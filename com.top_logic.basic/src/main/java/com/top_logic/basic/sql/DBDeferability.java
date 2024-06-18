@@ -10,7 +10,7 @@ import java.sql.DatabaseMetaData;
 import com.top_logic.basic.config.annotation.Label;
 
 /**
- * Actions for foreign key constraint.
+ * Deferability of foreign key constraint.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  * 
@@ -27,7 +27,7 @@ public enum DBDeferability {
 	DEFERRED,
 	
 	/**
-	 * Constraints is checked on insert but can be deferred within a transaction.
+	 * Constraint is checked on insert but can be deferred within a transaction.
 	 * 
 	 * @see DatabaseMetaData#importedKeyInitiallyImmediate
 	 */

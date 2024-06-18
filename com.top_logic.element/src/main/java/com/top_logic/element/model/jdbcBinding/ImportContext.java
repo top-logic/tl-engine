@@ -5,6 +5,9 @@
  */
 package com.top_logic.element.model.jdbcBinding;
 
+import static java.util.Collections.*;
+import static java.util.stream.Collectors.*;
+
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import com.top_logic.basic.col.ComparableComparator;
 import com.top_logic.basic.db.model.DBSchema;
@@ -44,13 +46,14 @@ public class ImportContext {
 
 	private final TLFactory _factory;
 
-	private Map<String, Map<Object, TLObject>> _objectByTableAndId;
+	private final Map<String, Map<Object, TLObject>> _objectByTableAndId = new HashMap<>();
 
-	private Map<String, Map<Object, Map<TLReference, ReferencePromise>>> _referenceByTableReferenceAndId;
+	private final Map<String, Map<Object, Map<TLReference, ReferencePromise>>> _referenceByTableReferenceAndId =
+		new HashMap<>();
 
-	private List<Runnable> _resolvers;
+	private final List<Runnable> _resolvers = new ArrayList<>();
 
-	private Map<TLType, List<TLStructuredTypePart>> _referers = new HashMap<>();
+	private final Map<TLType, List<TLStructuredTypePart>> _referrers;
 
 	/**
 	 * Creates an {@link ImportContext}.
@@ -63,17 +66,19 @@ public class ImportContext {
 		_sqlDialect = connection.getSQLDialect();
 		_factory = ModelService.getInstance().getFactory();
 
-		_objectByTableAndId = new HashMap<>();
-		_referenceByTableReferenceAndId = new HashMap<>();
-		_resolvers = new ArrayList<>();
+		_referrers = Map.copyOf(computeTypeReferrers(module));
+	}
 
+	private final Map<TLType, List<TLStructuredTypePart>> computeTypeReferrers(TLModule module) {
+		Map<TLType, List<TLStructuredTypePart>> referrers = new HashMap<>();
 		for (TLType type : module.getTypes()) {
 			if (type instanceof TLStructuredType) {
 				for (TLStructuredTypePart part : ((TLStructuredType) type).getLocalParts()) {
-					_referers.computeIfAbsent(part.getType(), x -> new ArrayList<>()).add(part);
+					referrers.computeIfAbsent(part.getType(), x -> new ArrayList<>()).add(part);
 				}
 			}
 		}
+		return referrers;
 	}
 
 	/**
@@ -115,15 +120,14 @@ public class ImportContext {
 	 * Processing to be done before the import is finished.
 	 */
 	public void resolve() {
-		for (Entry<String, Map<Object, Map<TLReference, ReferencePromise>>> tableEntry : _referenceByTableReferenceAndId
-			.entrySet()) {
+		for (var tableEntry : _referenceByTableReferenceAndId.entrySet()) {
 			String tableName = tableEntry.getKey();
 			Map<Object, TLObject> index = typeIndex(tableName);
-			for (Entry<Object, Map<TLReference, ReferencePromise>> objectEntry : tableEntry.getValue().entrySet()) {
+			for (var objectEntry : tableEntry.getValue().entrySet()) {
 				Object sourceId = objectEntry.getKey();
 				TLObject source = index.get(sourceId);
 				if (source == null) {
-					// TODO: Warning.
+					// TODO JST: Warning.
 				} else {
 					for (Entry<TLReference, ReferencePromise> refEntry : objectEntry.getValue().entrySet()) {
 						refEntry.getValue().resolve(source, refEntry.getKey());
@@ -150,6 +154,7 @@ public class ImportContext {
 		_resolvers.add(action);
 	}
 
+	// TODO JST in eigene Datei extrahieren
 	/**
 	 * Collected data for synthesizing a multiple reference from target objects with foreign key
 	 * references.
@@ -161,7 +166,7 @@ public class ImportContext {
 		/**
 		 * Adds the ID of a value object with an order value to the reference.
 		 */
-		public void addOrderedDefered(Map<Object, TLObject> index, Object destId, Object orderValue) {
+		public void addOrderedDeferred(Map<Object, TLObject> index, Object destId, Object orderValue) {
 			_entries.add(new DeferredRefEntry(index, destId, orderValue));
 		}
 
@@ -177,7 +182,13 @@ public class ImportContext {
 		 */
 		protected void resolve(TLObject source, TLReference reference) {
 			Collections.sort(_entries);
-			source.tUpdate(reference, _entries.stream().map(e -> e.getTarget()).collect(Collectors.toList()));
+			source.tUpdate(reference, resolveEntriesToTargets());
+		}
+
+		private List<TLObject> resolveEntriesToTargets() {
+			return _entries.stream()
+				.map(e -> e.getTarget())
+				.collect(toList());
 		}
 
 		private static abstract class RefEntry implements Comparable<RefEntry> {
@@ -206,7 +217,7 @@ public class ImportContext {
 			private final TLObject _target;
 
 			/**
-			 * Creates a {@link RefEntry}.
+			 * Creates a {@link DirectRefEntry}.
 			 */
 			public DirectRefEntry(TLObject target, Object orderValue) {
 				super(orderValue);
@@ -221,12 +232,12 @@ public class ImportContext {
 
 		private static class DeferredRefEntry extends RefEntry {
 
-			private Map<Object, TLObject> _index;
+			private final Map<Object, TLObject> _index;
 
-			private Object _targetId;
+			private final Object _targetId;
 
 			/**
-			 * Creates a {@link RefEntry}.
+			 * Creates a {@link DeferredRefEntry}.
 			 */
 			public DeferredRefEntry(Map<Object, TLObject> index, Object targetId, Object orderValue) {
 				super(orderValue);
@@ -263,8 +274,8 @@ public class ImportContext {
 	/**
 	 * Resolve references that have the given type as target type.
 	 */
-	public List<TLStructuredTypePart> referers(TLType type) {
-		return _referers.getOrDefault(type, Collections.emptyList());
+	public List<TLStructuredTypePart> referrers(TLType type) {
+		return _referrers.getOrDefault(type, emptyList());
 	}
 
 }

@@ -10,7 +10,6 @@ import static com.top_logic.basic.db.sql.SQLFactory.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -125,8 +124,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 
 	private void loadData(ImportContext context) throws SQLException {
 		for (TLType type : context.getModule().getTypes()) {
-			TypeLoader loader =
-				typeLoader(context, type);
+			TypeLoader loader = typeLoader(context, type);
 
 			if (loader != null) {
 				loader.load(context.getConnection());
@@ -220,8 +218,8 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 
 								if (isOrdered) {
 									Object orderValue = linkCursor.getValue(orderColumn);
-									context.reference(tableName, sourceId, reference).addOrderedDefered(destIndex,
-										destId, orderValue);
+									context.reference(tableName, sourceId, reference)
+										.addOrderedDeferred(destIndex, destId, orderValue);
 								} else {
 									context.addResolver(() -> {
 										TLObject source = typeIndex.get(sourceId);
@@ -245,7 +243,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		}
 
 		// All references with the currently imported type as target type.
-		for (TLObject referenceObject : context.referers(type)) {
+		for (TLObject referenceObject : context.referrers(type)) {
 			if (referenceObject instanceof TLReference) {
 				TLReference reference = (TLReference) referenceObject;
 				TLReverseForeignKeyBinding reverseForeignKeyBinding =
@@ -387,7 +385,6 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		if (customParser != null) {
 			return customParser;
 		}
-
 		return value -> value;
 	}
 
@@ -401,7 +398,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 			}
 			array[n] = value;
 		}
-		return Arrays.asList(array);
+		return List.of(array);
 	}
 
 	private ImportRow cursor(ResultSet resultSet) {
@@ -415,7 +412,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 	}
 
 	private TypeSelector momomorphicTypeSelector(TLClass type) {
-		return (row) -> type;
+		return row -> type;
 	}
 
 }

@@ -9,9 +9,9 @@ import java.util.List;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.CommaSeparatedStrings;
+import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
-import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
@@ -31,7 +31,7 @@ import com.top_logic.model.config.TLTypeAnnotation;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @DisplayOrder({
-	TLTableBinding.NAME,
+	TLTableBinding.NAME_ATTRIBUTE,
 	TLTableBinding.PRIMARY_KEY,
 	TLTableBinding.TYPE_SELECTOR,
 	TLTableBinding.ROW_READER,
@@ -39,12 +39,7 @@ import com.top_logic.model.config.TLTypeAnnotation;
 })
 @InApp
 @TagName("table-binding")
-public interface TLTableBinding extends TLTypeAnnotation {
-
-	/**
-	 * @see #getName()
-	 */
-	final String NAME = "name";
+public interface TLTableBinding extends TLTypeAnnotation, NamedConfigMandatory {
 
 	/**
 	 * @see #getPrimaryKey()
@@ -65,18 +60,6 @@ public interface TLTableBinding extends TLTypeAnnotation {
 	 * @see #getRowWriter()
 	 */
 	final String ROW_WRITER = "row-writer";
-
-	/**
-	 * The name of the table.
-	 */
-	@Name(NAME)
-	@Mandatory
-	String getName();
-
-	/**
-	 * @see #getName()
-	 */
-	void setName(String value);
 
 	/**
 	 * Specifies the primary key of the table that is used to reference objects through

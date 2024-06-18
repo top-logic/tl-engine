@@ -41,23 +41,23 @@ import com.top_logic.model.migration.data.Type;
 import com.top_logic.model.migration.data.TypePart;
 
 /**
- * {@link MigrationProcessor} that changes the type of objects of a given reference from a concrete
- * source type to a concrete destination type.
+ * {@link MigrationProcessor} that changes the type of objects that are referenced by a given
+ * reference from some concrete source type to some concrete destination type.
  *
  * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
  */
-public class ChangeReferenceObjectsTypeProcessor
-		extends AbstractConfiguredInstance<ChangeReferenceObjectsTypeProcessor.Config<?>>
+public class ChangeReferencedObjectsTypeProcessor
+		extends AbstractConfiguredInstance<ChangeReferencedObjectsTypeProcessor.Config<?>>
 		implements MigrationProcessor {
 
 	/**
-	 * Configuration options for {@link ChangeReferenceObjectsTypeProcessor}.
+	 * Configuration options for {@link ChangeReferencedObjectsTypeProcessor}.
 	 */
-	@TagName("change-reference-objects-type")
-	public interface Config<I extends ChangeReferenceObjectsTypeProcessor> extends PolymorphicConfiguration<I> {
+	@TagName("change-referenced-objects-type")
+	public interface Config<I extends ChangeReferencedObjectsTypeProcessor> extends PolymorphicConfiguration<I> {
 
 		/**
-		 * Qualified name of the reference of whose objects the type should be changed.
+		 * Qualified name of the reference of whose referenced objects should be changed.
 		 */
 		@Mandatory
 		@Name("reference")
@@ -97,7 +97,7 @@ public class ChangeReferenceObjectsTypeProcessor
 	private static String DEST_ID_DB_NAME = "DEST_ID";
 
 	/**
-	 * Creates a {@link ChangeReferenceObjectsTypeProcessor} from configuration.
+	 * Creates a {@link ChangeReferencedObjectsTypeProcessor} from configuration.
 	 * 
 	 * @param context
 	 *        The context for instantiating sub configurations.
@@ -105,7 +105,7 @@ public class ChangeReferenceObjectsTypeProcessor
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public ChangeReferenceObjectsTypeProcessor(InstantiationContext context, Config<?> config) {
+	public ChangeReferencedObjectsTypeProcessor(InstantiationContext context, Config<?> config) {
 		super(context, config);
 	}
 

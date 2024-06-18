@@ -22,7 +22,7 @@ public class TokenSplitter {
 
 	private static final Pattern NUMBER = Pattern.compile("^([0-9]+)");
 
-	private Map<String, List<String>> _glossary;
+	private final Map<String, List<String>> _glossary;
 
 	/**
 	 * Creates a {@link TokenSplitter}.
@@ -71,7 +71,7 @@ public class TokenSplitter {
 			suffixSplits.forEach(l -> addReplacement(l, token));
 			buffer.addAll(suffixSplits);
 		} else {
-			ArrayList<String> singleResult = new ArrayList<>();
+			List<String> singleResult = new ArrayList<>();
 			addReplacement(singleResult, token);
 			buffer.add(singleResult);
 		}

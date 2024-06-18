@@ -19,6 +19,7 @@ import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.dob.meta.MOReference.HistoryType;
+import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
@@ -27,6 +28,7 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.export.PreloadContext;
 import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.search.expr.EvalContext;
@@ -288,20 +290,6 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 				copy = allocate(orig, contextRef, context);
 			}
 			enterCopy(orig, copy);
-
-			for (TLStructuredTypePart part : orig.tType().getAllParts()) {
-				if (part.isDerived()) {
-					continue;
-				}
-
-				if (part.getModelKind() == ModelKind.REFERENCE) {
-					TLReference reference = (TLReference) part;
-					if (reference.getEnd().isComposite()) {
-						copyComposite(orig, reference, copy);
-					}
-				}
-			}
-
 			return copy;
 		}
 
@@ -328,15 +316,21 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 			}
 		}
 
-		private void copyComposite(TLObject orig, TLReference reference, TLObject copy) {
-			TLReference currentReference = WrapperHistoryUtils.getCurrent(reference);
-			if (currentReference == null) {
-				// Reference does no longer exist.
-				return;
-			}
+		final void copyComposite(TLObject orig, TLReference reference, TLObject copy) {
+			// TODO #28073: This check becomes unnecessary, after update.
+			TLReference currentReference;
+			if (WrapperHistoryUtils.isCurrent(reference)) {
+				currentReference = reference;
+			} else {
+				currentReference = WrapperHistoryUtils.getCurrent(reference);
+				if (currentReference == null) {
+					// Reference does no longer exist.
+					return;
+				}
 
-			if (!defines(copy, currentReference)) {
-				return;
+				if (!defines(copy, currentReference)) {
+					return;
+				}
 			}
 
 			Object value = orig.tValue(reference);
@@ -383,6 +377,105 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 
 		private final Map<TLObject, TLObject> _copies = new HashMap<>();
 
+		private final Map<TLStructuredType, CopyAttributes> _copyAttributes = new HashMap<>();
+
+		private Map<TLReference, DescendBatch> _unresolvedCopies = new HashMap<>();
+
+		private Map<TLStructuredType, ValueBatch> _valueBatches = new HashMap<>();
+
+		private class CopyAttributes {
+
+			private List<TLReference> _compositions = new ArrayList<>();
+
+			private List<TLStructuredTypePart> _properties = new ArrayList<>();
+
+			public List<TLReference> compositions() {
+				return _compositions;
+			}
+
+			public List<TLStructuredTypePart> getProperties() {
+				return _properties;
+			}
+
+			public void add(TLStructuredTypePart part) {
+				if (part.getModelKind() == ModelKind.REFERENCE) {
+					TLReference reference = (TLReference) part;
+					if (reference.getEnd().isComposite()) {
+						_compositions.add((TLReference) part);
+						return;
+					}
+				}
+
+				_properties.add(part);
+			}
+		}
+
+		private class Batch {
+			protected final List<TLObject> _origBatch = new ArrayList<>();
+
+			protected final List<TLObject> _copyBatch = new ArrayList<>();
+
+			public void add(TLObject orig, TLObject copy) {
+				_origBatch.add(orig);
+				_copyBatch.add(copy);
+			}
+		}
+
+		private class DescendBatch extends Batch {
+			private final TLReference _reference;
+
+			/**
+			 * Creates a {@link DescendBatch}.
+			 */
+			public DescendBatch(TLReference reference) {
+				_reference = reference;
+			}
+
+			public void excuteBatch() {
+				try (PreloadContext context = new PreloadContext()) {
+					TLReference reference = _reference;
+					MetaElementUtil.preloadAttribute(context, _origBatch, reference);
+
+					for (int n = 0, cnt = _origBatch.size(); n < cnt; n++) {
+						TLObject orig = _origBatch.get(n);
+						TLObject copy = _copyBatch.get(n);
+
+						copyComposite(orig, reference, copy);
+					}
+				}
+			}
+		}
+
+		private class ValueBatch extends Batch {
+			private final TLStructuredType _type;
+
+			/**
+			 * Creates a {@link DescendBatch}.
+			 */
+			public ValueBatch(TLStructuredType type) {
+				_type = type;
+			}
+
+			public void excuteBatch() {
+				List<TLStructuredTypePart> properties = copyAttributes(_type).getProperties();
+				if (properties.isEmpty()) {
+					return;
+				}
+
+				try (PreloadContext context = new PreloadContext()) {
+					MetaElementUtil.preloadAttributes(context, _origBatch,
+						properties.toArray(new TLStructuredTypePart[0]));
+
+					for (int n = 0, cnt = _origBatch.size(); n < cnt; n++) {
+						TLObject orig = _origBatch.get(n);
+						TLObject copy = _copyBatch.get(n);
+
+						copyValues(properties, orig, copy);
+					}
+				}
+			}
+		}
+
 		@Override
 		public TLObject resolveCopy(TLObject orig) {
 			return _copies.get(orig);
@@ -391,6 +484,30 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 		@Override
 		public void enterCopy(TLObject orig, TLObject copy) {
 			_copies.put(orig, copy);
+
+			TLStructuredType type = orig.tType();
+
+			for (TLReference reference : copyAttributes(type).compositions()) {
+				_unresolvedCopies.computeIfAbsent(reference, DescendBatch::new).add(orig, copy);
+			}
+
+			_valueBatches.computeIfAbsent(type, ValueBatch::new).add(orig, copy);
+		}
+
+		private CopyAttributes copyAttributes(TLStructuredType type) {
+			CopyAttributes cache = _copyAttributes.get(type);
+			if (cache == null) {
+				cache = new CopyAttributes();
+				for (TLStructuredTypePart part : type.getAllParts()) {
+					if (part.isDerived()) {
+						continue;
+					}
+
+					cache.add(part);
+				}
+				_copyAttributes.put(type, cache);
+			}
+			return cache;
 		}
 
 		@Override
@@ -400,29 +517,41 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 
 		@Override
 		public void finish() {
-			for (Entry<TLObject, TLObject> entry : localCopies()) {
-				TLObject orig = entry.getKey();
-				TLObject copy = entry.getValue();
+			// Copy along composition references in batch mode.
+			while (true) {
+				Map<TLReference, DescendBatch> batch = _unresolvedCopies;
+				if (batch.isEmpty()) {
+					break;
+				}
 
-				copyValues(orig, copy);
+				_unresolvedCopies = new HashMap<>();
+
+				for (Entry<TLReference, DescendBatch> entry : batch.entrySet()) {
+					entry.getValue().excuteBatch();
+				}
+			}
+
+			for (ValueBatch valueBatch : _valueBatches.values()) {
+				valueBatch.excuteBatch();
 			}
 		}
 
-		private void copyValues(TLObject orig, TLObject copy) {
-			TLStructuredType type = orig.tType();
-			for (TLStructuredTypePart part : type.getAllParts()) {
-				if (part.isDerived()) {
-					continue;
-				}
-				
-				TLStructuredTypePart currentPart = WrapperHistoryUtils.getCurrent(part);
-				if (currentPart == null) {
-					// Property no longer exists.
-					continue;
-				}
+		private void copyValues(List<TLStructuredTypePart> parts, TLObject orig, TLObject copy) {
+			for (TLStructuredTypePart part : parts) {
+				TLStructuredTypePart currentPart;
+				// TODO #28073: This check becomes unnecessary, after update.
+				if (WrapperHistoryUtils.isCurrent(part)) {
+					currentPart = part;
+				} else {
+					currentPart = WrapperHistoryUtils.getCurrent(part);
+					if (currentPart == null) {
+						// Property no longer exists.
+						continue;
+					}
 
-				if (!defines(copy, currentPart)) {
-					continue;
+					if (!defines(copy, currentPart)) {
+						continue;
+					}
 				}
 
 				Object value = orig.tValue(part);
@@ -433,10 +562,6 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 				Object copyValue;
 				if (part.getModelKind() == ModelKind.REFERENCE) {
 					TLReference reference = (TLReference) part;
-					if (reference.getEnd().isComposite()) {
-						// Already processed during allocate step.
-						continue;
-					}
 					copyValue = rewriteReferences(reference.getHistoryType(), value);
 				} else {
 					copyValue = value;

@@ -114,47 +114,47 @@ public class SchemaExtraction {
 	}
 
 	// parent key table catalog (may be null)
-	static final int XREF_PKTABLE_CAT = 1;
+	private static final int XREF_PKTABLE_CAT = 1;
 
 	// parent key table schema (may be null)
-	static final int XREF_PKTABLE_SCHEM = 2;
+	private static final int XREF_PKTABLE_SCHEM = 2;
 
 	// parent key table name
-	static final int PKTABLE_NAME = 3;
+	private static final int PKTABLE_NAME = 3;
 
 	// parent key column name
-	static final int XREF_PKCOLUMN_NAME = 4;
+	private static final int XREF_PKCOLUMN_NAME = 4;
 
 	// foreign key table catalog (may be null) being exported (may be null)
-	static final int XREF_FKTABLE_CAT = 5;
+	private static final int XREF_FKTABLE_CAT = 5;
 
 	// foreign key table schema (may be null) being exported (may be null)
-	static final int XREF_FKTABLE_SCHEM = 6;
+	private static final int XREF_FKTABLE_SCHEM = 6;
 
 	// foreign key table name being exported
-	static final int XREF_FKTABLE_NAME = 7;
+	private static final int XREF_FKTABLE_NAME = 7;
 
 	// foreign key column name being exported
-	static final int XREF_FKCOLUMN_NAME = 8;
+	private static final int XREF_FKCOLUMN_NAME = 8;
 
 	// sequence number within foreign key (a value of 1 represents the first column of the
 	// foreign key, a value of 2 would represent the second column within the foreign key).
-	static final int XREF_KEY_SEQ = 9;
+	private static final int XREF_KEY_SEQ = 9;
 
 	// What happens to foreign key when parent key is updated:
-	static final int XREF_UPDATE_RULE = 10;
+	private static final int XREF_UPDATE_RULE = 10;
 
 	// What happens to the foreign key when parent key is deleted.
-	static final int XREF_DELETE_RULE = 11;
+	private static final int XREF_DELETE_RULE = 11;
 
 	// foreign key name (may be null)
-	static final int XREF_FK_NAME = 12;
+	private static final int XREF_FK_NAME = 12;
 
 	// parent key name (may be null)
-	static final int XREF_PK_NAME = 13;
+	private static final int XREF_PK_NAME = 13;
 
 	// can the evaluation of foreign key constraints be deferred until commit
-	static final int XREF_DEFERRABILITY = 14;
+	private static final int XREF_DEFERRABILITY = 14;
 
 	private void addForeignKeys(String catalog, String schemaName, DBTable table) throws SQLException {
 		String tableName = table.getDBName();
@@ -175,8 +175,8 @@ public class SchemaExtraction {
 				assert tableName.equals(fkTableName) : "Unexpected table name: " + fkTableName + ", expected: "
 					+ tableName;
 
-				DBConstraintType onUpdate = type(crossReference.getShort(XREF_UPDATE_RULE));
-				DBConstraintType onDelete = type(crossReference.getShort(XREF_DELETE_RULE));
+				DBConstraintType onUpdate = constraintType(crossReference.getShort(XREF_UPDATE_RULE));
+				DBConstraintType onDelete = constraintType(crossReference.getShort(XREF_DELETE_RULE));
 				DBDeferability deferability = deferability(crossReference.getShort(XREF_DEFERRABILITY));
 
 				DBForeignKey key = TypedConfiguration.newConfigItem(DBForeignKey.class);
@@ -215,7 +215,7 @@ public class SchemaExtraction {
 		return DBDeferability.DEFERRED;
 	}
 
-	private static DBConstraintType type(short value) {
+	private static DBConstraintType constraintType(short value) {
 		switch (value) {
 			case DatabaseMetaData.importedKeyRestrict:
 				return DBConstraintType.RESTRICT;

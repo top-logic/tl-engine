@@ -156,6 +156,7 @@ i[class*=" overlay-"] span::before {
 .Footer {
 	display: flex;
 	justify-content: flex-end;
+	align-items: center;
 	gap: var(--spacing-02);
 	font-size: var(--body-01-font-size);
     line-height: var(--body-01-line-height);

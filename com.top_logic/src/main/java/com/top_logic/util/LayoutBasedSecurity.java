@@ -124,6 +124,11 @@ public class LayoutBasedSecurity extends KBBasedManagedClass<LayoutBasedSecurity
 			return null;
 		}
 
+		if (layout == null) {
+			// Error has already been reported.
+			return null;
+		}
+
 		int count = BoundMainLayout.initPersBoundComp(kb(), layout);
 		if (count > 0) {
 			SecurityComponentCache.setupCache();

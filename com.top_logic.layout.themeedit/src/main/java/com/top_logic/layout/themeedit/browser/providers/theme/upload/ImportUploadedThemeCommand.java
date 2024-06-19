@@ -21,12 +21,14 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.gui.MultiThemeFactory;
 import com.top_logic.gui.Theme;
 import com.top_logic.gui.ThemeFactory;
+import com.top_logic.gui.ThemeInitializationFailure;
 import com.top_logic.gui.ThemeUtil;
 import com.top_logic.gui.config.ThemeConfig;
 import com.top_logic.layout.table.component.TableComponent;
 import com.top_logic.tool.dataImport.ImportZipDataCommand;
 import com.top_logic.tool.dataImport.UploadDataDialog;
 import com.top_logic.tool.dataImport.ZipImporter;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Command executes the import of the uploaded {@link Theme}.
@@ -66,7 +68,11 @@ public class ImportUploadedThemeCommand extends ImportZipDataCommand {
 			public void doImport() {
 				super.doImport();
 
-				doPost();
+				try {
+					updateTransient();
+				} catch (ThemeInitializationFailure ex) {
+					throw new TopLogicException(ex.getErrorKey());
+				}
 			}
 
 			@Override
@@ -121,16 +127,15 @@ public class ImportUploadedThemeCommand extends ImportZipDataCommand {
 				return file.getParentFile().getParentFile();
 			}
 
-			private void doPost() {
+			private void updateTransient() throws ThemeInitializationFailure {
 				for (ThemeConfig themeConfig : _themeConfigs) {
 					addThemeConfig(themeConfig);
 					updateTableRow(themeConfig);
 				}
 			}
 
-			private void addThemeConfig(ThemeConfig themeConfig) {
+			private void addThemeConfig(ThemeConfig themeConfig) throws ThemeInitializationFailure {
 				MultiThemeFactory themeFactory = (MultiThemeFactory) ThemeFactory.getInstance();
-
 				themeFactory.putThemeConfig(themeConfig.getId(), themeConfig);
 			}
 

@@ -16,6 +16,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.gui.MultiThemeFactory;
 import com.top_logic.gui.ThemeFactory;
+import com.top_logic.gui.ThemeInitializationFailure;
 import com.top_logic.gui.ThemeUtil;
 import com.top_logic.gui.config.ThemeConfig;
 import com.top_logic.layout.DisplayContext;
@@ -28,6 +29,7 @@ import com.top_logic.layout.themeedit.browser.providers.I18NConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Handler to store a {@link ThemeConfig}.
@@ -56,7 +58,11 @@ public class ThemeConfigApplyHandler extends AbstractCommandHandler {
 
 		try {
 			if (!existThemeCycle(themeConfig)) {
-				return applyThemeConfig(component, themeConfig);
+				try {
+					return applyThemeConfig(component, themeConfig);
+				} catch (ThemeInitializationFailure ex) {
+					throw new TopLogicException(ex.getErrorKey());
+				}
 			}
 
 			return createDependencyCycleErrorResult(formContext);
@@ -65,10 +71,11 @@ public class ThemeConfigApplyHandler extends AbstractCommandHandler {
 		}
 	}
 
-	private HandlerResult applyThemeConfig(LayoutComponent component, ThemeConfig themeConfig) throws IOException {
-		ThemeUtil.writeThemeConfig(themeConfig, getThemeConfigurationFile(themeConfig.getId()));
-
+	private HandlerResult applyThemeConfig(LayoutComponent component, ThemeConfig themeConfig)
+			throws IOException, ThemeInitializationFailure {
 		updateTransientThemeConfig(themeConfig);
+
+		ThemeUtil.writeThemeConfig(themeConfig, getThemeConfigurationFile(themeConfig.getId()));
 		updateTableRow(component, themeConfig);
 
 		return HandlerResult.DEFAULT_RESULT;
@@ -128,7 +135,7 @@ public class ThemeConfigApplyHandler extends AbstractCommandHandler {
 		themesTable.setSelected(themeConfig);
 	}
 
-	private void updateTransientThemeConfig(ThemeConfig themeConfig) {
+	private void updateTransientThemeConfig(ThemeConfig themeConfig) throws ThemeInitializationFailure {
 		MultiThemeFactory themeFactory = (MultiThemeFactory) ThemeFactory.getInstance();
 
 		themeFactory.replaceThemeConfig(themeConfig.getId(), themeConfig);

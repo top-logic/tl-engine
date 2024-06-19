@@ -29,7 +29,7 @@ public class ThemeLabelAccessor extends ReadOnlyAccessor<ThemeConfig> {
 	public Object getValue(ThemeConfig config, String property) {
 		String themeId = config.getId();
 		Theme theme = ThemeFactory.getInstance().getTheme(themeId);
-		return theme.getName();
+		return theme == null ? "" : theme.getName();
 	}
 
 }

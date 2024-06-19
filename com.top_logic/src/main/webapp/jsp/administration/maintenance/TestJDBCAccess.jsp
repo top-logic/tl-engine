@@ -117,8 +117,8 @@
 				/>
 				<table
 					align="center"
-					width="100%"
 					style="padding-bottom: var(--spacing-02);"
+					width="100%"
 				>
 					<tr>
 						<td class="label">
@@ -186,8 +186,13 @@
 					</tr>
 				</table>
 				<div class="cmdButtons">
-					<button class="tlButton cButton cmdButton" name="submit" type="submit">
-						<h4 class="tlButtonLabel">Make It So</h4>
+					<button class="tlButton cButton cmdButton"
+						name="submit"
+						type="submit"
+					>
+						<h4 class="tlButtonLabel">
+							Make It So
+						</h4>
 					</button>
 				</div>
 			</form>

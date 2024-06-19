@@ -22,6 +22,7 @@ import com.top_logic.layout.basic.ThemeImage.Img;
 import com.top_logic.layout.component.configuration.ViewConfiguration;
 import com.top_logic.layout.tabbar.TabbarUtil;
 import com.top_logic.layout.template.WithPropertiesBase;
+import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.TLContext;
 
@@ -62,6 +63,12 @@ public class LogoViewConfiguration extends AbstractConfiguredInstance<LogoViewCo
 		 */
 		@Name("quickSearch")
 		PolymorphicConfiguration<? extends ViewConfiguration> getQuickSearch();
+
+		/**
+		 * The component whose context menu is displayed.
+		 */
+		@Name("contextMenuComponent")
+		ComponentName getContextMenuComponent();
 	}
 
 	private ViewConfiguration _quickSearchFactory;
@@ -158,7 +165,7 @@ public class LogoViewConfiguration extends AbstractConfiguredInstance<LogoViewCo
 		 */
 		@TemplateVariable("popup")
 		public void writePopUp(DisplayContext context, TagWriter out) throws IOException {
-			TabbarUtil.writePopup(_component, context, out);
+			TabbarUtil.writePopup(_component, getConfig().getContextMenuComponent(), context, out);
 		}
 
 		/**

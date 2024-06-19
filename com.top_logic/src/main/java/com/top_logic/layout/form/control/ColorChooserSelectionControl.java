@@ -88,7 +88,7 @@ public class ColorChooserSelectionControl extends AbstractConstantControl {
 		/**
 		 * Height of the dialog in pixels.
 		 */
-		@IntDefault(230)
+		@IntDefault(250)
 		int getHeight();
 		
 		/**
@@ -517,7 +517,7 @@ public class ColorChooserSelectionControl extends AbstractConstantControl {
 					out.endBeginTag();
 					for (int column = 0, columns = _columns; column < columns; column++) {
 						ColorDisplay cell = _cells[n++];
-
+						cell.fetchID(getScope().getFrameScope());
 						out.beginBeginTag(SPAN);
 						out.writeAttribute(ONCLICK_ATTR, "return colorChooser.colorCellClick('" + cell.getID() + "');");
 						out.endBeginTag();
@@ -802,13 +802,13 @@ public class ColorChooserSelectionControl extends AbstractConstantControl {
 				XMLTag icon1 = Icons.TRANSPARENT_BACKGROUND.toIcon();
 				icon1.beginBeginTag(context, out);
 				writeId(out, ("colorField"));
-				out.writeAttribute(STYLE_ATTR, "position:absolute; height:192px; width:192px;");
+				out.writeAttribute(CLASS_ATTR, "tl-colorchooser__colorf-field");
 				icon1.endEmptyTag(context, out);
 
 				XMLTag icon2 = Icons.CIRCLE.toIcon();
 				icon2.beginBeginTag(context, out);
 				writeId(out, ("circle"));
-				out.writeAttribute(STYLE_ATTR, "position:absolute; height:12px; width:12px; cursor:pointer;");
+				out.writeAttribute(CLASS_ATTR, "tl_colorchooser__circle");
 				icon2.endEmptyTag(context, out);
 
 				// construction of colorline.png in GIMP. Color gradient HSV
@@ -816,13 +816,13 @@ public class ColorChooserSelectionControl extends AbstractConstantControl {
 				XMLTag icon3 = Icons.COLORLINE.toIcon();
 				icon3.beginBeginTag(context, out);
 				writeId(out, ("colorLine"));
-				out.writeAttribute(STYLE_ATTR, "position:absolute; height:192px; width:30px; top:0px; left:195px");
+				out.writeAttribute(CLASS_ATTR, "tl_colorchooser__color-line");
 				icon3.endEmptyTag(context, out);
 
 				XMLTag icon4 = Icons.LINE.toIcon();
 				icon4.beginBeginTag(context, out);
 				writeId(out, ("hline"));
-				out.writeAttribute(STYLE_ATTR, "position:absolute; height:12px; width:30px; cursor:pointer");
+				out.writeAttribute(CLASS_ATTR, "tl_colorchooser__hline");
 				icon4.endEmptyTag(context, out);
 			}
 

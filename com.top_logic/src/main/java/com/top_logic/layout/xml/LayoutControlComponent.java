@@ -10,6 +10,7 @@ import java.util.Collections;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.Log;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.NoProtocol;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.annotation.FrameworkInternal;
@@ -123,6 +124,10 @@ public final class LayoutControlComponent extends LayoutComponent implements Bou
 			_allowDelegate = new AllowNoneChecker(getName());
 		} else {
 			_referencedComponent = mainLayout.getComponentByName(_componentName);
+			if (_referencedComponent == null) {
+				Logger.error("Component cannot be resolved (" + getLocation() + "): " + _componentName,
+					LayoutControlComponent.class);
+			}
 			initSecurityDelegate(context);
 		}
 	}
@@ -213,14 +218,20 @@ public final class LayoutControlComponent extends LayoutComponent implements Bou
 		@Override
 		public LayoutControl createLayoutControl(Strategy strategy, LayoutComponent component) {
 			LayoutControlComponent controlComponent = (LayoutControlComponent) component;
+			LayoutComponent referencedComponent = controlComponent.getReferencedComponent();
+			if (referencedComponent == null) {
+				Logger.error("Component cannot be resolved: " + component.getName(),
+					DispatchingLayoutControlProvider.class);
+				return null;
+			}
 
 			PolymorphicConfiguration<LayoutControlProvider> customProvider =
 				controlComponent.getConfig().getComponentControlProvider();
 			if (customProvider == null) {
-				return strategy.createLayout(controlComponent.getReferencedComponent());
+				return strategy.createLayout(referencedComponent);
 			} else {
 				LayoutControlProvider customProviderImpl = TypedConfigUtil.createInstance(customProvider);
-				return customProviderImpl.createLayoutControl(strategy, controlComponent.getReferencedComponent());
+				return customProviderImpl.createLayoutControl(strategy, referencedComponent);
 			}
 		}
 		

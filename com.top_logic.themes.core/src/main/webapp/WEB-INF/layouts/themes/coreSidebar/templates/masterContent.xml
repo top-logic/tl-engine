@@ -2,6 +2,7 @@
 
 <template>
 	<params>
+		<param name="mainTabbarName" value="mainTabbar.layout.xml#mainTabber"/>
 		<param name="mainTabbar"/>
 	</params>
 
@@ -44,12 +45,14 @@
 						</componentControlProvider>
 
 						<components>
-							<layoutControl>
+							<layoutControl componentName="${mainTabbarName}">
 								<layoutInfo size="%QUICK_SEARCH_HEIGHT%"/>
 								<componentControlProvider class="com.top_logic.layout.structure.LayoutViewProvider"
 									css-class="sblLogo"
 								>
-									<view class="com.top_logic.layout.structure.LogoViewConfiguration">
+									<view class="com.top_logic.layout.structure.LogoViewConfiguration"
+										contextMenuComponent="${mainTabbarName}"
+									>
 										<quickSearch class="com.top_logic.element.layout.meta.search.quick.QuickSearchViewConfiguration"
 											active="%QUICK_SEARCH_ENABLED%"
 											maxResults="%QUICK_SEARCH_MAX_RESULTS%"
@@ -59,7 +62,7 @@
 								</componentControlProvider>
 							</layoutControl>
 
-							<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
+							<layoutControl componentName="${mainTabbarName}">
 								<layoutInfo size="0px"/>
 								<componentControlProvider class="com.top_logic.layout.structure.ConditionalViewLayout"
 									css-class="notificationTitle licenseView"
@@ -70,7 +73,7 @@
 							</layoutControl>
 
 							<layoutControl name="toolRow"
-								componentName="mainTabbar.layout.xml#mainTabber"
+								componentName="${mainTabbarName}"
 							>
 								<layoutInfo size="100%"/>
 								<componentControlProvider class="com.top_logic.layout.structure.sidebar.SidebarLayoutControlProvider"
@@ -97,7 +100,7 @@
 								</inject>
 							</include>
 
-							<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
+							<layoutControl componentName="${mainTabbarName}">
 								<layoutInfo size="0px"/>
 								<componentControlProvider class="com.top_logic.layout.structure.ConditionalViewLayout"
 									css-class="notificationTitle"
@@ -116,7 +119,7 @@
 								<components>${mainTabbar}</components>
 							</component>
 
-							<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
+							<layoutControl componentName="${mainTabbarName}">
 								<layoutInfo
 									scrolleable="false"
 									size="%com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT%"

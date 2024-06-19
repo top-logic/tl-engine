@@ -2182,6 +2182,34 @@ div.cColorComposer tr.spacer {
     width:30px;
 }
 
+.tl-colorchooser__colorf-field {
+	position: absolute;
+	height: 192px;
+	width: 192px;
+}
+
+.tl_colorchooser__circle {
+	position: absolute;
+	height: 12px;
+	width: 12px;
+	cursor: pointer;
+}
+
+.tl_colorchooser__color-line {
+	position: absolute;
+	height: 192px;
+	width: 30px;
+	top: 0px;
+	left: 195px
+}
+
+.tl_colorchooser__hline {
+	position: absolute;
+	height: 12px;
+	width: 30px;
+	cursor: pointer;
+}
+
 .cBeacon {
 	display: inline-flex;
 	flex-direction: row;
@@ -2198,13 +2226,14 @@ div.cColorComposer tr.spacer {
 	height: 16px;
 }
 
-div.sizeContainer, div.imageContainer {
-  position: absolute;
-  text-align: center;
-  left: 2px;
-  top: 2px;
-  right: 2px;
-  bottom: 2px;
+div.sizeContainer, 
+div.imageContainer {
+	position: absolute;
+	text-align: center;
+	left: 2px;
+	top: 2px;
+	right: 2px;
+	bottom: 2px;
 }
 
 /* ==================================== */

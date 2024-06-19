@@ -2067,7 +2067,7 @@
 
 		<config config:interface="com.top_logic.layout.form.control.ColorChooserSelectionControl$Config">
 			<width>442</width>
-			<height>230</height>
+			<height>255</height>
 			<rows>6</rows>
 			<columns>6</columns>
 			<colors>

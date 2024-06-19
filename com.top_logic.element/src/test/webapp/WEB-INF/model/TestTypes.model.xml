@@ -548,6 +548,78 @@
 						/>
 					</attributes>
 				</class>
+
+				<class name="PreloadTest">
+					<annotations>
+						<table name="PreloadTest"/>
+					</annotations>
+					<attributes>
+						<reference name="inline"
+							multiple="false"
+							type="PreloadTest"
+						>
+							<annotations>
+								<storage-algorithm>
+									<foreign-key-storage
+										storage-attribute="inline"
+										storage-type="PreloadTest"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="inlineReverse"
+							multiple="false"
+							type="PreloadTest"
+						>
+							<annotations>
+								<storage-algorithm>
+									<reverse-foreign-key-storage container-column="inlineReverse"/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="compositeSet"
+							composite="true"
+							multiple="true"
+							ordered="false"
+							type="PreloadTest"
+						>
+							<annotations>
+								<storage-algorithm>
+									<inline-set-storage container-column="containerSet"/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="compositeList"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="PreloadTest"
+						>
+							<annotations>
+								<storage-algorithm>
+									<inline-list-storage
+										container-column="containerList"
+										order-column="listOrder"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+						<reference name="linkSet"
+							multiple="true"
+							ordered="false"
+							type="PreloadTest"
+						/>
+						<reference name="linkList"
+							multiple="true"
+							ordered="true"
+							type="PreloadTest"
+						/>
+						<reference name="singletonLink"
+							multiple="false"
+							type="PreloadTest"
+						/>
+					</attributes>
+				</class>
 			</types>
 		</module>
 	</modules>

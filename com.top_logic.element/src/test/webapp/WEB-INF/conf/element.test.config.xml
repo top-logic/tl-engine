@@ -113,6 +113,7 @@
 				<type-system name="Default">
 					<declarations>
 			            <declaration resource="webinf://kbase/TestElementMeta.xml"/>
+						<declaration resource="webinf://kbase/TestTypesMeta.xml" />
 			        </declarations>
 			    </type-system>
 			</type-systems>

@@ -64,7 +64,7 @@ public class Setup extends ThreadContextSetup {
 	static final String NODE_NAME = Setup.class.getName().replace('.', '_') + "_node";
 	
 	/** Name of the association table used by {@link #LIST_2_ATTR} to store their values. */
-	/* Defined in DemoMeta.xml */
+	/* Defined in TestTypesMeta.xml */
 	static final String LIST_2_ATTR_TABLE = "otherHasWrapperAttValue";
 	
 	static TLClass metaElement;

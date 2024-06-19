@@ -103,9 +103,9 @@ public class TestDOMUtil extends TestCase {
 		DOMUtil.serializeXMLDocument(out, false, sourceDocument);
 		Document recreatedDoc = DOMUtil.parse(out.toString());
 		Element a2 = recreatedDoc.getDocumentElement();
-		assertEquals("Ticket #18858: Namespace clash between definied in file and generated one", "bar1",
+		assertEquals("Ticket #18858: Namespace clash between defined in file and generated one", "bar1",
 			a2.getAttributeNS("http://bar", "bar"));
-		assertEquals("Ticket #18858: Namespace clash between definied in file and generated one", "foo1",
+		assertEquals("Ticket #18858: Namespace clash between defined in file and generated one", "foo1",
 			a2.getAttributeNS("http://foo", "foo"));
 	}
 

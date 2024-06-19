@@ -26,7 +26,6 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.ReloadableManager;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.io.FileUtilities;
@@ -137,13 +136,7 @@ public class MultiThemeFactory extends ThemeFactory {
 	@Override
 	protected void startUp() {
 		super.startUp();
-		try {
-			init();
-		} catch (ConfigurationException exception) {
-			ResKey errorStartThemeFactory = ResKey.text("Cannot start theme factory due to configuration problems.");
-
-			throw new ConfigurationError(errorStartThemeFactory, exception);
-		}
+		init();
 
         ReloadableManager.getInstance().addReloadable(this);
 	}
@@ -160,13 +153,8 @@ public class MultiThemeFactory extends ThemeFactory {
 
     @Override
 	public boolean reload() {
-		try {
-			init();
-			return true;
-		} catch (ConfigurationException ex) {
-			Logger.error("Reloading themes failed.", ex, MultiThemeFactory.class);
-			return false;
-		}
+		init();
+		return true;
     }
 
     /** 
@@ -287,7 +275,7 @@ public class MultiThemeFactory extends ThemeFactory {
 	/**
 	 * Parse the configuration file (that is the XMLProperties) for the theme section
 	 */
-	private void init() throws ConfigurationException {
+	private void init() {
 		invalidateExisting();
 		initThemeConfigsById();
 		initThemesById();
@@ -310,17 +298,24 @@ public class MultiThemeFactory extends ThemeFactory {
 
 	private void initThemesById() {
 		_themesById = new HashMap<>();
-		_themeConfigsById.values().stream().forEach(themeConfig -> initTheme(themeConfig));
+		for (ThemeConfig themeConfig : _themeConfigsById.values()) {
+			try {
+				initTheme(themeConfig);
+			} catch (ThemeInitializationFailure ex) {
+				Logger.error("Failed to initialize theme '" + themeConfig.getId() + "': " + ex.getMessage(),
+					MultiThemeFactory.class);
+			}
+		}
 	}
 
-	private void initChoosableThemes() throws ConfigurationException {
+	private void initChoosableThemes() {
 		setChoosableThemes(_themesById.values());
 	}
 
 	/**
 	 * Sets the collection of themes the user can select.
 	 */
-	public void setChoosableThemes(Collection<Theme> choosableThemes) throws ConfigurationException {
+	public void setChoosableThemes(Collection<Theme> choosableThemes) {
 		if (choosableThemes.isEmpty()) {
 			Logger.warn("No valid themes found.", MultiThemeFactory.class);
 		}
@@ -367,7 +362,7 @@ public class MultiThemeFactory extends ThemeFactory {
 	/**
 	 * Creates a Theme for the given {@link ThemeConfig} if the theme is not already created.
 	 */
-	public void initTheme(ThemeConfig themeConfiguration) {
+	public void initTheme(ThemeConfig themeConfiguration) throws ThemeInitializationFailure {
 		String themeId = themeConfiguration.getId();
 
 		if (!isInitialized(themeId)) {
@@ -375,7 +370,7 @@ public class MultiThemeFactory extends ThemeFactory {
 		}
 	}
 
-	private Theme initTheme(String themeId, ThemeConfig themeConfiguration) {
+	private Theme initTheme(String themeId, ThemeConfig themeConfiguration) throws ThemeInitializationFailure {
 		Theme theme = createTheme(themeConfiguration);
 
 		checkVariableNames(theme);
@@ -404,7 +399,7 @@ public class MultiThemeFactory extends ThemeFactory {
 		return settings.stream().collect(Collectors.groupingBy(setting -> setting.getLocalName()));
 	}
 
-	private Theme createTheme(ThemeConfig themeConfiguration) {
+	private Theme createTheme(ThemeConfig themeConfiguration) throws ThemeInitializationFailure {
 		String themeId = themeConfiguration.getId();
 
 		Log log = new LogProtocol(MultiThemeFactory.class) {
@@ -421,7 +416,7 @@ public class MultiThemeFactory extends ThemeFactory {
 		return createTheme(themeConfiguration, log, settings, parentTheme);
 	}
 
-	private Theme getInitializedTheme(String themeId) {
+	private Theme getInitializedTheme(String themeId) throws ThemeInitializationFailure {
 		if (!isInitialized(themeId)) {
 			initTheme(themeId);
 		}
@@ -429,14 +424,15 @@ public class MultiThemeFactory extends ThemeFactory {
 		return getTheme(themeId);
 	}
 
-	private List<Theme> getParentThemes(ThemeConfig themeConfiguration) {
+	private List<Theme> getParentThemes(ThemeConfig themeConfiguration) throws ThemeInitializationFailure {
 		List<String> parentThemeIds = themeConfiguration.getExtends();
 		List<Theme> initializedParentThemes = new ArrayList<>();
 
 		if (parentThemeIds != null) {
 			for (String parentThemeId : parentThemeIds) {
 				if (themeConfiguration.getId().equals(parentThemeId)) {
-					throw new IllegalStateException(parentThemeId + " extends itself.");
+					throw new ThemeInitializationFailure(
+						I18NConstants.ERROR_CYCLIC_THEME_HIERARCHY__ID.fill(themeConfiguration.getId()));
 				}
 				initializedParentThemes.add(getInitializedTheme(parentThemeId));
 			}
@@ -455,13 +451,13 @@ public class MultiThemeFactory extends ThemeFactory {
 		return _themesById.values();
 	}
 
-	private void initTheme(String themeId) {
+	private void initTheme(String themeId) throws ThemeInitializationFailure {
 		ThemeConfig themeConfig = _themeConfigsById.get(themeId);
 
 		if (themeConfig != null) {
 			initTheme(themeId, themeConfig);
 		} else {
-			throw new ConfigurationError(ResKey.text("Theme configuration with id " + themeId + " not found."));
+			throw new ThemeInitializationFailure(I18NConstants.ERROR_REFERENCED_THEME_NOT_DEFINED__ID.fill(themeId));
 		}
 	}
 
@@ -482,7 +478,7 @@ public class MultiThemeFactory extends ThemeFactory {
 		return _choosableThemes;
 	}
 
-	private void updateChoosableTheme(String themeID) {
+	private void updateChoosableTheme(String themeID) throws ThemeInitializationFailure {
 		removeChoosableTheme(themeID);
 		addChoosableTheme(themeID);
 	}
@@ -496,7 +492,7 @@ public class MultiThemeFactory extends ThemeFactory {
 	/**
 	 * Add the theme with the given id to the choosables themes for the user.
 	 */
-	public void addChoosableTheme(String themeId) {
+	public void addChoosableTheme(String themeId) throws ThemeInitializationFailure {
 		addChoosableTheme(getInitializedTheme(themeId));
 	}
 
@@ -536,7 +532,7 @@ public class MultiThemeFactory extends ThemeFactory {
 	/**
 	 * Replaces the given transient {@link ThemeConfig} with the given theme id.
 	 */
-	public void replaceThemeConfig(String themeId, ThemeConfig themeConfig) {
+	public void replaceThemeConfig(String themeId, ThemeConfig themeConfig) throws ThemeInitializationFailure {
 		_themeConfigsById.replace(themeId, themeConfig);
 		dropTheme(themeId);
 		updateChoosableTheme(themeId);
@@ -559,7 +555,7 @@ public class MultiThemeFactory extends ThemeFactory {
 	/**
 	 * Adds a {@link ThemeConfig} to the transient loaded themes configs.
 	 */
-	public void putThemeConfig(String themeId, ThemeConfig themeConfig) {
+	public void putThemeConfig(String themeId, ThemeConfig themeConfig) throws ThemeInitializationFailure {
 		_themeConfigsById.put(themeId, themeConfig);
 
 		addChoosableTheme(themeId);

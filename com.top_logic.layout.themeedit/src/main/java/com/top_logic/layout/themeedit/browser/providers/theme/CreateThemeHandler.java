@@ -18,6 +18,7 @@ import com.top_logic.basic.config.copy.ConfigCopier;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.gui.MultiThemeFactory;
 import com.top_logic.gui.ThemeFactory;
+import com.top_logic.gui.ThemeInitializationFailure;
 import com.top_logic.gui.ThemeUtil;
 import com.top_logic.gui.config.ThemeConfig;
 import com.top_logic.gui.config.ThemeSettings;
@@ -31,6 +32,7 @@ import com.top_logic.layout.themeedit.browser.providers.theme.ThemeFormBuilder.E
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Creates a new {@link ThemeConfig}.
@@ -58,7 +60,11 @@ public class CreateThemeHandler extends AbstractCommandHandler {
 		HandlerResult handlerResult = new HandlerResult();
 
 		if (formContext.checkAll()) {
-			handlerResult = createTheme(component, formContext);
+			try {
+				handlerResult = createTheme(component, formContext);
+			} catch (ThemeInitializationFailure ex) {
+				throw new TopLogicException(ex.getErrorKey());
+			}
 		} else {
 			AbstractApplyCommandHandler.fillHandlerResultWithErrors(formContext, handlerResult);
 		}
@@ -66,14 +72,15 @@ public class CreateThemeHandler extends AbstractCommandHandler {
 		return handlerResult;
 	}
 
-	private HandlerResult createTheme(LayoutComponent component, FormContext formContext) throws IOError {
+	private HandlerResult createTheme(LayoutComponent component, FormContext formContext)
+			throws IOError, ThemeInitializationFailure {
 		ThemeConfig form = getEditModel(formContext);
 		ThemeConfig themeConfig = TypedConfiguration.newConfigItem(ThemeConfig.class);
 		ConfigCopier.copyContent(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, form, themeConfig);
 
-		createThemeFiles(themeConfig);
-
 		updateTransientThemeConfigs(themeConfig);
+
+		createThemeFiles(themeConfig);
 		updateTableRow(component, themeConfig);
 
 		return HandlerResult.DEFAULT_RESULT;
@@ -133,7 +140,7 @@ public class CreateThemeHandler extends AbstractCommandHandler {
 		FileUtilities.enforceDirectory(FileManager.getInstance().getIDEFile(ThemeUtil.getThemeResourcesPath(theme)));
 	}
 
-	private void updateTransientThemeConfigs(ThemeConfig themeConfig) {
+	private void updateTransientThemeConfigs(ThemeConfig themeConfig) throws ThemeInitializationFailure {
 		((MultiThemeFactory) ThemeFactory.getInstance()).putThemeConfig(themeConfig.getId(), themeConfig);
 	}
 

@@ -234,7 +234,7 @@ public class ComputedColumnProviderByExpression
 			};
 			column.setFieldProvider(columnFieldProvider);
 		}
-		if (displayMode.isDisplayed()) {
+		if (displayMode.isDisplayed() && !table.getDefaultColumns().contains(columnName)) {
 			table.setDefaultColumns(append(table.getDefaultColumns(), columnName));
 		}
 	}

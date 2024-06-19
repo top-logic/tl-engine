@@ -10,7 +10,6 @@ import java.lang.invoke.MethodHandles.Lookup;
 import java.net.URL;
 import java.util.Map;
 
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.URLFormat;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
@@ -40,7 +39,6 @@ import com.top_logic.service.openapi.common.authentication.apikey.APIKeyPosition
 	SecuritySchemeObject.IN,
 	SecuritySchemeObject.FLOWS,
 	SecuritySchemeObject.X_TL_IN_USER_CONTEXT,
-	SecuritySchemeObject.X_TL_USER_FIELD_NAME,
 })
 public interface SecuritySchemeObject extends Described {
 
@@ -70,9 +68,6 @@ public interface SecuritySchemeObject extends Described {
 
 	/** Configuration name for the value of {@link #isInUserContext()}. */
 	String X_TL_IN_USER_CONTEXT = "x-tl-in-user-context";
-
-	/** Configuration name for the value of {@link #getUserFieldName()}. */
-	String X_TL_USER_FIELD_NAME = "x-tl-user-field-name";
 
 	/**
 	 * Name of the security schema.
@@ -188,31 +183,13 @@ public interface SecuritySchemeObject extends Described {
 	boolean isInUserContext();
 
 	/**
-	 * Optional configuration of the header field, that contains the name of the user in whose
-	 * context an operation must be executed.
-	 * 
-	 * <p>
-	 * Must only be set, when the operation is executed {@link #isInUserContext() in user context}.
-	 * </p>
-	 */
-	@Name(X_TL_USER_FIELD_NAME)
-	@Nullable
-	@Label("User field name")
-	String getUserFieldName();
-
-	/**
 	 * Marks this {@link SecuritySchemeObject} to be {@link #isInUserContext()}.
 	 * 
 	 * @param inUserContext
 	 *        See {@link #isInUserContext()}.
-	 * @param userFieldName
-	 *        See {@link #getUserFieldName()}.
 	 */
-	default void setUserContext(boolean inUserContext, String userFieldName) {
+	default void setUserContext(boolean inUserContext) {
 		update(descriptor().getProperty(X_TL_IN_USER_CONTEXT), inUserContext);
-		if (inUserContext && !StringServices.isEmpty(userFieldName)) {
-			update(descriptor().getProperty(X_TL_USER_FIELD_NAME), userFieldName);
-		}
 	}
 
 }

@@ -37,8 +37,6 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 
 	private boolean _inUserContext;
 
-	private String _userNameField;
-
 	/**
 	 * Creates a new {@link ClientCredentialsAuthenticator}.
 	 */
@@ -47,7 +45,6 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 		_secret = secret;
 		_uriProvider = TypedConfigUtil.createInstance(config.getURIProvider());
 		_inUserContext = _config.isInUserContext();
-		_userNameField = _config.getUserNameField();
 	}
 
 	@Override
@@ -65,10 +62,7 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 		if (!_inUserContext) {
 			return null;
 		}
-		if (_userNameField == null) {
-			return introspectionResponse.getUsername();
-		}
-		return req.getHeader(_userNameField);
+		return introspectionResponse.getUsername();
 	}
 	@Override
 	protected ClientSecretPost getClientAuth() {

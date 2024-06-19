@@ -27,19 +27,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  */
 public class TabbarUtil {
 
-	private static final ComponentName COMPONENT_NAME = ComponentName.newName("mainTabbar.layout.xml", "mainTabber");
-
-	/**
-	 * Creates a {@link PopupMenuButtonControl} with the configured commands of the burger menu of
-	 * the tabbar. Uses {@link #COMPONENT_NAME} as component name.
-	 * 
-	 * @see #writePopup(LayoutComponent, ComponentName, DisplayContext, TagWriter)
-	 */
-	public static void writePopup(LayoutComponent component, DisplayContext context, TagWriter out)
-			throws IOException {
-		writePopup(component, COMPONENT_NAME, context, out);
-	}
-
 	/**
 	 * Creates a {@link PopupMenuButtonControl} with the configured commands of the burger menu of
 	 * the tabbar.
@@ -55,7 +42,15 @@ public class TabbarUtil {
 	 */
 	public static void writePopup(LayoutComponent component, ComponentName componentName, DisplayContext context,
 			TagWriter out) throws IOException {
-		Menu burgerMenu = ((TabComponent) component.getComponentByName(componentName)).getTabBar().getBurgerMenu();
+		if (componentName == null) {
+			return;
+		}
+
+		TabComponent tabComponent = (TabComponent) component.getComponentByName(componentName);
+		if (tabComponent == null) {
+			throw new IllegalStateException("Cannot resolve component: " + componentName);
+		}
+		Menu burgerMenu = tabComponent.getTabBar().getBurgerMenu();
 		PopupMenuButtonControl popup = createPopupControl(burgerMenu);
 
 		if (popup != null) {

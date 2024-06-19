@@ -1298,6 +1298,24 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	}
 
 	/**
+	 * Concatenates the given lists where duplicates are removed, or returns one of the given lists,
+	 * if the other one is empty.
+	 */
+	public static <T> List<T> concatUnique(List<T> left, List<T> right) {
+		if (left.isEmpty()) {
+			return right;
+		}
+		if (right.isEmpty()) {
+			return left;
+		}
+
+		LinkedHashSet<T> result = new LinkedHashSet<>();
+		result.addAll(left);
+		result.addAll(right);
+		return new ArrayList<>(result);
+	}
+
+	/**
 	 * Completes the given graph with its reflexive hull.
 	 * 
 	 * @param <N>

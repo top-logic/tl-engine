@@ -5,12 +5,14 @@
  */
 package com.top_logic.util.monitor.db;
 
+import java.sql.SQLException;
 import java.util.Map;
 
 import javax.sql.DataSource;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.sql.LoggingDataSourceProxy;
 import com.top_logic.layout.DisplayContext;
@@ -44,9 +46,17 @@ public class StartMonitoringCommand extends MonitoringCommand {
 
 		DataSource dataSource = datasource();
 		if (dataSource instanceof LoggingDataSourceProxy) {
-			LoggingDataSourceProxy.AggregatingAnalyzer analyzer = new LoggingDataSourceProxy.AggregatingAnalyzer(true);
+			ConnectionPool pool = ConnectionPoolRegistry.getDefaultConnectionPool();
+			char stringQuoteChar;
+			try {
+				stringQuoteChar = pool.getSQLDialect().stringQuoteChar();
+			} catch (SQLException ex) {
+				stringQuoteChar = '\'';
+			}
+			LoggingDataSourceProxy.AggregatingAnalyzer analyzer =
+				new LoggingDataSourceProxy.AggregatingAnalyzer(true, stringQuoteChar);
 			installAnalyzer(analyzer);
-			ConnectionPoolRegistry.getDefaultConnectionPool().clear();
+			pool.clear();
 
 			MonitoringCommand.setResult(aComponent, analyzer);
 

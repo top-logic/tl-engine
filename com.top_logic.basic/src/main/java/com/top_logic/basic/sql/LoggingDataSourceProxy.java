@@ -404,6 +404,16 @@ public class LoggingDataSourceProxy extends DefaultDataSourceProxy {
 			return new LoggingStatement(super.createStatement());
 		}
 		
+		@Override
+		public Statement createStatement(int a1, int a2) throws SQLException {
+			return new LoggingStatement(super.createStatement(a1, a2));
+		}
+
+		@Override
+		public Statement createStatement(int a1, int a2, int a3) throws SQLException {
+			return new LoggingStatement(super.createStatement(a1, a2, a3));
+		}
+
 		class LoggingPreparedStatement extends PreparedStatementProxy {
 
 			private final PreparedStatement _statement;

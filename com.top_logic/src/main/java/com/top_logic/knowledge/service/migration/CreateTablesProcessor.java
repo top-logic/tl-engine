@@ -6,16 +6,22 @@
 package com.top_logic.knowledge.service.migration;
 
 import java.sql.SQLException;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.NamedResource;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.db.model.DBSchema;
 import com.top_logic.basic.db.model.DBTable;
 import com.top_logic.basic.db.model.util.DBSchemaUtils;
+import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.sql.PooledConnection;
 
 /**
@@ -31,8 +37,21 @@ public class CreateTablesProcessor extends AbstractConfiguredInstance<CreateTabl
 	/**
 	 * Configuration options of {@link CreateTablesProcessor}.
 	 */
+	@TagName("create-tables")
 	public interface Config extends PolymorphicConfiguration<CreateTablesProcessor>, DBSchema {
-		// Pure sum interface.
+
+		/**
+		 * @see #getSchemas()
+		 */
+		String SCHEMAS = "schemas";
+
+		/**
+		 * References to externally defined schemas.
+		 */
+		@Name(SCHEMAS)
+		@Key(NamedResource.NAME_ATTRIBUTE)
+		List<NamedResource> getSchemas();
+
 	}
 
 	/**
@@ -50,12 +69,26 @@ public class CreateTablesProcessor extends AbstractConfiguredInstance<CreateTabl
 
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+		Config config = getConfig();
+		DBSchema dbSchema = config;
+		if (!dbSchema.getTables().isEmpty()) {
+			createTables(log, connection, dbSchema);
+		}
+
+		if (!config.getSchemas().isEmpty()) {
+			DBSchema externalSchema = SchemaSetup.newDBSchema(config.getSchemas());
+			externalSchema.setName(null);
+			createTables(log, connection, externalSchema);
+		}
+	}
+
+	private void createTables(Log log, PooledConnection connection, DBSchema dbSchema) {
 		try {
-			for (DBTable table : getConfig().getTables()) {
+			for (DBTable table : dbSchema.getTables()) {
 				DBSchemaUtils.create(connection, table);
 			}
 			log.info("Created tables: "
-				+ getConfig().getTables().stream().map(t -> t.getName()).collect(Collectors.joining(", ")));
+				+ dbSchema.getTables().stream().map(t -> t.getName()).collect(Collectors.joining(", ")));
 		} catch (SQLException ex) {
 			log.error("Failed to create tables.", ex);
 		}

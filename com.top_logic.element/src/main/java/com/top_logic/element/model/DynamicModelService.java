@@ -352,9 +352,6 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 		boolean initialSetup = dbModel.getModules().isEmpty();
 
 		Protocol log = log();
-		ModelResolver modelResolver = new ModelResolver(log, dbModel, getFactory());
-		modelResolver.createModel(_modelConfig);
-		modelResolver.complete();
 
 		if (!initialSetup) {
 			// The model baseline was lost, the current configuration is used as new baseline, but
@@ -386,6 +383,12 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 					DynamicModelService.class);
 			}
 		}
+
+		// Note: This must be done after producing the automatic migration instructions above.
+		// Otherwise, new types, and modules would no appear in the diff.
+		ModelResolver modelResolver = new ModelResolver(log, dbModel, getFactory());
+		modelResolver.createModel(_modelConfig);
+		modelResolver.complete();
 
 		storeModelConfig(connection);
 	}

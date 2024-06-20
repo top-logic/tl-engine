@@ -8,7 +8,7 @@ package com.top_logic.basic.db.sql;
 import com.top_logic.basic.sql.DBType;
 
 /**
- * {@link AbstractSQLTableModification} that modifies an aspect of a database column.
+ * {@link SQLAlterTable} that modifies an aspect of a database column.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -18,6 +18,11 @@ public class SQLModifyColumn extends SQLAddColumn {
 	 * The aspect of the column to modify.
 	 */
 	public enum ModificationAspect {
+		/**
+		 * The column name is modified.
+		 */
+		NAME,
+
 		/**
 		 * The column type is modified.
 		 */
@@ -29,11 +34,14 @@ public class SQLModifyColumn extends SQLAddColumn {
 		MANDATORY;
 	}
 
-	private ModificationAspect _modificationAspect = ModificationAspect.TYPE;
+	private ModificationAspect _modificationAspect;
 
-	SQLModifyColumn(String columnName, ModificationAspect aspect, DBType type) {
-		super(columnName, type);
+	private String _newName;
+
+	SQLModifyColumn(SQLTable table, String columnName, ModificationAspect aspect, DBType type) {
+		super(table, columnName, type);
 		_modificationAspect = aspect;
+		_newName = columnName;
 	}
 
 	@Override
@@ -49,6 +57,21 @@ public class SQLModifyColumn extends SQLAddColumn {
 	@Override
 	public SQLModifyColumn setMandatory(boolean mandatory) {
 		return (SQLModifyColumn) super.setMandatory(mandatory);
+	}
+
+	/**
+	 * The new name for a rename.
+	 */
+	public String getNewName() {
+		return _newName;
+	}
+
+	/**
+	 * Sets the new name for a rename.
+	 */
+	public SQLModifyColumn setNewName(String newName) {
+		_newName = newName;
+		return this;
 	}
 
 	@Override

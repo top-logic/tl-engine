@@ -1051,14 +1051,14 @@ public class MigrationUtils {
 		try {
 			module = getTLModuleOrFail(tlModel, typeName.getModuleName());
 		} catch (MigrationException ex) {
-			log.info("No module " + typeName.getModuleName() + " found to delete type " + typeName + ".");
+			log.info("No module " + typeName.getModuleName() + " found to delete type " + typeName + ".", Log.WARN);
 			return false;
 		}
 		Element type;
 		try {
 			type = getTLTypeOrFail(log, module, typeName.getTypeName());
 		} catch (MigrationException ex) {
-			log.info("No type " + typeName + " found to delete.");
+			log.info("No type " + typeName.getName() + " found to delete.", Log.WARN);
 			return false;
 		}
 		type.getParentNode().removeChild(type);
@@ -1075,7 +1075,7 @@ public class MigrationUtils {
 		try {
 			module = getTLModuleOrFail(tlModel, moduleName);
 		} catch (MigrationException ex) {
-			log.info("No module " + moduleName + " found to delete.");
+			log.info("No module " + moduleName + " found to delete.", Log.WARN);
 			return false;
 		}
 		module.getParentNode().removeChild(module);
@@ -1092,14 +1092,14 @@ public class MigrationUtils {
 		try {
 			module = getTLModuleOrFail(tlModel, partName.getModuleName());
 		} catch (MigrationException ex) {
-			log.info("No module " + partName.getModuleName() + " found to delete part " + partName + ".");
+			log.info("No module " + partName.getModuleName() + " found to delete part " + partName + ".", Log.WARN);
 			return false;
 		}
 		Element type;
 		try {
 			type = getTLTypeOrFail(log, module, partName.getTypeName());
 		} catch (MigrationException ex) {
-			log.info("No type " + partName.getOwner() + " found to delete part " + partName + ".");
+			log.info("No type " + partName.getOwner().getName() + " found to delete part " + partName + ".", Log.WARN);
 			return false;
 		}
 
@@ -1107,7 +1107,7 @@ public class MigrationUtils {
 		try {
 			part = getTLTypePartOrFail(log, type, partName.getPartName());
 		} catch (MigrationException ex) {
-			log.info("No part " + partName + " found to delete.");
+			log.info("No part " + partName.getName() + " found to delete.", Log.WARN);
 			return false;
 		}
 		Node attributes = part.getParentNode();

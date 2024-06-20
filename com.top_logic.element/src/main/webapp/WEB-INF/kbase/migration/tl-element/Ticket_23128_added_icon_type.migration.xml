@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_23128_added_icon_type"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="migration_21612"
+			module="tl"
+		/>
+	</dependencies>
+	<processors>
+	  <create-datatype name="tl.core:Icon"
+	    db_type="string"
+	    kind="Custom"
+	  >
+	    <annotations>
+	      <config-type value="ICON"/>
+	    </annotations>
+	    <storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.IconMapping"/>
+	  </create-datatype>
+	</processors>
+</migration>

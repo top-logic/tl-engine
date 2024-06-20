@@ -45,11 +45,21 @@ public interface AttributeConfig extends PolymorphicConfiguration<MOAttribute> {
 	String getAttributeName();
 
 	/**
+	 * @see #getAttributeName()
+	 */
+	void setAttributeName(String value);
+
+	/**
 	 * @see MOAttribute#isMandatory()
 	 */
 	@Name(DOXMLConstants.MANDATORY_ATTRIBUTE)
 	@BooleanDefault(false)
 	boolean isMandatory();
+
+	/**
+	 * @see #isMandatory()
+	 */
+	void setMandatory(boolean value);
 
 	/**
 	 * @see MOAttribute#isImmutable()

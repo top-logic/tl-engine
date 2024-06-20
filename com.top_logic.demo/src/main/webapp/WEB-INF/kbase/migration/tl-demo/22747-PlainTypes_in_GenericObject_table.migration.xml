@@ -11,6 +11,9 @@
 		<dependency name="22747-Add_GenericObject_table"
 			module="tl-element"
 		/>
+		<dependency name="Ticket_23110_create_module_tl_model_i18n"
+			module="tl-model-wysiwyg"
+		/>
 		<dependency name="set_date2_format"
 			module="tl-demo"
 		/>

@@ -26,11 +26,9 @@ import com.top_logic.basic.LongID;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLColumnDefinition;
 import com.top_logic.basic.db.sql.SQLOrder;
@@ -46,7 +44,6 @@ import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.dob.sql.DBTableMetaObject;
 import com.top_logic.element.meta.kbbased.storage.LinkStorage;
-import com.top_logic.knowledge.objects.meta.DefaultMOFactory;
 import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
 import com.top_logic.knowledge.service.db2.RevisionXref;
 import com.top_logic.knowledge.service.migration.MigrationContext;
@@ -112,9 +109,7 @@ public class InlineCompositionLinks extends AbstractMoveCompositionLinks<InlineC
 
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
-		SchemaSetup setup =
-			new SchemaSetup(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, context.getPersistentSchema());
-		_allTypes = setup.createMORepository(DefaultMOFactory.INSTANCE);
+		_allTypes = context.getPersistentRepository();
 
 		super.doMigration(context, log, connection);
 	}

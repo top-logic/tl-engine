@@ -10,7 +10,6 @@ import java.util.Set;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.searching.FullTextBuBuffer;
-import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
@@ -59,7 +58,7 @@ public abstract class PersistentStructuredTypePart extends PersistentTypePart im
 	@Override
 	public TLStructuredTypePart getDefinition() {
 		KnowledgeItem definition = (KnowledgeItem) tGetData(PersistentClassProperty.DEFINITION_REF);
-		return (TLClassPart) definition.getWrapper();
+		return (TLStructuredTypePart) definition.getWrapper();
 	}
 
 	@Override

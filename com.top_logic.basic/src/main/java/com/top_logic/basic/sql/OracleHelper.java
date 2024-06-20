@@ -984,27 +984,39 @@ public abstract class OracleHelper extends DBHelper {
 		}
 	}
 
+	@Override
+	public void appendChangeColumnName(Appendable result, String tableName, DBType sqlType, String columnName, String newName,
+			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+		result.append(alterTable(tableName));
+		result.append("RENAME COLUMN ");
+		result.append(columnRef(columnName));
+		result.append(" TO ");
+		result.append(columnRef(newName));
+	}
+
 	/**
 	 * @implNote Changing column type must <b>not</b> append mandatory. This leads to errors if the
 	 *           mandatory state is not changed.
 	 * 
 	 * @see com.top_logic.basic.sql.DBHelper#appendChangeColumnType(java.lang.Appendable,
-	 *      com.top_logic.basic.sql.DBType, java.lang.String, long, int, boolean, boolean,
-	 *      java.lang.Object)
+	 *      String, com.top_logic.basic.sql.DBType, java.lang.String, String, long, int,
+	 *      boolean, boolean, java.lang.Object)
 	 */
 	@Override
-	public void appendChangeColumnType(Appendable result, DBType sqlType, String columnName, long size, int precision,
-			boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+	public void appendChangeColumnType(Appendable result, String tableName, DBType sqlType, String columnName, String newName,
+			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+		result.append(alterTable(tableName));
 		result.append("MODIFY ");
 		result.append(columnRef(columnName));
 		result.append(" ");
-		internalAppendDBType(result, sqlType, size, precision, mandatory, binary, binary, columnName);
+		internalAppendDBType(result, sqlType, size, precision, mandatory, binary, binary, newName);
 		appendDefaultValue(result, sqlType, defaultValue);
 	}
 
 	@Override
-	public void appendChangeMandatory(Appendable result, DBType sqlType, String columnName, long size, int precision,
-			boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+	public void appendChangeMandatory(Appendable result, String tableName, DBType sqlType, String columnName, String newName,
+			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+		result.append(alterTable(tableName));
 		result.append("MODIFY ");
 		result.append(columnRef(columnName));
 		result.append(" ");

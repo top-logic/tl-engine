@@ -191,6 +191,11 @@ public interface MOAttribute extends MOPart {
 	public MOAttribute copy();
 
 	/**
+	 * Creates an (unresolved) copy of this {@link MOAttribute}.
+	 */
+	public MOAttribute copy(String newName, MetaObject newType);
+
+	/**
 	 * Resolves this attribute.
 	 * 
 	 * @param context

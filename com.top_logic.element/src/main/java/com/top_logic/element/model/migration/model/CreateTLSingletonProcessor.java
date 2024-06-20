@@ -103,15 +103,15 @@ public class CreateTLSingletonProcessor extends AbstractConfiguredInstance<Creat
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		try {
 			_util = context.getSQLUtils();
-			internalDoMigration(log, connection);
+			internalDoMigration(context, log, connection);
 		} catch (Exception ex) {
 			log.error("Creating singleton migration failed at " + getConfig().location(), ex);
 		}
 	}
 
-	private void internalDoMigration(Log log, PooledConnection connection) throws Exception {
+	private void internalDoMigration(MigrationContext context, Log log, PooledConnection connection) throws Exception {
 		Module module = _util.getTLModuleOrFail(connection, getConfig().getModule());
-		BranchIdType newSingleton = _singletonCreator.createObject(connection);
+		BranchIdType newSingleton = _singletonCreator.createObject(context, connection);
 		CompiledStatement createSingleton = query(
 			parameters(
 				_util.branchParamDef(),

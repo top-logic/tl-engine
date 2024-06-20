@@ -165,7 +165,6 @@ public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLC
 		QualifiedTypeName primaryGeneralization = getConfig().getPrimaryGeneralization();
 		if (primaryGeneralization == null) {
 			if (getConfig().isWithoutPrimaryGeneralization()) {
-				log.info("Skip generalization creation for '" + _util.qualifiedName(newClass) + "'.");
 				return;
 			}
 			if (!TlModelFactory.TL_MODEL_STRUCTURE.equals(newClass.getModuleName())) {

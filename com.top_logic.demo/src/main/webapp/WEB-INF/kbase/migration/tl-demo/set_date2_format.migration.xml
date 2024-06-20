@@ -8,6 +8,9 @@
 		<dependency name="Ticket_24085_DateTime"
 			module="tl-element"
 		/>
+		<dependency name="Ticket_23110_create_module_tl_model_i18n"
+			module="tl-model-wysiwyg"
+		/>
 	</dependencies>
 	<migration>
 		<type-mapping/>

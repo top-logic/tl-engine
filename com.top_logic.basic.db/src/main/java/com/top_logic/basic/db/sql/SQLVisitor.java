@@ -111,6 +111,11 @@ public interface SQLVisitor<R,A> {
 	R visitSQLInSet(SQLInSet sql, A arg);
 	
 	/**
+	 * Visit case for {@link SQLInSetSelect}.
+	 */
+	R visitSQLInSetSelect(SQLInSetSelect sql, A arg);
+
+	/**
 	 * Visit case for {@link SQLTuple}.
 	 */
 	R visitSQLTuple(SQLTuple sql, A arg);
@@ -154,11 +159,6 @@ public interface SQLVisitor<R,A> {
 	 * Visit case for {@link SQLDelete}
 	 */
 	R visitSQLDelete(SQLDelete sql, A arg);
-
-	/**
-	 * Visit case for {@link SQLAlterTable}
-	 */
-	R visitSQLAlterTable(SQLAlterTable sql, A arg);
 
 	/**
 	 * Visit case for {@link SQLAddColumn}

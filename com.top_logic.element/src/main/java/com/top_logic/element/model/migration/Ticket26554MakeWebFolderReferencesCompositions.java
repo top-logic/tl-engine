@@ -50,13 +50,6 @@ public class Ticket26554MakeWebFolderReferencesCompositions implements Migration
 		}
 	}
 
-	@Override
-	public boolean isDeferred() {
-		// Note: Migration tries to parse the table baseline schema. Therefore all code migrations
-		// must have been applied to this baseline before the configuration can be loaded.
-		return true;
-	}
-
 	private void tryMigrate(Log log, PooledConnection connection) throws SQLException {
 		SchemaConfiguration persistentSchema =
 			KBSchemaUtil.loadSchema(connection, PersistencyLayer.DEFAULT_KNOWLEDGE_BASE_NAME);

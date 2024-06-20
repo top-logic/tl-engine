@@ -389,6 +389,11 @@ public class RemoveBridgeObjectProcessor extends AbstractConfiguredInstance<Remo
 			int cnt = 0;
 			int batchSize = 0;
 
+			int selectSize = selectColumns.size();
+			int batchParameters = selectSize + 1;
+			Object[] values = new Object[batchParameters];
+			int maxBatchSize = sqlDialect.getMaxBatchSize(batchParameters);
+
 			select.setFetchSize(1000);
 
 			ConnectionPool pool = connection.getPool();
@@ -396,9 +401,6 @@ public class RemoveBridgeObjectProcessor extends AbstractConfiguredInstance<Remo
 			try {
 				try (ResultSet result = select.executeQuery(seond)) {
 					try (Batch batch = insert.createBatch(connection)) {
-						int selectSize = selectColumns.size();
-						Object[] values = new Object[selectSize + 1];
-
 						while (result.next()) {
 							int pos = 0;
 							values[pos++] = util.newID(connection);
@@ -408,7 +410,7 @@ public class RemoveBridgeObjectProcessor extends AbstractConfiguredInstance<Remo
 
 							batch.addBatch(values);
 
-							if (++batchSize >= 1000) {
+							if (++batchSize >= maxBatchSize) {
 								long now = System.nanoTime();
 								if (now - start > 1000_000_000L) {
 									log.info("Created " + cnt + " links while synthesizing direct references '"

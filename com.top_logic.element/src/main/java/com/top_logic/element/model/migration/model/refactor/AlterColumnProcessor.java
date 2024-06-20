@@ -41,7 +41,7 @@ import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.knowledge.service.migration.processors.AddMOAttributeProcessor;
 
 /**
- * {@link MigrationProcessor} renaming a table column.
+ * {@link MigrationProcessor} renaming a table column or updating its properties.
  */
 public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumnProcessor.Config<?>>
 		implements MigrationProcessor {
@@ -52,12 +52,14 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 	@TagName("alter-column")
 	public interface Config<I extends AlterColumnProcessor> extends PolymorphicConfiguration<I> {
 		/**
-		 * Name of the logical table to copy from.
+		 * Logical name of the table to copy from.
 		 * 
 		 * <p>
-		 * The name expected is the logical name of the table as defined in the TopLogic meta
-		 * schema.
+		 * The name expected is the logical name of the table as defined in the <em>TopLogic</em>
+		 * meta schema.
 		 * </p>
+		 * 
+		 * @see MOClass#getName()
 		 */
 		@Name("table")
 		String getTable();
@@ -66,23 +68,29 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 		 * The old name of the column.
 		 * 
 		 * <p>
-		 * The name expected is the logical name of the column as defined in the TopLogic meta
-		 * schema. If the {@link #getTable()} does not define a column of the given name, the
+		 * The name expected is the logical name of the column as defined in the <em>TopLogic</em>
+		 * meta schema. If the {@link #getTable()} does not define a column of the given name, the
 		 * flex-data for the corresponding table is migrated.
 		 * </p>
+		 * 
+		 * @see MOAttribute#getName()
 		 */
 		@Name("column")
 		String getColumn();
 
 		/**
-		 * The new name of the column.
+		 * The new logical name of the column.
+		 * 
+		 * @see MOAttribute#getName()
 		 */
 		@Nullable
 		@Name("new-name")
 		String getNewName();
 
 		/**
-		 * The new name of the column.
+		 * The new concrete name of the column used in the database.
+		 * 
+		 * @see DBAttribute#getDBName()
 		 */
 		@Nullable
 		@Name("new-db-name")
@@ -90,12 +98,16 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 
 		/**
 		 * The new mandatory mode.
+		 * 
+		 * @see MOAttribute#isMandatory()
 		 */
 		@Name("new-mandatory")
 		Boolean getNewMandatory();
 
 		/**
 		 * The new column type.
+		 * 
+		 * @see MOAttribute#getMetaObject()
 		 */
 		@Nullable
 		@Name("new-type")

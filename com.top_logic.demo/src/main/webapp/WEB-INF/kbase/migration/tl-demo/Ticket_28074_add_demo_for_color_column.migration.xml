@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28074_add_demo_for_color_column"
+		module="tl-demo"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_28005_Additional_meta_model_properties"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_27999_Multiple_composition_tables"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_27604_Upgrade_GridCreateHandlerByExpression_createType"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_27517_Refactoring_User_Management"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+		<dependency name="Ticket_26970_Update_stored_table_definition"
+			module="tl-mail"
+		/>
+		<dependency name="Ticket_27517_fix_legacy_migrations"
+			module="tl-layout-formeditor"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+		<dependency name="Ticket_27999_Multiple_composition_tables"
+			module="tl-doc"
+		/>
+		<dependency name="Ticket_27999_Multiple_composition_tables"
+			module="tl-demo"
+		/>
+	</dependencies>
+	<processors>
+		<add-mo-attribute table="DemoTypes">
+			<mo_attribute att_name="color" att_type="String" mandatory="false" db_size="16">
+				<primitive-column-storage
+					storage-mapping="com.top_logic.element.meta.complex.ColorValueProvider"
+				/>
+			</mo_attribute>
+		</add-mo-attribute>
+		
+		<add-annotations name="DemoTypes:DemoTypes.A#color">
+			<annotations>
+				<storage-algorithm>
+					<primitive-storage>
+						<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping"
+							application-type="java.awt.Color"
+						/>						
+					</primitive-storage>
+				</storage-algorithm>
+			</annotations>
+		</add-annotations>
+	</processors>
+</migration>

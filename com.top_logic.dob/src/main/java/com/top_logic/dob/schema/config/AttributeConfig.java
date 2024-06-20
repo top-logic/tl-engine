@@ -6,6 +6,7 @@
 package com.top_logic.dob.schema.config;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -94,6 +95,7 @@ public interface AttributeConfig extends PolymorphicConfiguration<MOAttribute> {
 	 * 
 	 * @see MOAttribute#getStorage()
 	 */
+	@DefaultContainer
 	@InstanceFormat
 	AttributeStorage getStorage();
 

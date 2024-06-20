@@ -114,7 +114,9 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 
 			Collection<TLID> implIds = util.getImplementationIds(connection, owner);
 
-			CompiledStatement insert = createI18NInsert(context, connection);
+			MOClass i18nTable =
+				(MOClass) context.getSchemaRepository().getType(I18NAttributeStorage.I18N_STORAGE_KO_TYPE);
+			CompiledStatement insert = createI18NInsert(context, connection, i18nTable);
 
 			MORepository repository = context.getPersistentRepository();
 
@@ -174,7 +176,8 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 
 				long start = System.nanoTime();
 				int perSecond = 0;
-				int cnt = 0;
+				int batchSize = 0;
+				int total = 0;
 				int maxBatchSize = sqlDialect.getMaxBatchSize(10);
 				try (Batch batch = insert.createBatch(connection)) {
 					try (ResultSet result = select.executeQuery(connection)) {
@@ -208,11 +211,12 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 									objBranch, util.newID(connection), revMin, revMax, revMin, objType, objId, attrId,
 									lang, value);
 
-								if (++cnt >= maxBatchSize) {
+								if (++batchSize >= maxBatchSize) {
 									batch.executeBatch();
 
-									perSecond += cnt;
-									cnt = 0;
+									total += batchSize;
+									perSecond += batchSize;
+									batchSize = 0;
 
 									// Log only once each second.
 									long now = System.nanoTime();
@@ -229,11 +233,12 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 							}
 						}
 					}
-					if (cnt > 0) {
+					if (batchSize > 0) {
 						batch.executeBatch();
 
-						perSecond += cnt;
-						cnt = 0;
+						total += batchSize;
+						perSecond += batchSize;
+						batchSize = 0;
 					}
 
 					if (perSecond > 0) {
@@ -243,6 +248,10 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 								+ "' to internationalization table (" + lang + ").");
 						perSecond = 0;
 					}
+
+					if (total > 0) {
+						MoveObjectsProcessor.updateXref(context, log, connection, i18nTable);
+					}
 				}
 			}
 		} catch (SQLException | MigrationException ex) {
@@ -251,11 +260,9 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 		}
 	}
 
-	private CompiledStatement createI18NInsert(MigrationContext context, PooledConnection connection)
+	private CompiledStatement createI18NInsert(MigrationContext context, PooledConnection connection, MOClass i18nTable)
 			throws SQLException {
 		Util util = context.getSQLUtils();
-		MOClass i18nTable =
-			(MOClass) context.getSchemaRepository().getType(I18NAttributeStorage.I18N_STORAGE_KO_TYPE);
 
 		MOReference objRef = (MOReference) i18nTable.getAttribute(I18NAttributeStorage.OBJECT_ATTRIBUTE_NAME);
 		MOReference attrRef =

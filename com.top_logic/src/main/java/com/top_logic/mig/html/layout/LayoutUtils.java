@@ -1016,7 +1016,12 @@ public class LayoutUtils {
 		return layout;
 	}
 
-	private static boolean isApplicationRootLayout(String layout) {
+	/**
+	 * Whether the given layout is a root layout for the application.
+	 * 
+	 * @see LayoutConfig#getAvailableLayouts()
+	 */
+	public static boolean isApplicationRootLayout(String layout) {
 		return LayoutConfig.getAvailableLayouts().contains(layout);
 	}
 

@@ -35,6 +35,7 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.internal.SubsessionHandler;
 import com.top_logic.layout.internal.WindowId;
 import com.top_logic.layout.internal.WindowRegistry;
+import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.util.TLContextManager;
 
 /**
@@ -177,6 +178,14 @@ public class ContentHandlersRegistry extends WindowRegistry<SubsessionHandler> {
 				throw new IOException("No layout found to instantiate.");
 			}
 			layout = layouts.get(0);
+		} else {
+			if (!LayoutUtils.isApplicationRootLayout(layout)) {
+				List<String> layouts = _config.getLayouts();
+				Logger.warn(
+					"Tried to use a non-root layout '" + layout + "' for login available root layouts: " + layouts,
+					ContentHandlersRegistry.class);
+				layout = layouts.get(0);
+			}
 		}
 		final TLSessionContext session = TLContextManager.getSession();
 

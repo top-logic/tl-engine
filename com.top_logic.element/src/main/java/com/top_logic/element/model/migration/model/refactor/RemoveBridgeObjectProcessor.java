@@ -55,7 +55,7 @@ import com.top_logic.model.migration.data.TypePart;
  * and target objects direct links.
  * 
  * <p>
- * In the following situation, where a `Src1` object is linked through a `owner` Referece to a
+ * In the following situation, where a `Src1` object is linked through a `owner` Reference to a
  * `Bridge1` object that itself is linked through a `child` reference to multiple `Dest` objects,
  * this processor creates direct links between `Src1` and `Dest1`..`Dest2` objects.
  * </p>
@@ -173,7 +173,7 @@ public class RemoveBridgeObjectProcessor extends AbstractConfiguredInstance<Remo
 		 */
 		@Name("direct-association-table")
 		@StringDefault(ApplicationObjectUtil.WRAPPER_ATTRIBUTE_ASSOCIATION)
-		String getDirectAssocitionTable();
+		String getDirectAssociationTable();
 
 		/**
 		 * The direct model reference that should be synthesized.
@@ -188,7 +188,7 @@ public class RemoveBridgeObjectProcessor extends AbstractConfiguredInstance<Remo
 		QualifiedPartName getDirectReference();
 
 		/**
-		 * The column containing the reference in the {@link #getDirectAssocitionTable()}.
+		 * The column containing the reference in the {@link #getDirectAssociationTable()}.
 		 */
 		@Name("direct-reference-column")
 		@StringDefault(ApplicationObjectUtil.META_ATTRIBUTE_ATTR)
@@ -248,7 +248,7 @@ public class RemoveBridgeObjectProcessor extends AbstractConfiguredInstance<Remo
 			MOReference bridgeTypeKey = (MOReference) bridgeTable.getAttribute(PersistentObject.T_TYPE_ATTR);
 			Type bridgeType = util.getTLTypeOrFail(connection, config.getBridgeType());
 
-			MOClass directTable = (MOClass) repository.getType(config.getDirectAssocitionTable());
+			MOClass directTable = (MOClass) repository.getType(config.getDirectAssociationTable());
 			MOReference directMetaRef = (MOReference) destTable.getAttribute(config.getDirectReferenceColumn());
 			MOReference directSrc = (MOReference) destTable.getAttribute(config.getDirectSourceKeyColumn());
 			MOReference directDst = (MOReference) destTable.getAttribute(config.getDirectDestKeyColumn());
@@ -439,7 +439,7 @@ public class RemoveBridgeObjectProcessor extends AbstractConfiguredInstance<Remo
 				+ "' in table '" + directTable.getName() + "'.");
 		} catch (MigrationException | SQLException ex) {
 			log.error("Failed to synthesize direct references '" + config.getDirectReference().getName()
-				+ "' in table '" + config.getDirectAssocitionTable() + "': "
+				+ "' in table '" + config.getDirectAssociationTable() + "': "
 				+ ex.getMessage(), ex);
 		}
 	}

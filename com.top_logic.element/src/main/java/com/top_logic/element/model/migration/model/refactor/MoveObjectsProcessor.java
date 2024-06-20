@@ -276,7 +276,10 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 		}
 	}
 
-	private static void updateXref(MigrationContext context, Log log, PooledConnection connection,
+	/**
+	 * Re-computes the xref information for the given table type.
+	 */
+	public static void updateXref(MigrationContext context, Log log, PooledConnection connection,
 			MOStructure table) throws SQLException {
 		CompiledStatement removeXref = query(
 			delete(table(SQLH.mangleDBName(RevisionXref.REVISION_XREF_TYPE_NAME)),

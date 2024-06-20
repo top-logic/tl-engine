@@ -184,7 +184,7 @@ public class XMLInstanceImporter implements RefVisitor<TLObject, Void> {
 	public void importInstances(List<ObjectConf> configs) throws ConfigurationException {
 		for (ObjectConf config : configs) {
 			TLClass type = (TLClass) TLModelUtil.findType(_model, config.getType());
-			TLObject obj = _factory.createObject(type, null, null);
+			TLObject obj = _factory.createObject(type);
 			addObject(config.getId(), obj);
 		}
 

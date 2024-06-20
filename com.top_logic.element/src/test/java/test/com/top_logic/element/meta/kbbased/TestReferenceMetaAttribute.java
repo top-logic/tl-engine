@@ -36,6 +36,8 @@ import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.core.TlCoreFactory;
+import com.top_logic.model.factory.TLFactory;
+import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
@@ -47,6 +49,68 @@ import com.top_logic.util.model.ModelService;
  */
 @SuppressWarnings("javadoc")
 public class TestReferenceMetaAttribute extends BasicTestCase {
+
+	public void testValueForMultipleOrderedAttribute() {
+		testValueForMultipleOrderedAttribute(TransientObjectFactory.INSTANCE);
+		testValueForMultipleOrderedAttribute(TestTypesFactory.getInstance());
+	}
+
+	private void testValueForMultipleOrderedAttribute(TLFactory factory) {
+		TLObject b0 = factory.createObject(TestTypesFactory.getBNodeType());
+		TLObject b1 = factory.createObject(TestTypesFactory.getBNodeType());
+		TLObject b2 = factory.createObject(TestTypesFactory.getBNodeType());
+
+		TLReference attr = TestTypesFactory.getTypedSetOrderedBAttr();
+		b0.tUpdate(attr, list(b1, b2));
+		assertEquals(list(b1, b2), b0.tValue(attr));
+
+		// test fuzzy compatible type
+
+		try {
+			b0.tUpdate(attr, b2);
+			fail("Non collection value for multiple attribute");
+		} catch (RuntimeException ex) {
+			// expected.
+		}
+
+		b0.tUpdate(attr, set(b1, b2));
+		assertInstanceof(b0.tValue(attr), List.class);
+		assertEquals(set(b1, b2), toSet((List<?>) b0.tValue(attr)));
+
+		b0.tUpdate(attr, null);
+		assertEquals(list(), b0.tValue(attr));
+	}
+
+	public void testValueForMultipleUnorderedAttribute() {
+		testValueForMultipleUnorderedAttribute(TransientObjectFactory.INSTANCE);
+		testValueForMultipleUnorderedAttribute(TestTypesFactory.getInstance());
+	}
+
+	private void testValueForMultipleUnorderedAttribute(TLFactory factory) {
+		TLObject b0 = factory.createObject(TestTypesFactory.getBNodeType());
+		TLObject b1 = factory.createObject(TestTypesFactory.getBNodeType());
+		TLObject b2 = factory.createObject(TestTypesFactory.getBNodeType());
+
+		TLReference attr = TestTypesFactory.getTypedSetUnorderedBAttr();
+		b0.tUpdate(attr, set(b1, b2));
+		assertEquals(set(b1, b2), b0.tValue(attr));
+
+		// test fuzzy compatible type
+
+		try {
+			b0.tUpdate(attr, b2);
+			fail("Non collection value for multiple attribute");
+		} catch (RuntimeException ex) {
+			// expected.
+		}
+
+		b0.tUpdate(attr, list(b1, b2));
+		assertInstanceof(b0.tValue(attr), Set.class);
+		assertEquals(set(b1, b2), b0.tValue(attr));
+
+		b0.tUpdate(attr, null);
+		assertEquals(set(), b0.tValue(attr));
+	}
 
 	public void testRevisionReferences() throws KnowledgeBaseException, ConfigurationException {
 		if (!kb().getHistoryManager().hasHistory()) {

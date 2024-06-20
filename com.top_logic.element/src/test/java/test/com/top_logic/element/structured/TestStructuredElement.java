@@ -248,7 +248,7 @@ public class TestStructuredElement extends BasicTestCase {
 			TLClass abstractType = (TLClass) factory.getModule().getType("Subproject");
 			assertTrue("Test needs an abstract type.", abstractType.isAbstract());
 			try {
-				StructuredElement child = (StructuredElement) factory.createObject(abstractType, parent, null);
+				StructuredElement child = (StructuredElement) factory.createObject(abstractType, parent);
 				child.setValue("name", "genericSubProject");
 				tx.commit();
 				fail("Must not be able to create element for abstract type '" + abstractType + "'.");

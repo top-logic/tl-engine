@@ -51,7 +51,7 @@ public final class ApplicationModelBinding extends AbstractModelBinding {
 
 	@Override
 	protected TLObject createObject(TLClass type) {
-		return ModelService.getInstance().getFactory().createObject(type, null, null);
+		return ModelService.getInstance().getFactory().createObject(type);
 	}
 
 }

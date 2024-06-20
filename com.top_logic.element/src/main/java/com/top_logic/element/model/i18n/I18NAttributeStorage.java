@@ -115,6 +115,10 @@ public class I18NAttributeStorage<C extends I18NAttributeStorage.Config<?>> exte
 			if (string != null) {
 				KnowledgeItem i18nItem = createI18nItem();
 				i18nItem.setAttributeValue(OBJECT_ATTRIBUTE_NAME, owner.tHandle());
+				// Note: This is "wrong" - all other storages that use generic tables use the ID of
+				// the definition of the attribute, not the concrete override to associates values
+				// with the attribute. When this is changed, the InternationalizeAttributeProcessor
+				// must also be changed.
 				i18nItem.setAttributeValue(META_ATTRIBUTE_ATTRIBUTE_NAME, attribute.tHandle());
 				i18nItem.setAttributeValue(LANGUAGE_ATTRIBUTE_NAME, lang);
 				setI18N(i18nItem, string);

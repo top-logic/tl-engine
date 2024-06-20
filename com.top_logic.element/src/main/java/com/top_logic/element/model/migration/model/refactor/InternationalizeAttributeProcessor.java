@@ -105,6 +105,9 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 
 		try {
 			TypePart attr = util.getTLTypePartOrFail(connection, config.getAttribute());
+			// Note: The I18NAttributeStorage uses the "wrong" ID for associating values with the
+			// attribute. Instead of the ID of the definition of the attribute, the ID of the
+			// concrete override is used. Therefore, the migration must also use the "wrong" ID.
 			TLID attrId = attr.getID();
 			Type owner = attr.getOwner();
 

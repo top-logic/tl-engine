@@ -7,7 +7,7 @@ package com.top_logic.basic.db.sql;
 
 
 /**
- * SQL test, if an expression result is within a literal set of values.
+ * SQL test, if an expression result is within the results of a sub-query.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -43,8 +43,7 @@ public class SQLInSetSelect extends AbstractSQLExpression {
 	}
 
 	/**
-	 * The literal values that the {@link #getExpr()} is tested to be a member
-	 * of.
+	 * The sub-query that must match the test value.
 	 */
 	public SQLSelect getSelect() {
 		return _select;

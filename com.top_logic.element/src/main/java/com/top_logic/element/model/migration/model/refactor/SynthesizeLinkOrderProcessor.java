@@ -225,7 +225,8 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 					// Use additional connection for executing the concurrent join. Databases man
 					// not handle concurrent queries well.
 					PooledConnection additional = connection.getPool().borrowWriteConnection();
-					try (OrderGenerator generator = new OrderGenerator(util, select, factor, additional)) {
+					try (ResultSet result = select.executeQuery(additional)) {
+						OrderGenerator generator = new OrderGenerator(util, result, factor);
 						while (cursor.next()) {
 							long branch = hasBranches ? cursor.getLong(1) : TLContext.TRUNK_ID;
 							long id = cursor.getLong(idIndex);
@@ -269,7 +270,7 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 		}
 	}
 
-	static class OrderGenerator implements AutoCloseable {
+	static class OrderGenerator {
 		private ResultSet _result;
 
 		private int _scopeIndex;
@@ -293,8 +294,7 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 		/**
 		 * Creates a {@link OrderGenerator}.
 		 */
-		public OrderGenerator(Util util, CompiledStatement select, int factor, PooledConnection connection)
-				throws SQLException {
+		public OrderGenerator(Util util, ResultSet result, int factor) {
 			_factor = factor;
 
 			_hasBranches = util.hasBranches();
@@ -303,7 +303,7 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 			_scopeIndex = util.getBranchIndexInc() + 3;
 			_orderIndex = util.getBranchIndexInc() + 4;
 
-			_result = select.executeQuery(connection);
+			_result = result;
 			_valueById = new HashMap<>();
 			_values = new ArrayList<>();
 		}
@@ -357,11 +357,6 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 			}
 			_continuation = false;
 			return !_values.isEmpty();
-		}
-
-		@Override
-		public void close() throws SQLException {
-			_result.close();
 		}
 
 		private static class Value {

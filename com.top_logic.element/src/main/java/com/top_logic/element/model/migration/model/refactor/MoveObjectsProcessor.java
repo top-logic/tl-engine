@@ -75,13 +75,14 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 		 * The type of objects to move.
 		 */
 		@Mandatory
-		@Name("type")
+		@Name("types")
 		@Format(QualifiedTypeName.ListFormat.class)
-		List<QualifiedTypeName> getType();
+		List<QualifiedTypeName> getTypes();
 
 		/**
 		 * Whether to only move objects of the given type excluding sub-classes.
 		 */
+		@Name("monomorphic")
 		boolean getMonomorphic();
 	}
 
@@ -104,7 +105,8 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 		String sourceTableName = config.getSourceTable();
 		String destTableName = config.getDestTable();
 
-		String typeNames = config.getType().stream().map(t -> "'" + t.getName() + "'").collect(Collectors.joining(", "));
+		String typeNames =
+			config.getTypes().stream().map(t -> "'" + t.getName() + "'").collect(Collectors.joining(", "));
 		log.info(
 			"Moving objects of type " + typeNames + " from table '" + sourceTableName + "' to '" + destTableName
 				+ "'. ");
@@ -139,7 +141,7 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 		Util util = context.getSQLUtils();
 		try {
 			Set<TLID> movedTypes = new HashSet<>();
-			for (QualifiedTypeName type : config.getType()) {
+			for (QualifiedTypeName type : config.getTypes()) {
 				Type declaredType = util.getTLTypeOrFail(connection, type);
 				if (config.getMonomorphic()) {
 					movedTypes.add(declaredType.getID());

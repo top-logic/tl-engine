@@ -28,7 +28,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.ConfigurationError;
-import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -58,12 +57,11 @@ import com.top_logic.layout.form.values.edit.editor.BinaryDataEditor;
 import com.top_logic.layout.messagebox.CreateConfigurationDialog;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
-import com.top_logic.service.openapi.common.authentication.AuthenticationConfigs;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthentication;
 import com.top_logic.service.openapi.common.authentication.http.basic.BasicAuthentication;
-import com.top_logic.service.openapi.common.authentication.oauth.ClientCredentials;
 import com.top_logic.service.openapi.common.authentication.oauth.DefaultURIProvider;
 import com.top_logic.service.openapi.common.authentication.oauth.OpenIDURIProvider;
+import com.top_logic.service.openapi.common.authentication.oauth.TokenBasedAuthentication;
 import com.top_logic.service.openapi.common.document.ComponentsObject;
 import com.top_logic.service.openapi.common.document.IParameterObject;
 import com.top_logic.service.openapi.common.document.OAuthFlow;
@@ -74,6 +72,7 @@ import com.top_logic.service.openapi.common.document.ReferencableParameterObject
 import com.top_logic.service.openapi.common.document.ReferencingParameterObject;
 import com.top_logic.service.openapi.common.document.SchemaObject;
 import com.top_logic.service.openapi.common.document.SecuritySchemeObject;
+import com.top_logic.service.openapi.common.document.SecuritySchemeType;
 import com.top_logic.service.openapi.common.schema.OpenAPISchemaUtils;
 import com.top_logic.service.openapi.common.schema.Schema;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
@@ -276,86 +275,77 @@ public abstract class ImportOpenAPIConfiguration extends AbstractCommandHandler 
 	}
 
 	/**
-	 * Creates (and adds) {@link AuthenticationConfig}'s based on the given {@link OpenapiDocument}.
-	 * 
-	 * @param openAPI
-	 *        <i>OpenAPI</i> specification.
-	 * @param auth
-	 *        {@link AuthenticationConfigs} to enhance.
-	 * @param warnings
-	 *        Log to add potential warnings to.
+	 * Creates an {@link AuthenticationConfig} for {@link SecuritySchemeObject} of type
+	 * {@link SecuritySchemeType#OPEN_ID_CONNECT}.
 	 */
-	protected void addAuthentications(OpenapiDocument openAPI, AuthenticationConfigs auth, List<ResKey> warnings) {
-		Map<String, AuthenticationConfig> authentications = auth.getAuthentications();
-		ComponentsObject components = openAPI.getComponents();
-		if (components != null) {
-			Map<String, SecuritySchemeObject> securitySchemes = components.getSecuritySchemes();
-			for (SecuritySchemeObject schema : securitySchemes.values()) {
-				AuthenticationConfig authentication = createAuthentication(schema, warnings);
-				if (authentication != null) {
-					authentication.setDomain(schema.getSchemaName());
-					authentications.put(authentication.getDomain(), authentication);
-				}
+	protected <T extends TokenBasedAuthentication> T createOpenIDConnectAuthentication(Class<T> configType,
+			SecuritySchemeObject value) {
+		URL connectURL = value.getOpenIdConnectUrl();
+		OpenIDURIProvider.Config openIdURIProvider = newConfigForImplementation(OpenIDURIProvider.class);
+		openIdURIProvider.setOpenIDIssuer(connectURL);
+
+		T clientCredentials = TypedConfiguration.newConfigItem(configType);
+		clientCredentials.setURIProvider(openIdURIProvider);
+		return clientCredentials;
+	}
+
+	/**
+	 * Creates an {@link AuthenticationConfig} for {@link SecuritySchemeObject} of type
+	 * {@link SecuritySchemeType#OAUTH2}.
+	 */
+	protected <T extends TokenBasedAuthentication> T createOAuth2Authentication(Class<T> configType,
+			SecuritySchemeObject value, List<ResKey> warnings) {
+		Map<OAuthFlow, OAuthFlowObject> flows = value.getFlows();
+		OAuthFlowObject credentialFlow = flows.get(OAuthFlow.CLIENT_CREDENTIALS);
+		if (credentialFlow == null) {
+			warnings.add(I18NConstants.MISSING_CLIENT_CREDENTIALS_FLOW__SCHEMA.fill(value.getSchemaName()));
+			return null;
+		}
+		T clientCredentials = TypedConfiguration.newConfigItem(configType);
+		DefaultURIProvider.Config defaultURIProvider = newConfigForImplementation(DefaultURIProvider.class);
+		try {
+			defaultURIProvider.setTokenURL(new URL(credentialFlow.getTokenUrl()));
+		} catch (MalformedURLException ex) {
+			warnings.add(I18NConstants.INVALID_URL__URL__SCHEMA.fill(credentialFlow.getTokenUrl(),
+				value.getSchemaName()));
+		}
+		clientCredentials.setURIProvider(defaultURIProvider);
+		return clientCredentials;
+	}
+
+	/**
+	 * Creates an {@link AuthenticationConfig} for {@link SecuritySchemeObject} of type
+	 * {@link SecuritySchemeType#HTTP}.
+	 */
+	protected BasicAuthentication createHTTPAuthentication(SecuritySchemeObject value, List<ResKey> warnings) {
+		String scheme = value.getScheme();
+		if (scheme == null) {
+			warnings.add(I18NConstants.MISSING_HTTP_SCHEME__SCHEMA.fill(value.getSchemaName()));
+			return null;
+		}
+		switch (scheme.toLowerCase()) {
+			case "basic": {
+				// Actually "Basic" as of https://www.rfc-editor.org/rfc/rfc7617.html
+				return TypedConfiguration.newConfigItem(BasicAuthentication.class);
+			}
+			default: {
+				warnings.add(I18NConstants.MISSING_UNSUPPORTED_HTTP_SCHEME__SCHEME_SCHEMA.fill(scheme,
+					value.getSchemaName()));
+				return null;
 			}
 		}
 	}
 
-	private AuthenticationConfig createAuthentication(SecuritySchemeObject value, List<ResKey> warnings) {
-		switch (value.getType()) {
-			case API_KEY:
-				APIKeyAuthentication apiKeyAuthentication =
-					TypedConfiguration.newConfigItem(APIKeyAuthentication.class);
-				apiKeyAuthentication.setPosition(value.getIn());
-				apiKeyAuthentication.setParameterName(value.getName());
-				return apiKeyAuthentication;
-			case HTTP:
-				String scheme = value.getScheme();
-				if (scheme == null) {
-					warnings.add(I18NConstants.MISSING_HTTP_SCHEME__SCHEMA.fill(value.getSchemaName()));
-					return null;
-				}
-				switch (scheme.toLowerCase()) {
-					case "basic": {
-						// Actually "Basic" as of https://www.rfc-editor.org/rfc/rfc7617.html
-						return TypedConfiguration.newConfigItem(BasicAuthentication.class);
-					}
-					default: {
-						warnings.add(I18NConstants.MISSING_UNSUPPORTED_HTTP_SCHEME__SCHEME_SCHEMA.fill(scheme,
-							value.getSchemaName()));
-						return null;
-					}
-				}
-			case OAUTH2: {
-				Map<OAuthFlow, OAuthFlowObject> flows = value.getFlows();
-				OAuthFlowObject credentialFlow = flows.get(OAuthFlow.CLIENT_CREDENTIALS);
-				if (credentialFlow == null) {
-					warnings.add(I18NConstants.MISSING_CLIENT_CREDENTIALS_FLOW__SCHEMA.fill(value.getSchemaName()));
-					return null;
-				}
-				ClientCredentials clientCredentials = TypedConfiguration.newConfigItem(ClientCredentials.class);
-				DefaultURIProvider.Config defaultURIProvider = newConfigForImplementation(DefaultURIProvider.class);
-				try {
-					defaultURIProvider.setTokenURL(new URL(credentialFlow.getTokenUrl()));
-				} catch (MalformedURLException ex) {
-					warnings.add(I18NConstants.INVALID_URL__URL__SCHEMA.fill(credentialFlow.getTokenUrl(),
-						value.getSchemaName()));
-				}
-				clientCredentials.setURIProvider(defaultURIProvider);
-				return clientCredentials;
-			}
-			case OPEN_ID_CONNECT: {
-				URL connectURL = value.getOpenIdConnectUrl();
-				OpenIDURIProvider.Config openIdURIProvider = newConfigForImplementation(OpenIDURIProvider.class);
-				openIdURIProvider.setOpenIDIssuer(connectURL);
-
-				ClientCredentials clientCredentials = TypedConfiguration.newConfigItem(ClientCredentials.class);
-				clientCredentials.setURIProvider(openIdURIProvider);
-				return clientCredentials;
-			}
-			default:
-				throw new UnreachableAssertion("Unexpected SecuritySchemeType: " + value.getType());
-		}
-
+	/**
+	 * Creates an {@link AuthenticationConfig} for {@link SecuritySchemeObject} of type
+	 * {@link SecuritySchemeType#API_KEY}.
+	 */
+	protected APIKeyAuthentication createAPIKeyAuthentication(SecuritySchemeObject value) {
+		APIKeyAuthentication apiKeyAuthentication =
+			TypedConfiguration.newConfigItem(APIKeyAuthentication.class);
+		apiKeyAuthentication.setPosition(value.getIn());
+		apiKeyAuthentication.setParameterName(value.getName());
+		return apiKeyAuthentication;
 	}
 
 	/**

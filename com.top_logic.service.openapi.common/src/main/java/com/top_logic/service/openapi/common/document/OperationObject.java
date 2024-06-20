@@ -19,6 +19,7 @@ import com.top_logic.basic.config.ConfigurationWriter;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -166,6 +167,7 @@ public interface OperationObject extends Described, WithSecurity, WithParameters
 	 */
 	@Nullable
 	@Name(X_TL_IMPLEMENTATION)
+	@Label("Implementation")
 	String getImplementation();
 
 	/**

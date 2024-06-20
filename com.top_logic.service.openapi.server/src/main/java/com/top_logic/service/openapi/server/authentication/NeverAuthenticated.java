@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * {@link Authenticator} that never authenticates the request.
@@ -50,7 +51,7 @@ public class NeverAuthenticated implements Authenticator {
 	}
 
 	@Override
-	public void authenticate(HttpServletRequest req, HttpServletResponse resp)
+	public Person authenticate(HttpServletRequest req, HttpServletResponse resp)
 			throws AuthenticationFailure, IOException {
 		AuthenticationFailure failure = new AuthenticationFailure(_externalReason);
 		failure.setResponseEnhancer((response, authEx, requestedPath) -> {

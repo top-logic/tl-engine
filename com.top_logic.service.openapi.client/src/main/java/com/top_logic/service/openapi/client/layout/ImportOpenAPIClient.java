@@ -56,7 +56,12 @@ import com.top_logic.service.openapi.client.registry.impl.value.ConstantValue;
 import com.top_logic.service.openapi.client.registry.impl.value.ParameterValue;
 import com.top_logic.service.openapi.client.registry.impl.value.ValueProducerFactory;
 import com.top_logic.service.openapi.common.OpenAPIConstants;
+import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
+import com.top_logic.service.openapi.common.authentication.ClientAuthentication;
+import com.top_logic.service.openapi.common.authentication.ClientAuthentications;
+import com.top_logic.service.openapi.common.authentication.oauth.ClientCredentials;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
+import com.top_logic.service.openapi.common.document.ComponentsObject;
 import com.top_logic.service.openapi.common.document.IParameterObject;
 import com.top_logic.service.openapi.common.document.MediaTypeObject;
 import com.top_logic.service.openapi.common.document.OpenapiDocument;
@@ -65,6 +70,7 @@ import com.top_logic.service.openapi.common.document.ParameterObject;
 import com.top_logic.service.openapi.common.document.PathItemObject;
 import com.top_logic.service.openapi.common.document.ReferencableParameterObject;
 import com.top_logic.service.openapi.common.document.RequestBodyObject;
+import com.top_logic.service.openapi.common.document.SecuritySchemeObject;
 import com.top_logic.service.openapi.common.document.ServerObject;
 import com.top_logic.service.openapi.common.layout.ImportOpenAPIConfiguration;
 import com.top_logic.service.openapi.common.layout.MultiPartBodyTransferType;
@@ -119,6 +125,47 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 
 		addAuthentications(config, serviceConfiguration, warnings);
 		addMethods(config, serviceConfiguration, warnings);
+	}
+
+	/**
+	 * Creates (and adds) {@link AuthenticationConfig}'s based on the given {@link OpenapiDocument}.
+	 * 
+	 * @param openAPI
+	 *        <i>OpenAPI</i> specification.
+	 * @param auth
+	 *        {@link ClientAuthentications} to enhance.
+	 * @param warnings
+	 *        Log to add potential warnings to.
+	 */
+	private void addAuthentications(OpenapiDocument openAPI, ClientAuthentications auth, List<ResKey> warnings) {
+		Map<String, ClientAuthentication> authentications = auth.getAuthentications();
+		ComponentsObject components = openAPI.getComponents();
+		if (components != null) {
+			Map<String, SecuritySchemeObject> securitySchemes = components.getSecuritySchemes();
+			for (SecuritySchemeObject schema : securitySchemes.values()) {
+				ClientAuthentication authentication = createAuthentication(schema, warnings);
+				if (authentication != null) {
+					authentication.setDomain(schema.getSchemaName());
+					authentications.put(authentication.getDomain(), authentication);
+				}
+			}
+		}
+	}
+
+	private ClientAuthentication createAuthentication(SecuritySchemeObject value, List<ResKey> warnings) {
+		switch (value.getType()) {
+			case API_KEY:
+				return createAPIKeyAuthentication(value);
+			case HTTP:
+				return createHTTPAuthentication(value, warnings);
+			case OAUTH2:
+				return createOAuth2Authentication(ClientCredentials.class, value, warnings);
+			case OPEN_ID_CONNECT:
+				return createOpenIDConnectAuthentication(ClientCredentials.class, value);
+			default:
+				throw new UnreachableAssertion("Unexpected SecuritySchemeType: " + value.getType());
+		}
+
 	}
 
 	private void addMethods(OpenapiDocument config, ServiceMethodRegistry.Config<?> serviceConfiguration,

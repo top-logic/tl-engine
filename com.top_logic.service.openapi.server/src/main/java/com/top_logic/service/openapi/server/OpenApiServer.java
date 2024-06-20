@@ -62,7 +62,8 @@ import com.top_logic.layout.form.values.edit.annotation.CollapseEntries;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
-import com.top_logic.service.openapi.common.authentication.AuthenticationConfigs;
+import com.top_logic.service.openapi.common.authentication.ServerAuthentication;
+import com.top_logic.service.openapi.common.authentication.ServerAuthentications;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
 import com.top_logic.service.openapi.common.document.InfoObject;
 import com.top_logic.service.openapi.common.document.SchemaObject;
@@ -108,7 +109,7 @@ public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?
 		Config.SECRETS
 	})
 	@Label("OpenAPI server configuration")
-	public interface Config<I extends OpenApiServer> extends ConfiguredManagedClass.Config<I>, AuthenticationConfigs {
+	public interface Config<I extends OpenApiServer> extends ConfiguredManagedClass.Config<I>, ServerAuthentications {
 		
 		/** @see #getBaseURL() */
 		String BASE_PATH = "base-url";
@@ -169,7 +170,7 @@ public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?
 		 * {@link #getPaths()}.
 		 */
 		@Override
-		Map<String, AuthenticationConfig> getAuthentications();
+		Map<String, ServerAuthentication> getAuthentications();
 
 		/**
 		 * Configuration of the secrets that a client must use to access this server.

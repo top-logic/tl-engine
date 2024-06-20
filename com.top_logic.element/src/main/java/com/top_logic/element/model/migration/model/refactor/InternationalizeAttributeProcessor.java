@@ -25,6 +25,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.db.sql.Batch;
 import com.top_logic.basic.db.sql.CompiledStatement;
+import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MOAttribute;
@@ -129,6 +130,7 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 				final boolean flex;
 
 				CompiledStatement select;
+				DBHelper sqlDialect = connection.getSQLDialect();
 				if (objColumn == null) {
 					flex = true;
 					select = query(
@@ -149,7 +151,7 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 							orders(
 								order(false, util.branchColumnRef()),
 								order(false, column(BasicTypes.IDENTIFIER_DB_NAME)),
-								order(false, column(BasicTypes.REV_MIN_DB_NAME))))).toSql(connection.getSQLDialect());
+								order(false, column(BasicTypes.REV_MIN_DB_NAME))))).toSql(sqlDialect);
 				} else {
 					flex = false;
 					String valueColumn = objColumn.getDbMapping()[0].getDBName();
@@ -167,12 +169,13 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 							orders(
 								order(false, util.branchColumnRef()),
 								order(false, column(BasicTypes.IDENTIFIER_DB_NAME)),
-								order(false, column(BasicTypes.REV_MIN_DB_NAME))))).toSql(connection.getSQLDialect());
+								order(false, column(BasicTypes.REV_MIN_DB_NAME))))).toSql(sqlDialect);
 				}
 
 				long start = System.nanoTime();
 				int perSecond = 0;
 				int cnt = 0;
+				int maxBatchSize = sqlDialect.getMaxBatchSize(10);
 				try (Batch batch = insert.createBatch(connection)) {
 					try (ResultSet result = select.executeQuery(connection)) {
 						while (result.next()) {
@@ -205,7 +208,7 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 									objBranch, util.newID(connection), revMin, revMax, revMin, objType, objId, attrId,
 									lang, value);
 
-								if (++cnt >= 1000) {
+								if (++cnt >= maxBatchSize) {
 									batch.executeBatch();
 
 									perSecond += cnt;

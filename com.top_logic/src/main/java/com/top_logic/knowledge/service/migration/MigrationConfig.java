@@ -10,6 +10,7 @@ import java.util.Map;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -24,6 +25,7 @@ import com.top_logic.knowledge.service.db2.migration.config.ReplayConfig;
 @DisplayOrder({
 	MigrationConfig.VERSION_PROPERTY,
 	MigrationConfig.DEPENDENCIES_PROPERTY,
+	MigrationConfig.PRE_PROCESSORS_PROPERTY,
 	MigrationConfig.PROCESSORS_PROPERTY,
 	MigrationConfig.MIGRATION_PROPERTY,
 	MigrationConfig.POST_PROCESSORS,
@@ -38,6 +40,9 @@ public interface MigrationConfig extends ConfigurationItem {
 
 	/** Configuration name for {@link #getMigration()}. */
 	String MIGRATION_PROPERTY = ReplayConfig.TAG_NAME;
+
+	/** Configuration name for {@link #getPreProcessors()}. */
+	String PRE_PROCESSORS_PROPERTY = "pre-processors";
 
 	/** Configuration name for {@link #getProcessors()}. */
 	String PROCESSORS_PROPERTY = "processors";
@@ -71,6 +76,24 @@ public interface MigrationConfig extends ConfigurationItem {
 	 *        New value of {@link #getVersion()}.
 	 */
 	void setVersion(Version v);
+
+	/**
+	 * {@link MigrationProcessor} to be executed out of order before regular processors.
+	 * 
+	 * <p>
+	 * Adjusting the baselines of model and schema due to code changes (e.g. class or property
+	 * renames or structural changes) is recommended to do before regular processing to allow
+	 * regular processors to read the baselines with typed configuration tooling.
+	 * </p>
+	 */
+	@Name(PRE_PROCESSORS_PROPERTY)
+	@EntryTag("processor") // Allow to easily move processors between phase blocks.
+	List<PolymorphicConfiguration<? extends MigrationProcessor>> getPreProcessors();
+
+	/**
+	 * @see #getPreProcessors()
+	 */
+	void setPreProcessors(List<PolymorphicConfiguration<? extends MigrationProcessor>> value);
 
 	/**
 	 * {@link MigrationProcessor} to execute before the actual migration as described in

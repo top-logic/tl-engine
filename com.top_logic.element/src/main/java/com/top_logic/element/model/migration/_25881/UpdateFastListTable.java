@@ -64,17 +64,18 @@ public class UpdateFastListTable implements MigrationProcessor {
 
 	private void removeModuleTypeColumn(PooledConnection connection) throws SQLException {
 		/* Module reference is now monomorphic. */
-		execute(connection, alterTable(enumTable(),
-			dropColumn(ReferencePart.type.getReferenceAspectColumnName(SQLH.mangleDBName(FastList.MODULE_REF)))));
+		execute(connection,
+			dropColumn(enumTable(),
+				ReferencePart.type.getReferenceAspectColumnName(SQLH.mangleDBName(FastList.MODULE_REF))));
 	}
 
 	private void addScopeColumns(PooledConnection connection, String scopeTypeColName, String scopeIDColName)
 			throws SQLException {
 		/* Add scope type column. */
 		execute(connection,
-			alterTable(enumTable(), addColumn(scopeTypeColName, DBType.STRING).setBinary(true).setSize(150)));
+			addColumn(enumTable(), scopeTypeColName, DBType.STRING).setBinary(true).setSize(150));
 		/* Add scope id column. */
-		execute(connection, alterTable(enumTable(), addColumn(scopeIDColName, DBType.LONG)));
+		execute(connection, addColumn(enumTable(), scopeIDColName, DBType.LONG));
 		/* Update "scope" columns with corresponding values of "module" columns. */
 		execute(connection, update(
 			enumTable(),
@@ -87,10 +88,10 @@ public class UpdateFastListTable implements MigrationProcessor {
 				column(ReferencePart.name.getReferenceAspectColumnName(SQLH.mangleDBName(FastList.MODULE_REF))))));
 
 		/* Make scope type column mandatory. */
-		execute(connection, alterTable(enumTable(), modifyColumnMandatory(scopeIDColName, DBType.LONG, true)));
+		execute(connection, modifyColumnMandatory(enumTable(), scopeIDColName, DBType.LONG, true));
 		/* Make scope id column mandatory. */
-		execute(connection, alterTable(enumTable(),
-			modifyColumnMandatory(scopeTypeColName, DBType.STRING, true).setBinary(true).setSize(150)));
+		execute(connection,
+			modifyColumnMandatory(enumTable(), scopeTypeColName, DBType.STRING, true).setBinary(true).setSize(150));
 	}
 
 	private static SQLTable enumTable() {

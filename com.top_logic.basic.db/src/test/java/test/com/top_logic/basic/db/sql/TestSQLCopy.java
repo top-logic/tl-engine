@@ -130,8 +130,8 @@ public class TestSQLCopy extends TestCase {
 	}
 
 	public void testAlter() {
-		assertCopy(alterTable(table("table", NO_TABLE_ALIAS), addColumn("string", DBType.STRING).setSize(1024L)));
-		assertCopy(alterTable(table("table", NO_TABLE_ALIAS), dropColumn("string")));
+		assertCopy(addColumn(table("table", NO_TABLE_ALIAS), "string", DBType.STRING).setSize(1024L));
+		assertCopy(dropColumn(table("table", NO_TABLE_ALIAS), "string"));
 	}
 
 	private List<String> columnNames(String... columnNames) {

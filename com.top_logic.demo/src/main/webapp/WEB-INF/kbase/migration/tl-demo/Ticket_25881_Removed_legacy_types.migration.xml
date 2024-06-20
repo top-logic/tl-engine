@@ -22,6 +22,9 @@
 		<dependency name="Ticket_25881_Removed_legacy_types"
 			module="tl-mail"
 		/>
+		<dependency name="Ticket_23110_create_module_tl_model_i18n"
+			module="tl-model-wysiwyg"
+		/>
 		<dependency name="Ticket_25962_Remove_EWE"
 			module="tl-demo"
 		/>

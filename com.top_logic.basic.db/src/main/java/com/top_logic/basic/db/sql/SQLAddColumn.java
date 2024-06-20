@@ -12,7 +12,7 @@ import com.top_logic.basic.sql.DBType;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class SQLAddColumn extends AbstractSQLTableModification {
+public class SQLAddColumn extends SQLAlterTable {
 
 	private DBType _type;
 
@@ -31,7 +31,8 @@ public class SQLAddColumn extends AbstractSQLTableModification {
 	/**
 	 * Creates a new {@link SQLAddColumn}.
 	 */
-	SQLAddColumn(String columnName, DBType type) {
+	SQLAddColumn(SQLTable table, String columnName, DBType type) {
+		super(table);
 		setColumnName(columnName);
 		setType(type);
 	}

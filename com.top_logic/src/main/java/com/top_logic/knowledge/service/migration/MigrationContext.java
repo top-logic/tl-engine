@@ -12,6 +12,7 @@ import com.top_logic.basic.Log;
 import com.top_logic.basic.col.TypedAnnotationContainer;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.format.PrimitiveBooleanFormat;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
@@ -19,6 +20,7 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.dob.MOFactory;
 import com.top_logic.dob.meta.MORepository;
+import com.top_logic.knowledge.objects.meta.DefaultMOFactory;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseConfiguration;
@@ -98,6 +100,16 @@ public class MigrationContext extends TypedAnnotationContainer {
 	 */
 	public SchemaConfiguration getPersistentSchema() {
 		return KBSchemaUtil.loadSchema(_connection, PersistencyLayer.DEFAULT_KNOWLEDGE_BASE_NAME);
+	}
+
+	/**
+	 * The resolved {@link #getPersistentSchema() type repository} read from the current DB.
+	 */
+	public MORepository getPersistentRepository() {
+		SchemaConfiguration persistentSchema = getPersistentSchema();
+		SchemaSetup setup =
+			new SchemaSetup(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, persistentSchema);
+		return setup.createMORepository(DefaultMOFactory.INSTANCE);
 	}
 
 	/**

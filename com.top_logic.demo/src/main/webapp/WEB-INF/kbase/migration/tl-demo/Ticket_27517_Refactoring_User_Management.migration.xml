@@ -34,6 +34,9 @@
 		<dependency name="Ticket_21471_Adjust_model_overrides"
 			module="tl-doc"
 		/>
+		<dependency name="Ticket_23110_create_module_tl_model_i18n"
+			module="tl-model-wysiwyg"
+		/>
 		<dependency name="Ticket_26966_Set_date2_storage_mapping"
 			module="tl-demo"
 		/>

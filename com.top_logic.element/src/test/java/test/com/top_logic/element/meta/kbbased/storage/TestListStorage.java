@@ -124,7 +124,7 @@ public class TestListStorage extends BasicTestCase {
 	}
 
 	private TLObject instantiate(TLClass type) {
-		return DynamicModelService.getInstance().createObject(type, null, null);
+		return DynamicModelService.getInstance().createObject(type);
 	}
 
 	private TLClass getParentType() {

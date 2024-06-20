@@ -351,7 +351,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 
 				TLObject local;
 				try (Transaction tx = kb.beginTransaction()) {
-					local = ModelService.getInstance().getFactory().createObject(localType, null, null);
+					local = ModelService.getInstance().getFactory().createObject(localType);
 					local.tUpdateByName("name", "local");
 					local.tUpdateByName("x", 42);
 					tx.commit();

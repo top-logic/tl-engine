@@ -406,8 +406,19 @@ public class MSSQLHelper extends DBHelper {
 	}
 
 	@Override
-	public void appendChangeColumnType(Appendable result, DBType sqlType, String columnName, long size, int precision,
-			boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+	public void appendChangeColumnName(Appendable result, String tableName, DBType sqlType, String columnName, String newName,
+			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+		result.append("EXEC sp_rename ");
+		result.append(columnRef(tableName + "." + columnName));
+		result.append(", ");
+		result.append(columnRef(newName));
+		result.append(", 'COLUMN'");
+	}
+
+	@Override
+	public void appendChangeColumnType(Appendable result, String tableName, DBType sqlType, String columnName, String newName,
+			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+		result.append(alterTable(tableName));
 		result.append("ALTER COLUMN ");
 		result.append(columnRef(columnName));
 		result.append(" ");
@@ -415,8 +426,9 @@ public class MSSQLHelper extends DBHelper {
 	}
 
 	@Override
-	public void appendChangeMandatory(Appendable result, DBType sqlType, String columnName, long size, int precision,
-			boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+	public void appendChangeMandatory(Appendable result, String tableName, DBType sqlType, String columnName, String newName,
+			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+		result.append(alterTable(tableName));
 		result.append("ALTER COLUMN ");
 		result.append(columnRef(columnName));
 		result.append(" ");

@@ -265,6 +265,17 @@ public class H2Helper extends DBHelper {
 	}
 
 	@Override
+	public void appendChangeColumnName(Appendable result, String tableName, DBType sqlType, String columnName, String newName,
+			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+		result.append(alterTable(tableName));
+		appendModifyColumnKeyword(result);
+		result.append(columnRef(columnName));
+		result.append(" ");
+		result.append("RENAME TO ");
+		result.append(columnRef(newName));
+	}
+
+	@Override
 	protected void appendModifyColumnKeyword(Appendable result) throws IOException {
 		result.append("ALTER COLUMN ");
 	}

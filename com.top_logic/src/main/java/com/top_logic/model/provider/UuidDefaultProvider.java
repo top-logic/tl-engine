@@ -5,6 +5,8 @@
  */
 package com.top_logic.model.provider;
 
+import java.util.function.Supplier;
+
 import com.top_logic.basic.StringServices;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.TLTypeKind;
@@ -16,7 +18,7 @@ import com.top_logic.model.annotate.TargetType;
  * @author <a href="mailto:dpa@top-logic.com">dpa</a>
  */
 @TargetType(TLTypeKind.STRING)
-public class UuidDefaultProvider implements DefaultProvider {
+public class UuidDefaultProvider implements DefaultProvider, Supplier<String> {
 	
 	/**
 	 * Singleton {@link UuidDefaultProvider} instance.
@@ -29,6 +31,11 @@ public class UuidDefaultProvider implements DefaultProvider {
 
 	@Override
 	public Object createDefault(Object context, TLStructuredTypePart attribute, boolean createForUI) {
+		return get();
+	}
+
+	@Override
+	public String get() {
 		return StringServices.randomUUID();
 	}
 

@@ -54,6 +54,11 @@ public class DefaultSQLVisitor<R, A> implements SQLVisitor<R, A> {
 	}
 
 	@Override
+	public R visitSQLInSetSelect(SQLInSetSelect sql, A arg) {
+		return visitSQLExpression(sql, arg);
+	}
+
+	@Override
 	public R visitSQLTuple(SQLTuple sql, A arg) {
 		return visitSQLExpression(sql, arg);
 	}
@@ -149,11 +154,6 @@ public class DefaultSQLVisitor<R, A> implements SQLVisitor<R, A> {
 	}
 
 	@Override
-	public R visitSQLAlterTable(SQLAlterTable sql, A arg) {
-		return visitSQLStatement(sql, arg);
-	}
-
-	@Override
 	public R visitSQLAddIndex(SQLAddIndex sql, A arg) {
 		return visitSQLStatement(sql, arg);
 	}
@@ -181,8 +181,8 @@ public class DefaultSQLVisitor<R, A> implements SQLVisitor<R, A> {
 	/**
 	 * Common visit case for {@link SQLTableModification}.
 	 */
-	protected R visitSQLTableModification(SQLTableModification sql, A arg) {
-		return visitSQLExpression(sql, arg);
+	protected R visitSQLTableModification(SQLAlterTable sql, A arg) {
+		return visitSQLPart(sql, arg);
 	}
 
 	/**

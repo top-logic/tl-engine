@@ -156,9 +156,7 @@ public class DocumentationImporter {
 			log.info("No documentation root folder.");
 			return;
 		}
-		KBUtils.inTransaction(rootPage.tKnowledgeBase(), () -> {
-			importForLocales(log, rootPage);
-		});
+		importForLocales(log, rootPage);
 	}
 
 	private void importForLocales(Log log, Page rootPage) {

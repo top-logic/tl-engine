@@ -69,11 +69,6 @@ abstract class AbstractStatementBuilder<E extends SimpleSQLBuffer> implements SQ
 			return result;
 		}
 
-		@Override
-		public Boolean visitSQLAlterTable(SQLAlterTable sql, DBHelper arg) {
-			return noPrepStatement;
-		}
-
 		private Boolean descend(SQLPart subSQL, DBHelper arg, Boolean result) {
 			if (subSQL == null) {
 				return result;
@@ -127,6 +122,11 @@ abstract class AbstractStatementBuilder<E extends SimpleSQLBuffer> implements SQ
 			return noPrepStatement;
 		}
 		
+		@Override
+		public Boolean visitSQLInSetSelect(SQLInSetSelect sql, DBHelper arg) {
+			return mayUsePrepStatement;
+		}
+
 		@Override
 		public Boolean visitSQLTuple(SQLTuple sql, DBHelper arg) {
 			return descend(sql.getExpressions(), arg, mayUsePrepStatement);
@@ -554,21 +554,21 @@ abstract class AbstractStatementBuilder<E extends SimpleSQLBuffer> implements SQ
 		return resetContext(oldContext, buffer);
 	}
 
-	@Override
-	public Void visitSQLAlterTable(SQLAlterTable sql, E buffer) {
-		SQLPart oldContext = setContext(sql, buffer);
+	/**
+	 * Appends "ALTER TABLE ..." statement prefix to the builder.
+	 */
+	protected void appendAlterTable(E buffer, SQLAlterTable sql) {
 		buffer.append("ALTER TABLE ");
 		buffer.append(buffer.sqlDialect.tableRef(sql.getTable().getTableName()));
 		buffer.append(StringServices.BLANK_CHAR);
-
-		sql.getModification().visit(this, buffer);
-
-		return resetContext(oldContext, buffer);
 	}
 
 	@Override
 	public Void visitSQLAddColumn(SQLAddColumn sql, E buffer) {
 		SQLPart oldContext = setContext(sql, buffer);
+
+		appendAlterTable(buffer, sql);
+
 		buffer.append("ADD ");
 		buffer.append(buffer.sqlDialect.columnRef(sql.getColumnName()));
 		buffer.append(StringServices.BLANK_CHAR);
@@ -593,15 +593,20 @@ abstract class AbstractStatementBuilder<E extends SimpleSQLBuffer> implements SQ
 		boolean mandatory = sql.isMandatory();
 		boolean binary = sql.isBinary();
 		Object defaultValue = sql.getDefaultValue();
+		String tableName = sql.getTable().getTableName();
 		try {
 			switch (sql.getModificationAspect()) {
+				case NAME:
+					buffer.sqlDialect.appendChangeColumnName(buffer, tableName, type, sql.getColumnName(), sql.getNewName(),
+						size, prec, mandatory, binary, defaultValue);
+					break;
 				case TYPE:
-					buffer.sqlDialect.appendChangeColumnType(buffer, type, sql.getColumnName(), size, prec, mandatory,
-						binary, defaultValue);
+					buffer.sqlDialect.appendChangeColumnType(buffer, tableName, type, sql.getColumnName(), sql.getNewName(),
+						size, prec, mandatory, binary, defaultValue);
 					break;
 				case MANDATORY:
-					buffer.sqlDialect.appendChangeMandatory(buffer, type, sql.getColumnName(), size, prec, mandatory,
-						binary, defaultValue);
+					buffer.sqlDialect.appendChangeMandatory(buffer, tableName, type, sql.getColumnName(), sql.getNewName(),
+						size, prec, mandatory, binary, defaultValue);
 					break;
 				default:
 					throw new IllegalArgumentException();
@@ -616,6 +621,7 @@ abstract class AbstractStatementBuilder<E extends SimpleSQLBuffer> implements SQ
 	@Override
 	public Void visitSQLDropColumn(SQLDropColumn sql, E buffer) {
 		SQLPart oldContext = setContext(sql, buffer);
+		appendAlterTable(buffer, sql);
 		buffer.append("DROP COLUMN ");
 		buffer.append(buffer.sqlDialect.columnRef(sql.getColumnName()));
 
@@ -1029,6 +1035,17 @@ abstract class AbstractStatementBuilder<E extends SimpleSQLBuffer> implements SQ
 		buffer.append(" IN ");
 		buffer.append('(');
 		sql.getValues().visit(this, buffer);
+		buffer.append(')');
+		return resetContext(oldContext, buffer);
+	}
+
+	@Override
+	public Void visitSQLInSetSelect(SQLInSetSelect sql, E buffer) {
+		SQLPart oldContext = setContext(sql, buffer);
+		sql.getExpr().visit(this, buffer);
+		buffer.append(" IN ");
+		buffer.append('(');
+		sql.getSelect().visit(this, buffer);
 		buffer.append(')');
 		return resetContext(oldContext, buffer);
 	}

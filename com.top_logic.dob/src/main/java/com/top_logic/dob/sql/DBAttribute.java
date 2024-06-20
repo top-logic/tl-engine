@@ -42,6 +42,11 @@ public interface DBAttribute {
     public String getDBName ();
     
     /**
+	 * @see #getDBName()
+	 */
+	public void setDBName(String dbName);
+
+	/**
 	 * The column type to use.
 	 */
     public DBType getSQLType();

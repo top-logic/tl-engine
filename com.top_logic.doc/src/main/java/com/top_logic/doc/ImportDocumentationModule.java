@@ -18,6 +18,7 @@ import java.util.Date;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.LogProtocol;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.col.ObjectFlag;
 import com.top_logic.basic.config.InstantiationContext;
@@ -78,7 +79,11 @@ public class ImportDocumentationModule extends KBBasedManagedClass<ImportDocumen
 	@Override
 	protected void startUp() {
 		super.startUp();
-		updateDocumentationFromFS(new LogProtocol(ImportDocumentationModule.class));
+		try {
+			updateDocumentationFromFS(new LogProtocol(ImportDocumentationModule.class));
+		} catch (RuntimeException ex) {
+			Logger.error("Cannot import documentation: " + ex.getMessage(), ex, ImportDocumentationModule.class);
+		}
 	}
 
 	private void updateDocumentationFromFS(Log log) {

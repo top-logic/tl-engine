@@ -27,6 +27,7 @@ import com.top_logic.model.config.DatatypeConfig;
 import com.top_logic.model.config.TLTypeAnnotation;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedTypeName;
+import com.top_logic.model.migration.data.Type;
 
 /**
  * {@link MigrationProcessor} creating a new {@link TLPrimitive}.
@@ -112,6 +113,12 @@ public class CreateTLDatatypeProcessor extends AbstractConfiguredInstance<Create
 
 	private void internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedTypeName typeName = getConfig().getName();
+		Type existing = _util.getTLTypeOrNull(connection, typeName);
+		if (existing != null) {
+			log.info("Datatype already exists: " + _util.qualifiedName(typeName), Log.WARN);
+			return;
+		}
+
 		_util.createTLDatatype(connection, typeName, getConfig().getKind(), getConfig(),
 			getConfig().getStorageMapping(),
 			getConfig());

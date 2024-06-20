@@ -22,13 +22,15 @@
 		<dependency name="Ticket_25881_Removed_legacy_types"
 			module="tl-mail"
 		/>
+		<dependency name="Ticket_23110_create_module_tl_model_i18n"
+			module="tl-model-wysiwyg"
+		/>
 		<dependency name="Ticket_26398_remove_table_interfaces"
 			module="tl-demo"
 		/>
 	</dependencies>
 	
-	<processors>
-
+	<pre-processors>
 		<processor class="com.top_logic.knowledge.service.migration.DeleteTableProcessor">
 			<tables>
 				<table object_name="Ticket"/>
@@ -48,8 +50,9 @@
 		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
 			transform="/WEB-INF/kbase/migration/tl-demo/Ticket_26660_Remove_dependency_to_tl_remote.migration.xslt"
 		/>
-	
-	</processors>
+		
+		<delete-module name="DemoRemote"/>
+	</pre-processors>
 	<migration>
 		<type-mapping class=""/>
 	</migration>

@@ -62,7 +62,7 @@ public interface LayoutConfig extends ConfigurationItem {
 	 * @see #getAvailableLayouts()
 	 * @see #getDefaultLayout()
 	 */
-	@FormattedDefault("/masterFrame.xml")
+	@FormattedDefault("masterFrame.layout.xml")
 	@Format(CommaSeparatedStrings.class)
 	@Name(LAYOUTS_NAME)
 	List<String> getLayouts();

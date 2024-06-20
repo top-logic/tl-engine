@@ -15,6 +15,7 @@ import com.top_logic.base.accesscontrol.AuthorizationUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.common.authentication.http.LoginCredentials;
 import com.top_logic.service.openapi.server.OpenApiServer;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
@@ -37,7 +38,7 @@ public class BasicAuthAuthenticator implements Authenticator {
 	}
 
 	@Override
-	public void authenticate(HttpServletRequest req, HttpServletResponse resp)
+	public Person authenticate(HttpServletRequest req, HttpServletResponse resp)
 			throws AuthenticationFailure, IOException {
 		if (!AuthorizationUtil.authorizationSent(req)) {
 			throw requestAuthentication(I18NConstants.AUTH_FAILED_MISSING_AUTHENTICATION_DATA);
@@ -52,7 +53,8 @@ public class BasicAuthAuthenticator implements Authenticator {
 			throw requestAuthentication(
 				I18NConstants.AUTH_FAILED_WRONG_AUTHENTICATION_DATA__USER.fill(sentCredentials.getUser()));
 		}
-
+		// Allowed users are technical user and *not* accounts from the application.
+		return null;
 	}
 
 	private AuthenticationFailure requestAuthentication(ResKey message) {

@@ -10,6 +10,8 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.top_logic.knowledge.wrap.person.Person;
+
 /**
  * Class checking and authenticating the communication in Open API communication.
  * 
@@ -26,8 +28,11 @@ public interface Authenticator {
 	 *        Response corresponding to the given request.
 	 * @throws AuthenticationFailure
 	 *         when authentication is not possible.
+	 * 
+	 * @return The account which was authenticated. May be <code>null</code>, in this case no
+	 *         special account is authenticated.
 	 */
-	void authenticate(HttpServletRequest req, HttpServletResponse resp) throws AuthenticationFailure, IOException;
+	Person authenticate(HttpServletRequest req, HttpServletResponse resp) throws AuthenticationFailure, IOException;
 
 	/**
 	 * Returns an {@link Authenticator} that first check authentication with this

@@ -13,13 +13,17 @@ import com.top_logic.layout.I18NConstantsBase;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-@SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
 	 * @en No secret available for domain {0}.
 	 */
 	public static ResKey1 ERROR_NO_SECRET_AVAILABLE__DOMAIN;
+
+	/**
+	 * @en No authentication config available for domain {0}.
+	 */
+	public static ResKey1 ERROR_NO_AUTHENTICATION_AVAILABLE__DOMAIN;
 
     static {
         initConstants(I18NConstants.class);

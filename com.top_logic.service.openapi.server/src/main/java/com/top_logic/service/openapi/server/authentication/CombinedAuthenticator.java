@@ -10,6 +10,8 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.top_logic.knowledge.wrap.person.Person;
+
 /**
  * {@link Authenticator} executing multiple {@link Authenticator}.
  * 
@@ -30,10 +32,20 @@ public class CombinedAuthenticator implements Authenticator {
 	}
 
 	@Override
-	public void authenticate(HttpServletRequest req, HttpServletResponse resp)
+	public Person authenticate(HttpServletRequest req, HttpServletResponse resp)
 			throws AuthenticationFailure, IOException {
-		_first.authenticate(req, resp);
-		_second.authenticate(req, resp);
+		Person firstAccount = _first.authenticate(req, resp);
+		Person secondAccount = _second.authenticate(req, resp);
+		if (firstAccount == null) {
+			return secondAccount;
+		} else if (secondAccount == null) {
+			return firstAccount;
+		} else if (!firstAccount.equals(secondAccount)) {
+			throw new AuthenticationFailure(
+				I18NConstants.ERROR_MULTIPLE_USERS__USER1_USER2.fill(firstAccount, secondAccount));
+		} else {
+			return firstAccount;
+		}
 	}
 
 }

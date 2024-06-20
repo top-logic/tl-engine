@@ -11,16 +11,15 @@ import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletResponse;
 
-import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
-import com.top_logic.service.openapi.common.authentication.AuthenticationConfigVisitor;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
+import com.top_logic.service.openapi.common.authentication.ServerAuthenticationVisitor;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthentication;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeySecret;
 import com.top_logic.service.openapi.common.authentication.http.HTTPSecret;
 import com.top_logic.service.openapi.common.authentication.http.LoginCredentials;
 import com.top_logic.service.openapi.common.authentication.http.basic.BasicAuthentication;
-import com.top_logic.service.openapi.common.authentication.oauth.ClientCredentials;
+import com.top_logic.service.openapi.common.authentication.oauth.ServerCredentials;
 import com.top_logic.service.openapi.server.OpenApiServer;
 import com.top_logic.service.openapi.server.authentication.apikey.APIKeyAuthenticator;
 import com.top_logic.service.openapi.server.authentication.http.basic.BasicAuthAuthenticator;
@@ -33,7 +32,7 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class AuthenticateVisitor implements AuthenticationConfigVisitor<Authenticator, OpenApiServer> {
+public class AuthenticateVisitor implements ServerAuthenticationVisitor<Authenticator, OpenApiServer> {
 
 	/** Singleton {@link AuthenticateVisitor} instance. */
 	public static final AuthenticateVisitor INSTANCE = new AuthenticateVisitor();
@@ -63,15 +62,14 @@ public class AuthenticateVisitor implements AuthenticationConfigVisitor<Authenti
 	}
 
 	@Override
-	public Authenticator visitClientCredentials(ClientCredentials config, OpenApiServer arg) {
+	public Authenticator visitServerCredentials(ServerCredentials config, OpenApiServer arg) {
 		Set<ServerCredentialSecret> secrets = secretsOfType(config, arg, ServerCredentialSecret.class)
 			.collect(Collectors.toSet());
 		switch (secrets.size()) {
 			case 0:
 				return missingSecret();
 			case 1:
-				return new ClientCredentialsAuthenticator(secrets.iterator().next(),
-					TypedConfigUtil.createInstance(config.getURIProvider()));
+				return new ClientCredentialsAuthenticator(config, secrets.iterator().next());
 			default:
 				throw new TopLogicException(
 					I18NConstants.ERROR_MULTIPLE_CLIENT_CREDENTIAL_SECRETS__DOMAIN.fill(config.getDomain()));

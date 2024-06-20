@@ -51,7 +51,6 @@ import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.ImplOptionMapping;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.service.openapi.common.authentication.AllAuthenticationDomains;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.authentication.SecretAvailableConstraint;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
@@ -59,6 +58,7 @@ import com.top_logic.service.openapi.common.document.ParameterLocation;
 import com.top_logic.service.openapi.common.document.TagObject;
 import com.top_logic.service.openapi.server.OpenApiServer;
 import com.top_logic.service.openapi.server.OpenApiServer.OpenAPIServerPart;
+import com.top_logic.service.openapi.server.authentication.AllAuthenticationDomains;
 import com.top_logic.service.openapi.server.authentication.ServerSecret;
 import com.top_logic.service.openapi.server.parameter.ConcreteRequestParameter;
 import com.top_logic.service.openapi.server.parameter.ParameterUsedIn;
@@ -146,7 +146,9 @@ public interface OperationByMethod extends Operation, ConfigPart, OpenAPIServerP
 		@Ref({ ENCLOSING_PATH_ITEM, OpenAPIServerPart.SERVER_CONFIGURATION, OpenApiServer.Config.AUTHENTICATIONS }) })
 	@Nullable
 	@Constraint(value = ServerSecretAvailable.class, asWarning = true, args = {
-		@Ref({ ENCLOSING_PATH_ITEM, OpenAPIServerPart.SERVER_CONFIGURATION, OpenApiServer.Config.SECRETS }) })
+		@Ref({ ENCLOSING_PATH_ITEM, OpenAPIServerPart.SERVER_CONFIGURATION, OpenApiServer.Config.SECRETS }),
+		@Ref({ ENCLOSING_PATH_ITEM, OpenAPIServerPart.SERVER_CONFIGURATION, OpenApiServer.Config.AUTHENTICATIONS })
+	})
 	@Format(CommaSeparatedStrings.class)
 	List<String> getAuthentication();
 
@@ -418,9 +420,16 @@ public interface OperationByMethod extends Operation, ConfigPart, OpenAPIServerP
 		}
 
 		@Override
+		public boolean isChecked(int index) {
+			return index == 0;
+		}
+
+		@Override
 		protected void checkValue(PropertyModel<List<String>> authentication,
-				PropertyModel<List<ServerSecret>> serverSecrets) {
-			checkSecretAvailable(authentication, serverSecrets.getValue());
+				PropertyModel<List<ServerSecret>> serverSecrets,
+				PropertyModel<Map<String, ? extends AuthenticationConfig>> availableAuthentications) {
+			checkSecretAvailable(authentication, CollectionUtil.nonNull(serverSecrets.getValue()),
+				CollectionUtil.nonNull(availableAuthentications.getValue()));
 		}
 
 	}

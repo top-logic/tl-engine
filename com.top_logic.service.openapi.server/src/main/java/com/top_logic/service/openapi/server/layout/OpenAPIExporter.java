@@ -52,13 +52,13 @@ import com.top_logic.basic.io.binary.ByteArrayStream;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.service.openapi.common.OpenAPIConstants;
-import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
-import com.top_logic.service.openapi.common.authentication.AuthenticationConfigVisitor;
+import com.top_logic.service.openapi.common.authentication.ServerAuthentication;
+import com.top_logic.service.openapi.common.authentication.ServerAuthenticationVisitor;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthentication;
 import com.top_logic.service.openapi.common.authentication.http.basic.BasicAuthentication;
-import com.top_logic.service.openapi.common.authentication.oauth.ClientCredentials;
 import com.top_logic.service.openapi.common.authentication.oauth.DefaultURIProvider;
 import com.top_logic.service.openapi.common.authentication.oauth.OpenIDURIProvider;
+import com.top_logic.service.openapi.common.authentication.oauth.ServerCredentials;
 import com.top_logic.service.openapi.common.authentication.oauth.TokenURIProvider;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
 import com.top_logic.service.openapi.common.document.ComponentsObject;
@@ -175,12 +175,12 @@ public class OpenAPIExporter {
 
 		doc.setInfo(copyInfoObject(_serverConfig));
 		setTags(doc, _serverConfig);
-		Map<String, AuthenticationConfig> authentications = _serverConfig.getAuthentications();
+		Map<String, ServerAuthentication> authentications = _serverConfig.getAuthentications();
 		Map<String, SchemaObject> schemas = _serverConfig.getGlobalSchemas();
 		Map<String, ReferencedParameter> parameters = _serverConfig.getGlobalParameters();
 		if (!authentications.isEmpty() || !schemas.isEmpty() || !parameters.isEmpty()) {
 			ComponentsObject componentsObject = newItem(ComponentsObject.class);
-			for (Entry<String, AuthenticationConfig> authentication : authentications.entrySet()) {
+			for (Entry<String, ServerAuthentication> authentication : authentications.entrySet()) {
 				addAuthentication(componentsObject, authentication);
 			}
 			for (Entry<String, SchemaObject> schema : schemas.entrySet()) {
@@ -296,7 +296,7 @@ public class OpenAPIExporter {
 	}
 
 	private void addAuthentication(ComponentsObject componentsObject,
-			Entry<String, AuthenticationConfig> authentication) {
+			Entry<String, ServerAuthentication> authentication) {
 		String authName = authentication.getKey();
 		componentsObject.getSecuritySchemes().put(authName,
 			authentication.getValue().visit(SecuritySchemeObjects.INSTANCE, authName));
@@ -641,7 +641,7 @@ public class OpenAPIExporter {
 		return TypedConfiguration.copy(item);
 	}
 
-	private static class SecuritySchemeObjects implements AuthenticationConfigVisitor<SecuritySchemeObject, String> {
+	private static class SecuritySchemeObjects implements ServerAuthenticationVisitor<SecuritySchemeObject, String> {
 
 		/** Singleton {@link SecuritySchemeObjects} instance. */
 		public static final SecuritySchemeObjects INSTANCE = new SecuritySchemeObjects();
@@ -663,7 +663,7 @@ public class OpenAPIExporter {
 		}
 
 		@Override
-		public SecuritySchemeObject visitClientCredentials(ClientCredentials config, String schemaName) {
+		public SecuritySchemeObject visitServerCredentials(ServerCredentials config, String schemaName) {
 			SecuritySchemeObject securityScheme = newSecuritySchema(schemaName);
 			PolymorphicConfiguration<? extends TokenURIProvider> uriProvider = config.getURIProvider();
 			if (uriProvider instanceof OpenIDURIProvider.Config) {
@@ -678,6 +678,9 @@ public class OpenAPIExporter {
 				securityScheme.getFlows().put(flowObject.getFlow(), flowObject);
 			} else {
 				throw new UnsupportedOperationException();
+			}
+			if (config.isInUserContext()) {
+				securityScheme.setUserContext(true);
 			}
 			return securityScheme;
 		}

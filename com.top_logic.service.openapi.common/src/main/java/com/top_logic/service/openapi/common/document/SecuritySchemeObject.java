@@ -5,12 +5,15 @@
  */
 package com.top_logic.service.openapi.common.document;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.net.URL;
 import java.util.Map;
 
 import com.top_logic.basic.config.URLFormat;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -30,12 +33,17 @@ import com.top_logic.service.openapi.common.authentication.apikey.APIKeyPosition
 @DisplayOrder({
 	SecuritySchemeObject.SCHEMA_NAME,
 	SecuritySchemeObject.TYPE,
+	SecuritySchemeObject.OPEN_ID_CONNECT_URL,
 	SecuritySchemeObject.DESCRIPTION,
 	SecuritySchemeObject.NAME,
 	SecuritySchemeObject.IN,
 	SecuritySchemeObject.FLOWS,
+	SecuritySchemeObject.X_TL_IN_USER_CONTEXT,
 })
 public interface SecuritySchemeObject extends Described {
+
+	/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
+	Lookup LOOKUP = MethodHandles.lookup();
 
 	/** Configuration name for the value of {@link #getType()}. */
 	String TYPE = "type";
@@ -57,6 +65,9 @@ public interface SecuritySchemeObject extends Described {
 
 	/** Configuration name for the value of {@link #getOpenIdConnectUrl()}. */
 	String OPEN_ID_CONNECT_URL = "openIdConnectUrl";
+
+	/** Configuration name for the value of {@link #isInUserContext()}. */
+	String X_TL_IN_USER_CONTEXT = "x-tl-in-user-context";
 
 	/**
 	 * Name of the security schema.
@@ -162,6 +173,24 @@ public interface SecuritySchemeObject extends Described {
 	 * Setter for {@link #getOpenIdConnectUrl()}.
 	 */
 	void setOpenIdConnectUrl(URL value);
+
+	/**
+	 * Whether operations protected by this {@link SecuritySchemeObject} must be executed in user
+	 * context.
+	 */
+	@Name(X_TL_IN_USER_CONTEXT)
+	@Label("In user context")
+	boolean isInUserContext();
+
+	/**
+	 * Marks this {@link SecuritySchemeObject} to be {@link #isInUserContext()}.
+	 * 
+	 * @param inUserContext
+	 *        See {@link #isInUserContext()}.
+	 */
+	default void setUserContext(boolean inUserContext) {
+		update(descriptor().getProperty(X_TL_IN_USER_CONTEXT), inUserContext);
+	}
 
 }
 

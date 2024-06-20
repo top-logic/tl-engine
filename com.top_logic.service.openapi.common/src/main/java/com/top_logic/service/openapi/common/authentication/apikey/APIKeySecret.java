@@ -5,16 +5,11 @@
  */
 package com.top_logic.service.openapi.common.authentication.apikey;
 
-import java.util.function.Predicate;
-
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
-import com.top_logic.service.openapi.common.authentication.AllAuthenticationDomains;
-import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
 
 /**
@@ -46,27 +41,6 @@ public interface APIKeySecret extends SecretConfiguration {
 	@Nullable
 	@ControlProvider(MultiLineText.class)
 	String getDescription();
-
-	/**
-	 * All domains of configured {@link APIKeyAuthentication}.
-	 * 
-	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
-	 */
-	public static class AllAPIKeyDomains extends AllAuthenticationDomains {
-
-		/**
-		 * Creates a new {@link AllAPIKeyDomains}.
-		 */
-		public AllAPIKeyDomains(DeclarativeFormOptions options) {
-			super(options);
-		}
-
-		@Override
-		protected Predicate<? super AuthenticationConfig> filter() {
-			return APIKeyAuthentication.class::isInstance;
-		}
-
-	}
 
 }
 

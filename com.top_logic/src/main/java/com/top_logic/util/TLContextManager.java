@@ -22,6 +22,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.thread.InContext;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.DisplayContext;
@@ -69,10 +70,23 @@ public class TLContextManager extends ThreadContextManager {
 		return DefaultSessionContext.newDefaultSessionContext(session);
 	}
 
+	/**
+	 * Runs the given job in context of the given person.
+	 * 
+	 * <p>
+	 * If there is already an interaction, the job is just executed without setting the given
+	 * {@link Person}.
+	 * </p>
+	 * 
+	 * @see #inPersonContext(Person, ComputationEx2)
+	 */
 	public static void inPersonContext(Person p, InContext job) {
 		getManager().inPersonContextInternal(p, job);
 	}
 
+	/**
+	 * Implementation of {@link #inPersonContext(Person, InContext)}.
+	 */
 	protected void inPersonContextInternal(Person p, InContext job) {
 		TLInteractionContext interaction = getInteractionInternal();
 		if (interaction == null) {
@@ -93,6 +107,48 @@ public class TLContextManager extends ThreadContextManager {
 			}
 		} else {
 			job.inContext();
+		}
+	}
+
+	/**
+	 * Runs the given job in context of the given person.
+	 * 
+	 * <p>
+	 * If there is already an interaction, the job is just executed without setting the given
+	 * {@link Person}.
+	 * </p>
+	 * 
+	 * @see #inPersonContext(Person, InContext)
+	 */
+	public static <T, E1 extends Throwable, E2 extends Throwable> T inPersonContext(Person p,
+			ComputationEx2<T, E1, E2> job) throws E1, E2 {
+		return getManager().inPersonContextInternal(p, job);
+	}
+
+	/**
+	 * Implementation of {@link #inPersonContext(Person, ComputationEx2)}.
+	 */
+	protected <T, E1 extends Throwable, E2 extends Throwable> T inPersonContextInternal(Person p,
+			ComputationEx2<T, E1, E2> job) throws E1, E2 {
+		TLInteractionContext interaction = getInteractionInternal();
+		if (interaction == null) {
+			interaction = newInteractionInternal();
+			registerSubSessionInSessionForInteraction(interaction);
+			setInteraction(interaction);
+			try {
+				TLSessionContext session = interaction.getSessionContext();
+				TLSubSessionContext subsession = interaction.getSubSessionContext();
+				try {
+					subsession.setPerson(p);
+					return job.run();
+				} finally {
+					sessionUnbound(session);
+				}
+			} finally {
+				removeInteraction();
+			}
+		} else {
+			return job.run();
 		}
 	}
 

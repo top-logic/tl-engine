@@ -7,6 +7,8 @@ package com.top_logic.service.openapi.common.authentication.http.basic;
 
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.service.openapi.common.authentication.ClientAuthentication;
+import com.top_logic.service.openapi.common.authentication.ServerAuthentication;
 import com.top_logic.service.openapi.common.authentication.http.HTTPAuthentication;
 
 /**
@@ -16,7 +18,7 @@ import com.top_logic.service.openapi.common.authentication.http.HTTPAuthenticati
  */
 @TagName("basic-authentication")
 @Label("HTTP authentication (BasicAuth)")
-public interface BasicAuthentication extends HTTPAuthentication {
+public interface BasicAuthentication extends HTTPAuthentication, ServerAuthentication, ClientAuthentication {
 
 	// No additional properties here.
 

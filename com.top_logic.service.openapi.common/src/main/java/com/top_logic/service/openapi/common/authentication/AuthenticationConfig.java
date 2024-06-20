@@ -7,8 +7,11 @@ package com.top_logic.service.openapi.common.authentication;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Abstract;
+import com.top_logic.basic.config.annotation.Derived;
+import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.func.misc.AlwaysTrue;
 
 /**
  * Configuration of the authentication in Open API communication.
@@ -34,9 +37,11 @@ public interface AuthenticationConfig extends ConfigurationItem {
 	void setDomain(String value);
 
 	/**
-	 * Visitor method for {@link AuthenticationConfig}.
+	 * Whether for this kind of authorization a separate secret is necessary.
 	 */
-	<R, A> R visit(AuthenticationConfigVisitor<R, A> visitor, A arg);
+	@Hidden
+	@Derived(fun = AlwaysTrue.class, args = {})
+	boolean isSeparateSecretNeeded();
 
 }
 

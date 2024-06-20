@@ -30,13 +30,13 @@ import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.service.openapi.client.authentication.AllAuthenticationDomains;
 import com.top_logic.service.openapi.client.authentication.ClientSecret;
 import com.top_logic.service.openapi.client.registry.ServiceMethodRegistry;
 import com.top_logic.service.openapi.client.registry.ServiceMethodRegistry.ServiceRegistryPart;
 import com.top_logic.service.openapi.client.registry.impl.call.CallBuilderFactory;
 import com.top_logic.service.openapi.client.registry.impl.response.ResponseHandlerByExpression;
 import com.top_logic.service.openapi.client.registry.impl.response.ResponseHandlerFactory;
-import com.top_logic.service.openapi.common.authentication.AllAuthenticationDomains;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.authentication.SecretAvailableConstraint;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
@@ -152,7 +152,9 @@ public interface MethodDefinition extends ParameterContext, NamedConfigMandatory
 		@Ref({ ServiceRegistryPart.SERVICE_REGISTRY, ServiceMethodRegistry.Config.AUTHENTICATIONS }) })
 	@Nullable
 	@Constraint(value = ClientSecretAvailable.class, asWarning = true, args = {
-		@Ref({ ServiceRegistryPart.SERVICE_REGISTRY, ServiceMethodRegistry.Config.SECRETS }) })
+		@Ref({ ServiceRegistryPart.SERVICE_REGISTRY, ServiceMethodRegistry.Config.SECRETS }),
+		@Ref({ ServiceRegistryPart.SERVICE_REGISTRY, ServiceMethodRegistry.Config.AUTHENTICATIONS })
+	})
 	@Format(CommaSeparatedStrings.class)
 	List<String> getAuthentication();
 
@@ -218,9 +220,17 @@ public interface MethodDefinition extends ParameterContext, NamedConfigMandatory
 		}
 
 		@Override
+		public boolean isChecked(int index) {
+			return index == 0;
+		}
+
+		@Override
 		protected void checkValue(PropertyModel<List<String>> authentication,
-				PropertyModel<Map<String, ClientSecret>> clientSecrets) {
-			checkSecretAvailable(authentication, CollectionUtil.nonNull(clientSecrets.getValue()).values());
+				PropertyModel<Map<String, ClientSecret>> clientSecrets,
+				PropertyModel<Map<String, ? extends AuthenticationConfig>> availableAuthentications
+		) {
+			checkSecretAvailable(authentication, CollectionUtil.nonNull(clientSecrets.getValue()).values(),
+				CollectionUtil.nonNull(availableAuthentications.getValue()));
 		}
 
 	}

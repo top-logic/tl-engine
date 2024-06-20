@@ -10,6 +10,8 @@ import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.top_logic.knowledge.wrap.person.Person;
+
 /**
  * {@link Authenticator} that always authenticates the request.
  * 
@@ -28,8 +30,9 @@ public class AlwaysAuthenticated implements Authenticator {
 	}
 
 	@Override
-	public void authenticate(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		// No authentication check.
+	public Person authenticate(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		// No authentication or person check.
+		return null;
 	}
 
 	@Override

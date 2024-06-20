@@ -13,6 +13,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.service.openapi.server.impl.ComputationFailure;
@@ -60,13 +61,13 @@ class PathHandler {
 	 */
 	public void handleRequest(HttpServletRequest req, HttpServletResponse resp, Map<String, String> rawPathParams)
 			throws IOException, InvalidValueException, AuthenticationFailure, ComputationFailure {
-		_authenticator.authenticate(req, resp);
+		Person localAccount = _authenticator.authenticate(req, resp);
 		HashMap<String, Object> parameters = new HashMap<>();
 		for (ConcreteRequestParameter<?> parser : _parameterParsers) {
 			parser.parse(parameters, req, rawPathParams);
 		}
 
-		_implementation.handleRequest(parameters, resp);
+		_implementation.handleRequest(localAccount, parameters, resp);
 	}
 
 }

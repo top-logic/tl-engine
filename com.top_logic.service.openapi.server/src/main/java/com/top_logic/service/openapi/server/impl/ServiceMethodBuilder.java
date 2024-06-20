@@ -7,6 +7,7 @@ package com.top_logic.service.openapi.server.impl;
 
 import java.util.List;
 
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.server.conf.Operation;
 
 /**
@@ -25,7 +26,7 @@ public interface ServiceMethodBuilder {
 	 *        The path the created {@link ServiceMethod} will be registered for.
 	 * @param parameters
 	 *        Parameter names that describe the arguments that will be passed to invocations, see
-	 *        {@link ServiceMethod#handleRequest(java.util.Map, javax.servlet.http.HttpServletResponse)}.
+	 *        {@link ServiceMethod#handleRequest(Person, java.util.Map, javax.servlet.http.HttpServletResponse)}.
 	 */
 	ServiceMethod build(String path, List<String> parameters);
 

@@ -36,6 +36,7 @@ import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOClass;
+import com.top_logic.knowledge.objects.identifier.ObjectBranchId;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.knowledge.util.OrderedLinkUtil;
@@ -46,7 +47,6 @@ import com.top_logic.model.migration.data.QualifiedPartName;
 import com.top_logic.model.migration.data.QualifiedTypeName;
 import com.top_logic.model.migration.data.Type;
 import com.top_logic.model.migration.data.TypePart;
-import com.top_logic.util.TLContext;
 
 /**
  * {@link MigrationProcessor} adding links to the association table of the configured
@@ -157,22 +157,22 @@ public class SynthesizeLinksProcessor extends AbstractConfiguredInstance<Synthes
 
 			Type source = util.getTLTypeOrFail(connection, config.getSourceType());
 			String sourceTableName = getTableName(context, config.getSourceTable());
-			Map<Long, Pair<Long, Long>> sourceLifetimeByIds =
-				getObjectLifetimeById(log, connection, sqlDialect, source, sourceTableName);
+			Map<ObjectBranchId, Pair<Long, Long>> sourceLifetimeByIds =
+				getObjectLifetimeById(context, log, connection, sqlDialect, source, sourceTableName);
 
 			Type target = util.getTLTypeOrFail(connection, config.getTargetType());
 			String targetTableName = getTableName(context, config.getTargetTable());
-			Map<Long, Pair<Long, Long>> targetLifetimeByIds =
-				getObjectLifetimeById(log, connection, sqlDialect, target, targetTableName);
+			Map<ObjectBranchId, Pair<Long, Long>> targetLifetimeByIds =
+				getObjectLifetimeById(context, log, connection, sqlDialect, target, targetTableName);
 
 			TypePart reference = util.getTLTypePartOrFail(connection, config.getReference());
 
 			boolean isSorted = config.isSorted();
 			int addedRows = 0;
-			for (Entry<Long, Pair<Long, Long>> sourceLifetimeById : sourceLifetimeByIds.entrySet()) {
+			for (Entry<ObjectBranchId, Pair<Long, Long>> sourceLifetimeById : sourceLifetimeByIds.entrySet()) {
 				int sortOrderCounter = 1;
 
-				for (Entry<Long, Pair<Long, Long>> targetLifetimeById : targetLifetimeByIds.entrySet()) {
+				for (Entry<ObjectBranchId, Pair<Long, Long>> targetLifetimeById : targetLifetimeByIds.entrySet()) {
 					Pair<Long, Long> sourceLifetime = sourceLifetimeById.getValue();
 					Pair<Long, Long> targetLifetime = targetLifetimeById.getValue();
 
@@ -180,12 +180,13 @@ public class SynthesizeLinksProcessor extends AbstractConfiguredInstance<Synthes
 						TLID id = util.newID(connection);
 						long revMax = Math.min(sourceLifetime.getSecond(), targetLifetime.getSecond());
 						long revMin = Math.max(sourceLifetime.getFirst(), targetLifetime.getFirst());
-						TLID sourceId = IdentifierUtil.fromExternalForm(sourceLifetimeById.getKey().toString());
-						TLID targetId = IdentifierUtil.fromExternalForm(targetLifetimeById.getKey().toString());
+						long branchId = sourceLifetimeById.getKey().getBranchId();
+						TLID sourceId = sourceLifetimeById.getKey().getObjectName();
+						TLID targetId = targetLifetimeById.getKey().getObjectName();
 						Integer sortOrder = isSorted ? sortOrderCounter : null;
 
 						addedRows += insertStatement.executeUpdate(connection,
-							TLContext.TRUNK_ID, 
+							branchId,
 							id, 
 							revMax,
 							revMin,
@@ -268,23 +269,26 @@ public class SynthesizeLinksProcessor extends AbstractConfiguredInstance<Synthes
 		return ((MOClass) context.getSchemaRepository().getType(table)).getDBMapping().getDBName();
 	}
 
-	private Map<Long, Pair<Long, Long>> getObjectLifetimeById(Log log, Connection connection, DBHelper helper, Type type,
+	private Map<ObjectBranchId, Pair<Long, Long>> getObjectLifetimeById(MigrationContext context, Log log,
+			Connection connection, DBHelper helper, Type type,
 			String tableName) {
-		CompiledStatement selectStatement = createSelectStatement(helper, tableName, type);
+		CompiledStatement selectStatement = createSelectStatement(context, helper, tableName, type);
 
-		Map<Long, Pair<Long, Long>> lifetimeById = new HashMap<>();
+		Map<ObjectBranchId, Pair<Long, Long>> lifetimeById = new HashMap<>();
 
 		try (ResultSet result = selectStatement.executeQuery(connection)) {
 			while (result.next()) {
-				long id = result.getLong(1);
-				long revMin = result.getLong(2);
-				long revMax = result.getLong(3);
+				long branch = result.getLong(1);
+				TLID id = IdentifierUtil.getId(result, 2);
+				long revMin = result.getLong(3);
+				long revMax = result.getLong(4);
 
-				Pair<Long, Long> pair = lifetimeById.get(id);
+				ObjectBranchId objId = new ObjectBranchId(branch, null, id);
+				Pair<Long, Long> pair = lifetimeById.get(objId);
 				if (pair == null) {
-					lifetimeById.put(id, new Pair<>(revMin, revMax));
+					lifetimeById.put(objId, new Pair<>(revMin, revMax));
 				} else {
-					lifetimeById.put(id, new Pair<>(pair.getFirst(), revMax));
+					lifetimeById.put(objId, new Pair<>(pair.getFirst(), revMax));
 				}
 			}
 		} catch (SQLException exception) {
@@ -295,10 +299,13 @@ public class SynthesizeLinksProcessor extends AbstractConfiguredInstance<Synthes
 		return lifetimeById;
 	}
 
-	private CompiledStatement createSelectStatement(DBHelper sqlDialect, String tableName, Type type) {
+	private CompiledStatement createSelectStatement(MigrationContext context, DBHelper sqlDialect, String tableName,
+			Type type) {
+		Util util = context.getSQLUtils();
 		return query(
 			select(
 				columns(
+					util.branchColumnDef(),
 					columnDef(BasicTypes.IDENTIFIER_DB_NAME),
 					columnDef(BasicTypes.REV_MIN_DB_NAME),
 					columnDef(BasicTypes.REV_MAX_DB_NAME)

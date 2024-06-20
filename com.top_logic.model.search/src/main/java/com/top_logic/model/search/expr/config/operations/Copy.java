@@ -317,21 +317,9 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 		}
 
 		final void copyComposite(TLObject orig, TLReference reference, TLObject copy) {
-			// TODO #28073: This check becomes unnecessary, after update.
-			TLReference currentReference;
-			if (WrapperHistoryUtils.isCurrent(reference)) {
-				currentReference = reference;
-			} else {
-				currentReference = WrapperHistoryUtils.getCurrent(reference);
-				if (currentReference == null) {
-					// Reference does no longer exist.
-					return;
-				}
-			}
-
 			// Note: The target object may be of another type than the source object and not
 			// define all properties of the source.
-			if (!defines(copy, currentReference)) {
+			if (!defines(copy, reference)) {
 				return;
 			}
 
@@ -342,7 +330,7 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 			}
 
 			Object valueCopy = copyValue(orig, reference, value);
-			copy.tUpdate(currentReference, valueCopy);
+			copy.tUpdate(reference, valueCopy);
 		}
 
 		private Object copyValue(TLObject orig, TLReference reference, Object value) {
@@ -540,21 +528,9 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 
 		private void copyValues(List<TLStructuredTypePart> parts, TLObject orig, TLObject copy) {
 			for (TLStructuredTypePart part : parts) {
-				TLStructuredTypePart currentPart;
-				// TODO #28073: This check becomes unnecessary, after update.
-				if (WrapperHistoryUtils.isCurrent(part)) {
-					currentPart = part;
-				} else {
-					currentPart = WrapperHistoryUtils.getCurrent(part);
-					if (currentPart == null) {
-						// Property no longer exists.
-						continue;
-					}
-				}
-
 				// Note: The target object may be of another type than the source object and not
 				// define all properties of the source.
-				if (!defines(copy, currentPart)) {
+				if (!defines(copy, part)) {
 					continue;
 				}
 
@@ -570,7 +546,7 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 				} else {
 					copyValue = value;
 				}
-				copy.tUpdate(currentPart, copyValue);
+				copy.tUpdate(part, copyValue);
 			}
 		}
 

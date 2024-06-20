@@ -165,7 +165,7 @@ public class ChangeReferencedObjectsTypeProcessor
 
 		try (ResultSet result = createTargetIdSelectStatement(helper, reference, tableName).executeQuery(connection)) {
 			while (result.next()) {
-				targetIds.add(IdentifierUtil.fromExternalForm(Long.toString(result.getLong(1))));
+				targetIds.add(IdentifierUtil.getId(result, 1));
 			}
 		} catch (SQLException exception) {
 			log.error("Failed to select target identifiers in association table '" + tableName
@@ -177,11 +177,10 @@ public class ChangeReferencedObjectsTypeProcessor
 
 	private CompiledStatement createTargetIdSelectStatement(DBHelper helper, TypePart reference, String tableName) {
 		return query(
-			select(
+			selectDistinct(
 				columns(columnDef(DEST_ID_DB_NAME)),
 				table(tableName),
-				eqSQL(column(META_ATTRIBUTE_ID_DB_NAME), literal(DBType.ID, reference.getDefinition())),
-				noOrder())).toSql(helper);
+				eqSQL(column(META_ATTRIBUTE_ID_DB_NAME), literal(DBType.ID, reference.getDefinition())))).toSql(helper);
 	}
 
 }

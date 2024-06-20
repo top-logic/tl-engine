@@ -13,7 +13,7 @@ package com.top_logic.basic.db.sql;
  */
 public class SQLInSetSelect extends AbstractSQLExpression {
 
-	private SQLExpression expr;
+	private SQLExpression _expr;
 
 	private SQLSelect _select;
 
@@ -26,7 +26,7 @@ public class SQLInSetSelect extends AbstractSQLExpression {
 	 *        See {@link #getSelect()}.
 	 */
 	SQLInSetSelect(SQLExpression expr, SQLSelect select) {
-		this.expr = expr;
+		_expr = expr;
 		_select = select;
 	}
 
@@ -34,12 +34,12 @@ public class SQLInSetSelect extends AbstractSQLExpression {
 	 * The expression to test.
 	 */
 	public SQLExpression getExpr() {
-		return expr;
+		return _expr;
 	}
 
 	/** @see #getExpr() */
 	public void setExpr(SQLExpression expr) {
-		this.expr = expr;
+		_expr = expr;
 	}
 
 	/**

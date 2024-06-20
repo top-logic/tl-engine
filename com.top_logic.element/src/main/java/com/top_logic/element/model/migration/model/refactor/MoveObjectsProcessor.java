@@ -300,7 +300,7 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 					SQLH.mangleDBName(RevisionXref.XREF_REV_ATTRIBUTE),
 					SQLH.mangleDBName(RevisionXref.XREF_BRANCH_ATTRIBUTE),
 					SQLH.mangleDBName(RevisionXref.XREF_TYPE_ATTRIBUTE)),
-				select(true,
+				selectDistinct(
 					columns(
 						columnDef(BasicTypes.REV_MIN_DB_NAME),
 						context.getSQLUtils().branchColumnDef(),
@@ -308,7 +308,7 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 					table(table.getDBMapping().getDBName())))).toSql(connection.getSQLDialect());
 
 		int readded = fillXref.executeUpdate(connection);
-		log.info("Re-added " + readded + " rows for table '" + table.getName() + "' from '"
+		log.info("Re-added " + readded + " rows for table '" + table.getName() + "' to '"
 			+ RevisionXref.REVISION_XREF_TYPE_NAME + ".");
 	}
 

@@ -29,6 +29,7 @@ import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.element.structured.util.StructuredElementUtil;
 import com.top_logic.element.structured.wrap.StructuredElementWrapperFactory;
 import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
@@ -197,6 +198,10 @@ public interface StructuredElement extends Wrapper, TLScope {
 	 * @return A new, mutable and resizable {@link Set}.
 	 */
 	default Set<TLClass> getChildrenTypes() {
+		if (!WrapperHistoryUtils.isCurrent(this)) {
+			// No instantiation in historic context.
+			return set();
+		}
 		TLStructuredTypePart childrenAttribute = tType().getPart(CHILDREN_ATTR);
 		if (childrenAttribute == null) {
 			return set();

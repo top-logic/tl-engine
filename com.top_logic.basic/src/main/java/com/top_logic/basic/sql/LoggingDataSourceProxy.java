@@ -940,20 +940,40 @@ public class LoggingDataSourceProxy extends DefaultDataSourceProxy {
 		 */
 		private static final Pattern SET_LITERAL_PATTERN = Pattern.compile("(?i)\\b(in)\\s+\\([^\\)]+\\)");
 
+		/**
+		 * Pattern matching a number followed or following one of the char " =><;()[]"
+		 */
+		private static final Pattern NUMBER_PATTERN =
+			Pattern.compile("(^|[\\s=><;\\(\\)\\[\\]])\\d+($|[\\s=><;\\(\\)\\[\\]])");
+
+		private final Pattern _literalStringPattern;
+
 		private final Map<String, Statistics> buffer = new HashMap<>();
 
 		private final boolean _allocateStacktrace;
+
+		private final char _stringQuoteChar;
+
+		/**
+		 * Creates a {@link AggregatingAnalyzer}.
+		 */
+		public AggregatingAnalyzer(boolean allocateStacktrace, char stringQuoteChar) {
+			_allocateStacktrace = allocateStacktrace;
+			_stringQuoteChar = stringQuoteChar;
+			_literalStringPattern =
+				Pattern.compile(_stringQuoteChar + "[^" + _stringQuoteChar + "]+" + _stringQuoteChar);
+		}
 
 		/**
 		 * Creates a {@link AggregatingAnalyzer}.
 		 */
 		public AggregatingAnalyzer(boolean allocateStacktrace) {
-			_allocateStacktrace = allocateStacktrace;
+			this(allocateStacktrace, '\'');
 		}
 
 		@Override
 		public void log(String sql, long elapsed, long rows, int calls) {
-			String key = unifySetLiterals(sql);
+			String key = unifySQL(sql);
 			synchronized (buffer) {
 				Statistics statistics = buffer.get(key);
 				if (statistics == null) {
@@ -964,9 +984,14 @@ public class LoggingDataSourceProxy extends DefaultDataSourceProxy {
 			}
 		}
 
-		private String unifySetLiterals(String sql) {
+		private String unifySQL(String sql) {
+
+			String unified = sql;
 			// Take the "in" from the first group to preserve its case.
-			return SET_LITERAL_PATTERN.matcher(sql).replaceAll("$1 (...)");
+			unified = SET_LITERAL_PATTERN.matcher(unified).replaceAll("$1 (...)");
+			unified = NUMBER_PATTERN.matcher(unified).replaceAll("$1<number>$2");
+			unified = _literalStringPattern.matcher(unified).replaceAll(_stringQuoteChar + "..." + _stringQuoteChar);
+			return unified;
 		}
 
 		private Exception allocateStacktrace() {

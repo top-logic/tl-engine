@@ -2386,7 +2386,7 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
      */
 	protected void internalEscape(Appendable out, String str) throws IOException {
 		int len    = str.length();
-		char quote = '\'';
+		char quote = stringQuoteChar();
 		
 		out.append(quote);
 		for (int i = 0; i < len; i++) {
@@ -2397,6 +2397,13 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 		        out.append(ch);
 		}
 		out.append(quote);
+	}
+
+	/**
+	 * Character that is used to quote string literals.
+	 */
+	public char stringQuoteChar() {
+		return '\'';
 	}
     
     /**

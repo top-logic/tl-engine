@@ -17,7 +17,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.db.sql.CompiledStatement;
-import com.top_logic.basic.sql.DBType;
+import com.top_logic.basic.db.sql.SQLFactory;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
@@ -88,7 +88,7 @@ public class InvertLinkTableProcessor extends AbstractConfiguredInstance<InvertL
 			CompiledStatement sql = query(
 				update(
 					table(table.getDBMapping().getDBName()),
-					literal(DBType.BOOLEAN, Boolean.TRUE),
+					SQLFactory.literalTrueLogical(),
 					columnNames(
 						// columnDef(srcRef.getColumn(ReferencePart.branch).getDBName()),
 						// columnDef(srcRef.getColumn(ReferencePart.revision).getDBName()),

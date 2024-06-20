@@ -164,7 +164,7 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 					adjustTable(log, connection, concreteTable, column, newName, newType, newDbName, newMandatory);
 				}
 
-				if (concreteTable.getDeclaredAttributeOrNull(columnName) != null) {
+				if (concreteTable.hasDeclaredAttribute(columnName)) {
 					tablesWithDeclaredAttribute.add(concreteTable.getName());
 				}
 			}

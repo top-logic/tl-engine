@@ -76,26 +76,6 @@ public class MySQLHelper extends DBHelper {
 			backslashEscape(out, s);
 		}
 
-		static void backslashEscape(Appendable out, String s) throws IOException {
-			out.append('\'');
-			for (int n = 0, cnt = s.length(); n < cnt; n++) {
-				char ch = s.charAt(n);
-				switch (ch) {
-					case '\'':
-						out.append('\'');
-						out.append(ch);
-						break;
-					case '\\':
-						out.append('\\');
-						out.append(ch);
-						break;
-					default:
-						out.append(ch);
-						break;
-				}
-			}
-			out.append('\'');
-		}
 	}
 
 	private static final long MAX_TINYTEXT_SIZE   = (1L << 8) - 1;
@@ -674,6 +654,32 @@ public class MySQLHelper extends DBHelper {
 	@Override
 	public String dropForeignKey(String tableName, String foreignKeyName) {
 		return "ALTER TABLE " + tableRef(tableName) + " DROP FOREIGN KEY " + tableRef(foreignKeyName);
+	}
+
+	/**
+	 * Quotes the given string by replacing <code>'</code> by <code>''</code> and <code>\</code> by
+	 * <code>\\</code>.
+	 */
+	protected void backslashEscape(Appendable out, String s) throws IOException {
+		char quote = stringQuoteChar();
+		out.append(quote);
+		for (int n = 0, cnt = s.length(); n < cnt; n++) {
+			char ch = s.charAt(n);
+			switch (ch) {
+				case '\'':
+					out.append('\'');
+					out.append(ch);
+					break;
+				case '\\':
+					out.append('\\');
+					out.append(ch);
+					break;
+				default:
+					out.append(ch);
+					break;
+			}
+		}
+		out.append(quote);
 	}
 
 }

@@ -302,6 +302,10 @@ public class AttributeOperations {
 	 */
 	private static TLStructuredTypePart getAttributeOverride(TLStructuredType actualType,
 			TLStructuredTypePart attribute) {
+		if (actualType == null) {
+			return null;
+		}
+
 		TLStructuredTypePart attributeInObjectRev = WrapperHistoryUtils.getWrapper(actualType.tRevision(), attribute);
 		if (attributeInObjectRev == null) {
 			// Attribute does not exist at the time of the accessed type.

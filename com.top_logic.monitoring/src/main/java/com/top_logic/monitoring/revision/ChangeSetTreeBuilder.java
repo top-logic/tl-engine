@@ -59,6 +59,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelI18N;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.TLCollator;
 
 /**
@@ -427,6 +428,10 @@ public class ChangeSetTreeBuilder extends DefaultTreeTableBuilder {
 				try {
 					TLObject wrapper = item.getWrapper();
 					TLStructuredType type = wrapper.tType();
+					if (type == null) {
+						// Type no longer exists, use top-most type.
+						type = (TLStructuredType) TLModelUtil.findType("tl.model", "TLObject");
+					}
 					return type.tId();
 				} catch (NullPointerException ex) {
 					// Trap for problem reported in Ticket #23017.

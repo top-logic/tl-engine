@@ -97,6 +97,11 @@ public interface AttributeConfig extends PolymorphicConfiguration<MOAttribute> {
 	@InstanceFormat
 	AttributeStorage getStorage();
 
+	/**
+	 * @see #getStorage()
+	 */
+	void setStorage(AttributeStorage value);
+
 	/** @see MOAttribute#isHidden() */
 	@Name(DOXMLConstants.HIDDEN_ATTRIBUTE)
 	boolean isHidden();

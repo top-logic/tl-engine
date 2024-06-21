@@ -531,6 +531,62 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	}
 
 	/**
+	 * Lookup {@link PreloadTest} type.
+	 */
+	public static com.top_logic.model.TLClass getPreloadTestType() {
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TEST_TYPES_STRUCTURE).getType(PreloadTest.PRELOAD_TEST_TYPE);
+	}
+
+	/**
+	 * Lookup {@link PreloadTest#COMPOSITE_LIST_ATTR} of {@link PreloadTest}.
+	 */
+	public static com.top_logic.model.TLReference getCompositeListPreloadTestAttr() {
+		return (com.top_logic.model.TLReference) getPreloadTestType().getPart(PreloadTest.COMPOSITE_LIST_ATTR);
+	}
+
+	/**
+	 * Lookup {@link PreloadTest#COMPOSITE_SET_ATTR} of {@link PreloadTest}.
+	 */
+	public static com.top_logic.model.TLReference getCompositeSetPreloadTestAttr() {
+		return (com.top_logic.model.TLReference) getPreloadTestType().getPart(PreloadTest.COMPOSITE_SET_ATTR);
+	}
+
+	/**
+	 * Lookup {@link PreloadTest#INLINE_ATTR} of {@link PreloadTest}.
+	 */
+	public static com.top_logic.model.TLReference getInlinePreloadTestAttr() {
+		return (com.top_logic.model.TLReference) getPreloadTestType().getPart(PreloadTest.INLINE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link PreloadTest#INLINE_REVERSE_ATTR} of {@link PreloadTest}.
+	 */
+	public static com.top_logic.model.TLReference getInlineReversePreloadTestAttr() {
+		return (com.top_logic.model.TLReference) getPreloadTestType().getPart(PreloadTest.INLINE_REVERSE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link PreloadTest#LINK_LIST_ATTR} of {@link PreloadTest}.
+	 */
+	public static com.top_logic.model.TLReference getLinkListPreloadTestAttr() {
+		return (com.top_logic.model.TLReference) getPreloadTestType().getPart(PreloadTest.LINK_LIST_ATTR);
+	}
+
+	/**
+	 * Lookup {@link PreloadTest#LINK_SET_ATTR} of {@link PreloadTest}.
+	 */
+	public static com.top_logic.model.TLReference getLinkSetPreloadTestAttr() {
+		return (com.top_logic.model.TLReference) getPreloadTestType().getPart(PreloadTest.LINK_SET_ATTR);
+	}
+
+	/**
+	 * Lookup {@link PreloadTest#SINGLETON_LINK_ATTR} of {@link PreloadTest}.
+	 */
+	public static com.top_logic.model.TLReference getSingletonLinkPreloadTestAttr() {
+		return (com.top_logic.model.TLReference) getPreloadTestType().getPart(PreloadTest.SINGLETON_LINK_ATTR);
+	}
+
+	/**
 	 * Name of type <code>CommonNode</code> in structure {@link #TEST_TYPES_STRUCTURE}.
 	 * 
 	 * @deprecated Use {@link CommonNode#COMMON_NODE_TYPE}.
@@ -636,6 +692,19 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	public static final String KO_NAME_PART = "CompositePart";
 
 	/**
+	 * Name of type <code>PreloadTest</code> in structure {@link #TEST_TYPES_STRUCTURE}.
+	 * 
+	 * @deprecated Use {@link PreloadTest#PRELOAD_TEST_TYPE}.
+	 */
+	@Deprecated
+	public static final String PRELOAD_TEST_NODE = PreloadTest.PRELOAD_TEST_TYPE;
+
+	/**
+	 * Storage table name of {@link #PRELOAD_TEST_NODE} objects.
+	 */
+	public static final String KO_NAME_PRELOAD_TEST = "PreloadTest";
+
+	/**
 	 * Singleton <code>ROOT</code>.
 	 */
 	public ANode getRootSingleton() {
@@ -725,6 +794,20 @@ public class TestTypesFactory extends com.top_logic.element.structured.wrap.Stru
 	 */
 	public final Part createPart() {
 		return createPart(null);
+	}
+
+	/**
+	 * Create an instance of {@link PreloadTest} type.
+	 */
+	public final PreloadTest createPreloadTest(com.top_logic.model.TLObject context) {
+		return (PreloadTest) createObject(getPreloadTestType(), context);
+	}
+
+	/**
+	 * Create an instance of {@link PreloadTest} type.
+	 */
+	public final PreloadTest createPreloadTest() {
+		return createPreloadTest(null);
 	}
 
 	/**

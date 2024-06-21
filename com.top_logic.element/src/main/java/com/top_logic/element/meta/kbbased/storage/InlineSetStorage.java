@@ -30,6 +30,9 @@ import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.model.export.PreloadContribution;
+import com.top_logic.model.export.SinglePreloadContribution;
+import com.top_logic.model.v5.AssociationCachePreload;
 
 /**
  * {@link InlineCollectionStorage} for unordered references.
@@ -144,6 +147,11 @@ public class InlineSetStorage<C extends InlineSetStorage.Config<?>> extends Inli
 		}
 		links.removeAll(toRemove);
 		links.addAll(toAdd);
+	}
+
+	@Override
+	public PreloadContribution getPreload() {
+		return new SinglePreloadContribution(new AssociationCachePreload(_outgoingQuery));
 	}
 
 	/**

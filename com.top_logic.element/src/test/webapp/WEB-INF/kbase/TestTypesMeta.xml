@@ -81,5 +81,33 @@
 			</attributes>
 		</metaobject>
 	
+		<metaobject
+			object_name="PreloadTest"
+			super_class="AttributedObject"
+		>
+			<attributes>
+				<reference
+					att_name="inline"
+					target-type="PreloadTest"
+				/>
+				<reference
+					att_name="inlineReverse"
+					target-type="PreloadTest"
+				/>
+				<reference
+					att_name="containerSet"
+					target-type="PreloadTest"
+				/>
+				<reference
+					att_name="containerList"
+					target-type="PreloadTest"
+				/>
+				<mo_attribute
+					att_name="listOrder"
+					att_type="Integer"
+					mandatory="false"
+				/>
+			</attributes>
+		</metaobject>
 	</metaobjects>
 </objectlist>

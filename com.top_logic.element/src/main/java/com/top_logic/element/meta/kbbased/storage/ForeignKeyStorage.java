@@ -40,6 +40,10 @@ import com.top_logic.model.composite.CompositeStorage;
 import com.top_logic.model.composite.ContainerStorage;
 import com.top_logic.model.composite.SourceTable;
 import com.top_logic.model.config.annotation.TableName;
+import com.top_logic.model.export.PreloadContribution;
+import com.top_logic.model.export.SinglePreloadContribution;
+import com.top_logic.model.v5.AssociationCachePreload;
+import com.top_logic.model.v5.ReferencePreload;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -126,6 +130,10 @@ public class ForeignKeyStorage<C extends ForeignKeyStorage.Config<?>> extends TL
 		_incomingQuery =
 			AssociationQuery.createQuery(attribute.getName() + "References", TLObject.class,
 				getConfig().getStorageType(), getStorageAttribute());
+	}
+
+	private String getTable() {
+		return _incomingQuery.getAssociationTypeName();
 	}
 
 	private String getStorageAttributeName(TLStructuredTypePart attribute, String configuredStorageAttribute) {
@@ -239,7 +247,17 @@ public class ForeignKeyStorage<C extends ForeignKeyStorage.Config<?>> extends TL
 
 	@Override
 	public ContainerStorage getContainerStorage(TLReference reference) {
-		return new SourceTable(getConfig().getStorageType(), getStorageAttribute(), reference);
+		return new SourceTable(getTable(), getStorageAttribute(), reference);
+	}
+
+	@Override
+	public PreloadContribution getPreload() {
+		return new ReferencePreload(getTable(), getStorageAttribute());
+	}
+
+	@Override
+	public PreloadContribution getReversePreload() {
+		return new SinglePreloadContribution(new AssociationCachePreload(_incomingQuery));
 	}
 
 }

@@ -295,8 +295,13 @@ public class IDEFileSystemCache extends FileSystemCache {
 					Files.walk(creation).filter(Files::isRegularFile).forEach(path -> {
 						addFileToCache(path, indexOfRootFile);
 					});
-				} catch (IOException exception) {
-					Logger.error("Path " + creation + " can not be accessed.", exception, this);
+				} catch (IOException ex) {
+					// Do not log an error, since this can happen during normal operation if e.g. a
+					// theme is created and immediately deleted. The addition can then be processed
+					// after the deletion.
+					Logger.info("Path " + creation
+						+ " can (no longer) be accessed (was potentially deleted in the meantime): " + ex.getMessage(),
+						IDEFileSystemCache.class);
 				}
 			}
 		}

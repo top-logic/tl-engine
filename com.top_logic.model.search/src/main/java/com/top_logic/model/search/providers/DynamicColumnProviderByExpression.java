@@ -376,6 +376,7 @@ public class DynamicColumnProviderByExpression
 		}
 
 		if (displayMode.isDisplayed()) {
+			dynamicColumnNames.removeAll(table.getDefaultColumns());
 			table.setDefaultColumns(CollectionUtil.concat(table.getDefaultColumns(), dynamicColumnNames));
 		}
 	}

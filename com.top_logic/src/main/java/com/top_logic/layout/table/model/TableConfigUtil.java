@@ -249,7 +249,7 @@ public class TableConfigUtil {
 		}
 		if (tableConfig.valueSet(descriptor.getProperty(TableConfig.DEFAULT_COLUMNS_ATTRIBUTE))) {
 			settings.add(result -> result.setDefaultColumns(
-				CollectionUtil.concat(tableConfig.getDefaultColumns(), result.getDefaultColumns())));
+				CollectionUtil.concatUnique(tableConfig.getDefaultColumns(), result.getDefaultColumns())));
 		}
 		if (tableConfig.valueSet(descriptor.getProperty(TableConfig.FOOTER_STYLE_ATTRIBUTE))) {
 			settings.add(result -> result.setFooterStyle(tableConfig.getFooterStyle()));

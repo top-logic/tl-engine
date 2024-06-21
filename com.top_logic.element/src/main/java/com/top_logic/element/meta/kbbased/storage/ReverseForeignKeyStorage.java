@@ -38,6 +38,10 @@ import com.top_logic.model.composite.CompositeStorage;
 import com.top_logic.model.composite.ContainerStorage;
 import com.top_logic.model.composite.MonomorphicContainerColumn;
 import com.top_logic.model.composite.PolymorphicContainerColumn;
+import com.top_logic.model.export.PreloadContribution;
+import com.top_logic.model.export.SinglePreloadContribution;
+import com.top_logic.model.v5.AssociationCachePreload;
+import com.top_logic.model.v5.ReferencePreload;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -229,6 +233,19 @@ public class ReverseForeignKeyStorage<C extends ReverseForeignKeyStorage.Config<
 		} else {
 			return new PolymorphicContainerColumn(containerColumn, referenceColumn);
 		}
+	}
+
+	@Override
+	public PreloadContribution getPreload() {
+		return new SinglePreloadContribution(new AssociationCachePreload(_outgoingQuery));
+	}
+
+	@Override
+	public PreloadContribution getReversePreload() {
+		/* When the column is polymorphic, i.e. there is an additional column holding the
+		 * TLReference, then this preload will actually load too many objects. But this doesn't
+		 * matter. */
+		return new ReferencePreload(getTable(), getStorageAttribute());
 	}
 
 }

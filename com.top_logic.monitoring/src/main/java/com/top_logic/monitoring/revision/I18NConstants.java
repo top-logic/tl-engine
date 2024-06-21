@@ -19,7 +19,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey2 COMMIT_ON_MULTIPLE_BRANCHES;
 
-	public static ResKey REVERT_NOT_POSSIBLE;
+	/**
+	 * @en Revert of revision {0} is not possible, because the current data is incompatible with the
+	 *     change: {1}
+	 */
+	public static ResKey2 REVERT_NOT_POSSIBLE__REV_CAUSE;
 
 	public static ResKey2 CONFIRM_REVERT_REVISION__REVISION_DATE;
 

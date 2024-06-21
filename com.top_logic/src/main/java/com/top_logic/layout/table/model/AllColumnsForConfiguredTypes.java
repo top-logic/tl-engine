@@ -56,6 +56,7 @@ public class AllColumnsForConfiguredTypes extends Function0<Collection<ColumnOpt
 
 	@Override
 	public Collection<ColumnOption> apply() {
+		// return AllColumnOptions.INSTANCE.apply(getTypeRefs());
 		return AllColumnOptions.INSTANCE.apply(getTypeRefs(), getProviders(), null);
 	}
 
@@ -73,8 +74,13 @@ public class AllColumnsForConfiguredTypes extends Function0<Collection<ColumnOpt
 	private Collection<PolymorphicConfiguration<? extends TableConfigurationProvider>> getProviders() {
 		PropertyDescriptor typeProperty =
 			_formModel.descriptor().getProperty(ColumnsTemplateParameters.CONFIGURATION_PROVIDERS);
-		return (Collection<PolymorphicConfiguration<? extends TableConfigurationProvider>>) _formModel
-			.value(typeProperty);
+
+		if (typeProperty != null) {
+			return (Collection<PolymorphicConfiguration<? extends TableConfigurationProvider>>) _formModel
+				.value(typeProperty);
+		}
+
+		return Collections.emptyList();
 	}
 
 	private Collection<TLModelPartRef> createModelPartRefs(Collection<?> types) {

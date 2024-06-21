@@ -49,7 +49,7 @@ public abstract class AbstractCssClassUpdate extends DOMAction {
 			writeCssClassContent(context, writer);
 			writer.endCssClasses();
 			writer.endEmptyTag();
-		} catch (Exception throwable) {
+		} catch (Throwable throwable) {
 			writer.endAll(currentDepth);
 			writer.endTag(AJAXConstants.AJAX_PROPERTY);
 			Logger.error("Could not create css class update (Cause: " + throwable.getMessage(), throwable, this);

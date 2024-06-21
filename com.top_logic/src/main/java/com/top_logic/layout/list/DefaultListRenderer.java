@@ -202,7 +202,7 @@ public class DefaultListRenderer extends AbstractListRenderer {
 				int currentDepth = out.getDepth();
 				try {
 					listControl.getItemContentRenderer().write(context, out, listItem);
-				} catch (RuntimeException itemError) {
+				} catch (Throwable itemError) {
 					try {
 						out.endAll(currentDepth);
 
@@ -223,7 +223,7 @@ public class DefaultListRenderer extends AbstractListRenderer {
 	}
 
 	private void produceLabelRenderingError(DisplayContext context, TagWriter out, ListControl listControl,
-			RuntimeException itemError) throws IOException {
+			Throwable itemError) throws IOException {
 		RuntimeException labelRenderingError = ExceptionUtil.createException(
 			"Error occured during rendering of item of list '" + getListFieldName(listControl) + "'.",
 			Collections.singletonList(itemError));

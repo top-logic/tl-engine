@@ -37,9 +37,11 @@ public class VariableTemplate implements RawTemplateFragment {
 
 	@Override
 	public void write(DisplayContext context, TagWriter out, WithProperties properties) throws IOException {
+		int depth = out.getDepth();
 		try {
 			properties.renderProperty(context, out, _name);
-		} catch (RuntimeException exception) {
+		} catch (Throwable exception) {
+			out.endAll(depth);
 			switch (out.getState()) {
 				case ELEMENT_CONTENT:
 					HTMLTemplateUtils.renderError(context, out, exception);

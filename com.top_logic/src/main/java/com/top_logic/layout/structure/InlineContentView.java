@@ -141,8 +141,6 @@ public abstract class InlineContentView extends AbstractControlBase {
 	}
 
 	/*package protected*/ void writeComponentContents(DisplayContext context, TagWriter out) throws IOException {
-		HttpServletRequest request = context.asRequest();
-		
 		LayoutComponent mainlayout = MainLayout.getComponent(context);
 		LayoutUtils.setContextComponent(context, this.businessComponent);
 		context.set(LayoutConstants.ATTRIBUTE_CONTENTS_ONLY, Boolean.TRUE);
@@ -159,7 +157,7 @@ public abstract class InlineContentView extends AbstractControlBase {
 				processingInfo.setComponentName(businessComponent.getName());
 				processingInfo.setProcessingKind(ProcessingKind.COMPONENT_RENDERING);
 			}
-		} catch (ServletException ex) {
+		} catch (Throwable ex) {
 			out.endAll(currentDepth);
 			RenderErrorUtil.reportComponentRenderingError(context, out, businessComponent, currentDepth, ex);
 		} finally {

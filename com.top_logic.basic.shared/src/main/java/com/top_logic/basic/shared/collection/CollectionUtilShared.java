@@ -639,19 +639,19 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	 * Removes duplicated entries from a given list.
 	 * 
 	 * <p>
-	 * This implementation uses a temporary {@link Set}, consider using more efficient methods for
-	 * lists with {@link Comparable} elements, e.g. #sort other Methods in case you have a) lots of
-	 * data b) a List that is already sorted in some way.
+	 * This implementation uses a temporary {@link LinkedHashSet}, consider using more efficient
+	 * methods for lists with {@link Comparable} elements, e.g. #sort other Methods in case you have
+	 * a) lots of data b) a List that is already sorted in some way.
 	 * </p>
 	 * 
-	 * @param aList
+	 * @param list
 	 *        The list that contains duplicated entries.
-	 * @return A list that contains no duplicated entries.
+	 * @return A new, mutable and resizable list that contains no duplicated entries.
 	 * 
 	 * @see #sortRemovingDuplicates(List)
 	 */
-	public static <E> List<E> removeDuplicates(List<? extends E> aList) {
-		Set<? extends E> temp = toSet(aList);
+	public static <E> List<E> removeDuplicates(List<? extends E> list) {
+		Set<? extends E> temp = linkedSet(list);
 		return new ArrayList<>(temp);
 	}
 

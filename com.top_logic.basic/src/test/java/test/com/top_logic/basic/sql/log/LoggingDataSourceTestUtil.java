@@ -51,7 +51,7 @@ public class LoggingDataSourceTestUtil {
 		}
 	}
 
-	private static TestableLoggingDataSource analyzer(LoggingDataSourceProxy dataSource) {
+	static TestableLoggingDataSource analyzer(LoggingDataSourceProxy dataSource) {
 		TestableLoggingDataSource analyzer = (TestableLoggingDataSource) dataSource.getAnalyzer();
 		return analyzer;
 	}

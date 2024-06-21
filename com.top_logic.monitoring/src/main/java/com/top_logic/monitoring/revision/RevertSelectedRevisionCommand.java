@@ -6,13 +6,17 @@
 package com.top_logic.monitoring.revision;
 
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ListDefault;
+import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.event.ChangeSet;
 import com.top_logic.knowledge.event.ItemEvent;
@@ -79,7 +83,7 @@ public class RevertSelectedRevisionCommand extends ConfirmCommandHandler {
 	}
 
 	@Override
-	public HandlerResult internalHandleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model,
+	public HandlerResult internalHandleCommand(DisplayContext context, LayoutComponent aComponent, Object model,
 			Map<String, Object> someArguments) {
 		ChangeSet cs = (ChangeSet) model;
 		long revision = cs.getRevision();
@@ -95,9 +99,29 @@ public class RevertSelectedRevisionCommand extends ConfirmCommandHandler {
 		try {
 			KBUtils.revert(_kb, startRevision, branch, stopRevision, branch);
 		} catch (RuntimeException ex) {
-			return HandlerResult.error(I18NConstants.REVERT_NOT_POSSIBLE);
+			return HandlerResult
+				.error(I18NConstants.REVERT_NOT_POSSIBLE__REV_CAUSE.fill(cs.getRevision(), message(context, ex)));
 		}
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	private String message(DisplayContext context, Throwable ex) {
+		Set<String> messages = new LinkedHashSet<>();
+
+		for (Throwable current = ex; current != null; current = current.getCause()) {
+			String message;
+			if (current instanceof I18NFailure) {
+				ResKey errorKey = ((I18NFailure) current).getErrorKey();
+				message = context.getResources().getString(errorKey);
+			} else {
+				message = current.getMessage();
+			}
+			if (message != null && !message.isBlank()) {
+				messages.add(message);
+			}
+		}
+
+		return messages.stream().collect(Collectors.joining(" "));
 	}
 
 	private long getBranchContext(ChangeSet cs) throws MultipleBranchCommit {

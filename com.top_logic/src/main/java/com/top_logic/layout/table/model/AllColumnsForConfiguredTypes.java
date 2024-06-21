@@ -56,7 +56,6 @@ public class AllColumnsForConfiguredTypes extends Function0<Collection<ColumnOpt
 
 	@Override
 	public Collection<ColumnOption> apply() {
-		// return AllColumnOptions.INSTANCE.apply(getTypeRefs());
 		return AllColumnOptions.INSTANCE.apply(getTypeRefs(), getProviders(), null);
 	}
 

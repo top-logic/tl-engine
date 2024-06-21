@@ -1,0 +1,67 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>jmsReceive($destination)</code>
+</pre>
+
+<h2>Description</h2>
+
+<p><span style="color:#e74c3c"><strong>This function exists purely for test purposes and is not intended to be used in production systems.</strong></span><br />
+It can be used to receive a message from a queue or a topic and thus check the connection and functionality of a message queue system.</p>
+
+<p>In order for a message to be received, a target configuration must be created in the JMS service. The queue manager defined in the configuration must be accessible at the specified address in order for the message to be received successfully, otherwise an error will be displayed. IBM MQ, for example, can be used as the server here. This must be created and started separately. To receive a message, a message must also have already been sent.
+
+Translated with DeepL.com (free version)</p>
+
+<p> </p>
+
+<p> </p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>destination</td>
+			<td>Character string (target configuration)</td>
+			<td>Name of a target configuration in the JMS service</td>
+			<td>yes</td>
+			<td>-</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>return value</h2>
+
+<p>null, or the first message of the queue.</p>
+
+<h2>Examples</h2>
+
+<h3>Receive message (Topic)</h3>
+
+<pre>
+	<code>jmsReceive("Topic1");
+</code>
+</pre>
+
+<p>​</p>
+
+<h3>Receive message (Queue)</h3>
+
+<pre>
+	<code>jmsReceive("Queue1");
+</code>
+</pre>
+
+<p>​</p>
+
+<p> </p>

@@ -13,10 +13,13 @@
 			<ref id="b13"/>
 		</attribute>
 	</object>
-	<object id="b11" type="TestSearchExpression:B">
+	<object id="b11" type="TestSearchExpression:BSpecial">
 		<attribute name="name" value="B11"/>
 		<attribute name="other">
 			<ref id="b12"/>
+		</attribute>
+		<attribute name="special">
+			<ref id="b11"/>
 		</attribute>
 	</object>
 	<object id="b12" type="TestSearchExpression:B">

@@ -70,6 +70,18 @@
 						<reference name="other" type="B" />
 					</attributes>
 				</class>
+
+				<class name="BSpecial">
+					<annotations>
+						<table name="StructuredElement" />
+					</annotations>
+					<generalizations>
+						<generalization type="B"/>
+					</generalizations>
+					<attributes>
+						<reference name="special" type="BSpecial" />
+					</attributes>
+				</class>
 				
 				<class name="C">
 					<annotations>

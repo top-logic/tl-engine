@@ -327,10 +327,12 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 					// Reference does no longer exist.
 					return;
 				}
+			}
 
-				if (!defines(copy, currentReference)) {
-					return;
-				}
+			// Note: The target object may be of another type than the source object and not
+			// define all properties of the source.
+			if (!defines(copy, currentReference)) {
+				return;
 			}
 
 			Object value = orig.tValue(reference);
@@ -548,10 +550,12 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 						// Property no longer exists.
 						continue;
 					}
+				}
 
-					if (!defines(copy, currentPart)) {
-						continue;
-					}
+				// Note: The target object may be of another type than the source object and not
+				// define all properties of the source.
+				if (!defines(copy, currentPart)) {
+					continue;
 				}
 
 				Object value = orig.tValue(part);

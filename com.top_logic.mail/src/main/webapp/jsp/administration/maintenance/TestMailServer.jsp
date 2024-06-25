@@ -68,12 +68,8 @@
 			<table
 				align="center"
 				width="100%"
+				style="padding-bottom: var(--spacing-02);"
 			>
-				<tr>
-					<td colspan="2">
-						<hr/>
-					</td>
-				</tr>
 				<tr>
 					<td class="label">
 						Folder to read:
@@ -98,23 +94,12 @@
 						/>
 					</td>
 				</tr>
-				<tr>
-					<td colspan="2">
-						<hr/>
-					</td>
-				</tr>
-				<tr>
-					<td
-						align="center"
-						colspan="2"
-					>
-						<input name="submit"
-							type="submit"
-							value="Make It So"
-						/>
-					</td>
-				</tr>
 			</table>
+			<div class="cmdButtons">
+				<button class="tlButton cButton cmdButton" name="submit" type="submit">
+					<h4 class="tlButtonLabel">Make It So</h4>
+				</button>
+			</div>
 		</form>
 		<%
 		if (!isNew) {

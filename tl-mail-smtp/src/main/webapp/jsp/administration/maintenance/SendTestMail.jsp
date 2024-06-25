@@ -128,7 +128,7 @@ private static final Boolean DEFAULT_HTML = Boolean.TRUE;
 					out.write("<br/><b>Simulating...</b><br/><br/><br/>\n");
 				}
 				%>
-				<table style="margin: 5px">
+				<table>
 					<tr>
 						<td>
 							<code class="normal">
@@ -155,11 +155,11 @@ private static final Boolean DEFAULT_HTML = Boolean.TRUE;
 							<tr>
 								<td>
 									<p>
-										&#xA0;
-										<input name="<%=doSimulate ? "SIMULATE" : "SUBMIT"%>"
-											type="submit"
-											value="<%=REFRESH_BUTTON%>"
-										/>
+										<button class="tlButton cButton cmdButton"
+									            name="<%=doSimulate ? "SIMULATE" : "SUBMIT"%>"
+									            type="submit">
+									        <span class="tlButtonLabel"><%= REFRESH_BUTTON %></span>
+									    </button>
 									</p>
 								</td>
 							</tr>
@@ -170,12 +170,9 @@ private static final Boolean DEFAULT_HTML = Boolean.TRUE;
 				if (RESTART_LINK != null) {
 					%>
 					<p>
-						<a
-							href="javascript:self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';"
-							style="color:darkblue"
-						>
-							&#xA0;<%=RESTART_LINK%>
-						</a>
+						<button class="tlButton cButton cmdButton" onclick="self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';">
+					        <h4 class="tlButtonLabel"><%= RESTART_LINK %></h4>
+					    </button>
 					</p>
 					<%
 				}
@@ -183,149 +180,107 @@ private static final Boolean DEFAULT_HTML = Boolean.TRUE;
 			else {
 				%>
 				<form method="POST">
-					<table>
-						<tr>
-							<td>
-								<%!
-								private static class FieldListener implements ValueListener {
-									
-									private final Property<Object> propertyName;
-									
-									public FieldListener(Property<Object> propertyName) {
-										this.propertyName = propertyName;
-									}
-									
-									@Override
-									public void valueChanged(FormField formField, Object oldValue, Object newValue) {
-										TLContext.getContext().set(propertyName, newValue);
-									}
-								}
+					<%!
+					private static class FieldListener implements ValueListener {
+					
+						private final Property<Object> propertyName;
+						
+						public FieldListener(Property<Object> propertyName) {
+							this.propertyName = propertyName;
+						}
+						
+						@Override
+						public void valueChanged(FormField formField, Object oldValue, Object newValue) {
+							TLContext.getContext().set(propertyName, newValue);
+						}
+					}
+						
+					private void drawField(FormContext context, boolean multiLine, Property<Object> propertyName, Object defaultValue,
+						DisplayContext displayContext, PageContext pageContext) throws Exception {
+						FormField field = FormFactory.newStringField(propertyName.getName());
+						field.setLabel(propertyName.getName());
+						field.addValueListener(new FieldListener(propertyName));
+						Object value = TLContext.getContext().get(propertyName);
+						if (value == null) value = defaultValue;
+							field.initializeField(value);
+							field.check();
+							context.addMember(field);
+							Control control = ValueWithErrorControlProvider.newInstance(new TextInputFormFieldControlProvider(multiLine ? 5 : 1, multiLine ? 50 : 30, multiLine)).createControl(field, null);
+							TagWriter tagWriter = MainLayout.getTagWriter(pageContext);
+							control.write(displayContext, tagWriter);
+							tagWriter.flushBuffer();
+						}
 								
-								private void drawField(FormContext context, boolean multiLine, Property<Object> propertyName, Object defaultValue,
-									DisplayContext displayContext, PageContext pageContext) throws Exception {
-									FormField field = FormFactory.newStringField(propertyName.getName());
-									field.setLabel(propertyName.getName());
-									field.addValueListener(new FieldListener(propertyName));
-									Object value = TLContext.getContext().get(propertyName);
-									if (value == null) value = defaultValue;
-									field.initializeField(value);
-									field.check();
-									context.addMember(field);
-									Control control = ValueWithErrorControlProvider.newInstance(new TextInputFormFieldControlProvider(multiLine ? 5 : 1, multiLine ? 50 : 30, multiLine)).createControl(field, null);
-									TagWriter tagWriter = MainLayout.getTagWriter(pageContext);
-									control.write(displayContext, tagWriter);
-									tagWriter.flushBuffer();
-								}
-								
-								private void drawBooleanField(FormContext context, Property<Object> propertyName, Boolean defaultValue,
-									DisplayContext displayContext, PageContext pageContext) throws Exception {
-									FormField field = FormFactory.newBooleanField(propertyName.getName());
-									field.setLabel(propertyName.getName());
-									field.addValueListener(new FieldListener(propertyName));
-									Object value = TLContext.getContext().get(propertyName);
-									if (value == null) value = defaultValue;
-									field.initializeField(value);
-									field.check();
-									context.addMember(field);
-									Control control = ValueWithErrorControlProvider.newInstance(DefaultFormFieldControlProvider.INSTANCE).createControl(field, null);
-									TagWriter tagWriter = MainLayout.getTagWriter(pageContext);
-									control.write(displayContext, tagWriter);
-									tagWriter.flushBuffer();
-								}
-								%>
-								<table>
-									<% FormContext context = new FormContext(component); %>
-									<tr>
-										<td>
-											<b>
-												Recipient:
-											</b>
-										</td>
-										<td>
-											&#xA0;
-										</td>
-										<td>
-											<% drawField(context, false, PROPERTY_RECIPIENT, DEFAULT_RECIPIENT, displayContext, pageContext); %>
-										</td>
-										<td>
-											The recipient of the test mail (only one recipient allowed).
-										</td>
-									</tr>
-									<tr>
-										<td>
-											<b>
-												Subject:
-											</b>
-										</td>
-										<td>
-											&#xA0;
-										</td>
-										<td>
-											<% drawField(context, false, PROPERTY_SUBJECT, DEFAULT_SUBJECT, displayContext, pageContext); %>
-										</td>
-										<td>
-											The subject of the test mail.
-										</td>
-									</tr>
-									<tr>
-										<td>
-											<b>
-												HTML:
-											</b>
-										</td>
-										<td>
-											&#xA0;
-										</td>
-										<td>
-											<% drawBooleanField(context, PROPERTY_HTML, DEFAULT_HTML, displayContext, pageContext); %>
-										</td>
-										<td>
-											Flag whether the content is HTML.
-										</td>
-									</tr>
-									<tr>
-										<td>
-											<b>
-												Content:
-											</b>
-										</td>
-										<td>
-											&#xA0;
-										</td>
-										<td>
-											<% drawField(context, true, PROPERTY_CONTENT, DEFAULT_CONTENT, displayContext, pageContext); %>
-										</td>
-										<td>
-											The content of the test mail.
-										</td>
-									</tr>
-								</table>
+						private void drawBooleanField(FormContext context, Property<Object> propertyName, Boolean defaultValue,
+							DisplayContext displayContext, PageContext pageContext) throws Exception {
+							FormField field = FormFactory.newBooleanField(propertyName.getName());
+							field.setLabel(propertyName.getName());
+							field.addValueListener(new FieldListener(propertyName));
+							Object value = TLContext.getContext().get(propertyName);
+							if (value == null) value = defaultValue;
+								field.initializeField(value);
+								field.check();
+								context.addMember(field);
+								Control control = ValueWithErrorControlProvider.newInstance(DefaultFormFieldControlProvider.INSTANCE).createControl(field, null);
+								TagWriter tagWriter = MainLayout.getTagWriter(pageContext);
+								control.write(displayContext, tagWriter);
+								tagWriter.flushBuffer();
+							}
+							%>
+					<div style="padding-top: var(--spacing-02);">
+						<% FormContext context = new FormContext(component); %>
+						<div style="padding: var(--spacing-02) 0;">
+							<div style="color: var(--text-secondary);">
+								Recipient (The recipient of the test mail. Only one recipient allowed)
+							</div>
+							<div>
+								<% drawField(context, false, PROPERTY_RECIPIENT, DEFAULT_RECIPIENT, displayContext, pageContext); %>
+							</div>
+						</div>
+						<div style="padding: var(--spacing-02) 0;">
+							<div style="color: var(--text-secondary);">
+								Subject (The subject of the test mail)
+							</div>
+							<div>
+								<% drawField(context, false, PROPERTY_SUBJECT, DEFAULT_SUBJECT, displayContext, pageContext); %>
+							</div>
+						</div>
+						<div style="display: flex; padding: var(--spacing-02) 0; gap: var(--spacing-02);">
+							<div>
+								<% drawBooleanField(context, PROPERTY_HTML, DEFAULT_HTML, displayContext, pageContext); %>
+							</div>
+							<div style="color: var(--text-secondary);">
+								HTML (Flag whether the content is HTML)
+							</div>
+						</div>
+						<div style="padding: var(--spacing-02) 0;">
+							<div style="color: var(--text-secondary);">
+								Content (The content of the test mail)
+							</div>
+							<div>
+								<% drawField(context, true, PROPERTY_CONTENT, DEFAULT_CONTENT, displayContext, pageContext); %>
+							</div>
+						</div>
+					</div>
 
-								<p>
-									<%
-									if (RUN_BUTTON != null) {
-										%>
-										&#xA0;
-										<input name="SUBMIT"
-											type="submit"
-											value="<%=RUN_BUTTON%>"
-										/>
-										<%
-									}
-									if (SIMULATE_BUTTON != null) {
-										%>
-										&#xA0;
-										<input name="SIMULATE"
-											type="submit"
-											value="<%=SIMULATE_BUTTON%>"
-										/>
-										<%
-									}
-									%>
-								</p>
-							</td>
-						</tr>
-					</table>
+					<div class="cmdButtons">
+						<%
+						if (RUN_BUTTON != null) {
+							%>
+							<button class="tlButton cButton cmdButton" name="SUBMIT" type="submit">
+					            <h4 class="tlButtonLabel"><%= RUN_BUTTON %></h4>
+					        </button>
+							<%
+						}
+						if (SIMULATE_BUTTON != null) {
+							%>
+							<button class="tlButton cButton cmdButton" name="SIMULATE" type="submit">
+					            <h4 class="tlButtonLabel"><%= SIMULATE_BUTTON %></h4>
+					        </button>
+							<%
+						}
+						%>
+					</div>
 				</form>
 				<%
 			}

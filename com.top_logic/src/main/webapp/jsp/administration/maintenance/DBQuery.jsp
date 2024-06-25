@@ -92,6 +92,7 @@ private static final int HISTORY_LENGTH = 256;
 	protected void doWork(JspWriter out, boolean simulate, HttpServletRequest request) throws Exception {
 		try {
 			boolean query = request.getParameter("QUERY") != null;
+			JspWriter writer = getWriter();
 			String statement = TLContext.getContext().get(STATEMENT_PROPERTY);
 			if (StringServices.isEmpty(statement)) {
 				print("No statement specified.");
@@ -109,16 +110,14 @@ private static final int HISTORY_LENGTH = 256;
 				
 				long startTime = System.currentTimeMillis();
 				if (query) {
-					print("Executing query:");
-					print();
+					writer.write("<h4>Executing query:</h4>");
 					print(statement);
 					print(); print();
 					String[][] result = DBUtil.executeQueryAsTable(statement);
 					printResult(result);
 				}
 				else {
-					print(simulate ? "Simulating update:" : "Executing update:");
-					print();
+					writer.write(simulate ? "<h4>Simulating update:</h4>" : "<h4>Executing update:</h4>");
 					print(statement);
 					print(); print();
 					SimpleDBExecutor db = new SimpleDBExecutor();
@@ -155,7 +154,7 @@ private static final int HISTORY_LENGTH = 256;
 	
 	private void printResult(String[][] result) throws Exception {
 		JspWriter writer = getWriter();
-		writer.write("<table border=\"1\" style=\"white-space: nowrap\">\n");
+		writer.write("<table class=\"tl-standard-table\" border=\"1\" style=\"white-space: nowrap\">\n");
 		
 		// write header
 		if (result.length > 0) {
@@ -207,12 +206,9 @@ private static final int HISTORY_LENGTH = 256;
 				if (RESTART_LINK != null) {
 					%>
 					<p>
-						<a
-							href="javascript:self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';"
-							style="color:darkblue"
-						>
-							&#xA0;<%=RESTART_LINK%>
-						</a>
+					    <button class="tlButton cButton cmdButton" onclick="self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';">
+					        <h4 class="tlButtonLabel"><%= RESTART_LINK %></h4>
+					    </button>
 					</p>
 					<%
 				}
@@ -222,7 +218,7 @@ private static final int HISTORY_LENGTH = 256;
 					out.write("<br/><b>Simulating...</b><br/><br/><br/>\n");
 				}
 				%>
-				<table style="margin: 5px">
+				<table>
 					<tr>
 						<td>
 							<code class="normal">
@@ -249,11 +245,11 @@ private static final int HISTORY_LENGTH = 256;
 							<tr>
 								<td>
 									<p>
-										&#xA0;
-										<input name="<%=doSimulate ? "SIMULATE" : "SUBMIT"%>"
-											type="submit"
-											value="<%=REFRESH_BUTTON%>"
-										/>
+										<button class="tlButton cButton cmdButton"
+									            name="<%=doSimulate ? "SIMULATE" : "SUBMIT"%>"
+									            type="submit">
+									        <span class="tlButtonLabel"><%= REFRESH_BUTTON %></span>
+									    </button>
 									</p>
 								</td>
 							</tr>
@@ -261,23 +257,11 @@ private static final int HISTORY_LENGTH = 256;
 					</form>
 					<%
 				}
-				if (RESTART_LINK != null) {
-					%>
-					<p>
-						<a
-							href="javascript:self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';"
-							style="color:darkblue"
-						>
-							&#xA0;<%=RESTART_LINK%>
-						</a>
-					</p>
-					<%
-				}
 			}
 			else {
 				%>
 				<form method="POST">
-					<table>
+					<table style="width: 100%">
 						<tr>
 							<td>
 								<p>
@@ -305,70 +289,66 @@ private static final int HISTORY_LENGTH = 256;
 									%>
 								</div>
 
-								<p>
-									<%
-									if (QUERY_BUTTON != null) {
-										%>
-										&#xA0;
-										<input name="QUERY"
-											type="submit"
-											value="<%=QUERY_BUTTON%>"
-										/>
-										<%
-									}
-									if (RUN_BUTTON != null) {
-										%>
-										&#xA0;
-										<input name="SUBMIT"
-											type="submit"
-											value="<%=RUN_BUTTON%>"
-										/>
-										<%
-									}
-									if (SIMULATE_BUTTON != null) {
-										%>
-										&#xA0;
-										<input name="SIMULATE"
-											type="submit"
-											value="<%=SIMULATE_BUTTON%>"
-										/>
-										<%
-									}
-									%>
-								</p>
+								<div class="cmdButtons">
+								    <%
+								    if (QUERY_BUTTON != null) {
+								        %>
+								        <button class="tlButton cButton cmdButton" name="QUERY" type="submit">
+								            <h4 class="tlButtonLabel"><%= QUERY_BUTTON %></h4>
+								        </button>
+								        <%
+								    }
+								    if (RUN_BUTTON != null) {
+								        %>
+								        <button class="tlButton cButton cmdButton" name="SUBMIT" type="submit">
+								            <h4 class="tlButtonLabel"><%= RUN_BUTTON %></h4>
+								        </button>
+								        <%
+								    }
+								    if (SIMULATE_BUTTON != null) {
+								        %>
+								        <button class="tlButton cButton cmdButton" name="SIMULATE" type="submit">
+								            <h4 class="tlButtonLabel"><%= SIMULATE_BUTTON %></h4>
+								        </button>
+								        <%
+								    }
+								    %>
+								</div>
 								<%
 								if (HISTORY_LENGTH > 0) {
-									%>
-									<br/>
-									<h4>
-										History:
-									</h4>
-									<%
 									List<Tuple> history = TLContext.getContext().get(HISTORY_PROPERTY);
 									StringBuilder sb = new StringBuilder();
-									sb.append("<table border=\"0\" style=\"white-space: nowrap; border-spacing: 12px\">\n");
-									if (history != null)
-									for (int i = history.size() - 1; i >= 0; i--) {
-										TupleFactory.Tuple tuple = history.get(i);
-										sb.append("<tr>");
-										sb.append("<td>").append(tuple.get(0)).append("</td>");
-										sb.append("<td>").append(tuple.get(1)).append("</td>");
-										sb.append("<td>").append(tuple.get(2)).append("</td>");
-										sb.append("</tr>\n");
+									sb.append("<table class=\"tl-standard-table\" border=\"0\" >\n");
+									if (history != null && history.size() > 0) {
+										%>
+										<br/>
+										<h4>
+											History:
+										</h4>
+										<%
+										for (int i = history.size() - 1; i >= 0; i--) {
+											TupleFactory.Tuple tuple = history.get(i);
+											sb.append("<tr>");
+											sb.append("<td>").append(tuple.get(0)).append("</td>");
+											sb.append("<td>").append(tuple.get(1)).append("</td>");
+											sb.append("<td>").append(tuple.get(2)).append("</td>");
+											sb.append("</tr>\n");
+										}
+										sb.append("</table>\n");
+										%>
+										<%=sb.toString()%>
+										
+										<%
+										if (CLEAR_BUTTON != null) {
+											%>
+											<div class="cmdButtons">
+												<button class="tlButton cButton cmdButton" name="CLEAR" type="submit">
+													<h4 class="tlButtonLabel"><%= CLEAR_BUTTON %></h4>
+												</button>
+											</div>
+											<%
+										}
 									}
-									sb.append("</table>\n");
-									%>
-									<%=sb.toString()%>
-									<%
-								}
-								if (CLEAR_BUTTON != null) {
-									%>
-									<br/>
-									<input name="CLEAR"
-										type="submit"
-										value="<%=CLEAR_BUTTON%>"
-									/>
-									<%
 								}
 								%>
 							</td>

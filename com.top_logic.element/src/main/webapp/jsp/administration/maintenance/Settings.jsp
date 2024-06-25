@@ -352,10 +352,9 @@
 								&#xA0;If checked, the resources will be reloaded also while applying the changes.
 								<br/>
 								<br/>
-								<input name="SUBMIT"
-									type="submit"
-									value="Apply"
-								/>
+								<button class="tlButton cButton cmdButton" name="SUBMIT" type="submit">
+									<h4 class="tlButtonLabel">Apply</h4>
+								</button>
 								<input name="done"
 									type="hidden"
 									value="<%="done".equals(request.getParameter("done")) ? "ok" : "done"%>"

@@ -108,15 +108,18 @@ h1 {
 	text-align: center
 }
 
-i.red {
+i.red,
+.tl-error-message {
 	color: var(--support-danger);
 }
 
-i.green {
+i.green,
+.tl-success-message {
 	color: var(--support-success);
 }
 
-i.yellow {
+i.yellow,
+.tl-warning-message {
 	color: var(--support-warning);
 }
 
@@ -152,7 +155,9 @@ i[class*=" overlay-"] span::before {
 /* The general footer of the application */
 .Footer {
 	display: flex;
-	justify-content: space-between;
+	justify-content: flex-end;
+	align-items: center;
+	gap: var(--spacing-02);
 	font-size: var(--body-01-font-size);
     line-height: var(--body-01-line-height);
     letter-spacing: var(--body-01-letter-spacing);
@@ -160,7 +165,6 @@ i[class*=" overlay-"] span::before {
 	background: var(--layer);
 	padding: 0 var(--spacing-03) 0 var(--spacing-01)
 }
-
 
 /*
 ****					****
@@ -1158,16 +1162,6 @@ td.rightList {
 .fixed,
 .fixedSelectable a:link {
     color: var(--text-disabled);
-}
-
-.cDefaultButton button {
-	border: none;
-	border-radius: var(--corner-radius);
-	cursor: pointer;
-}
-
-button.moveOption {
-	width: 100%;
 }
 
 /* ====================================== */

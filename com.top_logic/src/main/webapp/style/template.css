@@ -7557,16 +7557,17 @@ div.dirtyHandlingDialog .changes {
 }
 
 .tl-table__cell-resizer {
-	width: 4px;
+	width: 16px;
 	opacity: 0;
 	cursor: col-resize;
 	background: var(--TABLE_RESIZE_GRABBER_COLOR);
 	position: absolute;
 	top: 0;
-	right: 0;
+	right: -8px;
 	height: 100%;
 	transition: all 0.75s ease;
 	filter: brightness(100%);
+	z-index: 1;
 }
 
 .tl-table__cell-resizer--active {

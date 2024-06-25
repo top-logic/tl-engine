@@ -65,6 +65,8 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey RESET_TABLE_CONFIGURATION;
 
+	public static ResKey AUTO_FIT_COLUMNS;
+
 	public static ResKey LOAD_NAMED_TABLE_SETTINGS;
 
 	public static ResKey EDIT_NAMED_TABLE_SETTINGS;

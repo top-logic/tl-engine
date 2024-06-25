@@ -61,7 +61,7 @@ public class TLObjectLinkUtil {
 	 *         are invalid.
 	 */
 	public static Wrapper getObject(String objectArgument) throws ObjectNotFound {
-		Map<String, Object> objectArguments = getObjectArgumentsMap(objectArgument);
+		Map<String, Object> objectArguments = parseLinkArguments(objectArgument);
 		if (objectArguments == null) {
 			return null;
 		}
@@ -81,7 +81,7 @@ public class TLObjectLinkUtil {
 	 *        String containing the key value pairs.
 	 * @return Converted key value pairs as {@link Map}.
 	 */
-	public static Map<String, Object> getObjectArgumentsMap(String objectArgument) {
+	public static Map<String, Object> parseLinkArguments(String objectArgument) {
 		int index = objectArgument.lastIndexOf("?");
 		if (index == -1) {
 			return null;

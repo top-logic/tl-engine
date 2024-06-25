@@ -309,7 +309,7 @@ public class PageLinksValidator implements PageValidator {
 
 	private Link parseLink(String href) {
 		Link result = new Link();
-		Map<String, Object> objectArgs = TLObjectLinkUtil.getObjectArgumentsMap(href);
+		Map<String, Object> objectArgs = TLObjectLinkUtil.parseLinkArguments(href);
 		result.setName((String) objectArgs.get(PageBookmarkHandler.COMMAND_PARAM_PAGE));
 		result.setUuid((String) objectArgs.get(PageBookmarkHandler.COMMAND_PARAM_UUID));
 		return result;

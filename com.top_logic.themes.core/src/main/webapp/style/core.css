@@ -23,11 +23,6 @@ body {
 	background: transparent;
 }
 
-:not(.accRoot)::-webkit-scrollbar-track {
-	background: var(--sb-track-color);
-	border-radius: 4px;
-}
-
 :not(.accRoot)::-webkit-scrollbar-thumb {
 	background: var(--sb-thumb-color);
 	border-radius: 4px;
@@ -38,11 +33,6 @@ body {
 	height: var(--sb-size);
 }
 
-:hover::-webkit-scrollbar-track {
-	background: var(--sb-track-color);
-	border-radius: 4px;
-}
-
 :hover::-webkit-scrollbar-thumb {
 	background: var(--sb-thumb-color);
 	border-radius: 4px;
@@ -51,7 +41,7 @@ body {
 @supports not selector(::-webkit-scrollbar) {
 	body {
 		scrollbar-color: var(--sb-thumb-color)
-						var(--sb-track-color);
+						transparent;
 	}
 }
 /* < Scrollbars */

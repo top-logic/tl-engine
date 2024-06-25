@@ -62,7 +62,6 @@ import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.CommandHandlerUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.tool.boundsec.ObjectNotFound;
 import com.top_logic.tool.boundsec.commandhandlers.DefaultBookmarkHandler;
 import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
 import com.top_logic.util.ActionQueue;
@@ -71,6 +70,7 @@ import com.top_logic.util.TLContextManager;
 import com.top_logic.util.ToBeValidated;
 import com.top_logic.util.TopLogicServlet;
 import com.top_logic.util.ValidationQueue;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link ContentHandler} and {@link LayoutContext} implementation of a subsession.
@@ -206,9 +206,9 @@ public class SubsessionHandler extends WindowHandler implements LayoutContext {
 					try {
 						try {
 							CommandHandlerUtil.handleCommand(handler, context, mainLayout, gotoArguments);
-						} catch (ObjectNotFound ex) {
+						} catch (TopLogicException ex) {
 							// Goto object not found. Perhaps it was deleted
-							notifyBookmarkNotFound(mainLayout, null);
+							notifyBookmarkNotFound(mainLayout, ex.getErrorKey());
 						}
 						mainLayout.globallyValidateModel(context);
 					} finally {

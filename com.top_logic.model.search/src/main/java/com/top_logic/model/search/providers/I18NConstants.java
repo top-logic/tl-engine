@@ -60,6 +60,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_MODE__VALUE_OPTIONS;
 
+	/**
+	 * @en Link generator must produce map of key value pairs as result.
+	 */
+	public static ResKey ERROR_LINK_GENERATOR_MUST_PRODUCE_MAP;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

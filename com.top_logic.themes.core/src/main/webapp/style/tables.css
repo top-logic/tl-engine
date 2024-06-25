@@ -1368,6 +1368,10 @@ div.dirtyHandlingDialog .changes {
     vertical-align: middle;
 }
 
+th:last-child .px-1 {
+	padding-right: 16px !important;
+}
+
 .px-1 .tl-radio-checkbox-container {
 	display: flex;
 	justify-content: center;
@@ -1451,12 +1455,19 @@ div.dirtyHandlingDialog .changes {
 }
 
 .tl-table__cell-resizer {
-	width: 4px;
+	width: 16px;
 	cursor: col-resize;
 	position: absolute;
 	top: 0;
-	right: 0;
+	right: -8px;
 	height: 100%;
+	user-select: none;
+	z-index: 1;
+}
+
+th:last-child .tl-table__cell-resizer {
+/* 	width: 8px; */
+	right: 0;
 }
 
 .tl-table__cell {

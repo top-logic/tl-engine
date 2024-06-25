@@ -248,6 +248,7 @@ public class BookmarkFactory {
 			ComponentName componentName) {
 		boolean first = true;
 		if (targetObject != null) {
+			// Note: Used in SubSessionHandler to resolve an object later on.
 			CommandHandler handler =
 				CommandHandlerFactory.getInstance().getHandler(DefaultBookmarkHandler.COMMAND_RESOLVE_BOOKMARK);
 			if (handler != null) {

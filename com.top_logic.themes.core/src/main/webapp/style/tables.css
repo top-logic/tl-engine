@@ -68,9 +68,17 @@ table.tblTableNoBorder {
 	margin: 0;
 }
 
+td.tblCenter {
+	text-align: center;
+}
+
+td.tblRight {
+	text-align: right;
+}
+
 td.tblRight .px-1,
 td.tblRight .px-1 > * {
-	justify-content: flex-end;
+/* 	justify-content: safe flex-end; */
 }
 
 table td.tblRight .px-1 span.lFlexible > input {
@@ -963,7 +971,7 @@ table td .ddwttDropBtn .ddwttButtonContent {
 	flex-grow: 1;
 }
 
-table td ..ddwttContainer {
+table td .ddwttContainer {
 	width: 100%;
 }
 

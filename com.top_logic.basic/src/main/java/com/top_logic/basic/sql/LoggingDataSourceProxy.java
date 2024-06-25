@@ -941,10 +941,10 @@ public class LoggingDataSourceProxy extends DefaultDataSourceProxy {
 		private static final Pattern SET_LITERAL_PATTERN = Pattern.compile("(?i)\\b(in)\\s+\\([^\\)]+\\)");
 
 		/**
-		 * Pattern matching a number followed or following one of the char " =><;()[]"
+		 * Pattern matching a number followed or following one of the char " =><;()[]-"
 		 */
 		private static final Pattern NUMBER_PATTERN =
-			Pattern.compile("(^|[\\s=><;\\(\\)\\[\\]])\\d+($|[\\s=><;\\(\\)\\[\\]])");
+			Pattern.compile("(?<=^|[\\s=><;\\(\\)\\[\\]\\-])\\d+(?=$|[\\s=><;\\(\\)\\[\\]\\-])");
 
 		private final Pattern _literalStringPattern;
 
@@ -989,7 +989,7 @@ public class LoggingDataSourceProxy extends DefaultDataSourceProxy {
 			String unified = sql;
 			// Take the "in" from the first group to preserve its case.
 			unified = SET_LITERAL_PATTERN.matcher(unified).replaceAll("$1 (...)");
-			unified = NUMBER_PATTERN.matcher(unified).replaceAll("$1<number>$2");
+			unified = NUMBER_PATTERN.matcher(unified).replaceAll("<number>");
 			unified = _literalStringPattern.matcher(unified).replaceAll(_stringQuoteChar + "..." + _stringQuoteChar);
 			return unified;
 		}

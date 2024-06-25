@@ -15,12 +15,15 @@ import java.util.Map.Entry;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
@@ -73,6 +76,8 @@ public class BookmarkService extends KBBasedManagedClass<BookmarkService.Config>
 		 * The {@link BookmarkHandler} used for {@link #getTypeSpec()}.
 		 */
 		@Mandatory
+		@Options(fun = AllInAppImplementations.class)
+		@DefaultContainer
 		PolymorphicConfiguration<BookmarkHandler> getImpl();
 
 	}

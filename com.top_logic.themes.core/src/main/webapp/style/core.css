@@ -23,6 +23,16 @@ body {
 	background: transparent;
 }
 
+:not(.accRoot)::-webkit-scrollbar-track {
+	background: var(--sb-track-color);
+	border-radius: 4px;
+}
+
+:not(.accRoot)::-webkit-scrollbar-thumb {
+	background: var(--sb-thumb-color);
+	border-radius: 4px;
+}
+
 :hover::-webkit-scrollbar {
 	width: var(--sb-size);
 	height: var(--sb-size);

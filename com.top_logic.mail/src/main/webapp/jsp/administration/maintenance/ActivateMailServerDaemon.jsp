@@ -24,7 +24,9 @@
 			<%
 			if (isNew) {
 				%>
-				Click "start" to delete duplicated representative groups.
+				<p>
+					Click "start" to delete duplicated representative groups.
+				</p>
 				<form method="post">
 					<input name="done"
 						type="hidden"
@@ -36,25 +38,26 @@
 					>
 						<tr>
 							<td>
-								<input name="RELOAD"
-									type="submit"
-									value="Start"
-								/>
+								<button class="tlButton cButton cmdButton"
+									name="RELOAD"
+									type="submit">
+									<span class="tlButtonLabel">Start</span>
+								</button>
 							</td>
 						</tr>
 					</table>
 				</form>
 				<% } else {
-				out.print("Please wait...<br /><hr>");
+				out.print("Please wait...<hr>");
 				
 				AbstractMailServerDaemon theTask = (AbstractMailServerDaemon) Scheduler.getSchedulerInstance().getTaskByName("MailServerDaemon");
 				
 				if (theTask != null) {
 					theTask.setActivated(true);
-					out.print("<br/>Task activated<br/>");
+					out.print("Task activated");
 				}
 				else {
-					out.print("<br/>Task not found<br/>");
+					out.print("Task not found");
 				}
 			}
 			%>

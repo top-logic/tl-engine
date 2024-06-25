@@ -93,43 +93,42 @@
 					This page allows you to reload different modules in TopLogic.
 				</p>
 				<form method="POST">
-					<table summary="List of Things you can reload">
+					<table class="tl-standard-table" summary="List of Things you can reload">
+						<tr>
+							<th>
+								TopLogic Modules
+							</th>
+							<th>
+								Description
+							</th>
+						</tr>
 						<%
 						for (int thePos = 0; thePos < theArray.length; thePos++) {
 							theName = theArray [thePos];
 							theDesc = theManager.getDescription (theName);
 							%>
 							<tr>
-								<td
-									nowrap="true"
-									valign="top"
-								>
+								<td>
+								<div class="cChoice-option" style="gap: var(--spacing-02)">
 									<input name="chk_<%=theName %>"
 										type="checkbox"
 									/>
-									&#xA0;<%=theName %>
+									<span><%=theName %></span>
+								</div>
 								</td>
-								<td valign="top">
-									&#xA0;(<%=theDesc %>)
+								<td>
+									<%=theDesc %>
 								</td>
 							</tr>
 							<%
 						}
 						%>
 					</table>
-					<hr/>
-					<table summary="Button to reload selected elements">
-						<tr>
-							<td>
-								<p>
-									<input name="RELOAD"
-										type="submit"
-										value="Reload..."
-									/>
-								</p>
-							</td>
-						</tr>
-					</table>
+						<div class="cmdButtons">
+							<button class="tlButton cButton cmdButton" name="RELOAD" type="submit">
+							 	<h4 class="tlButtonLabel">Reload</h4>
+							</button>
+						</div>
 				</form>
 				<%
 			}

@@ -135,8 +135,9 @@ a.HelpIconActive {background:url(../images/help_new_active.png) left top no-repe
     color: #333333;
     font-size: 11px;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
+    gap: 0.5rem;
 }
 
 /* Budget List Page*/

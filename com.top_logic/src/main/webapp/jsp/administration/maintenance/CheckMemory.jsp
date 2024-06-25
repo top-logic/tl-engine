@@ -39,9 +39,7 @@ Format theFormat = HTMLFormatter.getInstance().getDoubleFormat();
 		<basic:access>
 			<table style="width: 100%; border: 0px;">
 				<tr>
-					<td
-						align="center"
-						colspan="2"
+					<td	colspan="2"
 					>
 						<h3>
 							Memory MXBean
@@ -49,32 +47,35 @@ Format theFormat = HTMLFormatter.getInstance().getDoubleFormat();
 					</td>
 				</tr>
 				<tr>
-					<td width="200">
-						Heap Memory Usage
-					</td>
 					<td>
-						<%=convertMemoryUsage(ManagementFactory.getMemoryMXBean().getHeapMemoryUsage(), theFormat) %>
+						<table class="tl-standard-table">
+							<tr>
+								<td width="200">
+									Heap Memory Usage
+								</td>
+								<td>
+									<%=convertMemoryUsage(ManagementFactory.getMemoryMXBean().getHeapMemoryUsage(), theFormat) %>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									Non-Heap Memory Usage
+								</td>
+								<td>
+									<%=convertMemoryUsage(ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage(), theFormat) %>
+								</td>
+							</tr>
+						</table>
 					</td>
 				</tr>
 
-				<tr>
-					<td>
-						Non-Heap Memory Usage
-					</td>
-					<td>
-						<%=convertMemoryUsage(ManagementFactory.getMemoryMXBean().getNonHeapMemoryUsage(), theFormat) %>
-					</td>
-				</tr>
 				<tr>
 					<td colspan="2">
 						&#xA0;
 					</td>
 				</tr>
 				<tr>
-					<td
-						align="center"
-						colspan="2"
-					>
+					<td colspan="2">
 						<h3>
 							Memory Pool MXBeans
 						</h3>
@@ -86,16 +87,14 @@ Format theFormat = HTMLFormatter.getInstance().getDoubleFormat();
 					%>
 					<tr>
 						<td colspan="2">
-							<table style="width: 100%; border: 1px #98AAB1 solid;">
+							<table class="tl-standard-table">
 								<tr>
-									<td
+									<th
 										align="center"
 										colspan="2"
 									>
-										<b>
-											<%= theItem.getName() %>
-										</b>
-									</td>
+										<%= theItem.getName() %>
+									</th>
 								</tr>
 								<tr>
 									<td width="200">

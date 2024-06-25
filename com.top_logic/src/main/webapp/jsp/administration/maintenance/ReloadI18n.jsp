@@ -100,35 +100,26 @@
 							if(theName.startsWith("Resources") ){
 								%>
 								<tr>
-									<td
-										nowrap="true"
-										valign="top"
-									>
-										<input name="chk_<%=theName %>"
-											checked="checked"
-											type="hidden"
-										/>
+									<td>
+										<div class="cChoice-option" style="gap: var(--spacing-02)">
+											<input name="chk_<%=theName %>"
+												checked="checked"
+												type="hidden"
+											/>
+										</div>
 									</td>
-									<td valign="top">
-										<%-- = theDesc not needed here --%>
-									</td>
+									<%-- = theDesc not needed here --%>
 								</tr>
 								<%
 							}
 						}
 						%>
 					</table>
-					<hr/>
-					<table summary="Button to reload selected elements">
-						<tr>
-							<td>
-								<input name="RELOAD"
-									type="submit"
-									value="Laden"
-								/>
-							</td>
-						</tr>
-					</table>
+					<p>
+						<button class="tlButton cButton cmdButton" name="RELOAD" type="submit">
+						 	<h4 class="tlButtonLabel">Reload</h4>
+						</button>
+					</p>
 				</form>
 			<%  } %>
 		</basic:access>

@@ -21,20 +21,21 @@ private static final String DESCRIPTION =
 // This methods does the actual work:
 private void runWork(JspWriter out, HttpServletRequest request) throws Exception {
 	writer = out;
-	encodeString(request.getParameter("encodeString"));
-	print("Finished.");
+	encodeString(out, request.getParameter("encodeString"));
+	out.write("<p>Finished.</p>");
 }
 
 
-private void encodeString(String theString)  throws Exception {
+private void encodeString(JspWriter out, String theString)  throws Exception {
 	if(StringServices.isEmpty(theString)){ return;}
 	try{
 		String theEncode = CryptSupport.getInstance().encodeString(theString);
-		print("Endcoded String:");
-		print(theEncode);
+		out.write("<b>Endcoded String:</b></br>");
+		out.write(theEncode);
 	}catch(Exception e){
-		print("Failed to encode String.");
-		print(e.toString());
+		out.write("<span class=\"tl-error-message\"> Failed to decode String.");
+		out.write(e.toString());
+		out.write("</span></br></br>");
 	}
 }
 
@@ -76,7 +77,7 @@ private String quote(String string) {
 			<%
 			if (RUN_BUTTON == null || request.getParameter("SUBMIT") != null) {
 				%>
-				<table style="margin: 5px">
+				<table>
 					<tr>
 						<td>
 							<code class="normal">
@@ -126,11 +127,9 @@ private String quote(String string) {
 						<tr>
 							<td>
 								<p>
-									&#xA0;
-									<input name="SUBMIT"
-										type="submit"
-										value="<%=RUN_BUTTON%>"
-									/>
+									<button class="tlButton cButton cmdButton" name="SUBMIT" type="submit">
+										<h4 class="tlButtonLabel"><%=RUN_BUTTON%></h4>
+									</button>
 								</p>
 							</td>
 						</tr>

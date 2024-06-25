@@ -164,7 +164,7 @@ public abstract class DataUploadServlet extends HttpServlet implements UploadHan
 	 */   
 	protected void doPostWithLogMark(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-		if (JakartaServletDiskFileUpload.isMultipartContent(request)) {
+		if (JakartaServletFileUpload.isMultipartContent(request)) {
             try{
 				JakartaServletDiskFileUpload theUpload = new JakartaServletDiskFileUpload();
                 this.initializeFileUpload(theUpload);       

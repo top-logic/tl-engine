@@ -23,7 +23,7 @@ com.top_logic.basic.Logger,com.top_logic.basic.version.Version"
 	SimpleDateFormat timestampFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 	String timestamp = timestampFormat.format(new Date());
 	
-	String  uri    = (String) request.getAttribute(ErrorPage.JAVAX_SERVLET_ERROR_REQUEST_URI);
+	String  uri    = (String) request.getAttribute(ErrorPage.JAKARTA_SERVLET_ERROR_REQUEST_URI);
 	if (exception == null) {
 		exception = (Throwable) request.getAttribute(RequestDispatcher.ERROR_EXCEPTION);
 	}

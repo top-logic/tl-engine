@@ -31,7 +31,7 @@ import com.top_logic.mig.html.HTMLConstants;
 public class ErrorPage {
 
 	/** Attribute of the request containing {@link HttpServletRequest#getRequestURI()} */
-	public static final String JAVAX_SERVLET_ERROR_REQUEST_URI = RequestDispatcher.ERROR_REQUEST_URI;
+	public static final String JAKARTA_SERVLET_ERROR_REQUEST_URI = RequestDispatcher.ERROR_REQUEST_URI;
 
 	/**
 	 * Configuration of error pages.
@@ -72,7 +72,7 @@ public class ErrorPage {
 
 		String errorPage = getPage(errorKey);
 		if (errorPage != null) {
-			request.setAttribute(JAVAX_SERVLET_ERROR_REQUEST_URI, request.getRequestURI());
+			request.setAttribute(JAKARTA_SERVLET_ERROR_REQUEST_URI, request.getRequestURI());
 			/* This attribute is read by the Glassfish container in compiled JSP. */
 			request.setAttribute(RequestDispatcher.ERROR_STATUS_CODE, HttpServletResponse.SC_NOT_FOUND);
 			try {

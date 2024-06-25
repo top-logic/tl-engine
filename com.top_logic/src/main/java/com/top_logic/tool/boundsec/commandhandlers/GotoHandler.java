@@ -328,8 +328,8 @@ public class GotoHandler extends AbstractCommandHandler {
 		} else {
 			layout = theMain.getComponentByName(targetComponentName);
 			if (layout == null) {
-				Logger.info("Component " + targetComponentName + " as goto target for " + targetObject
-					+ " not found. Use default view.", GotoHandler.class);
+				Logger.warn("Component " + targetComponentName + " as goto target for " + targetObject
+					+ " not found. Using default view.", GotoHandler.class);
 			}
 		}
 		
@@ -347,7 +347,9 @@ public class GotoHandler extends AbstractCommandHandler {
 				String theUser = TLContext.getContext().getCurrentUserName();
 				// This can happen in case Components ignore the security when rendering GOTO-Links
 				// or store their model as initial in the PersonalConfiguration.
-				Logger.warn("GOTO for User '" + theUser + "' using '" + targetObject + "' in '" + (layout == null ? "<null>-component" : layout.getName()) + "' was denied.", this);
+				Logger.warn("Deep link for user '" + theUser + "' showing '" + targetObject + "' in "
+					+ (layout == null ? "default component" : "'" + layout.getName() + "'") + " was denied.",
+					GotoHandler.class);
 
 				throw new TopLogicSecurityException(I18NConstants.GOTO_DENY__USER_TARGET.fill(theUser, targetObject));
 			}
@@ -619,7 +621,7 @@ public class GotoHandler extends AbstractCommandHandler {
 	}
 
 	/**
-	 * Check, if the given component can handle the model.
+	 * Check, whether the given component can display the given object.
 	 * 
 	 * @param object
 	 *        The model to be displayed, may be <code>null</code>.
@@ -635,6 +637,9 @@ public class GotoHandler extends AbstractCommandHandler {
 		}
 	}
 
+	/**
+	 * Whether the given object can be displayed in it's default view.
+	 */
 	public static boolean canShow(Object anObject) {
         if (anObject instanceof BoundObject) {
             BoundHelper theHelper = BoundHelper.getInstance();

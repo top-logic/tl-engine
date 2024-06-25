@@ -10,14 +10,6 @@
 			</instance>
 		</config>
 		
- 		<config service-class="com.top_logic.tool.boundsec.commandhandlers.BookmarkService">
-			<instance>
-				<bookmark-handlers>
-					<bookmark-handler type="tl.element:StructuredElement" impl="com.top_logic.demo.bookmark.DemoBookmarkHandler"/>
-				</bookmark-handlers>
-			</instance>
-		</config>
-		
         <config service-class="com.top_logic.layout.provider.LabelProviderService">
             <instance>
                 <label-providers>

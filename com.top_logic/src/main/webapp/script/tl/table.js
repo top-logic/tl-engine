@@ -2009,6 +2009,7 @@ TABLE = {
 		let numColumns = this.getNumberOfColumns(table),
 			borderWidth = parseInt(getComputedStyle(document.body).getPropertyValue("--TABLE_COLUMN_BORDER_WIDTH"));
 		const ctrlID = tableContainer.id;
+		const colgroup = table.querySelector("colgroup");
 		
 		let firstIdx, lastIdx;
 		if (fullTable == true) {
@@ -2018,6 +2019,8 @@ TABLE = {
 			firstIdx = (firstCol ||= 0);
 			lastIdx = (lastCol ||= (numColumns - 1));
 		}
+		
+		let relevantColumns = [];
 		
 		for (let i = firstIdx; i <= lastIdx; i++) {
 			let cells = this.getTableColumnCells(tbody, i, numColumns),
@@ -2031,14 +2034,17 @@ TABLE = {
 				
 				let cellWidth = cellContent.clientWidth + borderWidth,
 					scrollWidth = cellContent.scrollWidth + borderWidth;
+				console.log(cellWidth);
+				console.log(scrollWidth);
 				
 				columnWidth = Math.max(columnWidth, cellWidth, scrollWidth);
 			}
 			
-			let col = table.querySelector("colgroup col:nth-child(" + (i + 1) + ")");
 			if (columnWidth != 0) {
-				let originalColWidth = col.style.width;
+				let col = colgroup.querySelector("col:nth-child(" + (i + 1) + ")"),
+					originalColWidth = col.style.width;
 				col.style.width = columnWidth + "px";
+				relevantColumns.push(i);
 				
 				let columnResizer = this.getColumnResizer(table.querySelector("tr:last-child th:nth-child(" + (i + 1) + ")")),
 					widthDiff = columnWidth - parseInt(originalColWidth);
@@ -2052,6 +2058,28 @@ TABLE = {
 						columnID: i,
 						newColumnWidth: columnWidth
 					}, /* useWaitPane */false);
+				}
+			}
+		}
+		
+		if (fullTable) {
+			let visibleTableWidth = TABLE.getScrollContainer(tableContainer.id).clientWidth,
+				tableWidth = table.clientWidth;
+			if (tableWidth < visibleTableWidth) {
+				let colIncrease = (visibleTableWidth - tableWidth) / relevantColumns.length;
+				for (let colID of relevantColumns) {
+					let col = colgroup.querySelector("col:nth-child(" + (colID + 1) + ")"),
+						newColWidth = parseInt(col.style.width) + colIncrease;
+					col.style.width = newColWidth + "px";
+					if (updateServer == true) {
+						// send update of column colID's width to server
+						services.ajax.execute("dispatchControlCommand", {
+							controlCommand: "updateColumnWidth",
+							controlID: ctrlID,
+							columnID: colID,
+							newColumnWidth: newColWidth
+						}, /* useWaitPane */false);
+					}
 				}
 			}
 		}

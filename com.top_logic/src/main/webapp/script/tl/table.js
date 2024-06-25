@@ -2016,8 +2016,8 @@ TABLE = {
 			firstIdx = 0;
 			lastIdx = numColumns - 1;
 		} else {
-			firstIdx = (firstCol ||= 0);
-			lastIdx = (lastCol ||= (numColumns - 1));
+			firstIdx = (firstCol ? firstCol : 0);
+			lastIdx = (((lastCol == 0) || lastCol) ? lastCol : (numColumns - 1));
 		}
 		
 		let relevantColumns = [];
@@ -2034,8 +2034,6 @@ TABLE = {
 				
 				let cellWidth = cellContent.clientWidth + borderWidth,
 					scrollWidth = cellContent.scrollWidth + borderWidth;
-				console.log(cellWidth);
-				console.log(scrollWidth);
 				
 				columnWidth = Math.max(columnWidth, cellWidth, scrollWidth);
 			}

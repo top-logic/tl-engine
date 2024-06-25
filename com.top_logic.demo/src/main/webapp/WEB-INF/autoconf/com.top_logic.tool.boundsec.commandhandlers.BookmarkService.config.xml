@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<services>
+		<config service-class="com.top_logic.tool.boundsec.commandhandlers.BookmarkService"
+			config:override="true"
+		>
+			<instance class="com.top_logic.tool.boundsec.commandhandlers.BookmarkService">
+				<bookmark-handlers>
+					<bookmark-handler type="tl.doc:Page">
+						<impl class="com.top_logic.doc.PageBookmarkHandler"/>
+					</bookmark-handler>
+					<bookmark-handler type="DemoTypes:DemoTypes.All">
+						<scripted-bookmark-handler>
+							<link-generator><![CDATA[obj -> { 
+    "bookmark": $obj.type().get(`tl.model:TLType#module`).get(`tl.model:TLModule#name`) + 
+        $obj.recursion(x -> $x.get(`tl.element:StructuredElement#parent`))
+        .reverse()
+        .subList(1)
+        .reduce("", a -> b -> $a + "/" + $b)
+}]]></link-generator>
+							<link-resolver><![CDATA[params -> {
+    path = regex("(?<=^|/)([^/]+)")
+        .regexSearch($params["bookmark"])
+        .map(x -> $x.regexGroup(1));
+    moduleName = $path[0];
+    root = all(`tl.model:TLModule`)
+        .filter(m -> $m.get(`tl.model:TLModule#name`) == $moduleName)
+        .singleElement()
+        .get(`tl.model:TLModule#singletons`)
+        .singleElement()
+        .get(`tl.model:TLModuleSingletons#singleton`)
+        || throw("Module singleton '" + $moduleName + "' not found.");
+    log("Resolving bookmark in '" + $root + "': " + $path);
+    $path
+        .subList(1)
+        .reduce($root, a -> b -> $a
+            .get(`tl.element:StructuredElementContainer#children`)
+            .filter(e -> $e.label() == $b)
+            .singleElement()
+            || throw("No child '" + $b + "' in '" + $a + "', children: " + $a.get(`tl.element:StructuredElementContainer#children`)))
+}]]></link-resolver>
+						</scripted-bookmark-handler>
+					</bookmark-handler>
+				</bookmark-handlers>
+				<default-bookmark-handler class="com.top_logic.tool.boundsec.commandhandlers.TechnicalBookmark"/>
+			</instance>
+		</config>
+	</services>
+</application>

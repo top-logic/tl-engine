@@ -708,25 +708,25 @@ public class BoundHelper extends ManagedClass {
 
 
     /**
-     * Check if the current user may view the given BoundObject.
-     * Use the BoundCheckers in the checker
-     * tree of aChecker to check it.
-     *
-     * @param anObject  the BoundObject
-     * @param aChecker  the BoundChecker
-     * @return true if the current user may view the given BoundObject,
-     * false otherwise or if the object is <code>null</code>.
-     */
-    public boolean allowView(BoundObject anObject, BoundChecker aChecker) {
-		Iterator<BoundChecker> theCheckers = this.getBoundCheckers(anObject, aChecker, null).iterator();
-
-        boolean allow = false;
-        while (!allow && theCheckers.hasNext()) {
-			BoundChecker theChecker = theCheckers.next();
-			allow = ((LayoutComponent) theChecker).supportsModel(anObject) && theChecker.allowPotentialModel(anObject);
+	 * Checks whether the current user can jump to the given object.
+	 *
+	 * @param target
+	 *        The target object that should be shown.
+	 * @param context
+	 *        The context checker.
+	 * @return <code>true</code> if the current user can jump to the given object.
+	 *         <code>false</code> otherwise.
+	 */
+	public boolean allowView(BoundObject target, BoundChecker context) {
+		for (BoundChecker checker : getBoundCheckers(target, context, null)) {
+			LayoutComponent component = (LayoutComponent) checker;
+			boolean allow = component.supportsModel(target) && checker.allowPotentialModel(target);
+			if (allow) {
+				return true;
+			}
         }
 
-        return allow;
+		return false;
     }
 
     /**

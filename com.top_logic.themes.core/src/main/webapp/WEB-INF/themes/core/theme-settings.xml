@@ -1312,6 +1312,9 @@
 	<icon name="com.top_logic.layout.table.renderer.Icons.RESET_TABLE"
 		expr="%ICON_TABLE%"
 	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.AUTO_FIT_COLUMNS"
+		value="css:bi bi-arrows-expand-vertical"
+	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.SORT_BUTTON_ICON"
 		expr="%com.top_logic.layout.form.values.edit.Icons.SORT_ELEMENTS%"
 	/>

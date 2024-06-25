@@ -1971,6 +1971,94 @@ TABLE = {
 	},
 	
 	/**
+	 * Auto fits clicked column width on double click to widest cell content.
+	 * 
+	 * @param{dblclickEvent} Double click event.
+	 * @param{ctrlID} Table control identifier.
+	 */
+	fitClickedColumn: function(dblclickEvent, ctrlID) {
+		const columnResizer = dblclickEvent.currentTarget;
+		const resizerCell = columnResizer.parentElement;
+		
+		let firstCol = this.getFirstColumnIndex(resizerCell),
+			lastCol = this.getLastColumnIndex(resizerCell);
+		
+		const tableContainer = document.getElementById(ctrlID);
+		this.autofitColumnWidths(tableContainer, false, firstCol, lastCol);
+		
+		dblclickEvent.preventDefault();
+		dblclickEvent.stopPropagation();
+	},
+	
+	/**
+	 * Auto fits width of given columns to widest cell content of each column.
+	 * 
+	 * @param{tableContainer} Container of the table.
+	 * @param{fullTable} [optional] Boolean if all columns of the table should be fitted. If true, firstCol & lastCol will be ignored. [default = true]
+	 * @param{firstCol} First column to fit. If falsy is overwritten with tables first column (0).
+	 * @param{lastCol} Last column to fit. If falsy is overwritten with tables last column (number of columns - 1).
+	 * @param{updateServer} [optional] Boolean if the column widths on the Server should be updated. [default = true]
+	 */
+	autofitColumnWidths: function(tableContainer, fullTable = true, firstCol, lastCol, updateServer = true) {
+		const table = tableContainer.querySelector("table");
+		const tbody = this.getTableBody(tableContainer);
+		let numColumns = this.getNumberOfColumns(table);
+		const ctrlID = tableContainer.id;
+		
+		let firstIdx, lastIdx;
+		if (fullTable == true) {
+			firstIdx = 0;
+			lastIdx = numColumns - 1;
+		} else {
+			firstIdx = (firstCol ||= 0);
+			lastIdx = (lastCol ||= (numColumns - 1));
+		}
+		
+		for (let i = firstIdx; i <= lastIdx; i++) {
+			let cells = this.getTableColumnCells(tbody, i, numColumns),
+				columnWidth = 0;
+			for (let cell of cells) {
+				let cellContent = cell.firstElementChild;
+				if (!cellContent) {
+					continue;
+				}
+				
+				// Removing width style is needed to calculate the actual scrollwidth (width including overflow)
+				let originalStyleWidth = cellContent.style.width;
+				cellContent.style.width = "auto";
+				
+				let borderWidth = parseInt(getComputedStyle(document.body).getPropertyValue("--TABLE_COLUMN_BORDER_WIDTH")),
+					cellWidth = cellContent.clientWidth + borderWidth,
+					scrollWidth = cellContent.scrollWidth + borderWidth;
+				
+				cellContent.style.width = originalStyleWidth;
+				
+				columnWidth = Math.max(columnWidth, cellWidth, scrollWidth);
+			}
+			
+			let col = table.querySelector("colgroup col:nth-child(" + (i + 1) + ")");
+			if (columnWidth != 0) {
+				let originalColWidth = col.style.width;
+				col.style.width = columnWidth + "px";
+				
+				let columnResizer = this.getColumnResizer(table.querySelector("tr:last-child th:nth-child(" + (i + 1) + ")")),
+					widthDiff = columnWidth - parseInt(originalColWidth);
+				this.createFixedColumnLeftOffsetUpater(ctrlID, columnResizer)(widthDiff);
+				
+				if (updateServer == true) {
+					// send update of column i's width to server
+					services.ajax.execute("dispatchControlCommand", {
+						controlCommand: "updateColumnWidth",
+						controlID: ctrlID,
+						columnID: i,
+						newColumnWidth: columnWidth
+					}, /* useWaitPane */false);
+				}
+			}
+		}
+	},
+	
+	/**
 	 * Returns the column resizer for the given table header cell.
 	 *
 	 * @param{headerCell} Table column header cell.

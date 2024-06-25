@@ -470,7 +470,7 @@ a.input-image.cannot-edit {
 }
 
 .tlButton {
-  display: inline-flex;
+  display: flex;
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
@@ -482,3 +482,6 @@ a.input-image.cannot-edit {
   font-size: 9pt;
 }
 
+.tlButton.tlUser a.accEntry {
+    flex-grow: 2;
+}

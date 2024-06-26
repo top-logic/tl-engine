@@ -470,15 +470,11 @@ a.input-image.cannot-edit {
 }
 
 .tlButton {
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  flex-shrink: 0;
-  height: 2rem;
-  cursor: pointer;
+	height: 2rem;
+	cursor: pointer;
 }
 
 .tlButton h4 {
-  font-size: 9pt;
+	font-size: 9pt;
+	margin: 0;
 }
-

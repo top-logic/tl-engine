@@ -2228,9 +2228,9 @@ h5.card-title a:focus {
 .tcrNode .treeNode {
     display: flex;
     align-items: center;
-    gap: var(--spacing-01);
+    gap: var(--spacing-02);
     height: 2rem;
-    padding: 0 var(--spacing-03);
+    padding: 0 var(--spacing-02);
     position: relative;
 }
 
@@ -2247,14 +2247,12 @@ h5.card-title a:focus {
 
 .treeNode .fToggle,
 .fToggle.tcrToggle, 
-.tlLeafIcon,
 .tcrNode .treeNode span i,
 .treeNode img,
 .tcrNode .treeNode span img {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	color: var(--icon-secondary);
 	/* 
 	Is needed for consistency as long as there are backend rendered 
 	toggle arrow pictures with width 15px. 
@@ -2262,12 +2260,30 @@ h5.card-title a:focus {
 	width: 15px;
 }
 
+.treeNodeIcon {
+	display: flex;
+	align-items: center;
+}
+
+.treeNodeIcon:not(img),
+.treeNode .fToggle,
+.fToggle.tcrToggle {
+    color: var(--icon-secondary);
+}
+
 .treeNode.treeSelected .fToggle.tcrToggle,
-.tlLeafIcon,
-.tcrNode .treeNode.treeSelected span {
+.tcrNode .treeNode.treeSelected .treeNodeIcon:not(img),
+.tcrNode .treeNode:hover .treeNodeIcon:not(img),
+.tcrNode .treeNode:hover .treeNode .fToggle,
+.tcrNode .treeNode:hover .fToggle.tcrToggle {
 	color: var(--icon-primary);
 }
 
+.tcrNoSelect {
+	color: var(--text-disabled);
+}
+
+.tcrNoSelect .treeNodeIcon:not(img),
 .treeNode .input-image.fToggle.disabled {
 	color: var(--icon-disabled);
 }

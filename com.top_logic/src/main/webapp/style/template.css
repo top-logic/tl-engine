@@ -3830,6 +3830,10 @@ a.topSpacerRightText {	color:var(--INVERT_TEXT);
 	line-height: var(--TREE_NODE_LINE_HEIGHT);
 }
 
+.treeNodeIcon {
+	margin-right: 5px;
+}
+
 .treeBody .treeNode.tblFrozen {
 	line-height: normal;
 }

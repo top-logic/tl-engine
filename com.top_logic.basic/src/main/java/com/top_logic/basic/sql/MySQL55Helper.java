@@ -47,7 +47,7 @@ public class MySQL55Helper extends MySQLHelper {
 
 		@Override
 		protected void internalEscape(Appendable out, String str) throws IOException {
-			MySQLWithBackslashEscape.backslashEscape(out, str);
+			backslashEscape(out, str);
 		}
 
 	}

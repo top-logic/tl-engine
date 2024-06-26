@@ -1444,10 +1444,10 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 
 				TLObject copy =
 					(TLObject) execute(search(
-						"x -> $x.copy(null, true, "  + 
-							"orig -> if ($orig.instanceOf(`TestSearchExpression:B`), " +
+						"x -> $x.copy(constructor: orig -> "  + 
+							"if ($orig.instanceOf(`TestSearchExpression:B`), " +
 								"new(`TestSearchExpression:C`) " + 
-							"..set(`TestSearchExpression:C#orig`, $orig) " +
+								"..set(`TestSearchExpression:C#orig`, $orig) " +
 							"))"),
 						orig);
 
@@ -1457,10 +1457,10 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 
 				TLObject stableCopy =
 					(TLObject) execute(search(
-						"x -> $x.copy(null, true, " +
-							"orig -> if ($orig.instanceOf(`TestSearchExpression:B`), " +
-							"new(`TestSearchExpression:C`) " +
-							"..set(`TestSearchExpression:C#orig`, $orig.inCurrent()) " +
+						"x -> $x.copy(constructor: orig -> " +
+							"if ($orig.instanceOf(`TestSearchExpression:B`), " +
+								"new(`TestSearchExpression:C`) " +
+								"..set(`TestSearchExpression:C#orig`, $orig.inCurrent()) " +
 							"))"),
 						stable);
 
@@ -1470,6 +1470,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 
 	private void checkCopyConstructor(TLObject orig, TLObject copy) {
 		assertEquals(value(orig, "b", "contents", 0), value(copy, "b", "contents", 0, "orig"));
+		assertNull(value(copy, "b", "contents", 0, "special"));
 	}
 
 	private void assertEmpty(Object value) {

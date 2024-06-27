@@ -2,6 +2,7 @@
 
 <template>
 	<params>
+		<param name="mainTabbarName" value="mainTabbar.layout.xml#mainTabber"/>
 		<param name="mainTabbar"/>
 	</params>
 
@@ -19,7 +20,7 @@
 					</view>
 				</componentControlProvider>
 			</layoutControl>
-			<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
+			<layoutControl componentName="${mainTabbarName}">
 				<layoutInfo
 					scrolleable="false"
 					size="%MAIN_TAB_BAR_HEIGHT%"
@@ -27,7 +28,7 @@
 				<componentControlProvider class="com.top_logic.layout.tabbar.TabBarControlProvider"/>
 			</layoutControl>
 			<layoutControl name="toolRow"
-				componentName="mainTabbar.layout.xml#mainTabber"
+				componentName="${mainTabbarName}"
 			>
 				<layoutInfo size="%TOOL_ROW_HEIGHT%"/>
 				<componentControlProvider class="com.top_logic.layout.structure.LayoutViewProvider">
@@ -43,7 +44,7 @@
 					<layoutInfo size="%MAIN_NAVIGATION_BAR_HEIGHT%"/>
 				</inject>
 			</include>
-			<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
+			<layoutControl componentName="${mainTabbarName}">
 				<layoutInfo size="100%"/>
 				<componentControlProvider class="com.top_logic.layout.structure.DeckPaneControlProvider"/>
 			</layoutControl>

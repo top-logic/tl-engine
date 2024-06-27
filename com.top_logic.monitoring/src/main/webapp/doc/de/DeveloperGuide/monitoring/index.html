@@ -1,4 +1,4 @@
-<p>In diesem Kapitel wird <strong>JMX </strong>(<strong>J</strong>ava <strong>M</strong>anagement E<strong>x</strong>tensions) zur Überwachung und Verwaltung einer Applikation vorgestellt. Ein <strong>JMX Agent</strong> besteht aus einem <strong>MBean Server</strong> und weiteren Möglichkeiten zur Verwaltung von <strong>MBeans</strong> (<strong>M</strong>anaged <strong>Beans</strong>). Diese MBeans bilden die Schnittstelle zur Anwendung. Sie können Daten bereitstellen, aber auch Aufgaben ausführen. Über die <strong>JConsole </strong>(<strong>J</strong>ava Monitoring and Management <strong>Console</strong>) können die am MBean Server registrierten MBeans angesehen und ihre Operationen ausgeführt werden. Die entstandenen Daten können über <strong>Prometheus </strong>gesammelt und einfach graphisch angezeigt werden. Durch <strong>Grafana </strong>können diese gesammelten Daten noch weiter aufbereitet werden.</p>
+<p>In diesem Kapitel wird <strong>JMX </strong>(<strong>J</strong>ava <strong>M</strong>anagement E<strong>x</strong>tensions) zur Überwachung und Verwaltung einer Applikation vorgestellt. Ein <strong>JMX Agent</strong> besteht aus einem <strong>MBean Server</strong> und weiteren Möglichkeiten zur Verwaltung von <strong>MBeans</strong> (<strong>M</strong>anaged <strong>Beans</strong>). Diese MBeans bilden die Schnittstelle zur Anwendung. Sie können Daten bereitstellen, aber auch Aufgaben ausführen. Z. B. über eine <strong><a class="tlObject" href="?page=jconsole&amp;uuid=9b52cdad-0354-4d79-82a2-9b1cf0339279">JConsole</a> </strong>(<strong>J</strong>ava Monitoring and Management <strong>Console</strong>) können die am MBean Server registrierten MBeans angesehen und ihre Operationen ausgeführt werden. Die entstandenen Daten können über z. B. <strong><a class="tlObject" href="?page=prometheus&amp;uuid=860d38f9-6099-48bc-9073-265541d12e57">Prometheus</a> </strong>gesammelt und einfach graphisch angezeigt werden. Durch z. B. <strong><a class="tlObject" href="?page=grafana&amp;uuid=42d01f7d-d71f-401f-8817-dc253efb0aa9">Grafana</a> </strong>können diese gesammelten Daten noch weiter aufbereitet werden.</p>
 
 <p> </p>
 
@@ -8,7 +8,19 @@
 
 <h2>MBeans</h2>
 
-<p>MBeans (<strong>M</strong>anaged <strong>Beans</strong>) stellen Attribute und Operationen zur Verfügung. Ein Attribut repräsentiert einen Wert und eine Operation führt eine Methode aus. Es gibt verschiedene MBeans:</p>
+<p>MBeans sind Java-Objekte, die Ressourcen und Anwendungsverwaltungsfunktionen in der JMX Technologie repräsentieren. Sie ermöglichen die Beobachtung und Steuerung von Systemressourcen, wie etwa den Speicherverbrauch, Thread-Management und benutzerdefinierte Metriken in Java-Anwendungungen. Durch MBeans gelangt man unter anderem an folgende Informationen:</p>
+
+<ul>
+	<li>Exakte Java Version</li>
+	<li>Argumente für die JVM, Classpath, Library Path,...</li>
+	<li>Detaillierte Speicher-Verwendung der JVM</li>
+	<li>Detaillierte Speicher- und CPU-Auslastung des Betriebssystems</li>
+	<li>Detaillierte Auflistung der verschiedenen Speicher Bereiche der JVM</li>
+	<li>Vollständige Log4j Konfiguration sowie jede Menge Details zum Logging</li>
+	<li>uvm.</li>
+</ul>
+
+<p>MBeans stellen Attribute und Operationen zur Verfügung. Ein Attribut repräsentiert einen Wert und eine Operation führt eine Methode aus. Es gibt verschiedene MBeans:</p>
 
 <ul>
 	<li>Standard MBean</li>
@@ -121,7 +133,7 @@
 <pre>
 <code class="language-java">MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 Object mBean = new Foo();
-ObjectName mBeanName = new ObjectName(domain:key=property);
+ObjectName mBeanName = new ObjectName("domain:key=property");
 mbs.registerMBean(mBean, mBeanName);</code></pre>
 
 <p><em>Codebeispiel 1: Registrierung einer MBean am MBean Server.</em></p>

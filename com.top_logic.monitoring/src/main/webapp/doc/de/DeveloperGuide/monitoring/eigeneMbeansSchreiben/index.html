@@ -1,13 +1,4 @@
-<p>​Um eigene Dynamic MBeans in Top Logic zu erzeugen, muss die abstrakte Klasse DynamicMBeanElement erweitert werden.</p>
-
-<h2>Konstruktor</h2>
-
-<p>Damit auch die Werte der jeweiligen Konfigurationen berücksichtigt werden können, muss jede Dynamic MBean selbst die Methode</p>
-
-<pre>
-<code class="language-java">buildDynamicMBeanInfo(config)</code></pre>
-
-<p>der Oberklasse in ihrem Konstruktor aufrufen.</p>
+<p>Um eigene Dynamic MBeans in Top Logic zu erzeugen, muss die abstrakte Klasse AbstractDynamicMBean erweitert werden. Die Methoden, die der Schnittstelle zur Verfügung gestellt werden sollen, müssen in ein jeweils entsprechendes MBean Info Objekt verpackt werden. Sie werden in ConstuktorInfo, AttributeInfo und OperationInfo unterteilt. <strong>Hinweis:</strong> Es müssen nicht zwingend alle öffentlichen Methoden auch der über die MBean Schnittstelle bereit gestellt werden.</p>
 
 <h2>ConstructorInfo</h2>
 
@@ -44,7 +35,7 @@
 		<tr>
 			<td style="width:123px">type</td>
 			<td style="width:28px">String</td>
-			<td style="width:569px">Klasse des Attributes.</td>
+			<td style="width:569px">Qualifizierter Name der Klasse des Attributes.</td>
 		</tr>
 		<tr>
 			<td style="width:123px">description</td>
@@ -111,7 +102,7 @@
 		<tr>
 			<td style="width:120px">type</td>
 			<td style="width:124px">String</td>
-			<td style="width:476px">Rückgabetyp der Methode.</td>
+			<td style="width:476px">Qualifizierter Name des Rückgabetyp der Methode.</td>
 		</tr>
 		<tr>
 			<td style="width:120px">impact</td>
@@ -189,4 +180,4 @@
 	&lt;/instance&gt;
 &lt;/config&gt;</code></pre>
 
-<p><em>Codebeispiel 1: Konfigurationseintrag zur Registierung der MBeans.</em>​</p>
+<p><em>Codebeispiel 1: Konfigurationseintrag zur Registierung der MBeans.</em></p>

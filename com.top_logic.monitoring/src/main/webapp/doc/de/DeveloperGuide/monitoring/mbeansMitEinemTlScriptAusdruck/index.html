@@ -1,6 +1,6 @@
 <p>In TopLogic gibt es die Möglichkeit MBeans zu erstellen, die einen TL-Script Ausdruck beinhalten, der mit einer beliebigen Anzahl an Parametern angereichert werden und ausgewertet werden kann. So können InApp MBeans erstellt und konfiguriert werden.</p>
 
-<p>Über den <strong>Service "TLDataBeanService"</strong> im Serve-Editor können "MBean mit einem TL-Script-Ausdruck" (<strong>MonitorByExpression</strong>) ausgewählt werden. Dieser muss wie in <em>Tabelle 1</em> zu sehen konfiguriert werden.</p>
+<p>Über den <strong>Service "TLDataBeanService"</strong> im Service-Editor können "MBean mit einem TL-Script-Ausdruck" (<strong>MBeanByExpression</strong>) ausgewählt werden. Dieser muss wie in <em>Tabelle 1</em> zu sehen konfiguriert werden.</p>
 
 <table border="0" class="tlDocTable" style="width:1000.78px">
 	<thead>
@@ -24,21 +24,19 @@
 		<tr>
 			<td>Implementierung</td>
 			<td>Expr</td>
-			<td style="width:705px">TL-Script Ausdruck, der ausgewertet werden soll. Besitzt der Ausdruck keine Parameter, so wird er direkt ausgewertet. Ist er jedoch parametrisiert, benötigt er zunächst die Eingabe dieser Parameter z. B. über JConsole. <strong>Wichtig:</strong> Das Ergebnis muss ein "einfacher" Typ sein, wie eine Zahl, ein Text, ein Boolean oder eine Liste solcher Objekte. Jedoch werden nur nummerische Werte durch Prometheus gesammelt.</td>
+			<td style="width:705px">TL-Script Ausdruck, der ausgewertet werden soll. Besitzt der Ausdruck keine Parameter, so wird er direkt ausgewertet. Ist er jedoch parametrisiert, benötigt er zunächst die Eingabe dieser Parameter z. B. über JConsole. <strong>Wichtig:</strong> Das Ergebnis muss ein "einfacher" Typ sein, wie eine Zahl, ein Text, ein Boolean oder eine Liste solcher Objekte. Jedoch werden nur nummerische Werte durch Prometheus gesammelt. Soll dieses Tool eingesetzt werden, so sollte das Ergebnis der Implementierung ein nummerischer Wert sein.</td>
 		</tr>
 		<tr>
 			<td>Liste von Parametern</td>
 			<td>Parameter-Liste</td>
 			<td style="width:705px">
-			<p>Es müssen genauso viele Parameter erstellt werden, die für den TL-Script Ausdruck benötigt werden. Sie werden in genau der Reihenfolge an den TL-Script-Ausdruck weitergegeben, unabhängig der eingegebenen Namen.</p>
+			<p>Es müssen genauso viele Parameter erstellt werden, wie für den TL-Script Ausdruck benötigt werden. Sie werden in genau der Reihenfolge an den TL-Script-Ausdruck weitergegeben, unabhängig der eingegebenen Namen.</p>
 			</td>
 		</tr>
 	</tbody>
 </table>
 
 <p><em>Tabelle 1: Konfiguration eines MBeans mit einem TL-Script-Ausdruck.</em></p>
-
-<p> </p>
 
 <p>Jeder benötigte Parameter muss erstellt und wie in <em>Tabelle 2</em> zu sehen konfiguriert werden.</p>
 
@@ -54,7 +52,7 @@
 		<tr>
 			<td style="width:115px">Name</td>
 			<td style="width:83px">String</td>
-			<td style="width:703px">Der Parameter benötigt einen Namen, der jedoch irrelevant für den TL Script Ausdruck ist.</td>
+			<td style="width:703px">Der Parameter benötigt einen Namen, der jedoch irrelevant für den TL Script Ausdruck ist. Er wird jedoch über die Schnittstelle weitergegeben, um die Paramter beim Befüllen unterscheiden zu können. Durch eine einfache Benamung kann er somit beim Verständnis helfen.</td>
 		</tr>
 		<tr>
 			<td style="width:115px">Beschreibung</td>
@@ -71,6 +69,4 @@
 
 <p><em>Tabelle 2: Konfiguration eines Parameters.</em></p>
 
-<p> </p>
-
-<p><em></em>Nun können diese Parameter z. B. über JConsole befüllt werden. Dazu wird eine <strong>execute()-Operation </strong>angeboten, die auch das Ergebnis zurückliefert. Dieses Ergebnis wird auch gleichzeitig im <strong>Attribut result</strong> gespeichert. Ist ein unparametrisierter Script-Ausdruck konfiguriert, so wird das Ergebnis direkt ausgewertet und ebenfalls gespeichert.</p>
+<p><em></em>Nun können diese Parameter z. B. über <a class="tlObject" href="?uuid=9b52cdad-0354-4d79-82a2-9b1cf0339279">JConsole</a> befüllt werden. Dazu wird eine <strong>execute()-Operation </strong>angeboten, die auch das Ergebnis zurückliefert. Dieses Ergebnis wird auch gleichzeitig über das <strong>Attribut result</strong> angezeigt. Das Ausführen von Operationen ist ebenfalls z. B. über <a class="tlObject" href="?uuid=9b52cdad-0354-4d79-82a2-9b1cf0339279">JConsole</a> möglich. Die Werte der Attribute können z. B. in der <a class="tlObject" href="?uuid=9b52cdad-0354-4d79-82a2-9b1cf0339279">JConsole</a>, <a class="tlObject" href="?uuid=860d38f9-6099-48bc-9073-265541d12e57">Prometheus</a>, <a class="tlObject" href="?uuid=42d01f7d-d71f-401f-8817-dc253efb0aa9">Grafana</a> usw. angezeigt werden. Ist ein unparametrisierter Script-Ausdruck konfiguriert, so wird das Ergebnis direkt ausgewertet.</p>

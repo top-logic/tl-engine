@@ -1,0 +1,112 @@
+<p>TopLogic bietet bereits eigene MBeans, wie der <strong>UserMBean</strong>, die Daten über Benutzer sammeln kann, sowie der <strong>KnowledgeBaseMBean</strong>, die Daten der Knowledge Base bereit stellt. Weiterhin findet man in der Demo-Anwendung die sogenannte <strong>DemoMBean</strong>. Dieser speichert einen Namen, der verändert und auf dessen Existenz geprüft werden kann, sowie eine Methode, um einen Zähler hochzählen zu lassen. Letztere DemoMBean soll im folgenden als Beispiel für die Implementierung eigener MBeans dienen.</p>
+
+<p>Zunächst wird eine Java-Klasse namens DemoMBean dafür erstellt, die <strong>AbstractDynamicMBean</strong> erweitert. <strong>Hinweis:</strong> Da so eine Dynamic MBean erstellt wird, ist der Suffix "MBean" nicht notwendig, soll jedoch die Zusammengehörigkeit zu anderen MBeans verdeutlichen.</p>
+
+<pre>
+<code class="language-java">public class DemoMBean extends AbstractDynamicMBean {}</code></pre>
+
+<p>Durch AbstractDynamicMBean wird auch die neue DemoMBean konfigurierbar. Der konfigurierte Name muss dem Schema "domain:key=name" folgen, sowie eindeutig sein. Um es nach außen hin so aussehen zu lassen, als lägen alle MBeans in einem Paket, wird als <strong>Domain </strong>"com.top_logic.monitoring.data" verwendet. So sind alle TopLogic MBeans an einer gemeinsamen Stelle. Da gerade der Name der MBean erstellt werden soll, wird "name" als <strong>Key </strong>gewählt. Anschließend wird der Name der Klasse als <strong>Name </strong>der MBean eingesetzt.</p>
+
+<pre>
+<code class="language-java">/** {@link ConfigurationItem} for the {@link DemoMBean}. */
+public interface Config extends AbstractDynamicMBean.Config {
+
+  @Override
+  @StringDefault("com.top_logic.monitoring.data:name=DemoMBean")
+  public String getName();
+}</code></pre>
+
+<p>​Im Konstruktor wird lediglich der Super-Konstruktor aufgerufen.​</p>
+
+<pre>
+<code class="language-java">/** {@link TypedConfiguration} constructor for {@link DemoMBean}. */
+public DemoMBean(InstantiationContext context, Config config) {
+  super(context, config);
+}</code></pre>
+
+<p>​Jetzt beginnt der eigentliche Code der Funktionalität dieser Klasse. Hierfür werden ein Vorname und ein Zähler lokal gespeichert. Für den Vornamen wird ein Getter, ein Setter, sowie eine Methode erstellt, die überprüft, ob die Variable gesetzt worden ist. Für den Zähler wird eine Methode count() geschrieben, die diesen hochzählt, sowie das aktuelle Ergebnis zurück gibt. Da die vier Methoden über Reflection aufgerufen werden, wird eine entsprechende Annotation dafür gesetzt.</p>
+
+<pre>
+<code class="language-java">String _prename = "Alice";
+int _counter = 0;
+
+/** Returns the prename. */
+@CalledByReflection
+public String getPrename() {
+  return _prename;
+}
+
+/** Sets the prename. */
+@CalledByReflection
+public void setPrename(String name) {
+  _prename = name;
+}
+
+/** Checks whether the prename is set. */
+@CalledByReflection
+public boolean isNameSet() {
+  return !StringServices.isEmpty(_prename);
+}
+
+/** Adds 1 to the counter. */
+@CalledByReflection
+public int count() {
+  return ++_counter;
+}</code></pre>
+
+<p>Für die Attribute einer MBean wird nach den <strong>öffentlichen Getter-Methoden</strong> gesucht. Diese müssen jeweils, bei den dynamischen MBeans, als ein MBeanAttributeInfo eingetragen werden. Es wurden zuvor <strong>getPrename()</strong> und <strong>isNameSet()</strong> erstellt. Die <strong>Namen </strong>sind jeweils die Methodennamen ohne ihre Prefixe get/is. Hierbei gilt es auch die Groß- und Kleinschreibung zu beachten. Also "<u>P</u>rename" und "<u>N</u>ameSet". Die <strong>Typen </strong>der Attribute entsprechen den vollqualifizierten Rückgabetypen der jeweiligen Methoden - String beim Vorname und Boolean bei der Abfrage, ob der Name gesetzt worden ist. Für die <strong>Beschreibungen </strong>sollten aussagekräftigte Hinweise über die Inhalte der Attribute gewählt werden. Da beide Getter <strong>auslesbar </strong>sein sollen, werden sie auch so definiert. Der Name soll zusätzlich veränderbar sein. Dadurch benötigt er <strong>Schreibrechte</strong>, um den entsprechenden Setter (setPrename()) finden zu können. Die Abfrage, ob der Name gesetzt ist, soll nicht von außen verändert werden können. Der letzte Parameter zum Erstellen eines MBeanAttributeInfos fragt ab, ob der<strong> Prefix der Methode</strong> ein "is" ist oder die Methode mit einem "get" beginnt.</p>
+
+<pre>
+<code class="language-java">@Override
+protected MBeanAttributeInfo[] createAttributeInfo() {
+  MBeanAttributeInfo[] attributes = new MBeanAttributeInfo[2];
+
+  attributes[0] = new MBeanAttributeInfo(
+    "Prename", // name
+    "java.lang.String", // type
+    "The value of the prename attribute.", // description
+    true, // readable
+    true, // writable
+    false); // isIs
+
+  attributes[1] = new MBeanAttributeInfo(
+    "NameSet", // name
+    "java.lang.Boolean", // type
+    "Checks whether the prename attribute is set.", // description
+    true, // readable
+    false, // writable
+    true); // isIs
+
+  return attributes;
+}</code></pre>
+
+<p>Als nächstes wird die <strong>count()</strong>-Methode als Operation eingetragen. Der <strong>Name </strong>der Methode wird 1:1 so übernommen, also "count". Für die <strong>Beschreibung </strong>wird wieder ein möglichst aussagekrägtiger Text gewählt. Da diese Methode keine <strong>Parameter</strong> besitzt, wird hierfür ein null übergeben. Der aktuelle Zählerstand soll jedes Mal nach dem Ausführen der Methode zurückgegeben werden. Primitive Typen, aber auch "void" werden auch so geschrieben, im Gegensatz zu den vollqualifizierten Namen von Klassen. Somit wird hier lediglich "int" als <strong>Typ</strong> eingetragen. Da die Methode eine Aktion ausführt und eine Information über den Zählerstand zurückgibt, wird sie als <strong>ACTION_INFO </strong>definiert.</p>
+
+<pre>
+<code class="language-java">@Override
+protected MBeanOperationInfo[] createOperationInfo() {
+  MBeanOperationInfo[] operations = new MBeanOperationInfo[1];
+
+  MBeanParameterInfo[] emptyParams = null;
+  operations[0] = new MBeanOperationInfo(
+    "count", // name
+    "Counts the klicks.", // description
+    emptyParams, // parameter types
+    "int", // return type
+    MBeanOperationInfo.ACTION_INFO); // impact
+
+  return operations;
+}</code></pre>
+
+<p>Nun muss die erstellte MBean in die gewünschten Anwendungskonfiguration (*.config.xml) im Service-Tag eingetragen werden.</p>
+
+<pre>
+<code class="language-xml">&lt;config service-class="com.top_logic.monitoring.data.TLDataBeanService"&gt;
+  &lt;instance&gt;
+    &lt;mbeans&gt;
+      &lt;mbean class="com.top_logic.demo.monitoring.DemoMBean" description="Dynamic MBean demonstration." /&gt;
+    &lt;/mbeans&gt;
+  &lt;/instance&gt;
+&lt;/config&gt;</code></pre>
+
+<p> </p>

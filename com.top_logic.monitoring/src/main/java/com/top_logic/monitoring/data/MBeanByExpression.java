@@ -33,10 +33,6 @@ public class MBeanByExpression extends AbstractDynamicMBean {
 
 	private final QueryExecutor _impl;
 
-	private final List<OperationParameter> _parameters;
-
-	private Object _result;
-
 	/** {@link ConfigurationItem} for the {@link MBeanByExpression}. */
 	public interface Config extends AbstractDynamicMBean.Config {
 
@@ -63,8 +59,8 @@ public class MBeanByExpression extends AbstractDynamicMBean {
 		super(context, config);
 
 		_impl = QueryExecutor.compile(config.getImpl());
-		_parameters = config.getParameters();
-		if (_parameters == null || _parameters.size() == 0) {
+
+		if (getParameters() == null || getParameters().size() == 0) {
 			execute();
 		}
 	}
@@ -89,7 +85,7 @@ public class MBeanByExpression extends AbstractDynamicMBean {
 		MBeanOperationInfo[] operations = new MBeanOperationInfo[1];
 
 		List<MBeanParameterInfo> parameters = new ArrayList<>();
-		for (OperationParameter param : _parameters) {
+		for (OperationParameter param : getParameters()) {
 			OperationParameter.Config paramConfig = param.getConfig();
 			parameters.add(new MBeanParameterInfo(
 				paramConfig.getName(),
@@ -110,32 +106,22 @@ public class MBeanByExpression extends AbstractDynamicMBean {
 	/** Returns the result of the query. */
 	@CalledByReflection
 	public Object getResult() {
-		if (CollectionUtil.isEmpty(_parameters)) {
-			// update
-			_result = ThreadContextManager.inSystemInteraction(MBeanByExpression.class, () -> _impl.execute());
-		} else {
-			_result =
-				ThreadContextManager.inSystemInteraction(MBeanByExpression.class, () -> _impl.execute(_parameters));
-		}
-
-		return _result;
+		return ThreadContextManager.inSystemInteraction(MBeanByExpression.class,
+			() -> CollectionUtil.isEmpty(getParameters()) ? getImpl().execute() : getImpl().execute(getParameters()));
 	}
 
 	/** Executes the configured script with its given parameters. Maybe called by reflection. */
 	@CalledByReflection
 	public Object execute(Object... args) {
-		Object[] arguments;
-		if (args.length == 1 && args[0] instanceof Object[]) {
-			// if called by reflection, the arguments are wrapped inside an array at the first
-			// position to fit to the number of parameters.
-			arguments = (Object[]) args[0];
-		} else {
-			arguments = args;
-		}
+		return ThreadContextManager.inSystemInteraction(MBeanByExpression.class, () -> getImpl().execute(args));
+	}
 
-		_result = ThreadContextManager.inSystemInteraction(MBeanByExpression.class, () -> _impl.execute(arguments));
+	private List<OperationParameter> getParameters() {
+		return ((MBeanByExpression.Config) getConfig()).getParameters();
+	}
 
-		return _result;
+	private QueryExecutor getImpl() {
+		return _impl;
 	}
 
 }

@@ -27,8 +27,7 @@ import com.top_logic.basic.config.constraint.annotation.Constraint;
 
 /**
  * Dynamic MBean with information to expose for management (constructors, attributes and operations)
- * using reflection. The method {@link #buildDynamicMBeanInfo(Config)} must be called in the
- * constructors of its subclasses to respect the configured information.
+ * using reflection.
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
@@ -65,12 +64,16 @@ public abstract class AbstractDynamicMBean extends AbstractConfiguredInstance<Ab
 	/**
 	 * Creates an array of attributes to expose.
 	 */
-	protected abstract MBeanAttributeInfo[] createAttributeInfo();
+	protected MBeanAttributeInfo[] createAttributeInfo() {
+		return null;
+	}
 
 	/**
 	 * Creates an array of operations to expose.
 	 */
-	protected abstract MBeanOperationInfo[] createOperationInfo();
+	protected MBeanOperationInfo[] createOperationInfo() {
+		return null;
+	}
 
 	/**
 	 * Create information about the constructors, attributes and operations which should be listed
@@ -105,26 +108,21 @@ public abstract class AbstractDynamicMBean extends AbstractConfiguredInstance<Ab
 		MBeanAttributeInfo attributeInfo = findAttributeInfo(attribute);
 
 		if(attributeInfo == null) {
-			Logger.error(
-				"There is no getter registered for this dynamic MBean for the attribute '" + attribute + "'.",
-				AbstractDynamicMBean.class);
+			Logger.error("There is no attribute '" + attribute + "' registered for this dynamic MBean.", getClass());
 			return null;
 		}
 		
 		boolean isReadable = attributeInfo.isReadable();
-		String prefix = attributeInfo.isIs() ? "is" : "get";
-
-		if (isReadable) {
-			String methodName = StringServices.concatenate(prefix, attribute);
-			Method method = ReflectionUtil.getMethod(getClass(), methodName);
-			return ReflectionUtil.invokeMethod(this, method);
+		if (!isReadable) {
+			Logger.error("The attribute '" + attribute + "' is not readable.", getClass());
+			return null;
 		}
 
-		Logger.error(
-			"The attribute '" + attribute + "' is not readable.",
-			AbstractDynamicMBean.class);
-
-		return null;
+		String prefix = attributeInfo.isIs() ? "is" : "get";
+		String methodName = StringServices.concatenate(prefix, attribute);
+		Method method = getDeclaredMethod(methodName);
+			
+		return ReflectionUtil.invokeMethod(this, method);
 	}
 
 	private MBeanAttributeInfo findAttributeInfo(String attribute) {
@@ -135,6 +133,15 @@ public abstract class AbstractDynamicMBean extends AbstractConfiguredInstance<Ab
 		}
 
 		return null;
+	}
+
+	private Method getDeclaredMethod(String methodName, Class<?>... parameterTypes) {
+		try {
+			return getClass().getDeclaredMethod(methodName, parameterTypes);
+		} catch (NoSuchMethodException | SecurityException ex) {
+			Logger.error("Cannot find method '" + methodName + "' in '" + getClass() + "'.", ex, getClass());
+			return null;
+		}
 	}
 
 	@Override
@@ -174,19 +181,27 @@ public abstract class AbstractDynamicMBean extends AbstractConfiguredInstance<Ab
 
 	@Override
 	public void setAttribute(Attribute attribute) {
-		if (attribute != null) {
-			String name = attribute.getName();
-			Object value = attribute.getValue();
-			MBeanAttributeInfo attributeInfo = findAttributeInfo(name);
-			try {
-				Class<?> type = Class.forName(attributeInfo.getType());
-				String methodName = "set" + name;
-				Method method = ReflectionUtil.getMethod(getClass(), methodName, type);
+		if (attribute == null) {
+			Logger.error("The attribute must not be null.", getClass());
+			return;
+		}
 
-				ReflectionUtil.invokeMethod(this, method, value);
-			} catch (ClassNotFoundException ex) {
-				Logger.error("Cannot find class named '" + attributeInfo.getType() + "'.", ex, AbstractDynamicMBean.class);
-			}
+		String name = attribute.getName();
+		Object value = attribute.getValue();
+		MBeanAttributeInfo attributeInfo = findAttributeInfo(name);
+
+		if (attributeInfo == null) {
+			Logger.error("There is no attribute '" + attribute + "' registered for this dynamic MBean.", getClass());
+			return;
+		}
+
+		try {
+			Class<?> type = Class.forName(attributeInfo.getType());
+			String methodName = "set" + name;
+			Method method = getDeclaredMethod(methodName, type);
+			ReflectionUtil.invokeMethod(this, method, value);
+		} catch (ClassNotFoundException ex) {
+			Logger.error("Cannot find class named '" + attributeInfo.getType() + "'.", ex, AbstractDynamicMBean.class);
 		}
 	}
 

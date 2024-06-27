@@ -6,7 +6,6 @@
 package com.top_logic.monitoring.data;
 
 import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanOperationInfo;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -59,11 +58,6 @@ public class KnowledgeBaseMBean extends AbstractDynamicMBean {
 			false); // isIs
 
 		return attributes;
-	}
-
-	@Override
-	protected MBeanOperationInfo[] createOperationInfo() {
-		return null;
 	}
 
 	/** Returns the size of the used knowledge-base cache. */

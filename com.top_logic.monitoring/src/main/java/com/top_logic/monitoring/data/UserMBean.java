@@ -11,7 +11,6 @@ import java.util.Date;
 import java.util.List;
 
 import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanOperationInfo;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -59,11 +58,6 @@ public class UserMBean extends AbstractDynamicMBean {
 			false); // isIs
 
 		return attributes;
-	}
-
-	@Override
-	protected MBeanOperationInfo[] createOperationInfo() {
-		return null;
 	}
 
 	/**

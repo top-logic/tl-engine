@@ -30,8 +30,6 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
 public class TLDataBeanService extends ConfiguredManagedClass<TLDataBeanService.Config> {
-
-	private final List<AbstractDynamicMBean.Config> _mBeanConfigurations;
 	
 	/**
 	 * Configuration of a {@link TLDataBeanService}.
@@ -57,19 +55,13 @@ public class TLDataBeanService extends ConfiguredManagedClass<TLDataBeanService.
 	 */
 	public TLDataBeanService(InstantiationContext context, Config configuration) {
 		super(context, configuration);
-
-		_mBeanConfigurations = configuration.getMbeans();
-	}
-
-	private List<AbstractDynamicMBean.Config> getMBeans() {
-		return _mBeanConfigurations;
 	}
 
 	@Override
 	protected void startUp() {
 		MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
-		for (AbstractDynamicMBean.Config mBean : getMBeans()) {
+		for (AbstractDynamicMBean.Config mBean : getConfig().getMbeans()) {
 			registerMBean(mbs, mBean);
 		}
 	}
@@ -98,7 +90,7 @@ public class TLDataBeanService extends ConfiguredManagedClass<TLDataBeanService.
 	protected void shutDown() {
 		MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
 
-		for (AbstractDynamicMBean.Config mBean : getMBeans()) {
+		for (AbstractDynamicMBean.Config mBean : getConfig().getMbeans()) {
 			try {
 				mbs.unregisterMBean(createObjectName(mBean.getName()));
 			} catch (MBeanRegistrationException | InstanceNotFoundException ex) {

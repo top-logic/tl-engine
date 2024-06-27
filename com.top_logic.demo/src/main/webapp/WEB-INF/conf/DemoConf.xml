@@ -4,6 +4,7 @@
 
 <root>
 	<alias>
+		<!-- Note: Since multiple search components (AttributedSearchComponent) are defined in tl-demo, the one that should display quick search results must be configured. -->
 		<entry name="%QUICK_SEARCH_SEARCH_COMPONENT%" value="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput" />
 		
     	<!-- Aliases for TestServerClient.script.xml -->
@@ -32,7 +33,5 @@
 		<section name="ConfiguredAttributedTooltips" comment="Attributes to show in ConfiguredAttributedTooltipProvider">
             <entry name="me:DemoTypes:A" value="name, tl.type, boolean" />
 		</section>
-
 	</properties>
-	
 </root>

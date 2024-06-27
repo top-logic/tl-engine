@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="templates/masterFrame.xml"
+	closeDialogOnBackgroundClick="true"
+>
+	<components>
+		<layout-reference resource="views/micro-frontend/viewCockpit.layout.xml"/>
+	</components>
+</include>

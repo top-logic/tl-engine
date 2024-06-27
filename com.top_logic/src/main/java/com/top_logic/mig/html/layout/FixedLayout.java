@@ -45,12 +45,12 @@ public class FixedLayout implements TLLayout {
 
 	@Override
 	public String getTemplateName() {
-		throw new UnsupportedOperationException("Layout does not come from a template.");
+		throw new UnsupportedOperationException("Layout has no template: " + _config.getName().scope());
 	}
 
 	@Override
 	public ConfigurationItem getArguments() throws ConfigurationException {
-		throw new UnsupportedOperationException("Layout does not come from a template.");
+		throw new UnsupportedOperationException("Layout has no template: " + _config.getName().scope());
 	}
 
 	@Override

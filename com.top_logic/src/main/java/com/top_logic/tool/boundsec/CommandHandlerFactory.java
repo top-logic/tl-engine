@@ -738,6 +738,9 @@ public final class CommandHandlerFactory extends ManagedClass {
 	 * This method cares for referenced {@link CommandHandler}s and returns the referenced handler
 	 * instead of the reference handler.
 	 * </p>
+	 * 
+	 * @return the resolved command, or <code>null</code> if no command could be found or
+	 *         instantiated. An error has been logged in that case.
 	 */
 	public CommandHandler getCommand(InstantiationContext context,
 			PolymorphicConfiguration<? extends CommandHandler> config) {
@@ -745,6 +748,10 @@ public final class CommandHandlerFactory extends ManagedClass {
 		if (config instanceof CommandHandlerReference.Config) {
 			String handlerId = ((CommandHandlerReference.Config) config).getCommandId();
 			commandHandler = getHandler(handlerId);
+			if (commandHandler == null) {
+				Logger.error("No command registered for ID '" + handlerId + "' in registry.",
+					CommandHandlerFactory.class);
+			}
 		} else {
 			commandHandler = createCommand(context, config);
 		}
@@ -773,8 +780,9 @@ public final class CommandHandlerFactory extends ManagedClass {
 				return createHandler(context, commandConfig);
 			} catch (ConfigurationException | InstantiationException | IllegalAccessException
 					| InvocationTargetException ex) {
-				throw new ConfigurationError("Command handler '" + commandConfig.getId() + "' instantiation failed.",
-					ex);
+				Logger.error("Command handler '" + commandConfig.getId() + "' instantiation failed.",
+					ex, CommandHandlerFactory.class);
+				return null;
 			}
 		}
 		return context.getInstance(handlerConfig);

@@ -9,6 +9,7 @@ import com.top_logic.layout.structure.LayoutControlProvider.Strategy;
 import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.mig.html.layout.DialogComponent;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.mig.html.layout.MainLayout;
 
 /**
  * Global algorithm for transforming {@link LayoutComponent}s into {@link LayoutControl}s.
@@ -75,5 +76,15 @@ public interface LayoutFactory {
 	 * @return The {@link DialogWindowControl} used to render the given component.
 	 */
 	DialogWindowControl createDialogLayout(DialogComponent dialog);
+
+	/**
+	 * Main entry-point for creating the {@link BrowserWindowControl} for a application's root
+	 * component.
+	 * 
+	 * @param main
+	 *        The application's root component.
+	 * @return The {@link BrowserWindowControl} used to render the given component.
+	 */
+	BrowserWindowControl createRootLayout(MainLayout main);
 
 }

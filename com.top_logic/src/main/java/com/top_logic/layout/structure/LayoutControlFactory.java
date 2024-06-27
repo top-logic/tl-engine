@@ -283,12 +283,6 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 	@Override
 	public LayoutControl mkLayout(Strategy strategy, LayoutComponent aBusinessComponent) {
 		if (aBusinessComponent instanceof LayoutContainer) {
-			if (aBusinessComponent instanceof MainLayout) {
-				if (_config.getAutomaticToolbars()) {
-					markMaximizables(aBusinessComponent);
-				}
-				return createMainLayout((MainLayout) aBusinessComponent);
-			}
 			if (aBusinessComponent instanceof Layout) {
 				if (aBusinessComponent instanceof CockpitLayout) {
 					return createCockpitLayout((CockpitLayout) aBusinessComponent);
@@ -608,17 +602,23 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 		}
 	}
 
-	protected LayoutControl createMainLayout(MainLayout aMainLayout) {
+	@Override
+	public BrowserWindowControl createRootLayout(MainLayout main) {
+		markMaximizables(main);
+
 		DefaultWindowModel windowModel = new DefaultWindowModel(DefaultLayoutData.NO_SCROLL_CONSTRAINT, null);
-		WindowManager windowManager = aMainLayout.getWindowManager();
-		return createBrowserWindowControl(aMainLayout, null, windowManager, windowModel);
+		WindowManager windowManager = main.getWindowManager();
+		return createBrowserWindowControl(main, null, windowManager, windowModel);
 	}
 
 	private BrowserWindowControl createBrowserWindowControl(Layout layout, WindowScope opener, WindowManager windowManager, WindowModel windowModel) {
 		BrowserWindowControl windowControl =
 			new BrowserWindowControl(opener, windowManager, windowModel, layout.getName());
 		
-		LayoutControl content = createLayout(layout);
+		// A component tree may have no top-level tab bar. In such situation, the main layout must
+		// be able to introduce a toolbar.
+		LayoutControl content = decorate(layout, this);
+
 		CockpitControl cockpit = new CockpitControl();
 		cockpit.setChildControl(content);
 		windowControl.setChildControl(cockpit);

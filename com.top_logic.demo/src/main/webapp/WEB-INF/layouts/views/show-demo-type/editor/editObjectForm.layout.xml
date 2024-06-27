@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments defaultFor="DemoTypes:DemoTypes.All">
+		<name key="dynamic.bbd5ced1-a8f4-4c66-a407-3f2b5f17a174">
+			<en>Edit object</en>
+			<de>Objekt bearbeiten</de>
+		</name>
+	</arguments>
+</config:template-call>

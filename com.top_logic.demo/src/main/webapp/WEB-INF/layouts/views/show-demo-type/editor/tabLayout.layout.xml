@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_48df0f3a_336f_4497_8462_bd3ad4c7336a"
+		tabIcon="css:fas fa-pen-nib"
+	>
+		<tabLabel key="dynamic.21dc932f-fb02-4a45-bfb7-85093aee3d59">
+			<en>Editor</en>
+			<de>Editor</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="views/show-demo-type/editor/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

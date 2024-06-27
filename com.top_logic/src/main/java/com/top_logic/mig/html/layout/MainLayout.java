@@ -1044,7 +1044,7 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		}
 		// must call after super components resolved as it is needed that all descendants are
 		// resolved.
-		layoutControl = (BrowserWindowControl) _layoutFactory.createLayout(this);
+		layoutControl = _layoutFactory.createRootLayout(this);
 		LayoutUtils.setWindowScope(DefaultDisplayContext.getDisplayContext(), layoutControl);
 		if (oldId != null) {
 			getEnclosingFrameScope().addClientAction(new ElementReplacement(oldId, layoutControl));

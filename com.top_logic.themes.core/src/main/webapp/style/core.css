@@ -23,14 +23,43 @@ body {
 	background: transparent;
 }
 
-:not(.accRoot)::-webkit-scrollbar-thumb {
-	background: var(--sb-thumb-color);
+@property --sb-track-transition {
+	syntax: "<color>";
+	inherits: true;
+	initial-value: transparent;
+}
+
+@property --sb-thumb-transition {
+	syntax: "<color>";
+	inherits: true;
+	initial-value: transparent;
+}
+
+.lcAuto, .lcScroll, .tl-overflow--auto {
+	transition-property: --sb-track-transition, --sb-thumb-transition;
+	transition-duration: .5s;
+	transition-delay: 1s;
+}
+
+:is(.lcAuto, .lcScroll, .tl-overflow--auto):not(:has(:is(.lcAuto, .lcScroll, .tl-overflow--auto):not(:hover))):hover {
+	--sb-track-transition: var(--sb-track-color);
+	--sb-thumb-transition: var(--sb-thumb-color);
+	transition: --sb-track-transition, --sb-thumb-transition;
+}
+
+:is(.lcAuto, .lcScroll, .tl-overflow--auto)::-webkit-scrollbar-track {
+	background: var(--sb-track-transition);
 	border-radius: 4px;
 }
 
-:hover::-webkit-scrollbar {
-	width: var(--sb-size);
-	height: var(--sb-size);
+:is(.lcAuto, .lcScroll, .tl-overflow--auto)::-webkit-scrollbar-thumb {
+	background: var(--sb-thumb-transition);
+	border-radius: 4px;
+}
+
+:hover::-webkit-scrollbar-track {
+	background: var(--sb-track-color);
+	border-radius: 4px;
 }
 
 :hover::-webkit-scrollbar-thumb {
@@ -41,7 +70,7 @@ body {
 @supports not selector(::-webkit-scrollbar) {
 	body {
 		scrollbar-color: var(--sb-thumb-color)
-						transparent;
+						var(--sb-track-color);
 	}
 }
 /* < Scrollbars */

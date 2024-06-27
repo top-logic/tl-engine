@@ -138,8 +138,8 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 	 * 
 	 * <p>
 	 * It annotates a component <code>B</code> to a surrounding layout <code>A</code>, if the
-	 * component <code>A</code> should be display a toolbar on behalf of <code>B</code>. A toolbar
-	 * can be minimized, if there are sibling components in the directly surrounding layout. The
+	 * component <code>A</code> should display a toolbar on behalf of <code>B</code>. A toolbar can
+	 * be minimized, if there are sibling components in the directly surrounding layout. The
 	 * minimization state is stored at the minimization lead component <code>B</code>.
 	 * </p>
 	 */
@@ -206,7 +206,7 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 			markMaximizables(component);
 			if (contextToolbar != null) {
 				// Prevent duplicate toolbars in dialog title and top-level component.
-				clearMinimizable(component);
+				clearToolbarFor(component);
 			}
 			return createLayout(component);
 		} finally {
@@ -244,7 +244,7 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 		Expandable maximizationModel = maximizables.isEmpty() ? null : maximizables.get(0);
 		boolean shouldMaximize = maximizationModel != null;
 
-		LayoutComponent toolbarModel = clearMinimizable(component);
+		LayoutComponent toolbarModel = clearToolbarFor(component);
 		if (toolbarModel != null) {
 			ToolbarOptions toolbarConfig = toolbarModel.getConfig();
 			CollapsibleControl result =
@@ -317,10 +317,6 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 			}
 			return createLayoutContainerLayout((LayoutContainer) aBusinessComponent);
 		}
-//		if (aBusinessComponent instanceof InfoComponent) {
-//			return createInfoComponentLayout((InfoComponent) aBusinessComponent);
-//		}
-
 		return createContentLayout(strategy, aBusinessComponent);
 	}
 
@@ -630,6 +626,10 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 		return windowControl;
 	}
 	
+	/**
+	 * Creates the {@link LayoutComponent} for a {@link WindowComponent} representing an additional
+	 * window opened from an application's main window.
+	 */
 	protected LayoutControl createWindowComponent(WindowComponent windowComponent) {
 		markMaximizables(windowComponent);
 		WindowScope mainWindow = windowComponent.getMainLayout().getLayoutControl();
@@ -665,7 +665,7 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 			markMaximizables(contentComponent);
 
 			// Prevent duplicate toolbars in dialog title and top-level component.
-			clearMinimizable(contentComponent);
+			clearToolbarFor(contentComponent);
 
 			_contextToolbar = currentDialog.getToolbar();
 		}
@@ -1175,7 +1175,7 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 		public abstract LayoutComponent maximizeRoot();
 	}
 
-	private LayoutComponent clearMinimizable(LayoutComponent component) {
+	private LayoutComponent clearToolbarFor(LayoutComponent component) {
 		return component.reset(TOOLBAR_FOR);
 	}
 

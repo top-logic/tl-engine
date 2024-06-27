@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- 
+ - - Template that can be used in a direct child of the main layout (masterFrame.xml) to define a minimal 
+ - - frontend to an application without sidebar, toolbar and other decoration. 
+ -->
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	groups="entry-point"
+>
+	<properties>
+		<property name="components"
+			element-type="com.top_logic.mig.html.layout.LayoutComponent$Config"
+			type="List"
+		>
+			<hidden/>
+			<available-templates value="commons"/>
+			<options
+				fun="com.top_logic.layout.editor.DynamicComponentOptions"
+				mapping="com.top_logic.layout.editor.DynamicComponentOptionMapping"
+			/>
+			<option-labels value="com.top_logic.layout.editor.DynamicComponentDefinition$Labels"/>
+			<dynamic-mode fun="com.top_logic.layout.form.values.edit.mode.CustomMode"/>
+			
+			<!-- Re-install the placeholder component, if the (last) view was deleted. -->
+			<complex-default value="com.top_logic.layout.editor.annotation.LayoutTemplatesDefault"/>
+			<layout-templates value="com.top_logic/contentLayout.template.xml"/>
+		</property>
+	</properties>
+
+	<component class="com.top_logic.tool.boundsec.CockpitLayout"
+		components="${components}"
+		name="cockpit"
+		horizontal="false"
+	>
+		<layoutInfo size="100%"/>
+		
+		<buttons>
+			<!-- 
+			<reference command-id="openScriptRecorder"/>
+			-->
+
+			<reference command-id="toggleDesignModeCommand"/>
+			<reference command-id="releaseLayout"/>
+			<reference command-id="exportLayout"/>
+			<reference command-id="reloadI18N"/>
+			<reference command-id="reloadTheme"/>
+			<reference command-id="toggleAlwaysShowKeys"/>
+			<reference command-id="toggleShowAllCommands"/>
+			
+			<!-- No logout by default - not if the view is embedded into another application -->
+			<!--  
+			<reference command-id="logout"/>
+			 -->
+		</buttons>
+	</component>
+</config:template>

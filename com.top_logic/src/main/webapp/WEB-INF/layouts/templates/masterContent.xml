@@ -2,6 +2,9 @@
 
 <template>
 	<params>
+		<!-- Parameter value is not used, but an argument is passed by application layouts that is ignored here. -->
+		<param name="mainTabbarName" value=""/>
+		
 		<param name="mainTabbar"/>
 	</params>
 

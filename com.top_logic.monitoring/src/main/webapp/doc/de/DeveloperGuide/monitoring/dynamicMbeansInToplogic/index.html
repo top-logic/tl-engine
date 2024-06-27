@@ -1,10 +1,79 @@
 <p>In TopLogic können MBeans auf zwei Arten erstellt werden:</p>
 
 <ul>
-	<li><strong>InApp </strong>mit einem (parametrisiertem) TL-Script Ausdruck.</li>
-	<li>In der Anwendungskonfiguration registrierte <strong>eigene Java-Klassen</strong>.</li>
+	<li><a class="tlObject" href="?uuid=5a1317a4-9630-4ff4-b934-b1aa2ecd621c"><strong>InApp </strong>mit einem (parametrisiertem) TL-Script Ausdruck.</a></li>
+	<li><a class="tlObject" href="?uuid=26cfb990-bb60-4549-be95-b32cc51347ec">In der Anwendungskonfiguration registrierte <strong>eigene Java-Klassen</strong>.</a></li>
 </ul>
 
-<p>In den beiden folgenden Kapiteln wird beschrieben, wie diese generiert bzw. geschrieben werden können. Die so entstandenen MBeans werden in der Service-Klasse <strong>TLDataBeanService </strong>an einem MBean Server registriert. Über eine JConsole können diese angezeigt werden.</p>
+<p>In den beiden folgenden Kapiteln wird beschrieben, wie diese generiert bzw. geschrieben werden können. Die so entstandenen MBeans werden in der Service-Klasse <strong>TLDataBeanService </strong>an einem MBean Server registriert. Diese können zum Beispiel per <a class="tlObject" href="?uuid=9b52cdad-0354-4d79-82a2-9b1cf0339279">JConsole</a> angezeigt werden. Da es sich bei Javas MBeans um eine offene Schnittstelle handelt, gibt es aber auch viele andere Monitoring Lösungen, die das auslesen und weiterverwenden können.</p>
 
-<p>Daraufhin wird erläutert, wie die Daten der MBeans für Prometheus konvertiert und in diesem ausgelesen werden können.</p>
+<p>Daraufhin wird erläutert, wie die Daten der MBeans für <a class="tlObject" href="?uuid=860d38f9-6099-48bc-9073-265541d12e57">Prometheus</a> konvertiert und in diesem ausgelesen werden können. Anschließend wird gezeigt, wie ein Dashboard mit verschiedenen Visualierungen der Daten in <a class="tlObject" href="?uuid=42d01f7d-d71f-401f-8817-dc253efb0aa9">Grafana</a> erstellt werden kann.</p>
+
+<h2>MBeans</h2>
+
+<p>In TopLogic sind bereits einige MBeans enthalten.</p>
+
+<table border="0" class="tlDocTable" style="width:810.6px">
+	<thead>
+		<tr>
+			<th scope="col">Name</th>
+			<th scope="col">InApp</th>
+			<th scope="col" style="width:514px">Beschreibung</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>MBeanByExpression</td>
+			<td>ja</td>
+			<td style="width:514px">Berechnet Werte mittels eines (parametriesiertem) TLScript Ausdurcks.</td>
+		</tr>
+		<tr>
+			<td>KnowledgeBaseMBean</td>
+			<td>nein</td>
+			<td style="width:514px">Informationen über die KnowledgeBase.</td>
+		</tr>
+		<tr>
+			<td>UserMBean</td>
+			<td>nein</td>
+			<td style="width:514px">Informationen über die Benutzer.</td>
+		</tr>
+		<tr>
+			<td>DemoMBean</td>
+			<td>nein</td>
+			<td style="width:514px">Demonstration zur Erstellung und Nutzung von MBeans.</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Portnummern</h2>
+
+<p>Da verschiedene Programme bis zur Ausgabe der aufbereiteten Daten verwendet werden, werden im Folgenden die Standard-Ports aufgelistet.</p>
+
+<table border="0" class="tlDocTable" style="width:500px">
+	<thead>
+		<tr>
+			<th scope="col">Port</th>
+			<th scope="col">Beschreibung</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>8080</td>
+			<td>Anwendung</td>
+		</tr>
+		<tr>
+			<td>12345*</td>
+			<td>JMX Exporter</td>
+		</tr>
+		<tr>
+			<td>9090</td>
+			<td>Prometheus</td>
+		</tr>
+		<tr>
+			<td>3000</td>
+			<td>Grafana</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>(*) Der Port für den JMX Exporter muss gänzlich eigenständig vergeben werden. Somit gibt es keinen Standard-Port im eigentlichen Sinne. Der vollständigkeitshalber wurde dieser dennoch hier aufgelistet und der einfachheithalber auch im weiteren Verlauf mit 12345 konfiguriert.</p>

@@ -1,0 +1,34 @@
+<p>Als Beispiel soll eine neue MBean erstellt werden, die die Differenz zweier Zahlen berechnet.</p>
+
+<h2>MBean erstellen</h2>
+
+<p>Um eine gescriptete MBean zu erstellen, kann der <strong>TL-DataBean-Service</strong> genutzt werden. Dazu wird eine "<strong>MBean mit einem TL-Script-Ausdruck</strong>" erzeugt (siehe Bild 1). <strong>Wichtig:</strong> Die anderen Auswahlmöglichkeiten sind programmatische MBeans. Im Gegensatz zu den MBeansByExpression wird von diesen kein neues Objekt mit einer eigenen Konfiguration erzeugt. Sie dürfen daher <u>nicht</u> ausgwählt werden, um eine Namensdopplung zu vermeiden.</p>
+
+<p><img src="ref:mBeanScript0_86395.png" style="opacity:1" /></p>
+
+<p><em>Bild 1: Erstellung einer gescripteten MBean.</em></p>
+
+<h2>Konfiguration</h2>
+
+<p>Um eine MBean mit der obengenannten gewünschten Funktionalität zu erhalten, muss sie entsprechend konfiguriert werden (siehe Bild 2).</p>
+
+<p><img src="ref:mBeanScript1_24211.png" style="opacity:1" /></p>
+
+<p><em>Bild 2: Konfiguration einer gescripteten MBean.</em></p>
+
+<p><strong>Name.</strong> Der Name muss einem bestimmten Schema entsprechen (domain:key=name) und zusätzlich eindeutig sein. Es wird ein Name vorgeschlagen, der dem geforderten Aussehen entspricht, jedoch nicht zwangsläufig eindeutig ist. Da dies die erste gescriptete MBean auf dem System ist, kann der Name in diesem Beispiel übernommen werden.</p>
+
+<pre>
+<code class="language-markdown">com.top-logic.monitoring.data:name=expression0</code></pre>
+
+<p><strong>Beschreibung.</strong> Als Beschreibungstext ist ein möglichst aussagekräftiger Text sinnvoll, da die Implementierung an späteren Oberflächen der Schnittstelle nicht mehr zu sehen ist.</p>
+
+<pre>
+<code class="language-markdown">Berechnet die Differenz zweier Zahlen.</code></pre>
+
+<p>​<strong>Implementierung.</strong> Für die Implementierung wird ein <a class="tlObject" href="?page=TLScript&amp;uuid=d1172c3d-4596-48b0-837a-42349d1e3227">TL-Script-Ausdruck</a> benötigt. In diesem Beispiel sollen die beiden Zahlen, von denen die Differenz gebildet werden soll, frei wählbar sein. Dadurch wird eine Funktion benötigt, die zwei Parameter entgegen nimmt und ihre Differenz berechnet.​</p>
+
+<pre>
+<code>x -&gt; y -&gt; $x - $y</code></pre>
+
+<p><strong>Parameter.</strong> Diese Paramater müssen definiert werden. Dazu müssen genau so viele Parameter-Objekte erstellt werden, wie der TL-Script-Ausdruck fordert. Hier sind es zwei. Auch sie brauchen einen eindeutigen Namen, eine passende Beschreibung und eine Auswahl über den Typ.</p>

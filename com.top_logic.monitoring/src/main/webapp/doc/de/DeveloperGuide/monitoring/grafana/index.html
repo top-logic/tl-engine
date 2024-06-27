@@ -10,6 +10,11 @@
 
 <p><a href="https://grafana.com/grafana/download">https://grafana.com/grafana/download</a></p>
 
+<p>Anschließend muss Grafana gestartet werden. Je nach System kann dies durch einen Neustart oder z. B. im Falle von Linux manuell geschehen:</p>
+
+<pre>
+<code>sudo systemctl start grafana-server</code></pre>
+
 <p>Standardmäßig ist Grafana nun unter</p>
 
 <p><a href="http://localhost:3000/">http://localhost:3000/</a></p>
@@ -18,7 +23,7 @@
 
 <h2>Daten laden</h2>
 
-<p>Unter <strong><em>Connections -&gt; Data sources</em></strong> können mögliche, unterstützte Datenquellen gefunden werden. Es gibt außerdem eine Möglichkeit eine eigene Schnittstelle hierfür zu definieren. Hier soll es lediglich um Prometheus als Quelle gehen. Dazu wird entsprechend Prometheus ausgewählt. Der <strong>Name </strong>sollte möglichst aussagekräftig definiert werden, um die Datenquelle später einfacher identifizieren zu können. Des weiteren wird ein die Promtheus <strong>Server URL</strong> benötigt.<span style="color:#101113"><span style="font-family:var(--font-family-regular); font-size:var(--body-02-font-size)"></span></span></p>
+<p>Unter <strong><em>Connections -&gt; Data sources</em></strong> können mögliche, unterstützte Datenquellen gefunden werden. Es gibt außerdem eine Möglichkeit eine eigene Schnittstelle hierfür zu definieren. Hier soll es lediglich um Prometheus als Quelle gehen. Dazu wird entsprechend Prometheus ausgewählt. Der <strong>Name </strong>sollte möglichst aussagekräftig definiert werden, um die Datenquelle später einfacher identifizieren zu können. Des weiteren wird eine Promtheus <strong>Server URL</strong> benötigt.<span style="color:#101113"><span style="font-family:var(--font-family-regular); font-size:var(--body-02-font-size)"></span></span></p>
 
 <p><img src="ref:grafana_data_source_31869.png" style="opacity:1" /></p>
 

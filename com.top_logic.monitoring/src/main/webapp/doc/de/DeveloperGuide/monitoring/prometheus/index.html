@@ -1,4 +1,8 @@
-<p>Über Promethus können die nummerische Attribute der MBeans über einen Zeitraum getrackt und auf einfache Art und Weise graphisch dargestellt werden. Dazu wird ein JMX Exporter benötigt. Sollen auch nicht-nummerische Werte gespeichert werden, so wird der Einsatz eines anderen Tools als Prometheus empfohlen.</p>
+<p>Über Promethus können die <strong>nummerische Attribute</strong> der MBeans über einen Zeitraum getrackt und auf einfache Art und Weise graphisch dargestellt werden. MBeans stellen Metriken und Statusinformationen über die <strong>JMX </strong>(<strong>J</strong>ava <strong>M</strong>anagement E<strong>x</strong>tension) bereit. Allerdings ist die direkte Integration von JMX in Überwachungssysteme wie Prometheus nicht trivial, da Prometheus standardmäßig keine Unterstützung für das Abfragen von JMX-Metriken bietet. Dazu wird ein JMX Exporter benötigt.</p>
+
+<p>Der JMX Exporter fungiert als Brücke zwischen JMX und Prometheus. Er verbindet sich mit der JMX-Schnittstelle der Java-Anwendung, sammelt die Metriken von MBeans und wandelt sie in ein Format um, das von Prometheus verstanden werden kann. Diese umgewandelten Metriken werden dann über eine HTTP-Schnittstelle bereitgestellt, die Prometheus regelmäßig abfragt (scraped).</p>
+
+<p>Sollen auch nicht-nummerische Werte gespeichert werden, so wird der Einsatz eines anderen Tools als Prometheus empfohlen.</p>
 
 <p><img src="ref:screenshot_prometheus_klein_51723.png" style="opacity:1" /></p>
 
@@ -19,16 +23,16 @@
 <p>Zum Starten kann in Eclipse eine <strong>Launch Konfiguration</strong> geschrieben werden. Dazu muss</p>
 
 <pre>
-<code>-javaagent:Pfad_zum_Java_Agent=Portnummer:Pfad_zur_Konfiguration</code></pre>
+<code>-javaagent:Pfad_zum_Java_Agent=Portnummer_JMX:Pfad_zur_Konfiguration</code></pre>
 
-<p>in die entsprechenden <strong>VM Argumente</strong> eingetragen werden. <em>Pfad_zum_Java_Agent</em>, <em>Portnummer</em> und <em>Pfad_zur_Konfiguration</em> sind hierbei zu ersetzen.</p>
+<p>in die entsprechenden <strong>VM Argumente</strong> eingetragen werden. <em>Pfad_zum_Java_Agent</em>, <em>Portnummer_JMX</em> und <em>Pfad_zur_Konfiguration</em> sind hierbei zu ersetzen.</p>
 
-<p>Nach dem Start der Applikation können die <strong>Metriken</strong> können nun unter</p>
+<p>Nach dem Start der Applikation können die <strong>Metriken</strong> nun unter</p>
 
 <pre>
-<code>http://localhost:Portnummer/metrics</code></pre>
+<code>http://localhost:Portnummer_JMX/metrics</code></pre>
 
-<p>eingesehen werden (siehe Bild 2).</p>
+<p>eingesehen werden (siehe Bild 2). Im Folgenden wird "12345" als Portnummer für den JMX Exporter gewählt.</p>
 
 <p><img src="ref:jmx_metrics_67153.png" style="opacity:1" /></p>
 

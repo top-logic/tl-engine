@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<include name="templates/masterContent.xml"
+	mainTabbarName="views/show-demo-type/viewTabbar.layout.xml#mainTabber"
+>
+	<mainTabbar>
+		<layout-reference resource="views/show-demo-type/viewTabbar.layout.xml"/>
+	</mainTabbar>
+</include>

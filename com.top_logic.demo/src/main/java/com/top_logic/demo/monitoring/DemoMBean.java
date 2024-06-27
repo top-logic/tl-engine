@@ -50,7 +50,7 @@ public class DemoMBean extends AbstractDynamicMBean {
 		attributes[0] = new MBeanAttributeInfo(
 			"Prename", // name
 			"java.lang.String", // type
-			"The number of actual logged in users with respect to the last system start.", // description
+			"The value of the prename attribute.", // description
 			true, // readable
 			true, // writable
 			false); // isIs
@@ -75,7 +75,7 @@ public class DemoMBean extends AbstractDynamicMBean {
 			"count", // name
 			"Counts the klicks.", // description
 			emptyParams, // parameter types
-			"java.lang.Integer", // return type
+			"int", // return type
 			MBeanOperationInfo.ACTION_INFO); // impact
 
 		return operations;
@@ -102,7 +102,7 @@ public class DemoMBean extends AbstractDynamicMBean {
 	/** Adds 1 to the counter. */
 	@CalledByReflection
 	public int count() {
-		return _counter++;
+		return ++_counter;
 	}
 
 }

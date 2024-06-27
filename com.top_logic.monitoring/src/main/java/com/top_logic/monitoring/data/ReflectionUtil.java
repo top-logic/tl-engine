@@ -30,26 +30,37 @@ public class ReflectionUtil {
 	 * @param name
 	 *        The name of the method.
 	 * @param parameterTypes
-	 *        The types of the parameters.
+	 *        The types of the parameters. Can contain var args.
 	 * @return The found method or <code>null</code> (if not found).
 	 */
 	public static Method getMethod(Class<?> type, String name, Class<?>... parameterTypes) {
+		// Uses getDeclaredMethods() to be able to use varArgs which need to be wrapped in an extra
+		// array to fit to the parameters
 		Method[] declaredMethods = type.getDeclaredMethods();
 		for (int i = 0; i < declaredMethods.length; i++) {
+			// is the same name?
 			if (name.equals(declaredMethods[i].getName())) {
 				Class<?>[] methodeParameterTypes = declaredMethods[i].getParameterTypes();
-				if (parameterTypes.length == methodeParameterTypes.length || declaredMethods[i].isVarArgs()) {
+				boolean isVarArgs = declaredMethods[i].isVarArgs();
+				Class<?> varArgType = null;
+
+				if (isVarArgs) {
+					varArgType = methodeParameterTypes[methodeParameterTypes.length - 1].getComponentType();
+				}
+
+				// does the number of parameters fit?
+				if (parameterTypes.length == methodeParameterTypes.length || isVarArgs) {
 					boolean match = true;
+					int simpleArgLength = isVarArgs ? methodeParameterTypes.length - 1 : methodeParameterTypes.length;
 
 					for (int j = 0; j < parameterTypes.length; j++) {
-						if (i < methodeParameterTypes.length - 1) {
+						// is simple arg?
+						if (i < simpleArgLength) {
 							if (!parameterTypes[j].isAssignableFrom(methodeParameterTypes[j])) {
 								match = false;
 								break;
 							}
 						} else {
-							Class<?> varArgType =
-								methodeParameterTypes[methodeParameterTypes.length - 1].getComponentType();
 							if (varArgType != null && !varArgType.isAssignableFrom(parameterTypes[j])) {
 								match = false;
 								break;
@@ -75,33 +86,13 @@ public class ReflectionUtil {
 	 * @param method
 	 *        The method to invoke.
 	 * @param args
-	 *        The arguments for the given method.
+	 *        The arguments for the given method. Can contain var args.
 	 * @return The object which may be returned by the given method.
 	 */
 	public static Object invokeMethod(Object object, Method method, Object... args) {
 		if (method != null) {
 			try {
-				if (method.getParameterCount() > 0) {
-					Parameter[] parameters = method.getParameters();
-					Parameter parameter = parameters[parameters.length - 1];
-					boolean isVarArgs = parameter.isVarArgs();
-
-					if (isVarArgs) {
-						if (args == null) {
-							args = new Object[0];
-						} else if (args.length < parameters.length) {
-							Object[] varArgs = new Object[0];
-							args = ArrayUtils.add(args, varArgs);
-						} else {
-							Object[] simpleArgs = Arrays.copyOfRange(args, 0, (parameters.length - 1));
-							Object[] varArgs =
-								new Object[] {
-									Arrays.copyOfRange(args, (parameters.length - 1), args.length) };
-
-							args = ArrayUtils.add(simpleArgs, varArgs);
-						}
-					}
-				}
+				args = transformArgs(method, args);
 				return method.invoke(object, args);
 			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
 				Logger.error(
@@ -111,6 +102,34 @@ public class ReflectionUtil {
 		}
 
 		return null;
+	}
+
+	private static Object[] transformArgs(Method method, Object... args) {
+		if (method.getParameterCount() > 0) {
+			Parameter[] parameters = method.getParameters();
+			Parameter lastParameter = parameters[parameters.length - 1];
+			boolean isVarArgs = lastParameter.isVarArgs();
+
+			if (isVarArgs) {
+				if (args == null) {
+					// no args
+					args = new Object[0];
+				} else if (args.length < parameters.length) {
+					// empty var args -> put an empty array in the end
+					Object[] varArgs = new Object[0];
+					args = ArrayUtils.add(args, varArgs);
+				} else {
+					// with var args -> wrap var args and put them in the end
+					Object[] simpleArgs = Arrays.copyOfRange(args, 0, (parameters.length - 1));
+					Object[] varArgs =
+						Arrays.copyOfRange(args, (parameters.length - 1), args.length);
+
+					args = ArrayUtils.add(simpleArgs, varArgs);
+				}
+			}
+		}
+
+		return args;
 	}
 
 }

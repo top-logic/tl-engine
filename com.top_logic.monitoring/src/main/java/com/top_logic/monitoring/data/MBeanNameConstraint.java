@@ -5,7 +5,6 @@
  */
 package com.top_logic.monitoring.data;
 
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
@@ -45,9 +44,8 @@ public class MBeanNameConstraint extends ValueConstraint<String> {
 
 	private ResKey checkPattern(PropertyModel<String> propertyModel) {
 		String name = propertyModel.getValue();
-		Matcher matcher = FULL_NAME_PATTERN.matcher(name);
 
-		if (name != null && !matcher.matches()) {
+		if (name != null && !FULL_NAME_PATTERN.matcher(name).matches()) {
 			return I18NConstants.WRONG_PATTERN_MBEAN_NAME;
 		}
 

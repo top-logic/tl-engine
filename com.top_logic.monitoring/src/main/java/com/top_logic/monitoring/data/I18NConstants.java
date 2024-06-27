@@ -16,7 +16,8 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * @en The name of the <i>MBean</i> must follow the pattern "domain:key=property".
+	 * @en The name of the <i>MBean</i> must follow the pattern "domain:key=property". Allowed
+	 *     characters are letters, numbers, underscores and dots.
 	 */
 	public static ResKey WRONG_PATTERN_MBEAN_NAME;
 

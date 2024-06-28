@@ -1652,7 +1652,6 @@ div.fptBody {
 
 div.fptBodyContent {
  	position: absolute; 
-	overflow: auto;
 	
 	left: 0px; 
 	right: 0px; 

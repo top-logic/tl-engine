@@ -14,6 +14,7 @@ import com.top_logic.layout.AbstractDisplayValue;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.basic.fragments.Fragments;
+import com.top_logic.layout.form.FormConstants;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
 
@@ -41,8 +42,6 @@ public class ScrollContainerControl extends AbstractControlBase {
 		b.append("bottom:0;");
 		b.append("left:0;");
 		b.append("right:0;");
-		/* Show scroll bar if content does not fit. */
-		b.append("overflow:auto;");
 		/* must set position attribute to be able to */
 		b.append("position:absolute;");
 		STYLE_ATTRIBUTE_VALUE = b.toString();
@@ -64,6 +63,12 @@ public class ScrollContainerControl extends AbstractControlBase {
 	@Override
 	public Object getModel() {
 		return null;
+	}
+
+	/* Show scroll bar if content does not fit. */
+	@Override
+	protected String getTypeCssClass() {
+		return FormConstants.OVERFLOW_AUTO_CLASS;
 	}
 
 	@Override

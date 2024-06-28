@@ -20,6 +20,7 @@ import com.top_logic.html.template.LocalVariable;
 import com.top_logic.html.template.TagTemplate;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.template.ControlProvider;
@@ -52,7 +53,7 @@ public class TemplateRenderer {
 		FormMember member = (FormMember) TemplateRenderer.model(properties);
 		ControlProvider contextControlProvider = TemplateRenderer.contextControlProvider(properties);
 		return new TemplateControl(member, contextControlProvider,
-			div(css(ReactiveFormCSS.RF_LINE), template));
+			div(css(ReactiveFormCSS.RF_LINE + " " + FormConstants.OVERFLOW_AUTO_CLASS), template));
 	}
 
 	/**

@@ -11,6 +11,7 @@ import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ConstantControl;
+import com.top_logic.layout.form.FormConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.util.css.CssUtil;
@@ -120,6 +121,7 @@ public class CellControl extends ConstantControl<HTMLFragment> {
 		HTMLUtil.appendCSSClass(out, _cssClass);
 		if (_wholeLine) {
 			HTMLUtil.appendCSSClass(out, WHOLE_LINE_CSS);
+			HTMLUtil.appendCSSClass(out, FormConstants.OVERFLOW_AUTO_CLASS);
 		}
 		if (_width != null) {
 			HTMLUtil.appendCSSClass(out, CELL_SMALL_CSS);

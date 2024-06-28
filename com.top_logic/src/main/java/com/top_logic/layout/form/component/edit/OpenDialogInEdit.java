@@ -10,7 +10,6 @@ import java.util.Map;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.form.component.Editor;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.FindFirstMatchingComponent;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -68,7 +67,7 @@ public class OpenDialogInEdit extends OpenModalDialogCommandHandler {
 		super.beforeOpening(aContext, aComponent, aSomeArguments, aDialog);
 	}
 
-	private Editor findEditor(LayoutComponent aDialog) {
+	private EditMode findEditor(LayoutComponent aDialog) {
 		ComponentName editorName = config().getEditor();
 		if (editorName != null) {
 			return findEditorByName(aDialog, editorName);
@@ -77,24 +76,24 @@ public class OpenDialogInEdit extends OpenModalDialogCommandHandler {
 		}
 	}
 
-	private Editor findFirstEditor(LayoutComponent aDialog) {
-		FindFirstMatchingComponent visitor = new FindFirstMatchingComponent(Editor.class::isInstance);
+	private EditMode findFirstEditor(LayoutComponent aDialog) {
+		FindFirstMatchingComponent visitor = new FindFirstMatchingComponent(EditMode.class::isInstance);
 		aDialog.acceptVisitorRecursively(visitor);
 		LayoutComponent editor = visitor.result();
 		if (editor == null) {
 			throw new TopLogicException(I18NConstants.EXCEPTION_NO_EDITOR_FOUND);
 		}
-		return (Editor) editor;
+		return (EditMode) editor;
 	}
 
-	private Editor findEditorByName(LayoutComponent aDialog, ComponentName editorName) {
+	private EditMode findEditorByName(LayoutComponent aDialog, ComponentName editorName) {
 		LayoutComponent editor = aDialog.getComponentByName(editorName);
 		if (editor == null) {
 			throw new TopLogicException(I18NConstants.EXCEPTION_NO_COMPONENT_FOUND);
 		}
-		if (!(editor instanceof Editor)) {
+		if (!(editor instanceof EditMode)) {
 			throw new TopLogicException(I18NConstants.EXCEPTION_NOT_AN_EDITOR);
 		}
-		return (Editor) editor;
+		return (EditMode) editor;
 	}
 }

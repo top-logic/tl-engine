@@ -25,6 +25,7 @@ import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.RenderErrorUtil;
 import com.top_logic.layout.component.SaveScrollPosition;
+import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.layoutRenderer.LayoutControlRenderer;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.mig.html.HTMLConstants;
@@ -137,7 +138,12 @@ public abstract class InlineContentView extends AbstractControlBase {
 	@Override
 	protected void writeControlAttributes(DisplayContext context, TagWriter out) throws IOException {
 		super.writeControlAttributes(context, out);
-		out.writeAttribute(STYLE_ATTR, "position: absolute; top:0; left:0; overflow:auto; height:100%; width:100%;");
+		out.writeAttribute(STYLE_ATTR, "position: absolute; top:0; left:0; height:100%; width:100%;");
+	}
+
+	@Override
+	protected String getTypeCssClass() {
+		return FormConstants.OVERFLOW_AUTO_CLASS;
 	}
 
 	/*package protected*/ void writeComponentContents(DisplayContext context, TagWriter out) throws IOException {

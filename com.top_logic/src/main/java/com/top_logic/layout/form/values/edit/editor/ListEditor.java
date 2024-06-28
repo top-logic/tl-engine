@@ -50,6 +50,7 @@ import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.form.Collapsible;
+import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
@@ -313,7 +314,7 @@ public class ListEditor implements Editor {
 		boolean compact = editorFactory.isCompact();
 		PropertyDescriptor property = valueModel.getProperty();
 		TagTemplate content =
-			div(css("dfList " + ReactiveFormCSS.RF_LINE),
+			div(css("dfList " + ReactiveFormCSS.RF_LINE + " " + FormConstants.OVERFLOW_AUTO_CLASS),
 				div(css("dfListContent"),
 					member(EditorUtils.LIST_CONTENT_GROUP,
 						div(

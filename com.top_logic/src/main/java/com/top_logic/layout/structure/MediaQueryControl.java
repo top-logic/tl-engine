@@ -22,6 +22,7 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ControlRenderer;
+import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.layoutRenderer.LayoutControlAdapterRenderer;
 import com.top_logic.layout.layoutRenderer.LayoutControlRenderer;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -195,7 +196,7 @@ public class MediaQueryControl extends LayoutControlAdapter {
 		@Override
 		public void appendControlCSSClasses(Appendable out, LayoutControlAdapter control) throws IOException {
 			super.appendControlCSSClasses(out, control);
-			out.append("cMediaQuery");
+			out.append("cMediaQuery " + FormConstants.OVERFLOW_AUTO_CLASS);
 		}
 
 	}

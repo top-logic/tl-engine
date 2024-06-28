@@ -77,7 +77,6 @@ div.fptBody {
 
 div.fptBodyContent {
 	position: absolute;
-	overflow: auto;
 	left: 0px;
 	right: 0px;
 	top: 0px;
@@ -657,8 +656,13 @@ div.dfListAdd {
 	white-space: pre-wrap;
 }
 
-.rf_line,
-.cMediaQuery, .layoutControl.dflColumns .rf_groupCell .rf_content .rf_groupCell {
+.rf_line, .cMediaQuery {
+	display: grid;
+	grid-template-columns: 1fr;
+	grid-column: 1 / -1;
+}
+
+.layoutControl.dflColumns .rf_groupCell .rf_content .rf_groupCell {
 	/* groupCells in groupCells are rendered over the whole line per default */
 	display: grid;
 	grid-template-columns: 1fr;

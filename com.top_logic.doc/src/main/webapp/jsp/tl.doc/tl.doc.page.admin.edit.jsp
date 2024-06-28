@@ -1,5 +1,5 @@
 <%@page language="java" session="true" extends="com.top_logic.util.TopLogicJspBase"
-%><%@page import="com.top_logic.layout.form.component.Editor"
+%><%@page import="com.top_logic.layout.form.component.EditMode"
 %><%@page import="com.top_logic.mig.html.layout.MainLayout"
 %><%@page import="com.top_logic.doc.model.Page"
 %><%@page import="com.top_logic.element.layout.structured.AdminElementComponent"
@@ -19,7 +19,7 @@
 			<form:subtitle>
 				<meta:group>
 					<meta:attribute name="<%=Page.NAME_ATTR%>"/>
-					<% if (((Editor) MainLayout.getComponent(pageContext)).isInViewMode()) {%>
+					<% if (((EditMode) MainLayout.getComponent(pageContext)).isInViewMode()) {%>
 						(UUID:
 							<meta:attribute name="<%=Page.UUID_ATTR%>"/>
 						)

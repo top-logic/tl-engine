@@ -18,6 +18,7 @@ import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.component.Editor;
+import com.top_logic.layout.form.component.edit.EditMode;
 import com.top_logic.layout.form.component.edit.EditMode.EditorMode;
 import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMandatory;
@@ -128,8 +129,8 @@ public class EditorExecutabilityRule extends AbstractConfiguredInstance<EditorEx
 
 	@Override
 	public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> someValues) {
-		if (aComponent instanceof Editor) {
-			Editor editor = (Editor) aComponent;
+		if (aComponent instanceof EditMode) {
+			EditMode editor = (EditMode) aComponent;
 			if (editor.getEditorMode() == _mode) {
 				return new ExecutableState(_visibility, _reason);
 			}

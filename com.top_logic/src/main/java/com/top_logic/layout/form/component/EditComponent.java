@@ -617,8 +617,8 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 
         @Override
 		public HandlerResult handleCommand(DisplayContext context, LayoutComponent component, Object model, Map<String, Object> someArguments) {
-			if (component instanceof Editor) {
-				Editor editor = ((Editor) component);
+			if (component instanceof EditMode) {
+				EditMode editor = ((EditMode) component);
 
 				if (editor.isInEditMode()) {
 					try {

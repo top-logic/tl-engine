@@ -153,15 +153,6 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 			}
 		};
 
-	private static final ComponentChannel.ChannelListener EDIT_MODE_LISTENER = new ComponentChannel.ChannelListener() {
-
-		@Override
-		public void handleNewValue(ComponentChannel sender, Object oldValue, Object newValue) {
-			EditComponent editor = (EditComponent) sender.getComponent();
-			editor.handleComponentModeChange(((Boolean) newValue).booleanValue());
-		}
-	};
-
     private boolean allowRefresh;
 
 	/***
@@ -335,7 +326,8 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 	 * @param editMode
 	 *        The new component mode.
 	 */
-	protected void handleComponentModeChange(boolean editMode) {
+	@Override
+	public void handleComponentModeChange(boolean editMode) {
 		// Even when switching from edit mode back to view mode, the
 		// contents of the form must be renewed, because changes to the form
 		// context may have happened during edit mode.

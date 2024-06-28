@@ -2175,7 +2175,7 @@ public class GridComponent extends EditComponent implements
 	}
 
 	@Override
-	protected void handleComponentModeChange(boolean editMode) {
+	public void handleComponentModeChange(boolean editMode) {
 		// Do not drop the form context. The existing context is incrementally updated.
 		//
 		// super.handleComponentModeChange(oldMode, newMode);

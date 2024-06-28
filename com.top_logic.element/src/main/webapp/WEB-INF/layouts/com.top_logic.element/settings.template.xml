@@ -38,6 +38,11 @@
 		>
 			<acceptable-classifiers value="form, commons"/>
 		</property>
+		<property name="editMode"
+			type="com.top_logic.layout.ModelSpec"
+		>
+			<item-default value="com.top_logic.layout.channel.linking.True"/>
+		</property>
 	</properties>
 
 	<settings name="Form"

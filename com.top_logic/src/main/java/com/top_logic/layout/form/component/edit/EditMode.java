@@ -152,11 +152,28 @@ public interface EditMode extends IComponent {
 		return getChannel(EDIT_MODE_CHANNEL);
 	}
 
+	/**
+	 * Listener forwarding edit mode channel changes to component.
+	 */
+	static final ComponentChannel.ChannelListener EDIT_MODE_LISTENER = new ComponentChannel.ChannelListener() {
+		@Override
+		public void handleNewValue(ComponentChannel sender, Object oldValue, Object newValue) {
+			EditMode editor = (EditMode) sender.getComponent();
+			editor.handleComponentModeChange(((Boolean) newValue).booleanValue());
+		}
+	};
+
 	@Override
 	default void linkChannels(Log log) {
 		LayoutComponent self = (LayoutComponent) this;
 		ChannelLinking channelLinking = self.getChannelLinking(((Config) getConfig()).getEditMode());
 		editModeChannel().linkChannel(log, self(), channelLinking);
+		editModeChannel().addListener(EDIT_MODE_LISTENER);
 	}
+
+	/**
+	 * Callback invoked, if the mode channel changes its value.
+	 */
+	void handleComponentModeChange(boolean editMode);
 
 }

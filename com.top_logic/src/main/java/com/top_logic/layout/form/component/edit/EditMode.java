@@ -54,6 +54,13 @@ public interface EditMode extends IComponent {
 		 * @see Editor#isInEditMode()
 		 */
 		EDIT_MODE;
+
+		/**
+		 * Whether this mode is the edit mode.
+		 */
+		boolean isEditing() {
+			return this == EDIT_MODE;
+		}
 	}
 
 	/**
@@ -96,6 +103,13 @@ public interface EditMode extends IComponent {
 	 */
 	default EditorMode getEditorMode() {
 		return isEditing() ? EditorMode.EDIT_MODE : EditorMode.VIEW_MODE;
+	}
+
+	/**
+	 * Sets the mode of this editor to the given {@link EditorMode}.
+	 */
+	default void setEditorMode(EditorMode mode) {
+		setEditMode(mode.isEditing());
 	}
 
 	/**

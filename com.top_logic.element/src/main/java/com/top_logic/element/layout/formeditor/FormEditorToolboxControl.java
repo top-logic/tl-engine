@@ -21,6 +21,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.form.DefaultExpansionModel;
+import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.boxes.reactive_tag.DefaultGroupSettings;
 import com.top_logic.layout.form.boxes.reactive_tag.GroupCellControl;
 import com.top_logic.layout.form.control.I18NConstants;
@@ -43,7 +44,8 @@ public class FormEditorToolboxControl extends FormEditorDisplayControl {
 	
 	private final static String CSS = "cFormEditorToolbox";
 
-	private final static String INNER_CSS = ReactiveFormCSS.RF_LINE + " rf_buttons";
+	private final static String INNER_CSS =
+		ReactiveFormCSS.RF_LINE + " " + FormConstants.OVERFLOW_AUTO_CLASS + " rf_buttons";
 
 	private List<Class<? extends FormElement<? extends FormElementTemplateProvider>>> _buttonElements;
 

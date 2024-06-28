@@ -16,6 +16,7 @@ import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
+import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.control.I18NConstants;
 import com.top_logic.layout.form.control.Icons;
 import com.top_logic.model.TLStructuredType;
@@ -93,14 +94,14 @@ public class FrameDefinitionTemplateProvider extends AbstractFormContainerProvid
 		String cssClass = "";
 		String cssInnerTarget = ReactiveFormCSS.RF_INNER_TARGET;
 		String cssShowBorder = "showBorder";
-		String cssWholeLine = ReactiveFormCSS.RF_LINE;
+		String cssWholeLine = ReactiveFormCSS.RF_LINE + " " + FormConstants.OVERFLOW_AUTO_CLASS;
 		String cssColumns = ReactiveFormCSS.RF_COLUMNS_LAYOUT;
 		cssColumns = getConfig().getColumns().appendColsCSSto(cssColumns);
 
 		if (getConfig() != null) {
 			cssClass = getConfig().getCssClass();
 			cssShowBorder = getConfig().getShowBorder().booleanValue() ? "showBorder" : "";
-			cssWholeLine = getWholeLine() ? ReactiveFormCSS.RF_LINE : "";
+			cssWholeLine = getWholeLine() ? cssWholeLine : "";
 		}
 
 		String cssClasses =

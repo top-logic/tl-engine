@@ -181,7 +181,7 @@ public class IconChooserControl extends AbstractVisibleControl {
 		ThemeImage selectedImage = (ThemeImage) _model.getValue();
 
 		out.beginBeginTag(DIV);
-		out.writeAttribute(CLASS_ATTR, "fptBodyContent");
+		out.writeAttribute(CLASS_ATTR, "fptBodyContent " + FormConstants.OVERFLOW_AUTO_CLASS);
 		out.endBeginTag();
 
 		// render all icons

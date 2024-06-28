@@ -19,6 +19,11 @@ import com.top_logic.mig.html.HTMLConstants;
  */
 public interface FormConstants {
 
+	/**
+	 * Default CSS class for elements that should have <code>overflow: auto;</code>
+	 */
+	public static final String OVERFLOW_AUTO_CLASS = "tl-overflow--auto";
+
 	/** Default CSS class of a from body {@link HTMLConstants#DIV}. */
 	public static final String FORM_BODY_CSS_CLASS = "frmBody";
 

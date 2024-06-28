@@ -40,7 +40,7 @@
 	</template>
 	<template name="com.top_logic.layout.form.boxes.reactive_tag.Icons.FORM_GROUP_TEMPLATE">
 		<value><![CDATA[<div id="{id}"
-	class="is-control {canInspectClass} rf_groupCell {collapsed ? 'collapsed'} {cssClass} {wholeLine ? 'rf_line'} {rows > 1 ? 'rf_spanRow' + rows} {!hasBorder ? 'noBorder'} {!hasLegend ? 'noLegend'}"
+	class="is-control {canInspectClass} rf_groupCell {collapsed ? 'collapsed'} {cssClass} {wholeLine ? 'rf_line tl-overflow--auto'} {rows > 1 ? 'rf_spanRow' + rows} {!hasBorder ? 'noBorder'} {!hasLegend ? 'noLegend'}"
 	style="{width ? 'width: ' + width + '; '}{style}"
 	draggable="{draggable}"
 	data-id="{dataId}"

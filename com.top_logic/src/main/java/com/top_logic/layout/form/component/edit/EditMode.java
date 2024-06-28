@@ -7,10 +7,12 @@ package com.top_logic.layout.form.component.edit;
 
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.TypedChannelSPI;
+import com.top_logic.layout.channel.linking.False;
 import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.component.IComponent;
 import com.top_logic.layout.form.component.Editor;
@@ -84,6 +86,7 @@ public interface EditMode extends IComponent {
 		 */
 		@Name(EDIT_MODE_CHANNEL)
 		@DisplayMinimized
+		@ItemDefault(False.class)
 		ModelSpec getEditMode();
 
 	}

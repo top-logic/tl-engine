@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.component.edit.EditMode;
+import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
@@ -71,6 +72,18 @@ public class SettingsComponent extends FormComponent implements EditMode, WithOu
 		super.linkChannels(log);
 		EditMode.super.linkChannels(log);
 		WithOutputChannel.super.linkChannels(log);
+	}
+
+	@Override
+	public void handleComponentModeChange(boolean editMode) {
+		if (!hasFormContext()) {
+			return;
+		}
+		if (editMode) {
+			getFormContext().setImmutable(false);
+		} else {
+			getFormContext().setImmutable(true);
+		}
 	}
 
 }

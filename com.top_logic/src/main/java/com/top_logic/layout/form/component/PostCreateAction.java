@@ -11,17 +11,20 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfigurationValueProvider;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.DefaultValueProvider;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.layout.DefaultRefVisitor;
@@ -33,6 +36,7 @@ import com.top_logic.layout.channel.linking.impl.DirectLinking;
 import com.top_logic.layout.channel.linking.ref.ComponentRef;
 import com.top_logic.layout.channel.linking.ref.NamedComponent;
 import com.top_logic.layout.form.component.edit.EditMode;
+import com.top_logic.layout.form.component.edit.EditMode.EditorMode;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
@@ -182,6 +186,20 @@ public interface PostCreateAction {
 			@Mandatory
 			@DefaultContainer
 			ComponentRef getComponentRef();
+
+			/**
+			 * The mode to select.
+			 */
+			@Name("mode")
+			@ComplexDefault(DefaultEditMode.class)
+			EditorMode getMode();
+
+			class DefaultEditMode extends DefaultValueProvider {
+				@Override
+				public Object getDefaultValue(ConfigurationDescriptor descriptor, String propertyName) {
+					return EditorMode.EDIT_MODE;
+				}
+			}
 		}
 
 		/**
@@ -196,7 +214,7 @@ public interface PostCreateAction {
 			LayoutComponent editComponent =
 				DefaultRefVisitor.resolveReference(getConfig().getComponentRef(), component);
 			if (editComponent instanceof EditMode) {
-				((EditMode) editComponent).setEditMode();
+				((EditMode) editComponent).setEditorMode(getConfig().getMode());
 			}
 		}
 

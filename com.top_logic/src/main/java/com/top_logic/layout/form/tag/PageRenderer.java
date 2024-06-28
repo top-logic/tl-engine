@@ -15,6 +15,7 @@ import com.top_logic.gui.Theme;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.component.SaveScrollPosition;
+import com.top_logic.layout.form.FormConstants;
 import com.top_logic.mig.html.HTMLUtil;
 
 /**
@@ -417,7 +418,7 @@ public abstract class PageRenderer {
 	 */
 	protected void writeBodyContentAttributes(TagWriter out, String containerId) throws IOException {
 		String scrollContainerId = getScrollContainerId(containerId);
-		out.writeAttribute(CLASS_ATTR, BODY_CONTENT_CSS_CLASS);
+		out.writeAttribute(CLASS_ATTR, BODY_CONTENT_CSS_CLASS + " " + FormConstants.OVERFLOW_AUTO_CLASS);
 		out.writeAttribute(ID_ATTR, scrollContainerId);
 		out.beginAttribute(ONSCROLL_ATTR);
 		SaveScrollPosition.writePushScrollPositionScript(out, scrollContainerId);

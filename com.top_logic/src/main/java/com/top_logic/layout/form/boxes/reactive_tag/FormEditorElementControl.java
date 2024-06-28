@@ -14,6 +14,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.basic.ConstantControl;
 import com.top_logic.layout.basic.ResourceRenderer;
+import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.provider.ImageResourceProvider;
 import com.top_logic.model.form.ReactiveFormCSS;
 
@@ -115,6 +116,7 @@ public class FormEditorElementControl extends ConstantControl<HTMLFragment> {
 		}
 		if (getRenderWholeLine()) {
 			out.append(WHOLE_LINE_CSS);
+			out.append(FormConstants.OVERFLOW_AUTO_CLASS);
 		}
 	}
 

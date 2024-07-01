@@ -39,6 +39,7 @@
 		</property>
 		<property name="contextMenuButtons"
 			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
+			instance-type="com.top_logic.tool.boundsec.CommandHandler"
 			type="List"
 		>
 			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>

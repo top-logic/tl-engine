@@ -7,7 +7,7 @@ package com.top_logic.basic.mime;
 
 import java.io.InputStream;
 
-import javax.activation.FileTypeMap;
+import jakarta.activation.FileTypeMap;
 
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;

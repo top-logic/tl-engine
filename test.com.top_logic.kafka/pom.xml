@@ -41,6 +41,14 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-kafka-server</artifactId>
+      <exclusions>
+        <exclusion>
+          <!-- This would be in conflict with 'org.slf4j:jcl-over-slf4j' which is coming from 'tl-core',
+                as both define the same classes, for example: org.apache.commons.logging.Log -->
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>

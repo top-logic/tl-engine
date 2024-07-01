@@ -27,12 +27,12 @@ import java.net.URL;
 import java.util.Dictionary;
 import java.util.Stack;
 
-import javax.servlet.*;
+import jakarta.servlet.*;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 /**
  * This class represents the context in which a specific servlet request is being made.

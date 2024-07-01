@@ -5,9 +5,9 @@
  */
 package com.top_logic.element.meta.form.tag;
 
-import javax.servlet.jsp.PageContext;
-import javax.servlet.jsp.tagext.Tag;
-import javax.servlet.jsp.tagext.TagSupport;
+import jakarta.servlet.jsp.PageContext;
+import jakarta.servlet.jsp.tagext.Tag;
+import jakarta.servlet.jsp.tagext.TagSupport;
 
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.MetaElementUtil;

@@ -136,7 +136,7 @@ public abstract class AbstractTableExportHandler extends AbstractCommandHandler 
 				return _rowCount;
 			}
 
-			protected void incProgress() {
+			private void incProgress() {
 				incProgress(1);
 			}
 

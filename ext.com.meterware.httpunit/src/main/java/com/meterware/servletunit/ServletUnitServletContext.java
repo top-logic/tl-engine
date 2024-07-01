@@ -37,18 +37,18 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterRegistration;
-import javax.servlet.Servlet;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRegistration;
-import javax.servlet.ServletRegistration.Dynamic;
-import javax.servlet.SessionCookieConfig;
-import javax.servlet.SessionTrackingMode;
-import javax.servlet.descriptor.JspConfigDescriptor;
-import javax.servlet.descriptor.JspPropertyGroupDescriptor;
-import javax.servlet.descriptor.TaglibDescriptor;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterRegistration;
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRegistration;
+import jakarta.servlet.ServletRegistration.Dynamic;
+import jakarta.servlet.SessionCookieConfig;
+import jakarta.servlet.SessionTrackingMode;
+import jakarta.servlet.descriptor.JspConfigDescriptor;
+import jakarta.servlet.descriptor.JspPropertyGroupDescriptor;
+import jakarta.servlet.descriptor.TaglibDescriptor;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -77,7 +77,7 @@ public class ServletUnitServletContext implements ServletContext {
      * <p>
      * In a security conscious environment, the servlet container may return null for a given URL.
      **/
-    public javax.servlet.ServletContext getContext(java.lang.String A) {
+    public jakarta.servlet.ServletContext getContext(java.lang.String A) {
         return null;
     }
 
@@ -174,7 +174,7 @@ public class ServletUnitServletContext implements ServletContext {
      * RequestDispatcher for resources in foreign contexts. This method returns null if the ServletContext cannot return a
      * RequestDispatcher.
      **/
-    public javax.servlet.RequestDispatcher getRequestDispatcher( String path ) {
+    public jakarta.servlet.RequestDispatcher getRequestDispatcher( String path ) {
         try {
             URL url = new URL( "http", "localhost", _application.getContextPath() + path );
             return new RequestDispatcherImpl( _application, url );
@@ -194,7 +194,7 @@ public class ServletUnitServletContext implements ServletContext {
      *
      * This method returns null if the ServletContext cannot return a RequestDispatcher for any reason.
      **/
-    public javax.servlet.RequestDispatcher getNamedDispatcher(java.lang.String A) {
+    public jakarta.servlet.RequestDispatcher getNamedDispatcher(java.lang.String A) {
         return null;   // XXX not implemented
     }
 
@@ -202,7 +202,7 @@ public class ServletUnitServletContext implements ServletContext {
     /**
      * @deprecated as of Servlet API 2.1
      **/
-    public javax.servlet.Servlet getServlet(java.lang.String A) {
+    public jakarta.servlet.Servlet getServlet(java.lang.String A) {
         return null;
     }
 
@@ -482,21 +482,21 @@ public class ServletUnitServletContext implements ServletContext {
 
 
 	@Override
-	public javax.servlet.FilterRegistration.Dynamic addFilter(
+	public jakarta.servlet.FilterRegistration.Dynamic addFilter(
 			String filterName, String className) {
 		throw new UnsupportedOperationException();
 	}
 
 
 	@Override
-	public javax.servlet.FilterRegistration.Dynamic addFilter(
+	public jakarta.servlet.FilterRegistration.Dynamic addFilter(
 			String filterName, Filter filter) {
 		throw new UnsupportedOperationException();
 	}
 
 
 	@Override
-	public javax.servlet.FilterRegistration.Dynamic addFilter(
+	public jakarta.servlet.FilterRegistration.Dynamic addFilter(
 			String filterName, Class<? extends Filter> filterClass) {
 		throw new UnsupportedOperationException();
 	}

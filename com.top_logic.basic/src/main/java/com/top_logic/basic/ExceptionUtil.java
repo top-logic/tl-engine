@@ -238,11 +238,6 @@ public class ExceptionUtil {
 		try {
 			return unsafeCode.get();
 		} catch (RuntimeException | Error exception) {
-			if (exception instanceof ThreadDeath) {
-				/* Never suppress ThreadDeath, as that make it impossible to stop this thread from
-				 * within the JVM. */
-				throw exception;
-			}
 			logError(exception.getMessage(), exception, caller);
 			return errorResult.apply(exception);
 		}
@@ -266,11 +261,6 @@ public class ExceptionUtil {
 		try {
 			unsafeCode.run();
 		} catch (RuntimeException | Error exception) {
-			if (exception instanceof ThreadDeath) {
-				/* Never suppress ThreadDeath, as that make it impossible to stop this thread from
-				 * within the JVM. */
-				throw exception;
-			}
 			logError(exception.getMessage(), exception, caller);
 		}
 	}

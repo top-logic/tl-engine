@@ -8,7 +8,7 @@ package com.top_logic.base.dsa;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload2.core.FileItem;
 
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.dsa.DatabaseAccessException;
@@ -31,7 +31,7 @@ public interface UploadHandler {
     * @throws   IOException             if the createEntry failed 
     *                                
     */   
-    public DataAccessProxy createEntry(DataAccessProxy aProxy, FileItem anItem)
+	public DataAccessProxy createEntry(DataAccessProxy aProxy, FileItem<?> anItem)
                                   throws IOException, DatabaseAccessException;
 
 	/**
@@ -69,7 +69,7 @@ public interface UploadHandler {
     * @throws   DatabaseAccessException if the putEntry-method failed
     * @throws   IOException             if the putEntry-method failed 
     */                            
-    public boolean putEntry(DataAccessProxy aProxy, FileItem anItem)
+	public boolean putEntry(DataAccessProxy aProxy, FileItem<?> anItem)
                                         throws IOException, DatabaseAccessException;
 
 	/**
@@ -100,7 +100,7 @@ public interface UploadHandler {
     * @throws   DatabaseAccessException if the putEntry-method failed
     * @throws   IOException             if the putEntry-method failed  
     */
-    public  boolean putEntryInContainer(DataAccessProxy aProxy, FileItem anItem) 
+	public boolean putEntryInContainer(DataAccessProxy aProxy, FileItem<?> anItem)
                                               throws DatabaseAccessException, IOException;
     
     /**

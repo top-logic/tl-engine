@@ -16,7 +16,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload2.core.FileItem;
 
 import com.top_logic.base.multipart.MultipartRequest;
 import com.top_logic.base.services.simpleajax.JSSnipplet;
@@ -425,14 +425,14 @@ public class DataItemControl extends AbstractFormFieldControl implements Content
 		uploadMulti(nameChecker(), request.getFiles());
 	}
 
-	private void uploadMulti(Function<String, ResKey> nameChecker, List<FileItem> receivedFiles)
+	private void uploadMulti(Function<String, ResKey> nameChecker, List<? extends FileItem<?>> receivedFiles)
 			throws IllegalArgumentException {
-		for (FileItem file : receivedFiles) {
+		for (FileItem<?> file : receivedFiles) {
 			uploadSingle(nameChecker, file);
 		}
 	}
 
-	private void uploadSingle(Function<String, ResKey> nameChecker, FileItem file) throws IllegalArgumentException {
+	private void uploadSingle(Function<String, ResKey> nameChecker, FileItem<?> file) throws IllegalArgumentException {
 		final String name = file.getName();
 		assert name != null : "File must have a non-null name.";
 		String fileName = toFileName(name);

@@ -11,7 +11,7 @@ import java.lang.invoke.MethodHandles.Lookup;
 import java.util.Iterator;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.basic.StringServices;

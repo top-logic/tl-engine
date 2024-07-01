@@ -45,7 +45,7 @@ public class RunTaskActionOp extends AbstractApplicationActionOp<RunTaskAction> 
 		super(context, config);
 		_scheduler = Scheduler.getSchedulerInstance();
 
-		// Note: Java 11 requires a variable for the reduction to accept the types.
+		// Note: 'javac' requires a variable for the reduction to accept the types.
 		List<Filter<? super TaskResult>> filterInstances = TypedConfiguration.getInstanceList(context, config.getResultFilters());
 
 		_filter = FilterFactory.and(filterInstances);

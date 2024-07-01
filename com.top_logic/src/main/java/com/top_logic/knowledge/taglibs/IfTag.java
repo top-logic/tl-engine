@@ -5,8 +5,8 @@
  */
 package com.top_logic.knowledge.taglibs;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.TagSupport;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.TagSupport;
 
 /**
  * Tag that executes its body if the given condition is true.
@@ -35,7 +35,7 @@ public class IfTag extends TagSupport {
     /**
      * If the condition is <code>true</code>, the body of the tag will be executed. 
      * 
-     * @see javax.servlet.jsp.tagext.TagSupport#doStartTag()
+     * @see jakarta.servlet.jsp.tagext.TagSupport#doStartTag()
      */
     @Override
 	public int doStartTag() throws JspException {
@@ -49,7 +49,7 @@ public class IfTag extends TagSupport {
     /**
      * Sets the condition to <code>false</code> to ensure reusability and keeps executing the page.
      * 
-     * @see javax.servlet.jsp.tagext.TagSupport#doEndTag()
+     * @see jakarta.servlet.jsp.tagext.TagSupport#doEndTag()
      */
     @Override
 	public int doEndTag() throws JspException {

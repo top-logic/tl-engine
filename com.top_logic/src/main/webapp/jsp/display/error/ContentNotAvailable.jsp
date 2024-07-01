@@ -6,7 +6,7 @@ isErrorPage="true"
 %>
 <basic:html>
 	<%
-	String  requestedPage = (String) request.getAttribute(ErrorPage.JAVAX_SERVLET_ERROR_REQUEST_URI);
+	String  requestedPage = (String) request.getAttribute(ErrorPage.JAKARTA_SERVLET_ERROR_REQUEST_URI);
 	String context = request.getContextPath();
 	%>
 	<head>

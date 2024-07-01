@@ -6,6 +6,7 @@
 package com.top_logic.kafka.services.common;
 
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
+import static com.top_logic.basic.util.StopWatch.*;
 import static java.util.stream.Collectors.*;
 
 import java.util.Comparator;
@@ -228,20 +229,21 @@ public class TopicChecker extends AbstractConfiguredInstance<TopicChecker.Config
 
 	/** Waits for the server to answer the request. */
 	protected <T> T waitForReceive(KafkaFuture<T> future) {
+		long waitTimeout = getConfig().getWaitTimeout();
 		try {
-			return future.get(getConfig().getWaitTimeout(), TimeUnit.MILLISECONDS);
+			return future.get(waitTimeout, TimeUnit.MILLISECONDS);
 		} catch (ExecutionException | TimeoutException | RuntimeException exception) {
-			throw getExceptionWaitingFailed(exception);
+			throw getExceptionWaitingFailed(waitTimeout, exception);
 		} catch (InterruptedException exception) {
 			// Restore the interrupt flag:
 			Thread.currentThread().interrupt();
-			throw getExceptionWaitingFailed(exception);
+			throw getExceptionWaitingFailed(waitTimeout, exception);
 		}
 	}
 
-	private RuntimeException getExceptionWaitingFailed(Exception exception) {
-		String message =
-			"Failed to retrieve the list of existing topics for Kafka client '" + _commonClientConfig.getName() + "'.";
+	private RuntimeException getExceptionWaitingFailed(long waitMillis, Exception exception) {
+		String message = "Failed to retrieve the list of existing topics for Kafka client '"
+			+ _commonClientConfig.getName() + "'. Waited at most: " + toStringMillis(waitMillis);
 		return new RuntimeException(message, exception);
 	}
 

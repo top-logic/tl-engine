@@ -404,8 +404,6 @@ public final class ScriptedTest extends LogListeningTestCase {
 		for (ApplicationSession session : sessionCopy) {
 			try {
 				invalidateSession(session);
-			} catch (ThreadDeath exception) {
-				throw exception;
 			} catch (Throwable exception) {
 				// Keep the first problem, as the others are often just consequential errors
 				if (problem == null) {

@@ -1,4 +1,4 @@
-FROM docker.top-logic.com/tomcat9-java11:latest
+FROM docker.top-logic.com/tomcat:10.1-jdk17-openjdk
 MAINTAINER support@top-logic.com
 USER root
 RUN apt update

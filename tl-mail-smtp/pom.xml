@@ -33,28 +33,27 @@
     
 	<!-- API only, implementation, see below.-->
 	<dependency>
-	    <groupId>javax.mail</groupId>
-	    <artifactId>javax.mail-api</artifactId>
+	    <groupId>jakarta.mail</groupId>
+	    <artifactId>jakarta.mail-api</artifactId>
 	</dependency>
 
 	<!-- The actual mail implementation, in case the container does not provide one. -->
 	<dependency>
-		<groupId>com.sun.mail</groupId>
-		<artifactId>javax.mail</artifactId>
+		<groupId>org.eclipse.angus</groupId>
+		<artifactId>angus-mail</artifactId>
 		<scope>runtime</scope>
 	</dependency>
 	
-	<!-- Replacement for excluded dependency of com.sun.mail:javax.mail -->
 	<!-- API only, implementation, see below.-->
 	<dependency>
-		<groupId>javax.activation</groupId>
-		<artifactId>javax.activation-api</artifactId>
+		<groupId>jakarta.activation</groupId>
+		<artifactId>jakarta.activation-api</artifactId>
 	</dependency>
 	
 	<!-- The actual activation implementation, in case the container does not provide one. -->
 	<dependency>
-	    <groupId>com.sun.activation</groupId>
-	    <artifactId>javax.activation</artifactId>
+		<groupId>org.eclipse.angus</groupId>
+		<artifactId>angus-activation</artifactId>
 		<scope>runtime</scope>
 	</dependency>
     

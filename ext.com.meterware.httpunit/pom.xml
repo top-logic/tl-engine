@@ -10,18 +10,18 @@
   <artifactId>ext-com-meterware-httpunit</artifactId>
   <dependencies>
 	<dependency>
-		<groupId>javax.servlet</groupId>
-		<artifactId>javax.servlet-api</artifactId>
+		<groupId>jakarta.servlet</groupId>
+		<artifactId>jakarta.servlet-api</artifactId>
 		<scope>provided</scope>
 	</dependency>
 	<dependency>
-	    <groupId>javax.activation</groupId>
-	    <artifactId>javax.activation-api</artifactId>
+		<groupId>jakarta.activation</groupId>
+		<artifactId>jakarta.activation-api</artifactId>
 	    <scope>test</scope>
 	</dependency>
 	<dependency>
-	    <groupId>javax.mail</groupId>
-	    <artifactId>javax.mail-api</artifactId>
+	    <groupId>jakarta.mail</groupId>
+	    <artifactId>jakarta.mail-api</artifactId>
 	    <scope>test</scope>
 	</dependency>
 	<dependency>

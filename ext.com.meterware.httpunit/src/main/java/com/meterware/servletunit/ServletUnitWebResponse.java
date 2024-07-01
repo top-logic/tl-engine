@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.HttpURLConnection;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 
 /**

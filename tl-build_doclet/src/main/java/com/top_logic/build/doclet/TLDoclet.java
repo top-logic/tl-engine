@@ -873,7 +873,7 @@ public class TLDoclet implements Doclet {
 	}
 
 	private List<ReturnTree> returnTags(DocCommentTree commentTree) {
-		return bockTagsOfKind(commentTree, DocTree.Kind.RETURN, ReturnTree.class);
+		return blockTagsOfKind(commentTree, DocTree.Kind.RETURN, ReturnTree.class);
 	}
 
 	private List<ParamTree> paramTags(Element elem) {
@@ -881,10 +881,10 @@ public class TLDoclet implements Doclet {
 	}
 
 	private List<ParamTree> paramTags(DocCommentTree commentTree) {
-		return bockTagsOfKind(commentTree, DocTree.Kind.PARAM, ParamTree.class);
+		return blockTagsOfKind(commentTree, DocTree.Kind.PARAM, ParamTree.class);
 	}
 
-	private <T extends DocTree> List<T> bockTagsOfKind(DocCommentTree commentTree, DocTree.Kind blockTagKind,
+	private <T extends DocTree> List<T> blockTagsOfKind(DocCommentTree commentTree, DocTree.Kind blockTagKind,
 			Class<T> tagClass) {
 		if (commentTree == null) {
 			return Collections.emptyList();
@@ -958,7 +958,7 @@ public class TLDoclet implements Doclet {
 
 	@Override
 	public SourceVersion getSupportedSourceVersion() {
-		return SourceVersion.RELEASE_11;
+		return SourceVersion.RELEASE_17;
 	}
 
 	@Override
@@ -1298,6 +1298,7 @@ public class TLDoclet implements Doclet {
 								case ANNOTATION_TYPE:
 								case CLASS:
 								case INTERFACE:
+								case RECORD:
 								case ENUM_CONSTANT:
 									buffer.append("<i>");
 									buffer.append(label(referencedElement, _startOfSentence));
@@ -1314,6 +1315,8 @@ public class TLDoclet implements Doclet {
 								case RESOURCE_VARIABLE:
 								case STATIC_INIT:
 								case TYPE_PARAMETER:
+								case RECORD_COMPONENT:
+								case BINDING_VARIABLE:
 									break;
 							}
 						}
@@ -2438,7 +2441,7 @@ public class TLDoclet implements Doclet {
 		}
 
 		private List<SeeTree> seeTags(DocCommentTree commentTree) {
-			return bockTagsOfKind(commentTree, DocTree.Kind.SEE, SeeTree.class);
+			return blockTagsOfKind(commentTree, DocTree.Kind.SEE, SeeTree.class);
 		}
 
 		private void writeSee(DocTreePath tagPath, SeeTree tag) throws XMLStreamException, IOException {
@@ -2466,6 +2469,7 @@ public class TLDoclet implements Doclet {
 						case CLASS:
 						case ENUM:
 						case INTERFACE:
+						case RECORD:
 							attribute("class", signature(referencedElement.asType()));
 							break;
 						case CONSTRUCTOR:
@@ -2481,6 +2485,8 @@ public class TLDoclet implements Doclet {
 						case RESOURCE_VARIABLE:
 						case STATIC_INIT:
 						case TYPE_PARAMETER:
+						case BINDING_VARIABLE:
+						case RECORD_COMPONENT:
 							attribute("class", signature(referencedElement.getEnclosingElement().asType()));
 							attribute("member", elementSignature(referencedElement));
 							break;
@@ -2552,6 +2558,7 @@ public class TLDoclet implements Doclet {
 							case CLASS:
 							case ENUM:
 							case INTERFACE:
+							case RECORD:
 								raw.append("class=\"");
 								raw.append(signature(referencedElement.asType()));
 								raw.append("\" ");
@@ -2569,6 +2576,8 @@ public class TLDoclet implements Doclet {
 							case RESOURCE_VARIABLE:
 							case STATIC_INIT:
 							case TYPE_PARAMETER:
+							case BINDING_VARIABLE:
+							case RECORD_COMPONENT:
 								raw.append("class=\"");
 								raw.append(signature(referencedElement.getEnclosingElement().asType()));
 								raw.append("\" ");

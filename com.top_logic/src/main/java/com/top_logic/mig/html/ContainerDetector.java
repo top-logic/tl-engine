@@ -9,7 +9,7 @@ package com.top_logic.mig.html;
 import java.util.Collection;
 import java.util.Collections;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.module.BasicRuntimeModule;

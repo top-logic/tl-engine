@@ -8,7 +8,7 @@ package com.top_logic.service.openapi.server.authentication;
 import java.io.IOException;
 import java.util.Objects;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.exception.I18NException;
 import com.top_logic.basic.util.ResKey;

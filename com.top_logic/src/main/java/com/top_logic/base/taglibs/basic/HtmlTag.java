@@ -8,10 +8,10 @@ package com.top_logic.base.taglibs.basic;
 import java.io.IOException;
 import java.io.Writer;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.PageContext;
-import javax.servlet.jsp.tagext.TagSupport;
-import javax.servlet.jsp.tagext.TryCatchFinally;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.PageContext;
+import jakarta.servlet.jsp.tagext.TagSupport;
+import jakarta.servlet.jsp.tagext.TryCatchFinally;
 
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;

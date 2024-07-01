@@ -95,7 +95,7 @@ public class EngineResolver extends AbstractMojo {
 		if (file.isDirectory()) {
 			return new File(file, TL_MODULE_MARKER).exists();
 		} else {
-			try (FileSystem jar = FileSystems.newFileSystem(file.toPath(), null)) {
+			try (FileSystem jar = FileSystems.newFileSystem(file.toPath())) {
 				return Files.exists(jar.getPath(TL_MODULE_MARKER));
 			}
 		}

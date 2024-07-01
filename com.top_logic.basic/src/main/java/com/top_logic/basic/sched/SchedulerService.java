@@ -191,8 +191,6 @@ public class SchedulerService extends ConfiguredManagedClass<SchedulerService.Co
 				}
 				try {
 					command.run();
-				} catch (ThreadDeath ex) {
-					wrapperLogThreadDeath(command, ex);
 				} catch (Throwable ex) {
 					wrapperLogThrowable(command, ex);
 				}
@@ -204,15 +202,6 @@ public class SchedulerService extends ConfiguredManagedClass<SchedulerService.Co
 	private void wrapperLogSuspended(final Object command) {
 		logDebug("Not executing '" + StringServices.getObjectDescription(command) + "' as the "
 			+ SchedulerService.class.getSimpleName() + " is suspended.");
-	}
-
-	/**
-	 * A {@link ThreadDeath} could mean someone tried to kill one of the worker threads. That's
-	 * serious enough to be logged more explicit.
-	 */
-	private void wrapperLogThreadDeath(final Object command, ThreadDeath ex) {
-		logError("One of the " + SchedulerService.class.getSimpleName() + " threads received a ThreadDeath."
-			+ " Execution of '" + StringServices.getObjectDescription(command) + "' failed.", ex);
 	}
 
 	private void wrapperLogThrowable(final Object command, Throwable ex) {

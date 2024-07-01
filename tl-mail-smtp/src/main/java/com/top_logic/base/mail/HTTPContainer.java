@@ -9,9 +9,9 @@ package com.top_logic.base.mail;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.basic.StringServices;
@@ -178,7 +178,7 @@ public class HTTPContainer {
     /**
      * Returns the requested value out of the current session. In this
      * implementation the method uses {@link
-     * javax.servlet.http.HttpSession#getAttribute(java.lang.String)} which
+     * jakarta.servlet.http.HttpSession#getAttribute(java.lang.String)} which
      * is defined in Java Servlet 2.2 specification. If you wanna use the
      * specification 2.1, you have to overwrite this method.
      *
@@ -197,7 +197,7 @@ public class HTTPContainer {
 
     /**
      * Store the given value in the current session. In this  implementation the
-     * method uses {@link javax.servlet.http.HttpSession#setAttribute(java.lang.String,java.lang.Object)}
+     * method uses {@link jakarta.servlet.http.HttpSession#setAttribute(java.lang.String,java.lang.Object)}
      * which is defined in Java Servlet 2.2 specification. If you wanna use the
      * specification 2.1, you have to overwrite this method.
      *

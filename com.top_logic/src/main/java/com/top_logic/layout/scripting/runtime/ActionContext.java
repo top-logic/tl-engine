@@ -8,7 +8,7 @@ package com.top_logic.layout.scripting.runtime;
 import java.util.Collection;
 import java.util.List;
 
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;

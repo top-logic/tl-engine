@@ -5,6 +5,9 @@
  */
 package test.com.top_logic.basic.format.configured;
 
+import static com.top_logic.basic.StringServices.*;
+import static com.top_logic.basic.util.RegExpUtil.*;
+
 import java.text.DateFormat;
 import java.text.Format;
 import java.text.NumberFormat;
@@ -41,7 +44,7 @@ import com.top_logic.basic.util.ComputationEx;
  */
 @SuppressWarnings("javadoc")
 public class TestFormatter extends BasicTestCase {
-	
+
 	private TimeZone _timeZone;
 
 	/** Default CTor, create Test-case by calling given function name. */
@@ -57,7 +60,7 @@ public class TestFormatter extends BasicTestCase {
 
 	/** Test the German (default) format */
 	public void testGermanFormatNumbers() {
-		Formatter fm = getHTMLFormatterGerman(false);
+		Formatter fm = getHTMLFormatterGerman();
         
         assertNotNull(fm.toString());
         
@@ -146,8 +149,8 @@ public class TestFormatter extends BasicTestCase {
 		assertEquals(sdt, fm.parseMixedDateTime("02.06.2002, 11:17"));
 	}
     
-    public void testInvalidDate() throws Exception {
-		Formatter fm = getHTMLFormatterGerman(false);
+	public void testInvalidDate() {
+		Formatter fm = getHTMLFormatterGerman();
         
 		try {
 			fm.getDateFormat().parse("0.0.0");
@@ -157,8 +160,8 @@ public class TestFormatter extends BasicTestCase {
 		}
     }
 
-    public void testInvalidDate2() throws Exception {
-		Formatter fm = getHTMLFormatterGerman(false);
+	public void testInvalidDate2() {
+		Formatter fm = getHTMLFormatterGerman();
     	
 		try {
 			fm.getDateFormat().parse("32.5.2010");
@@ -169,7 +172,7 @@ public class TestFormatter extends BasicTestCase {
     }
     
     public void testValidDate() throws Exception {
-		Formatter fm = getHTMLFormatterGerman(false);
+		Formatter fm = getHTMLFormatterGerman();
     	
     	Date date = fm.getDateFormat().parse("31.5.2010");
     	
@@ -179,7 +182,7 @@ public class TestFormatter extends BasicTestCase {
     
     /** Test the US Locale based formats */
 	public void testUSFormatNumbers() {
-		Formatter fm = getHTMLFormatterUS(false);
+		Formatter fm = getHTMLFormatterUS();
 		assertEquals(Long.valueOf(1234), fm.parseNumber("1,234"));
 		assertEquals(Double.valueOf(1234.56), fm.parseNumber("1,234.56"));
         assertNull  (fm.parseNumber(null));
@@ -225,24 +228,29 @@ public class TestFormatter extends BasicTestCase {
         assertEquals(d                      , fm.parseShortDate("2/6/67"));
 
 		Date t = DateUtil.createDate(calendarLA, 1970, Calendar.JANUARY, 1, 11, 17, 36);
-        assertEquals("11:17:36 AM"          , fm.formatTime(t));
-        assertEquals(t                      , fm.parseTime("11:17:36 AM"));
+		// Replace all kinds of whitespaces with a blank.
+		// Different Java versions use different whitespaces as separator.
+		String formattedTime = fm.formatTime(t);
+		boolean useNarrowNoBreakSpace = formattedTime.indexOf(NARROW_NO_BREAK_SPACE) != -1;
+		char separator = useNarrowNoBreakSpace ? NARROW_NO_BREAK_SPACE : ' ';
+		assertEquals("11:17:36 AM", normalizeWhitespace(formattedTime));
+		assertEquals(t, fm.parseTime("11:17:36" + separator + "AM"));
 
 		Date st = DateUtil.createDate(calendarLA, 1970, Calendar.JANUARY, 1, 11, 17, 0);
-        assertEquals("11:17 AM"             , fm.formatShortTime(st));
-        assertEquals(st                     , fm.parseShortTime("11:17 AM"));
+		assertEquals("11:17 AM", normalizeWhitespace(fm.formatShortTime(st)));
+		assertEquals(st, fm.parseShortTime("11:17" + separator + "AM"));
 
 		Date dt = DateUtil.createDate(calendarLA, 2002, Calendar.JUNE, 2, 11, 17, 36);
-		assertEquals("Jun 2, 2002, 11:17:36 AM", fm.formatDateTime(dt));
-		assertEquals(dt, fm.parseDateTime("Jun 2, 2002, 11:17:36 AM"));
+		assertEquals("Jun 2, 2002, 11:17:36 AM", normalizeWhitespace(fm.formatDateTime(dt)));
+		assertEquals(dt, fm.parseDateTime("Jun 2, 2002, 11:17:36" + separator + "AM"));
 
 
 		Date sdt = DateUtil.createDate(calendarLA, 2002, Calendar.JUNE, 2, 11, 17, 00);
-		assertEquals("6/2/02, 11:17 AM", fm.formatShortDateTime(sdt));
-		assertEquals(sdt, fm.parseShortDateTime("6/2/02, 11:17 AM"));
+		assertEquals("6/2/02, 11:17 AM", normalizeWhitespace(fm.formatShortDateTime(sdt)));
+		assertEquals(sdt, fm.parseShortDateTime("6/2/02, 11:17" + separator + "AM"));
 
-		assertEquals("Jun 2, 2002, 11:17 AM", fm.formatMediumDateTime(sdt));
-		assertEquals(sdt, fm.parseMixedDateTime("Jun 2, 2002, 11:17 AM"));
+		assertEquals("Jun 2, 2002, 11:17 AM", normalizeWhitespace(fm.formatMediumDateTime(sdt)));
+		assertEquals(sdt, fm.parseMixedDateTime("Jun 2, 2002, 11:17" + separator + "AM"));
 	}
 
 	public void testFormatParseDecimal() throws ParseException {
@@ -438,7 +446,7 @@ public class TestFormatter extends BasicTestCase {
 			def.newFormat(globalConfig(), getTimeZone(-12), Locale.GERMANY).parseObject("15.07.2014, 05:42:56"));
 	}
 
-	public void testCurrency() throws ParseException {
+	public void testCurrency() {
 		FormatDefinition<?> def = getFormatDefinition("testCurrency");
 		assertNotNull(def);
 		double value = 1123123.45D;
@@ -451,7 +459,7 @@ public class TestFormatter extends BasicTestCase {
 		return format.replace('\u00A0', ' ');
 	}
 
-	public void testPercent() throws ParseException {
+	public void testPercent() {
 		FormatDefinition<?> def = getFormatDefinition("testPercent");
 		assertNotNull(def);
 		double value = 10.45D;
@@ -460,10 +468,9 @@ public class TestFormatter extends BasicTestCase {
 		assertEquals("1,045%", normalizePercent(def.newFormat(globalConfig(), _timeZone, Locale.UK).format(value)));
 	}
 
-	public void testChoice() throws ParseException {
+	public void testChoice() {
 		FormatDefinition<?> def = getFormatDefinition("testGeneric");
 		assertNotNull(def);
-		Date value = CalendarUtil.newSimpleDateFormat("yyyy/MM/dd").parse("2014/07/15");
 		Format format = def.newFormat(globalConfig(), _timeZone, Locale.GERMANY);
 		assertEquals("is more than 2.", format.format(2.1D));
 		assertEquals("is 1+", format.format(1.9D));
@@ -471,7 +478,7 @@ public class TestFormatter extends BasicTestCase {
 
 	public void testModifyDefaultNumberFormatCopy() {
 		int expectedDigits = 4;
-		Formatter htmlFormatter = getHTMLFormatterGerman(false);
+		Formatter htmlFormatter = getHTMLFormatterGerman();
 		NumberFormat numberFormatCopy = (NumberFormat) htmlFormatter.getNumberFormat().clone();
 		numberFormatCopy.setMinimumFractionDigits(expectedDigits);
 
@@ -481,7 +488,7 @@ public class TestFormatter extends BasicTestCase {
 
 	public void testModifyDefaultDateFormatCopy() {
 		boolean expected = true;
-		Formatter htmlFormatter = getHTMLFormatterGerman(false);
+		Formatter htmlFormatter = getHTMLFormatterGerman();
 		DateFormat dateFormatCopy = (DateFormat) htmlFormatter.getDateFormat().clone();
 		dateFormatCopy.setLenient(expected);
 
@@ -490,7 +497,7 @@ public class TestFormatter extends BasicTestCase {
 	}
 
 	public void testFailModifyDefaultNumberFormat() {
-		Formatter htmlFormatter = getHTMLFormatterGerman(false);
+		Formatter htmlFormatter = getHTMLFormatterGerman();
 		try {
 			htmlFormatter.getNumberFormat().setMinimumFractionDigits(4);
 			fail("Must not allow modification of default format!");
@@ -500,7 +507,7 @@ public class TestFormatter extends BasicTestCase {
 	}
 
 	public void testFailModifyDefaultDateFormat() {
-		Formatter htmlFormatter = getHTMLFormatterGerman(false);
+		Formatter htmlFormatter = getHTMLFormatterGerman();
 		try {
 			htmlFormatter.getDateFormat().setLenient(true);
 			fail("Must not allow modification of default format!");
@@ -524,13 +531,10 @@ public class TestFormatter extends BasicTestCase {
         parallelTest(3,new ExecutionFactory() {
             @Override
 			public Execution createExecution(int aId) {
-                return new Execution() {
-                    @Override
-					public void run() throws Exception {
-						testGermanFormatNumbers();
-						testGermanFormatDates();
-                    }
-                };
+				return () -> {
+					testGermanFormatNumbers();
+					testGermanFormatDates();
+				};
             }
         });
     }
@@ -542,25 +546,22 @@ public class TestFormatter extends BasicTestCase {
         parallelTest(3,new ExecutionFactory() {
             @Override
 			public Execution createExecution(int aId) {
-                return new Execution() {
-                    @Override
-					public void run() throws Exception {
-						testUSFormatNumbers();
-						testUSFormatDates();
-                    }
-                };
+				return () -> {
+					testUSFormatNumbers();
+					testUSFormatDates();
+				};
             }
         });
     }
 
-	protected Formatter getHTMLFormatterGerman(boolean lenientParsing) {
+	protected Formatter getHTMLFormatterGerman() {
 		return FormatterService.getFormatter(Locale.GERMAN);
 	}
 
-	protected Formatter getHTMLFormatterUS(boolean lenientParsing) {
+	protected Formatter getHTMLFormatterUS() {
 		return FormatterService.getFormatter(Locale.US);
 	}
-    
+
 	/**
 	 * the suite of Tests to execute 
 	 */

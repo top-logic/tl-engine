@@ -22,9 +22,9 @@ package com.meterware.servletunit;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
-import javax.servlet.Servlet;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletContext;
 
 
 /**

@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.form.tag.util;
 
-import javax.servlet.jsp.PageContext;
+import jakarta.servlet.jsp.PageContext;
 
 /**
  * TODO BHU: Work in progress. Stop reading here.

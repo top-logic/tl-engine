@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+	<alias>
+		<entry name="%PAC_CALLBACK_URL%" value="${env:tl_pac_callback_url:/servlet/callback}" />
+		<entry name="%PAC_CALLBACK_ABSOLUTE%" value="${env:tl_pac_callback_absolute:false}" />
+		<entry name="%PAC_DOMAIN%" value="${env:tl_pac_domain:tl-demo-keycloak-users}" />
+		<entry name="%PAC_CLIENT_ID%" value="${env:tl_pac_client_id:tldemo-login}" />
+		<entry name="%PAC_SECRET%" value="${env:tl_pac_secret:unencrypted:mOnT3ZsU6xWcDYSW3IF7G0ERDjYzKKUk}" />
+		<entry name="%PAC_KEYCLOAK_BASE_URI%" value="${env:tl_pac_keycloak_base_uri:http://openid.bos.local:8098/auth}" />
+		<entry name="%PAC_KEYCLOAK_REALM%" value="${env:tl_pac_keycloak_realm:tl-demo}" />
+	</alias>
+</root>

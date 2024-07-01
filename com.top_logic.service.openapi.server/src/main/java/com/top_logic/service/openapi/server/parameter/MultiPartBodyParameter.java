@@ -20,13 +20,14 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.activation.MimeType;
-import javax.activation.MimeTypeParseException;
-import javax.mail.internet.ContentDisposition;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.activation.MimeType;
+import jakarta.activation.MimeTypeParseException;
+import jakarta.mail.internet.ContentDisposition;
 
-import org.apache.commons.fileupload.MultipartStream;
-import org.apache.commons.fileupload.MultipartStream.MalformedStreamException;
+import jakarta.servlet.http.HttpServletRequest;
+
+import org.apache.commons.fileupload2.core.MultipartInput;
+import org.apache.commons.fileupload2.core.MultipartInput.MalformedStreamException;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.StringServices;
@@ -344,7 +345,7 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 		String characterEncoding = req.getCharacterEncoding();
 		Map<String, Object> values = new HashMap<>();
 		try {
-			MultipartStream multipartStream = parseMultipartBody(req, characterEncoding);
+			MultipartInput multipartStream = parseMultipartBody(req, characterEncoding);
 			boolean nextPart = multipartStream.skipPreamble();
 			while (nextPart) {
 				addValue(values, multipartStream, characterEncoding);
@@ -356,7 +357,7 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 		return values;
 	}
 
-	private void addValue(Map<String, Object> values, MultipartStream stream, String defaultEncoding)
+	private void addValue(Map<String, Object> values, MultipartInput stream, String defaultEncoding)
 			throws IOException, InvalidValueException {
 		String sContentDisposition = StringServices.EMPTY_STRING;
 		String contentType = StringServices.EMPTY_STRING;
@@ -377,7 +378,7 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 		ContentDisposition contentDisposition;
 		try {
 			contentDisposition = new ContentDisposition(sContentDisposition);
-		} catch (javax.mail.internet.ParseException ex) {
+		} catch (jakarta.mail.internet.ParseException ex) {
 			throw new InvalidValueException("Invalid content disposition: " + sContentDisposition, ex);
 		}
 
@@ -468,7 +469,7 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 		return contentDisposition.getParameter(CONTENT_DISPOSITION_FILENAME_PARAM);
 	}
 
-	private String readString(MultipartStream stream, String charSet)
+	private String readString(MultipartInput stream, String charSet)
 			throws MalformedStreamException, IOException, UnsupportedEncodingException {
 		ByteArrayStream out = new ByteArrayStream();
 		stream.readBodyData(out);
@@ -481,7 +482,7 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 		return value;
 	}
 
-	private ByteArrayStream readBinary(MultipartStream stream, String name, String contentType)
+	private ByteArrayStream readBinary(MultipartInput stream, String name, String contentType)
 			throws MalformedStreamException, IOException {
 		ByteArrayStream content;
 		if (name == null) {
@@ -493,14 +494,14 @@ public class MultiPartBodyParameter extends ConcreteRequestParameter<MultiPartBo
 		return content;
 	}
 
-	private MultipartStream parseMultipartBody(HttpServletRequest req, String characterEncoding)
+	private MultipartInput parseMultipartBody(HttpServletRequest req, String characterEncoding)
 			throws IOException, InvalidValueException {
 		String contentType = req.getContentType();
 		MimeType mimeType = parseMimeType(contentType);
-		MultipartStream multipartStream =
-			new MultipartStream(req.getInputStream(), getBoundary(mimeType, characterEncoding), 4096, null);
-		multipartStream.setHeaderEncoding(characterEncoding);
-		return multipartStream;
+		return new MultipartInput.Builder()
+			.setInputStream(req.getInputStream())
+			.setBoundary(getBoundary(mimeType, characterEncoding))
+			.get();
 	}
 
 	private MimeType parseMimeType(String contentType) throws InvalidValueException {

@@ -7,7 +7,7 @@ package com.top_logic.layout.form.control;
 
 import java.io.IOException;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.layout.ContentHandler;

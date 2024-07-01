@@ -1,5 +1,4 @@
 db-mysql.xml
 db-mysql55.xml
-pac4j-google.xml
 enable-debug.xml
 config.xml

@@ -5,7 +5,7 @@
  */
 package com.top_logic.util;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Small helper for checking submit commands in forms,   

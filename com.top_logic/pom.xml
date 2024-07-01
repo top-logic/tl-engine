@@ -44,8 +44,8 @@
       <artifactId>tl-convert</artifactId>
     </dependency>
 	<dependency>
-	    <groupId>commons-fileupload</groupId>
-	    <artifactId>commons-fileupload</artifactId>
+	    <groupId>org.apache.commons</groupId>
+	    <artifactId>commons-fileupload2-jakarta-servlet6</artifactId>
 	</dependency>
 	<dependency>
 	    <groupId>commons-io</groupId>
@@ -67,10 +67,6 @@
 	<dependency>
 	    <groupId>org.jfree</groupId>
 	    <artifactId>jfreechart</artifactId>
-	</dependency>
-	<dependency>
-	    <groupId>javax.xml.ws</groupId>
-	    <artifactId>jaxws-api</artifactId>
 	</dependency>
     <dependency>
       <groupId>com.top-logic</groupId>

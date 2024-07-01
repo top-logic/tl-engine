@@ -40,11 +40,11 @@
 	</dependency>
 	<dependency>
 	    <groupId>org.pac4j</groupId>
-	    <artifactId>pac4j-jee</artifactId>
+	    <artifactId>pac4j-jakartaee</artifactId>
 	</dependency>
 	<dependency>
 	    <groupId>org.pac4j</groupId>
-	    <artifactId>jee-pac4j</artifactId>
+	    <artifactId>jakartaee-pac4j</artifactId>
 	</dependency>
   </dependencies>
 </project>

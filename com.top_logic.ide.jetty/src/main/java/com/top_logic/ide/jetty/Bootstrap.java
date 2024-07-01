@@ -7,7 +7,6 @@ package com.top_logic.ide.jetty;
 
 import java.awt.Desktop;
 import java.io.File;
-import java.io.IOError;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -19,29 +18,26 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.CharBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.jasper.servlet.TldScanner;
 import org.apache.tomcat.util.scan.StandardJarScanner;
-import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
+import org.eclipse.jetty.ee10.apache.jsp.JettyJasperInitializer;
+import org.eclipse.jetty.ee10.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee10.servlet.ServletHolder;
+import org.eclipse.jetty.ee10.webapp.WebAppContext;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.util.component.AbstractLifeCycle;
 import org.eclipse.jetty.util.resource.Resource;
-import org.eclipse.jetty.util.resource.ResourceCollection;
-import org.eclipse.jetty.webapp.WebAppContext;
+import org.eclipse.jetty.util.resource.ResourceFactory;
 import org.xml.sax.SAXException;
 
 import com.top_logic.basic.core.workspace.Environment;
@@ -119,25 +115,24 @@ public class Bootstrap {
 		connector.open();
 		server.addConnector(connector);
 
-		HandlerCollection handlers = new HandlerCollection();
-
 		WebAppContext webapp = new WebAppContext();
 		webapp.setContextPath(_contextPath);
 		webapp.setDefaultsDescriptor("com/top_logic/ide/jetty/webdefault.xml");
 
+		ResourceFactory resourceFactory = ResourceFactory.of(webapp);
 		List<URL> resourcePath = paths.getResourcePath();
 		List<Resource> resources = new ArrayList<>(resourcePath.size());
 		for (URL resourceUrl : resourcePath) {
 			if (resourceUrl.getPath().endsWith(".war")) {
 				resourceUrl = new URL("jar:" + resourceUrl.toExternalForm() + "!/");
 			}
-			resources.add(Resource.newResource(resourceUrl));
+			resources.add(resourceFactory.newResource(resourceUrl));
 		}
-		webapp.setBaseResource(new ResourceCollection(resources.toArray(new Resource[0])));
+		webapp.setBaseResource(ResourceFactory.combine(resources));
 
 		List<URL> classPath = paths.getClassJars();
 		for (URL entry : classPath) {
-			webapp.getMetaData().addWebInfJar(Resource.newResource(entry));
+			webapp.getMetaData().addWebInfResource(resourceFactory.newResource(entry));
 		}
 
 		for (File simulatedJar : paths.getClassFolders()) {
@@ -145,24 +140,15 @@ public class Bootstrap {
 			// folder.
 			// This is required to let the development container resolve web-fragment.xml
 			// resources.
-			webapp.getMetaData().addWebInfJar(Resource.newResource(simulatedJar));
+			webapp.getMetaData().addWebInfResource(resourceFactory.newResource(simulatedJar.toPath()));
 		}
 
-		List<String> configurationClasses =
-			new ArrayList<>(Arrays.asList(WebAppContext.getDefaultConfigurationClasses()));
-		configurationClasses.remove("org.eclipse.jetty.webapp.WebInfConfiguration");
-		configurationClasses.add(0, WebInfConfiguration.class.getName());
-		webapp.setConfigurationClasses(configurationClasses);
-
-		handlers.addHandler(webapp);
-		
 		File tmpDir = new File("tmp/scratch");
 		tmpDir.mkdirs();
 		webapp.setAttribute(ServletContext.TEMPDIR, tmpDir);
 		webapp.addBean(new JspStarter(webapp));
 
-		ServletContextHandler adminHandler = new ServletContextHandler(handlers, ADMIN_WEBAPP);
-		handlers.addHandler(adminHandler);
+		ServletContextHandler adminHandler = new ServletContextHandler(ADMIN_WEBAPP);
 
 		Thread shutdown = new Thread() {
 			@Override
@@ -191,7 +177,7 @@ public class Bootstrap {
 			}),
 			STOP_SERVLET);
 
-		ServletContextHandler rootContext = new ServletContextHandler(handlers, "/");
+		ServletContextHandler rootContext = new ServletContextHandler("/");
 		rootContext.addServlet(new ServletHolder("redirect", new HttpServlet() {
 			@Override
 			protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -200,7 +186,7 @@ public class Bootstrap {
 			}
 		}), "/*");
 
-		server.setHandler(handlers);
+		server.setHandler(new ContextHandlerCollection(webapp, adminHandler, rootContext));
 
 		server.start();
 
@@ -308,54 +294,4 @@ public class Bootstrap {
 		}
 	}
 
-	/**
-	 * Optimization for lookup of JARs from WEB-INF/lib in a highly modular application with may
-	 * resource paths.
-	 */
-	public static class WebInfConfiguration extends org.eclipse.jetty.webapp.WebInfConfiguration {
-		@Override
-		protected List<Resource> findWebInfLibJars(WebAppContext context) throws Exception {
-			Resource webInf = context.getWebInf();
-			if (webInf == null || !webInf.exists())
-				return null;
-
-			List<Resource> jarResources = new ArrayList<>();
-			Resource webInfLibs = webInf.addPath("/lib");
-			if (webInfLibs.exists() && webInfLibs.isDirectory()) {
-				if (webInfLibs instanceof ResourceCollection) {
-					Resource[] resources = ((ResourceCollection) webInfLibs).getResources();
-					for (Resource webInfLib : resources) {
-						scan(jarResources, webInfLib);
-					}
-				} else {
-					scan(jarResources, webInfLibs);
-				}
-			}
-			Collections.sort(jarResources, (Resource r1, Resource r2) -> {
-				try {
-					return r1.getFile().getName().compareTo(r2.getFile().getName());
-				} catch (IOException ex) {
-					throw new IOError(ex);
-				}
-			});
-
-			return jarResources;
-		}
-
-		private void scan(List<Resource> jarResources, Resource webInfLib) throws IOException, MalformedURLException {
-			String[] files = webInfLib.list();
-			if (files == null) {
-				return;
-			}
-			for (int f = 0; f < files.length; f++) {
-				Resource file = webInfLib.addPath(files[f]);
-				String fnlc = file.getName().toLowerCase(Locale.ENGLISH);
-				int dot = fnlc.lastIndexOf('.');
-				String extension = (dot < 0 ? null : fnlc.substring(dot));
-				if (extension != null && (extension.equals(".jar") || extension.equals(".zip"))) {
-					jarResources.add(file);
-				}
-			}
-		}
-	}
 }

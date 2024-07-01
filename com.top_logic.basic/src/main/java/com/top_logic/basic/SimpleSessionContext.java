@@ -7,8 +7,8 @@ package com.top_logic.basic;
 
 import java.util.List;
 
-import javax.servlet.http.HttpSessionBindingEvent;
-import javax.servlet.http.HttpSessionBindingListener;
+import jakarta.servlet.http.HttpSessionBindingEvent;
+import jakarta.servlet.http.HttpSessionBindingListener;
 
 import com.top_logic.basic.col.ConcurrentTypedAnnotationContainer;
 import com.top_logic.basic.col.CopyOnChangeListProvider;
@@ -76,7 +76,7 @@ public class SimpleSessionContext extends ConcurrentTypedAnnotationContainer imp
 	 * The {@link HttpSessionBindingListener} is added as attribute to the session. When doing this,
 	 * it is registered as listener.
 	 * 
-	 * @see javax.servlet.http.HttpSessionBindingListener#valueBound(javax.servlet.http.HttpSessionBindingEvent)
+	 * @see jakarta.servlet.http.HttpSessionBindingListener#valueBound(jakarta.servlet.http.HttpSessionBindingEvent)
 	 */
 	@Override
 	public void valueBound(HttpSessionBindingEvent event) {
@@ -138,7 +138,7 @@ public class SimpleSessionContext extends ConcurrentTypedAnnotationContainer imp
 	 * The {@link HttpSessionBindingListener} is added as attribute to the session. When doing this,
 	 * it is registered as listener.
 	 * 
-	 * @see javax.servlet.http.HttpSessionBindingListener#valueUnbound(javax.servlet.http.HttpSessionBindingEvent)
+	 * @see jakarta.servlet.http.HttpSessionBindingListener#valueUnbound(jakarta.servlet.http.HttpSessionBindingEvent)
 	 */
 	@Override
 	public void valueUnbound(final HttpSessionBindingEvent event) {

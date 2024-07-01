@@ -5,8 +5,8 @@
  */
 package com.top_logic.base.accesscontrol;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
 import com.top_logic.basic.Logger;

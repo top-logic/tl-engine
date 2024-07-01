@@ -7,6 +7,7 @@ package com.top_logic.build.doclet;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
 import jdk.javadoc.doclet.Doclet.Option;
@@ -27,7 +28,7 @@ public class OptionBuilder {
 
 	private String _parameters = "";
 
-	private ToBooleanBiFunction<String, List<String>> _processor;
+	private BiPredicate<String, List<String>> _processor;
 
 	OptionBuilder argumentCount(int count) {
 		_count = count;
@@ -49,7 +50,7 @@ public class OptionBuilder {
 		return this;
 	}
 
-	OptionBuilder process(ToBooleanBiFunction<String, List<String>> processor) {
+	OptionBuilder process(BiPredicate<String, List<String>> processor) {
 		_processor = processor;
 		return this;
 	}
@@ -95,7 +96,7 @@ public class OptionBuilder {
 
 			@Override
 			public boolean process(String option, List<String> arguments) {
-				return _processor.applyAsBoolean(option, arguments);
+				return _processor.test(option, arguments);
 			}
 
 		};

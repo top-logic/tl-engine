@@ -9,19 +9,19 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
-import org.apache.commons.fileupload.DiskFileUpload;
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileUploadBase;
-import org.apache.commons.fileupload.FileUploadException;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
+import org.apache.commons.fileupload2.core.FileItem;
+import org.apache.commons.fileupload2.core.FileUploadException;
+import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletDiskFileUpload;
+import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.dsa.DataAccessProxy;
@@ -53,8 +53,11 @@ import com.top_logic.util.TopLogicServlet;
  * @author    <a href="mailto:hbo@top-logic.com">Holger Borchard</a>
   */
 public abstract class DataUploadServlet extends HttpServlet implements UploadHandler{
-    
-   /**
+
+	private static final DiskFileItemFactory ITEM_FACTORY =
+		DiskFileItemFactory.builder().setPath(System.getProperty("java.io.tmpdir")).get();
+
+/**
     * The name of the data-source. 
     * 
     * private, because it is only used in test-cases (security)
@@ -161,12 +164,12 @@ public abstract class DataUploadServlet extends HttpServlet implements UploadHan
 	 */   
 	protected void doPostWithLogMark(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-		if (FileUploadBase.isMultipartContent(request)) {
+		if (JakartaServletFileUpload.isMultipartContent(request)) {
             try{
-                DiskFileUpload theUpload = new DiskFileUpload();
+				JakartaServletDiskFileUpload theUpload = new JakartaServletDiskFileUpload();
                 this.initializeFileUpload(theUpload);       
-				List theFileItems = theUpload.parseRequest(request);
-                Map theFormFieldMap = this.extractFormFields(theFileItems);
+				var theFileItems = theUpload.parseRequest(request);
+                var theFormFieldMap = this.extractFormFields(theFileItems);
 				this.uploadFileItems(request, theFileItems, theFormFieldMap);
             }
             catch(FileUploadException fue){
@@ -197,15 +200,15 @@ public abstract class DataUploadServlet extends HttpServlet implements UploadHan
     * @throws   IOException             if the building of InputStream from the FileItem failed 
     *                                
     */            
-     public DataAccessProxy doCreate(DataAccessProxy aProxy, List aFileItems)
+	public DataAccessProxy doCreate(DataAccessProxy aProxy, List<? extends FileItem<?>> aFileItems)
                                    throws ServletException, DatabaseAccessException, IOException{
         DataAccessProxy theNewProxy = null;                                                            
         if (aProxy.exists()){
              throw new ServletException("'" + aProxy + "' must not exist");
         }
-        Iterator theIter = aFileItems.iterator();
+		var theIter = aFileItems.iterator();
         while (theIter.hasNext()){
-            FileItem theItem = (FileItem)theIter.next();
+			FileItem<?> theItem = theIter.next();
             if (theItem != null && !theItem.isFormField()){
                 theNewProxy = uploadHandler.createEntry(aProxy, theItem);   
             }
@@ -227,7 +230,7 @@ public abstract class DataUploadServlet extends HttpServlet implements UploadHan
     *                                
     */     
     @Override
-	public DataAccessProxy createEntry(DataAccessProxy aProxy, FileItem anItem)
+	public DataAccessProxy createEntry(DataAccessProxy aProxy, FileItem<?> anItem)
 		                          throws IOException, DatabaseAccessException {
         String theFileName;
         if (aProxy.isContainer()) { // create entry in container                                      
@@ -277,13 +280,13 @@ public abstract class DataUploadServlet extends HttpServlet implements UploadHan
     * @throws   IOException             if the putEntry-method failed 
     *                                
     */
-    public DataAccessProxy doUpdate(DataAccessProxy aProxy, List aFileItems)
+	public DataAccessProxy doUpdate(DataAccessProxy aProxy, List<? extends FileItem<?>> aFileItems)
                                     throws ServletException, DatabaseAccessException, IOException{
-        Iterator theIter = aFileItems.iterator();
+		var theIter = aFileItems.iterator();
         if (aProxy.exists()&& aProxy.isEntry()){
             boolean isPut = false;
             while (theIter.hasNext() && !isPut){
-                FileItem theItem = (FileItem) theIter.next();
+				FileItem<?> theItem = theIter.next();
                 if (theItem != null && !theItem.isFormField()){
                     isPut = uploadHandler.putEntry(aProxy, theItem);
                     if (isPut && theIter.hasNext()){
@@ -295,7 +298,7 @@ public abstract class DataUploadServlet extends HttpServlet implements UploadHan
         }
         else if (aProxy.exists()&& aProxy.isContainer()){
             while (theIter.hasNext()){
-                FileItem theItem = (FileItem) theIter.next();
+				FileItem<?> theItem = theIter.next();
                 if (theItem != null && !theItem.isFormField()){
                     uploadHandler.putEntryInContainer(aProxy, theItem);
                 }
@@ -320,7 +323,7 @@ public abstract class DataUploadServlet extends HttpServlet implements UploadHan
      * @throws   IOException             if the putEntry-method failed 
      */
     @Override
-	public boolean putEntry(DataAccessProxy aProxy, FileItem anItem)
+	public boolean putEntry(DataAccessProxy aProxy, FileItem<?> anItem)
                            throws IOException, DatabaseAccessException {
         InputStream theStream = anItem.getInputStream();
 		try {
@@ -379,7 +382,7 @@ public abstract class DataUploadServlet extends HttpServlet implements UploadHan
      * @throws   IOException             if the putEntry-method failed  
      */
     @Override
-	public  boolean putEntryInContainer(DataAccessProxy aProxy, FileItem anItem) 
+	public boolean putEntryInContainer(DataAccessProxy aProxy, FileItem<?> anItem)
                                           throws DatabaseAccessException, IOException{
         String theFileName = anItem.getName();
         boolean isPut = false;
@@ -410,7 +413,7 @@ public abstract class DataUploadServlet extends HttpServlet implements UploadHan
     * @param    aFileItems   a list of instances of org.apache.commons.fileupload.FileItem
     *
     */  
-    public DataAccessProxy doUpload(DataAccessProxy aProxy, List aFileItems)
+	public DataAccessProxy doUpload(DataAccessProxy aProxy, List<? extends FileItem<?>> aFileItems)
                                     throws ServletException, DatabaseAccessException, IOException{
         if (!aProxy.exists()){
             throw new ServletException("Data-Source does not exists!");
@@ -419,9 +422,9 @@ public abstract class DataUploadServlet extends HttpServlet implements UploadHan
             return doUpdate(aProxy, aFileItems);
         }
         else if (aProxy.isContainer()){
-            Iterator theIter = aFileItems.iterator();
+			var theIter = aFileItems.iterator();
             while (theIter.hasNext()){
-                FileItem theItem = (FileItem) theIter.next();
+				FileItem<?> theItem = theIter.next();
                 if(!uploadHandler.putEntryInContainer(aProxy, theItem)){
                     uploadHandler.createEntry(aProxy, theItem);
                 }
@@ -470,13 +473,13 @@ public abstract class DataUploadServlet extends HttpServlet implements UploadHan
      * The extract item is removed from the list.
      * @param aFileItems a list of FileItem
      * 
-     * @return theFormFieldMap --> key: name of form fiels, value: value of form-field
+     * @return theFormFieldMap --> key: name of form fields, value: value of form-field
      */ 
-     public Map extractFormFields(List aFileItems){
-         Map theFormFieldMap = new HashMap();
-         Iterator theIter = aFileItems.iterator();
+	public Map<String, String> extractFormFields(List<? extends FileItem<?>> aFileItems) {
+		var theFormFieldMap = new HashMap<String, String>();
+		var theIter = aFileItems.iterator();
          while (theIter.hasNext()){
-             FileItem theItem = (FileItem) theIter.next();
+			FileItem<?> theItem = theIter.next();
              if (theItem.isFormField()){
                 String theFieldName = theItem.getFieldName();
                 String theValue = theItem.getString();
@@ -497,10 +500,10 @@ public abstract class DataUploadServlet extends HttpServlet implements UploadHan
       * @throws DatabaseAccessException if upload failed
       * @throws IOException if upload failed
       */
-     public void uploadFileItems(HttpServletRequest aRequest, List aFileItems, Map aFormFieldMap) 
-                                throws ServletException, DatabaseAccessException, IOException{
-        String theCommand = (String)aFormFieldMap.get(COMMAND);
-        String theDataSource = (String)aFormFieldMap.get(DATA_SOURCE);
+		public void uploadFileItems(HttpServletRequest aRequest, List<? extends FileItem<?>> aFileItems,
+				Map<String, String> aFormFieldMap) throws ServletException, DatabaseAccessException, IOException {
+			String theCommand = aFormFieldMap.get(COMMAND);
+			String theDataSource = aFormFieldMap.get(DATA_SOURCE);
         if (theCommand == null || theDataSource == null){
             throw new ServletException("Incomplete Request: Command or DataSource is missing!");
         }
@@ -522,13 +525,13 @@ public abstract class DataUploadServlet extends HttpServlet implements UploadHan
       * Initialize the multipart-fileupload.
       * Only the repository-path is needed.
       */
-     public  void initializeFileUpload(DiskFileUpload anUpload){
+		public void initializeFileUpload(JakartaServletDiskFileUpload anUpload) {
         // maximum size before a FileUploadException will be thrown
         //anUpload.setSizeMax(1000000);
         // maximum size that will be stored in memory
         //anUpload.setSizeThreshold(4096);
         // the location for saving data that is larger than getSizeThreshold()
-        anUpload.setRepositoryPath(System.getProperty("java.io.tmpdir"));
+		anUpload.setFileItemFactory(ITEM_FACTORY);
      }
   
 }

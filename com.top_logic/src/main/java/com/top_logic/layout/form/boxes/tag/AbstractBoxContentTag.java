@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.form.boxes.tag;
 
-import javax.servlet.jsp.JspException;
+import jakarta.servlet.jsp.JspException;
 
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.form.boxes.model.ContentBox;

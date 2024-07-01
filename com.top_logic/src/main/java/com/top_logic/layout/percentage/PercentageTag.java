@@ -11,8 +11,8 @@ import java.awt.Paint;
 import java.io.IOException;
 import java.text.NumberFormat;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.JspException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.JspException;
 
 import com.top_logic.base.chart.component.JFreeChartComponent;
 import com.top_logic.basic.xml.TagWriter;

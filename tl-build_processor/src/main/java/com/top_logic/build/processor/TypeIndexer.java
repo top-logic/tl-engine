@@ -66,7 +66,7 @@ import com.top_logic.xref.model.TypeInfo;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @SupportedAnnotationTypes("*")
-@SupportedSourceVersion(SourceVersion.RELEASE_11)
+@SupportedSourceVersion(SourceVersion.RELEASE_17)
 public final class TypeIndexer extends AbstractProcessor
 		implements AnnotationValueVisitor<com.top_logic.xref.model.Value, Void> {
 

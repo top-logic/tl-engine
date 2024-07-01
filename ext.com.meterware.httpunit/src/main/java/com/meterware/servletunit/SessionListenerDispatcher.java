@@ -19,7 +19,7 @@ package com.meterware.servletunit;
  * DEALINGS IN THE SOFTWARE.
  *
  *******************************************************************************************************************/
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 
 /**
  *

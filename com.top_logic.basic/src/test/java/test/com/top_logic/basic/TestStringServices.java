@@ -1521,7 +1521,6 @@ public class TestStringServices extends BasicTestCase {
 			assertEquals("a", runnable.getResult());
 		}
 		else {
-			replacer.stop();
 			throw new AssertionFailedError("String replacement is in infinity loop!");
 		}
 		
@@ -1535,7 +1534,6 @@ public class TestStringServices extends BasicTestCase {
 			assertEquals("", runnable.getResult());
 		}
 		else {
-			replacer.stop();
 			throw new AssertionFailedError("String replacement is in infinity loop!");
 		}
 		
@@ -1549,7 +1547,6 @@ public class TestStringServices extends BasicTestCase {
 			assertEquals("a", runnable.getResult());
 		}
 		else {
-			replacer.stop();
 			throw new AssertionFailedError("String replacement is in infinity loop!");
 		}
 		
@@ -1563,7 +1560,6 @@ public class TestStringServices extends BasicTestCase {
 			assertEquals("a;b;c", runnable.getResult());
 		}
 		else {
-			replacer.stop();
 			throw new AssertionFailedError("String replacement is in infinity loop!");
 		}
     }

@@ -21,7 +21,7 @@ package com.meterware.servletunit;
  *******************************************************************************************************************/
 import com.meterware.httpunit.WebResponse;
 
-import javax.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServlet;
 
 
 /**

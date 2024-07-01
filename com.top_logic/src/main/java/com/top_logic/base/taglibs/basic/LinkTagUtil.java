@@ -5,9 +5,9 @@
  */
 package com.top_logic.base.taglibs.basic;
 
-import javax.servlet.ServletRequest;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.jsp.PageContext;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.jsp.PageContext;
 
 import com.top_logic.basic.StringServices;
 

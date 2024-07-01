@@ -7,7 +7,7 @@ package com.top_logic.monitoring.log;
 
 import java.util.Map;
 
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.util.TopLogicServlet;

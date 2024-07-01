@@ -7,7 +7,6 @@
 				<modules>
 					<module key="com.top_logic.kafka.services.consumer.KafkaConsumerService$Module" value="true"/>
 					<module key="com.top_logic.kafka.services.producer.KafkaProducerService$Module" value="true"/>
-					<module key="com.top_logic.kafka.services.connect.KafkaConnectService$Module" value="true"/>
 		            <module key="com.top_logic.kafka.services.sensors.SensorService$Module" value="true" />
 				</modules>
 			</instance>

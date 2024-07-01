@@ -29,15 +29,19 @@
     </dependency>
 	<dependency>
 	    <groupId>org.apache.kafka</groupId>
-	    <artifactId>kafka_2.12</artifactId>
+	    <artifactId>kafka_2.13</artifactId>
 	</dependency>
 	<dependency>
-	    <groupId>org.eclipse.jetty</groupId>
-	    <artifactId>jetty-webapp</artifactId>
+	    <groupId>org.eclipse.jetty.ee10</groupId>
+	    <artifactId>jetty-ee10-webapp</artifactId>
 	</dependency>
 	<dependency>
 	    <groupId>org.apache.kafka</groupId>
 	    <artifactId>kafka-clients</artifactId>
+	</dependency>
+	<dependency>
+		<groupId>org.apache.zookeeper</groupId>
+		<artifactId>zookeeper</artifactId>
 	</dependency>
   </dependencies>
 </project>

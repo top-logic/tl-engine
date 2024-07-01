@@ -1,6 +1,6 @@
 <%@page language="java" session="true" extends="com.top_logic.util.TopLogicJspBase"
 %><%@page import="java.util.Date"
-%><%@page import="javax.servlet.jsp.JspWriter"
+%><%@page import="jakarta.servlet.jsp.JspWriter"
 %><%@page import="java.io.PrintWriter"
 %><%@page import="com.top_logic.mig.html.layout.*"
 %><%@page import="com.top_logic.basic.Logger"
@@ -11,8 +11,8 @@
 %><%@page import="com.top_logic.knowledge.wrap.person.PersonManager"
 %><%@page import="com.top_logic.mig.html.layout.LayoutComponent"
 %><%@page import="com.top_logic.mig.html.layout.MainLayout"
-%><%@page import="javax.mail.Folder"
-%><%@page import="javax.mail.Message"
+%><%@page import="jakarta.mail.Folder"
+%><%@page import="jakarta.mail.Message"
 %><%@taglib uri="layout" prefix="layout"
 %><layout:html>
 	<layout:head>

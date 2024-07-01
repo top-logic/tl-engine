@@ -10,20 +10,20 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javax.mail.Address;
-import javax.mail.Flags;
-import javax.mail.Flags.Flag;
-import javax.mail.Folder;
-import javax.mail.Message;
-import javax.mail.MessageRemovedException;
-import javax.mail.MessagingException;
-import javax.mail.Store;
-import javax.mail.event.ConnectionEvent;
-import javax.mail.event.ConnectionListener;
-import javax.mail.event.MessageCountAdapter;
-import javax.mail.event.MessageCountEvent;
-import javax.mail.event.MessageCountListener;
-import javax.mail.internet.InternetAddress;
+import jakarta.mail.Address;
+import jakarta.mail.Flags;
+import jakarta.mail.Flags.Flag;
+import jakarta.mail.Folder;
+import jakarta.mail.Message;
+import jakarta.mail.MessageRemovedException;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Store;
+import jakarta.mail.event.ConnectionEvent;
+import jakarta.mail.event.ConnectionListener;
+import jakarta.mail.event.MessageCountAdapter;
+import jakarta.mail.event.MessageCountEvent;
+import jakarta.mail.event.MessageCountListener;
+import jakarta.mail.internet.InternetAddress;
 
 import com.top_logic.base.context.TLInteractionContext;
 import com.top_logic.base.mail.MailSenderService;
@@ -539,9 +539,9 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 		if (!folder.isOpen()) {
 			return true;
 		}
-		/* Check that store is still connected. com.sun.mail.imap.IMAPStore uses this method to
-		 * verify that the server does not have terminated the connection. After call of this method
-		 * and the result is false, the folder is not longer usable. */
+		/* Check that store is still connected. IMAPStore uses this method to verify that the server
+		 * does not have terminated the connection. After call of this method and the result is
+		 * false, the folder is not longer usable. */
 		Store store = folder.getStore();
 		if (!store.isConnected()) {
 			return true;

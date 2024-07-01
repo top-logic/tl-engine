@@ -31,8 +31,6 @@ com.top_logic.base.accesscontrol.SessionService.java: Invalid camel case word 'L
 com.top_logic.base.accesscontrol.SessionService.java: Invalid camel case word 'SessionIDs', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.accesscontrol.SessionService.java: Invalid camel case word 'SessionService', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.accesscontrol.SessionService.java: Invalid camel case word 'validateSession', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.accesscontrol.TLNTLMSecurityFilter.java: Invalid camel case word 'loginExternal', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.base.accesscontrol.TLNTLMSecurityFilter.java: Invalid camel case word 'loginSSO', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.administration.EnterMaintenanceWindowTask.java: Invalid camel case word 'EnterMaintenanceWindowTask', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.administration.MaintenanceWindowManager.java: Invalid camel case word 'MaintenanceWindowManager', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.base.administration.MaintenanceWindowManager.java: Missing documentation: com.top_logic.base.administration.MaintenanceWindowManager.ABOUT_TO_ENTER_MAINTENANCE_MODE

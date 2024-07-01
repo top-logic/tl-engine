@@ -95,9 +95,9 @@ public class CommandChain extends AbstractCommandHandler {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see com.top_logic.tool.boundsec.CommandHandler#handleCommand(javax.servlet.ServletContext,
-	 *      javax.servlet.http.HttpServletRequest,
-	 *      javax.servlet.http.HttpServletResponse,
+	 * @see com.top_logic.tool.boundsec.CommandHandler#handleCommand(jakarta.servlet.ServletContext,
+	 *      jakarta.servlet.http.HttpServletRequest,
+	 *      jakarta.servlet.http.HttpServletResponse,
 	 *      com.top_logic.mig.html.layout.LayoutComponent)
 	 */
 	@Override

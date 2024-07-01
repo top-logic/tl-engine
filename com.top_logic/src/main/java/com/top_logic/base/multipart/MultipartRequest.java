@@ -7,6 +7,9 @@ package com.top_logic.base.multipart;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -15,19 +18,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
+import org.apache.commons.fileupload2.core.FileItem;
+import org.apache.commons.fileupload2.core.FileItemFactory;
+import org.apache.commons.fileupload2.core.FileUploadException;
+import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
 
 import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.Settings;
 import com.top_logic.basic.StringServices;
-import com.top_logic.mig.html.layout.LayoutConstants;
 
 /**
  * This class Wraps a multi-part Request created by special HTML-forms.
@@ -50,7 +53,7 @@ import com.top_logic.mig.html.layout.LayoutConstants;
  * 
  * <p>
  * In case you want to decode the Stream on the fly (to conserve DiskSpace use
- * {@link ServletFileUpload#getItemIterator(HttpServletRequest)} directly.
+ * {@link JakartaServletFileUpload#getItemIterator(HttpServletRequest)} directly.
  * </p>
  * 
  * @author <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
@@ -64,23 +67,19 @@ public class MultipartRequest extends HttpServletRequestWrapper {
         </form>
     */
 
-    /** Default Maximum size of a file to be loaded. used as protection 4 GB */
+	/** Default Maximum size of a file to be loaded. used as protection 4 GB */
     public static final long    DEFAULT_MAX_POST_SIZE = 4L*1024L*1024L*1024L;
                                                      
     /** Fixed Buffer length for a line of Text read */
     public static final int     BUF_LEN = 1024;
-    
-    /**
-     * Directory used to temporary save the files.
-     * may be null indicating the System tmp-area.
-     */
-    private File                         dir; // TODO KHA create a 
+
+	private final FileItemFactory<?> _fileItemFactory;
 
     /** Map of the "normal" parameters found in the wrapped request. */
 	private Map<String, String[]> parameters;
 
     /** List with all fileItems. */
-    private List<FileItem> fileItems;
+	private List<? extends FileItem<?>> fileItems;
 
     /**
      * Constructs a new MultipartRequest to handle the specified request. 
@@ -104,14 +103,19 @@ public class MultipartRequest extends HttpServletRequestWrapper {
                                    ") bigger than allowed (" + aSize + ")");
         }
 
-        // null is ok, will use system directory ...
-        if (aDir != null) {
-            if (!aDir.mkdirs () || !aDir.isDirectory () || aDir.canWrite ()) {
-                throw new IOException ("Invalid Directory " + aDir);
-            }
-            this.dir = aDir;
-        }
+		Path tempDirectory = getTempDirectory(aDir);
+		_fileItemFactory = DiskFileItemFactory.builder().setPath(tempDirectory).get();
     }
+
+	private Path getTempDirectory(File directory) throws IOException {
+		if (directory == null) {
+			return createTempDir().toPath();
+		}
+		if (!directory.mkdirs() || !directory.isDirectory() || directory.canWrite()) {
+			throw new IOException("Invalid Directory " + directory);
+		}
+		return directory.toPath();
+	}
 
     /**
      * Constructs MultipartRequest with DEFAULT_MAX_POST_SIZE.
@@ -148,7 +152,7 @@ public class MultipartRequest extends HttpServletRequestWrapper {
         this (aRequest, null, DEFAULT_MAX_POST_SIZE);                             
     }
 
-    public synchronized List<FileItem> getFiles() {
+	public synchronized List<? extends FileItem<?>> getFiles() {
         
         /* remove all the filed parameters */
         if(this.parameters == null) {
@@ -172,15 +176,12 @@ public class MultipartRequest extends HttpServletRequestWrapper {
     }
 
     /**
-     * Create a new {@link ServletFileUpload} to handle a MultiPart-Request.
-     * 
-     * Subclasses may use other parameters than the ones shown here.
-     */
-    private ServletFileUpload createFileUpload() {
-       ServletFileUpload theResult = new ServletFileUpload(
-               new DiskFileItemFactory(DiskFileItemFactory.DEFAULT_SIZE_THRESHOLD, dir));
-       
-       return theResult;
+	 * Create a new {@link JakartaServletFileUpload} to handle a MultiPart-Request.
+	 * 
+	 * Subclasses may use other parameters than the ones shown here.
+	 */
+	private JakartaServletFileUpload<?, ?> createFileUpload() {
+		return new JakartaServletFileUpload<>(_fileItemFactory);
     }
     
     /**
@@ -195,12 +196,12 @@ public class MultipartRequest extends HttpServletRequestWrapper {
      * 
      * ?deprecated not longer used. usage of transparent MultiPartRequest here.
      */ 
-     private Map<String, String[]>  extractFormFields(List<FileItem> aFileItems){
+	private Map<String, String[]> extractFormFields(List<? extends FileItem<?>> aFileItems) {
          int size   = aFileItems.size();
 		HashMap<String, Object> theMap = new HashMap<>(size);
          int i      = 0;
          while( i<size ) {
-             FileItem theItem = aFileItems.get(i);
+				FileItem<?> theItem = aFileItems.get(i);
              if (theItem.isFormField()){
                 String theFieldName = theItem.getFieldName();
                 String theStringValue = theItem.getString();
@@ -265,12 +266,13 @@ public class MultipartRequest extends HttpServletRequestWrapper {
     private void initParameterMap() {
 
         try {
-            ServletFileUpload theUpload = this.createFileUpload(); 
-            String theEncoding = this.getRequest().getCharacterEncoding();
+			JakartaServletFileUpload<?, ?> theUpload = this.createFileUpload();
+			String theEncoding = getRequest().getCharacterEncoding();
             if (StringServices.isEmpty(theEncoding)) {
-            	theEncoding = LayoutConstants.UTF_8;
+				theUpload.setHeaderCharset(StandardCharsets.UTF_8);
+			} else {
+				theUpload.setHeaderCharset(Charset.forName(theEncoding));
             }
-            theUpload.setHeaderEncoding(theEncoding); 
             this.fileItems  = parseRequest(theUpload, (HttpServletRequest)super.getRequest());
             this.parameters = this.extractFormFields(this.fileItems);
         } catch (FileUploadException e) {
@@ -283,8 +285,8 @@ public class MultipartRequest extends HttpServletRequestWrapper {
      * 
      * Can be removed when commons file Upload becomes JDK1.5 aware.
      */
-    @SuppressWarnings("unchecked")
-    private static List<FileItem> parseRequest(ServletFileUpload theUpload, HttpServletRequest request) throws FileUploadException {
+	private static List<? extends FileItem<?>> parseRequest(JakartaServletFileUpload<?, ?> theUpload,
+			HttpServletRequest request) throws FileUploadException {
         return theUpload.parseRequest(request);
     }
 
@@ -364,20 +366,6 @@ public class MultipartRequest extends HttpServletRequestWrapper {
 			return theList;
          }
 		return ArrayUtil.EMPTY_STRING_ARRAY;
-    }
-
-    /**
-     * Returns the directory to be used for temporary storage of the
-     * uploaded files.
-     *
-     * @return    The directory to be used.
-     */
-    File getTempDir () {
-        if (this.dir == null) {
-            this.dir = this.createTempDir ();
-        }
-
-        return (this.dir);
     }
 
     /**

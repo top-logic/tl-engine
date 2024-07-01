@@ -13,15 +13,15 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import javax.mail.Flags.Flag;
-import javax.mail.Folder;
-import javax.mail.FolderClosedException;
-import javax.mail.FolderNotFoundException;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.event.ConnectionEvent;
-import javax.mail.event.MessageCountEvent;
-import javax.mail.event.MessageCountListener;
+import jakarta.mail.Flags.Flag;
+import jakarta.mail.Folder;
+import jakarta.mail.FolderClosedException;
+import jakarta.mail.FolderNotFoundException;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.event.ConnectionEvent;
+import jakarta.mail.event.MessageCountEvent;
+import jakarta.mail.event.MessageCountListener;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;

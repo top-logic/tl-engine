@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -20,6 +21,7 @@ import org.apache.kafka.common.config.SaslConfigs;
 import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.security.auth.AuthenticateCallbackHandler;
 import org.apache.kafka.common.security.auth.Login;
+import org.apache.kafka.common.security.auth.SslEngineFactory;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.NamedPolymorphicConfiguration;
@@ -29,6 +31,7 @@ import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.DoubleDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
@@ -58,6 +61,16 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	String LOG_WRITER = "log-writer";
 
 	/**
+	 * @see ConsumerConfig#AUTO_INCLUDE_JMX_REPORTER_CONFIG
+	 */
+	@Deprecated
+	@SuppressWarnings("deprecation")
+	@Name(CommonClientConfigs.AUTO_INCLUDE_JMX_REPORTER_CONFIG)
+	@BooleanDefault(true)
+	@KafkaClientProperty
+	boolean getAutoIncludeJmxReporter();
+
+	/**
 	 * @see CommonClientConfigs#BOOTSTRAP_SERVERS_DOC
 	 */
 	@Name(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG)
@@ -68,7 +81,7 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	 * @see CommonClientConfigs#BOOTSTRAP_SERVERS_DOC
 	 */
 	@Name(CommonClientConfigs.CLIENT_DNS_LOOKUP_CONFIG)
-	@StringDefault("default")
+	@StringDefault("use_all_dns_ips")
 	@KafkaClientProperty
 	String getClientDnsLookup();
 
@@ -147,7 +160,7 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	 * @see CommonClientConfigs#RECONNECT_BACKOFF_MS_DOC
 	 */
 	@Name(CommonClientConfigs.RECONNECT_BACKOFF_MS_CONFIG)
-	@LongDefault(30 * 1000)
+	@LongDefault(50)
 	@KafkaClientProperty
 	long getReconnectBackoffMS();
 
@@ -178,6 +191,7 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	 */
 	@Name(SaslConfigs.SASL_JAAS_CONFIG)
 	@KafkaClientProperty
+	@Encrypted
 	String getSaslJaasConfig();
 
 	/**
@@ -234,6 +248,20 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	Class<? extends Login> getSaslLoginClass();
 
 	/**
+	 * @see SaslConfigs#SASL_LOGIN_CONNECT_TIMEOUT_MS_DOC
+	 */
+	@Name(SaslConfigs.SASL_LOGIN_CONNECT_TIMEOUT_MS)
+	@KafkaClientProperty
+	int getSaslLoginConnectTimeoutMS();
+
+	/**
+	 * @see SaslConfigs#SASL_LOGIN_READ_TIMEOUT_MS_DOC
+	 */
+	@Name(SaslConfigs.SASL_LOGIN_READ_TIMEOUT_MS)
+	@KafkaClientProperty
+	int getSaslLoginReadTimeoutMS();
+
+	/**
 	 * @see SaslConfigs#SASL_LOGIN_REFRESH_BUFFER_SECONDS_DOC
 	 */
 	@Name(SaslConfigs.SASL_LOGIN_REFRESH_BUFFER_SECONDS)
@@ -266,12 +294,104 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	double getSaslLoginRefreshWindowJitter();
 
 	/**
+	 * @see SaslConfigs#SASL_LOGIN_RETRY_BACKOFF_MAX_MS_DOC
+	 */
+	@Name(SaslConfigs.SASL_LOGIN_RETRY_BACKOFF_MAX_MS)
+	@LongDefault(10 * 1000)
+	@KafkaClientProperty
+	long getSaslLoginRetryBackoffMaxMS();
+
+	/**
+	 * @see SaslConfigs#SASL_LOGIN_RETRY_BACKOFF_MS_DOC
+	 */
+	@Name(SaslConfigs.SASL_LOGIN_RETRY_BACKOFF_MS)
+	@LongDefault(100)
+	@KafkaClientProperty
+	long getSaslLoginRetryBackoffMS();
+
+	/**
 	 * @see SaslConfigs#SASL_MECHANISM_DOC
 	 */
 	@Name(SaslConfigs.SASL_MECHANISM)
 	@StringDefault("GSSAPI")
 	@KafkaClientProperty
 	String getSaslMechanism();
+
+	/**
+	 * @see SaslConfigs#SASL_OAUTHBEARER_CLOCK_SKEW_SECONDS_DOC
+	 */
+	@Name(SaslConfigs.SASL_OAUTHBEARER_CLOCK_SKEW_SECONDS)
+	@IntDefault(SaslConfigs.DEFAULT_SASL_OAUTHBEARER_CLOCK_SKEW_SECONDS)
+	@KafkaClientProperty
+	int getSaslOauthbearerClockSkewSeconds();
+
+	/**
+	 * @see SaslConfigs#SASL_OAUTHBEARER_EXPECTED_AUDIENCE_DOC
+	 */
+	@Name(SaslConfigs.SASL_OAUTHBEARER_EXPECTED_AUDIENCE)
+	@KafkaClientProperty
+	String getSaslOauthbearerExpectedAudience();
+
+	/**
+	 * @see SaslConfigs#SASL_OAUTHBEARER_EXPECTED_ISSUER_DOC
+	 */
+	@Name(SaslConfigs.SASL_OAUTHBEARER_EXPECTED_ISSUER)
+	@KafkaClientProperty
+	String getSaslOauthbearerExpectedIssuer();
+
+	/**
+	 * @see SaslConfigs#SASL_OAUTHBEARER_JWKS_ENDPOINT_URL_DOC
+	 */
+	@Name(SaslConfigs.SASL_OAUTHBEARER_JWKS_ENDPOINT_URL)
+	@KafkaClientProperty
+	String getSaslOauthbearerJwksEndpointUrl();
+
+	/**
+	 * @see SaslConfigs#SASL_OAUTHBEARER_JWKS_ENDPOINT_REFRESH_MS_DOC
+	 */
+	@Name(SaslConfigs.SASL_OAUTHBEARER_JWKS_ENDPOINT_REFRESH_MS)
+	@LongDefault(SaslConfigs.DEFAULT_SASL_OAUTHBEARER_JWKS_ENDPOINT_REFRESH_MS)
+	@KafkaClientProperty
+	Long getSaslOauthbearerJwksEndpointRefreshMS();
+
+	/**
+	 * @see SaslConfigs#SASL_OAUTHBEARER_JWKS_ENDPOINT_RETRY_BACKOFF_MAX_MS_DOC
+	 */
+	@Name(SaslConfigs.SASL_OAUTHBEARER_JWKS_ENDPOINT_RETRY_BACKOFF_MAX_MS)
+	@LongDefault(SaslConfigs.DEFAULT_SASL_OAUTHBEARER_JWKS_ENDPOINT_RETRY_BACKOFF_MAX_MS)
+	@KafkaClientProperty
+	Long getSaslOauthbearerJwksEndpointRetryBackoffMaxMS();
+
+	/**
+	 * @see SaslConfigs#SASL_OAUTHBEARER_JWKS_ENDPOINT_RETRY_BACKOFF_MS_DOC
+	 */
+	@Name(SaslConfigs.SASL_OAUTHBEARER_JWKS_ENDPOINT_RETRY_BACKOFF_MS)
+	@LongDefault(SaslConfigs.DEFAULT_SASL_OAUTHBEARER_JWKS_ENDPOINT_RETRY_BACKOFF_MS)
+	@KafkaClientProperty
+	Long getSaslOauthbearerJwksEndpointRetryBackoffMS();
+
+	/**
+	 * @see SaslConfigs#SASL_OAUTHBEARER_SCOPE_CLAIM_NAME_DOC
+	 */
+	@Name(SaslConfigs.SASL_OAUTHBEARER_SCOPE_CLAIM_NAME)
+	@StringDefault(SaslConfigs.DEFAULT_SASL_OAUTHBEARER_SCOPE_CLAIM_NAME)
+	@KafkaClientProperty
+	String getSaslOauthbearerScopeClaimName();
+
+	/**
+	 * @see SaslConfigs#SASL_OAUTHBEARER_SUB_CLAIM_NAME_DOC
+	 */
+	@Name(SaslConfigs.SASL_OAUTHBEARER_SUB_CLAIM_NAME)
+	@StringDefault(SaslConfigs.DEFAULT_SASL_OAUTHBEARER_SUB_CLAIM_NAME)
+	@KafkaClientProperty
+	String getSaslOauthbearerSubClaimName();
+
+	/**
+	 * @see SaslConfigs#SASL_OAUTHBEARER_TOKEN_ENDPOINT_URL_DOC
+	 */
+	@Name(SaslConfigs.SASL_OAUTHBEARER_TOKEN_ENDPOINT_URL)
+	@KafkaClientProperty
+	String getSaslOauthbearerTokenEndpointUrl();
 
 	/**
 	 * @see CommonClientConfigs#SECURITY_PROTOCOL_DOC
@@ -297,6 +417,22 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	int getSendBufferBytes();
 
 	/**
+	 * @see CommonClientConfigs#SOCKET_CONNECTION_SETUP_TIMEOUT_MAX_MS_DOC
+	 */
+	@Name(CommonClientConfigs.SOCKET_CONNECTION_SETUP_TIMEOUT_MAX_MS_CONFIG)
+	@LongDefault(30 * 1000)
+	@KafkaClientProperty
+	long getSocketConnectionSetupTimeoutMaxMS();
+
+	/**
+	 * @see CommonClientConfigs#SOCKET_CONNECTION_SETUP_TIMEOUT_MS_DOC
+	 */
+	@Name(CommonClientConfigs.SOCKET_CONNECTION_SETUP_TIMEOUT_MS_CONFIG)
+	@LongDefault(10 * 1000)
+	@KafkaClientProperty
+	long getSocketConnectionSetupTimeoutMS();
+
+	/**
 	 * @see SslConfigs#SSL_CIPHER_SUITES_DOC
 	 */
 	@Name(SslConfigs.SSL_CIPHER_SUITES_CONFIG)
@@ -307,7 +443,7 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	 * @see SslConfigs#SSL_ENABLED_PROTOCOLS_DOC
 	 */
 	@Name(SslConfigs.SSL_ENABLED_PROTOCOLS_CONFIG)
-	@StringDefault("TLSv1.2,TLSv1.1,TLSv1")
+	@StringDefault("TLSv1.2,TLSv1.3")
 	@KafkaClientProperty
 	String getSslEnabledProtocols();
 
@@ -318,6 +454,13 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	@StringDefault("https")
 	@KafkaClientProperty
 	String getSslEndpointIdentificationAlgorithm();
+
+	/**
+	 * @see SslConfigs#SSL_ENGINE_FACTORY_CLASS_DOC
+	 */
+	@Name(SslConfigs.SSL_ENGINE_FACTORY_CLASS_CONFIG)
+	@KafkaClientProperty
+	Class<? extends SslEngineFactory> getSslEngineFactoryClass();
 
 	/**
 	 * @see SslConfigs#SSL_KEY_PASSWORD_DOC
@@ -334,6 +477,22 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	@StringDefault("SunX509")
 	@KafkaClientProperty
 	String getSslKeymanagerAlgorithm();
+
+	/**
+	 * @see SslConfigs#SSL_KEYSTORE_CERTIFICATE_CHAIN_DOC
+	 */
+	@Name(SslConfigs.SSL_KEYSTORE_CERTIFICATE_CHAIN_CONFIG)
+	@KafkaClientProperty
+	@Encrypted
+	String getSslKeystoreCertificateChain();
+
+	/**
+	 * @see SslConfigs#SSL_KEYSTORE_KEY_DOC
+	 */
+	@Name(SslConfigs.SSL_KEYSTORE_KEY_CONFIG)
+	@KafkaClientProperty
+	@Encrypted
+	String getSslKeystoreKey();
 
 	/**
 	 * @see SslConfigs#SSL_KEYSTORE_LOCATION_DOC
@@ -354,7 +513,7 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	 * @see SslConfigs#SSL_KEYSTORE_TYPE_DOC
 	 */
 	@Name(SslConfigs.SSL_KEYSTORE_TYPE_CONFIG)
-	@StringDefault("JKS")
+	@StringDefault(SslConfigs.DEFAULT_SSL_KEYSTORE_TYPE)
 	@KafkaClientProperty
 	String getSslKeystoreType();
 
@@ -362,7 +521,7 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	 * @see SslConfigs#SSL_PROTOCOL_DOC
 	 */
 	@Name(SslConfigs.SSL_PROTOCOL_CONFIG)
-	@StringDefault("TLS")
+	@StringDefault("TLSv1.3")
 	@KafkaClientProperty
 	String getSslProtocol();
 
@@ -386,7 +545,15 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	@Name(SslConfigs.SSL_TRUSTMANAGER_ALGORITHM_CONFIG)
 	@StringDefault("PKIX")
 	@KafkaClientProperty
-	String getSslTrustManagerAlgorithm();
+	String getSslTrustmanagerAlgorithm();
+
+	/**
+	 * @see SslConfigs#SSL_TRUSTSTORE_CERTIFICATES_DOC
+	 */
+	@Name(SslConfigs.SSL_TRUSTSTORE_CERTIFICATES_CONFIG)
+	@KafkaClientProperty
+	@Encrypted
+	String getSslTruststoreCertificates();
 
 	/**
 	 * @see SslConfigs#SSL_TRUSTSTORE_LOCATION_DOC
@@ -407,6 +574,7 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	 * @see SslConfigs#SSL_TRUSTSTORE_TYPE_DOC
 	 */
 	@Name(SslConfigs.SSL_TRUSTSTORE_TYPE_CONFIG)
+	@StringDefault(SslConfigs.DEFAULT_SSL_TRUSTSTORE_TYPE)
 	@KafkaClientProperty
 	String getSslTruststoreType();
 

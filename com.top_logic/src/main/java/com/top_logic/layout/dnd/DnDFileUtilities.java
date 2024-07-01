@@ -14,10 +14,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
-import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload2.core.FileItem;
 
 import com.top_logic.base.multipart.MultipartRequest;
 import com.top_logic.base.services.simpleajax.ClientAction;
@@ -142,7 +142,7 @@ public class DnDFileUtilities {
 	 *        The file to get the name of.
 	 * @return file name
 	 */
-	public static String getFileName(final FileItem fileItem) {
+	public static String getFileName(FileItem<?> fileItem) {
 		int splitNameIndex = fileItem.getName().lastIndexOf(':');
 		String fileName =
 			(splitNameIndex != -1) ? fileItem.getName().substring(splitNameIndex + 1) : fileItem.getName();
@@ -159,7 +159,7 @@ public class DnDFileUtilities {
 	 *        Name of the file.
 	 * @return content type of the file
 	 */
-	public static String getContentType(final FileItem fileItem, String fileName) {
+	public static String getContentType(FileItem<?> fileItem, String fileName) {
 		String contentType = fileItem.getContentType();
 		if (BinaryData.CONTENT_TYPE_OCTET_STREAM.equals(contentType)) {
 			contentType = MimeTypes.getInstance().getMimeType(fileName);

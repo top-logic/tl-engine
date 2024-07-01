@@ -7,9 +7,9 @@ package com.top_logic.base.taglibs.basic;
 
 import java.io.IOException;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.BodyContent;
-import javax.servlet.jsp.tagext.BodyTag;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.BodyContent;
+import jakarta.servlet.jsp.tagext.BodyTag;
 
 import com.top_logic.basic.xml.TagWriter.State;
 import com.top_logic.layout.basic.fragments.Tag;

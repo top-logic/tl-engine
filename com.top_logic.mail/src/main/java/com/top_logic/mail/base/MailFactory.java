@@ -9,12 +9,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.mail.Address;
-import javax.mail.Folder;
-import javax.mail.Message;
-import javax.mail.Message.RecipientType;
-import javax.mail.MessagingException;
-import javax.mail.internet.InternetAddress;
+import jakarta.mail.Address;
+import jakarta.mail.Folder;
+import jakarta.mail.Message;
+import jakarta.mail.Message.RecipientType;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.InternetAddress;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;

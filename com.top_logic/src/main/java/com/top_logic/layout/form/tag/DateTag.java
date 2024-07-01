@@ -7,7 +7,7 @@ package com.top_logic.layout.form.tag;
 
 import java.util.Date;
 
-import javax.servlet.jsp.JspException;
+import jakarta.servlet.jsp.JspException;
 
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormMember;

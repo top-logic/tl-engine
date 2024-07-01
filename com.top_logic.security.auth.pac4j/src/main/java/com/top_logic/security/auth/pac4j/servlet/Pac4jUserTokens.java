@@ -8,21 +8,23 @@ package com.top_logic.security.auth.pac4j.servlet;
 import java.util.Date;
 import java.util.Optional;
 
-import javax.servlet.http.Cookie;
+import jakarta.servlet.http.Cookie;
 
 import org.pac4j.core.client.Client;
 import org.pac4j.core.config.Config;
-import org.pac4j.core.context.JEEContext;
+import org.pac4j.core.context.CallContext;
 import org.pac4j.core.context.WebContext;
-import org.pac4j.core.context.session.JEESessionStore;
 import org.pac4j.core.profile.UserProfile;
 import org.pac4j.core.util.Pac4jConstants;
+import org.pac4j.jee.context.JEEContext;
+import org.pac4j.jee.context.session.JEESessionStore;
 import org.pac4j.oidc.profile.OidcProfile;
 
 import com.nimbusds.oauth2.sdk.token.AccessToken;
 
 import com.top_logic.base.accesscontrol.UserTokens;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory;
 
 /**
  * {@link UserTokens} implementation based on an {@link OidcProfile}.
@@ -69,9 +71,11 @@ public class Pac4jUserTokens implements UserTokens {
 
 	@Override
 	public boolean refreshTokens(DisplayContext displayContext) {
-		Client client = Config.INSTANCE.getClients().findClient(_profile.getClientName()).get();
+		Config config = Pac4jConfigFactory.getInstance().getPac4jConfig();
+		Client client = config.getClients().findClient(_profile.getClientName()).get();
 		WebContext context = new JEEContext(displayContext.asRequest(), displayContext.asResponse());
-		Optional<UserProfile> newProfile = client.renewUserProfile(_profile, context, JEESessionStore.INSTANCE);
+		CallContext callContext = new CallContext(context, new JEESessionStore());
+		Optional<UserProfile> newProfile = client.renewUserProfile(callContext, _profile);
 		if (newProfile.isEmpty()) {
 			return false;
 		}

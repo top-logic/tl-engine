@@ -5,8 +5,8 @@
  */
 package com.top_logic.util;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletContextListener;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextListener;
 
 import com.top_logic.basic.version.Version;
 

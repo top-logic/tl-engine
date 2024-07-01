@@ -7,10 +7,10 @@ package com.top_logic.mail.base.imap;
 
 import java.lang.ref.WeakReference;
 
-import javax.mail.Folder;
-import javax.mail.Store;
-import javax.mail.event.ConnectionEvent;
-import javax.mail.event.ConnectionListener;
+import jakarta.mail.Folder;
+import jakarta.mail.Store;
+import jakarta.mail.event.ConnectionEvent;
+import jakarta.mail.event.ConnectionListener;
 
 import com.top_logic.basic.Logger;
 

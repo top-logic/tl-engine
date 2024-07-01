@@ -3623,22 +3623,6 @@
 								>
 									<selection>
 										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-											string="/jsp/administration/maintenance/TestMailAccess.jsp"
-										/>
-										<selection-state boolean="true"/>
-									</selection>
-									<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-										<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-											name="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml#Maintenance_List"
-											tab-path="Administration > Tech. Administration > Wartung"
-										/>
-									</selection-model-name>
-								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-									change-kind="ABSOLUTE"
-								>
-									<selection>
-										<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
 											string="/jsp/administration/maintenance/TestMailConnect.jsp"
 										/>
 										<selection-state boolean="true"/>

@@ -8,9 +8,9 @@ package com.top_logic.layout.form.boxes.reactive_tag;
 import java.io.IOException;
 import java.io.Writer;
 
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.BodyTag;
-import javax.servlet.jsp.tagext.BodyTagSupport;
+import jakarta.servlet.jsp.JspException;
+import jakarta.servlet.jsp.tagext.BodyTag;
+import jakarta.servlet.jsp.tagext.BodyTagSupport;
 
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.mig.html.layout.MainLayout;

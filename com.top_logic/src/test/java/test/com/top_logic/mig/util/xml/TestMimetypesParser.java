@@ -7,7 +7,7 @@ package test.com.top_logic.mig.util.xml;
 
 import java.io.File;
 
-import javax.activation.FileTypeMap;
+import jakarta.activation.FileTypeMap;
 
 import junit.framework.Test;
 import junit.framework.TestCase;

@@ -194,8 +194,6 @@ public class BasicTestCase extends TestCase implements InContext {
         if (SHOW_SPACE) {
             Runtime rt = Runtime.getRuntime();
             rt.gc();
-            rt.runFinalization();
-            rt.gc();
             space = rt.freeMemory();
         }
     }
@@ -230,8 +228,6 @@ public class BasicTestCase extends TestCase implements InContext {
         if (SHOW_SPACE) {
             Runtime rt = Runtime.getRuntime();
             long free1 =  rt.freeMemory();
-            rt.gc();
-            rt.runFinalization();
             rt.gc();
             long free2 =  rt.freeMemory();
             long garbage = free2 - free1;
@@ -1611,9 +1607,6 @@ public class BasicTestCase extends TestCase implements InContext {
 					elapsed += System.currentTimeMillis();
 					waitTime -= elapsed;
 					if (waitTime <= 0) {
-						// Last resort to free resources.
-						executor.stop();
-						
 						throw new AssertionFailedError(optionalMessagePrefix(message) +
 							"Test execution did not terminate in time.");
 					}
@@ -2373,7 +2366,6 @@ public class BasicTestCase extends TestCase implements InContext {
 	@Deprecated
 	public static void provokeOutOfMemory() {
 		for (int i = 0; i < 3; i++) {
-			System.runFinalization();
 			System.gc();
 			internalProvokeOOM(128 * 1024);
 		}

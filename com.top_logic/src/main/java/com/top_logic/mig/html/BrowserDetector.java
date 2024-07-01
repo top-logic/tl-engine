@@ -7,7 +7,7 @@ package com.top_logic.mig.html;
 
 import java.io.Serializable;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 // package org.apache.turbine.util;
 

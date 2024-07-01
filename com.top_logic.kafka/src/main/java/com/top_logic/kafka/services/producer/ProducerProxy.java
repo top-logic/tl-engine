@@ -7,14 +7,15 @@ package com.top_logic.kafka.services.producer;
 
 import static java.util.Objects.*;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import org.apache.kafka.clients.consumer.ConsumerGroupMetadata;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.Callback;
@@ -80,8 +81,8 @@ public abstract class ProducerProxy<K, V> implements Producer<K, V>, KafkaHeader
 	}
 
 	@Override
-	public void close(long timeout, TimeUnit timeUnit) {
-		withLogMarkAndStateLogging("Closing " + toString() + ".", () -> getImpl().close(timeout, timeUnit));
+	public void close(Duration timeout) {
+		withLogMarkAndStateLogging("Closing " + toString() + ".", () -> getImpl().close(timeout));
 	}
 
 	@Override
@@ -255,6 +256,16 @@ public abstract class ProducerProxy<K, V> implements Producer<K, V>, KafkaHeader
 	}
 
 	@Override
+	public void sendOffsetsToTransaction(Map<TopicPartition, OffsetAndMetadata> offsets,
+			ConsumerGroupMetadata groupMetadata) throws ProducerFencedException {
+		String description = "Sending offset to transaction. Offsets: '"
+			+ offsets + "'. Group metadata: " + groupMetadata + ".";
+		withLogMarkAndStateLogging(description, () -> getImpl().sendOffsetsToTransaction(offsets, groupMetadata));
+	}
+
+	@Override
+	@Deprecated
+	@SuppressWarnings("deprecation")
 	public void sendOffsetsToTransaction(Map<TopicPartition, OffsetAndMetadata> offsets, String consumerGroupId)
 			throws ProducerFencedException {
 		String description = "Sending offset to transaction. CunsumerGroupId: '"

@@ -38,8 +38,8 @@ public class TestZooKeeperModule extends ZooKeeperModule {
 	}
 
 	private void removeZooKeeperData(ServerConfig zooKeeperConfig) {
-		String dataDir = zooKeeperConfig.getDataDir();
-		FileUtilities.deleteR(new File(dataDir));
+		File dataDir = zooKeeperConfig.getDataDir();
+		FileUtilities.deleteR(dataDir);
 	}
 
 }

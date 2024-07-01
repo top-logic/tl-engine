@@ -5,9 +5,9 @@
  */
 package com.top_logic.security.auth.pac4j.config.azure;
 
-import org.pac4j.oidc.client.AzureAdClient;
+import org.pac4j.oidc.client.AzureAd2Client;
 import org.pac4j.oidc.client.OidcClient;
-import org.pac4j.oidc.config.AzureAdOidcConfiguration;
+import org.pac4j.oidc.config.AzureAd2OidcConfiguration;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -19,7 +19,7 @@ import com.top_logic.security.auth.pac4j.config.ClientConfigurator;
 import com.top_logic.security.auth.pac4j.config.DefaultOidcClientConfigurator;
 
 /**
- * {@link ClientConfigurator} for an {@link AzureAdClient} with specialized configuration options.
+ * {@link ClientConfigurator} for an {@link AzureAd2Client} with specialized configuration options.
  * 
  * @see Config#getTenant()
  *
@@ -34,7 +34,7 @@ public class AzureClientConfigurator<C extends AzureClientConfigurator.Config<?>
 	public interface Config<I extends AzureClientConfigurator<?>> extends DefaultOidcClientConfigurator.Config<I> {
 
 		/**
-		 * Must not be set because it is hard-coded by the {@link AzureAdClient} implementation.
+		 * Must not be set because it is hard-coded by the {@link AzureAd2Client} implementation.
 		 * 
 		 * <p>
 		 * Set {@link #getTenant()} instead.
@@ -45,7 +45,7 @@ public class AzureClientConfigurator<C extends AzureClientConfigurator.Config<?>
 		String getDiscoveryURI();
 
 		/**
-		 * @see AzureAdOidcConfiguration#getTenant()
+		 * @see AzureAd2OidcConfiguration#getTenant()
 		 */
 		@Mandatory
 		String getTenant();
@@ -66,29 +66,29 @@ public class AzureClientConfigurator<C extends AzureClientConfigurator.Config<?>
 
 	@Override
 	protected OidcClient createRawClient() {
-		return new AzureAdClient(buildAzureAdConfig());
+		return new AzureAd2Client(buildAzureAdConfig());
 	}
 
 	/**
-	 * Creates configuration for an {@link AzureAdClient}.
+	 * Creates configuration for an {@link AzureAd2Client}.
 	 */
-	protected final AzureAdOidcConfiguration buildAzureAdConfig() {
-		AzureAdOidcConfiguration result = createAzureConfig();
+	protected final AzureAd2OidcConfiguration buildAzureAdConfig() {
+		AzureAd2OidcConfiguration result = createAzureConfig();
 		fillAzureConfig(result);
 		return result;
 	}
 
 	/**
-	 * Creates the {@link AzureAdClient} configuration object.
+	 * Creates the {@link AzureAd2Client} configuration object.
 	 */
-	protected AzureAdOidcConfiguration createAzureConfig() {
-		return new AzureAdOidcConfiguration();
+	protected AzureAd2OidcConfiguration createAzureConfig() {
+		return new AzureAd2OidcConfiguration();
 	}
 
 	/**
-	 * Populates the {@link AzureAdClient} configuration object from the application configuration.
+	 * Populates the {@link AzureAd2Client} configuration object from the application configuration.
 	 */
-	protected void fillAzureConfig(AzureAdOidcConfiguration result) {
+	protected void fillAzureConfig(AzureAd2OidcConfiguration result) {
 		fillConfig(result);
 
 		Config<?> config = getConfig();

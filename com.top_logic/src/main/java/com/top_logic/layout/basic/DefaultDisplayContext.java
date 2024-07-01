@@ -5,11 +5,11 @@
  */
 package com.top_logic.layout.basic;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletRequest;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.jsp.PageContext;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.jsp.PageContext;
 
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.CalledFromJSP;

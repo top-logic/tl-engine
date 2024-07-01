@@ -32,9 +32,10 @@
 
 	<properties>
 		<tl.version>7.9.0-SNAPSHOT</tl.version>
-		<jetty.version>9.4.51.v20230217</jetty.version>
+		<jetty.version>12.0.6</jetty.version>
 		<poi.version>5.2.5</poi.version>
-		<kafka.version>2.1.1</kafka.version>
+		<kafka.version>3.6.1</kafka.version>
+		<zookeeper.version>3.8.3</zookeeper.version>
 		<slf4j.version>2.0.7</slf4j.version>
 		<log4j.version>2.20.0</log4j.version>
 		<fasterxml.version>2.16.1</fasterxml.version>
@@ -43,8 +44,8 @@
 		
 		<project.build.sourceEncoding>ISO-8859-1</project.build.sourceEncoding>
 
-		<maven.compiler.source>11</maven.compiler.source>
-		<maven.compiler.target>11</maven.compiler.target>
+		<maven.compiler.source>17</maven.compiler.source>
+		<maven.compiler.target>17</maven.compiler.target>
 
 		<skipTests>true</skipTests>
 		<skipDependencyCheck>false</skipDependencyCheck>
@@ -678,7 +679,7 @@
 			<dependency>
 			    <groupId>com.microsoft.sqlserver</groupId>
 			    <artifactId>mssql-jdbc</artifactId>
-			    <version>12.2.0.jre11</version>
+			    <version>12.2.0.jre11</version><!-- The 'jre11' version works with newer Java versions, too: https://github.com/microsoft/mssql-jdbc/issues/2161 -->
 			</dependency>
 			<dependency>
 			    <groupId>com.mysql</groupId>
@@ -698,14 +699,14 @@
 
 			<!-- External dependencies -->
 			<dependency>
-				<groupId>javax.servlet</groupId>
-				<artifactId>javax.servlet-api</artifactId>
-				<version>4.0.1</version>
+				<groupId>jakarta.servlet</groupId>
+				<artifactId>jakarta.servlet-api</artifactId>
+				<version>6.0.0</version>
 			</dependency>
 			<dependency>
-				<groupId>javax.servlet.jsp</groupId>
-				<artifactId>jsp-api</artifactId>
-				<version>2.2.1-b03</version>
+				<groupId>jakarta.servlet.jsp</groupId>
+				<artifactId>jakarta.servlet.jsp-api</artifactId>
+				<version>3.1.0</version>
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
@@ -770,44 +771,22 @@
 			
 			<!-- Only good for compiling against, provides no mail implementations. -->
 			<dependency>
-			    <groupId>javax.mail</groupId>
-			    <artifactId>javax.mail-api</artifactId>
-			    <version>1.6.2</version>
-			    <scope>provided</scope>
-			    
-			    <exclusions>
-			    	<!-- Note: Must include javax.activation:javax.activation-api instead. -->
-			    	<exclusion>
-			    		<groupId>javax.activation</groupId>
-			    		<artifactId>activation</artifactId>
-			    	</exclusion>
-			    </exclusions>
+			    <groupId>jakarta.mail</groupId>
+			    <artifactId>jakarta.mail-api</artifactId>
+			    <version>2.1.3</version>
 			</dependency>
 			
 			<!-- The actual mail implementation. Might be already be installed in the container running the application. -->
 			<dependency>
-				<groupId>com.sun.mail</groupId>
-				<artifactId>javax.mail</artifactId>
-				<version>1.6.2</version>
-				
-				<exclusions>
-			    	<!-- Note: Must include javax.activation:javax.activation-api instead. -->
-			    	<exclusion>
-			    		<groupId>javax.activation</groupId>
-			    		<artifactId>activation</artifactId>
-			    	</exclusion>
-				</exclusions>
+				<groupId>org.eclipse.angus</groupId>
+				<artifactId>angus-mail</artifactId>
+				<version>2.0.3</version>
 			</dependency>
 			
 			<dependency>
 			    <groupId>javax.xml</groupId>
 			    <artifactId>jaxrpc-api</artifactId>
 			    <version>1.1</version>
-			</dependency>
-			<dependency>
-			    <groupId>javax.xml.ws</groupId>
-			    <artifactId>jaxws-api</artifactId>
-			    <version>2.3.1</version>
 			</dependency>
 			<dependency>
 				<groupId>commons-discovery</groupId>
@@ -835,9 +814,9 @@
 			    <version>5.2.1</version>
 			</dependency>
 			<dependency>
-			    <groupId>commons-fileupload</groupId>
-			    <artifactId>commons-fileupload</artifactId>
-			    <version>1.5</version>
+			    <groupId>org.apache.commons</groupId>
+			    <artifactId>commons-fileupload2-jakarta-servlet6</artifactId>
+			    <version>2.0.0-M2</version>
 			</dependency>
 			<dependency>
 			    <groupId>commons-io</groupId>
@@ -861,7 +840,7 @@
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.kafka</groupId>
-			    <artifactId>kafka_2.12</artifactId>
+			    <artifactId>kafka_2.13</artifactId>
 			    <version>${kafka.version}</version>
 			</dependency>
 			<dependency>
@@ -878,6 +857,11 @@
 			    <groupId>org.apache.kafka</groupId>
 			    <artifactId>connect-json</artifactId>
 			    <version>${kafka.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.zookeeper</groupId>
+				<artifactId>zookeeper</artifactId>
+				<version>${zookeeper.version}</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.apache.lucene</groupId>
@@ -977,12 +961,24 @@
 			          <groupId>xalan</groupId>
 			          <artifactId>xalan</artifactId>
 			        </exclusion>
-				</exclusions> 
+					<exclusion>
+						<!-- Don't include 'com.sun.activation:jakarta.activation', as it collides with 'jakarta.activation:jakarta.activation-api'. -->
+						<groupId>com.sun.activation</groupId>
+						<artifactId>jakarta.activation</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 			<dependency>
 			    <groupId>org.docx4j</groupId>
 			    <artifactId>docx4j-JAXB-ReferenceImpl</artifactId>
 			    <version>11.4.9</version>
+				<exclusions>
+					<exclusion>
+						<!-- Don't include 'com.sun.activation:jakarta.activation', as it collides with 'jakarta.activation:jakarta.activation-api'. -->
+						<groupId>com.sun.activation</groupId>
+						<artifactId>jakarta.activation</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 			<dependency>
 			    <groupId>com.fasterxml.jackson.core</groupId>
@@ -1059,18 +1055,18 @@
 			    <version>2.8</version>
 			</dependency>
 			<dependency>
-				<groupId>org.eclipse.jetty</groupId>
-				<artifactId>jetty-webapp</artifactId>
+				<groupId>org.eclipse.jetty.ee10</groupId>
+				<artifactId>jetty-ee10-webapp</artifactId>
 				<version>${jetty.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>org.eclipse.jetty</groupId>
-				<artifactId>apache-jsp</artifactId>
+				<groupId>org.eclipse.jetty.ee10</groupId>
+				<artifactId>jetty-ee10-apache-jsp</artifactId>
 				<version>${jetty.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>org.eclipse.jetty</groupId>
-				<artifactId>jetty-servlet</artifactId>
+				<groupId>org.eclipse.jetty.ee10</groupId>
+				<artifactId>jetty-ee10-servlet</artifactId>
 				<version>${jetty.version}</version>
 			</dependency>
 			<dependency>
@@ -1116,7 +1112,7 @@
 			<dependency>
 			    <groupId>org.pac4j</groupId>
 			    <artifactId>pac4j-oidc</artifactId>
-    			<version>5.7.1</version>
+    			<version>6.0.1</version>
 			</dependency>
 			<dependency>
 				<groupId>net.minidev</groupId>
@@ -1125,13 +1121,13 @@
 			</dependency>			
 			<dependency>
 			    <groupId>org.pac4j</groupId>
-			    <artifactId>pac4j-jee</artifactId>
-    			<version>5.4.6</version>
+			    <artifactId>pac4j-jakartaee</artifactId>
+    			<version>6.0.1</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.pac4j</groupId>
-			    <artifactId>jee-pac4j</artifactId>
-			    <version>6.1.0</version>
+			    <artifactId>jakartaee-pac4j</artifactId>
+			    <version>8.0.0</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.codelibs</groupId>
@@ -1152,14 +1148,14 @@
 			</dependency>
 
 			<dependency>
-			    <groupId>javax.activation</groupId>
-			    <artifactId>javax.activation-api</artifactId>
-			    <version>1.2.0</version>
+				<groupId>jakarta.activation</groupId>
+				<artifactId>jakarta.activation-api</artifactId>
+				<version>2.1.3</version>
 			</dependency>
 			<dependency>
-			    <groupId>com.sun.activation</groupId>
-			    <artifactId>javax.activation</artifactId>
-			    <version>1.2.0</version>
+				<groupId>org.eclipse.angus</groupId>
+				<artifactId>angus-activation</artifactId>
+				<version>2.0.2</version>
 			</dependency>
 			
 		  	<dependency>
@@ -1493,25 +1489,25 @@
 								</ignoreVersions>
 							</rule>
 							<rule>
-								<groupId>org.eclipse.jetty</groupId>
+								<groupId>org.eclipse.jetty.ee10</groupId>
 								
-								<!-- Limit to Jetty 9 to avoid updating javax.servlet -->
+								<!-- Limit to Jetty 10 to avoid updating jakarta.servlet -->
 								<ignoreVersions>
 									<ignoreVersion>
 										<type>regex</type>
-										<version>(?!9\.).*</version>
-									</ignoreVersion>								
+										<version>(?!12\.).*</version>
+									</ignoreVersion>
 								</ignoreVersions>
 							</rule>
 							<rule>
 								<groupId>org.apache.kafka</groupId>
 								
-								<!-- Limit to Kafka 2.1.x for compatibility -->
+								<!-- Limit to Kafka 3.6.x for compatibility -->
 								<ignoreVersions>
 									<ignoreVersion>
 										<type>regex</type>
-										<version>(?!2\.1\.).*</version>
-									</ignoreVersion>								
+										<version>(?!3\.6\.).*</version>
+									</ignoreVersion>
 								</ignoreVersions>
 							</rule>
 						</rules>
@@ -1707,11 +1703,11 @@
 				</plugin>
 				<plugin>
 					<artifactId>maven-plugin-plugin</artifactId>
-					<version>3.8.1</version>
+					<version>3.11.0</version>
 				</plugin>
 				<plugin>
 					<artifactId>maven-surefire-plugin</artifactId>
-					<version>2.22.2</version>
+					<version>3.2.5</version>
 				</plugin>
 				<plugin>
 					<artifactId>maven-jar-plugin</artifactId>

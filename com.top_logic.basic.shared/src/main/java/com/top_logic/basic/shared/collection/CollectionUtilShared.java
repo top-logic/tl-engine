@@ -2253,7 +2253,7 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 
 	/** Returns null, if the {@link Collection} is null or empty, or contains only nulls. */
 	public static <T extends Comparable<T>> T max(Collection<? extends T> values) {
-		// Note: Java 11 requires a variable for the reduction to accept the types.
+		// Note: 'javac' requires a variable for the reduction to accept the types.
 		BinaryOperator<T> reduction = CollectionUtilShared::maxUnsafe;
 		return reduce(reduction, values);
 	}
@@ -2271,7 +2271,7 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 
 	/** Returns null, if the {@link Collection} is null or empty, or contains only nulls. */
 	public static <T extends Comparable<T>> T min(Collection<? extends T> values) {
-		// Note: Java 11 requires a variable for the reduction to accept the types.
+		// Note: 'javac' requires a variable for the reduction to accept the types.
 		BinaryOperator<T> reduction = CollectionUtilShared::minUnsafe;
 		return reduce(reduction, values);
 	}

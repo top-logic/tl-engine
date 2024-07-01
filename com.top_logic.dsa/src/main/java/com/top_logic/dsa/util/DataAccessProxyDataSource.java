@@ -8,7 +8,7 @@ package com.top_logic.dsa.util;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import javax.activation.DataSource;
+import jakarta.activation.DataSource;
 
 import com.top_logic.dsa.DataAccessProxy;
 

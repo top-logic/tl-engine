@@ -218,7 +218,9 @@ public class DocumentationImporter {
 	protected Page importSubTree(Log log, Page parent, Locale locale, String resourcePath, int position) {
 		Page newParent = importPage(log, parent, locale, resourcePath, position);
 		log.info("Imported content from path " + resourcePath, Protocol.VERBOSE);
-		importContentPages(log, newParent, locale, resourcePath);
+		if (newParent != null) {
+			importContentPages(log, newParent, locale, resourcePath);
+		}
 		return parent;
 	}
 
@@ -430,6 +432,11 @@ public class DocumentationImporter {
 		KnowledgeBase kb = parent.tKnowledgeBase();
 		KnowledgeItem existingPage = findExistingPage(kb, uuidStripped, idStripped);
 		Page page;
+
+		if (sourceStripped == null) {
+			return null;
+		}
+
 		if (existingPage == null) {
 			page = (Page) parent.createChild(idStripped, Page.PAGE_TYPE);
 			if (uuidStripped != null) {

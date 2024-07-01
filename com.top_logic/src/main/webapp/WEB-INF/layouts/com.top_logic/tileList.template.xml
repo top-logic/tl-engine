@@ -42,7 +42,7 @@
 			instance-type="com.top_logic.tool.boundsec.CommandHandler"
 			type="List"
 		>
-			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>
+			<options fun="com.top_logic.layout.form.values.edit.InAppImplementations"/>
 			<acceptable-classifiers value="list, commons"/>
 		</property>
 		<property name="preview"

@@ -544,6 +544,15 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 		fireValueChanged(oldValue);
     }
     
+	@Override
+	void updateDisplayMode() {
+		super.updateDisplayMode();
+
+		// Since only fields that are active can have errors, a mode change must re-validate field
+		// modes.
+		clearError();
+	}
+
     @Override
 	public Object getDefaultValue() {
     	return this.defaultValue;
@@ -1049,8 +1058,10 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 	 */
     private final boolean checkValue(Object aValue) throws CheckException {
     	boolean success = true;
-        for (Iterator<Constraint> it = InlineList.iterator(Constraint.class, this.constraints); it.hasNext(); ) {
-    		success &= it.next().check(aValue);
+		if (isActive()) {
+			for (Iterator<Constraint> it = InlineList.iterator(Constraint.class, this.constraints); it.hasNext();) {
+				success &= it.next().check(aValue);
+			}
     	}
     	
     	// Note: Must not explicitly check for the mandatory property, because there are

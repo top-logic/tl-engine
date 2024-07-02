@@ -89,10 +89,18 @@ public class TransientTLObjectImpl extends TransientObject {
 			TLReference otherRef = otherEnd.getReference();
 			if (otherRef != null) {
 				for (Object oldTarget : collection(oldValue)) {
-					((TransientTLObjectImpl) oldTarget).directRemove(otherRef, this);
+					// Note: Non-transient objects may have been assigned to transient ones (the
+					// other way around is not possible).
+					if (oldTarget instanceof TransientTLObjectImpl) {
+						((TransientTLObjectImpl) oldTarget).directRemove(otherRef, this);
+					}
 				}
 				for (Object newTarget : collection(newValue)) {
-					((TransientTLObjectImpl) newTarget).directAdd(otherRef, this);
+					// Note: Non-transient objects may have been assigned to transient ones (the
+					// other way around is not possible).
+					if (newTarget instanceof TransientTLObjectImpl) {
+						((TransientTLObjectImpl) newTarget).directAdd(otherRef, this);
+					}
 				}
 			}
 		}
@@ -134,11 +142,15 @@ public class TransientTLObjectImpl extends TransientObject {
 			checkNonNull(value);
 			mkCollection(part).add(value);
 
-			TLAssociationEnd updatedEnd = ((TLReference) part).getEnd();
-			TLAssociationEnd otherEnd = TLModelUtil.getOtherEnd(updatedEnd);
-			TLReference otherRef = otherEnd.getReference();
-			if (otherRef != null) {
-				((TransientTLObjectImpl) value).directAdd(otherRef, this);
+			// Note: Non-transient objects may have been assigned to transient ones (the
+			// other way around is not possible).
+			if (value instanceof TransientTLObjectImpl) {
+				TLAssociationEnd updatedEnd = ((TLReference) part).getEnd();
+				TLAssociationEnd otherEnd = TLModelUtil.getOtherEnd(updatedEnd);
+				TLReference otherRef = otherEnd.getReference();
+				if (otherRef != null) {
+					((TransientTLObjectImpl) value).directAdd(otherRef, this);
+				}
 			}
 		} else {
 			super.tAdd(part, value);
@@ -152,11 +164,15 @@ public class TransientTLObjectImpl extends TransientObject {
 			checkNonNull(value);
 			mkCollection(part).remove(value);
 
-			TLAssociationEnd updatedEnd = ((TLReference) part).getEnd();
-			TLAssociationEnd otherEnd = TLModelUtil.getOtherEnd(updatedEnd);
-			TLReference otherRef = otherEnd.getReference();
-			if (otherRef != null) {
-				((TransientTLObjectImpl) value).directRemove(otherRef, this);
+			// Note: Non-transient objects may have been assigned to transient ones (the
+			// other way around is not possible).
+			if (value instanceof TransientTLObjectImpl) {
+				TLAssociationEnd updatedEnd = ((TLReference) part).getEnd();
+				TLAssociationEnd otherEnd = TLModelUtil.getOtherEnd(updatedEnd);
+				TLReference otherRef = otherEnd.getReference();
+				if (otherRef != null) {
+					((TransientTLObjectImpl) value).directRemove(otherRef, this);
+				}
 			}
 		} else {
 			super.tRemove(part, value);

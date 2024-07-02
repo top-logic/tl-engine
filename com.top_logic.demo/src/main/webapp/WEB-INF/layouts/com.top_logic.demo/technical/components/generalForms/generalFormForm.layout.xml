@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.model.search/genericForm.template.xml"
+>
+	<arguments model="selection(com.top_logic.demo/technical/components/generalForms/contextSelectorTable.layout.xml#Table)">
+		<name key="dynamic.2f183579-2c41-4101-a0e5-46b18bbc76be">
+			<en>General form</en>
+			<de>Allgemeines Formular</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.GenericFormBuilderByExpression"
+			formCreation="model -> $model"
+		/>
+		<buttons>
+			<button id="ID_04ccf5ee_73e2_400d_b187_f877b8a2e08b"
+				class="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+				image="css:fas fa-save"
+				operation="null"
+			>
+				<resourceKey key="dynamic.2131f96d-0a06-4754-a386-b1035986bbd2">
+					<en>Apply</en>
+					<de>Übernehmen</de>
+				</resourceKey>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

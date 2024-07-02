@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.model.search/genericForm.template.xml"
+>
+	<arguments>
+		<name key="dynamic.2dd1fb4b-95bd-4a95-bbed-ed84930a917c">
+			<en>Create form</en>
+			<de>Anlage-Formular</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.GenericFormBuilderByExpression">
+			<formCreation><![CDATA[model -> $model == null ? null : $model
+    .copy(transient: true)
+    ..set(`DemoTypes:A#webFolder`, null) // Workaround for CCE
+    ..set(`DemoTypes:DemoTypes.All#name`, null)]]></formCreation>
+		</modelBuilder>
+		<buttons>
+			<button id="ID_a0deba42_92d6_439d_83bd_3e3c8fbce00e"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				form-apply="false"
+				image="css:bi bi-plus-circle"
+				operation="input -> new(`DemoTypes:A`, transient: true)"
+				transaction="false"
+			>
+				<resourceKey key="dynamic.771c55be-fa53-4ea8-b1fc-30fa646a5067">
+					<en>Create new object</en>
+					<de>Neues Objekt anlegen</de>
+				</resourceKey>
+				<postCreateActions>
+					<setModel target="model(self())"/>
+				</postCreateActions>
+			</button>
+			<button id="ID_f52fa0e7_68ac_4813_9486_443c4f3a7389"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				form-apply="false"
+				image="css:far fa-window-close"
+				operation="null"
+				transaction="false"
+			>
+				<resourceKey key="dynamic.6bb2c255-3ac7-4ff6-9705-ad84c3d677cd">
+					<en>Abort create</en>
+					<de>Anlage Abbrechen</de>
+				</resourceKey>
+				<executability>
+					<rule-by-expression decision="input -> $input != null"/>
+				</executability>
+				<postCreateActions>
+					<setModel target="model(self())"/>
+				</postCreateActions>
+			</button>
+			<button id="ID_5f1708cf_39c4_4ff1_b0d4_6d81346e9e1b"
+				class="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+				image="css:fas fa-check"
+				operation="form -> $form.copy(transient: false)"
+			>
+				<resourceKey key="dynamic.ae940fb7-aded-4557-9f20-dd263f75ce74">
+					<en>Save object</en>
+					<de>Objekt speichern</de>
+				</resourceKey>
+				<executability>
+					<rule-by-expression decision="model -> $model != null"/>
+				</executability>
+				<postCreateActions>
+					<setModel target="selection(com.top_logic.demo/technical/components/generalForms/contextSelectorTable.layout.xml#Table)"/>
+				</postCreateActions>
+			</button>
+			<button id="ID_34e42b26_fff9_46ae_8fbc_89b969a6d244"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				form-apply="false"
+				image="css:fas fa-arrow-right"
+				operation="model -> $model"
+				target="selection(com.top_logic.demo/technical/components/generalForms/contextSelectorTable.layout.xml#Table)"
+			>
+				<resourceKey key="dynamic.5aceffe8-0db4-41f0-8774-2993e00458be">
+					<en>Transfer data</en>
+					<de>Daten übernehmen</de>
+					<tooltip>
+						<en>Use the values of the selected object as base for a new object.</en>
+						<de>Die Daten des selektierten Objektes als Ausgangspunkt für ein neues Objekt verwenden.</de>
+					</tooltip>
+				</resourceKey>
+				<executability>
+					<rule-by-expression decision="model -> $model != null"/>
+				</executability>
+				<postCreateActions>
+					<setModel target="model(self())"/>
+				</postCreateActions>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

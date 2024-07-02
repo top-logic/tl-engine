@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_885dff81_77c3_4f3d_990a_fb92f1084f20"
+		tabIcon="colored:tl-icon form-border"
+	>
+		<tabLabel key="dynamic.aec6baf4-f3be-4188-92ab-34fe446ce742">
+			<en>General forms</en>
+			<de>Allgemeine Formulare</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/generalForms/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

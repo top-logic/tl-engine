@@ -138,11 +138,6 @@ public class EditFormBuilder extends ConfiguredDynamicFormBuilder {
 	}
 
 	@Override
-	public TLStructuredType getType(FormComponent component, TLObject object) {
-		return object.tType();
-	}
-
-	@Override
 	public boolean supportsModel(Object model, LayoutComponent component) {
 		if (model == null) {
 			return _showNoModel;

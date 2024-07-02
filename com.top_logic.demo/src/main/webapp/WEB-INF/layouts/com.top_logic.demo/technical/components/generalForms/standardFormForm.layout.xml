@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments
+		model="selection(com.top_logic.demo/technical/components/generalForms/contextSelectorTable.layout.xml#Table)"
+		type="DemoTypes:DemoTypes.All"
+	>
+		<name key="dynamic.34dd83c3-9b1a-4027-962f-bf7034eccddd">
+			<en>Standard form</en>
+			<de>Standardformular</de>
+			<tooltip>
+				<en>Form component for editing persistent objects. Has a built-in edit mode and save/accept buttons</en>
+				<de>Formularkomponente zum Bearbeiten von persistenten Objekten. Hat einen eingebauten Edit-Modus und Speichern-/Übernehmen-Knöpfe</de>
+			</tooltip>
+		</name>
+	</arguments>
+</config:template-call>

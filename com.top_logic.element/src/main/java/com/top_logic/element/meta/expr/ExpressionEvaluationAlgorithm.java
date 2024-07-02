@@ -28,7 +28,7 @@ import com.top_logic.element.meta.expr.internal.OperationFactory;
 import com.top_logic.element.meta.expr.parser.ExpressionParser;
 import com.top_logic.element.meta.expr.parser.ParseException;
 import com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocator;
-import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.model.TLObject;
 
 /**
  * Default {@link MetaAttributeAlgorithm} that evaluates a configurable generic expression.
@@ -128,7 +128,7 @@ public class ExpressionEvaluationAlgorithm extends MetaAttributeAlgorithm {
 	}
 
 	@Override
-	public Object calculate(Wrapper obj) throws AttributeException {
+	public Object calculate(TLObject obj) throws AttributeException {
 		return _locator.locateAttributeValue(obj);
 	}
 

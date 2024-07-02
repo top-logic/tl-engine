@@ -4483,6 +4483,9 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	@Override
 	public final void closeDialog() {
 		LayoutComponent dialog = getDialogTopLayout();
+		if (dialog == null) {
+			return;
+		}
 		LayoutComponent opener = getDialogParent();
 		DialogSupport dialogSupport = opener.getDialogSupport();
 		if (!dialogSupport.isDialogOpened(dialog)) {

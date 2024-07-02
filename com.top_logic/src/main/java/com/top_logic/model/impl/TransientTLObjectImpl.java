@@ -106,18 +106,37 @@ public class TransientTLObjectImpl extends TransientObject {
 		}
 	}
 
+	/**
+	 * Converts the give value to the collection-type of this attribute.
+	 * 
+	 * <p>
+	 * Note: A collection passed from the outside must never directly stored, since it may be
+	 * modified by the caller later on.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note: If the resulting value is a collection, it must be a modifiable one, since this
+	 * implementation modifies the internal collections, if values are added or removed.
+	 * </p>
+	 *
+	 * @param part
+	 *        The attribute that is updated.
+	 * @param newValue
+	 *        The value passed to the setter of the given attribute.
+	 * @return The value to actually store in this object.
+	 */
 	private Object ensureMultiplicity(TLStructuredTypePart part, Object newValue) {
 		if (part.isMultiple()) {
 			Collection<Object> result;
 			if (part.isOrdered()) {
 				if (newValue instanceof List<?>) {
-					return newValue;
+					return new ArrayList<Object>((List<?>) newValue);
 				}
 				// Create mutable collection to be able to support tAdd and tRemove.
 				result = new ArrayList<>();
 			} else {
 				if (newValue instanceof Set<?>) {
-					return newValue;
+					return new HashSet<Object>((Set<?>) newValue);
 				}
 				// Create mutable collection to be able to support tAdd and tRemove.
 				result = new HashSet<>();
@@ -127,7 +146,7 @@ public class TransientTLObjectImpl extends TransientObject {
 			} else if (newValue == null) {
 				// Nothing to add.
 			} else {
-				throw new IllegalArgumentException();
+				result.add(newValue);
 			}
 			return result;
 		} else {

@@ -150,7 +150,7 @@ public class KBUtils {
 	 * {@link TLObject#tHandle()} of the argument.
 	 */
 	public static TLID getWrappedObjectName(TLObject wrapper) {
-		return getObjectName(wrapper.tHandle());
+		return wrapper.tIdLocal();
 	}
 
 	/**
@@ -158,7 +158,7 @@ public class KBUtils {
 	 * {@link TLObject#tHandle()} of the argument.
 	 */
 	public static String getWrappedObjectKeyString(TLObject wrapper) {
-		return getObjectKeyString(wrapper.tHandle());
+		return wrapper.tId().toString();
 	}
 
 	/**
@@ -166,7 +166,7 @@ public class KBUtils {
 	 * argument.
 	 */
 	public static Object getWrappedObjectKey(TLObject wrapper) {
-		return wrapper.tHandle().tId();
+		return wrapper.tId();
 	}
 
 	

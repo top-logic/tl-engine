@@ -15,7 +15,7 @@ import com.top_logic.element.config.algorithm.MethodAlgorithmConfig;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.MetaAttributeAlgorithm;
 import com.top_logic.knowledge.service.KBUtils;
-import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.model.TLObject;
 
 /**
  * {@link MetaAttributeAlgorithm} that calls a method on the object and returns the method value.
@@ -53,10 +53,10 @@ public class MethodInvocationAlgorithm extends MetaAttributeAlgorithm {
 	 * This method returns the object that is returned of the configured method.
 	 * See {@link #methodName}.
 	 * 
-	 * @see com.top_logic.element.meta.MetaAttributeAlgorithm#calculate(com.top_logic.knowledge.wrap.Wrapper)
+	 * @see com.top_logic.element.meta.MetaAttributeAlgorithm#calculate(TLObject)
 	 */
     @Override
-	public Object calculate(Wrapper anAttributed) throws AttributeException {
+	public Object calculate(TLObject anAttributed) throws AttributeException {
 		try {
 		    Class<?> theClass = anAttributed.getClass();
 		    
@@ -74,8 +74,11 @@ public class MethodInvocationAlgorithm extends MetaAttributeAlgorithm {
 
 		    return theMethod.invoke(anAttributed);
 		}
-		catch (Exception e) {
-			throw new AttributeException("The method ('" + this.methodName + "') could not be found or called for the attributed ('" + anAttributed.getValue("name") + "[" + KBUtils.getWrappedObjectKeyString(anAttributed) + "]" + "')", e);
+		catch (Exception ex) {
+			throw new AttributeException(
+				"The method ('" + this.methodName + "') could not be found or called for the attributed ('"
+					+ anAttributed + "[" + KBUtils.getWrappedObjectKeyString(anAttributed) + "]" + "')",
+				ex);
 		} 
 	}
 

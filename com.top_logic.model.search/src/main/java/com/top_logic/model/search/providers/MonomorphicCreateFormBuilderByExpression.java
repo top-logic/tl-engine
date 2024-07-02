@@ -6,10 +6,12 @@
 package com.top_logic.model.search.providers;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Abstract;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.element.layout.create.MonomorphicCreateFormBuilder;
 import com.top_logic.element.meta.form.AttributeFormContext;
@@ -24,6 +26,8 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@InApp
+@Label("Create form")
 public class MonomorphicCreateFormBuilderByExpression extends MonomorphicCreateFormBuilder {
 
 	/**

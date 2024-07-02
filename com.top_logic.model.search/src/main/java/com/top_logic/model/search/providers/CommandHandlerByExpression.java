@@ -70,12 +70,18 @@ public class CommandHandlerByExpression extends AbstractCommandHandler {
 		Config.OPERATION,
 		Config.TRANSACTION,
 		Config.POST_CREATE_ACTIONS,
+		Config.FORM_APPLY,
 		Config.CONFIRM_PROPERTY,
 		Config.CLOSE_DIALOG,
 		Config.CONFIRM_MESSAGE,
 		Config.SECURITY_OBJECT,
 	})
 	public interface Config extends AbstractCommandHandler.Config, WithPostCreateActions.Config {
+
+		/**
+		 * @see #getFormApply()
+		 */
+		String FORM_APPLY = "form-apply";
 
 		/**
 		 * @see #getOperation()
@@ -95,6 +101,17 @@ public class CommandHandlerByExpression extends AbstractCommandHandler {
 		@Override
 		@ClassDefault(CommandHandlerByExpression.class)
 		Class<? extends CommandHandler> getImplementationClass();
+
+		/**
+		 * If this command is defined on a form, this options controls, whether changes are applied
+		 * to the underlying model before the {@link #getOperation()} is invoked. For a command on
+		 * any other component, this option has no effect. Applying changes also implicitly
+		 * validates form input. Therefore with this option activated, the command will fail, if the
+		 * current user input on the context form has errors.
+		 */
+		@BooleanDefault(true)
+		@Name(FORM_APPLY)
+		boolean getFormApply();
 
 		/**
 		 * The operation to perform.
@@ -153,9 +170,12 @@ public class CommandHandlerByExpression extends AbstractCommandHandler {
 	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model,
 			Map<String, Object> someArguments) {
 		Object result = model;
+
+		Config config = (Config) getConfig();
+
 		if (_operation != null) {
 			try (Transaction tx = beginTransaction()) {
-				if (aComponent instanceof FormHandler) {
+				if (aComponent instanceof FormHandler && config.getFormApply()) {
 					FormContext formContext = ((FormHandler) aComponent).getFormContext();
 					if (formContext != null) {
 						boolean ok = formContext.checkAll();
@@ -172,7 +192,6 @@ public class CommandHandlerByExpression extends AbstractCommandHandler {
 			}
 		}
 
-		Config config = (Config) getConfig();
 		if (config.getCloseDialog()) {
 			aComponent.closeDialog();
 		}

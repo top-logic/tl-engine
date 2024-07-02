@@ -404,7 +404,7 @@ public class AttributeFormContext extends FormContext {
 	 * @return A new {@link FormContainer} for the given {@link TLFormObject}.
 	 */
 	public FormContainer createFormContainerForOverlay(TLFormObject overlay) {
-		FormGroup result = new FormGroup(MetaAttributeGUIHelper.getOverlayId(overlay), getResources());
+		FormGroup result = new FormGroup(overlay.getFormId(), getResources());
 		overlay.initContainer(result);
 		result.set(OVERLAY, overlay);
 		return result;

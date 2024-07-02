@@ -59,6 +59,8 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 
 	private FormContainer _formContainer;
 
+	private String _id;
+
 	/**
 	 * Creates a {@link FormObjectOverlay}.
 	 * 
@@ -70,6 +72,7 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 	public FormObjectOverlay(AttributeUpdateContainer scope, TLStructuredType type) {
 		_scope = scope;
 		_type = type;
+		_id = scope.newID();
 	}
 
 	@Override
@@ -152,6 +155,11 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 
 	@Override
 	public abstract TLObject getEditedObject();
+
+	@Override
+	public String getFormId() {
+		return _id;
+	}
 
 	@Override
 	public abstract String getDomain();

@@ -252,7 +252,7 @@ public class AttributeUpdateContainer {
 	 */
 	public TLFormObject newObject(TLStructuredType type, TLObject container, ObjectConstructor constructor) {
 		while (true) {
-			String domain = newDomain();
+			String domain = newID();
 			if (_creates.get(domain) != null) {
 				continue;
 			}
@@ -261,8 +261,11 @@ public class AttributeUpdateContainer {
 		}
 	}
 
-	private String newDomain() {
-		return Integer.toString(_nextCreateId++);
+	/**
+	 * Creates a new local ID for usage in forms.
+	 */
+	public String newID() {
+		return "obj_" + Integer.toString(_nextCreateId++);
 	}
 
 	private TLFormObject allocateCreateOverlay(TLStructuredType type, String domain, TLObject container,

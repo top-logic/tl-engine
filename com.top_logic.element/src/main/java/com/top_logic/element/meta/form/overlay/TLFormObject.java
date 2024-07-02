@@ -106,4 +106,9 @@ public interface TLFormObject extends TLObject, UpdateFactory {
 	 */
 	void withUpdate(TLStructuredTypePart attribute, Consumer<AttributeUpdate> callback);
 
+	/**
+	 * ID used to identify form groups displaying information for this object.
+	 */
+	String getFormId();
+
 }

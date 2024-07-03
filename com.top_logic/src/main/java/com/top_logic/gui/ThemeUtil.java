@@ -284,10 +284,15 @@ public class ThemeUtil {
 		for (String themeDirectoryPath : themeDirectoryPaths) {
 			List<BinaryData> themeConfigContents = FileManager.getInstance()
 				.getDataOverlays(themeDirectoryPath + MultiThemeFactory.THEME_CONFIGURATION_FILENAME);
-			Collections.reverse(themeConfigContents);
-			String theme = Paths.get(themeDirectoryPath).getFileName().toString();
-			ThemeConfig themeConfig = readThemeConfig(theme, themeConfigContents);
-			themeConfigByName.put(theme, themeConfig);
+			if (themeConfigContents.isEmpty()) {
+				Logger.error("Theme configuration not found for '" + themeDirectoryPath
+					+ "'. A theme must have a theme.xml file to be instantiated.", ThemeUtil.class);
+			} else {
+				Collections.reverse(themeConfigContents);
+				String theme = Paths.get(themeDirectoryPath).getFileName().toString();
+				ThemeConfig themeConfig = readThemeConfig(theme, themeConfigContents);
+				themeConfigByName.put(theme, themeConfig);
+			}
 		}
 
 		return themeConfigByName;

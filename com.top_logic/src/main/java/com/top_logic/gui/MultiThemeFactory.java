@@ -298,13 +298,24 @@ public class MultiThemeFactory extends ThemeFactory {
 
 	private void initThemesById() {
 		_themesById = new HashMap<>();
+		List<String> themesToRemove = new ArrayList<>();
+
 		for (ThemeConfig themeConfig : _themeConfigsById.values()) {
 			try {
 				initTheme(themeConfig);
 			} catch (ThemeInitializationFailure ex) {
+				themesToRemove.add(themeConfig.getId());
 				Logger.error("Failed to initialize theme '" + themeConfig.getId() + "': " + ex.getMessage(),
 					MultiThemeFactory.class);
 			}
+		}
+
+		removeUninstantiatedThemes(themesToRemove);
+	}
+
+	private void removeUninstantiatedThemes(List<String> themesToRemove) {
+		for (String themeId : themesToRemove) {
+			_themeConfigsById.remove(themeId);
 		}
 	}
 

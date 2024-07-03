@@ -62,6 +62,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey CONFIGURE_FORM_DEFINITION_COMMAND;
 
+	/**
+	 * @en Cannot store form definition to layout based on a template without a "forms" parameter.
+	 *     <p>
+	 *     To enable editing form definitions, the template of the view must either extend
+	 *     <code>FormsTemplateParameter</code>, or must have a <code>modelBuilder</code> property
+	 *     with a configuration type extending <code>FormsTemplateParameter</code>.
+	 *     </p>
+	 */
+	public static ResKey1 ERROR_TEMPLATE_WITHOUT_FORMS__LAYOUT;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -573,16 +573,6 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
-				<artifactId>tl-themes-dezent</artifactId>
-				<version>${tl.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.top-logic</groupId>
-				<artifactId>tl-themes-modern</artifactId>
-				<version>${tl.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.top-logic</groupId>
 				<artifactId>tl-themes-core</artifactId>
 				<version>${tl.version}</version>
 			</dependency>

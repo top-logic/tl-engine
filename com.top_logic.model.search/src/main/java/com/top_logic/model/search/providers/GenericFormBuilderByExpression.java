@@ -12,6 +12,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.element.layout.formeditor.FormEditorUtil;
 import com.top_logic.element.layout.formeditor.builder.ConfiguredDynamicFormBuilder;
 import com.top_logic.element.layout.formeditor.builder.TypedForm;
@@ -79,6 +80,10 @@ public class GenericFormBuilderByExpression extends ConfiguredDynamicFormBuilder
 	/**
 	 * Configuration options for {@link GenericFormBuilderByExpression}.
 	 */
+	@DisplayOrder({
+		Config.FORM_CREATION,
+		Config.FORMS,
+	})
 	public interface Config extends ConfiguredDynamicFormBuilder.Config, UIOptions {
 		// Pure sum interface.
 	}
@@ -141,7 +146,7 @@ public class GenericFormBuilderByExpression extends ConfiguredDynamicFormBuilder
 		TypedForm typedForm = TypedForm.lookup(getConfiguredForms(), type);
 		setDisplayedTypedForm(typedForm);
 		FormEditorContext context = new FormEditorContext.Builder()
-			.formMode(FormMode.CREATE)
+			.formMode(formObject.tTransient() ? FormMode.CREATE : FormMode.EDIT)
 			.formType(typedForm.getFormType())
 			.formContext(formContext)
 			.contentGroup(editorGroup)

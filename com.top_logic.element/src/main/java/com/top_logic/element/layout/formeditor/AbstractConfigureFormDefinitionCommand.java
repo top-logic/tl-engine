@@ -9,7 +9,9 @@ import java.util.Map;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.formeditor.builder.ConfiguredDynamicFormBuilder;
@@ -44,6 +46,7 @@ import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Command to change the view of a {@link FormComponent} by editing the underlying
@@ -240,8 +243,7 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
 		try (Transaction tx = kb.beginTransaction()) {
-			FormsTemplateParameter arguments = (FormsTemplateParameter) layout.getArguments();
-			Map<TLModelPartRef, TypedFormDefinition> forms = arguments.getForms();
+			Map<TLModelPartRef, TypedFormDefinition> forms = getFormDefinitions(layout);
 
 			TypedFormDefinition typedForm = TypedConfiguration.newConfigItem(TypedFormDefinition.class);
 			TLModelPartRef typeRef = TLModelPartRef.ref(type);
@@ -250,7 +252,7 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 
 			forms.put(typeRef, typedForm);
 
-			LayoutTemplateUtils.storeLayout(scope, layout.getTemplateName(), arguments);
+			LayoutTemplateUtils.storeLayout(scope, layout.getTemplateName(), layout.getArguments());
 
 			tx.commit();
 		} catch (ConfigurationException exception) {
@@ -260,6 +262,31 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 		LayoutTemplateUtils.replaceComponent(scope, component);
 
 		return true;
+	}
+
+	static Map<TLModelPartRef, TypedFormDefinition> getFormDefinitions(TLLayout layout) throws ConfigurationException {
+		ConfigurationItem arguments = layout.getArguments();
+
+		FormsTemplateParameter argumentsWithForms;
+		if (arguments instanceof FormsTemplateParameter) {
+			argumentsWithForms = (FormsTemplateParameter) arguments;
+		} else {
+			PropertyDescriptor modelBuilderProperty = arguments.descriptor().getProperty("modelBuilder");
+			if (modelBuilderProperty == null) {
+				throw errorNoFormsTemplate(layout);
+			}
+			Object modelBuilder = arguments.value(modelBuilderProperty);
+			if (!(modelBuilder instanceof FormsTemplateParameter)) {
+				throw errorNoFormsTemplate(layout);
+			}
+			argumentsWithForms = (FormsTemplateParameter) modelBuilder;
+		}
+		Map<TLModelPartRef, TypedFormDefinition> forms = argumentsWithForms.getForms();
+		return forms;
+	}
+
+	private static TopLogicException errorNoFormsTemplate(TLLayout layout) {
+		throw new TopLogicException(I18NConstants.ERROR_TEMPLATE_WITHOUT_FORMS__LAYOUT.fill(layout.getTemplateName()));
 	}
 
 	/**

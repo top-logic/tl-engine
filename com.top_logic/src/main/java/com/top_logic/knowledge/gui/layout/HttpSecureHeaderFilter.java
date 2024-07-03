@@ -6,6 +6,9 @@
 package com.top_logic.knowledge.gui.layout;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -14,6 +17,17 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
+
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.CommaSeparatedStrings;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.ListBinding;
+import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.knowledge.gui.layout.HttpSecureHeaderFilter.GlobalConfig.Header;
 
 /**
  * {@link Filter} setting common HTTP headers enhancing app security.
@@ -42,9 +56,64 @@ public class HttpSecureHeaderFilter implements Filter {
 	 */
 	public static final String X_CONTENT_TYPE_OPTIONS = "X-Content-Type-Options";
 
+	/**
+	 * Configuration options for {@link HttpSecureHeaderFilter}.
+	 */
+	public interface GlobalConfig extends ConfigurationItem {
+		/**
+		 * Header values to set on each response.
+		 */
+		@Name("headers")
+		@Key(Header.NAME)
+		List<Header> getHeaders();
+
+		/**
+		 * A HTTP header to set.
+		 */
+		interface Header extends ConfigurationItem {
+			/**
+			 * @see #getName()
+			 */
+			String NAME = "name";
+
+			/**
+			 * @see #getValues()
+			 */
+			String VALUES = "values";
+
+			/**
+			 * Name of the header to set.
+			 */
+			@Name(NAME)
+			@Mandatory
+			String getName();
+
+			/**
+			 * Values for the header to set.
+			 */
+			@Name(VALUES)
+			@Mandatory
+			@Format(CommaSeparatedStrings.class)
+			@ListBinding(tag = "value", attribute = "value")
+			List<String> getValues();
+		}
+	}
+
+	private List<Consumer<HttpServletResponse>> _headers;
+
 	@Override
 	public void init(FilterConfig config) throws ServletException {
-		// No initialization.
+		GlobalConfig appConfig = ApplicationConfig.getInstance().getConfig(GlobalConfig.class);
+
+		_headers = new ArrayList<>();
+		for (Header header : appConfig.getHeaders()) {
+			String name = header.getName();
+			for (String value : header.getValues()) {
+				Logger.info(name + ": " + value, HttpSecureHeaderFilter.class);
+
+				_headers.add(response -> response.addHeader(name, value));
+			}
+		}
 	}
 
 	@Override
@@ -58,11 +127,11 @@ public class HttpSecureHeaderFilter implements Filter {
 		if (response instanceof HttpServletResponse) {
 			HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-			httpResponse.setHeader(X_CONTENT_TYPE_OPTIONS, "nosniff");
-			httpResponse.setHeader(X_XSS_PROTECTION, "1; mode=block");
-			httpResponse.setHeader(STRICT_TRANSPORT_SECURITY, "max-age=31536000; includeSubDomains");
-			httpResponse.setHeader(X_FRAME_OPTIONS, "SAMEORIGIN");
+			for (Consumer<HttpServletResponse> header : _headers) {
+				header.accept(httpResponse);
+			}
 		}
+
 		chain.doFilter(request, response);
 	}
 

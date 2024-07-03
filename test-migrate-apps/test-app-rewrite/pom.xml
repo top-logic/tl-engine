@@ -35,10 +35,6 @@
     	</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
-			<artifactId>tl-themes-dezent</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.top-logic</groupId>
 			<artifactId>tl-model-search</artifactId>
 		</dependency>
 		<dependency>

@@ -254,7 +254,7 @@ public final class LayoutControlComponent extends LayoutComponent implements Bou
 
 	@Override
 	protected boolean supportsInternalModel(Object object) {
-		return false;
+		return true;
 	}
 
 	@Override

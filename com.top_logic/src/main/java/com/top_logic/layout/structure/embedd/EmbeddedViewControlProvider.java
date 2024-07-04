@@ -8,13 +8,13 @@ package com.top_logic.layout.structure.embedd;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.WithPostCreateActions;
+import com.top_logic.layout.structure.DecoratingLayoutControlProvider;
 import com.top_logic.layout.structure.LayoutControl;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.layout.xml.LayoutControlComponent;
@@ -26,8 +26,8 @@ import com.top_logic.tool.boundsec.commandhandlers.BookmarkService;
  * {@link LayoutControlProvider} for e.g. a {@link LayoutControlComponent} to embedd a
  * micro-frontend of another application via an <code>iframe</code> element.
  */
-public class EmbeddedViewControlProvider extends AbstractConfiguredInstance<EmbeddedViewControlProvider.Config<?>>
-		implements LayoutControlProvider {
+public class EmbeddedViewControlProvider
+		extends DecoratingLayoutControlProvider<EmbeddedViewControlProvider.Config<?>> {
 
 	/**
 	 * Configuration options for {@link EmbeddedViewControlProvider}.
@@ -60,7 +60,7 @@ public class EmbeddedViewControlProvider extends AbstractConfiguredInstance<Embe
 	}
 
 	@Override
-	public LayoutControl createLayoutControl(Strategy strategy, LayoutComponent component) {
+	public LayoutControl mkLayout(Strategy strategy, LayoutComponent component) {
 		UICallback onClose = (commandContext, args) -> {
 			Object resultObject = args.isEmpty() ? null : BookmarkService.getInstance().resolveBookmark(args);
 			WithPostCreateActions.processCreateActions(_actions, component, resultObject);

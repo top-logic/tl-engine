@@ -85,44 +85,6 @@ String appSubtitle = (com.top_logic.layout.Icons.HIDE_APP_TITLE_ON_LOGIN_PAGE.ge
 				return true;
 			}
 			
-			var DO_NOT_CLOSE = 'doNotClose=true';
-			
-			function openInRootFrame(name) {
-				if (this == top) {
-					return true;
-				}
-				if (name == null) {
-					name = "invisible_frame"; // default name
-				}
-				// check, if we need to scan for the correct frame
-				var fullURL     = parent.document.URL;
-				var theQuery = fullURL.substring(fullURL.indexOf('?'), fullURL.length);
-				if (theQuery.indexOf(DO_NOT_CLOSE) < 0) {
-					return;
-				}
-				if (this == top) {
-					// top frame is ok, but we need to check if we have an openend window to close
-					if (confirm('<%=res.getString(ResKey.legacy("tl.login.noConnection"))%>\n<%=res.getString(ResKey.legacy("tl.login.closingWindow"))%>')) {
-						self.close();
-					}
-					else {
-						self.location = "<%=contextPath%>/jsp/pos/view/Empty.jsp";
-					}
-				}
-				else {
-					theRootFrame = findFrame(name);
-					
-					if (theRootFrame != null) {
-						// we found the pos root frame
-						theRootFrame.parent.location.href = self.location+'?'+DO_NOT_CLOSE;
-					}
-					else {
-						// normal login/logout
-						// do nothing
-					}
-				}
-			}
-			
 			// ignore errors on page
 			function handleError() {
 				return true;

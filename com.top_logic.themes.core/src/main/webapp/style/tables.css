@@ -137,34 +137,6 @@ th.tblTitleRight {
 	white-space: nowrap;
 }
 
-input.tblRowSelector {
-	margin-top: 4px;	
-}
-
-input.tblRowSelector {
-	/* empty: due to transparent image. */
-}
-
-input.tblRowSelected {
-	background-image: var(--TABLE_ROW_SELECTED);
-}
-
-tr.tl-table__row:hover input.tblRowSelector, input.tblRowSelector:focus {
-	background-image: var(--TABLE_ROW_FOCUSED);
-}
-
-a.tblRowSelector {
-	display: none;
-}
-
-a.tblRowSelector i {
-	font-size: 9px;
-}
-
-tr.tl-table__row:hover a.tblRowSelector, a.tblRowSelector:focus, a.tblRowSelected {
-	display: inline-block;
-}
-
 span.tblButton input {
 	margin-left: 2px; 
 }
@@ -318,12 +290,12 @@ th.tblTHRight {
 }
 
 tr.tl-table__row {
-	background-color: var(--background);
+	background-color: var(--TABLE_ROW_BACKGROUND_COLOR);
 }
 
 /* Note: Order matters: Must appear below `tl-table__row` to override styles. */
 tr.tblEven {
-	background-color: var(--background);
+	background-color: var(--TABLE_ROW_EVEN_BACKGROUND_COLOR);
 }
 
 /* Note: Order matters: Must appear below `tblEven` to override styles. */
@@ -640,37 +612,6 @@ td.regTDselected100 {
 
 select.tbl {	/* Tables can be written as selects, using this style */
  	width: 80%;
-}
-
-div.movingheader{
-	text-align: 		 left;
-	position:			 absolute;
-	font-size:           13px;
-	font-weight:         normal;
-    white-space:         nowrap;
-	padding:             0px;
-	border-bottom-color: var(--border-subtle);
-	border-bottom-style: solid;
-	border-bottom-width: 0px;
-	border-right-width:  0px;
-	border-left-width:   0px;
-	border-top-width:    0px;
-	color:               black;
-	background-color:    var(--layer-accent);
-}
-
-th.insertRight{
-	border-right-color:  var(--REPLACECOLOR) !important;
-	border-right-width: 2px !important;
-	border-right-style: solid !important;
-	z-index: 1000 !important;
-}
-
-th.insertLeft{
-	border-left-color:   var(--REPLACECOLOR) !important;
-	border-left-width: 2px !important;
-	border-left-style: solid !important;
-	z-index: 1000 !important;
 }
 
 .fltButtons {

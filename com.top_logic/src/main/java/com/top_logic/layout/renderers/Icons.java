@@ -21,6 +21,7 @@ import com.top_logic.layout.form.control.AbstractButtonControl;
 @SuppressWarnings("javadoc")
 public class Icons extends IconsBase {
 
+	@DefaultValue("css:bi bi-chevron-right")
 	public static ThemeImage BUTTON_ARROW;
 
 	public static ThemeImage BUTTON_ARROW_DISABLED;

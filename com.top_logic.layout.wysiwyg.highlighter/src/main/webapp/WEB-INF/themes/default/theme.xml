@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8" ?>
-
-<theme>
-	<styles>
-		<style name="webjar:org.webjars/highlightjs:/webjars/highlightjs:styles/base16/atelier-heath-light.min.css"/>
-	</styles>
-</theme>
-

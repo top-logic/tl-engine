@@ -7,6 +7,7 @@ package com.top_logic.layout.form.tag;
 
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.gui.ThemeVar;
+import com.top_logic.layout.basic.DefaultValue;
 import com.top_logic.layout.basic.IconsBase;
 import com.top_logic.layout.basic.ThemeImage;
 
@@ -58,6 +59,7 @@ public class Icons extends IconsBase {
 
 	public static ThemeImage DELETE_BUTTON_DISABLED;
 
+	@DefaultValue("css:bi bi-arrow-down")
 	public static ThemeImage DOWN;
 
 	public static ThemeImage OPEN_CHOOSER;

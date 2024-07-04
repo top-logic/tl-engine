@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/embeddedView.template.xml"
+>
+	<arguments toolbar="true">
+		<name key="dynamic.bac6cd93-f460-4c17-a49f-fa4266973446">
+			<en>Second view to same app</en>
+			<de>Ein zweiter Blick in die Anwendung</de>
+		</name>
+		<urlProvider class="com.top_logic.model.search.providers.UrlProviderByExpression">
+			<url>resolveAlias("%HOST%") + contextPath() + "/servlet/LayoutServlet?layout=views/micro-frontend/view.layout.xml"</url>
+		</urlProvider>
+	</arguments>
+</config:template-call>

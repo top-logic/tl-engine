@@ -28,7 +28,7 @@
 		</property>
 	</properties>
 
-	<layoutControl name="Embedd"
+	<defaultComponent name="Embedd"
 		dialogs="${dialogs}"
 		model="${model}"
 		titleKey="${name}"
@@ -43,5 +43,5 @@
 			${buttons}
 			<include name="templates/editComponentCommands.xml"/>
 		</buttons>
-	</layoutControl>
+	</defaultComponent>
 </config:template>

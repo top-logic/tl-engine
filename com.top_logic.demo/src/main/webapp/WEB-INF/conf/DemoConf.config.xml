@@ -226,6 +226,7 @@
 		<config config:interface="com.top_logic.knowledge.gui.layout.LayoutConfig">
 			<max-subsession-count>3</max-subsession-count>
 			<stable-window-name>demo1</stable-window-name>
+			<layouts>masterFrame.layout.xml, views/micro-frontend/view.layout.xml</layouts>			
 		</config>
 		
 		<config config:interface="com.top_logic.layout.scripting.template.excel.ExcelActionRegistry$Config">

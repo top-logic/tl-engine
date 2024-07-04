@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_af58c75e_3464_4afd_884b_291f1251642e"
+		securityDomain=""
+		tabIcon="css:fas fa-tv"
+	>
+		<tabLabel key="dynamic.24a5dd68-93e7-49e7-896c-dfa24cc04c1c">
+			<en>Micro front-end</en>
+			<de>Micro-Frontend</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/microFront_end/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

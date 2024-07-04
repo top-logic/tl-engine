@@ -2901,3 +2901,12 @@ i.tl-accent-2 {
 	--highlight-fg: var(--highlight);
 	color: var(--highlight, inherit);
 }
+
+iframe.tlEmbedd {
+	border: none;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	position: absolute;
+}

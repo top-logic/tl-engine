@@ -5,6 +5,22 @@
 >
 	<properties extends="com.top_logic.layout.structure.ToolbarOptions, com.top_logic.layout.form.component.WithPostCreateActions$Config, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters">
 		<annotations>
+			<display-order>
+				<value>
+					<property name="name"/>
+	
+					<property name="model"/>
+					<property name="urlProvider"/>
+	
+					<property name="toolbar"/>
+					<property name="showMaximize"/>
+					<property name="showMinimize"/>
+					<property name="showPopOut"/>
+	
+					<property name="postCreateActions"/>
+					<property name="buttons"/>
+				</value>
+			</display-order>
 		</annotations>
 		
 		<property name="name"
@@ -14,6 +30,10 @@
 			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
 			<item-display value="monomorphic"/>
 		</property>
+		
+		<property name="toolbar"
+			type="boolean"
+		/>
 		
 		<property name="model"
 			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
@@ -32,6 +52,7 @@
 		dialogs="${dialogs}"
 		model="${model}"
 		titleKey="${name}"
+		toolbar="${toolbar}"
 	>
 		<componentControlProvider class="com.top_logic.layout.structure.embedd.EmbeddedViewControlProvider"
 			urlProvider="${urlProvider}"

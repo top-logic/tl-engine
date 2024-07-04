@@ -2693,3 +2693,11 @@ div.ssiContentArea {
 	margin-left: var(--spacing-01);
 }
 
+iframe.tlEmbedd {
+	border: none;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	position: absolute;
+}

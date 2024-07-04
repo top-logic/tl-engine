@@ -105,10 +105,18 @@ public class Bootstrap {
 	}
 
 	private void start() throws Exception {
-		String stopUrl = "http://" + HOSTNAME + ":" + _port + ADMIN_WEBAPP + STOP_SERVLET;
+		String externalIntf = Environment.getSystemPropertyOrEnvironmentVariable("tl_host", null);
+		if (externalIntf == null) {
+			// Set property normally configured to the external interface of the application.
+			externalIntf = "http://" + HOSTNAME + ":" + _port;
+			System.setProperty("tl_host", externalIntf);
+		}
+
+		String stopUrl = externalIntf + ADMIN_WEBAPP + STOP_SERVLET;
 		stopPreviousApp(stopUrl);
 
 		System.setProperty(Environment.DEVELOPER_MODE, "true");
+
 		PathInfo paths = Workspace.getAppPaths();
 
 		final Server server = new Server();
@@ -206,7 +214,7 @@ public class Bootstrap {
 
 		Runtime.getRuntime().addShutdownHook(shutdown);
 
-		String appUrl = "http://" + HOSTNAME + ":" + _port + _contextPath + "/";
+		String appUrl = externalIntf + _contextPath + "/";
 
 		System.out.println("Server started: " + appUrl);
 		System.out.println("Stop server accessing: " + stopUrl);

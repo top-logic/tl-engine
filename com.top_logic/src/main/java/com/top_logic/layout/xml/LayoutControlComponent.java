@@ -219,11 +219,6 @@ public final class LayoutControlComponent extends LayoutComponent implements Bou
 		public LayoutControl createLayoutControl(Strategy strategy, LayoutComponent component) {
 			LayoutControlComponent controlComponent = (LayoutControlComponent) component;
 			LayoutComponent referencedComponent = controlComponent.getReferencedComponent();
-			if (referencedComponent == null) {
-				Logger.error("Component cannot be resolved: " + component.getName(),
-					DispatchingLayoutControlProvider.class);
-				return null;
-			}
 
 			PolymorphicConfiguration<LayoutControlProvider> customProvider =
 				controlComponent.getConfig().getComponentControlProvider();

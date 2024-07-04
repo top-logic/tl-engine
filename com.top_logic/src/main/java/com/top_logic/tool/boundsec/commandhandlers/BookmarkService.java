@@ -100,6 +100,25 @@ public class BookmarkService extends KBBasedManagedClass<BookmarkService.Config>
 		_handlerByType = getSpecialHandlers(context, config);
 	}
 
+	/**
+	 * Resolves an object based on some URL arguments.
+	 */
+	public Object resolveBookmark(Map<String, Object> urlArguments) {
+		Collection<BookmarkHandler> specialProviders = getSpecialisedHandlers();
+		for (BookmarkHandler provider : specialProviders) {
+			Object targetObject = provider.getBookmarkObject(urlArguments);
+			if (targetObject != null) {
+				return targetObject;
+			}
+		}
+		BookmarkHandler defaultProvider = getDefaultHandler();
+		Object target = defaultProvider.getBookmarkObject(urlArguments);
+		if (target != null) {
+			return target;
+		}
+		return null;
+	}
+
 	private LinkedHashMap<TLType, BookmarkHandler> getSpecialHandlers(InstantiationContext context, Config config) {
 		Map<TLType, BookmarkHandler> unorderedProvider = resolveConfiguredHandlers(context, config);
 		return orderTopologically(unorderedProvider);

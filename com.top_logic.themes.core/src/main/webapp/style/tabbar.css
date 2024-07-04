@@ -186,6 +186,7 @@
 .system_message {
 	display: flex;
 	flex-direction: column;
+	color: var(--support-danger);
 }
 
 .ToolBarContainer .IconContainer .cButton,

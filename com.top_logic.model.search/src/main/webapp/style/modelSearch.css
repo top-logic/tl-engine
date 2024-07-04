@@ -25,8 +25,7 @@ div.ace_tooltip>code.inlineCode {
 }
 
 .tablePreview .previewBoxInner,
-.formPreview .previewBoxInner
-{
+.formPreview .previewBoxInner {
 	height: 100%;
 	top: 0px;
 	transform: none;
@@ -44,4 +43,62 @@ div.ace_tooltip>code.inlineCode {
 	position: relative;
 	top: 50%;
 	transform: translateY(-50%);
+}
+
+.modelBasedSearch .rf_line {
+	overflow: initial;
+}
+
+.modelBasedSearch div.dfList div.dfList, 
+.modelBasedSearch .dfModeFull div.dfList {
+	margin-left: var(--spacing-04);
+}
+
+.modelBasedSearch .dfListContent,
+.modelBasedSearch .dfListEntry {
+	margin-top: var(--spacing-02);
+	white-space: nowrap;
+}
+
+.modelBasedSearch .dfListEntry {
+	display: grid;
+	grid-column-gap: var(--spacing-01);
+	grid-template-columns: repeat(8, auto);
+	align-items: center;
+	max-width: max-content;
+}
+
+.modelBasedSearch .dfListEntry > * {
+	max-width: max-content;
+}
+
+.modelBasedSearch .dfListContent .dfListEntry:first-child {
+	margin-top: 0; /* otherwise the margin is stacked */
+}
+
+.modelBasedSearch span.dfListRemove {
+	margin-right: var(--spacing-02);
+}
+
+.modelBasedSearch .ddwttContainer.active {
+	display: unset;
+	min-width: max-content;
+}
+
+.modelBasedSearch .cTextInput.cannot-edit {
+	min-width: calc(2 * var(--spacing-03) + 2ch);
+}
+
+.modelBasedSearch .cTextInput {
+	text-align: center;
+	min-width: calc(2 * var(--spacing-03) + 4.5ch);
+	max-width: calc(2 * var(--spacing-03) + 21.5ch);
+}
+
+.modelBasedSearch .cTextInput:not(.searchIrrelevant) input.is-input:not([size]) {
+	width: 100vw;
+}
+
+.modelBasedSearch .cPopupSelect.active {
+	width: unset;
 }

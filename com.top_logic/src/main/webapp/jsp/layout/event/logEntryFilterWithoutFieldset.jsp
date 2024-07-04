@@ -8,7 +8,7 @@
 %><%
 Resources theRes = Resources.getInstance();
 String theLabel = theRes.getString(ResKey.legacy("tl.command.refresh"));
-String theImagePath = "theme:MISC_RELOAD_SMALL";
+String theImagePath = "theme:ICONS_BUTTON_REFRESH";
 %><layout:html>
 	<layout:head>
 		<style>

@@ -898,21 +898,6 @@ div.dfListAdd {
 	min-height: 24px;
 }
 
-.rf_highlighted .rf_frameBorder.hover .rf_frame,
-.rf_highlighted .rf_frame.hover,
-.rf_highlighted .rf_wrapper.hover .rf_container {
-	margin-left: 20px;
-	margin-right: 20px;
-	min-width: calc(100% - 40px);
-}
-
-.rf_highlighted .rf_frameBorder.hover,
-.rf_highlighted .rf_wrapper.hover  {
-	background-image: var(--FORM_EDITOR_BUTTON_INSERT_LEFT), var(--FORM_EDITOR_BUTTON_INSERT_RIGHT);
-	background-repeat: no-repeat;
-	background-position: left center, right center; 
-}
-
 .cFormEditorToolbox [data-tool=true].rf_dragElement {
     display: inline-block;
     overflow: hidden;
@@ -975,13 +960,11 @@ div.dfListAdd {
 	background-color: var(--BUTTON_COLOR_HOVER);
 }
 
-.cFormEditorDisplay.edit .rf_frameBorder:not(.hover):hover > .rf_frame,
 .cFormEditorDisplay.edit .rf_wrapper:not(.hover):hover > .rf_container {
 	margin-left: 20px;
 	min-width: calc(100% - 20px);
 }
 
-.rf_editor > .cFormEditorPreview:not(.rf_highlighted) > .cFormEditorDisplay.edit .rf_frameBorder:not(.hover):hover,
 .rf_editor > .cFormEditorPreview:not(.rf_highlighted) > .cFormEditorDisplay.edit .rf_wrapper:not(.hover):hover {
 	background-image: var(--FORM_EDITOR_BUTTON_MOVE);
 	background-repeat: no-repeat;

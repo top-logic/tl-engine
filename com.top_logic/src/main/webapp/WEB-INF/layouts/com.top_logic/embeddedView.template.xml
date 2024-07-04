@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	groups="commons"
+>
+	<properties extends="com.top_logic.layout.structure.ToolbarOptions, com.top_logic.layout.form.component.WithPostCreateActions$Config, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters">
+		<annotations>
+		</annotations>
+		
+		<property name="name"
+			type="ResKey"
+		>
+			<mandatory/>
+			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
+			<item-display value="monomorphic"/>
+		</property>
+		
+		<property name="model"
+			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
+			type="com.top_logic.layout.ModelSpec"
+		/>
+		
+		<property name="urlProvider"
+			type="PolymorphicConfiguration"
+			instance-type="com.top_logic.layout.structure.embedd.URLProvider"
+		>
+			<mandatory/>
+		</property>
+	</properties>
+
+	<layoutControl name="Embedd"
+		dialogs="${dialogs}"
+		model="${model}"
+		titleKey="${name}"
+	>
+		<componentControlProvider class="com.top_logic.layout.structure.embedd.EmbeddedViewControlProvider"
+			urlProvider="${urlProvider}"
+			postCreateActions="${postCreateActions}"
+		>
+		</componentControlProvider>
+	
+		<buttons>
+			${buttons}
+			<include name="templates/editComponentCommands.xml"/>
+		</buttons>
+	</layoutControl>
+</config:template>

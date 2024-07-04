@@ -5,7 +5,6 @@
  */
 package com.top_logic.tool.boundsec.commandhandlers;
 
-import java.util.Collection;
 import java.util.Map;
 
 import com.top_logic.basic.config.InstantiationContext;
@@ -63,20 +62,7 @@ public class DefaultBookmarkHandler extends GotoHandler {
 
 	@Override
 	protected Object getObject(Map<String, Object> someArguments) {
-		BookmarkService bms = BookmarkService.getInstance();
-		Collection<BookmarkHandler> specialProviders = bms.getSpecialisedHandlers();
-		for (BookmarkHandler provider : specialProviders) {
-			Object targetObject = provider.getBookmarkObject(someArguments);
-			if (targetObject != null) {
-				return targetObject;
-			}
-		}
-		BookmarkHandler defaultProvider = bms.getDefaultHandler();
-		Object target = defaultProvider.getBookmarkObject(someArguments);
-		if (target != null) {
-			return target;
-		}
-		return null;
+		return BookmarkService.getInstance().resolveBookmark(someArguments);
 	}
 
 }

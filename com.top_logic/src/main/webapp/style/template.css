@@ -7993,3 +7993,12 @@ img.ddwttItemIcon {
 	left: 50%;
 	transform: translate(-50%, -50%);
 }
+
+iframe.tlEmbedd {
+	border: none;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	position: absolute;
+}

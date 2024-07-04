@@ -86,17 +86,15 @@ public abstract class AliasManager extends ManagedClass implements Reloadable {
 		super.startUp();
 
 		fetchConfiguredAliases();
-		Map<String, String> baseAliases;
+		Map<String, String> baseAliases = new HashMap<>();
 		if (ServletContextService.Module.INSTANCE.isActive()) {
 			ServletContextService contextService = ServletContextService.getInstance();
 			ServletContext context = contextService.getServletContext();
 			String applicationPath = contextService.getApplication().getPath();
 
-			baseAliases = new HashMap<>();
 			baseAliases.put(APP_CONTEXT, context.getContextPath());
 			baseAliases.put(APP_ROOT, applicationPath);
 		} else {
-			baseAliases = new HashMap<>();
 			baseAliases.put(APP_CONTEXT, "");
 			baseAliases.put(APP_ROOT, new File(ModuleLayoutConstants.WEBAPP_DIR).getAbsolutePath());
 		}

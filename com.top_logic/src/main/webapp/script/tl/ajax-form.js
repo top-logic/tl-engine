@@ -322,7 +322,7 @@ services.form = {
 		 * to the user. The height is unknown and depends on the number and size of the elements to be dragged. 
 		 * Therefore, the element is moved down by the maximal height (i.e. height of the viewport).
 		 */
-		dragImageElement.style.bottom = "-100vh";
+		dragImageElement.style.bottom = "100vh";
 	
 		document.body.appendChild(dragImageElement);
 		

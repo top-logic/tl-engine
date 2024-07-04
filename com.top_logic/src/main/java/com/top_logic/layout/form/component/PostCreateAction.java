@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.form.component;
 
+import com.top_logic.base.services.simpleajax.JSSnipplet;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
@@ -24,10 +25,13 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.layout.DefaultRefVisitor;
+import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.channel.linking.Channel;
@@ -37,6 +41,7 @@ import com.top_logic.layout.channel.linking.ref.ComponentRef;
 import com.top_logic.layout.channel.linking.ref.NamedComponent;
 import com.top_logic.layout.form.component.edit.EditMode;
 import com.top_logic.layout.form.component.edit.EditMode.EditorMode;
+import com.top_logic.layout.structure.embedd.URLProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
@@ -339,5 +344,114 @@ public interface PostCreateAction {
 			targetComponent.setModel(newModel);
 			targetComponent.makeVisible();
 		}
+	}
+
+	/**
+	 * UI action to open an external URL as response to a command.
+	 */
+	@InApp
+	@Label("Open URL")
+	public class OpenUrlAction extends AbstractConfiguredInstance<OpenUrlAction.Config<?>> implements PostCreateAction {
+
+		/**
+		 * Configuration options for {@link OpenUrlAction}.
+		 */
+		@TagName("openUrl")
+		public interface Config<I extends OpenUrlAction> extends PolymorphicConfiguration<I> {
+
+			/**
+			 * Opens the URL in a new browser window.
+			 * 
+			 * <p>
+			 * If this is option is disabled, the URL is opened in the application window replacing
+			 * the current session. When this happens in the main window, this is equivalent to a
+			 * log-out from the application (if no other windows sub-sessions are currently open).
+			 * </p>
+			 */
+			@Name("newWindow")
+			@BooleanDefault(true)
+			boolean getNewWindow();
+
+			/**
+			 * Algorithm constructing the URL to open.
+			 */
+			@Name("urlProvider")
+			@Mandatory
+			PolymorphicConfiguration<? extends URLProvider> getUrlProvider();
+
+		}
+
+		private boolean _newWindow;
+
+		private URLProvider _urlProvider;
+
+		/**
+		 * Creates a {@link OpenUrlAction} from configuration.
+		 * 
+		 * @param context
+		 *        The context for instantiating sub configurations.
+		 * @param config
+		 *        The configuration.
+		 */
+		@CalledByReflection
+		public OpenUrlAction(InstantiationContext context, Config<?> config) {
+			super(context, config);
+
+			_newWindow = config.getNewWindow();
+			_urlProvider = context.getInstance(config.getUrlProvider());
+		}
+
+		@Override
+		public void handleNew(LayoutComponent component, Object model) {
+			DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
+			String url = _urlProvider.getUrl(displayContext, component, model);
+
+			StringBuilder script = new StringBuilder();
+			if (_newWindow) {
+				script.append("window.open(");
+				TagUtil.writeJsString(script, url);
+				script.append(", '_blank')");
+			} else {
+				script.append("window.location = ");
+				TagUtil.writeJsString(script, url);
+			}
+
+			displayContext.getWindowScope().getTopLevelFrameScope().addClientAction(new JSSnipplet(script.toString()));
+		}
+
+	}
+
+	/**
+	 * Closes the dialog, the component of the currently executing command is defined in.
+	 */
+	@InApp
+	class CloseDialog extends AbstractConfiguredInstance<CloseDialog.Config<?>> implements PostCreateAction {
+
+		/**
+		 * Configuration options for {@link CloseDialog}.
+		 */
+		@TagName("closeDialog")
+		public interface Config<I extends CloseDialog> extends PolymorphicConfiguration<I> {
+			// Pure marker interface.
+		}
+
+		/**
+		 * Creates a {@link CloseDialog} from configuration.
+		 * 
+		 * @param context
+		 *        The context for instantiating sub configurations.
+		 * @param config
+		 *        The configuration.
+		 */
+		@CalledByReflection
+		public CloseDialog(InstantiationContext context, Config<?> config) {
+			super(context, config);
+		}
+
+		@Override
+		public void handleNew(LayoutComponent component, Object newModel) {
+			component.closeDialog();
+		}
+
 	}
 }

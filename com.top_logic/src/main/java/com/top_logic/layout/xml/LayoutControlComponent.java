@@ -118,6 +118,8 @@ public final class LayoutControlComponent extends LayoutComponent implements Bou
 
 	@Override
 	protected void componentsResolved(InstantiationContext context) {
+		super.componentsResolved(context);
+
 		MainLayout mainLayout = getMainLayout();
 		if (_componentName == null) {
 			_referencedComponent = this;

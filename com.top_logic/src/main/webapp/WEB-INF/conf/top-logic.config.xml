@@ -1751,6 +1751,7 @@
 					<scheme class="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming" priority="preferred"/>
 					<scheme class="com.top_logic.layout.scripting.recorder.ref.value.ResKeyNaming" priority="preferred"/>
 					<scheme class="com.top_logic.layout.scripting.recorder.ref.value.ComponentNameNaming" priority="preferred"/>
+					<scheme class="com.top_logic.layout.scripting.recorder.ref.value.AliasNaming" priority="resolve-only"/>
 					<scheme class="com.top_logic.model.util.scripting.TLModelPartNaming" priority="preferred"/>
 
 					<scheme class="com.top_logic.layout.scripting.recorder.ref.TreeObjectPathNaming"/>

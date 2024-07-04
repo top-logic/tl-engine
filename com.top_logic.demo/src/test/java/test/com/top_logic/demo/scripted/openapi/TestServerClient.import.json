@@ -169,7 +169,7 @@
 			},
 			"DeleteData": {
 				"type": "openIdConnect",
-				"openIdConnectUrl": "http://liveapps:8098/auth/realms/tl-demo"
+				"openIdConnectUrl": "http://server:8080/is-replaced-in-later-action"
 			},
 			"DeleteData2": {
 				"type": "apiKey",

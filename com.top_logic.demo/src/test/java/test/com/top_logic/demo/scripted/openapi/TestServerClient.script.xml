@@ -1587,8 +1587,8 @@
 											>
 												<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 											</field>
-											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-												value="http://liveapps:8098/auth/realms/tl-demo"
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AliasNaming$Name"
+												value="%TEST_OPEN_API_URL%"
 											/>
 										</action>
 										<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
@@ -1757,8 +1757,8 @@
 													tab-path="Administration > Development > Service Editor > Modul Konfiguration"
 												/>
 											</field>
-											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-												value="test-tldemo-server"
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AliasNaming$Name"
+												value="%TEST_OPEN_API_SERVER_ID%"
 											/>
 										</action>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
@@ -1788,8 +1788,8 @@
 													<labeled-member label="Passwort"/>
 												</path>
 											</field>
-											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-												value="wGt3gmPgBcBTsRKAwH9IQLPyyw5WGgfe"
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AliasNaming$Name"
+												value="%TEST_OPEN_API_SERVER_SECRET%"
 											/>
 										</action>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
@@ -2362,6 +2362,20 @@
 							label="Ok"
 							user-id="root"
 						/>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="OpenID-URL"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AliasNaming$Name"
+								value="%TEST_OPEN_API_URL%"
+							/>
+						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 							comment="Add security"
 						>
@@ -2617,8 +2631,8 @@
 											>
 												<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 											</field>
-											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-												value="test-tldemo-client"
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AliasNaming$Name"
+												value="%TEST_OPEN_API_CLIENT_ID%"
 											/>
 										</action>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
@@ -2629,8 +2643,8 @@
 											>
 												<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 											</field>
-											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-												value="XuGyoUI1NIPMQUzBs7tkExAIEOPNm53C"
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AliasNaming$Name"
+												value="%TEST_OPEN_API_CLIENT_SECRET%"
 											/>
 										</action>
 										<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"

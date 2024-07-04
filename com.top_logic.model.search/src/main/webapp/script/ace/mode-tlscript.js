@@ -28,7 +28,7 @@ ace.define('ace/mode/tlscript', function(require, exports, module) {
 			 * Regular expression for an identifier deciding if completions should be computed and shown.
 			 */
 			identifierRegexps: [
-				/[a-zA-Z0-9$]+/
+				/[a-zA-Z0-9_$]+/
 			]
 	};
 	

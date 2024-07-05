@@ -624,6 +624,11 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-importer-jdbc</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-service-jms</artifactId>
 				<version>${tl.version}</version>
 			</dependency>

@@ -132,6 +132,10 @@
                 <artifactId>tl-service-openapi-server</artifactId>
         </dependency>
 #end
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-importer-jdbc</artifactId>
+		</dependency>
 
 		<!-- Tests -->
 		<dependency>

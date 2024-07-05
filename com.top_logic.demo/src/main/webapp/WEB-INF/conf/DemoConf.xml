@@ -5,6 +5,13 @@
 <root>
 	<alias>
 		<entry name="%QUICK_SEARCH_SEARCH_COMPONENT%" value="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput" />
+		
+    	<!-- Aliases for TestServerClient.script.xml -->
+		<entry name="%TEST_OPEN_API_URL%" value="${env:tl_test_testopenapi_url}"/>
+		<entry name="%TEST_OPEN_API_SERVER_ID%" value="${env:tl_test_testopenapi_server_id}"/>
+		<entry name="%TEST_OPEN_API_SERVER_SECRET%" value="${env:tl_test_testopenapi_server_secret}"/>
+		<entry name="%TEST_OPEN_API_CLIENT_ID%" value="${env:tl_test_testopenapi_client_id}"/>
+		<entry name="%TEST_OPEN_API_CLIENT_SECRET%" value="${env:tl_test_testopenapi_client_secret}"/>
 	</alias>
 	
 	<properties>

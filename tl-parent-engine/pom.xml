@@ -110,6 +110,7 @@
  		<module>../com.top_logic.service.openapi.common</module>
  		<module>../com.top_logic.service.openapi.client</module>
 		<module>../com.top_logic.service.openapi.server</module>
+		<module>../tl-importer-jdbc</module>
 		<module>../tl-service-jms</module>
 		<module>../tl-service-jms-activemq</module>
 		<module>../tl-service-jms-ibmmq</module>

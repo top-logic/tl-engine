@@ -320,7 +320,13 @@ services.form = {
 		/*
 		 * The element from which the image for the drag operation is created should not be visible
 		 * to the user. The height is unknown and depends on the number and size of the elements to be dragged. 
-		 * Therefore, the element is moved down by the maximal height (i.e. height of the viewport).
+		 * Therefore, the element is moved up by the maximal height (i.e. height of the viewport).
+		 *
+		 * The browser does not display objects above its top edge and to the left of its left edge. 
+		 * This content is cut off by the browser. 
+		 * In contrast to the right and bottom edges, the size of the rendered container does not change if an element is positioned absolute, 
+		 * for example, 100vh above the top edge. However, if you were to position absolute the element 100vh below the 
+		 * bottom edge, the height of the rendered container would suddenly double.
 		 */
 		dragImageElement.style.bottom = "100vh";
 	

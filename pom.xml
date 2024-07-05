@@ -730,6 +730,12 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-importer-jdbc</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-security-selfservice</artifactId>
 				<version>${tl.version}</version>
 			</dependency>

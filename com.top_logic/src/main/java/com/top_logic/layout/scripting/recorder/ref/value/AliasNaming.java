@@ -6,6 +6,7 @@
 package com.top_logic.layout.scripting.recorder.ref.value;
 
 import com.top_logic.basic.AliasManager;
+import com.top_logic.basic.StringServices;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.UnrecordableNamingScheme;
@@ -25,14 +26,18 @@ public class AliasNaming extends UnrecordableNamingScheme<String, AliasNaming.Na
 	public interface Name extends ModelName {
 
 		/**
-		 * The literal value.
+		 * The name of the alias.
 		 */
 		String getValue();
 
 		/**
-		 * @see #getValue()
+		 * Whether the value for the alias may be <code>null</code>, empty, or not set.
+		 * 
+		 * <p>
+		 * Resolving a non-optional {@link Name} with an empty resolved value leads to an error.
+		 * </p>
 		 */
-		void setValue(String value);
+		boolean isOptional();
 
 	}
 
@@ -47,8 +52,8 @@ public class AliasNaming extends UnrecordableNamingScheme<String, AliasNaming.Na
 	@Override
 	public String locateModel(ActionContext context, Name name) {
 		String resolved = AliasManager.getInstance().getAlias(name.getValue());
-		if (resolved == null) {
-			throw ApplicationAssertions.fail(name, "No alias available: " + name.getValue());
+		if (!name.isOptional() && StringServices.isEmpty(resolved)) {
+			throw ApplicationAssertions.fail(name, "No alias available or value empty: " + name.getValue());
 		}
 		return resolved;
 	}

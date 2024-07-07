@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  When updating your version of GWT, you should also update this DTD reference,
+  so that your app can take advantage of the latest GWT module capabilities.
+-->
+<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.8.1//EN"
+  "http://gwtproject.org/doctype/2.8.1/gwt-module.dtd">
+<module rename-to='TLBlocksClient'>
+    <inherits name="com.google.gwt.user.User" />
+    <inherits name="com.google.gwt.user.theme.standard.Standard"/>
+    <inherits name="com.top_logic.ajax.shared.TLAjaxShared"/>
+    <inherits name="com.top_logic.ajax.client.TLAjaxClient"/>
+    
+    <inherits name="com.top_logic.graph.diagramjs.client.TLGraphClientDiagramJS"/>
+    <inherits name="com.top_logic.graphic.blocks.TLBlocks"/>
+    
+    <inherits name="org.vectomatic.libgwtsvg"/>
+
+	<!-- Specify the paths for translatable code                    -->
+	<source path='boot'/>
+	<source path='control'/>
+	<source path='dom'/>
+
+    <entry-point class='com.top_logic.graphic.blocks.client.boot.ModuleEntry' />
+
+	<!-- allow Super Dev Mode -->
+	<add-linker name="xsiframe"/>
+</module>

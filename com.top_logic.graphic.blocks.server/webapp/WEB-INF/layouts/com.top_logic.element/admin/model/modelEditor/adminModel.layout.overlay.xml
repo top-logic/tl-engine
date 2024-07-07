@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<components>
+	<component name="Tab">
+		<components>
+			<layout-reference resource="com.top_logic.graphic.blocks.server/functionDesigner/index.layout.xml"/>
+		</components>
+	</component>
+</components>

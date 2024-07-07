@@ -6,8 +6,8 @@ package com.top_logic.graphic.blocks.model;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
-import com.top_logic.basic.col.Provider;
 import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.graphic.blocks.json.JsonSerializable;
@@ -28,7 +28,7 @@ public class BlockSchema implements JsonSerializable<Void> {
 
 	private Map<String, ConnectorType> _connectorTypes = new HashMap<>();
 
-	private Map<String, Provider<RowPartType>> _contentTypes = new HashMap<>();
+	private Map<String, Supplier<RowPartType>> _contentTypes = new HashMap<>();
 
 	private Map<String, BlockType> _blockTypes = new HashMap<>();
 
@@ -54,10 +54,10 @@ public class BlockSchema implements JsonSerializable<Void> {
 	}
 
 	/**
-	 * The {@link RowPartType} {@link Provider} with the given well-known name.
+	 * The {@link RowPartType} {@link Supplier} with the given well-known name.
 	 */
-	public Provider<RowPartType> getRowPartType(String kind) {
-		Provider<RowPartType> result = _contentTypes.get(kind);
+	public Supplier<RowPartType> getRowPartType(String kind) {
+		Supplier<RowPartType> result = _contentTypes.get(kind);
 		if (result == null) {
 			throw new IllegalArgumentException("No such content type '" + kind + "'.");
 		}
@@ -69,7 +69,7 @@ public class BlockSchema implements JsonSerializable<Void> {
 	 * 
 	 * @see #getRowPartType(String)
 	 */
-	public BlockSchema defineRowPartType(String kind, Provider<RowPartType> type) {
+	public BlockSchema defineRowPartType(String kind, Supplier<RowPartType> type) {
 		_contentTypes.put(kind, type);
 		return this;
 	}

@@ -9,7 +9,6 @@ import static com.top_logic.graphic.blocks.svg.SvgConstants.*;
 import java.io.IOException;
 
 import com.top_logic.ajax.server.util.JSControlUtil;
-import com.top_logic.basic.io.rw.WriterW;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.graphic.blocks.control.JSBlocksControlCommon;
@@ -105,15 +104,15 @@ public class BlocksControl extends AbstractControlBase implements JSBlocksContro
 		blocks.visit(IdAssignmentVisitor.INSTANCE, getScope().getFrameScope());
 
 		out.beginBeginTag(SVG);
-		writeControlAttributes(out);
+		writeControlAttributes(context, out);
 		out.beginAttribute(JSBlocksControlCommon.TL_BLOCK_SCHEMA);
 		{
-			schema.writeTo(new JsonWriter(new WriterW(out)));
+			schema.writeTo(new JsonWriter(out));
 		}
 		out.endAttribute();
 		out.beginAttribute(JSBlocksControlCommon.TL_BLOCK_DATA);
 		{
-			blocks.writeTo(new JsonWriter(new WriterW(out)));
+			blocks.writeTo(new JsonWriter(out));
 		}
 		out.endAttribute();
 

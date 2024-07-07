@@ -34,6 +34,7 @@
 			<layout-reference resource="com.top_logic.demo/technical/components/hTMLTemplates/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/toggleButton/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/dynamicVisibility/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/blocks/tabLayout.layout.xml"/>
 		</components>
 	</arguments>
 </config:template-call>

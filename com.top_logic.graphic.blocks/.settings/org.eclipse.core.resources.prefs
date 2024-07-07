@@ -1,0 +1,15 @@
+eclipse.preferences.version=1
+encoding/.classpath=UTF-8
+encoding/.factorypath=ISO-8859-1
+encoding//.settings/org.eclipse.jdt.apt.core.prefs=ISO-8859-1
+encoding//.settings/org.eclipse.jdt.core.prefs=ISO-8859-1
+encoding//.settings/org.eclipse.jdt.ui.prefs=ISO-8859-1
+encoding//bin/build.xml=ISO-8859-1
+encoding//deploy/local/webapp/WEB-INF/conf/metaConf.txt=ISO-8859-1
+encoding//src/com/top_logic/graphic/blocks/svg/SvgWriter.java=UTF-8
+encoding//webapp/WEB-INF/conf/metaConf.txt=ISO-8859-1
+encoding//webapp/WEB-INF/conf/resources/tl-graphic-blocks.messages_de.properties=ISO-8859-1
+encoding//webapp/WEB-INF/conf/resources/tl-graphic-blocks.messages_en.properties=ISO-8859-1
+encoding//webapp/WEB-INF/conf/tl-graphic-blocks.conf.config.xml=UTF-8
+encoding//webapp/WEB-INF/conf/tl-graphic-blocks.conf.xml=UTF-8
+encoding//webapp/WEB-INF/web.xml=UTF-8

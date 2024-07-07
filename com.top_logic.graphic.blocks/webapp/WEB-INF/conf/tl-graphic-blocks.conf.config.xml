@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<static-bundles>
+					<bundles>
+						<bundle name="tl-graphic-blocks.messages" />
+					</bundles>
+				</static-bundles>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.base.security.SecurityConfiguration">
+			<layout>
+				<domain-mapper class="com.top_logic.element.layout.admin.StructureDomainMapper" />
+			</layout>
+		</config>
+		
+		<config config:interface="com.top_logic.base.accesscontrol.ExternalAuthentication"
+			isEnabled="false"
+		/>
+	</configs>
+</application>

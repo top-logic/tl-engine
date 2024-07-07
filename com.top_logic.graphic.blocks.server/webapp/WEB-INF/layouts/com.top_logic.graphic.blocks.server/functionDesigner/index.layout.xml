@@ -1,5 +1,0 @@
-<include name="templates/contentTab.xml">
-	<components>
-		<blocks/>
-	</components>
-</include>

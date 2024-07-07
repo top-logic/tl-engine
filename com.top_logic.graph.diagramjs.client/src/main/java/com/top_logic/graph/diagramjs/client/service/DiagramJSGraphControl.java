@@ -335,7 +335,7 @@ public class DiagramJSGraphControl extends AbstractJSControl implements ScopeLis
 				setShowHiddenElements(Boolean.parseBoolean((String) args[0]));
 				break;
 			default:
-				throw new IllegalArgumentException("Command '" + command + "' not supported.");
+				super.invoke(command, args);
 		}
 	}
 

@@ -4,11 +4,9 @@
 	<services>
 		<config service-class="com.top_logic.basic.util.ResourcesModule">
 			<instance>
-				<static-bundles>
-					<bundles>
-						<bundle name="tl-graphic-blocks.messages" />
-					</bundles>
-				</static-bundles>
+				<bundles>
+					<bundle name="tl-graphic-blocks.messages" />
+				</bundles>
 			</instance>
 		</config>
 	</services>

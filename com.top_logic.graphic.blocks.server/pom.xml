@@ -2,10 +2,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-	  <groupId>com.top-logic</groupId>
-	  <artifactId>tl-parent-gwt</artifactId>
-	  <version>7.9.0-SNAPSHOT</version>
-	  <relativePath>../tl-parent-gwt</relativePath>
+    <relativePath>../tl-parent-core/internal</relativePath>
+    <groupId>com.top-logic</groupId>
+    <artifactId>tl-parent-core-internal</artifactId>
+    <version>7.9.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>tl-graphic-blocks-server</artifactId>
@@ -18,9 +18,52 @@
   	
   	<dependency>
 		<groupId>com.top-logic</groupId>
+		<artifactId>tl-graph-diagramjs-server</artifactId>
+  	</dependency>
+  	
+  	<dependency>
+		<groupId>com.top-logic</groupId>
 		<artifactId>tl-graphic-blocks</artifactId>
 		<version>${project.version}</version>
   	</dependency>
   	
+    <!-- The GWT client-code. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-graphic-blocks-client</artifactId>
+	  <version>${project.version}</version>
+      <type>war</type>
+      <classifier>web-fragment</classifier>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
+  
+  <build>
+  	<plugins>
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-war-plugin</artifactId>
+	
+			<executions>
+				<execution>
+					<id>war-fragment</id>
+					<phase>package</phase>
+					<goals>
+						<goal>war</goal>
+					</goals>
+					<configuration>
+						<overlays>
+							<overlay>
+								<groupId>com.top-logic</groupId>
+								<artifactId>tl-graphic-blocks-client</artifactId>
+								<type>war</type>
+								<classifier>web-fragment</classifier>
+							</overlay>
+						</overlays>
+					</configuration>
+				</execution>
+			</executions>
+		</plugin>
+  	</plugins>
+  </build>
 </project>

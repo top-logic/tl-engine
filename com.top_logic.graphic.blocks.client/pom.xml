@@ -10,33 +10,19 @@
 
   <artifactId>tl-graphic-blocks-client</artifactId>
 
+  <properties>
+	<gwt.module>com.top_logic.graphic.blocks.client.TLBlocksClient</gwt.module>  	
+  </properties>
+
   <dependencies>
   	<dependency>
 		<groupId>com.top-logic</groupId>
-		<artifactId>tl-ajax-client</artifactId>
-  	</dependency>
-
-  	<dependency>
-		<groupId>com.top-logic</groupId>
 		<artifactId>tl-graph-diagramjs-client</artifactId>
   	</dependency>
 
   	<dependency>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-graph-diagramjs-client</artifactId>
-        <version>${tl.version}</version>
-        <classifier>sources</classifier>
-        <scope>provided</scope>
-  	</dependency>
-  	
-  	<dependency>
-		<groupId>com.top-logic</groupId>
-		<artifactId>tl-ajax-client</artifactId>
-  	</dependency>
-
-  	<dependency>
-		<groupId>com.top-logic</groupId>
-		<artifactId>tl-ajax-client</artifactId>
         <version>${tl.version}</version>
         <classifier>sources</classifier>
         <scope>provided</scope>
@@ -49,9 +35,99 @@
   	</dependency>
 
   	<dependency>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-graphic-blocks</artifactId>
+		<version>${project.version}</version>
+        <classifier>sources</classifier>
+        <scope>provided</scope>
+  	</dependency>
+
+  	<dependency>
 		<groupId>org.vectomatic</groupId>
 		<artifactId>lib-gwt-svg</artifactId>
 		<version>0.5.15</version>
   	</dependency>
+  	
+    <!-- Note: Must repeat non-inherited dependencies (provided dependencies are not inherited). -->
+    <dependency>
+      <groupId>org.gwtproject</groupId>
+      <artifactId>gwt-user</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.gwtproject</groupId>
+      <artifactId>gwt-dev</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-ajax-client</artifactId>
+	  <version>7.9.0-SNAPSHOT</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-client-diagramjs</artifactId>
+	  <version>7.9.0-SNAPSHOT</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-graph-diagramjs</artifactId>
+	  <version>7.9.0-SNAPSHOT</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-graph-common</artifactId>
+	  <version>7.9.0-SNAPSHOT</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-common-remote</artifactId>
+	  <version>7.9.0-SNAPSHOT</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-common-json</artifactId>
+	  <version>7.9.0-SNAPSHOT</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic-shared</artifactId>
+	  <version>7.9.0-SNAPSHOT</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+       <groupId>de.haumacher.msgbuf</groupId>
+       <artifactId>msgbuf-api</artifactId>
+       <classifier>sources</classifier>
+       <scope>provided</scope>
+    </dependency>
+  	
   </dependencies>
+  
+  <build>
+  	<plugins>
+  	  <plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-war-plugin</artifactId>
+	  </plugin>
+ 	  <plugin>
+		<groupId>net.ltgt.gwt.maven</groupId>
+		<artifactId>gwt-maven-plugin</artifactId>
+ 	  </plugin>
+  	</plugins>
+  </build>
+  
 </project>

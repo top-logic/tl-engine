@@ -15,7 +15,7 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry including="**/*.java" kind="src" output="target/tl-graphic-blocks-server-7.9.0-SNAPSHOT/WEB-INF/classes" path="src/main/java">
+	<classpathentry including="**/*.java" kind="src" output="target/classes" path="src/main/java">
 		<attributes>
 			<attribute name="optional" value="true"/>
 			<attribute name="maven.pomderived" value="true"/>
@@ -34,5 +34,5 @@
 			<attribute name="test" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="output" path="target/tl-graphic-blocks-server-7.9.0-SNAPSHOT/WEB-INF/classes"/>
+	<classpathentry kind="output" path="target/classes"/>
 </classpath>

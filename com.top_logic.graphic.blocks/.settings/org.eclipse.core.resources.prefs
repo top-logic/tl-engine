@@ -13,3 +13,5 @@ encoding//webapp/WEB-INF/conf/resources/tl-graphic-blocks.messages_en.properties
 encoding//webapp/WEB-INF/conf/tl-graphic-blocks.conf.config.xml=UTF-8
 encoding//webapp/WEB-INF/conf/tl-graphic-blocks.conf.xml=UTF-8
 encoding//webapp/WEB-INF/web.xml=UTF-8
+encoding/<project>=ISO-8859-1
+encoding/src=ISO-8859-1

@@ -128,6 +128,11 @@ public class JSBlocksControl extends AbstractJSControl
 	}
 
 	@Override
+	public void invoke(String command, Object[] args) {
+		// TODO
+	}
+
+	@Override
 	public void onMouseDown(MouseDownEvent event) {
 		Element target = event.getNativeEvent().getEventTarget().cast();
 		if (select(target)) {

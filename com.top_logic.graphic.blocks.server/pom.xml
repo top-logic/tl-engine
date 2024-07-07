@@ -1,0 +1,29 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+	  <groupId>com.top-logic</groupId>
+	  <artifactId>tl-parent-gwt</artifactId>
+	  <version>7.9.0-SNAPSHOT</version>
+	  <relativePath>../tl-parent-gwt</relativePath>
+  </parent>
+
+  <artifactId>tl-graphic-blocks-server</artifactId>
+
+  <dependencies>
+  	<dependency>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-ajax-server</artifactId>
+  	</dependency>
+  	
+  	<dependency>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-graphic-blocks</artifactId>
+		<version>${project.version}</version>
+  	</dependency>
+  </dependencies>
+
+  <build>
+    <sourceDirectory>src</sourceDirectory>
+  </build>
+</project>

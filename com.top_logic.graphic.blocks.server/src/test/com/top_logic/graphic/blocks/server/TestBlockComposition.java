@@ -13,7 +13,6 @@ import java.io.OutputStreamWriter;
 import junit.framework.TestCase;
 
 import com.top_logic.basic.shared.io.StringR;
-import com.top_logic.basic.shared.io.StringW;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.common.json.gstream.JsonWriter;
@@ -150,7 +149,7 @@ public class TestBlockComposition extends TestCase {
 	}
 
 	private String toJson(JsonSerializable<?> blocks) throws IOException {
-		StringW buffer = new StringW();
+		StringBuilder buffer = new StringBuilder();
 		blocks.writeTo(new JsonWriter(buffer));
 		return buffer.toString();
 	}

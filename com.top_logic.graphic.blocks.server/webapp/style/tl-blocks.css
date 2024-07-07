@@ -1,0 +1,29 @@
+text {font-family: Arial; font-size: 14px; }
+g.tlbA path.tlbShape {stroke: #265699; fill: #4C97FF; }
+g.tlbA path.tlbBorder {stroke: #6897d9; fill: none; }
+g.tlbB path.tlbShape {stroke: #996711; fill: #FFAB19; }
+g.tlbB path.tlbBorder {stroke: #e0b05e; fill: none; }
+g.tlbC path.tlbShape {stroke: #2f792f; fill: #59C059; } 
+g.tlbC path.tlbBorder {stroke: #63ad63; fill: none; } 
+g.tlbInput rect {fill: white; } 
+g.tlbInput text {fill: black; } 
+g.tlbSelect {cursor: pointer; } 
+g.tlbSelect rect {fill: #00000000; stroke: white; } 
+g.tlbSelect:hover rect {fill: #FFFFFF30; } 
+g.tlbSelect text {fill: white; } 
+g.tlbSelect path {fill: white; stroke: none; } 
+g.tlbLabel text {fill: white; } 
+
+g.tlbSelected > path.tlbBorder {
+	stroke: none;
+}
+
+path.tlbConnector {
+	fill: none;
+}
+
+g.tlbSelected > path.tlbShape, 
+path.tlbConnector {
+	stroke-width: 3;
+	stroke: #ffe635; 
+}

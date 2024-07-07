@@ -21,9 +21,6 @@
 		<artifactId>tl-graphic-blocks</artifactId>
 		<version>${project.version}</version>
   	</dependency>
+  	
   </dependencies>
-
-  <build>
-    <sourceDirectory>src</sourceDirectory>
-  </build>
 </project>

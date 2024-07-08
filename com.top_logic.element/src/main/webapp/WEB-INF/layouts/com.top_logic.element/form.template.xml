@@ -36,6 +36,9 @@
 		<property name="resetInvisible"
 			type="boolean"
 		/>
+		<property name="buttonbar"
+			type="boolean"
+		/>
 		<property name="securityObject"
 			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
 			type="com.top_logic.basic.config.PolymorphicConfiguration"
@@ -63,6 +66,7 @@
 
 	<editor name="Form"
 		applyCommand="storeAttributes"
+		buttonbar="${buttonbar}"
 		defaultFor="${defaultFor}"
 		dialogs="${dialogs}"
 		editCommand="customEdit"

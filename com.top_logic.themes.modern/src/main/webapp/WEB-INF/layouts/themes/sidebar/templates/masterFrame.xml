@@ -10,7 +10,6 @@
 		closeDialogOnBackgroundClick="${closeDialogOnBackgroundClick}"
 		horizontal="false"
 		icon="/images/favicon.png"
-		layoutFactory="com.top_logic.layout.structure.sidebar.SidebarLayoutControlFactory"
 		name="masterFrame"
 		resizable="false"
 		shortcutIcon="/images/favicon.png"

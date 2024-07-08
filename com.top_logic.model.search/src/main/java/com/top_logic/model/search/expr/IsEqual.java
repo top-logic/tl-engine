@@ -12,6 +12,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
+import com.top_logic.model.TLClassifier;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.Visitor;
 import com.top_logic.util.Utils;
@@ -91,6 +93,15 @@ public class IsEqual extends BinaryOperation implements BooleanExpression {
 			String leftString = asString(leftResult);
 			String rightString = asString(rightResult);
 			return leftString.equals(rightString);
+		} else if (leftResult instanceof TLClassifier && rightResult instanceof TLClassifier) {
+			// Historic objects refer to historic classifiers, but when comparing classifiers, they
+			// are compared without version, since the model must only be used in current and
+			// classifiers are part of the data and the model.
+
+			TLClassifier leftClassifier = (TLClassifier) leftResult;
+			TLClassifier rightClassifier = (TLClassifier) rightResult;
+
+			return WrapperHistoryUtils.equalsUnversioned(leftClassifier, rightClassifier);
 		} else {
 			return Utils.equals(leftResult, rightResult);
 		}

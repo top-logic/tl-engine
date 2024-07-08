@@ -5,9 +5,7 @@
 		<param name="namePrefix"/>
 	</params>
 
-	<layout
-		buttonbar="true"
-	>
+	<layout buttonbar="true">
 		<components>
 			<component class="com.top_logic.tool.boundsec.assistent.AssistentComponent"
 				name="${namePrefix}testAssistent"

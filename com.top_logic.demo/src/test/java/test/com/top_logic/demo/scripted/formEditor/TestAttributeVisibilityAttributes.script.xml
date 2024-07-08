@@ -1944,8 +1944,7 @@
 							<identifiers/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
-							component-implementation-comment="com.top_logic.knowledge.gui.layout.ButtonComponent"
-							component-name="18fe5aa5-a751-41a0-9497-39f08a8eb3e9.layout.xml#Buttons"
+							component-name="18fe5aa5-a751-41a0-9497-39f08a8eb3e9.layout.xml#Dialog"
 							user-id="root"
 						/>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"

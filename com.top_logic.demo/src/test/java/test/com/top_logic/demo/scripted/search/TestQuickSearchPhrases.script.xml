@@ -190,8 +190,7 @@
 							</constraints>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
-							component-implementation-comment="com.top_logic.knowledge.gui.layout.ButtonComponent"
-							component-name="mainTabbar.layout.xml#globalDialogDemoTypesstructureEditButtons"
+							component-name="mainTabbar.layout.xml#globalDialogDemoTypesEdit"
 							user-id="root"
 						/>
 						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
@@ -259,8 +258,7 @@
 							</constraints>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
-							component-implementation-comment="com.top_logic.knowledge.gui.layout.ButtonComponent"
-							component-name="mainTabbar.layout.xml#globalDialogDemoTypesstructureEditButtons"
+							component-name="mainTabbar.layout.xml#globalDialogDemoTypesEdit"
 							user-id="root"
 						/>
 					</actions>
@@ -334,8 +332,7 @@
 							</constraints>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
-							component-implementation-comment="com.top_logic.knowledge.gui.layout.ButtonComponent"
-							component-name="mainTabbar.layout.xml#globalDialogDemoTypesstructureEditButtons"
+							component-name="mainTabbar.layout.xml#globalDialogDemoTypesEdit"
 							user-id="root"
 						/>
 						<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
@@ -388,8 +385,7 @@
 							</constraints>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
-							component-implementation-comment="com.top_logic.knowledge.gui.layout.ButtonComponent"
-							component-name="mainTabbar.layout.xml#globalDialogDemoTypesstructureEditButtons"
+							component-name="mainTabbar.layout.xml#globalDialogDemoTypesEdit"
 							user-id="root"
 						/>
 					</actions>

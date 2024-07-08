@@ -981,8 +981,7 @@ default: {
 					</identifiers>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
-					component-implementation-comment="com.top_logic.knowledge.gui.layout.ButtonComponent"
-					component-name="797ce17a-736b-4612-9ac7-50f8f2b3d5e7.layout.xml#Buttons"
+					component-name="797ce17a-736b-4612-9ac7-50f8f2b3d5e7.layout.xml#Dialog"
 					user-id="root"
 				/>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -1382,8 +1381,7 @@ default: {
 					</identifiers>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
-					component-implementation-comment="com.top_logic.knowledge.gui.layout.ButtonComponent"
-					component-name="7d91605d-d482-42d0-b435-2e03e20ef8b0.layout.xml#Buttons"
+					component-name="7d91605d-d482-42d0-b435-2e03e20ef8b0.layout.xml#Dialog"
 					user-id="root"
 				/>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -1580,8 +1578,7 @@ default: {
 					<identifiers/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
-					component-implementation-comment="com.top_logic.knowledge.gui.layout.ButtonComponent"
-					component-name="7d91605d-d482-42d0-b435-2e03e20ef8b0.layout.xml#Buttons"
+					component-name="7d91605d-d482-42d0-b435-2e03e20ef8b0.layout.xml#Dialog"
 					user-id="root"
 				/>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"

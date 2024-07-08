@@ -130,10 +130,12 @@
                 <artifactId>tl-service-openapi-server</artifactId>
         </dependency>
 #end
+#if ($useJdbcImporter == "true")
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-importer-jdbc</artifactId>
 		</dependency>
+#end
 
 		<!-- Tests -->
 		<dependency>

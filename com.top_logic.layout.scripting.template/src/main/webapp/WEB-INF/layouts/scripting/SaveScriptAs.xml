@@ -37,7 +37,7 @@
 				</treeBuilder>
 			</component>
 			<form class="com.top_logic.layout.form.component.SelectableFormComponent"
-				buttonComponent="${namePrefix}Buttons"
+				buttonbar="true"
 				dontRecord="true"
 				model="selection(${namePrefix}FolderSelector)"
 				name="${namePrefix}FileNameInput"
@@ -57,7 +57,6 @@
 					/>
 				</buttons>
 			</form>
-			<buttonbar name="${namePrefix}Buttons"/>
 		</components>
 	</component>
 </template>

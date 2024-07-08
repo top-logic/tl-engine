@@ -104,7 +104,7 @@
 
 				<components>
 					<component class="${detailTable}"
-						buttonComponent="${namePrefix}ChartDetailButtons"
+						buttonbar="true"
 						modelBuilder="${detailBuilder}"
 						name="${namePrefix}ChartDetail"
 						objectType="${objectType}"
@@ -112,7 +112,6 @@
 						securityProviderClass="dialogParent"
 						selectable="false"
 					>${table}</component>
-					<buttonbar name="${namePrefix}ChartDetailButtons"/>
 				</components>
 			</layout>
 		</dialogs>

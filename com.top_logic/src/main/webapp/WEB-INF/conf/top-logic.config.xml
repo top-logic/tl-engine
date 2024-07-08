@@ -1949,10 +1949,6 @@
 			<changePassword>/jsp/util/administration/changePwd.jsp</changePassword>
 		</config>
 		
-		<config config:interface="com.top_logic.layout.ViewInfoComponent$GlobalConfig">
-			<inspect-component>com.top_logic/admin/technical/layoutInspector/applicationViews.layout.xml#ViewInfo</inspect-component>
-		</config>
-	
 		<config config:interface="com.top_logic.mig.html.layout.GlobalModelEventForwarder$Config">
 			<link-relevance>
 				<link type="Association">

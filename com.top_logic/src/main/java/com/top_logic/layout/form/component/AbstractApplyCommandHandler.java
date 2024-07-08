@@ -342,8 +342,6 @@ public abstract class AbstractApplyCommandHandler extends AbstractFormCommandHan
 		formContext.setFieldsToDefaultValues();
 
 		sendEvent(model, component);
-
-		component.invalidateButtons();
 	}
 
     /** 

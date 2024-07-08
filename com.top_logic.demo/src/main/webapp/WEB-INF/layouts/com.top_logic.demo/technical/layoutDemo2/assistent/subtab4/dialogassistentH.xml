@@ -3,7 +3,7 @@
 <layout>
 	<components>
 		<component class="com.top_logic.mig.html.layout.SimpleComponent"
-			buttonComponent="demoAssistentDialog1HButtons"
+			buttonbar="true"
 			content="Press the button to start the assistent running in a modal dialog"
 			name="demoAssistentDialog1H"
 			resPrefix="layouts.layoutdemo.assistent.dialogassistentH.demoAssistentDialog1H."
@@ -12,6 +12,5 @@
 				<include name="com.top_logic.demo/technical/layoutDemo2/assistent/subtab4/dialog1H.xml"/>
 			</dialogs>
 		</component>
-		<buttonbar name="demoAssistentDialog1HButtons"/>
 	</components>
 </layout>

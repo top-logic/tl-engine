@@ -10,6 +10,7 @@
 	<layout name="${componentName}Container">
 		<components>
 			<component class="com.top_logic.demo.layout.form.demo.TestAJAXEditComponent"
+				buttonbar="true"
 				model="provider(com.top_logic.layout.component.model.SelfModelProvider)"
 				name="${componentName}"
 				page="/jsp/test/layout/TestAJAXEditComponent.jsp"
@@ -18,7 +19,6 @@
 			>
 				<dialogs>${dialogs}</dialogs>
 			</component>
-			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 		</components>
 	</layout>
 </template>

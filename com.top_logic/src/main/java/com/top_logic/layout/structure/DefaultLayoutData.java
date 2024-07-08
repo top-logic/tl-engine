@@ -188,6 +188,15 @@ public class DefaultLayoutData implements LayoutData {
 	}
 
 	@Override
+	public LayoutData withScrolling(Scrolling scrolling) {
+		if (scrolling == this.getScrollable()) {
+			return this;
+		}
+		return new DefaultLayoutData(this.getWidthDimension(), this.getMinWidth(), this.getMaxWidth(),
+			this.getHeightDimension(), this.getMinHeight(), this.getMaxHeight(), scrolling);
+	}
+
+	@Override
 	public Scrolling getScrollable() {
 		return this.scrollable;
 	}

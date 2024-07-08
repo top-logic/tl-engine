@@ -76,7 +76,7 @@
 
 	<layout name="${dialogName}">
 		<component class="com.top_logic.layout.form.component.AbstractCreateComponent"
-			buttonComponent="${namePrefix}Buttons"
+			buttonbar="true"
 			commandGroups="${createCommandGroups}"
 			commands="${commands}"
 			create-handler="${createHandler}"
@@ -95,6 +95,5 @@
 			<defaultAction>${defaultAction}</defaultAction>
 			<cancelAction>${cancelAction}</cancelAction>
 		</component>
-		<buttonbar name="${namePrefix}Buttons"/>
 	</layout>
 </template>

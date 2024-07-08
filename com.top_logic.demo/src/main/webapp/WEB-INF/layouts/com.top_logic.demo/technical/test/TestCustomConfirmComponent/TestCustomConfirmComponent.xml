@@ -4,12 +4,11 @@
 <layout>
 	<components>
 		<component class="com.top_logic.demo.layout.form.demo.TestCustomConfirmComponent"
-			buttonComponent="TestCustomConfirmComponentButtons"
+			buttonbar="true"
 			name="TestCustomConfirmComponent"
 			page="/jsp/test/layout/TestCustomConfirmComponent.jsp"
 			resPrefix="layouts.layoutdemo.test.TestCustomConfirmComponent.TestCustomConfirmComponent."
 			securityProviderClass="securityRoot"
 		/>
-		<buttonbar name="TestCustomConfirmComponentButtons"/>
 	</components>
 </layout>

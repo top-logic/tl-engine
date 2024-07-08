@@ -8,7 +8,6 @@ package com.top_logic.layout.editor;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.knowledge.gui.layout.ButtonComponent;
 import com.top_logic.layout.basic.component.BreadcrumbComponent;
 import com.top_logic.layout.editor.components.ComponentPlaceholder;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
@@ -103,7 +102,6 @@ public class AllVisibleComponentNames extends AbstractComponentNameCollector {
 			&& !(component instanceof LayoutControlComponent)
 			&& !(component instanceof LayoutContainer && !(component instanceof InlinedTileComponent))
 			&& !(component instanceof ComponentPlaceholder)
-			&& !(component instanceof ButtonComponent)
 			&& !(component instanceof PageComponent);
 	}
 

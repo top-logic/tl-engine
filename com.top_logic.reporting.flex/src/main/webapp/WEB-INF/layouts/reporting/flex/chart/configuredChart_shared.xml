@@ -135,7 +135,7 @@
 
 				<components>
 					<component class="${tableComponent}"
-						buttonComponent="${namePrefix}ChartDetailButtons"
+						buttonbar="true"
 						modelBuilder="com.top_logic.reporting.flex.chart.component.builder.ConfiguredChartListModelBuilder"
 						name="${namePrefix}ChartDetail"
 						objectType="${objectType}"
@@ -151,7 +151,6 @@
 							/>
 						</buttons>
 					</component>
-					<buttonbar name="${namePrefix}ChartDetailButtons"/>
 				</components>
 			</layout>
 		</dialogs>

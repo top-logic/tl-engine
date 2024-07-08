@@ -85,7 +85,6 @@ public class MaintenanceWindowComponent extends FormComponent {
         if (maintenanceModeState != maintenanceWndMgr.getMaintenanceModeState()) {
             maintenanceModeState = maintenanceWndMgr.getMaintenanceModeState();
             invalidate();
-            invalidateButtons();
             super.validateModel(aContext);
             return true;
         }
@@ -230,7 +229,6 @@ public class MaintenanceWindowComponent extends FormComponent {
                 LayoutComponent theParent = theComp.getDialogParent();
                 if (theParent != null) {
                     theParent.invalidate();
-                    theParent.invalidateButtons();
                 }
             }
             else {
@@ -289,7 +287,6 @@ public class MaintenanceWindowComponent extends FormComponent {
 		public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model, Map<String, Object> aSomeArguments) {
 			MaintenanceWindowManager.getInstance().enterMaintenanceWindow();
 			aComponent.invalidate();
-			aComponent.invalidateButtons();
 			return HandlerResult.DEFAULT_RESULT;
         }
 
@@ -332,7 +329,6 @@ public class MaintenanceWindowComponent extends FormComponent {
 		public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model, Map<String, Object> aSomeArguments) {
 			MaintenanceWindowManager.getInstance().leaveMaintenanceWindow();
 			aComponent.invalidate();
-			aComponent.invalidateButtons();
 			HandlerResult result = new HandlerResult();
 			result.setCloseDialog(true);
 			return result;
@@ -380,7 +376,6 @@ public class MaintenanceWindowComponent extends FormComponent {
 		public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model, Map<String, Object> aSomeArguments) {
 			MaintenanceWindowManager.getInstance().abortEnterMaintenanceWindow();
 			aComponent.invalidate();
-			aComponent.invalidateButtons();
 			return HandlerResult.DEFAULT_RESULT;
         }
 

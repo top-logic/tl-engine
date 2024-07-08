@@ -79,7 +79,6 @@ public class SessionSearchComponent extends FormComponent implements Selectable 
 	 */
 	public SessionSearchComponent(InstantiationContext context, Config atts) throws ConfigurationException {
 		super(context, atts);
-		alwaysReloadButtons = true;
 	}
 
 	@Override

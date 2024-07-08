@@ -30,7 +30,6 @@
 	</params>
 
 	<component class="com.top_logic.layout.table.component.TableComponent"
-		buttonComponent="${exportButtonComponent}"
 		isSecurityMaster="${isSecurityMaster}"
 		modelBuilder="com.top_logic.layout.admin.component.GroupListBuilder"
 		name="${namePrefix}_Table"

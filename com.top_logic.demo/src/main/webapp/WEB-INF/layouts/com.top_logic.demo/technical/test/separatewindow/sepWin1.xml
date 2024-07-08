@@ -17,7 +17,7 @@
 					>
 						<components>
 							<component class="com.top_logic.mig.html.layout.SimpleComponent"
-								buttonComponent="${namePrefix}ewDemo1Buttons_1"
+								buttonbar="true"
 								content="The tree on the right side is the master tree for one inputfield on this page and one inputfield in the opening window"
 								name="${namePrefix}SWTreeBdescr"
 								resPrefix="layouts.layoutdemo.separateWindow.sepWin1.SWTreeBdescr."
@@ -75,7 +75,6 @@
 							/>
 						</components>
 					</layout>
-					<buttonbar name="${namePrefix}ewDemo1Buttons_1"/>
 				</components>
 			</layout>
 			<include name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsForm_shared.xml"

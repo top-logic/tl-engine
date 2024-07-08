@@ -66,15 +66,16 @@
 		<param name="exportDialogs">
 			<!-- Empty by default. -->
 		</param>
-		<param name="buttonbar">
-			<buttonbar class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
-		</param>
+		<param name="buttonbar"
+			value="false"
+		/>
 	</params>
 
 	<layout>
 		<components>
 			<!-- component to edit structured elements -->
 			<component class="com.top_logic.element.layout.structured.AdminElementComponent"
+				buttonbar="${buttonbar}"
 				commandGroups="${editCommandGroups}"
 				defaultFor="${defaultFor}"
 				editRoot="${editRoot}"
@@ -132,7 +133,6 @@
 				</dialogs>
 				${subConfiguration}
 			</component>
-			${buttonbar}
 		</components>
 	</layout>
 </template>

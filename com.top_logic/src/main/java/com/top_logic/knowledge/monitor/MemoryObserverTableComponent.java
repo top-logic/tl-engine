@@ -97,7 +97,6 @@ public class MemoryObserverTableComponent extends TableComponent {
             MemoryObserverThread.getInstance().startLogging();
             
             aComponent.invalidate();
-            aComponent.invalidateButtons();
             
             return HandlerResult.DEFAULT_RESULT;
         }
@@ -123,7 +122,6 @@ public class MemoryObserverTableComponent extends TableComponent {
             MemoryObserverThread.getInstance().stopLogging();
             
             aComponent.invalidate();
-            aComponent.invalidateButtons();
             
             return HandlerResult.DEFAULT_RESULT;
         }

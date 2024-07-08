@@ -356,8 +356,7 @@
 							</identifiers>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
-							component-implementation-comment="com.top_logic.knowledge.gui.layout.ButtonComponent"
-							component-name="bb19d79b-ba9c-4037-b8a8-bc94b94452dc.layout.xml#Buttons"
+							component-name="bb19d79b-ba9c-4037-b8a8-bc94b94452dc.layout.xml#Dialog"
 							user-id="root"
 						/>
 					</actions>

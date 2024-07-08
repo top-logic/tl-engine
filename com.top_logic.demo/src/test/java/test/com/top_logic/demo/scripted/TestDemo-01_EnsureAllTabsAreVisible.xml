@@ -624,8 +624,7 @@
 									<arguments/>
 								</action>
 								<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
-									component-implementation-comment="com.top_logic.knowledge.gui.layout.ButtonComponent"
-									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#dialogInline2Buttons"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#demoDialog1"
 									user-id="root"
 								/>
 								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"

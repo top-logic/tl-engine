@@ -12,7 +12,6 @@
 		<layout>
 			<components>
 				<component class="com.top_logic.element.layout.role.ScopedEditRoleComponent"
-					buttonComponent="EditRoleButtons"
 					defaultFor="tl.accounts:Role"
 					model="selection(editRolesTable)"
 					name="EditRole"
@@ -44,7 +43,6 @@
 						</layout>
 					</dialogs>
 				</component>
-				<buttonbar name="EditRoleButtons"/>
 			</components>
 		</layout>
 	</components>

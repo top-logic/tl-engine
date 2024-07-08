@@ -57,6 +57,8 @@
 	    	is-container="false" 
 	    	deletion-policy="veto" 
 	    	target-type="MetaElement"
+	    	
+	    	storage="com.top_logic.knowledge.CurrentOnlyReferenceStorage"
     	/>
 </attributes>
     </metaobject>

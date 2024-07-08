@@ -1448,6 +1448,10 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	 */
 	private void syncCacheRemoveCacheEntry(ObjectKey identity, IDReference referenceToRemove) {
 		Object removed = cache.remove(identity);
+		if (removed == null) {
+			/* Already removed. */
+			return;
+		}
 		if (removed == referenceToRemove) {
 			/* There is only one entry, which is the given one. */
 			return;

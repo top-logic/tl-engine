@@ -85,9 +85,7 @@
 										</components>
 									</layout>
 
-									<layout
-										buttonbar="true"
-									>
+									<layout buttonbar="true">
 										<dialogInfo defaultI18n="demo.securityExample.Assistant"/>
 
 										<components>

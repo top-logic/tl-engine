@@ -3,8 +3,8 @@
 <layout>
 	<components>
 		<component class="com.top_logic.demo.layout.form.demo.PersonAjaxForm"
-			buttonbar="true"
 			applyCommand="PersonAjaxForm_Apply"
+			buttonbar="true"
 			name="PersonAjaxForm"
 			page="/jsp/layout/test/PersonAjaxForm.jsp"
 			resPrefix="layouts.layoutdemo.test.PersonAjaxForm.PersonAjaxForm."

@@ -4,5 +4,4 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	final="true"
 	template="com.top_logic/placeholder.template.xml"
->
-</config:template-call>
+/>

@@ -24,9 +24,6 @@
 		<param name="exportDownloadNameKey"
 			value="admin.person.export.file.name"
 		/>
-		<param name="exportButtonComponent"
-			value=""
-		/>
 		<param name="securityProviderClass"
 			value="securityRoot"
 		/>

@@ -538,9 +538,6 @@ public class SearchFieldSupport {
                     
                     theField.setDisabled(false);
                 }
-
-                // Invalidate the buttons if a change happens from
-               	theComponent.invalidateButtons();
             }
         }
     }
@@ -567,8 +564,6 @@ public class SearchFieldSupport {
                     theComponent.resetStoredQuery();
                     theComponent.fireModelModifiedEvent(theNewValue, theComponent);
                 }
-
-                theComponent.invalidateButtons();
             }
 
             aField.setDisabled(false);

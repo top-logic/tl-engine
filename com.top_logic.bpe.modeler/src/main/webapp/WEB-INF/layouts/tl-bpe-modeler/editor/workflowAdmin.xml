@@ -87,7 +87,7 @@
 					/>
 
 					<form name="${namePrefix}NewForm"
-						buttonComponent="${namePrefix}NewButtons"
+						buttonbar="true"
 						resetInvisible="true"
 					>
 						<modelBuilder class="com.top_logic.layout.form.declarative.DefaultDeclarativeFormBuilder"
@@ -107,7 +107,6 @@
 							</button>
 						</buttons>
 					</form>
-					<buttonbar name="${namePrefix}NewButtons"/>
 				</layout>
 				<layout name="${namePrefix}Upload">
 					<dialogInfo
@@ -119,7 +118,7 @@
 					/>
 
 					<form name="${namePrefix}UploadForm"
-						buttonComponent="${namePrefix}UploadButtons"
+						buttonbar="true"
 						resetInvisible="true"
 					>
 						<modelBuilder class="com.top_logic.layout.form.declarative.DefaultDeclarativeFormBuilder"
@@ -138,7 +137,6 @@
 							</button>
 						</buttons>
 					</form>
-					<buttonbar name="${namePrefix}UploadButtons"/>
 				</layout>
 				<layout name="${namePrefix}Update">
 					<dialogInfo
@@ -159,7 +157,7 @@
 					</dialogInfo>
 
 					<form name="${namePrefix}UpdateForm"
-						buttonComponent="${namePrefix}UpdateButtons"
+						buttonbar="true"
 						resetInvisible="true"
 					>
 						<modelBuilder class="com.top_logic.layout.form.declarative.DefaultDeclarativeFormBuilder"
@@ -175,7 +173,6 @@
 							/>
 						</buttons>
 					</form>
-					<buttonbar name="${namePrefix}UpdateButtons"/>
 				</layout>
 				<layout name="${namePrefix}Copy">
 					<dialogInfo
@@ -187,7 +184,7 @@
 					/>
 
 					<form name="${namePrefix}CopyForm"
-						buttonComponent="${namePrefix}CopyButtons"
+						buttonbar="true"
 						model="selection(${namePrefix}Table)"
 						securityProviderClass="securityRoot"
 					>
@@ -205,7 +202,6 @@
 							</button>
 						</buttons>
 					</form>
-					<buttonbar name="${namePrefix}CopyButtons"/>
 				</layout>
 			</dialogs>
 		</tableView>

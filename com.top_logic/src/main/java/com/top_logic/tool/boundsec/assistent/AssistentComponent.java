@@ -26,7 +26,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;
-import com.top_logic.knowledge.gui.layout.ButtonComponent;
+import com.top_logic.knowledge.gui.layout.ButtonBar;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.component.Selectable;
@@ -319,9 +319,8 @@ public class AssistentComponent extends LayoutList implements Selectable {
 			buttons.add(model);
 		}
 
-        ButtonComponent theBC = getButtonComponent();
+        ButtonBar theBC = getButtonBar();
 		theBC.setTransientButtons(buttons);
-        invalidateButtons();
     }
 
     @Override

@@ -53,12 +53,12 @@
 
 					<components>
 						<component class="com.top_logic.layout.unit.NewUnitComponent"
+							buttonbar="true"
 							name="NewUnit"
 							page="/jsp/unit/NewUnit.jsp"
 							resPrefix="admin.unit.edit.new."
 							securityProviderClass="dialogParent"
 						/>
-						<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 					</components>
 				</layout>
 			</dialogs>

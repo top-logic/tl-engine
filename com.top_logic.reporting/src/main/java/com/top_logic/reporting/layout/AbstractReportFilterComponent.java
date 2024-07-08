@@ -138,7 +138,6 @@ public abstract class AbstractReportFilterComponent extends FormComponent {
         this.result = theResult;
 
         fireModelEvent(this.result, ModelEventListener.MODEL_MODIFIED);
-        this.invalidateButtons();
 
         return (true);
     }

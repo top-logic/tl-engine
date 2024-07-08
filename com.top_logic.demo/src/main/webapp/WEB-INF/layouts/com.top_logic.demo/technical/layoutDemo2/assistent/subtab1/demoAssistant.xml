@@ -5,7 +5,9 @@
 		<param name="namePrefix"/>
 	</params>
 
-	<layout>
+	<layout
+		buttonbar="true"
+	>
 		<components>
 			<component class="com.top_logic.tool.boundsec.assistent.AssistentComponent"
 				name="${namePrefix}testAssistent"
@@ -54,8 +56,6 @@
 					<assistantInfo labelKeySuffix="step4"/>
 				</component>
 			</component>
-
-			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 		</components>
 	</layout>
 </template>

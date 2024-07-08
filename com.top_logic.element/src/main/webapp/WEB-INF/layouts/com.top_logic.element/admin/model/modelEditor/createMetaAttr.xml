@@ -22,7 +22,7 @@
 	<layout name="${namePrefix}Dialog">
 		<components>
 			<form name="${namePrefix}Form"
-				buttonComponent="${namePrefix}ButtonBar"
+				buttonbar="true"
 				closeHandlerName="cancelCreate"
 				model="${ownerModel}"
 				resPrefix="${resPrefix}"
@@ -45,7 +45,6 @@
 					/>
 				</buttons>
 			</form>
-			<buttonbar name="${namePrefix}ButtonBar"/>
 		</components>
 	</layout>
 </template>

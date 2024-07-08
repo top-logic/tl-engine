@@ -7,6 +7,7 @@
 	<layout>
 		<components>
 			<component class="com.top_logic.element.layout.structured.AdminElementComponent"
+				buttonbar="true"
 				modifier="com.top_logic.demo.edit.DemoFormContextModificator"
 				name="Edit"
 				page="/jsp/demo/EditStructuredElement.jsp"
@@ -21,8 +22,6 @@
 					/>
 				</model>
 			</component>
-
-			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 		</components>
 	</layout>
 </template>

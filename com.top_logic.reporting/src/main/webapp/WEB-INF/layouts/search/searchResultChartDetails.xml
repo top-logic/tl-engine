@@ -46,7 +46,7 @@
 	<layout name="${namePrefix}SearchResultChartDetails">
 		<components>
 			<component class="${componentClass}"
-				buttonComponent="${namePrefix}AttributedSearchResultChartDetailsButtons"
+				buttonbar="true"
 				metaElement="${metaElement}"
 				metaElementBuilder="${builderClass}"
 				model="selection(${masters})"
@@ -74,7 +74,6 @@
 					/>
 				</buttons>
 			</component>
-			<buttonbar name="${namePrefix}AttributedSearchResultChartDetailsButtons"/>
 		</components>
 	</layout>
 </template>

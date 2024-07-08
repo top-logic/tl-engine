@@ -26,7 +26,7 @@
 	>
 		<components>
 			<form name="${formName}"
-				buttonComponent="${namePrefix}Buttons"
+				buttonbar="true"
 				closeHandlerName="cancelCreate"
 				model="${ownerModel}"
 				resPrefix="element.meta.createModule.Form."
@@ -48,7 +48,6 @@
 					/>
 				</buttons>
 			</form>
-			<buttonbar name="${namePrefix}Buttons"/>
 		</components>
 	</layout>
 </template>

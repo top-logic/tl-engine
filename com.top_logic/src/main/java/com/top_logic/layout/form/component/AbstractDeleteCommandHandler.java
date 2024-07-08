@@ -233,7 +233,6 @@ public abstract class AbstractDeleteCommandHandler extends AbstractCommandHandle
 		// to be selected). As the persistent events are sent via the ModelEventForwarder it is
 		// necessary to process the global events.
 		component.getMainLayout().processGlobalEvents();
-        component.invalidateButtons();
 
 		closeDialog(component);
     }

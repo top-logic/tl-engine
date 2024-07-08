@@ -41,7 +41,6 @@ public class GenericDataImportAssistentComponent extends BoundAssistentComponent
     public GenericDataImportAssistentComponent(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);
         this.filename            = atts.getImportConfigFile();
-        this.alwaysReloadButtons = true;
     }
 
 	@Override

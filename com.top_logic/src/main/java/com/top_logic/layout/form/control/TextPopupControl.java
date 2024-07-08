@@ -15,7 +15,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
-import com.top_logic.knowledge.gui.layout.ButtonComponent;
+import com.top_logic.knowledge.gui.layout.ButtonBar;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
@@ -193,14 +193,14 @@ public class TextPopupControl extends PopupEditControl {
 		return new ControlViewAdapter(new HTMLFragmentView(
 			div("cTextPopupEditor",
 				div(editor),
-				div(ButtonComponent.DEFAULT_CSS_CLASS, okButton, cancelButton))));
+				div(ButtonBar.DEFAULT_CSS_CLASS, okButton, cancelButton))));
 	}
 
 	private ControlViewAdapter getContent(TextInputControl editor, HTMLFragment cancelButton) {
 		return new ControlViewAdapter(new HTMLFragmentView(
 			div("cTextPopupEditor",
 				div(editor),
-				div(ButtonComponent.DEFAULT_CSS_CLASS, cancelButton))));
+				div(ButtonBar.DEFAULT_CSS_CLASS, cancelButton))));
 	}
 
 	private void initEditField(final AbstractFormField originalField, final FormField editField,

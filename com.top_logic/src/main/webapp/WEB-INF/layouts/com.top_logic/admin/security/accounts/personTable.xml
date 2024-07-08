@@ -42,7 +42,6 @@
 	</params>
 
 	<component class="com.top_logic.layout.table.component.TableComponent"
-		buttonComponent="${exportButtonComponent}"
 		isSecurityMaster="${isSecurityMaster}"
 		modelBuilder="${builderClass}"
 		name="${namePrefix}PersonTable"

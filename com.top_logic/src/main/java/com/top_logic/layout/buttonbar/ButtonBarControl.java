@@ -17,7 +17,7 @@ import com.top_logic.basic.col.Provider;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.knowledge.gui.layout.ButtonComponent;
+import com.top_logic.knowledge.gui.layout.ButtonBar;
 import com.top_logic.knowledge.gui.layout.I18NConstants;
 import com.top_logic.layout.AbstractDisplayValue;
 import com.top_logic.layout.Control;
@@ -143,7 +143,7 @@ public class ButtonBarControl extends AbstractCompositeControl<ButtonBarControl>
 	/**
 	 * Create a new {@link ButtonBarControl}
 	 * 
-	 * @see ButtonBarFactory#createButtonBar(ButtonComponent, String)
+	 * @see ButtonBarFactory#createButtonBar(ButtonBarModel)
 	 */
 	ButtonBarControl(ButtonBarModel buttonBarModel) {
 		super(COMMANDS);
@@ -229,7 +229,7 @@ public class ButtonBarControl extends AbstractCompositeControl<ButtonBarControl>
 			});
 		}
 
-		ControlProvider controlProvider = theModel.get(ButtonComponent.BUTTON_CONTROL_PROVIDER);
+		ControlProvider controlProvider = theModel.get(ButtonBar.BUTTON_CONTROL_PROVIDER);
 		Control control;
 		if (controlProvider != null) {
 			control = controlProvider.createControl(theModel);

@@ -4,7 +4,7 @@
 <layout>
 	<components>
 		<component class="com.top_logic.demo.layout.form.demo.TestLayoutProblems"
-			buttonComponent="TestLayoutProblemsButtons"
+			buttonbar="true"
 			displayWithoutModel="true"
 			name="TestLayoutProblems"
 			page="/jsp/test/layout/TestLayoutProblems.jsp"
@@ -22,6 +22,5 @@
 				/>
 			</buttons>
 		</component>
-		<buttonbar name="TestLayoutProblemsButtons"/>
 	</components>
 </layout>

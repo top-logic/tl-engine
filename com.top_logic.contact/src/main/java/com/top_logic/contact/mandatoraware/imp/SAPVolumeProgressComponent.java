@@ -5,18 +5,12 @@
  */
 package com.top_logic.contact.mandatoraware.imp;
 
-import java.io.IOException;
-
-import jakarta.servlet.http.HttpServletRequest;
-
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.sched.Batch;
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.mig.html.layout.ProgressComponent;
-import com.top_logic.tool.boundsec.assistent.AssistentComponent;
 
 /**
  * Show the Progress of the SAPVolumeImporter.
@@ -45,17 +39,5 @@ public class SAPVolumeProgressComponent extends ProgressComponent {
         
         this.mandatorAware = atts.getMandatorAware();
     }
-
-    /** 
-     * Hook for subclasses so they are called when the import is finished.
-     */
-    @Override
-	protected void progressFinished(String aContextPath, TagWriter aOut, HttpServletRequest aReq) 
-        throws IOException {
-        if (model != null) {
-            AssistentComponent assi = AssistentComponent.getEnclosingAssistentComponent(this);
-            assi.invalidateButtons();
-        }
-    }    
     
 }

@@ -72,7 +72,6 @@ public class ShowCurrentRevisionCommandHandler extends AJAXCommandHandler {
 
     protected void updateComponent(LayoutComponent aComponent) {
         aComponent.invalidate();
-        aComponent.invalidateButtons();
     }
 
 	@Override

@@ -136,7 +136,7 @@
 						/>
 						<components>
 							<component class="com.top_logic.layout.scripting.template.gui.ScriptUploadComponent"
-								buttonComponent="${namePrefix}ScriptUploadButtons"
+								buttonbar="true"
 								name="${namePrefix}ScriptUploadForm"
 								page="/jsp/layout/scripting/ScriptUploadComponent.jsp"
 								resPrefix="tl.scripting.recorder.scriptUpload."
@@ -149,7 +149,6 @@
 									/>
 								</buttons>
 							</component>
-							<buttonbar name="${namePrefix}ScriptUploadButtons"/>
 						</components>
 					</component>
 					<include name="scripting/LoadScript.xml"

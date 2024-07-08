@@ -6,7 +6,7 @@
 package com.top_logic.graphic.blocks.svg;
 
 /**
- * Context for rendering SVG.
+ * Context for rendering to SVG.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

@@ -6,6 +6,7 @@
 	template="com.top_logic.element/form.template.xml"
 >
 	<arguments
+		buttonbar="true"
 		edit-group="System"
 		resetInvisible="true"
 		showNoModel="false"

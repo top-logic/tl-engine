@@ -3380,7 +3380,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		ButtonBar buttonComponent = getButtonBar();
 		if (buttonComponent != null) {
 			List<? extends CommandModel> buttons = createButtonCommandModels();
-			buttonComponent.addTransientButtons(buttons);
+			buttonComponent.addButtons(buttons);
 		}
 	}
 

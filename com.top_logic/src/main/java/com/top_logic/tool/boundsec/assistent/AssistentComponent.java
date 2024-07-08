@@ -320,7 +320,7 @@ public class AssistentComponent extends LayoutList implements Selectable {
 		}
 
         ButtonBar theBC = getButtonBar();
-		theBC.setTransientButtons(buttons);
+		theBC.setButtons(buttons);
     }
 
     @Override

@@ -32,17 +32,15 @@ public class ButtonBar extends PropertyObservableBase implements ButtonBarModel 
 	public static final String DEFAULT_CSS_CLASS = "cmdButtons";
 	
     /**
-     * Property of a commandModel whose value is a {@link ControlProvider}. That provider will be
-     * called when rendering the corresponding {@link CommandModel}.
-     */
+	 * Property of a {@link CommandModel} giving a {@link ControlProvider} to render the
+	 * corresponding button.
+	 */
 	public static final Property<ControlProvider> BUTTON_CONTROL_PROVIDER =
 		TypedAnnotatable.property(ControlProvider.class, "buttonControlProvider");
 
-	/** 
-     * Buttons that where set by some other componenent.
-     * 
-     * (They are only transient in so far that they will not be saved to XML ...)
-     */     
+	/**
+	 * Buttons to display.
+	 */     
 	private List<CommandModel> _buttons;
     
     /**
@@ -61,9 +59,9 @@ public class ButtonBar extends PropertyObservableBase implements ButtonBarModel 
     }
 
     /**
-     * Set-method for instance-variable buttons.
-     */
-    public void setTransientButtons(List<? extends CommandModel> buttons) {
+	 * Updates the list of displayed buttons.
+	 */
+    public void setButtons(List<? extends CommandModel> buttons) {
 		if (_buttons == null) {
             if (buttons != null) {
 				_buttons = new ArrayList<>(buttons);
@@ -78,9 +76,9 @@ public class ButtonBar extends PropertyObservableBase implements ButtonBarModel 
     }
 
     /**
-     * Appending method for instance-variable buttons.
-     */
-    public void addTransientButtons(List<? extends CommandModel> buttons) {
+	 * Adds the given buttons to the list of displayed buttons.
+	 */
+    public void addButtons(List<? extends CommandModel> buttons) {
 		if (_buttons == null) {
             if (buttons != null) {
 				_buttons = new ArrayList<>(buttons);

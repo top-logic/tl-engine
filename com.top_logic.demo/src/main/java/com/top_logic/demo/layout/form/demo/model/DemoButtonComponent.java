@@ -53,7 +53,7 @@ public class DemoButtonComponent extends FormComponent {
 			@Override
 			public void valueChanged(FormField field, Object oldValue, Object newValue) {
 				boolean buttonsVisible = ((Boolean) newValue).booleanValue();
-				getButtonBar().setTransientButtons(buttonsVisible ? commands : null);
+				getButtonBar().setButtons(buttonsVisible ? commands : null);
 			}
 		});
 		grp.addMember(theField);

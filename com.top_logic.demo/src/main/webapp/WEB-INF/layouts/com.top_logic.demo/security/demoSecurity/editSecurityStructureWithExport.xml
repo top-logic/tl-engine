@@ -127,6 +127,7 @@
 										/>
 									</buttons>
 								</subConfiguration>
+								<buttonbar/>
 							</include>
 						</components>
 					</securityLayout>

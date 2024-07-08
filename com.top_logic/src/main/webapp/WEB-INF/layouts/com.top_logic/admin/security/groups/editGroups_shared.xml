@@ -41,7 +41,6 @@
 			<layout>
 				<components>
 					<component class="${editComponent}"
-						buttonComponent="${namePrefix}EditGroupButtons"
 						defaultFor="tl.accounts:Group"
 						model="selection(${namePrefix}EditGroup_Table)"
 						name="${namePrefix}EditGroup"
@@ -73,7 +72,6 @@
 							</layout>
 						</dialogs>
 					</component>
-					<buttonbar name="${namePrefix}EditGroupButtons"/>
 				</components>
 			</layout>
 		</components>

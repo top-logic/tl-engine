@@ -19,7 +19,6 @@
 					securityModule="selection(com.top_logic.element/admin/security/securityStructure.xml#adminRolesView_navigationTree)"
 					securityProviderClass="securityRoot"
 				/>
-				<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 			</components>
 		</layout>
 	</components>

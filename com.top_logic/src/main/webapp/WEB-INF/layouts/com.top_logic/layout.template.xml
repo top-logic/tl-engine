@@ -22,9 +22,14 @@
 			<complex-default value="com.top_logic.layout.editor.annotation.LayoutTemplatesDefault"/>
 			<layout-templates value="com.top_logic/layoutPlaceholder.template.xml,com.top_logic/layoutPlaceholder.template.xml"/>
 		</property>
+
+		<property name="buttonbar"
+			type="boolean"
+		/>
 	</properties>
 
 	<layout name="InnerLayout"
+		buttonbar="${buttonbar}"
 		components="${components}"
 		horizontal="${horizontal}"
 		resizable="${resizable}"

@@ -43,7 +43,7 @@
 		<components>
 			<!-- component to edit structured elements -->
 			<component class="${class}"
-				buttonComponent="${namePrefix}Buttons"
+				buttonbar="true"
 				commandGroups="${editCommandGroups}"
 				defaultFor="${defaultFor}"
 				model="selection(${master})"
@@ -72,7 +72,6 @@
 				</dialogs>
 			</component>
 			<!-- buttons -->
-			<buttonbar name="${namePrefix}Buttons"/>
 		</components>
 	</layout>
 </template>

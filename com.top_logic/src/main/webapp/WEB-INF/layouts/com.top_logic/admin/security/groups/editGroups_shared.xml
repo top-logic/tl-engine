@@ -61,13 +61,12 @@
 
 								<components>
 									<component class="${newComponent}"
-										buttonComponent="${namePrefix}NewGroupButtons"
+										buttonbar="true"
 										name="${namePrefix}NewGroup"
 										page="${newJSP}"
 										resPrefix="admin.group.edit.new."
 										securityProviderClass="${securityProviderClass}"
 									/>
-									<buttonbar name="${namePrefix}NewGroupButtons"/>
 								</components>
 							</layout>
 						</dialogs>

@@ -3,9 +3,9 @@
 <layout name="dynamicDemoLayout1">
 	<components>
 		<component class="com.top_logic.mig.html.layout.SimpleComponent"
+			buttonbar="true"
 			content="Dynamic layout demo layout 1."
 			name="dynamicDemoLayout1_content"
 		/>
-		<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 	</components>
 </layout>

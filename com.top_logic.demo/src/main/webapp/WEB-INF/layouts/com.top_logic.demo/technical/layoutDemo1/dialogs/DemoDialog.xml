@@ -3,7 +3,7 @@
 <layout>
 	<components>
 		<component class="com.top_logic.demo.layout.demo.dialog.DemoDialog"
-			buttonComponent="dialogDemoButtons"
+			buttonbar="true"
 			name="demoDialog1"
 			page="/jsp/test/layout/dialog/DemoDialog.jsp"
 			resPrefix="layouts.layoutdemo.dialog.DemoDialog.demoDialog1."
@@ -96,6 +96,5 @@
 				</include>
 			</dialogs>
 		</component>
-		<buttonbar name="dialogDemoButtons"/>
 	</components>
 </layout>

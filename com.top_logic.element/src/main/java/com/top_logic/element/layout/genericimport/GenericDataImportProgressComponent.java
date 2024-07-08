@@ -41,15 +41,6 @@ public class GenericDataImportProgressComponent extends AJAXProgressComponent {
         return anObject instanceof GenericDataImportConfiguration;
     }
 
-    @Override
-	protected void progressFinished(DisplayContext aSomeContext, Map aSomeArguments) {
-        super.progressFinished(aSomeContext, aSomeArguments);
-        if (getModel() != null) {
-            AssistentComponent.getEnclosingAssistentComponent(this).setData(IMPORT_PROGRESS_INFO, null);
-            this.invalidateButtons();
-        }
-    }
-
     public static class StartGenericImportTaskCommand extends AJAXCommandHandler {
 
         public static final String COMMAND_ID = "StartImport";

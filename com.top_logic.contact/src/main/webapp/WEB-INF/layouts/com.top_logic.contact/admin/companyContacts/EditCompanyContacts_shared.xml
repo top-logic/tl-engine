@@ -123,6 +123,7 @@
 
 						<components>
 							<component class="${createComponentClass}"
+								buttonbar="true"
 								commandGroups="${createCommandGroups}"
 								model="null()"
 								name="addCompanyContact"
@@ -130,7 +131,6 @@
 								resPrefix="layouts.contact.EditCompanyContacts_shared.addCompanyContact."
 								securityProviderClass="${createSecurityProvider}"
 							/>
-							<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 						</components>
 					</layout>
 				</dialogs>

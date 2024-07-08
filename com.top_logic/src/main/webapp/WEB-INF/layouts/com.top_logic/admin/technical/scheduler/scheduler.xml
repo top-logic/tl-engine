@@ -2,13 +2,13 @@
 
 <!-- This component manages the scheduled tasks. -->
 <layout name="sysScheduler"
+	buttonbar="true"
 	horizontal="true"
 >
 	<components>
 		<layout name="schedulerTables">
 			<components>
 				<component class="com.top_logic.util.sched.layout.table.TaskTreeComponent"
-					buttonComponent="EditTaskButtons"
 					isSecurityMaster="true"
 					maximizeRoot="sysSchedulerTable"
 					model="provider(com.top_logic.util.sched.Scheduler#getSchedulerInstance)"
@@ -172,7 +172,6 @@
 					</table>
 				</component>
 				<component class="com.top_logic.util.sched.layout.table.results.TaskResultTreeComponent"
-					buttonComponent="EditTaskButtons"
 					maximizeRoot="schedulerResult"
 					model="model(sysEditTask)"
 					name="schedulerResult"
@@ -262,7 +261,6 @@
 						</columns>
 					</table>
 				</component>
-				<buttonbar name="EditTaskButtons"/>
 			</components>
 		</layout>
 		<layout name="schedulerInfoBoxes">
@@ -277,7 +275,6 @@
 				/>
 
 				<component class="com.top_logic.layout.task.EditTaskWrapperComponent"
-					buttonComponent="EditTaskButtons"
 					defaultFor="tl.legacy.tabletypes:TaskImplTable"
 					maximizeRoot="sysEditTask"
 					model="selection(sysSchedulerTable)"
@@ -297,7 +294,7 @@
 
 							<components>
 								<component class="com.top_logic.util.sched.layout.table.results.failed.FailedTaskResultTreeComponent"
-									buttonComponent="failedTaskResultsButtons"
+									buttonbar="true"
 									model="provider(com.top_logic.util.sched.Scheduler#getSchedulerInstance)"
 									name="failedTaskResultsTable"
 									resPrefix="admin.sys.scheduler.failed."
@@ -387,7 +384,6 @@
 										</columns>
 									</table>
 								</component>
-								<buttonbar name="failedTaskResultsButtons"/>
 							</components>
 						</layout>
 					</dialogs>

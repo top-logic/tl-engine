@@ -14,7 +14,6 @@
 			<layout-reference resource="com.top_logic/admin/technical/maintenanceMode/maintenanceWindow.layout.xml"/>
 			<layout-reference resource="com.top_logic/admin/technical/scheduler/schedulerView.layout.xml"/>
 			<layout-reference resource="com.top_logic/admin/technical/locks/locksView.layout.xml"/>
-			<layout-reference resource="com.top_logic/admin/technical/layoutInspector/applicationViews.layout.xml"/>
 			<layout-reference resource="com.top_logic/admin/technical/logs/logView.layout.xml"/>
 			<layout-reference resource="com.top_logic/admin/technical/maintenancePages/maintenanceView.layout.xml"/>
 		</components>

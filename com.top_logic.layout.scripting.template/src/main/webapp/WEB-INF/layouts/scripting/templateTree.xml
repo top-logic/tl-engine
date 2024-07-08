@@ -39,7 +39,7 @@
 
 				<components>
 					<component class="com.top_logic.layout.scripting.template.gui.templates.TemplateParameterComponent"
-						buttonComponent="${namePrefix}instantiationButtons"
+						buttonbar="true"
 						dontRecord="true"
 						model="selection(${namePrefix}templates)"
 						name="${namePrefix}parameters"
@@ -69,7 +69,6 @@
 							</button>
 						</buttons>
 					</component>
-					<buttonbar name="${namePrefix}instantiationButtons"/>
 				</components>
 			</layout>
 			<include name="scripting/TemplateEditor.xml"

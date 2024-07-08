@@ -95,13 +95,13 @@
 			<layout>
 				<components>
 					<component class="${detailComponent}"
+						buttonbar="true"
 						defaultFor="${defaultFor}"
 						model="selection(${namePrefix}Mail_List)"
 						name="${namePrefix}Mail_content"
 						page="/jsp/mail/mailFolder/Mail.jsp"
 						resPrefix="mails.mail.details."
 					/>
-					<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 				</components>
 			</layout>
 		</components>

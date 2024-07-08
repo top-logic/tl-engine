@@ -14,7 +14,6 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
 import com.top_logic.basic.xml.DOMUtil;
-import com.top_logic.knowledge.gui.layout.ButtonComponent;
 import com.top_logic.layout.component.TabComponent;
 import com.top_logic.layout.form.component.EditComponent;
 import com.top_logic.layout.form.component.FormComponent;
@@ -194,13 +193,6 @@ public class MigrateTicket20846 extends LayoutRewrite {
 				String horizontal = replacement.getAttributeNS(null, "horizontal");
 				if ("false".equals(horizontal)) {
 					replacement.removeAttributeNS(null, "horizontal");
-				}
-			}
-			replacement = simplifyTag(layout, ButtonComponent.Config.TAG_NAME, ButtonComponent.class.getName());
-			if (replacement != null) {
-				replacement.removeAttributeNS(null, "target");
-				for (Node child : DOMUtil.elementsNS(replacement, null, "layoutInfo")) {
-					child.getParentNode().removeChild(child);
 				}
 			}
 			simplifyTag(layout, BoundAssistentComponent.Config.TAG_NAME, BoundAssistentComponent.class.getName());

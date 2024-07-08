@@ -107,10 +107,6 @@
 				<commandGroup name="Export"/>
 				<commandGroup name="Read"/>
 			</view>
-			<view name="com.top_logic.monitoring/admin/monitor/performanceChart/performanceChart.layout.xml#adminConfigViewsPerformance">
-				<commandGroup name="Export"/>
-				<commandGroup name="Read"/>
-			</view>
 			<view name="com.top_logic.monitoring/admin/monitor/schema/dbSchemaMonitor.layout.xml#adminMonitorSchema">
 				<commandGroup name="Export"/>
 				<commandGroup name="Read"/>
@@ -181,9 +177,6 @@
 				<commandGroup name="Export"/>
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
-			</view>
-			<view name="com.top_logic/admin/technical/layoutInspector/applicationViews.layout.xml#adminViewConfigView">
-				<commandGroup name="Read"/>
 			</view>
 			<view name="com.top_logic/admin/technical/locks/locksView.layout.xml#adminTechnicalDeleteLocksView">
 				<commandGroup name="Read"/>

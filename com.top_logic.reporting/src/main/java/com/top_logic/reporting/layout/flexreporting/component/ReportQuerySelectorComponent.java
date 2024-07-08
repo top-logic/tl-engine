@@ -230,7 +230,6 @@ public class ReportQuerySelectorComponent extends FormComponent implements Repor
 			thePublishGroup.setVisible(false);
 			theSelectionField.setVisible(false);
 			this.showPublishingGroup = false;
-			this.invalidateButtons();
 			return false;
 		}
 		this.monitorChanges = false;

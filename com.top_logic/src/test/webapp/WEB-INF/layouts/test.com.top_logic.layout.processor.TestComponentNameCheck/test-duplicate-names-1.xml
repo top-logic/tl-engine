@@ -14,7 +14,5 @@
 		<component class="C"
 			name="c3"
 		/>
-
-		<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 	</childList>
 </component>

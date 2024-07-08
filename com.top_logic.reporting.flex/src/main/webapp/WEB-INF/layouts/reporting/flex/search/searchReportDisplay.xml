@@ -48,13 +48,12 @@
 
 					<components>
 						<component class="com.top_logic.reporting.flex.search.NewStoredConfigChartReportComponent"
-							buttonComponent="${namePrefix}CreateReportButtons"
+							buttonbar="true"
 							name="${namePrefix}CreateReport"
 							page="/jsp/model/search/SaveSearchAs.jsp"
 							resPrefix="reporting.flex.chart.create."
 							securityProviderClass="securityRoot"
 						/>
-						<buttonbar name="${namePrefix}CreateReportButtons"/>
 					</components>
 				</layout>
 			</dialogs>

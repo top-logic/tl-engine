@@ -3,12 +3,11 @@
 <layout>
 	<components>
 		<component class="com.top_logic.mig.html.layout.PageComponent"
-			buttonComponent="TestPageLayoutStaticButtons"
+			buttonbar="true"
 			name="TestPageLayoutStatic"
 			page="/jsp/layout/test/TestPageLayoutStatic.jsp"
 			resPrefix="layouts.layoutdemo.test.TestPageLayoutStatic.TestPageLayoutStatic."
 			securityProviderClass="securityRoot"
 		/>
-		<buttonbar name="TestPageLayoutStaticButtons"/>
 	</components>
 </layout>

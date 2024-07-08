@@ -12,7 +12,6 @@ import java.util.List;
 
 import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.knowledge.gui.layout.ButtonComponent;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.component.BreadcrumbComponent;
 import com.top_logic.layout.component.TabComponent;
@@ -95,8 +94,7 @@ public class AllComponents extends Function0<OptionModel<LayoutComponent>> {
 		if ((component instanceof BreadcrumbComponent)
 			|| (component instanceof TabComponent)
 			|| (component instanceof LayoutControlComponent)
-			|| (component instanceof ComponentPlaceholder)
-			|| (component instanceof ButtonComponent)) {
+			|| (component instanceof ComponentPlaceholder)) {
 			return false;
 		}
 

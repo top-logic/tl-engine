@@ -24,13 +24,12 @@
 
 			<components>
 				<component class="com.top_logic.model.search.ui.selector.saveas.SaveSearchAsComponent"
-					buttonComponent="SaveSearchAsButtons"
+					buttonbar="true"
 					name="SaveSearchAsForm"
 					page="/jsp/model/search/SaveSearchAs.jsp"
 					resPrefix="layouts.model.search.modelSearch.SaveSearchAsForm."
 					securityProviderClass="securityRoot"
 				/>
-				<buttonbar name="SaveSearchAsButtons"/>
 			</components>
 		</layout>
 	</dialogs>

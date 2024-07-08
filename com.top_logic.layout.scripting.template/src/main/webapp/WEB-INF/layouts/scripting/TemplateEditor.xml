@@ -47,7 +47,7 @@
 			</layoutControl>
 
 			<form name="${namePrefix}Form"
-				buttonComponent="${namePrefix}Buttons"
+				buttonbar="true"
 				dontRecord="true"
 				page="/jsp/layout/scripting/TemplateEditContent.jsp"
 				resPrefix="tl.scripting.recorder.templates.templateEdit."
@@ -85,7 +85,6 @@
 					/>
 				</buttons>
 			</form>
-			<buttonbar name="${namePrefix}Buttons"/>
 		</components>
 	</layout>
 </template>

@@ -59,6 +59,11 @@ public interface LayoutData {
 	public LayoutData resized(DisplayDimension newWidth, DisplayDimension newHeight);
 
 	/**
+	 * An updated version of this instance with adjusted {@link #getScrollable()}.
+	 */
+	public LayoutData withScrolling(Scrolling scrolling);
+
+	/**
 	 * This method returns how much percent of the possible width will be used by children of the
 	 * corresponding {@link LayoutControl} whose size is given in {@link DisplayUnit#PIXEL}.
 	 * 

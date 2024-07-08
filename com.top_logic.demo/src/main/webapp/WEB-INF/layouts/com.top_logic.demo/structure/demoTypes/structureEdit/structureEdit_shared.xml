@@ -12,6 +12,7 @@
 	<layout>
 		<components>
 			<component class="com.top_logic.demo.table.DemoStructuredEditComponent"
+				buttonbar="true"
 				columns="default, boolean, booleanMandatory, checklist, checklistSingle, checklistMulti, collection, date, document, list, long, stringSet, string, structure, typedSetOrdered, typedSetUnordered, typedWrapper, typedWrapperFiltered, typedWrapperGenerated, untypedWrapper, float"
 				expandAll="${expandAll}"
 				fixedColumns="2"
@@ -46,7 +47,6 @@
 					</table>
 				</tables>
 			</component>
-			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 		</components>
 	</layout>
 </template>

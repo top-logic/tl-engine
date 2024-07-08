@@ -4,7 +4,7 @@
 <layout>
 	<components>
 		<component class="com.top_logic.demo.knowledge.test.layout.DynamicTreeDemo"
-			buttonComponent="editDynamicTreeDemoButtons"
+			buttonbar="true"
 			model="provider(com.top_logic.layout.component.model.SelfModelProvider)"
 			name="editDynamicTreeDemo"
 			page="/jsp/layout/test/DynamicTree.jsp"
@@ -25,6 +25,5 @@
 				/>
 			</buttons>
 		</component>
-		<buttonbar name="editDynamicTreeDemoButtons"/>
 	</components>
 </layout>

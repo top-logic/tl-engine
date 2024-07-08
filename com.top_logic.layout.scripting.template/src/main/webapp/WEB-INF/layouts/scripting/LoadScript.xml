@@ -19,7 +19,7 @@
 
 		<components>
 			<component class="com.top_logic.layout.scripting.template.gui.selector.ScriptSelectorComponent"
-				buttonComponent="${namePrefix}Buttons"
+				buttonbar="true"
 				columns="name, _type, _date, _size"
 				model="provider(com.top_logic.layout.scripting.template.gui.selector.ScriptSelectorBuilder)"
 				name="${namePrefix}Table"
@@ -44,7 +44,6 @@
 					</fileFilter>
 				</treeBuilder>
 			</component>
-			<buttonbar name="${namePrefix}Buttons"/>
 		</components>
 	</component>
 </template>

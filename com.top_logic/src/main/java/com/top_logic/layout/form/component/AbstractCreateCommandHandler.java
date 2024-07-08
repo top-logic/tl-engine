@@ -219,7 +219,6 @@ public abstract class AbstractCreateCommandHandler extends AbstractFormCommandHa
 	@Override
 	protected void onInvalidInput(LayoutComponent component, FormContext formContext, HandlerResult result) {
 		super.onInvalidInput(component, formContext, result);
-		component.invalidateButtons();
 		result.setCloseDialog(false);
 	}
 

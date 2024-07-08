@@ -32,13 +32,12 @@
 
 							<components>
 								<component class="com.top_logic.tool.boundsec.gui.EditRoleComponent$NewRoleComponent"
-									buttonComponent="NewRoleButtons"
+									buttonbar="true"
 									name="NewRole"
 									page="/jsp/layout/admin/roles/NewRole.jsp"
 									resPrefix="admin.role.edit.new."
 									securityProviderClass="securityRoot"
 								/>
-								<buttonbar name="NewRoleButtons"/>
 							</components>
 						</layout>
 					</dialogs>

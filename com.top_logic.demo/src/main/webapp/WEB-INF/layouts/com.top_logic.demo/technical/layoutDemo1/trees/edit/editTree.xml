@@ -3,11 +3,10 @@
 <layout>
 	<components>
 		<component class="com.top_logic.demo.knowledge.test.layout.EditTreeDemo"
+			buttonbar="true"
 			name="editTreeDemo"
 			page="/jsp/layout/test/EditTree.jsp"
 			resPrefix="layouts.layoutdemo.tree.editTree.editTreeDemo."
 		/>
-
-		<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 	</components>
 </layout>

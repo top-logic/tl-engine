@@ -100,7 +100,7 @@
 						width="350"
 					/>
 					<form name="${namePrefix}ResourceUploadForm"
-						buttonComponent="${namePrefix}ResourceUploadButtons"
+						buttonbar="true"
 						model="model(dialogParent())"
 						resetInvisible="true"
 						securityProviderClass="securityRoot"
@@ -118,7 +118,6 @@
 							/>
 						</buttons>
 					</form>
-					<buttonbar name="${namePrefix}ResourceUploadButtons"/>
 				</layout>
 			</dialogs>
 			<buttons>

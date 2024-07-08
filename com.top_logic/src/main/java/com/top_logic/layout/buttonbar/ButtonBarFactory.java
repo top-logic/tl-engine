@@ -7,7 +7,7 @@ package com.top_logic.layout.buttonbar;
 
 import java.util.List;
 
-import com.top_logic.knowledge.gui.layout.ButtonComponent;
+import com.top_logic.knowledge.gui.layout.ButtonBar;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ControlRenderer;
 
@@ -21,13 +21,13 @@ public class ButtonBarFactory {
 	/**
 	 * The default renderer to use with {@link ButtonBarControl}s.
 	 */
-	public static final DefaultButtonBarRenderer DEFAULT_RENDERER = new DefaultButtonBarRenderer("cmdButtons");
+	public static final DefaultButtonBarRenderer DEFAULT_RENDERER =
+		new DefaultButtonBarRenderer(ButtonBar.DEFAULT_CSS_CLASS);
 
 	/**
-	 * Creates a {@link ButtonBarControl} based on a {@link ButtonComponent}
+	 * Creates a {@link ButtonBarControl} based on a {@link ButtonBar}
 	 */
-	public static ButtonBarControl createButtonBar(ButtonComponent buttonComponent, String masterCssClass) {
-		ButtonBarModel buttonBarModel = new ButtonComponentBarModel(buttonComponent);
+	public static ButtonBarControl createButtonBar(ButtonBarModel buttonBarModel, String masterCssClass) {
 		DefaultButtonBarRenderer renderer = new DefaultButtonBarRenderer(masterCssClass);
 		return createButtonBar(buttonBarModel, renderer);
 	}

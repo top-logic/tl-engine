@@ -61,6 +61,7 @@
 			<!-- component to edit structured elements -->
 			<component class="${componentClass}"
 				applyCommand="${applyCommand}"
+				buttonbar="true"
 				commandGroups="${editCommandGroups}"
 				defaultFor="${defaultFor}"
 				deleteCommand="${deleteCommand}"
@@ -78,7 +79,6 @@
 				${subConfiguration}
 			</component>
 			<!-- buttons -->
-			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 		</components>
 	</layout>
 </template>

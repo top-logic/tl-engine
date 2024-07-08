@@ -48,6 +48,7 @@
 						<tabInfo label="layouts.demo.editSecurityStructureWithExport.demoStructureDemoSecurityTypes.tab"/>
 						<components>
 							<include name="element/editStructureDetail.xml"
+								buttonbar="true"
 								defaultFor="${defaultFor}"
 								page="/jsp/demo/EditStructuredElement.jsp"
 								structure="${structure}"
@@ -61,11 +62,11 @@
 
 										<components>
 											<component class="com.top_logic.mig.html.layout.PageComponent"
+												buttonbar="true"
 												name="DialogA"
 												page="/jsp/layout/security/DialogA.jsp"
 												resPrefix="layouts.demo.editSecurityStructureWithExport.DialogA."
 											/>
-											<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 										</components>
 									</layout>
 
@@ -74,17 +75,19 @@
 
 										<components>
 											<component class="com.top_logic.element.layout.structured.AdminElementComponent"
+												buttonbar="true"
 												modifier=""
 												name="DialogGotoParent"
 												page="/jsp/layout/security/GotoParent.jsp"
 												resPrefix="layouts.demo.editSecurityStructureWithExport.DialogGotoParent."
 												securityProviderClass="default"
 											/>
-											<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 										</components>
 									</layout>
 
-									<layout>
+									<layout
+										buttonbar="true"
+									>
 										<dialogInfo defaultI18n="demo.securityExample.Assistant"/>
 
 										<components>
@@ -113,8 +116,6 @@
 													<assistantInfo/>
 												</component>
 											</assistent>
-
-											<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 										</components>
 									</layout>
 								</editDialogs>
@@ -127,7 +128,6 @@
 										/>
 									</buttons>
 								</subConfiguration>
-								<buttonbar/>
 							</include>
 						</components>
 					</securityLayout>
@@ -141,12 +141,12 @@
 							<layout>
 								<components>
 									<component class="com.top_logic.demo.layout.security.EditAComponent"
+										buttonbar="true"
 										model="selection(${structure}Tree)"
 										name="EditAComponent"
 										page="/jsp/layout/security/DisplayA.jsp"
 										resPrefix="layouts.demo.editSecurityStructureWithExport.EditAComponent."
 									/>
-									<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 								</components>
 							</layout>
 						</components>
@@ -161,12 +161,12 @@
 							<layout>
 								<components>
 									<component class="com.top_logic.demo.layout.security.EditBComponent"
+										buttonbar="true"
 										model="selection(${structure}Tree)"
 										name="EditBComponent"
 										page="/jsp/layout/security/DisplayB.jsp"
 										resPrefix="layouts.demo.editSecurityStructureWithExport.EditBComponent."
 									/>
-									<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 								</components>
 							</layout>
 						</components>
@@ -185,6 +185,7 @@
 										master-component
 									-->
 									<component class="com.top_logic.demo.layout.security.EditParentComponent"
+										buttonbar="true"
 										model="model(${structure}Edit)"
 										modifier=""
 										name="EditParentComponent"
@@ -193,7 +194,6 @@
 										securityProviderClass="default"
 										structure="${structure}"
 									/>
-									<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 								</components>
 							</layout>
 						</components>

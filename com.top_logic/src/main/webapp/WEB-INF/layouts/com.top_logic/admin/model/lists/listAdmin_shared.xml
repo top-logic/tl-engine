@@ -109,7 +109,7 @@
 
 						<components>
 							<component class="com.top_logic.layout.admin.component.EditListComponent$NewListComponent"
-								buttonComponent="${namePrefix}newListComponentButtons"
+								buttonbar="true"
 								listtype="${createType}"
 								model="selection(${master})"
 								name="${namePrefix}newListComponent"
@@ -117,7 +117,6 @@
 								resPrefix="${resPrefix}.edit.new."
 								securityProviderClass="securityRoot"
 							/>
-							<buttonbar name="${namePrefix}newListComponentButtons"/>
 						</components>
 					</layout>
 				</dialogs>

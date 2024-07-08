@@ -70,7 +70,6 @@
 				<editDialogs>${editDialogs}</editDialogs>
 				<subConfiguration>${subConfiguration}</subConfiguration>
 				<exportDialogs>${exportDialogs}</exportDialogs>
-				<buttonbar/>
 			</include>
 		</components>
 	</layout>

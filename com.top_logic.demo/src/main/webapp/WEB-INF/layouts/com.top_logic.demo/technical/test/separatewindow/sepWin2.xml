@@ -13,13 +13,12 @@
 				resPrefix="layouts.layoutdemo.separateWindow.sepWin2.SWPartnerTestComp2descr."
 			/>
 			<component class="com.top_logic.demo.layout.demo.SeparateWindowPartnerTestComponent"
-				buttonComponent="${namePrefix}SWPartnerTestButtons2"
+				buttonbar="true"
 				displayWithoutModel="true"
 				name="${namePrefix}SWPartnerTestComp2"
 				page="/jsp/test/layout/SeparateWindowPartnerTest.jsp"
 				resPrefix="layouts.layoutdemo.separateWindow.sepWin2.SWPartnerTestComp2."
 			/>
-			<buttonbar name="${namePrefix}SWPartnerTestButtons2"/>
 		</components>
 	</layout>
 </template>

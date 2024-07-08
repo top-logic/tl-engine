@@ -4,11 +4,11 @@
 <layout name="dialogInline2">
 	<components>
 		<layout name="dialogInline2_1"
+			buttonbar="true"
 			horizontal="true"
 		>
 			<components>
 				<component class="com.top_logic.demo.layout.demo.dialog.DemoDialog"
-					buttonComponent="dialogInline2Buttons"
 					name="infoDialogInline2_1"
 					page="/jsp/test/layout/dialog/DemoDialogContent.jsp"
 					resPrefix="layouts.layoutdemo.dialog.dialogInline2.infoDialogInline21."
@@ -17,7 +17,6 @@
 					<componentControlProvider class="com.top_logic.layout.structure.InlineLayoutControlProvider"/>
 				</component>
 				<component class="com.top_logic.demo.layout.demo.dialog.DemoDialog"
-					buttonComponent="dialogInline2Buttons"
 					name="infoDialogInline2_2"
 					page="/jsp/test/layout/dialog/DemoDialogContent.jsp"
 					resPrefix="layouts.layoutdemo.dialog.dialogInline2.infoDialogInline22."
@@ -27,6 +26,5 @@
 				</component>
 			</components>
 		</layout>
-		<buttonbar name="dialogInline2Buttons"/>
 	</components>
 </layout>

@@ -14,7 +14,7 @@
 	<layout>
 		<components>
 			<component class="com.top_logic.demo.layout.form.demo.TestControlsForm"
-				buttonComponent="${componentName}Buttons"
+				buttonbar="true"
 				name="${componentName}"
 				page="/jsp/test/layout/TestControlsForm.jsp"
 				resPrefix="layouts.layoutdemo.TestControlsForm_shared.main."
@@ -92,7 +92,6 @@
 				</dialogs>
 				${conf}
 			</component>
-			<buttonbar name="${componentName}Buttons"/>
 		</components>
 	</layout>
 </template>

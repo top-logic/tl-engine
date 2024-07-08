@@ -26,10 +26,11 @@
 		/>
 	</params>
 
-	<layout name="${namePrefix}SearchResultChart">
+	<layout name="${namePrefix}SearchResultChart"
+		buttonbar="true"
+	>
 		<components>
 			<component class="com.top_logic.reporting.layout.flexreporting.component.ReportQuerySelectorComponent"
-				buttonComponent="${namePrefix}ReportingChartComponentButtons"
 				model="selection(${namePrefix}ChartConfigurationComponent)"
 				name="${namePrefix}ReportQuerySelector"
 				page="/jsp/reporting/reportQuerySelector.jsp"
@@ -52,7 +53,6 @@
 
 						<components>
 							<component class="${chartConfigurationComponentClass}"
-								buttonComponent="${namePrefix}ReportingChartComponentButtons"
 								model="selection(${namePrefix}AttributedSearchInput)"
 								name="${namePrefix}ChartConfigurationComponent"
 								page="/jsp/reporting/reportChart.jsp"
@@ -74,13 +74,12 @@
 
 										<components>
 											<component class="com.top_logic.reporting.layout.flexreporting.component.PublishableNewStoredReportComponent"
-												buttonComponent="${namePrefix}NewStoredReportButtons"
+												buttonbar="true"
 												name="${namePrefix}NewStoredReport"
 												page="/jsp/flexibleReporting/PublishableNewStoredReport.jsp"
 												resPrefix="reporting.chart.create."
 												securityProviderClass="${securityProvider}"
 											/>
-											<buttonbar name="${namePrefix}NewStoredReportButtons"/>
 										</components>
 									</layout>
 								</dialogs>
@@ -90,7 +89,6 @@
 					<layout resPrefix="${resourcePrefix}">
 						<components>
 							<component class="com.top_logic.reporting.layout.meta.search.ReportingChartComponent"
-								buttonComponent="${namePrefix}ReportingChartComponentButtons"
 								chartProducer="com.top_logic.reporting.layout.flexreporting.producer.FlexibleReportingProducer"
 								downloadNameKey="${downloadNameKey}"
 								exportHandlerId="${exportHandlerId}"
@@ -109,7 +107,6 @@
 					</layout>
 				</components>
 			</component>
-			<buttonbar name="${namePrefix}ReportingChartComponentButtons"/>
 		</components>
 	</layout>
 </template>

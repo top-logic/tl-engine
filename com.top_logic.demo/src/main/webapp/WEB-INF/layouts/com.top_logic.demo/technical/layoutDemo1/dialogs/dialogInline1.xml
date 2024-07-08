@@ -4,7 +4,7 @@
 <layout name="dialogInline1">
 	<components>
 		<component class="com.top_logic.demo.layout.demo.dialog.DemoDialog"
-			buttonComponent="dialogInline1Buttons"
+			buttonbar="true"
 			name="infoDialogInline1"
 			page="/jsp/test/layout/dialog/DemoDialogContent.jsp"
 			resPrefix="layouts.layoutdemo.dialog.dialogInline1.infoDialogInline1."
@@ -12,6 +12,5 @@
 		>
 			<componentControlProvider class="com.top_logic.layout.structure.InlineLayoutControlProvider"/>
 		</component>
-		<buttonbar name="dialogInline1Buttons"/>
 	</components>
 </layout>

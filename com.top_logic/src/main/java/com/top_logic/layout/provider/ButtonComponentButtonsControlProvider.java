@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.provider;
 
-import com.top_logic.knowledge.gui.layout.ButtonComponent;
+import com.top_logic.knowledge.gui.layout.ButtonBar;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.model.CommandField;
@@ -14,7 +14,7 @@ import com.top_logic.layout.renderers.ButtonComponentButtonRenderer;
 
 /**
  * {@link DefaultFormFieldControlProvider} that generates buttons as in
- * {@link ButtonComponent} for {@link CommandField}s.
+ * {@link ButtonBar} for {@link CommandField}s.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

@@ -13,7 +13,7 @@ import com.top_logic.base.services.simpleajax.NothingCommand;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.knowledge.gui.layout.ButtonComponent;
+import com.top_logic.knowledge.gui.layout.ButtonBar;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.CommandModelFactory;
 import com.top_logic.layout.form.FormContainer;
@@ -29,7 +29,7 @@ import com.top_logic.tool.boundsec.CommandHandlerFactory;
 
 /**
  * The class {@link DemoButtonComponent} is a demo class for toggling buttons in a
- * {@link ButtonComponent}.
+ * {@link ButtonBar}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -53,7 +53,7 @@ public class DemoButtonComponent extends FormComponent {
 			@Override
 			public void valueChanged(FormField field, Object oldValue, Object newValue) {
 				boolean buttonsVisible = ((Boolean) newValue).booleanValue();
-				getButtonComponent().setTransientButtons(buttonsVisible ? commands : null);
+				getButtonBar().setTransientButtons(buttonsVisible ? commands : null);
 			}
 		});
 		grp.addMember(theField);

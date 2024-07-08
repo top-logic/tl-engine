@@ -52,7 +52,7 @@
 		/>
 
 		<form name="Form"
-			buttonComponent="Buttons"
+			buttonbar="true"
 			resetInvisible="true"
 			securityObject="${securityObject}"
 			securityProviderClass="${securityProviderClass}"
@@ -70,8 +70,6 @@
 				<reference command-id="deleteEditFormDefinitionCommand"/>
 			</buttons>
 		</form>
-
-		<buttonbar name="Buttons"/>
 
 		<buttons>
 			<reference command-id="editDialogCommand"/>

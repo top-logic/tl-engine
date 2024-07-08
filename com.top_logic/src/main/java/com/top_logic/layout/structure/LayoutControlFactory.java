@@ -30,11 +30,11 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.gui.ThemeFactory;
-import com.top_logic.knowledge.gui.layout.ButtonComponent;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.WindowScope;
 import com.top_logic.layout.basic.component.BreadcrumbComponent;
+import com.top_logic.layout.buttonbar.ButtonBarFactory;
 import com.top_logic.layout.component.TabComponent;
 import com.top_logic.layout.dynamic.DynamicLayoutContainer;
 import com.top_logic.layout.structure.LayoutControlProvider.Layouting;
@@ -191,11 +191,33 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 	@Override
 	public LayoutControl createLayout(LayoutComponent component) {
 		LayoutControlProvider customProvider = component.getComponentControlProvider();
+		LayoutControl componentLayout;
 		if (customProvider == null) {
-			return createDefaultLayout(component);
+			componentLayout = createDefaultLayout(component);
 		} else {
-			return createSpecificLayout(component, customProvider);
+			componentLayout = createSpecificLayout(component, customProvider);
 		}
+
+		if (!component.definesButtonBar()) {
+			return componentLayout;
+		}
+
+		// Wrap component with button bar.
+		FixedFlowLayoutControl buttonLayout = new FixedFlowLayoutControl(Orientation.VERTICAL);
+		buttonLayout.addChild(componentLayout);
+		LayoutControlAdapter buttonBar =
+			new LayoutControlAdapter(ButtonBarFactory.createButtonBar(component.getButtonBar()));
+		buttonBar.setConstraint(new DefaultLayoutData(DisplayDimension.HUNDERED_PERCENT, 100,
+			DisplayDimension.px(60), 100, Scrolling.NO));
+		buttonLayout.addChild(buttonBar);
+
+		LayoutData componentConstraint = componentLayout.getConstraint();
+		Scrolling scrolling = componentConstraint.getScrollable();
+		buttonLayout.setConstraint(componentConstraint.withScrolling(Scrolling.NO));
+		componentLayout.setConstraint(scrolling == Scrolling.AUTO ? DefaultLayoutData.DEFAULT_CONSTRAINT
+			: DefaultLayoutData.NO_SCROLL_CONSTRAINT);
+
+		return buttonLayout;
 	}
 
 	@Override
@@ -507,7 +529,7 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 	}
 
 	private static boolean markedAsTechnical(LayoutComponent component) {
-		return component instanceof ButtonComponent || component instanceof BreadcrumbComponent;
+		return component instanceof BreadcrumbComponent;
 	}
 
 	private static boolean isInvisible(LayoutComponent component) {

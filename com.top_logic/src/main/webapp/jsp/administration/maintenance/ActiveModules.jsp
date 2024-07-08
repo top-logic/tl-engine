@@ -4,7 +4,7 @@
 %><%@page import="com.top_logic.basic.util.ResKey"
 %><%@page import="com.top_logic.layout.provider.ImageButtonControlProvider"
 %><%@page import="com.top_logic.layout.form.tag.PopupSelectTag"
-%><%@page import="com.top_logic.layout.ViewInfoComponent"
+%><%@page import="com.top_logic.layout.scripting.recorder.gui.inspector.plugin.debuginfo.AbstractStaticInfoPlugin"
 %><%@page import="com.top_logic.layout.form.model.CommandField"
 %><%@page import="com.top_logic.layout.basic.fragments.Fragments"
 %><%@page import="java.util.Collections"
@@ -44,7 +44,7 @@ String pkg(BasicRuntimeModule<?> module) {
 }
 
 void inspect(DisplayContext context, TagWriter out, LayoutComponent component, BasicRuntimeModule<?> module) throws IOException {
-	CommandField inspectButton = ViewInfoComponent.createInspectButton(component.getMainLayout(), "inspect", module.getImplementationInstance());
+	CommandField inspectButton = AbstractStaticInfoPlugin.createInspectButton(component.getMainLayout(), "inspect", module.getImplementationInstance());
 	if (inspectButton != null) {
 		inspectButton.setImage(Icons.OPEN_CHOOSER);
 		inspectButton.setControlProvider(ImageButtonControlProvider.INSTANCE);

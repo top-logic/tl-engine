@@ -5,7 +5,7 @@
 	final="true"
 	template="com.top_logic.element/form.template.xml"
 >
-	<arguments>
+	<arguments buttonbar="true">
 		<name key="dynamic.6ec83041-762e-4673-9956-129bce19e16c">
 			<en>Form 1</en>
 			<de>Formular 1</de>

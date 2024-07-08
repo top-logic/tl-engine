@@ -995,8 +995,7 @@
 							</identifiers>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
-							component-implementation-comment="com.top_logic.knowledge.gui.layout.ButtonComponent"
-							component-name="0a1e1597-8d38-4d28-8606-d1fa4d677b41.layout.xml#Buttons"
+							component-name="0a1e1597-8d38-4d28-8606-d1fa4d677b41.layout.xml#Dialog"
 							user-id="root"
 						/>
 					</actions>

@@ -18,9 +18,6 @@
 		<param name="sortKeyProvider"
 			value="com.top_logic.layout.LabelMapping"
 		/>
-		<param name="exportButtonComponent"
-			value=""
-		/>
 		<param name="securityProviderClass"
 			value="securityRoot"
 		/>

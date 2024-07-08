@@ -116,15 +116,6 @@
 								<components>${mainTabbar}</components>
 							</component>
 
-							<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
-								<layoutInfo
-									scrolleable="false"
-									size="%com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT%"
-								/>
-								<componentControlProvider class="com.top_logic.layout.structure.sidebar.TitleButtonsViewProvider"
-									size="%com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT%"
-								/>
-							</layoutControl>
 							<layout-reference resource="statusBar.layout.xml"/>
 						</components>
 					</layout>

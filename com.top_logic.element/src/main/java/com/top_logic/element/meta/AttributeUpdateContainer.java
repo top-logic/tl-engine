@@ -42,7 +42,7 @@ public class AttributeUpdateContainer {
 	/** Separates IDs of attribute and object. */
 	public static final String ID_SEPARATOR = "_";
 
-	private static final int FIRST_ID = 0;
+	private static final int FIRST_ID = 1;
 
 	private AttributeFormContext _form;
 

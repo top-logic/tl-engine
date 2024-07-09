@@ -69,10 +69,10 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 	 * @param type
 	 *        The type of the transient object.
 	 */
-	public FormObjectOverlay(AttributeUpdateContainer scope, TLStructuredType type) {
+	public FormObjectOverlay(AttributeUpdateContainer scope, TLStructuredType type, String id) {
 		_scope = scope;
 		_type = type;
-		_id = scope.newCreateID();
+		_id = id;
 	}
 
 	@Override

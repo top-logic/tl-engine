@@ -3190,16 +3190,6 @@
 								tab-path="Administration > Tech. Administration > Sperren"
 							/>
 						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name=""
-								tab-path="Administration > Tech. Administration > Sichten"
-							/>
-						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 							comment="Administration > Tech. Administration > Log Dateien"
 							failure-message=""

@@ -146,7 +146,8 @@ public class TransientTLObjectImpl extends TransientObject {
 			} else if (newValue == null) {
 				// Nothing to add.
 			} else {
-				result.add(newValue);
+				throw new IllegalArgumentException("Multiple attribute '" + part
+					+ "' expects a collection, but a single value was given: " + newValue);
 			}
 			return result;
 		} else {

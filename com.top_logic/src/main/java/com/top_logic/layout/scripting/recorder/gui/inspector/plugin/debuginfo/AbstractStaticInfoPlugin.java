@@ -20,6 +20,8 @@ import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.tag.Icons;
 import com.top_logic.layout.inspector.OpenSeparateInspectorWindowCommandHandler;
 import com.top_logic.layout.provider.ImageButtonControlProvider;
+import com.top_logic.mig.html.layout.ComponentName;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.util.Resources;
@@ -125,10 +127,12 @@ public abstract class AbstractStaticInfoPlugin<M> extends DebugInfoPlugin<M> {
 	 * @return The button that opens the inspector.
 	 */
 	public static CommandField createInspectButton(MainLayout layout, String fieldName, Object model) {
-		CommandHandler handler = layout.getCommandById(INSPECTOR_WINDOW);
+		LayoutComponent mainTabbar =
+			layout.getComponentByName(ComponentName.newName("mainTabbar.layout.xml", "mainTabber"));
+		CommandHandler handler = mainTabbar.getCommandById(INSPECTOR_WINDOW);
 		Map<String, Object> arguments =
 			Collections.singletonMap(OpenSeparateInspectorWindowCommandHandler.PARAM_OBJECT, model);
-		return FormFactory.newCommandField(fieldName, handler, layout, arguments);
+		return FormFactory.newCommandField(fieldName, handler, mainTabbar, arguments);
 	}
 
 	/**

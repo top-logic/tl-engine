@@ -41,11 +41,13 @@ public class PostGraphPartCreationAction implements PostCreateAction {
 		SharedGraph graph = graphComponent.getGraphModel();
 		GraphPart newPart = graph.getGraphPart(newModel);
 
-		if (newPart instanceof Node) {
-			GraphModelUtil.applyBounds((Node) newPart, getCreatedBounds(component));
-		}
+		if (newPart != null) {
+			if (newPart instanceof Node) {
+				GraphModelUtil.applyBounds((Node) newPart, getCreatedBounds(component));
+			}
 
-		graph.setSelectedGraphParts(Collections.singleton(newPart));
+			graph.setSelectedGraphParts(Collections.singleton(newPart));
+		}
 	}
 
 	private Bounds getCreatedBounds(LayoutComponent component) {

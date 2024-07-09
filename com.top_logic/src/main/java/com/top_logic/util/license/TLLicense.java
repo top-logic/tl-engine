@@ -26,17 +26,26 @@ public interface TLLicense extends ConfigurationItem {
 
 	/**
 	 * Allowed number of cluster nodes running the application.
+	 * 
+	 * @deprecated No longer in use.
 	 */
+	@Deprecated
 	int getClusterSize();
 
 	/**
 	 * Number of users accounts permitted by the license.
+	 * 
+	 * @deprecated No longer in use.
 	 */
+	@Deprecated
 	int getUsers();
 
 	/**
 	 * Number of restricted user accounts (read-only) permitted by the license.
+	 * 
+	 * @deprecated No longer in use.
 	 */
+	@Deprecated
 	int getRestrictedUsers();
 
 	/**

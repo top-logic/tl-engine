@@ -5,7 +5,12 @@
  */
 package com.top_logic.element.meta.form.overlay;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
@@ -79,9 +84,34 @@ public class TLFormObjectNaming extends AbstractModelNamingScheme<TLFormObject, 
 			(AttributeFormContext) ModelResolver.locateModel(context, name.getFormContext());
 		TLObject editedObject = (TLObject) ModelResolver.locateModel(context, name.getEditedObject());
 		String domain = name.getDomain();
-		TLFormObject result = formContext.getAttributeUpdateContainer().getOverlay(editedObject, domain);
+		AttributeUpdateContainer updateContainer = formContext.getAttributeUpdateContainer();
+		TLFormObject result = updateContainer.getOverlay(editedObject, domain);
 		if (result == null) {
-			ApplicationAssertions.assertNotNull(name, "Form object overlay cannot be resolved.", result);
+			List<String> existingDomains = new ArrayList<>();
+			for (Iterator<? extends TLFormObject> it = updateContainer.getAllOverlays().iterator(); it.hasNext();) {
+				TLFormObject obj = it.next();
+
+				if (editedObject != null && editedObject == obj.getEditedObject()) {
+					throw ApplicationAssertions.fail(name, "Wrong domain in object overlay reference, domain: " + domain
+						+ ", expecting: " + obj.getDomain());
+				}
+
+				if (obj.getEditedObject() == null) {
+					existingDomains.add(obj.getDomain());
+				}
+			}
+
+			if (editedObject == null && existingDomains.size() == 1) {
+				throw ApplicationAssertions.fail(name, "Wrong domain in object overlay reference, domain: " + domain
+					+ ", expecting: " + existingDomains.get(0));
+			}
+
+			if (editedObject == null) {
+				ApplicationAssertions.fail(name, "Form create overlay cannot be resolved (domain '" + domain
+					+ "'), existing domains: " + existingDomains);
+			} else {
+				ApplicationAssertions.fail(name, "Form object overlay cannot be resolved. ");
+			}
 		}
 		return result;
 	}

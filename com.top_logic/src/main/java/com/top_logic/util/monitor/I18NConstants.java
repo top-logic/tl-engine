@@ -90,21 +90,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey DELETE_LICENSE_INFO;
 
 	/**
-	 * @en User account usage
-	 */
-	public static ResKey LICENSE_USERS_FULL;
-
-	/**
-	 * @en Restricted user account usage
-	 */
-	public static ResKey LICENSE_USERS_RESTRICTED;
-
-	/**
-	 * @en {0} of max {1}
-	 */
-	public static ResKey LICENSE_USERS_VALUE;
-
-	/**
 	 * @en Product type
 	 */
 	public static ResKey PRODUCT_TYPE;
@@ -130,19 +115,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey LICENSE_VALIDITY;
 
 	/**
-	 * @en Unlimited
-	 */
-	public static ResKey UNLIMITED;
-
-	/**
 	 * @en Does not expire.
 	 */
 	public static ResKey NO_EXPIRY;
-
-	/**
-	 * @en Number of cluster nodes
-	 */
-	public static ResKey LICENSE_CLUSTER_SIZE;
 
 	public static ResKey ALIVE1 = legacyKey("admin.sys.monitor.message.alive1");
 

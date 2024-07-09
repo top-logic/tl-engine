@@ -9,6 +9,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ModelSpec;
@@ -19,8 +20,9 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
- * 
+ * TL-Script plug-in to compute a URL for some object context.
  */
+@Label("TL-Script URL computation")
 public class UrlProviderByExpression extends AbstractConfiguredInstance<UrlProviderByExpression.Config<?>>
 		implements URLProvider {
 

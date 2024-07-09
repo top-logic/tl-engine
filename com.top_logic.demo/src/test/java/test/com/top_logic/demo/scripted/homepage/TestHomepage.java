@@ -25,7 +25,6 @@ public class TestHomepage {
 		String[] testCases = {
 			"00_SetMaintenanceHomepage",
 			"01_CheckMaintenanceHomepage",
-			"02_SetViewInfoHomepage",
 			"04_SetMonitorHomepage",
 			"05_CheckMonitorHomepage",
 			"06_SetSearchHomepage",

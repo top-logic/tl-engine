@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<!-- 
- - - Template that can be used in a direct child of the main layout (masterFrame.xml) to define a minimal 
- - - frontend to an application without sidebar, toolbar and other decoration. 
- -->
+<!--
+	- - Template that can be used in a direct child of the main layout (masterFrame.xml) to define a minimal
+	- - frontend to an application without sidebar, toolbar and other decoration.
+-->
 <config:template
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	groups="entry-point"
@@ -21,7 +21,7 @@
 			/>
 			<option-labels value="com.top_logic.layout.editor.DynamicComponentDefinition$Labels"/>
 			<dynamic-mode fun="com.top_logic.layout.form.values.edit.mode.CustomMode"/>
-			
+
 			<!-- Re-install the placeholder component, if the (last) view was deleted. -->
 			<complex-default value="com.top_logic.layout.editor.annotation.LayoutTemplatesDefault"/>
 			<layout-templates value="com.top_logic/contentLayout.template.xml"/>
@@ -30,15 +30,13 @@
 
 	<component class="com.top_logic.tool.boundsec.CockpitLayout"
 		components="${components}"
-		name="cockpit"
 		horizontal="false"
+		name="cockpit"
 	>
 		<layoutInfo size="100%"/>
-		
+
 		<buttons>
-			<!-- 
-			<reference command-id="openScriptRecorder"/>
-			-->
+			<!-- <reference command-id="openScriptRecorder"/> -->
 
 			<reference command-id="toggleDesignModeCommand"/>
 			<reference command-id="releaseLayout"/>
@@ -47,11 +45,9 @@
 			<reference command-id="reloadTheme"/>
 			<reference command-id="toggleAlwaysShowKeys"/>
 			<reference command-id="toggleShowAllCommands"/>
-			
+
 			<!-- No logout by default - not if the view is embedded into another application -->
-			<!--  
-			<reference command-id="logout"/>
-			 -->
+			<!-- <reference command-id="logout"/> -->
 		</buttons>
 	</component>
 </config:template>

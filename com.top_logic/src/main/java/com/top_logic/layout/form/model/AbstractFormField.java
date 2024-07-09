@@ -545,12 +545,21 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
     }
     
 	@Override
-	void updateDisplayMode() {
-		super.updateDisplayMode();
-
+	protected void notifyDisplayModeChanged(int oldDisplayMode, int newDisplayMode) {
 		// Since only fields that are active can have errors, a mode change must re-validate field
 		// modes.
-		clearError();
+		if (state != ILLEGAL_INPUT_STATE) {
+			if (newDisplayMode == ACTIVE_MODE) {
+				// Restore potential error.
+				check();
+			} else {
+				// An invalid user input cannot be restored later on, therefore, this state must not
+				// be changed, when changing visibility.
+				clearError();
+			}
+		}
+
+		super.notifyDisplayModeChanged(oldDisplayMode, newDisplayMode);
 	}
 
     @Override

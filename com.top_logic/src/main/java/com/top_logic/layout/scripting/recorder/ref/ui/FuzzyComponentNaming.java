@@ -215,7 +215,7 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 				return super.visitLayoutComponent(aComponent);
 			}
 		});
-		return searchResult.getSingleResult("Search for component " + title + " failed.");
+		return searchResult.getSingleResult("Search for component '" + title + "' failed.");
 	}
 
 	private LayoutComponent getRootLayout(DisplayContext context) {
@@ -400,7 +400,7 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 	private LayoutComponent findComponent(LayoutComponent component, ComponentName name, List<String> path) {
 		SearchResult<LayoutComponent> result = new SearchResult<>();
 		findComponent(Collections.singletonList(component), name, result);
-		return result.getSingleResult("Search for component '" + name + "' in " + printPath(path) + " failed.");
+		return result.getSingleResult("Search for component '" + name + "' in '" + printPath(path) + "' failed.");
 	}
 
 	private String printPath(List<String> path) {

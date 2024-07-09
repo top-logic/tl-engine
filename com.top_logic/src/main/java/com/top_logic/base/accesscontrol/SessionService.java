@@ -21,7 +21,6 @@ import javax.servlet.http.HttpSessionBindingListener;
 import com.top_logic.base.bus.UserEvent;
 import com.top_logic.base.context.DefaultSessionContext;
 import com.top_logic.base.context.TLSessionContext;
-import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
@@ -40,9 +39,6 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
-import com.top_logic.util.Utils;
-import com.top_logic.util.license.LicenseTool;
-import com.top_logic.util.license.TLLicense;
 
 /**
  * {@link ManagedClass} holding active user sessions.
@@ -120,11 +116,6 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	private final PersonManager _personManager;
 
 	private final ThreadContextManager _threadContextManager;
-
-	/**
-	 * Thank you for looking at this code, ask msi for details.
-	 */
-	private static boolean __;
 
 	/**
 	 * Initializes a new Service.
@@ -371,38 +362,8 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
     }
 
 	private HttpSession login(HttpServletRequest request, HttpServletResponse response, Person aUser) {
-		LicenseTool licenseTool = LicenseTool.getInstance();
-		TLLicense license = licenseTool.getLicense();
-		if (licenseTool.usersExceeded(license)) {
-			if (!aUser.getName().equals(PersonManager.getManager().getSuperUserName())) {
-				return null;
-			}
-			logOutExistingSession(aUser.getName());
-		}
-		if (getOnlyOneSession() || licenseTool.limitToOneSession(license)) {
-			logOutExistingSession(aUser.getName());
-    	}
         return (getNewSessionForUser (request, response, aUser));
     }    
-
-    /**
-	 * Logs the given user out, if he has already a session.
-	 * The user gets logged out only if the login name doesn't appear in the exclude list.
-	 *
-	 * @param userName the user to log out.
-	 */
-	private void logOutExistingSession(String userName) {
-		if (!ArrayUtil.contains(getExcludeUIDs(), userName)) {
-			Collection<String> sessionIDs = getSessionIDs();
-			for (String sessionID : sessionIDs) {
-				Person user = getUser(sessionID);
-				if (Utils.equals(userName, user.getName())) {
-					Logger.info("Logging out user '" + userName + "' because of another login." , SessionService.class);
-					invalidateSession(sessionID);
-				}
-			}
-		}
-	}
 
 	/**
      * Creates a new session for the given request an binds the given

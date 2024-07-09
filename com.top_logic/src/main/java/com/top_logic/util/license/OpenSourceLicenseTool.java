@@ -18,14 +18,17 @@ public class OpenSourceLicenseTool extends LicenseTool {
 	 * The license information for an active AGPL license.
 	 */
 	public interface AGPL extends TLLicense {
+		@Deprecated
 		@Override
 		@IntDefault(Integer.MAX_VALUE)
 		int getUsers();
 
+		@Deprecated
 		@Override
 		@IntDefault(Integer.MAX_VALUE)
 		int getRestrictedUsers();
 
+		@Deprecated
 		@Override
 		@IntDefault(Integer.MAX_VALUE)
 		int getClusterSize();
@@ -62,16 +65,6 @@ public class OpenSourceLicenseTool extends LicenseTool {
 	@Override
 	public TLLicense getLicense() {
 		return LICENSE;
-	}
-
-	@Override
-	public boolean usersExceeded(TLLicense license) {
-		return false;
-	}
-
-	@Override
-	public boolean limitToOneSession(TLLicense license) {
-		return false;
 	}
 
 	@Override

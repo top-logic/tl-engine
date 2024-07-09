@@ -18,7 +18,6 @@ import com.top_logic.base.security.device.interfaces.PersonDataAccessDevice;
 import com.top_logic.base.security.device.interfaces.SecurityDevice;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Key;
@@ -30,7 +29,6 @@ import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.util.license.LicenseTool;
 
 /**
  * Provides access to all configured {@link SecurityDevice} without knowledge of device IDs.
@@ -47,8 +45,6 @@ import com.top_logic.util.license.LicenseTool;
 })
 public class TLSecurityDeviceManager extends ManagedClass {
 	
-	private static final String TL_FEATURE_LDAP = "tl.feature.ldap";
-
 	private static final String DB_SECURITY = "dbSecurity";
 
 	/**
@@ -124,17 +120,9 @@ public class TLSecurityDeviceManager extends ManagedClass {
 	public TLSecurityDeviceManager(InstantiationContext context, Config config) {
 		_configuredDevices =
 			TypedConfiguration.<String, SecurityDevice> getInstanceMap(context, config.getSecurityDevices());
-		checkSecurityDevices(_configuredDevices);
 		_dataAccessDevices = getDataAccessDevices(_configuredDevices);
 		_authenticationDevices = getAuthenticationDevices(context, _configuredDevices);
 		_defaultAuthenticationDevice = getDefaultAuthenticationDevice(context, config, _authenticationDevices);
-	}
-
-	@FrameworkInternal
-	private void checkSecurityDevices(Map<String, SecurityDevice> devices) {
-		if (!LicenseTool.getInstance().includeFeature(TL_FEATURE_LDAP)) {
-			devices.entrySet().removeIf(e -> !e.getKey().equals(DB_SECURITY));
-		}
 	}
 
 	private Map<String, AuthenticationDevice> getAuthenticationDevices(Log log,
@@ -164,12 +152,7 @@ public class TLSecurityDeviceManager extends ManagedClass {
 	private AuthenticationDevice getDefaultAuthenticationDevice(Log log, Config config,
 			Map<String, AuthenticationDevice> authenticationDevices) {
 		AuthenticationDevice defaultAuthenticationDevice;
-		String defaultAuthenticationId;
-		if (LicenseTool.getInstance().includeFeature(TL_FEATURE_LDAP)) {
-			defaultAuthenticationId = config.getDefaultAuthenticationDevice();
-		} else {
-			defaultAuthenticationId = DB_SECURITY;
-		}
+		String defaultAuthenticationId = config.getDefaultAuthenticationDevice();
 		if (defaultAuthenticationId.isEmpty()) {
 			if (authenticationDevices.size() != 1) {
 				StringBuilder noDefaultAuthentication = new StringBuilder();
@@ -195,7 +178,6 @@ public class TLSecurityDeviceManager extends ManagedClass {
 	}
 
 	private Map<String, PersonDataAccessDevice> getDataAccessDevices(Map<String, SecurityDevice> allDevices) {
-		checkSecurityDevices(allDevices);
 		Map<String, PersonDataAccessDevice> result = new HashMap<>();
 		for (Entry<String, SecurityDevice> entry : allDevices.entrySet()) {
 			String id = entry.getKey();

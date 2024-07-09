@@ -17,7 +17,7 @@
 			/>
 		</windowInfo>
 	</window>
-	
+
 	<window template="com.top_logic/admin/technical/layoutInspector/inspector.xml">
 		<windowInfo
 			multiWindow="false"

@@ -45,6 +45,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * 
  * @author <a href="mailto:tma@top-logic.com">tma</a>
  */
+@SuppressWarnings("javadoc")
 public class TestFormField extends BasicTestCase {
 
 	private static final ResPrefix ADDRESS = ResPrefix.forTest("adress");
@@ -321,6 +322,27 @@ public class TestFormField extends BasicTestCase {
 		}
 	}
 	
+	public void testConstraintsOnInsactiveField() {
+		AbstractFormField field = FormFactory.newStringField("name");
+		field.addConstraint(DigitsOnlyConstraint.INSTANCE);
+
+		// No error until initial check.
+		field.setValue("abc");
+		assertFalse(field.hasError());
+
+		// Show constraint violation error.
+		field.check();
+		assertTrue(field.hasError());
+
+		// Check that non-active fields do not report errors.
+		field.setImmutable(true);
+		assertFalse(field.hasError());
+
+		// Check that error is restored, when field is made active again.
+		field.setImmutable(false);
+		assertTrue(field.hasError());
+	}
+
 	public void testClearConstraints() {
 		AbstractFormField field = new TestField("name");
 

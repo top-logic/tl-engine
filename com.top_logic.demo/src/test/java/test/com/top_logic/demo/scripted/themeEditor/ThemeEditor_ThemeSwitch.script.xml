@@ -5,7 +5,7 @@
 >
 	<actions>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Dezent Theme auswählen"
+			comment="Comfort Theme auswählen"
 		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
@@ -14,14 +14,14 @@
 				>
 					<parameters>
 						<parameter name="Theme"
-							value="Dezent (Modern)"
+							value="Comfort"
 						/>
 					</parameters>
 				</action>
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Login mit dezent Theme"
+			comment="Login mit Comfort (Sidebar) Theme"
 		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
@@ -72,7 +72,7 @@
 						<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 							<values>
 								<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-									label="Dezent (Modern)"
+									label="Comfort (Sidebar)"
 								/>
 							</values>
 						</local-name>
@@ -90,7 +90,7 @@
 				>
 					<parameters>
 						<parameter name="Theme"
-							value="Demo Modern"
+							value="Comfort"
 						/>
 					</parameters>
 				</action>

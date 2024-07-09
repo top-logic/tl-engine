@@ -9,7 +9,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * 
+ * Algorithm to compute a URL for an object context.
  */
 public interface URLProvider {
 

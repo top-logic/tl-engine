@@ -201,6 +201,9 @@ public interface PostCreateAction {
 			@ComplexDefault(DefaultEditMode.class)
 			EditorMode getMode();
 
+			/**
+			 * Selects {@link EditorMode#EDIT_MODE} as default value for {@link Config#getMode()}.
+			 */
 			class DefaultEditMode extends DefaultValueProvider {
 				@Override
 				public Object getDefaultValue(ConfigurationDescriptor descriptor, String propertyName) {

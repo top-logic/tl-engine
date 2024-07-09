@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -201,9 +202,15 @@ public class LayoutTemplateUtils {
 	 * Computes the {@link Element} node containing the typed layout arguments.
 	 * 
 	 * It is assumed that the first child of typed layout templates is the arguments object.
+	 * 
+	 * @return The argument element or <code>null</code> if there are no arguments.
 	 */
 	public static Element getTemplateArgumentElement(Element node) {
-		return getFirstChild(node);
+		Iterator<Element> it = DOMUtil.elements(node).iterator();
+		if (!it.hasNext()) {
+			return null;
+		}
+		return it.next();
 	}
 
 	static String getArgumentContentName(String templateName) {
@@ -242,10 +249,6 @@ public class LayoutTemplateUtils {
 			return false;
 		}
 		return finalAnnotation.booleanValue();
-	}
-
-	private static Element getFirstChild(Element node) {
-		return DOMUtil.elements(node).iterator().next();
 	}
 
 	/**

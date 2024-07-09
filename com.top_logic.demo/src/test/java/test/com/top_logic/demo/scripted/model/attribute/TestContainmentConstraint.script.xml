@@ -1111,7 +1111,6 @@
 							user-id="root"
 						/>
 						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							xmlns:config="http://www.top-logic.com/ns/config/6.0"
 							user-id="root"
 						>
 							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
@@ -1350,12 +1349,13 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.element.meta.form.overlay.TLFormObjectNaming$Name"
-							domain="2"
+							domain="obj_3"
 						>
 							<edited-object config:interface=""/>
 							<form-context config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Containment Constraint > Details"
+									name="3911c78f-5336-4477-b0ad-a86e2f24768e.layout.xml#Form"
+									tab-path="Containment Constraint"
 								/>
 								<path/>
 							</form-context>
@@ -1366,7 +1366,8 @@
 						label="Tabelle in content"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Containment Constraint > Details"
+							name="3911c78f-5336-4477-b0ad-a86e2f24768e.layout.xml#Form"
+							tab-path="Containment Constraint"
 						/>
 					</selection-model-name>
 				</action>

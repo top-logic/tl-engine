@@ -293,7 +293,11 @@ public class ComponentConfigurationBuilder {
 	}
 
 	private String getTemplateCallArguments(Element documentElement) {
-		return DOMUtil.toString(LayoutTemplateUtils.getTemplateArgumentElement(documentElement));
+		Element argumentElement = LayoutTemplateUtils.getTemplateArgumentElement(documentElement);
+		if (argumentElement == null) {
+			return "<arguments/>";
+		}
+		return DOMUtil.toString(argumentElement);
 	}
 
 	private TLLayout createTemplateCallLayout(String scope,

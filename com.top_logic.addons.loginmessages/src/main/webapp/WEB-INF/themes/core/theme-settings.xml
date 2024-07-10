@@ -2,13 +2,13 @@
 
 <settings>
 	<icon name="ICONS_LARGE_LOGIN_MESSAGE60"
-		value="/icons/large/LoginMessage60.png"
+		expr="%ICONS_LOGIN_MESSAGE%"
 	/>
 	<icon name="ICONS_LOGIN_MESSAGE"
-		value="/icons/LoginMessage.png"
+		value="css:fas fa-envelope"
 	/>
 	<icon name="ICONS_LOGIN_MESSAGE_BUTTON"
-		value="/icons/LoginMessageButton.png"
+		expr="%ICONS_LOGIN_MESSAGE%"
 	/>
 	<icon name="LOGIN_MESSAGE_RESET_ICON"
 		value="css:fas fa-backward"

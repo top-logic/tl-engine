@@ -380,10 +380,4 @@
 	<icon name="mime.Clipboard.large"
 		expr="%mime.Clipboard%"
 	/>
-	<icon name="MIMETYPES_LARGE_PERSON_CONTACT_60"
-		value="css:bi bi-people-fill"
-	/>
-	<icon name="MIMETYPES_PERSON_CONTACT_16"
-		expr="%MIMETYPES_LARGE_PERSON_CONTACT_60%"
-	/>
 </settings>

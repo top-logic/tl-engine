@@ -21,7 +21,7 @@
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Login mit Comfort (Sidebar) Theme"
+			comment="Login mit Comfort Theme"
 		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
@@ -72,7 +72,7 @@
 						<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 							<values>
 								<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-									label="Comfort (Sidebar)"
+									label="Comfort"
 								/>
 							</values>
 						</local-name>
@@ -90,7 +90,7 @@
 				>
 					<parameters>
 						<parameter name="Theme"
-							value="Comfort"
+							value="Comfort (Sidebar)"
 						/>
 					</parameters>
 				</action>

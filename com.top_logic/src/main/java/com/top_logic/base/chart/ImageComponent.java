@@ -24,7 +24,7 @@ import com.top_logic.mig.html.HTMLConstants;
 public interface ImageComponent {
 
 	/** Path to the image that is used in case no image could be created. */
-	public static final String DEFAULT_IMG_PATH = "/themes/default/misc/brokenImage.png";
+	public static final String DEFAULT_IMG_PATH = "/themes/core/misc/brokenImage.png";
 
 	/**
 	 * Type to request rendering of PNG images.

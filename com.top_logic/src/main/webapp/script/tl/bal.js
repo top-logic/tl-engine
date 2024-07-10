@@ -1061,6 +1061,15 @@ BAL = {
 		// There is no browser independent way to suppress text selection.
 		return false;
 	},
+	
+	removeAndDisableSelection: function(element) {
+		// new Function because there is a function in bal-ff.js that overrides the one above
+		window.getSelection().empty();
+		element.onselectstart = (event) => {
+			event.preventDefault();
+		};
+		return true;
+	},
   
 	/** <<function>>
 	 * Retrieves the object that triggered the given event from the event.

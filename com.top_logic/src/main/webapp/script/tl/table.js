@@ -1959,6 +1959,8 @@ TABLE = {
 	initColumnResizing: function(mousedownEvent, ctrlID) {
 		var columnResizer = mousedownEvent.currentTarget;
 		
+		BAL.removeAndDisableSelection(columnResizer);
+		
 		TABLE.addColumnResizingStyles(columnResizer);
 		
 		var columnWidthOnClientUpdater = TABLE.createColumnWidthOnClientUpdater(ctrlID, columnResizer);
@@ -1968,6 +1970,117 @@ TABLE = {
  		window.addEventListener('mouseup', columnWidthOnServerUpdater, { once: true });
  		
  		mousedownEvent.stopPropagation();
+	},
+	
+	/**
+	 * Auto fits clicked column width on double click to widest cell content.
+	 * 
+	 * @param{dblclickEvent} Double click event.
+	 * @param{ctrlID} Table control identifier.
+	 */
+	fitClickedColumn: function(dblclickEvent, ctrlID) {
+		const columnResizer = dblclickEvent.currentTarget;
+		const resizerCell = columnResizer.parentElement;
+		
+		BAL.removeAndDisableSelection(columnResizer);
+		
+		let firstCol = this.getFirstColumnIndex(resizerCell),
+			lastCol = this.getLastColumnIndex(resizerCell);
+		
+		const tableContainer = document.getElementById(ctrlID);
+		this.autofitColumnWidths(tableContainer, false, firstCol, lastCol);
+		
+		dblclickEvent.preventDefault();
+		dblclickEvent.stopPropagation();
+	},
+	
+	/**
+	 * Auto fits width of given columns to widest cell content of each column.
+	 * 
+	 * @param{tableContainer} Container of the table.
+	 * @param{fullTable} [optional] Boolean if all columns of the table should be fitted. If true, firstCol & lastCol will be ignored. [default = true]
+	 * @param{firstCol} First column to fit. If falsy is overwritten with tables first column (0).
+	 * @param{lastCol} Last column to fit. If falsy is overwritten with tables last column (number of columns - 1).
+	 * @param{updateServer} [optional] Boolean if the column widths on the Server should be updated. [default = true]
+	 */
+	autofitColumnWidths: function(tableContainer, fullTable = true, firstCol, lastCol, updateServer = true) {
+		const table = tableContainer.querySelector("table");
+		const tbody = this.getTableBody(tableContainer);
+		let numColumns = this.getNumberOfColumns(table),
+			borderWidth = parseInt(getComputedStyle(document.body).getPropertyValue("--TABLE_COLUMN_BORDER_WIDTH"));
+		const ctrlID = tableContainer.id;
+		const colgroup = table.querySelector("colgroup");
+		
+		let firstIdx, lastIdx;
+		if (fullTable == true) {
+			firstIdx = 0;
+			lastIdx = numColumns - 1;
+		} else {
+			firstIdx = (firstCol ? firstCol : 0);
+			lastIdx = (((lastCol == 0) || lastCol) ? lastCol : (numColumns - 1));
+		}
+		
+		let relevantColumns = [];
+		
+		for (let i = firstIdx; i <= lastIdx; i++) {
+			let cells = this.getTableColumnCells(tbody, i, numColumns),
+				columnWidth = 0;
+			
+			for (let cell of cells) {
+				let cellContent = cell.firstElementChild;
+				if (!cellContent) {
+					continue;
+				}
+				
+				let cellWidth = cellContent.clientWidth + borderWidth,
+					scrollWidth = cellContent.scrollWidth + borderWidth;
+				
+				columnWidth = Math.max(columnWidth, cellWidth, scrollWidth);
+			}
+			
+			if (columnWidth != 0) {
+				let col = colgroup.querySelector("col:nth-child(" + (i + 1) + ")"),
+					originalColWidth = col.style.width;
+				col.style.width = columnWidth + "px";
+				relevantColumns.push(i);
+				
+				let columnResizer = this.getColumnResizer(table.querySelector("tr:last-child th:nth-child(" + (i + 1) + ")")),
+					widthDiff = columnWidth - parseInt(originalColWidth);
+				this.createFixedColumnLeftOffsetUpater(ctrlID, columnResizer)(widthDiff);
+				
+				if (updateServer == true) {
+					// send update of column i's width to server
+					services.ajax.execute("dispatchControlCommand", {
+						controlCommand: "updateColumnWidth",
+						controlID: ctrlID,
+						columnID: i,
+						newColumnWidth: columnWidth
+					}, /* useWaitPane */false);
+				}
+			}
+		}
+		
+		if (fullTable) {
+			let visibleTableWidth = TABLE.getScrollContainer(tableContainer.id).clientWidth,
+				tableWidth = table.clientWidth;
+			if (tableWidth < visibleTableWidth) {
+				let colIncrease = (visibleTableWidth - tableWidth) / relevantColumns.length;
+				for (let colID of relevantColumns) {
+					let col = colgroup.querySelector("col:nth-child(" + (colID + 1) + ")"),
+						newColWidth = parseInt(col.style.width) + colIncrease;
+					col.style.width = newColWidth + "px";
+					if (updateServer == true) {
+						// send update of column colID's width to server
+						services.ajax.execute("dispatchControlCommand", {
+							controlCommand: "updateColumnWidth",
+							controlID: ctrlID,
+							columnID: colID,
+							newColumnWidth: newColWidth
+						}, /* useWaitPane */false);
+					}
+				}
+			}
+		}
 	},
 	
 	/**

@@ -673,7 +673,7 @@
 							the variable "com.top_logic.layout.table.model.Icons.SELECTION_COLUMN_WIDTH", is only set when a new table configuration based on this default 
 							table is created. 
 						-->
-						<column name="_select" sortable="false" fullTextProvider="" columnLabelKey="tl.table._select" filterProvider="" classifier="suppressExport" showHeader="false">
+						<column name="_select" cssClass="tblCenter" sortable="false" fullTextProvider="" columnLabelKey="tl.table._select" filterProvider="" classifier="suppressExport" showHeader="false">
 							<cellRenderer class="com.top_logic.layout.table.control.TableSelectionColumnRenderer"/>
 						</column>
 					</columns>

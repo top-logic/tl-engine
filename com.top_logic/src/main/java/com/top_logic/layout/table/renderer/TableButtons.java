@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.base.services.simpleajax.JSFunctionCall;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.TypedAnnotatable;
@@ -71,6 +72,7 @@ import com.top_logic.layout.table.TableModelUtils;
 import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.layout.table.control.SortConfigDialog;
 import com.top_logic.layout.table.control.StructuredColumnLabels;
+import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.control.TableControl.OpenFilterDialogAction;
 import com.top_logic.layout.table.display.IndexRange;
 import com.top_logic.layout.table.filter.TableFilterEvent;
@@ -235,6 +237,25 @@ public class TableButtons {
 
 		return createButton(resetTableCommand, table, Icons.RESET_TABLE,
 			I18NConstants.RESET_TABLE_CONFIGURATION);
+	}
+
+	/**
+	 * The button that automatically fits the width of each column to its widest content.
+	 */
+	public static CommandModel createAutofitColumnsCommand(final TableData table) {
+		Command autofitColumnsCommand = new Command() {
+			@Override
+			public HandlerResult executeCommand(DisplayContext commandContext) {
+				if (table.isSet(TableControl.CONTROL_ID_PROPERTY)) {
+					commandContext.getWindowScope().getTopLevelFrameScope().addClientAction(new JSFunctionCall(
+						table.get(TableControl.CONTROL_ID_PROPERTY), "TABLE", "autofitColumnWidths"));
+				}
+				return HandlerResult.DEFAULT_RESULT;
+			}
+		};
+
+		return createButton(autofitColumnsCommand, table, Icons.AUTO_FIT_COLUMNS,
+			I18NConstants.AUTO_FIT_COLUMNS);
 	}
 
 	/**

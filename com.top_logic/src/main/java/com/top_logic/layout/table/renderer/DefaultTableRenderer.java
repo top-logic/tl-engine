@@ -651,6 +651,9 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 
 			groupCellProperties.put("styles", null);
 			groupCellProperties.put("onResizeGrabberMousedownHandler", createFragmentToResizeColumn());
+			if (hasFixedColumns()) {
+				groupCellProperties.put("onResizeGrabberDoubleclickHandler", createFragmentToAutofitColumn());
+			}
 
 			if (isFixed) {
 				groupCellProperties.put("isSticky", true);
@@ -750,6 +753,9 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 
 					headerCellProperties.put("styles", createHeaderCellStylesFragment(columnIndex));
 					headerCellProperties.put("onResizeGrabberMousedownHandler", createFragmentToResizeColumn());
+					if (hasFixedColumns()) {
+						headerCellProperties.put("onResizeGrabberDoubleclickHandler", createFragmentToAutofitColumn());
+					}
 					appendFixedColumnProperties(headerCellProperties, columnIndex, fixedColumnWidth, fixedColumns);
 
 					if (fixedColumns > 0) {
@@ -787,6 +793,14 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		private HTMLFragment createFragmentToResizeColumn() {
 			return (context, out) -> {
 				out.append("TABLE.initColumnResizing(event, ");
+				out.writeJsString(getView().getID());
+				out.append(");");
+			};
+		}
+
+		private HTMLFragment createFragmentToAutofitColumn() {
+			return (context, out) -> {
+				out.append("TABLE.fitClickedColumn(event, ");
 				out.writeJsString(getView().getID());
 				out.append(");");
 			};
@@ -1228,7 +1242,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 
 		private void writeSeparatorColgroupColumn(TagWriter out) {
 			out.beginBeginTag(COL);
-			out.writeAttribute(STYLE_ATTR, "width: --var(TABLE_SEPARATOR_WIDTH)");
+			out.writeAttribute(STYLE_ATTR, "width: var(--TABLE_SEPARATOR_WIDTH)");
 			out.endEmptyTag();
 		}
 

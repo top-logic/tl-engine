@@ -58,7 +58,9 @@ public class OpenSourceLicenseTool extends LicenseTool {
 		System.out.println(text);
 		System.out.println();
 		System.out.println(
-			"Licensed under GNU Affero General Public License - AGPL");
+			" Licensed under GNU Affero General Public License - AGPL");
+		System.out.println(
+			" https://www.gnu.org/licenses/agpl-3.0.en.html          ");
 		System.out.println();
 	}
 

@@ -69,6 +69,8 @@ public class Icons extends IconsBase {
 
 	public static ThemeImage RESET_TABLE;
 
+	public static ThemeImage AUTO_FIT_COLUMNS;
+
 	public static ThemeImage SORT_BUTTON_ICON;
 
 	public static ThemeImage TBL_COLUMN_CONFIG;
@@ -188,7 +190,7 @@ public class Icons extends IconsBase {
 	/**
 	 * Width of the tables separator which separates the tables fixed and flexible area.
 	 */
-	@DefaultValue("7px")
+	@DefaultValue("4px")
 	public static ThemeVar<DisplayDimension> TABLE_SEPARATOR_WIDTH;
 
 

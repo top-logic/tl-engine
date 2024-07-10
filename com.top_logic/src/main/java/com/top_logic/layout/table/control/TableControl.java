@@ -144,6 +144,7 @@ import com.top_logic.layout.table.model.TableModelListener;
 import com.top_logic.layout.table.model.TableUtil;
 import com.top_logic.layout.table.renderer.DefaultTableRenderer;
 import com.top_logic.layout.table.renderer.Icons;
+import com.top_logic.layout.table.renderer.TableButtons;
 import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.mig.html.DefaultMultiSelectionModel;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
@@ -263,6 +264,11 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 	/** Translation key for title of table */
 	public static final String RES_TITLE = "title";
+
+	/**
+	 * Property to transfer the table control ID to {@link TableButtons}.
+	 */
+	public static final Property<String> CONTROL_ID_PROPERTY = TypedAnnotatable.property(String.class, "controlID");
 
 	public TableControl(TableData tableData, ITableRenderer tableRenderer) {
 		this(tableData, TABLE_COMMANDS, tableRenderer);
@@ -976,6 +982,8 @@ public class TableControl extends AbstractControl implements TableModelListener,
 			createPageInputControl();
 			createPageSizeControl();
 		}
+
+		this.tableData.set(CONTROL_ID_PROPERTY, getID());
 
 		getRenderer().write(context, out, this);
 		

@@ -9,17 +9,14 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.ModuleTestSetup;
-import test.com.top_logic.basic.ReflectionUtils;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
-import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.basic.Settings;
 import com.top_logic.basic.col.MutableInteger;
 import com.top_logic.basic.format.configured.FormatterService;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.knowledge.service.InitialTableSetup;
-import com.top_logic.util.license.LicenseTool;
 
 /**
  * {@link ModuleTestSetup} that also sets up a testing license.
@@ -46,16 +43,9 @@ public class ModuleLicenceTestSetup extends ModuleTestSetup {
     protected void doSetUp() throws Exception {
     	super.doSetUp();
     	
-		internalSetUp();
-
 		// Deactivate automatic table setup during tests.
 		System.setProperty(InitialTableSetup.NO_DATABASE_TABLE_SETUP, String.valueOf(!_tableSetup));
     }
-
-	private void internalSetUp() {
-		ReflectionUtils.setStaticValue(LicenseTool.class, "__", 100);
-		ReflectionUtils.setStaticValue(SessionService.class, "__", true);
-	}
 
     public static Test setupModule(Class testClass) {
 		return setupModule(new TestSuite(testClass));

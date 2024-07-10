@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.ServiceLoader;
 
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * Entry point for license validation.
@@ -27,27 +26,14 @@ public abstract class LicenseTool {
 	public abstract TLLicense getLicense();
 
 	/**
-	 * Check if one more user (restricted or not) is allowed by the {@link TLLicense}.
-	 * 
-	 * <p>
-	 * Use this method to check, whether more users can be added to the system. To validate user
-	 * actions use {@link #usersExceeded(TLLicense)}.
-	 * </p>
-	 */
-	public static boolean moreUsersAllowed(TLLicense license, boolean restrictedUser) {
-		if (restrictedUser) {
-			long systemRestricedUsers = Person.all().stream().filter(Person.RESTRICTED_USER_FILTER).count();
-			return systemRestricedUsers < license.getRestrictedUsers();
-		} else {
-			long systemFullUsers = Person.all().stream().filter(Person.FULL_USER_FILTER).count();
-			return systemFullUsers < license.getUsers();
-		}
-	}
-
-	/**
 	 * Whether the user limits set in the license are exceeded.
+	 * 
+	 * @deprecated No longer in use.
 	 */
-	public abstract boolean usersExceeded(TLLicense license);
+	@Deprecated
+	public boolean usersExceeded(@SuppressWarnings("unused") TLLicense license) {
+		return false;
+	}
 
 	/**
 	 * Whether the feature with the given name is included in the current license.
@@ -56,8 +42,13 @@ public abstract class LicenseTool {
 
 	/**
 	 * Whether only a single user session is allowed due to license restrictions.
+	 * 
+	 * @deprecated No longer in use.
 	 */
-	public abstract boolean limitToOneSession(TLLicense license);
+	@Deprecated
+	public boolean limitToOneSession(@SuppressWarnings("unused") TLLicense license) {
+		return false;
+	}
 
 	/**
 	 * Computes a description of the currently running product.
@@ -114,11 +105,5 @@ public abstract class LicenseTool {
 			return toolOption.get();
 		}
 	}
-
-	/**
-	 * Thank you for looking at this code, ask msi for details.
-	 */
-	@SuppressWarnings("unused")
-	private static int __ = 5;
 
 }

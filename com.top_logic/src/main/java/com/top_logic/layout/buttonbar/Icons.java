@@ -7,6 +7,7 @@ package com.top_logic.layout.buttonbar;
 
 import com.top_logic.gui.ThemeVar;
 import com.top_logic.html.template.HTMLTemplateFragment;
+import com.top_logic.layout.basic.DefaultValue;
 import com.top_logic.layout.basic.IconsBase;
 import com.top_logic.layout.basic.TemplateType;
 import com.top_logic.layout.basic.ThemeImage;
@@ -20,6 +21,7 @@ import com.top_logic.layout.basic.ThemeImage.Img;
 public class Icons extends IconsBase {
 
 	/** Image to display when the command is a long running command. */
+	@DefaultValue("Slider.gif")
 	public static ThemeVar<Img> SLIDER_IMG;
 
 	/**

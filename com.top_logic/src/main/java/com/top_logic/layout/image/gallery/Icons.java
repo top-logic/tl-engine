@@ -20,6 +20,7 @@ import com.top_logic.layout.basic.ThemeImage.Img;
 public class Icons extends IconsBase {
 
 	/** Image to display when no image can be found. */
+	@DefaultValue("/images/noPreviewImage.png")
 	public static ThemeVar<Img> NO_PREVIEW_IMAGE;
 
 	/**

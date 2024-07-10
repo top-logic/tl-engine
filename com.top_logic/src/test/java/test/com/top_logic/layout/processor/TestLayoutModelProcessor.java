@@ -38,7 +38,7 @@ import com.top_logic.layout.component.LayoutModelProcessor;
 public class TestLayoutModelProcessor extends TestCase {
 
 	private static final String PATH_TO_ACTUAL_MASTERFRAME =
-		"/" + ModuleLayoutConstants.WEBAPP_DIR + "/WEB-INF/layouts/themes/default/masterFrame.xml";
+		"/" + ModuleLayoutConstants.WEBAPP_DIR + "/WEB-INF/layouts/themes/core/masterFrame.xml";
 
 	private static final String PATH_TO_EXPECTED_MASTERFRAME =
 		"/" + ModuleLayoutConstants.WEBAPP_DIR + "/WEB-INF/layouts/expectedMasterFrame.xml";

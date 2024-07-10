@@ -85,17 +85,6 @@
 	<size name="com.top_logic.layout.structure.Icons.DIALOG_VERTICAL_BORDER_WIDTH"
 		value="10px"
 	/>
-	<!--
-		Needs to be that high because every filter element is being used in an HTML element with the
-		same css classes even when the layout for the page is totally different.
-	-->
-	<int name="FILTER_SINGLE_LINE_HEIGHT"
-		value="64"
-	/>
-	<int name="EVENTLOG_SHARED_FILTER_HEIGHT"
-		value="64"
-	/>
-	
 	<string name="spacing-01"
 		value=".25rem"
 	/>

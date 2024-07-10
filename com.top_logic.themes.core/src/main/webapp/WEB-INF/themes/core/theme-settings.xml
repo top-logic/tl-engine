@@ -4,10 +4,6 @@
 	<string name="THEME_NAME"
 		value="Comfort"
 	/>
-	<type name="MAIN_LAYOUT_CLASS"
-		interface="com.top_logic.mig.html.layout.MainLayout"
-		value="com.top_logic.knowledge.gui.layout.TLMainLayout"
-	/>
 	<int name="STRUCTURE_DIALOG_HEIGHT"
 		value="500"
 	/>
@@ -67,9 +63,6 @@
 	/>
 	<icon name="com.top_logic.layout.structure.Icons.BUTTON_INSPECTOR"
 		expr="%com.top_logic.layout.form.popupmenu.Icons.MENU_INSPECTOR%"
-	/>
-	<int name="VERSION_ROW_HEIGHT"
-		value="16"
 	/>
 	<boolean name="QUICK_SEARCH_ENABLED"
 		value="true"

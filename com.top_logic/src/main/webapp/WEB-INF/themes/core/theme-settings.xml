@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!-- These Variables are instantiated here to make the junit tests work -->
 <settings>
+	<type name="MAIN_LAYOUT_CLASS"
+		interface="com.top_logic.mig.html.layout.MainLayout"
+		value="com.top_logic.knowledge.gui.layout.TLMainLayout"
+	/>
+	<int name="VERSION_ROW_HEIGHT"
+		value="16"
+	/>
 	<int name="FILTER_SINGLE_LINE_HEIGHT"
 		value="64"
 	/>

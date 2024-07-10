@@ -180,13 +180,6 @@ public abstract class AbstractFilterChartComponent extends JFreeChartComponent i
 	}
 
 	@Override
-	protected void handleNewModel(Object newModel) {
-		super.handleNewModel(newModel);
-		invalidateButtons();
-	}
-
-
-	@Override
 	protected boolean supportsInternalModel(Object anObject) {
         return anObject instanceof ChartContext;
     }

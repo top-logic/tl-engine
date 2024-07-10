@@ -3,7 +3,7 @@
 <layout>
 	<components>
 		<component class="com.top_logic.demo.layout.demo.DemoAJAXProgressComponent"
-			buttonComponent="DemoAJAXProgressButtons"
+			buttonbar="true"
 			closeOnFinish="false"
 			isSecurityMaster="false"
 			logFilePrefix="DemoLog_"
@@ -17,6 +17,5 @@
 			securityProviderClass="securityRoot"
 			useIntervallFromProgressProvider="false"
 		/>
-		<buttonbar name="DemoAJAXProgressButtons"/>
 	</components>
 </layout>

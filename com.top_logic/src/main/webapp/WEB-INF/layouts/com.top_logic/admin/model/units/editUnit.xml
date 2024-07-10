@@ -33,39 +33,35 @@
 				</columns>
 			</table>
 		</tableView>
-		<layout>
-			<components>
-				<component class="com.top_logic.layout.unit.EditUnitComponent"
-					model="selection(AdminUnitTable)"
-					name="EditUnit"
-					page="/jsp/unit/EditUnit.jsp"
-					resPrefix="admin.unit.edit."
-					securityProviderClass="master"
-				>
-					<dialogs>
-						<layout name="newUnitDialog">
-							<dialogInfo
-								executability="InViewMode"
-								height="290"
-								openHandlerClass="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-								openerCommandGroup="Delete"
-								width="400"
-							/>
+		<component class="com.top_logic.layout.unit.EditUnitComponent"
+			model="selection(AdminUnitTable)"
+			name="EditUnit"
+			page="/jsp/unit/EditUnit.jsp"
+			resPrefix="admin.unit.edit."
+			securityProviderClass="master"
+		>
+			<dialogs>
+				<layout name="newUnitDialog">
+					<dialogInfo
+						executability="InViewMode"
+						height="290"
+						openHandlerClass="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+						openerClique="create"
+						openerCommandGroup="Create"
+						width="400"
+					/>
 
-							<components>
-								<component class="com.top_logic.layout.unit.NewUnitComponent"
-									name="NewUnit"
-									page="/jsp/unit/NewUnit.jsp"
-									resPrefix="admin.unit.edit.new."
-									securityProviderClass="dialogParent"
-								/>
-								<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
-							</components>
-						</layout>
-					</dialogs>
-				</component>
-				<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
-			</components>
-		</layout>
+					<components>
+						<component class="com.top_logic.layout.unit.NewUnitComponent"
+							buttonbar="true"
+							name="NewUnit"
+							page="/jsp/unit/NewUnit.jsp"
+							resPrefix="admin.unit.edit.new."
+							securityProviderClass="dialogParent"
+						/>
+					</components>
+				</layout>
+			</dialogs>
+		</component>
 	</components>
 </layout>

@@ -3,13 +3,12 @@
 <layout>
 	<components>
 		<component class="com.top_logic.demo.layout.form.demo.model.DemoButtonComponent"
-			buttonComponent="DemoButtonComponentButtons"
+			buttonbar="true"
 			displayWithoutModel="true"
 			name="DemoButtonComponent"
 			page="/jsp/test/layout/demoButtonComponent.jsp"
 			resPrefix="layouts.layoutdemo.DemoButtonComponent.DemoButtonComponent."
 			securityProviderClass="securityRoot"
 		/>
-		<buttonbar name="DemoButtonComponentButtons"/>
 	</components>
 </layout>

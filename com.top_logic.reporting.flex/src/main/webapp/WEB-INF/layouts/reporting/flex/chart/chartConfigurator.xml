@@ -7,9 +7,6 @@
 		<param name="class"
 			value="com.top_logic.reporting.flex.chart.component.ChartConfigComponent"
 		/>
-		<param name="buttonComponent"
-			value=""
-		/>
 		<param name="isSecurityMaster"
 			value="false"
 		/>
@@ -44,7 +41,6 @@
 
 	<component class="${class}"
 		base-config-file="${base-config-file}"
-		buttonComponent="${buttonComponent}"
 		isSecurityMaster="${isSecurityMaster}"
 		maximizeRoot="${maximizeRoot}"
 		model="${model}"

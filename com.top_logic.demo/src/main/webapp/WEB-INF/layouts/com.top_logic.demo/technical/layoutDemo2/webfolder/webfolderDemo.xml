@@ -3,6 +3,7 @@
 <layout>
 	<components>
 		<component class="com.top_logic.common.webfolder.ui.WebFolderComponent"
+			buttonbar="true"
 			columns="name,_download,_size,_type,_date,_lock,_version,_clipboard,_delete"
 			name="demoWebfolderNew"
 			resPrefix="class.com.top_logic.common.webfolder.ui.I18NConstants.TABLE."
@@ -11,6 +12,5 @@
 				folderID="demoWebfolder"
 			/>
 		</component>
-		<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 	</components>
 </layout>

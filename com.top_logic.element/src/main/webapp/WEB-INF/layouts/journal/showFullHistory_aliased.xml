@@ -22,7 +22,7 @@
 	>
 		<components>
 			<component class="${componentClass}"
-				buttonComponent="${namePrefix}showFullSupplierHistoryDialogButtons"
+				buttonbar="true"
 				isSecurityMaster="true"
 				model="selection(${master})"
 				name="${namePrefix}showFullSupplierHistoryDialog"
@@ -37,7 +37,6 @@
 					</table>
 				</tables>
 			</component>
-			<buttonbar name="${namePrefix}showFullSupplierHistoryDialogButtons"/>
 		</components>
 	</securityLayout>
 </template>

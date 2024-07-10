@@ -34,6 +34,7 @@
 	<layout>
 		<components>
 			<tableView name="${componentName}"
+				buttonbar="true"
 				modelBuilder="${builderClass}"
 				partnerGroup="${partnerGroup}"
 				resPrefix="layouts.layoutdemo.table.DemoTableComponent_shared.main."
@@ -87,8 +88,6 @@
 					/>
 				</buttons>
 			</tableView>
-
-			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 		</components>
 	</layout>
 </template>

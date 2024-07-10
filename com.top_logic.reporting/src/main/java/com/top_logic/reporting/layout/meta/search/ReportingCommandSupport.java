@@ -256,7 +256,6 @@ public class ReportingCommandSupport implements ReportConstants{
 
     				if (theKB.commit()) {
     					this.updateComponent(theRQSComp, theReport);
-    					theComp.invalidateButtons();
     				}
     				else {
 						theResult.addErrorMessage(I18NConstants.ERROR_DELETE_FAILED);

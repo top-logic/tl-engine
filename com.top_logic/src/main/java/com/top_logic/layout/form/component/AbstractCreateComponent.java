@@ -266,7 +266,7 @@ public class AbstractCreateComponent extends FormComponent {
 	@Override
 	protected void registerDialogCloseCommand() {
 		if (getCancelCommand() != null) {
-			registerCommandHandler(getCancelCommand(), getButtonComponent() != null);
+			registerCommandHandler(getCancelCommand(), getButtonBar() != null);
 			return;
 		}
 		super.registerDialogCloseCommand();
@@ -303,7 +303,6 @@ public class AbstractCreateComponent extends FormComponent {
         if (this.openedAsDialog()) {
 			LayoutComponent dialogParent = this.getDialogParent();
     
-			dialogParent.invalidateButtons();
 			dialogParent.fireModelCreatedEvent(aNewObject, this);
     
 			boolean modelSetToParent = this.setNewModel(dialogParent, aNewObject);

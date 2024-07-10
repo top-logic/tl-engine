@@ -69,7 +69,6 @@
 					</include>
 				</dialogs>
 			</component>
-			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 		</components>
 	</layout>
 </template>

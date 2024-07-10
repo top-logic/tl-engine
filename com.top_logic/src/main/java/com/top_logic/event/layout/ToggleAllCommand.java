@@ -34,8 +34,6 @@ public class ToggleAllCommand extends ToggleCommand {
 			this.setFields(component, (FormGroup) theGroups.next());
         }
 
-        aComponent.invalidateButtons();
-
         return HandlerResult.DEFAULT_RESULT;
     }
 

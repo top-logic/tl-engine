@@ -45,7 +45,7 @@
 		<components>
 			<!-- component to edit structured elements -->
 			<component class="${detailComponent}"
-				buttonComponent="${namePrefixInternal}Buttons"
+				buttonbar="true"
 				commandGroups="${createCommandGroups}"
 				model="${model}"
 				name="${detailComponentName}"
@@ -54,7 +54,6 @@
 				resPrefix="${newResPrefix}"
 				securityProviderClass="${securityProvider}"
 			>${createComponentConfig}</component>
-			<buttonbar name="${namePrefixInternal}Buttons"/>
 		</components>
 	</layout>
 </template>

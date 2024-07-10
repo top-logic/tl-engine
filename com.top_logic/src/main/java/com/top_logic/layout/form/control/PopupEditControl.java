@@ -18,7 +18,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.knowledge.gui.layout.ButtonComponent;
+import com.top_logic.knowledge.gui.layout.ButtonBar;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
@@ -548,7 +548,7 @@ public class PopupEditControl extends AbstractFormFieldControl {
 	protected Tag getButtonsTag(Command apply, Command cancel) {
 		HTMLFragment applyButton = getApplyButton(apply);
 		HTMLFragment cancelButton = getCancelButton(cancel);
-		return Fragments.div(ButtonComponent.DEFAULT_CSS_CLASS, applyButton, cancelButton);
+		return Fragments.div(ButtonBar.DEFAULT_CSS_CLASS, applyButton, cancelButton);
 	}
 
 	/**

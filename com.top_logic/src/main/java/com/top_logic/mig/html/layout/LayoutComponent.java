@@ -35,7 +35,6 @@ import com.top_logic.base.services.simpleajax.ClientAction;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.CollectionUtil;
-import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -83,7 +82,7 @@ import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.gui.JSFileCompiler;
 import com.top_logic.gui.Theme;
 import com.top_logic.gui.ThemeFactory;
-import com.top_logic.knowledge.gui.layout.ButtonComponent;
+import com.top_logic.knowledge.gui.layout.ButtonBar;
 import com.top_logic.knowledge.gui.layout.LayoutConfig;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.CommandListener;
@@ -250,13 +249,15 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 		String COMPONENT = "component";
 
-		/** @see #getButtonComponent() */
-		String BUTTON_COMPONENT_NAME = "buttonComponent";
-
 		/**
 		 * @see #hasToolbar()
 		 */
 		String TOOLBAR = "toolbar";
+
+		/**
+		 * @see #hasButtonbar()
+		 */
+		String BUTTONBAR = "buttonbar";
 
 		/**
 		 * @see #getMaximizeRoot()
@@ -346,17 +347,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 		/** @see #getResPrefix() */
 		void setResPrefix(ResPrefix value);
-
-		/**
-		 * Name of the {@link ButtonComponent} to place command in.
-		 */
-		@Name(BUTTON_COMPONENT_NAME)
-		ComponentName getButtonComponent();
-
-		/**
-		 * @see #getButtonComponent()
-		 */
-		void setButtonComponent(ComponentName value);
 
 		@Name(ATT_USE_CHANGE_HANDLING)
 		Boolean getUseChangeHandling();
@@ -536,6 +526,17 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		 */
 		@Name(TOOLBAR)
 		boolean hasToolbar();
+
+		/**
+		 * Whether to automatically allocate a button bar at the bottom border of this component.
+		 * 
+		 * <p>
+		 * An allocated button bar is used for displaying commands of this component and all nested
+		 * components that have no own button bar.
+		 * </p>
+		 */
+		@Name(BUTTONBAR)
+		boolean hasButtonbar();
 
 		/**
 		 * Name of the ancestor component that is maximized, if the maximize button in this
@@ -738,8 +739,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 			}
 		};
 
-	/** @see #getButtonComponent() */
-	private ButtonComponent _buttons;
+	/** @see #getButtonBar() */
+	private ButtonBar _buttonBar;
 
     /**
      * A snipplet of js to be executed in the onScroll Handler.
@@ -826,15 +827,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 * All commands that have been registered for direct display at the UI.
 	 */
 	private Map<String, List<CommandHandler>> _buttonsByCliqueLazy;
-
-	/**
-	 * Set to true when the buttons should always be reloaded.
-	 * 
-	 * You should only set this if you cant invalidate the buttons yourself correctly. Before doing
-	 * so review your command functions, the <code>modelChanges()</code> and
-	 * <code>setInvalid()</code> functions.
-	 */
-	protected boolean alwaysReloadButtons;
 
 	private LayoutComponent currentDialog;
 
@@ -1425,10 +1417,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 		_validationRequested = true;
 
-        if (alwaysReloadButtons) {
-            invalidateButtons();
-        }
-        
 		firePropertyChanged(InvalidationListener.INVALIDATION_PROPERTY, this, Boolean.FALSE, Boolean.TRUE);
     }
     
@@ -2645,18 +2633,11 @@ public abstract class LayoutComponent extends ModelEventAdapter
             }
         }
 
-		ComponentName buttonComponentName = _config.getButtonComponent();
-		if (buttonComponentName != null) {
-			LayoutComponent buttonComponent = getComponentByName(buttonComponentName);
-			if (buttonComponent == null) {
-				throw new ConfigurationError("Undefined button component reference '" + buttonComponentName + "' in '"
-					+ _config.location() + "'.");
-			}
-			if (!(buttonComponent instanceof ButtonComponent)) {
-				throw new ConfigurationError("Not a button component '" + buttonComponentName + "' in '"
-					+ _config.location() + "'.");
-			}
-			setButtonComponent((ButtonComponent) buttonComponent);
+		if (definesButtonBar()) {
+			_buttonBar = new ButtonBar();
+		} else {
+			LayoutComponent parent = getParent();
+			_buttonBar = parent == null ? null : parent.getButtonBar();
         }
 
 		CommandHandlerFactory factory = CommandHandlerFactory.getInstance();
@@ -2708,6 +2689,14 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		}
 
 		_gotoTargets = LayoutUtils.resolveGotoTargets(context, getMainLayout(), getConfig().getGotoTargets().values());
+	}
+
+	/**
+	 * Whether this component defines a button bar for displaying own buttons and buttons from inner
+	 * components.
+	 */
+	public boolean definesButtonBar() {
+		return _config.hasButtonbar();
 	}
 
     /** Try to make this component visible.
@@ -3221,7 +3210,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 			closeHandlerName = getDefaultCloseDialogHandlerName();
 		}
 		if (!StringServices.isEmpty(closeHandlerName)) {
-			this.registerCommandHandler(closeHandlerName, getButtonComponent() != null);
+			this.registerCommandHandler(closeHandlerName, getButtonBar() != null);
 		}
     }
 
@@ -3388,17 +3377,17 @@ public abstract class LayoutComponent extends ModelEventAdapter
      * e.g. adding buttons and not replacing buttons.
      */
 	private final void registerButtons() {
-		ButtonComponent buttonComponent = getButtonComponent();
+		ButtonBar buttonComponent = getButtonBar();
 		if (buttonComponent != null) {
 			List<? extends CommandModel> buttons = createButtonCommandModels();
-			buttonComponent.addTransientButtons(buttons);
+			buttonComponent.addButtons(buttons);
 		}
 	}
 
     /**
      * Create {@link CommandModel}s from buttonCommands.
      *
-     * @return a List of {@link CommandModel}s for the {@link ButtonComponent}, may be null
+     * @return a List of {@link CommandModel}s for the {@link ButtonBar}, may be null
      */
 	final protected List<? extends CommandModel> createButtonCommandModels() {
 		Map<String, List<CommandHandler>> buttonsByClique = buttonsByClique();
@@ -3465,13 +3454,13 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 	/**
 	 * Create a {@link CommandModel} for the given {@link CommandHandler} for being displayed in the
-	 * {@link ButtonComponent}.
+	 * {@link ButtonBar}.
 	 * @param command
 	 *        The Command to create a CommandModel for.
 	 * @param targetComponent
 	 *        the {@link LayoutComponent} to execute the command.
 	 * 
-	 * @return A {@link CommandModel} to be displayed in the {@link ButtonComponent}.
+	 * @return A {@link CommandModel} to be displayed in the {@link ButtonBar}.
 	 */
 	protected CommandModel modelForCommand(CommandHandler command, Map<String, Object> arguments, LayoutComponent targetComponent) {
 		return command.createCommandModel(targetComponent, arguments);
@@ -3508,17 +3497,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
         return newlyAdded;
     }
 
-	/**
-     * Reload the Buttons (ususally when Button state has changed).
-     *
-     * This is done by invalidating the ComponentProxy.
-     */
-    public void invalidateButtons() {
-		if (_buttons != null) {
-			_buttons.invalidate();
-        }
-    }
-
     /**
      * Write a JScript function to submit the form for the given command.
      *
@@ -3532,23 +3510,13 @@ public abstract class LayoutComponent extends ModelEventAdapter
     }
 
     /**
-     * Getter for ButtonComponent identified by group name.
-     *
-     * @return null if not found
-     */
-    public ButtonComponent getButtonComponent() {
-		return _buttons;
-    }
-
-    /**
-     * Allow direct setting of the ButtonComponent.
-     */
-	public void setButtonComponent(ButtonComponent aComponent) {
-		if (_buttons != null && aComponent != null && aComponent != _buttons) {
-			throw new ConfigurationError("Inconsistent button component '" + _buttons.getName() + "' vs. '"
-				+ aComponent.getName() + "' in '" + _config.location() + "'.");
-		}
-		_buttons = aComponent;
+	 * The {@link ButtonBar}, this component adds commands to.
+	 *
+	 * @return The component's button bar, <code>null</code> if all buttons are added to the
+	 *         toolbar.
+	 */
+    public ButtonBar getButtonBar() {
+		return _buttonBar;
     }
 
 	/**
@@ -4149,7 +4117,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 				String cliqueGroup = factory.getCliqueGroup(clique);
 				CommandHandler.Display display = factory.getDisplay(cliqueGroup);
 				if (display == CommandHandler.Display.TOOLBAR || display == CommandHandler.Display.MENU
-					|| (display == CommandHandler.Display.COMMANDS && getButtonComponent() == null)) {
+					|| (display == CommandHandler.Display.COMMANDS && getButtonBar() == null)) {
 					removeCommandsFromToolbar(oldValue, cliqueGroup);
 				}
 			}
@@ -4178,7 +4146,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 				String cliqueGroup = factory.getCliqueGroup(clique);
 				CommandHandler.Display display = factory.getDisplay(cliqueGroup);
 				if (display == CommandHandler.Display.TOOLBAR || display == CommandHandler.Display.MENU
-						|| (display == CommandHandler.Display.COMMANDS && getButtonComponent() == null)) {
+						|| (display == CommandHandler.Display.COMMANDS && getButtonBar() == null)) {
 					List<CommandHandler> handlers = entry.getValue();
 					Collections.sort(handlers, commandOrder);
 
@@ -4523,12 +4491,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 		opener.setDialog(null);
 		dialogSupport.deregisterOpenedDialog(dialog);
-
-		// Needed to refresh button component in case the dialog was aborted
-		ButtonComponent buttons = opener.getButtonComponent();
-		if (buttons != null) {
-			buttons.invalidate();
-		}
 
 		dialog.setVisible(false);
 		dialog.invalidate();

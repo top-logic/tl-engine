@@ -8,7 +8,6 @@
 <layout>
 	<components>
 		<component class="com.top_logic.layout.admin.component.MaintenanceWindowComponent"
-			buttonComponent="maintenanceWindowComponentButtons"
 			displayWithoutModel="true"
 			name="maintenanceWindowComponent"
 			page="/jsp/layout/admin/MaintenanceWindowComponent.jsp"
@@ -19,6 +18,8 @@
 				<with-checker name="enterMaintenanceWindow">
 					<command id="AbortEnteringMaintenanceWindow"
 						class="com.top_logic.layout.admin.component.MaintenanceWindowComponent$AbortEnteringMaintenanceWindowCommandHandler"
+						image="theme:ICONS_BUTTON_CLEAR"
+						resourceKey="main.admin.maintenanceWindow.component.AbortEnteringMaintenanceWindow"
 					/>
 				</with-checker>
 			</buttons>
@@ -30,6 +31,7 @@
 					<dialogInfo
 						executability="com.top_logic.layout.admin.component.StrictInNormalModeExecutable"
 						height="280"
+						image="theme:START_SERVICE"
 						openButtonSecComp="enterMaintenanceWindow"
 						openerCommandGroup="Write"
 						width="400"
@@ -37,13 +39,12 @@
 
 					<components>
 						<component class="com.top_logic.layout.admin.component.MaintenanceWindowComponent$EnterMaintenanceWindowDialog"
-							buttonComponent="enterMaintenanceWindowButtons"
+							buttonbar="true"
 							name="enterMaintenanceWindow"
 							page="/jsp/layout/admin/EnterMaintenanceWindowDialog.jsp"
 							resPrefix="main.admin.maintenanceWindow.enterDialog."
 							securityProviderClass="securityRoot"
 						/>
-						<buttonbar name="enterMaintenanceWindowButtons"/>
 					</components>
 				</securityLayout>
 				<securityLayout name="exitMaintenanceWindowDialog"
@@ -53,6 +54,7 @@
 					<dialogInfo
 						executability="com.top_logic.layout.admin.component.InMaintenanceWindowExecutable"
 						height="150"
+						image="theme:STOP_SERVICE"
 						openButtonSecComp="exitMaintenanceWindow"
 						openerCommandGroup="Write"
 						width="400"
@@ -60,7 +62,7 @@
 
 					<components>
 						<component class="com.top_logic.mig.html.layout.SimpleBoundComponent"
-							buttonComponent="exitMaintenanceWindowButtons"
+							buttonbar="true"
 							content-message="main.admin.maintenanceWindow.exitDialog.content"
 							name="exitMaintenanceWindow"
 							resPrefix="main.admin.maintenanceWindow.exitDialog."
@@ -73,11 +75,9 @@
 								/>
 							</buttons>
 						</component>
-						<buttonbar name="exitMaintenanceWindowButtons"/>
 					</components>
 				</securityLayout>
 			</dialogs>
 		</component>
-		<buttonbar name="maintenanceWindowComponentButtons"/>
 	</components>
 </layout>

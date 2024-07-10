@@ -624,8 +624,7 @@
 									<arguments/>
 								</action>
 								<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
-									component-implementation-comment="com.top_logic.knowledge.gui.layout.ButtonComponent"
-									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#dialogInline2Buttons"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#dialogInline2"
 									user-id="root"
 								/>
 								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -3191,16 +3190,6 @@
 								tab-path="Administration > Tech. Administration > Sperren"
 							/>
 						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name=""
-								tab-path="Administration > Tech. Administration > Sichten"
-							/>
-						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 							comment="Administration > Tech. Administration > Log Dateien"
 							failure-message=""
@@ -3791,26 +3780,6 @@
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								name=""
 								tab-path="Administration > Monitor > BusEvent Monitor"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name=""
-								tab-path="Administration > Monitor > Performancemonitor"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name=""
-								tab-path="Administration > Monitor > Performancetrend"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"

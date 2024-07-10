@@ -13,7 +13,7 @@
 
 	<components>
 		<component class="com.top_logic.reporting.flex.chart.component.DetailsTableDialog"
-			buttonComponent="ChartDetailsButtons"
+			buttonbar="true"
 			metaElement=""
 			modelBuilder="com.top_logic.element.layout.meta.search.AttributedSearchResultComponent$AttributedSearchResultBuilder"
 			name="ChartDetailsTable"
@@ -35,6 +35,5 @@
 				/>
 			</buttons>
 		</component>
-		<buttonbar name="ChartDetailsButtons"/>
 	</components>
 </securityLayout>

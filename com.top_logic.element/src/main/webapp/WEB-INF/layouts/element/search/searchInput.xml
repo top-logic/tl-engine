@@ -63,7 +63,7 @@
 		<components>
 			<component class="${componentClass}"
 				additionalResultColumnOptions="${additionalResultColumnOptions}"
-				buttonComponent="${namePrefix}AttributeSearchButtons"
+				buttonbar="true"
 				columns="columns(${searchResultComponent})"
 				derivedAttributeDescriptionProviderClass="${derivedAttributeDescriptionProviderClass}"
 				fulltextExactMatch="${fulltextExactMatch}"
@@ -95,18 +95,16 @@
 
 						<components>
 							<component class="${newQueryComponent}"
-								buttonComponent="${namePrefix}NewStoredQueryButtons"
+								buttonbar="true"
 								name="${namePrefix}NewStoredQuery"
 								page="/jsp/element/metaattributes/PublishableNewStoredQuery.jsp"
 								resPrefix="element.meta.search.create."
 								securityProviderClass="${securityProviderCreate}"
 							/>
-							<buttonbar name="${namePrefix}NewStoredQueryButtons"/>
 						</components>
 					</layout>
 				</dialogs>
 			</component>
-			<buttonbar name="${namePrefix}AttributeSearchButtons"/>
 		</components>
 	</layout>
 </template>

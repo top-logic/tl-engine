@@ -114,8 +114,6 @@ public class AdminElementComponent extends EditAttributedComponent {
     public AdminElementComponent(InstantiationContext context, Config someAttrs) throws ConfigurationException {
         super(context, someAttrs);
         
-        this.alwaysReloadButtons = true;
-        
         this.editRoot      = someAttrs.getEditRoot();
         // TODO MGA/KBU/KHA this should be mandatory 
         this.structureName = StringServices.nonEmpty(someAttrs.getStructure());

@@ -57,7 +57,7 @@
 	<layout name="${namePrefix}DataImport">
 		<components>
 			<component class="${statusComponentClass}"
-				buttonComponent="${namePrefix}DataImportStatusButtons"
+				buttonbar="true"
 				importerClass="${importerClass}"
 				name="${namePrefix}DataImportStatus"
 				page="${statusJSP}"
@@ -76,7 +76,7 @@
 
 						<components>
 							<component class="${assistantClass}"
-								buttonComponent="${namePrefix}DataImportAssistantButtons"
+								buttonbar="true"
 								importerClass="${importerClass}"
 								name="${namePrefix}DataImportAssistant"
 								resPrefix="layout.dataimport.assistant."
@@ -136,12 +136,10 @@
 									<assistantInfo labelKeySuffix="DataImportEndStep"/>
 								</component>
 							</component>
-							<buttonbar name="${namePrefix}DataImportAssistantButtons"/>
 						</components>
 					</layout>
 				</dialogs>
 			</component>
-			<buttonbar name="${namePrefix}DataImportStatusButtons"/>
 		</components>
 	</layout>
 </template>

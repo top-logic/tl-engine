@@ -37,7 +37,7 @@
 				<components>
 					<!-- Stored queries component -->
 					<component class="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
-						buttonComponent="${namePrefix}AttributeSearchGeneralButtons"
+						buttonbar="true"
 						inputSupport="${inputSupport}"
 						metaElement="${metaElement}"
 						modelBuilder="${modelBuilder}"
@@ -58,12 +58,11 @@
 
 								<components>
 									<component class="com.top_logic.element.layout.meta.search.NewQueryComponent"
-										buttonComponent="${namePrefix}NewStoredQueryButtons"
+										buttonbar="true"
 										name="${namePrefix}NewStoredQuery"
 										page="/jsp/element/metaattributes/NewStoredQuery.jsp"
 										resPrefix="element.meta.search.create."
 									/>
-									<buttonbar name="${namePrefix}NewStoredQueryButtons"/>
 								</components>
 							</layout>
 						</dialogs>
@@ -88,7 +87,6 @@
 					</component>
 				</components>
 			</layout>
-			<buttonbar name="${namePrefix}AttributeSearchGeneralButtons"/>
 		</components>
 	</layout>
 </template>

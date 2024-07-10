@@ -15,9 +15,13 @@
 		<param name="master"
 			value="${structure}Tree"
 		/>
+		<param name="buttonbar"
+			value="false"
+		/>
 	</params>
 
 	<include name="element/editStructureDetail.xml"
+		buttonbar="${buttonbar}"
 		defaultFor="${defaultFor}"
 		editRoot="true"
 		master="${master}"

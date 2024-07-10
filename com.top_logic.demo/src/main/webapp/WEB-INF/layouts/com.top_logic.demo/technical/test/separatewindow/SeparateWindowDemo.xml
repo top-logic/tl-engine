@@ -15,7 +15,7 @@
 				</component>
 				<treeView name="SWTreeA"
 					adjustSelectionWhenCollapsing="true"
-					buttonComponent="ewDemo1Buttons"
+					buttonbar="true"
 					expandSelected="true"
 					modelBuilder="com.top_logic.demo.layout.demo.LRMDemoTreeModelBuilder"
 					resPrefix="layouts.layoutdemo.SeparateWindowDemo.SWTreeA."
@@ -68,7 +68,6 @@
 				</layout>
 			</components>
 		</layout>
-		<buttonbar name="ewDemo1Buttons"/>
 		<layout name="SWPartnerBoundLayout">
 			<components>
 				<component class="com.top_logic.mig.html.layout.SimpleComponent"
@@ -77,7 +76,7 @@
 					resPrefix="layouts.layoutdemo.SeparateWindowDemo.SWPartnerTestComp1descr."
 				/>
 				<component class="com.top_logic.demo.layout.demo.SeparateWindowPartnerTestComponent"
-					buttonComponent="SWPartnerTestButtons"
+					buttonbar="true"
 					displayWithoutModel="true"
 					name="SWPartnerTestComp1"
 					page="/jsp/test/layout/SeparateWindowPartnerTest.jsp"
@@ -98,7 +97,6 @@
 						</window>
 					</windows>
 				</component>
-				<buttonbar name="SWPartnerTestButtons"/>
 			</components>
 		</layout>
 	</components>

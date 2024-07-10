@@ -215,7 +215,7 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 				return super.visitLayoutComponent(aComponent);
 			}
 		});
-		return searchResult.getSingleResult("Search for component " + title + " failed.");
+		return searchResult.getSingleResult("Search for component '" + title + "' failed.");
 	}
 
 	private LayoutComponent getRootLayout(DisplayContext context) {

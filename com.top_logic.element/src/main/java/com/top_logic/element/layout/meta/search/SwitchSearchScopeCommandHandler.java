@@ -35,7 +35,6 @@ public class SwitchSearchScopeCommandHandler extends AJAXCommandHandler {
         HandlerResult             theResult = HandlerResult.DEFAULT_RESULT; 
         try {
             this.switchSearchScope(theComp);
-            theComp.invalidateButtons();
         }
         catch (Exception ex) {
         	theResult = new HandlerResult();
@@ -54,7 +53,7 @@ public class SwitchSearchScopeCommandHandler extends AJAXCommandHandler {
 
     public void switchSearchScope(AttributedSearchComponent aComp) {
         String       theScope = aComp.getSearchScope();
-        CommandModel theModel = aComp.getButtonComponent().getCommandModel(this);
+        CommandModel theModel = aComp.getButtonBar().getCommandModel(this);
         String       theNewScope;
 		ResKey theLabel;
 

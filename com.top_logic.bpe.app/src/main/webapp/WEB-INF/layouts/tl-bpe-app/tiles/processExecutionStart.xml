@@ -16,6 +16,7 @@
 		<components>
 			<!-- component to create attributed objects -->
 			<component class="com.top_logic.bpe.app.layout.ProcessExecutionCreateComponent"
+				buttonbar="true"
 				create-handler="startProcessExecution"
 				element=""
 				model="${model}"
@@ -37,7 +38,6 @@
 					/>
 				</commands>
 			</component>
-			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 		</components>
 	</layout>
 </template>

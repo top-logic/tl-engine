@@ -111,6 +111,7 @@
 		/>
 		<property name="buttons"
 			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
+			instance-type="com.top_logic.tool.boundsec.CommandHandler"
 			type="List"
 		>
 			<acceptable-classifiers value="treegrid, commons"/>

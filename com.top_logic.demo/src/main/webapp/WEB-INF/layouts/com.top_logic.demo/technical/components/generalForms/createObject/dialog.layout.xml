@@ -13,6 +13,10 @@
 			resourceKey="class.com.top_logic.model.search.providers.I18NConstants.CREATE_OBJECT_DEFAULT_LABEL"
 		/>
 		<typeOptions type="DemoTypes:DemoTypes.All"/>
-		<create-handler id="createNewElement"/>
+		<create-handler id="createNewElement">
+			<postCreateActions>
+				<setModel target="selection(com.top_logic.demo/technical/components/generalForms/contextSelectorTable.layout.xml#Table)"/>
+			</postCreateActions>
+		</create-handler>
 	</arguments>
 </config:template-call>

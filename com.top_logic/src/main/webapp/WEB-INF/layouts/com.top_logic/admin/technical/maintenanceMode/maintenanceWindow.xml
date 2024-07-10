@@ -8,7 +8,6 @@
 <layout>
 	<components>
 		<component class="com.top_logic.layout.admin.component.MaintenanceWindowComponent"
-			buttonbar="true"
 			displayWithoutModel="true"
 			name="maintenanceWindowComponent"
 			page="/jsp/layout/admin/MaintenanceWindowComponent.jsp"
@@ -19,6 +18,8 @@
 				<with-checker name="enterMaintenanceWindow">
 					<command id="AbortEnteringMaintenanceWindow"
 						class="com.top_logic.layout.admin.component.MaintenanceWindowComponent$AbortEnteringMaintenanceWindowCommandHandler"
+						image="theme:ICONS_BUTTON_CLEAR"
+						resourceKey="main.admin.maintenanceWindow.component.AbortEnteringMaintenanceWindow"
 					/>
 				</with-checker>
 			</buttons>
@@ -30,6 +31,7 @@
 					<dialogInfo
 						executability="com.top_logic.layout.admin.component.StrictInNormalModeExecutable"
 						height="280"
+						image="theme:START_SERVICE"
 						openButtonSecComp="enterMaintenanceWindow"
 						openerCommandGroup="Write"
 						width="400"
@@ -52,6 +54,7 @@
 					<dialogInfo
 						executability="com.top_logic.layout.admin.component.InMaintenanceWindowExecutable"
 						height="150"
+						image="theme:STOP_SERVICE"
 						openButtonSecComp="exitMaintenanceWindow"
 						openerCommandGroup="Write"
 						width="400"

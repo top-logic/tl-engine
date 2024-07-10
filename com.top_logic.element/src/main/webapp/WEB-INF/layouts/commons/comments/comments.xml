@@ -96,12 +96,12 @@
 
 						<components>
 							<component class="${createComponentClass}"
+								buttonbar="true"
 								model="selection(${namePrefix}CommentTable)"
 								name="new${namePrefix}QuoteComment"
 								page="/jsp/comments/QuoteComment.jsp"
 								resPrefix="element.comments.new.dialog."
 							/>
-							<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 						</components>
 					</layout>
 					<layout name="${namePrefix}EditCommentDialog">
@@ -121,13 +121,13 @@
 
 						<components>
 							<component class="${createComponentClass}"
+								buttonbar="true"
 								editComment="true"
 								model="selection(${namePrefix}CommentTable)"
 								name="edit${namePrefix}EditComment"
 								page="/jsp/comments/EditComment.jsp"
 								resPrefix="element.comments.new.dialog."
 							/>
-							<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 						</components>
 					</layout>
 					<layout name="${namePrefix}NewCommentDialog">
@@ -142,16 +142,15 @@
 
 						<components>
 							<component class="${createComponentClass}"
+								buttonbar="true"
 								name="new${namePrefix}EditComment"
 								page="/jsp/comments/NewComment.jsp"
 								resPrefix="element.comments.new.dialog."
 							/>
-							<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 						</components>
 					</layout>
 				</dialogs>
 			</component>
-			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 		</components>
 	</layout>
 </template>

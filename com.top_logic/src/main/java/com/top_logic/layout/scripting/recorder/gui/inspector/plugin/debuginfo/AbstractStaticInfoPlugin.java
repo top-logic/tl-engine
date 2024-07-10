@@ -5,10 +5,12 @@
  */
 package com.top_logic.layout.scripting.recorder.gui.inspector.plugin.debuginfo;
 
+import java.util.Collections;
+import java.util.Map;
+
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ResPrefix;
-import com.top_logic.layout.ViewInfoComponent;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.FormMember;
@@ -16,8 +18,12 @@ import com.top_logic.layout.form.model.CommandField;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.tag.Icons;
+import com.top_logic.layout.inspector.OpenSeparateInspectorWindowCommandHandler;
 import com.top_logic.layout.provider.ImageButtonControlProvider;
+import com.top_logic.mig.html.layout.ComponentName;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
+import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.util.Resources;
 
 /**
@@ -26,6 +32,8 @@ import com.top_logic.util.Resources;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public abstract class AbstractStaticInfoPlugin<M> extends DebugInfoPlugin<M> {
+
+	private static final String INSPECTOR_WINDOW = "openInspector";
 
 	private static final String INSPECT_FIELD = "inspect";
 
@@ -93,7 +101,7 @@ public abstract class AbstractStaticInfoPlugin<M> extends DebugInfoPlugin<M> {
 		if (inspectModel == null) {
 			return null;
 		}
-		CommandField inspectButton = ViewInfoComponent.createInspectButton(ml, INSPECT_FIELD, inspectModel);
+		CommandField inspectButton = createInspectButton(ml, INSPECT_FIELD, inspectModel);
 		if (inspectButton == null) {
 			return null;
 		}
@@ -105,6 +113,26 @@ public abstract class AbstractStaticInfoPlugin<M> extends DebugInfoPlugin<M> {
 			ResKey.fallback(buttonPrefix.key(inspectButton.getName()), I18NConstants.SHOW_DETAIL_COMMAND);
 		inspectButton.setLabel(Resources.getInstance().getString(detailLabelKey));
 		return inspectButton;
+	}
+
+	/**
+	 * Creates a button that opens the given model in the object inspector.
+	 * 
+	 * @param layout
+	 *        The layout root.
+	 * @param fieldName
+	 *        The name of the button to create.
+	 * @param model
+	 *        The model to inspect.
+	 * @return The button that opens the inspector.
+	 */
+	public static CommandField createInspectButton(MainLayout layout, String fieldName, Object model) {
+		LayoutComponent mainTabbar =
+			layout.getComponentByName(ComponentName.newName("mainTabbar.layout.xml", "mainTabber"));
+		CommandHandler handler = mainTabbar.getCommandById(INSPECTOR_WINDOW);
+		Map<String, Object> arguments =
+			Collections.singletonMap(OpenSeparateInspectorWindowCommandHandler.PARAM_OBJECT, model);
+		return FormFactory.newCommandField(fieldName, handler, mainTabbar, arguments);
 	}
 
 	/**

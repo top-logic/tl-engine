@@ -48,7 +48,6 @@ public class OutputComponent extends AJAXProgressComponent {
             LayoutComponent    theParent = theComp.getDialogParent();
 
             theComp.setData(IMPORT_PROGRESS_INFO, null);
-            this.invalidateButtons();
 
             if (theParent != null) {
                 theParent.invalidate();

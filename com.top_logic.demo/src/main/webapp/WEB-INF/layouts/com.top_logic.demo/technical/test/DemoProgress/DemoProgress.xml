@@ -3,7 +3,7 @@
 <layout>
 	<components>
 		<component class="com.top_logic.demo.layout.demo.DemoOpenProgressComponent"
-			buttonComponent="demoOpenProgressComponentButtons"
+			buttonbar="true"
 			displayWithoutModel="true"
 			name="demoOpenProgressComponent"
 			page="/jsp/layout/demo/DemoProgressOpenerComponent.jsp"
@@ -35,6 +35,5 @@
 				</layout>
 			</dialogs>
 		</component>
-		<buttonbar name="demoOpenProgressComponentButtons"/>
 	</components>
 </layout>

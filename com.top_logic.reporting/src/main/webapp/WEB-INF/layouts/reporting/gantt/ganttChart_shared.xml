@@ -136,11 +136,11 @@
 
 								<components>
 									<component class="${exportDialog}"
+										buttonbar="true"
 										name="${namePrefix}GanttExportDialogComp"
 										page="${exportJSP}"
 										resPrefix="reporting.chart.gantt.export."
 									/>
-									<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 								</components>
 							</layout>
 						</dialogs>

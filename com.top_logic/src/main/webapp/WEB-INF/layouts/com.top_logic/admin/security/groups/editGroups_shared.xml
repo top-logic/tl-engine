@@ -41,7 +41,6 @@
 			<layout>
 				<components>
 					<component class="${editComponent}"
-						buttonComponent="${namePrefix}EditGroupButtons"
 						defaultFor="tl.accounts:Group"
 						model="selection(${namePrefix}EditGroup_Table)"
 						name="${namePrefix}EditGroup"
@@ -62,18 +61,16 @@
 
 								<components>
 									<component class="${newComponent}"
-										buttonComponent="${namePrefix}NewGroupButtons"
+										buttonbar="true"
 										name="${namePrefix}NewGroup"
 										page="${newJSP}"
 										resPrefix="admin.group.edit.new."
 										securityProviderClass="${securityProviderClass}"
 									/>
-									<buttonbar name="${namePrefix}NewGroupButtons"/>
 								</components>
 							</layout>
 						</dialogs>
 					</component>
-					<buttonbar name="${namePrefix}EditGroupButtons"/>
 				</components>
 			</layout>
 		</components>

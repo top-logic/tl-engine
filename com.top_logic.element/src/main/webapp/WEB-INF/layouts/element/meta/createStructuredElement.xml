@@ -29,6 +29,7 @@
 		<components>
 			<!-- component to edit structured elements -->
 			<component class="${detailComponent}"
+				buttonbar="true"
 				commandGroups="${createCommandGroups}"
 				model="${model}"
 				name="${namePrefix}newElementDialog"
@@ -37,7 +38,6 @@
 				resPrefix="${newResPrefix}"
 				structureName="${structureName}"
 			/>
-			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 		</components>
 	</layout>
 </template>

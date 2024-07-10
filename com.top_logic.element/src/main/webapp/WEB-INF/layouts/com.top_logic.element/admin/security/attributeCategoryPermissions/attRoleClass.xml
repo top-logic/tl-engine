@@ -40,18 +40,12 @@
 				</columns>
 			</table>
 		</tableView>
-		<layout>
-			<components>
-				<component class="com.top_logic.element.layout.security.AttributeClassifierRolesComponent"
-					buttonComponent="editAttRoleClassButtons"
-					model="selection(attRoleClassMetaElementTable)"
-					name="editAttRoleClass"
-					page="/jsp/layout/admin/security/rolesClassification.jsp"
-					resPrefix="admin.security.attRoleClass."
-					securityProviderClass="securityRoot"
-				/>
-				<buttonbar name="editAttRoleClassButtons"/>
-			</components>
-		</layout>
+		<component class="com.top_logic.element.layout.security.AttributeClassifierRolesComponent"
+			model="selection(attRoleClassMetaElementTable)"
+			name="editAttRoleClass"
+			page="/jsp/layout/admin/security/rolesClassification.jsp"
+			resPrefix="admin.security.attRoleClass."
+			securityProviderClass="securityRoot"
+		/>
 	</components>
 </layout>

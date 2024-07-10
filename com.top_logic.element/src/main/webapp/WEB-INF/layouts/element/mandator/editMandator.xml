@@ -14,7 +14,6 @@
 	<layout>
 		<components>
 			<component class="com.top_logic.element.layout.structured.MandatorAdminComponent"
-				buttonComponent="mandatorEditButtons"
 				editRoot="true"
 				maxIDLength="${maxIDLength}"
 				minIDLength="${minIDLength}"
@@ -44,7 +43,6 @@
 					</include>
 				</dialogs>
 			</component>
-			<buttonbar name="mandatorEditButtons"/>
 		</components>
 	</layout>
 </template>

@@ -817,7 +817,6 @@ public class TreeTableComponent extends BoundComponent
 	@Override
 	protected void handleNewModel(Object newModel) {
 		super.handleNewModel(newModel);
-		invalidateButtons();
 		rebuildTableModel();
 	}
 

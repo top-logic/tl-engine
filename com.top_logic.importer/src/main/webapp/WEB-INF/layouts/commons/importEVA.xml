@@ -57,7 +57,7 @@
 	>
 		<components>
 			<assistent name="${namePrefix}GenericImport"
-				buttonComponent="${namePrefix}GenericImportButtons"
+				buttonbar="true"
 				isSecurityMaster="true"
 				model="selection(${masterComponent})"
 				resPrefix="${resPrefix}"
@@ -109,7 +109,6 @@
 					<assistantInfo/>
 				</component>
 			</assistent>
-			<buttonbar name="${namePrefix}GenericImportButtons"/>
 		</components>
 	</layout>
 </template>

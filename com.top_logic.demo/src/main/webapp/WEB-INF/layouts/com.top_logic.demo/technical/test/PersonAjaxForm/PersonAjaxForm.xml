@@ -4,6 +4,7 @@
 	<components>
 		<component class="com.top_logic.demo.layout.form.demo.PersonAjaxForm"
 			applyCommand="PersonAjaxForm_Apply"
+			buttonbar="true"
 			name="PersonAjaxForm"
 			page="/jsp/layout/test/PersonAjaxForm.jsp"
 			resPrefix="layouts.layoutdemo.test.PersonAjaxForm.PersonAjaxForm."
@@ -34,6 +35,5 @@
 				<layout-reference resource="com.top_logic.demo/technical/test/PersonAjaxForm/localPersonalDialog/dialog.layout.xml"/>
 			</dialogs>
 		</component>
-		<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 	</components>
 </layout>

@@ -38,18 +38,12 @@
 				</columns>
 			</table>
 		</component>
-		<layout>
-			<components>
-				<component class="com.top_logic.element.layout.security.AttributeSecurityEditComponent"
-					buttonComponent="editAttSecurityButtons"
-					model="selection(attSecMetaElementTable)"
-					name="editAttSecurity"
-					page="/jsp/layout/admin/security/classification.jsp"
-					resPrefix="admin.security.attSec."
-					securityProviderClass="securityRoot"
-				/>
-				<buttonbar name="editAttSecurityButtons"/>
-			</components>
-		</layout>
+		<component class="com.top_logic.element.layout.security.AttributeSecurityEditComponent"
+			model="selection(attSecMetaElementTable)"
+			name="editAttSecurity"
+			page="/jsp/layout/admin/security/classification.jsp"
+			resPrefix="admin.security.attSec."
+			securityProviderClass="securityRoot"
+		/>
 	</components>
 </layout>

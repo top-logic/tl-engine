@@ -50,7 +50,7 @@
 
 					<components>
 						<form name="${namePrefix}CreateTheme"
-							buttonComponent="${namePrefix}CreateThemeButtonBar"
+							buttonbar="true"
 							resetInvisible="true"
 							securityProviderClass="securityRoot"
 						>
@@ -67,7 +67,6 @@
 								/>
 							</buttons>
 						</form>
-						<buttonbar name="${namePrefix}CreateThemeButtonBar"/>
 					</components>
 				</layout>
 			</dialogs>

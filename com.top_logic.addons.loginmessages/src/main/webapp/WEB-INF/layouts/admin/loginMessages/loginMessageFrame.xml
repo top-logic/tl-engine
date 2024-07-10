@@ -28,7 +28,6 @@
 				resPrefix="LoginMessage.frame."
 				securityProviderClass="securityRoot"
 			/>
-			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 		</components>
 	</layout>
 </template>

@@ -62,6 +62,7 @@
 
 		<components>
 			<component class="${class}"
+				buttonbar="true"
 				exportHandlers="${exportHandlers}"
 				name="${namePrefix}Component"
 				page="${page}"
@@ -69,7 +70,6 @@
 				resPrefix="${resPrefix}"
 				securityProviderClass="${securityProviderClass}"
 			/>
-			<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 		</components>
 	</layout>
 </template>

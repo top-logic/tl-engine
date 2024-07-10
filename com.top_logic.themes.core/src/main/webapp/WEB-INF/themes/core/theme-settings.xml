@@ -928,6 +928,9 @@
 	<icon name="START_SERVICE"
 		value="css:bi bi-play-fill"
 	/>
+	<icon name="PAUSE"
+		value="css:bi bi-pause"
+	/>
 	<icon name="STOP_SERVICE"
 		expr="%ICONS_BUTTON_STOP_DISABLED%"
 	/>

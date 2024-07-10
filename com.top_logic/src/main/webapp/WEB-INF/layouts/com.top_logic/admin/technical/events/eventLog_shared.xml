@@ -79,11 +79,11 @@
 
 						<components>
 							<component class="com.top_logic.event.layout.ConfigureLogEntriesComponent"
+								buttonbar="true"
 								name="${namePrefix}DialogLogEntries"
 								page="/jsp/layout/event/configureEntries.jsp"
 								resPrefix="logentry.conf."
 							/>
-							<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 						</components>
 					</layout>
 				</dialogs>

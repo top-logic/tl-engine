@@ -186,7 +186,6 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
         super(context, someAttrs);
 
 		this.allowRefresh = someAttrs.getAllowRefresh();
-        this.alwaysReloadButtons = true;
 
 		_lockHandler = CanLock.createLockHandler(context, someAttrs);
     }
@@ -421,8 +420,6 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 		}
 
 		super.afterModelSet(oldModel, newModel);
-
-		this.invalidateButtons();
 
 		if (wasInEdit) {
 			// Even if the new model is null, try to re-switch to edit mode, because the current new

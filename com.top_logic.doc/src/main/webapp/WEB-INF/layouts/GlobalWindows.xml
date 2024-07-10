@@ -33,4 +33,12 @@
 			/>
 		</windowInfo>
 	</window>
+	<window template="com.top_logic/admin/technical/layoutInspector/inspector.xml">
+		<windowInfo
+			createOpenerButtons="false"
+			multiWindow="false"
+			openHandlerClass="com.top_logic.layout.inspector.OpenSeparateInspectorWindowCommandHandler"
+			openHandlerName="openInspector"
+		/>
+	</window>
 </template>

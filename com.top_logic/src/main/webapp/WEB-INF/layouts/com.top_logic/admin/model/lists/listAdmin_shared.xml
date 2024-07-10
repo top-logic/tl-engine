@@ -83,51 +83,44 @@
 					</columns>
 				</table>
 			</tableView>
-			<layout>
-				<components>
-					<component class="com.top_logic.layout.admin.component.EditListComponent"
-						allowRemovingElementsInUse="${allowRemovingElementsInUse}"
-						buttonComponent="${namePrefix}editListComponentButtons"
-						model="selection(${namePrefix}editListTable)"
-						name="${namePrefix}editListComponent"
-						page="/jsp/layout/admin/list/EditListComponent.jsp"
-						resPrefix="main.admin.list.edit."
-						securityProviderClass="securityRoot"
-					>
-						<tables>
-							<table name="field_tablelist">
-								<column-default filterProvider=""/>
-							</table>
-						</tables>
-						<dialogs>
-							<layout name="${namePrefix}newListDialog">
-								<dialogInfo
-									defaultI18n="${resPrefix}.edit.displayDialog_newListDialog"
-									executability="InViewMode"
-									height="315"
-									openerClique="create"
-									openerCommandGroup="Create"
-									width="480"
-								/>
+			<component class="com.top_logic.layout.admin.component.EditListComponent"
+				allowRemovingElementsInUse="${allowRemovingElementsInUse}"
+				model="selection(${namePrefix}editListTable)"
+				name="${namePrefix}editListComponent"
+				page="/jsp/layout/admin/list/EditListComponent.jsp"
+				resPrefix="main.admin.list.edit."
+				securityProviderClass="securityRoot"
+			>
+				<tables>
+					<table name="field_tablelist">
+						<column-default filterProvider=""/>
+					</table>
+				</tables>
+				<dialogs>
+					<layout name="${namePrefix}newListDialog">
+						<dialogInfo
+							defaultI18n="${resPrefix}.edit.displayDialog_newListDialog"
+							executability="InViewMode"
+							height="315"
+							openerClique="create"
+							openerCommandGroup="Create"
+							width="480"
+						/>
 
-								<components>
-									<component class="com.top_logic.layout.admin.component.EditListComponent$NewListComponent"
-										buttonComponent="${namePrefix}newListComponentButtons"
-										listtype="${createType}"
-										model="selection(${master})"
-										name="${namePrefix}newListComponent"
-										page="/jsp/layout/admin/list/NewListComponent.jsp"
-										resPrefix="${resPrefix}.edit.new."
-										securityProviderClass="securityRoot"
-									/>
-									<buttonbar name="${namePrefix}newListComponentButtons"/>
-								</components>
-							</layout>
-						</dialogs>
-					</component>
-					<buttonbar name="${namePrefix}editListComponentButtons"/>
-				</components>
-			</layout>
+						<components>
+							<component class="com.top_logic.layout.admin.component.EditListComponent$NewListComponent"
+								buttonbar="true"
+								listtype="${createType}"
+								model="selection(${master})"
+								name="${namePrefix}newListComponent"
+								page="/jsp/layout/admin/list/NewListComponent.jsp"
+								resPrefix="${resPrefix}.edit.new."
+								securityProviderClass="securityRoot"
+							/>
+						</components>
+					</layout>
+				</dialogs>
+			</component>
 		</components>
 	</layout>
 </template>

@@ -14,12 +14,11 @@
 
 	<components>
 		<component class="com.top_logic.tool.export.progress.ExportProgressComponent"
+			buttonbar="true"
 			closeHandlerName="cancelProgress"
 			name="ProgressExportView"
 			page="/jsp/layout/misc/refreshProgress.jsp"
 			resPrefix="tool.export.progress."
 		/>
-
-		<component class="com.top_logic.knowledge.gui.layout.DefaultButtonComponent"/>
 	</components>
 </layout>

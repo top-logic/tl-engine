@@ -17,7 +17,6 @@
 			<layout-reference resource="com.top_logic/admin/monitor/db/sqlMonitor.layout.xml"/>
 			<layout-reference resource="com.top_logic/admin/monitor/event/eventMonitor.layout.xml"/>
 			<layout-reference resource="com.top_logic/admin/monitor/memory/memoryMonitor.layout.xml"/>
-			<layout-reference resource="com.top_logic/admin/monitor/performance/performanceMonitor.layout.xml"/>
 		</components>
 	</arguments>
 </config:template-call>

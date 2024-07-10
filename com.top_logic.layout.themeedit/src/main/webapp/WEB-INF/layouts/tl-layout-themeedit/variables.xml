@@ -103,7 +103,7 @@
 					</dialogInfo>
 					<components>
 						<form name="${namePrefix}VariablesEditor"
-							buttonComponent="${namePrefix}VariablesEditButtonBar"
+							buttonbar="true"
 							resetInvisible="true"
 							securityProviderClass="securityRoot"
 							titleKey="${resPrefix}.variables.editor.title"
@@ -153,7 +153,6 @@
 								/>
 							</buttons>
 						</form>
-						<buttonbar name="${namePrefix}VariablesEditButtonBar"/>
 					</components>
 				</layout>
 				<layout name="${namePrefix}CreateVariableDialog"
@@ -168,7 +167,7 @@
 					/>
 					<components>
 						<form name="${namePrefix}CreateVariable"
-							buttonComponent="${namePrefix}CreateVariableButtonBar"
+							buttonbar="true"
 							model="selection(${namePrefix}VariablesTable)"
 							resetInvisible="true"
 							securityProviderClass="securityRoot"
@@ -213,7 +212,6 @@
 								/>
 							</buttons>
 						</form>
-						<buttonbar name="${namePrefix}CreateVariableButtonBar"/>
 					</components>
 				</layout>
 			</dialogs>

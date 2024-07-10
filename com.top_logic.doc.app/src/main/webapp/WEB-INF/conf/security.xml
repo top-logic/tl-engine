@@ -148,9 +148,6 @@
 				<commandGroup name="Export"/>
 				<commandGroup name="Read"/>
 			</view>
-			<view name="com.top_logic/admin/monitor/performance/performanceMonitor.layout.xml#adminPerformanceMonitor">
-				<commandGroup name="Read"/>
-			</view>
 			<view name="com.top_logic/admin/monitor/systemEnvironment.layout.xml#view">
 				<commandGroup name="Read"/>
 			</view>

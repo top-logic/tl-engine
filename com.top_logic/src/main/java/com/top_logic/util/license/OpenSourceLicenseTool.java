@@ -18,14 +18,17 @@ public class OpenSourceLicenseTool extends LicenseTool {
 	 * The license information for an active AGPL license.
 	 */
 	public interface AGPL extends TLLicense {
+		@Deprecated
 		@Override
 		@IntDefault(Integer.MAX_VALUE)
 		int getUsers();
 
+		@Deprecated
 		@Override
 		@IntDefault(Integer.MAX_VALUE)
 		int getRestrictedUsers();
 
+		@Deprecated
 		@Override
 		@IntDefault(Integer.MAX_VALUE)
 		int getClusterSize();
@@ -55,23 +58,15 @@ public class OpenSourceLicenseTool extends LicenseTool {
 		System.out.println(text);
 		System.out.println();
 		System.out.println(
-			"Licensed under GNU Affero General Public License - AGPL");
+			" Licensed under GNU Affero General Public License - AGPL");
+		System.out.println(
+			" https://www.gnu.org/licenses/agpl-3.0.en.html          ");
 		System.out.println();
 	}
 
 	@Override
 	public TLLicense getLicense() {
 		return LICENSE;
-	}
-
-	@Override
-	public boolean usersExceeded(TLLicense license) {
-		return false;
-	}
-
-	@Override
-	public boolean limitToOneSession(TLLicense license) {
-		return false;
 	}
 
 	@Override

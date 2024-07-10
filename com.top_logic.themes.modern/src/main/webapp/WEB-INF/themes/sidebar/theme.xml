@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8" ?>
-
-<theme extends="modern" state="enabled">
-	<styles>
-		<style name="/style/sidebar.css"/>
-	</styles>
-</theme>

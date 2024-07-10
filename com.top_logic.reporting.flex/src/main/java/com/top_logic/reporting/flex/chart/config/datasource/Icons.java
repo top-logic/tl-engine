@@ -5,6 +5,7 @@
  */
 package com.top_logic.reporting.flex.chart.config.datasource;
 
+import com.top_logic.layout.basic.DefaultValue;
 import com.top_logic.layout.basic.IconsBase;
 import com.top_logic.layout.basic.ThemeImage;
 
@@ -16,8 +17,10 @@ import com.top_logic.layout.basic.ThemeImage;
 @SuppressWarnings("javadoc")
 public class Icons extends IconsBase {
 
+	@DefaultValue("css:bi bi-plus-lg")
 	public static ThemeImage ADD_BUTTON;
 
+	@DefaultValue("css:bi bi-plus-lg")
 	public static ThemeImage ADD_BUTTON_DISABLED;
 
 }

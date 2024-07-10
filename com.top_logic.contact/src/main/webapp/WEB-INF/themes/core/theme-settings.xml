@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<settings>
+	<icon name="MIMETYPES_COMPANY_CONTACT_16"
+		value="css:bi bi-buildings-fill"
+	/>
+	<icon name="MIMETYPES_LARGE_COMPANY_CONTACT_60"
+		expr="%MIMETYPES_COMPANY_CONTACT_16%"
+	/>
+	<icon name="MIMETYPES_LARGE_ORG_UNIT_60"
+		expr="%MIMETYPES_ORG_UNIT_16%"
+	/>
+	<icon name="MIMETYPES_ORG_UNIT_16"
+		value="css:fas fa-sitemap"
+	/>
+	<icon name="IMAGE_BUTTONS_PERSONAL_SETTINGS22"
+		value="css:bi bi-person-fill-gear"
+	/>
+	<icon name="MIMETYPES_LARGE_PERSON_CONTACT_60"
+		value="css:bi bi-person-fill"
+	/>
+	<icon name="MIMETYPES_PERSON_CONTACT_16"
+		expr="%MIMETYPES_LARGE_PERSON_CONTACT_60%"
+	/>
+</settings>

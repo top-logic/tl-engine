@@ -19,8 +19,10 @@ import com.top_logic.layout.basic.ThemeImage;
 @SuppressWarnings("javadoc")
 public class Icons extends IconsBase {
 
+	@DefaultValue("css:bi bi-trash")
 	public static ThemeImage DELETE_MENU;
 
+	@DefaultValue("css:bi bi-trash")
 	public static ThemeImage DELETE_MENU_DISABLED;
 
 	public static ThemeImage INVERT_SELECTION;

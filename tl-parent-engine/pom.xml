@@ -101,8 +101,6 @@
 		<module>../com.top_logic.security.auth.pac4j</module>
 		<module>../com.top_logic.storage.azure</module>
 		<module>../com.top_logic.template</module>
-		<module>../com.top_logic.themes.dezent</module>
-		<module>../com.top_logic.themes.modern</module>
 		<module>../com.top_logic.themes.core</module>
 		<module>../com.top_logic.umljs</module>
 		<module>../com.top_logic.xio</module>

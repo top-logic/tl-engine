@@ -4,10 +4,6 @@
 	<string name="THEME_NAME"
 		value="Comfort"
 	/>
-	<type name="MAIN_LAYOUT_CLASS"
-		interface="com.top_logic.mig.html.layout.MainLayout"
-		value="com.top_logic.knowledge.gui.layout.TLMainLayout"
-	/>
 	<int name="STRUCTURE_DIALOG_HEIGHT"
 		value="500"
 	/>
@@ -41,15 +37,8 @@
 	<size name="tabbar-height"
 		value="40px"
 	/>
-	<!--
-		Needs to be that high because every filter element is being used in an HTML element with the
-		same css classes even when the layout for the page is totally different.
-	-->
-	<int name="FILTER_SINGLE_LINE_HEIGHT"
-		value="64"
-	/>
-	<int name="EVENTLOG_SHARED_FILTER_HEIGHT"
-		value="64"
+	<int name="com.top_logic.layout.form.control.Icons.TAB_COMPONENT_DEFAULT_TAB_HEIGHT"
+		value="40"
 	/>
 	<icon name="com.top_logic.layout.Icons.APP_LOGO"
 		value="/images/appLogo.svg"
@@ -74,9 +63,6 @@
 	/>
 	<icon name="com.top_logic.layout.structure.Icons.BUTTON_INSPECTOR"
 		expr="%com.top_logic.layout.form.popupmenu.Icons.MENU_INSPECTOR%"
-	/>
-	<int name="VERSION_ROW_HEIGHT"
-		value="16"
 	/>
 	<boolean name="QUICK_SEARCH_ENABLED"
 		value="true"
@@ -153,12 +139,6 @@
 	<size name="com.top_logic.layout.table.model.Icons.SELECTION_COLUMN_WIDTH"
 		value="34px"
 	/>
-	<icon name="com.top_logic.layout.tabbar.Icons.TAB_LEFT_SCROLL_BUTTON"
-		expr="%ICONS_MOVE_ROW_LEFT%"
-	/>
-	<icon name="com.top_logic.layout.tabbar.Icons.TAB_RIGHT_SCROLL_BUTTON"
-		expr="%ICONS_MOVE_ROW_RIGHT%"
-	/>
 	<icon name="com.top_logic.mig.html.layout.tiles.component.Icons.EDIT_TILE_PREVIEW_ICON"
 		expr="%ICONS_BUTTON_EDIT%"
 	/>
@@ -221,9 +201,6 @@
 	/>
 	<img name="com.top_logic.layout.buttonbar.Icons.SLIDER_IMG"
 		value="/images/Slider.gif"
-	/>
-	<img name="com.top_logic.layout.image.gallery.Icons.NO_PREVIEW_IMAGE"
-		value="/images/noPreviewImage.png"
 	/>
 	<icon name="com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU"
 		value="css:bi bi-three-dots-vertical"
@@ -556,6 +533,9 @@
 	<icon name="com.top_logic.tool.export.Icons.DOWNLOAD"
 		expr="%ICONS_DOWNLOAD60%"
 	/>
+	<icon name="com.top_logic.tool.export.Icons.DOWNLOAD_DISABLED"
+		expr="%ICONS_DOWNLOAD60%"
+	/>
 	<icon name="com.top_logic.common.webfolder.ui.commands.Icons.DOWNLOAD60"
 		expr="%ICONS_DOWNLOAD60%"
 	/>
@@ -853,6 +833,9 @@
 	<icon name="ICONS_BUTTON_CLEAR"
 		expr="%ICONS_CANCEL_BUTTON%"
 	/>
+	<icon name="ICONS_BUTTON_CLEAR_DISABLED"
+		expr="%ICONS_CANCEL_BUTTON%"
+	/>
 	<icon name="ICONS_EXPAND_ALL"
 		value="css:bi bi-chevron-double-down"
 	/>
@@ -1111,95 +1094,14 @@
 	<icon name="com.top_logic.layout.messagebox.Icons.BUTTON_CLOSE_IMAGE_DISABLED"
 		expr="%com.top_logic.layout.messagebox.Icons.BUTTON_CLOSE_IMAGE%"
 	/>
-	<icon name="mime.image/bmp"
-		expr="%mime.image/png%"
-	/>
-	<icon name="mime.image/gif"
-		expr="%mime.image/png%"
-	/>
-	<icon name="mime.image/png"
-		value="css:bi bi-image"
-	/>
-	<icon name="MIMETYPES_LARGE_PERSON_CONTACT_60"
-		expr="%USER_MENU_ICON%"
-	/>
-	<icon name="MIMETYPES_PERSON_CONTACT_16"
-		expr="%USER_MENU_ICON%"
-	/>
 	<icon name="ICONS_STAKEHOLDER"
 		value="css:bi bi-people-fill"
 	/>
 	<icon name="ICONS_LARGE_STAKEHOLDER60"
 		expr="%ICONS_STAKEHOLDER%"
 	/>
-	<icon name="mime.tl.accounts.Group"
-		expr="%ICONS_STAKEHOLDER%"
-	/>
-	<icon name="mime.tl.accounts.Group.large"
-		expr="%ICONS_STAKEHOLDER%"
-	/>
 	<icon name="ICONS_PERSON_ASSIGNMENTS48"
 		expr="%ICONS_STAKEHOLDER%"
-	/>
-	<icon name="MIMETYPES_GROUP_16"
-		expr="%ICONS_STAKEHOLDER%"
-	/>
-	<icon name="MIMETYPES_LARGE_GROUP_60"
-		expr="%ICONS_STAKEHOLDER%"
-	/>
-	<icon name="mime.tl.accounts.Person"
-		expr="%USER_MENU_ICON%"
-	/>
-	<icon name="mime.tl.accounts.Person.large"
-		expr="%USER_MENU_ICON%"
-	/>
-	<icon name="mime.ClassificationMetaAttribute"
-		expr="%mime.tl.folder.Document%"
-	/>
-	<icon name="mime.FloatMetaAttribute"
-		expr="%mime.tl.folder.Document%"
-	/>
-	<icon name="mime.Link"
-		expr="%ICONS_OPEN_SELECTOR%"
-	/>
-	<icon name="mime.Project"
-		value="css:bi bi-hdd-network-fill"
-	/>
-	<icon name="mime.Project.large"
-		value="css:bi bi-hdd-rack-fill"
-	/>
-	<icon name="mime.RoleRule"
-		value="css:bi bi-person-badge-fill"
-	/>
-	<icon name="mime.SearchExpressionTable"
-		expr="%IMAGE_BUTTONS_SEARCH22%"
-	/>
-	<icon name="mime.WebFolderMetaAttribute"
-		expr="%mime.tl.folder.Document%"
-	/>
-	<icon name="mime.application/zip.large"
-		expr="%ICONS_EXPORT_ZIP%"
-	/>
-	<icon name="mime.text/plain.large"
-		value="css:bi bi-file-earmark-text-fill"
-	/>
-	<icon name="mime.tl.accounts.Role"
-		expr="%IMAGE_BUTTONS_PERSONAL_SETTINGS22%"
-	/>
-	<icon name="mime.tl.folder.Document"
-		value="css:bi bi-file-earmark-fill"
-	/>
-	<icon name="mime.tl.folder.DocumentVersion"
-		expr="%mime.tl.folder.Document%"
-	/>
-	<icon name="mime.application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.large"
-		expr="%ICONS_EXPORT_GRID%"
-	/>
-	<icon name="mime.Clipboard"
-		expr="%ICONS_CLIPBOARD_BUTTON_ICON%"
-	/>
-	<icon name="mime.Clipboard.large"
-		expr="%ICONS_CLIPBOARD_BUTTON_ICON%"
 	/>
 	<icon name="com.top_logic.layout.table.control.Icons.ADD_ROW"
 		expr="%ICON_PLUS%"
@@ -1270,9 +1172,6 @@
 	<icon name="com.top_logic.layout.table.renderer.Icons.TBL_PREV_DISABLED"
 		expr="%ICONS_MOVE_ROW_LEFT%"
 	/>
-	<icon name="com.top_logic.layout.form.treetable.component.Icons.DELETE_MENU_DISABLED"
-		expr="%ICONS_DELETE_MENU%"
-	/>
 	<icon name="com.top_logic.layout.form.treetable.component.Icons.MOVE_ROW_LEFT"
 		expr="%ICONS_MOVE_ROW_LEFT%"
 	/>
@@ -1326,9 +1225,6 @@
 	/>
 	<size name="TABLE_FILTER_BUTTON_BAR_HEIGHT"
 		value="62px"
-	/>
-	<icon name="mime.TLClass"
-		value="css:bi bi-window"
 	/>
 	<size name="com.top_logic.layout.basic.Icons.DIRTY_DIALOG_WIDTH"
 		value="550px"
@@ -1599,12 +1495,6 @@
 		value="css:bi bi-check-circle-fill green"
 	/>
 	<icon name="com.top_logic.util.sched.task.result.Icons.UNKNOWN"
-		expr="%com.top_logic.tool.boundsec.assistent.Icons.STEP_OPEN%"
-	/>
-	<icon name="com.top_logic.tool.boundsec.assistent.Icons.STEP_FINISHED"
-		expr="%com.top_logic.util.sched.task.result.Icons.SUCCESS%"
-	/>
-	<icon name="com.top_logic.tool.boundsec.assistent.Icons.STEP_OPEN"
 		value="css:bi bi-question-circle-fill"
 	/>
 	<icon name="ICONS_SELECT_ALL_CHECKBOXES"
@@ -1652,6 +1542,36 @@
 	<icon name="ICONS_BUTTON_NEW_ELEMENT_DISABLED"
 		expr="%ICONS_BUTTON_NEW_ELEMENT%"
 	/>
+	<icon name="com.top_logic.layout.form.control.Icons.CHEVRON_EXPAND"
+		value="css:bi bi-chevron-expand"
+	/>
+	<dim name="com.top_logic.layout.form.boxes.reactive_tag.Icons.RF_HORIZONTAL_GAP_COLUMNS"
+		value="4rem"
+	/>
+	<dim name="RF_HORIZONTAL_GAP_FILTER"
+		expr="%com.top_logic.layout.form.boxes.reactive_tag.Icons.RF_HORIZONTAL_GAP_COLUMNS%"
+	/>
+	<icon name="com.top_logic.layout.admin.component.Icons.TL_SERVICE_RUNNING"
+		expr="%ICONS_BUTTON_START%"
+	/>
+	<icon name="com.top_logic.layout.admin.component.Icons.TL_SERVICE_NOT_RUNNING"
+		expr="%ICONS_BUTTON_PAUSE%"
+	/>
+	<int name="com.top_logic.layout.tree.renderer.Icons.TREE_INDENT_CHARS"
+		value="6"
+	/>
+	<color name="TABLE_ROW_BACKGROUND_COLOR"
+		expr="%background%"
+	/>
+	<color name="TABLE_ROW_EVEN_BACKGROUND_COLOR"
+		expr="%background%"
+	/>
+	<int name="com.top_logic.layout.form.control.Icons.MEGA_MENU_BORDER_WIDTH"
+		value="1"
+	/>
+	<size name="com.top_logic.layout.table.renderer.Icons.TABLE_COLUMN_BORDER_WIDTH"
+		value="1px"
+	/>
 
 	<!-- No Bootstrap Icons found for these -->
 
@@ -1663,9 +1583,6 @@
 		value="colored:fas fa-save overlay-add"
 	/>
 	<!-- END -->
-	<icon name="mime.TLModule"
-		value="css:bi bi-window-stack"
-	/>
 	<icon name="com.top_logic.layout.form.control.Icons.WARN"
 		value="/icons/warn.png"
 	/>
@@ -1719,17 +1636,6 @@
 	/>
 	<icon name="ICONS_BUTTON_UNGROUP_DISABLED"
 		expr="%ICONS_BUTTON_UNGROUP%"
-	/>
-	<int name="com.top_logic.layout.form.control.Icons.MEGA_MENU_BORDER_WIDTH"
-		value="1"
-	/>
-	<icon name="mime.TLAssociationEnd@containment@mandatory@multiple"
-		expr=""
-		value="colored:tl-icon selection-invert"
-	/>
-	<icon name="mime.TLEnumeration"
-		expr=""
-		value="colored:tl-icon chain"
 	/>
 	<icon name="ICONS_FORM_WHITE"
 		value="colored:tl-icon form"
@@ -1801,13 +1707,253 @@
 		value="css: bi bi-question-square-fill"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.PDF_MISSING"
-		value="bi bi-question-square-fill missingPDFIcon"
+		value="css:bi bi-question-square-fill"
 	/>
 	<icon name="com.top_logic.mig.html.layout.tiles.component.Icons.HIDE_TILE_COMMAND"
 		value="css:far fa-eye-slash"
 	/>
-	<icon name="com.top_logic.layout.form.control.Icons.CHEVRON_EXPAND"
-		value="css:bi bi-chevron-expand"
+	<icon name="TABLE_EMPTY"
+		value="/icons/sortNo.png"
+	/>	
+	<string name="FORM_EDITOR_BUTTON_MOVE"
+		value="url(/icons/sortElementsDisabled.png)"
+	/>
+	<icon name="ICONS_BUTTON_FORWARD"
+		value="colored:tl-icon caret-right-double"
+	/>
+	<icon name="ICONS_BUTTON_FORWARD_DISABLED"
+		expr="%ICONS_BUTTON_FORWARD%"
+	/>
+	<icon name="ICONS_COLLAPSE"
+		value="colored:tl-icon collapse"
+	/>
+	<icon name="ICONS_COLLAPSE_DISABLED"
+		expr="%ICONS_COLLAPSE%"
+	/>
+	<icon name="ICONS_CONFIGURE"
+		expr="%ICONS_GEAR%"
+	/>
+	<icon name="ICONS_DOC_LOCKED"
+		expr="%ICON_PASSWORD%"
+	/>
+	<icon name="ICONS_EXCEL_IMPORT_BUTTON_ICON"
+		value="css:fas fa-cloud-download-alt"
+	/>
+	<icon name="ICONS_EXCEL_IMPORT_BUTTON_ICON_DISABLED"
+		value="css:fas fa-cloud-download-alt"
+	/>
+	<icon name="ICONS_FILE_INFO"
+		value="/icons/FileInfo.png"
+	/>
+	<icon name="ICONS_HELP"
+		value="colored:tl-icon question-circle"
+	/>
+	<icon name="ICONS_HELP_DISABLED"
+		expr="%ICONS_HELP%"
+	/>
+	<icon name="IMAGE_BUTTONS_ORG_UNIT22"
+		value="colored:tl-icon hierarchy"
+	/>
+	<icon name="MIMETYPES_TAG"
+		value="/mimetypes/tag.png"
+	/>
+	<int name="TABBER_SIZE"
+		value="18"
+	/>
+	<icon name="SPACER_BAR_CHART_TYPE"
+		value="colored:tl-icon chart-bar"
+	/>
+	<icon name="com.top_logic.base.chart.util.Icons.ARCHIEVEMENT_CHART"
+		expr="%com.top_logic.base.chart.util.Icons.DEFAULT_CHART%"
+	/>
+	<icon name="com.top_logic.base.chart.util.Icons.BAR_CHART"
+		expr="%SPACER_BAR_CHART_TYPE%"
+	/>
+	<icon name="com.top_logic.base.chart.util.Icons.DEFAULT_CHART"
+		value="colored:tl-icon chart-bar-line"
+	/>
+	<icon name="com.top_logic.base.chart.util.Icons.KPITRACING_CHART"
+		expr="%com.top_logic.base.chart.util.Icons.DEFAULT_CHART%"
+	/>
+	<icon name="com.top_logic.base.chart.util.Icons.MATRIX_CHART"
+		expr="%com.top_logic.base.chart.util.Icons.DEFAULT_CHART%"
+	/>
+	<icon name="com.top_logic.base.chart.util.Icons.PIE_CHART"
+		value="css:fas fa-chart-pie"
+	/>
+	<icon name="com.top_logic.base.chart.util.Icons.SPIDER_CHART"
+		expr="%com.top_logic.base.chart.util.Icons.DEFAULT_CHART%"
+	/>
+	<icon name="com.top_logic.base.chart.util.Icons.SWING_CHART"
+		expr="%com.top_logic.base.chart.util.Icons.DEFAULT_CHART%"
+	/>
+	<icon name="com.top_logic.base.chart.util.Icons.TREND_CHART"
+		expr="%com.top_logic.base.chart.util.Icons.DEFAULT_CHART%"
+	/>
+	<icon name="com.top_logic.knowledge.gui.layout.person.Icons.UNKNOWN_PERSON"
+		value="/misc/unknownPerson.jpg"
+	/>
+	<icon name="com.top_logic.layout.Icons.V"
+		value="/tree/v.png"
+	/>
+	<icon name="com.top_logic.layout.accordion.Icons.BACK22"
+		value="colored:tl-icon caret-left-light"
+	/>
+	<icon name="com.top_logic.layout.accordion.Icons.FORWARD22"
+		value="colored:tl-icon caret-right-light"
+	/>
+	<icon name="com.top_logic.layout.form.boxes.model.Icons.BURGER_MENU"
+		expr="%com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU%"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ACCUMULATED_TRISTATE_FALSE"
+		value="/accumulatedTristate/false.png"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ACCUMULATED_TRISTATE_FALSE_DISABLED"
+		value="/accumulatedTristate/false_disabled.png"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ACCUMULATED_TRISTATE_NULL"
+		value="/accumulatedTristate/null.png"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ACCUMULATED_TRISTATE_NULL_DISABLED"
+		value="/accumulatedTristate/null_disabled.png"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ACCUMULATED_TRISTATE_TRUE"
+		value="/accumulatedTristate/true.png"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ACCUMULATED_TRISTATE_TRUE_DISABLED"
+		value="/accumulatedTristate/true_disabled.png"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.ALERT_SPACER"
+		value="/icons/alert-spacer.png"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.CHECKLIST_ALL"
+		value="css:fas fa-check-double"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.CHECKLIST_NONE"
+		expr="%com.top_logic.layout.form.tag.Icons.DELETE_BUTTON%"
+	/>
+	<icon name="com.top_logic.layout.form.control.Icons.URL_LINK"
+		value="colored:tl-icon arrow-top-right-square"
+	/>
+	<icon name="com.top_logic.layout.form.popupmenu.Icons.BUTTON_EMPTY"
+		value="/icons/buttonEmpty.png"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.EDIT48"
+		expr="%ICONS_EDIT48%"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.FILTER_FORM"
+		value="colored:tl-icon filter"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.GROUP_COLLAPSED"
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.GROUP_EXPANDED"
+		value="colored:tl-icon caret-down"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.PLUS48"
+		expr="%ICON_PLUS%"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.RELOAD_SMALL"
+		expr="%ICONS_BUTTON_REFRESH%"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.RELOAD_SMALL_DISABLED"
+		expr="%com.top_logic.layout.form.tag.Icons.RELOAD_SMALL%"
+	/>
+	<icon name="com.top_logic.layout.form.tag.Icons.UP"
+		value="colored:tl-icon caret-up"
+	/>
+	<icon name="com.top_logic.layout.form.treetable.component.Icons.INVERT_SELECTION"
+		value="/icons/invertSelection.png"
+	/>
+	<icon name="com.top_logic.layout.form.treetable.component.Icons.INVERT_SELECTION_DISABLED"
+		value="/icons/invertSelectionDisabled.png"
+	/>
+	<icon name="com.top_logic.layout.form.values.edit.editor.Icons.SELECT_TYPE"
+		value="colored:tl-icon bars"
+	/>
+	<icon name="com.top_logic.layout.inspector.resources.Icons.PRIVATE"
+		value="/inspector/private.png"
+	/>
+	<icon name="com.top_logic.layout.inspector.resources.Icons.PRIVATE_LIST"
+		value="/inspector/privateList.png"
+	/>
+	<icon name="com.top_logic.layout.inspector.resources.Icons.PRIVATE_MAP"
+		value="/inspector/privateMap.png"
+	/>
+	<icon name="com.top_logic.layout.inspector.resources.Icons.PRIVATE_PRIMITIVE"
+		value="/inspector/privatePrimitive.png"
+	/>
+	<icon name="com.top_logic.layout.inspector.resources.Icons.PUBLIC_LIST"
+		value="/inspector/publicList.png"
+	/>
+	<icon name="com.top_logic.layout.inspector.resources.Icons.PUBLIC_MAP"
+		value="/inspector/publicMap.png"
+	/>
+	<icon name="com.top_logic.layout.inspector.resources.Icons.PUBLIC_PRIMITIVE"
+		value="/inspector/publicPrimitive.png"
+	/>
+	<icon name="com.top_logic.layout.scripting.recorder.gui.inspector.Icons.CREATE_ASSERTIONS"
+		value="css:fas fa-exclamation-triangle"
+	/>
+	<icon name="com.top_logic.layout.scripting.recorder.gui.inspector.Icons.CREATE_ASSERTIONS_DISABLED"
+		expr="%com.top_logic.layout.scripting.recorder.gui.inspector.Icons.CREATE_ASSERTIONS%"
+	/>
+	<icon name="com.top_logic.layout.scripting.recorder.gui.inspector.Icons.RESET"
+		expr="%ICON_UNDO%"
+	/>
+	<icon name="com.top_logic.layout.scripting.recorder.gui.inspector.Icons.RESET_DISABLED"
+		expr="%com.top_logic.layout.scripting.recorder.gui.inspector.Icons.RESET%"
+	/>	
+	<icon name="com.top_logic.layout.structure.Icons.HELP"
+		value="css:bi bi-question-lg"
+	/>
+	<icon name="com.top_logic.layout.table.control.Icons.SORT_CONFIG_60"
+		value="/icons/sort-config-60.png"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.EDIT_NAMED_TABLE_SETTINGS"
+		value="colored:tl-icon tools"
+	/>
+	<icon name="com.top_logic.layout.table.renderer.Icons.EMPTY"
+		value="/mimetypes/empty.png"
+	/>	
+	<icon name="com.top_logic.layout.tree.renderer.Icons.BREADCRUMB_LF"
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.BREADCRUMB_LL"
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.BREADCRUMB_LNL"
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.BREADCRUMB_LS"
+		value="/tree/ls.png"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.BREADCRUMB_MF"
+		value="colored:tl-icon caret-down"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.BREADCRUMB_ML"
+		value="colored:tl-icon caret-down"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.BREADCRUMB_MNL"
+		value="colored:tl-icon caret-down"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.BREADCRUMB_MS"
+		value="/tree/ms.png"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.BREADCRUMB_PF"
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.BREADCRUMB_PL"
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.BREADCRUMB_PNL"
+		value="colored:tl-icon caret-right"
+	/>
+	<icon name="com.top_logic.layout.tree.renderer.Icons.BREADCRUMB_PS"
+		value="/tree/ps.png"
+	/>
+	<icon name="com.top_logic.layout.messagebox.Icons.IN_PROGRESS"
+		value="css:fas fa-running"
 	/>
 
 	<!-- Style Tokens -->

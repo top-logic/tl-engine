@@ -49,6 +49,12 @@
 	<icon name="DEMO_NEW_CS_CHILD"
 		value="/demo/new-cs-child.png"
 	/>
+	<icon name="DEMO_DIALOG_ICON"
+		value="/demo/dialog-icon.png"
+	/>
+	<icon name="ICONS_ALERT"
+		value="css:bi bi-exclamation-triangle-fill"
+	/>
 	<icon name="ICON_BRIEFCASE"
 		value="css:fas fa-briefcase"
 	/>

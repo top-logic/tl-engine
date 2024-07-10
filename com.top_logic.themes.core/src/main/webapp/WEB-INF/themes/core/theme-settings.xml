@@ -1552,10 +1552,10 @@
 		expr="%com.top_logic.layout.form.boxes.reactive_tag.Icons.RF_HORIZONTAL_GAP_COLUMNS%"
 	/>
 	<icon name="com.top_logic.layout.admin.component.Icons.TL_SERVICE_RUNNING"
-		expr="%BEACON_BALLS_GREEN%"
+		expr="%ICONS_BUTTON_START%"
 	/>
 	<icon name="com.top_logic.layout.admin.component.Icons.TL_SERVICE_NOT_RUNNING"
-		expr="%BEACON_BALLS_WHITE%"
+		expr="%ICONS_BUTTON_PAUSE%"
 	/>
 	<int name="com.top_logic.layout.tree.renderer.Icons.TREE_INDENT_CHARS"
 		value="6"

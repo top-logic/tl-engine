@@ -2,24 +2,24 @@
 
 <settings>
 	<icon name="MIMETYPES_COMPANY_CONTACT_16"
-		value="/mimetypes/CompanyContact-16.png"
+		value="css:bi bi-buildings-fill"
 	/>
 	<icon name="MIMETYPES_LARGE_COMPANY_CONTACT_60"
-		value="/mimetypes/large/CompanyContact-60.png"
+		expr="%MIMETYPES_COMPANY_CONTACT_16%"
 	/>
 	<icon name="MIMETYPES_LARGE_ORG_UNIT_60"
-		value="/mimetypes/large/OrgUnit-60.png"
-	/>
-	<icon name="MIMETYPES_LARGE_PERSON_CONTACT_60"
-		value="/mimetypes/large/PersonContact-60.png"
+		expr="%MIMETYPES_ORG_UNIT_16%"
 	/>
 	<icon name="MIMETYPES_ORG_UNIT_16"
-		value="/mimetypes/OrgUnit-16.png"
-	/>
-	<icon name="MIMETYPES_PERSON_CONTACT_16"
-		value="/mimetypes/PersonContact-16.png"
+		value="css:fas fa-sitemap"
 	/>
 	<icon name="IMAGE_BUTTONS_PERSONAL_SETTINGS22"
-		value="css:fas fa-user-cog"
+		value="css:bi bi-person-fill-gear"
+	/>
+	<icon name="MIMETYPES_LARGE_PERSON_CONTACT_60"
+		value="css:bi bi-person-fill"
+	/>
+	<icon name="MIMETYPES_PERSON_CONTACT_16"
+		expr="%MIMETYPES_LARGE_PERSON_CONTACT_60%"
 	/>
 </settings>

@@ -17,6 +17,7 @@
 			<button id="ID_04ccf5ee_73e2_400d_b187_f877b8a2e08b"
 				auto-apply="true"
 				class="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+				closeDialog="false"
 				image="css:fas fa-save"
 				operation="null"
 			>

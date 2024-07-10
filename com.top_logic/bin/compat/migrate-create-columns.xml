@@ -44,7 +44,6 @@
 <include name="com.top_logic/webapp/WEB-INF/layouts/admin/persons/personTable_alias.xml" />
 <include name="com.top_logic/webapp/WEB-INF/layouts/admin/technical/deleteLocks.xml" />
 <include name="com.top_logic/webapp/WEB-INF/layouts/admin/technical/memoryObserver.xml" />
-<include name="com.top_logic/webapp/WEB-INF/layouts/admin/technical/performanceMonitor.xml" />
 <include name="com.top_logic/webapp/WEB-INF/layouts/admin/technical/scheduler.xml" />
 <include name="com.top_logic/webapp/WEB-INF/layouts/admin/technical/userMonitor.xml" />
 <include name="com.top_logic/webapp/WEB-INF/layouts/admin/units/editUnit.xml" />
@@ -127,7 +126,6 @@
 <include name="webapp/WEB-INF/layouts/admin/persons/personTable_alias.xml" />
 <include name="webapp/WEB-INF/layouts/admin/technical/deleteLocks.xml" />
 <include name="webapp/WEB-INF/layouts/admin/technical/memoryObserver.xml" />
-<include name="webapp/WEB-INF/layouts/admin/technical/performanceMonitor.xml" />
 <include name="webapp/WEB-INF/layouts/admin/technical/scheduler.xml" />
 <include name="webapp/WEB-INF/layouts/admin/technical/userMonitor.xml" />
 <include name="webapp/WEB-INF/layouts/admin/units/editUnit.xml" />

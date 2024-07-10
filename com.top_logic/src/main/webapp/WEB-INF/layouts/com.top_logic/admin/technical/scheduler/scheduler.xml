@@ -2,7 +2,6 @@
 
 <!-- This component manages the scheduled tasks. -->
 <layout name="sysScheduler"
-	buttonbar="true"
 	horizontal="true"
 >
 	<components>
@@ -288,6 +287,7 @@
 						<layout name="failedTaskResultsDialog">
 							<dialogInfo
 								height="80%"
+								image="theme:com.top_logic.layout.table.control.Icons.OPEN_SELECTOR"
 								resizable="true"
 								width="920px"
 							/>

@@ -1129,7 +1129,9 @@
 		            	group="Write" 
 		            />
 		            <handler class="com.top_logic.layout.progress.AJAXProgressComponent$WriteFinishedProgressCommand" />
-		            <handler class="com.top_logic.layout.table.tree.UpdateTreeTableCommandHandler" />
+		            <handler class="com.top_logic.layout.table.tree.UpdateTreeTableCommandHandler"
+		            	clique="refresh" 
+		            />
 		            <handler class="com.top_logic.layout.basic.component.ControlComponent$DispatchAction"
 						clique="internal"/> 
 		            <handler class="com.top_logic.mig.html.layout.MainLayout$NotifyUnload"
@@ -1307,9 +1309,6 @@
 						resourceKey="main.admin.maintenanceWindow.exitDialog.LeaveMaintenanceWindow"
 					/>
 					<handler id="EnterMaintenanceWindowDelayed" class="com.top_logic.layout.admin.component.MaintenanceWindowComponent$EnterMaintenanceWindowDelayedCommandHandler"/>
-					<handler id="AbortEnteringMaintenanceWindow" class="com.top_logic.layout.admin.component.MaintenanceWindowComponent$AbortEnteringMaintenanceWindowCommandHandler"
-						resourceKey="main.admin.maintenanceWindow.component.AbortEnteringMaintenanceWindow"
-					/>
 					
 					<handler id="sortConfigOpenForControlRepresentable" class="com.top_logic.layout.table.control.SortConfigDialog$OpenForControlRepresentable"/>
 					<handler id="sortConfigOpenForTableComponent" class="com.top_logic.layout.table.control.SortConfigDialog$OpenForTableComponent"/>
@@ -1330,20 +1329,21 @@
 					<handler id="signalStop" class="com.top_logic.layout.progress.AJAXProgressComponent$SignalStopProgress"/>
 					
 					<handler id="scheduleTask" class="com.top_logic.util.sched.layout.ScheduleTaskCommandHandler" 
-						group="Write" target="selection(self())"
+						group="Write" target="selection(self())" image="theme:START_SERVICE"
 					/>
 					<handler id="stopTask" class="com.top_logic.util.sched.layout.StopTaskCommand" 
-						group="Write" target="selection(self())"
+						group="Write" target="selection(self())" image="theme:STOP_SERVICE"
 					/>
 					<handler id="blockTask" class="com.top_logic.util.sched.layout.block.BlockTaskCommand"
-						group="Write" target="selection(self())"
+						group="Write" target="selection(self())" image="theme:PAUSE"
 					/>
 					<handler id="unblockTask" class="com.top_logic.util.sched.layout.block.UnblockTaskCommand"
-						group="Write" target="selection(self())"
+						group="Write" target="selection(self())" image="theme:RESTART_SERVICE"
 					/>
 					<handler id="releaseTaskClusterLock" class="com.top_logic.util.sched.layout.ReleaseTaskClusterLockCommand"
 						group="Write" 
 						confirm="true"
+						image="theme:ICONS_BUTTON_CLEAR"
 						target="selection(self())"
 					/>
 					

@@ -1548,6 +1548,9 @@
 	<icon name="RESTART_SERVICE"
 		value="css:fas fa-redo"
 	/>
+	<icon name="PAUSE"
+		value="css:fas fa-pause"
+	/>
 	<icon name="SAVE_SERVICE_CONFIGURATION"
 		value="css:fas fa-save"
 	/>

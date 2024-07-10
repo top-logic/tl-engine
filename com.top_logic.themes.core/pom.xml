@@ -13,6 +13,18 @@
 	<url>https://github.com/top-logic/tl-engine</url>
 	
   <dependencies>
+  	<dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-core</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-element</artifactId>

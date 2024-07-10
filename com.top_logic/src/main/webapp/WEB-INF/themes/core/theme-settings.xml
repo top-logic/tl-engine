@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- These Variables are instantiated here to make the junit tests work -->
+<settings>
+	<type name="MAIN_LAYOUT_CLASS"
+		interface="com.top_logic.mig.html.layout.MainLayout"
+		value="com.top_logic.knowledge.gui.layout.TLMainLayout"
+	/>
+	<int name="VERSION_ROW_HEIGHT"
+		value="16"
+	/>
+	<int name="FILTER_SINGLE_LINE_HEIGHT"
+		value="64"
+	/>
+	<int name="EVENTLOG_SHARED_FILTER_HEIGHT"
+		value="64"
+	/>
+	<icon name="com.top_logic.util.Icons.UNKNOWN_TYPE"
+		value="/mimetypes/unknown.png"
+	/>
+	<icon name="mime.Office"
+		value="/mimetypes/tl/office.png"
+	/>
+	<icon name="mime.OrganisationalUnit"
+		value="/mimetypes/tl/organisation.png"
+	/>
+	<icon name="mime.OrganisationalUnit.large"
+		value="/mimetypes/large/OrganisationalUnit.png"
+	/>
+	<icon name="mime.Portal"
+		value="/mimetypes/tl/portal.png"
+	/>
+	<icon name="mime.Portal.large"
+		value="/mimetypes/large/Portal.png"
+	/>
+	<icon name="mime.Profile"
+		value="/mimetypes/tl/profile_expert.png"
+	/>
+	<icon name="mime.Profile.default"
+		value="/mimetypes/tl/profile_expert.png"
+	/>
+	<icon name="mime.Profile.expert"
+		value="/mimetypes/tl/profile_expert.png"
+	/>
+	<icon name="mime.Profile.search"
+		value="/mimetypes/tl/profile_search.png"
+	/>
+	<icon name="mime.TLAssociation"
+		value="/mimetypes/tl/TLAssociation.png"
+	/>
+	<icon name="mime.TLAssociationEnd"
+		value="/mimetypes/tl/TLAssociationEnd.png"
+	/>
+	<icon name="mime.TLAssociationEnd@containment"
+		value="/mimetypes/tl/TLAssociationEnd@containment.png"
+	/>
+	<icon name="mime.TLAssociationEnd@containment@mandatory"
+		value="/mimetypes/tl/TLAssociationEnd@containment@mandatory.png"
+	/>
+	<icon name="mime.TLAssociationEnd@containment@mandatory@multiple"
+		value="colored:tl-icon selection-invert"
+	/>
+	<icon name="mime.TLAssociationEnd@containment@multiple"
+		value="/mimetypes/tl/TLAssociationEnd@containment@multiple.png"
+	/>
+	<icon name="mime.TLAssociationEnd@mandatory"
+		value="/mimetypes/tl/TLAssociationEnd@mandatory.png"
+	/>
+	<icon name="mime.TLAssociationEnd@mandatory@multiple"
+		value="/mimetypes/tl/TLAssociationEnd@mandatory@multiple.png"
+	/>
+	<icon name="mime.TLAssociationEnd@multiple"
+		value="/mimetypes/tl/TLAssociationEnd@multiple.png"
+	/>	
+	<icon name="mime.TLClass"
+		value="css:bi bi-window"
+	/>
+	<icon name="mime.TLClassifier"
+		value="/mimetypes/tl/TLClassifier.png"
+	/>
+	<icon name="mime.TLEnumeration"
+		value="colored:tl-icon chain"
+	/>
+	<icon name="mime.TLPrimitive"
+		value="/mimetypes/tl/TLPrimitive.png"
+	/>
+	<icon name="mime.TLProperty"
+		value="/mimetypes/tl/TLProperty.png"
+	/>
+	<icon name="mime.TLProperty@mandatory"
+		value="/mimetypes/tl/TLProperty@mandatory.png"
+	/>
+	<icon name="mime.TLReference"
+		value="/mimetypes/tl/TLReference.png"
+	/>
+	<icon name="mime.TLReference@containment"
+		value="/mimetypes/tl/TLReference@containment.png"
+	/>
+	<icon name="mime.TLReference@containment@mandatory"
+		value="/mimetypes/tl/TLReference@containment@mandatory.png"
+	/>
+	<icon name="mime.TLReference@containment@mandatory@multiple"
+		value="/mimetypes/tl/TLReference@containment@mandatory@multiple.png"
+	/>
+	<icon name="mime.TLReference@containment@multiple"
+		value="/mimetypes/tl/TLReference@containment@multiple.png"
+	/>
+	<icon name="mime.TLReference@mandatory"
+		value="/mimetypes/tl/TLReference@mandatory.png"
+	/>
+	<icon name="mime.TLReference@mandatory@multiple"
+		value="/mimetypes/tl/TLReference@mandatory@multiple.png"
+	/>
+	<icon name="mime.TLReference@multiple"
+		value="/mimetypes/tl/TLReference@multiple.png"
+	/>
+	<icon name="mime.TLModule"
+		value="css:bi bi-window-stack"
+	/>
+	<icon name="mime.Unknown.large"
+		value="/mimetypes/large/unknown.png"
+	/>
+	<icon name="mime.WebFolder.child.large"
+		value="/mimetypes/large/WebFolder60.png"
+	/>
+	<icon name="mime.application/msword"
+		value="/mimetypes/doc.png"
+	/>
+	<icon name="mime.application/msword.large"
+		value="/mimetypes/large/doc.png"
+	/>
+	<icon name="mime.application/octet-stream"
+		value="/mimetypes/binaryContent.png"
+	/>
+	<icon name="mime.application/octet-stream.large"
+		value="/mimetypes/large/binaryContent.png"
+	/>
+	<icon name="mime.application/pdf"
+		value="/mimetypes/pdf.png"
+	/>
+	<icon name="mime.application/pdf.large"
+		value="/mimetypes/large/pdf.png"
+	/>
+	<icon name="mime.application/postscript"
+		value="/mimetypes/ps.png"
+	/>
+	<icon name="mime.application/postscript.large"
+		value="/mimetypes/large/ps.png"
+	/>
+	<icon name="mime.application/vnd.ms-access"
+		value="/mimetypes/mdb.png"
+	/>
+	<icon name="mime.application/vnd.ms-excel"
+		value="/mimetypes/xls.png"
+	/>
+	<icon name="mime.application/vnd.ms-excel.large"
+		value="/mimetypes/large/xls.png"
+	/>
+	<icon name="mime.application/vnd.ms-powerpoint"
+		value="/mimetypes/ppt.png"
+	/>
+	<icon name="mime.application/vnd.ms-powerpoint.large"
+		value="/mimetypes/large/ppt.png"
+	/>
+	<icon name="mime.application/vnd.ms-project"
+		value="/mimetypes/mpp.png"
+	/>
+	<icon name="mime.application/vnd.ms-project.large"
+		value="/mimetypes/large/mpp.png"
+	/>
+	<icon name="mime.application/vnd.openxmlformats-officedocument.presentationml.presentation"
+		value="/mimetypes/ppt.png"
+	/>
+	<icon name="mime.application/vnd.openxmlformats-officedocument.presentationml.presentation.large"
+		value="/mimetypes/large/ppt.png"
+	/>
+	<icon name="mime.application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+		value="/mimetypes/xls.png"
+	/>
+	<icon name="mime.application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+		value="/mimetypes/doc.png"
+	/>
+	<icon name="mime.application/vnd.openxmlformats-officedocument.wordprocessingml.document.large"
+		value="/mimetypes/large/doc.png"
+	/>
+	<icon name="mime.application/x-gzip"
+		value="/mimetypes/zip.png"
+	/>
+	<icon name="mime.application/x-gzip.large"
+		value="/mimetypes/large/zip.png"
+	/>
+	<icon name="mime.application/x-msmetafile"
+		value="/mimetypes/wmf.png"
+	/>
+	<icon name="mime.application/x-msmetafile.large"
+		value="/mimetypes/large/wmf.png"
+	/>
+	<icon name="mime.application/x-photoshop"
+		value="/mimetypes/psd.png"
+	/>
+	<icon name="mime.application/x-photoshop.large"
+		value="/mimetypes/large/psd.png"
+	/>
+	<icon name="mime.application/xml"
+		value="/mimetypes/xml.png"
+	/>
+	<icon name="mime.application/xml.large"
+		value="/mimetypes/large/xml.png"
+	/>
+	<icon name="mime.application/zip"
+		value="/mimetypes/zip.png"
+	/>
+	<icon name="mime.audio/x-wav"
+		value="/mimetypes/wav.png"
+	/>
+	<icon name="mime.audio/x-wav.large"
+		value="/mimetypes/large/wav.png"
+	/>
+	<icon name="mime.com.top_logic.common.folder.FolderDefinition"
+		value="/mimetypes/tl/webfolder.png"
+	/>
+	<icon name="mime.com.top_logic.model.TLClass.generalizations"
+		value="/mimetypes/tl/TLClass.generalizations.png"
+	/>
+	<icon name="mime.com.top_logic.model.TLClass.specializations"
+		value="/mimetypes/tl/TLClass.specializations.png"
+	/>
+	<icon name="mime.com.top_logic.model.TLStructuredType.parts"
+		value="/mimetypes/tl/TLStructuredType.parts.png"
+	/>
+	<icon name="mime.com.top_logic.model.TLType.usage"
+		value="/mimetypes/tl/TLType.usage.png"
+	/>
+	<icon name="mime.image/bmp.large"
+		value="/mimetypes/large/bmp.png"
+	/>
+	<icon name="mime.image/gif.large"
+		value="/mimetypes/large/gif.png"
+	/>
+	<icon name="mime.image/jpeg"
+		value="/mimetypes/jpg.png"
+	/>
+	<icon name="mime.image/jpeg.large"
+		value="/mimetypes/large/jpg.png"
+	/>
+	<icon name="mime.image/png.large"
+		value="/mimetypes/large/gif.png"
+	/>
+	<icon name="mime.image/tiff"
+		value="/mimetypes/tif.png"
+	/>
+	<icon name="mime.image/tiff.large"
+		value="/mimetypes/large/tif.png"
+	/>
+	<icon name="mime.text/comma-separated-values"
+		value="/mimetypes/csv.png"
+	/>
+	<icon name="mime.text/comma-separated-values.large"
+		value="/mimetypes/large/csv.png"
+	/>
+	<icon name="mime.text/css"
+		value="/mimetypes/txt.png"
+	/>
+	<icon name="mime.text/html"
+		value="/mimetypes/html.png"
+	/>
+	<icon name="mime.text/html.large"
+		value="/mimetypes/large/html.png"
+	/>
+	<icon name="mime.text/jsp"
+		value="/mimetypes/jsp.png"
+	/>
+	<icon name="mime.text/plain"
+		value="/mimetypes/txt.png"
+	/>
+	<icon name="mime.text/xml"
+		value="/mimetypes/xml.png"
+	/>
+	<icon name="mime.text/xml.large"
+		value="/mimetypes/large/xml.png"
+	/>
+	<icon name="mime.tl.units.Unit"
+		value="/mimetypes/Unit16.png"
+	/>
+	<icon name="mime.tl.units.Unit.large"
+		value="/mimetypes/large/Unit60.png"
+	/>
+	<icon name="mime.tl.folder.WebFolder"
+		value="/mimetypes/tl/webfolder.png"
+	/>
+	<icon name="mime.tl.folder.WebFolder.large"
+		value="/mimetypes/large/WebFolder60.png"
+	/>
+	<icon name="mime.unknown.large"
+		value="/mimetypes/large/unknown.png"
+	/>
+	<icon name="mime.video/mpeg"
+		value="/mimetypes/mpg.png"
+	/>
+	<icon name="mime.video/mpeg.large"
+		value="/mimetypes/large/mpg.png"
+	/>
+	<icon name="mime.video/x-msvideo"
+		value="/mimetypes/avi.png"
+	/>
+	<icon name="mime.video/x-msvideo.large"
+		value="/mimetypes/large/avi.png"
+	/>
+	<icon name="mime.image/bmp"
+		expr="%mime.image/png%"
+	/>
+	<icon name="mime.image/gif"
+		expr="%mime.image/png%"
+	/>
+	<icon name="mime.image/png"
+		value="css:bi bi-image"
+	/>
+	<icon name="mime.tl.accounts.Group"
+		value="css:bi bi-people-fill"
+	/>
+	<icon name="mime.tl.accounts.Group.large"
+		expr="%mime.tl.accounts.Group%"
+	/>
+	<icon name="MIMETYPES_GROUP_16"
+		value="css:bi bi-people-fill"
+	/>
+	<icon name="MIMETYPES_LARGE_GROUP_60"
+		value="css:bi bi-people-fill"
+	/>
+	<icon name="mime.tl.accounts.Person"
+		value="css:bi bi-person-fill"
+	/>
+	<icon name="mime.tl.accounts.Person.large"
+		value="css:bi bi-person-fill"
+	/>
+	<icon name="mime.ClassificationMetaAttribute"
+		expr="%mime.tl.folder.Document%"
+	/>
+	<icon name="mime.FloatMetaAttribute"
+		expr="%mime.tl.folder.Document%"
+	/>
+	<icon name="mime.Link"
+		value="css:bi bi-box-arrow-up-right"
+	/>
+	<icon name="mime.Project"
+		value="css:bi bi-hdd-network-fill"
+	/>
+	<icon name="mime.Project.large"
+		value="css:bi bi-hdd-rack-fill"
+	/>
+	<icon name="mime.RoleRule"
+		value="css:bi bi-person-badge-fill"
+	/>
+	<icon name="mime.SearchExpressionTable"
+		value="css:bi bi-search"
+	/>
+	<icon name="mime.WebFolderMetaAttribute"
+		expr="%mime.tl.folder.Document%"
+	/>
+	<icon name="mime.application/zip.large"
+		value="css:bi bi-file-zip-fill"
+	/>
+	<icon name="mime.text/plain.large"
+		value="css:bi bi-file-earmark-text-fill"
+	/>
+	<icon name="mime.tl.accounts.Role"
+		value="css:bi bi-person-fill-gear"
+	/>
+	<icon name="mime.tl.folder.Document"
+		value="css:bi bi-file-earmark-fill"
+	/>
+	<icon name="mime.tl.folder.DocumentVersion"
+		expr="%mime.tl.folder.Document%"
+	/>
+	<icon name="mime.application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.large"
+		value="css:bi bi-file-spreadsheet-fill"
+	/>
+	<icon name="mime.Clipboard"
+		value="css:bi bi-clipboard-fill"
+	/>
+	<icon name="mime.Clipboard.large"
+		expr="%mime.Clipboard%"
+	/>
+</settings>

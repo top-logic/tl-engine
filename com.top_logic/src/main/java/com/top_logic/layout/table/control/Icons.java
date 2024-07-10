@@ -83,8 +83,6 @@ public class Icons extends IconsBase {
 	 */
 	public static ThemeImage OPEN_SELECTOR_DISABLED;
 
-	public static ThemeImage ROW_SELECTION_SPACER;
-
 	public static ThemeImage SORT_CONFIG_60;
 
 }

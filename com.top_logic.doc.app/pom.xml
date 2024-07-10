@@ -37,10 +37,6 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-themes-core</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-themes-dezent</artifactId>
-    </dependency>
 	<dependency>
 	    <groupId>org.xhtmlrenderer</groupId>
 	    <artifactId>flying-saucer-pdf-openpdf</artifactId>

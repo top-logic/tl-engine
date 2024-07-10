@@ -52,6 +52,7 @@
 			</button>
 			<button id="ID_5f1708cf_39c4_4ff1_b0d4_6d81346e9e1b"
 				class="com.top_logic.model.search.providers.TransactionHandlerByExpression"
+				closeDialog="false"
 				image="css:fas fa-check"
 				operation="form -> $form.copy(transient: false)"
 			>

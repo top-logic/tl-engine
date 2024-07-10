@@ -2,7 +2,6 @@
 
 <theme>
 	<styles>
-		<style name="/style/fontColor.css"/>
 		<style name="/style/tl_iconFont.css"/>
 	</styles>
 </theme>

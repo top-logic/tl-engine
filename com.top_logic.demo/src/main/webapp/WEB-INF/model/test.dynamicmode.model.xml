@@ -2,10 +2,49 @@
 
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<module name="test.dynamicmode">
+		<enum name="Category">
+			<classifier name="Consumables"/>
+			<classifier name="Investment"/>
+		</enum>
 		<class name="Acquisition">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
 			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="test.dynamicmode:Acquisition#name"
+							type="tl.core:String"
+						>
+							<annotations>
+								<render-whole-line/>
+							</annotations>
+						</field>
+						<field
+							attribute="critical"
+							fullQualifiedName="test.dynamicmode:Acquisition#critical"
+							type="tl.core:Boolean"
+						/>
+						<field
+							attribute="category"
+							fullQualifiedName="test.dynamicmode:Acquisition#category"
+							type="test.dynamicmode:Category"
+						/>
+						<field
+							attribute="price"
+							fullQualifiedName="test.dynamicmode:Acquisition#price"
+							type="tl.core:Double"
+						/>
+						<field
+							attribute="positions"
+							fullQualifiedName="test.dynamicmode:Acquisition#positions"
+							type="test.dynamicmode:Position"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
 			<attributes>
 				<property name="name"
 					type="tl.core:String"
@@ -34,6 +73,22 @@
 					navigate="true"
 					ordered="true"
 					type="Position"
+				/>
+				<reference name="category"
+					kind="forwards"
+					navigate="true"
+					type="Category"
+				>
+					<annotations>
+						<dynamic-visibility>
+							<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression">
+								<function>x -&gt; $x.get(`test.dynamicmode:Acquisition#critical`) ? "mandatory" : "editable"</function>
+							</mode-selector>
+						</dynamic-visibility>
+					</annotations>
+				</reference>
+				<property name="critical"
+					type="tl.core:Boolean"
 				/>
 			</attributes>
 		</class>

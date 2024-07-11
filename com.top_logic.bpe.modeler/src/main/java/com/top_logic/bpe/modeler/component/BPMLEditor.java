@@ -76,19 +76,6 @@ public class BPMLEditor extends BoundComponent
 		}
 	};
 
-	private static final ComponentChannel.ChannelListener EDIT_MODE_LISTENER = new ComponentChannel.ChannelListener() {
-
-		@Override
-		public void handleNewValue(ComponentChannel sender, Object oldValue, Object newValue) {
-			BPMLEditor editor = (BPMLEditor) sender.getComponent();
-			BPMNDisplay display = editor.getBPMNDisplay();
-			if (display != null) {
-				display.setEditMode(((Boolean) newValue).booleanValue());
-			}
-		}
-
-	};
-
 	/**
 	 * Configuration options for {@link BPMLEditor}.
 	 */
@@ -272,7 +259,14 @@ public class BPMLEditor extends BoundComponent
 		Editor.super.linkChannels(log);
 
 		selectionChannel().addListener(ON_SELECTION_CHANGE);
-		editModeChannel().addListener(EDIT_MODE_LISTENER);
+	}
+
+	@Override
+	public void handleComponentModeChange(boolean editMode) {
+		BPMNDisplay display = getBPMNDisplay();
+		if (display != null) {
+			display.setEditMode(editMode);
+		}
 	}
 
 	/**

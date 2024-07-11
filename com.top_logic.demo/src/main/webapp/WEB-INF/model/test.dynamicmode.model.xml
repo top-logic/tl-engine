@@ -42,6 +42,11 @@
 							fullQualifiedName="test.dynamicmode:Acquisition#positions"
 							type="test.dynamicmode:Position"
 						/>
+						<field
+							attribute="reason"
+							fullQualifiedName="test.dynamicmode:Acquisition#reason"
+							type="tl.core:Text"
+						/>
 					</form>
 				</form-definition>
 			</annotations>

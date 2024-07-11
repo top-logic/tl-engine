@@ -7,10 +7,12 @@ package com.top_logic.layout.form.component.edit;
 
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.TypedChannelSPI;
+import com.top_logic.layout.channel.linking.False;
 import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.component.IComponent;
 import com.top_logic.layout.form.component.Editor;
@@ -77,6 +79,7 @@ public interface EditMode extends IComponent {
 		 */
 		@Name(EDIT_MODE_CHANNEL)
 		@DisplayMinimized
+		@ItemDefault(False.class)
 		ModelSpec getEditMode();
 
 	}
@@ -152,11 +155,28 @@ public interface EditMode extends IComponent {
 		return getChannel(EDIT_MODE_CHANNEL);
 	}
 
+	/**
+	 * Listener forwarding edit mode channel changes to component.
+	 */
+	static final ComponentChannel.ChannelListener EDIT_MODE_LISTENER = new ComponentChannel.ChannelListener() {
+		@Override
+		public void handleNewValue(ComponentChannel sender, Object oldValue, Object newValue) {
+			EditMode editor = (EditMode) sender.getComponent();
+			editor.handleComponentModeChange(((Boolean) newValue).booleanValue());
+		}
+	};
+
 	@Override
 	default void linkChannels(Log log) {
 		LayoutComponent self = (LayoutComponent) this;
 		ChannelLinking channelLinking = self.getChannelLinking(((Config) getConfig()).getEditMode());
 		editModeChannel().linkChannel(log, self(), channelLinking);
+		editModeChannel().addListener(EDIT_MODE_LISTENER);
 	}
+
+	/**
+	 * Callback invoked, if the mode channel changes its value.
+	 */
+	void handleComponentModeChange(boolean editMode);
 
 }

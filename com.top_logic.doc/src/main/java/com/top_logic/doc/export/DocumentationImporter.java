@@ -218,21 +218,31 @@ public class DocumentationImporter {
 	protected Page importSubTree(Log log, Page parent, Locale locale, String resourcePath, int position) {
 		Page newParent = importPage(log, parent, locale, resourcePath, position);
 		log.info("Imported content from path " + resourcePath, Protocol.VERBOSE);
-		if (newParent != null) {
-			importContentPages(log, newParent, locale, resourcePath);
-		}
-		return parent;
+		importContentPages(log, newParent, locale, resourcePath);
+		return newParent;
 	}
 
 	private void importContentPages(Log log, Page parent, Locale locale, String rootPath) {
 		Set<String> resourcePaths = FileManager.getInstance().getResourcePaths(rootPath);
+		if (resourcePaths.isEmpty()) {
+			parent.tDelete();
+			return;
+		}
+
 		List<String> orderedResourcePaths = getResourcesSortedByFilename(resourcePaths);
 		int entryPosition = 1000;
 		for (String resourcePath : orderedResourcePaths) {
 			Page child = importSubTree(log, parent, locale, resourcePath, entryPosition);
-			if (child != null) {
+			if (parent.isChild(child)) {
 				entryPosition += 1000;
 			}
+		}
+
+		if (parent.getChildren().isEmpty()
+			&& !resourcePaths.contains(rootPath + TLDocExportImportConstants.PROPERTIES_FILE_NAME)
+			&& !resourcePaths.contains(rootPath + TLDocExportImportConstants.CONTENT_FILE_NAME)) {
+			parent.tDelete();
+			return;
 		}
 		sortChildren(parent);
 	}
@@ -285,6 +295,10 @@ public class DocumentationImporter {
 		String sourceBundle = null;
 
 		String propertyResourcePath = resourcePath + TLDocExportImportConstants.PROPERTIES_FILE_NAME;
+
+		String contents;
+		String contentResourcePath = resourcePath + TLDocExportImportConstants.CONTENT_FILE_NAME;
+
 		if (FileManager.getInstance().exists(propertyResourcePath)) {
 			try {
 				Properties propertiesMap = loadProperties(propertyResourcePath);
@@ -303,8 +317,6 @@ public class DocumentationImporter {
 			}
 		}
 
-		String contents;
-		String contentResourcePath = resourcePath + TLDocExportImportConstants.CONTENT_FILE_NAME;
 		if (FileManager.getInstance().exists(contentResourcePath)) {
 			try {
 				contents = getFileContents(contentResourcePath, StringServices.UTF8);
@@ -432,11 +444,6 @@ public class DocumentationImporter {
 		KnowledgeBase kb = parent.tKnowledgeBase();
 		KnowledgeItem existingPage = findExistingPage(kb, uuidStripped, idStripped);
 		Page page;
-
-		if (sourceStripped == null) {
-			return null;
-		}
-
 		if (existingPage == null) {
 			page = (Page) parent.createChild(idStripped, Page.PAGE_TYPE);
 			if (uuidStripped != null) {

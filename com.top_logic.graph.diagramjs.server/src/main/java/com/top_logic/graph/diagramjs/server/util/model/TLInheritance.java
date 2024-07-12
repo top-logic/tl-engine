@@ -15,13 +15,13 @@ import com.top_logic.model.TLClass;
 public interface TLInheritance {
 
 	/**
-	 * Generalisation of {@link #getTarget()}
+	 * Specialization of {@link #getGeneralization()}
 	 */
-	TLClass getSource();
+	TLClass getSpecialization();
 
 	/**
-	 * Specialisation of {@link #getSource()}
+	 * Generalisation of {@link #getSpecialization()}
 	 */
-	TLClass getTarget();
+	TLClass getGeneralization();
 
 }

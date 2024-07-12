@@ -145,56 +145,6 @@
 							type="com.top_logic.model.TLTypePart"
 						/>
 					</column>
-					<column name="isBag"
-						columnWidth="30px"
-						comparator="com.top_logic.basic.col.BooleanComparatorNullSafe"
-						filterProvider="com.top_logic.layout.table.filter.TristateBooleanFilterProvider"
-					>
-						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
-							method="isBag"
-							type="com.top_logic.model.TLStructuredTypePart"
-						/>
-					</column>
-					<column name="isMandatory"
-						columnWidth="30px"
-						comparator="com.top_logic.basic.col.BooleanComparatorNullSafe"
-						filterProvider="com.top_logic.layout.table.filter.TristateBooleanFilterProvider"
-					>
-						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
-							method="isMandatory"
-							type="com.top_logic.model.TLStructuredTypePart"
-						/>
-					</column>
-					<column name="isDerived"
-						columnWidth="30px"
-						comparator="com.top_logic.basic.col.BooleanComparatorNullSafe"
-						filterProvider="com.top_logic.layout.table.filter.TristateBooleanFilterProvider"
-					>
-						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
-							method="isDerived"
-							type="com.top_logic.model.DerivedTLTypePart"
-						/>
-					</column>
-					<column name="isMultiple"
-						columnWidth="30px"
-						comparator="com.top_logic.basic.col.BooleanComparatorNullSafe"
-						filterProvider="com.top_logic.layout.table.filter.TristateBooleanFilterProvider"
-					>
-						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
-							method="isMultiple"
-							type="com.top_logic.model.TLStructuredTypePart"
-						/>
-					</column>
-					<column name="isOrdered"
-						columnWidth="30px"
-						comparator="com.top_logic.basic.col.BooleanComparatorNullSafe"
-						filterProvider="com.top_logic.layout.table.filter.TristateBooleanFilterProvider"
-					>
-						<accessor class="com.top_logic.layout.accessors.ReflectionInstanceAccessor"
-							method="isOrdered"
-							type="com.top_logic.model.TLStructuredTypePart"
-						/>
-					</column>
 				</columns>
 			</table>
 		</tableView>

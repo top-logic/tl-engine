@@ -5,8 +5,6 @@
  */
 package com.top_logic.graph.diagramjs.client.service.scope.listener;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -545,11 +543,7 @@ public class DisplayGraphPartCreator {
 		Shape source = (Shape) sharedEdge.getSource().getTag();
 		Shape target = (Shape) sharedEdge.getDestination().getTag();
 
-		if (GraphLayoutConstants.EDGE_INHERITANCE_TYPE.equals(sharedEdge.getType())) {
-			return createDisplayEdge(source, target, Optional.of(getConnectionOptions(sharedEdge)));
-		} else {
-			return createDisplayEdge(target, source, Optional.of(getRevConnectionOptions(sharedEdge)));
-		}
+		return createDisplayEdge(source, target, Optional.of(getConnectionOptions(sharedEdge)));
 	}
 
 	private ConnectionOptions getConnectionOptions(DefaultDiagramJSEdge sharedEdge) {
@@ -561,25 +555,6 @@ public class DisplayGraphPartCreator {
 		getEdgeWaypoints(sharedEdge).ifPresent(waypoints -> options.setWaypoints(waypoints));
 
 		return options;
-	}
-
-	private ConnectionOptions getRevConnectionOptions(DefaultDiagramJSEdge sharedEdge) {
-		ConnectionOptions options = JavaScriptObject.createObject().cast();
-
-		options.setSharedGraphPart(sharedEdge);
-		options.setType(sharedEdge.getType());
-		options.setVisibility(sharedEdge.isVisible());
-		getEdgeWaypoints(sharedEdge).ifPresent(waypoints -> options.setWaypoints(getReversedWaypoints(waypoints)));
-
-		return options;
-	}
-
-	private Waypoint[] getReversedWaypoints(Waypoint[] waypoints) {
-		List<Waypoint> waypointsList = Arrays.asList(waypoints);
-
-		Collections.reverse(waypointsList);
-
-		return waypointsList.toArray(new Waypoint[waypointsList.size()]);
 	}
 
 	private Optional<Waypoint[]> getEdgeWaypoints(DefaultDiagramJSEdge edge) {

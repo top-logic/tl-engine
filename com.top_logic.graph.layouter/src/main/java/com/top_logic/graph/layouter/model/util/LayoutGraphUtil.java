@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -802,6 +803,24 @@ public class LayoutGraphUtil implements LayoutGraphUtilConstants {
 		} else {
 			return node.outgoingEdges();
 		}
+	}
+
+	/**
+	 * Get all {@link LayoutGraph} {@link LayoutEdge edges}.
+	 */
+	public static Set<LayoutEdge> getEdges(LayoutGraph graph) {
+		return getEdges(graph, x -> true);
+	}
+
+	/**
+	 * Get all {@link LayoutGraph} {@link LayoutEdge edges} that matches the given {@link Predicate
+	 * filter}.
+	 */
+	public static Set<LayoutEdge> getEdges(LayoutGraph graph, Predicate<LayoutEdge> filter) {
+		return getNodesStream(graph)
+			.flatMap(node -> getOutgoingEdgesStream(node))
+			.filter(filter)
+			.collect(Collectors.toSet());
 	}
 
 	/**

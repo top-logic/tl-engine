@@ -16,45 +16,45 @@ import com.top_logic.model.TLClass;
  */
 public class TLInheritanceImpl implements TLInheritance {
 
-	private TLClass _source;
+	private TLClass _generalization;
 
-	private TLClass _target;
+	private TLClass _specialization;
 
 	/**
 	 * Creates a {@link TLInheritance} for the given {@link TLClass}es.
 	 */
-	public TLInheritanceImpl(TLClass source, TLClass target) {
-		_source = source;
-		_target = target;
+	public TLInheritanceImpl(TLClass generalization, TLClass specialization) {
+		_generalization = generalization;
+		_specialization = specialization;
 	}
 
 	@Override
-	public TLClass getSource() {
-		return _source;
+	public TLClass getSpecialization() {
+		return _generalization;
 	}
 
 	/**
-	 * @see #getSource()
+	 * @see #getSpecialization()
 	 */
 	public void setSource(TLClass source) {
-		_source = source;
+		_generalization = source;
 	}
 
 	@Override
-	public TLClass getTarget() {
-		return _target;
+	public TLClass getGeneralization() {
+		return _specialization;
 	}
 
 	/**
-	 * @see #getTarget()
+	 * @see #getGeneralization()
 	 */
 	public void setTarget(TLClass target) {
-		_target = target;
+		_specialization = target;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(_source, _target);
+		return Objects.hash(_generalization, _specialization);
 	}
 
 	@Override
@@ -66,7 +66,7 @@ public class TLInheritanceImpl implements TLInheritance {
 		if (getClass() != obj.getClass())
 			return false;
 		TLInheritanceImpl other = (TLInheritanceImpl) obj;
-		return Objects.equals(_source, other._source) && Objects.equals(_target, other._target);
+		return Objects.equals(_generalization, other._generalization) && Objects.equals(_specialization, other._specialization);
 	}
 
 }

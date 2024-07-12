@@ -826,7 +826,7 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		for (Edge outgoingEdge : node.getOutgoingEdges()) {
 			Object tag = outgoingEdge.getTag();
 
-			if (tag instanceof TLInheritance && !generalizations.contains(((TLInheritance) tag).getTarget())) {
+			if (tag instanceof TLInheritance && !generalizations.contains(((TLInheritance) tag).getGeneralization())) {
 				generalizationEdgesToRemove.add(outgoingEdge);
 			}
 		}

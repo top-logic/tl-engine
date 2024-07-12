@@ -125,8 +125,8 @@ public class TLInheritanceFormBuilder
 
 	@Override
 	protected void fillFormModel(EditModel formModel, TLInheritance businessModel) {
-		formModel.setSpecialization(TLModelUtil.qualifiedName(businessModel.getSource()));
-		formModel.setGeneralization(TLModelUtil.qualifiedName(businessModel.getTarget()));
+		formModel.setSpecialization(TLModelUtil.qualifiedName(businessModel.getSpecialization()));
+		formModel.setGeneralization(TLModelUtil.qualifiedName(businessModel.getGeneralization()));
 	}
 
 }

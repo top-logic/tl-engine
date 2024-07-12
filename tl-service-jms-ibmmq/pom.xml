@@ -6,7 +6,7 @@
 		<relativePath>../tl-parent-core/internal</relativePath>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-core-internal</artifactId>
-		<version>7.8.1</version>	
+		<version>7.8.2</version>	
 	</parent>
 	
 	<artifactId>tl-service-jms-ibmmq</artifactId>

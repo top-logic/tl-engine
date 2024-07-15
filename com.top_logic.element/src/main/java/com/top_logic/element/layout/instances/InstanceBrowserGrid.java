@@ -52,4 +52,17 @@ public class InstanceBrowserGrid extends GridComponent {
 		return super.modifyUpdateForAdd(name, attribute, row, update);
 	}
 
+	@Override
+	protected boolean receiveModelChangedEvent(Object model, Object someChangedBy) {
+		Object currentModel = getModel();
+
+		if (model == currentModel) {
+			invalidate();
+
+			return true;
+		} else {
+			return super.receiveModelChangedEvent(model, someChangedBy);
+		}
+	}
+
 }

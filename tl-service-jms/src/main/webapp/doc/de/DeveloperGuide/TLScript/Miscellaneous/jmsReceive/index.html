@@ -1,0 +1,65 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>jmsReceive($destination)</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p><span style="color:#e74c3c"><strong>Diese Funktion existiert rein zu Testzwecken und ist nicht dazu gedacht in Produktionssystemen verwendet zu werden.</strong></span><br />
+Sie kann dazu benutzt werden, eine Nachricht aus einer Warteschlange (Queue) oder einem Thema (Topic) zu empfangen und so die Verbindung und Funktionalität eines Message Queue Systems zu überprüfen.</p>
+
+<p>Damit eine Nachricht empfangen werden kann, muss eine Ziel-Konfiguration im JMS-Service angelegt sein. Der in der Konfiguration definierte Warteschlangenmanager muss unter der angegebenen Adresse erreichbar sein, um Erfolg beim Empfangen zu haben, andernfalls wird ein Fehler ausgegeben. Als Server kann hier beispielsweise die IBM MQ verwendet werden. Diese muss separat angelegt und gestartet worden sein. Zum Empfangen einer Nachricht muss außerdem bereits eine Nachricht gesendet worden sein.</p>
+
+<p> </p>
+
+<p> </p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>destination</td>
+			<td>Zeichenkette (Ziel-Konfiguration)</td>
+			<td>Name einer Ziel-Konfiguration im JMS-Service</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p>null, oder die erste Nachricht der Queue.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Nachricht empfangen (Topic)</h3>
+
+<pre>
+	<code>jmsReceive("Topic1");
+</code>
+</pre>
+
+<p>​</p>
+
+<h3>Nachricht empfangen (Queue)</h3>
+
+<pre>
+	<code>jmsReceive("Queue1");
+</code>
+</pre>
+
+<p>​</p>
+
+<p> </p>

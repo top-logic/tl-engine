@@ -2608,7 +2608,7 @@ span.disabled .ddwttDropBtn {
 	width: fit-content;
 	z-index: 10;
 	background-color: var(--field);
-	border: 1px solid var(--border-subtle);
+	border: 1px solid var(--focus);
 	color: var(--text-secondary);
 	box-sizing: border-box;
 	box-shadow: var(--shadow-menu);
@@ -2626,7 +2626,6 @@ span.disabled .ddwttDropBtn {
 .ddwttDDList {
 	display: flex;
 	flex-direction: column;
-	border: 1px solid var(--focus);
 	overflow-y: auto;
 }
 

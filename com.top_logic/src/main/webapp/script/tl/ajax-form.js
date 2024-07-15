@@ -3520,23 +3520,20 @@ services.form = {
 
 		setDimensions: function(btnPos, ddBox, ddMaxHeight) {
 			let search = ddBox.querySelector(":scope > ." + this.searchCl),
-				ddList = ddBox.querySelector(":scope > ." + this.listCl),
-				incrWidth = window.getComputedStyle(ddBox).getPropertyValue("width");
+				ddList = ddBox.querySelector(":scope > ." + this.listCl);
 			
 			ddBox.style.removeProperty("right");
 			ddBox.style.setProperty("left", btnPos.left + "px");
 			ddBox.style.setProperty("min-width", btnPos.width + "px");
-			ddBox.style.setProperty("max-height", ddMaxHeight + "px");
-			
-			let scrollbarW = ddList.offsetWidth - ddList.clientWidth;
-			if (btnPos.width < (parseFloat(incrWidth) + scrollbarW)) {
-				incrWidth = parseFloat(incrWidth) + scrollbarW + "px";
-				ddList.style.setProperty("width", incrWidth);
-				if (parseFloat(incrWidth) > (window.innerWidth - btnPos.left)) {
-					ddBox.style.removeProperty("left");
-					ddBox.style.setProperty("right", (window.innerWidth - btnPos.right) + "px");
-				}
+			ddBox.style.setProperty("max-height", (ddMaxHeight - 8) + "px"); // 8px offset to edge of the screen
+				
+			let maxWidth = (window.innerWidth - btnPos.left - 9); // 8px offset to edge of the screen (1px additional needed because of border)
+			if (btnPos.right > maxWidth) {
+				ddBox.style.removeProperty("left");
+				ddBox.style.setProperty("right", (window.innerWidth - btnPos.right) + "px");
+				maxWidth = (btnPos.right - 8); // 8px offset to edge of the screen
 			}
+			ddBox.style.setProperty("max-width", maxWidth + "px");
 			
 			let searchW = ddList.getBoundingClientRect().width + "px";
 			search.style.setProperty("width", searchW);

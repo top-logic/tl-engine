@@ -65,6 +65,11 @@ public class TitleControl extends ConstantControl<HTMLFragment> implements Title
 	}
 
 	@Override
+	protected String getTypeCssClass() {
+		return "tl-title";
+	}
+
+	@Override
 	public void handleTitleChanged(Object sender, HTMLFragment oldTitle, HTMLFragment newTitle) {
 		setModel(newTitle);
 	}

@@ -21,8 +21,5 @@
 div.tlDocSearchContainer {
 	display: table;
 	width: 100%;
-}
-
-.margin5 {
-	margin: 5px;
+	margin-top: 4px;
 }

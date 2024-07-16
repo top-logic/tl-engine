@@ -129,10 +129,6 @@ h1 {
     padding: 0 var(--spacing-03);
 }
 
-.margin5 {
-    margin-top: 0.5rem;
-}
-
 .noSelection {
 	position: relative; 
 	top: 40%; 

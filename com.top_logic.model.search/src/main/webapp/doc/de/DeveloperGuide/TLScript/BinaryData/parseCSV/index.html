@@ -1,0 +1,59 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>$input.parseCSV()</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Interpretiert die Eingabe als CSV formattierten Text.</p>
+
+<h2>​Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>input</td>
+			<td>Binärwert</td>
+			<td>Text im CSV-Format</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Liste</p>
+
+<p>Erzeugt pro Zeile in der Eingabe eine Liste und fasst anschließend diese Listen in einer Liste zusammen.</p>
+
+<h2>Beispiel</h2>
+
+<pre><code>{
+toParse = binary(
+    name: "test.csv",
+    data: "date; name; number
+    15.07.2024; test; 5",
+    contentType: "text/csv",
+    encoding: "utf-8"
+);
+result = $toParse.parseCSV();
+$result[0]
+}</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> [date, name, number]</p>
+
+<p>Der Aufruf von <code class="hljs inlineCode">parseCSV()</code> liefert die Liste <code class="hljs inlineCode">[[date, name, number], [15.07.2024, test, 5]].</code></p>
+
+<p>​</p>

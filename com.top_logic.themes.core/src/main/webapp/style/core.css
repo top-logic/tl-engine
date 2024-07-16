@@ -2341,6 +2341,12 @@ div.treeNode.treeSelected.dndInsertInto {
 	white-space: nowrap;
 }
 
+.tl-title .tl-block-control {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-02);
+}
+
 .cCollapsibleToolbar .cButton,
 .cToolbar .cButton,
 .tl-table__title-toolbar .cButton {

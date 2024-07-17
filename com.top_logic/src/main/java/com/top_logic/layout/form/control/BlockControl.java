@@ -56,4 +56,9 @@ public class BlockControl extends AbstractCompositeControl<BlockControl> {
 		return this;
 	}
 
+	@Override
+	protected String getTypeCssClass() {
+		return "tl-block-control";
+	}
+
 }

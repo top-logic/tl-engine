@@ -27,11 +27,11 @@ import com.top_logic.model.search.expr.Call;
 import com.top_logic.model.search.expr.Compare;
 import com.top_logic.model.search.expr.CompareOp;
 import com.top_logic.model.search.expr.DynamicGet;
+import com.top_logic.model.search.expr.DynamicInstanceOf;
 import com.top_logic.model.search.expr.Filter;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.GetDay;
 import com.top_logic.model.search.expr.IfElse;
-import com.top_logic.model.search.expr.DynamicInstanceOf;
 import com.top_logic.model.search.expr.IsEmpty;
 import com.top_logic.model.search.expr.IsEqual;
 import com.top_logic.model.search.expr.Lambda;
@@ -289,9 +289,9 @@ public class ConstantFolding {
 			if (isLiteral(conditionResult)) {
 				boolean decision = literalBoolean(conditionResult);
 				if (decision) {
-					return expr.getIfClause();
+					return ifResult;
 				} else {
-					return expr.getElseClause();
+					return elseResult;
 				}
 			}
 			return super.composeIfElse(expr, arg, conditionResult, ifResult, elseResult);

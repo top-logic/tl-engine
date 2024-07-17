@@ -1643,6 +1643,18 @@ span.cIconSelect .input-image.cannot-edit i {
     letter-spacing: var(--body-02-letter-spacing);
 }
 
+.cTextInput.mandatory input,
+.cIntegerInput.num.mandatory input,
+.cExpandableTextInput.mandatory input,
+.cBlockTextInput.mandatory input,
+.cPopupSelect.mandatory input,
+.cDateInput.mandatory input,
+.cTimeInput.mandatory input,
+.ddwttContainer.mandatory button,
+.mandatory .lFixedRight a {
+	box-shadow: inset 0px -2px 0px 0px var(--focus);
+}
+
 .cTextInput textarea,
 .cExpandableTextInput textarea, 
 .cBlockTextInput textarea {
@@ -2597,7 +2609,7 @@ span.disabled .ddwttDropBtn {
 	box-shadow: inset 0px 0px 0px 1px var(--support-danger),inset 0px 0px 0px 2px var(--focus-inset);
 }
 
-.ddwttDropBtn:focus,
+.ddwttContainer .ddwttDropBtn:focus,
 .error.ddwttDropBtnActive .ddwttDropBtn{
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 	outline: none !important;

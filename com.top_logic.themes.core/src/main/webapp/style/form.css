@@ -50,6 +50,12 @@
 	gap: var(--spacing-01);
 }
 
+.fieldSetBoxContainer {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-02);
+}
+
 .collapsed .dfToolbar {
 	display: none;
 }
@@ -813,8 +819,7 @@ div.dfListAdd {
 
 .rf_groupCell .rf_header select.tl-select,
 .rf_groupCell .rf_header label {
-	color: var(--GROUP_LABEL_COLOR);
-	font-weight: bold;
+	font-weight: 600;
 	margin-bottom: 0px;
 	text-overflow: ellipsis;
 	overflow: hidden;
@@ -2553,12 +2558,7 @@ a.input-image.tristate.tBoolean {
 .rf_header .ddwttDropBtn {
 	background-color: unset;
 	border: none;
-	color: var(--GROUP_LABEL_COLOR);
 	height: 20px;
-}
-
-.rf_header .ddwttChevron::after {
-	color: var(--GROUP_LABEL_COLOR);
 }
 
 .ddwttDropBtn {
@@ -2683,7 +2683,7 @@ span.disabled .ddwttDropBtn {
 .ddwttItem {
 	display: inline-flex;
 	gap: var(--spacing-02);
-	padding: 0 var(--spacing-02);
+	padding: 0 var(--spacing-02) 0 var(--spacing-03);
 	position: relative;
 	text-align: left;
 	cursor: pointer;

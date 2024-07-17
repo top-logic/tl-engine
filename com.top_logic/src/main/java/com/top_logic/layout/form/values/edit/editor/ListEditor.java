@@ -345,7 +345,9 @@ public class ListEditor implements Editor {
 				});
 			}
 			return div(
-				fieldsetBox(span(label(), htmlTemplate(errorBox)), content, ConfigKey.field(member))
+				fieldsetBox(
+					span(css("fieldSetBoxContainer"), label(), htmlTemplate(errorBox)),
+					content, ConfigKey.field(member))
 					.setInitiallyCollapsed(minimized)
 					.setInitializer(initializer));
 		}

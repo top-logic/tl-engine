@@ -17,12 +17,9 @@
 				>
 					<layoutInfo size="250px"/>
 					<layoutControl>
-						<layoutInfo size="30px"/>
+						<layoutInfo size="32px"/>
 						<componentControlProvider class="com.top_logic.layout.structure.LayoutViewProvider">
-							<view class="com.top_logic.layout.component.configuration.SimpleHTMLViewConfiguration"
-								cssClass="margin5"
-								tag="div"
-							>
+							<view class="com.top_logic.layout.component.configuration.SimpleHTMLViewConfiguration">
 								<content-view class="com.top_logic.layout.component.configuration.SimpleHTMLViewConfiguration"
 									cssClass="tlDocSearchContainer"
 									tag="div"

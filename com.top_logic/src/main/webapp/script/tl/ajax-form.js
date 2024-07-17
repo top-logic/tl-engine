@@ -3363,9 +3363,10 @@ services.form = {
 				let activeItem = this.getActiveItem(button, ddList);
 
 				this.positionDD(button, ddBox);
+				this.addScrollEvents(button, onGlobalChange);
+				
 				if (activeItem) {
 					this.setItemActive(activeItem, true, false);
-					this.addScrollEvents(button, onGlobalChange);
 				}
 				
 				let dialog = button.closest(".dlgWindow");

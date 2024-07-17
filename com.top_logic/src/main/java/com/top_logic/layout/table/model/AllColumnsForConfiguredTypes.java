@@ -71,12 +71,12 @@ public class AllColumnsForConfiguredTypes extends Function0<Collection<ColumnOpt
 
 	@SuppressWarnings("unchecked")
 	private Collection<PolymorphicConfiguration<? extends TableConfigurationProvider>> getProviders() {
-		PropertyDescriptor typeProperty =
+		PropertyDescriptor configuredProviders =
 			_formModel.descriptor().getProperty(ColumnsTemplateParameters.CONFIGURATION_PROVIDERS);
 
-		if (typeProperty != null) {
+		if (configuredProviders != null) {
 			return (Collection<PolymorphicConfiguration<? extends TableConfigurationProvider>>) _formModel
-				.value(typeProperty);
+				.value(configuredProviders);
 		}
 
 		return Collections.emptyList();

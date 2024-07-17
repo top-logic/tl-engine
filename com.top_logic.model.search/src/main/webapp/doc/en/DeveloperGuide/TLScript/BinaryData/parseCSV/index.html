@@ -39,21 +39,22 @@
 
 <h2>Example:</h2>
 
-<pre><code>{
-toParse = binary(
-    name: "test.csv",
-    data: "date; name; number
-    15.07.2024; test; 5",
-    contentType: "text/csv",
-    encoding: "utf-8"
-);
-result = $toParse.parseCSV();
-$result[0]
+<pre>
+<code>{
+    toParse = binary(
+        name: "test.csv",
+        data: "date; name; number
+        15.07.2024; test; 5",
+        contentType: "text/csv",
+        encoding: "utf-8"
+    );
+    result = $toParse.parseCSV();
+    $result[0]
 }</code>
 </pre>
 
-<p><strong>Output:</strong> [date, name, number]</p>
+<p><strong>Output:</strong> ["date", "name", "number"]</p>
 
-<p>Calling <code class="hljs inlineCode">parseCSV()</code> returns the list <code class="hljs inlineCode">[[date, name, number], [15.07.2024, test, 5]].</code></p>
+<p>Calling <code class="hljs inlineCode">parseCSV()</code> returns the list <code class="hljs inlineCode">[["date", "name", "number"], ["15.07.2024", "test", "5"]].</code></p>
 
 <p> </p>

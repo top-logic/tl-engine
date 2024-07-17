@@ -1243,6 +1243,17 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		assertEquals(null, execute(expr, 0));
 	}
 
+	public void testSwitchLiteral() throws ParseException {
+		SearchExpression expr = search(
+			"""
+			switch (1) {
+				0: false;
+				1: true;
+			}
+			""");
+		assertEquals(Boolean.TRUE, execute(expr));
+	}
+	
 	public void testBlockComment() throws ParseException {
 		SearchExpression expr =
 			search("x -> /********/ $x /* foobar */ + /*/*/ 3");

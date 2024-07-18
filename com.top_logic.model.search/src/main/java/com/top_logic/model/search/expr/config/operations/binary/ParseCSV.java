@@ -8,7 +8,11 @@ package com.top_logic.model.search.expr.config.operations.binary;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import jakarta.activation.MimeType;
 import jakarta.activation.MimeTypeParseException;
@@ -61,7 +65,54 @@ public class ParseCSV extends GenericMethod {
 			return null;
 		}
 
+		List <List <String>> result = parse(input);
 
+		Boolean raw = asBoolean(arguments[1]);
+		if (raw == true) {
+			return result;
+		} else {
+			List<Map<String, Object>> mapedResult = new ArrayList<>();
+			Map<String, SearchExpression> parsers = createParseMap(arguments);
+			List<String> header = result.get(0);
+			for (int i = 1; i < result.size(); ++i) {
+				List<String> row = result.get(i);
+				Map<String, Object> maped = new HashMap<>();
+
+				for (int j = 0; j < header.size(); ++j) {
+					String key = header.get(j);
+					if (j < row.size()) {
+						String rawValue = row.get(j);
+						if (parsers.containsKey(key)) {
+							SearchExpression parser = parsers.get(key);
+							maped.put(key, parser.eval(definitions, rawValue));
+
+						} else {
+							maped.put(key, rawValue);
+						}
+					} else {
+						maped.put(key, "");
+					}
+				}
+				mapedResult.add(maped);
+			}
+			return mapedResult;
+		}
+	}
+
+	private Map<String, SearchExpression> createParseMap(Object[] arguments) {
+		Map<String, SearchExpression> result = new HashMap<>();
+		if (arguments[2] != null) {
+			Map<?, ?> parsers = asMap(arguments[2]);
+			for (Entry<?, ?> entry : parsers.entrySet()) {
+				String column = asString(entry.getKey());
+				SearchExpression parser = asSearchExpression(entry.getValue());
+				result.put(column, parser);
+			}
+		}
+		return result;
+	}
+
+	private List<List<String>> parse(Object input) {
 		try {
 			BinaryDataSource data = (BinaryDataSource) input;
 
@@ -90,6 +141,8 @@ public class ParseCSV extends GenericMethod {
 
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("input")
+			.optional("raw")
+			.optional("parsers")
 			.build();
 
 		/**

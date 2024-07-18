@@ -22,7 +22,7 @@ public class NoFieldProvider extends AbstractFieldProvider {
 	}
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
+	public FormMember createFormField(EditContext editContext, String fieldName) {
 		return null;
 	}
 

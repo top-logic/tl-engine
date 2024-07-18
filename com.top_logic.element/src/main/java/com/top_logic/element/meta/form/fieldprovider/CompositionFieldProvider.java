@@ -122,7 +122,7 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 	};
 
 	@Override
-	public FormMember getFormField(EditContext update, String fieldName) {
+	public FormMember createFormField(EditContext update, String fieldName) {
 		final TLObject obj = update.getOverlay();
 
 		boolean searchUpdate = update.isSearchUpdate();

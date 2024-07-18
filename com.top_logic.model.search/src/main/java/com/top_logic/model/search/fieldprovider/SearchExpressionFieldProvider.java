@@ -44,8 +44,8 @@ public class SearchExpressionFieldProvider extends FormattedFieldProvider<Search
 	}
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
-		FormMember formField = super.getFormField(editContext, fieldName);
+	public FormMember createFormField(EditContext editContext, String fieldName) {
+		FormMember formField = super.createFormField(editContext, fieldName);
 		
 		TLNumberOfEditorRows annotation = getMultiLineAnnotation(editContext);
 		

@@ -20,7 +20,7 @@ import com.top_logic.layout.form.model.SelectField;
 public class WrapperFieldProvider extends AbstractWrapperFieldProvider {
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
+	public FormMember createFormField(EditContext editContext, String fieldName) {
 		boolean isMultiple = editContext.isMultiple();
 		boolean isMandatory = editContext.isMandatory();
 		boolean isDisabled = editContext.isDisabled();

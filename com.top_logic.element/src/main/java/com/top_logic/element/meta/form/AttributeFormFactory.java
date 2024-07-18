@@ -155,16 +155,10 @@ public abstract class AttributeFormFactory {
 				result = field;
 			}
 		} else {
-			// create or edit update
-
-			// TODO BHU: Why are there two methods toFormFieldForCreate and
-			// toFormFieldForEdit, if they are not used???
+			// Update for create or edit.
 			FormMember field = toFormField(update, aContainer, fieldName);
-			if (field instanceof FormField) {
-				initFieldValue(update, (FormField) field);
-			}
-			result = field;
 
+			result = field;
 		}
 
 		update.initField(result);

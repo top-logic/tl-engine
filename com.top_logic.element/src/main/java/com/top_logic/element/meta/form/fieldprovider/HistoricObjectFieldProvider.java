@@ -10,7 +10,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.element.meta.form.AbstractFieldProvider;
 import com.top_logic.element.meta.form.DefaultAttributeFormFactory;
 import com.top_logic.element.meta.form.EditContext;
@@ -19,6 +18,7 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.model.TLStructuredTypePart;
 
 /**
  * {@link FieldProvider} for {@link TLStructuredTypePart}s pointing to the past.
@@ -28,7 +28,7 @@ import com.top_logic.layout.provider.MetaLabelProvider;
 public class HistoricObjectFieldProvider extends AbstractFieldProvider {
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
+	public FormMember createFormField(EditContext editContext, String fieldName) {
 		boolean isDisabled = true;
 		Object theValue = editContext.getCorrectValues();
 		List<?> theValueList;

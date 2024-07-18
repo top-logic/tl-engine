@@ -27,7 +27,7 @@ import com.top_logic.model.TLStructuredTypePart;
 public class StringSetFieldProvider extends AbstractWrapperFieldProvider {
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
+	public FormMember createFormField(EditContext editContext, String fieldName) {
 		boolean isDisabled = editContext.isDisabled();
 
 		Format format = new StringTokenFormat(IdentityFormat.INSTANCE, String.valueOf(','), null, true);

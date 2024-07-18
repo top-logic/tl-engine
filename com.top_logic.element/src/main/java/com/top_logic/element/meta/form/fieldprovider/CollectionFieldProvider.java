@@ -22,7 +22,7 @@ import com.top_logic.model.TLStructuredTypePart;
 public class CollectionFieldProvider extends AbstractSelectFieldProvider {
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
+	public FormMember createFormField(EditContext editContext, String fieldName) {
 		boolean isMandatory = editContext.isMandatory();
 		boolean isDisabled = editContext.isDisabled();
 		boolean isSearch = editContext.isSearchUpdate();

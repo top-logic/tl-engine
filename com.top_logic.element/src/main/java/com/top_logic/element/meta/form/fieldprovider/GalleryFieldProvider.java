@@ -19,7 +19,7 @@ import com.top_logic.layout.form.model.GalleryField;
 public class GalleryFieldProvider extends AbstractFieldProvider {
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
+	public FormMember createFormField(EditContext editContext, String fieldName) {
 		GalleryField galleryField = FormFactory.newGalleryField(fieldName);
 		galleryField.setDisabled(editContext.isDisabled());
 		galleryField.setMandatory(editContext.isMandatory());

@@ -16,7 +16,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.contact.external.ExternalContact;
 import com.top_logic.contact.external.ExternalContacts;
-import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.element.meta.form.AbstractFieldProvider;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
@@ -24,6 +23,7 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.model.TLStructuredTypePart;
 
 /**
  * {@link FieldProvider} for {@link TLStructuredTypePart}s of type {@link ExternalContact}.
@@ -59,7 +59,7 @@ public final class ExternalContactFieldProvider extends AbstractFieldProvider {
 	}
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
+	public FormMember createFormField(EditContext editContext, String fieldName) {
 		boolean isDisabled  = editContext.isDisabled();
 		boolean isSearch    = editContext.isSearchUpdate();
 		

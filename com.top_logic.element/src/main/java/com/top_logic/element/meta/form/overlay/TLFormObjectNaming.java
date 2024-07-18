@@ -6,7 +6,6 @@
 package com.top_logic.element.meta.form.overlay;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import com.top_logic.basic.config.annotation.Nullable;
@@ -88,9 +87,7 @@ public class TLFormObjectNaming extends AbstractModelNamingScheme<TLFormObject, 
 		TLFormObject result = updateContainer.getOverlay(editedObject, domain);
 		if (result == null) {
 			List<String> existingDomains = new ArrayList<>();
-			for (Iterator<? extends TLFormObject> it = updateContainer.getAllOverlays().iterator(); it.hasNext();) {
-				TLFormObject obj = it.next();
-
+			for (TLFormObject obj : updateContainer.getAllOverlays()) {
 				if (editedObject != null && editedObject == obj.getEditedObject()) {
 					throw ApplicationAssertions.fail(name, "Wrong domain in object overlay reference, domain: " + domain
 						+ ", expecting: " + obj.getDomain());

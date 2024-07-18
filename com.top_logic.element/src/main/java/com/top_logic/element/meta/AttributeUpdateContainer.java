@@ -358,6 +358,7 @@ public class AttributeUpdateContainer {
 
 		_edits.clear();
 		_creates.clear();
+		_nextObjId = FIRST_ID;
 		_nextCreateId = FIRST_ID;
 	}
 

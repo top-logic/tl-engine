@@ -73,9 +73,9 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 		 * <p>
 		 * Expected is a function taking three arguments. The first argument is the transient form
 		 * object providing the user input in its attributes. The second argument is the context
-		 * model of the command. The last argument is the underlying form model being edited or
-		 * created (in a create form, a model is only created automatically, if
-		 * {@link #getAutoApply()} is active, otherwise <code>null</code> is passed).
+		 * model of the command. The last argument is the model being created or edited (in a create
+		 * form, a model is only created automatically, if {@link #getAutoApply()} is active,
+		 * otherwise <code>null</code> is passed).
 		 * </p>
 		 * 
 		 * <p>

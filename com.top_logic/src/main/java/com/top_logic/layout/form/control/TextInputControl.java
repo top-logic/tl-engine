@@ -14,6 +14,7 @@ import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.base.services.simpleajax.JSFunctionCall;
 import com.top_logic.base.services.simpleajax.PropertyUpdate;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
@@ -92,12 +93,34 @@ public class TextInputControl extends AbstractFormFieldControl implements WithPl
 
 	@Override
 	public String getPlaceHolder() {
-		return _placeHolder;
+		return _placeHolder != null ? _placeHolder : (String) getFieldModel().getPlaceholder();
 	}
 
 	@Override
-	public void setPlaceHolder(String placeHolder) {
-		_placeHolder = placeHolder;
+	public void setPlaceHolder(String newValue) {
+		// Note: Must be set unconditionally, since the placeholder override could be set to the
+		// value provided by the field model.
+		_placeHolder = newValue;
+
+		String oldValue = getPlaceHolder();
+		if (!Utils.equals(newValue, oldValue)) {
+			internalHandlePlaceholderChanged(newValue);
+		}
+	}
+
+	@Override
+	protected void internalHandlePlaceholderChanged() {
+		internalHandlePlaceholderChanged(getPlaceHolder());
+	}
+
+	/**
+	 * Updates the UI with a new placeholder value.
+	 */
+	protected void internalHandlePlaceholderChanged(String newValue) {
+		if (isAttached()) {
+			addUpdate(
+				new PropertyUpdate(getInputId(), HTMLConstants.PLACEHOLDER_ATTR, new ConstantDisplayValue(newValue)));
+		}
 	}
 
 	/** @see #isMultiLine() */

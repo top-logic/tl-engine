@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments
+		createOpenerButtons="false"
+		helpID="ID_d8ade883_9fa4_4fb6_a6b7_e460308d6343"
+	>
+		<title>
+			<title key="dynamic.14fb6cb5-5c55-43d8-ae1f-bb17f74df6e5">
+				<en>Edit context</en>
+				<de>Kontext bearbeiten</de>
+			</title>
+		</title>
+		<open-handler id="ID_6df1c334_a411_42f1_809e_03a13b2ac003"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			image="css:fas fa-cog"
+		>
+			<resourceKey key="dynamic.14fb6cb5-5c55-43d8-ae1f-bb17f74df6e5">
+				<en>Edit context</en>
+				<de>Kontext bearbeiten</de>
+			</resourceKey>
+			<postCreateActions>
+				<setEditMode>
+					<target name="com.top_logic.demo/technical/components/fallbackValues/editContext/contextDetailsForm.layout.xml#Form"/>
+				</setEditMode>
+			</postCreateActions>
+		</open-handler>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/fallbackValues/editContext/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

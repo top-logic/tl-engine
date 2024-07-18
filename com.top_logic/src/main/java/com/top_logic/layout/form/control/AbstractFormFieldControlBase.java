@@ -40,6 +40,7 @@ import com.top_logic.layout.form.HasErrorChanged;
 import com.top_logic.layout.form.HasWarningsChangedListener;
 import com.top_logic.layout.form.ImmutablePropertyListener;
 import com.top_logic.layout.form.MandatoryChangedListener;
+import com.top_logic.layout.form.PlaceholderChangedListener;
 import com.top_logic.layout.form.RawValueListener;
 import com.top_logic.layout.form.UINonBlocking;
 import com.top_logic.layout.form.ValueListener;
@@ -56,8 +57,8 @@ import com.top_logic.tool.boundsec.HandlerResult;
  */
 public abstract class AbstractFormFieldControlBase extends AbstractFormMemberControl implements KeyEventDispatcher,
 		Comparable, MandatoryChangedListener, HasErrorChanged, HasWarningsChangedListener, ImmutablePropertyListener,
-		DisabledPropertyListener, RawValueListener, ValueListener, BlockedStateChangedListener,
-		Focusable.FocusRequestedListener {
+		DisabledPropertyListener, RawValueListener, ValueListener, PlaceholderChangedListener,
+		BlockedStateChangedListener, Focusable.FocusRequestedListener {
 
 	protected static final Map<String, ControlCommand> COMMANDS = createCommandMap(
 		AbstractFormMemberControl.COMMANDS,
@@ -108,6 +109,7 @@ public abstract class AbstractFormFieldControlBase extends AbstractFormMemberCon
 		member.addListener(FormField.IMMUTABLE_PROPERTY, this);
 		member.addListener(FormField.DISABLED_PROPERTY, this);
 		member.addListener(FormField.VALUE_PROPERTY, this);
+		member.addListener(FormField.PLACEHOLDER_PROPERTY, this);
 		member.addListener(FormField.MANDATORY_PROPERTY, this);
 		member.addListener(FormField.BLOCKED_PROPERTY, this);
 		member.addListener(FormField.FOCUS_PROPERTY, this);
@@ -121,6 +123,7 @@ public abstract class AbstractFormFieldControlBase extends AbstractFormMemberCon
 		member.removeListener(FormField.BLOCKED_PROPERTY, this);
 		member.removeListener(FormField.MANDATORY_PROPERTY, this);
 		member.removeListener(FormField.VALUE_PROPERTY, this);
+		member.removeListener(FormField.PLACEHOLDER_PROPERTY, this);
 		member.removeListener(FormField.DISABLED_PROPERTY, this);
 		member.removeListener(FormField.IMMUTABLE_PROPERTY, this);
 		member.removeListener(FormField.HAS_WARNINGS_PROPERTY, this);
@@ -407,6 +410,14 @@ public abstract class AbstractFormFieldControlBase extends AbstractFormMemberCon
 	}
 
 	@Override
+	public Bubble handlePlaceholderChanged(FormField field, Object oldValue, Object newValue) {
+		if (!skipEvent(field)) {
+			internalHandlePlaceholderChanged();
+		}
+		return Bubble.BUBBLE;
+	}
+
+	@Override
 	protected void attachRevalidated() {
 		super.attachRevalidated();
 
@@ -449,6 +460,17 @@ public abstract class AbstractFormFieldControlBase extends AbstractFormMemberCon
 	 * </p>
 	 */
 	protected abstract void internalHandleValueChanged(FormField field, Object oldValue, Object newValue);
+
+	/**
+	 * Defines the control-specific reaction on the change of this control's placeholder value.
+	 * 
+	 * <p>
+	 * The implementation must care for transporting the new value to the GUI.
+	 * </p>
+	 */
+	protected void internalHandlePlaceholderChanged() {
+		requestRepaint();
+	}
 
 	@Override
 	public Bubble handleIsBlockedChanged(FormField sender, Boolean oldValue, Boolean newValue) {

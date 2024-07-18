@@ -176,6 +176,9 @@ public abstract class AbstractFormMemberControl extends AbstractControl implemen
 		registerListener(model);
 	}
 
+	/**
+	 * Registers listeners on the given model in response to attaching this control.
+	 */
 	protected void registerListener(FormMember member) {
 		member.addListener(FormMember.VISIBLE_PROPERTY, this);
 		member.addListener(FormMember.CLASS_PROPERTY, this);

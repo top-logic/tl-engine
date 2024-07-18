@@ -8,6 +8,7 @@ package com.top_logic.element.layout.meta;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.model.TLClass;
@@ -68,6 +69,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en A type part with name ''{0}'' already exists in the generalization ''{1}''.
 	 */
 	public static ResKey2 ERROR_PART_WITH_NAME_EXISTS__NAME_GENERALIZATION;
+
+	/**
+	 * @en A type part with name ''{0}'' is defined in ''{1}'' and ''{2}''.
+	 */
+	public static ResKey3 ERROR_CONFLICTING_ATTRIBUTE__NAME_TYPE1_TYPE2;
 
 	static {
 		initConstants(I18NConstants.class);

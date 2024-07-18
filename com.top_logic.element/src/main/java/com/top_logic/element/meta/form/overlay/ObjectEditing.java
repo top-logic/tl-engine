@@ -31,7 +31,7 @@ public class ObjectEditing extends FormObjectOverlay {
 	 *        See {@link #getEditedObject()}.
 	 */
 	public ObjectEditing(AttributeUpdateContainer scope, TLObject base) {
-		super(scope, base.tType());
+		super(scope, base.tType(), scope.newObjectID());
 		_base = base;
 	}
 

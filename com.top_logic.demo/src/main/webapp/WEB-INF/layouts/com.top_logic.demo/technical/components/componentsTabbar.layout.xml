@@ -25,6 +25,7 @@
 			<layout-reference resource="com.top_logic.demo/technical/components/componentVisibility/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/polymorphicForms/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/polymorphicViews/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/generalForms/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/reports/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/pDFExport/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/graph/tabLayout.layout.xml"/>

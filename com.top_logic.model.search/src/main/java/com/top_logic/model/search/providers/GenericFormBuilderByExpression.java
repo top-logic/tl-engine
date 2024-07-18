@@ -3,14 +3,16 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.element.layout.create;
+package com.top_logic.model.search.providers;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.element.layout.formeditor.FormEditorUtil;
 import com.top_logic.element.layout.formeditor.builder.ConfiguredDynamicFormBuilder;
 import com.top_logic.element.layout.formeditor.builder.TypedForm;
@@ -24,49 +26,72 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormMode;
-import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link FormBuilder} that allows to create a form for objects of a configured concrete type.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class MonomorphicCreateFormBuilder extends ConfiguredDynamicFormBuilder {
+@InApp
+@Label("Generic form")
+public class GenericFormBuilderByExpression extends ConfiguredDynamicFormBuilder {
 
 	/**
-	 * Configuration options for {@link MonomorphicCreateFormBuilder} that are directly
+	 * Configuration options for {@link GenericFormBuilderByExpression} that are directly
 	 * user-configurable.
 	 */
 	public interface UIOptions extends ConfigurationItem {
 		/**
-		 * @see #getFormType()
+		 * @see #getFormCreation()
 		 */
-		String FORM_TYPE = "formType";
+		String FORM_CREATION = "formCreation";
 
 		/**
-		 * The concrete type to build the form for.
+		 * Function creating the form model.
 		 * 
 		 * <p>
-		 * The displayed form can show all properties of the given type. By default, the form uses
-		 * the the form definition annotated to the type.
+		 * The function receives the component's model as single argument and must return the object
+		 * that should be edited in the form.
+		 * </p>
+		 * 
+		 * <p>
+		 * The form model may either be a transient object that only exists while the form is
+		 * displayed or an existing persistent object that should be edited. However, the function
+		 * must neither allocate a new persistent object nor perform any other operations requiring
+		 * a transaction.
+		 * </p>
+		 * 
+		 * <p>
+		 * An object creation can be modeled by creating a transient object as form model in this
+		 * function and creating a deep persistent copy of the form data during apply. As
+		 * alternative, another form builder can be used that creates a form implicitly creating an
+		 * object during apply. In both situations, it is advisable to enable auto-apply in the form
+		 * transaction handler to copy form data to the form model.
 		 * </p>
 		 */
-		@Name(FORM_TYPE)
+		@Name(FORM_CREATION)
 		@Mandatory
-		TLModelPartRef getFormType();
+		Expr getFormCreation();
 	}
 
 	/**
-	 * Configuration options for {@link MonomorphicCreateFormBuilder}.
+	 * Configuration options for {@link GenericFormBuilderByExpression}.
 	 */
+	@DisplayOrder({
+		Config.FORM_CREATION,
+		Config.FORMS,
+	})
 	public interface Config extends ConfiguredDynamicFormBuilder.Config, UIOptions {
 		// Pure sum interface.
 	}
 
-	private final TLStructuredType _type;
+	private final QueryExecutor _formCreation;
 
 	/**
-	 * Creates a {@link MonomorphicCreateFormBuilder} from configuration.
+	 * Creates a {@link GenericFormBuilderByExpression} from configuration.
 	 * 
 	 * @param context
 	 *        The context for instantiating sub configurations.
@@ -74,11 +99,11 @@ public class MonomorphicCreateFormBuilder extends ConfiguredDynamicFormBuilder {
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public MonomorphicCreateFormBuilder(InstantiationContext context, Config config) throws ConfigurationException {
+	public GenericFormBuilderByExpression(InstantiationContext context, Config config) {
 		super(context, config);
 
-		_type = config.getFormType().resolveClass();
-    }
+		_formCreation = QueryExecutor.compile(config.getFormCreation());
+	}
 
 	@Override
 	public Object getModel(Object businessModel, LayoutComponent component) {
@@ -87,13 +112,6 @@ public class MonomorphicCreateFormBuilder extends ConfiguredDynamicFormBuilder {
 		fillFormContext(component, formContext, businessModel);
 
 		return formContext;
-	}
-
-	/**
-	 * The type of the form being built.
-	 */
-	protected final TLStructuredType getFormType() {
-		return _type;
 	}
 
 	/**
@@ -109,24 +127,35 @@ public class MonomorphicCreateFormBuilder extends ConfiguredDynamicFormBuilder {
 	 */
 	protected TLFormObject fillFormContext(LayoutComponent component, AttributeFormContext formContext,
 			Object businessModel) {
-		TLObject container = businessModel instanceof TLObject ? (TLObject) businessModel : null;
-		TLStructuredType type = getFormType();
-		TLFormObject newCreation = formContext.createObject(type, null, container);
+		Object scriptResult = _formCreation.execute(businessModel);
+		if (scriptResult == null) {
+			return null;
+		}
+		
+		if (!(scriptResult instanceof TLObject)) {
+			throw new TopLogicException(I18NConstants.ERROR_NO_TLOBJECT_FORM_MODEL__FORM.fill(scriptResult));
+		}
+		
+		TLObject formObject = (TLObject) scriptResult;
+		
+		TLStructuredType type = formObject.tType();
+		TLFormObject formOverlay = formContext.editObject(formObject);
 
-		FormContainer editorGroup = formContext.createFormContainerForOverlay(newCreation);
+		FormContainer editorGroup = formContext.createFormContainerForOverlay(formOverlay);
 		formContext.addMember(editorGroup);
 		TypedForm typedForm = TypedForm.lookup(getConfiguredForms(), type);
 		setDisplayedTypedForm(typedForm);
 		FormEditorContext context = new FormEditorContext.Builder()
-			.formMode(FormMode.CREATE)
+			.formMode(formObject.tTransient() ? FormMode.CREATE : FormMode.EDIT)
 			.formType(typedForm.getFormType())
 			.formContext(formContext)
 			.contentGroup(editorGroup)
-			.concreteType(type)
+			.model(formObject)
+			.concreteType(formObject.tType())
 			.build();
 		FormEditorUtil.createAttributes(context, typedForm.getFormDefinition());
 
-		return newCreation;
+		return formOverlay;
 	}
 
 	@Override

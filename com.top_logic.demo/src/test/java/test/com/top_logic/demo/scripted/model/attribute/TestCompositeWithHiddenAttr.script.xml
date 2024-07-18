@@ -1028,7 +1028,7 @@
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ModelNotExistsAssertionOp"
 					comment="Attribute is Hidden in create"
-					failure-pattern="Form member not found, best match was "
+					failure-pattern="Form member not found: "
 					user-id="root"
 				>
 					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">

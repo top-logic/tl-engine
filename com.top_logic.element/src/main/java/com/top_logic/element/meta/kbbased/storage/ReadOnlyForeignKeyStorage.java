@@ -50,13 +50,6 @@ public class ReadOnlyForeignKeyStorage<C extends ReadOnlyForeignKeyStorage.Confi
 	}
 
 	@Override
-	public Object getUpdateValue(AttributeUpdate update)
-			throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
-		TLStructuredTypePart attribute = update.getAttribute();
-		throw new AttributeException("Read-only attribute '" + attribute + "' can't be updated.");
-	}
-
-	@Override
 	public void update(AttributeUpdate update)
 			throws AttributeException {
 		// Ignore.

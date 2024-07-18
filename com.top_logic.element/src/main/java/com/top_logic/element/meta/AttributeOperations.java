@@ -175,12 +175,6 @@ public class AttributeOperations {
 		}
 
 		@Override
-		public Object getUpdateValue(AttributeUpdate update)
-				throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
-			throw undefined(update);
-		}
-
-		@Override
 		public Collection<?> getLiveCollection(TLObject object, TLStructuredTypePart attribute) {
 			throw undefined(object, attribute);
 		}
@@ -239,17 +233,6 @@ public class AttributeOperations {
 		TLStructuredTypePart attribute = update.getAttribute();
 		checkAlive(object, attribute);
 		getStorageImplementation(object, attribute).checkUpdate(update);
-	}
-
-	/**
-	 * @see StorageImplementation#update(AttributeUpdate)
-	 */
-	public static Object getUpdateValue(AttributeUpdate update) throws NoSuchAttributeException, IllegalArgumentException,
-			AttributeException {
-		TLObject object = update.getObject();
-		TLStructuredTypePart attribute = update.getAttribute();
-		checkAlive(object, attribute);
-		return getStorageImplementation(object, attribute).getUpdateValue(update);
 	}
 
 	/**

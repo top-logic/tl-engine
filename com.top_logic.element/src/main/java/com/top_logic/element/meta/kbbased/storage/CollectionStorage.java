@@ -9,7 +9,6 @@ import java.util.Collection;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.AbstractStorageBase;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.AttributeOperations;
@@ -69,25 +68,6 @@ public abstract class CollectionStorage<C extends CollectionStorage.Config<?>> e
 	protected abstract void checkAddValue(TLObject object, TLStructuredTypePart attribute, Object collectionAddUpdate) throws TopLogicException;
 
 	protected abstract void checkRemoveValue(TLObject object, TLStructuredTypePart attribute, Object collectionRemoveUpdate) throws TopLogicException;
-
-	@Override
-	public Object getUpdateValue(AttributeUpdate update) throws NoSuchAttributeException,
-			IllegalArgumentException, AttributeException {
-		TLStructuredTypePart attribute = update.getAttribute();
-		try {
-			// Do the check
-			checkUpdate(update);
-
-			switch (update.getUpdateType()) {
-				case TYPE_SET_COLLECTION:
-					return update.getCollectionSetUpdate();
-				default: // other types are not allowed for collections
-					throw new IllegalArgumentException("Invalid update for " + attribute);
-			}
-		} catch (Exception e) {
-			throw new IllegalArgumentException("Invalid update for " + attribute);
-		}
-	}
 
 	@Override
 	public void update(AttributeUpdate update) throws AttributeException {

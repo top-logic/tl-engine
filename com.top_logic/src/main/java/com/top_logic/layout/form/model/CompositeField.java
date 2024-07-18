@@ -142,6 +142,16 @@ public abstract class CompositeField extends FormGroup implements FormField {
 	}
 
 	@Override
+	public Object getPlaceholder() {
+		return getProxy().getPlaceholder();
+	}
+
+	@Override
+	public void setPlaceholder(Object value) {
+		getProxy().setPlaceholder(value);
+	}
+
+	@Override
 	public void setDefaultValue(Object defaultValue) {
 		getProxy().setDefaultValue(defaultValue);
 	}

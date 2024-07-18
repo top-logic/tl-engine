@@ -90,10 +90,10 @@ public class QuickSearchView extends WithPropertiesBase implements HTMLFragment 
 	protected void createViews(FormContext form, String searchFieldName, QuickSearchConfig config) {
 		StringField searchField = FormFactory.newStringField(searchFieldName);
 		searchField.setCssClasses(QUICK_SEARCH_INPUT_CSS_CLASS);
+		searchField.setPlaceholder(Resources.getInstance().getString(I18NConstants.PLACEHOLDER));
 		form.addMember(searchField);
 
 		TextInputControl input = new TextInputControl(searchField);
-		input.setPlaceHolder(Resources.getInstance().getString(I18NConstants.PLACEHOLDER));
 		setInput(input);
 
 		Command command = createSearchCommand(input, config);

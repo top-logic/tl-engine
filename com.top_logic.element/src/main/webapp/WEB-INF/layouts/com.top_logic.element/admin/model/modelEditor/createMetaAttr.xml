@@ -19,7 +19,8 @@
 		<param name="resPrefix"/>
 	</params>
 
-	<layout name="${namePrefix}Dialog">
+	<layout name="${namePrefix}Dialog"
+		xmlns:config="http://www.top-logic.com/ns/config/6.0">
 		<components>
 			<form name="${namePrefix}Form"
 				buttonbar="true"
@@ -35,6 +36,9 @@
 					typePartFormBuilder="${typePartFormBuilder}"
 				/>
 
+				<cancelAction config:interface="com.top_logic.tool.boundsec.CommandHandlerReference$Config"
+					command-id="cancelCreate"
+				/>
 				<buttons>
 					<button id="createPart"
 						class="com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler"

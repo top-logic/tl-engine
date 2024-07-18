@@ -20,7 +20,7 @@ import com.top_logic.model.TLStructuredTypePart;
 public class PasswordFieldProvider extends AbstractFieldProvider {
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
+	public FormMember createFormField(EditContext editContext, String fieldName) {
 		boolean isMandatory = editContext.isMandatory();
 		boolean isDisabled = editContext.isDisabled();
 

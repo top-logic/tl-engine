@@ -22,7 +22,7 @@ import com.top_logic.model.wysiwyg.annotation.StructuredTextEditorConfig;
 public class StructuredTextFieldProvider extends AbstractFieldProvider {
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
+	public FormMember createFormField(EditContext editContext, String fieldName) {
 		if (editContext.isSearchUpdate()) {
 			return FormFactory.newStringField(fieldName);
 		} else {

@@ -48,7 +48,7 @@ import com.top_logic.util.Resources;
 public abstract class FormDefinitionFieldProvider extends AbstractFieldProvider {
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
+	public FormMember createFormField(EditContext editContext, String fieldName) {
 		TLStructuredType guiType = guiType(editContext);
 		Supplier<? extends List<FormDefinitionTemplate>> templateProvider =
 			templateProvider(editContext);

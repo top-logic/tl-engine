@@ -237,7 +237,7 @@ public class ConfigurationFieldProvider extends AbstractFieldProvider {
 	}
 
 	@Override
-	public FormMember getFormField(com.top_logic.element.meta.form.EditContext update, String fieldName) {
+	public FormMember createFormField(com.top_logic.element.meta.form.EditContext update, String fieldName) {
 		TLPrimitive type = (TLPrimitive) update.getValueType();
 		ConfigurationStorageMapping storage = (ConfigurationStorageMapping) type.getStorageMapping();
 		Class<? extends ConfigurationItem> configType = storage.getApplicationType();

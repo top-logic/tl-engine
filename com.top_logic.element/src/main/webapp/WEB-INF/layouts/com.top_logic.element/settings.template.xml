@@ -48,6 +48,7 @@
 	<settings name="Form"
 		dialogs="${dialogs}"
 		editMode="${editMode}"
+		isSecurityMaster="${isSecurityMaster}"
 		model="${model}"
 		resetInvisible="${resetInvisible}"
 		securityObject="${securityObject}"

@@ -544,6 +544,24 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 		fireValueChanged(oldValue);
     }
     
+	@Override
+	protected void notifyDisplayModeChanged(int oldDisplayMode, int newDisplayMode) {
+		// Clear/restore error when making field inactive/reactivating field. Since restoring the
+		// error is only possible if the field does not contain user input that cannot be parsed,
+		// this only happens for fields that have no illegal input.
+		if (state != ILLEGAL_INPUT_STATE) {
+			if (newDisplayMode == ACTIVE_MODE) {
+				// Restore a potential error.
+				check();
+			} else {
+				// Clear error because the user can no longer change the value to fix the error.
+				clearError();
+			}
+		}
+
+		super.notifyDisplayModeChanged(oldDisplayMode, newDisplayMode);
+	}
+
     @Override
 	public Object getDefaultValue() {
     	return this.defaultValue;
@@ -1049,8 +1067,10 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 	 */
     private final boolean checkValue(Object aValue) throws CheckException {
     	boolean success = true;
-        for (Iterator<Constraint> it = InlineList.iterator(Constraint.class, this.constraints); it.hasNext(); ) {
-    		success &= it.next().check(aValue);
+		if (isActive()) {
+			for (Iterator<Constraint> it = InlineList.iterator(Constraint.class, this.constraints); it.hasNext();) {
+				success &= it.next().check(aValue);
+			}
     	}
     	
     	// Note: Must not explicitly check for the mandatory property, because there are

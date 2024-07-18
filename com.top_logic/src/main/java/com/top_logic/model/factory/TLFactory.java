@@ -98,7 +98,13 @@ public interface TLFactory {
 			if (defaultProvider == null) {
 				continue;
 			}
-			obj.tUpdate(part, defaultProvider.createDefault(createContext, part, false));
+			// A transient object can never create a default that is allocated lately
+			// during commit, since there is no commit for creating a transient object. When
+			// creating e.g. a transient version of on object that defines an attribute with a
+			// sequence number default, this attribute must not be filled in the transient version
+			// to prevent an auto-rollback of the transaction started when the default is filled.
+			boolean forUI = obj.tTransient();
+			obj.tUpdate(part, defaultProvider.createDefault(createContext, part, forUI));
 		}
 	}
 

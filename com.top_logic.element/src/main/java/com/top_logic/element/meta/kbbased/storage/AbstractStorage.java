@@ -8,7 +8,6 @@ package com.top_logic.element.meta.kbbased.storage;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.func.misc.IsEmpty;
-import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.AttributeUpdate;
@@ -96,22 +95,6 @@ public abstract class AbstractStorage<C extends AbstractStorage.Config<?>> exten
 			throw e;
 		} catch (Exception e) {
 			throw new AttributeException(e);
-		}
-	}
-
-	@Override
-	public Object getUpdateValue(AttributeUpdate update)
-			throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
-		TLObject object = update.getObject();
-		TLStructuredTypePart attribute = update.getAttribute();
-		try {
-			Object simpleValue = update.getSimpleSetUpdate();
-
-			checkSetValue(object, attribute, simpleValue);
-
-			return simpleValue;
-		} catch (RuntimeException e) {
-			throw new IllegalArgumentException("Invalid update for attribute " + attribute);
 		}
 	}
 

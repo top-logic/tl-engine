@@ -38,13 +38,6 @@ public abstract class AbstractDerivedStorage<C extends AbstractDerivedStorage.Co
 	}
 
 	@Override
-	public Object getUpdateValue(AttributeUpdate update)
-			throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
-		TLStructuredTypePart attribute = update.getAttribute();
-		throw new AttributeException("Calculated attribute '" + attribute + "' can't be updated.");
-	}
-
-	@Override
 	public void update(AttributeUpdate update)
 			throws AttributeException {
 		// Ignore.

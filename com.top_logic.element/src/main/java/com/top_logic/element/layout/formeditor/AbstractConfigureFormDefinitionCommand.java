@@ -37,6 +37,7 @@ import com.top_logic.layout.scripting.action.ApplicationAction;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.structure.DialogClosedListener;
 import com.top_logic.layout.structure.DialogModel;
+import com.top_logic.layout.table.component.BuilderComponent;
 import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.TLLayout;
@@ -271,7 +272,8 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 		if (arguments instanceof FormsTemplateParameter) {
 			argumentsWithForms = (FormsTemplateParameter) arguments;
 		} else {
-			PropertyDescriptor modelBuilderProperty = arguments.descriptor().getProperty("modelBuilder");
+			PropertyDescriptor modelBuilderProperty =
+				arguments.descriptor().getProperty(BuilderComponent.MODEL_BUILDER_ELEMENT);
 			if (modelBuilderProperty == null) {
 				throw errorNoFormsTemplate(layout);
 			}

@@ -38,6 +38,7 @@ import com.top_logic.element.layout.meta.TLStructuredTypeFormBuilder;
 import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder;
 import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder.EditModel;
 import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder.PartModel;
+import com.top_logic.element.layout.meta.TypeHasNoConflictingAttributes;
 import com.top_logic.graph.common.model.Edge;
 import com.top_logic.graph.common.model.GraphModel;
 import com.top_logic.graph.common.model.GraphPart;
@@ -475,6 +476,8 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		if (TLModelUtil.getReflexiveTransitiveGeneralizations(targetClass).contains(sourceClass)) {
 			throw new TopLogicException(I18NConstants.ERROR_NO_CYCLIC_INHERITANCE);
 		}
+
+		TypeHasNoConflictingAttributes.checkClasses(Arrays.asList(sourceClass, targetClass));
 
 		DiagramJSGraphModel graphModel = (DiagramJSGraphModel) getGraphModel();
 

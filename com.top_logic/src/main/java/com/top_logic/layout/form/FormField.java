@@ -179,6 +179,23 @@ public interface FormField extends FormMember {
 		};
 	
 	/**
+	 * Type of the <code>placeholder</code> property.
+	 * 
+	 * @see #getPlaceholder()
+	 * @see PlaceholderChangedListener
+	 */
+	EventType<PlaceholderChangedListener, FormField, Object> PLACEHOLDER_PROPERTY =
+		new EventType<>("placeholder") {
+
+			@Override
+			public Bubble dispatch(PlaceholderChangedListener listener, FormField sender, Object oldValue,
+					Object newValue) {
+				return listener.handlePlaceholderChanged(sender, oldValue, newValue);
+			}
+
+		};
+
+	/**
 	 * Type of the <code>blocked</code> property.
 	 * 
 	 * @see #isBlocked()
@@ -541,6 +558,20 @@ public interface FormField extends FormMember {
 	 * @return The parsed value of this field.
 	 */
     public Object getValue();
+
+	/**
+	 * The value being displayed, if no value has yet been explicitly set on this field.
+	 * 
+	 * <p>
+	 * The value must be of the same type as potential values of {@link #getValue()} of this field.
+	 * </p>
+	 */
+	public Object getPlaceholder();
+
+	/**
+	 * @see #getPlaceholder()
+	 */
+	public void setPlaceholder(Object value);
 
     /**
 	 * Report, whether the current {@link #getValue() value} of this field

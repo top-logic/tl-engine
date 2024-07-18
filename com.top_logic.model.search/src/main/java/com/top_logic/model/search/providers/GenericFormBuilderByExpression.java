@@ -53,8 +53,8 @@ public class GenericFormBuilderByExpression extends ConfiguredDynamicFormBuilder
 		 * Function creating the form model.
 		 * 
 		 * <p>
-		 * The function can expect the component's model as single argument and must return the
-		 * object that should be edited in the form.
+		 * The function receives the component's model as single argument and must return the object
+		 * that should be edited in the form.
 		 * </p>
 		 * 
 		 * <p>

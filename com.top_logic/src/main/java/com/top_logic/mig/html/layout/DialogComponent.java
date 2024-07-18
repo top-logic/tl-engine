@@ -72,7 +72,7 @@ public class DialogComponent extends AbstractDialogModel {
 			} else {
 				Map<String, Object> emptyArgs = Collections.<String,Object>emptyMap();
 				boolean dirty =
-					DirtyHandling.getInstance().checkDirty(context, closeHandler, dialogContents, emptyArgs);
+					DirtyHandling.getInstance().checkDirty(context, closeHandler, targetComponent, emptyArgs);
 				if (dirty) {
 					return HandlerResult.DEFAULT_RESULT;
 				} else {

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_d5fb17b0_aa70_4bd7_b3bc_6f7c71297238">
+		<tabLabel key="dynamic.74ed1b99-bfc0-412c-9616-002cb3914fb0">
+			<en>Fallback values</en>
+			<de>Ersatzwerte</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/fallbackValues/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

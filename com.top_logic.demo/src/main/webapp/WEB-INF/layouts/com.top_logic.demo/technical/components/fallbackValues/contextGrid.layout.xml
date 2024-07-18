@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/grid.template.xml"
+>
+	<arguments
+		defaultColumns="ID_00ba2b73_2b4e_4267_8937_96ad4662dc53,name"
+		type="test.fallback:A"
+	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/fallbackValues/editContext/dialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.0e9ae381-97ea-484c-ae76-a2f24ace6f51">
+			<en>Context</en>
+			<de>Kontext</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`test.fallback:A`)"
+			supportsElement="element->$element.instanceOf(`test.fallback:A`)"
+		/>
+		<configurationProviders>
+			<configurationProvider class="com.top_logic.layout.table.provider.ButtonColumnProvider"
+				columnId="ID_00ba2b73_2b4e_4267_8937_96ad4662dc53"
+				width="35px"
+			>
+				<columnLabel key="dynamic.f877548b-c147-4fad-9a3d-b3e523cdcc82">
+					<en>Edit</en>
+					<de>Bearbeitung</de>
+				</columnLabel>
+				<buttons>
+					<button id="ID_0ca8366d_8364_47c5_bec7_0fde58d6cf1e"
+						class="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+						dialog-name="com.top_logic.demo/technical/components/fallbackValues/editContext/dialog.layout.xml#Dialog"
+						group="Write"
+						image="css:fas fa-pen"
+						targetComponent="com.top_logic.demo/technical/components/fallbackValues/editContext/contextDetailsForm.layout.xml#Form"
+					>
+						<resourceKey key="dynamic.a584ef23-b085-4ccf-a61c-3870b3935339">
+							<en>Edit context</en>
+							<de>Kontext bearbeiten</de>
+						</resourceKey>
+						<executability>
+							<rule class="com.top_logic.tool.execution.InViewModeExecutable"/>
+						</executability>
+						<postCreateActions>
+							<setEditMode>
+								<global-target name="com.top_logic.demo/technical/components/fallbackValues/editContext/contextDetailsForm.layout.xml#Form"/>
+							</setEditMode>
+						</postCreateActions>
+					</button>
+				</buttons>
+			</configurationProvider>
+		</configurationProviders>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+			<button id="createRow"
+				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
+			>
+				<checkScopeProvider/>
+				<type-options
+					include-subtypes="false"
+					type="test.fallback:A"
+				/>
+			</button>
+			<button id="deleteRow"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments
+		createOpenerButtons="false"
+		helpID="ID_10d5336a_16d6_46f6_8455_78dcc0e28d7a"
+	>
+		<title title="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.editDialogTitle"/>
+		<open-handler id="editRow"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			image="theme:ICONS_BUTTON_EDIT"
+			resourceKey="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.editButton"
+			target="selection(self())"
+			targetComponent="com.top_logic.demo/technical/components/fallbackValues/table/properties/properties_Form_Form.layout.xml#Form"
+		/>
+		<buttons>
+			<button id="showPrevious"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				group="System"
+				image="css:fas fa-chevron-left"
+				resourceKey="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.previousObject"
+				transaction="false"
+			>
+				<target class="com.top_logic.layout.channel.linking.impl.CombineLinking">
+					<channel name="rows">
+						<target name="com.top_logic.demo/technical/components/fallbackValues/table/entriesTable.layout.xml#Table"/>
+					</channel>
+					<channel name="model">
+						<target name="com.top_logic.demo/technical/components/fallbackValues/table/properties/properties_Form_Form.layout.xml#Form"/>
+					</channel>
+				</target>
+				<executability>
+					<rule-by-expression show-disabled="true">
+						<decision><![CDATA[input -> {
+    rows = $input[0];
+    model = $input[1];
+    index = $rows.elementIndex($model);
+    $index > 0 || #"class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.firstRow";
+}]]></decision>
+					</rule-by-expression>
+				</executability>
+				<operation><![CDATA[input -> {
+    rows = $input[0];
+    model = $input[1];
+    index = $rows.elementIndex($model);
+    $rows[$index - 1];
+}]]></operation>
+				<postCreateActions>
+					<setModel target="model(com.top_logic.demo/technical/components/fallbackValues/table/properties/properties_Form_Form.layout.xml#Form)"/>
+					<setModel target="selection(com.top_logic.demo/technical/components/fallbackValues/table/entriesTable.layout.xml#Table)"/>
+				</postCreateActions>
+			</button>
+			<button id="showNext"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				group="System"
+				image="css:fas fa-chevron-right"
+				resourceKey="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.nextObject"
+				transaction="false"
+			>
+				<target class="com.top_logic.layout.channel.linking.impl.CombineLinking">
+					<channel name="rows">
+						<target name="com.top_logic.demo/technical/components/fallbackValues/table/entriesTable.layout.xml#Table"/>
+					</channel>
+					<channel name="model">
+						<target name="com.top_logic.demo/technical/components/fallbackValues/table/properties/properties_Form_Form.layout.xml#Form"/>
+					</channel>
+				</target>
+				<executability>
+					<rule-by-expression show-disabled="true">
+						<decision><![CDATA[input -> {
+    rows = $input[0];
+    model = $input[1];
+    index = $rows.elementIndex($model);
+    $index < $rows.size() - 1 || #"class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.lastRow"
+}]]></decision>
+					</rule-by-expression>
+				</executability>
+				<operation><![CDATA[input -> {
+    rows = $input[0];
+    model = $input[1];
+    index = $rows.elementIndex($model);
+    $rows[$index + 1];
+}]]></operation>
+				<postCreateActions>
+					<setModel target="model(com.top_logic.demo/technical/components/fallbackValues/table/properties/properties_Form_Form.layout.xml#Form)"/>
+					<setModel target="selection(com.top_logic.demo/technical/components/fallbackValues/table/entriesTable.layout.xml#Table)"/>
+				</postCreateActions>
+			</button>
+		</buttons>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/fallbackValues/table/properties/properties_Form_Form.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<forms>
+			<form type="test.fallback:B">
+				<formDefinition>
+					<field
+						attribute="text"
+						fullQualifiedName="test.fallback:B#text"
+						type="tl.core:String"
+					/>
+					<field
+						attribute="textFallback"
+						fullQualifiedName="test.fallback:B#textFallback"
+						type="tl.core:String"
+					/>
+					<field
+						attribute="date"
+						fullQualifiedName="test.fallback:B#date"
+						type="tl.core:Date"
+					/>
+					<field
+						attribute="dateFallback"
+						fullQualifiedName="test.fallback:B#dateFallback"
+						type="tl.core:Date"
+					/>
+					<field
+						attribute="datetime"
+						fullQualifiedName="test.fallback:B#datetime"
+						type="tl.core:DateTime"
+					/>
+					<field
+						attribute="datetimeFallback"
+						fullQualifiedName="test.fallback:B#datetimeFallback"
+						type="tl.core:DateTime"
+					/>
+					<field
+						attribute="selection"
+						fullQualifiedName="test.fallback:B#selection"
+						type="test.fallback:Options"
+					/>
+					<field
+						attribute="selectionFallback"
+						fullQualifiedName="test.fallback:B#selectionFallback"
+						type="test.fallback:Options"
+					/>
+					<field
+						attribute="popup"
+						fullQualifiedName="test.fallback:B#popup"
+						type="test.fallback:Options"
+					/>
+					<field
+						attribute="popupFallback"
+						fullQualifiedName="test.fallback:B#popupFallback"
+						type="test.fallback:Options"
+					/>
+					<field
+						attribute="number"
+						fullQualifiedName="test.fallback:B#number"
+						type="tl.core:Double"
+					/>
+					<field
+						attribute="numberFallback"
+						fullQualifiedName="test.fallback:B#numberFallback"
+						type="tl.core:Double"
+					/>
+				</formDefinition>
+			</form>
+		</forms>
+		<title title="class.com.top_logic.model.search.providers.I18NConstants.CREATE_OBJECT_DEFAULT_LABEL"/>
+		<open-handler id="addRow"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			image="theme:ICONS_ADD_BUTTON"
+			resourceKey="class.com.top_logic.model.search.providers.I18NConstants.CREATE_OBJECT_DEFAULT_LABEL"
+			targetComponent="com.top_logic.demo/technical/components/fallbackValues/table/createObject/dialog.layout.xml#Editor"
+		/>
+		<typeOptions type="test.fallback:B"/>
+		<create-handler id="createRow"
+			linkOperation="context -> obj -> $context.add(`test.fallback:A#contents`, $obj)"
+		>
+			<postCreateActions>
+				<setModel target="selection(com.top_logic.demo/technical/components/fallbackValues/table/entriesTable.layout.xml#Table)"/>
+			</postCreateActions>
+		</create-handler>
+	</arguments>
+</config:template-call>

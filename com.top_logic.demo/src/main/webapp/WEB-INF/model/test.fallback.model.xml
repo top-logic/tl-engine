@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.fallback">
+		<enum name="Options">
+			<classifier name="OPTION_1"/>
+			<classifier name="OPTION_2"/>
+			<classifier name="OPTION_3"/>
+		</enum>
+		<class name="A">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="test.fallback:A#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="contents"
+							fullQualifiedName="test.fallback:A#contents"
+							type="test.fallback:B"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="contents"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="B"
+				/>
+			</attributes>
+		</class>
+		<class name="B">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<id-column value="id"/>
+			</annotations>
+			<attributes>
+				<property name="id"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<default-value>
+							<provider class="com.top_logic.element.structured.util.SequenceDefaultProvider"
+								sequence-name="fallback_id"
+							>
+								<dynamic-sequence-name class="com.top_logic.element.structured.util.ContextAwareSequenceName"/>
+							</provider>
+						</default-value>
+						<create-visibility value="hidden"/>
+						<visibility value="read-only"/>
+					</annotations>
+				</property>
+				<property name="text"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<fallback-storage
+								fallback-attribute="textFallback"
+								storage-attribute="textOverride"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="textFallback"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[x -> 
+    $x.container().get(`test.fallback:A#name`)
+    + " ("
+    + ($x.get(`test.fallback:B#id`)
+        || #("noch nicht zugewiesen"@de, "not yet assigned"@en))
+        .toString()
+    + ")"]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="textOverride"
+					type="tl.core:String"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</property>
+				<property name="date"
+					type="tl.core:Date"
+				>
+					<annotations>
+						<storage-algorithm>
+							<fallback-storage
+								fallback-attribute="dateFallback"
+								storage-attribute="dateStorage"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="dateStorage"
+					type="tl.core:Date"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</property>
+				<property name="dateFallback"
+					type="tl.core:Date"
+				>
+					<annotations>
+						<default-value>
+							<default-by-expression value="now()"/>
+						</default-value>
+					</annotations>
+				</property>
+				<reference name="selection"
+					kind="forwards"
+					navigate="true"
+					type="Options"
+				>
+					<annotations>
+						<storage-algorithm>
+							<fallback-storage
+								fallback-attribute="selectionFallback"
+								storage-attribute="selectionStorage"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="selectionStorage"
+					kind="forwards"
+					navigate="true"
+					type="Options"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+				<reference name="selectionFallback"
+					kind="forwards"
+					navigate="true"
+					type="Options"
+				/>
+				<reference name="popup"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Options"
+				>
+					<annotations>
+						<storage-algorithm>
+							<fallback-storage
+								fallback-attribute="popupFallback"
+								storage-attribute="popupStorage"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<reference name="popupFallback"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Options"
+				/>
+				<reference name="popupStorage"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Options"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
+				<property name="number"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<storage-algorithm>
+							<fallback-storage
+								fallback-attribute="numberFallback"
+								storage-attribute="numberStorage"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="numberFallback"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<default-value>
+							<double value="42.0"/>
+						</default-value>
+					</annotations>
+				</property>
+				<property name="numberStorage"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</property>
+				<property name="datetime"
+					type="tl.core:DateTime"
+				>
+					<annotations>
+						<storage-algorithm>
+							<fallback-storage
+								fallback-attribute="datetimeFallback"
+								storage-attribute="datetimeStorage"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="datetimeFallback"
+					type="tl.core:DateTime"
+				/>
+				<property name="datetimeStorage"
+					type="tl.core:DateTime"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

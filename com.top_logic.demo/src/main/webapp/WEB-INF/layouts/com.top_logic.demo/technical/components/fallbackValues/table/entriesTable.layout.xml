@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="_actions,id,text,textFallback,date,dateFallback,selection,selectionFallback,popup,popupFallback,number,numberFallback,datetime,datetimeFallback"
+		model="selection(com.top_logic.demo/technical/components/fallbackValues/contextGrid.layout.xml#Grid)"
+		type="test.fallback:B"
+	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/fallbackValues/table/createObject/dialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/fallbackValues/table/properties/dialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.2452a047-f0c3-428d-a316-e2bca6c7cf30">
+			<en>Entries</en>
+			<de>Einträge</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->$model.get(`test.fallback:A#contents`)"
+			supportsElement="element->$element.instanceOf(`test.fallback:B`)"
+		/>
+		<configurationProviders>
+			<configurationProvider class="com.top_logic.layout.table.provider.ButtonColumnProvider"
+				columnId="_actions"
+				columnLabel="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.buttonColumn"
+				width="40px"
+			>
+				<buttons>
+					<button id="openEditDialog"
+						class="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+						dialog-name="com.top_logic.demo/technical/components/fallbackValues/table/properties/dialog.layout.xml#Dialog"
+						group="Write"
+						image="theme:ICONS_BUTTON_EDIT"
+						resourceKey="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.edit"
+						targetComponent="com.top_logic.demo/technical/components/fallbackValues/table/properties/properties_Form_Form.layout.xml#Form"
+					>
+						<executability>
+							<rule class="com.top_logic.tool.execution.InViewModeExecutable"/>
+						</executability>
+					</button>
+				</buttons>
+			</configurationProvider>
+		</configurationProviders>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="deleteRow"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

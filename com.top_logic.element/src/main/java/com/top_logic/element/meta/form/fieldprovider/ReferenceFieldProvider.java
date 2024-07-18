@@ -26,7 +26,7 @@ public class ReferenceFieldProvider extends AbstractFieldProvider {
 		TypedConfigUtil.newConfiguredInstance(WrapperFieldProvider.class);
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
+	public FormMember createFormField(EditContext editContext, String fieldName) {
 		return delegate(editContext).getFormField(editContext, fieldName);
 	}
 

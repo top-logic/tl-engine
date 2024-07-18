@@ -19,7 +19,7 @@ import com.top_logic.layout.form.model.StringField;
 public class CodeEditorFieldProvider extends AbstractFieldProvider {
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
+	public FormMember createFormField(EditContext editContext, String fieldName) {
 		StringField result = FormFactory.newStringField(fieldName, editContext.isMandatory(), editContext.isDisabled(),
 			FormFactory.NO_CONSTRAINT);
 		return result;

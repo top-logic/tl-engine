@@ -19,8 +19,8 @@ import com.top_logic.layout.form.constraints.URLConstraint;
 public class URLFieldProvider extends StringFieldProvider {
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
-		FormMember field = super.getFormField(editContext, fieldName);
+	public FormMember createFormField(EditContext editContext, String fieldName) {
+		FormMember field = super.createFormField(editContext, fieldName);
 		field.setControlProvider(new URLControlProvider());
 		return field;
 	}

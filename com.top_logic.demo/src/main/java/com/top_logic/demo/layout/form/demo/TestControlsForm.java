@@ -214,6 +214,9 @@ import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.form.template.ExpandableTextInputFormFieldControlProvider;
 import com.top_logic.layout.form.template.FormTemplateConstants;
 import com.top_logic.layout.form.template.TextInputControlProvider;
+import com.top_logic.layout.form.template.model.MemberStyle;
+import com.top_logic.layout.form.template.model.Templates;
+import com.top_logic.layout.form.template.model.internal.TemplateControlProvider;
 import com.top_logic.layout.form.util.FormFieldValueMapping;
 import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.image.gallery.GalleryImage;
@@ -231,6 +234,7 @@ import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.resources.NestedResourceView;
 import com.top_logic.layout.structure.DefaultLayoutData;
 import com.top_logic.layout.structure.DefaultPopupDialogModel;
+import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.table.TableModel;
 import com.top_logic.layout.table.filter.FirstCharacterFilterProvider;
 import com.top_logic.layout.table.model.AbstractFieldProvider;
@@ -268,6 +272,8 @@ import com.top_logic.mig.html.SelectionModelFilter;
 import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutUtils;
+import com.top_logic.model.annotate.LabelPosition;
+import com.top_logic.model.form.definition.LabelPlacement;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
@@ -2562,16 +2568,36 @@ public class TestControlsForm extends FormComponent {
 	}
 
 	private FormMember createTextInputWithPlaceholder() {
+		FormGroup group = new FormGroup("placeholder", PlainKeyResources.INSTANCE);
+		group.setControlProvider(
+			new TemplateControlProvider(
+				Templates.fieldsetBoxDirect(
+					Templates.label(),
+					Templates.items(
+						Templates.self()),
+					ConfigKey.field(group)),
+				DefaultFormFieldControlProvider.INSTANCE));
+
+		TemplateControlProvider fieldBox = new TemplateControlProvider(
+			Templates.descriptionBox(
+				Templates.fragment(Templates.labelWithColon(), Templates.error()),
+				Templates.self(MemberStyle.DIRECT),
+				LabelPosition.DEFAULT,
+				LabelPlacement.DEFAULT),
+			DefaultFormFieldControlProvider.INSTANCE);
+
+		StringField fallbackField = FormFactory.newStringField("fallback");
+		fallbackField.setControlProvider(fieldBox);
+		group.addMember(fallbackField);
+
 		StringField field = FormFactory.newStringField("textInputWithPlaceholder");
-		field.setControlProvider(new ControlProvider() {
-			@Override
-			public Control createControl(Object model, String style) {
-				TextInputControl control = new TextInputControl((FormField) model);
-				control.setPlaceHolder("enter value");
-				return control;
-			}
-		});
-		return field;
+		field.setControlProvider(fieldBox);
+		group.addMember(field);
+
+		fallbackField.addValueListener((src, before, after) -> field.setPlaceholder(after));
+		fallbackField.setValue("default value");
+
+		return group;
 	}
 
 	private FormMember createTextInputWithContextMenu() {

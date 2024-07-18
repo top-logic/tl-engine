@@ -131,10 +131,11 @@
 				<!-- Another view for the same field model. Both display the same value. -->
 				<form:inputCell name="textInputControl"/>
 
-				<form:inputCell name="textInputWithPlaceholder"/>
 				<form:inputCell name="textInputWithContextMenu"/>
 
 				<form:inputCell name="structuredText"/>
+
+				<form:custom name="placeholder"/>
 
 				<form:groupCell
 					personalizationName="codeEditorGroup"

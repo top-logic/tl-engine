@@ -51,12 +51,31 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 		String OPERATION = "operation";
 
 		/**
+		 * Whether to automatically apply the user inputs in the form fields to the edited model
+		 * underlying the form.
+		 * 
+		 * <p>
+		 * When not checked, the {@link #getOperation()} is responsible for transferring values from
+		 * the given form object to the underlying model.
+		 * </p>
+		 * 
+		 * <p>
+		 * When checked and the form was constructed in create-mode, a new object of the requested
+		 * type is automatically created, filled with user input from the form and passed as
+		 * underlying model to the {@link #getOperation()}.
+		 * </p>
+		 */
+		boolean getAutoApply();
+
+		/**
 		 * The operation to execute in a transaction context.
 		 * 
 		 * <p>
-		 * Expected is a function taking two arguments. The first argument is the form object
-		 * providing the user input in its attributes. The second argument is the context model of
-		 * the command.
+		 * Expected is a function taking three arguments. The first argument is the transient form
+		 * object providing the user input in its attributes. The second argument is the context
+		 * model of the command. The last argument is the model being created or edited (in a create
+		 * form, a model is only created automatically, if {@link #getAutoApply()} is active,
+		 * otherwise <code>null</code> is passed).
 		 * </p>
 		 * 
 		 * <p>
@@ -131,10 +150,15 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 	 */
 	protected Object performTransaction(LayoutComponent component, FormContext formContext, Object model) {
 		AttributeFormContext fc = (AttributeFormContext) formContext;
+
+		if (((Config) getConfig()).getAutoApply()) {
+			fc.store();
+		}
+
 		FormContainer parameterObjectGroup = (FormContainer) fc.getMembers().next();
 		TLFormObject parameterObject = fc.getOverlay(parameterObjectGroup);
 
-		return _operation.execute(parameterObject, model);
+		return _operation.execute(parameterObject, model, parameterObject.getEditedObject());
 	}
 
 }

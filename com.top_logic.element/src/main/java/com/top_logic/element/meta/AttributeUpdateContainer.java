@@ -42,7 +42,7 @@ public class AttributeUpdateContainer {
 	/** Separates IDs of attribute and object. */
 	public static final String ID_SEPARATOR = "_";
 
-	private static final int FIRST_CREATE_ID = 1;
+	private static final int FIRST_ID = 1;
 
 	private AttributeFormContext _form;
 
@@ -50,7 +50,9 @@ public class AttributeUpdateContainer {
 
 	final Map<String, ObjectCreation> _creates;
 
-	private int _nextCreateId = FIRST_CREATE_ID;
+	private int _nextObjId = FIRST_ID;
+
+	private int _nextCreateId = FIRST_ID;
 
 	/**
 	 * Default CTor. Set up fields.
@@ -252,7 +254,7 @@ public class AttributeUpdateContainer {
 	 */
 	public TLFormObject newObject(TLStructuredType type, TLObject container, ObjectConstructor constructor) {
 		while (true) {
-			String domain = newDomain();
+			String domain = newObjectID();
 			if (_creates.get(domain) != null) {
 				continue;
 			}
@@ -261,8 +263,22 @@ public class AttributeUpdateContainer {
 		}
 	}
 
-	private String newDomain() {
-		return Integer.toString(_nextCreateId++);
+	/**
+	 * Creates a new local object ID for usage in forms.
+	 */
+	public String newObjectID() {
+		return "obj_" + Integer.toString(_nextObjId++);
+	}
+
+	/**
+	 * Creates a new local create object ID for usage in forms.
+	 * 
+	 * <p>
+	 * Note: The IDs are separate from object IDs to keep compatibility with recorded test scripts.
+	 * </p>
+	 */
+	public String newCreateID() {
+		return "create_" + Integer.toString(_nextCreateId++);
 	}
 
 	private TLFormObject allocateCreateOverlay(TLStructuredType type, String domain, TLObject container,
@@ -342,7 +358,8 @@ public class AttributeUpdateContainer {
 
 		_edits.clear();
 		_creates.clear();
-		_nextCreateId = FIRST_CREATE_ID;
+		_nextObjId = FIRST_ID;
+		_nextCreateId = FIRST_ID;
 	}
 
 	private void dropFields(TLFormObject overlay) {

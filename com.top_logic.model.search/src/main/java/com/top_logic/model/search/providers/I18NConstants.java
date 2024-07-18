@@ -60,6 +60,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_MODE__VALUE_OPTIONS;
 
+	/**
+	 * @en The model of a form must be a modeled instance (TLObject), but was: {0}
+	 */
+	public static ResKey1 ERROR_NO_TLOBJECT_FORM_MODEL__FORM;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

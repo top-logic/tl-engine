@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	groups="commons"
+>
+	<properties extends="com.top_logic.layout.structure.ToolbarOptions, com.top_logic.mig.html.layout.WithDefaultFor, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.layout.editor.config.ButtonTemplateParameters">
+		<annotations>
+			<display-order>
+				<value>
+					<property name="name"/>
+
+					<property name="model"/>
+
+					<property name="defaultFor"/>
+					<property name="isSecurityMaster"/>
+
+					<property name="showMaximize"/>
+					<property name="showMinimize"/>
+					<property name="showPopOut"/>
+
+					<property name="securityObject"/>
+
+					<property name="modelBuilder"/>
+
+					<property name="buttons"/>
+				</value>
+			</display-order>
+		</annotations>
+
+		<property name="name"
+			type="ResKey"
+		>
+			<mandatory/>
+			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
+			<item-display value="monomorphic"/>
+		</property>
+
+		<property name="model"
+			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
+			type="com.top_logic.layout.ModelSpec"
+		/>
+
+		<property name="modelBuilder"
+			instance-type="com.top_logic.element.layout.formeditor.builder.ConfiguredDynamicFormBuilder"
+			type="com.top_logic.basic.config.PolymorphicConfiguration"
+		>
+			<mandatory/>
+			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>
+		</property>
+
+		<property name="securityObject"
+			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
+			type="com.top_logic.basic.config.PolymorphicConfiguration"
+		/>
+		<property name="securityProviderClass"
+			default="dialogParent"
+			type="String"
+		>
+			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
+			<hidden/>
+		</property>
+		<property name="buttons"
+			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
+			type="List"
+		>
+			<acceptable-classifiers value="customTransaction, commons"/>
+		</property>
+	</properties>
+
+	<!-- Note: A settings component is used here instead of a general form, since this provides an edit-mode channel that allows to switch modes from UI actions. -->
+	<settings name="Form"
+		defaultFor="${defaultFor}"
+		dialogs="${dialogs}"
+		isSecurityMaster="${isSecurityMaster}"
+		model="${model}"
+		modelBuilder="${modelBuilder}"
+		resetInvisible="true"
+		securityObject="${securityObject}"
+		securityProviderClass="${securityProviderClass}"
+		showMaximize="${showMaximize}"
+		showMinimize="${showMinimize}"
+		showPopOut="${showPopOut}"
+		titleKey="${name}"
+	>
+		<buttons>
+			${buttons}
+			<include name="templates/editComponentCommands.xml"/>
+			<reference command-id="configureCreateFormDefinitionCommand"/>
+			<reference command-id="deleteCreateFormDefinitionCommand"/>
+		</buttons>
+	</settings>
+</config:template>

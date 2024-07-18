@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/layout.template.xml"
+>
+	<arguments>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/generalForms/contextSelectorTable.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/generalForms/standardFormForm.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/generalForms/generalFormForm.layout.xml">
+				<layoutInfo/>
+			</layout-reference>
+			<layout-reference resource="com.top_logic.demo/technical/components/generalForms/createFormForm.layout.xml">
+				<layoutInfo/>
+			</layout-reference>
+		</components>
+	</arguments>
+</config:template-call>

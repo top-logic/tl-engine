@@ -45,11 +45,8 @@ public abstract class CollectionStorage<C extends CollectionStorage.Config<?>> e
 		}
 
 		switch (update.getUpdateType()) {
-			case TYPE_SET_COLLECTION:
-				checkSetValues(update.getObject(), update.getAttribute(), update.getCollectionSetUpdate());
-				return;
-			case TYPE_SET_SIMPLE:
-				checkSetValue(update.getObject(), update.getAttribute(), update.getSimpleSetUpdate());
+			case TYPE_EDIT:
+				checkSetValue(update.getObject(), update.getAttribute(), update.getEditedValue());
 				return;
 			default: // other types are not allowed for collections
 				return;
@@ -83,8 +80,8 @@ public abstract class CollectionStorage<C extends CollectionStorage.Config<?>> e
 			}
 
 			switch (update.getUpdateType()) {
-				case TYPE_SET_COLLECTION:
-					setAttributeValue(object, attribute, update.getCollectionSetUpdate());
+				case TYPE_EDIT:
+					setAttributeValue(object, attribute, update.getEditedValue());
 					break;
 				default: // other types are not allowed for collections
 					break;

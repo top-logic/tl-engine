@@ -93,7 +93,7 @@ public class DiagramJSGraphControl extends AbstractJSControl implements ScopeLis
 
 	Diagram _diagram;
 
-	private DiagramJSGraphScope _scope;
+	DiagramJSGraphScope _scope;
 
 	private Timer _updateTimer;
 
@@ -128,21 +128,28 @@ public class DiagramJSGraphControl extends AbstractJSControl implements ScopeLis
 	 */
 	@Override
 	public void init(Object[] args) {
-		checkArguments(args);
+		ScopeListener scopeListener = this;
 
-		_scope.addListener(new DefaultGraphScopeListener(_diagram));
-		initSharedGraphModel((String) args[0]);
-		setShowHiddenElements((boolean) args[1]);
-		_scope.addListener(this);
+		new Timer() {
+			@Override
+			public void run() {
+				checkArguments(args);
 
-		registerDisplayGraphEventHandlers(_diagram.getEventBus());
+				_scope.addListener(new DefaultGraphScopeListener(_diagram));
+				initSharedGraphModel((String) args[0]);
+				setShowHiddenElements((boolean) args[1]);
+				_scope.addListener(scopeListener);
 
-		addEventListeners();
+				registerDisplayGraphEventHandlers(_diagram.getEventBus());
 
-		setViewbox();
+				addEventListeners();
+
+				setViewbox();
+			}
+		}.schedule(0);
 	}
 
-	private void setViewbox() {
+	void setViewbox() {
 		List<Base> selectedDisplayGraphParts = getSelectedDisplayGraphParts();
 
 		if (selectedDisplayGraphParts.isEmpty()) {
@@ -177,7 +184,7 @@ public class DiagramJSGraphControl extends AbstractJSControl implements ScopeLis
 		canvas.setViewbox(viewbox);
 	}
 
-	private void addEventListeners() {
+	void addEventListeners() {
 		enableEvents(_rootElement, DOM_DROP_EVENT_NAME, DOM_DRAG_OVER_EVENT_NAME);
 
 		setEventListeners();
@@ -254,7 +261,7 @@ public class DiagramJSGraphControl extends AbstractJSControl implements ScopeLis
 		sendCommand(GraphControlCommon.UPDATE_SERVER_GRAPH_COMMAND, arguments);
 	}
 
-	private void registerDisplayGraphEventHandlers(EventBus eventBus) {
+	void registerDisplayGraphEventHandlers(EventBus eventBus) {
 		String id = getId();
 
 		addEventBusHandlers(eventBus, id);
@@ -303,7 +310,7 @@ public class DiagramJSGraphControl extends AbstractJSControl implements ScopeLis
 		return root;
 	}
 
-	private void checkArguments(Object[] args) {
+	void checkArguments(Object[] args) {
 		if (args.length < 2) {
 			GWT.log("Two arguments are expected."
 				+ "The first argument represents the graph status in json."
@@ -315,7 +322,7 @@ public class DiagramJSGraphControl extends AbstractJSControl implements ScopeLis
 		shapes.stream().forEach(shape -> canvas.addShape(shape, parent));
 	}
 
-	private void initSharedGraphModel(String jsonGraphModel) {
+	void initSharedGraphModel(String jsonGraphModel) {
 		try (JsonReader reader = new JsonReader(new StringR(jsonGraphModel))) {
 			_scope.readFrom(reader);
 		} catch (IOException ex) {
@@ -339,7 +346,7 @@ public class DiagramJSGraphControl extends AbstractJSControl implements ScopeLis
 		}
 	}
 
-	private void setShowHiddenElements(boolean showHiddenElements) {
+	void setShowHiddenElements(boolean showHiddenElements) {
 		_diagram.getLayouter().setShowHiddenElements(showHiddenElements);
 	}
 

@@ -196,7 +196,7 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 				return;
 			}
 		}
-		member.setCssClasses(staticCssClass);
+		member.addCssClass(staticCssClass);
 	}
 
 	protected FormMember createFormMember(

@@ -5,11 +5,6 @@
  */
 package com.top_logic.element.meta;
 
-import com.top_logic.element.meta.form.EditContext;
-import com.top_logic.element.meta.kbbased.StringSetOptions;
-import com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocator;
-import com.top_logic.element.meta.kbbased.filtergen.Generator;
-import com.top_logic.element.meta.kbbased.storage.StringSetStorage;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -127,41 +122,6 @@ public class AttributeUpdateFactory {
 			TLStructuredType type, TLStructuredTypePart attribute, Object presetValue, Object aPreset2Value,
 			String domain) {
 		return updateContainer.createObject(type, domain).newSearchUpdate(attribute, presetValue, aPreset2Value);
-	}
-
-	/**
-	 * Whether the attribute stores its values as string set whereas the actual values are concrete
-	 * objects that are computed from the single string values.
-	 */
-	static boolean isStringSetType(TLStructuredTypePart attribute) {
-		return AttributeOperations.getStorageImplementation(attribute) instanceof StringSetStorage;
-	}
-
-	/**
-	 * Whether the attribute is restricted in its possible values
-	 * 
-	 * @return true if the attribute is restricted in its possible values
-	 */
-	public static boolean isRestricted(TLStructuredTypePart attribute) {
-		Generator options = AttributeOperations.getOptions(attribute);
-		return (options instanceof StringSetOptions) && ((StringSetOptions) options).getValueLocator() != null
-			&& getResultLocator(attribute) != null;
-	}
-
-	/**
-	 * Whether the given edit location is restricted in its possible values
-	 */
-	public static boolean isRestricted(EditContext editContext) {
-		return editContext.isRestricted();
-	}
-
-	static AttributeValueLocator getResultLocator(TLStructuredTypePart attribute) {
-		StorageImplementation storageImplementation = AttributeOperations.getStorageImplementation(attribute);
-		if (storageImplementation instanceof StringSetStorage) {
-			return ((StringSetStorage) storageImplementation).getResultLocator();
-		} else {
-			return null;
-		}
 	}
 
 }

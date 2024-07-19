@@ -75,7 +75,7 @@ public class GraphSelectionTransformLinking extends BidirectionalTransformLinkin
 				return ((TLTypePart) value).getOwner();
 			}
 		} else if (value instanceof TLInheritance) {
-			return ((TLInheritance) value).getSource();
+			return ((TLInheritance) value).getSpecialization();
 		}
 
 		return value;

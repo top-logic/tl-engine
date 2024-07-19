@@ -48,6 +48,7 @@ import com.top_logic.graph.diagramjs.server.util.model.TLInheritance;
 import com.top_logic.graph.diagramjs.server.util.model.TLInheritanceImpl;
 import com.top_logic.graph.diagramjs.util.GraphLayoutConstants;
 import com.top_logic.graph.layouter.LayoutContext;
+import com.top_logic.graph.layouter.Sugiyama;
 import com.top_logic.graph.layouter.model.LayoutGraph;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutEdge;
 import com.top_logic.graph.layouter.model.LayoutGraph.LayoutNode;
@@ -86,6 +87,59 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	private static final int EDGE_MIDDLE_PRIORITY = 2;
 
 	private static final int EDGE_LOW_PRIORITY = 1;
+
+	/**
+	 * Creates a {@link LayoutGraph graph} for the given {@link TLModule module} and layout this
+	 * graph with the Sugiyama layout algorithm.
+	 * 
+	 * <p>
+	 * The Sugiyama layout algorithm is a hierarchical graph drawing in which vertices are drawn in
+	 * horizontal layers and edges downwards to the next layer
+	 * </p>
+	 * 
+	 * <p>
+	 * The initial graph to layout is created as follows:
+	 * <ul>
+	 * <li>For each {@link TLType type} a graph {@link LayoutNode node} is created</li>
+	 * <li>For each {@link TLReference reference} a graph {@link LayoutEdge edge} from the node of
+	 * its {@link TLReference#getType() target} type to the node of its
+	 * {@link TLReference#getOwner() owner} type is created</li>
+	 * <li>For each inheritance of {@link TLType types} a graph edge from the node of the
+	 * specialization to the node of its generialization is created</li>
+	 * </ul>
+	 * </p>
+	 * <p>
+	 * Since the generalizations should be displayed at the top of the diagram and references should
+	 * point downwards, edges are created for references from the target to the source, opposite to
+	 * those of the inheritance edges, from the specialization to the generalization.
+	 * 
+	 * With this implementation, the (acyclic) graph can be layouted using Sugiyama's algorithm. The
+	 * nodes of the graph are assigned to levels. The sink at the top and the source at the bottom.
+	 * This gives the desired result that generalizations are at the top of the graph and references
+	 * generally point downwards (because references have been added to the graph as edges from the
+	 * target to the source for this reason).
+	 * </p>
+	 * <p>
+	 * After the graph has been layouted, the edges of the references are reversed back. To do this,
+	 * the old edge of the reference is deleted and a new edge is created from the node of its
+	 * {@link TLReference#getOwner() owner} type to the node of its its {@link TLReference#getType()
+	 * target}. The waypoints are those of the old edge only in reverse order.
+	 * </p>
+	 * 
+	 * @param module
+	 *        Module of the business model to create a graph for
+	 * @param context
+	 *        Contains properties that are needed to layout the graph
+	 */
+	public static LayoutGraph getLayoutedGraph(TLModule module, LayoutContext context) {
+		LayoutGraph graph = createLayoutGraph(module, context);
+
+		Sugiyama.INSTANCE.layout(context, graph);
+
+		LayoutGraphUtil.getEdges(graph, edge -> edge.getBusinessObject() instanceof TLReference).forEach(edge -> edge.reverse());
+
+		return graph;
+	}
 
 	/**
 	 * Creates a {@link LayoutGraph} for the given {@link TLModule}.
@@ -470,8 +524,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 
 		Object businessObject = layoutEdge.getBusinessObject();
 
-		DefaultDiagramJSEdge edge =
-			(DefaultDiagramJSEdge) createDiagramJSEdge(labelProvider, graph, businessObject, source, target);
+		DefaultDiagramJSEdge edge =	(DefaultDiagramJSEdge) createDiagramJSEdge(labelProvider, graph, businessObject, source, target);
 
 		edge.setWaypoints(getWaypoints(layoutEdge.getWaypoints()));
 
@@ -496,7 +549,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 			Node source = graphModel.getNode(reference.getOwner());
 			Node target = graphModel.getNode(reference.getType());
 
-			return createDiagramJSEdge(labelProvider, graphModel, reference, target, source);
+			return createDiagramJSEdge(labelProvider, graphModel, reference, source, target);
 		}
 
 		return null;
@@ -625,8 +678,8 @@ public class GraphModelUtil implements GraphLayoutConstants {
 			if (edgeObject instanceof TLInheritance) {
 				TLInheritance inheritance = (TLInheritance) edgeObject;
 
-				LayoutNode source = mapping.get(inheritance.getSource());
-				LayoutNode target = mapping.get(inheritance.getTarget());
+				LayoutNode source = mapping.get(inheritance.getSpecialization());
+				LayoutNode target = mapping.get(inheritance.getGeneralization());
 
 				LayoutEdge edge = graph.connect(source, target, inheritance);
 				edge.setPriority(EDGE_HIGH_PRIORITY);
@@ -687,9 +740,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	}
 
 	private static boolean isReversedReference(TLReference reference) {
-		int endIndex = TLModelUtil.getEndIndex(reference.getEnd());
-
-		return endIndex == 0;
+		return TLModelUtil.getEndIndex(reference.getEnd()) == 0;
 	}
 
 	/**
@@ -770,9 +821,9 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	 */
 	public static void deleteInheritance(TLInheritance inheritance, CreateInheritanceHandler createHandler) {
 		try (Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			TLClass source = inheritance.getSource();
+			TLClass source = inheritance.getSpecialization();
 			List<TLClass> generalizations = source.getGeneralizations();
-			generalizations.remove(inheritance.getTarget());
+			generalizations.remove(inheritance.getGeneralization());
 			if (generalizations.isEmpty()) {
 				createHandler.createInheritance(source, TLModelUtil.tlObjectType(source.getModel()));
 			}
@@ -800,8 +851,8 @@ public class GraphModelUtil implements GraphLayoutConstants {
 
 					if (specializationNode instanceof Node) {
 						if (!hasEdge((Node) specializationNode, node, TLInheritance.class)) {
-							if (!isEdgeHidden(context.getHiddenElements(), inheritance, inheritance.getSource(),
-								inheritance.getTarget())) {
+							if (!isEdgeHidden(context.getHiddenElements(), inheritance, inheritance.getSpecialization(),
+								inheritance.getGeneralization())) {
 								GraphModelUtil.createDiagramJSEdge(context.getLabelProvider(), graphModel, inheritance,
 									(Node) specializationNode, node);
 							}
@@ -813,8 +864,8 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	}
 
 	private static boolean isInheritanceHidden(LayoutContext context, TLInheritance inheritance) {
-		return isInheritanceEndHidden(context, inheritance.getSource())
-			|| isInheritanceEndHidden(context, inheritance.getTarget());
+		return isInheritanceEndHidden(context, inheritance.getSpecialization())
+			|| isInheritanceEndHidden(context, inheritance.getGeneralization());
 	}
 
 	private static boolean isInheritanceEndHidden(LayoutContext context, TLClass inheritanceEnd) {
@@ -844,8 +895,8 @@ public class GraphModelUtil implements GraphLayoutConstants {
 
 					if (generalizationNode instanceof Node) {
 						if (!hasEdge(node, (Node) generalizationNode, TLInheritance.class)) {
-							if (!isEdgeHidden(context.getHiddenElements(), inheritance, inheritance.getSource(),
-								inheritance.getTarget())) {
+							if (!isEdgeHidden(context.getHiddenElements(), inheritance, inheritance.getSpecialization(),
+								inheritance.getGeneralization())) {
 								GraphModelUtil.createDiagramJSEdge(context.getLabelProvider(), graphModel, inheritance,
 									node, (Node) generalizationNode);
 							}
@@ -952,9 +1003,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 						if (target != null && target instanceof Node) {
 							if (GraphModelUtil.isDirectReversedReference(part, partType)) {
 								if (graphModel.getEdge(part) == null) {
-									GraphModelUtil.createDiagramJSEdge(context.getLabelProvider(), graphModel, part,
-										(Node) target,
-										node);
+									GraphModelUtil.createDiagramJSEdge(context.getLabelProvider(), graphModel, part, node, (Node) target);
 								}
 							}
 						}
@@ -975,7 +1024,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 		} else if (model instanceof TLTypePart) {
 			return ((TLTypePart) model).getOwner().getModule();
 		} else if (model instanceof TLInheritance) {
-			return ((TLInheritance) model).getSource().getModule();
+			return ((TLInheritance) model).getSpecialization().getModule();
 		} else {
 			return null;
 		}

@@ -5,6 +5,10 @@
  */
 package com.top_logic.element.meta.form;
 
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.element.config.annotation.TLStorage;
+import com.top_logic.element.meta.AttributeWithFallbackStorage;
+import com.top_logic.element.meta.StorageImplementation;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 
@@ -25,9 +29,28 @@ public abstract class AbstractFieldProvider implements FieldProvider {
 	/**
 	 * Sets the given field's value to the value from the {@link EditContext}.
 	 */
-	protected void initValue(EditContext editContext, FormMember field) {
-		if (field instanceof FormField) {
-			AttributeFormFactory.initFieldValue(editContext, (FormField) field);
+	protected void initValue(EditContext editContext, FormMember member) {
+		if (member instanceof FormField) {
+			TLStorage storage = editContext.getAnnotation(TLStorage.class);
+			if (storage != null) {
+				PolymorphicConfiguration<? extends StorageImplementation> implementation = storage.getImplementation();
+				if (implementation instanceof AttributeWithFallbackStorage.Config<?> fallbackConfig) {
+					String storageAttribute = fallbackConfig.getStorageAttribute();
+					String fallbackAttribute = fallbackConfig.getFallbackAttribute();
+
+					Object explicitValue = editContext.getOverlay().tValueByName(storageAttribute);
+					Object fallbackValue = editContext.getOverlay().tValueByName(fallbackAttribute);
+
+					FormField field = (FormField) member;
+					Object fieldValue = AttributeFormFactory.toFieldValue(editContext, field, explicitValue);
+					field.initializeField(fieldValue);
+
+					field.setPlaceholder(fallbackValue);
+					return;
+				}
+			}
+
+			AttributeFormFactory.initFieldValue(editContext, (FormField) member);
 		}
 	}
 

@@ -21,7 +21,6 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
-import com.top_logic.model.cache.TLModelCacheService;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 
@@ -76,7 +75,7 @@ public class TypeHasNoConflictingAttributes extends GenericValueDependency<List<
 		Map<String, TLStructuredTypePart> definitionByPartName = new HashMap<>();
 		
 		for (TLClass clazz : classes) {
-			List<? extends TLStructuredTypePart> attributes = getAllAttributes(clazz);
+			List<? extends TLStructuredTypePart> attributes = clazz.getAllParts();
 
 			for (TLStructuredTypePart attribute : attributes) {
 				TLStructuredTypePart attributeDefinition = attribute.getDefinition();
@@ -100,10 +99,6 @@ public class TypeHasNoConflictingAttributes extends GenericValueDependency<List<
 		String type2Name = TLModelUtil.qualifiedName(type2);
 
 		return I18NConstants.ERROR_CONFLICTING_ATTRIBUTE__NAME_TYPE1_TYPE2.fill(attributeName, type1Name, type2Name);
-	}
-
-	private static List<? extends TLStructuredTypePart> getAllAttributes(TLClass clazz) {
-		return TLModelCacheService.getOperations().getAllAttributes(clazz);
 	}
 
 }

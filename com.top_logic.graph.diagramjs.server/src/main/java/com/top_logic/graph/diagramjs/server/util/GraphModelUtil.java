@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.common.remote.factory.ReflectionFactory;
 import com.top_logic.common.remote.shared.ObjectScope;
 import com.top_logic.common.remote.shared.SharedObject;
@@ -392,7 +391,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 			TLType type, Collection<Object> hiddenElements, Collection<Object> invisibleElements) {
 		DefaultDiagramJSClassNode node = (DefaultDiagramJSClassNode) graphModel.createNode(null, type);
 
-		node.setClassName(TagUtil.encodeXML(LayoutGraphUtil.getLabel(labelProvider, type)));
+		node.setClassName(LayoutGraphUtil.getLabel(labelProvider, type));
 		node.setImported(((TLModule) graphModel.getTag()).getType(type.getName()) == null);
 
 		getModifiers(type).ifPresent(modifiers -> node.setClassModifiers(modifiers));
@@ -475,7 +474,7 @@ public class GraphModelUtil implements GraphLayoutConstants {
 		DefaultDiagramJSLabel label = (DefaultDiagramJSLabel) owner.createLabel();
 
 		label.setTag(tag);
-		label.setText(TagUtil.encodeXML(text));
+		label.setText(text);
 		label.setType(type);
 
 		return label;

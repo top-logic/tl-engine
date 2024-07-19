@@ -17,6 +17,7 @@ import com.top_logic.base.services.simpleajax.ClientAction;
 import com.top_logic.base.services.simpleajax.JSFunctionCall;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.common.remote.shared.ObjectScope;
@@ -129,9 +130,10 @@ public abstract class AbstractGraphControl extends AbstractControlBase implement
 		String objectPath = SERVICE_NAMESPACE + "." + SERVICE_NAME;
 		String methodName = INVOKE;
 		String changesAsJSON = retrieveChangesAsJSON();
+		String encodedChangeJSON = TagUtil.encodeXML(changesAsJSON);
 		logDebug(() -> "Sending graph update: " + changesAsJSON);
 		return new JSFunctionCall(getID(), objectPath, methodName,
-			GraphControlCommon.UPDATE_CLIENT_GRAPH_COMMAND, changesAsJSON);
+			GraphControlCommon.UPDATE_CLIENT_GRAPH_COMMAND, encodedChangeJSON);
 	}
 
 	/**

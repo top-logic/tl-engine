@@ -13,6 +13,7 @@ import com.top_logic.basic.util.Utils;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.fallback.StorageWithFallback;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 
@@ -21,7 +22,8 @@ import com.top_logic.util.error.TopLogicException;
  * attribute providing a value, if no explicit value has been set to the storage attribute.
  */
 @InApp
-public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeWithFallbackStorage.Config<?>> {
+public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeWithFallbackStorage.Config<?>>
+		implements StorageWithFallback {
 
 	/**
 	 * Configuration options for {@link AttributeWithFallbackStorage}.
@@ -103,13 +105,22 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 
 	@Override
 	public Object getAttributeValue(TLObject object, TLStructuredTypePart attribute) {
-		Object explicitValue =
-			storage().getAttributeValue(object, attribute);
+		Object explicitValue = getExplicitValue(object, attribute);
 		if (!Utils.isEmpty(explicitValue)) {
 			return explicitValue;
 		}
 
+		return getFallbackValue(object, attribute);
+	}
+
+	@Override
+	public Object getFallbackValue(TLObject object, TLStructuredTypePart attribute) {
 		return fallback().getAttributeValue(object, attribute);
+	}
+
+	@Override
+	public Object getExplicitValue(TLObject object, TLStructuredTypePart attribute) {
+		return storage().getAttributeValue(object, attribute);
 	}
 
 	@Override

@@ -11,6 +11,7 @@ import com.top_logic.element.meta.AttributeWithFallbackStorage;
 import com.top_logic.element.meta.StorageImplementation;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.model.fallback.UpdateFallbackCssClass;
 
 /**
  * Common base class for {@link FieldProvider} implementations.
@@ -35,17 +36,30 @@ public abstract class AbstractFieldProvider implements FieldProvider {
 			if (storage != null) {
 				PolymorphicConfiguration<? extends StorageImplementation> implementation = storage.getImplementation();
 				if (implementation instanceof AttributeWithFallbackStorage.Config<?> fallbackConfig) {
-					String storageAttribute = fallbackConfig.getStorageAttribute();
-					String fallbackAttribute = fallbackConfig.getFallbackAttribute();
-
-					Object explicitValue = editContext.getOverlay().tValueByName(storageAttribute);
-					Object fallbackValue = editContext.getOverlay().tValueByName(fallbackAttribute);
-
 					FormField field = (FormField) member;
-					Object fieldValue = AttributeFormFactory.toFieldValue(editContext, field, explicitValue);
-					field.initializeField(fieldValue);
+					
+					String storageAttribute = fallbackConfig.getStorageAttribute();
+					Object explicitValue = editContext.getOverlay().tValueByName(storageAttribute);
 
-					field.setPlaceholder(fallbackValue);
+					if (editContext.isDisabled()) {
+						AttributeFormFactory.initFieldValue(editContext, (FormField) member);
+					} else {
+						String fallbackAttribute = fallbackConfig.getFallbackAttribute();
+						
+						Object fallbackValue = editContext.getOverlay().tValueByName(fallbackAttribute);
+						
+						Object fieldValue = AttributeFormFactory.toFieldValue(editContext, field, explicitValue);
+						field.initializeField(fieldValue);
+						
+						field.setPlaceholder(fallbackValue);
+					}
+
+					member.addCssClass(UpdateFallbackCssClass.CSS_WITH_FALLBACK);
+					field.addValueListener(UpdateFallbackCssClass.INSTANCE);
+
+					// Set initial values.
+					UpdateFallbackCssClass.INSTANCE.valueChanged(field, null, explicitValue);
+
 					return;
 				}
 			}

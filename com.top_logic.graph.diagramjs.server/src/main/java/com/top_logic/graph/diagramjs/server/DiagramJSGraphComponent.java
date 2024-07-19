@@ -477,7 +477,7 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 			throw new TopLogicException(I18NConstants.ERROR_NO_CYCLIC_INHERITANCE);
 		}
 
-		TypeHasNoConflictingAttributes.checkClasses(Arrays.asList(sourceClass, targetClass));
+		TypeHasNoConflictingAttributes.checkClasses(List.of(sourceClass, targetClass));
 
 		DiagramJSGraphModel graphModel = (DiagramJSGraphModel) getGraphModel();
 

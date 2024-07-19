@@ -42,11 +42,8 @@ public abstract class AbstractStorage<C extends AbstractStorage.Config<?>> exten
 		}
 
 		switch (update.getUpdateType()) {
-			case TYPE_SET_COLLECTION:
-				checkSetValue(update.getObject(), update.getAttribute(), update.getCollectionSetUpdate());
-				return;
-			case TYPE_SET_SIMPLE:
-				checkSetValue(update.getObject(), update.getAttribute(), update.getSimpleSetUpdate());
+			case TYPE_EDIT:
+				checkSetValue(update.getObject(), update.getAttribute(), update.getEditedValue());
 				return;
 			default: // other types are not allowed for collections
 				return;
@@ -68,11 +65,8 @@ public abstract class AbstractStorage<C extends AbstractStorage.Config<?>> exten
 
 			Object value;
 			switch (update.getUpdateType()) {
-				case TYPE_SET_COLLECTION:
-					value = update.getCollectionSetUpdate();
-					break;
-				case TYPE_SET_SIMPLE:
-					value = update.getSimpleSetUpdate();
+				case TYPE_EDIT:
+					value = update.getEditedValue();
 					break;
 				default: // other types are not allowed for collections
 					return;

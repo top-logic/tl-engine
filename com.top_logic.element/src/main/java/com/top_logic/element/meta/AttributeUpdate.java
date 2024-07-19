@@ -117,10 +117,7 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	 */
 	public enum UpdateType {
 		/** Type: set a simple value. */
-		TYPE_SET_SIMPLE(false),
-
-		/** Type: set a collection value. */
-		TYPE_SET_COLLECTION(false),
+		TYPE_EDIT(false),
 
 		/** Type: a collection of search values. */
 		TYPE_SEARCH_COLLECTION(true),
@@ -361,33 +358,16 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	}
 
 	/**
-	 * Get the update value for a SimpleMetaAttribute
-	 *
-	 * @return the value
-	 * @throws RuntimeException if the update type
-	 * 			does not correspond to this method
+	 * The base value being edited.
+	 * 
+	 * <p>
+	 * The raw value taken from an model attribute is adjusted for editing with the
+	 * {@link #convertValue(Object)} method based on the {@link #getAttribute() attribute's}
+	 * configuration.
+	 * </p>
 	 */
-	public Object getSimpleSetUpdate () throws RuntimeException {
-		if (UpdateType.TYPE_SET_SIMPLE != getUpdateType()) {
-			throw new RuntimeException("Call to getSimpleSetUpdate not allowed for type " + getUpdateType());
-		}
-
+	public Object getEditedValue() {
 		return _value;
-	}
-
-	/**
-	 * Get the values for a CollectionMetaAttribute
-	 *
-	 * @return the values
-	 * @throws RuntimeException if the update type
-	 * 			does not correspond to this method
-	 */
-	public Collection<?> getCollectionSetUpdate() throws RuntimeException {
-		if (UpdateType.TYPE_SET_COLLECTION != getUpdateType()) {
-			throw new RuntimeException("Call to getCollectionSetUpdate not allowed for type " + getUpdateType());
-		}
-
-		return (Collection<?>) _value;
 	}
 
 	/**
@@ -462,10 +442,8 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 				return getSimpleSearchUpdate();
 			case TYPE_SEARCH_COLLECTION:
 				return getCollectionSearchUpdate();
-			case TYPE_SET_SIMPLE:
-				return getSimpleSetUpdate();
-			case TYPE_SET_COLLECTION:
-				return getCollectionSetUpdate();
+			case TYPE_EDIT:
+				return getEditedValue();
 			default:
 				Logger.warn("Unknown update type: " + getUpdateType(), this);
 				return null;
@@ -496,10 +474,12 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 		switch (getUpdateType()) {
 			case TYPE_SEARCH_COLLECTION:
 				return toCollection(formValue);
-			case TYPE_SET_SIMPLE:
-				return formValue;
-			case TYPE_SET_COLLECTION:
-				return toCollection(formValue);
+			case TYPE_EDIT:
+				if (AttributeOperations.isCollectionValued(getAttribute())) {
+					return toCollection(formValue);
+				} else {
+					return formValue;
+				}
 			default:
 				return formValue;
 		}
@@ -713,12 +693,11 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	}
 
 	void initEdit(Object presetValue) {
+		setType(UpdateType.TYPE_EDIT);
 		TLStructuredTypePart attribute = getAttribute();
 		if (!AttributeOperations.isCollectionValued(attribute)) {
-			setType(UpdateType.TYPE_SET_SIMPLE);
 			setValue(presetValue);
 		} else {
-			setType(UpdateType.TYPE_SET_COLLECTION);
 		    if (!AttributeUpdateFactory.isStringSetType(attribute) || !AttributeUpdateFactory.isRestricted(attribute)) {
 				setValue(presetValue);
 			} else {

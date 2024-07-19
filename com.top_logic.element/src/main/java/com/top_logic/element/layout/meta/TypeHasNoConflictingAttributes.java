@@ -17,10 +17,11 @@ import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
 import com.top_logic.basic.config.constraint.algorithm.ValueConstraint;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey5;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.TLType;
+import com.top_logic.model.TLTypePart;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 
@@ -72,33 +73,43 @@ public class TypeHasNoConflictingAttributes extends GenericValueDependency<List<
 	 * </p>
 	 */
 	public static void checkClasses(Collection<TLClass> classes) {
-		Map<String, TLStructuredTypePart> definitionByPartName = new HashMap<>();
+		Map<String, TLStructuredTypePart> attributeByName = new HashMap<>();
 		
 		for (TLClass clazz : classes) {
 			List<? extends TLStructuredTypePart> attributes = clazz.getAllParts();
 
-			for (TLStructuredTypePart attribute : attributes) {
-				TLStructuredTypePart attributeDefinition = attribute.getDefinition();
-				String attributeName = attribute.getName();
+			for (TLStructuredTypePart attribute1 : attributes) {
+				String name = attribute1.getName();
 
-				TLStructuredTypePart definition = definitionByPartName.get(attributeName);
+				TLStructuredTypePart attribute2 = attributeByName.get(name);
 
-				if (definition == null) {
-					definitionByPartName.put(attributeName, attributeDefinition);
+				if (attribute2 == null) {
+					attributeByName.put(name, attribute1);
 				} else {
-					if (!definition.equals(attributeDefinition)) {
-						throw new TopLogicException(errorKey(attributeName, definition.getOwner(), attributeDefinition.getOwner()));
+					TLStructuredTypePart definition1 = attribute1.getDefinition();
+					TLStructuredTypePart definition2 = attribute2.getDefinition();
+
+					if (!definition2.equals(definition1)) {
+						throw new TopLogicException(errorKey(name, attribute1, definition1, attribute2, definition2));
 					}
 				}
 			}
 		}
 	}
 
-	private static ResKey errorKey(String attributeName, TLType type1, TLType type2) {
-		String type1Name = TLModelUtil.qualifiedName(type1);
-		String type2Name = TLModelUtil.qualifiedName(type2);
+	private static ResKey errorKey(String name, TLTypePart attribute1, TLTypePart definition1, TLTypePart attribute2, TLTypePart definition2) {
+		ResKey5 key = I18NConstants.ERROR_CONFLICTING_ATTRIBUTE__NAME_TYPE1_DEFINITION1_TYPE2_DEFINITION2;
 
-		return I18NConstants.ERROR_CONFLICTING_ATTRIBUTE__NAME_TYPE1_TYPE2.fill(attributeName, type1Name, type2Name);
+		String type1Name = getOwnerName(attribute1);
+		String definition1Name = getOwnerName(definition1);
+		String type2Name = getOwnerName(attribute2);
+		String definition2Name = getOwnerName(definition2);
+
+		return key.fill(name, type1Name, definition1Name, type2Name, definition2Name);
+	}
+
+	private static String getOwnerName(TLTypePart attribute1) {
+		return TLModelUtil.qualifiedName(attribute1.getOwner());
 	}
 
 }

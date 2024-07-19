@@ -8,7 +8,7 @@ package com.top_logic.element.layout.meta;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
-import com.top_logic.basic.util.ResKey3;
+import com.top_logic.basic.util.ResKey5;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.model.TLClass;
@@ -71,10 +71,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 ERROR_PART_WITH_NAME_EXISTS__NAME_GENERALIZATION;
 
 	/**
-	 * @en A type part with name ''{0}'' is already defined in ''{1}'' and ''{2}''. It is not
-	 *     possible to have two different attributes with the same name.
+	 * @en A type part with name ''{0}'' exists already in ''{1}'' (definition in ''{2}'') and
+	 *     ''{3}'' (definition in ''{4}''). It is not possible to have two different attributes with
+	 *     the same name.
 	 */
-	public static ResKey3 ERROR_CONFLICTING_ATTRIBUTE__NAME_TYPE1_TYPE2;
+	public static ResKey5 ERROR_CONFLICTING_ATTRIBUTE__NAME_TYPE1_DEFINITION1_TYPE2_DEFINITION2;
 
 	static {
 		initConstants(I18NConstants.class);

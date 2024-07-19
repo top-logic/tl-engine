@@ -107,7 +107,7 @@
 
 <p><span style="color:#3498db"><strong>Output:</strong></span> [<span style="color:#c0392b">{date=</span> 15.07.2024, <span style="color:#c0392b">number=</span> 5, <span style="color:#c0392b">name=</span> test}, <span style="color:#c0392b">{date=</span> 16.07.2024, <span style="color:#c0392b">number=</span> 2, <span style="color:#c0392b">name=</span> test2}, <span style="color:#c0392b">{date=</span> 17.07.2024, <span style="color:#c0392b">number=</span>, <span style="color:#c0392b">name=}</span>]</p>
 
-<p>Calling <code class="hljs inlineCode">parseCSV()</code> returns a list of maps. The first line is selected as the header and its entries are used as the key for the maps. The corresponding map is then generated for each additional line from its entries according to the keys of the header, whereby excess entries of the line are ignored and missing entries of the line are filled with empty strings.</p>
+<p>Calling<code class="hljs inlineCode">parseCSV()</code> returns a list of maps. The first line is selected as the header and its entries are used as the key for the maps. Subsequently, for each additional line, the map is generated from its entries according to the keys of the header of the corresponding map, whereby excess entries of the line are ignored and missing entries of the line are filled with empty strings.</p>
 
 <p> </p>
 
@@ -124,19 +124,11 @@
         contentType: "text/csv",
         encoding: "utf-8"
     );
-    result = $toParse.parseCSV(parsers: {"date": x-&gt; dateFormat("dd.MM.yy").format(toDate(dateFormat("dd.MM.yyy").parse($x))) });
+    result = $toParse.parseCSV(parsers: {"date": x-&gt; dateFormat("dd.MM.yy").format(dateFormat("dd.MM.yyy").parse($x)) });
     $result
 }</code>
 </pre>
 
 <p><span style="color:#3498db"><strong>Output:</strong></span> [<span style="color:#c0392b">{date=</span> 15.07.24, <span style="color:#c0392b">number= </span>5, <span style="color:#c0392b">name=</span> test}, <span style="color:#c0392b">{date=</span> 16.07.24, <span style="color:#c0392b">number=</span> 2, <span style="color:#c0392b">name=</span> test2}, <span style="color:#c0392b">{date=</span> 17.07.24, <span style="color:#c0392b">number=</span>, <span style="color:#c0392b">name=}</span>]</p>
 
-<p> </p>
-
-<p> </p>
-
-<p> </p>
-
-<p> </p>
-
-<p> </p>
+<p>When<code class="hljs inlineCode">parseCSV()</code>is called, a parser for the column with the name "date" is specified, which prepares the entries from the corresponding cells.</p>

@@ -20,6 +20,7 @@ import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.FormMember.IDUsage;
 import com.top_logic.layout.form.LabelChangedListener;
+import com.top_logic.layout.form.MandatoryChangedListener;
 import com.top_logic.layout.form.TooltipChangedListener;
 import com.top_logic.layout.form.model.AbstractFormMember;
 import com.top_logic.layout.form.model.OptionsListener;
@@ -35,7 +36,7 @@ import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class LabelControl extends AbstractFormMemberControl implements OptionsListener, LabelChangedListener,
-		TooltipChangedListener, DisabledPropertyListener {
+		TooltipChangedListener, DisabledPropertyListener, MandatoryChangedListener {
 
 	/** Colon String written after the label (if requested). */
 	public static final String COLON = ":";
@@ -69,6 +70,7 @@ public class LabelControl extends AbstractFormMemberControl implements OptionsLi
 		member.addListener(FormMember.LABEL_PROPERTY, this);
 		member.addListener(FormMember.TOOLTIP_PROPERTY, this);
 		member.addListener(FormMember.DISABLED_PROPERTY, this);
+		member.addListener(FormField.MANDATORY_PROPERTY, this);
 	}
 
 	@Override
@@ -77,6 +79,7 @@ public class LabelControl extends AbstractFormMemberControl implements OptionsLi
 		member.removeListener(FormMember.TOOLTIP_PROPERTY, this);
 		member.removeListener(FormMember.LABEL_PROPERTY, this);
 		member.removeListener(SelectField.OPTIONS_PROPERTY, this);
+		member.removeListener(FormField.MANDATORY_PROPERTY, this);
 		super.deregisterListener(member);
 	}
 
@@ -281,4 +284,8 @@ public class LabelControl extends AbstractFormMemberControl implements OptionsLi
 		return repaintOnEvent(sender);
 	}
 
+	@Override
+	public Bubble handleMandatoryChanged(FormField sender, Boolean oldValue, Boolean newValue) {
+		return repaintOnEvent(sender);
+	}
 }

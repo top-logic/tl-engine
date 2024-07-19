@@ -87,7 +87,7 @@ public class TypeHasNoConflictingAttributes extends GenericValueDependency<List<
 				if (definition == null) {
 					definitionByPartName.put(attributeName, attributeDefinition);
 				} else {
-					if (definition != attributeDefinition) {
+					if (!definition.equals(attributeDefinition)) {
 						throw new TopLogicException(errorKey(attributeName, definition.getOwner(), attributeDefinition.getOwner()));
 					}
 				}

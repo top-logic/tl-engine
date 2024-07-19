@@ -12,6 +12,7 @@ import java.util.Collection;
 
 import com.top_logic.ajax.server.util.JSControlUtil;
 import com.top_logic.base.services.simpleajax.JSFunctionCall;
+import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.graph.common.util.GraphControlCommon;
 import com.top_logic.graph.diagramjs.server.commands.CreateClassCommand;
@@ -19,8 +20,8 @@ import com.top_logic.graph.diagramjs.server.commands.CreateClassPropertyGraphCom
 import com.top_logic.graph.diagramjs.server.commands.CreateConnectionGraphCommand;
 import com.top_logic.graph.diagramjs.server.commands.CreateEnumerationCommand;
 import com.top_logic.graph.diagramjs.server.commands.DeleteGraphPartCommand;
-import com.top_logic.graph.diagramjs.server.commands.GoToDefinitionCommand;
 import com.top_logic.graph.diagramjs.server.commands.ElementsVisibilityCommand;
+import com.top_logic.graph.diagramjs.server.commands.GoToDefinitionCommand;
 import com.top_logic.graph.diagramjs.server.handler.DiagramHandler;
 import com.top_logic.graph.diagramjs.server.util.layout.Bounds;
 import com.top_logic.graph.server.model.GraphData;
@@ -93,7 +94,9 @@ public class DiagramJSGraphControl extends AbstractGraphControl
 	 */
 	@Override
 	protected void writeGraphInitScript(TagWriter out, String type) throws IOException {
-		JSControlUtil.writeCreateJSControlScript(out, type, getID(), retrieveStateAsJSON(), _showHiddenElements);
+		String encodedGraphModel = TagUtil.encodeXML(retrieveStateAsJSON());
+
+		JSControlUtil.writeCreateJSControlScript(out, type, getID(), encodedGraphModel, _showHiddenElements);
 	}
 
 	@Override

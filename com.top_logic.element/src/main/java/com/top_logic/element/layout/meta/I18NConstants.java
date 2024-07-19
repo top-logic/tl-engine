@@ -71,7 +71,8 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 ERROR_PART_WITH_NAME_EXISTS__NAME_GENERALIZATION;
 
 	/**
-	 * @en A type part with name ''{0}'' is defined in ''{1}'' and ''{2}''.
+	 * @en A type part with name ''{0}'' is already defined in ''{1}'' and ''{2}''. It is not
+	 *     possible to have two different attributes with the same name.
 	 */
 	public static ResKey3 ERROR_CONFLICTING_ATTRIBUTE__NAME_TYPE1_TYPE2;
 

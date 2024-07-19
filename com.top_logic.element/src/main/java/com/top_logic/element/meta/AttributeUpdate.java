@@ -8,8 +8,6 @@ package com.top_logic.element.meta;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -19,7 +17,6 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.exception.I18NRuntimeException;
-import com.top_logic.dob.data.DOList;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.AttributeFormFactory;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
@@ -32,7 +29,6 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.DataField;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.StringField;
-import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -694,52 +690,7 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 
 	void initEdit(Object presetValue) {
 		setType(UpdateType.TYPE_EDIT);
-		TLStructuredTypePart attribute = getAttribute();
-		if (!AttributeOperations.isCollectionValued(attribute)) {
-			setValue(presetValue);
-		} else {
-		    if (!AttributeUpdateFactory.isStringSetType(attribute) || !AttributeUpdateFactory.isRestricted(attribute)) {
-				setValue(presetValue);
-			} else {
-				Collection<?> collectionValue = (Collection<?>) presetValue;
-				if (collectionValue instanceof DOList || collectionValue == null || collectionValue.isEmpty()) {
-					setValue(collectionValue);
-				} else {
-					OptionModel<?> options = AttributeOperations.allOptions(this);
-					List<Object> result = new ArrayList<>();
-					if (options != null) {
-			    		boolean stop = false;
-						Iterator<?> optionIt = options.iterator();
-						while (!stop && optionIt.hasNext()) {
-							Object option = optionIt.next();
-							try {
-								if (collectionValue.contains(option)) {
-									setValue(collectionValue);
-									stop = true;
-								} else {
-									// Check Strings (init)...
-									String dapParam =
-										(String) AttributeUpdateFactory.getResultLocator(attribute).locateAttributeValue(option);
-									if (collectionValue.contains(dapParam)) {
-										result.add(option);
-									}
-								}
-							}
-					    	catch (Exception ex) {
-								StringBuilder message = new StringBuilder();
-								message.append("Failed to get DAP parameters in attribute ");
-								message.append(attribute.getName());
-								Logger.warn(message.toString(), ex, AttributeUpdateFactory.class);
-					    	}
-						}
-	
-			    		if (!stop) {
-							setValue(result);
-			    		}
-			    	}
-		    	}
-		    }
-		}
+		setValue(presetValue);
 	}
 
 	void initSearchVisibility() {

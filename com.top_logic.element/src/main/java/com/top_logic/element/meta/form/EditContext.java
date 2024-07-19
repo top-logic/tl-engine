@@ -7,7 +7,6 @@ package com.top_logic.element.meta.form;
 
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.element.meta.AttributeUpdate.StoreAlgorithm;
-import com.top_logic.element.meta.AttributeUpdateFactory;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.kbbased.filtergen.AttributedValueFilter;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
@@ -48,14 +47,6 @@ public interface EditContext extends EditContextBase {
 	@Deprecated
 	default AttributedValueFilter getFilter() {
 		return null;
-	}
-
-	/**
-	 * @see AttributeUpdateFactory#isRestricted(com.top_logic.model.TLStructuredTypePart)
-	 */
-	@FrameworkInternal
-	default boolean isRestricted() {
-		return false;
 	}
 
 }

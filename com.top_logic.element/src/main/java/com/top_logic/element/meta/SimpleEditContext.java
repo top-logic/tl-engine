@@ -162,11 +162,6 @@ public class SimpleEditContext implements EditContext {
 	}
 
 	@Override
-	public boolean isRestricted() {
-		return AttributeUpdateFactory.isRestricted(getAttribute());
-	}
-
-	@Override
 	public String getConfigKey(FormMember field) {
 		return TLModelUtil.qualifiedName(getAttribute());
 	}

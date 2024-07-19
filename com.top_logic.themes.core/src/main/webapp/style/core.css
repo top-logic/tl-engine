@@ -2848,3 +2848,12 @@ i.tl-accent-2 {
 }
 
 
+/* TODO: Use accent styles. */
+td.tl-table__cell.tl-explicit,
+.tl-with-fallback.tl-explicit input {
+	background-color: #CCCCFF;
+}
+
+td.tl-table__cell--selected.tl-explicit {
+	background-color: rgb(205, 206, 249);
+}

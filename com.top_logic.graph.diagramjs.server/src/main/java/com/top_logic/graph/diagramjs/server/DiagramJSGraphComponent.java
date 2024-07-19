@@ -76,6 +76,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
 import com.top_logic.model.impl.generated.TlModelFactory;
@@ -742,20 +743,34 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 
 	@Override
 	protected void handleTLObjectCreations(Stream<? extends TLObject> creations) {
-		if (hasGraphModel()) {
-			getOrderedModelPartCreations(getDiagramRelevantObjects(creations)).forEach(object -> getOrCreateGraphPart(object));
+		SharedGraph graph = _graphData.getGraph();
+
+		if (graph != null) {
+			getOrderedModelPartCreations(getDiagramRelevantObjects(graph, creations)).forEach(object -> getOrCreateGraphPart(object));
 		}
 	}
 
-	private Stream<TLModelPart> getDiagramRelevantObjects(Stream<? extends TLObject> objects) {
-		return objects.filter(object -> isValidDiagramObject(object)).map(TLModelPart.class::cast);
+	private Stream<TLModelPart> getDiagramRelevantObjects(SharedGraph graph, Stream<? extends TLObject> objects) {
+		return objects.filter(object -> isValidDiagramObject(graph, object)).map(TLModelPart.class::cast);
 	}
 
-	private boolean isValidDiagramObject(TLObject object) {
+	private boolean isValidDiagramObject(SharedGraph graph, TLObject object) {
 		boolean isModelPart = object instanceof TLModelPart;
-		boolean belongsToDisplayedModule = belongsToDisplayedModule(object);
+		boolean belongsToDisplayedDiagram = belongsToDisplayedDiagram(graph, object);
 
-		return isModelPart && belongsToDisplayedModule && GraphModelUtil.isValidModelDiagramObject((TLModelPart) object);
+		return isModelPart && belongsToDisplayedDiagram	&& GraphModelUtil.isValidModelDiagramObject((TLModelPart) object);
+	}
+
+	private boolean belongsToDisplayedDiagram(SharedGraph graph, TLObject object) {
+		if (GraphModelUtil.getEnclosingModule(object) == _currentDisplayedModule) {
+			return true;
+		}
+
+		if (object instanceof TLReference && graph.getGraphPart(((TLReference) object).getOwner()) != null) {
+			return true;
+		}
+
+		return false;
 	}
 
 	private List<TLModelPart> getOrderedModelPartCreations(Stream<? extends TLModelPart> creations) {
@@ -859,10 +874,6 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 		} else {
 			return GraphModelUtil.createGraphPart(graph, object, getLayoutContext(), getInvisibleGraphParts());
 		}
-	}
-
-	private boolean belongsToDisplayedModule(TLObject object) {
-		return GraphModelUtil.getEnclosingModule(object) == _currentDisplayedModule;
 	}
 
 	@Override

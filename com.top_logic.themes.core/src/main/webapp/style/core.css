@@ -1480,7 +1480,7 @@ div.lcHidden {
 	overflow-y: auto;
 	white-space: normal;
 	overflow-wrap: break-word;
-	padding: var(--ttPadding) 12px;
+	padding: var(--ttPadding) 0.75rem;
 	line-height: 1.5 !important;
 	color: var(--text-inverse);
 	text-align: left;
@@ -1491,6 +1491,11 @@ div.lcHidden {
 .tooltipContent * {
 	color: var(--text-inverse);
 	line-height: 1.5 !important;
+		padding: 0;
+}
+
+.tooltipContent ul {
+	padding-left: 0.75rem;
 }
 
 /*

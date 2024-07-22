@@ -556,13 +556,11 @@ public class SelectFieldUtils {
 	 * @param out
 	 *        The output to append selection to.
 	 * 
-	 * @return Given {@link Appendable}.
-	 * 
 	 * @see SelectFieldUtils#writeSelectionAsTextEditable(Appendable, FormField) Only all selected
 	 *      values separated by the given separator.
 	 */
-	public static <T extends Appendable> T writeSelectionAsTextImmutable(T out, FormField field) throws IOException {
-		return writeSelectionAsText(out, field, getCollectionSeparator(field));
+	public static void writeSelectionAsTextImmutable(Appendable out, FormField field) throws IOException {
+		writeSelectionAsText(out, field, getCollectionSeparator(field));
 	}
 
 	/**
@@ -571,9 +569,9 @@ public class SelectFieldUtils {
 	 * 
 	 * @see SelectFieldUtils#writeSelectionAsTextImmutable(Appendable, FormField)
 	 */
-	public static <T extends Appendable> T writeSelectionAsText(T out, FormField field, String separator)
+	public static void writeSelectionAsText(Appendable out, FormField field, String separator)
 			throws IOException {
-		return internalWriteSelectionAsText(out, field, true, separator);
+		internalWriteSelectionAsText(out, field, true, separator);
 	}
 
 	/**
@@ -623,13 +621,11 @@ public class SelectFieldUtils {
 	 * @param out
 	 *        The output to append selection to.
 	 * 
-	 * @return Given {@link Appendable}.
-	 * 
 	 * @see SelectFieldUtils#writeSelectionAsTextImmutable(Appendable, FormField) A description of the
 	 *      selection with a special description for the empty selection.
 	 */
-	public static <T extends Appendable> T writeSelectionAsTextEditable(T out, FormField field) throws IOException {
-		return writeSelectionAsTextPlain(out, field, getMultiSelectionSeparatorFormat(field));
+	public static void writeSelectionAsTextEditable(Appendable out, FormField field) throws IOException {
+		writeSelectionAsTextPlain(out, field, getMultiSelectionSeparatorFormat(field));
 	}
 
 	/**
@@ -638,12 +634,12 @@ public class SelectFieldUtils {
 	 * 
 	 * @see SelectFieldUtils#writeSelectionAsTextImmutable(Appendable, FormField)
 	 */
-	public static <T extends Appendable> T writeSelectionAsTextPlain(T out, FormField field, String separator)
+	public static void writeSelectionAsTextPlain(Appendable out, FormField field, String separator)
 			throws IOException {
-		return internalWriteSelectionAsText(out, field, false, separator);
+		internalWriteSelectionAsText(out, field, false, separator);
 	}
 
-	private static <T extends Appendable> T internalWriteSelectionAsText(T out, FormField field, boolean useEmptyLabel,
+	private static void internalWriteSelectionAsText(Appendable out, FormField field, boolean useEmptyLabel,
 			String separator) throws IOException {
 		List<Throwable> labelErrors = new ArrayList<>();
 		List<?> theSel = getSelectionList(field);
@@ -653,14 +649,14 @@ public class SelectFieldUtils {
 		if (size == 1) {
 			// Optimization for single selections.
 			out.append(getOptionLabel(field, theSel.get(0)));
-			return out;
+			return;
 		}
 
 		if (size == 0) {
 			if (useEmptyLabel) {
 				out.append(getEmptySelectionLabelImmutable(field));
 			}
-			return out;
+			return;
 		}
 
 		if (!SelectFieldUtils.hasCustomOrder(field)) {
@@ -681,7 +677,7 @@ public class SelectFieldUtils {
 				labelErrors);
 			throw labelException;
 		}
-		return out;
+		return;
 	}
 
 	private static String getOptionLabelFailsafe(FormField field, Object option, List<Throwable> labelErrors) {

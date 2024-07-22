@@ -141,6 +141,7 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 				return contextType.getAllParts().stream()
 					.filter(p -> p != self)
 					.filter(p -> p.getType() == attributeType)
+					.filter(p -> p.isMultiple() == self.isMultiple())
 					.toList();
 			}
 		}

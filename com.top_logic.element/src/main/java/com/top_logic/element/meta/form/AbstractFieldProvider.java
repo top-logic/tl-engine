@@ -11,7 +11,7 @@ import com.top_logic.element.meta.AttributeWithFallbackStorage;
 import com.top_logic.element.meta.StorageImplementation;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
-import com.top_logic.model.fallback.UpdateFallbackCssClass;
+import com.top_logic.model.fallback.UpdateFallbackDisplay;
 
 /**
  * Common base class for {@link FieldProvider} implementations.
@@ -54,11 +54,12 @@ public abstract class AbstractFieldProvider implements FieldProvider {
 						field.setPlaceholder(fallbackValue);
 					}
 
-					member.addCssClass(UpdateFallbackCssClass.CSS_WITH_FALLBACK);
-					field.addValueListener(UpdateFallbackCssClass.INSTANCE);
+					member.addCssClass(UpdateFallbackDisplay.CSS_WITH_FALLBACK);
+					field.addValueListener(UpdateFallbackDisplay.INSTANCE);
+					field.addListener(FormField.ACTIVE_PROPERTY, UpdateFallbackDisplay.INSTANCE);
 
 					// Set initial values.
-					UpdateFallbackCssClass.INSTANCE.valueChanged(field, null, explicitValue);
+					UpdateFallbackDisplay.INSTANCE.valueChanged(field, null, explicitValue);
 
 					return;
 				}

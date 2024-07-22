@@ -357,6 +357,18 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 							out.writeAttribute(VALUE_ATTR, (String)rawValue);
 						}
 					}
+
+					Object placeholder = theModel.getPlaceholder();
+					if (placeholder != null) {
+						out.beginAttribute(PLACEHOLDER_ATTR);
+						try {
+							SelectFieldUtils.writeSelectionAsTextEditable(out, theModel,
+								SelectFieldUtils.toList(placeholder));
+						} catch (Throwable throwable) {
+							renderingError = throwable;
+						}
+						out.endAttribute();
+					}
 					out.endEmptyTag();
 
 					out.endTag(SPAN);

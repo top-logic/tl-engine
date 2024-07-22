@@ -195,7 +195,9 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 
 	@Override
 	public void update(AttributeUpdate update) throws AttributeException {
-		storage().update(update);
+		if (update.isChanged()) {
+			storage().setAttributeValue(update.getObject(), _storageAttr, update.getEditedValue());
+		}
 	}
 
 	@Override

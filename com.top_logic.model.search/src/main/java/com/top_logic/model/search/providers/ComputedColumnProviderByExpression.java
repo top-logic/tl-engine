@@ -22,13 +22,11 @@ import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.element.meta.form.AttributeFormFactory;
 import com.top_logic.element.meta.form.CustomEditContext;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
 import com.top_logic.element.meta.form.FieldProviderAnnotation;
 import com.top_logic.layout.Accessor;
-import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.utility.SimplePartAnnotationOptions;
 import com.top_logic.layout.form.values.ItemOptionMapping;
@@ -225,11 +223,7 @@ public class ComputedColumnProviderByExpression
 						.setLabel(labelKey)
 						.setValue(accessor.getValue(row, columnName))
 						.setInTableContext(true);
-					FormMember field = fieldProvider.getFormField(editContext, columnName);
-					if (field instanceof FormField) {
-						AttributeFormFactory.initFieldValue(editContext, (FormField) field);
-					}
-					return field;
+					return fieldProvider.getFormField(editContext, columnName);
 				}
 			};
 			column.setFieldProvider(columnFieldProvider);

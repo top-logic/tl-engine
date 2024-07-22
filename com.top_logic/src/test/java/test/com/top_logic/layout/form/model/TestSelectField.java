@@ -440,7 +440,9 @@ public class TestSelectField extends BasicTestCase {
 	
 	private static String getSelectionAsText(SelectField selectField) {
 		try {
-			return writeSelectionAsTextImmutable(new StringBuilder(), selectField).toString();
+			StringBuilder out = new StringBuilder();
+			writeSelectionAsTextImmutable(out, selectField);
+			return out.toString();
 		} catch (IOException ex) {
 			throw new UnreachableAssertion("StringBuilder does not throw IOException.", ex);
 		}
@@ -448,7 +450,9 @@ public class TestSelectField extends BasicTestCase {
 
 	private static String getSelectionAsTextPlain(SelectField selectField) {
 		try {
-			return writeSelectionAsTextEditable(new StringBuilder(), selectField).toString();
+			StringBuilder out = new StringBuilder();
+			writeSelectionAsTextEditable(out, selectField);
+			return out.toString();
 		} catch (IOException ex) {
 			throw new UnreachableAssertion("StringBuilder does not throw IOException.", ex);
 		}

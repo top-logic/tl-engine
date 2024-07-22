@@ -16,6 +16,7 @@ import java.util.Set;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.element.meta.AttributeException;
@@ -39,6 +40,7 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @InApp
+@Label("Calculation via TL-Script")
 public class AttributeByExpression<C extends AttributeByExpression.Config<?>> extends AbstractExpressionAttribute<C> {
 
 	/**

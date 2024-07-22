@@ -2850,7 +2850,8 @@ i.tl-accent-2 {
 
 /* TODO: Use accent styles. */
 td.tl-table__cell.tl-explicit,
-.tl-with-fallback.tl-explicit input {
+.tl-with-fallback.tl-explicit input,
+.tl-with-fallback span.cTextInput.tl-explicit {
 	background-color: #CCCCFF;
 }
 

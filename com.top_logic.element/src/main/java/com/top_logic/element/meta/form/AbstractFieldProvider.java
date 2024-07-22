@@ -72,9 +72,4 @@ public abstract class AbstractFieldProvider implements FieldProvider {
 	 */
 	protected abstract FormMember createFormField(EditContext editContext, String fieldName);
 
-	@Override
-	public final Unimplementable unimplementable() {
-		return null;
-	}
-
 }

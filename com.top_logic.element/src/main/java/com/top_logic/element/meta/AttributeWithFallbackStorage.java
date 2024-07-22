@@ -5,14 +5,33 @@
  */
 package com.top_logic.element.meta;
 
+import java.util.Collections;
+import java.util.List;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Container;
+import com.top_logic.basic.config.annotation.Hidden;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
+import com.top_logic.basic.config.annotation.Step;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.container.ConfigPart;
+import com.top_logic.basic.func.Function3;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.dob.ex.NoSuchAttributeException;
+import com.top_logic.element.config.annotation.TLStorage;
+import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder.EditModel;
+import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder.PartModel;
+import com.top_logic.layout.form.values.edit.OptionMapping;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.TLType;
+import com.top_logic.model.TLTypePart;
+import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.fallback.StorageWithFallback;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
@@ -29,7 +48,20 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 	 * Configuration options for {@link AttributeWithFallbackStorage}.
 	 */
 	@TagName("fallback-storage")
-	public interface Config<I extends AttributeWithFallbackStorage> extends AbstractStorageBase.Config<I> {
+	public interface Config<I extends AttributeWithFallbackStorage> extends AbstractStorageBase.Config<I>, ConfigPart {
+
+		/**
+		 * @see #getStorageAnnotation()
+		 */
+		public static final String STORAGE_ANNOTATION = "storage-annotation";
+
+		/**
+		 * The {@link TLStorage} annotation that uses this implementation.
+		 */
+		@Name(STORAGE_ANNOTATION)
+		@Hidden
+		@Container
+		TLStorage getStorageAnnotation();
 
 		/**
 		 * The name of the attribute to store explicitly set values.
@@ -38,6 +70,21 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 		 * The attribute must be defined in the same type as the attribute with fallback.
 		 * </p>
 		 */
+		@Options(fun = CompatibleAttributes.class, mapping = LocalPartName.class, args = {
+			@Ref(steps = {
+				@Step(STORAGE_ANNOTATION),
+				@Step(TLAttributeAnnotation.ANNOTATED),
+				@Step(value = PartModel.EDITING, type = PartModel.class) }),
+			@Ref(steps = {
+				@Step(STORAGE_ANNOTATION),
+				@Step(TLAttributeAnnotation.ANNOTATED),
+				@Step(value = PartModel.EDIT_MODEL, type = PartModel.class),
+				@Step(value = EditModel.CONTEXT_TYPE, type = EditModel.class) }),
+			@Ref(steps = {
+				@Step(STORAGE_ANNOTATION),
+				@Step(TLAttributeAnnotation.ANNOTATED),
+				@Step(value = PartModel.RESOLVED_TYPE, type = PartModel.class) }),
+		})
 		String getStorageAttribute();
 
 		/**
@@ -47,8 +94,56 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 		 * The attribute must be defined in the same type as the attribute with fallback.
 		 * </p>
 		 */
+		@Options(fun = CompatibleAttributes.class, mapping = LocalPartName.class, args = {
+			@Ref(steps = {
+				@Step(STORAGE_ANNOTATION),
+				@Step(TLAttributeAnnotation.ANNOTATED),
+				@Step(value = PartModel.EDITING, type = PartModel.class) }),
+			@Ref(steps = {
+				@Step(STORAGE_ANNOTATION),
+				@Step(TLAttributeAnnotation.ANNOTATED),
+				@Step(value = PartModel.EDIT_MODEL, type = PartModel.class),
+				@Step(value = EditModel.CONTEXT_TYPE, type = EditModel.class) }),
+			@Ref(steps = {
+				@Step(STORAGE_ANNOTATION),
+				@Step(TLAttributeAnnotation.ANNOTATED),
+				@Step(value = PartModel.RESOLVED_TYPE, type = PartModel.class) }),
+		})
 		String getFallbackAttribute();
 
+		/**
+		 * {@link OptionMapping} of a {@link TLTypePart} to its name.
+		 */
+		class LocalPartName implements OptionMapping {
+			@Override
+			public Object toSelection(Object option) {
+				if (option instanceof TLStructuredTypePart part) {
+					return part.getName();
+				}
+				return null;
+			}
+		}
+
+		/**
+		 * Options for {@link Config#getStorageAttribute()} and
+		 * {@link Config#getFallbackAttribute()}.
+		 */
+		class CompatibleAttributes extends
+				Function3<List<? extends TLStructuredTypePart>, TLStructuredTypePart, TLStructuredType, TLType> {
+
+			@Override
+			public List<? extends TLStructuredTypePart> apply(TLStructuredTypePart self, TLStructuredType contextType,
+					TLType attributeType) {
+				if (contextType == null || attributeType == null) {
+					return Collections.emptyList();
+				}
+
+				return contextType.getAllParts().stream()
+					.filter(p -> p != self)
+					.filter(p -> p.getType() == attributeType)
+					.toList();
+			}
+		}
 	}
 
 	private TLStructuredTypePart _storageAttr;

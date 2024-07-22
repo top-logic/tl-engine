@@ -154,6 +154,11 @@ public class TLStructuredTypePartFormBuilder extends
 		String EDIT_MODEL = "editModel";
 
 		/**
+		 * @see #getEditing()
+		 */
+		String EDITING = "editing";
+
+		/**
 		 * @see #isNewAttribute()
 		 */
 		String NEW_ATTRIBUTE = "newAttribute";
@@ -199,6 +204,20 @@ public class TLStructuredTypePartFormBuilder extends
 		@Hidden
 		@Name(EDIT_MODEL)
 		EditModel getEditModel();
+
+		/**
+		 * When an existing part is edited, the reference to the existing part, <code>null</code>
+		 * otherwise.
+		 */
+		@Name(EDITING)
+		@Hidden
+		@InstanceFormat
+		TLStructuredTypePart getEditing();
+
+		/**
+		 * @see #getEditing()
+		 */
+		void setEditing(TLStructuredTypePart part);
 
 		@Override
 		@DynamicMode(fun = HideImmutableIf.class, args = @Ref({ EDIT_MODEL, EditModel.CREATING }))
@@ -423,6 +442,7 @@ public class TLStructuredTypePartFormBuilder extends
 	protected static void initWithPart(EditModel formModel, PartModel partModel, TLStructuredTypePart part) {
 		formModel.setPartModel(partModel);
 
+		partModel.setEditing(part);
 		partModel.setOverride(part.isOverride());
 		partModel.setName(part.getName());
 		partModel.setFullQualifiedName(TLModelUtil.qualifiedName(part));

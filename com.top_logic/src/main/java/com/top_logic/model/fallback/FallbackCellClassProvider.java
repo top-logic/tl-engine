@@ -38,9 +38,9 @@ public class FallbackCellClassProvider extends AbstractCellClassProvider {
 			if (row instanceof TLObject obj) {
 				Object explicitValue = _fallbackStorage.getExplicitValue(obj, _attribute);
 				if (Utils.isEmpty(explicitValue)) {
-					return UpdateFallbackCssClass.CSS_FALLBACK;
+					return UpdateFallbackDisplay.CSS_FALLBACK;
 				} else {
-					return UpdateFallbackCssClass.CSS_EXPLICIT;
+					return UpdateFallbackDisplay.CSS_EXPLICIT;
 				}
 			}
 		}

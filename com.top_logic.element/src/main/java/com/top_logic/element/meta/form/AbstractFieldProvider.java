@@ -44,7 +44,8 @@ public abstract class AbstractFieldProvider implements FieldProvider {
 					} else {
 						String fallbackAttribute = fallbackConfig.getFallbackAttribute();
 						
-						Object fallbackValue = editContext.getOverlay().tValueByName(fallbackAttribute);
+						Object fallbackValue = AttributeFormFactory.toFieldValue(editContext, field,
+							editContext.getOverlay().tValueByName(fallbackAttribute));
 						field.setPlaceholder(fallbackValue);
 						
 						Object fieldValue = AttributeFormFactory.toFieldValue(editContext, field, explicitValue);

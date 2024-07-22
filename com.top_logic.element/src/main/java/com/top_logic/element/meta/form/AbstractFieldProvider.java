@@ -31,7 +31,7 @@ public abstract class AbstractFieldProvider implements FieldProvider {
 	 * Sets the given field's value to the value from the {@link EditContext}.
 	 */
 	protected void initValue(EditContext editContext, FormMember member) {
-		if (member instanceof FormField field) {
+		if (!editContext.isSearchUpdate() && member instanceof FormField field) {
 			TLStorage storage = editContext.getAnnotation(TLStorage.class);
 			if (storage != null) {
 				PolymorphicConfiguration<? extends StorageImplementation> implementation = storage.getImplementation();

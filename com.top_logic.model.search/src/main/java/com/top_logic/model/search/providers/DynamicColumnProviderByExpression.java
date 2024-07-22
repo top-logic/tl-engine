@@ -30,7 +30,6 @@ import com.top_logic.element.meta.form.FieldProvider;
 import com.top_logic.element.meta.form.FieldProviderAnnotation;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.component.ComponentUtil;
-import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.values.edit.initializer.UUIDInitializer;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -364,9 +363,6 @@ public class DynamicColumnProviderByExpression
 							.setValue(accessor.getValue(row, columnName))
 							.setInTableContext(true);
 						FormMember field = fieldProvider.getFormField(editContext, columnName);
-						if (field instanceof FormField) {
-							((FormField) field).initializeField(editContext.getCorrectValues());
-						}
 						field.setStableIdSpecialCaseMarker(columnModel);
 						return field;
 					}

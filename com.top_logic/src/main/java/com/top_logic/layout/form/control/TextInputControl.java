@@ -27,6 +27,7 @@ import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.constraints.StringLengthConstraint;
 import com.top_logic.layout.form.format.WikiWrite;
+import com.top_logic.layout.form.model.ComplexField;
 import com.top_logic.layout.tooltip.ToolTip;
 import com.top_logic.mig.html.HTMLConstants;
 
@@ -93,7 +94,30 @@ public class TextInputControl extends AbstractFormFieldControl implements WithPl
 
 	@Override
 	public String getPlaceHolder() {
-		return _placeHolder != null ? _placeHolder : (String) getFieldModel().getPlaceholder();
+		return _placeHolder != null ? _placeHolder : getModelPlaceholder();
+	}
+
+	/**
+	 * The placeholder value retrieved from the field model.
+	 */
+	private String getModelPlaceholder() {
+		Object placeholder = getFieldModel().getPlaceholder();
+		if (placeholder == null) {
+			return null;
+		}
+		return formatPlaceholder(placeholder);
+	}
+
+	/**
+	 * Converts the placeholder value from the field model to a string being displayed.
+	 */
+	protected String formatPlaceholder(Object placeholder) {
+		FormField field = getFieldModel();
+		if (field instanceof ComplexField complexField) {
+			return complexField.getFormat().format(placeholder);
+		} else {
+			return (String) placeholder;
+		}
 	}
 
 	@Override

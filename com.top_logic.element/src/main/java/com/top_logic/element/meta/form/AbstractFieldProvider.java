@@ -31,13 +31,11 @@ public abstract class AbstractFieldProvider implements FieldProvider {
 	 * Sets the given field's value to the value from the {@link EditContext}.
 	 */
 	protected void initValue(EditContext editContext, FormMember member) {
-		if (member instanceof FormField) {
+		if (member instanceof FormField field) {
 			TLStorage storage = editContext.getAnnotation(TLStorage.class);
 			if (storage != null) {
 				PolymorphicConfiguration<? extends StorageImplementation> implementation = storage.getImplementation();
 				if (implementation instanceof AttributeWithFallbackStorage.Config<?> fallbackConfig) {
-					FormField field = (FormField) member;
-					
 					String storageAttribute = fallbackConfig.getStorageAttribute();
 					Object explicitValue = editContext.getOverlay().tValueByName(storageAttribute);
 
@@ -47,11 +45,10 @@ public abstract class AbstractFieldProvider implements FieldProvider {
 						String fallbackAttribute = fallbackConfig.getFallbackAttribute();
 						
 						Object fallbackValue = editContext.getOverlay().tValueByName(fallbackAttribute);
+						field.setPlaceholder(fallbackValue);
 						
 						Object fieldValue = AttributeFormFactory.toFieldValue(editContext, field, explicitValue);
 						field.initializeField(fieldValue);
-						
-						field.setPlaceholder(fallbackValue);
 					}
 
 					member.addCssClass(UpdateFallbackDisplay.CSS_WITH_FALLBACK);

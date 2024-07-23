@@ -169,7 +169,7 @@ public class ItemEditor implements Editor {
 				} else {
 					LabelProvider optionLabels = editorFactory.getOptionLabels(property);
 					Listener valueUpdateOnOptionsChange =
-						new ValueUpdateOnOptionsChange(valueModel,
+						new ValueUpdateOnOptionsChange(editorFactory, valueModel,
 							Fields.optionMapping(optionProvider),
 							getOptionComparator(property, optionLabels));
 					optionsValue.addListener(valueUpdateOnOptionsChange);

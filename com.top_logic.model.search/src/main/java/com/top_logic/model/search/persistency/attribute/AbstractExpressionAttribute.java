@@ -11,6 +11,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.element.meta.kbbased.storage.AbstractDerivedStorage;
 import com.top_logic.model.TLStructuredTypePart;
@@ -43,6 +44,7 @@ public abstract class AbstractExpressionAttribute<C extends AbstractExpressionAt
 		 * </p>
 		 */
 		@Name("expr")
+		@Label("Function")
 		@DefaultContainer
 		Expr getExpr();
 	}

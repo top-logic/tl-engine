@@ -12,6 +12,7 @@ import java.util.Comparator;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
+import com.top_logic.basic.config.customization.AnnotationCustomizations;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
@@ -28,14 +29,18 @@ import com.top_logic.layout.form.values.edit.ValueModel;
  */
 final class ValueUpdateOnOptionsChange implements Listener {
 
+	private final AnnotationCustomizations _customizations;
+
 	private final ValueModel _valueModel;
 
 	private final OptionMapping _optionMapping;
 
 	private final Comparator<Object> _optionComparator;
 
-	ValueUpdateOnOptionsChange(ValueModel valueModel, OptionMapping optionMapping,
+	ValueUpdateOnOptionsChange(AnnotationCustomizations customizations, ValueModel valueModel,
+			OptionMapping optionMapping,
 			Comparator<Object> optionComparator) {
+		_customizations = customizations;
 		_optionComparator = optionComparator;
 		_valueModel = Utils.requireNonNull(valueModel);
 		_optionMapping = optionMapping;
@@ -50,7 +55,8 @@ final class ValueUpdateOnOptionsChange implements Listener {
 		}
 
 		PropertyDescriptor property = _valueModel.getProperty();
-		ImplementationClassDefault annotation = property.getAnnotation(ImplementationClassDefault.class);
+		ImplementationClassDefault annotation =
+			_customizations.getAnnotation(property, ImplementationClassDefault.class);
 		if (annotation != null) {
 			Class<?> defaultImplClass = annotation.value();
 

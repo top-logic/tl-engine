@@ -692,6 +692,12 @@
 		
 		<config config:interface="com.top_logic.layout.form.values.edit.EditorFactory$Config">
 			<customizations>
+				<property name="com.top_logic.element.config.annotation.TLStorage#implementation">
+					<annotations>
+						<implementation-class-default value="com.top_logic.model.search.providers.AttributeByExpression"/>
+					</annotations>
+				</property>
+
 				<type name="com.top_logic.layout.ScriptFunction0">
 					<annotations>
 						<property-editor value="com.top_logic.model.search.form.ScriptFunction0Impl$Editor"/>

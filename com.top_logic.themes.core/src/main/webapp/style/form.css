@@ -2551,9 +2551,7 @@ a.input-image.tristate.tBoolean {
 }
 
 .rf_header .ddwttDropBtn {
-	background-color: unset;
-	border: none;
-	height: 20px;
+	margin-left: var(--spacing-02);
 }
 
 .ddwttDropBtn {

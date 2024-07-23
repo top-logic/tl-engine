@@ -195,6 +195,11 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 	}
 
 	@Override
+	public void initUpdate(TLObject object, TLStructuredTypePart attribute, AttributeUpdate update) {
+		update.setValue(object.tValue(_storageAttr));
+	}
+
+	@Override
 	public void update(AttributeUpdate update) throws AttributeException {
 		if (update.isChanged()) {
 			storage().setAttributeValue(update.getObject(), _storageAttr, update.getEditedValue());

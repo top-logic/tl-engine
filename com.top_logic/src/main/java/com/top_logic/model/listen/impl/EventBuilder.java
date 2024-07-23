@@ -74,8 +74,11 @@ public class EventBuilder {
 
 		@Override
 		public Stream<? extends TLObject> getUpdated(TLStructuredType type) {
-			return _typeIndex.getOrDefault(type, Collections.emptyList()).stream()
-				.flatMap(specialization -> _updatedByType.get(specialization).stream());
+			return specializations(type).flatMap(this::updates);
+		}
+
+		private Stream<TLObject> updates(TLStructuredType specialization) {
+			return streamValue(_updatedByType, specialization);
 		}
 
 		@Override
@@ -85,8 +88,11 @@ public class EventBuilder {
 
 		@Override
 		public Stream<? extends TLObject> getCreated(TLStructuredType type) {
-			return _typeIndex.getOrDefault(type, Collections.emptyList()).stream()
-				.flatMap(specialization -> _createdByType.get(specialization).stream());
+			return specializations(type).flatMap(this::creations);
+		}
+
+		private Stream<TLObject> creations(TLStructuredType specialization) {
+			return streamValue(_createdByType, specialization);
 		}
 
 		@Override
@@ -96,8 +102,19 @@ public class EventBuilder {
 
 		@Override
 		public Stream<? extends TLObject> getDeleted(TLStructuredType type) {
-			return _typeIndex.getOrDefault(type, Collections.emptyList()).stream()
-				.flatMap(specialization -> _deletedByType.get(specialization).stream());
+			return specializations(type).flatMap(this::deletions);
+		}
+
+		private Stream<TLObject> deletions(TLStructuredType specialization) {
+			return streamValue(_deletedByType, specialization);
+		}
+
+		private Stream<TLStructuredType> specializations(TLStructuredType type) {
+			return streamValue(_typeIndex, type);
+		}
+
+		private <K, V> Stream<V> streamValue(Map<K, List<V>> map, K key) {
+			return map.getOrDefault(key, Collections.emptyList()).stream();
 		}
 
 		@Override

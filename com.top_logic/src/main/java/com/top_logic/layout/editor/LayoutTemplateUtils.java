@@ -314,10 +314,9 @@ public class LayoutTemplateUtils {
 		TypedConfiguration.minimize(arguments);
 		
 		try (StringWriter stringWriter = new StringWriter()) {
-			ConfigurationWriter configWriter = new ConfigurationWriter(stringWriter);
-
-			writeTemplateArguments(configWriter, arguments);
-
+			try (ConfigurationWriter configWriter = new ConfigurationWriter(stringWriter)) {
+				writeTemplateArguments(configWriter, arguments);
+			}
 			return stringWriter.toString();
 		} catch (XMLStreamException | IOException exception) {
 			throw new IOError(exception);

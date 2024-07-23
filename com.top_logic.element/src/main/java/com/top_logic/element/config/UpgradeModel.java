@@ -242,9 +242,10 @@ public class UpgradeModel extends XMain {
 	}
 
 	private static void writeModel(Writer out, ModelConfig model) throws XMLStreamException, IOException {
-		ConfigurationWriter writer = new ConfigurationWriter(out);
-		writer.setNamespace("", ElementSchemaConstants.MODEL_6_NS);
-		writer.write(ElementSchemaConstants.ROOT_ELEMENT, ModelConfig.class, model);
+		try (ConfigurationWriter writer = new ConfigurationWriter(out)) {
+			writer.setNamespace("", ElementSchemaConstants.MODEL_6_NS);
+			writer.write(ElementSchemaConstants.ROOT_ELEMENT, ModelConfig.class, model);
+		}
 		out.flush();
 	}
 

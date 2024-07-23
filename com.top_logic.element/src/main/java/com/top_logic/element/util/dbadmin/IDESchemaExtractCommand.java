@@ -237,8 +237,9 @@ public class IDESchemaExtractCommand extends AbstractCommandHandler {
 		TypedConfiguration.minimize(config);
 		try (OutputStreamWriter writer = new OutputStreamWriter(out, "utf-8")) {
 			StringWriter buffer = new StringWriter();
-			ConfigurationWriter w = new ConfigurationWriter(buffer);
-			w.write(rootTag, staticType, config);
+			try (ConfigurationWriter w = new ConfigurationWriter(buffer)) {
+				w.write(rootTag, staticType, config);
+			}
 
 			writer.write(XMLPrettyPrinter.prettyPrint(buffer.toString()));
 		}

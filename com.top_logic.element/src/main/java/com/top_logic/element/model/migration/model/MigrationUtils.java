@@ -954,8 +954,9 @@ public class MigrationUtils {
 	private static String storageMappingToString(PolymorphicConfiguration<StorageMapping<?>> config) {
 		StringWriter buffer = new StringWriter();
 		try {
-			new ConfigurationWriter(buffer).write(DatatypeConfig.STORAGE_MAPPING, PolymorphicConfiguration.class,
-				config);
+			try (ConfigurationWriter w = new ConfigurationWriter(buffer)) {
+				w.write(DatatypeConfig.STORAGE_MAPPING, PolymorphicConfiguration.class, config);
+			}
 		} catch (XMLStreamException ex) {
 			throw new RuntimeException(ex);
 		}

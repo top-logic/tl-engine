@@ -29,28 +29,56 @@
 			<td>-</td>
 		</tr>
 		<tr>
-			<td>raw</td>
-			<td>Boolean</td>
-			<td>
-			<p><span style="color:#2980b9">raw = true</span>: The function returns the raw data</p>
-
-			<p>as a list of lists with headers.</p>
-
-			<p><span style="color:#2980b9">otherwise:</span> The function returns a list of maps,</p>
-
-			<p>where the column names (from the header)</p>
-
-			<p>are used as the key.</p>
-			</td>
-			<td>No</td>
-			<td>false/null</td>
-		</tr>
-		<tr>
 			<td>parsers</td>
 			<td>map</td>
 			<td>Formatting information for the individual columns</td>
 			<td>No</td>
 			<td>null</td>
+		</tr>
+		<tr>
+			<td>columnSeparator</td>
+			<td>Char</td>
+			<td>Separator for row entries</td>
+			<td>No</td>
+			<td>','</td>
+		</tr>
+		<tr>
+			<td>lineSeparator</td>
+			<td>string</td>
+			<td>Separator for the individual lines</td>
+			<td>No</td>
+			<td>"\n"</td>
+		</tr>
+		<tr>
+			<td>quoteChar</td>
+			<td>Char</td>
+			<td>
+			<p>Character used to quote values that contain quotation marks or line breaks</p>
+			</td>
+			<td>No</td>
+			<td>'"'</td>
+		</tr>
+		<tr>
+			<td>trimSpaces</td>
+			<td>Boolean</td>
+			<td>true: if spaces around separators are to be trimmed automatically.</td>
+			<td>No</td>
+			<td>false</td>
+		</tr>
+		<tr>
+			<td>raw</td>
+			<td>Boolean</td>
+			<td>
+			<p>raw = true: The function returns the raw data as a list of lists with</p>
+
+			<p>header.</p>
+
+			<p>otherwise: The function returns a list of maps, whereby the column names</p>
+
+			<p>(from the header) are used as the key.</p>
+			</td>
+			<td>No</td>
+			<td>false/null</td>
 		</tr>
 	</tbody>
 </table>
@@ -76,14 +104,14 @@
         contentType: "text/csv",
         encoding: "utf-8"
     );
-    result = $toParse.parseCSV(true);
+    result = $toParse.parseCSV(raw:true, columnSeparator: ";");
     $result[0]
 }</code>
 </pre>
 
 <p><span style="color:#3498db"><strong>Output:</strong></span> ["date", "name", "number"]</p>
 
-<p>Calling <code class="hljs inlineCode">parseCSV(true)</code> returns the list <code class="hljs inlineCode">[["date", "name", "number"], ["15.07.2024", "test", "5"], ["16.07.2024", "test2", "2", "etc."],["17.07.2024"]].</code></p>
+<p>Calling <code class="hljs inlineCode">parseCSV(raw:true, columnSeparator: ";")</code> returns the list <code class="hljs inlineCode">[["date", "name", "number"], [" 15.07.2024", "test", "5"], [" 16.07.2024", "test2", "2", "etc."],[" 17.07.2024"]].</code> So with spaces before the date. If we want to get rid of these spaces, we have to call<code class="hljs inlineCode">parseCSV(raw:true, columnSeparator: ";", trimSpaces:true)</code>.</p>
 
 <h3> </h3>
 
@@ -100,14 +128,14 @@
         contentType: "text/csv",
         encoding: "utf-8"
     );
-    result = $toParse.parseCSV();
+    result = $toParse.parseCSV(columnSeparator: ";");
     $result
 }</code>
 </pre>
 
 <p><span style="color:#3498db"><strong>Output:</strong></span> [<span style="color:#c0392b">{date=</span> 15.07.2024, <span style="color:#c0392b">number=</span> 5, <span style="color:#c0392b">name=</span> test}, <span style="color:#c0392b">{date=</span> 16.07.2024, <span style="color:#c0392b">number=</span> 2, <span style="color:#c0392b">name=</span> test2}, <span style="color:#c0392b">{date=</span> 17.07.2024, <span style="color:#c0392b">number=</span>, <span style="color:#c0392b">name=}</span>]</p>
 
-<p>Calling<code class="hljs inlineCode">parseCSV()</code> returns a list of maps. The first line is selected as the header and its entries are used as the key for the maps. Subsequently, for each additional line, the map is generated from its entries according to the keys of the header of the corresponding map, whereby excess entries of the line are ignored and missing entries of the line are filled with empty strings.</p>
+<p>Calling <code class="hljs inlineCode">parseCSV(columnSeparator: ";")</code> returns a list of maps. The first line is selected as the header and its entries are used as the key for the maps. Subsequently, for each additional line, the map is generated from its entries according to the keys of the header of the corresponding map, whereby excess entries of the line are ignored and missing entries of the line are filled with empty strings.</p>
 
 <p> </p>
 
@@ -124,11 +152,13 @@
         contentType: "text/csv",
         encoding: "utf-8"
     );
-    result = $toParse.parseCSV(parsers: {"date": x-&gt; dateFormat("dd.MM.yy").format(dateFormat("dd.MM.yyy").parse($x)) });
+    result = $toParse.parseCSV(columnSeparator: ";", trimSpaces:true, 
+        parsers: {"date": x-&gt; dateFormat("dd.MM.yy").format(dateFormat("dd.MM.yyy").parse($x)), 
+        "number": y -&gt; numberFormat("#").parse($y)+1 });
     $result
 }</code>
 </pre>
 
-<p><span style="color:#3498db"><strong>Output:</strong></span> [<span style="color:#c0392b">{date=</span> 15.07.24, <span style="color:#c0392b">number= </span>5, <span style="color:#c0392b">name=</span> test}, <span style="color:#c0392b">{date=</span> 16.07.24, <span style="color:#c0392b">number=</span> 2, <span style="color:#c0392b">name=</span> test2}, <span style="color:#c0392b">{date=</span> 17.07.24, <span style="color:#c0392b">number=</span>, <span style="color:#c0392b">name=}</span>]</p>
+<p><span style="color:#3498db"><strong>Output:</strong></span> [<span style="color:#c0392b">{date=</span> 15.07.24, <span style="color:#c0392b">number= </span>6.0, <span style="color:#c0392b">name=</span> test}, <span style="color:#c0392b">{date=</span> 16.07.24, <span style="color:#c0392b">number=</span> 3.0, <span style="color:#c0392b">name=</span> test2}, <span style="color:#c0392b">{date=</span> 17.07.24, <span style="color:#c0392b">number=</span>, <span style="color:#c0392b">name=}</span>]</p>
 
-<p>When<code class="hljs inlineCode">parseCSV()</code>is called, a parser for the column with the name "date" is specified, which prepares the entries from the corresponding cells.</p>
+<p>When <code class="hljs inlineCode">parseCSV</code> is called, a parser for the column with the name "date" and a parser for the column with the name "number" is specified here, which prepares the entries from the corresponding cells.</p>

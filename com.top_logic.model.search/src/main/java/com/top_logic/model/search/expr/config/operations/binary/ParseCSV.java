@@ -17,9 +17,13 @@ import java.util.Map.Entry;
 import jakarta.activation.MimeType;
 import jakarta.activation.MimeTypeParseException;
 
+import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvParser;
+import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.io.CSVReader;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
@@ -42,6 +46,58 @@ public class ParseCSV extends GenericMethod {
 	public static final String ISO_8859 = "iso-8859-1";
 
 	/**
+	 * Position of the input csv file (for parsing) in arguments
+	 */
+	private static final int INPUT_DATA_INDEX = 0;
+
+	/**
+	 * Position of given parsers in arguments
+	 */
+	private static final int PARSERS_INDEX = 1;
+
+	/**
+	 * Position of selected column separator in arguments
+	 */
+	private static final int COLUMN_SEPARATOR_INDEX = 2;
+
+	/**
+	 * Position of selected line separator in arguments
+	 */
+	private static final int LINE_SEPARATOR_INDEX = 3;
+
+	/**
+	 * Position of selected quote char in arguments
+	 */
+	private static final int QUOTE_CHAR_INDEX = 4;
+
+	/**
+	 * Position of the Boolean, which indicates if the spaces around separator characters are to be
+	 * automatically trimmed before being reported or not in arguments.
+	 */
+	private static final int TRIM_SPACES_INDEX = 5;
+
+	/**
+	 * Position of the Boolean, which indicates if the raw result of parsing is returned (as a List
+	 * of Strings).
+	 */
+	private static final int RAW_INDEX = 6;
+
+	/**
+	 * Default separator for column.
+	 */
+	private static final char DEFAULT_COLUMN_SEPARATOR = ',';
+
+	/**
+	 * Default separator for lines.
+	 */
+	private static final String DEFAULT_LINE_SEPARATOR = "\n";
+
+	/**
+	 * Default separator for column.
+	 */
+	private static final char DEFAULT_QUOTE_CHAR = '"';
+
+	/**
 	 * Creates a {@link ParseCSV}.
 	 */
 	protected ParseCSV(String name, SearchExpression[] arguments) {
@@ -60,14 +116,19 @@ public class ParseCSV extends GenericMethod {
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		Object input = arguments[0];
+		Object input = arguments[INPUT_DATA_INDEX];
 		if (input == null) {
 			return null;
 		}
 
-		List <List <String>> result = parse(input);
+		char columnSeparator = asChar(arguments[COLUMN_SEPARATOR_INDEX], DEFAULT_COLUMN_SEPARATOR);
+		String lineSeparator = asString(arguments[LINE_SEPARATOR_INDEX], DEFAULT_LINE_SEPARATOR);
+		char quoteChar = asChar(arguments[QUOTE_CHAR_INDEX], DEFAULT_QUOTE_CHAR);
+		Boolean trimSpaces = asBoolean(arguments[TRIM_SPACES_INDEX]);
 
-		Boolean raw = asBoolean(arguments[1]);
+		List<List<String>> result = parse(input, columnSeparator, lineSeparator, quoteChar, trimSpaces);
+
+		Boolean raw = asBoolean(arguments[RAW_INDEX]);
 		if (raw == true) {
 			return result;
 		} else {
@@ -101,8 +162,8 @@ public class ParseCSV extends GenericMethod {
 
 	private Map<String, SearchExpression> createParseMap(Object[] arguments) {
 		Map<String, SearchExpression> result = new HashMap<>();
-		if (arguments[2] != null) {
-			Map<?, ?> parsers = asMap(arguments[2]);
+		if (arguments[PARSERS_INDEX] != null) {
+			Map<?, ?> parsers = asMap(arguments[PARSERS_INDEX]);
 			for (Entry<?, ?> entry : parsers.entrySet()) {
 				String column = asString(entry.getKey());
 				SearchExpression parser = asSearchExpression(entry.getValue());
@@ -112,7 +173,8 @@ public class ParseCSV extends GenericMethod {
 		return result;
 	}
 
-	private List<List<String>> parse(Object input) {
+	private List<List<String>> parse(Object input, char columnSeparator, String lineSeparator, char quoteChar,
+			Boolean trimSpaces) {
 		try {
 			BinaryDataSource data = (BinaryDataSource) input;
 
@@ -123,11 +185,61 @@ public class ParseCSV extends GenericMethod {
 			}
 
 			try (InputStream in = data.toData().getStream()) {
+				CsvSchema csvSchema = createSchema(columnSeparator, lineSeparator, quoteChar);
 				InputStreamReader streamReader = new InputStreamReader(in, charset);
-				CSVReader csvReader = new CSVReader(streamReader, ';');
-				return csvReader.readAllLines();
+				MappingIterator<List<String>> iterator = createIterator(streamReader, csvSchema, trimSpaces);
+				List<List<String>> all = iterator.readAll();
+				return all;
 			}
 		} catch (IOException | MimeTypeParseException ex) {
+			throw new TopLogicException(I18NConstants.ERROR_CONVERSION_FAILED__MSG_EXPR.fill(ex.getMessage(), this),
+				ex);
+		}
+	}
+
+	private char asChar(Object value, char defaultValue) {
+		String valueSting = asString(value, null);
+		if (valueSting == null) {
+			return defaultValue;
+		} else {
+			return valueSting.charAt(0);
+		}
+	}
+
+	private CsvSchema createSchema(char columnSeparator, String lineSeparator, char quoteChar) {
+		CsvSchema csvSchema = CsvSchema.emptySchema();
+
+		csvSchema = csvSchema
+			.withColumnSeparator(columnSeparator)
+			.withLineSeparator(lineSeparator)
+			.withQuoteChar(quoteChar);
+
+		return csvSchema;
+	}
+
+	private MappingIterator<List<String>> createIterator(InputStreamReader streamReader, CsvSchema csvSchema,
+			Boolean trimSpaces) {
+		CsvMapper csvMapper = new CsvMapper();
+		MappingIterator<List<String>> iterator = null;
+		try {
+			if (trimSpaces == true) {
+				iterator = csvMapper
+					.readerForListOf(String.class)
+					.with(CsvParser.Feature.WRAP_AS_ARRAY)
+					.with(CsvParser.Feature.TRIM_SPACES)
+					.with(csvSchema)
+					.readValues(streamReader);
+
+			} else {
+				iterator = csvMapper
+					.readerForListOf(String.class)
+					.with(CsvParser.Feature.WRAP_AS_ARRAY)
+					.with(csvSchema)
+					.readValues(streamReader);
+			}
+
+			return iterator;
+		} catch (IOException ex) {
 			throw new TopLogicException(I18NConstants.ERROR_CONVERSION_FAILED__MSG_EXPR.fill(ex.getMessage(), this),
 				ex);
 		}
@@ -141,8 +253,12 @@ public class ParseCSV extends GenericMethod {
 
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("input")
-			.optional("raw")
 			.optional("parsers")
+			.optional("columnSeparator", String.valueOf(DEFAULT_COLUMN_SEPARATOR))
+			.optional("lineSeparator", DEFAULT_LINE_SEPARATOR)
+			.optional("quoteChar", String.valueOf(DEFAULT_QUOTE_CHAR))
+			.optional("trimSpaces", false)
+			.optional("raw")
 			.build();
 
 		/**

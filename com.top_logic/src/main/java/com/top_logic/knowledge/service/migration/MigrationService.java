@@ -442,8 +442,9 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 			throws XMLStreamException, IOException, FileNotFoundException, SAXException {
 		try (var out = new FileOutputStream(file)) {
 			try (OutputStreamWriter writer = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {
-				new ConfigurationWriter(writer)
-					.write(MORepositoryBuilder.ROOT_TAG, MetaObjectsConfig.class, conf);
+				try (ConfigurationWriter w = new ConfigurationWriter(writer)) {
+					w.write(MORepositoryBuilder.ROOT_TAG, MetaObjectsConfig.class, conf);
+				}
 			}
 		}
 		XMLPrettyPrinter.normalizeFile(file);

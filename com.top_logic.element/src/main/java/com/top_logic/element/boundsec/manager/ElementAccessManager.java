@@ -475,7 +475,9 @@ public class ElementAccessManager extends AccessManager {
 		String configVersion;
 		try {
 			StringWriter out = new StringWriter();
-			new ConfigurationWriter(out).write("roleRules", RoleRulesConfig.class, roleRules);
+			try (ConfigurationWriter w = new ConfigurationWriter(out)) {
+				w.write("roleRules", RoleRulesConfig.class, roleRules);
+			}
 			configVersion = String.valueOf(out.toString().hashCode());
 		} catch (XMLStreamException ex) {
 			configVersion = String.valueOf(System.currentTimeMillis());

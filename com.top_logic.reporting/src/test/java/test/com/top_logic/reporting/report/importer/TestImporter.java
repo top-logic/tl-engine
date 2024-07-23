@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 import junit.framework.Test;
+
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.reporting.ReportingSetup;
 
@@ -86,8 +87,9 @@ public class TestImporter extends BasicTestCase {
         theConf.setAggregationConfigurations(new ListBuilder().add(theAgg1).add(theAgg2).toList());
         
         StringWriter theString = new StringWriter(1024);
-        ConfigurationWriter theWriter = new ConfigurationWriter(theString);
-        theWriter.write("report", ReportConfiguration.class, theConf);
+		try (ConfigurationWriter theWriter = new ConfigurationWriter(theString)) {
+			theWriter.write("report", ReportConfiguration.class, theConf);
+		}
         theString.flush();
         
         String theWrittenConf = theString.getBuffer().toString();

@@ -2052,11 +2052,11 @@ span.bcc-option {
 	color: var(--text-disabled);
 }
 
-.cChoice-horizontal > .cChoice-option::after {
+.cChoice-horizontal.cannot-edit > .cChoice-option::after {
 	content: ";";
 }
 
-.cChoice-horizontal > .cChoice-option:last-child::after {
+.cChoice-horizontal.cannot-edit > .cChoice-option:last-child::after {
 	content: "";
 }
 

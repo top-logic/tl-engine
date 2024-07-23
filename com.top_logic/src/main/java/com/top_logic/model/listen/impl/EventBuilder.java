@@ -425,15 +425,15 @@ public class EventBuilder {
 		if (touchedType.getModelKind() == ModelKind.CLASS) {
 			TLClass touchedClass = (TLClass) touchedType;
 			Set<TLClass> superClasses = TLModelUtil.getReflexiveTransitiveGeneralizations(touchedClass);
-			superClasses.forEach(superClass -> addDirect(typeIndex, listeners, superClass));
+			superClasses.forEach(superClass -> addDirect(typeIndex, listeners, superClass, touchedType));
 		} else {
-			addDirect(typeIndex, listeners, touchedType);
+			addDirect(typeIndex, listeners, touchedType, touchedType);
 		}
 	}
 
 	private void addDirect(Map<TLStructuredType, List<TLStructuredType>> typeIndex, Set<ModelListener> listeners,
-			TLStructuredType generalization) {
-		addToIndex(typeIndex, generalization);
+			TLStructuredType generalization, TLStructuredType specialization) {
+		addToIndex(typeIndex, generalization, specialization);
 		addToListeners(listeners, generalization);
 	}
 
@@ -444,8 +444,8 @@ public class EventBuilder {
 		}
 	}
 
-	private void addToIndex(Map<TLStructuredType, List<TLStructuredType>> typeIndex, TLStructuredType generalization) {
-		typeIndex.computeIfAbsent(generalization, x -> new ArrayList<>()).add(generalization);
+	private void addToIndex(Map<TLStructuredType, List<TLStructuredType>> typeIndex, TLStructuredType generalization, TLStructuredType specialization) {
+		typeIndex.computeIfAbsent(generalization, x -> new ArrayList<>()).add(specialization);
 	}
 
 	private void notifyListeners(Map<TLStructuredType, List<TLStructuredType>> typeIndex, Set<ModelListener> listeners) {

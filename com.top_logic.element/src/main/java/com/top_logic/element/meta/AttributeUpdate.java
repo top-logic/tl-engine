@@ -688,11 +688,6 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 		return this;
 	}
 
-	void initEdit(Object presetValue) {
-		setType(UpdateType.TYPE_EDIT);
-		setValue(presetValue);
-	}
-
 	void initSearchVisibility() {
 		setDisabled(false);
 		setMandatory(false);
@@ -735,9 +730,10 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	 * @return This instance of call chaining.
 	 */
 	public AttributeUpdate createUpdate() {
+		setType(UpdateType.TYPE_EDIT);
 		initCreate(true);
 		initCreateVisibility();
-		initEdit(null);
+		setValue(null);
 		if (!isDerived()) {
 			DefaultProvider defaultProvider = DisplayAnnotations.getDefaultProvider(getAttribute());
 			if (defaultProvider != null) {
@@ -756,6 +752,7 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	 * @return This instance of call chaining.
 	 */
 	public AttributeUpdate editUpdateDefault(boolean externalDisabled) {
+		setType(UpdateType.TYPE_EDIT);
 		initPersistentValue();
 		initDefaultEditVisibility(externalDisabled);
 		return this;
@@ -772,13 +769,17 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	 * @return This instance of call chaining.
 	 */
 	public AttributeUpdate editUpdateCustom(boolean disabled, boolean mandatory) {
+		setType(UpdateType.TYPE_EDIT);
 		initPersistentValue();
 		initCustomEditVisibility(disabled, mandatory);
 		return this;
 	}
 
 	private void initPersistentValue() {
-		initEdit(getObject().tValue(getAttribute()));
+		TLObject object = getObject();
+		TLStructuredTypePart attribute = getAttribute();
+		StorageImplementation storage = AttributeOperations.getStorageImplementation(object, attribute);
+		storage.initUpdate(object, attribute, this);
 	}
 
 	/**

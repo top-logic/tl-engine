@@ -21,6 +21,7 @@ import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.time.CalendarUtil;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.KeyEvent;
 import com.top_logic.layout.KeyEventListener;
@@ -785,6 +786,20 @@ public class DateTimeField extends CompositeField {
 			getTimeField().initializeField(toTime(defaultDate));
 		}
 		_listenerDeactivated = false;
+	}
+
+	@Override
+	public void setPlaceholder(Object value) {
+		super.setPlaceholder(value);
+
+		if (Utils.isEmpty(value)) {
+			getDayField().setPlaceholder(null);
+			getTimeField().setPlaceholder(null);
+		} else {
+			Date placeholderDate = (Date) value;
+			getDayField().setPlaceholder(toDay(placeholderDate));
+			getTimeField().setPlaceholder(toTime(placeholderDate));
+		}
 	}
 
 	@Override

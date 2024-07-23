@@ -51,6 +51,22 @@ public interface StorageImplementation extends StorageDetail, Unimplementable {
 			throws TopLogicException;
 
 	/**
+	 * Initializes the base value for an edit operation.
+	 * 
+	 * @param object
+	 *        The object being edited.
+	 * @param attribute
+	 *        The attribute being edited.
+	 * @param update
+	 *        The {@link AttributeUpdate} representing the edit operation.
+	 * 
+	 * @see AttributeUpdate#setValue(Object)
+	 */
+	default void initUpdate(TLObject object, TLStructuredTypePart attribute, AttributeUpdate update) {
+		update.setValue(object.tValue(attribute));
+	}
+
+	/**
 	 * Update the attribute value taking the correct update from the container.
 	 * 
 	 * @param update

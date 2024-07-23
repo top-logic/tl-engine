@@ -608,8 +608,9 @@ public class TestTypedConfiguration extends AbstractTypedConfigurationTestCase {
 
 	private String write(ConfigurationItem config) throws XMLStreamException {
 		StringWriter buffer = new StringWriter();
-		new ConfigurationWriter(buffer).write("config",
-			TypedConfiguration.getConfigurationDescriptor(ConfigurationItem.class), config);
+		try (ConfigurationWriter w = new ConfigurationWriter(buffer)) {
+			w.write("config", TypedConfiguration.getConfigurationDescriptor(ConfigurationItem.class), config);
+		}
 		return buffer.toString();
 	}
 

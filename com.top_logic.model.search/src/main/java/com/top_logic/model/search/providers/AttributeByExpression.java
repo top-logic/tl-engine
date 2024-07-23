@@ -15,12 +15,19 @@ import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.element.meta.AttributeException;
+import com.top_logic.element.meta.AttributeUpdate;
+import com.top_logic.element.meta.AttributeUpdateContainer;
+import com.top_logic.element.meta.AttributeUpdateContainer.Handle;
+import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocator;
+import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.ValueListener;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
@@ -28,7 +35,9 @@ import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.StorageMapping;
+import com.top_logic.model.search.expr.trace.ScriptTracer;
 import com.top_logic.model.search.persistency.attribute.AbstractExpressionAttribute;
+import com.top_logic.model.util.Pointer;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 
@@ -51,6 +60,8 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 		// Pure marker interface.
 	}
 
+	private ScriptTracer _analyzer;
+
 	/**
 	 * Creates a {@link AttributeByExpression} from configuration.
 	 * 
@@ -62,6 +73,45 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 	@CalledByReflection
 	public AttributeByExpression(InstantiationContext context, C config) {
 		super(context, config);
+	}
+
+	@Override
+	public void init(TLStructuredTypePart attribute) {
+		super.init(attribute);
+
+		_analyzer = ScriptTracer.compile(attribute.getModel(), getConfig().getExpr());
+	}
+
+	@Override
+	public void initUpdate(TLObject object, TLStructuredTypePart attribute, AttributeUpdate update) {
+		super.initUpdate(object, attribute, update);
+		
+		TLFormObject overlay = update.getOverlay();
+		AttributeUpdateContainer updateContainer = overlay.getScope();
+		
+		class Observer implements ValueListener, Sink<Pointer> {
+			private List<Handle> _handles = new ArrayList<>();
+
+			@Override
+			public void add(Pointer pointer) {
+				_handles.add(updateContainer.addValueListener(pointer.object(), pointer.attribute(), this));
+			}
+
+			@Override
+			public void valueChanged(FormField field, Object oldValue, Object newValue) {
+				_handles.forEach(Handle::release);
+
+				overlay.tUpdate(attribute, getAttributeValue(overlay, attribute));
+
+				listen();
+			}
+
+			public void listen() {
+				_analyzer.execute(attribute.tKnowledgeBase(), this, overlay);
+			}
+		}
+		
+		new Observer().listen();
 	}
 
 	@Override

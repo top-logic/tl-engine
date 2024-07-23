@@ -21,7 +21,6 @@ import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandHandlerCommand;
-import com.top_logic.layout.basic.DirtyHandling;
 import com.top_logic.layout.form.component.AbstractCreateCommandHandler;
 import com.top_logic.layout.scripting.action.ActionFactory;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
@@ -71,14 +70,8 @@ public class DialogComponent extends AbstractDialogModel {
 				return HandlerResult.DEFAULT_RESULT;
 			} else {
 				Map<String, Object> emptyArgs = Collections.<String,Object>emptyMap();
-				boolean dirty =
-					DirtyHandling.getInstance().checkDirty(context, closeHandler, targetComponent, emptyArgs);
-				if (dirty) {
-					return HandlerResult.DEFAULT_RESULT;
-				} else {
-					closeLocally();
-					return CommandHandlerUtil.handleCommand(closeHandler, context, targetComponent, emptyArgs);
-				}
+				closeLocally();
+				return CommandHandlerUtil.handleCommand(closeHandler, context, targetComponent, emptyArgs);
 			}
 		}
 

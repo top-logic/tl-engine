@@ -7,6 +7,7 @@ package com.top_logic.layout.structure;
 
 import java.awt.Dimension;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +28,8 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.DirtyHandling;
 import com.top_logic.layout.basic.TemplateVariable;
 import com.top_logic.layout.basic.XMLTag;
+import com.top_logic.layout.basic.check.ChangeHandler;
+import com.top_logic.layout.basic.check.ChildrenCheckScope;
 import com.top_logic.layout.component.configuration.OpenGuiInspectorFragment;
 import com.top_logic.layout.component.configuration.ToolRowCommandRenderer;
 import com.top_logic.layout.form.FormConstants;
@@ -39,6 +42,7 @@ import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.layout.toolbar.ToolbarControl;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
 import com.top_logic.mig.html.layout.DialogComponent;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -389,21 +393,34 @@ public class DialogWindowControl extends WindowControl<DialogWindowControl> impl
 		}
 
 		/**
-		 * Checks if a programmable dialog has unsaved changes before it closes itself. For checks
-		 * in other dialogs see {@link DialogComponent.CleanupAction}.
+		 * Checks if a dialog has unsaved changes before it closes itself.
 		 */
 		private HandlerResult getCloseDialogHandler(DisplayContext context, DialogModel dialogModel) {
 			AbstractDialog abstractDialog = AbstractDialog.getDialog(dialogModel);
+
 			if (abstractDialog instanceof FormHandler) {
 				FormHandler formHandler = (FormHandler) abstractDialog;
-				DirtyHandling instance = DirtyHandling.getInstance();
 				List<FormHandler> affectedFormHandlers = List.of(formHandler);
-				boolean dirty = instance.checkDirty(affectedFormHandlers);
-				if (dirty) {
-					instance.openConfirmDialog(dialogModel.getCloseAction(), affectedFormHandlers,
-						DefaultDisplayContext.getDisplayContext().getWindowScope());
-					return HandlerResult.DEFAULT_RESULT;
-				}
+				return handleDirtyCheck(context, dialogModel, affectedFormHandlers);
+			} else if (dialogModel instanceof DialogComponent) {
+				DialogComponent dialogComponent = (DialogComponent) dialogModel;
+				LayoutComponent dialogContents = dialogComponent.getContentComponent();
+				Collection<? extends ChangeHandler> affectedFormHandlers =
+					new ChildrenCheckScope(dialogContents).getAffectedFormHandlers();
+				return handleDirtyCheck(context, dialogModel, affectedFormHandlers);
+			}
+
+			return dialogModel.getCloseAction().executeCommand(context);
+		}
+
+		private HandlerResult handleDirtyCheck(DisplayContext context, DialogModel dialogModel,
+				Collection<? extends ChangeHandler> affectedFormHandlers) {
+			DirtyHandling instance = DirtyHandling.getInstance();
+			boolean dirty = instance.checkDirty(affectedFormHandlers);
+			if (dirty) {
+				instance.openConfirmDialog(dialogModel.getCloseAction(), affectedFormHandlers,
+					context.getWindowScope());
+				return HandlerResult.DEFAULT_RESULT;
 			}
 			return dialogModel.getCloseAction().executeCommand(context);
 		}

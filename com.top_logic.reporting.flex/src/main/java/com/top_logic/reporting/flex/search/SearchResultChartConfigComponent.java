@@ -174,7 +174,9 @@ public class SearchResultChartConfigComponent extends ChartConfigComponent {
 
 		Writer writer = new StringWriter();
 		try {
-			new ConfigurationWriter(writer).write("chart", TypedConfiguration.getConfigurationDescriptor(ChartConfig.class), config);
+			try (ConfigurationWriter w = new ConfigurationWriter(writer)) {
+				w.write("chart", TypedConfiguration.getConfigurationDescriptor(ChartConfig.class), config);
+			}
 		} catch (XMLStreamException ex) {
 			throw new RuntimeException(ex);
 		} finally {

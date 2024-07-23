@@ -307,11 +307,12 @@ public abstract class AbstractTypedConfigurationTestCase extends TestCase {
 			throws XMLStreamException {
 		StringWriter buffer = new StringWriter();
 		Entry<String, ConfigurationDescriptor> entry = getDescriptorBinding(descriptors, config);
-		ConfigurationWriter writer = new ConfigurationWriter(buffer);
-		String tag = entry.getKey();
-		Class<? extends ConfigurationItem> type = (Class<? extends ConfigurationItem>) entry.getValue()
-			.getConfigurationInterface();
-		writer.write(tag, type, config);
+		try (ConfigurationWriter writer = new ConfigurationWriter(buffer)) {
+			String tag = entry.getKey();
+			Class<? extends ConfigurationItem> type = (Class<? extends ConfigurationItem>) entry.getValue()
+					.getConfigurationInterface();
+			writer.write(tag, type, config);
+		}
 		return buffer.toString();
 	}
 

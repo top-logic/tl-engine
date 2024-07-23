@@ -120,8 +120,9 @@ public class ConfigurationStorageMapping
 		}
 		try {
 			StringWriter buffer = new StringWriter();
-			new ConfigurationWriter(buffer).write(CONFIG_TAG, ConfigurationItem.class,
-				(ConfigurationItem) aBusinessObject);
+			try (ConfigurationWriter w = new ConfigurationWriter(buffer)) {
+				w.write(CONFIG_TAG, ConfigurationItem.class, (ConfigurationItem) aBusinessObject);
+			}
 			return buffer.toString();
 		} catch (XMLStreamException ex) {
 			throw new IllegalArgumentException("Value cannot be serialized.", ex);

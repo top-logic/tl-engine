@@ -35,7 +35,7 @@ import com.top_logic.basic.xml.TagUtil;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class ConfigurationWriter {
+public class ConfigurationWriter implements AutoCloseable {
 	
 	private static final XMLOutputFactory OUTPUT_FACTORY;
 	static {
@@ -775,6 +775,11 @@ public class ConfigurationWriter {
 
 	protected String getElementTag(PropertyDescriptor property, ConfigurationItem entry) {
 		return property.getElementName(entry.descriptor());
+	}
+
+	@Override
+	public void close() throws XMLStreamException {
+		out.close();
 	}
 	
 }

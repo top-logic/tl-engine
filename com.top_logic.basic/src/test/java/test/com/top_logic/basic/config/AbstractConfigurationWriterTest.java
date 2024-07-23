@@ -466,7 +466,9 @@ public abstract class AbstractConfigurationWriterTest extends AbstractTypedConfi
 			ConfigurationItem item) throws Exception {
 		String serialized = writeConfigurationItem(localName, staticType, item);
 		StringWriter stringWriter = new StringWriter();
-		new ConfigurationWriter(stringWriter).write(localName, staticType, item);
+		try (ConfigurationWriter w = new ConfigurationWriter(stringWriter)) {
+			w.write(localName, staticType, item);
+		}
 		new ConfigurationReader(context, Collections.singletonMap(localName, staticType))
 			.setSource(CharacterContents.newContent(stringWriter.toString()))
 			.read();

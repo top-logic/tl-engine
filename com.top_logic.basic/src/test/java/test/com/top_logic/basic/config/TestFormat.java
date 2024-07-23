@@ -131,7 +131,9 @@ public class TestFormat extends TestCase {
 			// If configuration would be instantiated, a legal configuration could not be
 			// serialized:
 			config.setFoo(new FormatTooSpecific.Foo());
-			new ConfigurationWriter(new StringWriter()).write("config", FormatTooSpecific.class, config);
+			try (ConfigurationWriter w = new ConfigurationWriter(new StringWriter())) {
+				w.write("config", FormatTooSpecific.class, config);
+			}
 
 			// The prove that the invalid format annotation can lead to problems does not work. This
 			// should never be reached.

@@ -196,11 +196,12 @@ public interface OperationObject extends Described, WithSecurity, WithParameters
 		}
 		StringWriter out = new StringWriter();
 		try {
-			ConfigurationWriter configurationWriter = new ConfigurationWriter(out);
-			configurationWriter.setXMLHeaderWriting(false);
-			ConfigurationDescriptor baseType =
-				TypedConfiguration.getConfigurationDescriptor(PolymorphicConfiguration.class);
-			configurationWriter.write("impl", baseType, impl);
+			try (ConfigurationWriter configurationWriter = new ConfigurationWriter(out)) {
+				configurationWriter.setXMLHeaderWriting(false);
+				ConfigurationDescriptor baseType =
+					TypedConfiguration.getConfigurationDescriptor(PolymorphicConfiguration.class);
+				configurationWriter.write("impl", baseType, impl);
+			}
 		} catch (XMLStreamException ex) {
 			throw new RuntimeException(ex);
 		}

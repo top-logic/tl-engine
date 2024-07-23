@@ -229,7 +229,9 @@ public class TestComponentConfiguration extends BasicTestCase {
 	private void checkSerializeComponent(String layoutName, ConfigurationItem componentConfig) {
 		try {
 			try (Writer out = new StringWriter()) {
-				new ConfigurationWriter(out).write("component", ConfigurationItem.class, componentConfig);
+				try (ConfigurationWriter w = new ConfigurationWriter(out)) {
+					w.write("component", ConfigurationItem.class, componentConfig);
+				}
 			}
 		} catch (Throwable ex) {
 			_log.error(layoutName + ": Unable to serialize config.", ex);

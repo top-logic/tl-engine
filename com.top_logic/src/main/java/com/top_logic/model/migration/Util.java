@@ -324,7 +324,9 @@ public class Util {
 			ConfigurationItem config) {
 		StringWriter storageMappingBuffer = new StringWriter();
 		try {
-			new ConfigurationWriter(storageMappingBuffer).write(rootTag, staticType, config);
+			try (ConfigurationWriter w = new ConfigurationWriter(storageMappingBuffer)) {
+				w.write(rootTag, staticType, config);
+			}
 		} catch (XMLStreamException ex) {
 			throw new RuntimeException(ex);
 		}

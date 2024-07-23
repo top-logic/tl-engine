@@ -122,7 +122,9 @@ public class TestFormatAndBinding extends AbstractTypedConfigurationTestCase {
 			// If configuration would be instantiated, a legal configuration could not be
 			// serialized:
 			config.setFoo(new FormatTooSpecific.Foo());
-			new ConfigurationWriter(new StringWriter()).write("config", FormatTooSpecific.class, config);
+			try (ConfigurationWriter w = new ConfigurationWriter(new StringWriter())) {
+				w.write("config", FormatTooSpecific.class, config);
+			}
 
 			// The prove that the invalid format annotation can lead to problems does not work. This
 			// should never be reached.
@@ -165,7 +167,9 @@ public class TestFormatAndBinding extends AbstractTypedConfigurationTestCase {
 
 	private String write(A item) throws XMLStreamException {
 		StringWriter buffer = new StringWriter();
-		new ConfigurationWriter(buffer).write("a", A.class, item);
+		try (ConfigurationWriter w = new ConfigurationWriter(buffer)) {
+			w.write("a", A.class, item);
+		}
 		return buffer.toString();
 	}
 

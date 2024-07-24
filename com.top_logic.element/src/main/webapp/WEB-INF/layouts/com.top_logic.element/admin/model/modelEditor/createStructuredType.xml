@@ -23,6 +23,7 @@
 
 	<layout name="${dialogName}"
 		titleKey="element.meta.createStructuredType.Layout.title"
+		xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	>
 		<components>
 			<form name="${formName}"
@@ -36,6 +37,10 @@
 				<modelBuilder class="com.top_logic.element.layout.meta.TLStructuredTypeFormBuilder"
 					contextOptional="true"
 					create="true"
+				/>
+				
+				<cancelAction config:interface="com.top_logic.tool.boundsec.CommandHandlerReference$Config"
+					command-id="cancelCreate"
 				/>
 
 				<buttons>

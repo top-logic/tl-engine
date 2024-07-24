@@ -97,8 +97,9 @@ public abstract class AbstractSubtypesTest extends AbstractTypedConfigurationTes
 		assertEquals(x1, x2);
 
 		StringWriter buffer = new StringWriter();
-		ConfigurationWriter out = new ConfigurationWriter(buffer);
-		out.write("x", containerClass(), x2);
+		try (ConfigurationWriter out = new ConfigurationWriter(buffer)) {
+			out.write("x", containerClass(), x2);
+		}
 		assertEquals(normalize("<?xml version='1.0' ?>" + implicitTypeNotation), normalize(buffer.toString()));
 	}
 

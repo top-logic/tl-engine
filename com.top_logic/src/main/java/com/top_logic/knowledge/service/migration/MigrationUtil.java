@@ -202,12 +202,12 @@ public class MigrationUtil {
 	 *        The {@link MigrationConfig} to dump.
 	 */
 	public static void dumpMigrationConfig(Writer out, MigrationConfig migration) throws XMLStreamException {
-		ConfigurationWriter configurationWriter = new ConfigurationWriter(out);
-
-		// Note: Do not pass MigrationConfig.class as expected type during write to create a
-		// reference to the configuration type in the generated file. This better links the
-		// configuration to its schema.
-		configurationWriter.write(ROOT_TAG_NAME, ConfigurationItem.class, migration);
+		try (ConfigurationWriter configurationWriter = new ConfigurationWriter(out)) {
+			// Note: Do not pass MigrationConfig.class as expected type during write to create a
+			// reference to the configuration type in the generated file. This better links the
+			// configuration to its schema.
+			configurationWriter.write(ROOT_TAG_NAME, ConfigurationItem.class, migration);
+		}
 	}
 
 	/**

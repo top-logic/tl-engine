@@ -551,8 +551,8 @@ public class TypedConfiguration {
 		}
 
 		StringWriter out = new StringWriter();
-		try {
-			serialize(rootTagName, staticType, config, new ConfigurationWriter(out));
+		try (ConfigurationWriter w = new ConfigurationWriter(out)) {
+			serialize(rootTagName, staticType, config, w);
 		} catch (XMLStreamException ex) {
 			throw new RuntimeException(ex);
 		}
@@ -593,8 +593,8 @@ public class TypedConfiguration {
 	 * @since 5.7.3
 	 */
 	public static void serialize(ConfigurationItem config, Writer out) {
-		try {
-			serialize(DEFAULT_ROOT_TAG, config, new ConfigurationWriter(out));
+		try (ConfigurationWriter w = new ConfigurationWriter(out)) {
+			serialize(DEFAULT_ROOT_TAG, config, w);
 		} catch (XMLStreamException ex) {
 			throw new RuntimeException(ex);
 		}

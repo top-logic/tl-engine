@@ -93,7 +93,9 @@ public class ConfigurationAttributeStorage extends DBAttributeStorageImpl
 		}
 		try {
 			StringWriter buffer = new StringWriter();
-			new ConfigurationWriter(buffer).write(CONFIG_TAG, ConfigurationItem.class, (ConfigurationItem) cacheValue);
+			try (ConfigurationWriter w = new ConfigurationWriter(buffer)) {
+				w.write(CONFIG_TAG, ConfigurationItem.class, (ConfigurationItem) cacheValue);
+			}
 			return buffer.toString();
 		} catch (XMLStreamException ex) {
 			throw new IllegalArgumentException("Value cannot be serialized.", ex);

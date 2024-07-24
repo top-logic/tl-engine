@@ -191,21 +191,19 @@ public class UpdateComponentName extends XMain {
 		ConfigurationItem config = ConfigurationReader.readFile(log, _globalDescriptorsByName, file);
 		log.checkErrors();
 		return new ReadResult(config) {
-
 			@Override
 			public void writeBack(OutputStreamWriter out) throws XMLStreamException, IOException {
-				ConfigurationWriter configWriter = new ConfigurationWriter(out);
-				if (_config instanceof ApplicationAction) {
-					configWriter.write(ACTION, _globalDescriptorsByName.get(ACTION), _config);
-				} else if (_config instanceof SecurityConfig) {
-					configWriter.write(SECURITY, _globalDescriptorsByName.get(SECURITY), _config);
-				} else {
-					getProtocol().info("Unknown configuration type in file " + file.getCanonicalPath() + ".",
-						Protocol.WARN);
+				try (ConfigurationWriter configWriter = new ConfigurationWriter(out)) {
+					if (_config instanceof ApplicationAction) {
+						configWriter.write(ACTION, _globalDescriptorsByName.get(ACTION), _config);
+					} else if (_config instanceof SecurityConfig) {
+						configWriter.write(SECURITY, _globalDescriptorsByName.get(SECURITY), _config);
+					} else {
+						getProtocol().info("Unknown configuration type in file " + file.getCanonicalPath() + ".",
+							Protocol.WARN);
+					}
 				}
-
 			}
-
 		};
 	}
 

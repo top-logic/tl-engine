@@ -134,8 +134,9 @@ class PersonalConfigurationUtil {
 		}
 		try {
 			StringWriter out = new StringWriter();
-			ConfigurationWriter configWriter = new ConfigurationWriter(out);
-			configWriter.write("hps", TypedConfiguration.getConfigurationDescriptor(Homepages.class), pages);
+			try (ConfigurationWriter configWriter = new ConfigurationWriter(out)) {
+				configWriter.write("hps", TypedConfiguration.getConfigurationDescriptor(Homepages.class), pages);
+			}
 			pc.setValue(HOMEPAGE, out.toString());
 		} catch (XMLStreamException ex) {
 			throw new RuntimeException(ex);

@@ -67,12 +67,13 @@ public class TestXMLConfigurationWriter extends AbstractConfigurationWriterTest 
 		Map<String, ConfigurationDescriptor> descriptors = getDescriptors();
 		StringWriter buffer = new StringWriter();
 		Entry<String, ConfigurationDescriptor> entry = getDescriptorBinding(descriptors, a);
-		ConfigurationWriter writer = new ConfigurationWriter(buffer);
-		writer.setNamespace("x", "http://www.foo.com/ns/xyz");
-		String tag = entry.getKey();
-		Class<? extends ConfigurationItem> type = (Class<? extends ConfigurationItem>) entry.getValue()
-			.getConfigurationInterface();
-		writer.write(tag, type, a);
+		try (ConfigurationWriter writer = new ConfigurationWriter(buffer)) {
+			writer.setNamespace("x", "http://www.foo.com/ns/xyz");
+			String tag = entry.getKey();
+			Class<? extends ConfigurationItem> type = (Class<? extends ConfigurationItem>) entry.getValue()
+				.getConfigurationInterface();
+			writer.write(tag, type, a);
+		}
 		String xml = buffer.toString();
 
 		assertEqualsXML("<a xmlns='http://www.foo.com/ns/xyz' p='42'><b x='13'/></a>", xml);
@@ -89,7 +90,9 @@ public class TestXMLConfigurationWriter extends AbstractConfigurationWriterTest 
 		root.setC(TypedConfiguration.newConfigItem(ConfigWithDisplayAnnotation.class));
 		String result;
 		try (StringWriter out = new StringWriter()) {
-			new ConfigurationWriter(out).write("root", ConfigWithDisplayAnnotation.class, root);
+			try (ConfigurationWriter w = new ConfigurationWriter(out)) {
+				w.write("root", ConfigWithDisplayAnnotation.class, root);
+			}
 			result = out.getBuffer().toString();
 		}
 
@@ -195,7 +198,9 @@ public class TestXMLConfigurationWriter extends AbstractConfigurationWriterTest 
 	@Override
 	protected String writeConfigurationItem(String localName, ConfigurationDescriptor staticType, ConfigurationItem item) throws XMLStreamException {
 		StringWriter buffer = new StringWriter();
-		new ConfigurationWriter(buffer).write(localName, staticType, item);
+		try (ConfigurationWriter w = new ConfigurationWriter(buffer)) {
+			w.write(localName, staticType, item);
+		}
 		return buffer.toString();
 	}
 	

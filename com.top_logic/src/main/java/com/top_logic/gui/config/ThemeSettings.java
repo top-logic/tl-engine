@@ -269,7 +269,9 @@ public class ThemeSettings {
 	@FrameworkInternal
 	public static void storeSettings(Writer writer, Config settings) throws XMLStreamException, IOException {
 		Writer out = new StringWriter();
-		new ConfigurationWriter(out).write(TOP_LEVEL_THEME_SETTINGS_CONFIG_TAG_NAME, Config.class, settings);
+		try (ConfigurationWriter w = new ConfigurationWriter(out)) {
+			w.write(TOP_LEVEL_THEME_SETTINGS_CONFIG_TAG_NAME, Config.class, settings);
+		}
 		writer.write(XMLPrettyPrinter.prettyPrint(out.toString()));
 	}
 

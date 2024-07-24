@@ -1288,9 +1288,9 @@ public class LayoutUtils {
 	public static void writeConfiguration(LayoutComponent.Config config, File file) throws Exception {
 		try (OutputStream outputStream = new FileOutputStream(file)) {
 			try (Writer out = new OutputStreamWriter(outputStream, StringServices.CHARSET_UTF_8)) {
-				ConfigurationWriter confWriter = new ConfigurationWriter(out);
-
-				confWriter.write(LayoutComponent.Config.COMPONENT, LayoutComponent.Config.class, config);
+				try (ConfigurationWriter confWriter = new ConfigurationWriter(out)) {
+					confWriter.write(LayoutComponent.Config.COMPONENT, LayoutComponent.Config.class, config);
+				}
 			}
 
 			XMLPrettyPrinter.normalizeFile(file);

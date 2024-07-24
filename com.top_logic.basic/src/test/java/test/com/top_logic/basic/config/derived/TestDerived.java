@@ -1043,7 +1043,9 @@ public class TestDerived extends AbstractTypedConfigurationTestCase {
 			Class<? extends ConfigurationItem> configItemClass = (Class) config.getConfigurationInterface();
 			String rootTag = configItemClass.getSimpleName();
 			StringWriter buffer = new StringWriter();
-			new ConfigurationWriter(buffer).write(rootTag, configItemClass, config);
+			try (ConfigurationWriter w = new ConfigurationWriter(buffer)) {
+				w.write(rootTag, configItemClass, config);
+			}
 			return buffer.toString();
 		} catch (XMLStreamException ex) {
 			throw new RuntimeException(ex.getMessage(), ex);

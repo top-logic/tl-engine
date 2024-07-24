@@ -69,8 +69,9 @@ public class FixedLayout implements TLLayout {
 		}
 
 		try (Writer out = new OutputStreamWriter(stream, StringServices.CHARSET_UTF_8)) {
-			ConfigurationWriter confWriter = new ConfigurationWriter(out);
-			confWriter.write(LayoutComponent.Config.COMPONENT, LayoutComponent.Config.class, configToWrite);
+			try (ConfigurationWriter confWriter = new ConfigurationWriter(out)) {
+				confWriter.write(LayoutComponent.Config.COMPONENT, LayoutComponent.Config.class, configToWrite);
+			}
 		} catch (XMLStreamException exception) {
 			throw new IOException(exception);
 		}

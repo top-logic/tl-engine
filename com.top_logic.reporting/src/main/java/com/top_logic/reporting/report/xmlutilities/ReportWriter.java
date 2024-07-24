@@ -31,9 +31,9 @@ public class ReportWriter {
 	}
 
 	public static void writeReport(Writer aWriter, ReportConfiguration aConfig) throws XMLStreamException {
-	    ConfigurationWriter theWriter = new ConfigurationWriter(aWriter);
-	    
-	    theWriter.write("report", ReportConfiguration.class, aConfig);
+		try (ConfigurationWriter theWriter = new ConfigurationWriter(aWriter)) {
+			theWriter.write("report", ReportConfiguration.class, aConfig);
+		}
 	}
 	
 	public static String writeReportConfig(ReportConfiguration aConfig) throws XMLStreamException {

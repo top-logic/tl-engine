@@ -156,9 +156,10 @@ public class TLSaveServiceConfigHandler extends AbstractApplyCommandHandler {
 	}
 
 	private String createConfigText(ApplicationConfig.Config config, StringWriter innerWriter) throws XMLStreamException {
-		OverrideConfigurationWriter configWriter = new OverrideConfigurationWriter(innerWriter, getOverrideConfigs());
-
-		TypedConfiguration.serialize(APPLICATION_CONFIG_ROOT_TAG_NAME, config, configWriter);
+		try (OverrideConfigurationWriter configWriter =
+			new OverrideConfigurationWriter(innerWriter, getOverrideConfigs())) {
+			TypedConfiguration.serialize(APPLICATION_CONFIG_ROOT_TAG_NAME, config, configWriter);
+		}
 
 		return TypedConfiguration.prettyPrint(innerWriter.toString(), getPrinterConfig());
 	}

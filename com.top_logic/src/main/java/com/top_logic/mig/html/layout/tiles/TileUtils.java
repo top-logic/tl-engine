@@ -433,8 +433,9 @@ public class TileUtils {
 	private static Document loadLayout(Protocol log, ComponentParameters definition) {
 		StringWriter out = new StringWriter();
 		try {
-			ConfigurationWriter configurationWriter = new ConfigurationWriter(out);
-			configurationWriter.write(LayoutModelConstants.INCLUDE_ELEMENT, definition.descriptor(), definition);
+			try (ConfigurationWriter configurationWriter = new ConfigurationWriter(out)) {
+				configurationWriter.write(LayoutModelConstants.INCLUDE_ELEMENT, definition.descriptor(), definition);
+			}
 		} catch (XMLStreamException ex) {
 			log.error("Unable to serialize layout definition", ex);
 			return null;

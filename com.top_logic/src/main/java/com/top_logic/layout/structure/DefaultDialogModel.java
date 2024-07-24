@@ -168,6 +168,13 @@ public class DefaultDialogModel extends AbstractDialogModel {
 		return dialogModel(resourcePrefix.key("title"), width, height);
 	}
 
+	/**
+	 * Utility for creating a {@link DialogModel} from title {@link ResPrefix} and dimensions.
+	 */
+	public static DefaultDialogModel dialogModel(ResPrefix resourcePrefix, DisplayDimension width,
+			DisplayDimension height, boolean closable) {
+		return dialogModel(resourcePrefix.key("title"), width, height, closable);
+	}
 
 	/**
 	 * Utility for creating a {@link DialogModel} from title {@link ResKey} and dimensions.
@@ -176,6 +183,13 @@ public class DefaultDialogModel extends AbstractDialogModel {
 		return dialogModel(new ResourceText(titleKey), width, height);
 	}
 
+	/**
+	 * Utility for creating a {@link DialogModel} from title {@link ResKey} and dimensions.
+	 */
+	public static DefaultDialogModel dialogModel(ResKey titleKey, DisplayDimension width, DisplayDimension height,
+			boolean closable) {
+		return dialogModel(new ResourceText(titleKey), width, height, closable);
+	}
 
 	/**
 	 * Utility for creating a {@link DialogModel} from title and dimensions.
@@ -184,5 +198,17 @@ public class DefaultDialogModel extends AbstractDialogModel {
 			DisplayDimension height) {
 		return new DefaultDialogModel(
 			new DefaultLayoutData(width, 100, height, 100, Scrolling.NO), title, true, true, null);
+	}
+
+	/**
+	 * Utility for creating a {@link DialogModel} from title, dimensions and closable.
+	 * 
+	 * @param closable
+	 *        - if a dialog has a closing button and closes by clicking in the background
+	 */
+	private static DefaultDialogModel dialogModel(HTMLFragment title, DisplayDimension width, DisplayDimension height,
+			boolean closable) {
+		return new DefaultDialogModel(
+			new DefaultLayoutData(width, 100, height, 100, Scrolling.NO), title, true, closable, null);
 	}
 }

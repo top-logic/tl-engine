@@ -37,5 +37,10 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-layout-codeedit</artifactId>
     </dependency>
+    <dependency>
+		<groupId>com.fasterxml.jackson.dataformat</groupId>
+		<artifactId>jackson-dataformat-csv</artifactId>
+		<version>2.13.0</version>
+	</dependency>
   </dependencies>
 </project>

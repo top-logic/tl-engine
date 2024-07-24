@@ -74,8 +74,11 @@ public class EventBuilder {
 
 		@Override
 		public Stream<? extends TLObject> getUpdated(TLStructuredType type) {
-			return _typeIndex.getOrDefault(type, Collections.emptyList()).stream()
-				.flatMap(specialization -> _updatedByType.get(specialization).stream());
+			return specializations(type).flatMap(this::updates);
+		}
+
+		private Stream<TLObject> updates(TLStructuredType specialization) {
+			return streamValue(_updatedByType, specialization);
 		}
 
 		@Override
@@ -85,8 +88,11 @@ public class EventBuilder {
 
 		@Override
 		public Stream<? extends TLObject> getCreated(TLStructuredType type) {
-			return _typeIndex.getOrDefault(type, Collections.emptyList()).stream()
-				.flatMap(specialization -> _createdByType.get(specialization).stream());
+			return specializations(type).flatMap(this::creations);
+		}
+
+		private Stream<TLObject> creations(TLStructuredType specialization) {
+			return streamValue(_createdByType, specialization);
 		}
 
 		@Override
@@ -96,8 +102,19 @@ public class EventBuilder {
 
 		@Override
 		public Stream<? extends TLObject> getDeleted(TLStructuredType type) {
-			return _typeIndex.getOrDefault(type, Collections.emptyList()).stream()
-				.flatMap(specialization -> _deletedByType.get(specialization).stream());
+			return specializations(type).flatMap(this::deletions);
+		}
+
+		private Stream<TLObject> deletions(TLStructuredType specialization) {
+			return streamValue(_deletedByType, specialization);
+		}
+
+		private Stream<TLStructuredType> specializations(TLStructuredType type) {
+			return streamValue(_typeIndex, type);
+		}
+
+		private <K, V> Stream<V> streamValue(Map<K, List<V>> map, K key) {
+			return map.getOrDefault(key, Collections.emptyList()).stream();
 		}
 
 		@Override
@@ -425,15 +442,15 @@ public class EventBuilder {
 		if (touchedType.getModelKind() == ModelKind.CLASS) {
 			TLClass touchedClass = (TLClass) touchedType;
 			Set<TLClass> superClasses = TLModelUtil.getReflexiveTransitiveGeneralizations(touchedClass);
-			superClasses.forEach(superClass -> addDirect(typeIndex, listeners, superClass));
+			superClasses.forEach(superClass -> addDirect(typeIndex, listeners, superClass, touchedType));
 		} else {
-			addDirect(typeIndex, listeners, touchedType);
+			addDirect(typeIndex, listeners, touchedType, touchedType);
 		}
 	}
 
 	private void addDirect(Map<TLStructuredType, List<TLStructuredType>> typeIndex, Set<ModelListener> listeners,
-			TLStructuredType generalization) {
-		addToIndex(typeIndex, generalization);
+			TLStructuredType generalization, TLStructuredType specialization) {
+		addToIndex(typeIndex, generalization, specialization);
 		addToListeners(listeners, generalization);
 	}
 
@@ -444,8 +461,8 @@ public class EventBuilder {
 		}
 	}
 
-	private void addToIndex(Map<TLStructuredType, List<TLStructuredType>> typeIndex, TLStructuredType generalization) {
-		typeIndex.computeIfAbsent(generalization, x -> new ArrayList<>()).add(generalization);
+	private void addToIndex(Map<TLStructuredType, List<TLStructuredType>> typeIndex, TLStructuredType generalization, TLStructuredType specialization) {
+		typeIndex.computeIfAbsent(generalization, x -> new ArrayList<>()).add(specialization);
 	}
 
 	private void notifyListeners(Map<TLStructuredType, List<TLStructuredType>> typeIndex, Set<ModelListener> listeners) {

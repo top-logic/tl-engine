@@ -6,6 +6,7 @@
 package com.top_logic.model.fallback;
 
 import com.top_logic.basic.util.Utils;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.table.AbstractCellClassProvider;
 import com.top_logic.layout.table.CellClassProvider;
@@ -33,7 +34,7 @@ public class FallbackCellClassProvider extends AbstractCellClassProvider {
 
 	@Override
 	public String getCellClass(Cell cell) {
-		if (cell.cellExists() && !(cell.getValue() instanceof FormMember)) {
+		if (cell.cellExists() && !(cell.getValue() instanceof FormMember) && !(cell.getValue() instanceof Control)) {
 			Object row = cell.getRowObject();
 			if (row instanceof TLObject obj) {
 				Object explicitValue = _fallbackStorage.getExplicitValue(obj, _attribute);

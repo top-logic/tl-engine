@@ -24,8 +24,6 @@ import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder.EditModel;
 import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder.PartModel;
-import com.top_logic.element.meta.form.overlay.TLFormObject;
-import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLObject;
@@ -199,11 +197,6 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 	@Override
 	public void initUpdate(TLObject object, TLStructuredTypePart attribute, AttributeUpdate update) {
 		update.setValue(object.tValue(_storageAttr));
-
-		TLFormObject overlay = update.getOverlay();
-		overlay.getScope().addValueListener(overlay, _fallbackAttr, (field, oldFallback, newFallback) -> {
-			((FormField) update.getField()).setPlaceholder(newFallback);
-		});
 	}
 
 	@Override

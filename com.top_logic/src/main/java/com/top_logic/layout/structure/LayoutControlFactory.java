@@ -205,10 +205,12 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 		// Wrap component with button bar.
 		FixedFlowLayoutControl buttonLayout = new FixedFlowLayoutControl(Orientation.VERTICAL);
 		buttonLayout.addChild(componentLayout);
+		DisplayDimension buttonBarHeight =
+			ThemeFactory.getTheme().getValue(com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT);
 		LayoutControlAdapter buttonBar =
 			new LayoutControlAdapter(ButtonBarFactory.createButtonBar(component.getButtonBar()));
 		buttonBar.setConstraint(new DefaultLayoutData(DisplayDimension.HUNDERED_PERCENT, 100,
-			DisplayDimension.px(60), 100, Scrolling.NO));
+			buttonBarHeight, 100, Scrolling.NO));
 		buttonLayout.addChild(buttonBar);
 
 		LayoutData componentConstraint = componentLayout.getConstraint();

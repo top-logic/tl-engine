@@ -1994,6 +1994,21 @@
 	<color name="text-highlight"
 		value="#89ADE4"
 	/>
+	<color name="text-explicit"
+		value="#0000DD"
+	/>
+	<string name="text-explicit-weight"
+		value="bolder"
+	/>
+	<color name="text-explicit-bg"
+		value="#CDCEF9"
+	/>
+	<color name="text-fallback"
+		value="#967100"
+	/>
+	<float name="text-fallback-opacity"
+		value="0.7"
+	/>
 	<color name="script-editor-text-highlight"
 		value="#D6E3F7"
 	/>

@@ -1723,7 +1723,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.element.meta.form.overlay.TLFormObjectNaming$Name"
-									domain="obj_4"
+									domain="create_1"
 								>
 									<edited-object config:interface=""/>
 									<form-context config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">

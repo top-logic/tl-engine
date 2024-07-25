@@ -15,7 +15,7 @@
 			image="theme:SAVE_SCRIPT_AS"
 			openerClique="additional-apply"
 			openerCommandGroup="System"
-			width="655px"
+			width="710px"
 		/>
 		<components>
 			<component class="com.top_logic.layout.folder.file.selection.FileSelectionComponent"
@@ -47,7 +47,7 @@
 				securityProviderClass="securityRoot"
 				toolbar="false"
 			>
-				<layoutInfo size="72px"/>
+				<layoutInfo size="140px"/>
 				<modelBuilder class="com.top_logic.layout.scripting.template.gui.saveas.SaveScriptAsFormBuilder"
 					allowedEndings=".script.xml"
 				/>

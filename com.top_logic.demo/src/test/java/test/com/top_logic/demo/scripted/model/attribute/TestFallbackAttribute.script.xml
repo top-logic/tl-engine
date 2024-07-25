@@ -1,0 +1,580 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<actions>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo > Komponenten > Ersatzwerte"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Create context"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
+					command-label="Neue Zeile"
+					command-name="createRow"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.demo/technical/components/fallbackValues/contextGrid.layout.xml#Grid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/components/fallbackValues/contextGrid.layout.xml#Grid"
+							tab-path="Technisches Demo > Komponenten > Ersatzwerte"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="Test fallback"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.grid.DefaultGridSaveCommandHandler"
+					command-label="Speichern"
+					command-name="gridSave"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.demo/technical/components/fallbackValues/contextGrid.layout.xml#Grid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+					name="Test fallback"
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					name="com.top_logic.demo/technical/components/fallbackValues/contextGrid.layout.xml#Grid"
+					tab-path="Technisches Demo > Komponenten > Ersatzwerte"
+				/>
+				<path>
+					<named-member name="fieldTable"/>
+				</path>
+			</selection-model-name>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+			user-id="root"
+		>
+			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
+			command-label="Neue Zeile"
+			command-name="createRow"
+			component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+			component-name="com.top_logic.demo/technical/components/fallbackValues/grid/elementsGrid.layout.xml#Grid"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Datum (Rückfallwert)"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="05.08.2024"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Datum"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value=""
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldPlaceholderNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Datum"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
+				value="2024-08-04T15:00:00.000Z"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Datum"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="25.07.2024"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Datum"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="25.07.2024"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Selektion (Rückfallwert)"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+						ref="test.fallback:Options#OPTION_1"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="multi-set-equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldPlaceholderNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Selektion"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+						ref="test.fallback:Options#OPTION_1"
+					/>
+				</values>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Popup (Rückfallwert)"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+						ref="test.fallback:Options#OPTION_2"
+					/>
+					<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+						ref="test.fallback:Options#OPTION_3"
+					/>
+				</values>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="multi-set-equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldPlaceholderNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Popup"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+						ref="test.fallback:Options#OPTION_2"
+					/>
+					<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+						ref="test.fallback:Options#OPTION_3"
+					/>
+				</values>
+			</expected-value>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Zahl (Rückfallwert)"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="99"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldPlaceholderNaming$Name">
+				<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+					label="Zahl"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
+					/>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+				value="99.0"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
+				/>
+				<path>
+					<object>
+						<business-object config:interface="com.top_logic.element.layout.scripting.GridNewObjectNaming$GridNewObjectName"/>
+					</object>
+					<labeled-member label="Uhrzeit (Rückfallwert)"/>
+					<labeled-member label="Tag"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="25.07.2024"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
+				/>
+				<path>
+					<object>
+						<business-object config:interface="com.top_logic.element.layout.scripting.GridNewObjectNaming$GridNewObjectName"/>
+					</object>
+					<labeled-member label="Uhrzeit (Rückfallwert)"/>
+					<labeled-member label="Uhrzeit"/>
+				</path>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="11:47"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldPlaceholderNaming$Name">
+				<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
+					/>
+					<path>
+						<object>
+							<business-object config:interface="com.top_logic.element.layout.scripting.GridNewObjectNaming$GridNewObjectName"/>
+						</object>
+						<labeled-member label="Uhrzeit"/>
+						<labeled-member label="Tag"/>
+					</path>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
+				value="2024-07-25T07:00:00.000Z"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldPlaceholderNaming$Name">
+				<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
+					/>
+					<path>
+						<object>
+							<business-object config:interface="com.top_logic.element.layout.scripting.GridNewObjectNaming$GridNewObjectName"/>
+						</object>
+						<labeled-member label="Uhrzeit"/>
+						<labeled-member label="Uhrzeit"/>
+					</path>
+				</model>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
+				value="1970-01-01T19:47:00.000Z"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.element.layout.grid.DefaultGridSaveCommandHandler"
+			command-label="Speichern"
+			command-name="gridSave"
+			component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+			component-name="com.top_logic.demo/technical/components/fallbackValues/grid/elementsGrid.layout.xml#Grid"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Check values."
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Text"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="1"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="Test fallback (1)"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Datum"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="1"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
+						value="2024-07-24T15:00:00.000Z"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Selektion"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="1"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+						ref="test.fallback:Options#OPTION_1"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Popup"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="1"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+								ref="test.fallback:Options#OPTION_2"
+							/>
+							<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+								ref="test.fallback:Options#OPTION_3"
+							/>
+						</values>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Zahl"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="1"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+						value="99.0"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Uhrzeit"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="1"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
+						value="2024-07-25T18:47:00.000Z"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Tear down"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="Test fallback"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/components/fallbackValues/contextGrid.layout.xml#Grid"
+							tab-path="Technisches Demo > Komponenten > Ersatzwerte"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+					command-label="Löschen"
+					command-name="deleteRow"
+					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
+					component-name="com.top_logic.demo/technical/components/fallbackValues/contextGrid.layout.xml#Grid"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+	</actions>
+</action>

@@ -2107,7 +2107,7 @@ public class GridComponent extends EditComponent implements
 
 	private void setRowModel(FormGroup row, Object rowModel) {
 		row.set(PROP_ATTRIBUTED, rowModel);
-        row.setStableIdSpecialCaseMarker(rowModel);
+		row.setStableIdSpecialCaseMarker(rowModel, this);
 	}
 
 	/**

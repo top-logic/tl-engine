@@ -75,7 +75,7 @@ public class TransientTLObjectImpl extends TransientObject {
 		if (part.isDerived() && (part.getModelKind() != ModelKind.REFERENCE || !((TLReference) part).isBackwards())) {
 			return part.getStorageImplementation().getAttributeValue(this, part);
 		}
-		return _values.get(part);
+		return _values.get(part.getDefinition());
 	}
 
 	@Override
@@ -216,7 +216,7 @@ public class TransientTLObjectImpl extends TransientObject {
 	}
 
 	private Object directUpdate(TLStructuredTypePart part, Object newValue) {
-		return _values.put(part, newValue);
+		return _values.put(part.getDefinition(), newValue);
 	}
 
 	private void directAdd(TLReference ref, TransientTLObjectImpl other) {

@@ -38,7 +38,7 @@ public class TableColumnLabelAssertionPlugin extends SingleValueAssertionPlugin<
 	 *        Is not allowed to be null.
 	 */
 	public TableColumnLabelAssertionPlugin(TableCell model) {
-		super(model, true, "tableColumnLabel");
+		super(model, false, "tableColumnLabel");
 	}
 
 	@Override

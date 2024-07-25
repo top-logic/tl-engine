@@ -254,7 +254,7 @@ public class AttributeUpdateContainer {
 	 */
 	public TLFormObject newObject(TLStructuredType type, TLObject container, ObjectConstructor constructor) {
 		while (true) {
-			String domain = newObjectID();
+			String domain = newCreateID();
 			if (_creates.get(domain) != null) {
 				continue;
 			}

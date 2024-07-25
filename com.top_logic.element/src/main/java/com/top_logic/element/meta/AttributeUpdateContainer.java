@@ -29,6 +29,7 @@ import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.factory.TLFactory;
 import com.top_logic.util.Resources;
 
 /**
@@ -286,6 +287,9 @@ public class AttributeUpdateContainer {
 		ObjectCreation newOverlay = new ObjectCreation(this, type, domain, constructor);
 		_creates.put(domain, newOverlay);
 		newOverlay.initContainer(container);
+
+		TLFactory.setupDefaultValues(container, newOverlay, type);
+
 		return newOverlay;
 	}
 

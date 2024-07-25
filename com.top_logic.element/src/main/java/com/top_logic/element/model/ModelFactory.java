@@ -21,6 +21,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLScope;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.config.ScopeConfig;
 import com.top_logic.model.config.TypeConfig;
 import com.top_logic.model.factory.TLFactory;
@@ -134,9 +135,9 @@ public abstract class ModelFactory implements TLStructureFactory {
 	/**
 	 * Sets the default values for the given {@link TLObject} without create context.
 	 * 
-	 * @see TLFactory#setupDefaultValues(Object, TLObject, TLClass)
+	 * @see TLFactory#setupDefaultValues(Object, TLObject, TLStructuredType)
 	 * 
-	 * @deprecated Use {@link TLFactory#setupDefaultValues(Object, TLObject, TLClass)}
+	 * @deprecated Use {@link TLFactory#setupDefaultValues(Object, TLObject, TLStructuredType)}
 	 */
 	@Deprecated
 	protected final void setupDefaultValues(TLObject newWrapper, TLClass type) {

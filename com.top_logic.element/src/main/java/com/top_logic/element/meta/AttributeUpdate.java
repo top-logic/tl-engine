@@ -731,9 +731,16 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	public AttributeUpdate createUpdate() {
 		setType(UpdateType.TYPE_EDIT);
 		initCreate(true);
+		initCreateValue();
 		initCreateVisibility();
-		setValue(null);
 		return this;
+	}
+
+	private void initCreateValue() {
+		TLObject object = getOverlay();
+		TLStructuredTypePart attribute = getAttribute();
+		StorageImplementation storage = AttributeOperations.getStorageImplementation(object, attribute);
+		storage.initUpdate(object, attribute, this);
 	}
 
 	/**

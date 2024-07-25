@@ -140,19 +140,22 @@ public class ErrorHandlingHelper extends ManagedClass {
 
 	private void writeErrorMessageTitle(DisplayContext context, TagWriter out, HandlerResult handlerResult)
 			throws IOException {
-		out.beginTag(H3);
+		out.beginBeginTag(H3);
+		out.writeAttribute(CLASS_ATTR, "tl-error-message-title");
+		out.endBeginTag();
 		out.beginBeginTag(SPAN);
-		out.writeAttribute(CLASS_ATTR, "tl-info-service-item__error-icon");
+		out.writeAttribute(CLASS_ATTR, "tl-error-message-title__error-icon");
 		out.endBeginTag();
 		HTMLFragment titleIcon = getMessageTypeIcon(handlerResult);
 		titleIcon.write(context, out);
 		out.endTag(SPAN);
 
+		out.beginTag(SPAN);
 		String title = title(context, handlerResult);
 		if (title != null) {
 			title = title.replaceAll("<br\\s*/?>", " ");
 		}
-
+		out.endTag(SPAN);
 		out.writeText(title);
 		out.endTag(H3);
 	}

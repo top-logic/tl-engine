@@ -179,6 +179,13 @@ i[class*=" overlay-"] span::before {
 	cursor: default;
 }
 
+.notificationTitle {
+    display: flex;
+    align-items: center;
+    color: var(--support-danger);
+    font-weight: bold;
+}
+
 /* The general footer of the application */
 .Footer {
 	display: flex;

@@ -62,7 +62,7 @@
 							<layoutControl componentName="mainTabbar.layout.xml#mainTabber">
 								<layoutInfo size="0px"/>
 								<componentControlProvider class="com.top_logic.layout.structure.ConditionalViewLayout"
-									css-class="notificationTitle licenseView"
+									css-class="licenseView"
 									size="%LICENCE_EXPIRE_BAR_HEIGHT%"
 								>
 									<include name="com.top_logic/license/license-expiry.xml"/>

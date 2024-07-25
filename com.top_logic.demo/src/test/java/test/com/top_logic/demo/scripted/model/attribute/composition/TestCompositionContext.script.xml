@@ -718,23 +718,6 @@
 				>
 					<arguments/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
-					failure-expected="false"
-					user-id="root"
-				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
-						<component config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
-							component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
-							component-name="rootLayout#masterFrame"
-							require-visible="true"
-						/>
-						<matchers>
-							<labeled-member label="Verwerfen"/>
-							<named-member name="buttons"/>
-							<form-context/>
-						</matchers>
-					</model-name>
-				</action>
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
@@ -1037,23 +1020,6 @@
 					user-id="root"
 				>
 					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
-					failure-expected="false"
-					user-id="root"
-				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.GlobalFormMemberNaming$Name">
-						<component config:interface="com.top_logic.layout.component.ComponentBasedNamingScheme$ComponentName"
-							component-implementation-comment="com.top_logic.knowledge.gui.layout.TLMainLayout"
-							component-name="rootLayout#masterFrame"
-							require-visible="true"
-						/>
-						<matchers>
-							<labeled-member label="Verwerfen"/>
-							<named-member name="buttons"/>
-							<form-context/>
-						</matchers>
-					</model-name>
 				</action>
 			</actions>
 		</action>

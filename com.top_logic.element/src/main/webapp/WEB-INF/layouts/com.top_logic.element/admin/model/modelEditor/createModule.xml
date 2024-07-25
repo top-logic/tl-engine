@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<template>
+<template xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<params>
 		<param name="namePrefix"/>
 		<param name="ownerModel"/>
@@ -23,7 +23,6 @@
 
 	<layout name="${dialogName}"
 		titleKey="element.meta.createModule.Layout.title"
-		xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	>
 		<components>
 			<form name="${formName}"
@@ -38,11 +37,11 @@
 					contextOptional="true"
 					create="true"
 				/>
-				
+
 				<cancelAction config:interface="com.top_logic.tool.boundsec.CommandHandlerReference$Config"
 					command-id="cancelCreate"
 				/>
-				
+
 				<buttons>
 					<button id="createModule"
 						class="com.top_logic.element.layout.meta.TLModuleCreateHandler"

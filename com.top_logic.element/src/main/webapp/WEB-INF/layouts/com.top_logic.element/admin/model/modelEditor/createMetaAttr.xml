@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<template>
+<template xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<params>
 		<param name="namePrefix"/>
 		<param name="ownerModel"/>
@@ -19,8 +19,7 @@
 		<param name="resPrefix"/>
 	</params>
 
-	<layout name="${namePrefix}Dialog"
-		xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<layout name="${namePrefix}Dialog">
 		<components>
 			<form name="${namePrefix}Form"
 				buttonbar="true"

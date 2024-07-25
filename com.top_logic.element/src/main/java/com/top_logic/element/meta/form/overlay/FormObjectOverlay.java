@@ -23,6 +23,7 @@ import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.ChangeAware;
 import com.top_logic.element.meta.form.AttributeFormFactory;
+import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
@@ -171,6 +172,14 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 
 	@Override
 	public Object tValue(TLStructuredTypePart part) {
+		if (part.isDerived() && (part.getModelKind() != ModelKind.REFERENCE || !((TLReference) part).isBackwards())) {
+			if (part.getName().equals(PersistentObject.T_TYPE_ATTR)) {
+				return tType();
+			} else {
+				return part.getStorageImplementation().getAttributeValue(this, part);
+			}
+		}
+
 		AttributeUpdate update = getUpdate(part);
 		if (update == null) {
 			return defaultValue(part);
@@ -375,6 +384,14 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 		if (specializedAttribute == null) {
 			return null;
 		}
+
+		AttributeUpdate existing = _updates.get(specializedAttribute);
+		if (existing != null) {
+			// May happen due to legacy code forcing an update creation while the update has already
+			// been created before.
+			return existing;
+		}
+
 		AttributeUpdate result = new AttributeUpdate(this, specializedAttribute);
 		addUpdate(result);
 		return result;

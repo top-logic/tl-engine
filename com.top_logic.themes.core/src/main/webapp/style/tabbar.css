@@ -186,6 +186,7 @@
 .system_message {
 	display: flex;
 	flex-direction: column;
+	font-weight: 600;
 }
 
 .ToolBarContainer .IconContainer .cButton,
@@ -473,7 +474,7 @@ div.mcMinimized .accText {
 
 span.cLogoutTimer {
 	display: none;
-	font-weight: bold;
+	font-weight: 600;
 	color: var(--support-danger);
 }
 

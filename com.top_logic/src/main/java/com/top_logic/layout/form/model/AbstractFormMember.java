@@ -171,8 +171,8 @@ public abstract class AbstractFormMember extends PropertyObservableBase implemen
 	}
 
 	public AbstractFormMember(String name, boolean immutable) {
-		assert name != null;
-		assert name.length() > 0;
+		assert name != null : "Form member name must not be null.";
+		assert name.length() > 0 : "Form member name must not be empty.";
 		
 		// Check, whether the given name string is a legal name.
 		for (int cnt = name.length(), n = 0; n < cnt; n++) {

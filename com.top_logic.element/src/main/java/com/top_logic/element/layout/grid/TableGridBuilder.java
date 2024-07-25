@@ -145,6 +145,7 @@ public class TableGridBuilder<R> extends ListModelBuilderProxy
 			EditableRowTableModel tableModel = createTable(grid, tableConfiguration, availableColumns);
 			_tableField = FormFactory.newTableField(GridComponent.FIELD_TABLE, grid.getConfigKey());
 			_tableField.setTableModel(tableModel);
+			_tableField.setStableIdSpecialCaseContext(grid);
 		}
 
 		private ObjectTableModel createTable(GridComponent grid, TableConfiguration tableConfiguration, String[] availableColumns) {

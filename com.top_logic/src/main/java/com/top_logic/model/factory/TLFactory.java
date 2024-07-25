@@ -8,6 +8,7 @@ package com.top_logic.model.factory;
 import com.top_logic.knowledge.wrap.ValueProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.provider.DefaultProvider;
@@ -88,7 +89,7 @@ public interface TLFactory {
 	 *        The type of the wrapper, i.e. value of {@link TLObject#tType()} of the given
 	 *        <code>newWrapper</code>.
 	 */
-	static void setupDefaultValues(Object createContext, TLObject obj, TLClass type) {
+	static void setupDefaultValues(Object createContext, TLObject obj, TLStructuredType type) {
 		for (TLStructuredTypePart part : type.getAllParts()) {
 			if (part.isDerived()) {
 				// For safety reasons, ignore default value annotations on derived attributes.

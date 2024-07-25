@@ -37,7 +37,6 @@ import com.top_logic.model.annotate.AnnotationContainer;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.TLAnnotation;
-import com.top_logic.model.provider.DefaultProvider;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Utils;
 
@@ -734,12 +733,6 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 		initCreate(true);
 		initCreateVisibility();
 		setValue(null);
-		if (!isDerived()) {
-			DefaultProvider defaultProvider = DisplayAnnotations.getDefaultProvider(getAttribute());
-			if (defaultProvider != null) {
-				setValue(defaultProvider.createDefault(getOverlay().tContainer(), getAttribute(), true));
-			}
-		}
 		return this;
 	}
 

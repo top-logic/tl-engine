@@ -383,19 +383,19 @@ public class DialogWindowControl extends WindowControl<DialogWindowControl> impl
 				return result;
 			}
 
-			return getCloseDialogHandler(context, dialogModel);
+			return getCloseDialogHandlerResult(context, dialogModel);
 		}
 
 		/**
 		 * Checks if a dialog has unsaved changes before it closes itself.
 		 */
-		private HandlerResult getCloseDialogHandler(DisplayContext context, DialogModel dialogModel) {
+		private HandlerResult getCloseDialogHandlerResult(DisplayContext context, DialogModel dialogModel) {
 			Collection<? extends ChangeHandler> affectedFormHandlers = dialogModel.getAffectedFormHandlers();
-			DirtyHandling instance = DirtyHandling.getInstance();
-			boolean dirty = instance.checkDirty(affectedFormHandlers);
+			DirtyHandling dirtyHandling = DirtyHandling.getInstance();
+			boolean dirty = dirtyHandling.checkDirty(affectedFormHandlers);
 
 			if (dirty) {
-				instance.openConfirmDialog(dialogModel.getCloseAction(), affectedFormHandlers,
+				dirtyHandling.openConfirmDialog(dialogModel.getCloseAction(), affectedFormHandlers,
 					context.getWindowScope());
 				return HandlerResult.DEFAULT_RESULT;
 			}

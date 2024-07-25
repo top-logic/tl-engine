@@ -196,8 +196,7 @@ public class DefaultDialogModel extends AbstractDialogModel {
 	 */
 	public static DefaultDialogModel dialogModel(HTMLFragment title, DisplayDimension width,
 			DisplayDimension height) {
-		return new DefaultDialogModel(
-			new DefaultLayoutData(width, 100, height, 100, Scrolling.NO), title, true, true, null);
+		return dialogModel(title, width, height, true);
 	}
 
 	/**
@@ -206,7 +205,7 @@ public class DefaultDialogModel extends AbstractDialogModel {
 	 * @param closable
 	 *        - if a dialog has a closing button and closes by clicking in the background
 	 */
-	private static DefaultDialogModel dialogModel(HTMLFragment title, DisplayDimension width, DisplayDimension height,
+	public static DefaultDialogModel dialogModel(HTMLFragment title, DisplayDimension width, DisplayDimension height,
 			boolean closable) {
 		return new DefaultDialogModel(
 			new DefaultLayoutData(width, 100, height, 100, Scrolling.NO), title, true, closable, null);

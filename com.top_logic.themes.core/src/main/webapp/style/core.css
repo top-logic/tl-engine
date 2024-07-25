@@ -1321,6 +1321,12 @@ div.mboxInput {
 	padding-left: 10px;
 }
 
+.mboxContent .tl-error-message-title {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-02);
+}
+
 /*
 ****										****
 ****	simpleajax network error box (sx)	****

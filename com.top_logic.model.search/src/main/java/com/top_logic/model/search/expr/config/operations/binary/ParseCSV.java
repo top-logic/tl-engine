@@ -85,7 +85,7 @@ public class ParseCSV extends GenericMethod {
 	/**
 	 * Default separator for column.
 	 */
-	private static final char DEFAULT_COLUMN_SEPARATOR = ',';
+	private static final char DEFAULT_COLUMN_SEPARATOR = ';';
 
 	/**
 	 * Default separator for lines.
@@ -96,6 +96,11 @@ public class ParseCSV extends GenericMethod {
 	 * Default separator for column.
 	 */
 	private static final char DEFAULT_QUOTE_CHAR = '"';
+
+	/**
+	 * Default escape character.
+	 */
+	private static final char DEFAULT_ESCAPE_CHAR = '\\';
 
 	/**
 	 * Creates a {@link ParseCSV}.
@@ -212,6 +217,7 @@ public class ParseCSV extends GenericMethod {
 		csvSchema = csvSchema
 			.withColumnSeparator(columnSeparator)
 			.withLineSeparator(lineSeparator)
+			.withEscapeChar(DEFAULT_ESCAPE_CHAR)
 			.withQuoteChar(quoteChar);
 
 		return csvSchema;

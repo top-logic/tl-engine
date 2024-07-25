@@ -46,18 +46,18 @@ public class CloseDialogActionOp extends ComponentActionOp<ComponentAction> {
 		ApplicationAssertions.assertNotNull(getConfig(), "Dialog '" + dialog
 			+ "' does not seem to be open.", dialogModel);
 
-		HandlerResult result = getCloseDialogHandler(context.getDisplayContext(), dialogModel);
+		HandlerResult result = getCloseDialogHandlerResult(context.getDisplayContext(), dialogModel);
 		ApplicationAssertions.assertSuccess(getConfig(), result);
 		return argument;
 	}
 
-	private HandlerResult getCloseDialogHandler(DisplayContext context, DialogModel dialogModel) {
+	private HandlerResult getCloseDialogHandlerResult(DisplayContext context, DialogModel dialogModel) {
 		Collection<? extends ChangeHandler> affectedFormHandlers = dialogModel.getAffectedFormHandlers();
-		DirtyHandling instance = DirtyHandling.getInstance();
-		boolean dirty = instance.checkDirty(affectedFormHandlers);
+		DirtyHandling dirtyHandling = DirtyHandling.getInstance();
+		boolean dirty = dirtyHandling.checkDirty(affectedFormHandlers);
 
 		if (dirty) {
-			instance.openConfirmDialog(dialogModel.getCloseAction(), affectedFormHandlers,
+			dirtyHandling.openConfirmDialog(dialogModel.getCloseAction(), affectedFormHandlers,
 				context.getWindowScope());
 			return HandlerResult.DEFAULT_RESULT;
 		}

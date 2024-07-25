@@ -75,6 +75,7 @@ import com.top_logic.layout.scripting.recorder.ref.value.MapValue;
 import com.top_logic.layout.scripting.recorder.ref.value.MapValue.MapEntryValue;
 import com.top_logic.layout.scripting.recorder.ref.value.RowTableValue;
 import com.top_logic.layout.scripting.recorder.ref.value.TableValue;
+import com.top_logic.layout.scripting.recorder.ref.value.form.FieldPlaceholderNaming;
 import com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming;
 import com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming;
 import com.top_logic.layout.scripting.runtime.GlobalVariableStore;
@@ -533,12 +534,25 @@ public class ActionFactory {
 	 */
 	public static ValueAssertion fieldValueAssertion(ModelName formMemberName, ModelName expectedValue,
 			boolean rawValue, String comment) {
+		return fieldAssertion(formMemberName, expectedValue, currentFieldValue(formMemberName, rawValue), comment);
+	}
+
+	/**
+	 * Creates a new {@link ValueAssertion} that asserts the placeholder of a form field.
+	 */
+	public static ValueAssertion fieldPlaceholderAssertion(ModelName formMemberName, ModelName expectedValue,
+			String comment) {
+		return fieldAssertion(formMemberName, expectedValue, fieldPlaceholderValue(formMemberName), comment);
+	}
+
+	private static ValueAssertion fieldAssertion(ModelName formMemberName, ModelName expectedValue, Name actualValue,
+			String comment) {
 		if (needsContext(expectedValue)) {
 			ValueInContextName valueInContext = createValueInContext(formMemberName, expectedValue);
 
-			return valueAssertion(valueInContext, currentFieldValue(formMemberName, rawValue), comment);
+			return valueAssertion(valueInContext, actualValue, comment);
 		}
-		return valueAssertion(expectedValue, currentFieldValue(formMemberName, rawValue), comment);
+		return valueAssertion(expectedValue, actualValue, comment);
 	}
 
 	/**
@@ -607,8 +621,7 @@ public class ActionFactory {
 	}
 
 	/**
-	 * Returns either the {@link ModelName} for a {@link FieldRawValueNaming} or
-	 * {@link FieldValueNaming}.
+	 * Either the {@link ModelName} for a {@link FieldRawValueNaming} or {@link FieldValueNaming}.
 	 */
 	public static Name currentFieldValue(ModelName fieldName, boolean rawValue) {
 		AspectNaming.Name currentFieldValue;
@@ -617,6 +630,15 @@ public class ActionFactory {
 		} else {
 			currentFieldValue = TypedConfiguration.newConfigItem(FieldValueNaming.Name.class);
 		}
+		currentFieldValue.setModel(fieldName);
+		return currentFieldValue;
+	}
+
+	/**
+	 * The {@link ModelName} for a {@link FieldPlaceholderNaming}.
+	 */
+	public static Name fieldPlaceholderValue(ModelName fieldName) {
+		AspectNaming.Name currentFieldValue = TypedConfiguration.newConfigItem(FieldPlaceholderNaming.Name.class);
 		currentFieldValue.setModel(fieldName);
 		return currentFieldValue;
 	}

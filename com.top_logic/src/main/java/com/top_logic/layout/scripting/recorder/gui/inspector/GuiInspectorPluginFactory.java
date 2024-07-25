@@ -29,6 +29,7 @@ import com.top_logic.layout.scripting.recorder.gui.inspector.plugin.assertion.Fi
 import com.top_logic.layout.scripting.recorder.gui.inspector.plugin.assertion.FieldModeAssertionPlugin;
 import com.top_logic.layout.scripting.recorder.gui.inspector.plugin.assertion.FieldNotExistsAssertionPlugin;
 import com.top_logic.layout.scripting.recorder.gui.inspector.plugin.assertion.FieldOptionsAssertionPlugin;
+import com.top_logic.layout.scripting.recorder.gui.inspector.plugin.assertion.FieldPlaceholderAssertionPlugin;
 import com.top_logic.layout.scripting.recorder.gui.inspector.plugin.assertion.FieldValidityAssertionPlugin;
 import com.top_logic.layout.scripting.recorder.gui.inspector.plugin.assertion.FieldValueAssertionPlugin;
 import com.top_logic.layout.scripting.recorder.gui.inspector.plugin.assertion.TableCellFullTextAssertionPlugin;
@@ -112,6 +113,7 @@ public class GuiInspectorPluginFactory {
 		if (model instanceof SelectField) {
 			inspector.add(new FieldOptionsAssertionPlugin((SelectField) model));
 		}
+		inspector.add(new FieldPlaceholderAssertionPlugin(model));
 		inspector.add(new FieldValidityAssertionPlugin(model));
 		inspector.add(new FieldErrorAssertionPlugin(model));
 		inspector.add(new FieldMandatoryAssertionPlugin(model, false));

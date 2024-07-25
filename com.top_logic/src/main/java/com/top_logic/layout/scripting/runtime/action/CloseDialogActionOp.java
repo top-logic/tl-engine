@@ -5,7 +5,12 @@
  */
 package com.top_logic.layout.scripting.runtime.action;
 
+import java.util.Collection;
+
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.DirtyHandling;
+import com.top_logic.layout.basic.check.ChangeHandler;
 import com.top_logic.layout.scripting.action.ComponentAction;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.structure.DialogModel;
@@ -41,9 +46,22 @@ public class CloseDialogActionOp extends ComponentActionOp<ComponentAction> {
 		ApplicationAssertions.assertNotNull(getConfig(), "Dialog '" + dialog
 			+ "' does not seem to be open.", dialogModel);
 
-		HandlerResult result = dialogModel.getCloseAction().executeCommand(context.getDisplayContext());
+		HandlerResult result = getCloseDialogHandler(context.getDisplayContext(), dialogModel);
 		ApplicationAssertions.assertSuccess(getConfig(), result);
 		return argument;
+	}
+
+	private HandlerResult getCloseDialogHandler(DisplayContext context, DialogModel dialogModel) {
+		Collection<? extends ChangeHandler> affectedFormHandlers = dialogModel.getAffectedFormHandlers();
+		DirtyHandling instance = DirtyHandling.getInstance();
+		boolean dirty = instance.checkDirty(affectedFormHandlers);
+
+		if (dirty) {
+			instance.openConfirmDialog(dialogModel.getCloseAction(), affectedFormHandlers,
+				context.getWindowScope());
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		return dialogModel.getCloseAction().executeCommand(context);
 	}
 
 }

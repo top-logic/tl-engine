@@ -218,12 +218,12 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 
 	@Override
 	public Object getFallbackValue(TLObject object, TLStructuredTypePart attribute) {
-		return fallback().getAttributeValue(object, attribute);
+		return object.tValue(_fallbackAttr);
 	}
 
 	@Override
 	public Object getExplicitValue(TLObject object, TLStructuredTypePart attribute) {
-		return storage().getAttributeValue(object, attribute);
+		return object.tValue(_storageAttr);
 	}
 
 	@Override

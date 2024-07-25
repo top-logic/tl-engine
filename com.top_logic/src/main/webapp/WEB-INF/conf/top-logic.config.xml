@@ -1727,6 +1727,7 @@
 					<scheme class="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming" priority="resolve-only"/>
 					<scheme class="com.top_logic.layout.scripting.recorder.ref.value.form.FieldOptionsNaming" priority="resolve-only"/>
 					<scheme class="com.top_logic.layout.scripting.recorder.ref.value.form.FieldOptionLabelsNaming" priority="resolve-only"/>
+					<scheme class="com.top_logic.layout.scripting.recorder.ref.value.form.FieldPlaceholderNaming" priority="resolve-only"/>
 					<scheme class="com.top_logic.layout.scripting.recorder.ref.ObjectAspectNaming" priority="resolve-only"/>
 					<scheme class="com.top_logic.layout.scripting.recorder.ref.ConfigValueNaming" priority="resolve-only"/>
 					<scheme class="com.top_logic.layout.component.ComponentModelNamingScheme" priority="resolve-only"/>

@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.editor.commands;
 
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,15 +13,20 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import com.top_logic.basic.FileManager;
+import org.apache.commons.collections4.BidiMap;
+
+import com.top_logic.basic.col.BidiHashMap;
+import com.top_logic.basic.io.FileUtilities;
+import com.top_logic.basic.tooling.Workspace;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.editor.LayoutTemplateUtils;
+import com.top_logic.layout.processor.LayoutModelConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.mig.html.layout.LayoutConstants;
 import com.top_logic.mig.html.layout.LayoutStorage;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.mig.html.layout.TLLayout;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Context used by the {@link ExportLayoutCommandHandler}.
@@ -31,7 +37,7 @@ public class LayoutExportContext {
 
 	private Map<String, TLLayout> _templatesByLayoutKey = new HashMap<>();
 
-	private Map<String, String> _exportNameByLayoutKey = new HashMap<>();
+	private BidiMap<String, String> _exportNameByLayoutKey = new BidiHashMap<>();
 
 	private Map<LayoutComponent, Collection<LayoutComponent>> _childrenByComponent = new HashMap<>();
 
@@ -49,45 +55,18 @@ public class LayoutExportContext {
 
 	private void initExportNameByLayoutKey() {
 		for (LayoutComponent root : _existingComponents) {
-			String rootLayoutKey = getLayoutKey(root);
+			String layoutKey = getLayoutKey(root);
+			Path path = Path.of(layoutKey);
 
-			_exportNameByLayoutKey.put(rootLayoutKey, rootLayoutKey);
-
-			putExportNameByLayoutKeys(root, LayoutExportUtils.getRootLayoutScope(rootLayoutKey));
+			putExportName(layoutKey, path, true);
+			putChildrenExportNames(root, getLayoutScope(path));
 		}
 	}
 
-	private void putExportNameByLayoutKeys(LayoutComponent parent, String parentScope) {
-		Collection<LayoutComponent> children = _childrenByComponent.get(parent);
+	private Path getLayoutScope(Path path) {
+		Path parent = path.getParent();
 
-		if (children != null) {
-			putExportNameByLayoutKeysInternal(parentScope, children);
-		}
-	}
-
-	private void putExportNameByLayoutKeysInternal(String parentScope, Collection<LayoutComponent> children) {
-		Collection<String> childScopes = new HashSet<>();
-
-		for (LayoutComponent child : children) {
-			if (isNewCreatedComponent(child)) {
-				String childLayoutScope = LayoutExportUtils.getLayoutScope(child);
-				String uniqueChildLayoutScope =	LayoutExportUtils.getUniqueLayoutScope(childScopes, parentScope, childLayoutScope);
-				String layoutScope = LayoutExportUtils.getFullLayoutScope(parentScope, uniqueChildLayoutScope);
-				String uniqueFilename = getUniqueFilename(child, childLayoutScope, layoutScope);
-
-				_exportNameByLayoutKey.put(getLayoutKey(child), layoutScope + uniqueFilename);
-
-				putExportNameByLayoutKeys(child, layoutScope);
-
-				childScopes.add(uniqueChildLayoutScope);
-			}
-		}
-	}
-
-	private String getUniqueFilename(LayoutComponent child, String childLayoutScope, String layoutScope) {
-		Collection<String> layoutKeys = _exportNameByLayoutKey.values();
-
-		return LayoutExportUtils.getUniqueFilename(layoutKeys, childLayoutScope, layoutScope, child);
+		return parent == null ? Path.of(Workspace.topLevelProjectDirectory().getName()) : parent;
 	}
 
 	private boolean isNewCreatedComponent(LayoutComponent component) {
@@ -131,11 +110,76 @@ public class LayoutExportContext {
 		return Objects.requireNonNull(root);
 	}
 
+	private void putChildrenExportNames(LayoutComponent parent, Path scope) {
+		Collection<LayoutComponent> children = _childrenByComponent.get(parent);
+
+		if (children != null) {
+			putExportPathByLayoutKeysInternal(scope, children);
+		}
+	}
+
+	private void putExportPathByLayoutKeysInternal(Path scope, Collection<LayoutComponent> children) {
+		for (LayoutComponent child : children) {
+			if (isNewCreatedComponent(child)) {
+				Path childScope = scope.resolve(LayoutExportUtils.getLayoutScope(child)).normalize();
+				Path filename = Path.of(LayoutExportUtils.getLayoutName(child));
+
+				putExportName(getLayoutKey(child), childScope.resolve(filename), false);
+				putChildrenExportNames(child, childScope);
+			}
+		}
+	}
+
+	private void putExportName(String layoutKey, Path path, boolean override) {
+		Path exportPath = path;
+
+		if (!override) {
+			exportPath = getUniqueLayoutPath(path);
+		}
+
+		_exportNameByLayoutKey.put(layoutKey, FileUtilities.getCombinedPath(exportPath));
+	}
+
+	private Path getUniqueLayoutPath(Path path) {
+		Path scope = path.getParent();
+		String filename = scope.relativize(path).toString();
+		String basename = getLayoutBasename(filename);
+
+		Path uniquePath = path;
+		int suffixCounter = 1;
+
+		while (isUnique(uniquePath)) {
+			uniquePath = scope.resolve(basename + suffixCounter + LayoutModelConstants.LAYOUT_XML_FILE_SUFFIX);
+
+			suffixCounter++;
+		}
+
+		return uniquePath;
+	}
+
+	private String getLayoutBasename(String filename) {
+		if (filename.endsWith(LayoutModelConstants.LAYOUT_XML_FILE_SUFFIX)) {
+			return filename.substring(0, filename.length() - LayoutModelConstants.LAYOUT_XML_FILE_SUFFIX.length());
+		} else {
+			throw new TopLogicException(I18NConstants.NO_LAYOUT_FILENAME__NAME.fill(filename));
+		}
+	}
+
+	private boolean isUnique(Path path) {
+		String resourceName = FileUtilities.getCombinedPath(path);
+
+		return isUsedByExport(resourceName) || LayoutExportUtils.existsLayoutInFilesystem(resourceName);
+	}
+
+	private boolean isUsedByExport(String resourceName) {
+		return _exportNameByLayoutKey.containsValue(resourceName);
+	}
+
 	private void initExistingComponents() {
 		MainLayout mainLayout = MainLayout.getDefaultMainLayout();
 
 		for (String layoutKey : _templatesByLayoutKey.keySet()) {
-			if (FileManager.getInstance().exists(LayoutConstants.LAYOUT_BASE_RESOURCE + "/" + layoutKey)) {
+			if (LayoutExportUtils.existsLayoutInFilesystem(layoutKey)) {
 				LayoutComponent component = mainLayout.getComponentForLayoutKey(layoutKey);
 
 				if (component != null) {

@@ -50,6 +50,11 @@ public class I18NConstants extends I18NConstantsBase {
 	
 	public static ResKey1 RESOLVE_COMPONENT_ERROR__LAYOUT_KEY;
 
+	/**
+	 * @en '{0}' is not a valid layout file. Layout files have to end with '.layout.xml'.
+	 */
+	public static ResKey1 NO_LAYOUT_FILENAME__NAME;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

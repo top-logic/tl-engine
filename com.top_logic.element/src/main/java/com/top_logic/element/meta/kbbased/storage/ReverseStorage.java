@@ -151,6 +151,9 @@ public class ReverseStorage<C extends ReverseStorage.Config<?>> extends Abstract
 
 			_preload = new AssociationNavigationPreload(_outgoingQuery);
 			_reversePreload = new AssociationNavigationPreload(_incomingQuery);
+		} else {
+			_preload = forwardStorage.getReversePreload();
+			_reversePreload = forwardStorage.getPreload();
 		}
 
 		super.init(attribute);

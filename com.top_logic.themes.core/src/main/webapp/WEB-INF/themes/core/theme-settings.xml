@@ -1995,13 +1995,16 @@
 		value="#89ADE4"
 	/>
 	<color name="text-explicit"
-		value="#0000DD"
+		value="#205CB4"
 	/>
 	<string name="text-explicit-weight"
 		value="bolder"
 	/>
 	<color name="text-explicit-bg"
-		value="#CDCEF9"
+		value="#9BC2FC"
+	/>
+	<color name="text-explicit-bg-selected"
+		value="#92B5E9"
 	/>
 	<color name="text-fallback"
 		value="#967100"

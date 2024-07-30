@@ -13,8 +13,8 @@ import com.top_logic.knowledge.service.db2.AbstractAssociationQuery;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * {@link ReferenceStorage} that stores the reference in an separate table, i.e. the for the
- * reference an own row exists in the database.
+ * {@link ReferenceStorage} that stores the reference in an separate table, i.e. there is a separate
+ * line in the database for each referenced object.
  * 
  * @since 5.8.0
  * 

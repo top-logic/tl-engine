@@ -76,6 +76,9 @@ public class ReverseStorage<C extends ReverseStorage.Config<?>> extends Abstract
 		super(context, config);
 	}
 
+	/**
+	 * New default configuration for an {@link ReverseStorage}.
+	 */
 	public static Config<?> defaultConfig() {
 		return TypedConfiguration.newConfigItem(Config.class);
 	}
@@ -125,31 +128,29 @@ public class ReverseStorage<C extends ReverseStorage.Config<?>> extends Abstract
 		TLAssociationEnd sourceEnd = ((TLReference) attribute).getEnd();
 		TLAssociationEnd destinationEnd = TLModelUtil.getOtherEnd(sourceEnd);
 		TLStructuredTypePart forwardRef = destinationEnd.getReference();
-		if (forwardRef != null) {
-			StorageImplementation forwardStorage = AttributeOperations.getStorageImplementation(forwardRef);
-			if (forwardStorage instanceof AssociationStorage) {
-				AssociationStorage linkStorage = (AssociationStorage) forwardStorage;
-				_outgoingQuery = linkStorage.getIncomingQuery();
-				_table = _outgoingQuery.getAssociationTypeName();
-				_monomorphic = linkStorage.monomophicTable();
+		StorageImplementation forwardStorage = AttributeOperations.getStorageImplementation(forwardRef);
+		if (forwardStorage instanceof AssociationStorage) {
+			AssociationStorage linkStorage = (AssociationStorage) forwardStorage;
+			_outgoingQuery = linkStorage.getIncomingQuery();
+			_table = _outgoingQuery.getAssociationTypeName();
+			_monomorphic = linkStorage.monomophicTable();
 
-				AbstractAssociationQuery<KnowledgeAssociation, ? extends Collection<KnowledgeAssociation>> otherOutgoing =
+			AbstractAssociationQuery<KnowledgeAssociation, ? extends Collection<KnowledgeAssociation>> otherOutgoing =
 					linkStorage.getOutgoingQuery();
-				if (otherOutgoing instanceof AssociationSetQuery<?>) {
-					@SuppressWarnings("unchecked")
-					AssociationSetQuery<KnowledgeAssociation> incomingQuery =
+			if (otherOutgoing instanceof AssociationSetQuery<?>) {
+				@SuppressWarnings("unchecked")
+				AssociationSetQuery<KnowledgeAssociation> incomingQuery =
 					(AssociationSetQuery<KnowledgeAssociation>) otherOutgoing;
-					_incomingQuery = incomingQuery;
-				} else {
-					_incomingQuery = AssociationQuery.createOutgoingQuery(
-						_outgoingQuery.getCacheKey().asString() + "Reverse",
-						_table,
-						_outgoingQuery.getAttributeQuery());
-				}
-
-				_preload = new AssociationNavigationPreload(_outgoingQuery);
-				_reversePreload = new AssociationNavigationPreload(_incomingQuery);
+				_incomingQuery = incomingQuery;
+			} else {
+				_incomingQuery = AssociationQuery.createOutgoingQuery(
+					_outgoingQuery.getCacheKey().asString() + "Reverse",
+					_table,
+					_outgoingQuery.getAttributeQuery());
 			}
+
+			_preload = new AssociationNavigationPreload(_outgoingQuery);
+			_reversePreload = new AssociationNavigationPreload(_incomingQuery);
 		}
 
 		super.init(attribute);

@@ -2868,12 +2868,17 @@ td.tl-table__cell.tl-explicit,
 }
 
 /* Explicit fallback override in selected table rows. */
+.tl-table__row:not(.tblSelected):hover > td.tl-explicit,
 td.tl-table__cell--selected.tl-explicit {
-	background-color: var(--text-explicit-bg);
+	background-color: var(--text-explicit-bg-selected);
+}
+
+.tl-table__row:not(.tblSelected):hover > td.tl-fallback,
+td.tl-table__cell.tl-fallback {
+	color: var(--text-fallback);
 }
 
 /* Fallback value in field placeholders. */
-td.tl-table__cell.tl-fallback,
 .tl-with-fallback.tl-fallback input::placeholder,
 .tl-with-fallback.tl-fallback .ddwttDropBtn {
 	color: var(--text-fallback);

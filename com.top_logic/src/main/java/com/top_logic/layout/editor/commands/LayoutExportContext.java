@@ -26,7 +26,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutStorage;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.mig.html.layout.TLLayout;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * Context used by the {@link ExportLayoutCommandHandler}.
@@ -161,7 +160,7 @@ public class LayoutExportContext {
 		if (filename.endsWith(LayoutModelConstants.LAYOUT_XML_FILE_SUFFIX)) {
 			return filename.substring(0, filename.length() - LayoutModelConstants.LAYOUT_XML_FILE_SUFFIX.length());
 		} else {
-			throw new TopLogicException(I18NConstants.NO_LAYOUT_FILENAME__NAME.fill(filename));
+			throw new IllegalArgumentException(filename + ": Layout file expected. Files have to end with .layout.xml");
 		}
 	}
 

@@ -40,9 +40,9 @@ import com.top_logic.util.TLResKeyUtil;
 public class LayoutExportUtils {
 
 	/**
-	 * Returns the direct scope (only respecting tabs and dialogs) for the given component.
+	 * Returns the local scope (only respecting tabs and dialogs) for the given component.
 	 */
-	public static String getLayoutScope(LayoutComponent component) {
+	public static String getLocalScope(LayoutComponent component) {
 		StringBuilder layoutScopeBuilder = new StringBuilder();
 
 		appendTabLayoutScope(layoutScopeBuilder, component);
@@ -60,7 +60,13 @@ public class LayoutExportUtils {
 	}
 
 	private static String getBasename(LayoutComponent component) {
-		return getCompatibleFilenamePart(getTitleName(component) + " " + getLocalName(component));
+		StringBuilder builder = new StringBuilder();
+
+		builder.append(getTitleName(component));
+		builder.append(" ");
+		builder.append(getLocalName(component));
+
+		return getCompatibleFilenamePart(builder.toString());
 	}
 
 	private static String getLocalName(LayoutComponent component) {

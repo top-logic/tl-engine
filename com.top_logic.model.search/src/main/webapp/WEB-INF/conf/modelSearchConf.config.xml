@@ -353,6 +353,7 @@
 					<method name="zipArchive" class="com.top_logic.model.search.expr.config.operations.binary.ZipArchive$Builder"/>
 					<method name="zipEntry" class="com.top_logic.model.search.expr.config.operations.binary.ZipEntry$Builder"/>
 					<method name="pdf2txt" class="com.top_logic.model.search.expr.config.operations.binary.Pdf2Txt$Builder"/>
+					<method name="parseCSV" class="com.top_logic.model.search.expr.config.operations.binary.ParseCSV$Builder"/>
 					<method name="parseJson" class="com.top_logic.model.search.expr.config.operations.binary.ParseJson$Builder"/>
 					
 					<method name="regex" class="com.top_logic.model.search.expr.config.operations.regex.Regex$Builder"/>

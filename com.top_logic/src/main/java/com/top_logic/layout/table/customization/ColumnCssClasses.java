@@ -10,6 +10,7 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ColumnConfigurator;
 
@@ -23,6 +24,7 @@ public class ColumnCssClasses extends AbstractConfiguredInstance<ColumnCssClasse
 	/**
 	 * Configuration options for {@link ColumnCssClasses}.
 	 */
+	@TagName("column-classes")
 	public interface Config<I extends ColumnCssClasses> extends PolymorphicConfiguration<I> {
 		/**
 		 * CSS class to apply to all cells in a column.

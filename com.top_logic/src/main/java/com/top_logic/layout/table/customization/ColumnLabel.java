@@ -10,6 +10,8 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ColumnConfigurator;
@@ -18,21 +20,23 @@ import com.top_logic.layout.table.model.ColumnConfigurator;
  * Configures the visibility of the column label in the header.
  */
 @InApp
-public class ColumnName extends AbstractConfiguredInstance<ColumnName.Config<?>>
+public class ColumnLabel extends AbstractConfiguredInstance<ColumnLabel.Config<?>>
 		implements ColumnConfigurator {
 
 	/**
-	 * Configuration options for {@link ColumnName}.
+	 * Configuration options for {@link ColumnLabel}.
 	 */
-	public interface Config<I extends ColumnName> extends PolymorphicConfiguration<I> {
+	@TagName("column-label")
+	public interface Config<I extends ColumnLabel> extends PolymorphicConfiguration<I> {
 		/**
 		 * The label to display in the column header.
 		 */
-		ResKey getColumnLabel();
+		@Label("Column label")
+		ResKey getValue();
 	}
 
 	/**
-	 * Creates a {@link ColumnName} from configuration.
+	 * Creates a {@link ColumnLabel} from configuration.
 	 * 
 	 * @param context
 	 *        The context for instantiating sub configurations.
@@ -40,13 +44,13 @@ public class ColumnName extends AbstractConfiguredInstance<ColumnName.Config<?>>
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public ColumnName(InstantiationContext context, Config<?> config) {
+	public ColumnLabel(InstantiationContext context, Config<?> config) {
 		super(context, config);
 	}
 
 	@Override
 	public void adapt(ColumnConfiguration column) {
-		column.setColumnLabelKey(getConfig().getColumnLabel());
+		column.setColumnLabelKey(getConfig().getValue());
 	}
 
 }

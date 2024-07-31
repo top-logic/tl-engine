@@ -10,6 +10,8 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ColumnConfigurator;
@@ -24,11 +26,18 @@ public class ColumnWidth extends AbstractConfiguredInstance<ColumnWidth.Config<?
 	/**
 	 * Configuration options for {@link ColumnWidth}.
 	 */
+	@TagName("column-width")
 	public interface Config<I extends ColumnWidth> extends PolymorphicConfiguration<I> {
 		/**
 		 * The width of the column.
+		 * 
+		 * <p>
+		 * The value must be given in pixels (px) for tables that allow for drag and drop width
+		 * customization by the user.
+		 * </p>
 		 */
-		DisplayDimension getColumnWidth();
+		@Label("Column width")
+		DisplayDimension getValue();
 	}
 
 	/**
@@ -46,7 +55,7 @@ public class ColumnWidth extends AbstractConfiguredInstance<ColumnWidth.Config<?
 
 	@Override
 	public void adapt(ColumnConfiguration column) {
-		column.setDefaultColumnWidth(getConfig().getColumnWidth().toString());
+		column.setDefaultColumnWidth(getConfig().getValue().toString());
 	}
 
 }

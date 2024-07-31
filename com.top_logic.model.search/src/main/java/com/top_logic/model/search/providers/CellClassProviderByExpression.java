@@ -1,0 +1,124 @@
+/*
+ * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * 
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.model.search.providers;
+
+import java.util.Collection;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.StringServices;
+import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.layout.table.CellClassProvider;
+import com.top_logic.layout.table.TableRenderer.Cell;
+import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.QueryExecutor;
+
+/**
+ * Computation of dynamic CSS classes for table cells in a TL-Script function.
+ */
+@InApp
+@Label("CSS class provider in TL-Script")
+public class CellClassProviderByExpression extends AbstractConfiguredInstance<CellClassProviderByExpression.Config<?>>
+		implements CellClassProvider {
+
+	/**
+	 * Configuration options for {@link CellClassProviderByExpression}.
+	 */
+	public interface Config<I extends CellClassProviderByExpression> extends PolymorphicConfiguration<I> {
+		/**
+		 * Function computing the CSS class for a certain cell.
+		 * 
+		 * <p>
+		 * The function expects the following three arguments:
+		 * </p>
+		 * 
+		 * <dl>
+		 * <dt><code>value</code></dt>
+		 * <dd>The value of the cell that should receive a CSS class. If the column represents an
+		 * attribute of an object, then the value is the value of this attribute for the row
+		 * object.</dd>
+		 * </dl>
+		 * 
+		 * <dl>
+		 * <dt><code>row</code></dt>
+		 * <dd>The row object of the current table row. If the column represents an attribute of an
+		 * object, then the row is the object from which attributes are displayed in the current
+		 * table row.</dd>
+		 * </dl>
+		 * 
+		 * <dl>
+		 * <dt><code>model</code></dt>
+		 * <dd>The model of the underlying component.</dd>
+		 * </dl>
+		 * 
+		 * <p>
+		 * The function is expected to return a string representing the CSS class to be set to the
+		 * current cell. Multiple CSS classes may be separated with white space. If the function
+		 * returns <code>null</code>, no CSS classes are added to the current cell.
+		 * </p>
+		 * 
+		 * <p>
+		 * To add the CSS class "<code>tl-attention</code>" to cells with values greater than
+		 * <code>99</code>, you may use the following expression:
+		 * </p>
+		 * 
+		 * <pre>
+		 * <code>value -> $value &gt; 99 ? "tl-attention" : null</code>
+		 * </pre>
+		 */
+		@Mandatory
+		Expr getCssClasses();
+	}
+
+	private LayoutComponent _component;
+
+	private QueryExecutor _cssClasses;
+
+	/**
+	 * Creates a {@link CellClassProviderByExpression} from configuration.
+	 * 
+	 * @param context
+	 *        The context for instantiating sub configurations.
+	 * @param config
+	 *        The configuration.
+	 */
+	@CalledByReflection
+	public CellClassProviderByExpression(InstantiationContext context, Config<?> config) {
+		super(context, config);
+		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, c -> _component = c);
+		_cssClasses = QueryExecutor.compile(config.getCssClasses());
+	}
+
+	@Override
+	public String getCellClass(Cell cell) {
+		Object value = cell.getValue();
+		Object row = cell.getRowObject();
+		Object model = _component.getModel();
+		Object result = _cssClasses.execute(value, row, model);
+		return toCssClass(result);
+	}
+
+	private static String toCssClass(Object result) {
+		if (StringServices.isEmpty(result)) {
+			return null;
+		}
+		if (result instanceof Collection<?> collection) {
+			return collection.stream()
+				.map(CellClassProviderByExpression::toCssClass)
+				.filter(Objects::nonNull)
+				.collect(Collectors.joining(" "));
+		}
+		return result.toString();
+	}
+
+}

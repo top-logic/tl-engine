@@ -19,7 +19,7 @@ import com.top_logic.util.model.ModelService;
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
 @SuppressWarnings("javadoc")
-public class TestTLStructuredTypePart extends TestPersistentModelPart {
+public class TestTLStructuredTypePart extends TestWithModelExtension {
 
 	public void testNoException() {
 		/* Iterating over all instances might seem a lot. But this is only the model. And it takes

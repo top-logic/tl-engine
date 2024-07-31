@@ -58,10 +58,16 @@ public class ColumnCustomizations extends AbstractConfiguredInstance<ColumnCusto
 			 */
 			String CONFIGURATIONS = "configurations";
 
+			/**
+			 * Name of the column to add customizations to.
+			 */
 			@Name(NAME)
 			@Mandatory
 			String getName();
 
+			/**
+			 * Customizations for the selected column.
+			 */
 			@Name(CONFIGURATIONS)
 			@DefaultContainer
 			@Options(fun = AllInAppImplementations.class)

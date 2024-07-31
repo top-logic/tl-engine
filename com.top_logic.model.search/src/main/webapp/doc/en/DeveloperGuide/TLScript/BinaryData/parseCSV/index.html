@@ -1,0 +1,156 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>$input.parseCSV()</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Interprets the input as CSV formatted text.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name Name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>Input</td>
+			<td>Binary value</td>
+			<td>Text in CSV format</td>
+			<td>Yes</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>parsers</td>
+			<td>map</td>
+			<td>Map with column name as key and (TLScript) function as value. The values in the respective cells are formatted according to the specified function.</td>
+			<td>No</td>
+			<td>null</td>
+		</tr>
+		<tr>
+			<td>columnSeparator</td>
+			<td>Char</td>
+			<td>Separator for column values</td>
+			<td>No</td>
+			<td>','</td>
+		</tr>
+		<tr>
+			<td>lineSeparator</td>
+			<td>String</td>
+			<td>Separator for the individual lines</td>
+			<td>No</td>
+			<td>"\n"</td>
+		</tr>
+		<tr>
+			<td>quoteChar</td>
+			<td>Char</td>
+			<td>
+			<p>Character used to quote values that contain separators or line breaks. With \ (e.g. \") the quoting character becomes a normal character.</p>
+			</td>
+			<td>No</td>
+			<td>'"'</td>
+		</tr>
+		<tr>
+			<td>trimSpaces</td>
+			<td>Boolean</td>
+			<td>Whether spaces at the beginning or end of values should be ignored.</td>
+			<td>No</td>
+			<td>false</td>
+		</tr>
+		<tr>
+			<td>raw</td>
+			<td>Boolean</td>
+			<td>
+			<p>Whether the function should return the raw data as a list of lists. Otherwise, the function returns a list of maps, using the column names (from the header) as keys.</p>
+			</td>
+			<td>No</td>
+			<td>false/null</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><strong>Type:</strong> List</p>
+
+<p>Creates a list/map for each line in the input and then combines these lists into one list.</p>
+
+<h2>Examples</h2>
+
+<h3>Example 1:</h3>
+
+<pre>
+<code>{
+    toParse = binary(
+        name: "test.csv",
+        data: "date; name; number
+        15.07.2024; test; 5
+        16.07.2024; test2; 2; etc.
+        17.07.2024",
+        contentType: "text/csv",
+        encoding: "utf-8"
+    );
+    result = $toParse.parseCSV();
+    $result
+}</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> [<span style="color:#c0392b">{date=</span>" 15.07.2024", <span style="color:#c0392b">number=</span>" 5", <span style="color:#c0392b">name=</span>" test"}, <span style="color:#c0392b">{date=</span>" 16.07.2024", <span style="color:#c0392b">number=</span>" 2", <span style="color:#c0392b">name=</span>" test2"}, <span style="color:#c0392b">{date=</span>" 17.07.2024", <span style="color:#c0392b">number=</span>, <span style="color:#c0392b">name=}</span>]</p>
+
+<p>Calling <code class="hljs inlineCode">parseCSV(columnSeparator: ";")</code> returns a list of maps. The first line is selected as the header and its entries are used as the key for the maps. Subsequently, for each additional line, the map is generated from its entries according to the keys of the header of the corresponding map, whereby excess entries of the line are ignored and missing entries of the line are filled with empty strings.</p>
+
+<h3>Example 2:</h3>
+
+<pre>
+<code>{
+    toParse = binary(
+        name: "test.csv",
+        data: "date; name; number
+        15.07.2024; test; 5
+        16.07.2024; test2; 2; etc.
+        17.07.2024",
+        contentType: "text/csv",
+        encoding: "utf-8"
+    );
+    result = $toParse.parseCSV(trimSpaces:true, 
+      parsers: {
+        "date": x-&gt; dateFormat("dd.MM.yy").format(dateFormat("dd.MM.yyy").parse($x)), 
+        "number": y -&gt; numberFormat("#").parse($y)+1 
+      });
+    $result
+}</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> [<span style="color:#c0392b">{date=</span>15.07.24, <span style="color:#c0392b">number=</span>6.0, <span style="color:#c0392b">name=</span>"test"}, <span style="color:#c0392b">{date=</span>16<span style="color:#c0392b"></span>.07.24, <span style="color:#c0392b">number=</span>3.0, <span style="color:#c0392b">name=</span>"test2"}, <span style="color:#c0392b">{date=</span>17.07.24, <span style="color:#c0392b">number=</span>, <span style="color:#c0392b">name=}</span>]</p>
+
+<p>When calling <code class="hljs inlineCode">parseCSV</code>, a parser for the column with the name "date" and a parser for the column with the name "number" is specified here, which prepares the entries from the corresponding cells.</p>
+
+<h3>Example 3:</h3>
+
+<pre>
+<code>{
+    toParse = binary(
+        name: "test.csv",
+        data: "date; name; number
+        15.07.2024; test; 5
+        16.07.2024; test2; 2; etc.
+        17.07.2024",
+        contentType: "text/csv",
+        encoding: "utf-8"
+    );
+    result = $toParse.parseCSV(raw:true);
+    $result[0]
+}</code>
+</pre>
+
+<p><strong>Output:</strong> ["date", "name", "number"]</p>
+
+<p>Calling <code class="hljs inlineCode">parseCSV(raw:true)</code> returns the list <code class="hljs inlineCode">[["date", " name", " number"], [" 15.07.2024", " test", " 5"], [" 16.07.2024", " test2", " 2", " etc."],[" 17.07.2024"]].</code> So with spaces before every value except the first ("date"). If these spaces are not required, you must call<code class="hljs inlineCode">parseCSV(raw:true, trimSpaces:true)</code>.</p>

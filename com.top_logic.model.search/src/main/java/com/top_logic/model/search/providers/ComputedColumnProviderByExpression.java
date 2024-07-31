@@ -260,11 +260,6 @@ public class ComputedColumnProviderByExpression
 		}
 	}
 
-	@Override
-	public void adaptDefaultColumn(ColumnConfiguration defaultColumn) {
-		// No additions.
-	}
-
 	private static final class ColumnAccessor implements Accessor<Object> {
 		private final LayoutComponent _component;
 

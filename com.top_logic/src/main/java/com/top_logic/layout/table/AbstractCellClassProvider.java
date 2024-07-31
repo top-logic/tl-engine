@@ -12,9 +12,6 @@ package com.top_logic.layout.table;
  */
 public abstract class AbstractCellClassProvider implements CellClassProvider {
 
-	@Override
-	public Unimplementable unimplementable() {
-		return null;
-	}
+	// Intentionally left blank, CellClassProvider can now be directly implemented.
 
 }

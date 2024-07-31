@@ -15,13 +15,11 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.kbbased.AttributeUtil;
-import com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocator;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -39,22 +37,11 @@ public class StringSetStorage<C extends StringSetStorage.Config<?>> extends Coll
 	 */
 	@TagName("string-set-storage")
 	public interface Config<I extends StringSetStorage<?>> extends CollectionStorage.Config<I> {
-
-		/** @see #getResultLocator() */
-		String RESULT_PROPERTY = "result";
-
-		/**
-		 * TODO: What's this?
-		 */
-		@Name(RESULT_PROPERTY)
-		AttributeValueLocator getResultLocator();
-
+		// Pure marker interface.
 	}
 
 	/** Separate attribute values in the stored combined value. */
 	protected static final char VALUE_SEPARATOR = ',';
-
-	private AttributeValueLocator _resultLocator;
 
 	/**
 	 * Creates a {@link StringSetStorage} from configuration.
@@ -67,14 +54,6 @@ public class StringSetStorage<C extends StringSetStorage.Config<?>> extends Coll
 	@CalledByReflection
 	public StringSetStorage(InstantiationContext context, C config) {
 		super(context, config);
-		_resultLocator = config.getResultLocator();
-	}
-
-	/**
-	 * @see Config#getResultLocator()
-	 */
-	public AttributeValueLocator getResultLocator() {
-		return _resultLocator;
 	}
 
 	@Override
@@ -166,20 +145,6 @@ public class StringSetStorage<C extends StringSetStorage.Config<?>> extends Coll
 		}
 		if (aValue instanceof String) {
 			return (String) aValue;
-		}
-		if (_resultLocator != null) {
-			try {
-				Object theResult = _resultLocator.locateAttributeValue(aValue);
-				if (theResult instanceof String) {
-					return (String) theResult;
-				} else {
-					throw new IllegalArgumentException("The resource locator did not translate to a String. Input: "
-						+ aValue + ", Output: " + theResult);
-				}
-			} catch (Exception ex) {
-				throw new IllegalArgumentException("Value could not be located in: " + aValue);
-			}
-
 		}
 		throw new IllegalArgumentException("Given value is not a Stringand there is no resource locator to transalte: "
 			+ aValue);

@@ -8,7 +8,6 @@ package com.top_logic.element.meta.kbbased.storage;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.func.misc.IsEmpty;
-import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.AttributeUpdate;
@@ -43,11 +42,8 @@ public abstract class AbstractStorage<C extends AbstractStorage.Config<?>> exten
 		}
 
 		switch (update.getUpdateType()) {
-			case TYPE_SET_COLLECTION:
-				checkSetValue(update.getObject(), update.getAttribute(), update.getCollectionSetUpdate());
-				return;
-			case TYPE_SET_SIMPLE:
-				checkSetValue(update.getObject(), update.getAttribute(), update.getSimpleSetUpdate());
+			case TYPE_EDIT:
+				checkSetValue(update.getObject(), update.getAttribute(), update.getEditedValue());
 				return;
 			default: // other types are not allowed for collections
 				return;
@@ -69,11 +65,8 @@ public abstract class AbstractStorage<C extends AbstractStorage.Config<?>> exten
 
 			Object value;
 			switch (update.getUpdateType()) {
-				case TYPE_SET_COLLECTION:
-					value = update.getCollectionSetUpdate();
-					break;
-				case TYPE_SET_SIMPLE:
-					value = update.getSimpleSetUpdate();
+				case TYPE_EDIT:
+					value = update.getEditedValue();
 					break;
 				default: // other types are not allowed for collections
 					return;
@@ -96,22 +89,6 @@ public abstract class AbstractStorage<C extends AbstractStorage.Config<?>> exten
 			throw e;
 		} catch (Exception e) {
 			throw new AttributeException(e);
-		}
-	}
-
-	@Override
-	public Object getUpdateValue(AttributeUpdate update)
-			throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
-		TLObject object = update.getObject();
-		TLStructuredTypePart attribute = update.getAttribute();
-		try {
-			Object simpleValue = update.getSimpleSetUpdate();
-
-			checkSetValue(object, attribute, simpleValue);
-
-			return simpleValue;
-		} catch (RuntimeException e) {
-			throw new IllegalArgumentException("Invalid update for attribute " + attribute);
 		}
 	}
 

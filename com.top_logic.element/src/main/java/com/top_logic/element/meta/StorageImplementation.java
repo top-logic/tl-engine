@@ -9,7 +9,6 @@ import static com.top_logic.model.util.TLModelUtil.*;
 
 import java.util.Collection;
 
-import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -52,6 +51,22 @@ public interface StorageImplementation extends StorageDetail, Unimplementable {
 			throws TopLogicException;
 
 	/**
+	 * Initializes the base value for an edit operation.
+	 * 
+	 * @param object
+	 *        The object being edited.
+	 * @param attribute
+	 *        The attribute being edited.
+	 * @param update
+	 *        The {@link AttributeUpdate} representing the edit operation.
+	 * 
+	 * @see AttributeUpdate#setValue(Object)
+	 */
+	default void initUpdate(TLObject object, TLStructuredTypePart attribute, AttributeUpdate update) {
+		update.setValue(object.tValue(attribute));
+	}
+
+	/**
 	 * Update the attribute value taking the correct update from the container.
 	 * 
 	 * @param update
@@ -61,23 +76,6 @@ public interface StorageImplementation extends StorageDetail, Unimplementable {
 	 *         if the update fails
 	 */
 	public void update(AttributeUpdate update) throws AttributeException;
-
-	/**
-	 * Get the simulated result of a given update.
-	 * 
-	 * @param update
-	 *        The value to get.
-	 * 
-	 * @return theValue that would result in performing the update.
-	 * @throws AttributeException
-	 *         if the access to the attribute value fails
-	 * @throws IllegalArgumentException
-	 *         if aContext or anUpdate is <code>null</code>
-	 * @throws NoSuchAttributeException
-	 *         if this is not an attribute of aContext
-	 */
-	public Object getUpdateValue(AttributeUpdate update)
-			throws NoSuchAttributeException, IllegalArgumentException, AttributeException;
 
 	/**
 	 * {@link PreloadContribution} that contribute {@link PreloadOperation} to load the values of

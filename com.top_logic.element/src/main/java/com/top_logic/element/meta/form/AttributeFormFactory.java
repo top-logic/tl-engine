@@ -177,23 +177,31 @@ public abstract class AttributeFormFactory {
 	 * {@link EditContext}.
 	 */
 	public static void initFieldValue(EditContext context, FormField field) {
-		Object value = context.getCorrectValues();
-		if (!context.isMultiple()) {
-			// A SelectField might have been created even for "simple" attributes.
-			if (field instanceof SelectField) {
-				if (value == null) {
-					value = Collections.emptyList();
-				} else if (!(value instanceof Collection)) {
-					value = Collections.singletonList(value);
-				}
+		Object modelValue = context.getCorrectValues();
+		Object fieldValue = toFieldValue(context, field, modelValue);
+		field.initializeField(fieldValue);
+	}
+
+	/**
+	 * Converts the given model value to a value suitable for editing in the given field.
+	 */
+	public static Object toFieldValue(EditContext context, FormField field, Object modelValue) {
+		if (context.isMultiple()) {
+			if ((modelValue instanceof Collection) && (!(modelValue instanceof List))) {
+				return new ArrayList<>((Collection<?>) modelValue);
 			}
 		} else {
-			if ((value instanceof Collection) && (!(value instanceof List))) {
-				value = new ArrayList<>((Collection<?>) value);
+			// A SelectField might have been created even for non-multiple attributes. And select
+			// fields always use lists as values.
+			if (field instanceof SelectField) {
+				if (modelValue == null) {
+					return Collections.emptyList();
+				} else if (!(modelValue instanceof Collection)) {
+					return Collections.singletonList(modelValue);
+				}
 			}
 		}
-
-		field.initializeField(value);
+		return modelValue;
 	}
 
 	/**

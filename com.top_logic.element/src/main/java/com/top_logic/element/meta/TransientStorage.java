@@ -39,14 +39,18 @@ public class TransientStorage extends AbstractStorage<AbstractStorageBase.Config
 	}
 
 	@Override
-	public Object getAttributeValue(TLObject object, TLStructuredTypePart attribute) throws AttributeException {
-		return object.tValue(attribute);
+	public void initUpdate(TLObject object, TLStructuredTypePart attribute, AttributeUpdate update) {
+		StorageImplementation realStorage = AttributeOperations.getStorageImplementation(attribute);
+		if (realStorage != this) {
+			realStorage.initUpdate(object, attribute, update);
+		} else {
+			super.initUpdate(object, attribute, update);
+		}
 	}
 
 	@Override
-	public Object getUpdateValue(AttributeUpdate update)
-			throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
-		return update.getCorrectValues();
+	public Object getAttributeValue(TLObject object, TLStructuredTypePart attribute) throws AttributeException {
+		return object.tValue(attribute);
 	}
 
 	@Override

@@ -203,12 +203,6 @@ public class ReverseStorage<C extends ReverseStorage.Config<?>> extends Abstract
 	}
 
 	@Override
-	public Object getUpdateValue(AttributeUpdate update)
-			throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
-		throw new UnsupportedOperationException("Reverse attributes cannot be updated directly.");
-	}
-
-	@Override
 	public void removeAttributeValue(TLObject object, TLStructuredTypePart attribute, Object aValue)
 			throws NoSuchAttributeException, AttributeException {
 		throw new UnsupportedOperationException("Reverse attributes cannot be updated directly.");

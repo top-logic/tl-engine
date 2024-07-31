@@ -2667,3 +2667,14 @@ div.ssiContentArea {
 	margin-left: var(--spacing-01);
 }
 
+.tl-table__row:not(.tblSelected):hover > td.tl-attention,
+td.tl-table__cell--selected.tl-attention {
+	background: rgb(240, 173, 8);
+	color: white;
+}
+	
+.tl-table__cell.tl-attention {
+	background: rgb(255, 183, 15);
+	color: white;
+}
+

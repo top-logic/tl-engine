@@ -252,6 +252,11 @@ public interface ColumnBaseConfig extends ConfigurationItem {
 	String CSS_CLASS = "cssClass";
 
 	/**
+	 * @see #getCssHeaderClass()
+	 */
+	String CSS_HEADER_CLASS = "cssHeaderClass";
+
+	/**
 	 * @see #getCssClassGroupFirst()
 	 */
 	String CSS_CLASS_GROUP_FIRST = "cssClassGroupFirst";
@@ -618,6 +623,20 @@ public interface ColumnBaseConfig extends ConfigurationItem {
 	 * @see #getCssClass()
 	 */
 	void setCssClass(String value);
+
+	/**
+	 * CSS class for this column's header, or empty string if none configured.
+	 * 
+	 * @see ColumnConfiguration#getCssHeaderClass()
+	 */
+	@Name(ColumnConfig.CSS_HEADER_CLASS)
+	@Format(NullableString.class)
+	String getCssHeaderClass();
+
+	/**
+	 * @see #getCssHeaderClass()
+	 */
+	void setCssHeaderClass(String value);
 
 	/**
 	 * CSS class for this column if it is the first column in a column group, or empty

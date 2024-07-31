@@ -349,9 +349,23 @@ public abstract class ColumnConfiguration extends ColumnBase
 	/**
 	 * The CSS class of this column.
 	 * 
+	 * <p>
+	 * Note: For compatibility reasons, this class is added to the column's header and content
+	 * cells.
+	 * </p>
+	 * 
 	 * @return may be <code>null</code> if no class was set.
+	 * 
+	 * @see #getCssHeaderClass()
 	 */
 	public abstract String getCssClass();
+
+	/**
+	 * The CSS class of this column's header.
+	 * 
+	 * @return may be <code>null</code> if no class was set.
+	 */
+	public abstract String getCssHeaderClass();
 
 	/**
 	 * CSS class to use on cells the column that appears first in this group.
@@ -487,12 +501,26 @@ public abstract class ColumnConfiguration extends ColumnBase
 
 	protected abstract Collection<String> getClassifiers();
 
+	/**
+	 * @see #getCssClass()
+	 */
 	public abstract void setCssClass(String cssClass);
 
 	/**
 	 * @see #getCssClass()
 	 */
 	protected abstract void copyCssClass(String cssClass);
+
+	/**
+	 * @see #getCssHeaderClass()
+	 */
+	public abstract void setCssHeaderClass(String cssClass);
+
+	/**
+	 * @see #getCssHeaderClass()
+	 */
+	protected abstract void copyCssHeaderClass(String cssClass);
+
 
 	public abstract void setDescendingComparator(Comparator descendingComparator);
 
@@ -1103,6 +1131,22 @@ public abstract class ColumnConfiguration extends ColumnBase
 			@Override
 			public Object get(ColumnConfiguration self) {
 				return self.getCssClass();
+			}
+		},
+		new ColumnConfiguration.Property(ColumnConfig.CSS_HEADER_CLASS) {
+			@Override
+			public void set(ColumnConfiguration self, Object value) {
+				self.setCssHeaderClass((String) value);
+			}
+
+			@Override
+			public void copy(ColumnConfiguration self, Object value) {
+				self.copyCssHeaderClass((String) value);
+			}
+
+			@Override
+			public Object get(ColumnConfiguration self) {
+				return self.getCssHeaderClass();
 			}
 		},
 		new ColumnConfiguration.Property(ColumnConfig.CSS_CLASS_GROUP_FIRST) {

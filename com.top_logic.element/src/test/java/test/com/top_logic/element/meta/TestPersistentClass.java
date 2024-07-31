@@ -21,7 +21,7 @@ import com.top_logic.model.util.TLModelUtil;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @SuppressWarnings("javadoc")
-public class TestPersistentClass extends TestPersistentModelPart {
+public class TestPersistentClass extends TestWithModelExtension {
 
 	private TLModule _newModule;
 

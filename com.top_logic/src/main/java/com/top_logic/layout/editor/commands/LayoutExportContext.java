@@ -12,9 +12,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.BidiMap;
 
+import com.top_logic.basic.FileManager;
 import com.top_logic.basic.col.BidiHashMap;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.tooling.Workspace;
@@ -23,6 +27,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.editor.LayoutTemplateUtils;
 import com.top_logic.layout.processor.LayoutModelConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.mig.html.layout.LayoutConstants;
 import com.top_logic.mig.html.layout.LayoutStorage;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.mig.html.layout.TLLayout;
@@ -118,42 +123,68 @@ public class LayoutExportContext {
 	}
 
 	private void putExportPathByLayoutKeysInternal(Path scope, Collection<LayoutComponent> children) {
+		Set<String> existingLocalScopes = listLayouts(scope);
+
 		for (LayoutComponent child : children) {
 			if (isNewCreatedComponent(child)) {
-				Path childScope = scope.resolve(LayoutExportUtils.getLayoutScope(child)).normalize();
+				String localScope = getUniqueLocalScope(existingLocalScopes, child);
+				Path childScope = scope.resolve(localScope).normalize();
 				Path filename = Path.of(LayoutExportUtils.getLayoutName(child));
 
 				putExportName(getLayoutKey(child), childScope.resolve(filename), false);
 				putChildrenExportNames(child, childScope);
+
+				existingLocalScopes.add(childScope.getFileName().toString());
 			}
 		}
+	}
+
+	private Set<String> listLayouts(Path scope) {
+		String resourceName = FileUtilities.getCombinedPath(scope);
+
+		return FileManager.getInstance()
+			.getResourcePaths(LayoutConstants.LAYOUT_BASE_RESOURCE + "/" + resourceName + "/")
+			.stream()
+			.map(path -> FileUtilities.getFilenameOfResource(path))
+			.collect(Collectors.toSet());
+	}
+
+	private String getUniqueLocalScope(Set<String> existingScopes, LayoutComponent component) {
+		String localScope = LayoutExportUtils.getLocalScope(component);
+		Predicate<String> isUnique = scope -> !existingScopes.contains(scope);
+		return generateUniqueValue(localScope, isUnique, (value, counter) -> value + counter);
 	}
 
 	private void putExportName(String layoutKey, Path path, boolean override) {
 		Path exportPath = path;
 
 		if (!override) {
-			exportPath = getUniqueLayoutPath(path);
+			Predicate<Path> isUniqueExportName = layoutPath -> isUnique(layoutPath);
+			BiFunction<Path, Integer, Path> generator = createExportNameGenerator(path);
+
+			exportPath = generateUniqueValue(path, isUniqueExportName, generator);
 		}
 
 		_exportNameByLayoutKey.put(layoutKey, FileUtilities.getCombinedPath(exportPath));
 	}
 
-	private Path getUniqueLayoutPath(Path path) {
+	private boolean isUnique(Path path) {
+		String resourceName = FileUtilities.getCombinedPath(path);
+
+		boolean isUsedByExport = _exportNameByLayoutKey.containsValue(resourceName);
+		boolean existsInFilesystem = LayoutExportUtils.existsLayoutInFilesystem(resourceName);
+
+		return !isUsedByExport && !existsInFilesystem;
+	}
+
+	private BiFunction<Path, Integer, Path> createExportNameGenerator(Path path) {
 		Path scope = path.getParent();
 		String filename = scope.relativize(path).toString();
 		String basename = getLayoutBasename(filename);
 
-		Path uniquePath = path;
-		int suffixCounter = 1;
-
-		while (isUnique(uniquePath)) {
-			uniquePath = scope.resolve(basename + suffixCounter + LayoutModelConstants.LAYOUT_XML_FILE_SUFFIX);
-
-			suffixCounter++;
-		}
-
-		return uniquePath;
+		return (value, counter) -> {
+			return scope.resolve(basename + counter + LayoutModelConstants.LAYOUT_XML_FILE_SUFFIX);
+		};
 	}
 
 	private String getLayoutBasename(String filename) {
@@ -162,16 +193,6 @@ public class LayoutExportContext {
 		} else {
 			throw new IllegalArgumentException(filename + ": Layout file expected. Files have to end with .layout.xml");
 		}
-	}
-
-	private boolean isUnique(Path path) {
-		String resourceName = FileUtilities.getCombinedPath(path);
-
-		return isUsedByExport(resourceName) || LayoutExportUtils.existsLayoutInFilesystem(resourceName);
-	}
-
-	private boolean isUsedByExport(String resourceName) {
-		return _exportNameByLayoutKey.containsValue(resourceName);
 	}
 
 	private void initExistingComponents() {
@@ -204,6 +225,19 @@ public class LayoutExportContext {
 	 */
 	public Map<String, TLLayout> getTemplatesByLayoutKey() {
 		return _templatesByLayoutKey;
+	}
+
+	private <T> T generateUniqueValue(T value, Predicate<T> isUnique, BiFunction<T, Integer, T> generator) {
+		T uniqueValue = value;
+		int counter = 1;
+
+		while (!isUnique.test(uniqueValue)) {
+			uniqueValue = generator.apply(uniqueValue, counter);
+
+			counter++;
+		}
+
+		return uniqueValue;
 	}
 
 }

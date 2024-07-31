@@ -15,9 +15,12 @@ import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.resources.TLPartScopedResourceProvider;
 import com.top_logic.model.util.AllTypes;
+import com.top_logic.model.util.TLModelPartRef;
 
 /**
  * Configuration fragment referencing a type by its qualified name.
+ * 
+ * @see TLModelPartRef
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

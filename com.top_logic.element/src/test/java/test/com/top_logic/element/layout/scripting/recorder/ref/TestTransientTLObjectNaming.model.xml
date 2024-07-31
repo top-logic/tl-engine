@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model>
+	<module name="test.com.top_logic.element.layout.scripting.recorder.ref.TestTransientTLObjectNaming">
+		<class name="A">
+			<attributes>
+				<property name="dateProp"
+					type="tl.core:Date"
+				/>
+				<property name="stringProp"
+					type="tl.core:String"
+				/>
+				<reference name="persistentRef"
+					type="tl.model:TLClass"
+				/>
+				<reference name="transientRef"
+					type="B"
+				/>
+				<reference name="multipleTransientRef"
+					multiple="true"
+					ordered="false"
+					type="B"
+				/>
+			</attributes>
+		</class>
+		<class name="B">
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="a"
+					type="A"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

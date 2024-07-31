@@ -26,11 +26,14 @@ import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
 import com.top_logic.model.config.AbstractModelPartMapping;
+import com.top_logic.model.config.TypeRef;
 import com.top_logic.model.resources.TLPartScopedResourceProvider;
 
 /**
  * Textual reference to a {@link TLModelPart} that can be safely used in configurations.
- *
+ * 
+ * @see TypeRef
+ * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @Format(TLModelPartRef.TLModelPartRefValueProvider.class)

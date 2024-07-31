@@ -84,6 +84,9 @@ public class TLObjectByLabelNaming
 		if (isEmpty(getLabel(model))) {
 			return false;
 		}
+		if (model.tTransient()) {
+			return false;
+		}
 		TLStructuredType type = model.tType();
 		if (!(type instanceof TLClass)) {
 			return false;

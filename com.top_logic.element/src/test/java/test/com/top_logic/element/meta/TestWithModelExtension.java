@@ -26,12 +26,11 @@ import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLModuleSingleton;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.internal.PersistentModelPart;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Test class for {@link PersistentModelPart}s.
+ * Test class for tests which need custom {@link TLModel} extensions.
  * 
  * @since 5.8.0
  * 

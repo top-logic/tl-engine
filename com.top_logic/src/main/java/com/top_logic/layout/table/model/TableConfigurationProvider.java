@@ -28,8 +28,13 @@ public interface TableConfigurationProvider {
 	/**
 	 * Adjusts the default column of the {@link TableConfiguration}.
 	 * 
+	 * @param defaultColumn
+	 *        The configuration that is used as base for all other column configurations.
+	 * 
 	 * @see #adaptConfigurationTo(TableConfiguration)
 	 */
-	void adaptDefaultColumn(ColumnConfiguration defaultColumn);
+	default void adaptDefaultColumn(ColumnConfiguration defaultColumn) {
+		// Ignore.
+	}
 
 }

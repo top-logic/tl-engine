@@ -187,11 +187,6 @@ public class ButtonColumnProvider
 		return new ButtonControl(commandModel, ButtonRenderer.INSTANCE);
 	}
 
-	@Override
-	public void adaptDefaultColumn(ColumnConfiguration defaultColumn) {
-		// No additions.
-	}
-
 	/**
 	 * {@link ModelNamingScheme} for resolving {@link CommandHandler}s defined in tabel columns.
 	 */

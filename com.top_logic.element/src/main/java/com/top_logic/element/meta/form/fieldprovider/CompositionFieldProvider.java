@@ -298,11 +298,6 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 			_updateContainer = updateContainer;
 		}
 
-		@Override
-		public void adaptDefaultColumn(ColumnConfiguration defaultColumn) {
-			// Nothing to do.
-		}
-
 		private void adaptColumn(ColumnConfiguration col) {
 			col.setAccessor(ACCESSOR);
 			if (!TableControl.SELECT_COLUMN_NAME.equals(col.getName())) {

@@ -11,12 +11,11 @@ package com.top_logic.layout.table.model;
  * @since 5.7.5
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+ * 
+ * @deprecated Directly implement {@link TableConfigurationProvider}, since it has a default
+ *             implementation for adapting the default configuration that does nothing.
  */
+@Deprecated
 public abstract class NoDefaultColumnAdaption implements TableConfigurationProvider {
-
-	@Override
-	public void adaptDefaultColumn(ColumnConfiguration defaultColumn) {
-		// Default column is not adapted.
-	}
-
+	// No longer required.
 }

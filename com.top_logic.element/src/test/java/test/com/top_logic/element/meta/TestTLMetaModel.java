@@ -9,13 +9,8 @@ import java.util.Collection;
 import java.util.List;
 
 import junit.framework.Test;
-import junit.framework.TestSuite;
-
-import test.com.top_logic.basic.ThreadContextSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.DerivedTLTypePart;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
@@ -48,31 +43,7 @@ import com.top_logic.util.model.ModelService;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @SuppressWarnings("javadoc")
-public class TestTLMetaModel extends TestPersistentModelPart {
-
-	private static class MetaModelTestSetup extends ThreadContextSetup {
-		public MetaModelTestSetup(Test test) {
-			super(test);
-		}
-
-		@Override
-		protected void doSetUp() throws Exception {
-			extendApplicationModel(PersistencyLayer.getKnowledgeBase(), TestTLMetaModel.class, "model.xml");
-		}
-
-		@Override
-		protected void doTearDown() throws Exception {
-			Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction();
-			TLModule module = ModelService.getApplicationModel().getModule("test.com.top_logic.element.meta.TestTLMetaModel");
-			for (TLModuleSingleton singleton : module.getSingletons()) {
-				// Must delete instances of classes before the TLClass can be deleted.
-				singleton.getSingleton().tDelete();
-			}
-			module.tDelete();
-			tx.commit();
-		}
-
-	}
+public class TestTLMetaModel extends TestWithModelExtension {
 
 	private TLModule _module;
 
@@ -316,7 +287,7 @@ public class TestTLMetaModel extends TestPersistentModelPart {
 	 * @return a cumulative {@link Test} for all Tests in {@link TestTLMetaModel}.
 	 */
 	public static Test suite() {
-		return suite(new MetaModelTestSetup(new TestSuite(TestTLMetaModel.class)));
+		return suite(new ModelExtensionTestSetup(TestTLMetaModel.class));
 	}
 
 }

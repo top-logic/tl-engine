@@ -7,7 +7,6 @@ package test.com.top_logic.element.meta;
 
 import junit.framework.Test;
 
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.element.model.ModelFactory;
 import com.top_logic.knowledge.service.Transaction;
@@ -22,9 +21,9 @@ import com.top_logic.model.util.TLModelUtil;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @SuppressWarnings("javadoc")
-public class TestClearMandatoryAttribute extends TestPersistentModelPart {
+public class TestClearMandatoryAttribute extends TestWithModelExtension {
 
-	public void testClearAttribute() throws ConfigurationException {
+	public void testClearAttribute() {
 		extendApplicationModel(TestClearMandatoryAttribute.class, "clear-attribute.model.xml");
 
 		TLModule testModule = TLModelUtil.findModule("test.com.top_logic.element.meta.TestClearMandatoryAttribute");

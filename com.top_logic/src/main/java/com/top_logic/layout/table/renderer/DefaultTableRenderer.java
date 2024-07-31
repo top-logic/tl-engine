@@ -662,7 +662,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 				groupCellProperties.put("isSticky", false);
 			}
 
-			groupCellProperties.put("classes", CssUtil.joinCssClasses(getTHGroupClass(), group.getCssClasses()));
+			groupCellProperties.put("classes", CssUtil.joinCssClasses(getTHGroupClass(), group.getCssHeaderClasses()));
 			groupCellProperties.put("colspan", colspan);
 			groupCellProperties.put("isRowHeader", false);
 			groupCellProperties.put("label", createGroupCellLabelFragment(group, colspan, rowIndex));
@@ -2616,7 +2616,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 
 	@Override
 	public String computeTHClass(Column column) {
-		return CssUtil.joinCssClasses(TABLE_HEADER_CELL_CSS_CLASS, column.getCssClasses());
+		return CssUtil.joinCssClasses(TABLE_HEADER_CELL_CSS_CLASS, column.getCssHeaderClasses());
 	}
 	
 	@Override

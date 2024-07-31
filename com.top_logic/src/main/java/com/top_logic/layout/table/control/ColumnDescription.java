@@ -150,6 +150,8 @@ public class ColumnDescription extends ColumnConfiguration {
 
 	private String cssClass;
 
+	private String cssHeaderClass;
+
 	private String cssClassGroupFirst;
 
 	private String cssClassGroupLast;
@@ -611,6 +613,22 @@ public class ColumnDescription extends ColumnConfiguration {
 	@Override
 	public void setCssClass(String cssClass) {
 		copyCssClass(cssClass);
+	}
+
+	@Override
+	public String getCssHeaderClass() {
+		return this.cssHeaderClass;
+	}
+
+	@Override
+	protected void copyCssHeaderClass(String cssClass) {
+		checkFrozen();
+		this.cssHeaderClass = cssClass;
+	}
+
+	@Override
+	public void setCssHeaderClass(String cssClass) {
+		copyCssHeaderClass(cssClass);
 	}
 
 	@Override

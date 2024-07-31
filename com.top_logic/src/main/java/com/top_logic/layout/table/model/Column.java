@@ -52,6 +52,11 @@ public class Column {
 	 */
 	private String _cssClasses;
 
+	/**
+	 * @see #getCssHeaderClasses()
+	 */
+	private String _cssHeaderClasses;
+
 	private int _size;
 
 	private int _index;
@@ -195,6 +200,13 @@ public class Column {
 	}
 
 	/**
+	 * The space-separated CSS classes to assign to header cells of this column (group).
+	 */
+	public String getCssHeaderClasses() {
+		return _cssHeaderClasses;
+	}
+
+	/**
 	 * The CSS class to use on those subgroups and columns that appear as the first group or column
 	 * within this column group.
 	 */
@@ -333,12 +345,15 @@ public class Column {
 		Column parent = getParent();
 		ColumnConfiguration config = getConfig();
 		String ownClass = config.getCssClass();
+		String ownHeaderClass = config.getCssHeaderClass();
 		if (parent == null) {
 			_firstColumnClass = config.getCssClassGroupFirst();
 			_lastColumnClass = config.getCssClassGroupLast();
 
 			_cssClasses =
 				CssUtil.joinCssClasses(ownClass, _firstColumnClass, _lastColumnClass);
+
+			_cssHeaderClasses = CssUtil.joinCssClasses(_cssClasses, ownHeaderClass);
 		} else {
 			List<Column> parentParts = parent.getParts();
 			
@@ -359,6 +374,8 @@ public class Column {
 			}
 
 			_cssClasses = CssUtil.joinCssClasses(ownClass, CssUtil.joinCssClasses(_firstColumnClass, _lastColumnClass));
+
+			_cssHeaderClasses = CssUtil.joinCssClasses(_cssClasses, ownHeaderClass);
 		}
 	}
 

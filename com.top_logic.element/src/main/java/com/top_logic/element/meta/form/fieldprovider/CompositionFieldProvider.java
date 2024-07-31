@@ -254,7 +254,7 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 				FormMember field = getField(row, part);
 				if (field instanceof Composite) {
 					CompositionControlProvider.INSTANCE.createControl(field).write(context, out);
-				} else if (field != null && !field.isImmutable()) {
+				} else if (field != null) {
 					if (_editControlProvider != null) {
 						_editControlProvider.createControl(field).write(context, out);
 					} else {

@@ -48,7 +48,7 @@ public class ObjectCreation extends FormObjectOverlay {
 	 */
 	public ObjectCreation(AttributeUpdateContainer scope, TLStructuredType type, String domain,
 			ObjectConstructor constructor) {
-		super(scope, type, scope.newCreateID());
+		super(scope, type, domain == null ? scope.newCreateID() : domain);
 
 		// Note: Create domains are encoded into GUI IDs. While null is a legal value encoded as
 		// "null", the string "null" as domain would result in an ambiguity.

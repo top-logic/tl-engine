@@ -56,13 +56,6 @@ final class NoStorage extends AbstractStorageBase<AbstractStorageBase.Config<?>>
 	}
 
 	@Override
-	public Object getUpdateValue(AttributeUpdate update)
-			throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
-		TLStructuredTypePart attribute = update.getAttribute();
-		throw unsupported(attribute);
-	}
-
-	@Override
 	public Object getAttributeValue(TLObject object, TLStructuredTypePart attribute)
 			throws AttributeException {
 		return null;

@@ -19,6 +19,7 @@ import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOClassImpl;
 import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.knowledge.service.Revision;
+import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLObject;
@@ -73,7 +74,11 @@ public class TransientTLObjectImpl extends TransientObject {
 
 	private Object directValue(TLStructuredTypePart part) {
 		if (part.isDerived() && (part.getModelKind() != ModelKind.REFERENCE || !((TLReference) part).isBackwards())) {
-			return part.getStorageImplementation().getAttributeValue(this, part);
+			if (part.getName().equals(PersistentObject.T_TYPE_ATTR)) {
+				return tType();
+			} else {
+				return part.getStorageImplementation().getAttributeValue(this, part);
+			}
 		}
 		return _values.get(part.getDefinition());
 	}

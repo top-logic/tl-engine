@@ -8,8 +8,6 @@ package com.top_logic.element.meta;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -19,7 +17,6 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.exception.I18NRuntimeException;
-import com.top_logic.dob.data.DOList;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.AttributeFormFactory;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
@@ -32,7 +29,6 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.DataField;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.StringField;
-import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -41,7 +37,6 @@ import com.top_logic.model.annotate.AnnotationContainer;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.TLAnnotation;
-import com.top_logic.model.provider.DefaultProvider;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Utils;
 
@@ -117,10 +112,7 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	 */
 	public enum UpdateType {
 		/** Type: set a simple value. */
-		TYPE_SET_SIMPLE(false),
-
-		/** Type: set a collection value. */
-		TYPE_SET_COLLECTION(false),
+		TYPE_EDIT(false),
 
 		/** Type: a collection of search values. */
 		TYPE_SEARCH_COLLECTION(true),
@@ -361,33 +353,16 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	}
 
 	/**
-	 * Get the update value for a SimpleMetaAttribute
-	 *
-	 * @return the value
-	 * @throws RuntimeException if the update type
-	 * 			does not correspond to this method
+	 * The base value being edited.
+	 * 
+	 * <p>
+	 * The raw value taken from an model attribute is adjusted for editing with the
+	 * {@link #convertValue(Object)} method based on the {@link #getAttribute() attribute's}
+	 * configuration.
+	 * </p>
 	 */
-	public Object getSimpleSetUpdate () throws RuntimeException {
-		if (UpdateType.TYPE_SET_SIMPLE != getUpdateType()) {
-			throw new RuntimeException("Call to getSimpleSetUpdate not allowed for type " + getUpdateType());
-		}
-
+	public Object getEditedValue() {
 		return _value;
-	}
-
-	/**
-	 * Get the values for a CollectionMetaAttribute
-	 *
-	 * @return the values
-	 * @throws RuntimeException if the update type
-	 * 			does not correspond to this method
-	 */
-	public Collection<?> getCollectionSetUpdate() throws RuntimeException {
-		if (UpdateType.TYPE_SET_COLLECTION != getUpdateType()) {
-			throw new RuntimeException("Call to getCollectionSetUpdate not allowed for type " + getUpdateType());
-		}
-
-		return (Collection<?>) _value;
 	}
 
 	/**
@@ -462,10 +437,8 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 				return getSimpleSearchUpdate();
 			case TYPE_SEARCH_COLLECTION:
 				return getCollectionSearchUpdate();
-			case TYPE_SET_SIMPLE:
-				return getSimpleSetUpdate();
-			case TYPE_SET_COLLECTION:
-				return getCollectionSetUpdate();
+			case TYPE_EDIT:
+				return getEditedValue();
 			default:
 				Logger.warn("Unknown update type: " + getUpdateType(), this);
 				return null;
@@ -496,10 +469,12 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 		switch (getUpdateType()) {
 			case TYPE_SEARCH_COLLECTION:
 				return toCollection(formValue);
-			case TYPE_SET_SIMPLE:
-				return formValue;
-			case TYPE_SET_COLLECTION:
-				return toCollection(formValue);
+			case TYPE_EDIT:
+				if (AttributeOperations.isCollectionValued(getAttribute())) {
+					return toCollection(formValue);
+				} else {
+					return formValue;
+				}
 			default:
 				return formValue;
 		}
@@ -712,57 +687,6 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 		return this;
 	}
 
-	void initEdit(Object presetValue) {
-		TLStructuredTypePart attribute = getAttribute();
-		if (!AttributeOperations.isCollectionValued(attribute)) {
-			setType(UpdateType.TYPE_SET_SIMPLE);
-			setValue(presetValue);
-		} else {
-			setType(UpdateType.TYPE_SET_COLLECTION);
-		    if (!AttributeUpdateFactory.isStringSetType(attribute) || !AttributeUpdateFactory.isRestricted(attribute)) {
-				setValue(presetValue);
-			} else {
-				Collection<?> collectionValue = (Collection<?>) presetValue;
-				if (collectionValue instanceof DOList || collectionValue == null || collectionValue.isEmpty()) {
-					setValue(collectionValue);
-				} else {
-					OptionModel<?> options = AttributeOperations.allOptions(this);
-					List<Object> result = new ArrayList<>();
-					if (options != null) {
-			    		boolean stop = false;
-						Iterator<?> optionIt = options.iterator();
-						while (!stop && optionIt.hasNext()) {
-							Object option = optionIt.next();
-							try {
-								if (collectionValue.contains(option)) {
-									setValue(collectionValue);
-									stop = true;
-								} else {
-									// Check Strings (init)...
-									String dapParam =
-										(String) AttributeUpdateFactory.getResultLocator(attribute).locateAttributeValue(option);
-									if (collectionValue.contains(dapParam)) {
-										result.add(option);
-									}
-								}
-							}
-					    	catch (Exception ex) {
-								StringBuilder message = new StringBuilder();
-								message.append("Failed to get DAP parameters in attribute ");
-								message.append(attribute.getName());
-								Logger.warn(message.toString(), ex, AttributeUpdateFactory.class);
-					    	}
-						}
-	
-			    		if (!stop) {
-							setValue(result);
-			    		}
-			    	}
-		    	}
-		    }
-		}
-	}
-
 	void initSearchVisibility() {
 		setDisabled(false);
 		setMandatory(false);
@@ -805,16 +729,18 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	 * @return This instance of call chaining.
 	 */
 	public AttributeUpdate createUpdate() {
+		setType(UpdateType.TYPE_EDIT);
 		initCreate(true);
+		initCreateValue();
 		initCreateVisibility();
-		initEdit(null);
-		if (!isDerived()) {
-			DefaultProvider defaultProvider = DisplayAnnotations.getDefaultProvider(getAttribute());
-			if (defaultProvider != null) {
-				setValue(defaultProvider.createDefault(getOverlay().tContainer(), getAttribute(), true));
-			}
-		}
 		return this;
+	}
+
+	private void initCreateValue() {
+		TLObject object = getOverlay();
+		TLStructuredTypePart attribute = getAttribute();
+		StorageImplementation storage = AttributeOperations.getStorageImplementation(object, attribute);
+		storage.initUpdate(object, attribute, this);
 	}
 
 	/**
@@ -826,6 +752,7 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	 * @return This instance of call chaining.
 	 */
 	public AttributeUpdate editUpdateDefault(boolean externalDisabled) {
+		setType(UpdateType.TYPE_EDIT);
 		initPersistentValue();
 		initDefaultEditVisibility(externalDisabled);
 		return this;
@@ -842,13 +769,17 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	 * @return This instance of call chaining.
 	 */
 	public AttributeUpdate editUpdateCustom(boolean disabled, boolean mandatory) {
+		setType(UpdateType.TYPE_EDIT);
 		initPersistentValue();
 		initCustomEditVisibility(disabled, mandatory);
 		return this;
 	}
 
 	private void initPersistentValue() {
-		initEdit(getObject().tValue(getAttribute()));
+		TLObject object = getObject();
+		TLStructuredTypePart attribute = getAttribute();
+		StorageImplementation storage = AttributeOperations.getStorageImplementation(object, attribute);
+		storage.initUpdate(object, attribute, this);
 	}
 
 	/**

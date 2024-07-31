@@ -5,9 +5,7 @@
  */
 package com.top_logic.element.meta.form.tag;
 
-import com.top_logic.element.meta.AttributeUpdateFactory;
 import com.top_logic.element.meta.form.EditContext;
-import com.top_logic.layout.form.tag.PopupSelectTag;
 import com.top_logic.layout.form.tag.TextInputTag;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.model.annotate.DisplayAnnotations;
@@ -30,17 +28,9 @@ public class StringSetTagProvider extends IndirectDisplayProvider {
 
 	@Override
 	public ControlProvider getControlProvider(EditContext editContext) {
-		if (!editContext.isSearchUpdate() && AttributeUpdateFactory.isRestricted(editContext)) {
-			PopupSelectTag result = new PopupSelectTag();
-
-			result.setColumns(DisplayAnnotations.inputSize(editContext, PopupSelectTag.NO_COLUMNS));
-			result.clearButton.setAsBoolean(!editContext.isMandatory());
-			return result;
-		} else {
-			TextInputTag result = new TextInputTag();
-			result.setColumns(DisplayAnnotations.inputSize(editContext, TextInputTag.NO_COLUMNS));
-			return result;
-		}
+		TextInputTag result = new TextInputTag();
+		result.setColumns(DisplayAnnotations.inputSize(editContext, TextInputTag.NO_COLUMNS));
+		return result;
 	}
 
 }

@@ -10,6 +10,7 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ColumnConfigurator;
 
@@ -28,6 +29,7 @@ public class ColumnStyles extends AbstractConfiguredInstance<ColumnStyles.Config
 	/**
 	 * Configuration options for {@link ColumnStyles}.
 	 */
+	@TagName("column-styles")
 	public interface Config<I extends ColumnStyles> extends PolymorphicConfiguration<I> {
 
 		/**

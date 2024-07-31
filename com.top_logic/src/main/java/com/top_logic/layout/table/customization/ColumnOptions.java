@@ -10,6 +10,7 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ColumnConfigurator;
@@ -24,6 +25,7 @@ public class ColumnOptions extends AbstractConfiguredInstance<ColumnOptions.Conf
 	/**
 	 * Configuration options for {@link ColumnOptions}.
 	 */
+	@TagName("column-options")
 	public interface Config<I extends ColumnOptions> extends PolymorphicConfiguration<I> {
 		/**
 		 * Whether the column label is displayed in the header.

@@ -10,7 +10,9 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.table.CellClassProvider;
@@ -28,12 +30,14 @@ public class DynamicCssClasses extends AbstractConfiguredInstance<DynamicCssClas
 	/**
 	 * Configuration options for {@link DynamicCssClasses}.
 	 */
+	@TagName("dynamic-css-classes")
 	public interface Config<I extends DynamicCssClasses> extends PolymorphicConfiguration<I> {
 		/**
 		 * Algorithm to compute dynamic CSS classs to add to certain cells of a column.
 		 */
 		@Mandatory
 		@Options(fun = AllInAppImplementations.class)
+		@DefaultContainer
 		PolymorphicConfiguration<? extends CellClassProvider> getCssClassProvider();
 	}
 

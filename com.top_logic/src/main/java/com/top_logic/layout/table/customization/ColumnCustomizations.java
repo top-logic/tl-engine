@@ -19,6 +19,7 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
@@ -38,6 +39,7 @@ public class ColumnCustomizations extends AbstractConfiguredInstance<ColumnCusto
 	/**
 	 * Configuration options for {@link ColumnCustomizations}.
 	 */
+	@TagName("column-customizations")
 	public interface Config<I extends ColumnCustomizations> extends PolymorphicConfiguration<I> {
 
 		/**

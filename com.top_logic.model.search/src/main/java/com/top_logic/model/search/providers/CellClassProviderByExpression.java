@@ -17,6 +17,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.table.CellClassProvider;
 import com.top_logic.layout.table.TableRenderer.Cell;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -34,6 +35,7 @@ public class CellClassProviderByExpression extends AbstractConfiguredInstance<Ce
 	/**
 	 * Configuration options for {@link CellClassProviderByExpression}.
 	 */
+	@TagName("cell-class-by-expression")
 	public interface Config<I extends CellClassProviderByExpression> extends PolymorphicConfiguration<I> {
 		/**
 		 * Function computing the CSS class for a certain cell.

@@ -12,6 +12,8 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.knowledge.wrap.person.Homepage;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.DisplayContext;
@@ -117,9 +119,7 @@ public class TLMainLayout extends BoundMainLayout {
 		try {
 			homepage = personalConfig.getHomepage(this);
 		} catch (ConfigurationException ex) {
-			Logger.info("Reset home page, because format of the stored hompage is not longer valid.",
-				TLMainLayout.class);
-			personalConfig.removeHomepage(this);
+			handleHomepageFormatChanged(personalConfig);
 			return;
 		}
 		if (homepage == null) {
@@ -161,9 +161,18 @@ public class TLMainLayout extends BoundMainLayout {
 		}
 	}
 
-	private void handleTargetObjectUnresolvable(PersonalConfiguration personalConfig) {
-		Logger.info("Reset home page because the stored object is not longer valid.", TLMainLayout.class);
+	private void handleHomepageFormatChanged(PersonalConfiguration personalConfig) {
+		notifyHomepageReset(I18NConstants.HOMEPAGE_RESTORE_PROBLEM_SCHEMA_CHANGED);
 		personalConfig.removeHomepage(this);
+	}
+
+	private void handleTargetObjectUnresolvable(PersonalConfiguration personalConfig) {
+		notifyHomepageReset(I18NConstants.HOMEPAGE_RESTORE_PROBLEM_MODEL_INVALID);
+		personalConfig.removeHomepage(this);
+	}
+
+	private void notifyHomepageReset(ResKey detail) {
+		InfoService.showInfo(I18NConstants.HOMEPAGE_RESTORE_PROBLEM, detail);
 	}
 
     /**

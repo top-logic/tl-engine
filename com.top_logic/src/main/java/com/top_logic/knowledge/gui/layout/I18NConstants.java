@@ -30,6 +30,21 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey NO_LAYOUT_CONFIGURED;
 
+	/**
+	 * @en The format of the saved homepage has changed.
+	 */
+	public static ResKey HOMEPAGE_RESTORE_PROBLEM_SCHEMA_CHANGED;
+
+	/**
+	 * @en Your home page could not be restored. Please set the start page again.
+	 */
+	public static ResKey HOMEPAGE_RESTORE_PROBLEM;
+
+	/**
+	 * @en The saved model cannot be resolved.
+	 */
+	public static ResKey HOMEPAGE_RESTORE_PROBLEM_MODEL_INVALID;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

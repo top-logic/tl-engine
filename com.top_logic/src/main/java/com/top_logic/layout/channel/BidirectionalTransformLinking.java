@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.channel;
 
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.InstantiationContext;
@@ -38,6 +38,6 @@ public abstract class BidirectionalTransformLinking<C extends AbstractTransformL
 	/**
 	 * Mapping to determine the value for the source channel from the transformed channel.
 	 */
-	protected abstract Function<Object, ?> inverseTransformation();
+	protected abstract BiFunction<Object, Object, ?> inverseTransformation();
 
 }

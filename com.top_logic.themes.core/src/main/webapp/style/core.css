@@ -2667,14 +2667,124 @@ div.ssiContentArea {
 	margin-left: var(--spacing-01);
 }
 
-.tl-table__row:not(.tblSelected):hover > td.tl-attention,
-td.tl-table__cell--selected.tl-attention {
-	background: rgb(240, 173, 8);
-	color: white;
+/* tl-danger */ 
+.tl-table__row:not(.tblSelected):hover > td.tl-danger,
+td.tl-table__cell--selected.tl-danger {
+	background: var(--notification-danger-background);
+	color: var(--support-danger);
 }
 	
-.tl-table__cell.tl-attention {
-	background: rgb(255, 183, 15);
-	color: white;
+.tl-table__cell.tl-danger {
+	background: var(--notification-danger-background);
+	color: var(--support-danger);
+}
+
+/* tl-danger in fields. */
+td.tl-table__cell.tl-danger,
+.cTextInput.tl-danger input,
+.tl-danger .ddwttDropBtn {
+	background: var(--notification-danger-background);
+	color: var(--support-danger);
+}
+
+/* tl-danger in view mode. */
+span.cTextInput.tl-danger,
+span.cDateInput.tl-danger,
+span.cDatetime.tl-danger,
+span.cPopupSelect.tl-danger,
+.tl-danger > .ddwttImmutableItem {
+	color: var(--support-danger);
+	font-weight: bolder;
+}
+
+/* tl-warning */ 
+.tl-table__row:not(.tblSelected):hover > td.tl-warning,
+td.tl-table__cell--selected.tl-warning {
+	background: var(--notification-warning-background);
+	color: var(--support-warning);
+}
+	
+.tl-table__cell.tl-warning {
+	background: var(--notification-warning-background);
+	color: var(--support-warning);
+}
+
+/* tl-warning in fields. */
+td.tl-table__cell.tl-warning,
+.cTextInput.tl-warning input,
+.tl-warning .ddwttDropBtn {
+	background: var(--notification-warning-background);
+	color: var(--support-warning);
+}
+
+/* tl-warning in view mode. */
+span.cTextInput.tl-warning,
+span.cDateInput.tl-warning,
+span.cDatetime.tl-warning,
+span.cPopupSelect.tl-warning,
+.tl-warning > .ddwttImmutableItem {
+	color: var(--support-warning);
+	font-weight: bolder;
+}
+
+/* tl-success */ 
+.tl-table__row:not(.tblSelected):hover > td.tl-success,
+td.tl-table__cell--selected.tl-success {
+	background: var(--notification-success-background);
+	color: var(--support-success);
+}
+	
+.tl-table__cell.tl-success {
+	background: var(--notification-success-background);
+	color: var(--support-success);
+}
+
+/* tl-success in fields. */
+td.tl-table__cell.tl-success,
+.cTextInput.tl-success input,
+.tl-success .ddwttDropBtn {
+	background: var(--notification-success-background);
+	color: var(--support-success);
+}
+
+/* tl-success in view mode. */
+span.cTextInput.tl-success,
+span.cDateInput.tl-success,
+span.cDatetime.tl-success,
+span.cPopupSelect.tl-success,
+.tl-success > .ddwttImmutableItem {
+	color: var(--support-success);
+	font-weight: bolder;
+}
+
+
+/* tl-info */ 
+.tl-table__row:not(.tblSelected):hover > td.tl-info,
+td.tl-table__cell--selected.tl-info {
+	background: var(--notification-info-background);
+	color: var(--support-info);
+}
+	
+.tl-table__cell.tl-info {
+	background: var(--notification-info-background);
+	color: var(--support-info);
+}
+
+/* tl-info in fields. */
+td.tl-table__cell.tl-info,
+.cTextInput.tl-info input,
+.tl-info .ddwttDropBtn {
+	background: var(--notification-info-background);
+	color: var(--support-info);
+}
+
+/* tl-info in view mode. */
+span.cTextInput.tl-info,
+span.cDateInput.tl-info,
+span.cDatetime.tl-info,
+span.cPopupSelect.tl-info,
+.tl-info > .ddwttImmutableItem {
+	color: var(--support-info);
+	font-weight: bolder;
 }
 

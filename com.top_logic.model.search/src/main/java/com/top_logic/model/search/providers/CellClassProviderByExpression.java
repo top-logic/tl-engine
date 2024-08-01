@@ -15,12 +15,16 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.table.CellClassProvider;
 import com.top_logic.layout.table.TableRenderer.Cell;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.ui.CssClassProvider;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
@@ -30,7 +34,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 @InApp
 @Label("CSS class provider in TL-Script")
 public class CellClassProviderByExpression extends AbstractConfiguredInstance<CellClassProviderByExpression.Config<?>>
-		implements CellClassProvider {
+		implements CellClassProvider, CssClassProvider {
 
 	/**
 	 * Configuration options for {@link CellClassProviderByExpression}.
@@ -97,7 +101,9 @@ public class CellClassProviderByExpression extends AbstractConfiguredInstance<Ce
 	@CalledByReflection
 	public CellClassProviderByExpression(InstantiationContext context, Config<?> config) {
 		super(context, config);
-		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, c -> _component = c);
+		if (!(context instanceof SimpleInstantiationContext)) {
+			context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, c -> _component = c);
+		}
 		_cssClasses = QueryExecutor.compile(config.getCssClasses());
 	}
 
@@ -105,8 +111,15 @@ public class CellClassProviderByExpression extends AbstractConfiguredInstance<Ce
 	public String getCellClass(Cell cell) {
 		Object value = cell.getValue();
 		Object row = cell.getRowObject();
-		Object model = _component.getModel();
-		Object result = _cssClasses.execute(value, row, model);
+		Object componentModel = _component == null ? null : _component.getModel();
+		Object result = _cssClasses.execute(value, row, componentModel);
+		return toCssClass(result);
+	}
+
+	@Override
+	public String getCssClass(TLObject model, TLStructuredTypePart attribute, Object value) {
+		Object componentModel = _component == null ? null : _component.getModel();
+		Object result = _cssClasses.execute(value, model, componentModel);
 		return toCssClass(result);
 	}
 

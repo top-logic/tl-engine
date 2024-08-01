@@ -67,7 +67,6 @@ import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.MetaElementUtil;
-import com.top_logic.element.meta.UpdateFactory;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.AttributeFormFactory;
 import com.top_logic.element.meta.form.DefaultAttributeFormFactory;
@@ -118,6 +117,7 @@ import com.top_logic.layout.form.ChangeStateListener;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
 import com.top_logic.layout.form.component.AbstractCreateCommandHandler;
 import com.top_logic.layout.form.component.CreateFunction;
@@ -142,12 +142,16 @@ import com.top_logic.layout.structure.ControlRepresentable;
 import com.top_logic.layout.structure.ControlRepresentableCP;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.layout.structure.LayoutControlProvider.Layouting;
+import com.top_logic.layout.table.AbstractCellClassProvider;
+import com.top_logic.layout.table.CellAdapter;
+import com.top_logic.layout.table.CellClassProvider;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.table.ITableRenderer;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableModel;
 import com.top_logic.layout.table.TableModelUtils;
 import com.top_logic.layout.table.TableRenderer;
+import com.top_logic.layout.table.TableRenderer.Cell;
 import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.layout.table.component.BuilderComponent;
 import com.top_logic.layout.table.component.ColumnsChannel;
@@ -443,6 +447,8 @@ public class GridComponent extends EditComponent implements
 	};
 
 	private static final String ROW_DOMAIN = null;
+
+	private static final Property<String> DYNAMIC_STYLE = TypedAnnotatable.property(String.class, "dynamicStyle");
 
 	GridHandler<FormGroup> _handler;
 
@@ -2249,7 +2255,7 @@ public class GridComponent extends EditComponent implements
 
 				KeyEventListener onKeyPress = new OnKeyPress();
 
-				UpdateFactory overlay =
+				TLFormObject overlay =
 					editedObject == null
 						? formContext.createObject(type, ROW_DOMAIN, ((NewObject) rowObject).getContainer())
 						: formContext.editObject(editedObject);
@@ -2294,8 +2300,28 @@ public class GridComponent extends EditComponent implements
 								if (member != null) {
 									row.addMember(member);
 
-									if (member instanceof FormField) {
-										((FormField) member).addKeyListener(onKeyPress);
+									if (member instanceof FormField field) {
+										field.addKeyListener(onKeyPress);
+
+										CellClassProvider cssClassProvider = column.getCssClassProvider();
+										if (cssClassProvider != null) {
+											ValueListener classUpdate = (f, oldValue, newValue) -> {
+												String newClass = cssClassProvider
+													.getCellClass(new EditingCell(overlay, columnName, field));
+												String oldClass = f.get(DYNAMIC_STYLE);
+												if (oldClass != null) {
+													f.removeCssClass(oldClass);
+												}
+												if (newClass != null) {
+													f.addCssClass(newClass);
+												}
+												f.set(DYNAMIC_STYLE, newClass);
+											};
+											field.addValueListener(classUpdate);
+
+											// Establish initial style.
+											classUpdate.valueChanged(field, null, field.getValue());
+										}
 									}
 
 									this.modifier.modify(this, columnName, member, attribute, type, editedObject,
@@ -2698,6 +2724,11 @@ public class GridComponent extends EditComponent implements
 		TableUtil.setBusinessModelMapping(column);
 
 		applyGridCellTester(column);
+
+		CellClassProvider cellClassProvider = column.getCssClassProvider();
+		if (!(cellClassProvider instanceof GridCellClassProvider)) {
+			column.setCssClassProvider(new GridCellClassProvider(cellClassProvider));
+		}
 
 		Renderer<Object> customRenderer = column.finalRenderer();
 		ControlProvider optionalControlProvider = column.getEditControlProvider();
@@ -3275,6 +3306,99 @@ public class GridComponent extends EditComponent implements
 			FormGroup theGroup = _handler.getGridRow(gridRowObject);
 			Object rowObject = theGroup.get(PROP_ATTRIBUTED);
 			return _wrappedTester.isCellExistent(rowObject, columnName);
+		}
+	}
+
+	private class GridCellClassProvider extends AbstractCellClassProvider {
+
+		private final CellClassProvider _wrappedTester;
+
+		GridCellClassProvider(CellClassProvider wrappedTester) {
+			_wrappedTester = wrappedTester;
+		}
+
+		@Override
+		public String getCellClass(Cell cell) {
+			Object value = cell.getValue();
+			if (value instanceof FormField field) {
+				// Adding dynamic styles to cells containing fields has the problem that the styles
+				// cannot be updated when field values changes. Those dynamic styles must be created
+				// by the field itself.
+				return null;
+			}
+
+			return _wrappedTester.getCellClass(cell instanceof EditingCell ? cell : wrap(cell));
+		}
+
+		private Cell wrap(Cell cell) {
+			return new CellAdapter() {
+				@Override
+				public Object getRowObject() {
+					Object gridRowObject = super.getRowObject();
+					FormGroup group = _handler.getGridRow(gridRowObject);
+					return group.get(PROP_ATTRIBUTED);
+				}
+
+				@Override
+				public Object getValue() {
+					Object rawValue = super.getValue();
+					if (rawValue instanceof FormField field) {
+						return field.getValue();
+					}
+					return rawValue;
+				}
+
+				@Override
+				protected Cell impl() {
+					return cell;
+				}
+			};
+		}
+	}
+
+	/**
+	 * {@link com.google.common.collect.Table.Cell} adapter for accessing {@link CellClassProvider}s
+	 * outside a rendering context.
+	 */
+	private static final class EditingCell extends CellAdapter {
+		private final TLFormObject _overlay;
+
+		private final String _columnName;
+
+		private final FormField _field;
+
+		/**
+		 * Creates a {@link EditingCell}.
+		 */
+		private EditingCell(TLFormObject overlay, String columnName, FormField field) {
+			_field = field;
+			_columnName = columnName;
+			_overlay = overlay;
+		}
+
+		@Override
+		public String getColumnName() {
+			return _columnName;
+		}
+
+		@Override
+		public Object getValue() {
+			return _field.getValue();
+		}
+
+		@Override
+		public Object getRowObject() {
+			return _overlay;
+		}
+
+		@Override
+		public boolean cellExists() {
+			return true;
+		}
+
+		@Override
+		protected Cell impl() {
+			throw new UnsupportedOperationException();
 		}
 	}
 

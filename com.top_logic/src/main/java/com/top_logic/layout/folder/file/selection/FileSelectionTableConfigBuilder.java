@@ -79,7 +79,7 @@ final class FileSelectionTableConfigBuilder {
 		column.setAccessor(toAccessor(mapFolderNodeToFile(FileAccessor.FILE_LENGTH)));
 		column.setLabelProvider(new FormatLabelProvider(new DecimalFormat("#,##0 Byte")));
 		column.setFilterProvider(SimpleComparableFilterProvider.INSTANCE);
-		column.setCssClass("tblRight");
+		column.addCssClass("tblRight");
 		column.setDefaultColumnWidth("80px");
 	}
 

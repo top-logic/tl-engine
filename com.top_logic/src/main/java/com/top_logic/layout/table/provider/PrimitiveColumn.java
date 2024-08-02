@@ -141,7 +141,7 @@ public class PrimitiveColumn extends ColumnInfo {
 
 			case INT:
 			case FLOAT: {
-				column.setCssClass("tblRight");
+				column.addCssClass("tblRight");
 				column.setComparator(NULL_SAFE_NUMBER_COMPARATOR);
 				column.setDescendingComparator(NULL_SAFE_NUMBER_COMPARATOR_DESCENDING);
 

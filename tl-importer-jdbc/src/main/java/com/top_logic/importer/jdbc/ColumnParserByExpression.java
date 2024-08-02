@@ -17,7 +17,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
- * Configurable {@link ColumnParser} using a TL-Script expression.
+ * Parses the value with a TL-Script expression.
  * 
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
@@ -30,7 +30,6 @@ public class ColumnParserByExpression extends AbstractConfiguredInstance<ColumnP
 
 		/**
 		 * The expression parsing the raw database value.
-		 * 
 		 * <p>
 		 * The expression expects a single value (the raw database value) and returns the
 		 * application value.

@@ -501,6 +501,16 @@ public abstract class ColumnConfiguration extends ColumnBase
 
 	protected abstract Collection<String> getClassifiers();
 
+	/** Adds the given CSS class(es) to this column. */
+	public void addCssClass(String cssClass) {
+		setCssClass(CssUtil.joinCssClassesUnique(getCssClass(), cssClass));
+	}
+
+	/** Removes the given CSS class(es) from this column. */
+	public void removeCssClass(String cssClass) {
+		setCssClass(CssUtil.removeCssClasses(getCssClass(), cssClass));
+	}
+
 	/**
 	 * @see #getCssClass()
 	 */
@@ -515,6 +525,16 @@ public abstract class ColumnConfiguration extends ColumnBase
 	 * @see #getCssHeaderClass()
 	 */
 	public abstract void setCssHeaderClass(String cssClass);
+
+	/** Adds the given CSS class(es) to the {@link #getCssHeaderClass()} of this column. */
+	public void addCssHeaderClass(String cssClass) {
+		setCssHeaderClass(CssUtil.joinCssClassesUnique(getCssHeaderClass(), cssClass));
+	}
+
+	/** Removes the given CSS class(es) from the {@link #getCssHeaderClass()} of this column. */
+	public void removeCssHeaderClass(String cssClass) {
+		setCssHeaderClass(CssUtil.removeCssClasses(getCssHeaderClass(), cssClass));
+	}
 
 	/**
 	 * @see #getCssHeaderClass()

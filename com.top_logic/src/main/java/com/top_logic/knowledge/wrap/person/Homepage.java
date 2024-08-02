@@ -5,11 +5,19 @@
  */
 package com.top_logic.knowledge.wrap.person;
 
+import java.util.List;
+import java.util.Map;
+
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.mig.html.layout.ComponentName;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.mig.html.layout.QualifiedComponentNameConstraint;
 
@@ -20,10 +28,7 @@ import com.top_logic.mig.html.layout.QualifiedComponentNameConstraint;
  */
 public interface Homepage extends ConfigurationItem {
 
-	/** @see Homepage#getComponentName() */
-	String COMPONENT_NAME_NAME = "component";
-
-	/** @see #getMainLayout() */
+	/** Configuration name for {@link #getMainLayout()} */
 	String MAINLAYOUT_NAME = "main-layout";
 
 	/**
@@ -38,31 +43,62 @@ public interface Homepage extends ConfigurationItem {
 	void setMainLayout(String mainlayout);
 
 	/**
-	 * The name of the component that was set as homepage.
+	 * The definition of the components and the necessary models on the path to the homepage.
 	 */
-	@Name(COMPONENT_NAME_NAME)
-	@Constraint(QualifiedComponentNameConstraint.class)
-	ComponentName getComponentName();
+	@EntryTag("path")
+	List<Path> getComponentPaths();
 
 	/**
-	 * Setter for {@link #getComponentName()}.
+	 * A step on the path to the homepage.
 	 * 
-	 * @param componentName
-	 *        New value of {@link #getComponentName()}.
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	void setComponentName(ComponentName componentName);
+	public interface Path extends ConfigurationItem {
+
+		/** Configuration name for {@link #getComponent()} */
+		String COMPONENT_NAME = "component";
+
+		/**
+		 * The name of the component that was set as homepage.
+		 */
+		@Name(COMPONENT_NAME)
+		@Constraint(QualifiedComponentNameConstraint.class)
+		@Mandatory
+		ComponentName getComponent();
+
+		/**
+		 * Setter for {@link #getComponent()}.
+		 * 
+		 * @param component
+		 *        New value of {@link #getComponent()}.
+		 */
+		void setComponent(ComponentName component);
+
+		/**
+		 * Mapping of channel name to channel value to set to {@link #getComponent()}.
+		 */
+		@Key(ChannelValue.NAME_ATTRIBUTE)
+		Map<String, ChannelValue> getChannelValues();
+	}
 
 	/**
-	 * The model to set to the homepage component.
-	 */
-	ModelName getModel();
-
-	/**
-	 * Setter for {@link #getModel()}.
+	 * Definition of a channel value of a {@link LayoutComponent}.
 	 * 
-	 * @param model
-	 *        New value of {@link #getModel()}.
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	void setModel(ModelName model);
+	public interface ChannelValue extends NamedConfigMandatory {
+
+		/**
+		 * The value of the channel.
+		 */
+		@Mandatory
+		ModelName getValue();
+
+		/**
+		 * Setter for {@link #getValue()}.
+		 */
+		void setValue(ModelName value);
+
+	}
 
 }

@@ -5,11 +5,17 @@
  */
 package com.top_logic.model.annotate.util;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -20,6 +26,7 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.ExportColumns;
 import com.top_logic.model.annotate.TLAnnotation;
+import com.top_logic.model.annotate.TLObjectInitializers;
 import com.top_logic.model.annotate.ui.ClassificationDisplay;
 import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPresentation;
 import com.top_logic.model.config.TLTypeAnnotation;
@@ -27,6 +34,7 @@ import com.top_logic.model.config.TypeConfig;
 import com.top_logic.model.config.annotation.MultiSelect;
 import com.top_logic.model.config.annotation.TableName;
 import com.top_logic.model.form.EditContextBase;
+import com.top_logic.model.initializer.TLObjectInitializer;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -228,6 +236,48 @@ public class TLAnnotations {
 			return null;
 		}
 		return getExportColumns(primaryGeneralization);
+	}
+
+	/**
+	 * The {@link TLObjectInitializer}s that are annotated at the given {@link TLStructuredType} or
+	 * any super type.
+	 * 
+	 * <p>
+	 * {@link TLObjectInitializer} of the super classes occur before the intializers of sub classes.
+	 * </p>
+	 * 
+	 * @see #getLocalInitializers(TLStructuredType)
+	 */
+	public static List<TLObjectInitializer> getInitializers(TLStructuredType type) {
+		if (type instanceof TLClass clazz) {
+			Set<TLClass> allGeneralizations = TLModelUtil.getReflexiveTransitiveGeneralizations(clazz);
+
+			/* The "first" generalization is the type itself and the "last" is the most general
+			 * type. It is best to first apply the initialisers of the most general type before
+			 * applying the initialisers of the specialisations. */
+			TLClass[] tmp = allGeneralizations.toArray(TLClass[]::new);
+			ArrayUtil.reverse(tmp);
+
+			return Arrays.stream(tmp)
+				.map(TLAnnotations::getLocalInitializers)
+				.flatMap(List::stream)
+				.collect(Collectors.toList());
+		} else {
+			return getLocalInitializers(type);
+		}
+	}
+
+	/**
+	 * The {@link TLObjectInitializer}s that are annotated at the given {@link TLStructuredType}.
+	 * 
+	 * @see #getInitializers(TLStructuredType)
+	 */
+	public static List<TLObjectInitializer> getLocalInitializers(TLStructuredType type) {
+		TLObjectInitializers localInitializers = getAnnotation(type, TLObjectInitializers.class);
+		if (localInitializers == null) {
+			return Collections.emptyList();
+		}
+		return TypedConfigUtil.createInstanceList(localInitializers.getInitializers());
 	}
 
 }

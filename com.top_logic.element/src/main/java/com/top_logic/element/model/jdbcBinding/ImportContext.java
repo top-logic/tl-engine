@@ -12,10 +12,12 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 
 import com.top_logic.basic.col.ComparableComparator;
 import com.top_logic.basic.db.model.DBSchema;
@@ -46,7 +48,11 @@ public class ImportContext {
 
 	private final TLFactory _factory;
 
+	private final Map<String, Set<List<String>>> _nonPrimaryIndices = new HashMap<>();
+
 	private final Map<String, Map<Object, TLObject>> _objectByTableAndId = new HashMap<>();
+
+	private final Map<String, Map<List<String>, Map<Object, TLObject>>> _objectByTableAndIndexAndId = new HashMap<>();
 
 	private final Map<String, Map<Object, Map<TLReference, ReferencePromise>>> _referenceByTableReferenceAndId =
 		new HashMap<>();
@@ -141,10 +147,32 @@ public class ImportContext {
 	}
 
 	/**
+	 * The indices which are defined not by the table itself, but by other tables which are
+	 * referencing it through their own custom set of columns.
+	 */
+	public Set<List<String>> getNonPrimaryIndices(String table) {
+		return Set.copyOf(_nonPrimaryIndices.getOrDefault(table, emptySet()));
+	}
+
+	/** @see #getNonPrimaryIndices(String) */
+	public void addNonPrimaryIndex(String table, List<String> index) {
+		_nonPrimaryIndices.computeIfAbsent(table, x -> new HashSet<>()).add(List.copyOf(index));
+	}
+
+	/**
 	 * Looks up the index mapping a primary key value to an imported object of the given table.
 	 */
 	public Map<Object, TLObject> typeIndex(String tableName) {
 		return _objectByTableAndId.computeIfAbsent(tableName, x -> new HashMap<>());
+	}
+
+	/**
+	 * Looks up the index mapping a non-primary key value to an imported object of the given table.
+	 */
+	public Map<Object, TLObject> typeBySecondaryIndex(String tableName, List<String> indexColumns) {
+		return _objectByTableAndIndexAndId
+			.computeIfAbsent(tableName, x -> new HashMap<>())
+			.computeIfAbsent(indexColumns, x -> new HashMap<>());
 	}
 
 	/**

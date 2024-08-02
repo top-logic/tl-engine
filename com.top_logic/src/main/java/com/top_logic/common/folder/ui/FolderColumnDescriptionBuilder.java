@@ -121,7 +121,7 @@ public abstract class FolderColumnDescriptionBuilder {
 	public ColumnConfiguration createImmutableDescriptionColumn(ColumnConfiguration column) {
 		column.setSortable(true);
 		column.setRenderer(FirstLineRenderer.DEFAULT_INSTANCE);
-		column.setCssClass(DESCRIPTION_SIZE_MAX_CSS_CLASS);
+		column.addCssClass(DESCRIPTION_SIZE_MAX_CSS_CLASS);
 
 		return column;
 	}
@@ -156,7 +156,7 @@ public abstract class FolderColumnDescriptionBuilder {
 		column.setComparator(ComparableComparator.INSTANCE);
 		column.setFilterProvider(SimpleComparableFilterProvider.INSTANCE);
 		column.setLabelProvider(new FormatLabelProvider(new DecimalFormat("#,##0 Byte")));
-		column.setCssClass("tblRight");
+		column.addCssClass("tblRight");
 
 		return column;
 	}

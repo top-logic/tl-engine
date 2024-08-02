@@ -223,7 +223,7 @@ public abstract class ColumnInfo implements ColumnConfigurator {
 			setPDFRenderer(column);
 		}
 		if (_staticCss != null) {
-			column.setCssClass(_staticCss);
+			column.addCssClass(_staticCss);
 		}
 		if (_cellClassProvider != null) {
 			column.setCssClassProvider(_cellClassProvider);

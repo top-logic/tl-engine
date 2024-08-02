@@ -162,16 +162,6 @@
 						</singletons>
 					</module>
 				</settings>
-				<model-filter>
-					<blacklist>
-						<!-- These types are inherited from "com.top_logic.remote".
-						     They cannot be blacklisted there, as "com.top_logic.remote" does not
-						     and should not inherit from "com.top_logic.model.search". -->
-						<name-filter name="Ticket:Ticket.all" />
-						<name-filter name="Ticket:Login" />
-						<name-filter name="Ticket:Feedback" />
-					</blacklist>
-				</model-filter>
 			</instance>
 		</config>
 

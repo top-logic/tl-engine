@@ -497,7 +497,8 @@ public class SchemaSetup implements ConfiguredInstance<SchemaConfiguration> {
 		return indexAttributes;
 	}
 
-	static MetaObject toPrimitive(DBType type) {
+	/** Returns the corresponding {@link MOPrimitive} to the given {@link DBType}. */
+	public static MOPrimitive toPrimitive(DBType type) {
 		switch (type) {
 			case BLOB:
 				return MOPrimitive.BLOB;

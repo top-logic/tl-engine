@@ -445,17 +445,6 @@ td.tblTDselect100 {
 	border-width:     0px;
 }
 
-/** A Numeric table entry */
-td.num {
-	font-family:    var(--MONOSPACE_FAMILY);
-	text-align:     right;
-    white-space:    nowrap;
-	padding:        2px;
-	border-color:   transparent;
-	color:          var(--text-primary);
-}
-
-
 a.tl-table__cell {
 	font-size:13px;
 	color:black;

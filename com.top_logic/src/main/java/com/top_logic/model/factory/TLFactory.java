@@ -10,6 +10,8 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.model.initializer.TLObjectInitializer;
 import com.top_logic.model.provider.DefaultProvider;
 
 /**
@@ -89,6 +91,7 @@ public interface TLFactory {
 	 *        <code>newWrapper</code>.
 	 */
 	static void setupDefaultValues(Object createContext, TLObject obj, TLClass type) {
+		boolean forUI = false;
 		for (TLStructuredTypePart part : type.getAllParts()) {
 			if (part.isDerived()) {
 				// For safety reasons, ignore default value annotations on derived attributes.
@@ -98,7 +101,10 @@ public interface TLFactory {
 			if (defaultProvider == null) {
 				continue;
 			}
-			obj.tUpdate(part, defaultProvider.createDefault(createContext, part, false));
+			obj.tUpdate(part, defaultProvider.createDefault(createContext, part, forUI));
+		}
+		for (TLObjectInitializer initializer : TLAnnotations.getInitializers(type)) {
+			initializer.initializeObject(createContext, obj, forUI);
 		}
 	}
 

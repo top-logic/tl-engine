@@ -88,6 +88,177 @@ public class CssUtil {
 	}
 
 	/**
+	 * Joins the two CSS class specifiers to a single CSS class attribute value.
+	 * 
+	 * <p>
+	 * Special care is taken that the resulting classes are unique.
+	 * </p>
+	 * 
+	 * @param cssClass1
+	 *        The first class, may be <code>null</code>, which means no class to join.
+	 * @param cssClass2
+	 *        The second class, may be <code>null</code>, which means no class to join.
+	 * @return The joined class, if at least one of the given classes is non-<code>null</code>,
+	 *         <code>null</code> otherwise.
+	 * 
+	 * @see #writeCombinedCssClasses(TagWriter, String, String)
+	 */
+	public static String joinCssClassesUnique(String cssClass1, String cssClass2) {
+		if (cssClass1 == null) {
+			return cssClass2;
+		}
+		if (cssClass2 == null) {
+			return cssClass1;
+		}
+
+		StringBuilder buffer = new StringBuilder();
+		appendAll(buffer, cssClass1);
+		appendAll(buffer, cssClass2);
+		return buffer.toString();
+	}
+
+	private static void appendAll(StringBuilder buffer, String classes) {
+		int start = 0;
+		int length = classes.length();
+		do {
+			int separator = classes.indexOf(' ', start);
+			if (separator < 0) {
+				separator = length;
+			}
+			if (separator > start) {
+				// A class token was found.
+				String css = classes.substring(start, separator);
+
+				if (!containsToken(buffer, css)) {
+					if (!buffer.isEmpty()) {
+						buffer.append(' ');
+					}
+					buffer.append(css);
+				}
+			}
+			start = separator + 1;
+		} while (start < length);
+	}
+
+	private static boolean containsToken(StringBuilder buffer, String css) {
+		return tokenIndex(buffer, css, 0) >= 0;
+	}
+
+	/**
+	 * Removes the CSS classes given in the second parameter from the CSS classes in the first
+	 * parameter.
+	 * 
+	 * @param allClasses
+	 *        CSS classes to remove from.
+	 * @param removedClasses
+	 *        CSS classes to remove from all classes.
+	 * @return The CSS classes from all classes without the ones given in removed classes,
+	 *         <code>null</code> if no more classes are left.
+	 * 
+	 * @see #writeCombinedCssClasses(TagWriter, String, String)
+	 */
+	public static String removeCssClasses(String allClasses, String removedClasses) {
+		if (allClasses == null) {
+			return null;
+		}
+		if (removedClasses == null) {
+			return allClasses;
+		}
+		int start = 0;
+		int length = removedClasses.length();
+		do {
+			int separator = removedClasses.indexOf(' ', start);
+			if (separator < 0) {
+				separator = length;
+			}
+			if (separator > start) {
+				// A class token was found.
+				String css = removedClasses.substring(start, separator);
+
+				int index = 0;
+				while (true) {
+					index = tokenIndex(allClasses, css, index);
+
+					if (index < 0) {
+						break;
+					}
+
+					int endIndex = index + css.length();
+					if (endIndex >= allClasses.length()) {
+						// Last class was removed.
+						if (index == 0) {
+							// The only class was removed, there are no more left.
+							return null;
+						} else {
+							String prefix = allClasses.substring(0, index - 1);
+							allClasses = prefix;
+						}
+					} else {
+						String prefix = allClasses.substring(0, index);
+						String suffix = allClasses.substring(endIndex + 1);
+						allClasses = prefix + suffix;
+					}
+				}
+
+			}
+			start = separator + 1;
+		} while (start < length);
+
+		return allClasses;
+	}
+
+	private static int tokenIndex(CharSequence classes, String token, int pos) {
+		int length = classes.length();
+		while (true) {
+			int match = StringServices.indexOf(classes, token, pos);
+			if (match < 0) {
+				// Not found.
+				return -1;
+			} else {
+				int end = match + token.length();
+				if (end >= length) {
+					// Match was found at the end.
+					if (match == pos || classes.charAt(match - 1) == ' ') {
+						return match;
+					} else {
+						return -1;
+					}
+				} else {
+					// Check whether a complete token was found.
+					if (classes.charAt(end) == ' ') {
+						// Found token suffix.
+						if (match == pos) {
+							// Match was found in first token scanned.
+							return match;
+						}
+
+						if (classes.charAt(match - 1) == ' ') {
+							// Match was found in some following token.
+							return match;
+						}
+
+						// Scan next token.
+						pos = end + 1;
+					} else {
+						// Match within token, seach end of token.
+						pos = end + 1;
+						while (true) {
+							if (pos >= length) {
+								// Token was not found and there are no more tokens.
+								return -1;
+							}
+							if (classes.charAt(pos++) == ' ') {
+								// There are more tokens.
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/**
 	 * Joins given CSS class specifiers to a single CSS class attribute value.
 	 * 
 	 * @param cssClasses

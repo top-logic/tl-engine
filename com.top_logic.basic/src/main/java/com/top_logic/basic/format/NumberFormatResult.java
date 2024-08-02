@@ -25,12 +25,12 @@ public enum NumberFormatResult implements ExternallyNamed {
 	NUMBER("number"),
 
 	/**
-	 * Always a {@link Double} number.
+	 * Always a floating point number.
 	 */
 	DOUBLE("double"),
 
 	/**
-	 * Always a {@link Long} number, parsing fails, if any fractional digits have been entered.
+	 * Always an integer, parsing fails, if any fractional digits have been entered.
 	 */
 	LONG("long"),
 

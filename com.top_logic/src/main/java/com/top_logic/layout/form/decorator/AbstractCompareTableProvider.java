@@ -12,6 +12,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
+import com.top_logic.layout.compare.WrapCompareCells;
 import com.top_logic.layout.table.AbstractCellRenderer;
 import com.top_logic.layout.table.CellRenderer;
 import com.top_logic.layout.table.TableRenderer.Cell;
@@ -113,6 +114,8 @@ public abstract class AbstractCompareTableProvider<CI extends CompareInfo> exten
 			adaptCellRenderer(targetColumn);
 		}
 		adaptExcelCellRenderer(targetColumn);
+
+		WrapCompareCells.adaptColumn(targetColumn);
 	}
 
 	private void adaptCellExistenceTester(ColumnConfiguration targetColumn) {

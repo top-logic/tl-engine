@@ -6,18 +6,23 @@
 package com.top_logic.element.model.jdbcBinding;
 
 import static com.top_logic.basic.db.sql.SQLFactory.*;
+import static com.top_logic.model.util.TLModelUtil.*;
+import static java.util.Collections.*;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -34,10 +39,12 @@ import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.element.model.jdbcBinding.api.ColumnParser;
 import com.top_logic.element.model.jdbcBinding.api.ImportRow;
+import com.top_logic.element.model.jdbcBinding.api.KeyColumnNormalizer;
 import com.top_logic.element.model.jdbcBinding.api.RowReader;
 import com.top_logic.element.model.jdbcBinding.api.TypeSelector;
 import com.top_logic.element.model.jdbcBinding.api.annotate.TLColumnBinding;
 import com.top_logic.element.model.jdbcBinding.api.annotate.TLForeignKeyBinding;
+import com.top_logic.element.model.jdbcBinding.api.annotate.TLForeignKeyBinding.KeyColumnConfig;
 import com.top_logic.element.model.jdbcBinding.api.annotate.TLLinkTableBinding;
 import com.top_logic.element.model.jdbcBinding.api.annotate.TLReverseForeignKeyBinding;
 import com.top_logic.element.model.jdbcBinding.api.annotate.TLTableBinding;
@@ -46,11 +53,13 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelPartRef.ModuleRefValueProvider;
@@ -59,6 +68,16 @@ import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * {@link AbstractCommandHandler} importing a model from an existing database.
+ * <p>
+ * Uses the following {@link TLAnnotation annotations}:
+ * <ul>
+ * <li>TLTableBinding</li>
+ * <li>TLColumnBinding</li>
+ * <li>TLLinkTableBinding</li>
+ * <li>TLForeignKeyBinding</li>
+ * <li>TLReverseForeignKeyBinding</li>
+ * </ul>
+ * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -114,7 +133,9 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 			DBSchema schema = DBSchemaUtils.extractSchema(pool);
 			TLModule module = config.getModule().resolveModule();
 
-			loadData(new ImportContext(connection, schema, module));
+			ImportContext context = new ImportContext(connection, schema, module);
+			registerNonPrimaryIndices(context);
+			loadData(context);
 		} catch (SQLException ex) {
 			throw new RuntimeException(ex);
 		} finally {
@@ -132,6 +153,38 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		}
 
 		context.resolve();
+	}
+
+	private void registerNonPrimaryIndices(ImportContext context) {
+		for (TLClass type : context.getModule().getClasses()) {
+			for (TLClassPart attribute : type.getAllClassParts()) {
+				TLForeignKeyBinding foreignKeyBinding = attribute.getAnnotation(TLForeignKeyBinding.class);
+				if (foreignKeyBinding == null) {
+					continue;
+				}
+				if (!usesNonPrimaryIndex(foreignKeyBinding.getColumnConfigs())) {
+					continue;
+				}
+				List<String> indexColumns = getIndexColumns(foreignKeyBinding.getColumns(), foreignKeyBinding.getColumnConfigs());
+				registerNonPrimaryIndex(context, attribute, indexColumns);
+			}
+		}
+	}
+
+	private void registerNonPrimaryIndex(ImportContext context, TLClassPart attribute, List<String> indexColumns) {
+		TLTableBinding tableBinding = attribute.getType().getAnnotation(TLTableBinding.class);
+		if (tableBinding == null) {
+			errorMissingTableBindingForNonPrimaryIndex(attribute, indexColumns);
+			return;
+		}
+		String targetTable = tableBinding.getName();
+		context.addNonPrimaryIndex(targetTable, indexColumns);
+	}
+
+	private void errorMissingTableBindingForNonPrimaryIndex(TLStructuredTypePart attribute, List<String> indexColumns) {
+		logError("Missing " + TLTableBinding.class.getSimpleName() + " for type: "
+			+ qualifiedName(attribute.getType()) + ". There is a non-primary foreign key index in "
+			+ qualifiedName(attribute) + " to it. Index: " + indexColumns);
 	}
 
 	interface TypeLoader {
@@ -168,7 +221,6 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		
 			TLForeignKeyBinding foreignKeyBinding = property.getAnnotation(TLForeignKeyBinding.class);
 			if (foreignKeyBinding != null) {
-				List<String> keyColumns = foreignKeyBinding.getColumns();
 		
 				TLType targetType = property.getType();
 				TLTableBinding targetBinding = targetType.getAnnotation(TLTableBinding.class);
@@ -176,7 +228,9 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 					// TODO: Warning.
 				} else {
 					String targetTableName = targetBinding.getName();
-					readers.add(foreinKeyLoader(context, property, keyColumns, targetTableName));
+					List<String> keyColumns = foreignKeyBinding.getColumns();
+					Map<String, KeyColumnConfig> columnConfigs = foreignKeyBinding.getColumnConfigs();
+					readers.add(foreinKeyLoader(context, property, keyColumns, columnConfigs, targetTableName));
 
 					for (String keyColumnName : keyColumns) {
 						columns.add(keyColumnName);
@@ -328,6 +382,14 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 							typeIndex.put(id, object);
 						}
 					}
+					for (List<String> index : context.getNonPrimaryIndices(tableName)) {
+						Object id = readId(cursor, index);
+						if (id == null) {
+							// TODO JST: Warning.
+						} else {
+							context.typeBySecondaryIndex(tableName, index).put(id, object);
+						}
+					}
 				}
 			}
 
@@ -349,23 +411,69 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		return typeSelector;
 	}
 
-	private RowReader foreinKeyLoader(ImportContext context, TLStructuredTypePart property, List<String> keyColumns,
-			String targetTableName) {
-		Map<Object, TLObject> targetIndex = context.typeIndex(targetTableName);
+	private RowReader foreinKeyLoader(ImportContext context, TLStructuredTypePart property, List<String> columns,
+			Map<String, KeyColumnConfig> columnConfigs, String targetTableName) {
+		Map<Object, TLObject> targetIndex = getTargetIndex(context, columns, columnConfigs, targetTableName);
+		Map<String, KeyColumnNormalizer> normalizers = getNormalizers(columnConfigs);
 
 		return (TLObject object, ImportRow cursor) -> {
-			Object idRef = readId(cursor, keyColumns);
+			Object idRef = readId(cursor, columns, normalizers);
 			if (idRef != null) {
 				context.addResolver(() -> {
 					TLObject target = targetIndex.get(idRef);
 					if (target == null) {
-						// TODO: Warning.
+						logError("Failed to resolve foreign key " + idRef + " in attribute " + qualifiedName(property)
+							+ " into a TLObject.");
 					} else {
 						object.tUpdate(property, target);
 					}
 				});
 			}
 		};
+	}
+
+	private Map<String, KeyColumnNormalizer> getNormalizers(Map<String, KeyColumnConfig> columnConfigs) {
+		Map<String, KeyColumnNormalizer> map = new HashMap<>();
+		for (KeyColumnConfig config : columnConfigs.values()) {
+			PolymorphicConfiguration<KeyColumnNormalizer> normalizer = config.getNormalizer();
+			if (normalizer != null) {
+				map.put(config.getSourceColumn(), TypedConfigUtil.createInstance(normalizer));
+			}
+		}
+		return map;
+	}
+
+	private Map<Object, TLObject> getTargetIndex(ImportContext context, List<String> columns,
+			Map<String, KeyColumnConfig> columnConfigs, String targetTableName) {
+		if (usesNonPrimaryIndex(columnConfigs)) {
+			return context.typeBySecondaryIndex(targetTableName, getIndexColumns(columns, columnConfigs));
+		}
+		return context.typeIndex(targetTableName);
+	}
+
+	private boolean usesNonPrimaryIndex(Map<String, KeyColumnConfig> columnConfigs) {
+		if (columnConfigs.isEmpty()) {
+			return false;
+		}
+		for (KeyColumnConfig config : columnConfigs.values()) {
+			if (config.getTargetColumn() != null) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private List<String> getIndexColumns(List<String> columns, Map<String, KeyColumnConfig> columnConfigs) {
+		List<String> index = new ArrayList<>();
+		for (String column : columns) {
+			KeyColumnConfig config = columnConfigs.get(column);
+			if (config == null || config.getTargetColumn().isEmpty()) {
+				index.add(column);
+			} else {
+				index.add(config.getTargetColumn());
+			}
+		}
+		return index;
 	}
 
 	private RowReader propertyLoader(TLStructuredTypePart property, TLColumnBinding columnBinding) {
@@ -389,16 +497,28 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 	}
 
 	private Object readId(ImportRow cursor, List<String> columns) {
+		return readId(cursor, columns, emptyMap());
+	}
+
+	private Object readId(ImportRow cursor, List<String> columns, Map<String, KeyColumnNormalizer> normalizers) {
 		int keySize = columns.size();
-		Object[] array = new Object[keySize];
-		for (int n = 0; n < keySize; n++) {
-			Object value = cursor.getValue(columns.get(n));
+		List<Object> result = new ArrayList<>(keySize);
+		for (String columnName : columns) {
+			Object rawValue = cursor.getValue(columnName);
+			Object value = normalizeKeyColumn(normalizers.get(columnName), rawValue);
 			if (value == null) {
 				return null;
 			}
-			array[n] = value;
+			result.add(value);
 		}
-		return List.of(array);
+		return result;
+	}
+
+	private Object normalizeKeyColumn(KeyColumnNormalizer normalizer, Object value) {
+		if (normalizer == null) {
+			return value;
+		}
+		return normalizer.normalize(value);
 	}
 
 	private ImportRow cursor(ResultSet resultSet) {
@@ -413,6 +533,10 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 
 	private TypeSelector momomorphicTypeSelector(TLClass type) {
 		return row -> type;
+	}
+
+	private static void logError(String message) {
+		Logger.error(message, JdbcDataImporter.class);
 	}
 
 }

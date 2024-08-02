@@ -252,6 +252,10 @@ public final class ConfigurationDescriptorBuilder {
 				continue;
 			}
 			
+			if (Modifier.isPrivate(method.getModifiers())) {
+				continue;
+			}
+
 			if (Modifier.isStatic(method.getModifiers())) {
 				// Since Java 8, interfaces may contain static methods. These are not properties.
 				continue;

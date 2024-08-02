@@ -11,6 +11,8 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -78,6 +80,10 @@ import com.top_logic.basic.xml.XMLPrettyPrinter.Config;
 public class TypedConfiguration {
 
 	private static final String DEFAULT_ROOT_TAG = "config";
+
+	/** The default {@link Charset} used for reading and writing configurations. */
+	public static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
+
 	private static final String TO_STRING_ENCODING = "utf-8";
 	private static final Config DEFAULT_PRINTER_CONFIG = printerConfig();
 

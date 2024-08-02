@@ -6,11 +6,14 @@
 
 package com.top_logic.model.form.implementation.additional;
 
+import java.util.List;
+
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Homepage;
+import com.top_logic.knowledge.wrap.person.Homepage.Path;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.form.FormField;
@@ -57,7 +60,11 @@ public class CurrentStartPage extends PersonTemplateProvider {
 		if (homepage == null) {
 			return null;
 		}
-		ComponentName startComponentName = homepage.getComponentName();
+		List<Path> componentPath = homepage.getComponentPaths();
+		if (componentPath.isEmpty()) {
+			return null;
+		}
+		ComponentName startComponentName = componentPath.get(componentPath.size() - 1).getComponent();
 		if (startComponentName == null) {
 			return null;
 		}

@@ -162,8 +162,6 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	 */
 	private static final String TABLE_FILTER_SORT_ICON_CSS_CLASS = "tl-table__filter-sort-icons";
 
-	private static final String RIGHT_CSS_CLASS = "tblRight";
-	
 	public static final String CELL_INNER_SPACER_CSS_CLASS = "tblCellInnerSpacer";
 
 	public static final String CELL_ADJUSTMENT_CSS_CLASS = "tblCellAdjustment";

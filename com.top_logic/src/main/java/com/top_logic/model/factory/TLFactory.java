@@ -11,6 +11,8 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.model.initializer.TLObjectInitializer;
 import com.top_logic.model.provider.DefaultProvider;
 
 /**
@@ -90,6 +92,12 @@ public interface TLFactory {
 	 *        <code>newWrapper</code>.
 	 */
 	static void setupDefaultValues(Object createContext, TLObject obj, TLStructuredType type) {
+		// A transient object can never create a default that is allocated lately
+		// during commit, since there is no commit for creating a transient object. When
+		// creating e.g. a transient version of on object that defines an attribute with a
+		// sequence number default, this attribute must not be filled in the transient version
+		// to prevent an auto-rollback of the transaction started when the default is filled.
+		boolean forUI = obj.tTransient();
 		for (TLStructuredTypePart part : type.getAllParts()) {
 			if (part.isDerived()) {
 				// For safety reasons, ignore default value annotations on derived attributes.
@@ -99,13 +107,10 @@ public interface TLFactory {
 			if (defaultProvider == null) {
 				continue;
 			}
-			// A transient object can never create a default that is allocated lately
-			// during commit, since there is no commit for creating a transient object. When
-			// creating e.g. a transient version of on object that defines an attribute with a
-			// sequence number default, this attribute must not be filled in the transient version
-			// to prevent an auto-rollback of the transaction started when the default is filled.
-			boolean forUI = obj.tTransient();
 			obj.tUpdate(part, defaultProvider.createDefault(createContext, part, forUI));
+		}
+		for (TLObjectInitializer initializer : TLAnnotations.getInitializers(type)) {
+			initializer.initializeObject(createContext, obj, forUI);
 		}
 	}
 

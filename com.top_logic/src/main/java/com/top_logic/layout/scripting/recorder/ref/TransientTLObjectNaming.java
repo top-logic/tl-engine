@@ -74,8 +74,8 @@ public class TransientTLObjectNaming extends AbstractModelNamingScheme<TLObject,
 		void setType(TLModelPartRef value);
 
 		/**
-		 * Local identifier to identify the represented item in cycles, or <code>null</code> when
-		 * the item is not represented multiple times.
+		 * Local identifier for identifying objects if they occur multiple times within the value
+		 * tree. Can be <code>null</code> if the element is not represented more than once.
 		 */
 		Integer getId();
 
@@ -85,7 +85,7 @@ public class TransientTLObjectNaming extends AbstractModelNamingScheme<TLObject,
 		void setId(Integer id);
 
 		/**
-		 * Reference to the name of a former occurrence of the represented item.
+		 * Reference to the identifier of a former occurrence of the represented item.
 		 */
 		Integer getRef();
 		
@@ -114,7 +114,7 @@ public class TransientTLObjectNaming extends AbstractModelNamingScheme<TLObject,
 	}
 
 	/**
-	 * Holder for an attribute value.
+	 * Configuration for an attribute value.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */

@@ -249,7 +249,8 @@ public class TLAnnotations {
 	 * @see #getLocalInitializers(TLStructuredType)
 	 */
 	public static List<TLObjectInitializer> getInitializers(TLStructuredType type) {
-		if (type instanceof TLClass clazz) {
+		if (type instanceof TLClass) {
+			TLClass clazz = (TLClass) type;
 			Set<TLClass> allGeneralizations = TLModelUtil.getReflexiveTransitiveGeneralizations(clazz);
 
 			/* The "first" generalization is the type itself and the "last" is the most general

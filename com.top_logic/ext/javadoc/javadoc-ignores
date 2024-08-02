@@ -5248,7 +5248,6 @@ com.top_logic.tool.boundsec.assistent.eva.OutputComponent.java: Missing document
 com.top_logic.tool.boundsec.assistent.eva.OutputComponent.java: Missing documentation: com.top_logic.tool.boundsec.assistent.eva.OutputComponent.StartImportRule.INSTANCE
 com.top_logic.tool.boundsec.assistent.eva.ProcessingComponent.java: Missing documentation: com.top_logic.tool.boundsec.assistent.eva.ProcessingComponent
 com.top_logic.tool.boundsec.commandhandlers.AbstractUploadHandler.java: Missing documentation: com.top_logic.tool.boundsec.commandhandlers.AbstractUploadHandler.UploadExecutabilityRule.INSTANCE
-com.top_logic.tool.boundsec.commandhandlers.CompoundSetHomepageHandler.java: Invalid camel case word 'GotoInfo', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.tool.boundsec.commandhandlers.DoubleCheckCommandHandler.java: Missing documentation: com.top_logic.tool.boundsec.commandhandlers.DoubleCheckCommandHandler.getErrorPrefix
 com.top_logic.tool.boundsec.commandhandlers.DoubleCheckCommandHandler.java: Missing documentation: com.top_logic.tool.boundsec.commandhandlers.DoubleCheckCommandHandler.validateContext
 com.top_logic.tool.boundsec.commandhandlers.EmptyFileUploadHandler.java: Missing documentation: com.top_logic.tool.boundsec.commandhandlers.EmptyFileUploadHandler.COMMAND

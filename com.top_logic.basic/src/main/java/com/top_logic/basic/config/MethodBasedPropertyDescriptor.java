@@ -337,7 +337,7 @@ class MethodBasedPropertyDescriptor extends PropertyDescriptorImpl implements Pr
 				}
 			} else if (parameterCount > 1) {
 				error(protocol,
-					"Has getter with multiple parameters, expecting at least one for an indexed getter.");
+					"Has getter with too many parameters, expecting at most one for an indexed getter.");
 			}
 
 			// Check return type.

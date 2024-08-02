@@ -307,7 +307,6 @@
 					<handler id="gotoCmd" class="com.top_logic.tool.boundsec.commandhandlers.GotoHandler"
 						clique="internal"
 					/>
-					<handler id="setHomepage" class="com.top_logic.tool.boundsec.commandhandlers.SetHomepageHandler"/>			
 					<handler id="exportPowerpoint" class="com.top_logic.tool.export.PowerpointExportHandler"/>
 					<handler id="exportExcel" class="com.top_logic.tool.export.ExcelExportHandler"/>
 					<handler id="closeModalDialog" class="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"/>

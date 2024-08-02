@@ -9,14 +9,14 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.reporting.report.model.FilterVO;
 import com.top_logic.reporting.view.component.FilteringFilterVO;
-import com.top_logic.tool.boundsec.commandhandlers.CompoundSetHomepageHandler;
+import com.top_logic.tool.boundsec.commandhandlers.SetHomepageHandler;
 
 /**
- * {@link CompoundSetHomepageHandler} which can extract {@link FilterVO}s.
+ * {@link SetHomepageHandler} which can extract {@link FilterVO}s.
  * 
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
-public class ReportingSetHomepageHandler extends CompoundSetHomepageHandler {
+public class ReportingSetHomepageHandler extends SetHomepageHandler {
 
 	/**
 	 * Creates a new {@link ReportingSetHomepageHandler}.

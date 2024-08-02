@@ -19,7 +19,7 @@ import com.top_logic.layout.LayoutContext;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
-import com.top_logic.tool.boundsec.commandhandlers.CompoundSetHomepageHandler;
+import com.top_logic.tool.boundsec.commandhandlers.SetHomepageHandler;
 import com.top_logic.util.TLContext;
 
 /**
@@ -157,7 +157,7 @@ public class TransientPersonalConfiguration implements PersonalConfiguration {
 	}
 
 	private Homepage getStartPage(MainLayout mainLayout) {
-		CompoundSetHomepageHandler startPageHandler = getStartPageHandler();
+		SetHomepageHandler startPageHandler = getStartPageHandler();
 		if (startPageHandler == null) {
 			return null;
 		}
@@ -170,8 +170,8 @@ public class TransientPersonalConfiguration implements PersonalConfiguration {
 	 * @return The requested handler for setting the start page. Null, if there is no command for
 	 *         setting the start page.
 	 */
-	private CompoundSetHomepageHandler getStartPageHandler() {
-		return (CompoundSetHomepageHandler) getCommand(CompoundSetHomepageHandler.COMMAND_ID);
+	private SetHomepageHandler getStartPageHandler() {
+		return (SetHomepageHandler) getCommand(SetHomepageHandler.COMMAND_ID);
 	}
 
 	private CommandHandler getCommand(String commandId) {

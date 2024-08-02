@@ -16,9 +16,13 @@ import com.top_logic.basic.config.annotation.defaults.ListDefault;
 import com.top_logic.common.folder.ui.FolderComponent;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Homepage;
+import com.top_logic.knowledge.wrap.person.Homepage.ChannelValue;
+import com.top_logic.knowledge.wrap.person.Homepage.Path;
 import com.top_logic.knowledge.wrap.person.NoStartPageAutomatismExecutability;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.channel.ModelChannel;
+import com.top_logic.layout.channel.SelectionChannel;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
@@ -36,16 +40,19 @@ import com.top_logic.tool.execution.ExecutabilityRule;
 /**
  * Class for setting the personal home-page.
  * 
- * The home page should normally be a business component (in this case a {@link FormComponent}) 
+ * The home page should normally be a business component (in this case a {@link FormComponent})
  * which has a model of type {@link Wrapper}. If the found {@link FormComponent} is also a
- * {@link Selectable}, take the selection, otherwise the {@link LayoutComponent#getModel() model}
- * as business object to be displayed.
+ * {@link Selectable}, take the selection, otherwise the {@link LayoutComponent#getModel() model} as
+ * business object to be displayed.
  * 
- * If there is no matching business component, we use the nearest {@link Selectable} to find a 
+ * If there is no matching business component, we use the nearest {@link Selectable} to find a
  * context we can reconstruct later on.
  * 
- * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+ * @author <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
+ * 
+ * @deprecated Use {@link SetHomepageHandler}.
  */
+@Deprecated
 public class CompoundSetHomepageHandler extends AbstractCommandHandler {
 
 	/** {@link ConfigurationItem} of the {@link CompoundSetHomepageHandler}. */
@@ -106,7 +113,7 @@ public class CompoundSetHomepageHandler extends AbstractCommandHandler {
 	 * 
 	 * @param mainLayout
 	 *        The main layout containing all layout components, must not be <code>null</code>.
-	 * @return The requested {@link Homepage} information, never <code>null</code>.
+	 * @return The requested {@link Homepage} information. May be <code>null</code>.
 	 */
 	public Homepage getHomepage(MainLayout mainLayout) {
 		CompoundSecurityLayout theProjectLayout = CompoundSecurityLayout.getNextVisibleChildCompoundLayout(mainLayout);
@@ -121,11 +128,10 @@ public class CompoundSetHomepageHandler extends AbstractCommandHandler {
         if (theInnerLayout != null) {
 			homepage = this.getInnerModel(theInnerLayout);
 			if (homepage == null) {
-				homepage = newHomePage(theInnerLayout, null);
+				homepage = newHomePage(theInnerLayout);
 			}
         } else {
-			homepage = newHomePage(mainLayout.getLocation(),
-				ComponentName.newName("com.top_logic/admin/persons/adminPersonsView.layout.xml", "EditPerson"), null);
+			homepage = null;
         }
 
 
@@ -201,10 +207,10 @@ public class CompoundSetHomepageHandler extends AbstractCommandHandler {
 		ModelName target = extractTargetObjectFromModel(model);
 		Homepage info ;
 		if (target != null) {
-			info = newHomePage(component, target);
+			info = newHomePage(component, target, false);
 		}
 		else if (!withWrapper) {
-			info = newHomePage(component, null);
+			info = newHomePage(component);
 		} else {
 			info = null;
 		}
@@ -242,18 +248,18 @@ public class CompoundSetHomepageHandler extends AbstractCommandHandler {
     }
 
 	/**
-	 * Gets a GotoInfo for the given selection and component.
+	 * Gets a {@link Homepage} for the given selection and component.
 	 */
 	protected Homepage getHomepageFromSelection(Object selection, LayoutComponent component, boolean withWrapper) {
 		ModelName target = extractTargetObjectFromModel(selection);
 		Homepage info;
 		if (target != null) {
-			info = newHomePage(component, target);
+			info = newHomePage(component, target, true);
 		} else if (!withWrapper) {
 			if (isSelectionDeactivated(component)) {
-				info = newHomePage(component, extractTargetObjectFromModel(component.getModel()));
+				info = getHomepageFromModel(component.getModel(), component, false);
 			} else {
-				info = newHomePage(component, null);
+				info = newHomePage(component);
 			}
 		} else {
 			info = null;
@@ -268,15 +274,27 @@ public class CompoundSetHomepageHandler extends AbstractCommandHandler {
 		return component instanceof TableComponent && !((TableComponent) component).isSelectable();
 	}
 
-	private Homepage newHomePage(LayoutComponent component, ModelName model) {
-		return newHomePage(component.getMainLayout().getLocation(), component.getName(), model);
+	private Homepage newHomePage(LayoutComponent component) {
+		return newHomePage(component, null, false);
 	}
 
-	private Homepage newHomePage(String mainLayout, ComponentName component, ModelName model) {
+	private Homepage newHomePage(LayoutComponent component, ModelName model, boolean isSelection) {
+		return newHomePage(component.getMainLayout().getLocation(), component.getName(), model,
+			isSelection ? SelectionChannel.NAME : ModelChannel.NAME);
+	}
+
+	private Homepage newHomePage(String mainLayout, ComponentName component, ModelName model, String channelName) {
 		Homepage homepage = TypedConfiguration.newConfigItem(Homepage.class);
-		homepage.setComponentName(component);
 		homepage.setMainLayout(mainLayout);
-		homepage.setModel(model);
+		Path path = TypedConfiguration.newConfigItem(Path.class);
+		path.setComponent(component);
+		if (model != null) {
+			ChannelValue value = TypedConfiguration.newConfigItem(ChannelValue.class);
+			value.setName(channelName);
+			value.setValue(model);
+			path.getChannelValues().put(channelName, value);
+		}
+		homepage.getComponentPaths().add(path);
 		return homepage;
 	}
 

@@ -8,6 +8,7 @@ package com.top_logic.knowledge;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.dob.meta.IdentifiedObject;
 import com.top_logic.dob.meta.ObjectContext;
 import com.top_logic.knowledge.service.Revision;
 
@@ -39,7 +40,12 @@ public class CurrentOnlyReferenceStorage extends ByValueReferenceStorageImpl {
 		ObjectKey currentKey = new DefaultObjectKey(cachedKey.getBranchContext(), Revision.CURRENT_REV,
 			cachedKey.getObjectType(), cachedKey.getObjectName());
 
-		return context.resolveObject(currentKey);
+		IdentifiedObject currentValue = context.resolveObject(currentKey);
+		if (currentValue == null) {
+			// Emergency: The value does no longer exist in current, try historic model access.
+			return getReferencedObject(context, cacheValue);
+		}
+		return currentValue;
 	}
 
 }

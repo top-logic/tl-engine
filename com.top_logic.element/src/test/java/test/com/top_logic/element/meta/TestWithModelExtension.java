@@ -10,6 +10,7 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.BasicTestCase;
+import test.com.top_logic.basic.ThreadContextSetup;
 import test.com.top_logic.element.util.ElementWebTestSetup;
 
 import com.top_logic.basic.ArrayUtil;
@@ -23,20 +24,61 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLModuleSingleton;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.internal.PersistentModelPart;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Test class for {@link PersistentModelPart}s.
+ * Test class for tests which need custom {@link TLModel} extensions.
  * 
  * @since 5.8.0
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @SuppressWarnings("javadoc")
-public abstract class TestPersistentModelPart extends BasicTestCase {
+public abstract class TestWithModelExtension extends BasicTestCase {
+
+	protected static class ModelExtensionTestSetup extends ThreadContextSetup {
+		
+		private final Class<?> _testClass;
+	
+		private final String _suffix;
+	
+		private final String _moduleName;
+	
+		public ModelExtensionTestSetup(Class<? extends Test> testClass) {
+			this(new TestSuite(testClass), testClass);
+		}
+	
+		public ModelExtensionTestSetup(Test test, Class<? extends Test> testClass) {
+			this(test, testClass, "model.xml", testClass.getName());
+		}
+	
+		public ModelExtensionTestSetup(Test test, Class<?> testClass, String suffix, String moduleName) {
+			super(test);
+			_testClass = testClass;
+			_suffix = suffix;
+			_moduleName = moduleName;
+		}
+	
+		@Override
+		protected void doSetUp() throws Exception {
+			extendApplicationModel(PersistencyLayer.getKnowledgeBase(), _testClass, _suffix);
+		}
+	
+		@Override
+		protected void doTearDown() throws Exception {
+			Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction();
+			TLModule module = ModelService.getApplicationModel().getModule(_moduleName);
+			for (TLModuleSingleton singleton : module.getSingletons()) {
+				// Must delete instances of classes before the TLClass can be deleted.
+				singleton.getSingleton().tDelete();
+			}
+			module.tDelete();
+			tx.commit();
+		}
+	}
 
 	protected KnowledgeBase _kb;
 
@@ -82,7 +124,7 @@ public abstract class TestPersistentModelPart extends BasicTestCase {
 		}
 	}
 
-	protected static Test suite(Class<? extends TestPersistentModelPart> testClass) {
+	protected static Test suite(Class<? extends TestWithModelExtension> testClass) {
 		return suite(new TestSuite(testClass));
 	}
 

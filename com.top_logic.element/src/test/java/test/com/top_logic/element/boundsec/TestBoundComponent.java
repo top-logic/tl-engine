@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package test.com.top_logic.tool.boundsec;
+package test.com.top_logic.element.boundsec;
 
 import static com.top_logic.basic.shared.collection.CollectionUtilShared.*;
 
@@ -28,6 +28,7 @@ import com.top_logic.base.services.simpleajax.RequestLockFactory;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.element.boundsec.manager.StorageAccessManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -41,6 +42,7 @@ import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.SecurityObjectProviderManager;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
@@ -132,20 +134,25 @@ public class TestBoundComponent extends BasicTestCase {
 
 		assertSame(guest, cmp.getCurrentObject(SimpleBoundCommandGroup.READ, cmp.getModel()));
 
-		BoundedRole role = BoundedRole.createBoundedRole("Schuhzubinder");
-
 		CommandHandler cmd =
 			cmp.getCommandById(TestLayoutComponent.ComponentWithIntrinsicCommand.INTRINSIC_COMMAND_NAME);
 		cmp.resetAllowCache();
 		assertNotNull(cmp.hideReason());
 
-		// Allow "Schuhzubinders" to VIEW the BoundComponent
-		cmp.getPersBoundComp().addAccess(cmd.getCommandGroup(), role);
+		BoundedRole role;
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			role = BoundedRole.createBoundedRole("Schuhzubinder");
+			// Allow "Schuhzubinder"s to VIEW the BoundComponent
+			cmp.getPersBoundComp().addAccess(cmd.getCommandGroup(), role);
 
-		// Make guest a "Schuhzubinder" on itself.
-		ThreadContext.pushSuperUser(); // Need Super to do this
-		BoundedRole.assignRole(guest, guest, role);
-		ThreadContext.popSuperUser();
+			// Make guest a "Schuhzubinder" on itself.
+			ThreadContext.pushSuperUser(); // Need Super to do this
+			BoundedRole.assignRole(guest, guest, role);
+			ThreadContext.popSuperUser();
+			tx.commit();
+		}
+
+		((StorageAccessManager) AccessManager.getInstance()).reload();
 
 		cmp.resetAllowCache();
 		assertNull(cmp.hideReason());
@@ -154,7 +161,10 @@ public class TestBoundComponent extends BasicTestCase {
 
 		assertTrue(isEmptyOrNull(cmp.getChildCheckers()));
 
-		assertTrue(cmp.getPersBoundComp().removeAccess(cmd.getCommandGroup(), role));
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			assertTrue(cmp.getPersBoundComp().removeAccess(cmd.getCommandGroup(), role));
+			tx.commit();
+		}
 	}
 
     /** 
@@ -172,10 +182,10 @@ public class TestBoundComponent extends BasicTestCase {
     }
 
     /**
-     * Inner class implementing the Abstract Methods.
-     * 
-     * @author    <a href="mailto:kha@top-logic.com">kha</a>
-     */
+	 * Inner class implementing the abstract methods.
+	 * 
+	 * @author <a href="mailto:kha@top-logic.com">kha</a>
+	 */
 	public static class TestedBoundComponent extends BoundComponent {
 
 		/**

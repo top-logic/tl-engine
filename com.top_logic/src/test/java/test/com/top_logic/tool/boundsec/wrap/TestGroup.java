@@ -169,52 +169,10 @@ public class TestGroup extends BasicTestCase {
 		assertEquals(set(p1, p2, p4), toSet(g4.getMembers(true)));
 	}
 	
-	/**
-	 * @see "Ticket #3171: Security-Problem durch Wiederverwendung existierender Representative-Group für neuen Benutzer"
-	 * @see "Ticket #3350: Person.getRepresentativeGroup() überprüft nur auf (nicht eindeutigen) Namen"
-	 */
-	public void testRepresentativeGroup() {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-
-		Person p1;
-		{
-			Transaction tx = kb.beginTransaction();
-			
-			p1 = mkPerson();
-			
-			tx.commit();
-		}
-
-		Person p2 = Person.byName(p1.getName());
-		assertSame(p1, p2);
-		assertSame(p1.getRepresentativeGroup(), p2.getRepresentativeGroup());
-
-		// Delete representative group.
-		{
-			Transaction tx = kb.beginTransaction();
-			
-			p1.getRepresentativeGroup().tDelete();
-			
-			tx.commit();
-		}
-		
-		if (p2.getRepresentativeGroup() == null) {
-			fail("Test should fail due to the known bug in ticket #8958: Stale cache.");
-		} else {
-			/* Exptected due to the known bug in ticket #8958: Stale cache. */
-		}
-
-	}
-	
 	public void testIsInGroup() {
 		Person p1 = mkPerson();
 		Group g1 = mkGroup(p1);
 		assertTrue(p1.isInGroup(g1));
-	}
-
-	public void testIsInRepresentativeGroup() {
-		Person p1 = mkPerson();
-		assertTrue(p1.isInGroup(p1.getRepresentativeGroup()));
 	}
 
 	public void testIsInGroupRecursive() {

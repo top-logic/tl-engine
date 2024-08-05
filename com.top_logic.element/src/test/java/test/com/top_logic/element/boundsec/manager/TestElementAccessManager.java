@@ -139,6 +139,8 @@ public class TestElementAccessManager extends BasicTestCase {
 			Transaction tx = begin();
 			personB = initPerson("BB");
 			personC = initPerson("CC");
+			commit(tx);
+			tx = begin();
 
 			StructuredElement projectRoot =
 				projectRoot();
@@ -1609,7 +1611,6 @@ public class TestElementAccessManager extends BasicTestCase {
 
     private Person initPerson(String aID) {
         String authenticationDeviceID = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice().getDeviceID();
-        PersonManager pMgr = PersonManager.getManager();
         Person thePerson = Person.byName(aID);
         if (thePerson == null)
 			thePerson = Person.create(PersistencyLayer.getKnowledgeBase(), aID, authenticationDeviceID);

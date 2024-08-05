@@ -29,7 +29,7 @@ public class TransientObjectFactory implements TLFactory {
 	@Override
 	public TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues) {
 		TLFactory.failIfAbstract(type);
-		TransientTLObjectImpl result = new TransientTLObjectImpl(type);
+		TransientTLObjectImpl result = new TransientTLObjectImpl(type, context);
 		TLFactory.setupDefaultValues(context, result, type);
 		return result;
 	}

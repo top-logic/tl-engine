@@ -240,7 +240,6 @@
 								model="selection(${namePrefix}VersionSelector)"
 								namePrefix="Demo"
 								objectTypes="DemoTypes:DemoTypes.A, DemoTypes:DemoTypes.B, DemoTypes:DemoTypes.C.All, DemoTypes:DemoTypes.X, DemoTypes:DemoTypes.L"
-								tableConfigurationProvider="com.top_logic.demo.table.DemoTableConfigurationProvider"
 							>
 								<inject>
 									<tabInfo label="${resPrefix}demoStructureDemoTypesCompareTreeComponent.tab"/>

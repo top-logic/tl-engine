@@ -74,11 +74,7 @@ public interface Modification {
 	 * @see #andThen(Modification)
 	 */
 	default Modification compose(Modification before) {
-		if (before == NONE) {
-			return this;
-		}
-		Objects.requireNonNull(before);
-		return new ModificationChain(before, this);
+		return before.andThen(this);
 	}
 
 	/**
@@ -100,7 +96,7 @@ public interface Modification {
 			return this;
 		}
 		Objects.requireNonNull(after);
-		return new ModificationChain(this, after);
+		return new ModificationPair(this, after);
 	}
 }
 

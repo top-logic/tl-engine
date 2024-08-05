@@ -5,38 +5,51 @@
  */
 package com.top_logic.knowledge.service.event;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
 import com.top_logic.dob.DataObjectException;
 
 /**
- * Chain of two {@link Modification}s.
- * 
- * @see Modification#andThen(Modification)
- * @see Modification#compose(Modification)
+ * Chain of multiple {@link Modification}s.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class ModificationChain implements Modification {
 
-	private final Modification _second;
-
-	private final Modification _first;
+	private final List<Modification> _modifications;
 
 	/**
 	 * Creates a new {@link ModificationChain}.
-	 * 
-	 * @param first
-	 *        The {@link Modification} to execute first.
-	 * @param second
-	 *        The {@link Modification} to execute second.
 	 */
-	public ModificationChain(Modification first, Modification second) {
-		_first = first;
-		_second = second;
+	public ModificationChain() {
+		_modifications = new ArrayList<>();
 	}
 
 	@Override
 	public void execute() throws DataObjectException {
-		_first.execute();
-		_second.execute();
+		for (int i = 0, size = _modifications.size(); i < size; i++) {
+			_modifications.get(i).execute();
+		}
 	}
+
+	/**
+	 * Adds the given {@link Modification} to the modifications to execute.
+	 */
+	public void addModification(Modification modification) {
+		_modifications.add(modification);
+	}
+
+	@Override
+	public Modification andThen(Modification after) {
+		if (after instanceof ModificationChain chain) {
+			_modifications.addAll(chain._modifications);
+		} else {
+			Objects.requireNonNull(after);
+			_modifications.add(after);
+		}
+		return this;
+	}
+
 }

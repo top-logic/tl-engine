@@ -13,7 +13,6 @@ import java.util.TimeZone;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
-import com.top_logic.base.services.InitialGroupManager;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.ConfigurationError;
@@ -600,15 +599,6 @@ public class Person extends AbstractBoundWrapper implements Author {
 		result.setCountry(DefaultCountryDefault.INSTANCE.defaultCountry());
 		result.setLanguage(DefaultLocaleDefault.INSTANCE.defaultLocale());
 		result.setTimeZone(UserTimeZoneDefault.INSTANCE.defaultUserTimeZone());
-
-		Group representativeGroup = Group.createGroup(result.getName());
-		representativeGroup.setIsSystem(true);
-		representativeGroup.bind(result);
-
-		Group defaultGroup = InitialGroupManager.getInstance().getDefaultGroup();
-		if (defaultGroup != null) {
-			defaultGroup.addMember(result);
-		}
 
 		PersonManager.getManager().initUser(result);
 

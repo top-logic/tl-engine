@@ -182,6 +182,9 @@
 				/>
 				<main-properties properties="name,firstName,lastName"/>
 				<table name="Person"/>
+				<object-initializers>
+					<initializer class="com.top_logic.knowledge.wrap.person.PersonGroupsInitializer"/>
+				</object-initializers>
 			</annotations>
 			<attributes>
 				<property name="name"

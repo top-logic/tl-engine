@@ -37,11 +37,13 @@ import com.top_logic.model.annotate.InstancePresentation;
 import com.top_logic.model.annotate.TLSortOrder;
 import com.top_logic.model.annotate.persistency.LinkTables;
 import com.top_logic.model.annotate.ui.TLDynamicIcon;
+import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.composite.CompositeStorage;
 import com.top_logic.model.composite.ContainerStorage;
 import com.top_logic.model.composite.LinkTable;
 import com.top_logic.model.composite.SourceTable;
 import com.top_logic.model.composite.TargetTable;
+import com.top_logic.model.initializer.TLObjectInitializer;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -395,6 +397,13 @@ public class TLModelOperations {
 				collectDirectConcreteOverrides(sink, specialization, name);
 			}
 		}
+	}
+
+	/**
+	 * The {@link TLObjectInitializer}s that are attached to the given type or any supertype.
+	 */
+	public List<TLObjectInitializer> getInitializers(TLStructuredType type) {
+		return TLAnnotations.getInitializers(type);
 	}
 
 	/**

@@ -55,6 +55,8 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.knowledge.service.event.CommitChecker;
 import com.top_logic.knowledge.service.event.CommitVetoException;
+import com.top_logic.knowledge.service.event.Modification;
+import com.top_logic.knowledge.service.event.ModificationListener;
 import com.top_logic.layout.form.values.edit.AllQualifiedTLTypeNames;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLClass;
@@ -71,12 +73,15 @@ import com.top_logic.model.annotate.TLSize;
 import com.top_logic.model.annotate.TLUpdateMode;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.annotate.util.ConstraintCheck;
+import com.top_logic.model.cache.TLModelCacheService;
+import com.top_logic.model.cache.TLModelOperations;
 import com.top_logic.model.config.EnumConfig;
 import com.top_logic.model.config.ScopeConfig;
 import com.top_logic.model.config.TypeConfig;
 import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.filter.ModelFilterConfig;
 import com.top_logic.model.impl.TLModelImpl;
+import com.top_logic.model.initializer.TLObjectInitializer;
 import com.top_logic.model.internal.PersistentQuery;
 import com.top_logic.model.internal.PersistentType;
 import com.top_logic.model.util.TLModelUtil;
@@ -100,7 +105,8 @@ import com.top_logic.util.model.check.StringSizeCheck;
 	AttributeSettings.Module.class,
 	FormatterService.Module.class,
 })
-public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>> implements CommitChecker {
+public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
+		implements CommitChecker, ModificationListener {
 
 	/**
 	 * Configuration options for {@link ModelService}
@@ -226,6 +232,7 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 	protected void startUpInContext() throws ConfigurationException, KnowledgeBaseException {
 		KnowledgeBase kb = kb();
 		kb.addCommitChecker(this);
+		kb.addModificationListener(this);
 
 		_model = fetchModel(kb);
 		_queries = initQueries();
@@ -278,12 +285,48 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 
 	@Override
 	protected void shutDown() {
+		kb().removeModificationListener(this);
 		kb().removeCommitChecker(this);
 
 		_model = null;
 		_queries = null;
 
 		super.shutDown();
+	}
+
+	@Override
+	public Modification createModification(KnowledgeBase kb, Map<ObjectKey, ? extends KnowledgeItem> createdObjects,
+			Map<ObjectKey, ? extends KnowledgeItem> updatedObjects,
+			Map<ObjectKey, ? extends KnowledgeItem> removedObjects) {
+
+		return applyInitializers(createdObjects);
+	}
+
+	private Modification applyInitializers(Map<ObjectKey, ? extends KnowledgeItem> createdObjects) {
+		TLModelOperations operations = TLModelCacheService.getOperations();
+		Modification result = Modification.NONE;
+		for (KnowledgeItem created : createdObjects.values()) {
+			TLObject object = created.getWrapper();
+			TLStructuredType type = object.tType();
+			if (type == null) {
+				continue;
+			}
+			List<TLObjectInitializer> initializers = operations.getInitializers(type);
+			if (initializers.isEmpty()) {
+				continue;
+			}
+			result = result.andThen(() -> {
+				for (TLObjectInitializer initializer : initializers) {
+					initializer.initializeObject(object);
+				}
+			});
+		}
+		return result;
+	}
+
+	@Override
+	public Modification notifyUpcomingDeletion(KnowledgeBase kb, KnowledgeItem item) {
+		return Modification.NONE;
 	}
 
 	@Override

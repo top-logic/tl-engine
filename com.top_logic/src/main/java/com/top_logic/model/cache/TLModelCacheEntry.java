@@ -9,6 +9,7 @@ import static com.top_logic.basic.col.map.MultiMaps.*;
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
 import static java.util.Collections.*;
 
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +37,7 @@ import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.composite.CompositeStorage;
@@ -43,6 +45,7 @@ import com.top_logic.model.composite.ContainerStorage;
 import com.top_logic.model.composite.LinkTable;
 import com.top_logic.model.composite.SourceTable;
 import com.top_logic.model.composite.TargetTable;
+import com.top_logic.model.initializer.TLObjectInitializer;
 import com.top_logic.model.internal.PersistentModelPart;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
@@ -63,6 +66,8 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 	private final Map<TLClass, ListOrderedMap<String, TLStructuredTypePart>> _allAttributes = map();
 
 	private final Map<TLClass, ImmutableSet<TLClassPart>> _attributesOfSubClasses = map();
+
+	private final Map<TLStructuredType, List<TLObjectInitializer>> _initializers = map();
 
 	/**
 	 * <p>
@@ -255,6 +260,17 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		}
 	}
 
+	private static <E> List<E> immutable(List<E> list) {
+		switch (list.size()) {
+			case 0:
+				return Collections.emptyList();
+			case 1:
+				return Collections.singletonList(list.get(0));
+			default:
+				return Collections.unmodifiableList(list);
+		}
+	}
+
 	/** Whether data about the given {@link TLClass} can be cached. */
 	private boolean canBeCached(TLClass tlClass) {
 		if (!canModelPartBeCached(tlClass)) {
@@ -358,6 +374,15 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		return typeSafe;
 	}
 
+	@Override
+	public List<TLObjectInitializer> getInitializers(TLStructuredType type) {
+		if (!canModelPartBeCached(type)) {
+			return super.getInitializers(type);
+		}
+		return computeIfAbsent(_initializers, type,
+			key -> immutable(super.getInitializers(key)));
+	}
+
 	/** Whether data about the given {@link TLModelPart} can be cached. */
 	private boolean canModelPartBeCached(TLModelPart modelPart) {
 		if (!(modelPart instanceof PersistentModelPart)) {
@@ -389,6 +414,7 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		_allAttributes.clear();
 		_attributesOfSubClasses.clear();
 		_iconProviderByType.clear();
+		_initializers.clear();
 		_globalAppModelClasses = null;
 		_globalClasses = null;
 	}
@@ -404,6 +430,7 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 			.add("iconProviderByType", _iconProviderByType.size())
 			.add("globalAppModelClasses", _globalAppModelClasses == null ? "null" : _globalAppModelClasses.size())
 			.add("globalClasses", _globalClasses == null ? null : _globalClasses.size())
+			.add("initializers", _initializers.size())
 			.build();
 	}
 

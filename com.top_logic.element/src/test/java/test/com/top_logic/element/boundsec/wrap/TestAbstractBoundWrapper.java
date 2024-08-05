@@ -3,13 +3,12 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package test.com.top_logic.knowledge.wrap.boundsec;
+package test.com.top_logic.element.boundsec.wrap;
 
 import java.util.Collection;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
-import junit.textui.TestRunner;
 
 import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
@@ -17,7 +16,6 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 import test.com.top_logic.knowledge.wrap.person.CreateDefaultTestPersons;
 
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
 import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.knowledge.objects.KOAttributes;
@@ -40,7 +38,7 @@ public class TestAbstractBoundWrapper extends BasicTestCase {
 
     /** Some DSN for the document to be wrapped by ConcreteBoundWrapper */
 	private static final String DSN = "file://" + ModuleLayoutConstants.SRC_TEST_DIR
-		+ "/test/com/top_logic/knowledge/wrap/boundsec/TestAbstractBoundWrapper.java";
+			+ "/test/com/top_logic/element/boundsec/wrap/TestAbstractBoundWrapper.java";
 
     /**
      * Constructor for TestAbstractBoundWrapper.
@@ -82,11 +80,11 @@ public class TestAbstractBoundWrapper extends BasicTestCase {
             assertTrue("commit failed " + theKB, theKB.commit ());
 
             Collection allRoles = boundObject.getRoles();
-            assertTrue("There should be four roles.", allRoles.size()==4);
+			assertEquals("There should be four roles.", 4, allRoles.size());
             Collection rolesPerson1 = boundObject.getRoles(person1);
-            assertTrue("There should be two roles for person \"aMan\"", rolesPerson1.size()==2);
+			assertEquals("There should be two roles for person \"aMan\"", 2, rolesPerson1.size());
             Collection rolesPerson2 = boundObject.getRoles(person2);
-            assertTrue("There should be two roles for person \"aWoman\"", rolesPerson2.size()==2);
+			assertEquals("There should be two roles for person \"aWoman\"", 2, rolesPerson2.size());
             assertTrue(rolesPerson2.contains(role4));
         }
         finally {
@@ -168,14 +166,5 @@ public class TestAbstractBoundWrapper extends BasicTestCase {
 		t = ServiceTestSetup.createSetup(t, MimeTypes.Module.INSTANCE);
 		return PersonManagerSetup.createPersonManagerSetup(t);
     }
-
-    /** Main function for direct testing.
-     */
-    public static void main(String[] args) {
-        SHOW_TIME = false;
-        Logger.configureStdout(); // "WARN"
-        TestRunner.run(suite());
-    }
-    
 
 }

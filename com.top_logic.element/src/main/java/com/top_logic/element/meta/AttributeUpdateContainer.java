@@ -569,7 +569,10 @@ public class AttributeUpdateContainer {
 					if (_createIt.hasNext()) {
 						_next = _createIt.next();
 					} else if (_editIt.hasNext()) {
-						_next = _editIt.next();
+						ObjectEditing nextEdit = _editIt.next();
+						if (nextEdit.getEditedObject().tValid()) {
+							_next = nextEdit;
+						}
 					} else {
 						return false;
 					}

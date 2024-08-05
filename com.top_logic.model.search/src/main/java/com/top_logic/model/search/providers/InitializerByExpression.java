@@ -38,34 +38,18 @@ public class InitializerByExpression extends AbstractConfiguredInstance<Initiali
 	public interface Config extends PolymorphicConfiguration<InitializerByExpression> {
 
 		/**
-		 * Function initializing the object of the annotated {@link TLStructuredType type}.
+		 * Function initializing an object of the annotated {@link TLStructuredType type}.
 		 * 
 		 * <p>
-		 * The function is expected to use the newly created object as the first argument and the
-		 * context object of the newly created object as the second argument.
+		 * The function is expected to use the newly created object single argument.
 		 * </p>
 		 * 
 		 * <p>
 		 * The object already has default values for all attributes.
 		 * </p>
-		 * 
-		 * @see #getInTransaction()
 		 */
 		@Mandatory
 		Expr getFunction();
-
-		/**
-		 * Whether the computation in {@link #getFunction()} should be delayed until the create
-		 * transaction is performed.
-		 * 
-		 * <p>
-		 * This setting is necessary, if the script in {@link #getFunction()} performs operation that
-		 * can only be executed when in transaction context (e.g. <code>new</code>).
-		 * </p>
-		 * 
-		 * @see #getFunction()
-		 */
-		boolean getInTransaction();
 
 	}
 
@@ -82,13 +66,8 @@ public class InitializerByExpression extends AbstractConfiguredInstance<Initiali
 
 
 	@Override
-	public void initializeObject(Object context, TLObject object, boolean initForUI) {
-		if (getConfig().getInTransaction() && initForUI) {
-			// The expression contains transactional operations and cannot be executed without a
-			// transaction context.
-			return;
-		}
-		_initExpr.execute(object, context);
+	public void initializeObject(TLObject object) {
+		_initExpr.execute(object);
 	}
 
 }

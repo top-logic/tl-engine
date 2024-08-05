@@ -11,8 +11,6 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
-import com.top_logic.model.annotate.util.TLAnnotations;
-import com.top_logic.model.initializer.TLObjectInitializer;
 import com.top_logic.model.provider.DefaultProvider;
 
 /**
@@ -108,9 +106,6 @@ public interface TLFactory {
 				continue;
 			}
 			obj.tUpdate(part, defaultProvider.createDefault(createContext, part, forUI));
-		}
-		for (TLObjectInitializer initializer : TLAnnotations.getInitializers(type)) {
-			initializer.initializeObject(createContext, obj, forUI);
 		}
 	}
 

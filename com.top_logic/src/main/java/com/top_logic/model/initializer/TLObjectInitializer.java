@@ -20,13 +20,8 @@ public interface TLObjectInitializer {
 	/**
 	 * Initializes the newly created object.
 	 * 
-	 * @param context
-	 *        The context in which the new object was needed, e.g. when the object is a new child of
-	 *        an structured element, the context is the parent. May be <code>null</code>.
 	 * @param object
 	 *        The newly created element to initialize.
-	 * @param initForUI
-	 *        Whether the new object was created for the UI.
 	 */
-	void initializeObject(Object context, TLObject object, boolean initForUI);
+	void initializeObject(TLObject object);
 }

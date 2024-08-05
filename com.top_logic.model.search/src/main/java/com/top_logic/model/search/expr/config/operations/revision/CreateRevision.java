@@ -51,6 +51,9 @@ public class CreateRevision extends GenericMethod {
 		if (tlObject == null) {
 			return null;
 		}
+		if (tlObject.tTransient()) {
+			return Revision.CURRENT;
+		}
 		Revision createRevision = LifecycleStorageCreated.createRevision(tlObject.tHandle());
 		if (createRevision == null) {
 			return null;

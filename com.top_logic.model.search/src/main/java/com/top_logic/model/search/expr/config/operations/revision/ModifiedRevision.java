@@ -51,6 +51,9 @@ public class ModifiedRevision extends GenericMethod {
 		if (tlObject == null) {
 			return null;
 		}
+		if (tlObject.tTransient()) {
+			return Revision.CURRENT;
+		}
 		Revision lastUpdate = LifecycleStorageModified.lastUpdateRevision(tlObject.tHandle());
 		if (lastUpdate == null) {
 			return null;

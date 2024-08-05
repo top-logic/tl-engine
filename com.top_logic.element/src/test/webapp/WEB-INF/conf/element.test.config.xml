@@ -104,7 +104,16 @@
 				</label-providers>
 			</instance>
 		</config>
-	
+		
+		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
+			<instance>
+				<handlers>
+					<handler id="TestIntrinsicCommands" 
+						class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingCommand"/>
+				</handlers>
+			</instance>
+		</config>
+		
 	</services>
 
 	<configs>

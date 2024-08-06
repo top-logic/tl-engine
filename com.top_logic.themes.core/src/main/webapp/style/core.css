@@ -208,7 +208,7 @@ i[class*=" overlay-"] span::before {
 ****					****
 */
 a {
-	color: var(--link-primary);
+	color: var(--highlight-fg, var(--link-primary));
 }
 
 a, a:link {
@@ -217,17 +217,17 @@ a, a:link {
 }
 
 a:not(.disabled):hover {
-	color: var(--link-primary-hover);
+	color: var(--highlight-fg, var(--link-primary-hover));
 	text-decoration: underline;
 }
 
 a:not(.disabled):active {
-	color: var(--text-primary);
+	color: var(--highlight-fg, var(--text-primary));
 	text-decoration: underline;
 }
 
 a:not(.disabled):focus {
-    color: var(--link-primary-hover);
+    color: var(--highlight-fg, var(--link-primary-hover));
 	outline: 1px solid var(--focus);
 	outline-offset: 2px;
 }
@@ -427,6 +427,13 @@ hr {
 	padding: 0 var(--spacing-03);
 }
 
+span.cTextInput,
+span.cDateInput,
+span.cTimeInput {
+	color: var(--highlight, inherit);
+	font-weight: var(--highlight-weight, normal);
+}
+
 .sidebarFilterContainer input,
 .sidebarFilterContainer .cTextInput input,
 .sidebarFilterContainer .cDateInput input,
@@ -434,7 +441,8 @@ hr {
 .sidebarFilterContainer .cTimeInput input,
 .sidebarFilterContainer .cTimeInput .lFixedRight,
 .sidebarFilterContainer .ddwttDropBtn {
-	background: var(--background);
+	color: var(--highlight-fg, inherit);
+	background: var(--highlight-bg, var(--background));
 }
 
 .sidebarFilterContainer .cTextInput input {
@@ -599,7 +607,8 @@ div.fltList {
 .defaultFilterContainer .cTimeInput input,
 .defaultFilterContainer .cTimeInput .lFixedRight,
 .defaultFilterContainer .ddwttDropBtn {
-	background: var(--background);
+	color: var(--highlight-fg, inherit);
+	background: var(--highlight-bg, var(--background));
 }
 
 .defaultFilterContainer .lFlexible > input {
@@ -2667,124 +2676,123 @@ div.ssiContentArea {
 	margin-left: var(--spacing-01);
 }
 
-/* tl-danger */ 
-.tl-table__row:not(.tblSelected):hover > td.tl-danger,
-td.tl-table__cell--selected.tl-danger {
-	background: var(--notification-danger-background);
-	color: var(--support-danger);
-}
-	
-.tl-table__cell.tl-danger {
-	background: var(--notification-danger-background);
-	color: var(--support-danger);
+.tl-danger {
+	--highlight: var(--text-danger);
+	--highlight-fg: var(--text-danger--on-color);
+	--highlight-bg: var(--background-danger);
+	--highlight-bg--hover: var(--background-danger--hover);
+	--highlight-bg--selected: var(--background-danger--selected);
+	--highlight-bg--selected--hover: var(--background-danger--selected--hover);
+	--highlight-weight: bolder;
 }
 
-/* tl-danger in fields. */
-td.tl-table__cell.tl-danger,
-.cTextInput.tl-danger input,
-.tl-danger .ddwttDropBtn {
-	background: var(--notification-danger-background);
-	color: var(--support-danger);
+.tl-danger.tl-lighter {
+	--highlight: var(--text-danger--lighter);
+	--highlight-fg: var(--text-danger--on-color--lighter);
+	--highlight-bg: var(--background-danger--lighter);
+	--highlight-bg--hover: var(--background-danger--hover--lighter);
+	--highlight-bg--selected: var(--background-danger--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-danger--selected--hover--lighter);
+	--highlight-weight: bolder;
 }
 
-/* tl-danger in view mode. */
-span.cTextInput.tl-danger,
-span.cDateInput.tl-danger,
-span.cDatetime.tl-danger,
-span.cPopupSelect.tl-danger,
-.tl-danger > .ddwttImmutableItem {
-	color: var(--support-danger);
-	font-weight: bolder;
+.tl-warning {
+	--highlight: var(--text-warning);
+	--highlight-fg: var(--text-warning--on-color);
+	--highlight-bg: var(--background-warning);
+	--highlight-bg--hover: var(--background-warning--hover);
+	--highlight-bg--selected: var(--background-warning--selected);
+	--highlight-bg--selected--hover: var(--background-warning--selected--hover);
+	--highlight-weight: bolder;
 }
 
-/* tl-warning */ 
-.tl-table__row:not(.tblSelected):hover > td.tl-warning,
-td.tl-table__cell--selected.tl-warning {
-	background: var(--notification-warning-background);
-	color: var(--support-warning);
-}
-	
-.tl-table__cell.tl-warning {
-	background: var(--notification-warning-background);
-	color: var(--support-warning);
+.tl-warning.tl-lighter {
+	--highlight: var(--text-warning--lighter);
+	--highlight-fg: var(--text-warning--on-color--lighter);
+	--highlight-bg: var(--background-warning--lighter);
+	--highlight-bg--hover: var(--background-warning--hover--lighter);
+	--highlight-bg--selected: var(--background-warning--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-warning--selected--hover--lighter);
+	--highlight-weight: bolder;
 }
 
-/* tl-warning in fields. */
-td.tl-table__cell.tl-warning,
-.cTextInput.tl-warning input,
-.tl-warning .ddwttDropBtn {
-	background: var(--notification-warning-background);
-	color: var(--support-warning);
+.tl-success {
+	--highlight: var(--text-success);
+	--highlight-fg: var(--text-success--on-color);
+	--highlight-bg: var(--background-success);
+	--highlight-bg--hover: var(--background-success--hover);
+	--highlight-bg--selected: var(--background-success--selected);
+	--highlight-bg--selected--hover: var(--background-success--selected--hover);
+	--highlight-weight: bolder;
 }
 
-/* tl-warning in view mode. */
-span.cTextInput.tl-warning,
-span.cDateInput.tl-warning,
-span.cDatetime.tl-warning,
-span.cPopupSelect.tl-warning,
-.tl-warning > .ddwttImmutableItem {
-	color: var(--support-warning);
-	font-weight: bolder;
+.tl-success.tl-lighter {
+	--highlight: var(--text-success--lighter);
+	--highlight-fg: var(--text-success--on-color--lighter);
+	--highlight-bg: var(--background-success--lighter);
+	--highlight-bg--hover: var(--background-success--hover--lighter);
+	--highlight-bg--selected: var(--background-success--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-success--selected--hover--lighter);
+	--highlight-weight: bolder;
 }
 
-/* tl-success */ 
-.tl-table__row:not(.tblSelected):hover > td.tl-success,
-td.tl-table__cell--selected.tl-success {
-	background: var(--notification-success-background);
-	color: var(--support-success);
-}
-	
-.tl-table__cell.tl-success {
-	background: var(--notification-success-background);
-	color: var(--support-success);
+.tl-info {
+	--highlight: var(--text-info);
+	--highlight-fg: var(--text-info--on-color);
+	--highlight-bg: var(--background-info);
+	--highlight-bg--hover: var(--background-info--hover);
+	--highlight-bg--selected: var(--background-info--selected);
+	--highlight-bg--selected--hover: var(--background-info--selected--hover);
+	--highlight-weight: bolder;
 }
 
-/* tl-success in fields. */
-td.tl-table__cell.tl-success,
-.cTextInput.tl-success input,
-.tl-success .ddwttDropBtn {
-	background: var(--notification-success-background);
-	color: var(--support-success);
+.tl-info.tl-lighter {
+	--highlight: var(--text-info--lighter);
+	--highlight-fg: var(--text-info--on-color--lighter);
+	--highlight-bg: var(--background-info--lighter);
+	--highlight-bg--hover: var(--background-info--hover--lighter);
+	--highlight-bg--selected: var(--background-info--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-info--selected--hover--lighter);
+	--highlight-weight: bolder;
 }
 
-/* tl-success in view mode. */
-span.cTextInput.tl-success,
-span.cDateInput.tl-success,
-span.cDatetime.tl-success,
-span.cPopupSelect.tl-success,
-.tl-success > .ddwttImmutableItem {
-	color: var(--support-success);
-	font-weight: bolder;
+.tl-debug {
+	--highlight: var(--text-debug);
+	--highlight-fg: var(--text-debug--on-color);
+	--highlight-bg: var(--background-debug);
+	--highlight-bg--hover: var(--background-debug--hover);
+	--highlight-bg--selected: var(--background-debug--selected);
+	--highlight-bg--selected--hover: var(--background-debug--selected--hover);
+	--highlight-weight: normal;
 }
 
-
-/* tl-info */ 
-.tl-table__row:not(.tblSelected):hover > td.tl-info,
-td.tl-table__cell--selected.tl-info {
-	background: var(--notification-info-background);
-	color: var(--support-info);
-}
-	
-.tl-table__cell.tl-info {
-	background: var(--notification-info-background);
-	color: var(--support-info);
+.tl-debug.tl-lighter {
+	--highlight: var(--text-debug--lighter);
+	--highlight-fg: var(--text-debug--on-color--lighter);
+	--highlight-bg: var(--background-debug--lighter);
+	--highlight-bg--hover: var(--background-debug--hover--lighter);
+	--highlight-bg--selected: var(--background-debug--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-debug--selected--hover--lighter);
+	--highlight-weight: normal;
 }
 
-/* tl-info in fields. */
-td.tl-table__cell.tl-info,
-.cTextInput.tl-info input,
-.tl-info .ddwttDropBtn {
-	background: var(--notification-info-background);
-	color: var(--support-info);
+.tl-accent {
+	--highlight: var(--text-accent);
+	--highlight-fg: var(--text-accent--on-color);
+	--highlight-bg: var(--background-accent);
+	--highlight-bg--hover: var(--background-accent--hover);
+	--highlight-bg--selected: var(--background-accent--selected);
+	--highlight-bg--selected--hover: var(--background-accent--selected--hover);
+	--highlight-weight: bolder;
 }
 
-/* tl-info in view mode. */
-span.cTextInput.tl-info,
-span.cDateInput.tl-info,
-span.cDatetime.tl-info,
-span.cPopupSelect.tl-info,
-.tl-info > .ddwttImmutableItem {
-	color: var(--support-info);
-	font-weight: bolder;
+.tl-accent.tl-lighter {
+	--highlight: var(--text-accent--lighter);
+	--highlight-fg: var(--text-accent--on-color--lighter);
+	--highlight-bg: var(--background-accent--lighter);
+	--highlight-bg--hover: var(--background-accent--hover--lighter);
+	--highlight-bg--selected: var(--background-accent--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-accent--selected--hover--lighter);
+	--highlight-weight: bolder;
 }
 

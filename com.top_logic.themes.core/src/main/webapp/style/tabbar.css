@@ -83,7 +83,8 @@
 
 .tlTabBar .activeTabLabel {
 	color: var(--text-primary);
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
     font-size: var(--heading-compact-02-font-size);
     line-height: var(--heading-compact-02-line-height);
     letter-spacing: var(--heading-compact-02-letter-spacing);
@@ -91,7 +92,7 @@
 
 .tlTabBar .tabLabel {
 	color: var(--text-secondary);
-	font-family: var(--font-family-regular);
+	font-family: var(--font-family);
     font-size: var(--body-02-font-size);
     line-height: var(--body-02-line-height);
     letter-spacing: var(--body-02-letter-spacing);
@@ -186,7 +187,7 @@
 .system_message {
 	display: flex;
 	flex-direction: column;
-	font-weight: 600;
+	font-weight: bold;
 }
 
 .ToolBarContainer .IconContainer .cButton,
@@ -454,18 +455,18 @@ div.mcMinimized .accText {
 
 /* Is needed for the sidebar theme */
 .licenseView .licenseContent {
-	font-weight: 600;
+	font-weight: bold;
 	color: var(--text-on-color);
 }
 
 .licenseContent {
-	font-weight: 600;
+	font-weight: bold;
 	color: var(--support-danger);
 }
 
 /* For collapsed sidebar */
 .mcMinimized .licenseView .licenseContent {
-	font-family: var(--font-family-regular);
+	font-family: var(--font-family);
 	font-size: var(--body-01-font-size);
 	line-height: var(--body-01-line-height);
 	letter-spacing: var(--body-01-letter-spacing);
@@ -474,7 +475,7 @@ div.mcMinimized .accText {
 
 span.cLogoutTimer {
 	display: none;
-	font-weight: 600;
+	font-weight: bold;
 	color: var(--support-danger);
 }
 
@@ -584,7 +585,7 @@ div.accNode.tlPopupOpen a.accEntry .accLabel,
 a.accEntry.accContainer.accSelected .accLabel{
 	color: var(--text-primary);
 	font-size: .875rem;
-    font-weight: 600;
+    font-weight: bold;
 }
 
 a.accEntry.accSelected .accIcon i, 

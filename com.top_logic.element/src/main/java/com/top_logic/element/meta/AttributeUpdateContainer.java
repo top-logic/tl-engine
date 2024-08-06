@@ -5,8 +5,8 @@
  */
 package com.top_logic.element.meta;
 
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -63,8 +63,8 @@ public class AttributeUpdateContainer {
 	 */
 	public AttributeUpdateContainer(AttributeFormContext form) {
 		_form = form;
-		_edits = new HashMap<>();
-		_creates = new HashMap<>();
+		_edits = new LinkedHashMap<>();
+		_creates = new LinkedHashMap<>();
 	}
 
 	/**
@@ -569,7 +569,10 @@ public class AttributeUpdateContainer {
 					if (_createIt.hasNext()) {
 						_next = _createIt.next();
 					} else if (_editIt.hasNext()) {
-						_next = _editIt.next();
+						ObjectEditing nextEdit = _editIt.next();
+						if (nextEdit.getEditedObject().tValid()) {
+							_next = nextEdit;
+						}
 					} else {
 						return false;
 					}

@@ -335,7 +335,7 @@
 .fotorama__caption__wrap {
   background-color: var(--layer);
   padding: var(--spacing-01) var(--spacing-03);
-  font-family: 'Inter-Regular';
+  font-family: var(--font-family);
   font-size: var(--body-01-font-size);
   line-height: var(--body-01-line-height);
   letter-spacing: var(--body-01-letter-spacing);

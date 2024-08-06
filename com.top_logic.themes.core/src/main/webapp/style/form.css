@@ -4,7 +4,8 @@
 ****					****
 */
 .frmBody h1 {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
 	font-size: var(--heading-04-font-size);
 	line-height: var(--heading-04-line-height);
 	letter-spacing: var(--heading-04-letter-spacing);
@@ -12,7 +13,8 @@
 
 .rf_header,
 .dfEntryTitle {
-    font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
     font-size: var(--heading-compact-02-font-size);
     line-height: var(--heading-compact-02-line-height);
     letter-spacing: var(--heading-compact-02-letter-spacing);
@@ -121,7 +123,8 @@ div.fptTitleContent .tlTranslatedI18nField, div.fptTitleContent .cTextInput {
 }
 
 div.fptTitleContent, div.fptTitle input.is-input, div.fptTitle select.is-input {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
 	font-size: var(--heading-04-font-size);
 	line-height: var(--heading-04-line-height);
 	letter-spacing: var(--heading-04-letter-spacing);
@@ -142,7 +145,7 @@ div.fptSubtitleContent {
     box-sizing: border-box;
     padding: 0 var(--spacing-03);
     font-size: var(--heading-03-font-size);
-    font-weight: 600;
+    font-weight: bold;
 }
 
 .fptIcon, .fptIconWithOverlay, .fptIconOverlay {
@@ -819,7 +822,7 @@ div.dfListAdd {
 
 .rf_groupCell .rf_header select.tl-select,
 .rf_groupCell .rf_header label {
-	font-weight: 600;
+	font-weight: bold;
 	margin-bottom: 0px;
 	text-overflow: ellipsis;
 	overflow: hidden;
@@ -929,7 +932,7 @@ div.dfListAdd {
 	white-space: nowrap;
 	text-overflow: ellipsis;
     overflow: hidden;
-    font-family: var(--font-family-regular);
+    font-family: var(--font-family);
     font-size: var(--body-02-font-size);
     line-height: var(--body-02-line-height);
     letter-spacing: var(--body-02-letter-spacing);
@@ -1280,7 +1283,8 @@ div.cal_view {
 
 .cal_view_switch_header {
 	white-space: nowrap;
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
 	font-size: var(--heading-compact-01-font-size);
 	line-height: var(--heading-compact-01-line-height);
 	letter-spacing: var(--heading-compact-01-letter-spacing);
@@ -1311,7 +1315,7 @@ table.cal_table {
 th.cal_th {
 	border-style: none;
 	padding: var(--spacing-01) 0;
-	font-family: var(--font-family-regular);
+	font-family: var(--font-family);
     font-size: var(--body-01-font-size);
     line-height: var(--body-01-line-height);
     letter-spacing: var(--body-01-letter-spacing);
@@ -1325,7 +1329,7 @@ td.cal_cell {
 	padding: 0;
 	height: 2rem;
     width: 2rem;
-    font-family: var(--font-family-regular);
+    font-family: var(--font-family);
     font-size: var(--body-01-font-size);
     line-height: var(--body-01-line-height);
     letter-spacing: var(--body-01-letter-spacing);
@@ -1620,7 +1624,7 @@ span.cIconSelect .input-image.cannot-edit i {
 	white-space: break-spaces;
 	word-wrap: break-word;
 	word-break: break-word;
-	font-family: var(--font-family-regular);
+	font-family: var(--font-family);
     font-size: var(--body-02-font-size);
     line-height: var(--body-02-line-height);
     letter-spacing: var(--body-02-letter-spacing);
@@ -2555,7 +2559,7 @@ a.input-image.tristate.tBoolean {
 }
 
 .ddwttDropBtn {
-	font-family: var(--font-family-regular);
+	font-family: var(--font-family);
 	font-size: var(--body-02-font-size);
 	line-height: var(--body-02-line-height);
 	letter-spacing: var(--body-02-letter-spacing);
@@ -2640,7 +2644,7 @@ span.disabled .ddwttDropBtn {
 }
 
 .ddwttSearch {
-	font-family: var(--font-family-regular);
+	font-family: var(--font-family);
 	font-size: var(--body-02-font-size);
 	line-height: var(--body-02-line-height);
 	letter-spacing: var(--body-02-letter-spacing);

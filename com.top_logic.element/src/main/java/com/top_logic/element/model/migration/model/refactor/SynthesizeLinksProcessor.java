@@ -162,10 +162,18 @@ public class SynthesizeLinksProcessor extends AbstractConfiguredInstance<Synthes
 			Map<ObjectBranchId, Pair<Long, Long>> sourceLifetimeByIds =
 				getObjectLifetimeById(context, log, connection, sourceTable, sqlDialect, source);
 
+			if (sourceLifetimeByIds.isEmpty()) {
+				log.info("No objects found in source table: " + config.getSourceTable(), Log.WARN);
+			}
+
 			Type target = util.getTLTypeOrFail(connection, config.getTargetType());
 			MOClass targetTable = (MOClass) repository.getType(config.getTargetTable());
 			Map<ObjectBranchId, Pair<Long, Long>> targetLifetimeByIds =
 				getObjectLifetimeById(context, log, connection, targetTable, sqlDialect, target);
+
+			if (targetLifetimeByIds.isEmpty()) {
+				log.info("No objects found in target table: " + config.getTargetTable(), Log.WARN);
+			}
 
 			TypePart reference = util.getTLTypePartOrFail(connection, config.getReference());
 

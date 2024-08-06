@@ -429,7 +429,8 @@ hr {
 
 span.cTextInput,
 span.cDateInput,
-span.cTimeInput {
+span.cTimeInput,
+span.ddwttImmutableItem {
 	color: var(--highlight, inherit);
 	font-weight: var(--highlight-weight, normal);
 }

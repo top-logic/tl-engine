@@ -38,6 +38,13 @@ import com.top_logic.model.migration.data.Type;
 
 /**
  * {@link MigrationProcessor} deleting objects of some type.
+ * 
+ * <p>
+ * Note: References connecting the deleted object with other objects are not deleted automatically.
+ * You are responsible for consistently deleting all links (incoming and outgoing) that link any of
+ * the deleted objects to other non-deleted objects. If you fail to do so, your database becomes
+ * inconsistent and invalid-link-errors may occur at runtime.
+ * </p>
  */
 public class DeleteObjectsProcessor extends AbstractConfiguredInstance<DeleteObjectsProcessor.Config<?>>
 		implements MigrationProcessor {

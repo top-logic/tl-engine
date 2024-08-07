@@ -943,12 +943,12 @@ table td span.cDecoratedCell {
 	gap: var(--spacing-01);
 }
 
-.cDecoratedCell .treeType {
+.treeType > i {
 	color: var(--highlight-fg, var(--icon-secondary));
 }
 
-.tl-table__row:not(.tblSelected):hover .cDecoratedCell .treeType, 
-td.tl-table__cell--selected .cDecoratedCell .treeType {
+.tl-table__row:not(.tblSelected):hover .treeType > i, 
+td.tl-table__cell--selected .treeType > i {
 	color: var(--highlight-fg, var(--icon-primary));
 }
 

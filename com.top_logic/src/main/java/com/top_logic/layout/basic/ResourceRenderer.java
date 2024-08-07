@@ -512,7 +512,6 @@ public class ResourceRenderer<C extends ResourceRenderer.Config<?>>
 			ThemeImage resolved = theImage.resolve();
 			if (resolved != ThemeImage.none()) {
 				writeImage(context, out, value, resolved);
-				out.writeText(NBSP);
 			}
 		}
 
@@ -571,7 +570,11 @@ public class ResourceRenderer<C extends ResourceRenderer.Config<?>>
 			for (Iterator<?> theIt = aCollection.iterator(); theIt.hasNext();) {
                 Object theObject = theIt.next();
                 if (!(theObject instanceof ErrorControl) && needsSpacer) {
+					out.beginBeginTag(SPAN);
+					out.writeAttribute(CLASS_ATTR, "tl-separator");
+					out.endBeginTag();
 					out.writeText(separator);
+					out.endTag(SPAN);
                 }
 				write(context, out, theObject, useLink, useToolTip, useImage, useContextMenu);
 				needsSpacer = !(theObject instanceof View) || ((View) theObject).isVisible();

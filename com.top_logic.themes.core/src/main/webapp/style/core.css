@@ -155,10 +155,6 @@ i.yellow,
 	color: var(--support-warning);
 }
 
-a img.type-image {
-    vertical-align: middle;
-}
-
 /* Overlay styles are needed as long as the old icons with an overlay are not removed completely */
 i[class*=" overlay-"] span::before {
 	margin-left: -0.8em;
@@ -2380,6 +2376,10 @@ div.treeNode.treeSelected.dndInsertInto {
     display: inline-flex;
     align-items: center;
     gap: var(--spacing-02);
+}
+
+.tl-block-control .cButton {
+    padding-left: var(--spacing-02);
 }
 
 .cCollapsibleToolbar .cButton,

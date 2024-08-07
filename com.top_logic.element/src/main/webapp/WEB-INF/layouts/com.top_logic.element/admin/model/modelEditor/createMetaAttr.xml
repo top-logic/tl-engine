@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<template>
+<template xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<params>
 		<param name="namePrefix"/>
 		<param name="ownerModel"/>
@@ -35,6 +35,9 @@
 					typePartFormBuilder="${typePartFormBuilder}"
 				/>
 
+				<cancelAction config:interface="com.top_logic.tool.boundsec.CommandHandlerReference$Config"
+					command-id="cancelCreate"
+				/>
 				<buttons>
 					<button id="createPart"
 						class="com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler"

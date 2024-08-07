@@ -98,7 +98,8 @@ div.cmdProgress img {
 	height: 2rem; /* 32px height */
 	padding: 0 var(--spacing-03);
 	border-radius: var(--corner-radius);
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);
@@ -118,7 +119,8 @@ div.cmdProgress img {
 }
 
 .fltSubContent .menuEntryCell {
-    font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
     font-size: var(--heading-compact-02-font-size);
     line-height: var(--heading-compact-02-line-height);
     letter-spacing: var(--heading-compact-02-letter-spacing);
@@ -151,11 +153,11 @@ button.moveOption {
 	height: 2rem; /* 32px height */
 	padding: 0 var(--spacing-03);
 	border-radius: var(--corner-radius);
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);
-	font-weight: 600;
 	background: transparent;
 	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
 	color: var(--button-secondary);
@@ -190,7 +192,7 @@ with hard coded popup window dimension
 .tlButtonLabel, 
 .cDefaultButton button, 
 .cButton.cLinkButton.cmdLinkDisabled {
-	font-weight: 600;
+	font-weight: bold;
 }
 
 .tlButton, 
@@ -551,9 +553,9 @@ with hard coded popup window dimension
 }
 
 .tlDropdownContent a .tlButtonLabel {
-	font-family: 'Inter-Regular';
+	font-family: var(--font-family);
 	font-size: .875rem;
-	font-weight: 400;
+	font-weight: normal;
 	color: var(--text-secondary);
 	flex-shrink: 0;
 	margin-block: 0;

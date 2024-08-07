@@ -217,13 +217,13 @@ td.tl-table__cell {
 }
 
 th.tl-table__cell {
-    color: var(--text-primary);
+    color: var(--highlight-fg, var(--text-primary));
 	font-family: var(--font-family);
 	font-weight: bold;
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);
-    background: var(--layer);
+    background: var(--highlight-bg--selected, var(--layer));
     border-bottom-color: var(--border-subtle);
     border-bottom-style: solid;
     border-bottom-width: 1px;
@@ -247,8 +247,8 @@ td.tl-table__cell {
 }
 
 .tl-table__row.header .tl-table__cell:hover {
-	color: var(--text-primary);
-	background: var(--layer-hover);
+	color: var(--highlight-fg, var(--text-primary));
+	background: var(--highlight-bg--selected--hover, var(--layer-hover));
 }
 
 .tl-table__header-cell-content span.activeFilter:hover {

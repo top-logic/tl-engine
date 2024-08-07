@@ -167,10 +167,28 @@ public class TableUtil {
 			Collection<PolymorphicConfiguration<? extends TableConfigurationProvider>> providers) {
 		Map<String, ColumnOption> columnOptions = new HashMap<>();
 
+		collectAttributeColumns(columnOptions, parts);
+		collectSynthesizedColumns(columnOptions, providers);
+
+		return columnOptions.values();
+	}
+
+	/**
+	 * Adds {@link ColumnOption}s for the given attributes to the given map.
+	 */
+	public static void collectAttributeColumns(Map<String, ColumnOption> columnOptions,
+			Collection<? extends TLStructuredTypePart> parts) {
 		for (TLTypePart part : parts) {
 			columnOptions.putIfAbsent(part.getName(), new TypePartColumn(part));
 		}
+	}
 
+	/**
+	 * Adds {@link ColumnOption}s for columns defined by the given
+	 * {@link TableConfigurationProvider}s to the given map.
+	 */
+	public static void collectSynthesizedColumns(Map<String, ColumnOption> columnOptions,
+			Collection<PolymorphicConfiguration<? extends TableConfigurationProvider>> providers) {
 		for (PolymorphicConfiguration<? extends TableConfigurationProvider> providerConfig : providers) {
 			if (providerConfig instanceof ColumnProviderConfig) {
 				ColumnProviderConfig columnConfig = (ColumnProviderConfig) providerConfig;
@@ -178,8 +196,6 @@ public class TableUtil {
 					new PseudoColumn(columnConfig.getColumnLabel(), columnConfig.getColumnId()));
 			}
 		}
-
-		return columnOptions.values();
 	}
 
 	/**

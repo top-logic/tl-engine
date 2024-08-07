@@ -1630,6 +1630,14 @@ span.cIconSelect .input-image.cannot-edit i {
     letter-spacing: var(--body-02-letter-spacing);
 }
 
+.cDateInput input {
+    width: 7rem;
+}
+
+.cTimeInput input {
+    width: 4.5rem;
+}
+
 .cTextInput.mandatory input,
 .cIntegerInput.num.mandatory input,
 .cExpandableTextInput.mandatory input,

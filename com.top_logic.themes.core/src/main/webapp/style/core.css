@@ -2268,15 +2268,21 @@ h5.card-title a:focus {
 	align-items: center;
 }
 
-.treeNodeIcon:not(img),
+.treeNodeIcon > i {
+    color: var(--highlight, var(--icon-secondary));
+}
+
+.treeNode.treeSelected .treeNodeIcon > i,
+.treeNode:hover .treeNodeIcon > i {
+	color: var(--highlight, var(--icon-primary));
+}
+
 .treeNode .fToggle,
 .fToggle.tcrToggle {
     color: var(--icon-secondary);
 }
 
 .treeNode.treeSelected .fToggle.tcrToggle,
-.tcrNode .treeNode.treeSelected .treeNodeIcon:not(img),
-.tcrNode .treeNode:hover .treeNodeIcon:not(img),
 .tcrNode .treeNode:hover .treeNode .fToggle,
 .tcrNode .treeNode:hover .fToggle.tcrToggle {
 	color: var(--icon-primary);
@@ -2796,4 +2802,15 @@ div.ssiContentArea {
 	--highlight-bg--selected--hover: var(--background-accent--selected--hover--lighter);
 	--highlight-weight: bolder;
 }
+
+/* If the accent style is directly set on an icon, set all text colors to the view-mode foreground */
+i.tl-danger,
+i.tl-warning,
+i.tl-success,
+i.tl-info,
+i.tl-debug,
+i.tl-accent {
+	--highlight-fg: var(--highlight);
+}
+
 

@@ -35,9 +35,9 @@ import com.top_logic.layout.structure.PopupDialogModel;
 @SuppressWarnings("javadoc")
 public class TestCalendarControl extends TestControl {
 
-	private static final String MARKED_GREEN = "markedGreen";
+	private static final String MARKED_GREEN = "tl-success";
 
-	private static final String MARKED_RED = "markedRed";
+	private static final String MARKED_RED = "tl-danger";
 
 	private CalendarControl _calendar;
 

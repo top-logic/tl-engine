@@ -22,7 +22,7 @@ public class Icons extends IconsBase {
 	/**
 	 * Width of the selection column of tables.
 	 */
-	@DefaultValue("28px")
+	@DefaultValue("34px")
 	public static ThemeVar<DisplayDimension> SELECTION_COLUMN_WIDTH;
 
 }

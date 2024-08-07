@@ -8,17 +8,14 @@ package com.top_logic.layout.editor.config;
 import java.util.List;
 
 import com.top_logic.basic.config.CommaSeparatedStrings;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Format;
-import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.Step;
-import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.table.model.TableConfigurationProvider;
+import com.top_logic.layout.table.model.WithConfigurationProviders;
 import com.top_logic.layout.table.provider.AllColumnOptions;
 import com.top_logic.layout.table.provider.ColumnOptionLabelProvider;
 import com.top_logic.layout.table.provider.ColumnOptionMapping;
@@ -30,7 +27,7 @@ import com.top_logic.layout.table.provider.ColumnProviderConfig;
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
 @Abstract
-public interface ColumnsTemplateParameters extends TypesTemplateParameters {
+public interface ColumnsTemplateParameters extends TypesTemplateParameters, WithConfigurationProviders {
 
 	/**
 	 * Configuration option name for {@link #getDefaultColumns()}.
@@ -38,17 +35,12 @@ public interface ColumnsTemplateParameters extends TypesTemplateParameters {
 	public static final String DEFAULT_COLUMNS = "defaultColumns";
 
 	/**
-	 * @see #getConfigurationProviders()
-	 */
-	public static final String CONFIGURATION_PROVIDERS = "configurationProviders";
-
-	/**
 	 * Columns that shall be displayed by default in the defined order.
 	 */
 	@Name(DEFAULT_COLUMNS)
 	@Format(CommaSeparatedStrings.class)
 	@Options(fun = AllColumnOptions.class, mapping = ColumnOptionMapping.class, args = {
-		@Ref(TypeTemplateParameters.TYPE), 
+		@Ref(TypesTemplateParameters.TYPE),
 		@Ref(CONFIGURATION_PROVIDERS),  
 		@Ref(steps = {
 			@Step(CONFIGURATION_PROVIDERS), 
@@ -56,13 +48,5 @@ public interface ColumnsTemplateParameters extends TypesTemplateParameters {
 	})
 	@OptionLabels(value = ColumnOptionLabelProvider.class)
 	List<String> getDefaultColumns();
-
-	/**
-	 * Plug-ins to the table configuration.
-	 */
-	@Name(CONFIGURATION_PROVIDERS)
-	@Label("Column configurations")
-	@Options(fun = AllInAppImplementations.class)
-	List<PolymorphicConfiguration<? extends TableConfigurationProvider>> getConfigurationProviders();
 
 }

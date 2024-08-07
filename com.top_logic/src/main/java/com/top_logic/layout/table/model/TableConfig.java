@@ -49,14 +49,10 @@ import com.top_logic.layout.table.renderer.DefaultTableRenderer;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public interface TableConfig extends ColumnContainerConfig, ModelMappingConfig, WithContextMenu {
+public interface TableConfig
+		extends ColumnContainerConfig, ModelMappingConfig, WithContextMenu, WithConfigurationProviders {
 	
 	String TABLE_NAME_ATTRIBUTE = "name";
-
-	/**
-	 * @see #getConfigurationProviders()
-	 */
-	String CONFIGURATION_PROVIDERS_ATTRIBUTE = "configurationProviders";
 
 	String SHOW_TITLE_ATTRIBUTE = "showTitle";
 
@@ -158,12 +154,6 @@ public interface TableConfig extends ColumnContainerConfig, ModelMappingConfig, 
 	 * @see #getTableName()
 	 */
 	void setTableName(String value);
-
-	/**
-	 * {@link TableConfigurationProvider}s to dynamically extends this configuration.
-	 */
-	@Name(CONFIGURATION_PROVIDERS_ATTRIBUTE)
-	List<PolymorphicConfiguration<? extends TableConfigurationProvider>> getConfigurationProviders();
 
 	/**
 	 * Whether the title of the table should be shown.

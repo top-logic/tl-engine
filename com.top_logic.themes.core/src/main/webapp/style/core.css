@@ -4,7 +4,7 @@
 }
 
 body {
-	font-family: var(--font-family-regular);
+	font-family: var(--font-family);
 	font-size: var(--body-02-font-size);
 	line-height: var(--body-02-line-height);
 	letter-spacing: var(--body-02-letter-spacing);
@@ -85,38 +85,43 @@ code {
 }
 
 h5 {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
 	font-size: var(--heading-compact-01-font-size);
 	line-height: var(--heading-compact-01-line-height);
 	letter-spacing: var(--heading-compact-01-letter-spacing);
+	font-weight: bold;
 }
 
 h4 {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);
+	font-weight: bold;
 }
 
 h3 {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
 	font-size: var(--heading-03-font-size);
 	line-height: var(--heading-03-line-height);
 	letter-spacing: var(--heading-03-letter-spacing);
+	font-weight: bold;
 }
 
 h2 {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
 	font-size: var(--heading-04-font-size);
 	line-height: var(--heading-04-line-height);
 	letter-spacing: var(--heading-04-letter-spacing);
+	font-weight: bold;
 }
 
 h1 {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
 	font-size: var(--heading-05-font-size);
 	line-height: var(--heading-05-line-height);
 	letter-spacing: var(--heading-05-letter-spacing);
+	font-weight: bold;
 }
 
 /* Text highlight color */
@@ -177,6 +182,14 @@ i[class*=" overlay-"] span::before {
 
 .fflCollapsed {
 	cursor: default;
+}
+
+.notificationTitle {
+    display: flex;
+    align-items: center;
+    color: var(--support-danger);
+	font-family: var(--font-family);
+	font-weight: bold;
 }
 
 /* The general footer of the application */
@@ -367,6 +380,7 @@ a.cmdLink:visited {
 
 div.fltHeader {
 	margin: 3px;
+	font-family: var(--font-family);
 	font-weight: bold;
 }
 
@@ -548,6 +562,7 @@ div.fltList {
 
 .filterGroupTitle {
 	margin: 2px 2px 5px;
+	font-family: var(--font-family);
 	font-weight: bold;
 }
 
@@ -630,7 +645,8 @@ div.fltList {
 }
 
 .checkboxMultiSelectNoEntries {
-    font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
     font-size: var(--heading-compact-02-font-size);
     line-height: var(--heading-compact-02-line-height);
     letter-spacing: var(--heading-compact-02-letter-spacing);
@@ -1135,7 +1151,7 @@ td.rightList {
 	gap: var(--spacing-02);
 	justify-content: center;
 	align-items: center;
-	font-family: var(--font-family-regular);
+	font-family: var(--font-family);
 	font-size: .875rem;
 	font-weight: 400;
 	color: var(--button-secondary);
@@ -1243,14 +1259,15 @@ td.rightList {
 }
 
 .tl-mega-menu__option-label {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
 	font-size: var(--heading-02-font-size);
 	line-height: var(--heading-02-line-height);
 	letter-spacing: var(--heading-02-letter-spacing);
 }
 
 .tl-mega-menu__option-tooltip {
-	font-family: var(--font-family-regular);
+	font-family: var(--font-family);
     font-size: .875rem;
     font-weight: 400;
 }
@@ -1279,7 +1296,7 @@ td.rightList {
 
 .tl-mega-menu__option-label--immutable {
 	color: var(--text-primary);
-	font-family: var(--font-family-regular);
+	font-family: var(--font-family);
     font-size: .875rem;
     font-weight: 400;
 }
@@ -1347,7 +1364,8 @@ div.sxError {
 
 div.sxMessage,
 div.sxFailure {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
 	font-size: var(--heading-04-font-size);
 	line-height: var(--heading-04-line-height);
 	letter-spacing: var(--heading-04-letter-spacing);
@@ -1355,7 +1373,8 @@ div.sxFailure {
 }
 
 div.sxButtons {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);
@@ -1429,7 +1448,7 @@ div.lcHidden {
 	filter: drop-shadow(var(--shadow-menu));
 	z-index: 9999999999999999;
 	--ttPadding: var(--spacing-02);
-	font-weight: normal;
+	font-weight: 400;
 	cursor: default;
 	display: flex;
 	flex-direction: column;
@@ -1608,7 +1627,8 @@ div.lcHidden {
 }
 
 .tl-info-service-item__header-type-message {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);
@@ -1768,7 +1788,8 @@ span.ltcCounting input {
 	top: 40%;
 	transform: translate(-50%);
 	text-align: center;
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
 	font-size: var(--heading-03-font-size);
 	line-height: var(--heading-03-line-height);
 	letter-spacing: var(--heading-03-letter-spacing);
@@ -1898,7 +1919,8 @@ h5.card-title {
 
 h5.card-title a {
 	color: var(--text-primary);
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
 	font-size: var(--heading-03-font-size);
 	line-height: var(--heading-03-line-height);
 	letter-spacing: var(--heading-03-letter-spacing);
@@ -1917,7 +1939,7 @@ h5.card-title a:focus {
 .card-text {
 	order: 3;
 	color: var(--text-primary);
-	font-family: var(--font-family-regular);
+	font-family: var(--font-family);
 	font-size: var(--body-01-font-size);
 	line-height: var(--body-01-line-height);
 	letter-spacing: var(--body-01-letter-spacing);
@@ -1952,9 +1974,10 @@ h5.card-title a:focus {
 	min-width: 24px;
     border-radius: 50%;
     color: var(--text-on-color);
-    font-weight: 600;
+    font-weight: bold;
     border: 4px solid var(--background);
-    font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
     font-size: var(--body-01-font-size);
     line-height: var(--body-01-line-height);
     letter-spacing: var(--body-01-letter-spacing);
@@ -2342,7 +2365,8 @@ div.treeNode.treeSelected.dndInsertInto {
 }
 
 .cCollapsibleTitle {
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
     font-size: var(--heading-compact-02-font-size);
     line-height: var(--heading-compact-02-line-height);
     letter-spacing: var(--heading-compact-02-letter-spacing);
@@ -2609,7 +2633,8 @@ div.ssiContentArea {
 	height: 2rem; /* 32px height */
 	padding: 0 var(--spacing-03);
 	border-radius: var(--corner-radius);
-	font-family: var(--font-family-bold);
+	font-family: var(--font-family);
+	font-weight: bold;
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);

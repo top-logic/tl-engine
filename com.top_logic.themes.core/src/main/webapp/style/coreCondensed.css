@@ -22,6 +22,14 @@
     height: 1.5rem;
 }
 
+.cDateInput input {
+    width: 6rem;
+}
+
+.cTimeInput input {
+    width: 3.5rem;
+}
+
 .quickSearch .cTextInput input {
 	height: 2rem;
 }

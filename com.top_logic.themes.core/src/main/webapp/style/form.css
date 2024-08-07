@@ -1541,8 +1541,8 @@ div.cal_zoom_inAnimation {
 	width: 100%;
 }
 
-.cPopupSelect .tl-separator {
-	margin-right: var(--spacing-02);
+.tl-separator {
+	padding-right: var(--spacing-02);
 }
 
 .cBlockTextInput .lFixedRight a:not(.lFlexible),
@@ -2114,12 +2114,13 @@ img.type-image {
 	align-self: center;
 }
 
-span.type-image {
-	margin-right: var(--spacing-01);
+a img.type-image {
+    vertical-align: middle;
 }
 
-.tl-table__cell .type-image {
-	margin-left: var(--spacing-02);
+span.type-image,
+a img.type-image {
+	padding-right: var(--spacing-01);
 }
 
 .cSelectOption,

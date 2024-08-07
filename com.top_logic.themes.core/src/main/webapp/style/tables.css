@@ -950,7 +950,7 @@ table .cDecoratedCell > .lFlexible > :first-child:not(a) {
 }
 
 table td span.cDecoratedCell {
-	gap: var(--spacing-02);
+	gap: var(--spacing-01);
 }
 
 .cDecoratedCell .treeType {
@@ -1074,7 +1074,8 @@ table td .cBlockTextInput input,
 table td .cPopupSelect input,
 table td .cDatetime .cDateInput input,
 table td .cDatetime .cTimeInput input,
-table td .cDateInput input {
+table td .cDateInput input,
+table td .ddwttDropBtn {
 	padding: 0 var(--spacing-01);
 }
 
@@ -1328,6 +1329,17 @@ div.dirtyHandlingDialog .changes {
 
 .px-1:has(input) {
     width: 100%;
+	padding: 0 !important;
+}
+
+.lFixedLeft {
+	padding-right: var(--spacing-01);
+}
+
+/* Needs to be changed when px-1 padding changes. Otherwise the table row jumps when selection changed. */
+.px-1:has(input) .lFixedLeft {
+	padding-left: var(--spacing-01);
+	padding-right: 0;
 }
 
 th .px-1 {

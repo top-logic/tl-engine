@@ -637,6 +637,10 @@ a.fChoose,
 	color: var(--icon-primary);
 }
 
+.cButton.fToggle a {
+	color: var(--highlight-fg, var(--icon-primary));
+}
+
 .cOpenCalendar a:hover,
 a.fClear:hover,
 a.fChoose:hover,
@@ -647,9 +651,12 @@ a.fChoose:hover,
 .dfListCommands .cmdLink:hover,
 .px-1 .cmdLink:hover,
 .dfListAdd .cButton a:hover,
-.cButton.dfRemove a:hover,
-.cButton.fToggle a:hover {
+.cButton.dfRemove a:hover {
 	color: var(--icon-primary);
+}
+
+.cButton.fToggle a:hover {
+	color: var(--highlight-fg, var(--icon-primary));
 }
 
 .cButton.dfRemove {

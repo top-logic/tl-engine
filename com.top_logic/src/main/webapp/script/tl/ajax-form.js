@@ -5074,7 +5074,7 @@ services.form = {
 	MediaQueryControl: {
 		parentLayoutInformation: new Map(),
 
-		defaultSizes: [700, 1250, 1800, 2350, 2900],
+		defaultSizes: [640, 1190, 1740, 2290, 2840],
 		
 		onResize: function(controlID, classPrefix, maxColumns, sizes) {
 			if (sizes == null) {

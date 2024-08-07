@@ -1122,10 +1122,19 @@ table td .cDatetime .lFlexible {
 	width: fit-content !important;
 }
 
+/* 
+Padding is spacing-01 instead of 03 for tables 
+because of the datetimeinput field.
+ */
+table td .cTextInput input,
+table td .cIntegerInput.num input, 
+table td .cExpandableTextInput input, 
+table td .cBlockTextInput input, 
+table td .cPopupSelect input,
 table td .cDatetime .cDateInput input,
-table td .cDatetime .cTimeInput input {
-	padding-right: 0;
-    padding-left: 0;
+table td .cDatetime .cTimeInput input,
+table td .cDateInput input {
+	padding: 0 var(--spacing-01);
 }
 
 table.tl-table td .cDateTime .lFixedRight .cDateInput .lFlexible {
@@ -1369,12 +1378,15 @@ div.dirtyHandlingDialog .changes {
 }
 
 .px-1 {
-	padding-right: var(--spacing-02) !important;
-	padding-left: var(--spacing-02) !important;
+	padding: 0 var(--spacing-01) !important;
     display: inline-flex;
     align-items: center;
     box-sizing: border-box;
     vertical-align: middle;
+}
+
+.px-1:has(input) {
+    width: 100%;
 }
 
 th .px-1 {

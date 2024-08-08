@@ -2784,22 +2784,62 @@ div.ssiContentArea {
 }
 
 .tl-accent-1 {
-	--highlight: var(--text-accent);
-	--highlight-fg: var(--text-accent--on-color);
-	--highlight-bg: var(--background-accent);
-	--highlight-bg--hover: var(--background-accent--hover);
-	--highlight-bg--selected: var(--background-accent--selected);
-	--highlight-bg--selected--hover: var(--background-accent--selected--hover);
+	--highlight: var(--text-accent-1);
+	--highlight-fg: var(--text-accent-1--on-color);
+	--highlight-bg: var(--background-accent-1);
+	--highlight-bg--hover: var(--background-accent-1--hover);
+	--highlight-bg--selected: var(--background-accent-1--selected);
+	--highlight-bg--selected--hover: var(--background-accent-1--selected--hover);
 	--highlight-weight: bolder;
 }
 
 .tl-accent-1.tl-lighter {
-	--highlight: var(--text-accent--lighter);
-	--highlight-fg: var(--text-accent--on-color--lighter);
-	--highlight-bg: var(--background-accent--lighter);
-	--highlight-bg--hover: var(--background-accent--hover--lighter);
-	--highlight-bg--selected: var(--background-accent--selected--lighter);
-	--highlight-bg--selected--hover: var(--background-accent--selected--hover--lighter);
+	--highlight: var(--text-accent-1--lighter);
+	--highlight-fg: var(--text-accent-1--on-color--lighter);
+	--highlight-bg: var(--background-accent-1--lighter);
+	--highlight-bg--hover: var(--background-accent-1--hover--lighter);
+	--highlight-bg--selected: var(--background-accent-1--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-accent-1--selected--hover--lighter);
+	--highlight-weight: bolder;
+}
+
+.tl-accent-2 {
+	--highlight: var(--text-accent-2);
+	--highlight-fg: var(--text-accent-2--on-color);
+	--highlight-bg: var(--background-accent-2);
+	--highlight-bg--hover: var(--background-accent-2--hover);
+	--highlight-bg--selected: var(--background-accent-2--selected);
+	--highlight-bg--selected--hover: var(--background-accent-2--selected--hover);
+	--highlight-weight: bolder;
+}
+
+.tl-accent-2.tl-lighter {
+	--highlight: var(--text-accent-2--lighter);
+	--highlight-fg: var(--text-accent-2--on-color--lighter);
+	--highlight-bg: var(--background-accent-2--lighter);
+	--highlight-bg--hover: var(--background-accent-2--hover--lighter);
+	--highlight-bg--selected: var(--background-accent-2--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-accent-2--selected--hover--lighter);
+	--highlight-weight: bolder;
+}
+
+.tl-accent-3 {
+	--highlight: var(--text-accent-3);
+	--highlight-fg: var(--text-accent-3--on-color);
+	--highlight-bg: var(--background-accent-3);
+	--highlight-bg--hover: var(--background-accent-3--hover);
+	--highlight-bg--selected: var(--background-accent-3--selected);
+	--highlight-bg--selected--hover: var(--background-accent-3--selected--hover);
+	--highlight-weight: bolder;
+}
+
+.tl-accent-3.tl-lighter {
+	--highlight: var(--text-accent-3--lighter);
+	--highlight-fg: var(--text-accent-3--on-color--lighter);
+	--highlight-bg: var(--background-accent-3--lighter);
+	--highlight-bg--hover: var(--background-accent-3--hover--lighter);
+	--highlight-bg--selected: var(--background-accent-3--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-accent-3--selected--hover--lighter);
 	--highlight-weight: bolder;
 }
 
@@ -2809,7 +2849,9 @@ i.tl-warning,
 i.tl-success,
 i.tl-info,
 i.tl-debug,
-i.tl-accent-1 {
+i.tl-accent-1,
+i.tl-accent-3,
+i.tl-accent-2 {
 	--highlight-fg: var(--highlight);
 }
 

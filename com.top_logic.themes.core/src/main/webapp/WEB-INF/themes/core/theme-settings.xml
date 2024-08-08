@@ -2157,8 +2157,116 @@
 		value="#FFF1CC"
 	/>
 	
-	<!-- New accent color tokens. -->
+	<!-- Accent color tokens. -->
 	
+    <color name="background-accent-1"
+		value="#6829c8"
+	/>
+    <color name="background-accent-1--hover"
+		value="#5c20b4"
+	/>
+    <color name="background-accent-1--hover--lighter"
+		value="#f1ecfa"
+	/>
+    <color name="background-accent-1--lighter"
+		value="#f8f4fe"
+	/>
+    <color name="background-accent-1--selected"
+		value="#451789"
+	/>
+    <color name="background-accent-1--selected--hover"
+		value="#2f0e60"
+	/>
+    <color name="background-accent-1--selected--lighter"
+		value="#e3d7f7"
+	/>
+    <color name="background-accent-1--selected-hover--lighter"
+		value="#c8afee"
+	/>
+    <color name="text-accent-1"
+		value="#5c20b4"
+	/>
+    <color name="text-accent-1--lighter"
+		value="#753dce"
+	/>
+    <color name="text-accent-1--on-color"
+		value="#f8f4fe"
+	/>
+    <color name="text-accent-1--on-color--lighter"
+		value="#5c20b4"
+	/>
+    <color name="background-accent-2"
+		value="#c82968"
+	/>
+    <color name="background-accent-2--hover"
+		value="#b4205c"
+	/>
+    <color name="background-accent-2--hover--lighter"
+		value="#faecf1"
+	/>
+    <color name="background-accent-2--lighter"
+		value="#fef4f8"
+	/>
+    <color name="background-accent-2--selected"
+		value="#891745"
+	/>
+    <color name="background-accent-2--selected--hover"
+		value="#600e2f"
+	/>
+    <color name="background-accent-2--selected--lighter"
+		value="#f7d7e3"
+	/>
+    <color name="background-accent-2--selected-hover--lighter"
+		value="#eeafc8"
+	/>
+    <color name="text-accent-2"
+		value="#b4205c"
+	/>
+    <color name="text-accent-2--lighter"
+		value="#ce3d75"
+	/>
+    <color name="text-accent-2--on-color"
+		value="#fef4f8"
+	/>
+    <color name="text-accent-2--on-color--lighter"
+		value="#b4205c"
+	/>
+    <color name="background-accent-3"
+		value="#6ad2da"
+	/>
+    <color name="background-accent-3--hover"
+		value="#51c7d3"
+	/>
+    <color name="background-accent-3--hover--lighter"
+		value="#ecf9fa"
+	/>
+    <color name="background-accent-3--lighter"
+		value="#f4fcfe"
+	/>
+    <color name="background-accent-3--selected"
+		value="#3dbcce"
+	/>
+    <color name="background-accent-3--selected--hover"
+		value="#29b1c8"
+	/>
+    <color name="background-accent-3--selected--lighter"
+		value="#d7f3f7"
+	/>
+    <color name="background-accent-3--selected-hover--lighter"
+		value="#afe8ee"
+	/>
+    <color name="text-accent-3"
+		value="#178089"
+	/>
+    <color name="text-accent-3--lighter"
+		value="#178089"
+	/>
+    <color name="text-accent-3--on-color"
+		value="#07353b"
+	/>
+    <color name="text-accent-3--on-color--lighter"
+		value="#0e5660"
+	/>
     <color name="background-danger"
 		value="#da3b30"
 	/>
@@ -2230,42 +2338,6 @@
 	/>
     <color name="text-debug--on-color--lighter"
 		value="#525252"
-	/>
-    <color name="background-accent"
-		value="#6829c8"
-	/>
-    <color name="background-accent--hover"
-		value="#5c20b4"
-	/>
-    <color name="background-accent--hover--lighter"
-		value="#f1ecfa"
-	/>
-    <color name="background-accent--lighter"
-		value="#f8f4fe"
-	/>
-    <color name="background-accent--selected"
-		value="#451789"
-	/>
-    <color name="background-accent--selected--hover"
-		value="#2f0e60"
-	/>
-    <color name="background-accent--selected--lighter"
-		value="#e3d7f7"
-	/>
-    <color name="background-accent--selected-hover--lighter"
-		value="#c8afee"
-	/>
-    <color name="text-accent"
-		value="#5c20b4"
-	/>
-    <color name="text-accent--lighter"
-		value="#753dce"
-	/>
-    <color name="text-accent--on-color"
-		value="#f8f4fe"
-	/>
-    <color name="text-accent--on-color--lighter"
-		value="#5c20b4"
 	/>
     <color name="background-info"
 		value="#3d75ce"
@@ -2340,41 +2412,41 @@
 		value="#1e5120"
 	/>
     <color name="background-warning"
-		value="#967100"
+		value="#ffd166"
 	/>
     <color name="background-warning--hover"
-		value="#876504"
+		value="#ffcc00"
 	/>
     <color name="background-warning--hover--lighter"
-		value="#ffefcb"
+		value="#fff7cc"
 	/>
     <color name="background-warning--lighter"
-		value="#fef7e9"
+		value="#fffbe5"
 	/>
     <color name="background-warning--selected"
-		value="#785a00"
+		value="#e6b800"
 	/>
     <color name="background-warning--selected--hover"
-		value="#5b4300"
+		value="#cc9900"
 	/>
     <color name="background-warning--selected--hover--lighter"
-		value="#ffc107"
+		value="#ffe699"
 	/>
     <color name="background-warning--selected--lighter"
-		value="#fedf9c"
+		value="#fff2b2"
 	/>
     <color name="text-warning"
-		value="#967100"
+		value="#805700"
 	/>
     <color name="text-warning--lighter"
-		value="#967100"
+		value="#996600"
 	/>
     <color name="text-warning--on-color"
-		value="#ffffff"
+		value="#4d3300"
 	/>
     <color name="text-warning--on-color--lighter"
-		value="#876504"
-	/>
+		value="#805700"
+	/>	
 	
 	
 	<!-- Spacing Tokens -->

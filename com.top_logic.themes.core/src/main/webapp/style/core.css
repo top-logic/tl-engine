@@ -427,14 +427,6 @@ hr {
 	padding: 0 var(--spacing-03);
 }
 
-span.cTextInput,
-span.cDateInput,
-span.cTimeInput,
-span.ddwttImmutableItem {
-	color: var(--highlight, inherit);
-	font-weight: var(--highlight-weight, normal);
-}
-
 .sidebarFilterContainer input,
 .sidebarFilterContainer .cTextInput input,
 .sidebarFilterContainer .cDateInput input,

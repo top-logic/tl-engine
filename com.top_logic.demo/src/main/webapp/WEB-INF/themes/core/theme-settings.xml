@@ -82,23 +82,17 @@
 	<icon name="ICON_GLOBE"
 		value="css:fas fa-globe"
 	/>
-	<icon name="ICON_HANDSHAKE_DEMO_BLUE"
-		value="css:fas fa-handshake demo-blue"
-	/>
 	<icon name="ICON_LEAVE_DEMO_GREEN"
 		value="css:fas fa-leave demo-green"
 	/>
-	<icon name="ICON_LOCK_DEMO_FUCHSIA"
-		value="css:fas fa-lock demo-fuchsia"
-	/>
 	<icon name="ICON_PARACHUTE_BOX_DEMO_FUCHSIA"
-		value="css:fas fa-parachute-box demo-fuchsia"
+		value="css:fas fa-parachute-box tl-accent-1"
 	/>
 	<icon name="ICON_PEN_FANCY"
 		value="css:bi bi-pencil-fill"
 	/>
 	<icon name="ICON_PIGGY_BANK_DEMO_FUCHSIA"
-		value="css:fas fa-piggy-bank demo-fuchsia"
+		value="css:fas fa-piggy-bank tl-accent-1"
 	/>
 	<icon name="ICON_PLUS"
 		value="css:bi bi-plus-lg"
@@ -144,9 +138,6 @@
 	/>
 	<icon name="layouts.demo.tlHome"
 		value="css:bi bi-house-fill"
-	/>
-	<icon name="model.DemoTypes.A"
-		value="css:bi bi-alarm-fill"
 	/>
 	<icon name="ICON_CHART_JS"
 		value="css:bi bi-pie-chart-fill"

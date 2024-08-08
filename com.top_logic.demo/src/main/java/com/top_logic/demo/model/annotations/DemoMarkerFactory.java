@@ -27,10 +27,10 @@ import com.top_logic.model.annotate.ui.MarkerFactory;
 public class DemoMarkerFactory implements MarkerFactory {
 
 	/** CSS class for marking dates green. */
-	public static final String MARKED_GREEN = "markedGreen";
+	public static final String MARKED_GREEN = "tl-success";
 
 	/** CSS class for marking dates red. */
-	public static final String MARKED_RED = "markedRed";
+	public static final String MARKED_RED = "tl-danger";
 
 	/**
 	 * Initializes a {@link CalendarMarker} based on a time range.

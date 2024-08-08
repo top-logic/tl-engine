@@ -239,7 +239,7 @@
   icon = $x.get(`DemoTypes:A#icon`);
   important = $x.get(`DemoTypes:A#float`) >= 0.9;
   if ($important, {
-    $icon == null ? "css:fas fa-beer demo-red" : $icon + " demo-red";
+    $icon == null ? "css:fas fa-beer tl-danger" : $icon + " tl-danger";
   }, {
     $icon;
   })

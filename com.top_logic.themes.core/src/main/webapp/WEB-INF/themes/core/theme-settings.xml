@@ -2180,7 +2180,7 @@
     <color name="background-accent-1--selected--lighter"
 		value="#e3d7f7"
 	/>
-    <color name="background-accent-1--selected-hover--lighter"
+    <color name="background-accent-1--selected--hover--lighter"
 		value="#c8afee"
 	/>
     <color name="text-accent-1"
@@ -2216,7 +2216,7 @@
     <color name="background-accent-2--selected--lighter"
 		value="#f7d7e3"
 	/>
-    <color name="background-accent-2--selected-hover--lighter"
+    <color name="background-accent-2--selected--hover--lighter"
 		value="#eeafc8"
 	/>
     <color name="text-accent-2"
@@ -2252,7 +2252,7 @@
     <color name="background-accent-3--selected--lighter"
 		value="#d7f3f7"
 	/>
-    <color name="background-accent-3--selected-hover--lighter"
+    <color name="background-accent-3--selected--hover--lighter"
 		value="#afe8ee"
 	/>
     <color name="text-accent-3"

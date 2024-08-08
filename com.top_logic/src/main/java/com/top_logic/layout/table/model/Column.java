@@ -345,15 +345,13 @@ public class Column {
 		Column parent = getParent();
 		ColumnConfiguration config = getConfig();
 		String ownClass = config.getCssClass();
-		String ownHeaderClass = config.getCssHeaderClass();
+		_cssHeaderClasses = config.getCssHeaderClass();
 		if (parent == null) {
 			_firstColumnClass = config.getCssClassGroupFirst();
 			_lastColumnClass = config.getCssClassGroupLast();
 
 			_cssClasses =
 				CssUtil.joinCssClasses(ownClass, _firstColumnClass, _lastColumnClass);
-
-			_cssHeaderClasses = CssUtil.joinCssClasses(_cssClasses, ownHeaderClass);
 		} else {
 			List<Column> parentParts = parent.getParts();
 			
@@ -374,8 +372,6 @@ public class Column {
 			}
 
 			_cssClasses = CssUtil.joinCssClasses(ownClass, CssUtil.joinCssClasses(_firstColumnClass, _lastColumnClass));
-
-			_cssHeaderClasses = CssUtil.joinCssClasses(_cssClasses, ownHeaderClass);
 		}
 	}
 

@@ -29,6 +29,7 @@ import com.top_logic.layout.editor.config.TypesTemplateParameters;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
 import com.top_logic.layout.table.customization.ColumnCustomizations.Config.ColumnCustomization;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ColumnConfigurator;
@@ -62,6 +63,7 @@ public class ColumnCustomizations extends AbstractConfiguredInstance<ColumnCusto
 		 * Bundle of {@link ColumnConfigurator}s for a certain column.
 		 */
 		@DisplayOrder({ ColumnCustomization.NAME, ColumnCustomization.CONFIGURATIONS })
+		@TitleProperty(name = ColumnCustomization.NAME)
 		interface ColumnCustomization extends ConfigPart {
 
 			/**

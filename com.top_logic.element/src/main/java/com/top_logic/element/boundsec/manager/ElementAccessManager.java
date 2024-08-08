@@ -34,13 +34,12 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationWriter;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfiguration;
-import com.top_logic.basic.config.NullableString;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.db.schema.properties.DBProperties;
@@ -158,7 +157,7 @@ public class ElementAccessManager extends AccessManager {
 		String ROLE_ROOT = "role-root";
 
 		@Name(ROLE_ROOT)
-		@Format(NullableString.class)
+		@Nullable
 		String getRoleRoot();
 
 	}

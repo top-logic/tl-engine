@@ -347,12 +347,7 @@ public abstract class ColumnConfiguration extends ColumnBase
 	protected abstract void copyAccessor(Accessor accessor);
 
 	/**
-	 * The CSS class of this column.
-	 * 
-	 * <p>
-	 * Note: For compatibility reasons, this class is added to the column's header and content
-	 * cells.
-	 * </p>
+	 * The CSS class to use on content cells of this column.
 	 * 
 	 * @return may be <code>null</code> if no class was set.
 	 * 
@@ -368,7 +363,7 @@ public abstract class ColumnConfiguration extends ColumnBase
 	public abstract String getCssHeaderClass();
 
 	/**
-	 * CSS class to use on cells the column that appears first in this group.
+	 * CSS class to use on cells of the column that appear first in this group.
 	 * 
 	 * <p>
 	 * Identical to {@link #getCssClass()} for elementary columns.
@@ -389,7 +384,7 @@ public abstract class ColumnConfiguration extends ColumnBase
 	protected abstract void copyCssClassGroupFirst(String cssClass);
 
 	/**
-	 * CSS class to use on cells the column that appears last in this group.
+	 * CSS class to use on cells of the column that appear last in this group.
 	 * 
 	 * <p>
 	 * Identical to {@link #getCssClass()} for elementary columns.

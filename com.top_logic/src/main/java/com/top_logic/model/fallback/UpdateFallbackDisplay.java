@@ -18,39 +18,27 @@ import com.top_logic.layout.form.ValueListener;
  */
 public class UpdateFallbackDisplay implements ValueListener, ActivePropertyListener {
 
-	/**
-	 * CSS class for a value that can have a fallback value.
-	 */
-	public static final String CSS_WITH_FALLBACK = "tl-with-fallback";
+	private final String _cssExplicit;
+
+	private final String _cssFallback;
 
 	/**
-	 * CSS class for a fallback value being displayed.
+	 * Creates an {@link UpdateFallbackDisplay}.
 	 */
-	public static final String CSS_FALLBACK = "tl-fallback";
-
-	/**
-	 * CSS class for an explicit value that overrides a fallback value.
-	 */
-	public static final String CSS_EXPLICIT = "tl-explicit";
-
-	/**
-	 * Singleton {@link UpdateFallbackDisplay} instance.
-	 */
-	public static final UpdateFallbackDisplay INSTANCE = new UpdateFallbackDisplay();
-
-	private UpdateFallbackDisplay() {
-		// Singleton constructor.
+	public UpdateFallbackDisplay(String cssExplicit, String cssFallback) {
+		_cssExplicit = cssExplicit;
+		_cssFallback = cssFallback;
 	}
 
 	@Override
 	public void valueChanged(FormField field, Object oldValue, Object newValue) {
 		boolean displaysFallback = field.isActive() ? Utils.isEmpty(newValue) : Utils.isEmpty(field.getPlaceholder());
 		if (displaysFallback) {
-			field.removeCssClass(CSS_EXPLICIT);
-			field.addCssClass(CSS_FALLBACK);
+			field.removeCssClass(_cssExplicit);
+			field.addCssClass(_cssFallback);
 		} else {
-			field.removeCssClass(CSS_FALLBACK);
-			field.addCssClass(CSS_EXPLICIT);
+			field.removeCssClass(_cssFallback);
+			field.addCssClass(_cssExplicit);
 		}
 	}
 

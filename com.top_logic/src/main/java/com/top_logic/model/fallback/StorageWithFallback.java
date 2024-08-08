@@ -31,4 +31,16 @@ public interface StorageWithFallback extends StorageDetail {
 	 */
 	Object getExplicitValue(TLObject object, TLStructuredTypePart attribute);
 
+	/**
+	 * CSS class to set on values that have an explicit value assigned, or <code>null</code> if
+	 * explicit values should not be visually highlighted.
+	 */
+	String getCssExplicit();
+
+	/**
+	 * CSS class to set on locations where the fallback value is used, or <code>null</code> if
+	 * explicit values should not be visually highlighted.
+	 */
+	String getCssFallback();
+
 }

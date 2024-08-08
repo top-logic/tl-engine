@@ -61,12 +61,14 @@ public abstract class AbstractFieldProvider implements FieldProvider {
 							});
 					}
 
-					member.addCssClass(UpdateFallbackDisplay.CSS_WITH_FALLBACK);
-					field.addValueListener(UpdateFallbackDisplay.INSTANCE);
-					field.addListener(FormField.ACTIVE_PROPERTY, UpdateFallbackDisplay.INSTANCE);
+					UpdateFallbackDisplay updater =
+						new UpdateFallbackDisplay(fallbackConfig.getCssExplicit(), fallbackConfig.getCssFallback());
+
+					field.addValueListener(updater);
+					field.addListener(FormField.ACTIVE_PROPERTY, updater);
 
 					// Set initial values.
-					UpdateFallbackDisplay.INSTANCE.valueChanged(field, null, explicitValue);
+					updater.valueChanged(field, null, explicitValue);
 
 					return;
 				}

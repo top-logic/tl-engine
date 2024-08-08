@@ -6,12 +6,11 @@
 package com.top_logic.element.config;
 
 import com.top_logic.basic.config.ConfigurationItem;
-import com.top_logic.basic.config.NullableString;
 import com.top_logic.basic.config.annotation.Derived;
-import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.element.meta.schema.HolderType;
@@ -68,7 +67,7 @@ public interface ExtendsConfig extends ConfigurationItem {
 	 * </p>
 	 */
 	@Derived(fun = ModuleName.class, args = @Ref(TYPE))
-	@Format(NullableString.class)
+	@Nullable
 	@Hidden
 	String getModuleName();
 

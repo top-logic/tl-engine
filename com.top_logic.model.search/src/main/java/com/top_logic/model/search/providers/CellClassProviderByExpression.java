@@ -74,13 +74,31 @@ public class CellClassProviderByExpression extends AbstractConfiguredInstance<Ce
 		 * </p>
 		 * 
 		 * <p>
-		 * To add the CSS class "<code>tl-attention</code>" to cells with values greater than
+		 * To add the CSS class "<code>tl-warning</code>" to cells with values greater than
 		 * <code>99</code>, you may use the following expression:
 		 * </p>
 		 * 
 		 * <pre>
-		 * <code>value -> $value &gt; 99 ? "tl-attention" : null</code>
+		 * <code>value -> $value &gt; 99 ? "tl-warning" : null</code>
 		 * </pre>
+		 * 
+		 * <p>
+		 * There are a number of pre-defined CSS classes for highlighting:
+		 * </p>
+		 * 
+		 * <ul>
+		 * <li><code>tl-info</code></li>
+		 * <li><code>tl-success</code></li>
+		 * <li><code>tl-warning</code></li>
+		 * <li><code>tl-danger</code></li>
+		 * <li><code>tl-debug</code></li>
+		 * <li><code>tl-accent</code></li>
+		 * </ul>
+		 * 
+		 * <p>
+		 * All these classes can be combined with the class <code>tl-lighter</code> to make the
+		 * highlighting less prominent.
+		 * </p>
 		 */
 		@Mandatory
 		Expr getCssClasses();

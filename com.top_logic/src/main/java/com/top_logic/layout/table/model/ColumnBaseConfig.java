@@ -13,7 +13,6 @@ import com.top_logic.basic.col.ComparableComparator;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.Mappings;
 import com.top_logic.basic.config.CommaSeparatedStrings;
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.InstanceFormat;
@@ -31,7 +30,6 @@ import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.provider.MetaLabelProvider;
-import com.top_logic.layout.table.CellClassProvider;
 import com.top_logic.layout.table.CellRenderer;
 import com.top_logic.layout.table.TableFilter;
 import com.top_logic.layout.table.component.TableFilterProvider;
@@ -91,7 +89,7 @@ import com.top_logic.tool.export.pdf.PDFRenderer;
 	// This must be set to get the attributes-based internationalized label as column name.
 	ColumnBaseConfig.CONFIGURATORS,
 })
-public interface ColumnBaseConfig extends ConfigurationItem {
+public interface ColumnBaseConfig extends WithColumnCssClasses {
 
 	/**
 	 * Configuration option for {@link ColumnBase#isShowHeader()}.
@@ -245,31 +243,6 @@ public interface ColumnBaseConfig extends ConfigurationItem {
 	 * @see #getCommandGroup()
 	 */
 	String COMMAND_GROUP = "commandGroup";
-
-	/**
-	 * @see #getCssClass()
-	 */
-	String CSS_CLASS = "cssClass";
-
-	/**
-	 * @see #getCssHeaderClass()
-	 */
-	String CSS_HEADER_CLASS = "cssHeaderClass";
-
-	/**
-	 * @see #getCssClassGroupFirst()
-	 */
-	String CSS_CLASS_GROUP_FIRST = "cssClassGroupFirst";
-
-	/**
-	 * @see #getCssClassGroupFirst()
-	 */
-	String CSS_CLASS_GROUP_LAST = "cssClassGroupLast";
-
-	/**
-	 * @see #getCssClassProvider()
-	 */
-	String CSS_CLASS_PROVIDER = "cssClassProvider";
 
 	/**
 	 * @see #getClassifier()
@@ -608,75 +581,6 @@ public interface ColumnBaseConfig extends ConfigurationItem {
 	 * @see #getDescendingComparator()
 	 */
 	void setDescendingComparator(PolymorphicConfiguration<? extends Comparator<?>> value);
-
-	/**
-	 * CSS class for content cells of this column.
-	 * 
-	 * @see ColumnConfiguration#getCssClass()
-	 */
-	@Name(ColumnConfig.CSS_CLASS)
-	@Nullable
-	String getCssClass();
-
-	/**
-	 * @see #getCssClass()
-	 */
-	void setCssClass(String value);
-
-	/**
-	 * CSS class for this column's header.
-	 * 
-	 * @see ColumnConfiguration#getCssHeaderClass()
-	 */
-	@Name(ColumnConfig.CSS_HEADER_CLASS)
-	@Nullable
-	String getCssHeaderClass();
-
-	/**
-	 * @see #getCssHeaderClass()
-	 */
-	void setCssHeaderClass(String value);
-
-	/**
-	 * CSS class for this column if it is the first column in a column group.
-	 * 
-	 * @see ColumnConfiguration#getCssClassGroupFirst()
-	 */
-	@Name(ColumnConfig.CSS_CLASS_GROUP_FIRST)
-	@Nullable
-	String getCssClassGroupFirst();
-
-	/**
-	 * @see #getCssClassGroupFirst()
-	 */
-	void setCssClassGroupFirst(String value);
-
-	/**
-	 * CSS class for this column if it is the last column in a column group.
-	 * 
-	 * @see ColumnConfiguration#getCssClassGroupLast()
-	 */
-	@Name(ColumnConfig.CSS_CLASS_GROUP_LAST)
-	@Nullable
-	String getCssClassGroupLast();
-
-	/**
-	 * @see #getCssClassGroupLast()
-	 */
-	void setCssClassGroupLast(String value);
-
-	/**
-	 * CSS class for this column, or empty string if none configured.
-	 * 
-	 * @see ColumnConfiguration#getCssClass()
-	 */
-	@Name(ColumnConfig.CSS_CLASS_PROVIDER)
-	PolymorphicConfiguration<? extends CellClassProvider> getCssClassProvider();
-
-	/**
-	 * @see #getCssClassProvider()
-	 */
-	void setCssClassProvider(PolymorphicConfiguration<? extends CellClassProvider> value);
 
 	/**
 	 * true, if filter of this columns shall be not available in filter sidebar, false

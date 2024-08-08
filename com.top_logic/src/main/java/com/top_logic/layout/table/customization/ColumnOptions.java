@@ -16,7 +16,11 @@ import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ColumnConfigurator;
 
 /**
- * Configures the visibility of the column label in the header.
+ * Configures several options for the column.
+ * 
+ * <p>
+ * Besides others, it can be chosen, whether the column can be sorted or filtered.
+ * </p>
  */
 @InApp
 public class ColumnOptions extends AbstractConfiguredInstance<ColumnOptions.Config<?>>

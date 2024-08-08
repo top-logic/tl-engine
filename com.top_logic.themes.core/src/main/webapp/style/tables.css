@@ -624,7 +624,7 @@ td.fltButton {
 }
 
 .tl-table__header-cell-content .fltButton.tl-table__filter-sort-icons {
-	color: var(--icon-primary);
+	color: var(--highlight-fg, var(--icon-primary));
 	align-self: center;
 }
 
@@ -633,7 +633,7 @@ td.fltButton {
 }
 
 .tl-table__header-cell-content .fltButton:not(.activeFilter):not(.tl-table__filter-sort-icons):hover {
-	color: var(--icon-primary);
+	color: var(--highlight-fg, var(--icon-primary));
 }
 
 .tl-table__header-cell-content .fltButton.activeFilter {

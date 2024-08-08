@@ -9,7 +9,6 @@ import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.core.TlCoreFactory;
@@ -49,7 +48,7 @@ public class GetRevision extends GenericMethod {
 		if (tlObject == null) {
 			return null;
 		}
-		return HistoryUtils.getHistoryManager(tlObject.tKnowledgeBase()).getRevision(tlObject.tHistoryContext());
+		return tlObject.tRevision();
 	}
 
 	/**

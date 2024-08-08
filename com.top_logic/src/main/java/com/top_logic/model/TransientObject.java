@@ -11,6 +11,7 @@ import java.util.Set;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
 
 /**
@@ -75,6 +76,8 @@ public abstract class TransientObject extends AbstractTLObject {
 
 	@Override
 	public KnowledgeBase tKnowledgeBase() {
-		return null;
+		// For generic code that e.g. resolves the revision of this object, it is required to get
+		// some value.
+		return PersistencyLayer.getKnowledgeBase();
 	}
 }

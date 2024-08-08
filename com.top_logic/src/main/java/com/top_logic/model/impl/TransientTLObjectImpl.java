@@ -42,18 +42,31 @@ public class TransientTLObjectImpl extends TransientObject {
 
 	private Map<TLStructuredTypePart, Object> _values = new HashMap<>();
 
+	private TLObject _context;
+
 	/**
 	 * Creates a {@link TransientTLObjectImpl}.
 	 * 
+	 * @param type
+	 *        The type of this object.
+	 * @param context
+	 *        The container of this object, see {@link #tContainer()}.
+	 * 
 	 * @see TransientObjectFactory
 	 */
-	TransientTLObjectImpl(TLStructuredType type) {
+	TransientTLObjectImpl(TLStructuredType type, TLObject context) {
 		_type = type;
+		_context = context;
 	}
 
 	@Override
 	public TLStructuredType tType() {
 		return _type;
+	}
+
+	@Override
+	public TLObject tContainer() {
+		return _context;
 	}
 
 	@Override

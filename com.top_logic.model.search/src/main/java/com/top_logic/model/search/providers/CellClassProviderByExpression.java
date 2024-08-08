@@ -92,7 +92,7 @@ public class CellClassProviderByExpression extends AbstractConfiguredInstance<Ce
 		 * <li><code>tl-warning</code></li>
 		 * <li><code>tl-danger</code></li>
 		 * <li><code>tl-debug</code></li>
-		 * <li><code>tl-accent</code></li>
+		 * <li><code>tl-accent-1</code></li>
 		 * </ul>
 		 * 
 		 * <p>

@@ -2617,7 +2617,7 @@ span.disabled .ddwttDropBtn {
 }
 
 .ddwttDropBtn .ddwttChevron i {
-	color: var(--icon-on-color-disabled);
+	color: var(--highlight-fg, var(--icon-on-color-disabled));
 }
 
 .ddwttDropBtnActive .ddwttChevron i {

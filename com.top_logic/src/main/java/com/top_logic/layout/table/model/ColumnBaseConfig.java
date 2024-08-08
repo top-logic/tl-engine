@@ -14,11 +14,11 @@ import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.Mappings;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationItem;
-import com.top_logic.basic.config.NullableString;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
@@ -302,13 +302,12 @@ public interface ColumnBaseConfig extends ConfigurationItem {
 	void setShowHeader(boolean value);
 
 	/**
-	 * The CSS style to annotate at the header of the column, or empty string when none
-	 *         configured.
+	 * The CSS style to annotate at the header of the column.
 	 * 
 	 * @see ColumnConfiguration#getHeadStyle()
 	 */
 	@Name(HEAD_STYLE)
-	@Format(NullableString.class)
+	@Nullable
 	String getHeadStyle();
 
 	/**
@@ -571,7 +570,7 @@ public interface ColumnBaseConfig extends ConfigurationItem {
 	 * @see ColumnConfiguration#getCommandGroup()
 	 */
 	@Name(ColumnConfig.COMMAND_GROUP)
-	@Format(NullableString.class)
+	@Nullable
 	String getCommandGroup();
 
 	/**
@@ -611,12 +610,12 @@ public interface ColumnBaseConfig extends ConfigurationItem {
 	void setDescendingComparator(PolymorphicConfiguration<? extends Comparator<?>> value);
 
 	/**
-	 * CSS class for this column, or empty string if none configured.
+	 * CSS class for content cells of this column.
 	 * 
 	 * @see ColumnConfiguration#getCssClass()
 	 */
 	@Name(ColumnConfig.CSS_CLASS)
-	@Format(NullableString.class)
+	@Nullable
 	String getCssClass();
 
 	/**
@@ -625,12 +624,12 @@ public interface ColumnBaseConfig extends ConfigurationItem {
 	void setCssClass(String value);
 
 	/**
-	 * CSS class for this column's header, or empty string if none configured.
+	 * CSS class for this column's header.
 	 * 
 	 * @see ColumnConfiguration#getCssHeaderClass()
 	 */
 	@Name(ColumnConfig.CSS_HEADER_CLASS)
-	@Format(NullableString.class)
+	@Nullable
 	String getCssHeaderClass();
 
 	/**
@@ -639,13 +638,12 @@ public interface ColumnBaseConfig extends ConfigurationItem {
 	void setCssHeaderClass(String value);
 
 	/**
-	 * CSS class for this column if it is the first column in a column group, or empty
-	 *         string if none configured.
+	 * CSS class for this column if it is the first column in a column group.
 	 * 
 	 * @see ColumnConfiguration#getCssClassGroupFirst()
 	 */
 	@Name(ColumnConfig.CSS_CLASS_GROUP_FIRST)
-	@Format(NullableString.class)
+	@Nullable
 	String getCssClassGroupFirst();
 
 	/**
@@ -654,13 +652,12 @@ public interface ColumnBaseConfig extends ConfigurationItem {
 	void setCssClassGroupFirst(String value);
 
 	/**
-	 * CSS class for this column if it is the last column in a column group, or empty string
-	 *         if none configured.
+	 * CSS class for this column if it is the last column in a column group.
 	 * 
 	 * @see ColumnConfiguration#getCssClassGroupLast()
 	 */
 	@Name(ColumnConfig.CSS_CLASS_GROUP_LAST)
-	@Format(NullableString.class)
+	@Nullable
 	String getCssClassGroupLast();
 
 	/**
@@ -783,7 +780,7 @@ public interface ColumnBaseConfig extends ConfigurationItem {
 	 * @see ColumnConfiguration#getDefaultColumnWidth()
 	 */
 	@Name(ColumnConfig.COLUMN_WIDTH)
-	@Format(NullableString.class)
+	@Nullable
 	String getColumnWidth();
 
 	/**
@@ -797,7 +794,7 @@ public interface ColumnBaseConfig extends ConfigurationItem {
 	 * @see ColumnConfiguration#getCellStyle()
 	 */
 	@Name(ColumnConfig.CELL_STYLE)
-	@Format(NullableString.class)
+	@Nullable
 	String getCellStyle();
 
 	/**

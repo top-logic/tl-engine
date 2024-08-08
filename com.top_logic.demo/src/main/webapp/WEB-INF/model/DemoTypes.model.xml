@@ -1066,18 +1066,22 @@
 						<options>
 							<options-by-expression>
 								<function><![CDATA[[
-"tl-danger",
-"tl-warning",
-"tl-success",
 "tl-info",
-"tl-accent-1",
+"tl-success",
+"tl-warning",
+"tl-danger",
 "tl-debug",
-"tl-danger tl-lighter",
-"tl-warning tl-lighter",
-"tl-success tl-lighter",
+"tl-accent-1",
+"tl-accent-2",
+"tl-accent-3",
 "tl-info tl-lighter",
-tl-accent-1 tl-lighter",
-"tl-debug tl-lighter"
+"tl-success tl-lighter",
+"tl-warning tl-lighter",
+"tl-danger tl-lighter",
+"tl-debug tl-lighter",
+"tl-accent-1 tl-lighter",
+"tl-accent-2 tl-lighter",
+"tl-accent-3 tl-lighter"
 ]]]></function>
 							</options-by-expression>
 						</options>

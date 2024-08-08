@@ -3319,15 +3319,13 @@ public class GridComponent extends EditComponent implements
 
 		@Override
 		public String getCellClass(Cell cell) {
-			Object value = cell.getValue();
-			if (value instanceof FormField field) {
-				// Adding dynamic styles to cells containing fields has the problem that the styles
-				// cannot be updated when field values changes. Those dynamic styles must be created
-				// by the field itself.
+			if (cell instanceof EditingCell) {
+				// CSS class is directly applied to the field, not the table cell, since only field
+				// classes can be dynamically updated.
 				return null;
 			}
 
-			return _wrappedTester.getCellClass(cell instanceof EditingCell ? cell : wrap(cell));
+			return _wrappedTester.getCellClass(wrap(cell));
 		}
 
 		private Cell wrap(Cell cell) {
@@ -3337,15 +3335,6 @@ public class GridComponent extends EditComponent implements
 					Object gridRowObject = super.getRowObject();
 					FormGroup group = _handler.getGridRow(gridRowObject);
 					return group.get(PROP_ATTRIBUTED);
-				}
-
-				@Override
-				public Object getValue() {
-					Object rawValue = super.getValue();
-					if (rawValue instanceof FormField field) {
-						return field.getValue();
-					}
-					return rawValue;
 				}
 
 				@Override
@@ -3360,7 +3349,7 @@ public class GridComponent extends EditComponent implements
 	 * {@link com.google.common.collect.Table.Cell} adapter for accessing {@link CellClassProvider}s
 	 * outside a rendering context.
 	 */
-	private static final class EditingCell extends CellAdapter {
+	public static final class EditingCell extends CellAdapter {
 		private final TLFormObject _overlay;
 
 		private final String _columnName;

@@ -2783,7 +2783,7 @@ div.ssiContentArea {
 	--highlight-weight: normal;
 }
 
-.tl-accent {
+.tl-accent-1 {
 	--highlight: var(--text-accent);
 	--highlight-fg: var(--text-accent--on-color);
 	--highlight-bg: var(--background-accent);
@@ -2793,7 +2793,7 @@ div.ssiContentArea {
 	--highlight-weight: bolder;
 }
 
-.tl-accent.tl-lighter {
+.tl-accent-1.tl-lighter {
 	--highlight: var(--text-accent--lighter);
 	--highlight-fg: var(--text-accent--on-color--lighter);
 	--highlight-bg: var(--background-accent--lighter);
@@ -2809,7 +2809,7 @@ i.tl-warning,
 i.tl-success,
 i.tl-info,
 i.tl-debug,
-i.tl-accent {
+i.tl-accent-1 {
 	--highlight-fg: var(--highlight);
 }
 

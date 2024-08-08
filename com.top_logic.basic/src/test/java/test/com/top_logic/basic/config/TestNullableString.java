@@ -10,13 +10,12 @@ import junit.framework.TestCase;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationSchemaConstants;
-import com.top_logic.basic.config.NullableString;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.io.character.CharacterContents;
 
 /**
- * Test case for {@link NullableString}.
+ * Test case for {@link Nullable} properties.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -29,7 +28,7 @@ public class TestNullableString extends TestCase {
 
 		void setNonNull(String value);
 
-		@Format(NullableString.class)
+		@Nullable
 		String getNullable();
 
 		void setNullable(String value);

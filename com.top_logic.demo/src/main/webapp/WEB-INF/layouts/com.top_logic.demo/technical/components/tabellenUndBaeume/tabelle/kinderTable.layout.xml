@@ -27,6 +27,30 @@
 			supportsElement="element->$element.instanceOf(`DemoTypes:DemoTypes.All`)"
 			supportsModel="true"
 		/>
+		<configurationProviders>
+			<column-customizations>
+				<column name="name">
+					<column-width value="500px"/>
+					<column-label>
+						<value key="dynamic.e12fdba5-9113-452c-8ad6-b144baa88fb6">
+							<en>Name (en)</en>
+							<de>Name (de)</de>
+						</value>
+					</column-label>
+					<column-options
+						filter="false"
+						select="false"
+						show-in-sidebar-filter="false"
+						sort="false"
+					/>
+					<css-classes cssHeaderClass="tl-info">
+						<cell-class-by-expression>
+							<css-classes><![CDATA[value -> $value.length() < 3 ? "tl-info" : null]]></css-classes>
+						</cell-class-by-expression>
+					</css-classes>
+				</column>
+			</column-customizations>
+		</configurationProviders>
 		<buttons>
 			<button id="exportExcel"
 				class="com.top_logic.layout.table.export.ExcelExportHandler"

@@ -32,6 +32,17 @@
 			parents="node->$node.referers(`tl.element:StructuredElementContainer#children`)"
 			rootNode="x -> $x[1].inRevision($x[0])"
 		/>
+		<configurationProviders>
+			<column-customizations>
+				<column name="name">
+					<css-classes>
+						<cell-class-by-expression>
+							<css-classes><![CDATA[value -> $value.length() < 3 ? "tl-info" : null]]></css-classes>
+						</cell-class-by-expression>
+					</css-classes>
+				</column>
+			</column-customizations>
+		</configurationProviders>
 		<buttons>
 			<button id="exportExcelGrid"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"

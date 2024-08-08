@@ -55,9 +55,6 @@
 					<column name="text">
 						<renderer class="com.top_logic.layout.form.control.ConfiguredFirstLineRenderer"/>
 					</column>
-					<column name="float"
-						cssClassProvider="com.top_logic.demo.layout.demo.table.DemoFloatCssClassProvider"
-					/>
 				</columns>
 			</column>
 			<column name="name"

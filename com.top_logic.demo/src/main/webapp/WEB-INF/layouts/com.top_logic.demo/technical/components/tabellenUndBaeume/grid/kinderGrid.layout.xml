@@ -7,6 +7,7 @@
 >
 	<arguments
 		defaultColumns="name"
+		showDetailOpener="true"
 		type="DemoTypes:DemoTypes.All"
 	>
 		<name key="dynamic.0cdfb198-d435-469b-9f03-3a219220f703">
@@ -26,6 +27,17 @@
 			supportsElement="element->$element.instanceOf(`DemoTypes:DemoTypes.All`)"
 			supportsModel="true"
 		/>
+		<configurationProviders>
+			<column-customizations>
+				<column name="name">
+					<css-classes cssHeaderClass="tl-info">
+						<cell-class-by-expression>
+							<css-classes><![CDATA[value -> $value.length() < 3 ? "tl-info" : null]]></css-classes>
+						</cell-class-by-expression>
+					</css-classes>
+				</column>
+			</column-customizations>
+		</configurationProviders>
 		<buttons>
 			<button id="exportExcelGrid"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"

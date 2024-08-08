@@ -230,7 +230,7 @@
 				<generalization type="DemoTypes.All"/>
 			</generalizations>
 			<annotations>
-				<instance-presentation icon="theme:model.DemoTypes.A"/>
+				<instance-presentation icon="css:bi bi-alarm-fill"/>
 				<main-properties properties="name,boolean,string,float,date"/>
 				<legacy-qualified-name qualified-name="DemoTypes.A"/>
 				<dynamic-icon>
@@ -504,7 +504,7 @@
 							<primitive-storage>
 								<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping"
 									application-type="java.awt.Color"
-								/>						
+								/>
 							</primitive-storage>
 						</storage-algorithm>
 					</annotations>
@@ -580,6 +580,16 @@
 						<format>
 							<format-ref format-id="decimal"/>
 						</format>
+						<css-class>
+							<cell-class-by-expression>
+								<css-classes><![CDATA[value -> switch {
+    $value >= 0.9: "tl-danger";
+    $value >= 0.7: "tl-warning";
+    $value >= 0.4: "tl-success";
+    default: null;
+}]]></css-classes>
+							</cell-class-by-expression>
+						</css-class>
 					</annotations>
 				</property>
 				<property name="floatPercent"
@@ -719,7 +729,7 @@
 					type="tl.core:Text"
 				>
 					<annotations>
-						<css-class value="myClass"/>
+						<css-class value="tl-info"/>
 						<size-constraint upper-bound="128000"/>
 					</annotations>
 				</property>
@@ -1049,6 +1059,33 @@
 				<property name="time"
 					type="tl.core:Time"
 				/>
+				<property name="style"
+					type="tl.core:String"
+				>
+					<annotations>
+						<options>
+							<options-by-expression>
+								<function><![CDATA[[
+"tl-danger",
+"tl-warning",
+"tl-success",
+"tl-info",
+"tl-accent-1",
+"tl-debug",
+"tl-danger tl-lighter",
+"tl-warning tl-lighter",
+"tl-success tl-lighter",
+"tl-info tl-lighter",
+tl-accent-1 tl-lighter",
+"tl-debug tl-lighter"
+]]]></function>
+							</options-by-expression>
+						</options>
+						<css-class>
+							<cell-class-by-expression css-classes="value -> $value"/>
+						</css-class>
+					</annotations>
+				</property>
 			</attributes>
 		</interface>
 		<class name="A">
@@ -1329,7 +1366,7 @@
 				<generalization type="DemoTypes.All"/>
 			</generalizations>
 			<annotations>
-				<instance-presentation icon="theme:ICON_HANDSHAKE_DEMO_BLUE"/>
+				<instance-presentation icon="css:fas fa-handshake tl-info"/>
 				<legacy-qualified-name qualified-name="DemoTypes.X"/>
 				<main-properties properties="name,boolean,string,float,date"/>
 			</annotations>
@@ -2021,6 +2058,16 @@
 								</expression-evaluation>
 							</derived-storage>
 						</storage-algorithm>
+						<css-class>
+							<cell-class-by-expression>
+								<css-classes><![CDATA[value -> switch {
+    $value >= 0.9: "tl-danger";
+    $value >= 0.7: "tl-warning";
+    $value >= 0.4: "tl-success";
+    default: null;
+}]]></css-classes>
+							</cell-class-by-expression>
+						</css-class>
 					</annotations>
 				</property>
 				<property name="floatPercent"
@@ -2639,7 +2686,7 @@
 				<generalization type="BNotUnderAChild"/>
 			</generalizations>
 			<annotations>
-				<instance-presentation icon="theme:ICON_LOCK_DEMO_FUCHSIA"/>
+				<instance-presentation icon="css:fas fa-lock tl-accent-1"/>
 				<delete-constraints>
 					<delete-constraint expr="x->if($x.get(`DemoTypes:P#protected`), #('Objekt geschützt.'@de, 'Object protected.'@en))"/>
 				</delete-constraints>
@@ -2655,7 +2702,7 @@
 				<generalization type="P"/>
 			</generalizations>
 			<annotations>
-				<instance-presentation icon="theme:ICON_LOCK_DEMO_FUCHSIA"/>
+				<instance-presentation icon="css:fas fa-lock tl-accent-1"/>
 				<delete-constraints>
 					<delete-constraint expr="x->if($x.get(`DemoTypes:PP#moreProtected`), #'model.demo.demoTypes.errorObjectSpeciallyProtected__name'.fill($x.get(`DemoTypes:PP#name`)))"/>
 				</delete-constraints>
@@ -2671,7 +2718,7 @@
 				<generalization type="P"/>
 			</generalizations>
 			<annotations>
-				<instance-presentation icon="theme:ICON_LOCK_DEMO_FUCHSIA"/>
+				<instance-presentation icon="css:fas fa-lock tl-accent-1"/>
 				<delete-constraints override="true">
 					<custom-constraint class="com.top_logic.demo.model.annotations.DemoDeleteConstraint"/>
 				</delete-constraints>

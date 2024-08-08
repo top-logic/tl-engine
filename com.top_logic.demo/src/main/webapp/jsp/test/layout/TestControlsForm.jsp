@@ -21,10 +21,6 @@
 			.smaller input {
 				background-color: red;
 			}
-			
-			td.demoImportantGroup {
-				background-color: #FFDDDD;
-			}
 		</style>
 	</layout:head>
 	<layout:body>
@@ -1468,7 +1464,7 @@
 
 			<form:group name="messages"
 				collapsible="true"
-				cssClass="demoImportantGroup"
+				cssClass="tl-accent-1"
 			>
 				<form:cell wholeLine="true">
 					Note: This group should have a red background due to a custom CSS class.

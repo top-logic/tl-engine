@@ -14,9 +14,11 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Container;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.Step;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.func.Function3;
 import com.top_logic.basic.util.Utils;
@@ -112,6 +114,60 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 		String getFallbackAttribute();
 
 		/**
+		 * CSS class to set on values that have an explicit value assigned.
+		 * 
+		 * <p>
+		 * There are a number of pre-defined CSS classes for highlighting:
+		 * </p>
+		 * 
+		 * <ul>
+		 * <li><code>tl-info</code></li>
+		 * <li><code>tl-success</code></li>
+		 * <li><code>tl-warning</code></li>
+		 * <li><code>tl-danger</code></li>
+		 * <li><code>tl-debug</code></li>
+		 * <li><code>tl-accent-1</code></li>
+		 * <li><code>tl-accent-2</code></li>
+		 * <li><code>tl-accent-3</code></li>
+		 * </ul>
+		 * 
+		 * <p>
+		 * All these classes can be combined with the class <code>tl-lighter</code> to make the
+		 * highlighting less prominent.
+		 * </p>
+		 */
+		@Nullable
+		@StringDefault("tl-info")
+		String getCssExplicit();
+
+		/**
+		 * CSS class to set on locations where the fallback value is used.
+		 * 
+		 * <p>
+		 * There are a number of pre-defined CSS classes for highlighting:
+		 * </p>
+		 * 
+		 * <ul>
+		 * <li><code>tl-info</code></li>
+		 * <li><code>tl-success</code></li>
+		 * <li><code>tl-warning</code></li>
+		 * <li><code>tl-danger</code></li>
+		 * <li><code>tl-debug</code></li>
+		 * <li><code>tl-accent-1</code></li>
+		 * <li><code>tl-accent-2</code></li>
+		 * <li><code>tl-accent-3</code></li>
+		 * </ul>
+		 * 
+		 * <p>
+		 * All these classes can be combined with the class <code>tl-lighter</code> to make the
+		 * highlighting less prominent.
+		 * </p>
+		 */
+		@Nullable
+		@StringDefault("tl-debug")
+		String getCssFallback();
+
+		/**
 		 * {@link OptionMapping} of a {@link TLTypePart} to its name.
 		 */
 		class LocalPartName implements OptionMapping {
@@ -151,6 +207,10 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 
 	private TLStructuredTypePart _fallbackAttr;
 
+	private final String _cssExplicit;
+
+	private final String _cssFallback;
+
 	/**
 	 * Creates a {@link AttributeWithFallbackStorage} from configuration.
 	 * 
@@ -162,6 +222,9 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 	@CalledByReflection
 	public AttributeWithFallbackStorage(InstantiationContext context, Config<?> config) {
 		super(context, config);
+
+		_cssExplicit = config.getCssExplicit();
+		_cssFallback = config.getCssFallback();
 	}
 
 	@Override
@@ -187,6 +250,16 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 	 */
 	public TLStructuredTypePart getFallbackAttr() {
 		return _fallbackAttr;
+	}
+
+	@Override
+	public String getCssExplicit() {
+		return _cssExplicit;
+	}
+
+	@Override
+	public String getCssFallback() {
+		return _cssFallback;
 	}
 
 	@Override

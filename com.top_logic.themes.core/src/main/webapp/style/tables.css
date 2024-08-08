@@ -1659,11 +1659,15 @@ td.tl-table__cell--selected {
 }
 
 .tblSelected.tl-table__row:hover {
-	background-color: var(--highlight-bg--hover, var(--layer-selected-hover));
+	background-color: var(--layer-selected-hover);
+}
+
+.tblSelected.tl-table__row:hover .tl-table__cell {
+	background-color: var(--highlight-bg--selected--hover, var(--layer-selected-hover));
 }
 
 .tl-table__row:not(.tblSelected):hover > td {
-	background-color: var(--highlight-bg--selected--hover, var(--layer-hover));
+	background-color: var(--highlight-bg--hover, var(--layer-hover));
 }
 
 .tl-table__row:not(.tblSelected):hover .px-1 {

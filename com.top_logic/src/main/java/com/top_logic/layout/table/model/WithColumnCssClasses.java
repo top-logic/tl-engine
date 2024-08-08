@@ -61,6 +61,8 @@ public interface WithColumnCssClasses extends ConfigurationItem {
 	 * <li><code>tl-danger</code></li>
 	 * <li><code>tl-debug</code></li>
 	 * <li><code>tl-accent-1</code></li>
+	 * <li><code>tl-accent-2</code></li>
+	 * <li><code>tl-accent-3</code></li>
 	 * </ul>
 	 * 
 	 * <p>
@@ -94,6 +96,8 @@ public interface WithColumnCssClasses extends ConfigurationItem {
 	 * <li><code>tl-danger</code></li>
 	 * <li><code>tl-debug</code></li>
 	 * <li><code>tl-accent-1</code></li>
+	 * <li><code>tl-accent-2</code></li>
+	 * <li><code>tl-accent-3</code></li>
 	 * </ul>
 	 * 
 	 * <p>

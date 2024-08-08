@@ -148,34 +148,29 @@ div.fptSubtitleContent {
     font-weight: bold;
 }
 
-.fptIcon, .fptIconWithOverlay, .fptIconOverlay {
+.fptIcon, 
+.fptIconWithOverlay {
     position: absolute;
     top: 10px;
     right: 20px;
 }
 
-div.fptIconBar > span.fptIcon, div.fptIconBar > span.fptIconWithOverlay {
+div.fptIconBar > span.fptIcon, 
+div.fptIconBar > span.fptIconWithOverlay {
     font-size: 32px;
+}
+
+div.fptIconBar > span.fptIconOverlay {
+    font-size: 16px;
 }
 
 .fptIconOverlay {
     position: absolute;
-    top: 5px;
-    right: 5px;
-    height: 48px;
-}
-
-.fptIconOverlay i {
-    position: absolute;
-    top: 0px;
     right: 5px;
     border-radius: 30px;
-    font-size: 30px;
+    color: var(--icon-primary);
+    background: var(--layer);
     padding: 4px;
-}
-
-div.fptIconBar > span.fptIconOverlay > i {
-    color: black;
 }
 
 .rf_header .cLabel {

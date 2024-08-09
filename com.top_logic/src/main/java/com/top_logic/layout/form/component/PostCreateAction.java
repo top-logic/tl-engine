@@ -23,6 +23,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.layout.DefaultRefVisitor;
@@ -343,6 +344,9 @@ public interface PostCreateAction {
 			 * If not given, the command result is used as input by default.
 			 * </p>
 			 */
+			@NonNullable
+			@ImplementationClassDefault(CommandResult.class)
+			@ItemDefault
 			PolymorphicConfiguration<ValueTransformation> getInput();
 		}
 

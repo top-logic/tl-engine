@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.math3.util.Pair;
+
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.ConfigurationException;
@@ -367,7 +369,11 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 
 		private final Map<TLObject, TLObject> _copies = new HashMap<>();
 
-		private final Map<TLStructuredType, CopyAttributes> _copyAttributes = new HashMap<>();
+		/**
+		 * Mapping from either {@link TLStructuredType} or Pair<TLStructuredType, TLStructuredType>
+		 * to attributes to copy from source to target.
+		 */
+		private final Map<Object, CopyAttributes> _copyAttributes = new HashMap<>();
 
 		private Map<TLReference, DescendBatch> _unresolvedCopies = new HashMap<>();
 
@@ -437,17 +443,17 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 		}
 
 		private class ValueBatch extends Batch {
-			private final TLStructuredType _type;
+			private CopyAttributes _attributes;
 
 			/**
 			 * Creates a {@link DescendBatch}.
 			 */
-			public ValueBatch(TLStructuredType type) {
-				_type = type;
+			public ValueBatch(CopyAttributes attributes) {
+				_attributes = attributes;
 			}
 
 			public void excuteBatch() {
-				List<TLStructuredTypePart> properties = copyAttributes(_type).getProperties();
+				List<TLStructuredTypePart> properties = _attributes.getProperties();
 				if (properties.isEmpty()) {
 					return;
 				}
@@ -476,28 +482,52 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<Copy.Ope
 			_copies.put(orig, copy);
 
 			TLStructuredType type = orig.tType();
+			TLStructuredType copyType = copy.tType();
 
-			for (TLReference reference : copyAttributes(type).compositions()) {
+			CopyAttributes attributes = copyAttributes(type, copyType);
+			for (TLReference reference : attributes.compositions()) {
 				_unresolvedCopies.computeIfAbsent(reference, DescendBatch::new).add(orig, copy);
 			}
 
-			_valueBatches.computeIfAbsent(type, ValueBatch::new).add(orig, copy);
+			_valueBatches.computeIfAbsent(type, x -> new ValueBatch(attributes)).add(orig, copy);
 		}
 
-		private CopyAttributes copyAttributes(TLStructuredType type) {
-			CopyAttributes cache = _copyAttributes.get(type);
-			if (cache == null) {
-				cache = new CopyAttributes();
-				for (TLStructuredTypePart part : type.getAllParts()) {
-					if (part.isDerived()) {
+		private CopyAttributes copyAttributes(TLStructuredType srcType, TLStructuredType targetType) {
+			Object key;
+			boolean trivial = srcType == targetType;
+			if (trivial) {
+				// Prevent creating lots of pairs for just simple lookups.
+				key = srcType;
+			} else {
+				key = Pair.create(srcType, targetType);
+			}
+
+			CopyAttributes cache = _copyAttributes.get(key);
+			if (cache != null) {
+				return cache;
+			}
+
+			CopyAttributes result = new CopyAttributes();
+			for (TLStructuredTypePart srcPart : srcType.getAllParts()) {
+				TLStructuredTypePart targetPart;
+				if (trivial) {
+					targetPart = srcPart;
+				} else {
+					targetPart = targetType.getPart(srcPart.getName());
+					if (targetPart == null) {
+						// Not defined in target.
 						continue;
 					}
-
-					cache.add(part);
 				}
-				_copyAttributes.put(type, cache);
+
+				if (targetPart.isDerived()) {
+					continue;
+				}
+
+				result.add(srcPart);
 			}
-			return cache;
+			_copyAttributes.put(key, result);
+			return result;
 		}
 
 		@Override

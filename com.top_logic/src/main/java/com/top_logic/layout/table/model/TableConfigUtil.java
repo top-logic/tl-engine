@@ -411,6 +411,9 @@ public class TableConfigUtil {
 		if (config.valueSet(desc.getProperty(ColumnBaseConfig.CSS_CLASS))) {
 			settings.add(column -> column.setCssClass(config.getCssClass()));
 		}
+		if (config.valueSet(desc.getProperty(ColumnBaseConfig.CSS_HEADER_CLASS))) {
+			settings.add(column -> column.setCssHeaderClass(config.getCssHeaderClass()));
+		}
 		if (config.valueSet(desc.getProperty(ColumnBaseConfig.CSS_CLASS_GROUP_FIRST))) {
 			settings.add(column -> column.setCssClassGroupFirst(config.getCssClassGroupFirst()));
 		}

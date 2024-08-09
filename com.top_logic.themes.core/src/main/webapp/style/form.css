@@ -800,7 +800,8 @@ div.dfListAdd {
     display: flex;
     align-items: center;
     gap: var(--spacing-02);
-    background: var(--layer-accent);
+    color: var(--highlight-fg, inherit);
+    background: var(--highlight-bg, var(--layer-accent));
     padding: var(--spacing-02) var(--spacing-03);
     white-space: nowrap;
     height: 2.5rem;
@@ -809,7 +810,7 @@ div.dfListAdd {
 }
 
 .rf_groupCell .rf_header:hover {
-	background: var(--layer-accent-hover);
+	background: var(--highlight-bg--hover, var(--layer-accent-hover));
 }
 
 .rf_groupCell .rf_header a:hover {
@@ -1333,22 +1334,23 @@ td.cal_cell {
     font-size: var(--body-01-font-size);
     line-height: var(--body-01-line-height);
     letter-spacing: var(--body-01-letter-spacing);
+    background-color: var(--highlight-bg, inherit);
 }
 
 td.cal_cell:hover {
-	background-color: var(--layer-hover);
-	color: var(--text-primary);
+	background-color: var(--highlight-bg--hover, var(--layer-hover));
+	color: var(--highlight-fg, var(--text-primary));
 }
 
 td.cal_cell a {
 	/* Without display block, tab navigation through `cal_range` tables does not work. */
 	display: block;
-	color: inherit;
+	color: var(--highlight-fg, inherit);
 
 }
 
 td.cal_cell a:hover {
-	color: var(--text-primary);
+	color: var(--highlight-fg, var(--text-primary));
 	text-decoration: none;
 }
 
@@ -1361,35 +1363,35 @@ td.cal_now {
 	border-color: var(--border-strong);
 	border-style: solid;
 	border-width: 1px;
-	color: var(--text-primary);
+	color: var(--highlight-fg, var(--text-primary));
 }
 
 /* Weekday */
 td.cal_wd {	
-	color: var(--text-primary);
+	color: var(--highlight-fg, var(--text-primary));
 }
 
 /* Selected day */
 td.cal_sel {
-	background-color: var(--background-brand);
-  	color: var(--text-on-color);
+	background-color: var(--highlight-bg--selected, var(--background-brand));
+  	color: var(--highlight-fg, var(--text-on-color));
 }
 
 /* Weekends */
 td.cal_we:not(.cal_sel) {
-	color: var(--text-placeholder);
+	color: var(--highlight-fg, var(--text-placeholder));
 }
 
 /* Number of Week */
 td.cal_wn, td.cal_wn:hover {
-	background-color: var(--layer-accent-active);
-	color: var(--text-on-color);
+	background-color: var(--highlight-bg--hover, var(--layer-accent-active));
+	color: var(--highlight-fg, var(--text-on-color));
 	cursor: default;
 }
 
 /* Days of past or next month */
 td.cal_om {
-	color: var(--text-placeholder);
+	color: var(--highlight-fg, var(--text-placeholder));
 }
 
 span.cal_range {
@@ -1536,7 +1538,7 @@ div.cal_zoom_inAnimation {
 td.tl-table__cell--selected .cDecoratedCell a.input-image,
 td.tl-table__cell--selected .cDecoratedCell a.input-image:hover,
 td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
-	color: var(--icon-secondary);
+	color: var(--highlight-fg, var(--icon-secondary));
 	outline: none !important;
 }
 
@@ -1607,6 +1609,14 @@ span.cIconSelect .input-image.cannot-edit i {
 	outline: none !important;
 }
 
+span.cTextInput,
+span.cDateInput,
+span.cTimeInput,
+span.ddwttImmutableItem {
+	color: var(--highlight, inherit);
+	font-weight: var(--highlight-weight, normal);
+}
+
 .cTextInput input,
 .cIntegerInput.num input,
 .cExpandableTextInput input,
@@ -1614,8 +1624,8 @@ span.cIconSelect .input-image.cannot-edit i {
 .cPopupSelect input,
 .cDateInput input,
 .cTimeInput input {
-	color: var(--text-primary);
-	background: var(--field);
+	color: var(--highlight-fg, var(--text-primary));
+	background: var(--highlight-bg, var(--field));
 	border: none;
 	padding: 0 var(--spacing-03);
 	height: 2rem;
@@ -1653,8 +1663,8 @@ span.cIconSelect .input-image.cannot-edit i {
 .cTextInput textarea,
 .cExpandableTextInput textarea, 
 .cBlockTextInput textarea {
-	color: var(--text-primary);
-	background: var(--field);
+	color: var(--highlight-fg, var(--text-primary));
+	background: var(--highlight-bg, var(--field));
 	border: none;
 	padding: var(--spacing-02) var(--spacing-03);
 	box-sizing: border-box;
@@ -2578,8 +2588,8 @@ a.input-image.tristate.tBoolean {
 	border: none;
 	display: inline-flex;
 	align-items: center;
-	color: var(--text-primary);
-	background: var(--field);
+	color: var(--highlight-fg, var(--text-primary));
+	background: var(--highlight-bg, var(--field));
 	padding-left: var(--spacing-03);
 	padding-right: var(--spacing-02);
 	gap: var(--spacing-02);
@@ -2615,7 +2625,7 @@ span.disabled .ddwttDropBtn {
 }
 
 .ddwttDropBtn .ddwttChevron i {
-	color: var(--icon-on-color-disabled);
+	color: var(--highlight-fg, var(--icon-on-color-disabled));
 }
 
 .ddwttDropBtnActive .ddwttChevron i {

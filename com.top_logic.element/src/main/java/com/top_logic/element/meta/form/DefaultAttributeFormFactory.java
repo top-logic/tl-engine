@@ -22,8 +22,12 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Configuration;
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.Sink;
+import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.col.TypedAnnotatable.Property;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
@@ -65,6 +69,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.model.annotate.TLConstraints;
 import com.top_logic.model.annotate.TLDynamicVisibility;
+import com.top_logic.model.annotate.ui.CssClassProvider;
 import com.top_logic.model.annotate.ui.PDFRendererAnnotation;
 import com.top_logic.model.annotate.ui.TLCssClass;
 import com.top_logic.model.annotate.util.ConstraintCheck;
@@ -120,6 +125,9 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 		}
 	};
 
+	private static final Property<String> DYNAMIC_CSS_CLASS =
+		TypedAnnotatable.property(String.class, "dynamicCssClass");
+
 	@Override
 	protected FormMember toFormField(AttributeUpdate update, AttributeUpdateContainer container, String fieldName) {
         TLStructuredTypePart theMA = update.getAttribute();
@@ -147,13 +155,48 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 		}
 
 		if (result != null) {
-			TLCssClass annotation = update.getAnnotation(TLCssClass.class);
-			if (annotation != null) {
-				result.setCssClasses(annotation.getValue());
-			}
+			addCssClass(update, theMA, result);
 		}
 
 		return result;
+	}
+
+	private void addCssClass(AttributeUpdate update, TLStructuredTypePart attribute, FormMember member) {
+		TLCssClass annotation = update.getAnnotation(TLCssClass.class);
+		if (annotation == null) {
+			return;
+		}
+
+		String staticCssClass = annotation.getValue();
+		if (member instanceof FormField field) {
+			PolymorphicConfiguration<? extends CssClassProvider> dynamicCssClass = annotation.getDynamicCssClass();
+			if (dynamicCssClass != null) {
+				CssClassProvider provider = TypedConfigUtil.createInstance(dynamicCssClass);
+				ValueListener cssUpdate = (f, oldValue, newValue) -> {
+					String oldClass = f.get(DYNAMIC_CSS_CLASS);
+					String newClass = provider.getCssClass(update.getObject(), attribute, newValue);
+					if (StringServices.equals(oldClass, newClass)) {
+						return;
+					}
+					if (oldClass != null) {
+						f.removeCssClass(oldClass);
+					}
+					if (newClass == null) {
+						newClass = staticCssClass;
+					}
+					if (newClass != null) {
+						f.addCssClass(newClass);
+					}
+					f.set(DYNAMIC_CSS_CLASS, newClass);
+				};
+				field.addValueListener(cssUpdate);
+
+				// Setup initial value.
+				cssUpdate.valueChanged(field, null, field.getValue());
+				return;
+			}
+		}
+		member.setCssClasses(staticCssClass);
 	}
 
 	protected FormMember createFormMember(

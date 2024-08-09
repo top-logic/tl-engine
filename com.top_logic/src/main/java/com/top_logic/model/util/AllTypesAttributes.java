@@ -6,6 +6,7 @@
 package com.top_logic.model.util;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 
 import com.top_logic.basic.func.Function1;
@@ -28,6 +29,10 @@ public class AllTypesAttributes
 
 	@Override
 	public Collection<? extends TLStructuredTypePart> apply(Collection<TLModelPartRef> typeRefs) {
+		if (typeRefs == null) {
+			return Collections.emptyList();
+		}
+
 		Collection<TLStructuredTypePart> parts = new HashSet<>();
 
 		for (TLModelPartRef typeRef : typeRefs) {

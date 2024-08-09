@@ -8,13 +8,11 @@ package com.top_logic.layout.table;
 /**
  * Base class for {@link CellClassProvider} implementations.
  * 
- * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
+ * @deprecated Directly implement {@link CellClassProvider}.
  */
+@Deprecated
 public abstract class AbstractCellClassProvider implements CellClassProvider {
 
-	@Override
-	public Unimplementable unimplementable() {
-		return null;
-	}
+	// Intentionally left blank, CellClassProvider can now be directly implemented.
 
 }

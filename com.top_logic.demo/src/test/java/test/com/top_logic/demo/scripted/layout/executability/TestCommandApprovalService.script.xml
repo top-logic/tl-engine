@@ -104,7 +104,7 @@
 										value="0"
 									/>
 								</object>
-								<labeled-member label="Ausführbarkeit über Ausdruck"/>
+								<labeled-member label="Ausführbarkeit über TL-Script"/>
 								<labeled-member label="Entscheidung"/>
 							</path>
 						</model>

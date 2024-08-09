@@ -208,7 +208,7 @@ i[class*=" overlay-"] span::before {
 ****					****
 */
 a {
-	color: var(--link-primary);
+	color: var(--highlight-fg, var(--link-primary));
 }
 
 a, a:link {
@@ -217,17 +217,17 @@ a, a:link {
 }
 
 a:not(.disabled):hover {
-	color: var(--link-primary-hover);
+	color: var(--highlight-fg, var(--link-primary-hover));
 	text-decoration: underline;
 }
 
 a:not(.disabled):active {
-	color: var(--text-primary);
+	color: var(--highlight-fg, var(--text-primary));
 	text-decoration: underline;
 }
 
 a:not(.disabled):focus {
-    color: var(--link-primary-hover);
+    color: var(--highlight-fg, var(--link-primary-hover));
 	outline: 1px solid var(--focus);
 	outline-offset: 2px;
 }
@@ -434,7 +434,8 @@ hr {
 .sidebarFilterContainer .cTimeInput input,
 .sidebarFilterContainer .cTimeInput .lFixedRight,
 .sidebarFilterContainer .ddwttDropBtn {
-	background: var(--background);
+	color: var(--highlight-fg, inherit);
+	background: var(--highlight-bg, var(--background));
 }
 
 .sidebarFilterContainer .cTextInput input {
@@ -599,7 +600,8 @@ div.fltList {
 .defaultFilterContainer .cTimeInput input,
 .defaultFilterContainer .cTimeInput .lFixedRight,
 .defaultFilterContainer .ddwttDropBtn {
-	background: var(--background);
+	color: var(--highlight-fg, inherit);
+	background: var(--highlight-bg, var(--background));
 }
 
 .defaultFilterContainer .lFlexible > input {
@@ -2258,15 +2260,21 @@ h5.card-title a:focus {
 	align-items: center;
 }
 
-.treeNodeIcon:not(img),
+.treeNodeIcon > i {
+    color: var(--highlight, var(--icon-secondary));
+}
+
+.treeNode.treeSelected .treeNodeIcon > i,
+.treeNode:hover .treeNodeIcon > i {
+	color: var(--highlight, var(--icon-primary));
+}
+
 .treeNode .fToggle,
 .fToggle.tcrToggle {
     color: var(--icon-secondary);
 }
 
 .treeNode.treeSelected .fToggle.tcrToggle,
-.tcrNode .treeNode.treeSelected .treeNodeIcon:not(img),
-.tcrNode .treeNode:hover .treeNodeIcon:not(img),
 .tcrNode .treeNode:hover .treeNode .fToggle,
 .tcrNode .treeNode:hover .fToggle.tcrToggle {
 	color: var(--icon-primary);
@@ -2666,4 +2674,177 @@ div.ssiContentArea {
 .galleryImageLabel {
 	margin-left: var(--spacing-01);
 }
+
+.tl-danger {
+	--highlight: var(--text-danger);
+	--highlight-fg: var(--text-danger--on-color);
+	--highlight-bg: var(--background-danger);
+	--highlight-bg--hover: var(--background-danger--hover);
+	--highlight-bg--selected: var(--background-danger--selected);
+	--highlight-bg--selected--hover: var(--background-danger--selected--hover);
+	--highlight-weight: bolder;
+}
+
+.tl-danger.tl-lighter {
+	--highlight: var(--text-danger--lighter);
+	--highlight-fg: var(--text-danger--on-color--lighter);
+	--highlight-bg: var(--background-danger--lighter);
+	--highlight-bg--hover: var(--background-danger--hover--lighter);
+	--highlight-bg--selected: var(--background-danger--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-danger--selected--hover--lighter);
+	--highlight-weight: bolder;
+}
+
+.tl-warning {
+	--highlight: var(--text-warning);
+	--highlight-fg: var(--text-warning--on-color);
+	--highlight-bg: var(--background-warning);
+	--highlight-bg--hover: var(--background-warning--hover);
+	--highlight-bg--selected: var(--background-warning--selected);
+	--highlight-bg--selected--hover: var(--background-warning--selected--hover);
+	--highlight-weight: bolder;
+}
+
+.tl-warning.tl-lighter {
+	--highlight: var(--text-warning--lighter);
+	--highlight-fg: var(--text-warning--on-color--lighter);
+	--highlight-bg: var(--background-warning--lighter);
+	--highlight-bg--hover: var(--background-warning--hover--lighter);
+	--highlight-bg--selected: var(--background-warning--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-warning--selected--hover--lighter);
+	--highlight-weight: bolder;
+}
+
+.tl-success {
+	--highlight: var(--text-success);
+	--highlight-fg: var(--text-success--on-color);
+	--highlight-bg: var(--background-success);
+	--highlight-bg--hover: var(--background-success--hover);
+	--highlight-bg--selected: var(--background-success--selected);
+	--highlight-bg--selected--hover: var(--background-success--selected--hover);
+	--highlight-weight: bolder;
+}
+
+.tl-success.tl-lighter {
+	--highlight: var(--text-success--lighter);
+	--highlight-fg: var(--text-success--on-color--lighter);
+	--highlight-bg: var(--background-success--lighter);
+	--highlight-bg--hover: var(--background-success--hover--lighter);
+	--highlight-bg--selected: var(--background-success--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-success--selected--hover--lighter);
+	--highlight-weight: bolder;
+}
+
+.tl-info {
+	--highlight: var(--text-info);
+	--highlight-fg: var(--text-info--on-color);
+	--highlight-bg: var(--background-info);
+	--highlight-bg--hover: var(--background-info--hover);
+	--highlight-bg--selected: var(--background-info--selected);
+	--highlight-bg--selected--hover: var(--background-info--selected--hover);
+	--highlight-weight: bolder;
+}
+
+.tl-info.tl-lighter {
+	--highlight: var(--text-info--lighter);
+	--highlight-fg: var(--text-info--on-color--lighter);
+	--highlight-bg: var(--background-info--lighter);
+	--highlight-bg--hover: var(--background-info--hover--lighter);
+	--highlight-bg--selected: var(--background-info--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-info--selected--hover--lighter);
+	--highlight-weight: bolder;
+}
+
+.tl-debug {
+	--highlight: var(--text-debug);
+	--highlight-fg: var(--text-debug--on-color);
+	--highlight-bg: var(--background-debug);
+	--highlight-bg--hover: var(--background-debug--hover);
+	--highlight-bg--selected: var(--background-debug--selected);
+	--highlight-bg--selected--hover: var(--background-debug--selected--hover);
+	--highlight-weight: normal;
+}
+
+.tl-debug.tl-lighter {
+	--highlight: var(--text-debug--lighter);
+	--highlight-fg: var(--text-debug--on-color--lighter);
+	--highlight-bg: var(--background-debug--lighter);
+	--highlight-bg--hover: var(--background-debug--hover--lighter);
+	--highlight-bg--selected: var(--background-debug--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-debug--selected--hover--lighter);
+	--highlight-weight: normal;
+}
+
+.tl-accent-1 {
+	--highlight: var(--text-accent-1);
+	--highlight-fg: var(--text-accent-1--on-color);
+	--highlight-bg: var(--background-accent-1);
+	--highlight-bg--hover: var(--background-accent-1--hover);
+	--highlight-bg--selected: var(--background-accent-1--selected);
+	--highlight-bg--selected--hover: var(--background-accent-1--selected--hover);
+	--highlight-weight: bolder;
+}
+
+.tl-accent-1.tl-lighter {
+	--highlight: var(--text-accent-1--lighter);
+	--highlight-fg: var(--text-accent-1--on-color--lighter);
+	--highlight-bg: var(--background-accent-1--lighter);
+	--highlight-bg--hover: var(--background-accent-1--hover--lighter);
+	--highlight-bg--selected: var(--background-accent-1--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-accent-1--selected--hover--lighter);
+	--highlight-weight: bolder;
+}
+
+.tl-accent-2 {
+	--highlight: var(--text-accent-2);
+	--highlight-fg: var(--text-accent-2--on-color);
+	--highlight-bg: var(--background-accent-2);
+	--highlight-bg--hover: var(--background-accent-2--hover);
+	--highlight-bg--selected: var(--background-accent-2--selected);
+	--highlight-bg--selected--hover: var(--background-accent-2--selected--hover);
+	--highlight-weight: bolder;
+}
+
+.tl-accent-2.tl-lighter {
+	--highlight: var(--text-accent-2--lighter);
+	--highlight-fg: var(--text-accent-2--on-color--lighter);
+	--highlight-bg: var(--background-accent-2--lighter);
+	--highlight-bg--hover: var(--background-accent-2--hover--lighter);
+	--highlight-bg--selected: var(--background-accent-2--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-accent-2--selected--hover--lighter);
+	--highlight-weight: bolder;
+}
+
+.tl-accent-3 {
+	--highlight: var(--text-accent-3);
+	--highlight-fg: var(--text-accent-3--on-color);
+	--highlight-bg: var(--background-accent-3);
+	--highlight-bg--hover: var(--background-accent-3--hover);
+	--highlight-bg--selected: var(--background-accent-3--selected);
+	--highlight-bg--selected--hover: var(--background-accent-3--selected--hover);
+	--highlight-weight: bolder;
+}
+
+.tl-accent-3.tl-lighter {
+	--highlight: var(--text-accent-3--lighter);
+	--highlight-fg: var(--text-accent-3--on-color--lighter);
+	--highlight-bg: var(--background-accent-3--lighter);
+	--highlight-bg--hover: var(--background-accent-3--hover--lighter);
+	--highlight-bg--selected: var(--background-accent-3--selected--lighter);
+	--highlight-bg--selected--hover: var(--background-accent-3--selected--hover--lighter);
+	--highlight-weight: bolder;
+}
+
+/* If the accent style is directly set on an icon, set all text colors to the view-mode foreground */
+i.tl-danger,
+i.tl-warning,
+i.tl-success,
+i.tl-info,
+i.tl-debug,
+i.tl-accent-1,
+i.tl-accent-3,
+i.tl-accent-2 {
+	--highlight-fg: var(--highlight);
+}
+
 

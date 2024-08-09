@@ -347,14 +347,23 @@ public abstract class ColumnConfiguration extends ColumnBase
 	protected abstract void copyAccessor(Accessor accessor);
 
 	/**
-	 * The CSS class of this column.
+	 * The CSS class to use on content cells of this column.
 	 * 
 	 * @return may be <code>null</code> if no class was set.
+	 * 
+	 * @see #getCssHeaderClass()
 	 */
 	public abstract String getCssClass();
 
 	/**
-	 * CSS class to use on cells the column that appears first in this group.
+	 * The CSS class of this column's header.
+	 * 
+	 * @return may be <code>null</code> if no class was set.
+	 */
+	public abstract String getCssHeaderClass();
+
+	/**
+	 * CSS class to use on cells of the column that appear first in this group.
 	 * 
 	 * <p>
 	 * Identical to {@link #getCssClass()} for elementary columns.
@@ -375,7 +384,7 @@ public abstract class ColumnConfiguration extends ColumnBase
 	protected abstract void copyCssClassGroupFirst(String cssClass);
 
 	/**
-	 * CSS class to use on cells the column that appears last in this group.
+	 * CSS class to use on cells of the column that appear last in this group.
 	 * 
 	 * <p>
 	 * Identical to {@link #getCssClass()} for elementary columns.
@@ -487,12 +496,46 @@ public abstract class ColumnConfiguration extends ColumnBase
 
 	protected abstract Collection<String> getClassifiers();
 
+	/** Adds the given CSS class(es) to this column. */
+	public void addCssClass(String cssClass) {
+		setCssClass(CssUtil.joinCssClassesUnique(getCssClass(), cssClass));
+	}
+
+	/** Removes the given CSS class(es) from this column. */
+	public void removeCssClass(String cssClass) {
+		setCssClass(CssUtil.removeCssClasses(getCssClass(), cssClass));
+	}
+
+	/**
+	 * @see #getCssClass()
+	 */
 	public abstract void setCssClass(String cssClass);
 
 	/**
 	 * @see #getCssClass()
 	 */
 	protected abstract void copyCssClass(String cssClass);
+
+	/**
+	 * @see #getCssHeaderClass()
+	 */
+	public abstract void setCssHeaderClass(String cssClass);
+
+	/** Adds the given CSS class(es) to the {@link #getCssHeaderClass()} of this column. */
+	public void addCssHeaderClass(String cssClass) {
+		setCssHeaderClass(CssUtil.joinCssClassesUnique(getCssHeaderClass(), cssClass));
+	}
+
+	/** Removes the given CSS class(es) from the {@link #getCssHeaderClass()} of this column. */
+	public void removeCssHeaderClass(String cssClass) {
+		setCssHeaderClass(CssUtil.removeCssClasses(getCssHeaderClass(), cssClass));
+	}
+
+	/**
+	 * @see #getCssHeaderClass()
+	 */
+	protected abstract void copyCssHeaderClass(String cssClass);
+
 
 	public abstract void setDescendingComparator(Comparator descendingComparator);
 
@@ -1103,6 +1146,22 @@ public abstract class ColumnConfiguration extends ColumnBase
 			@Override
 			public Object get(ColumnConfiguration self) {
 				return self.getCssClass();
+			}
+		},
+		new ColumnConfiguration.Property(ColumnConfig.CSS_HEADER_CLASS) {
+			@Override
+			public void set(ColumnConfiguration self, Object value) {
+				self.setCssHeaderClass((String) value);
+			}
+
+			@Override
+			public void copy(ColumnConfiguration self, Object value) {
+				self.copyCssHeaderClass((String) value);
+			}
+
+			@Override
+			public Object get(ColumnConfiguration self) {
+				return self.getCssHeaderClass();
 			}
 		},
 		new ColumnConfiguration.Property(ColumnConfig.CSS_CLASS_GROUP_FIRST) {

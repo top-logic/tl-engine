@@ -2,7 +2,6 @@
 
 <theme>
 	<styles>
-		<style name="/style/demoStyles.css"/>
 		<style name="/style/demoStylesCoreTheme.css"/>
 	</styles>
 </theme>

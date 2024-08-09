@@ -394,11 +394,6 @@ public class DynamicColumnProviderByExpression
 		return _columnLabel == null ? columnModel : _columnLabel.execute(columnModel, model);
 	}
 
-	@Override
-	public void adaptDefaultColumn(ColumnConfiguration defaultColumn) {
-		// Ignore.
-	}
-
 	/**
 	 * Retrieves the column model object of the given column.
 	 * 

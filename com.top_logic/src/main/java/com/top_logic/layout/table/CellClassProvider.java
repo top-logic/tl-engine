@@ -22,7 +22,7 @@ import com.top_logic.layout.table.provider.DefaultCellClassProvider;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public interface CellClassProvider extends Unimplementable {
+public interface CellClassProvider {
 
 	/**
 	 * Look up the CSS class for the given individual cell.

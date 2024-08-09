@@ -6,6 +6,7 @@
 package test.com.top_logic.util.css;
 
 import static com.top_logic.util.css.CssUtil.*;
+
 import junit.framework.TestCase;
 
 import com.top_logic.util.css.CssUtil;
@@ -24,6 +25,35 @@ public class TestCssUtil extends TestCase {
 		assertEquals("foo", joinCssClasses("foo", null));
 		assertEquals("foo", joinCssClasses(null, "foo"));
 		assertNull(joinCssClasses(null, null));
+	}
+
+	public void testJoinTwoClassesUnique() {
+		assertEquals("foo bar", joinCssClassesUnique("foo", "bar"));
+		assertEquals("foo", joinCssClassesUnique("foo", null));
+		assertEquals("foo", joinCssClassesUnique(null, "foo"));
+		assertNull(joinCssClassesUnique(null, null));
+
+		assertEquals("foo", joinCssClassesUnique("foo", "foo"));
+		assertEquals("foobar foo", joinCssClassesUnique("foobar", "foo"));
+		assertEquals("foobar foo", joinCssClassesUnique("foobar foo", "foo"));
+		assertEquals("foobar bar foo", joinCssClassesUnique("foobar bar", "foo"));
+		assertEquals("foobar bar foo", joinCssClassesUnique("foobar bar foo", "foobar bar foo"));
+		assertEquals("foobar foo bar baz", joinCssClassesUnique("foobar foo bar baz", "bar"));
+		assertEquals("foo bar", joinCssClassesUnique("", "  foo  bar  "));
+	}
+
+	public void testRemoveClasses() {
+		assertEquals("foo", removeCssClasses("foo bar", "bar"));
+		assertEquals("foo", removeCssClasses("foo", null));
+		assertNull(removeCssClasses(null, "foo"));
+		assertNull(removeCssClasses(null, null));
+
+		assertEquals(null, removeCssClasses("foo", "foo"));
+		assertEquals("foobar", removeCssClasses("foobar foo", "foo"));
+		assertEquals("foobar bar", removeCssClasses("foobar bar foo", "foo"));
+		assertEquals(null, removeCssClasses("foobar bar foo", "foobar bar foo"));
+		assertEquals("foobar foo baz", removeCssClasses("foobar foo bar baz", "bar"));
+		assertEquals(null, removeCssClasses("foo bar", "  foo  bar  "));
 	}
 
 	public void testJoinManyClasses() {

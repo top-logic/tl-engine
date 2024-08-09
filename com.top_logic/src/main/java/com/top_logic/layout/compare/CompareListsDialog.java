@@ -28,7 +28,6 @@ import com.top_logic.layout.messagebox.SimpleFormDialog;
 import com.top_logic.layout.messagebox.SimpleTableDialog;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.control.TableControl;
-import com.top_logic.layout.table.model.NoDefaultColumnAdaption;
 import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.table.model.TableConfigurationFactory;
 import com.top_logic.layout.table.model.TableConfigurationProvider;
@@ -130,18 +129,20 @@ public class CompareListsDialog extends SimpleTableDialog {
 			FormFactory.newSelectField(fieldName, options, FormFactory.MULTIPLE, !FormFactory.IMMUTABLE);
 		selectField.setAsSelection(options);
 		selectField.setDisabled(true);
-		selectField.setTableConfigurationProvider(TableConfigurationFactory.combine(_tableConfig, setResourcesOfSelectField(selectField)));
+		selectField.setTransient(true);
+
+		selectField.setTableConfigurationProvider(
+			TableConfigurationFactory.combine(_tableConfig, WrapCompareCells.INSTANCE,
+				compareTableConfiguration(selectField)));
 		return selectField;
 	}
 
-	private NoDefaultColumnAdaption setResourcesOfSelectField(final SelectField selectField) {
-		return new NoDefaultColumnAdaption() {
-			
+	private TableConfigurationProvider compareTableConfiguration(final SelectField selectField) {
+		return new TableConfigurationProvider() {
 			@Override
 			public void adaptConfigurationTo(TableConfiguration table) {
 				selectField.setResources(table.getResPrefix());
 			}
-
 		};
 	}
 

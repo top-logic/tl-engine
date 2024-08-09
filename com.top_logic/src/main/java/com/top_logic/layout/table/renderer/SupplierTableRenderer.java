@@ -35,7 +35,6 @@ public class SupplierTableRenderer extends DefaultTableRenderer {
 			String theTDClass = state.getTDClass(column, isSelected);
 			boolean isSelectable = state.getView().isRowSelectable(row);
 
-
             out.beginBeginTag(TD);
 			CssUtil.writeCombinedCssClasses(out, theTDClass, "tblRight");
             if (!isSelected && isSelectable) {

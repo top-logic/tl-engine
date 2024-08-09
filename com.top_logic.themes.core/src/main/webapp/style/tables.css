@@ -27,7 +27,7 @@ table.treeBody {
 }
 
 table.treeBody .tl-table__row:not(.tblSelected):hover > td {
-    background: var(--background);
+    background: var(--highlight-bg--hover, var(--background));
 }
 
 .tl-standard-table th {
@@ -206,7 +206,8 @@ td.tl-table__cell {
 }
 
 .tl-table__cell {
-	color: var(--text-secondary);
+	color: var(--highlight-fg, var(--text-secondary));
+	background-color: var(--highlight-bg, inherit);
     white-space: nowrap;
 	padding: 0px;
 	border-color: var(--border-subtle);
@@ -216,13 +217,13 @@ td.tl-table__cell {
 }
 
 th.tl-table__cell {
-    color: var(--text-primary);
+    color: var(--highlight-fg, var(--text-primary));
 	font-family: var(--font-family);
 	font-weight: bold;
 	font-size: var(--heading-compact-02-font-size);
 	line-height: var(--heading-compact-02-line-height);
 	letter-spacing: var(--heading-compact-02-letter-spacing);
-    background: var(--layer);
+    background: var(--highlight-bg--selected, var(--layer));
     border-bottom-color: var(--border-subtle);
     border-bottom-style: solid;
     border-bottom-width: 1px;
@@ -246,8 +247,8 @@ td.tl-table__cell {
 }
 
 .tl-table__row.header .tl-table__cell:hover {
-	color: var(--text-primary);
-	background: var(--layer-hover);
+	color: var(--highlight-fg, var(--text-primary));
+	background: var(--highlight-bg--selected--hover, var(--layer-hover));
 }
 
 .tl-table__header-cell-content span.activeFilter:hover {
@@ -445,17 +446,6 @@ td.tblTDselect100 {
 	border-width:     0px;
 }
 
-/** A Numeric table entry */
-td.num {
-	font-family:    var(--MONOSPACE_FAMILY);
-	text-align:     right;
-    white-space:    nowrap;
-	padding:        2px;
-	border-color:   transparent;
-	color:          var(--text-primary);
-}
-
-
 a.tl-table__cell {
 	font-size:13px;
 	color:black;
@@ -634,7 +624,7 @@ td.fltButton {
 }
 
 .tl-table__header-cell-content .fltButton.tl-table__filter-sort-icons {
-	color: var(--icon-primary);
+	color: var(--highlight-fg, var(--icon-primary));
 	align-self: center;
 }
 
@@ -643,7 +633,7 @@ td.fltButton {
 }
 
 .tl-table__header-cell-content .fltButton:not(.activeFilter):not(.tl-table__filter-sort-icons):hover {
-	color: var(--icon-primary);
+	color: var(--highlight-fg, var(--icon-primary));
 }
 
 .tl-table__header-cell-content .fltButton.activeFilter {
@@ -953,13 +943,13 @@ table td span.cDecoratedCell {
 	gap: var(--spacing-01);
 }
 
-.cDecoratedCell .treeType {
-	color: var(--icon-secondary);
+.treeType > i {
+	color: var(--highlight-fg, var(--icon-secondary));
 }
 
-.tl-table__row:not(.tblSelected):hover .cDecoratedCell .treeType, 
-td.tl-table__cell--selected .cDecoratedCell .treeType {
-	color: var(--icon-primary);
+.tl-table__row:not(.tblSelected):hover .treeType > i, 
+td.tl-table__cell--selected .treeType > i {
+	color: var(--highlight-fg, var(--icon-primary));
 }
 
 table.i18nStringTable td span.cDecoratedCell .lFlexible {
@@ -1450,7 +1440,8 @@ th:last-child .tl-table__cell-resizer {
 	background-clip: padding-box !important;
 	position: relative;
 	box-sizing: border-box;
-	background-color: var(--background);
+	color: var(--highlight-fg, inherit);
+	background-color: var(--highlight-bg, var(--background));
 }
 
 .tl-table__cell:not(:last-child),
@@ -1475,7 +1466,8 @@ th:last-child .tl-table__cell-resizer {
 }
 
 .tblSelected .tl-table__cell {
-	background: inherit;
+	color: var(--highlight-fg, inherit);
+	background: var(--highlight-bg--selected, inherit);
 }
 
 .tl-table-overlay {
@@ -1661,29 +1653,33 @@ td.treeTableTd span {
 *****************************************************************************/
 td.tl-table__cell--selected {
     white-space:      nowrap;
-    color:            var(--text-primary);
-    background-color: var(--layer-selected);
+    color:            var(--highlight-fg, var(--text-primary));
+    background-color: var(--highlight-bg, var(--layer-selected));
     border-color:     var(--border-subtle);
 }
 
 .tblSelected.tl-table__row:hover {
-	background-color: var(--layer-selected-hover)
+	background-color: var(--layer-selected-hover);
+}
+
+.tblSelected.tl-table__row:hover .tl-table__cell {
+	background-color: var(--highlight-bg--selected--hover, var(--layer-selected-hover));
 }
 
 .tl-table__row:not(.tblSelected):hover > td {
-	background-color: var(--layer-hover);
+	background-color: var(--highlight-bg--hover, var(--layer-hover));
 }
 
 .tl-table__row:not(.tblSelected):hover .px-1 {
-	color: var(--text-primary);
+	color: var(--highlight-fg, var(--text-primary));
 }
 
 .tl-table__row:not(.tblSelected):hover .fToggle a {
-	color: var(--icon-primary);
+	color: var(--highlight-fg, var(--icon-primary));
 }
 
 .tl-table__cell--selectable .fToggle a {
-	color: var(--icon-secondary);
+	color: var(--highlight-fg, var(--icon-secondary));
 }
 
 .i18nStringTable.tl-table {

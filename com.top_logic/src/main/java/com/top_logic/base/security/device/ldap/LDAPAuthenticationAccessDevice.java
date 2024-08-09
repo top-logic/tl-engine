@@ -222,7 +222,14 @@ public class LDAPAuthenticationAccessDevice extends AbstractConfiguredInstance<S
 			existingPersons.add(account);
 			UserInterface localUser = account.getUser();
 			if (localUser != null) {
-				localUser.setName((String) user.getAttributeValue(UserInterface.NAME));
+				String surname = (String) user.getAttributeValue(UserInterface.NAME);
+				if (StringServices.isEmpty(surname)) {
+					Logger.warn("Encountered empty surname for user '" + userName + "' in '" + getDeviceID()
+							+ "'. Use '" + userName + "' as name.",
+						this);
+					surname = userName;
+				}
+				localUser.setName(surname);
 				localUser.setFirstName((String) user.getAttributeValue(UserInterface.FIRST_NAME));
 				localUser.setTitle((String) user.getAttributeValue(UserInterface.TITLE));
 				localUser.setPhone((String) user.getAttributeValue(UserInterface.PHONE));

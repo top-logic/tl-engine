@@ -17,6 +17,8 @@ import com.top_logic.model.TLStructuredTypePart;
 /**
  * {@link CellClassProvider} assigning CSS class values to a table cell depending on the explicit
  * assignment status of the displayed value.
+ * 
+ * @see UpdateFallbackDisplay
  */
 public class FallbackCellClassProvider extends AbstractCellClassProvider {
 
@@ -34,6 +36,20 @@ public class FallbackCellClassProvider extends AbstractCellClassProvider {
 
 	@Override
 	public String getCellClass(Cell cell) {
+		if (cell instanceof EditingCell) {
+			// The grid component tries to generically wrap cell class providers into field value
+			// listeners for dynamically updating CSS classes of fields displayed in the selected
+			// row in edit mode. However, the mechanics for fallback values already cares for
+			// dynamic CSS class updates for form fields displaying attributes with fallback values.
+			// Therefore the grid component's wrapping mechanics is not necessary and will not work
+			// correctly either: This implementation here depends on the ability to retrieve the
+			// current explicitly set value from the cell's row object through the fallback
+			// attribute storage. But this storage cannot retrieve the current value stored in the
+			// attribute's field. The storage retrieves the value of the storage attribute which
+			// delivers the persistent value at the beginning of the editing operation, not the
+			// value of the form field displaying the fallback attribute.
+			return null;
+		}
 		if (cell.cellExists() && !(cell.getValue() instanceof FormMember) && !(cell.getValue() instanceof Control)) {
 			Object row = cell.getRowObject();
 			if (row instanceof TLObject obj) {

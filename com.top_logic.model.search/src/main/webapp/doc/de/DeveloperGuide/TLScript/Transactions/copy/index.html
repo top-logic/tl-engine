@@ -54,8 +54,8 @@ copy(orig: $orig,
 
 			<ul>
 				<li>Das zu kopierende Attribut.</li>
-				<li>Die zu kopierende Instanz aus dem Ursprungsgraphen.</li>
-				<li>Die Kontext-Instanz, an der das zu kopierende Attribut definiert ist.</li>
+				<li>Der zu kopierende Wert.</li>
+				<li>Das zu kopierende Objekt aus dem Ursprungsgraphen.</li>
 			</ul>
 
 			<p>Ist die Entscheidung <code class="hljs inlineCode">true</code>, so wird das Attribut vom Ursprungsobjekt in das Zielobjekt kopiert. Ist das Attribut eine primitive Eigenschaft, wird der Wert direkt in das Zielobjekt übernommen. Ist das Attribut eine Referenz, wird diese Referenz entweder direkt übernommen, oder in den Zielgraphen umgeschrieben, je nachdem, ob das Ursprungsobjekt in der Kopieroperation kopiert wurde oder nicht. Ist das Attribut eine Komposition, wird eine tiefe Kopie des Ursprungsobjektes angefertigt.</p>
@@ -73,8 +73,8 @@ copy(orig: $orig,
 
 			<ul>
 				<li>Das zu kopierende Originalobjekt.</li>
-				<li>Die Kontext-Referenz, über die das Originalobjekt mit seinem Kontext verknüpft ist (<code class="hljs inlineCode">null</code>, für die top-level Kopie).</li>
-				<li>Das originale Kontext-Objekt, das das zu kopierende Originalobjekt in seiner Kontext-Referenz hält.</li>
+				<li>Die Referenz, über die das Originalobjekt mit seinem Kontext verknüpft ist (<code class="hljs inlineCode">null</code>, für das top-level Objekt).</li>
+				<li>Das originale Kontext-Objekt, das das zu kopierende Originalobjekt in der Kontext-Referenz enthält.</li>
 			</ul>
 
 			<p>Liefert die Konstruktorfunktion <code class="hljs inlineCode">null</code>, wird ein Objekt vom selben Typ wie das Original angelegt.</p>

@@ -15,6 +15,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
@@ -85,13 +86,13 @@ public interface PostCreateAction {
 	 * @see PostCreateAction.SetModel.Config#getTarget()
 	 */
 	@InApp
-	class SetModel extends AbstractConfiguredInstance<SetModel.Config> implements PostCreateAction {
+	class SetModel extends WithTransform<SetModel.Config> {
 
 		/**
 		 * Configuration options for {@link PostCreateAction.SetModel}.
 		 */
 		@TagName(Config.TAG_NAME)
-		public interface Config extends PolymorphicConfiguration<SetModel> {
+		public interface Config extends WithTransform.Config<SetModel> {
 
 			/**
 			 * Short-cut tag name for configuring a {@link SetModel} action.
@@ -159,7 +160,7 @@ public interface PostCreateAction {
 		}
 
 		@Override
-		public void handleNew(LayoutComponent component, Object newModel) {
+		public void internalHandleNew(LayoutComponent component, Object newModel) {
 			ChannelLinking.updateModel(getConfig().getTarget(), component, newModel);
 		}
 	}
@@ -210,13 +211,13 @@ public interface PostCreateAction {
 	 * </p>
 	 */
 	@InApp
-	class DeliverAsDownload extends AbstractConfiguredInstance<DeliverAsDownload.Config> implements PostCreateAction {
+	class DeliverAsDownload extends WithTransform<DeliverAsDownload.Config> {
 
 		/**
 		 * Configuration options for {@link PostCreateAction.DeliverAsDownload}.
 		 */
 		@TagName("deliverAsDownload")
-		public interface Config extends PolymorphicConfiguration<DeliverAsDownload> {
+		public interface Config extends WithTransform.Config<DeliverAsDownload> {
 			// Pure marker interface.
 		}
 
@@ -228,8 +229,9 @@ public interface PostCreateAction {
 		}
 
 		@Override
-		public void handleNew(LayoutComponent component, Object newModel) {
-			BinaryDataSource data = (BinaryDataSource) CollectionUtil.getSingleValueFrom(newModel);
+		public void internalHandleNew(LayoutComponent component, Object newModel) {
+			BinaryDataSource data =
+				(BinaryDataSource) CollectionUtil.getSingleValueFrom(newModel);
 			if (data != null) {
 				DefaultDisplayContext.getDisplayContext().getWindowScope().deliverContent(data);
 			}
@@ -286,13 +288,13 @@ public interface PostCreateAction {
 	 * Jumps to a specified component by switching tabs, opening dialogs, selecting tiles.
 	 */
 	@InApp
-	class ShowComponent extends AbstractConfiguredInstance<ShowComponent.Config> implements PostCreateAction {
+	class ShowComponent extends WithTransform<ShowComponent.Config> {
 
 		/**
 		 * Configuration options for {@link ShowComponent}.
 		 */
 		@TagName("showComponent")
-		public interface Config extends PolymorphicConfiguration<ShowComponent> {
+		public interface Config extends WithTransform.Config<ShowComponent> {
 			/**
 			 * The component to show.
 			 */
@@ -311,7 +313,7 @@ public interface PostCreateAction {
 		}
 
 		@Override
-		public void handleNew(LayoutComponent component, Object newModel) {
+		public void internalHandleNew(LayoutComponent component, Object newModel) {
 			LayoutComponent targetComponent =
 				DefaultRefVisitor.resolveReference(getConfig().getTargetComponent(), component);
 			if (targetComponent == null) {
@@ -322,4 +324,54 @@ public interface PostCreateAction {
 			targetComponent.makeVisible();
 		}
 	}
+
+	/**
+	 * Base class for {@link PostCreateAction} that can transform their input model.
+	 */
+	abstract class WithTransform<C extends WithTransform.Config<?>> extends AbstractConfiguredInstance<C>
+			implements PostCreateAction {
+
+		/**
+		 * Configuration options for {@link PostCreateAction.WithTransform}.
+		 */
+		@Abstract
+		public interface Config<I extends WithTransform<?>> extends PolymorphicConfiguration<I> {
+			/**
+			 * An optional transformation to apply to the command output and before processing with
+			 * this action.
+			 */
+			PolymorphicConfiguration<ValueTransformation> getTransformation();
+		}
+
+		private ValueTransformation _tx;
+
+		/**
+		 * Creates a {@link WithTransform} from configuration.
+		 * 
+		 * @param context
+		 *        The context for instantiating sub configurations.
+		 * @param config
+		 *        The configuration.
+		 */
+		@CalledByReflection
+		public WithTransform(InstantiationContext context, C config) {
+			super(context, config);
+
+			_tx = ValueTransformation.getInstance(context, config.getTransformation());
+		}
+
+		@Override
+		public final void handleNew(LayoutComponent component, Object newModel) {
+			internalHandleNew(component, _tx.transform(component, newModel));
+		}
+
+		/**
+		 * Implementation of {@link #handleNew(LayoutComponent, Object)} with a potentially
+		 * transformed model.
+		 */
+		protected abstract void internalHandleNew(LayoutComponent component, Object newModel);
+
+	}
+
+
 }

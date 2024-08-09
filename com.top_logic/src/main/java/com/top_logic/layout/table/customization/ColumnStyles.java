@@ -33,7 +33,7 @@ public class ColumnStyles extends AbstractConfiguredInstance<ColumnStyles.Config
 	public interface Config<I extends ColumnStyles> extends PolymorphicConfiguration<I> {
 
 		/**
-		 * CSS styles to add to the columns's header.
+		 * CSS styles to add to the column's header.
 		 */
 		String getHeadStyle();
 

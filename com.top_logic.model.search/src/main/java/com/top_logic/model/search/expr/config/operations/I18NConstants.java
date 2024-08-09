@@ -5,7 +5,6 @@
  */
 package com.top_logic.model.search.expr.config.operations;
 
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
@@ -55,9 +54,10 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_EXPECTING_A_TARGET__EXPR;
 
 	/**
-	 * @en Positional arguments must occur only at the beginning of the arguments list.
+	 * @en Positional arguments may occur only at the beginning of the arguments list in call to
+	 *     function "{0}".
 	 */
-	public static ResKey ERROR_INVALID_NAMED_ARGUMENT_ORDER;
+	public static ResKey1 ERROR_INVALID_NAMED_ARGUMENT_ORDER__FUN;
 
 	/**
 	 * @en There is no named argument "{1}" in function "{0}". The function has no named arguments.
@@ -79,6 +79,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     "{0}" is defined more than once.
 	 */
 	public static ResKey2 ERROR_AMBIGUOUS_ARGUMENT__FUN_NAME;
+
+	/**
+	 * @en Unexpected number of arguments in call of function "{0}", the function expects no more
+	 *     than {1} arguments.
+	 */
+	public static ResKey2 ERROR_UNEXPECTED_ARGUMENT__FUN_CNT;
 
 	static {
 		initConstants(I18NConstants.class);

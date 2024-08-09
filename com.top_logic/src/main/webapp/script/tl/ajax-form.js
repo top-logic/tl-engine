@@ -477,12 +477,16 @@ services.form = {
             var eventSource = BAL.getEventSource(evt);
             
             var tableCell = eventSource.closest('td');
+            if (!BAL.DOM.containsClass(tableCell, "tl-table__cell--selectable")) {
+                return false;
+            }
+            
             var tableRowId = tableCell.parentNode.id;
             
             var index = tableRowId.lastIndexOf('.');
 			var rowId = parseInt(tableRowId.substring(index + 1));
 
-            this.select(evt, element, controlId, rowId, TABLE.getChildIndex(tableCell));
+            return this.select(evt, element, controlId, rowId, TABLE.getChildIndex(tableCell));
         },
         
         select : function(evt, element, controlId, rowId, columnId) {
@@ -494,7 +498,7 @@ services.form = {
                 // or an anchor was clicked.
                 return true;
             }
-            this._select(evt, controlId, rowId, columnId);
+            return this._select(evt, controlId, rowId, columnId);
         },
 		
 		_select : function(evt, controlId, rowId, columnId) {

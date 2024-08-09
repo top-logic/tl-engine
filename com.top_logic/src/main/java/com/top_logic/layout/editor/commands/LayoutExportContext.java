@@ -232,7 +232,7 @@ public class LayoutExportContext {
 		int counter = 1;
 
 		while (!isUnique.test(uniqueValue)) {
-			uniqueValue = generator.apply(uniqueValue, counter);
+			uniqueValue = generator.apply(value, counter);
 
 			counter++;
 		}

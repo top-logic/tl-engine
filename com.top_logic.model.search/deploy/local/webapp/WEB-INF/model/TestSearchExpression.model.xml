@@ -64,6 +64,7 @@
 					</annotations>
 					<attributes>
 						<property name="name" type="tl.core:String" />
+						<property name="value" type="tl.core:Integer" />
 						<reference name="contents" type="B" composite="true" multiple="true" ordered="true"/>
 						<reference name="content" type="B" composite="true"/>
 						<reference name="others" type="B" multiple="true"/>
@@ -91,6 +92,14 @@
 						<generalization type="B"/>
 					</generalizations>
 					<attributes>
+						<!-- Override in copy with live reference back to original. -->
+						<property name="value" type="tl.core:Integer" override="true">
+							<annotations>
+								<storage-algorithm>
+									<query expr="self -> $self.get(`TestSearchExpression:C#orig`).get(`TestSearchExpression:B#value`)"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
 						<reference name="orig" type="B" />
 					</attributes>
 				</class>

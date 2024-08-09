@@ -2328,10 +2328,10 @@
 		value="#e2e2e2"
 	/>
     <color name="text-debug"
-		value="#111111"
+		value="#525252"
 	/>
     <color name="text-debug--lighter"
-		value="#525252"
+		value="#6a6a6a"
 	/>
     <color name="text-debug--on-color"
 		value="#111111"

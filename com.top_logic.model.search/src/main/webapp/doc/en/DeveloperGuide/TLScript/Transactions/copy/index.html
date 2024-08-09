@@ -54,8 +54,8 @@ copy(orig: $orig,
 
 			<ul>
 				<li>The attribute to copy.</li>
-				<li>The instance to copy from the source graph.</li>
-				<li>The context instance where the attribute to be copied is defined.</li>
+				<li>The value to copy.</li>
+				<li>The object to copy from the source graph.</li>
 			</ul>
 
 			<p>If the decision is <code class="hljs inlineCode">true</code>, the attribute is copied from the source object to the target object. If the attribute is a primitive property, the value is copied directly to the target object. If the attribute is a reference, that reference is either copied directly, or rewritten into the target graph, depending on whether the source object was copied in the copy operation or not. If the attribute is a composition, a deep copy of the origin object is made.</p>
@@ -73,8 +73,8 @@ copy(orig: $orig,
 
 			<ul>
 				<li>The original object to be copied.</li>
-				<li>The context reference by which the original object is linked to its context (<code class="hljs inlineCode">null</code>, for the top-level copy).</li>
-				<li>The original context object that holds the original object to be copied in its context reference.</li>
+				<li>The reference by which the original object is linked to its context (<code class="hljs inlineCode">null</code>, for the the top-level object).</li>
+				<li>The context object that holds the original object to be copied in its context reference.</li>
 			</ul>
 
 			<p>If the constructor function <code class="hljs inlineCode">null</code>, an object of the same type as the original is created.</p>

@@ -16,11 +16,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 public interface ValueTransformation {
 
 	/**
-	 * The identity transformation.
-	 */
-	ValueTransformation IDENTITY = (c, x) -> x;
-
-	/**
 	 * Transforms the given model before using it in a UI action.
 	 */
 	Object transform(LayoutComponent component, Object model);
@@ -36,7 +31,7 @@ public interface ValueTransformation {
 			PolymorphicConfiguration<ValueTransformation> config) {
 		ValueTransformation result = context.getInstance(config);
 		if (result == null) {
-			return ValueTransformation.IDENTITY;
+			return CommandResult.INSTANCE;
 		}
 		return result;
 	}

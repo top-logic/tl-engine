@@ -49,7 +49,11 @@ public class ArgumentDescriptorImpl implements ArgumentDescriptor {
 			String name = arg.getName();
 			if (name == null) {
 				if (named) {
-					throw AbstractMethodBuilder.error(I18NConstants.ERROR_INVALID_NAMED_ARGUMENT_ORDER);
+					throw AbstractMethodBuilder.error(I18NConstants.ERROR_INVALID_NAMED_ARGUMENT_ORDER__FUN.fill(fun));
+				}
+				if (pos >= result.length) {
+					throw AbstractMethodBuilder
+						.error(I18NConstants.ERROR_UNEXPECTED_ARGUMENT__FUN_CNT.fill(fun, result.length));
 				}
 				result[pos++] = arg.getValue();
 			} else {

@@ -1452,6 +1452,8 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 		with("TestSearchExpression-testCopy.scenario.xml",
 			scenario -> {
 				TLObject orig = scenario.getObject("a1");
+				TLObject origB = (TLObject) orig.tValueByName("b");
+				origB.tUpdateByName("value", 42);
 
 				TLObject copy =
 					(TLObject) execute(search(
@@ -1463,6 +1465,13 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 						orig);
 
 				checkCopyConstructor(orig, copy);
+
+				TLObject copyB = (TLObject) copy.tValueByName("b");
+				assertEquals(42, copyB.tValueByName("value"));
+
+				// Check that updates are visible in copy through derived attribute.
+				origB.tUpdateByName("value", 13);
+				assertEquals(13, copyB.tValueByName("value"));
 
 				TLObject stable = stabilize(orig);
 

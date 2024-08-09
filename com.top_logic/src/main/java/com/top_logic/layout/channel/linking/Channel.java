@@ -27,6 +27,8 @@ import com.top_logic.mig.html.layout.ComponentReference;
 
 /**
  * The model is take from a certain channel of another component.
+ * 
+ * @see DirectLinking
  */
 @TagName("channel")
 public interface Channel extends ModelSpec {

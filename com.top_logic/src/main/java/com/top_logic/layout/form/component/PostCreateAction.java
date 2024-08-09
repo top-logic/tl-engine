@@ -337,10 +337,13 @@ public interface PostCreateAction {
 		@Abstract
 		public interface Config<I extends WithTransform<?>> extends PolymorphicConfiguration<I> {
 			/**
-			 * An optional transformation to apply to the command output and before processing with
-			 * this action.
+			 * The input value for this UI action.
+			 * 
+			 * <p>
+			 * If not given, the command result is used as input by default.
+			 * </p>
 			 */
-			PolymorphicConfiguration<ValueTransformation> getTransformation();
+			PolymorphicConfiguration<ValueTransformation> getInput();
 		}
 
 		private ValueTransformation _tx;
@@ -357,7 +360,7 @@ public interface PostCreateAction {
 		public WithTransform(InstantiationContext context, C config) {
 			super(context, config);
 
-			_tx = ValueTransformation.getInstance(context, config.getTransformation());
+			_tx = ValueTransformation.getInstance(context, config.getInput());
 		}
 
 		@Override

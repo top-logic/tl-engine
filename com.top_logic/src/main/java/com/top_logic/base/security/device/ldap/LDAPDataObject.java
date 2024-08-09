@@ -209,16 +209,15 @@ public class LDAPDataObject extends AttributesDataObject {
     }
 
     /**
-     * Return the name from the JNDI service to be used for the specified
-     * <i>TopLogic</i> attribute name. If there is no matching name, the given one
-     * will be returned.
-     * 
-     * @param aName
-     *            The <i>TopLogic</i> attribute name.
-     * @return The JNDI attribute name.
-     */
-    private String getExternalAttrName(String aName) {
-        return (this.getTypeSpecificMapping().mapAttribute(aName, aName));
+	 * Return the name from the LDAP service to be used for the specified <i>TopLogic</i> attribute
+	 * name. If there is no matching name, the given one will be returned.
+	 * 
+	 * @param name
+	 *        The <i>TopLogic</i> attribute name.
+	 * @return The LDAP attribute name.
+	 */
+	public String getExternalAttrName(String name) {
+		return getTypeSpecificMapping().mapAttribute(name, name);
     }
 
     /**

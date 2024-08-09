@@ -207,9 +207,12 @@ public class LDAPAuthenticationAccessDevice extends AbstractConfiguredInstance<S
 		String authenticationDeviceID = getAuthenticationDeviceID();
 		List<Person> existingPersons = new ArrayList<>();
 		for (DataObject user : las.getAllUserData()) {
-			String userName = (String) user.getAttributeValue(UserInterface.USER_NAME);
+			LDAPDataObject ldapUser = (LDAPDataObject) user;
+			String userName = (String) ldapUser.getAttributeValue(UserInterface.USER_NAME);
 			if (StringServices.isEmpty(userName)) {
-				Logger.warn("Encountered empty username in '" + getDeviceID() + "' - entry ignored.",
+				Logger.warn(
+					"Encountered empty username in attribute '" + ldapUser.getExternalAttrName(UserInterface.USER_NAME)
+							+ "' in '" + getDeviceID() + "' - entry ignored.",
 					this);
 				continue;
 			}
@@ -222,18 +225,20 @@ public class LDAPAuthenticationAccessDevice extends AbstractConfiguredInstance<S
 			existingPersons.add(account);
 			UserInterface localUser = account.getUser();
 			if (localUser != null) {
-				String surname = (String) user.getAttributeValue(UserInterface.NAME);
+				String surname = (String) ldapUser.getAttributeValue(UserInterface.NAME);
 				if (StringServices.isEmpty(surname)) {
-					Logger.warn("Encountered empty surname for user '" + userName + "' in '" + getDeviceID()
-							+ "'. Use '" + userName + "' as name.",
+					Logger.warn(
+						"Encountered empty surname for user '" + userName + "' in attribute '"
+								+ ldapUser.getExternalAttrName(UserInterface.NAME) + "' in '" + getDeviceID()
+								+ "'. Using '" + userName + "' as name.",
 						this);
 					surname = userName;
 				}
 				localUser.setName(surname);
-				localUser.setFirstName((String) user.getAttributeValue(UserInterface.FIRST_NAME));
-				localUser.setTitle((String) user.getAttributeValue(UserInterface.TITLE));
-				localUser.setPhone((String) user.getAttributeValue(UserInterface.PHONE));
-				localUser.setEMail((String) user.getAttributeValue(UserInterface.EMAIL));
+				localUser.setFirstName((String) ldapUser.getAttributeValue(UserInterface.FIRST_NAME));
+				localUser.setTitle((String) ldapUser.getAttributeValue(UserInterface.TITLE));
+				localUser.setPhone((String) ldapUser.getAttributeValue(UserInterface.PHONE));
+				localUser.setEMail((String) ldapUser.getAttributeValue(UserInterface.EMAIL));
 			}
 		}
 		return existingPersons;

@@ -16,13 +16,13 @@
 <code>true
 </code></pre>
 
-<p>The literal for the truth value "true".</p>
+<p>The literal for the boolean value "true".</p>
 
 <pre>
 <code>false
 </code></pre>
 
-<p>The literal for the truth value "false".</p>
+<p>The literal for the boolean value "false".</p>
 
 <h2>Character strings</h2>
 
@@ -32,7 +32,7 @@
 
 <p>Special characters can be written in character strings using a backslash escape:</p>
 
-<table border="0" class="tlDocTable" style="width:500px">
+<table border="0" class="tlDocTable" style="width:600px">
 	<thead>
 		<tr>
 			<th scope="col">Escape character</th>
@@ -60,10 +60,16 @@
 			<td>\f</td>
 			<td>Form feed (ASCII no. 12)</td>
 		</tr>
+		<tr>
+			<td>\uABCD</td>
+			<td>The Unicode character with the hex code ABCD.</td>
+		</tr>
 	</tbody>
 </table>
 
-<p>The character string <code class="hljs inlineCode">"first line\nsecond line"</code> represents a two-line text.</p>
+<p>The character string <code class="hljs inlineCode">"first line\nsecond line"</code> represents the two-line text with <code class="hljs inlineCode">"first line"</code> in the first line and <code class="hljs inlineCode">"second line"</code> in the second line.</p>
+
+<p>The character string <code class="hljs inlineCode">"20 \u20AC"</code> is evaluated to <code class="hljs inlineCode">"20 €"</code>.</p>
 
 <h2>Text blocks</h2>
 

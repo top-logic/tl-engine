@@ -1,21 +1,86 @@
 <h2>Zahlen</h2>
+
 <p>Zahlen sind entweder Ganzzahlen oder Gleitkommazahlen in der folgenden Schreibweise:</p>
-<pre><code>42
+
+<pre>
+<code>42
 
 -13.42
 </code></pre>
-<p>Wichtig zu beachten bei Fließkommazahlen ist, dass diese immer in der englischen Schreibweise mit "<code class="hljs inlineCode">.</code>" als Dezimaltrenner und ohne Tausendertrennzeichen angegeben werden müssen, wenn sie direkt in einem TL-Script Ausdruck auftauchen. In Aus- und Eingaben können Zahlen aber selbstverständlich mit den Konventionen der Sprache des Nutzers formattiert werden, siehe&nbsp;<a class="tlObject" data-custom="false" href="?page=numberFormat&amp;uuid=2599fdcc-824c-4b7c-9006-d873d50f753e">Zahlenformat</a>&nbsp;.</p>
+
+<p>Wichtig zu beachten bei Fließkommazahlen ist, dass diese immer in der englischen Schreibweise mit "<code class="hljs inlineCode">.</code>" als Dezimaltrenner und ohne Tausendertrennzeichen angegeben werden müssen, wenn sie direkt in einem TL-Script Ausdruck auftauchen. In Aus- und Eingaben können Zahlen aber selbstverständlich mit den Konventionen der Sprache des Nutzers formattiert werden, siehe <a class="tlObject" data-custom="false" href="?page=numberFormat&amp;uuid=2599fdcc-824c-4b7c-9006-d873d50f753e">Zahlenformat</a> .</p>
+
 <h2>Wahrheitswerte</h2>
-<pre><code>true
+
+<pre>
+<code>true
 </code></pre>
+
 <p>Das Literal für den Wahrheitswert "wahr".</p>
-<pre><code>false
+
+<pre>
+<code>false
 </code></pre>
+
 <p>Das Literal für den Wahrheitswert "falsch".</p>
+
 <h2>Zeichenketten</h2>
+
 <p>Die Ausdrücke <code class="hljs inlineCode">"some string"</code> bzw. <code class="hljs inlineCode">'some other string'</code> repräsentieren die literalen String-Werte <code class="hljs inlineCode">some string</code> bzw. <code class="hljs inlineCode">some other string</code>.</p>
-<p><em>Hinweis</em>: In einer internationalisierten Anwendung sollte eine Zeichenkette nicht direkt für die Kommunikation mit dem Nutzer verwendet werden. Stattdessen sollten&nbsp;<a class="tlObject" data-custom="false" href="?page=I18N&amp;uuid=8eb42c98-cb0d-4c92-9d4e-f59269657404">Internationalisierte Texte</a>&nbsp; verwendet werden.</p>
+
+<p><em>Hinweis</em>: In einer internationalisierten Anwendung sollte eine Zeichenkette nicht direkt für die Kommunikation mit dem Nutzer verwendet werden. Stattdessen sollten <a class="tlObject" data-custom="false" href="?page=I18N&amp;uuid=8eb42c98-cb0d-4c92-9d4e-f59269657404">Internationalisierte Texte</a>  verwendet werden.</p>
+
+<p>Sonderzeichen können in Zeichenketten durch ein Backslash-Escape geschrieben werden:</p>
+
+<table border="0" class="tlDocTable" style="width:500px">
+	<thead>
+		<tr>
+			<th scope="col">Escape-Zeichen</th>
+			<th scope="col">Bedeutung</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>\t</td>
+			<td>Tabulator-Zeichen (ASCII Nr. 9)</td>
+		</tr>
+		<tr>
+			<td>\b</td>
+			<td>Backspace (ASCII Nr. 8)</td>
+		</tr>
+		<tr>
+			<td>\r</td>
+			<td>Carriage Return (ASCII Nr. 13)</td>
+		</tr>
+		<tr>
+			<td>\n</td>
+			<td>Zeilenumbruch (ASCII Nr. 10)</td>
+		</tr>
+		<tr>
+			<td>\f</td>
+			<td>Form-Feed (ASCII Nr. 12)</td>
+		</tr>
+	</tbody>
+</table>
+
+<p>Die Zeichenkette <code class="hljs inlineCode">"first line\nsecond line"</code> repräsentiert entsprechend einen zweizeiligen Text.</p>
+
+<h2>Text-Blöcke</h2>
+
+<p>Möchte man mehrzeiligen Text direkt in ein Script einfügen, sind Text-Blöcke die bessere Alternative zu Zeichenketten mit Escape-Zeichen.</p>
+
+<pre>
+<code>"""
+first line
+second line
+"""</code></pre>
+
+<p>Dieser Text-Block ist äquivalent zu der Zeichenkette <code class="hljs inlineCode">"first line\nsecond line"</code> aus dem obigen Beispiel. Der ganze Text-Block kann passend zu der Einrückung des umgebenden Scripts eingerückt werden, ohne dass das seinen Inhalt ändert.</p>
+
 <h2>Kein Wert</h2>
-<pre><code>null
+
+<pre>
+<code>null
 </code></pre>
+
 <p>Das Literal für den leeren/undefinierten Wert "<code class="hljs inlineCode">null</code>".</p>

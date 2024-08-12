@@ -239,7 +239,7 @@ public class ExprFactory {
 	}
 
 	/** @see StringLiteral */
-	public Expr stringLiteral(String value) {
+	public StringLiteral stringLiteral(String value) {
 		StringLiteral result = node(StringLiteral.class);
 		result.setValue(unQuoteStringLiteral(value));
 		return result;
@@ -1010,29 +1010,74 @@ public class ExprFactory {
 			switch (escaped) {
 				case 't':
 					result.append('\t');
+					start = esc + 2;
 					break;
 				case 'b':
 					result.append('\b');
+					start = esc + 2;
 					break;
 				case 'n':
 					result.append('\n');
+					start = esc + 2;
 					break;
 				case 'r':
 					result.append('\r');
+					start = esc + 2;
 					break;
 				case 'f':
 					result.append('\f');
+					start = esc + 2;
+					break;
+				case 'u':
+					int pos = esc + 2;
+					while (pos < stop && value.charAt(pos) == 'u') {
+						pos++;
+					}
+					if (pos + 3 < stop) {
+						int b1 = hex(value.charAt(pos++));
+						int b2 = hex(value.charAt(pos++));
+						int b3 = hex(value.charAt(pos++));
+						int b4 = hex(value.charAt(pos++));
+						int code = b1 << 12 | b2 << 8 | b3 << 4 | b4;
+						if (code < 0) {
+							// With legal string values, this must not happen.
+							result.append('\\');
+							start = esc + 1;
+						} else {
+							result.append((char) code);
+							start = pos;
+						}
+					} else {
+						// With legal string values, this must not happen.
+						result.append('\\');
+						start = esc + 1;
+					}
 					break;
 				default:
+					// With legal string values, this must not happen.
 					result.append(escaped);
+					start = esc + 2;
 			}
-			start = esc + 2;
 			esc = value.indexOf('\\', start);
 		} while (esc >= 0);
 
 		result.append(value, start, stop);
 
 		return result.toString();
+	}
+
+	private static int hex(char ch) {
+		if (ch >= '0' && ch <= '9') {
+			return ch - '0';
+		}
+		if (ch >= 'A' && ch <= 'F') {
+			return 10 + ch - 'A';
+		}
+		if (ch >= 'a' && ch <= 'f') {
+			return 10 + ch - 'a';
+		}
+		// With legal string values, this must not happen.
+		return -1;
 	}
 
 	static String unQuoteTextBlock(String value) {

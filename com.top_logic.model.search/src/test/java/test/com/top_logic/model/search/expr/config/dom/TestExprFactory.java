@@ -32,6 +32,18 @@ public class TestExprFactory extends TestCase {
 	}
 
 	/**
+	 * Test unicode escape sequences in strings.
+	 * 
+	 * <p>
+	 * Note: According to the Java specs, the "u" escape can be repeated.
+	 * </p>
+	 */
+	public void testUnicodeEscape() {
+		StringLiteral literal = _f.stringLiteral("'hello\\u007Eworld 20\\uuu20ac'");
+		assertEquals("hello~world 20\u20AC", literal.getValue());
+	}
+
+	/**
 	 * Test case for removing '\' quoting characters from HTML text content.
 	 */
 	public void testHtmlQuote() {

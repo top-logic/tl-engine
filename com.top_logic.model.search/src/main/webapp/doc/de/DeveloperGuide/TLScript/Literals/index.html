@@ -28,11 +28,11 @@
 
 <p>Die Ausdrücke <code class="hljs inlineCode">"some string"</code> bzw. <code class="hljs inlineCode">'some other string'</code> repräsentieren die literalen String-Werte <code class="hljs inlineCode">some string</code> bzw. <code class="hljs inlineCode">some other string</code>.</p>
 
-<p><em>Hinweis</em>: In einer internationalisierten Anwendung sollte eine Zeichenkette nicht direkt für die Kommunikation mit dem Nutzer verwendet werden. Stattdessen sollten <a class="tlObject" data-custom="false" href="?page=I18N&amp;uuid=8eb42c98-cb0d-4c92-9d4e-f59269657404">Internationalisierte Texte</a>  verwendet werden.</p>
+<p><em>Hinweis</em>: In einer internationalisierten Anwendung sollte eine Zeichenkette nicht direkt für die Kommunikation mit dem Nutzer verwendet werden. Stattdessen sollten <a class="tlObject" data-custom="false" href="?page=I18N&amp;uuid=8eb42c98-cb0d-4c92-9d4e-f59269657404">Internationalisierte Texte</a> verwendet werden.</p>
 
 <p>Sonderzeichen können in Zeichenketten durch ein Backslash-Escape geschrieben werden:</p>
 
-<table border="0" class="tlDocTable" style="width:500px">
+<table border="0" class="tlDocTable" style="width:600px">
 	<thead>
 		<tr>
 			<th scope="col">Escape-Zeichen</th>
@@ -60,10 +60,16 @@
 			<td>\f</td>
 			<td>Form-Feed (ASCII Nr. 12)</td>
 		</tr>
+		<tr>
+			<td>\uABCD</td>
+			<td>Das Unicode-Zeichen mit dem Hex-code ABCD.</td>
+		</tr>
 	</tbody>
 </table>
 
-<p>Die Zeichenkette <code class="hljs inlineCode">"first line\nsecond line"</code> repräsentiert entsprechend einen zweizeiligen Text.</p>
+<p>Die Zeichenkette <code class="hljs inlineCode">"first line\nsecond line"</code> repräsentiert den zweizeiligen Text mit <code class="hljs inlineCode">"first line"</code> in der ersten Zeile und <code class="hljs inlineCode">"second line"</code> in der zweiten Zeile.</p>
+
+<p>Die Zeichenkette <code class="hljs inlineCode">"20 \u20AC"</code> wird zu <code class="hljs inlineCode">"20 €"</code> ausgewertet.</p>
 
 <h2>Text-Blöcke</h2>
 

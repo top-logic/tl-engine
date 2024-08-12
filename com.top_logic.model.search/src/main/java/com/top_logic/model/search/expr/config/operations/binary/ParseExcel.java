@@ -76,7 +76,7 @@ public class ParseExcel extends GenericMethod {
 
 	private int NUMBER_OF_SHEETS_FOR_IMPORT = 1;
 
-	private List<Object> IMPORT_SELECTED_SHEETS = Collections.emptyList();;
+	private List<Object> IMPORT_SELECTED_SHEETS = Collections.emptyList();
 
 	private Map<String, List<Object>> HEADERS_AT = new HashMap<>();
 
@@ -101,6 +101,7 @@ public class ParseExcel extends GenericMethod {
 		return null;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Object input = arguments[INPUT_DATA_INDEX];
@@ -120,14 +121,14 @@ public class ParseExcel extends GenericMethod {
 			return importedSheets;
 		} else {
 			HashMap<String, List<Map<String, Object>>> mapedResult = new HashMap<>();
-			if (HEADERS_AT.size() > 0) {
-				DEFAULT_HEADER = incrementHeader(DEFAULT_HEADER);
-			} else {
-				for (String key : importedSheets.keySet()) {
-					ArrayList<String> headers = new ArrayList<>();
-					List<List<Object>> value = importedSheets.get(key);
+			ArrayList<String> headers = new ArrayList<>();
+			for (String key : importedSheets.keySet()) {
+				List<List<Object>> value = importedSheets.get(key);
+				ArrayList<Map<String, Object>> sheetEntries = new ArrayList<>();
+				if (HEADERS_AT.size() > 0) {
+					setHeaders(headers, key, value);
+				} else {
 					generateDefaultHeaders(headers, value);
-					ArrayList<Map<String, Object>> sheetEntries = new ArrayList<>();
 					for (List<Object> rawRow : value) {
 						HashMap<String, Object> rowEntries = createRowMap(headers, rawRow);
 						sheetEntries.add(rowEntries);
@@ -137,6 +138,35 @@ public class ParseExcel extends GenericMethod {
 			}
 			return mapedResult;
 		}
+	}
+
+	private void setHeaders(ArrayList<String> headers, String key, List<List<Object>> value) {
+
+		List<Object> headersPositionsForKey = HEADERS_AT.get(key);
+		if (headersPositionsForKey == null) {
+			generateDefaultHeaders(headers, value);
+		} else {
+			generateDefaultHeaders(headers, value);
+		}
+
+	}
+
+	private int[] parseString(String input) {
+		int[] result = new int[2];
+		int columnNumber = 0;
+		int row = 0;
+		int rowFactor = 10;
+		int columnFactor = 26;
+		for (int i = 0; i < input.length(); i++) {
+			if (input.charAt(i) >= '0' && input.charAt(i) <= '9') {
+				row = row * rowFactor + (input.charAt(i) - '0');
+			} else {
+				columnNumber = columnNumber * columnFactor + (input.charAt(i) - 'A' + 1);
+			}
+		}
+		result[0] = columnNumber;
+		result[1] = row;
+		return result;
 	}
 
 	private HashMap<String, Object> createRowMap(ArrayList<String> headers, List<Object> rawRow) {
@@ -300,7 +330,7 @@ public class ParseExcel extends GenericMethod {
 		}
 	}
 	
-	
+	@SuppressWarnings("unchecked")
 	private Map<String, List<Object>> getHeaderMap(Object[] arguments) {
 		Map<String, List<Object>> result = new HashMap<>();
 		if (arguments[HEADERS_INDEX] != null) {

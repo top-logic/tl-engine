@@ -29,6 +29,10 @@ public class TestHomepage {
 			"05_CheckMonitorHomepage",
 			"06_SetSearchHomepage",
 			"07_CheckSearchHomepage",
+			"08_SetChoiceHomepage",
+			"09_CheckChoiceHomepage",
+			"10_SetSettingsHomepage",
+			"11_CheckSettingsHomepage",
 		};
 		TestSuite theTestSuite = XmlScriptedTestUtil.suite(TestHomepage.class, testCases);
 		return DemoSetup.createDemoSetup(theTestSuite);

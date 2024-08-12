@@ -321,8 +321,4 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 		return AttributeOperations.getStorageImplementation(_storageAttr);
 	}
 
-	private StorageImplementation fallback() {
-		return AttributeOperations.getStorageImplementation(_fallbackAttr);
-	}
-
 }

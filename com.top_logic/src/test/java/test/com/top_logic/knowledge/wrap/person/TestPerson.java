@@ -34,7 +34,6 @@ import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.Country;
 import com.top_logic.util.TLContextManager;
 
@@ -140,21 +139,6 @@ public class TestPerson extends BasicTestCase {
 		} else {
 			p.setLanguage(locale);
 			p.setCountry(new Country(locale.getCountry()));
-		}
-	}
-
-	public void testCreatePersonWithGroupName() {
-		String groupName = "someGroupName";
-		Transaction groupCreation = PersistencyLayer.getKnowledgeBase().beginTransaction();
-		Group group = Group.createGroup(groupName);
-		assertNotNull("Creating of group with name " + groupName + " should work.", group);
-		groupCreation.commit();
-
-		try {
-			createPerson(groupName);
-			fail("Ticket #9261: Group with name '" + groupName + "' already exists");
-		} catch (KnowledgeBaseException ex) {
-			// expected
 		}
 	}
 

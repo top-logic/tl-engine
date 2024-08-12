@@ -5,7 +5,7 @@
 	final="true"
 	template="com.top_logic/tab.template.xml"
 >
-	<arguments helpID="ID_e2adeba0_d817_4c43_a456_98e9a93882d3">
+	<arguments helpID="">
 		<tabLabel key="dynamic.26a00d52-d634-466f-9e7b-6f7e10a28a44">
 			<en>Grid</en>
 			<de>Grid</de>

@@ -28,6 +28,9 @@
 				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
 				initOperation="container -> obj -> $container.add(`test.fallback:A#contents`, $obj)"
 			>
+				<executability>
+					<rule-by-expression decision="model -> $model != null"/>
+				</executability>
 				<checkScopeProvider/>
 				<type-options
 					include-subtypes="false"

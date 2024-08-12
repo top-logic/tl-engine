@@ -5,8 +5,6 @@
  */
 package com.top_logic.model.search.expr.config.operations.binary;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -71,21 +69,16 @@ public class ParseExcel extends GenericMethod {
 	private static final int HEADERS_INDEX = 3;
 
 	/**
-	 * Position of given parsers in arguments
-	 */
-	private static final int PARSERS_INDEX = 4;
-
-	/**
 	 * Position of the Boolean, which indicates if the raw result of parsing is returned (as a List
 	 * of Strings).
 	 */
-	private static final int RAW_INDEX = 5;
+	private static final int RAW_INDEX = 4;
 
 	private int NUMBER_OF_SHEETS_FOR_IMPORT = 1;
 
 	private List<Object> IMPORT_SELECTED_SHEETS = Collections.emptyList();;
 
-	private List<String> HEADERS_AT = Collections.emptyList();;
+	private Map<String, List<Object>> HEADERS_AT = new HashMap<>();
 
 	private Boolean IMPORT_ALL_SHEETS = false;
 
@@ -118,7 +111,7 @@ public class ParseExcel extends GenericMethod {
 		IMPORT_ALL_SHEETS = asBoolean(arguments[IMPORT_ALL_SHEETS_INDEX]);
 		IMPORT_SELECTED_SHEETS = (List<Object>) asList(arguments[IMPORT_SELECTED_SHEETS_INDEX]);
 		fixSelectedSheetsEntries();
-		HEADERS_AT = (List<String>) asList(arguments[HEADERS_INDEX]);
+		HEADERS_AT = getHeaderMap(arguments);
 
 		Map<String, List<List<Object>>> importedSheets = parse(input);
 
@@ -126,16 +119,58 @@ public class ParseExcel extends GenericMethod {
 		if (raw == true) {
 			return importedSheets;
 		} else {
+			HashMap<String, List<Map<String, Object>>> mapedResult = new HashMap<>();
 			if (HEADERS_AT.size() > 0) {
-				DEFAULT_HEADER = incrementDefaultHeader(DEFAULT_HEADER);
+				DEFAULT_HEADER = incrementHeader(DEFAULT_HEADER);
 			} else {
-				DEFAULT_HEADER = incrementDefaultHeader(DEFAULT_HEADER);
+				for (String key : importedSheets.keySet()) {
+					ArrayList<String> headers = new ArrayList<>();
+					List<List<Object>> value = importedSheets.get(key);
+					generateDefaultHeaders(headers, value);
+					ArrayList<Map<String, Object>> sheetEntries = new ArrayList<>();
+					for (List<Object> rawRow : value) {
+						HashMap<String, Object> rowEntries = createRowMap(headers, rawRow);
+						sheetEntries.add(rowEntries);
+					}
+					mapedResult.put(key, sheetEntries);
+				}
 			}
+			return mapedResult;
 		}
-		return null;
 	}
 
-	private String incrementDefaultHeader(String toInrease) {
+	private HashMap<String, Object> createRowMap(ArrayList<String> headers, List<Object> rawRow) {
+		HashMap<String, Object> rowEntries = new HashMap<>();
+		for (int j = 0; j < headers.size(); ++j) {
+			if (j < rawRow.size()) {
+				rowEntries.put(headers.get(j), rawRow.get(j));
+			} else {
+				rowEntries.put(headers.get(j), "");
+			}
+		}
+		return rowEntries;
+	}
+
+	private void generateDefaultHeaders(ArrayList<String> headers, List<List<Object>> value) {
+		int neededHeadersCount = getMaxSize(value);
+		String nextHeader = DEFAULT_HEADER;
+		for (int i = 0; i < neededHeadersCount; ++i) {
+			headers.add(nextHeader);
+			nextHeader = incrementHeader(nextHeader);
+		}
+	}
+
+	private int getMaxSize(List<List<Object>> list) {
+		int maxSize = -1;
+		for (List<Object> l : list) {
+			if (l.size() > maxSize) {
+				maxSize = l.size();
+			}
+		}
+		return maxSize;
+	}
+
+	private String incrementHeader(String toInrease) {
 		char[] charArray = toInrease.toCharArray();
 		if (charArray[charArray.length - 1] != 'Z') {
 			++charArray[charArray.length - 1];
@@ -144,7 +179,7 @@ public class ParseExcel extends GenericMethod {
 			return "AA";
 		} else {
 			char[] newRequest = Arrays.copyOfRange(charArray, 0, charArray.length - 1);
-			return incrementDefaultHeader(new String(newRequest)) + "A";
+			return incrementHeader(new String(newRequest)) + "A";
 		}
 	}
 
@@ -266,35 +301,19 @@ public class ParseExcel extends GenericMethod {
 	}
 	
 	
-	private Map<String, SearchExpression> createParseMap(Object[] arguments) {
-		Map<String, SearchExpression> result = new HashMap<>();
-		if (arguments[PARSERS_INDEX] != null) {
-			Map<?, ?> parsers = asMap(arguments[PARSERS_INDEX]);
+	private Map<String, List<Object>> getHeaderMap(Object[] arguments) {
+		Map<String, List<Object>> result = new HashMap<>();
+		if (arguments[HEADERS_INDEX] != null) {
+			Map<?, ?> parsers = asMap(arguments[HEADERS_INDEX]);
 			for (Entry<?, ?> entry : parsers.entrySet()) {
-				String column = asString(entry.getKey());
-				SearchExpression parser = asSearchExpression(entry.getValue());
-				result.put(column, parser);
+				String sheetName = asString(entry.getKey());
+				List<Object> headers = (List<Object>) asList(entry.getValue());
+				result.put(sheetName, headers);
 			}
 		}
 		return result;
 	}
 
-	private FileInputStream getFile(Object filePath) {
-		FileInputStream file = null;
-		try {
-			if (filePath instanceof FileInputStream) {
-				file = (FileInputStream) filePath;
-			} else if (filePath instanceof String) {
-				file = new FileInputStream(new File((String) filePath));
-				// Files.newInputStream(Paths.get(filePath)))
-			}
-			return file;
-		} catch (IOException ex) {
-			throw new TopLogicException(I18NConstants.ERROR_CONVERSION_FAILED__MSG_EXPR.fill(ex.getMessage(), this),
-				ex);
-		}
-	}
-	
 
 	/**
 	 * {@link MethodBuilder} for {@link ParseExcel}.
@@ -303,11 +322,10 @@ public class ParseExcel extends GenericMethod {
 
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("input")
-			.optional("importAllSheets")
+			.optional("importAllSheets", false)
 			.optional("importSheets")
 			.optional("headers")
-			.optional("parsers")
-			.optional("raw")
+			.optional("raw", false)
 			.build();
 
 		/**

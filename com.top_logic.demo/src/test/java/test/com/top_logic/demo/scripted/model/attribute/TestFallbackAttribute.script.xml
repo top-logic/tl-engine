@@ -97,7 +97,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Datum (Rückfallwert)"
+						label="Datum (Ersatzwert)"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
@@ -179,7 +179,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Selektion (Rückfallwert)"
+						label="Selektion (Ersatzwert)"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
@@ -219,7 +219,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Popup (Rückfallwert)"
+						label="Popup (Ersatzwert)"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
@@ -265,7 +265,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Zahl (Rückfallwert)"
+						label="Zahl (Ersatzwert)"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							tab-path="Technisches Demo > Komponenten > Ersatzwerte > Grid > Elemente"
@@ -304,7 +304,7 @@
 							<object>
 								<business-object config:interface="com.top_logic.element.layout.scripting.GridNewObjectNaming$GridNewObjectName"/>
 							</object>
-							<labeled-member label="Uhrzeit (Rückfallwert)"/>
+							<labeled-member label="Uhrzeit (Ersatzwert)"/>
 							<labeled-member label="Tag"/>
 						</path>
 					</field>
@@ -323,7 +323,7 @@
 							<object>
 								<business-object config:interface="com.top_logic.element.layout.scripting.GridNewObjectNaming$GridNewObjectName"/>
 							</object>
-							<labeled-member label="Uhrzeit (Rückfallwert)"/>
+							<labeled-member label="Uhrzeit (Ersatzwert)"/>
 							<labeled-member label="Uhrzeit"/>
 						</path>
 					</field>
@@ -778,7 +778,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Selektion (Rückfallwert)"
+						label="Selektion (Ersatzwert)"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							tab-path="Anlageformular"

@@ -241,7 +241,14 @@ public class ExprFactory {
 	/** @see StringLiteral */
 	public Expr stringLiteral(String value) {
 		StringLiteral result = node(StringLiteral.class);
-		result.setValue(unQuoteString(value));
+		result.setValue(unQuoteStringLiteral(value));
+		return result;
+	}
+
+	/** @see StringLiteral */
+	public StringLiteral textLiteral(String value) {
+		StringLiteral result = node(StringLiteral.class);
+		result.setValue(unQuoteTextBlock(value));
 		return result;
 	}
 
@@ -494,7 +501,7 @@ public class ExprFactory {
 	/** @see ResKeyReference */
 	public Expr reskeyLiteral(String value) {
 		ResKeyReference result = node(ResKeyReference.class);
-		result.setKey(unQuoteString(value.substring(1)));
+		result.setKey(unQuoteStringLiteral(value.substring(1)));
 		return result;
 	}
 
@@ -933,7 +940,20 @@ public class ExprFactory {
 			Locale locale = Locale.forLanguageTag(lang.substring(1));
 			LangStringConfig string =
 				TypedConfiguration.newConfigItem(Expr.ResKeyLiteral.LangStringConfig.class);
-			string.setText(unQuoteString(value));
+			string.setText(unQuoteStringLiteral(value));
+			string.setLang(locale);
+			_value.getValues().put(locale, string);
+			return this;
+		}
+
+		/**
+		 * Adds a language tagged text block
+		 */
+		public I18NBuilder addText(String value, String lang) {
+			Locale locale = Locale.forLanguageTag(lang.substring(1));
+			LangStringConfig string =
+				TypedConfiguration.newConfigItem(Expr.ResKeyLiteral.LangStringConfig.class);
+			string.setText(unQuoteTextBlock(value));
 			string.setLang(locale);
 			_value.getValues().put(locale, string);
 			return this;
@@ -968,8 +988,236 @@ public class ExprFactory {
 	
 	}
 
-	static String unQuoteString(String value) {
-		return value.substring(1, value.length() - 1).replaceAll("\\\\(.)", "$1");
+	static String unQuoteStringLiteral(String value) {
+		return unquoteStringContent(value, 1, value.length() - 1);
+	}
+
+	private static String unquoteStringContent(String value, int start, int stop) {
+		int esc = value.indexOf('\\', start);
+		if (esc < 0) {
+			return value.substring(start, stop);
+		}
+
+		StringBuilder result = new StringBuilder();
+		do {
+			result.append(value, start, esc);
+			if (esc + 1 >= stop) {
+				// Should never happen when called with legal strings.
+				start = stop;
+				break;
+			}
+			char escaped = value.charAt(esc + 1);
+			switch (escaped) {
+				case 't':
+					result.append('\t');
+					break;
+				case 'b':
+					result.append('\b');
+					break;
+				case 'n':
+					result.append('\n');
+					break;
+				case 'r':
+					result.append('\r');
+					break;
+				case 'f':
+					result.append('\f');
+					break;
+				default:
+					result.append(escaped);
+			}
+			start = esc + 2;
+			esc = value.indexOf('\\', start);
+		} while (esc >= 0);
+
+		result.append(value, start, stop);
+
+		return result.toString();
+	}
+
+	static String unQuoteTextBlock(String value) {
+		List<String> lines = splitLines(value);
+		if (lines.size() > 1) {
+			int blockIndent = computeIndent(lines);
+			removeIndent(lines, blockIndent);
+		}
+		return joinLines(lines);
+	}
+
+	private static List<String> splitLines(String value) {
+		int pos = 3;
+		int stop = value.length() - 3;
+	
+		boolean join = false;
+		List<String> lines = new ArrayList<>();
+		while (true) {
+			int eol = value.indexOf('\n', pos);
+			if (eol < 0) {
+				String line = value.substring(pos, stop);
+				join = addLine(lines, join, line);
+				break;
+			} else {
+				int end;
+				if (eol > pos && value.charAt(eol - 1) == '\r') {
+					end = eol - 1;
+				} else {
+					end = eol;
+				}
+				String line = value.substring(pos, end);
+				join = addLine(lines, join, line);
+				pos = eol + 1;
+			}
+		}
+		return lines;
+	}
+
+	private static int computeIndent(List<String> lines) {
+		int blockIndent = Integer.MAX_VALUE;
+		for (String line : lines) {
+			if (line.isEmpty()) {
+				continue;
+			}
+	
+			int lineIndent = 0;
+			int start = 0;
+			int length = line.length();
+	
+			computeIndent:
+			while (start < length) {
+				char ch = line.charAt(start);
+				switch (ch) {
+					case ' ':
+						lineIndent++;
+						break;
+					case '\t':
+						lineIndent += 4;
+						lineIndent -= lineIndent % 4;
+						break;
+					default:
+						break computeIndent;
+				}
+	
+				start++;
+			}
+	
+			blockIndent = Math.min(blockIndent, lineIndent);
+		}
+		return blockIndent;
+	}
+
+	private static void removeIndent(List<String> lines, int blockIndent) {
+		List<Integer> charPos = new ArrayList<>();
+
+		if (blockIndent > 0 && blockIndent < Integer.MAX_VALUE) {
+			for (int n = 0, cnt = lines.size(); n < cnt; n++) {
+				String line = lines.get(n);
+				if (line.isEmpty()) {
+					continue;
+				}
+	
+				int lineIndent = 0;
+				int contentStart = 0;
+				int length = line.length();
+				charPos.clear();
+				charPos.add(Integer.valueOf(0));
+
+				computeIndent:
+				while (contentStart < length) {
+					char ch = line.charAt(contentStart);
+					switch (ch) {
+						case ' ':
+							lineIndent++;
+							break;
+						case '\t':
+							lineIndent += 4;
+							lineIndent -= lineIndent % 4;
+							break;
+						default:
+							break computeIndent;
+					}
+	
+					charPos.add(Integer.valueOf(lineIndent));
+					contentStart++;
+				}
+
+				int requiredIndent = lineIndent - blockIndent;
+				int indentEnd = contentStart;
+
+				while (indentEnd > 0 && charPos.get(indentEnd) > requiredIndent) {
+					indentEnd--;
+				}
+	
+				int missingIndent = requiredIndent - charPos.get(indentEnd);
+				line = line.substring(0, indentEnd) + " ".repeat(missingIndent) + line.substring(contentStart);
+				lines.set(n, line);
+			}
+		}
+	}
+
+	private static String joinLines(List<String> lines) {
+		int lineCnt = lines.size();
+
+		int firstLine = 0;
+		if (lineCnt > 1) {
+			if (lines.get(firstLine).isBlank()) {
+				firstLine++;
+			}
+
+			if (lineCnt > firstLine && lines.get(lineCnt - 1).isBlank()) {
+				lineCnt--;
+			}
+		}
+
+		StringBuilder result = new StringBuilder();
+		for (int n = firstLine, cnt = lineCnt; n < cnt; n++) {
+			String line = lines.get(n);
+
+			if (n > firstLine) {
+				result.append('\n');
+			}
+			result.append(unquoteStringContent(line, 0, line.length()));
+		}
+
+		return result.toString();
+	}
+
+	private static boolean addLine(List<String> lines, boolean join, String line) {
+		boolean joinNext = line.length() > 0 && line.charAt(line.length() - 1) == '\\';
+
+		String lineSuffix;
+		if (joinNext) {
+			lineSuffix = line.substring(0, line.length() - 1);
+		} else {
+			lineSuffix = trimEnd(line);
+		}
+
+		if (join) {
+			lines.set(lines.size() - 1, lines.get(lines.size() - 1) + trimStart(lineSuffix));
+		} else {
+			lines.add(lineSuffix);
+		}
+		return joinNext;
+	}
+
+	private static String trimStart(String line) {
+		int pos = 0;
+		int length = line.length();
+		while (pos < length && Character.isWhitespace(line.charAt(pos))) {
+			pos++;
+		}
+		return line.substring(pos);
+	}
+
+	private static String trimEnd(String line) {
+		int pos = line.length();
+		while (pos > 0 && Character.isWhitespace(line.charAt(pos - 1))) {
+			pos--;
+		}
+		if (pos == 0) {
+			// Lines consists only of white space. This is kept to find a valid indentation.
+			return line;
+		}
+		return line.substring(0, pos);
 	}
 
 }

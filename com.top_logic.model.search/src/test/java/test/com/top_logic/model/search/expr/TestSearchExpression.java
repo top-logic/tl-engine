@@ -1864,6 +1864,24 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 					".groupBy(s -> $s.subString(0, 1), l -> $l.groupBy(s -> $s.subString(1, 2)))"));
 	}
 
+	public void testStringQuote() throws ParseException {
+		assertEquals("\t\b\n\r\f\'\"\\", eval("'\\t\\b\\n\\r\\f\\'\\\"\\\\'"));
+	}
+
+	public void testTextBlock() throws ParseException {
+		assertEquals(
+			"	A\n" + 
+			"		B\n" +
+			"	C", 
+			(String) eval(
+			"	\"\"\"\n" +
+			"		A\n" + 
+			"			B\n" + 
+			"		C\n" + 
+			"	\"\"\""
+		));
+	}
+	
 	public void testSubString() throws ParseException {
 		assertEquals("Bar", eval("'FooBar'.subString(3)"));
 		assertEquals("Bar", eval("'FooBar'.subString(from: 3)"));

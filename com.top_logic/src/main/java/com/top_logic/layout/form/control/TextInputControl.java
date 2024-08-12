@@ -143,7 +143,8 @@ public class TextInputControl extends AbstractFormFieldControl implements WithPl
 	protected void internalHandlePlaceholderChanged(String newValue) {
 		if (isAttached()) {
 			addUpdate(
-				new PropertyUpdate(getInputId(), HTMLConstants.PLACEHOLDER_ATTR, new ConstantDisplayValue(newValue)));
+				new PropertyUpdate(getInputId(), HTMLConstants.PLACEHOLDER_ATTR,
+					new ConstantDisplayValue(StringServices.nonNull(newValue))));
 		}
 	}
 

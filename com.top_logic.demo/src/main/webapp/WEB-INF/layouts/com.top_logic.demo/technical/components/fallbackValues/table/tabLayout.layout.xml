@@ -5,7 +5,7 @@
 	final="true"
 	template="com.top_logic/tab.template.xml"
 >
-	<arguments helpID="ID_c616e491_fa9d_4d8f_8300_17c0ad675b73">
+	<arguments helpID="">
 		<tabLabel key="dynamic.ece21a45-faec-48d0-97ab-664d6fb3a572">
 			<en>Table</en>
 			<de>Tabelle</de>

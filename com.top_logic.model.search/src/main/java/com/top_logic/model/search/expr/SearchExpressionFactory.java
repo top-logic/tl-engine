@@ -627,13 +627,13 @@ public class SearchExpressionFactory {
 	}
 
 	/**
-	 * Creates a {@link ResKeyArguments} expression.
+	 * Creates a {@link Fill} expression.
 	 *
 	 * @param arguments
-	 *        See {@link ResKeyArguments#getArguments()}.
+	 *        See {@link Fill#getArguments()}.
 	 */
-	public static ResKeyArguments reskeyArguments(SearchExpression... arguments) {
-		return new ResKeyArguments(arguments);
+	public static Fill reskeyArguments(SearchExpression... arguments) {
+		return new Fill(arguments);
 	}
 
 	/**

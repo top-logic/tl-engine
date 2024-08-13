@@ -10,6 +10,7 @@ import java.util.Map;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -22,11 +23,11 @@ import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.mig.html.layout.QualifiedComponentNameConstraint;
 
 /**
- * Definition of the homepage of the user.
+ * Configuration of the homepage of a user.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public interface Homepage extends ConfigurationItem {
+public interface Homepage extends PolymorphicConfiguration<HomepageImpl> {
 
 	/** Configuration name for {@link #getMainLayout()} */
 	String MAINLAYOUT_NAME = "main-layout";

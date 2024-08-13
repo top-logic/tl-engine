@@ -7,6 +7,10 @@ package com.top_logic.layout.editor.commands;
 
 import static com.top_logic.layout.DisplayDimension.*;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,9 +20,11 @@ import java.util.Set;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CollectionUtil;
+import com.top_logic.basic.FileManager;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.knowledge.service.KBUtils;
@@ -32,7 +38,9 @@ import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.structure.DefaultLayoutData;
 import com.top_logic.layout.structure.LayoutData;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.mig.html.layout.LayoutConstants;
 import com.top_logic.mig.html.layout.LayoutScopeMapper;
+import com.top_logic.mig.html.layout.LayoutStorage;
 import com.top_logic.mig.html.layout.TLLayout;
 import com.top_logic.tool.boundsec.ConfirmCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -50,6 +58,8 @@ import com.top_logic.util.TLContext;
  * in-app development, the designed application views can also be exported to a local development
  * environment for a conventional build/deploy/release process.
  * </p>
+ * 
+ * @see LayoutStorage#markLayoutAsDeleted(String)
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
@@ -101,26 +111,28 @@ public class ExportLayoutCommandHandler extends ConfirmCommandHandler {
 	private Map<String, ConfigurationException> exportLayoutToFilesystem(LayoutExportContext context) {
 		Map<String, ConfigurationException> exportExceptionsByLayoutKey = new HashMap<>();
 
-		LayoutExporter exporter = createLayoutExporter(context);
+		Map<String, String> exportNameByLayoutKey = context.getExportNameByLayoutKey();
+		LayoutExporter exporter = new LayoutExporter(new LayoutScopeMapper(exportNameByLayoutKey));
 
 		for (Entry<String, TLLayout> entry : context.getTemplatesByLayoutKey().entrySet()) {
-			try {
-				exporter.export(entry.getKey(), entry.getValue());
-			} catch (ConfigurationException exception) {
-				exportExceptionsByLayoutKey.put(entry.getKey(), exception);
+			String layoutKey = entry.getKey();
+			TLLayout layout = entry.getValue();
+
+			if (isMarkedAsDeleted(layout)) {
+				delete(getIDELayoutFile(layoutKey));
+			} else if (exportNameByLayoutKey.containsKey(layoutKey)) {
+				try {
+					exporter.export(layoutKey, layout);
+				} catch (ConfigurationException exception) {
+					exportExceptionsByLayoutKey.put(layoutKey, exception);
+				}
 			}
+
+			LayoutExportUtils.deletePersistentLayoutTemplates(layoutKey);
 		}
 
 		return exportExceptionsByLayoutKey;
 
-	}
-
-	private LayoutExporter createLayoutExporter(LayoutExportContext context) {
-		return new LayoutExporter(createLayoutScopeMapper(context));
-	}
-
-	private LayoutScopeMapper createLayoutScopeMapper(LayoutExportContext context) {
-		return new LayoutScopeMapper(context.getExportNameByLayoutKey());
 	}
 
 	private LayoutExportContext createLayoutContext() {
@@ -198,6 +210,31 @@ public class ExportLayoutCommandHandler extends ConfirmCommandHandler {
 	@Override
 	protected ExecutabilityRule intrinsicExecutability() {
 		return InDesignModeExecutable.INSTANCE;
+	}
+
+	private boolean isMarkedAsDeleted(TLLayout layout) {
+		return LayoutStorage.DELETED_LAYOUT_TEMPLATE.equals(layout.getTemplateName());
+	}
+
+	private File getIDELayoutFile(String layoutKey) {
+		return FileManager.getInstance().getIDEFileOrNull(LayoutConstants.LAYOUT_BASE_RESOURCE + "/" + layoutKey);
+	}
+
+	private void delete(File layoutFile) {
+		if (layoutFile != null) {
+			Path parent = layoutFile.getParentFile().toPath();
+
+			layoutFile.delete();
+
+			try {
+				if (FileUtilities.isEmptyDirectory(parent)) {
+					Files.delete(parent);
+				}
+			} catch (IOException exception) {
+				throw new RuntimeException("File " + parent.toAbsolutePath().toString()
+					+ " could not be check for its deletion when exporting layouts.", exception);
+			}
+		}
 	}
 
 }

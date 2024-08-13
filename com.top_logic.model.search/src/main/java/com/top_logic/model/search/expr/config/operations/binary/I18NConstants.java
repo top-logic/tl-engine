@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.search.expr.config.operations.binary;
 
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -27,6 +28,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Conversion in "{1}" failed: {0}
 	 */
 	public static ResKey2 ERROR_CONVERSION_FAILED__MSG_EXPR;
+
+	/**
+	 * @en Headers should be in the same row "{1}" but got "{0}".
+	 */
+	public static ResKey2 ERROR_INVALID_CELL_ENTRY__VALUE_MSG;
+
+	/**
+	 * @en Given content type "{0}" is not supported.
+	 */
+	public static ResKey1 ERROR_UNSUPPORTED_CONTENT_TYPE__VALUE_MSG;
 
 	static {
 		initConstants(I18NConstants.class);

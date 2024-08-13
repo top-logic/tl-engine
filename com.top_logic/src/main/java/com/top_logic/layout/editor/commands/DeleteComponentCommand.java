@@ -135,7 +135,7 @@ public class DeleteComponentCommand extends ConfirmCommandHandler {
 		return I18NConstants.DELETE_COMPONENT_CONFIRMATION__NAME.fill(LayoutUtils.getLabel(editedComponent));
 	}
 
-	private Identifiers deleteComponents(LayoutComponent component, Set<String> visitedLayoutKeys)
+	private Identifiers deleteComponents(LayoutComponent component, Set<String> layoutKeys)
 			throws TopLogicException {
 		String rootLayoutKey = LayoutTemplateUtils.getNonNullNameScope(component);
 		LayoutComponent parent = component.getParent();
@@ -151,7 +151,7 @@ public class DeleteComponentCommand extends ConfirmCommandHandler {
 				ex);
 		}
 
-		deleteComponents(visitedLayoutKeys);
+		deleteComponents(layoutKeys);
 		try {
 			replaceParent(component, parentLayoutKey);
 		} catch (ConfigurationException ex) {
@@ -180,9 +180,14 @@ public class DeleteComponentCommand extends ConfirmCommandHandler {
 		}
 	}
 
-	private void deleteComponents(Set<String> visitedLayoutKeys) {
-		visitedLayoutKeys.stream()
-			.forEach(visitedLayoutKey -> LayoutTemplateUtils.deletePersistentTemplateLayout(visitedLayoutKey));
+	private void deleteComponents(Set<String> layoutKeys) {
+		layoutKeys.stream().forEach(layoutKey -> {
+			LayoutTemplateUtils.deletePersistentTemplateLayout(layoutKey);
+
+			if (LayoutExportUtils.existsLayoutInFilesystem(layoutKey)) {
+				LayoutStorage.getInstance().markLayoutAsDeleted(layoutKey);
+			}
+		});
 	}
 
 	private Identifiers updateParent(String rootLayoutKey, String parentLayoutKey) throws ConfigurationException {

@@ -79,9 +79,17 @@ TOKEN :
 | < ACCESS : "." >
 | < VAR : "$" < NAME > > 
 | < STRING : "'" (~[ "'", "\\" ] | < QUOTE > )* "'" | "\"" (~[ "\"", "\\" ] | < QUOTE > )* "\"" >
+| < TEXTBLOCK : "\"\"\"" (
+      ~[ "\"", "\\" ] | < QUOTE > | "\"" (
+		~[ "\"", "\\" ] | < QUOTE > | "\"" (
+		  ~[ "\"", "\\" ] | < QUOTE >
+        )
+      )
+    )* ( "\"" ( "\"")? )? "\"\"\""
+  >
 | < RESKEY : "#" < STRING > > 
 | < LANGTAG : "@" (["a"-"z", "A"-"Z"])+ ("-" (["a"-"z", "A"-"Z", "0"-"9"])+)* >
-| < #QUOTE : "\\\\" | "\\'" | "\\\"" >
+| < #QUOTE : "\\\\" | "\\'" | "\\\"" | "\\t" | "\\b" | "\\n" | "\\r" | "\\f" | "\\u" ("u")* ( ["0"-"9", "a"-"f", "A"-"F"] ){4} >
 | < INT : ("0" | ( [ "1"-"9" ] ( ("_")? [ "0"-"9" ])* )) >
 | < #NUM : ("0" | ( [ "1"-"9" ] ([ "0"-"9" ])* )) >
 | < FLOAT : < NUM > ("." ([ "0"-"9" ])+)? (["e", "E"] < NUM >)? >
@@ -347,6 +355,8 @@ Expr atomicExpr() :
     { expr=_f.falseLiteral(); }
   | t=< STRING > (l = < LANGTAG >)?
     { expr=l == null ? _f.stringLiteral(t.image) : _f.i18nBuilder().add(t.image, l.image).build(); }
+  | t=< TEXTBLOCK > (l = < LANGTAG >)?
+    { expr=l == null ? _f.textLiteral(t.image) : _f.i18nBuilder().addText(t.image, l.image).build(); }
   | t=< RESKEY >
     { expr=_f.reskeyLiteral(t.image); }
   | t=< FLOAT > 
@@ -615,6 +625,8 @@ void i18nEntry(I18NBuilder result) :
 {
   ( s=< STRING > l=< LANGTAG >
 	{ result.add(s.image, l.image); }
+  | s=< TEXTBLOCK > l=< LANGTAG >
+	{ result.addText(s.image, l.image); }
   | s=< NAME > ":" "{"
 	  i18nContents(result.suffix(s.image))
 	"}"

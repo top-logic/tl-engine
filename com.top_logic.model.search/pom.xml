@@ -43,4 +43,31 @@
 		<version>2.13.0</version>
 	</dependency>
   </dependencies>
+  
+	<build>
+		<plugins>
+			<!-- Call explicitly with: mvn javacc:javacc@generate-javacc -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>javacc-maven-plugin</artifactId>
+				<version>3.0.1</version>
+				
+				<executions>
+					<execution>
+						<id>generate-javacc</id>
+						<goals>
+							<goal>javacc</goal>
+						</goals>
+						<phase>none</phase>
+					</execution>
+				</executions>
+				
+				<configuration>
+					<sourceDirectory>${basedir}/src/main/java</sourceDirectory>
+					<outputDirectory>${basedir}/src/main/java</outputDirectory>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	  
 </project>

@@ -36,7 +36,8 @@ public abstract class BidirectionalTransformLinking<C extends AbstractTransformL
 	}
 
 	/**
-	 * Mapping to determine the value for the source channel from the transformed channel.
+	 * Mapping to determine the value for the source channel from the new and the old value of the
+	 * transformed channel.
 	 */
 	protected abstract BiFunction<Object, Object, ?> inverseTransformation();
 

@@ -47,8 +47,6 @@ public class LayoutExporter {
 	public void export(String layoutKey, TLLayout layout) throws ConfigurationException {
 		ensureLoadingCompleted();
 		exportToFilesystem(_mapper.mapScope(layoutKey), getExportedTemplate(layoutKey, layout));
-
-		LayoutExportUtils.deletePersistentLayoutTemplates(layoutKey);
 	}
 
 	/**

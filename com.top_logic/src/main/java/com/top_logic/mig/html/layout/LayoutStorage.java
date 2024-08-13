@@ -38,6 +38,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.misc.NamedRegexp;
 import com.top_logic.basic.io.FileSystemCache;
@@ -69,6 +70,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.editor.DatabaseLayoutCache;
 import com.top_logic.layout.editor.DynamicComponentService;
 import com.top_logic.layout.editor.LayoutTemplateUtils;
+import com.top_logic.layout.editor.commands.ExportLayoutCommandHandler;
 import com.top_logic.layout.processor.LayoutModelConstants;
 import com.top_logic.layout.processor.LayoutResolver;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
@@ -115,6 +117,16 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 	 * {@link LayoutComponent.Config} for the given layout name.
 	 */
 	public static LayoutComponent.Config NO_VALID_CONFIGURATION = null;
+
+	/**
+	 * Used in the template name column in the database table where all inapp layouts are stored to
+	 * indicate that this layout has been deleted and should be removed by the next layout export on
+	 * the filesystem too.
+	 */
+	public static final String DELETED_LAYOUT_TEMPLATE = "LAYOUT_DELETED";
+
+	private static final String DELETED_LAYOUT =
+		LayoutTemplateUtils.getSerializedTemplateArguments(TypedConfiguration.newConfigItem(ConfigurationItem.class));
 
 	private final CompiledQuery<PersistentTemplateLayoutWrapper> _personalTemplateLayouts;
 
@@ -963,6 +975,26 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 			}
 			return result;
 		}
+	}
+
+	/**
+	 * Marks the component by the given layout key in the database as deleted.
+	 * 
+	 * <p>
+	 * As deleted marked layouts are deleted from the filesystem too when the user exports the
+	 * layouts.
+	 * </p>
+	 * 
+	 * @param layoutKey
+	 *        Layout identifier.
+	 * 
+	 * @see ExportLayoutCommandHandler
+	 */
+	public void markLayoutAsDeleted(String layoutKey) {
+		PersistentTemplateLayoutWrapper layout = createTemplateLayoutWrapper(TLContext.getContext().getPerson(), layoutKey);
+
+		layout.setTemplate(DELETED_LAYOUT_TEMPLATE);
+		layout.setArguments(DELETED_LAYOUT);
 	}
 
 	/**

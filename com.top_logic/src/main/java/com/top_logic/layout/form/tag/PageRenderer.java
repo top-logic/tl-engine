@@ -56,6 +56,11 @@ public abstract class PageRenderer {
 	protected static final String SUBTITLE_CONTENT_CSS_CLASS = "fptSubtitleContent";
 
 	/**
+	 * CSS class for text in title and subtitle.
+	 */
+	protected static final String TITLE_TEXT_CSS_CLASS = "fptTitleText";
+
+	/**
 	 * CSS class of the icon bar div.
 	 */
 	protected static final String ICONBAR_CSS_CLASS = "fptIconBar";
@@ -223,7 +228,11 @@ public abstract class PageRenderer {
 	 * @see #writeTitle(DisplayContext, TagWriter, PageControl)
 	 */
 	public void writeTitleContent(DisplayContext context, TagWriter out, PageControl pageControl) throws IOException {
+		out.beginBeginTag(SPAN);
+		out.writeAttribute(CLASS_ATTR, TITLE_TEXT_CSS_CLASS);
+		out.endBeginTag();
 		pageControl.getTitleContent().write(context, out);
+		out.endTag(SPAN);
 	}
 
 	/**
@@ -241,7 +250,11 @@ public abstract class PageRenderer {
 	 * @see #writeSubTitle(DisplayContext, TagWriter, PageControl)
 	 */
 	public void writeSubtitleContent(DisplayContext context, TagWriter out, PageControl pageControl) throws IOException {
+		out.beginBeginTag(SPAN);
+		out.writeAttribute(CLASS_ATTR, TITLE_TEXT_CSS_CLASS);
+		out.endBeginTag();
 		pageControl.getSubtitleContent().write(context, out);
+		out.endTag(SPAN);
 	}
 
 	/**

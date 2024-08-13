@@ -20,6 +20,7 @@ import com.top_logic.layout.Drag;
 import com.top_logic.layout.Drop;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.contextmenu.control.ContextMenuOwner;
+import com.top_logic.layout.messagebox.ProgressControl;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
 
 /**
@@ -1118,6 +1119,9 @@ public interface HTMLConstants {
 	 * </p>
 	 */
 	public static final String TL_BROWSER_MENU_ATTR = DATA_ATTRIBUTE_PREFIX + "browser-menu";
+
+	/** Custom attribute to define when an action is complete. f.e. {@link ProgressControl} */
+	public static final String COMPLETE_ATTR = DATA_ATTRIBUTE_PREFIX + "complete";
 
 	/**
 	 * Attribute value to denote an empty source reference (e.g. used in combination with

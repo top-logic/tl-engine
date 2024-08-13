@@ -12,6 +12,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.AbstractVisibleControl;
 import com.top_logic.layout.basic.ConstantDisplayValue;
+import com.top_logic.mig.html.HTMLConstants;
 
 /**
  * Displays a progress bar.
@@ -21,6 +22,11 @@ public class ProgressControl extends AbstractVisibleControl {
 	private int _max = 100;
 
 	private int _value;
+
+	/** Custom attribute to define when the progress action is complete. */
+	private static final String COMPLETE_ATTR = HTMLConstants.DATA_ATTRIBUTE_PREFIX + "complete";
+
+	private boolean _isComplete;
 
 	@Override
 	protected String getTypeCssClass() {
@@ -48,9 +54,11 @@ public class ProgressControl extends AbstractVisibleControl {
 	/**
 	 * Sets the data-complete attribute of the progress bar.
 	 */
-	public void setComplete(String value) {
+	public void setComplete(boolean isComplete) {
+		_isComplete = isComplete;
+
 		if (isAttached() && !isRepaintRequested()) {
-			addUpdate(new PropertyUpdate(getID(), COMPLETE_ATTR, new ConstantDisplayValue(value)));
+			addUpdate(new PropertyUpdate(getID(), COMPLETE_ATTR, new ConstantDisplayValue(Boolean.toString(isComplete))));
 		}
 	}
 
@@ -78,7 +86,7 @@ public class ProgressControl extends AbstractVisibleControl {
 
 		out.writeAttribute(MAX_ATTR, _max);
 		out.writeAttribute(VALUE_ATTR, _value);
-		out.writeAttribute(COMPLETE_ATTR, "false");
+		out.writeAttribute(COMPLETE_ATTR, _isComplete);
 	}
 
 	@Override

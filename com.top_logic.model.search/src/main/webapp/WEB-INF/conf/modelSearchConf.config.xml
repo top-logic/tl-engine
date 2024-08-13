@@ -398,7 +398,7 @@
 					<method name="isCompatible" class="com.top_logic.model.search.expr.config.operations.IsCompatible$Builder"/>
 					<method name="singleElement" class="com.top_logic.model.search.expr.config.operations.SingleElementBuilder"/>
 					<method name="singleton" class="com.top_logic.model.search.expr.config.operations.SingletonBuilder"/>
-					<method name="fill" class="com.top_logic.model.search.expr.config.operations.ResKeyArgumentsBuilder"/>
+					<method name="fill" class="com.top_logic.model.search.expr.Fill$Builder"/>
 					<method name="associationNavigation" class="com.top_logic.model.search.expr.config.operations.AssociationNavigationBuilder"/>
 					<method name="all" class="com.top_logic.model.search.expr.config.operations.AllBuilder"/>
 					<method name="none" class="com.top_logic.model.search.expr.config.operations.EmptySetBuilder"/>

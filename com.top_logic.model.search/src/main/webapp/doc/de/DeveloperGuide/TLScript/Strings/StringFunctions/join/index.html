@@ -1,0 +1,81 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>$list.join(separator: ", ", prefix: "(", suffix: ")")</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Fügt eine Zeichenkette aus den gegebenen Listeneinträgen zusammen. Zwischen jedem Eintrag wird ein Separator eingefügt. Optional kann am Anfang und Ende noch ein Prefix oder Suffix hinzugefügt werden.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td><code class="hljs inlineCode">input</code></td>
+			<td>List von Werten</td>
+			<td>Die in eine Zeichenkette umzuwandelnden Werte</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">separator</code></td>
+			<td>Zeichenkette</td>
+			<td>Der Separator, der zwischen die einzelnen Werte eingefügt werden soll.</td>
+			<td>nein</td>
+			<td><code class="hljs inlineCode">", "</code></td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">prefix</code></td>
+			<td>Zeichenkette</td>
+			<td>Der optionale Prefix, der am Anfang des Ergebnisses hinzugefügt werden soll.</td>
+			<td>nein</td>
+			<td>leer</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">suffix</code></td>
+			<td>Zeichenkette</td>
+			<td>Der optionale Suffix, der am Ende des Ergebnisses hinzugefügt werden soll.</td>
+			<td>nein</td>
+			<td>leer</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Zeichenkette</p>
+
+<p>Alle gegebenen Wert hintereinandergefügt und mit einem Separator getrennt.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Beispiel 1</h3>
+
+<pre>
+	<code>[1, 2, 3].join()
+</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">"1, 2, 3"</code></p>
+
+<h3>Beispiel 2</h3>
+
+<pre>
+	<code>[1, 2, 3].join(separator: "; ", prefix: "{", suffix: "}");
+</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">"{1; 2; 3}"</code></p>
+
+<p> </p>

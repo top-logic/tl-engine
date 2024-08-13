@@ -201,6 +201,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.fallback.EditingCell;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundHelper;
@@ -2107,7 +2108,7 @@ public class GridComponent extends EditComponent implements
 
 	private void setRowModel(FormGroup row, Object rowModel) {
 		row.set(PROP_ATTRIBUTED, rowModel);
-        row.setStableIdSpecialCaseMarker(rowModel);
+		row.setStableIdSpecialCaseMarker(rowModel, this);
 	}
 
 	/**
@@ -2307,7 +2308,7 @@ public class GridComponent extends EditComponent implements
 										if (cssClassProvider != null) {
 											ValueListener classUpdate = (f, oldValue, newValue) -> {
 												String newClass = cssClassProvider
-													.getCellClass(new EditingCell(overlay, columnName, field));
+													.getCellClass(new EditingGridCell(overlay, columnName, field));
 												String oldClass = f.get(DYNAMIC_STYLE);
 												if (oldClass != null) {
 													f.removeCssClass(oldClass);
@@ -3309,6 +3310,10 @@ public class GridComponent extends EditComponent implements
 		}
 	}
 
+	/**
+	 * {@link CellClassProvider} that is wrapped around a custom {@link CellClassProvider} to shield
+	 * it from grid internals.
+	 */
 	private class GridCellClassProvider extends AbstractCellClassProvider {
 
 		private final CellClassProvider _wrappedTester;
@@ -3327,7 +3332,7 @@ public class GridComponent extends EditComponent implements
 				return null;
 			}
 
-			return _wrappedTester.getCellClass(cell instanceof EditingCell ? cell : wrap(cell));
+			return _wrappedTester.getCellClass(cell instanceof EditingGridCell ? cell : wrap(cell));
 		}
 
 		private Cell wrap(Cell cell) {
@@ -3337,15 +3342,6 @@ public class GridComponent extends EditComponent implements
 					Object gridRowObject = super.getRowObject();
 					FormGroup group = _handler.getGridRow(gridRowObject);
 					return group.get(PROP_ATTRIBUTED);
-				}
-
-				@Override
-				public Object getValue() {
-					Object rawValue = super.getValue();
-					if (rawValue instanceof FormField field) {
-						return field.getValue();
-					}
-					return rawValue;
 				}
 
 				@Override
@@ -3360,7 +3356,7 @@ public class GridComponent extends EditComponent implements
 	 * {@link com.google.common.collect.Table.Cell} adapter for accessing {@link CellClassProvider}s
 	 * outside a rendering context.
 	 */
-	private static final class EditingCell extends CellAdapter {
+	private static final class EditingGridCell extends CellAdapter implements EditingCell {
 		private final TLFormObject _overlay;
 
 		private final String _columnName;
@@ -3368,9 +3364,9 @@ public class GridComponent extends EditComponent implements
 		private final FormField _field;
 
 		/**
-		 * Creates a {@link EditingCell}.
+		 * Creates a {@link EditingGridCell}.
 		 */
-		private EditingCell(TLFormObject overlay, String columnName, FormField field) {
+		private EditingGridCell(TLFormObject overlay, String columnName, FormField field) {
 			_field = field;
 			_columnName = columnName;
 			_overlay = overlay;

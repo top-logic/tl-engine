@@ -19,6 +19,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.IDBuilder;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
@@ -222,7 +223,12 @@ public class DropDownControl extends AbstractSelectControl {
 					label = getItemLabel(dropdown, selection.get(0));
 					renderItemIcon(context, out, dropdown, selection.get(0), Flavor.DEFAULT);
 				} else {
-					label = SelectFieldUtils.getEmptySelectionLabel(dropdown);
+					Object placeholder = dropdown.getPlaceholder();
+					if (Utils.isEmpty(placeholder)) {
+						label = SelectFieldUtils.getEmptySelectionLabel(dropdown);
+					} else {
+						label = getItemLabel(dropdown, placeholder);
+					}
 				}
 			}
 			out.beginBeginTag(SPAN);

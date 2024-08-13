@@ -31,7 +31,7 @@ import com.top_logic.util.TLCollator;
 public class ClassificationFieldProvider extends AbstractSelectFieldProvider {
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
+	public FormMember createFormField(EditContext editContext, String fieldName) {
 		ClassificationPresentation presentation = TLAnnotations.getClassificationPresentation(
 			editContext.getAnnotation(ClassificationDisplay.class), editContext.isMultiple());
 		switch (presentation) {

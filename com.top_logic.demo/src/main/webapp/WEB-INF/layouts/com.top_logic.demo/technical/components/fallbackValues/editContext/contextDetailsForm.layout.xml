@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments
+		buttonbar="true"
+		defaultFor="test.fallback:A"
+		editMode=""
+		model="selection(com.top_logic.demo/technical/components/fallbackValues/contextGrid.layout.xml#Grid)"
+		resetInvisible="true"
+	>
+		<name key="dynamic.f3c84d5c-4426-410c-9934-08277fa20060">
+			<en>Context details</en>
+			<de>Kontext-Details</de>
+		</name>
+	</arguments>
+</config:template-call>

@@ -25,7 +25,9 @@ import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ColumnConfiguration.DisplayMode;
 import com.top_logic.layout.table.model.ColumnConfigurator;
 import com.top_logic.layout.table.provider.generic.TableConfigModelInfo;
+import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLModelPart;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
 import com.top_logic.model.annotate.AnnotationLookup;
@@ -34,6 +36,8 @@ import com.top_logic.model.annotate.ui.PDFRendererAnnotation;
 import com.top_logic.model.annotate.ui.TLCssClass;
 import com.top_logic.model.export.ConcatenatedPreloadContribution;
 import com.top_logic.model.export.PreloadContribution;
+import com.top_logic.model.fallback.FallbackCellClassProvider;
+import com.top_logic.model.fallback.StorageWithFallback;
 import com.top_logic.model.util.TLTypeContext;
 import com.top_logic.tool.export.pdf.PDFRenderer;
 
@@ -227,6 +231,14 @@ public abstract class ColumnInfo implements ColumnConfigurator {
 		}
 		if (_cellClassProvider != null) {
 			column.setCssClassProvider(_cellClassProvider);
+		} else {
+			TLTypePart part = getTypeContext().getTypePart();
+			if (part != null && part instanceof TLStructuredTypePart attribute) {
+				StorageDetail storage = attribute.getStorageImplementation();
+				if (storage instanceof StorageWithFallback fallbackStorage) {
+					column.setCssClassProvider(new FallbackCellClassProvider(attribute, fallbackStorage));
+				}
+			}
 		}
 	}
 

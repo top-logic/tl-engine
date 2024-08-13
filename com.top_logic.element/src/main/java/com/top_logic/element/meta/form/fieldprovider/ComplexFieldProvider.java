@@ -90,7 +90,7 @@ public class ComplexFieldProvider extends AbstractSelectFieldProvider
 	}
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
+	public FormMember createFormField(EditContext editContext, String fieldName) {
 		boolean isMandatory = editContext.isMandatory();
 		boolean isDisabled = editContext.isDisabled();
 		boolean isSearch = editContext.isSearchUpdate();

@@ -1,0 +1,12 @@
+<p>Classes describe the properties of objects. Objects of a class are called instances of the class. Any number of objects can be created from a class. All these instances of the class have the same properties and differ only in the values of the properties.</p>
+<h2>Instance administration</h2>
+<p>The TopLogic model editor offers the option of instantiating classes directly, i.e. creating objects from these classes without having to define a specialized user interface beforehand. This built-in instance editor can be used for simple applications where instances of a class can only be created administratively and not by the end user of the application.</p>
+<h2>Generic creation option</h2>
+<p>Let's assume that in the example of <code class="hljs inlineCode">RobotSystem</code> and <code class="hljs inlineCode">Manufacturer</code> from the <a class="tlObject" data-custom="false" href="?page=References&amp;uuid=24f0521d-7151-428c-9619-cc92816b60be">References</a> section, the manufacturers that can be selected for a robot are only to be created administratively. Then you can use the instance editor to create manufacturers directly in the system.</p>
+<p><img src="ref:image_1.png" style="height:318px; opacity:1; width:603px"></p>
+<p>In this trivial model, the manufacturer has only one attribute, the name. Exactly this attribute is offered here as a column. When editing, a text field is displayed in which the name of the manufacturer created in this way can be entered.</p>
+<p><img src="ref:image.png" style="height:285px; opacity:1; width:599px"></p>
+<h2>Automatic selection of the input field</h2>
+<p>When creating a robot, things look a little different. A robot had two attributes, a name (text / <code class="hljs inlineCode">String</code>), a weight (floating point number / <code class="hljs inlineCode">Double</code>) and a reference "Manufacturer" of the type "<code class="hljs inlineCode">Manufacturer</code>".</p>
+<p><img src="ref:image_2.png" style="height:254px; opacity:1; width:599px"></p>
+<p>Here the interface follows the model and offers a text field for the name, an input field for the weight that only accepts numbers and a selection field for the manufacturer in which one of the three manufacturers administered above can be selected. If the input violates the value range of the types, corresponding error messages are displayed.</p>

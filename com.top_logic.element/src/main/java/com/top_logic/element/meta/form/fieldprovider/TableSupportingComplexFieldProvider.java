@@ -59,8 +59,8 @@ public class TableSupportingComplexFieldProvider extends ComplexFieldProvider {
 	}
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
-		SelectField selectField = (SelectField) super.getFormField(editContext, fieldName);
+	public FormMember createFormField(EditContext editContext, String fieldName) {
+		SelectField selectField = (SelectField) super.createFormField(editContext, fieldName);
 		
 		TableConfig table = getConfig().getTable();
 		if (table != null) {

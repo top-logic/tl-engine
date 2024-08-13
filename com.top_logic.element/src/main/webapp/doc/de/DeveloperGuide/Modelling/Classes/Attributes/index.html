@@ -1,15 +1,21 @@
-<p>Bei den Eigenschaften einer Klasse&nbsp;unterscheidet TopLogic zwischen Attributen und <a class="tlObject" data-custom="false" href="?page=References&amp;uuid=24f0521d-7151-428c-9619-cc92816b60be">Referenzen</a>. Ein Attribut ist eine Klasseneigenschaft, die einen einzelnen Wert wie eine Zahl oder einen Text darstellt. Der Wertetyp eines Attributs ist über einen <a class="tlObject" data-custom="true" href="?page=Datatypes&amp;uuid=af1def26-3023-46c9-b73d-253e799f9373">Datentyp</a> beschrieben. Im Auslieferungszustand bietet TopLogic bereits eine Vielzahl von vordefinierten Datentypen, die für die als Attributtypen verwendet werden können. Der Wertetyp des Attributs bestimmt beispielsweise, welches Eingabefeld für das Attribut in einem Formular dargestellt wird, oder wie eine Tabellenspalte, die dieses Attribut darstellt, sortiert oder gefiltert werden kann.</p>
+<p>Bei den Eigenschaften einer Klasse unterscheidet TopLogic zwischen Attributen und <a class="tlObject" data-custom="false" href="?page=References&amp;uuid=24f0521d-7151-428c-9619-cc92816b60be">Referenzen</a>. Ein Attribut ist eine Klasseneigenschaft, die einen einzelnen Wert wie eine Zahl oder einen Text darstellt. Der Wertetyp eines Attributs ist über einen <a class="tlObject" data-custom="true" href="?page=Datatypes&amp;uuid=af1def26-3023-46c9-b73d-253e799f9373">Datentyp</a> beschrieben. Im Auslieferungszustand bietet TopLogic bereits eine Vielzahl von vordefinierten Datentypen, die für die als Attributtypen verwendet werden können. Der Wertetyp des Attributs bestimmt beispielsweise, welches Eingabefeld für das Attribut in einem Formular dargestellt wird, oder wie eine Tabellenspalte, die dieses Attribut darstellt, sortiert oder gefiltert werden kann.</p>
+
 <h2>Attribut anlegen</h2>
+
 <p>Eine neu angelegte Klasse hat noch keine Eigenschaften. Ein neues Attribut kann im Diagramm der Klasse erstellt werden, indem die Klasse selektiert wird und anschließend in der daneben erscheinenden Toolbox das Plus-Symbol angeclickt wird.</p>
-<p><img src="ref:image.png" style="height:294px; opacity:1; width:600px"></p>
+
+<p><img src="ref:image.png" style="height:294px; opacity:1; width:600px" /></p>
+
 <p>Im sich darauf öffnenden Dialog muss für das neue Attribut mindestens ein technischer Name und ein Wertetyp festgelegt werden. Der technische Name eines Attribut sollte mit einem Kleinbuchstaben beginnen und nur aus Buchstaben ohne Leerzeichen und Sonderzeichen bestehen. Wie bei Klassennamen können zusammengesetzte Wörter über Großbuchstaben im Wort strukturiert werden.</p>
-<p><img src="ref:image_1.png" style="height:394px; opacity:1; width:601px"></p>
+
+<p><img src="ref:image_1.png" style="height:394px; opacity:1; width:601px" /></p>
+
 <h2>Wertetyp auswählen</h2>
+
 <p>Der Wertetyp kann entweder über den Selektor ausgewählt werden, oder man tippt den Anfang seines Namens und erhält entsprechende Vorschläge. Die wichtigsten und am häufigsten verwendeten Datenypen sind im Modul <code class="hljs inlineCode">tl.core</code> definiert. Siehe hierzu auch den Abschnitt <a class="tlObject" data-custom="false" href="?page=Datatypes&amp;uuid=af1def26-3023-46c9-b73d-253e799f9373">Datentypen</a>.</p>
+
 <p>Nach Bestätigung wird das neue Attribut im Diagramm der Klasse mit seinem Namen und seinem Wertetyp angezeigt. Im folgenden Beispiel wurden zwei Attribute für die Klasse <code class="hljs inlineCode">RobotSystem</code> angelegt, ein Name und ein Gewicht:</p>
-<p><img src="ref:image_2.png" style="height:231px; opacity:1; width:600px"></p>
+
+<p><img src="ref:image_2.png" style="height:231px; opacity:1; width:600px" /></p>
+
 <p>Standardmäßig verwendet das Diagramm nicht die technischen Namen von Klassen und Attributen, sondern ihre Anzeigenamen. Dies kann in dem Burger-Menü des Diagramms umgestellt werden.</p>
-<h2>Das Namens-Attribut</h2>
-<p>Bei der Wahl der Attributnamen ist man frei. Man kann hier passende Namen der Fachdomäne wählen. Es gibt lediglich ein Attribut mit einer besonderen Bedeutung. Erstellt man in einer Klasse ein Attribut mit Namen <code class="hljs inlineCode">name</code>, so wird der Wert dieses Attributs verwendet, um beispielsweise einen Verweis auf dieses Objekt in der Benutzeroberfläche darzustellen. Viele Fachklassen haben ein sinnvolles Namensattribut, das so vom Nutzer auch direkt gefüllt werden kann bzw. muss. Wenn Klassen kein Namensattribut definieren, dann dürfen diese nicht direkt in der Benutzeroberfläche angezeigt werden (z.B. als Knoten in einem <a class="tlObject" data-custom="true" href="?page=Trees&amp;uuid=77e3e974-8b6a-4081-b58f-c0b3e51a91a5">Baum</a>, oder als Werte von <a class="tlObject" data-custom="false" href="?page=References&amp;uuid=24f0521d-7151-428c-9619-cc92816b60be">Referenzen</a> einer anderen Klasse).</p>
-<p>In komplizierteren Situationen, kann es angezeigt sein, dass das Namensattribut nicht direkt vom Benutzer gefüllt werden muss, sondern sich der Anzeigename für ein Objekt aus mehreren anderen seiner Attribute ableitet. In diesem Fall kann auch ein <a class="tlObject" data-custom="true" href="?page=DerivedAttributes&amp;uuid=156bb8f1-02ff-4882-9e57-d2653554f4f8">berechnetes Attribut</a> als Namensattribut verwendet werden.</p>
-<p>&nbsp;</p>

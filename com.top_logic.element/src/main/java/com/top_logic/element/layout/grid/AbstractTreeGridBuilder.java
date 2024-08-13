@@ -472,6 +472,7 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 			}
 
 			table = FormFactory.newTreeTableField(GridComponent.FIELD_TABLE, grid.getConfigKey(), _treeModel);
+			table.setStableIdSpecialCaseContext(grid);
 		}
 
 		/**

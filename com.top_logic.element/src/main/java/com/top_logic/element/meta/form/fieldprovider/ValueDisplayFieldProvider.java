@@ -62,7 +62,7 @@ public class ValueDisplayFieldProvider extends AbstractFieldProvider
 	}
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
+	public FormMember createFormField(EditContext editContext, String fieldName) {
 		return FormFactory.newDisplayField(fieldName, null, _renderer);
 	}
 

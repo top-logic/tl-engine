@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/grid.template.xml"
+>
+	<arguments
+		defaultColumns="id,text,textFallback,date,dateFallback,selection,selectionFallback,popup,popupFallback,number,numberFallback,datetime,datetimeFallback"
+		defaultSelection="false"
+		model="selection(com.top_logic.demo/technical/components/fallbackValues/contextGrid.layout.xml#Grid)"
+		multiSelection="true"
+		type="test.fallback:B"
+	>
+		<name key="dynamic.22320310-2929-4e6d-a373-bee69fd17c84">
+			<en>Elements</en>
+			<de>Elemente</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->$model.get(`test.fallback:A#contents`)"
+			supportsElement="element->$element.instanceOf(`test.fallback:B`)"
+		/>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+			<button id="createRow"
+				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
+				initOperation="container -> obj -> $container.add(`test.fallback:A#contents`, $obj)"
+			>
+				<executability>
+					<rule-by-expression decision="model -> $model != null"/>
+				</executability>
+				<checkScopeProvider/>
+				<type-options
+					include-subtypes="false"
+					type="test.fallback:B"
+				/>
+			</button>
+			<button id="deleteRow"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

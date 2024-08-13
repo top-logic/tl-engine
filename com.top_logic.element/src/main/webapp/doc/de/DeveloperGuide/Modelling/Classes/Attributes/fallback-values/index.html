@@ -1,0 +1,21 @@
+<p>Werte von normale Attribute werden in der Datenbank gespeichert und der in der Datenbank gespeicherte Wert wird an der Oberfläche angezeigt. Die Anzeige an der Oberfläche kann über die Sichtenkonfiguration eingeschänkt werden, so dass der Wert entweder gar nicht, oder nicht bearbeitbar angezeigt wird.</p>
+
+<p>Eine spezielle Form von Attributen sind solche mit "Ersatzwert". Ein Attribut mit Ersatzwert kann auch dann einen Wert liefern, wenn dem Attribut noch kein expliziter Wert gesetzt wurde. In diesem Fall liefert das Attribut einen Ersatzwert, der aus einem anderen Attribut desselben Objektes genommen wird.</p>
+
+<p>Technisch besteht ein Attribut mit Ersatzwert aus drei Attributen (dem Attribut mit Ersatzwert, einem Speicherattribut, in dem ein explizit eingebener Wert gespeichert wird, und einem Attribut, das den Ersatzwert liefert). Das Speicherattribut ist i.d.R. versteckt und dient nur internen Speicherung von explizit eingegebenen Werten. Fachlogik kann auf das Speicherattribut zugreifen, um zu prüfen, ob ein expliziter Wert eingegeben wurde, oder ob das Attribut mit Ersatzwert seinen Ersatzwert verwendet. Beim Zugriff auf das Attribut mit Ersatzwert selbst ist nicht feststellbar, ob es sich um einen explizit eingebenen Wert oder den Ersatzwert handelt. Der Zugriff auf das Attribut liefert immer einen Wert, entweder den explizit eingegebenen oder den Ersatzwert, wenn kein Wert explizit eingegeben wurde.</p>
+
+<p>Im Gegensatz zu einem Standardwert, der bei normalen Attribute über eine Annotation gesetzt werden kann, ist ein Ersatzwert dynamisch. Wenn sich der Wert des Ersatzattributes ändert, so ändert sich automatisch auch der Wert des Attributes mit Ersatzwert. Ein Standardwert hingegen wird bei der Objekterzeugung in das Attribut gespeichert, für das er konfiguriert wird (wenn er nicht vom Nutzer in einer Anlagemaske eingegeben wird). Ein so gesetzter Standardwert ändert sich nicht mehr, sebst dann nicht, wenn man die Standardwertannotation ändern würde.</p>
+
+<h2>Anwendungsbeispiel</h2>
+
+<p>In einem Meilenstein soll ein Plantermin und ein Vorhersagetermin gepflegt werden. Solange Plan und Vorhersage nicht voneinander abweichen, gibt es keine Notwendigkeit für den Nutzer den Vorhersagetermin explizit einzugeben. In diesem Fall ist der Vorhersagetermin gleich dem Plantermin. Ändert der Nutzer den Plan, passt sich die Vorhersage automatisch an den neuen Plan an. Erst wenn die Vorhersage vom Plan abweicht, soll ein ein expliziter Vorhersagetermin eingegeben werden können.</p>
+
+<p>Diese Situation könnte man mit einem Attribut mit Ersatzwert (dem Plantermin) realisieren. Das Planterminattribut liefert hier den Ersatzwert. Ein weiteres (verstecktes) Attribut für einen explizit gesetzten Plantermin wird für die Speicherung von explizit vergebenen Planterminen verwendet.</p>
+
+<h2>Konfiguration</h2>
+
+<p>Ein Attribut mit Ersatzwert wird über eine spezielle Speichervorschrift "Attribut mit Ersatzwert" angelegt. An dieser Speichervorschrift muss das Speicher- und das Ersatzwertattribut konfiguriert werden. Zusätzlich kann auch die farbliche Kenntlichmachung von explizit eingegbenen Werten und Ersatzwerten an der Speichervorschrift eingestellt werden.</p>
+
+<p> </p>
+
+<p> </p>

@@ -19,7 +19,6 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import com.top_logic.basic.CollectionUtil;
-import com.top_logic.basic.ExceptionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.ComparableComparator;
@@ -556,13 +555,11 @@ public class SelectFieldUtils {
 	 * @param out
 	 *        The output to append selection to.
 	 * 
-	 * @return Given {@link Appendable}.
-	 * 
 	 * @see SelectFieldUtils#writeSelectionAsTextEditable(Appendable, FormField) Only all selected
 	 *      values separated by the given separator.
 	 */
-	public static <T extends Appendable> T writeSelectionAsTextImmutable(T out, FormField field) throws IOException {
-		return writeSelectionAsText(out, field, getCollectionSeparator(field));
+	public static void writeSelectionAsTextImmutable(Appendable out, FormField field) throws IOException {
+		writeSelectionAsText(out, field, getCollectionSeparator(field));
 	}
 
 	/**
@@ -571,9 +568,9 @@ public class SelectFieldUtils {
 	 * 
 	 * @see SelectFieldUtils#writeSelectionAsTextImmutable(Appendable, FormField)
 	 */
-	public static <T extends Appendable> T writeSelectionAsText(T out, FormField field, String separator)
+	public static void writeSelectionAsText(Appendable out, FormField field, String separator)
 			throws IOException {
-		return internalWriteSelectionAsText(out, field, true, separator);
+		internalWriteSelectionAsText(out, field, true, separator, getSelectionList(field));
 	}
 
 	/**
@@ -623,77 +620,59 @@ public class SelectFieldUtils {
 	 * @param out
 	 *        The output to append selection to.
 	 * 
-	 * @return Given {@link Appendable}.
-	 * 
 	 * @see SelectFieldUtils#writeSelectionAsTextImmutable(Appendable, FormField) A description of the
 	 *      selection with a special description for the empty selection.
 	 */
-	public static <T extends Appendable> T writeSelectionAsTextEditable(T out, FormField field) throws IOException {
-		return writeSelectionAsTextPlain(out, field, getMultiSelectionSeparatorFormat(field));
+	public static void writeSelectionAsTextEditable(Appendable out, FormField field) throws IOException {
+		List<?> selection = getSelectionList(field);
+		writeSelectionAsTextEditable(out, field, selection);
 	}
 
 	/**
-	 * Labels of the current selection joined with the given separator instead of the default
-	 * separator.
+	 * Labels of the given selection joined with the default {@link SelectField} separator.
 	 * 
-	 * @see SelectFieldUtils#writeSelectionAsTextImmutable(Appendable, FormField)
+	 * @param out
+	 *        The output to append selection to.
+	 * 
+	 * @see SelectFieldUtils#writeSelectionAsTextImmutable(Appendable, FormField) A description of
+	 *      the selection with a special description for the empty selection.
 	 */
-	public static <T extends Appendable> T writeSelectionAsTextPlain(T out, FormField field, String separator)
+	public static void writeSelectionAsTextEditable(Appendable out, FormField field, List<?> selection)
 			throws IOException {
-		return internalWriteSelectionAsText(out, field, false, separator);
+		internalWriteSelectionAsText(out, field, false, getMultiSelectionSeparatorFormat(field), selection);
 	}
 
-	private static <T extends Appendable> T internalWriteSelectionAsText(T out, FormField field, boolean useEmptyLabel,
-			String separator) throws IOException {
-		List<Throwable> labelErrors = new ArrayList<>();
-		List<?> theSel = getSelectionList(field);
+	private static void internalWriteSelectionAsText(Appendable out, FormField field, boolean useEmptyLabel,
+			String separator, List<?> selection) throws IOException {
 
-		int size = theSel.size();
-
-		if (size == 1) {
-			// Optimization for single selections.
-			out.append(getOptionLabel(field, theSel.get(0)));
-			return out;
-		}
+		int size = selection.size();
 
 		if (size == 0) {
 			if (useEmptyLabel) {
 				out.append(getEmptySelectionLabelImmutable(field));
 			}
-			return out;
+			return;
+		}
+
+		if (size == 1) {
+			// Optimization for single selections.
+			out.append(getOptionLabel(field, selection.get(0)));
+			return;
 		}
 
 		if (!SelectFieldUtils.hasCustomOrder(field)) {
-			theSel = new ArrayList<Object>(theSel);
-			Collections.sort(theSel, getOptionComparator(field));
+			selection = new ArrayList<Object>(selection);
+			Collections.sort(selection, getOptionComparator(field));
 		}
 
 		// Multiple selections
-		out.append(getOptionLabelFailsafe(field, theSel.get(0), labelErrors));
+		out.append(getOptionLabel(field, selection.get(0)));
 		for (int i = 1; i < size; i++) {
 			out.append(separator);
-			out.append(getOptionLabelFailsafe(field, theSel.get(i), labelErrors));
+			out.append(getOptionLabel(field, selection.get(i)));
 		}
 
-		if (!CollectionUtil.isEmpty(labelErrors)) {
-			RuntimeException labelException = ExceptionUtil.createException(
-				"Error occured during rendering of options of field '" + field.getQualifiedName() + "'.",
-				labelErrors);
-			throw labelException;
-		}
-		return out;
-	}
-
-	private static String getOptionLabelFailsafe(FormField field, Object option, List<Throwable> labelErrors) {
-		String optionLabel;
-		try {
-			optionLabel = getOptionLabel(field, option);
-		} catch (Throwable throwable) {
-			labelErrors.add(throwable);
-			optionLabel = Resources.getInstance()
-				.getString(com.top_logic.layout.form.control.I18NConstants.RENDERING_ERROR_SELECT_FIELD);
-		}
-		return optionLabel;
+		return;
 	}
 
 	/**
@@ -740,7 +719,13 @@ public class SelectFieldUtils {
 	 * list of selected options in undefined order
 	 */
 	public static List<?> getSelectionList(FormField field) {
-		Object value = field.getValue();
+		return toList(field.getValue());
+	}
+
+	/**
+	 * The given value as list.
+	 */
+	public static List<?> toList(Object value) {
 		if (value instanceof Collection<?>) {
 			return CollectionUtil.toList((Collection<?>) value);
 		}

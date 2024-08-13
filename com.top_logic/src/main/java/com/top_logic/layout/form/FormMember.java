@@ -86,6 +86,26 @@ public interface FormMember extends FormContextProxy, Focusable, VisibilityModel
 		TypedAnnotatable.property(Object.class, "context");
 
 	/**
+	 * Type of the <code>active</code> property.
+	 * 
+	 * The value transmitted to the client in response to a change of this property is a
+	 * {@link com.top_logic.base.services.simpleajax.XMLValueConstants#BOOLEAN_ELEMENT}.
+	 * 
+	 * @see #isActive()
+	 * @see ActivePropertyListener
+	 */
+	EventType<ActivePropertyListener, FormMember, Boolean> ACTIVE_PROPERTY =
+			new EventType<>("immutable") {
+		
+		@Override
+		public Bubble dispatch(ActivePropertyListener listener, FormMember sender, Boolean oldValue,
+				Boolean newValue) {
+			return listener.handleActiveChanged(sender, oldValue, newValue);
+		}
+		
+	};
+	
+	/**
 	 * Type of the <code>immutable</code> property.
 	 * 
 	 * The value transmitted to the client in response to a change of this property is a
@@ -230,6 +250,7 @@ public interface FormMember extends FormContextProxy, Focusable, VisibilityModel
 		.add(TOOLTIP_PROPERTY)
 		.add(LABEL_PROPERTY)
 		.add(CLASS_PROPERTY)
+		.add(ACTIVE_PROPERTY)
 		.add(DISABLED_PROPERTY)
 		.add(IMMUTABLE_PROPERTY)
 		.add(ADDED_TO_PARENT)

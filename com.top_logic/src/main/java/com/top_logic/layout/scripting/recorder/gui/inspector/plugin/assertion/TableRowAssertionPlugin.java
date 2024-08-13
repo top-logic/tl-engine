@@ -29,7 +29,7 @@ import com.top_logic.layout.scripting.recorder.ref.value.RowTableValue;
 public class TableRowAssertionPlugin extends SingleValueAssertionPlugin<TableCell, FormField> {
 
 	public TableRowAssertionPlugin(TableCell model) {
-		super(model, true, "tableRow");
+		super(model, false, "tableRow");
 	}
 
 	@Override

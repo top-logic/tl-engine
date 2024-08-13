@@ -461,6 +461,7 @@ public abstract class AbstractFormMember extends PropertyObservableBase implemen
 		}
 		default: {
 			assert mode == ACTIVE_MODE;
+			firePropertyChanged(ACTIVE_PROPERTY, self(), Boolean.valueOf(!isNewMode), Boolean.valueOf(isNewMode));
 			break;
 		}
 		}

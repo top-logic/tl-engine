@@ -21,7 +21,7 @@ import com.top_logic.layout.form.FormMember;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public interface FieldProvider extends Unimplementable {
+public interface FieldProvider {
 
 	/**
 	 * Create a {@link FormMember} for the given edit location.

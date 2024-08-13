@@ -220,6 +220,8 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 	 */
     private boolean fireChangedEvent = true;
 
+	private Object _placeholder;
+
     /**
 	 * Creates a new field with given parameters.
 	 * 
@@ -479,6 +481,18 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 			// Ignore, do not produce user feedback.
 		}
     }
+
+	@Override
+	public Object getPlaceholder() {
+		return _placeholder;
+	}
+
+	@Override
+	public void setPlaceholder(Object newValue) {
+		Object oldValue = _placeholder;
+		_placeholder = newValue;
+		notifyListeners(PLACEHOLDER_PROPERTY, this, oldValue, newValue);
+	}
 
 	/**
 	 * Calling this method indicates that the new value is not a programmatic

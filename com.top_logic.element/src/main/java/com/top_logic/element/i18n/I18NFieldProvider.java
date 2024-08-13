@@ -20,7 +20,7 @@ import com.top_logic.model.annotate.ui.MultiLine;
 public abstract class I18NFieldProvider extends AbstractFieldProvider {
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
+	public FormMember createFormField(EditContext editContext, String fieldName) {
 		boolean isMandatory = editContext.isMandatory();
 		boolean isDisabled = editContext.isDisabled();
 		boolean isMultiLine = AttributeOperations.isMultiline(editContext.getAnnotation(MultiLine.class));

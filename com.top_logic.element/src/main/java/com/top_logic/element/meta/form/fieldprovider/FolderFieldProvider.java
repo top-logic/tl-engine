@@ -24,7 +24,7 @@ import com.top_logic.util.Resources;
 public class FolderFieldProvider extends AbstractFieldProvider {
 
 	@Override
-	public FormMember getFormField(EditContext editContext, String fieldName) {
+	public FormMember createFormField(EditContext editContext, String fieldName) {
 		final TLObject attributedObject = editContext.getObject();
 
 		if (attributedObject == null) {

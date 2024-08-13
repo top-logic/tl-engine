@@ -65,7 +65,7 @@ public class FieldValueAssertionPlugin extends FieldAssertionPlugin<FormField, F
 		return valueAssertion;
 	}
 
-	private Comparision compareMode(FormField field) {
+	static Comparision compareMode(FormField field) {
 		Comparision compareMode = Comparision.EQUALS;
 		if (field instanceof SelectField && !((SelectField) field).hasCustomOrder()) {
 			compareMode = Comparision.MULTI_SET_EQUALS;

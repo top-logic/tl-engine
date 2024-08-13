@@ -12,19 +12,13 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.knowledge.wrap.person.Homepage;
-import com.top_logic.knowledge.wrap.person.Homepage.ChannelValue;
-import com.top_logic.knowledge.wrap.person.Homepage.Path;
+import com.top_logic.knowledge.wrap.person.HomepageImpl;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.layout.scripting.recorder.ref.ModelName;
-import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
-import com.top_logic.layout.scripting.recorder.ref.ui.LayoutComponentResolver;
-import com.top_logic.layout.scripting.runtime.LiveActionContext;
-import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.mig.html.layout.MainLayout;
@@ -130,68 +124,14 @@ public class TLMainLayout extends BoundMainLayout {
 			return;
 		}
 
-		boolean anythingChanged = installComponentPath(personalConfig, homepage);
-		if (anythingChanged) {
-			this.invalidate();
-		}
-	}
+		HomepageImpl homepageImpl = TypedConfigUtil.createInstance(homepage);
 
-	private boolean installComponentPath(PersonalConfiguration personalConfig, Homepage homepage) {
-		boolean anythingChanged = false;
-		LiveActionContext context = new LiveActionContext(DefaultDisplayContext.getDisplayContext(), this);
-		for (Path step : homepage.getComponentPaths()) {
-			ComponentName targetComponentName = step.getComponent();
-			LayoutComponent component = getComponentByName(targetComponentName);
-			if (component == null) {
-				handleTargetComponentUnresolvable(personalConfig);
-				return anythingChanged;
-			}
+		homepageImpl.restore(personalConfig, this);
 
-			boolean visible = component.makeVisible();
-			if (!visible) {
-				return anythingChanged;
-			}
-			for (ChannelValue channelValue : step.getChannelValues().values()) {
-				Object value;
-				try {
-					value = locateModel(context, channelValue.getValue());
-				} catch (RuntimeException | AssertionError ex) {
-					handleTargetObjectUnresolvable(personalConfig);
-					continue;
-				}
-				component.getChannel(channelValue.getName()).set(value);
-			}
-		}
-		return anythingChanged;
-	}
-
-	/**
-	 * Resolves the model of the {@link Homepage}.
-	 */
-	private Object locateModel(LiveActionContext context, ModelName name) {
-		/* Ensure that eventually hidden components are found. Such a component is made visible when
-		 * displaying model. */
-		boolean before = LayoutComponentResolver.allowResolvingHiddenComponents(context, true);
-		try {
-			return ModelResolver.locateModel(context, name);
-		} finally {
-			LayoutComponentResolver.allowResolvingHiddenComponents(context, before);
-		}
 	}
 
 	private void handleHomepageFormatChanged(PersonalConfiguration personalConfig) {
-		resetHomepage(personalConfig, I18NConstants.HOMEPAGE_RESTORE_PROBLEM_SCHEMA_CHANGED);
-	}
-
-	private void handleTargetComponentUnresolvable(PersonalConfiguration personalConfig) {
-		resetHomepage(personalConfig, I18NConstants.HOMEPAGE_RESTORE_PROBLEM_COMPONENT_INVALID);
-	}
-
-	private void handleTargetObjectUnresolvable(PersonalConfiguration personalConfig) {
-		resetHomepage(personalConfig, I18NConstants.HOMEPAGE_RESTORE_PROBLEM_MODEL_INVALID);
-	}
-
-	private void resetHomepage(PersonalConfiguration personalConfig, ResKey detail) {
+		ResKey detail = I18NConstants.HOMEPAGE_RESTORE_PROBLEM_SCHEMA_CHANGED;
 		InfoService.showInfo(I18NConstants.HOMEPAGE_RESTORE_PROBLEM, detail);
 		personalConfig.removeHomepage(this);
 	}

@@ -36,7 +36,7 @@
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.reporting.tool.ReportingSetHomepageHandler"
+			command-implementation-comment="com.top_logic.tool.boundsec.commandhandlers.SetHomepageHandler"
 			command-label="Startseite festlegen"
 			command-name="setHomepage"
 			component-implementation-comment="com.top_logic.layout.component.TabComponent"

@@ -2611,13 +2611,10 @@ progress[data-complete="true"]::-webkit-progress-bar {
 
 progress::-moz-progress-bar {
 	background-color: var(--background-info);
-	border: 1px solid var(--border-interactive);
-	border-radius: var(--corner-radius);
 }
 
 progress[data-complete="true"]::-moz-progress-bar {
 	background-color: var(--background-success);
-	border: 1px solid var(--background-success);
 }
 
 /*

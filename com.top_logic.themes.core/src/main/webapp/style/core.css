@@ -2532,6 +2532,7 @@ progress {
 	height: 1rem;
 	-webkit-appearance: none;
 	appearance: none;
+	box-sizing: border-box;
 }
 
 progress::-webkit-progress-bar {
@@ -2540,20 +2541,27 @@ progress::-webkit-progress-bar {
 	border-radius: var(--corner-radius);
 }
 
-/* works for mozilla too */
 progress::-webkit-progress-value {
-	background-color: var(--border-interactive);
-	border-radius: var(--corner-radius);
+	background-color: var(--background-info);
+}
+
+progress[data-complete="true"]::-webkit-progress-value {
+	background-color: var(--background-success);
+}
+
+progress[data-complete="true"]::-webkit-progress-bar {
+	border: 1px solid var(--background-success);
 }
 
 progress::-moz-progress-bar {
-	background-color: var(--background);
+	background-color: var(--background-info);
 	border: 1px solid var(--border-interactive);
 	border-radius: var(--corner-radius);
 }
 
-progress[data-complete="true"]::-webkit-progress-value {
-	background-color: green;
+progress[data-complete="true"]::-moz-progress-bar {
+	background-color: var(--background-success);
+	border: 1px solid var(--background-success);
 }
 
 /*

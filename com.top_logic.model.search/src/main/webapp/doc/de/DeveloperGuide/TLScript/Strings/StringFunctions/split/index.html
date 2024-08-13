@@ -1,0 +1,100 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>$input.split(separator: ",", trim: true)</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Zerlegt eine Eingabe-Zeichenkette in eine Liste von Zeichenketten anhand eines gegebenen Separators. In der Eingabezeichenkette werden alle Auftreten der Separator-Zeichenkette gesucht und die Zeichenketten zwischen den Separatoren als Liste zurückgegeben.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td><code class="hljs inlineCode">input</code></td>
+			<td>Zeichenkette</td>
+			<td>Die zu zerlegende Zeichenkette</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">separator</code></td>
+			<td>Zeichenkette/regulärer Ausdruck</td>
+			<td>Der zu suchende Separator anhand dessen die Eingabezeichenkette zerlegt werden soll.</td>
+			<td>nein</td>
+			<td><code class="hljs inlineCode">","</code></td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">trim</code></td>
+			<td>Wahrheitswert</td>
+			<td>Ob Leerzeichen am Anfang und Ende von den Ergebniseinträgen entfernt werden soll.</td>
+			<td>nein</td>
+			<td><code class="hljs inlineCode">true</code></td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><span style="color:#3498db"><strong>Typ:</strong></span> List von Zeichenketten</p>
+
+<p>Die Zeichenketten zwischen den gefundenen Separatoren in der Eingabezeichenkette.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Standardseparator</h3>
+
+<pre>
+	<code>"a, b, c".split()</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">["a", "b", "c"]</code></p>
+
+<p>Die Liste von mit Komma getrennten Wörtern aus der Eingabe.</p>
+
+<h3>Mit Separator</h3>
+
+<pre>
+	<code>"Hello world and hello moon!".split(" ")
+</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">["Hello", "world", "and", "hello", "moon!"]</code></p>
+
+<p>Die leerzeichengetrennten Wörter aus der Eingabe.</p>
+
+<h3>Mit regulärem Ausdruck</h3>
+
+<pre>
+	<code>"a --- b - c -- d".split(regex("-+"))
+</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">["a", "b", "c", "d"]</code></p>
+
+<p>Die mit einer beliebigen Anzahl von Minuszeichen getrennten Wörter der Eingabe.</p>
+
+<h3>Ohne Beschneiden</h3>
+
+<pre>
+	<code>"a, b, c".split(trim:false)</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">["a", " b", " c"]</code></p>
+
+<p>Genau die Zeichenketten zwischen den Separatoren. Hier befindet sich jeweils noch ein Leerzeichen vor den Zeichen <code class="hljs inlineCode">b</code> und <code class="hljs inlineCode">c</code>.</p>
+
+<p> </p>
+
+<p> </p>

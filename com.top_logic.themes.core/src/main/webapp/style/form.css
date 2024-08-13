@@ -138,10 +138,11 @@ div.fptTitleContent .cTextInput {
 }
 
 div.fptTitleContent, 
+div.fptTitleContent .cTextInput,
 div.fptTitle input.is-input, 
 div.fptTitle select.is-input {
 	font-family: var(--font-family);
-	font-weight: bold;
+	font-weight: var(--highlight-weight, bold);
 	font-size: var(--heading-04-font-size);
 	line-height: var(--heading-04-line-height);
 	letter-spacing: var(--heading-04-letter-spacing);

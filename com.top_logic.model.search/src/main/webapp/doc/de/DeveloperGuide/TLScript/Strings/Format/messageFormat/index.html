@@ -1,46 +1,79 @@
 <h2>Syntax</h2>
-<pre>	<code>messageFormat($pattern)</code>
+
+<pre>
+	<code>messageFormat($pattern)</code>
 </pre>
+
 <h2>Beschreibung</h2>
+
 <p>Konstruiert ein Nachrichtenformat mit dem angegebenen Muster für entweder <a class="tlObject" data-custom="true" href="?page=parse&amp;uuid=e2e35e56-db87-4f47-95f8-0b2bdc74a07e">parse()</a> oder <a class="tlObject" data-custom="true" href="?page=format&amp;uuid=77351653-ed93-45b5-be52-ab7873f6ec1c">format()</a> Aufrufe.</p>
+
 <p>Siehe <a href="https://docs.oracle.com/javase/8/docs/api/java/text/MessageFormat.html">MessageFormat</a>.</p>
+
 <h2>Parameter</h2>
+
 <table class="tlDocTable">
- <thead>
-  <tr>
-   <th>Name</th>
-   <th>Typ</th>
-   <th>Beschreibung</th>
-   <th>Pflicht</th>
-   <th>Default</th>
-  </tr>
- </thead>
- <tbody>
-  <tr>
-   <td>pattern</td>
-   <td>Zeichenkette</td>
-   <td>
-    <p>Das Pattern in dem formatiert werden soll. Es können Platzhalter definiert werden (<code class="hljs inlineCode">{0}</code>, <code class="hljs inlineCode">{1}</code> etc.), die anschließend beim Formattieren durch Parameter gefüllt werden. Diese Platzhalter können zusätzlich Formattypen und Subformattypen definieren, um die Parameter zusätzlich zu formattieren (<code class="hljs inlineCode">{0, number, integer}</code>, <code class="hljs inlineCode">{1, date</code><code class="hljs inlineCode">}</code> etc.). Für mehr Informationen zu möglichen Patterns siehe <a href="https://docs.oracle.com/javase/8/docs/api/java/text/MessageFormat.html">MessageFormat</a>.</p></td>
-   <td>ja</td>
-   <td></td>
-  </tr>
- </tbody>
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>pattern</td>
+			<td>Zeichenkette</td>
+			<td>
+			<p>Das Pattern in dem formatiert werden soll. Es können Platzhalter definiert werden (<code class="hljs inlineCode">{0}</code>, <code class="hljs inlineCode">{1}</code> etc.), die anschließend beim Formattieren durch Parameter gefüllt werden. Diese Platzhalter können zusätzlich Formattypen und Subformattypen definieren, um die Parameter zusätzlich zu formattieren (<code class="hljs inlineCode">{0, number, integer}</code>, <code class="hljs inlineCode">{1, date</code><code class="hljs inlineCode">}</code> etc.). Für mehr Informationen zu möglichen Patterns siehe <a href="https://docs.oracle.com/javase/8/docs/api/java/text/MessageFormat.html">MessageFormat</a>.</p>
+			</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+	</tbody>
 </table>
+
 <h2>Rückgabewert</h2>
+
 <p><span style="color:#3498db"><strong>Typ:</strong></span> Fachobjekt</p>
+
 <p>Ein Nachrichtenformat, das nun für <a class="tlObject" data-custom="true" href="?page=parse&amp;uuid=e2e35e56-db87-4f47-95f8-0b2bdc74a07e">parse()</a> oder <a class="tlObject" data-custom="true" href="?page=format&amp;uuid=77351653-ed93-45b5-be52-ab7873f6ec1c">format()</a> Aufrufe verwendet werden kann.</p>
+
 <h2>Beispiele</h2>
+
 <h3>Einfaches Formattieren</h3>
-<pre>	<code>messageFormat("Good {0}, {1}! Today we have {2} degrees.").format("Morning", "Sir", 19)</code>
+
+<pre>
+	<code>messageFormat("Good {0}, {1}! Today we have {2} degrees.").format("Morning", "Sir", 19)</code>
 </pre>
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Good Morning Sir! Today we have 19 degrees.</p>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">"Good Morning Sir! Today we have 19 degrees."</code></p>
+
+<p>Mit <a class="tlObject" href="?page=fill&amp;uuid=5de7c792-19ea-416e-9727-4c341026927e">fill()</a> angewendet direkt auf dem Format-String kann dieselbe Formattierung erreicht werden, ohne dass explizit ein Format erstellt wird.</p>
+
+<pre>
+<code>"Good {0}, {1}! Today we have {2} degrees."fill("Morning", "Sir", 19)</code></pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">"Good Morning Sir! Today we have 19 degrees."</code></p>
+
 <h3>Formattieren mit Formattyp</h3>
-<pre>	<code>messageFormat("At {1,time} on {1,date}, there was {2} on planet {0,number,integer}.").format(7, now(), "a disturbance in the Force")</code>
+
+<pre>
+	<code>messageFormat("At {1,time} on {1,date}, there was {2} on planet {0,number,integer}.").format(7, now(), "a disturbance in the Force")</code>
 </pre>
-<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> At 15:36:40 on 11.10.2021, there was a disturbance in the Force on planet 7.</p>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">"At 15:36:40 on 11.10.2021, there was a disturbance in the Force on planet 7."</code></p>
+
 <p>Das Datum wird in dieser Nachricht mehrfach verwendet und mit Hilfe von time und date entsprechend formattiert.</p>
-<h3>Parse</h3>
-<pre>	<code>messageFormat("Good {0}!").parse("Good Morning!")</code>
+
+<h3>Parsen</h3>
+
+<pre>
+	<code>messageFormat("Good {0}!").parse("Good Morning!")</code>
 </pre>
-<p><span style="color:#3498db"><strong>Ausgabe:</strong> </span>Nachrichtenobjekt</p>
-<p></p>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong> </span>Liste von Parse-Ergebnissen, hier <code class="hljs inlineCode">["Morning"]</code>.</p>
+
+<p> </p>

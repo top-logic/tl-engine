@@ -5,7 +5,9 @@
  */
 package com.top_logic.model.search.expr;
 
+import java.lang.reflect.Array;
 import java.text.ParseException;
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -144,6 +146,22 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 		}
 		if (result instanceof Float) {
 			return toNumber(((Number) result).floatValue());
+		}
+		if (result == null) {
+			return null;
+		}
+		if (result.getClass().isArray()) {
+			return new AbstractList<>() {
+				@Override
+				public int size() {
+					return Array.getLength(result);
+				}
+
+				@Override
+				public Object get(int index) {
+					return Array.get(result, index);
+				}
+			};
 		}
 		return result;
 	}

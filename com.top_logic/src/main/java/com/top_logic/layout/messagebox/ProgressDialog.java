@@ -389,6 +389,7 @@ public abstract class ProgressDialog extends AbstractDialog implements HTMLFragm
 		if (_state == State.COMPLETED) {
 			// Ensure that the progress bar always ends at 100%
 			_progress.setValue(_progress.getMax());
+			_progress.setComplete("true");
 
 			handleCompleted(DefaultDisplayContext.getDisplayContext());
 		} else {

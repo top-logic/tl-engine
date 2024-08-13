@@ -46,6 +46,15 @@ public class ProgressControl extends AbstractVisibleControl {
 	}
 
 	/**
+	 * Sets the data-complete attribute of the progress bar.
+	 */
+	public void setComplete(String value) {
+		if (isAttached() && !isRepaintRequested()) {
+			addUpdate(new PropertyUpdate(getID(), COMPLETE_ATTR, new ConstantDisplayValue(value)));
+		}
+	}
+
+	/**
 	 * The {@link #getValue()} that means completion (normally 100).
 	 */
 	public int getMax() {
@@ -69,6 +78,7 @@ public class ProgressControl extends AbstractVisibleControl {
 
 		out.writeAttribute(MAX_ATTR, _max);
 		out.writeAttribute(VALUE_ATTR, _value);
+		out.writeAttribute(COMPLETE_ATTR, "false");
 	}
 
 	@Override

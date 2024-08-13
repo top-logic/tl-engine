@@ -2521,6 +2521,59 @@ div.DNDmouseMarker div.dndSelection {
     padding: 2px;
 }
 
+
+/*
+ * =======================================
+ * =======  Styles for Progress   ========
+ * =======================================
+ */
+
+progress {
+	width: 100%;
+	height: 1rem;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+progress::-webkit-progress-bar {
+	background-color: var(--background);
+	border: 1px solid var(--border-interactive);
+	border-radius: var(--corner-radius);
+}
+
+/* works for mozilla too */
+progress::-webkit-progress-value {
+	background-color: var(--border-interactive);
+	border-radius: var(--corner-radius);
+}
+
+progress::-moz-progress-bar {
+	background-color: var(--background);
+	border: 1px solid var(--border-interactive);
+	border-radius: var(--corner-radius);
+}
+
+progress[data-complete="true"]::-webkit-progress-value {
+	background-color: green;
+}
+
+.logMessage {
+	color: green;
+}
+
+.logMessage.WARN {
+	color: orange;
+}
+
+.logMessage.DEBUG {
+	color: pink;
+}
+
+.logMessage.ERROR,
+.logMessage.FATAL {
+	color: red;
+}
+
 /* ============================================================== */
 /* ====== Sync scrolling images (ssi), see ImageControl     ===== */
 /* ============================================================== */

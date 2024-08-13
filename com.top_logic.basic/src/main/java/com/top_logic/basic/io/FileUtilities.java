@@ -1654,4 +1654,20 @@ public abstract class FileUtilities extends StreamUtilities {
 		}
 	}
 
+	/**
+	 * Whether the file by the given path is an empty directory.
+	 * 
+	 * @param path
+	 *        The path to the file to test if its an empty directory.
+	 */
+	public static boolean isEmptyDirectory(Path path) throws IOException {
+		if (Files.isDirectory(path)) {
+			try (Stream<Path> entries = Files.list(path)) {
+				return !entries.findFirst().isPresent();
+			}
+		}
+
+		return false;
+	}
+
 }

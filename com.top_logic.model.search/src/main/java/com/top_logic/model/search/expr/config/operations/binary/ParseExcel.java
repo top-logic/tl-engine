@@ -125,19 +125,19 @@ public class ParseExcel extends GenericMethod {
 			for (String key : importedSheets.keySet()) {
 				List<List<Object>> value = importedSheets.get(key);
 				ArrayList<Map<String, Object>> sheetEntries = new ArrayList<>();
-				if (HEADERS_AT.size() > 0) {
+				if (HEADERS_AT.containsKey(key)) {
 					ArrayList<Integer> headersPositions = new ArrayList<>();
 					setHeaders(headers, headersPositions, key, value);
-					for (int i = headersPositions.get(0) + 1; i < value.size(); ++i) {
-						List<Object> rawRow = value.get(i);
-						HashMap<String, Object> rowEntries = createRowMap(headers, rawRow, headersPositions);
-						sheetEntries.add(rowEntries);
+					if (headersPositions.size() > 0) {
+						for (int i = headersPositions.get(0) + 1; i < value.size(); ++i) {
+							List<Object> rawRow = value.get(i);
+							AddRowMap(headers, rawRow, headersPositions, sheetEntries);
+						}
 					}
 				} else {
 					generateDefaultHeaders(headers, value);
 					for (List<Object> rawRow : value) {
-						HashMap<String, Object> rowEntries = createRowMap(headers, rawRow, null);
-						sheetEntries.add(rowEntries);
+						AddRowMap(headers, rawRow, null, sheetEntries);
 					}
 				}
 				mapedResult.put(key, sheetEntries);
@@ -152,28 +152,46 @@ public class ParseExcel extends GenericMethod {
 		if (headersPositionsForKey == null) {
 			generateDefaultHeaders(headers, value);
 		} else {
-			int row = -1;
 			for (int i=0; i < headersPositionsForKey.size(); ++i) {
 				Object headObject = headersPositionsForKey.get(i);
 
 				if (headObject instanceof String) {
-					String[] splited = ((String) headObject).replace(" ", "").split("-");
+					String trimmedHeadObject = ((String) headObject).replace(" ", "");
+					String[] splited;
+					String[] multiHeader = trimmedHeadObject.split(":");
+					if (multiHeader.length == 1) {
+						splited = trimmedHeadObject.split("-");
+					} else {
+						splited = multiHeader[1].split("-");
+					}
 					if (splited.length == 1) {
 						int[] parsedCell = parseCellID(splited[0]);
-						row = checkForSameRow(row, parsedCell, headersPositions);
-						headers.add((String) value.get(row).get(parsedCell[0]));
+						if (headersPositions.size() == 0) {
+							setStartRow(-1, parsedCell, headersPositions);
+						} else {
+							setStartRow(headersPositions.get(0), parsedCell, headersPositions);
+						}
+						headers.add((String) value.get(parsedCell[1]).get(parsedCell[0]));
 						headersPositions.add(parsedCell[0]);
 					} else {
 						int[] parsedStart = parseCellID(splited[0]);
 						int[] parsedEnd = parseCellID(splited[1]);
-						row = checkForSameRow(row, parsedStart, headersPositions);
-						row = checkForSameRow(row, parsedEnd, headersPositions);
+						if (headersPositions.size() == 0) {
+							setStartRow(-1, parsedStart, headersPositions);
+						} else {
+							setStartRow(headersPositions.get(0), parsedStart, headersPositions);
+						}
+						setStartRow(headersPositions.get(0), parsedEnd, headersPositions);
 						for (int j = parsedStart[0]; j <= parsedEnd[0]; ++j) {
-							headers.add((String) value.get(row).get(j));
+							String header = (String) value.get(parsedStart[1]).get(j);
+							if (multiHeader.length != 1) {
+								int[] parsedCell = parseCellID(multiHeader[0]);
+								header = (String) value.get(parsedCell[1]).get(parsedCell[0]) + ":" + header;
+							}
+							headers.add(header);
 							headersPositions.add(j);
 						}
 					}
-
 				} else {
 					throw new TopLogicException(
 						I18NConstants.ERROR_UNSUPPORTED_CONTENT_TYPE__VALUE_MSG.fill(headObject));
@@ -183,17 +201,20 @@ public class ParseExcel extends GenericMethod {
 
 	}
 
-	private int checkForSameRow(int row, int[] parsedCell, ArrayList<Integer> headersPositions) {
-		if (row == -1) {
+	private void setStartRow(int row, int[] parsedCell, ArrayList<Integer> headersPositions) {
+		boolean isNextRow = (row == parsedCell[1] - 1);
+		boolean isPreviousRow = (row == parsedCell[1] + 1);
+		if (row == -1 || isNextRow) {
 			row = parsedCell[1];
-		} else if (row != parsedCell[1]) {
+		} else if (row != parsedCell[1] && !isNextRow && !isPreviousRow) {
 			throw new TopLogicException(
 				I18NConstants.ERROR_INVALID_CELL_ENTRY__VALUE_MSG.fill(parsedCell[1], row));
 		}
 		if (headersPositions.size() == 0) {
 			headersPositions.add(row);
+		} else if (isNextRow) {
+			headersPositions.set(0, row);
 		}
-		return row;
 	}
 
 	private int[] parseCellID(String input) {
@@ -214,8 +235,8 @@ public class ParseExcel extends GenericMethod {
 		return result;
 	}
 
-	private HashMap<String, Object> createRowMap(ArrayList<String> headers, List<Object> rawRow,
-			ArrayList<Integer> headersPositions) {
+	private void AddRowMap(ArrayList<String> headers, List<Object> rawRow,
+			ArrayList<Integer> headersPositions, ArrayList<Map<String, Object>> sheetEntries) {
 		HashMap<String, Object> rowEntries = new HashMap<>();
 		if (headersPositions == null || headersPositions.size() == 0) {
 			for (int j = 0; j < headers.size(); ++j) {
@@ -228,14 +249,32 @@ public class ParseExcel extends GenericMethod {
 		} else {
 			for (int j = 1; j < headersPositions.size(); ++j) {
 				int column = headersPositions.get(j);
+				String header = headers.get(j - 1);
+				String[] multiHeader = header.split(":");
 				if (column < rawRow.size()) {
-					rowEntries.put(headers.get(j - 1), rawRow.get(column));
+					Object columnValue = rawRow.get(column);
+					addValueToRowMap(columnValue, rowEntries, header, multiHeader);
 				} else {
-					rowEntries.put(headers.get(j - 1), "");
+					addValueToRowMap("", rowEntries, header, multiHeader);
 				}
 			}
 		}
-		return rowEntries;
+		sheetEntries.add(rowEntries);
+	}
+
+	private void addValueToRowMap(Object value, HashMap<String, Object> rowEntries, String header,
+			String[] multiHeader) {
+		if (multiHeader.length == 1) {
+			rowEntries.put(header, value);
+		} else {
+			HashMap<String, Object> multiHeaderMap =
+				(HashMap<String, Object>) rowEntries.get(multiHeader[0]);
+			if (multiHeaderMap == null) {
+				multiHeaderMap = new HashMap<>();
+			}
+			multiHeaderMap.put(multiHeader[1], value);
+			rowEntries.put(multiHeader[0], multiHeaderMap);
+		}
 	}
 
 	private void generateDefaultHeaders(ArrayList<String> headers, List<List<Object>> value) {

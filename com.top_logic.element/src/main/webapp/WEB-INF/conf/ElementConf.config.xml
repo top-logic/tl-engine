@@ -1020,6 +1020,7 @@
 					<scheme class="com.top_logic.element.layout.scripting.MetaAttributeNaming"/>
 					<scheme class="com.top_logic.element.layout.scripting.StructuredElementNaming"/>
 					<scheme class="com.top_logic.element.layout.scripting.CommentNamingScheme"/>
+					<scheme class="com.top_logic.element.layout.scripting.SearchResultNamingScheme"/>
 					<!-- Position the TLObjectByLabelNaming at the beginning
 					     to reduce its priority below that of the IndexedObjectNaming. -->
 					<scheme class="com.top_logic.element.layout.scripting.TLObjectByLabelNaming"

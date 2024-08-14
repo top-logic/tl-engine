@@ -46,6 +46,10 @@ public class RelevantComponentFinder extends DefaultDescendingLayoutVisitor {
 		if (!component.isVisible()) {
 			return false;
 		}
+		if (component.getDialogParent() != null) {
+			/* Skip dialogs. */
+			return false;
+		}
 		addRelevantSourceChannels(component, component.getChannel(ModelChannel.NAME).sources());
 		addTabComponentChild(component);
 		if (isStoreSelection()) {

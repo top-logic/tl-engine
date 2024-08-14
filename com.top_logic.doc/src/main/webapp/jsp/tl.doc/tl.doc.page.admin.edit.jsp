@@ -19,9 +19,9 @@
 				<meta:group>
 					<meta:attribute name="<%=Page.NAME_ATTR%>"/>
 					<% if (((EditMode) MainLayout.getComponent(pageContext)).isInViewMode()) {%>
-						(UUID:
+						<span style="padding: 0 var(--spacing-01);">(UUID:</span>
 							<meta:attribute name="<%=Page.UUID_ATTR%>"/>
-						)
+						<span>)</span>
 					<%} %>
 				</meta:group>
 			</form:subtitle>

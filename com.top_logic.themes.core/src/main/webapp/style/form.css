@@ -100,16 +100,30 @@ div.fptTitle {
     background-color: transparent;
 }
 
-div.fptTitleContent, div.fptSubtitleContent {
+div.fptTitleContent, 
+div.fptSubtitleContent {
     position: absolute;
-    overflow: hidden;
     left: 0px;
-    right: 110px;
+    right: 50px;
     top: 0px;
     bottom: 0px;
     white-space: nowrap;
-    text-overflow: ellipsis;
     color: var(--text-primary);
+}
+
+.fptTitleContent > *,
+.fptSubtitleContent > *,
+.fptTitleText {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.fptTitleText {
+	width: 100%;
+}
+
+.fptHeader span.can-edit {
+	width: initial;
 }
 
 div.fptTitleContent {
@@ -118,13 +132,17 @@ div.fptTitleContent {
 	padding: 0 var(--spacing-03);
 }
 
-div.fptTitleContent .tlTranslatedI18nField, div.fptTitleContent .cTextInput {
+div.fptTitleContent .tlTranslatedI18nField, 
+div.fptTitleContent .cTextInput {
 	width: calc(100% - var(--heading-04-font-size) - 6px);
 }
 
-div.fptTitleContent, div.fptTitle input.is-input, div.fptTitle select.is-input {
+div.fptTitleContent, 
+div.fptTitleContent .cTextInput,
+div.fptTitle input.is-input, 
+div.fptTitle select.is-input {
 	font-family: var(--font-family);
-	font-weight: bold;
+	font-weight: var(--highlight-weight, bold);
 	font-size: var(--heading-04-font-size);
 	line-height: var(--heading-04-line-height);
 	letter-spacing: var(--heading-04-letter-spacing);
@@ -140,7 +158,8 @@ div.fptSubtitle {
 }
 
 div.fptSubtitleContent {
-    display: inline-block;
+	display: flex;
+    align-items: center;
     width: 100%;
     box-sizing: border-box;
     padding: 0 var(--spacing-03);
@@ -148,34 +167,32 @@ div.fptSubtitleContent {
     font-weight: bold;
 }
 
-.fptIcon, .fptIconWithOverlay, .fptIconOverlay {
+div.fptIconBar > span,
+.fptIcon, 
+.fptIconWithOverlay {
     position: absolute;
     top: 10px;
     right: 20px;
 }
 
-div.fptIconBar > span.fptIcon, div.fptIconBar > span.fptIconWithOverlay {
+div.fptIconBar > span.fptIcon, 
+div.fptIconBar > span.fptIconWithOverlay,
+div.fptIconBar > span {
     font-size: 32px;
+}
+
+div.fptIconBar > span.fptIconOverlay {
+    font-size: 16px !important;
 }
 
 .fptIconOverlay {
     position: absolute;
-    top: 5px;
-    right: 5px;
-    height: 48px;
-}
-
-.fptIconOverlay i {
-    position: absolute;
-    top: 0px;
-    right: 5px;
+	top: 0px !important;
+    right: 5px !important;
     border-radius: 30px;
-    font-size: 30px;
+    color: var(--icon-primary);
+    background: var(--layer);
     padding: 4px;
-}
-
-div.fptIconBar > span.fptIconOverlay > i {
-    color: black;
 }
 
 .rf_header .cLabel {

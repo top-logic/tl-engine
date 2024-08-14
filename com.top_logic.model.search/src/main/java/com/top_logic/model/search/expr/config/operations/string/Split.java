@@ -65,7 +65,7 @@ public class Split extends GenericMethod {
 
 		Stream<String> result = pattern.splitAsStream(input);
 		if (trim) {
-			result = result.map(String::trim);
+			result = result.map(String::strip);
 		}
 		return result.toList();
 	}

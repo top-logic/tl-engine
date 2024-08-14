@@ -55,7 +55,9 @@
 		            <handler id="chartGotoDetails" class="com.top_logic.reporting.layout.meta.search.ChartGotoAwareGotoHandler"/>
 		            <handler id="RefreshChartCommand" class="com.top_logic.reporting.chart.component.AbstractFixedReportComponent$RefreshChartCommandHandler"
 						clique="refresh"/>
-					<handler id="setHomepage" class="com.top_logic.reporting.tool.ReportingSetHomepageHandler"/>
+					<handler id="setHomepage" class="com.top_logic.tool.boundsec.commandhandlers.SetHomepageHandler"
+						homepage-class="com.top_logic.reporting.tool.ReportingHomepageImpl"
+					/>
 
 					<handler id="ganttPdfExport" class="com.top_logic.reporting.chart.gantt.component.GanttExportDialog$PDFExportCommand" group="Export"/>
         			<handler id="applyFilterProgress" class="com.top_logic.reporting.view.component.progress.ApplyFilterProgressCommandHandler"  />

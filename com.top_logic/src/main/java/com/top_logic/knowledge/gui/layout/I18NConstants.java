@@ -26,9 +26,31 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey TOGGLE_SHOW_HELP = legacyKey("tl.command.help.toggle");
 
+	/** @en Update of visible button count */
 	public static ResKey VISIBLE_BUTTON_COUNT;
 
+	/** @en No layouts were configured. */
 	public static ResKey NO_LAYOUT_CONFIGURED;
+
+	/**
+	 * @en The format of the saved homepage has changed.
+	 */
+	public static ResKey HOMEPAGE_RESTORE_PROBLEM_SCHEMA_CHANGED;
+
+	/**
+	 * @en Your home page could not be restored. Please set the start page again.
+	 */
+	public static ResKey HOMEPAGE_RESTORE_PROBLEM;
+
+	/**
+	 * @en The saved model cannot be resolved.
+	 */
+	public static ResKey HOMEPAGE_RESTORE_PROBLEM_MODEL_INVALID;
+
+	/**
+	 * @en The saved view cannot be resolved.
+	 */
+	public static ResKey HOMEPAGE_RESTORE_PROBLEM_COMPONENT_INVALID;
 
 	static {
 		initConstants(I18NConstants.class);

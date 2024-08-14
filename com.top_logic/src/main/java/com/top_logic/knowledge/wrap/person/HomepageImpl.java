@@ -29,7 +29,6 @@ import com.top_logic.layout.scripting.recorder.ref.ui.LayoutComponentResolver;
 import com.top_logic.layout.scripting.runtime.LiveActionContext;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.mig.html.layout.LayoutContainer;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.commandhandlers.RelevantComponentFinder;
 
@@ -162,10 +161,11 @@ public class HomepageImpl extends AbstractConfiguredInstance<Homepage> {
 		RelevantComponentFinder channelFinder = new RelevantComponentFinder(storeSelection);
 		mainLayout.acceptVisitorRecursively(channelFinder);
 
-		Map<LayoutComponent, Set<String>> relevantChannels = channelFinder.relevantComponents();
+		Map<LayoutComponent, Set<ComponentChannel>> relevantChannels = channelFinder.relevantComponents();
+		Map<LayoutComponent, Set<LayoutComponent>> dependentComponents = channelFinder.dependentComponents();
 
 		List<LayoutComponent> sortedComponents =
-			CollectionUtil.topsort(this::componentDependencies, relevantChannels.keySet(), false);
+			CollectionUtil.topsort(c -> componentDependencies(dependentComponents, c), relevantChannels.keySet(), false);
 
 		Homepage config = getConfig();
 		config.setMainLayout(mainLayout.getLocation());
@@ -175,7 +175,7 @@ public class HomepageImpl extends AbstractConfiguredInstance<Homepage> {
 		}
 	}
 
-	private void addPath(Map<LayoutComponent, Set<String>> relevantChannels, Homepage config,
+	private void addPath(Map<LayoutComponent, Set<ComponentChannel>> relevantChannels, Homepage config,
 			LayoutComponent component) {
 		Path newPath = newPath(component, relevantChannels.get(component));
 		if (newPath != null) {
@@ -185,73 +185,68 @@ public class HomepageImpl extends AbstractConfiguredInstance<Homepage> {
 
 	/**
 	 * Creates a {@link Homepage#getComponentPaths() component path} entry for the given component
-	 * and the given channel names.
+	 * and the given channels.
 	 *
 	 * @param component
 	 *        Element in the component tree.
 	 * @param channels
-	 *        Name of the channels whose values must be stored. May be empty.
+	 *        The channels whose values must be stored. May be empty.
 	 * 
 	 * @return May be <code>null</code> when no entry is stored for any reason.
 	 */
-	protected Path newPath(LayoutComponent component, Set<String> channels) {
+	protected Path newPath(LayoutComponent component, Set<ComponentChannel> channels) {
 		Path path = TypedConfiguration.newConfigItem(Path.class);
 		path.setComponent(component.getName());
-		for (String channel : channels) {
+		for (ComponentChannel channel : channels) {
 			addChannel(path, component, channel);
 		}
 		return path;
 	}
 
-	private void addChannel(Path path, LayoutComponent component, String channelName) {
-		ChannelValue channelValue = newChannelValue(component, channelName);
+	private void addChannel(Path path, LayoutComponent component, ComponentChannel channel) {
+		ChannelValue channelValue = newChannelValue(component, channel);
 		if (channelValue != null) {
-			path.getChannelValues().put(channelName, channelValue);
+			path.getChannelValues().put(channelValue.getName(), channelValue);
 		}
 	}
 
 	/**
 	 * Creates a {@link Path#getChannelValues() channel} entry for the given component and the given
-	 * channel name.
+	 * channel.
 	 *
 	 * @param component
 	 *        Element in the component tree.
-	 * @param channelName
-	 *        Name of the channel whose value must be stored.
+	 * @param channel
+	 *        The channel whose value must be stored.
 	 * 
 	 * @return May be <code>null</code> when no entry is stored for any reason.
 	 */
-	protected ChannelValue newChannelValue(LayoutComponent component, String channelName) {
-		// Channel must exist.
-		ComponentChannel channel = component.getChannel(channelName);
-
+	protected ChannelValue newChannelValue(LayoutComponent component, ComponentChannel channel) {
 		ModelName value = extractTargetObjectFromModel(channel.get());
 		if (value == null) {
 			return null;
 		}
 		ChannelValue channelValue = TypedConfiguration.newConfigItem(ChannelValue.class);
-		channelValue.setName(channelName);
+		channelValue.setName(channel.name());
 		channelValue.setValue(value);
 		return channelValue;
 	}
 
-	private Set<LayoutComponent> componentDependencies(LayoutComponent component) {
+	private Set<LayoutComponent> componentDependencies(Map<LayoutComponent, Set<LayoutComponent>> dependentComponents,
+			LayoutComponent component) {
+
+		Set<LayoutComponent> channelDependencies = dependentComponents.getOrDefault(component, Collections.emptySet());
+
 		LayoutComponent parent = component.getParent();
 		if (parent == null) {
-			return Collections.emptySet();
+			return channelDependencies;
 		}
-		if (parent instanceof LayoutContainer) {
-			Set<LayoutComponent> dependencies = new HashSet<>();
-			dependencies.add(parent);
-			/* Component which are displayed "left" of the components are also dependent */
-			List<LayoutComponent> childList = ((LayoutContainer) parent).getChildList();
-			int componentIdx = childList.indexOf(component);
-			if (componentIdx != -1) {
-				dependencies.addAll(childList.subList(0, componentIdx));
-			}
-			return dependencies;
+		if (channelDependencies.isEmpty()) {
+			return Collections.singleton(parent);
 		}
-		return Collections.singleton(parent);
+		Set<LayoutComponent> dependencies = new HashSet<>(channelDependencies);
+		dependencies.add(parent);
+		return dependencies;
 	}
 
 	/**

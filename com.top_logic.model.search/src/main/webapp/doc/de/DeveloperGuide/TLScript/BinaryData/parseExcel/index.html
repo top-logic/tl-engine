@@ -1,0 +1,176 @@
+<p>​</p>
+
+<h2>Syntax</h2>
+
+<pre>
+	<code>$input.parseExcel()</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Liest das eingegeben Excel-Datei und erzeugt daraus eine Map&lt;String, List&gt;. Hierbei wird den Sheetname als Schlüssel für die Map verwendet und die zugehörige Liste ist die eingetragene Zeilen im Sheet.</p>
+
+<h2>​Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>input</td>
+			<td>Binärwert</td>
+			<td>Excel Datei (.xls bzw. .xlsx).</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>importAllSheets</td>
+			<td>Boolean</td>
+			<td>Ob alle Sheets aus dem Datei importiert werden sollen.</td>
+			<td>Nein</td>
+			<td>false</td>
+		</tr>
+		<tr>
+			<td>importSheets</td>
+			<td>List</td>
+			<td>Liste von Sheets, die importiert werden sollen. Zulässig sind Sheetnamen als Strings und/oder Sheetpositionen in der Datei (begonnen mit 0). Zum Beispiel werden bei der Eingabe importSheets : [0, "1", "Tabelle2"] das erste Sheet und die Sheets mit den Namen 1 bzw. Tabelle2 importiert.</td>
+			<td>Nein</td>
+			<td>null</td>
+		</tr>
+		<tr>
+			<td>headers</td>
+			<td>Map</td>
+			<td>Map mit Sheetnamen als Schlüssel und Positionen der Header im Sheet als Wert. Als zulässige Wert sind Strings (z.B: "B2-F2") bzw. eine Liste von Strings erlaubt.</td>
+			<td>Nein</td>
+			<td>null</td>
+		</tr>
+		<tr>
+			<td>raw</td>
+			<td>Boolean</td>
+			<td>
+			<p>Ob die Funktion die Rohdaten als Liste von Listen zurück lieferen soll. Ansonsten liefert die Funktion eine Liste von Maps.</p>
+			</td>
+			<td>Nein</td>
+			<td>false</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Map&lt;String, List&gt;</p>
+
+<p>Erzeugt pro Zeile in der Eingabesheet eine Liste/Map und fasst anschließend diese Listen in einer Liste zusammen. Anschließend wird pro Sheet eine Map eintrag mit Sheetname als Schlüssel und die Liste als Wert erzeugt.</p>
+
+<h2>Beispiele</h2>
+
+<p>Im folgenden Beispiele sei der Eingabedatei wie folgt. Die Datei hat drei Sheets "Test", "0" und "Vergleich" und Sheet "0" ist das aktive Sheet.</p>
+
+<p><img src="ref:grafik_17518.png" style="height:157px; opacity:1; width:533px" /> <img src="ref:grafik_40001.png" style="height:155px; opacity:1; width:231px" /></p>
+
+<p><img src="ref:grafik_82805.png" style="height:211px; opacity:1; width:534px" /></p>
+
+<p>Ferner sei Angenommen, dass diese Datei in eine Variable <code class="hljs inlineCode">importedData</code> bereits gespeichert ist.</p>
+
+<h3>Beispiel 1:</h3>
+
+<pre>
+<code>{
+    ...
+    result = $importedData.parseExcel();
+    $result
+}</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> {<span style="color:#16a085">0</span>=[{<span style="color:#e74c3c">A</span>="", <span style="color:#e74c3c">B</span>="Verbundene Zellen", <span style="color:#e74c3c">C</span>="", <span style="color:#e74c3c">D</span>=""}, {<span style="color:#e74c3c">A</span>="A2", <span style="color:#e74c3c">B</span>="B2", <span style="color:#e74c3c">C</span>="C2", <span style="color:#e74c3c">D</span>="D2"}, {<span style="color:#e74c3c">A</span>="A3", <span style="color:#e74c3c">B</span>="B3", <span style="color:#e74c3c">C</span>="C3", <span style="color:#e74c3c">D</span>="D3"}, {<span style="color:#e74c3c">A</span>="A4", <span style="color:#e74c3c">B</span>="B4", <span style="color:#e74c3c">C</span>="C4", <span style="color:#e74c3c">D</span>="D4"}]}</p>
+
+<p>Beim Aufruf von <code class="hljs inlineCode">$importedData.parseExcel()</code> wird das aktuell aktive Sheet der Exceldatei importiert. Hierbei wird zuerst eine Liste von Headers entsprechend den Excelspaltennamen der Länge maximal angefassten Spalten erzeugt. Anschließend werden die Einträge aus der Spalten entsprechend gemappt, wobei fehlenden Einträgen der Zeile mit leeren Strings aufgefüllt werden. Bei verbundene Spalten (hier B1 - C1) wird den Wert für den kleinsten Spaltennamen eingetragen.</p>
+
+<p> </p>
+
+<h3>Beispiel 2:</h3>
+
+<pre>
+<code>{
+    ...
+    result = $importedData.parseExcel(importSheets: 0);
+    $result
+}</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> {<span style="color:#16a085">Test</span>=[...]}</p>
+
+<p>Hier wird beim Aufruf von <code class="hljs inlineCode">parseExcel()</code> angegeben, dass das erste Sheet importiert werden soll.</p>
+
+<p>​</p>
+
+<h3>Beispiel 3:</h3>
+
+<pre>
+<code>{
+    ...
+    result = $importedData.parseExcel(importSheets: [0, "0"]);
+    $result
+}</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> {<span style="color:#16a085">0</span>=[...], <span style="color:#16a085">Test</span>=[...]}</p>
+
+<p>Hier wird beim Aufruf von <code class="hljs inlineCode">parseExcel()</code> angegeben, dass das erste Sheet und das Sheet mit den Namen 0 importiert werden sollen.</p>
+
+<p>​​</p>
+
+<h3>Beispiel 4:</h3>
+
+<pre>
+<code>{
+    ...
+    result = $importedData.parseExcel(importSheets: "Vergleich", 
+        headers:{"Vergleich": ["C3", "D3", "E3:E4-F4", "G3:G4-H4"]});
+    $result
+}</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> {<span style="color:#16a085">Vergleich</span>=[{<span style="color:#e74c3c">Aktuelles Jahr</span>={<span style="color:#2980b9">Ausgaben</span><span style="color:#2980b9"></span>="W15", <span style="color:#2980b9">Einnahmen</span>="W14"}, <span style="color:#e74c3c">Vorjahr</span>={<span style="color:#2980b9">Ausgaben</span>="W13_2", <span style="color:#2980b9">Einnahmen</span>=W13_1}, <span style="color:#e74c3c">H1</span>="W11", <span style="color:#e74c3c">H2</span>="W12"}, {<span style="color:#e74c3c">Aktuelles Jahr</span>={<span style="color:#2980b9">Ausgaben</span>="", <span style="color:#2980b9">Einnahmen</span>="W24"}, <span style="color:#e74c3c">Vorjahr</span>={<span style="color:#2980b9">Ausgaben</span>="", <span style="color:#2980b9">Einnahmen</span>="W23_1"}, <span style="color:#e74c3c">H1</span>="W21", <span style="color:#e74c3c">H2</span>="W22"}, ...]}</p>
+
+<p>Hier wird beim Aufruf von <code class="hljs inlineCode">parseExcel()</code> angegeben, dass das Sheet mit den Namen Vergleich importiert werden sollen und die Header in diesem Sheet auf Positionen C3, D3, E3 (als Hauptheader) mit Unterheader E4 und F4, G3 (als Hauptheader) mit Unterheader G4 und H4 zu finden sind. Nun werden alle Zeilen ab der fünften Zeile und nur die Spalten C bis H importiert und entsprechend gemappt.</p>
+
+<p>​​</p>
+
+<h3>Beispiel 5:</h3>
+
+<pre>
+<code>{
+    ...
+    result = $importedData.parseExcel(importSheets: "Test", 
+        headers:{"Test": "B2-F2"});
+    $result
+}</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> {<span style="color:#16a085">Test</span>=[{<span style="color:#e74c3c">Integer</span>=120.0, <span style="color:#e74c3c">Datum</span>=Thu Aug 01 00:00:00 CEST 2024, <span style="color:#e74c3c">Währung</span>=5.35, <span style="color:#e74c3c">Gleitkomma</span>=12.85, <span style="color:#e74c3c">Prozent</span>=D3/C3}, ..., {<span style="color:#e74c3c">Integer</span>=, <span style="color:#e74c3c">Datum</span>=, <span style="color:#e74c3c">Währung</span>=, <span style="color:#e74c3c">Gleitkomma</span>=, <span style="color:#e74c3c">Prozent</span>=}, {<span style="color:#e74c3c">Integer</span>=SUM(C3:C5), <span style="color:#e74c3c">Datum</span>="Summe", <span style="color:#e74c3c">Währung</span>=SUM(F3:F5), <span style="color:#e74c3c">Gleitkomma</span>=SUM(D3:D5), <span style="color:#e74c3c">Prozent</span>=SUM(E3:E5)}]}</p>
+
+<p>Hier wird beim Aufruf von <code class="hljs inlineCode">parseExcel()</code> angegeben, dass das Sheet mit den Namen Test importiert werden sollen und die Header in diesem Sheet auf Positionen B2 bis F2 zu finden sind. Nun werden alle Zeilen ab der dritten Zeile und nur die Spalten B bis F importiert und entsprechend gemappt.</p>
+
+<p>​</p>
+
+<h3>Beispiel 6:</h3>
+
+<pre>
+<code>{
+    ...
+    result = $importedData.parseExcel(importSheets: "Test", raw:true);
+    $result
+}</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> {<span style="color:#16a085">Test</span>=[[], [, "Datum", "Integer", "Gleitkomma", "Prozent", "Währung", , , "I2"], [, Thu Aug 01 00:00:00 CEST 2024, 120.0, 12.85, D3/C3, 5.35, , , , "J3"], [, Fri Aug 02 00:00:00 CEST 2024, 200.0, 20.2, D4/C4, 5.05, , , , , "K4"], [, Sat Aug 03 00:00:00 CEST 2024, 300.0, 66.6, D5/C5, 11.1, , , , , , "L5"], [, ], [, "Summe", SUM(C3:C5), SUM(D3:D5), SUM(E3:E5), SUM(F3:F5), , , "I7", "J7", "K7", "L7"]]}</p>
+
+<p>Der Aufruf von <code class="hljs inlineCode">parseExcel(importSheers: "Test", raw:true)</code> liefert eine Map von Listen von Listen für den Sheet Test.</p>

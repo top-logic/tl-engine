@@ -27,7 +27,9 @@ import com.top_logic.mig.html.layout.LayoutContainer;
  */
 public class RelevantComponentFinder extends DefaultDescendingLayoutVisitor {
 
-	private final Map<LayoutComponent, Set<String>> _relevantComponents = new HashMap<>();
+	private final Map<LayoutComponent, Set<ComponentChannel>> _relevantComponents = new HashMap<>();
+
+	private final Map<LayoutComponent, Set<LayoutComponent>> _dependentComponents = new HashMap<>();
 
 	private final boolean _storeSelection;
 
@@ -70,7 +72,7 @@ public class RelevantComponentFinder extends DefaultDescendingLayoutVisitor {
 		if (selectionChannel == null) {
 			return;
 		}
-		MultiMaps.add(relevantComponents(), component, selectionChannelName);
+		MultiMaps.add(relevantComponents(), component, selectionChannel);
 	}
 
 	/**
@@ -99,7 +101,8 @@ public class RelevantComponentFinder extends DefaultDescendingLayoutVisitor {
 				ComponentChannel existingChannel = sourceComponent.getChannelOrNull(sourceChannelName);
 				if (existingChannel != null) {
 					// Channel can be resolved later
-					MultiMaps.add(relevantComponents(), sourceComponent, sourceChannelName);
+					MultiMaps.add(relevantComponents(), sourceComponent, existingChannel);
+					MultiMaps.add(dependentComponents(), component, sourceComponent);
 				} else {
 					// Channel may be a transforming channel with generated name.
 					addRelevantSourceChannels(component, source.sources());
@@ -111,7 +114,7 @@ public class RelevantComponentFinder extends DefaultDescendingLayoutVisitor {
 	/**
 	 * The found relevant channels.
 	 */
-	public Map<LayoutComponent, Set<String>> relevantComponents() {
+	public Map<LayoutComponent, Set<ComponentChannel>> relevantComponents() {
 		return _relevantComponents;
 	}
 
@@ -120,6 +123,15 @@ public class RelevantComponentFinder extends DefaultDescendingLayoutVisitor {
 	 */
 	public boolean isStoreSelection() {
 		return _storeSelection;
+	}
+
+	/**
+	 * Dependencies derived from the {@link ComponentChannel}s, i.e. when a component <code>C</code>
+	 * has a model channel which bases a channel of another component <code>D</code>, then the
+	 * <code>C</code> depends on <code>D</code>.
+	 */
+	public Map<LayoutComponent, Set<LayoutComponent>> dependentComponents() {
+		return _dependentComponents;
 	}
 
 }

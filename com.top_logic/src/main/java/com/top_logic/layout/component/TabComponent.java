@@ -225,24 +225,7 @@ public final class TabComponent extends LayoutList implements BoundCheckerDelega
 			getTabBar().addInactiveCard(getCard(childIndex));
 		}
 
-		int theSelectedIndex = getTabBar().getSelectedIndex();
-
-		if (theSelectedIndex >= 0) {
-			if (!this.canBeVisible(theSelectedIndex)) {
-				fireModelEvent(null, ModelEventListener.SECURITY_CHANGED);
-				this.modelValid = false;
-			} else if (!this.isVisible()) {
-				fireModelEvent(null, ModelEventListener.SECURITY_CHANGED);
-				this.modelValid = false;
-			}
-		} else {
-			fireModelEvent(null, ModelEventListener.SECURITY_CHANGED);
-			this.modelValid = false;
-		}
-
-		if (_onChangeSelectFirstTab) {
-			setSelectedIndex(findNextVisible(-1));
-		}
+		this.modelValid = false;
 		return true;
 	}
 
@@ -529,11 +512,25 @@ public final class TabComponent extends LayoutList implements BoundCheckerDelega
 					setSelectedIndex(findNextVisible(theSelectedIndex));
 				}
 			}
+			boolean anyTabsAllowed = anyTabsAllowed(getTabBar());
+			if (isVisible()) {
+				if (!anyTabsAllowed) {
+					fireModelEvent(null, ModelEventListener.SECURITY_CHANGED);
+				}
+			} else {
+				if (anyTabsAllowed) {
+					fireModelEvent(null, ModelEventListener.SECURITY_CHANGED);
+				}
+			}
             return true;
 		}
 		return nonLocalChange;
 	}
 	
+	private boolean anyTabsAllowed(TabComponentTabBarModel tabBar) {
+		return !tabBar.getSelectableCards().isEmpty();
+	}
+
 	@Override
 	public boolean isModelValid() {
 		return modelValid && super.isModelValid();

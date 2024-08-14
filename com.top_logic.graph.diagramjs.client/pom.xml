@@ -5,7 +5,7 @@
     <relativePath>../tl-parent-gwt</relativePath>
     <groupId>com.top-logic</groupId>
 	<artifactId>tl-parent-gwt</artifactId>
-    <version>7.9.0-SNAPSHOT</version>
+    <version>0.0.1-CWS_28180-SNAPSHOT</version>
   </parent>
 
   <artifactId>tl-graph-diagramjs-client</artifactId>
@@ -35,7 +35,7 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-ajax-client</artifactId>
-	  <version>7.9.0-SNAPSHOT</version>
+	  <version>0.0.1-CWS_28180-SNAPSHOT</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
@@ -47,7 +47,7 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-client-diagramjs</artifactId>
-	  <version>7.9.0-SNAPSHOT</version>
+	  <version>0.0.1-CWS_28180-SNAPSHOT</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
@@ -59,7 +59,7 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-graph-diagramjs</artifactId>
-	  <version>7.9.0-SNAPSHOT</version>
+	  <version>0.0.1-CWS_28180-SNAPSHOT</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
@@ -68,28 +68,28 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-graph-common</artifactId>
-	  <version>7.9.0-SNAPSHOT</version>
+	  <version>0.0.1-CWS_28180-SNAPSHOT</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-common-remote</artifactId>
-	  <version>7.9.0-SNAPSHOT</version>
+	  <version>0.0.1-CWS_28180-SNAPSHOT</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-common-json</artifactId>
-	  <version>7.9.0-SNAPSHOT</version>
+	  <version>0.0.1-CWS_28180-SNAPSHOT</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-basic-shared</artifactId>
-	  <version>7.9.0-SNAPSHOT</version>
+	  <version>0.0.1-CWS_28180-SNAPSHOT</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>

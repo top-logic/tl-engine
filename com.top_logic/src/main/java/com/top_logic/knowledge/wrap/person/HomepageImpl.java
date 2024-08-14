@@ -22,6 +22,7 @@ import com.top_logic.knowledge.wrap.person.Homepage.ChannelValue;
 import com.top_logic.knowledge.wrap.person.Homepage.Path;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.channel.ComponentChannel;
+import com.top_logic.layout.channel.ModelChannel;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.scripting.recorder.ref.ui.LayoutComponentResolver;
@@ -86,12 +87,27 @@ public class HomepageImpl extends AbstractConfiguredInstance<Homepage> {
 				handleTargetComponentUnresolvable(personalConfig, mainLayout);
 				return anythingChanged;
 			}
+			ChannelValue modelChannel = step.getChannelValues().get(ModelChannel.NAME);
+			if (modelChannel != null) {
+				// Value of model channel must be set, before the component is made visible.
+				Object value;
+				try {
+					value = locateModel(context, modelChannel.getValue());
+				} catch (RuntimeException | AssertionError ex) {
+					handleTargetObjectUnresolvable(personalConfig, mainLayout);
+					continue;
+				}
+				component.setModel(value);
+			}
 
 			boolean visible = component.makeVisible();
 			if (!visible) {
 				return anythingChanged;
 			}
 			for (ChannelValue channelValue : step.getChannelValues().values()) {
+				if (ModelChannel.NAME.equals(channelValue.getName())){
+					continue;
+				}
 				Object value;
 				try {
 					value = locateModel(context, channelValue.getValue());

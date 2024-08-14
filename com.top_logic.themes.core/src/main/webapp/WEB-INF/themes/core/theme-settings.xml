@@ -2174,6 +2174,9 @@
 	<color name="notification-warning-background"
 		value="#FFF1CC"
 	/>
+	<color name="resize-bar"
+		value="#e5e5e6"
+	/>
 	
 	<!-- Accent color tokens. -->
 	

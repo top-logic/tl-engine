@@ -1199,7 +1199,7 @@
 					<handler class="com.top_logic.tool.boundsec.commandhandlers.SetComponentModelCommand"/>
 					<handler id="cancelCreate" class="com.top_logic.layout.form.component.AbstractCreateComponent$CancelHandler"
 						clique="cancel"/>
-					<handler id="setHomepage" class="com.top_logic.tool.boundsec.commandhandlers.CompoundSetHomepageHandler"
+					<handler id="setHomepage" class="com.top_logic.tool.boundsec.commandhandlers.SetHomepageHandler"
 						image="theme:HEAD_HOME"
 						resourceKey="menu.Home"
 						confirm="true"

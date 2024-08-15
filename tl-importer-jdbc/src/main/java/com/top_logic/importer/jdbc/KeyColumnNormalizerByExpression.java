@@ -38,23 +38,17 @@ public class KeyColumnNormalizerByExpression extends AbstractConfiguredInstance<
 
 	}
 
-	private QueryExecutor _expression;
+	private final QueryExecutor _expression;
 
 	/** {@link TypedConfiguration} constructor for {@link ColumnParserByExpression}. */
 	public KeyColumnNormalizerByExpression(InstantiationContext context, Config config) {
 		super(context, config);
+		_expression = QueryExecutor.compile(getConfig().getExpression());
 	}
 
 	@Override
 	public Object normalize(Object value) {
-		return getExpression().execute(value);
-	}
-
-	private QueryExecutor getExpression() {
-		if (_expression == null) {
-			_expression = QueryExecutor.compile(getConfig().getExpression());
-		}
-		return _expression;
+		return _expression.execute(value);
 	}
 
 }

@@ -221,7 +221,7 @@ private static final int HISTORY_LENGTH = 256;
 				<table>
 					<tr>
 						<td>
-							<code class="normal">
+							<code class="normal" style="font-family: var(--font-family);">
 								<%
 								try {
 									runWork(out, doSimulate, request);

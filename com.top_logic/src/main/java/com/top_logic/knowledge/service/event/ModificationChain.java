@@ -43,7 +43,8 @@ public class ModificationChain implements Modification {
 
 	@Override
 	public Modification andThen(Modification after) {
-		if (after instanceof ModificationChain chain) {
+		if (after instanceof ModificationChain) {
+			ModificationChain chain = (ModificationChain) after;
 			_modifications.addAll(chain._modifications);
 		} else {
 			Objects.requireNonNull(after);

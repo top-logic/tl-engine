@@ -1245,12 +1245,11 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 
 	public void testSwitchLiteral() throws ParseException {
 		SearchExpression expr = search(
-			"""
-			switch (1) {
-				0: false;
-				1: true;
-			}
-			""");
+			"switch (1) {\n" +
+			"	0: false;\n" +
+			"	1: true;\n" +
+			"}"
+			);
 		assertEquals(Boolean.TRUE, execute(expr));
 	}
 	

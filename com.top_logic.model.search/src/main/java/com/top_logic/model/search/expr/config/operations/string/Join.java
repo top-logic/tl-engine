@@ -65,7 +65,8 @@ public class Join extends GenericMethod {
 
 	private boolean appendAll(StringBuilder result, Collection<?> input, boolean first, String separator) {
 		for (Object element : input) {
-			if (element instanceof Collection<?> collection) {
+			if (element instanceof Collection<?>) {
+				Collection<?> collection = (Collection<?>) element;
 				// Flatten.
 				first = appendAll(result, collection, first, separator);
 			} else {

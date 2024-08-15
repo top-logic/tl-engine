@@ -7,6 +7,7 @@ package com.top_logic.model.search.expr.config.operations.string;
 
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.top_logic.basic.config.ConfigurationException;
@@ -67,7 +68,7 @@ public class Split extends GenericMethod {
 		if (trim) {
 			result = result.map(String::strip);
 		}
-		return result.toList();
+		return result.collect(Collectors.toList());
 	}
 
 	/**

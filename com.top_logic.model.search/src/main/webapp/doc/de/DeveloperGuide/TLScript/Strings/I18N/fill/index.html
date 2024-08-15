@@ -1,45 +1,64 @@
 <h2>Syntax</h2>
-<pre>	<code>$res-key.fill($value1,..., $valueN)
+
+<pre>
+	<code>$input.fill($value1,..., $valueN)
 </code>
 </pre>
-<h2>Beschreibung</h2>
-<p>In einen mehrsprachigen Text können dynamische Werte eingebettet werden. Die Syntax hierfür ist definiert über das <a href="https://docs.oracle.com/javase/8/docs/api/java/text/MessageFormat.html" target="_blank">Java-Message-Format</a>. Enthält ein mehrsprachiger Text solche Platzhalter (<code class="hljs inlineCode">{0}</code>, <code class="hljs inlineCode">{1}</code>,…), können diese über die Funktion <code class="hljs inlineCode">fill</code> belegt werden.</p>
-<p>Werden durch den Aufruf von <code class="hljs inlineCode">fill</code> nicht alle Parameter belegt, enthält das Ergebnis noch offene Parameter, die in einem weiteren Aufruf von <code class="hljs inlineCode">fill</code> belegt werden können. Das heißt, die beiden folgenden Ausdrücke sind äquivalent:</p>
-<pre><code>$res-key.fill($value1, $value2).fill($value3, $value4)
 
-$res-key.fill($value1, $value2, $value3, $value4)</code></pre>
+<h2>Beschreibung</h2>
+
+<p>In einen Text können dynamische Werte eingebettet werden. Die Syntax hierfür ist definiert über das <a href="https://docs.oracle.com/javase/8/docs/api/java/text/MessageFormat.html" target="_blank">Java-Message-Format</a>. Enthält ein Text solche Platzhalter (<code class="hljs inlineCode">{0}</code>, <code class="hljs inlineCode">{1}</code>,…), können diese über die Funktion <code class="hljs inlineCode">fill(...)</code> belegt werden.</p>
+
 <h2>Parameter</h2>
+
 <table class="tlDocTable">
- <thead>
-  <tr>
-   <th>Name</th>
-   <th>Typ</th>
-   <th>Beschreibung</th>
-   <th>Pflicht</th>
-   <th>Default</th>
-  </tr>
- </thead>
- <tbody>
-  <tr>
-   <td>res-key</td>
-   <td>Fachobjekt</td>
-   <td>Ein Resource-Key mit mindestens einem Parameter, der dynamisch befüllt werden kann.</td>
-   <td>ja</td>
-   <td></td>
-  </tr>
-  <tr>
-   <td>values</td>
-   <td>Zeichenkette</td>
-   <td>Dynamische Werte für die Platzhalter innerhalb des ResKeys</td>
-   <td>ja</td>
-   <td></td>
-  </tr>
- </tbody>
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>input</td>
+			<td>String oder internationalisierter Text</td>
+			<td>Ein Text mit mindestens einem Parameter, der dynamisch befüllt werden kann.</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>values</td>
+			<td>Zahl/Zeichenkette/Objekt</td>
+			<td>Dynamische Werte für die zu ersetzenden Platzhalter.</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+	</tbody>
 </table>
+
 <h2>Rückgabewert</h2>
-<p><span style="color:#3498db"><strong>Typ:</strong></span> Zeichenkette</p>
-<p>Ein mehrsprachiger Text mit eingesetzten Parametern.</p>
-<h2>Beispiele</h2>
-<pre><code>#("Die Antwort lautet {0}."@de, "{0} is the answer."@en).fill(42)</code></pre>
-<p><strong><span style="color:#3498db">Ausgabe Deutsch:</span></strong> Die Antwort lautet 42.</p>
-<p><span style="color:#3498db"><strong>Ausgabe Englisch:</strong></span> 42 is the answer.</p>
+
+<p><span style="color:#3498db"><strong>Typ:</strong></span> String oder internationalisierter Text (je nach Typ der Eingabe)</p>
+
+<p>Text mit eingesetzten Parametern.</p>
+
+<h2>Beispiel mit internationalisiertem Text</h2>
+
+<pre>
+<code>#("Die Antwort lautet {0}."@de, "{0} is the answer."@en).fill(42)</code></pre>
+
+<p><strong><span style="color:#3498db">Ausgabe Deutsch:</span></strong> <code class="hljs inlineCode">"Die Antwort lautet 42."</code></p>
+
+<p><span style="color:#3498db"><strong>Ausgabe Englisch:</strong></span> <code class="hljs inlineCode">"42 is the answer."</code></p>
+
+<h2>Beispiel mit einfacher Zeichenkette</h2>
+
+<pre>
+<code>"{0} is the answer.".fill(42)</code></pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> <code class="hljs inlineCode">"42 is the answer.</code></p>
+
+<p>Sollen viele Texte mit demselben Muster erzeugt werden, ist die Variante mit <a class="tlObject" href="?page=messageFormat&amp;uuid=b82a5829-0daa-4b53-aec0-ff6d24107b83">Nachrichtenformat</a> effizienter.</p>

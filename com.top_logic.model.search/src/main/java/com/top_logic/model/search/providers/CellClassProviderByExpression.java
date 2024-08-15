@@ -103,6 +103,7 @@ public class CellClassProviderByExpression extends AbstractConfiguredInstance<Ce
 		 * </p>
 		 */
 		@Mandatory
+		@Label("CSS classes")
 		Expr getCssClasses();
 	}
 

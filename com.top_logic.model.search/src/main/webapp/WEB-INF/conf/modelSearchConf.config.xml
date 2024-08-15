@@ -343,6 +343,8 @@
 					<method name="messageFormat" class="com.top_logic.model.search.expr.MessageFormatExpr$Builder"/>
 					<method name="format" class="com.top_logic.model.search.expr.FormatExpr$Builder"/>
 					<method name="parse" class="com.top_logic.model.search.expr.ParseExpr$Builder"/>
+					<method name="split" class="com.top_logic.model.search.expr.config.operations.string.Split$Builder"/>
+					<method name="join" class="com.top_logic.model.search.expr.config.operations.string.Join$Builder"/>
 					<method name="label" class="com.top_logic.model.search.expr.config.operations.Label$Builder"/>
 					
 					<method name="translate" class="com.top_logic.model.search.expr.config.operations.string.Translate$Builder"/>

@@ -1,0 +1,100 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>$input.split(separator: ",", trim: true)</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Splits an input string into a list of strings using a given separator. All occurrences of the separator string are searched for in the input string and the character strings between the separators are returned as a list.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>String name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td><code class="hljs inlineCode">input</code></td>
+			<td>Character string</td>
+			<td>The character string to be split</td>
+			<td>Yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">separator</code></td>
+			<td>String/regular expression</td>
+			<td>The separator to be used to split the input string.</td>
+			<td>no</td>
+			<td><code class="hljs inlineCode">","</code></td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">trim</code></td>
+			<td>Truth value</td>
+			<td>Whether to remove spaces at the beginning and end of the result entries.</td>
+			<td>no</td>
+			<td><code class="hljs inlineCode">true</code></td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> List of character strings</p>
+
+<p>The character strings between the separators found in the input string.</p>
+
+<h2>Examples</h2>
+
+<h3>Standard separator</h3>
+
+<pre>
+	<code>"a, b, c".split()</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">["a", "b", "c"]</code></p>
+
+<p>The list of comma-separated words from the input.</p>
+
+<h3>With separator</h3>
+
+<pre>
+	<code>"Hello world and hello moon!".split(" ")
+</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">["Hello", "world", "and", "hello", "moon!"]</code></p>
+
+<p>The space-separated words from the input.</p>
+
+<h3>With regular expression</h3>
+
+<pre>
+	<code>"a --- b - c -- d".split(regex("-+"))
+</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">["a", "b", "c", "d"]</code></p>
+
+<p>The words in the input separated by any number of minus signs.</p>
+
+<h3>Without trimming</h3>
+
+<pre>
+	<code>"a, b, c".split(trim:false)</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> <code class="hljs inlineCode">["a", " b", " c"]</code></p>
+
+<p>Exactly the character strings between the separators. There is a space before each of the characters <code class="hljs inlineCode">b</code> and <code class="hljs inlineCode">c</code>.</p>
+
+<p> </p>
+
+<p> </p>

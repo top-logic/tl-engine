@@ -84,6 +84,10 @@ public class ParseExcel extends GenericMethod {
 
 	private String DEFAULT_HEADER = "A";
 
+	private String OVERHEADER = "->";
+
+	private String FROM_TO = ":";
+
 	/**
 	 * Creates a {@link ParseExcel}.
 	 */
@@ -158,11 +162,11 @@ public class ParseExcel extends GenericMethod {
 				if (headObject instanceof String) {
 					String trimmedHeadObject = ((String) headObject).replace(" ", "");
 					String[] splited;
-					String[] multiHeader = trimmedHeadObject.split(":");
+					String[] multiHeader = trimmedHeadObject.split(OVERHEADER);
 					if (multiHeader.length == 1) {
-						splited = trimmedHeadObject.split("-");
+						splited = trimmedHeadObject.split(FROM_TO);
 					} else {
-						splited = multiHeader[1].split("-");
+						splited = multiHeader[1].split(FROM_TO);
 					}
 					if (splited.length == 1) {
 						int[] parsedCell = parseCellID(splited[0]);
@@ -186,7 +190,7 @@ public class ParseExcel extends GenericMethod {
 							String header = (String) value.get(parsedStart[1]).get(j);
 							if (multiHeader.length != 1) {
 								int[] parsedCell = parseCellID(multiHeader[0]);
-								header = (String) value.get(parsedCell[1]).get(parsedCell[0]) + ":" + header;
+								header = (String) value.get(parsedCell[1]).get(parsedCell[0]) + OVERHEADER + header;
 							}
 							headers.add(header);
 							headersPositions.add(j);
@@ -250,7 +254,7 @@ public class ParseExcel extends GenericMethod {
 			for (int j = 1; j < headersPositions.size(); ++j) {
 				int column = headersPositions.get(j);
 				String header = headers.get(j - 1);
-				String[] multiHeader = header.split(":");
+				String[] multiHeader = header.split(OVERHEADER);
 				if (column < rawRow.size()) {
 					Object columnValue = rawRow.get(column);
 					addValueToRowMap(columnValue, rowEntries, header, multiHeader);

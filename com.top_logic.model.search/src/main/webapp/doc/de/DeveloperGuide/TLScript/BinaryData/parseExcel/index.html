@@ -8,7 +8,7 @@
 
 <h2>Beschreibung</h2>
 
-<p>Liest das eingegeben Excel-Datei und erzeugt daraus eine Map&lt;String, List&gt;. Hierbei wird den Sheetname als Schlüssel für die Map verwendet und die zugehörige Liste ist die eingetragene Zeilen im Sheet.</p>
+<p>Liest die eingegebene Excel-Datei und erzeugt daraus eine Map&lt;String, List&gt;. Hierbei wird der Sheetname als Schlüssel für die Map verwendet und die zugehörigen Listen sind die eingetragene Zeilen im Sheet.</p>
 
 <h2>​Parameter</h2>
 
@@ -40,14 +40,14 @@
 		<tr>
 			<td>importSheets</td>
 			<td>List</td>
-			<td>Liste von Sheets, die importiert werden sollen. Zulässig sind Sheetnamen als Strings und/oder Sheetpositionen in der Datei (begonnen mit 0). Zum Beispiel werden bei der Eingabe importSheets : [0, "1", "Tabelle2"] das erste Sheet und die Sheets mit den Namen 1 bzw. Tabelle2 importiert.</td>
+			<td>Liste von Sheets, die importiert werden sollen. Zulässig sind Sheetnamen als Strings und/oder Sheetpositionen in der Datei (begonnen mit 0). Zum Beispiel werden bei der Eingabe importSheets : [0, "1", "Tabelle2"] das erste Sheet und die Sheets mit den Namen "1" bzw. "Tabelle2" importiert.</td>
 			<td>Nein</td>
 			<td>null</td>
 		</tr>
 		<tr>
 			<td>headers</td>
 			<td>Map</td>
-			<td>Map mit Sheetnamen als Schlüssel und Positionen der Header im Sheet als Wert. Als zulässige Wert sind Strings (z.B: "B2-F2") bzw. eine Liste von Strings erlaubt.</td>
+			<td>Map mit Sheetnamen als Schlüssel und Positionen der Header im Sheet als Wert. Als zulässiger Wert sind Strings (z.B: "B2:F2") bzw. eine Liste von Strings erlaubt.</td>
 			<td>Nein</td>
 			<td>null</td>
 		</tr>
@@ -133,7 +133,7 @@
 <code>{
     ...
     result = $importedData.parseExcel(importSheets: "Vergleich", 
-        headers:{"Vergleich": ["C3", "D3", "E3:E4-F4", "G3:G4-H4"]});
+        headers:{"Vergleich": ["C3", "D3", "E3-&gt;E4:F4", "G3-&gt;G4:H4"]});
     $result
 }</code>
 </pre>
@@ -150,7 +150,7 @@
 <code>{
     ...
     result = $importedData.parseExcel(importSheets: "Test", 
-        headers:{"Test": "B2-F2"});
+        headers:{"Test": "B2:F2"});
     $result
 }</code>
 </pre>

@@ -200,7 +200,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		String tableName = tableBinding.getName();
 		DBTable table = context.getSchema().getTable(tableName);
 		if (table == null) {
-			// TODO: Warning.
+			logErrorTableMissing(type, tableName);
 			return null;
 		}
 
@@ -225,7 +225,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 				TLType targetType = property.getType();
 				TLTableBinding targetBinding = targetType.getAnnotation(TLTableBinding.class);
 				if (targetBinding == null) {
-					// TODO: Warning.
+					logErrorMissingTableBindingOnTarget(property, targetType);
 				} else {
 					String targetTableName = targetBinding.getName();
 					List<String> keyColumns = foreignKeyBinding.getColumns();
@@ -256,10 +256,10 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 				SQLSelect select = select(linkColumns, table(linkBinding.getLinkTable()));
 				CompiledStatement linkRows = query(select).toSql(context.getSqlDialect());
 				
-				TLType targetType = property.getType();
+				TLType targetType = reference.getType();
 				TLTableBinding targetBinding = targetType.getAnnotation(TLTableBinding.class);
 				if (targetBinding == null) {
-					// TODO: Warning.
+					logErrorMissingTableBindingOnTarget(reference, targetType);
 				} else {
 					String destTableName = targetBinding.getName();
 					Map<Object, TLObject> destIndex = context.typeIndex(destTableName);
@@ -278,11 +278,11 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 									context.addResolver(() -> {
 										TLObject source = typeIndex.get(sourceId);
 										if (source == null) {
-											// TODO: Warning.
+											logErrorLinkTableUnknownSourceId(reference, sourceId, destId);
 										} else {
 											TLObject dest = destIndex.get(destId);
 											if (dest == null) {
-												// TODO: Warning.
+												logErrorLinkTableUnknownTargetId(reference, sourceId, destId);
 											} else {
 												source.tAdd(reference, dest);
 											}
@@ -336,7 +336,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 									context.addResolver(() -> {
 										TLObject source = sourceIndex.get(idRef);
 										if (source == null) {
-											// TODO: Warning.
+											logErrorReverseLinkUnknownSourceId(reference, idRef, target);
 										} else {
 											if (multiple) {
 												source.tAdd(reference, target);
@@ -349,7 +349,6 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 							});
 						}
 					}
-
 				}
 			}
 		}
@@ -422,8 +421,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 				context.addResolver(() -> {
 					TLObject target = targetIndex.get(idRef);
 					if (target == null) {
-						logError("Failed to resolve foreign key " + idRef + " in attribute " + qualifiedName(property)
-							+ " into a TLObject.");
+						logErrorLinkUnknownTargetId(property, object, idRef);
 					} else {
 						object.tUpdate(property, target);
 					}
@@ -503,15 +501,19 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 	private Object readId(ImportRow cursor, List<String> columns, Map<String, KeyColumnNormalizer> normalizers) {
 		int keySize = columns.size();
 		List<Object> result = new ArrayList<>(keySize);
+		boolean onlyNulls = true;
 		for (String columnName : columns) {
 			Object rawValue = cursor.getValue(columnName);
 			Object value = normalizeKeyColumn(normalizers.get(columnName), rawValue);
-			if (value == null) {
-				return null;
-			}
+			/* The value might be null. That is okay. That means either that reference is null. Or,
+			 * it can be that a part of the key is null. That does not imply that the key is
+			 * invalid. In a key consisting of multiple columns, some columns can sometimes be null.
+			 * Example: A person could be identified by their first, middle and last name. But some
+			 * people have no middle name. That column would be null in that case. */
+			onlyNulls &= (value == null);
 			result.add(value);
 		}
-		return result;
+		return onlyNulls ? null : result;
 	}
 
 	private Object normalizeKeyColumn(KeyColumnNormalizer normalizer, Object value) {
@@ -533,6 +535,35 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 
 	private TypeSelector momomorphicTypeSelector(TLClass type) {
 		return row -> type;
+	}
+
+	private void logErrorTableMissing(TLType type, String tableName) {
+		logError("Type " + qualifiedName(type) + " can not be imported, as its source SQL table '" + tableName + "' is missing.");
+	}
+
+	private void logErrorMissingTableBindingOnTarget(TLStructuredTypePart reference, TLType targetType) {
+		logError("Reference " + qualifiedName(reference) + " can not be imported, as the target type "
+			+ qualifiedName(targetType) + " has no " + TLTableBinding.class.getSimpleName() + " annotation.");
+	}
+
+	private void logErrorLinkTableUnknownSourceId(TLReference reference, Object sourceId, Object targetId) {
+		logError("Reference " + qualifiedName(reference) + ": There is no object for source id: " + sourceId
+			+ ". Target id: " + targetId);
+	}
+
+	private void logErrorLinkTableUnknownTargetId(TLReference reference, Object sourceId, Object targetId) {
+		logError("Reference " + qualifiedName(reference) + ": There is no object for target id: " + targetId
+			+ ". Source id: " + sourceId);
+	}
+
+	private void logErrorReverseLinkUnknownSourceId(TLReference reference, Object sourceId, TLObject target) {
+		logError("Reference " + qualifiedName(reference) + ": There is no object for source id: " + sourceId
+			+ ". Target: " + target);
+	}
+
+	private void logErrorLinkUnknownTargetId(TLStructuredTypePart reference, TLObject source, Object targetId) {
+		logError("Reference " + qualifiedName(reference) + ": There is no object for target id: " + targetId
+			+ ". Source: " + source);
 	}
 
 	private static void logError(String message) {

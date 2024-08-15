@@ -387,21 +387,26 @@ div.mcMinimized .accText {
 div.mcToggle {
 	position: absolute;
 	cursor: pointer;
-	width: calc(2 * var(--spacing-02) + var(--body-02-line-height));
-    height: calc(2 * var(--spacing-02) + var(--body-02-line-height));
+	width: 2rem;
+    height: 2rem;
 	right: 0;
-	top: 0;
-	background: var(--MC_MINIMIZE_ICON) no-repeat;
+	top: 50%;
+	z-index: 1;
+	transform: translateX(100%) translateY(-50%);
+	border-radius: 4px 0 0 4px;
+	background: var(--MC_MINIMIZE_ICON);
+	background-size: contain;
 	box-shadow: var(--shadow-menu);
 	visibility: hidden
 }
 
 div.mcMinimized > div.mcToggle {
-	right:0;
-	background: var(--MC_NORMALIZE_ICON) no-repeat;
+	right: 0;
+	background: var(--MC_NORMALIZE_ICON);
+	background-size: contain;
 }
 
-div.cMinimizable:HOVER > div.mcToggle {
+div.cMinimizable:hover > div.mcToggle {
 	visibility: visible;
 }
 

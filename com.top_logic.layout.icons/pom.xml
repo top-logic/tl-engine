@@ -5,7 +5,7 @@
     <relativePath>../tl-parent-core/internal</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core-internal</artifactId>
-    <version>7.8.1</version>
+    <version>7.8.3</version>
   </parent>
 
   <artifactId>tl-layout-icons</artifactId>

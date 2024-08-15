@@ -5,7 +5,7 @@
     <relativePath>../tl-parent-core</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core</artifactId>
-    <version>7.8.1</version>
+    <version>7.8.3</version>
   </parent>
 
   <artifactId>tl-graph-common</artifactId>
@@ -20,7 +20,7 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-common-remote</artifactId>
-	  <version>7.8.1</version>
+	  <version>7.8.3</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>

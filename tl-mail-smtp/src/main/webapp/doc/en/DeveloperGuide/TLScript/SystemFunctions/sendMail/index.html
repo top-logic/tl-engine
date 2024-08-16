@@ -1,0 +1,116 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>sendMail(
+  subject: "Hello world!", 
+  to: "Mr. Foobar &lt;foo@bar.com&gt;", 
+  body: {{{
+     &lt;h1&gt;Hello {$receiver}&lt;h1&gt;
+     &lt;p&gt;...&lt;/p&gt;
+  }}},
+  attachements: [
+    binary(...),
+    {
+      "cid": "attachement1",
+      "data": binary(...)
+    }
+  ],
+  cc: ["info@foo.com", "bar@foo.com"], 
+  bcc: "hidden@foobar.com"
+)</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Sends an e-mail with the specified parameters. To be able to use this function, e-mail dispatch must be activated in the application.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Email name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td><code class="hljs inlineCode">subject</code></td>
+			<td>Character string</td>
+			<td>The subject of the e-mail</td>
+			<td>Yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">to</code></td>
+			<td>Character string/list of character strings</td>
+			<td>The recipient(s) of the email. For reasons of data protection, only one recipient should ever be specified for a mass e-mail and the function should be called up individually for all recipients.</td>
+			<td>Yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">body</code></td>
+			<td>Character string/HTML/binary data</td>
+			<td>The content of the email.</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">attachements</code></td>
+			<td>List of binary data or attachment descriptions (see below)</td>
+			<td>Additional content that is sent in the email.</td>
+			<td>no</td>
+			<td><code class="hljs inlineCode">[]</code></td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">cc</code></td>
+			<td>Character string/list of character strings</td>
+			<td>List of recipients who should receive a copy of the e-mail</td>
+			<td>no</td>
+			<td><code class="hljs inlineCode">[]</code></td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">bcc</code></td>
+			<td>String/list of strings</td>
+			<td>List of recipients who should receive a copy of the e-mail without the other recipients seeing their e-mail addresses.</td>
+			<td>no</td>
+			<td><code class="hljs inlineCode">[]</code></td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> Truth value</p>
+
+<p>Whether the email was sent successfully.</p>
+
+<h2>Attachment description</h2>
+
+<p>Either a binary value can be passed directly as an attachment or a JSON object that describes the attachment in more detail:</p>
+
+<pre>
+<code>{
+    "filename": "policies.pdf",
+    "disposition": "attachment",
+    "description": "Some attachement.",
+    "cid": "id1",
+    "headers": {
+        "key": "value"
+    },
+    "data": $binaryData
+}</code></pre>
+
+<p>The attributes of the attachment description have the following meaning:</p>
+
+<ul>
+	<li><code class="hljs inlineCode">"filename"</code>: The file name for the attachment as it should be displayed in the recipient's email program. When the attachment is saved, this file name is suggested to the user.</li>
+	<li><code class="hljs inlineCode">"disposition"</code>: <code class="hljs inlineCode">"inline"</code> or <code class="hljs inlineCode">"attachement".</code> If <code class="hljs inlineCode">"inline"</code> is specified, the attachment is hidden from the recipient. This is useful if, for example, an image is sent that is embedded in the content of the e-mail. See <code class="hljs inlineCode">"cid"</code>.</li>
+	<li><code class="hljs inlineCode">"description"</code>An optional description of the attachment.</li>
+	<li><code class="hljs inlineCode">"cid"</code>The content ID of the attachment. This ID can be used, for example, to embed an attached image in an HTML email. If the value <code class="hljs inlineCode">"id1"</code> has been specified as <code class="hljs inlineCode">"cid"</code>, this attachment can be referenced from the HTML content of the email via <code class="hljs inlineCode">&lt;img src="cid:id1"/&gt;</code>, for example.</li>
+	<li><code class="hljs inlineCode">"headers"</code>Further optional header information that is set on the attachment.</li>
+	<li><code class="hljs inlineCode">"data"</code>The actual content of the attachment. Like the content of the e-mail, the content can be either a character string, HTML or binary data.</li>
+</ul>

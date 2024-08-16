@@ -20,7 +20,7 @@ public enum Visibility implements ExternallyNamed {
 	/**
 	 * The model element is visible and can be directly edited by the user.
 	 */
-	EDITABLE("editable"),
+	EDITABLE("editable", true),
 
 	/**
 	 * The model element is visible and must be entered by the user.
@@ -31,7 +31,7 @@ public enum Visibility implements ExternallyNamed {
 	 * attribute mandatory only in some situation.
 	 * </p>
 	 */
-	MANDATORY("mandatory"),
+	MANDATORY("mandatory", true),
 
 	/**
 	 * The model element is visible, but cannot directly be edited by the user.
@@ -40,7 +40,7 @@ public enum Visibility implements ExternallyNamed {
 	 * There may be custom application functionality that allows editing.
 	 * </p>
 	 */
-	READ_ONLY("read-only"),
+	READ_ONLY("read-only", false),
 
 	/**
 	 * The model element is hidden from all generically generated views.
@@ -49,17 +49,27 @@ public enum Visibility implements ExternallyNamed {
 	 * There may be custom application functionality that displays the element.
 	 * </p>
 	 */
-	HIDDEN("hidden");
+	HIDDEN("hidden", false);
 
 	private final String _externalName;
 
-	private Visibility(String externalName) {
+	private boolean _editable;
+
+	private Visibility(String externalName, boolean editable) {
 		_externalName = externalName;
+		_editable = editable;
 	}
 
 	@Override
 	public String getExternalName() {
 		return _externalName;
+	}
+
+	/**
+	 * Whether a field in this state can be edited.
+	 */
+	boolean isEditable() {
+		return _editable;
 	}
 
 }

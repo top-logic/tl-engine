@@ -232,14 +232,14 @@ public class DisplayAnnotations {
 	 * Whether the given {@link TLModelPart} is hidden during creation.
 	 */
 	public static boolean isEditableInCreate(TLModelPart part) {
-		return !TLModelUtil.isDerived(part) && getCreateVisibility(part) == Visibility.EDITABLE;
+		return !TLModelUtil.isDerived(part) && getCreateVisibility(part).isEditable();
 	}
 
 	/**
 	 * Whether the given {@link TLModelPart} is not derived and editable.
 	 */
 	public static boolean isEditable(TLModelPart part) {
-		return !TLModelUtil.isDerived(part) && getVisibility(part) == Visibility.EDITABLE;
+		return !TLModelUtil.isDerived(part) && getVisibility(part).isEditable();
 	}
 	
 	/** @see #isHidden(AnnotationLookup) */

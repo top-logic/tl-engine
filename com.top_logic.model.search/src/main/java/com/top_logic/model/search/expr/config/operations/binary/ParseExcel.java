@@ -122,7 +122,7 @@ public class ParseExcel extends GenericMethod {
 
 		Boolean raw = asBoolean(arguments[RAW_INDEX]);
 		if (raw == true) {
-			return importedSheets;
+			return determineReturn(importedSheets);
 		} else {
 			HashMap<String, List<Map<String, Object>>> mapedResult = new HashMap<>();
 			ArrayList<String> headers = new ArrayList<>();
@@ -146,8 +146,19 @@ public class ParseExcel extends GenericMethod {
 				}
 				mapedResult.put(key, sheetEntries);
 			}
-			return mapedResult;
+			return determineReturn(mapedResult);
 		}
+	}
+
+	private Object determineReturn(Map<String, ?> result) {
+		if ((result.size() == 1) && (IMPORT_ALL_SHEETS == false)) {
+			String key = (String) result.keySet().toArray()[0];
+			if (IMPORT_SELECTED_SHEETS.contains(key)) {
+				return result;
+			}
+			return result.get(key);
+		}
+		return result;
 	}
 
 	private void setHeaders(ArrayList<String> headers, ArrayList<Integer> headersPositions, String key, List<List<Object>> value) {

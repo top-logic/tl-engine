@@ -37,8 +37,8 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_UNKNOWN_REASON = legacyKey("mail.send.failed.unknown");
 
 	/**
-	 * @en SMTP service is not active in this instance. Before sending e-mail activate SMTP or
-	 *     contact your system administrator.
+	 * @en The SMTP service is not active. Before sending an e-mail activate SMTP or contact your
+	 *     system administrator.
 	 */
 	public static ResKey SMTP_NOT_ACTIVE;
 

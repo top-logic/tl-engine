@@ -11,7 +11,7 @@
 PlaceDialog = {
 
 	//  ========== Tooltip 2023 by SHA ==========
-	generateTooltip: function(target, content) {
+	generateTooltip: function(evt, target, content) {
 		let openTimeout = setTimeout(() => {
 			let targetZero = (target.offsetHeight == 0) && (target.offsetWidth == 0);
 			if (target.classList.contains("tlPopupOpen") || targetZero) {
@@ -26,7 +26,7 @@ PlaceDialog = {
 			tooltip.id = PlaceDialog.tooltipId;
 			tooltip.innerHTML = content;
 			outerDocument.append(tooltip);
-			this.positionTooltip(target, tooltip);
+			this.positionTooltip(evt, target, tooltip);
 			this.closeTooltip(target, tooltip);
 		}, 400);
 		target.setAttribute("data-ttOpen", openTimeout);
@@ -58,7 +58,7 @@ PlaceDialog = {
 		target.removeAttribute("data-ttOpen");
 	},
 
-	positionTooltip: function(target, tooltip) {
+	positionTooltip: function(evt, target, tooltip) {
 		target.classList.add("activeTooltip");
 
 		tooltip.style.left = 0;
@@ -66,7 +66,7 @@ PlaceDialog = {
 
 		if (tooltip.childElementCount > 0) {
 			let ttPos = tooltip.getBoundingClientRect(),
-				targetPos = target.getBoundingClientRect();
+				targetPos = this.targetBoundingClientRect(evt, target);
 			
 			positioning = "vertical";
 			if (target.closest(".tooltipHorizontal") || target.closest(".popupMenu")) {
@@ -77,6 +77,21 @@ PlaceDialog = {
 			this.setHorizontalPosition(tooltip, ttPos, targetPos, positioning);
 		} else {
 			tooltip.style.display = "none";
+		}
+	},
+	
+	targetBoundingClientRect: function(evt, target) {
+		if (target.tagName == "AREA") {
+			// Use mouseposition
+			let mouseCoordinates = BAL.mouseCoordinates(evt);
+			return DOMRect.fromRect({
+				x: mouseCoordinates.x,
+				y: mouseCoordinates.y,
+				width: 0,
+				height: 0,
+			});
+		} else {
+			return target.getBoundingClientRect();
 		}
 	},
 	

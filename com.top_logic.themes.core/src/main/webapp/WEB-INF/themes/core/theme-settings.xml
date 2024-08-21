@@ -1248,6 +1248,12 @@
 	<dim name="RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY"
 		value="90px"
 	/>
+	<dim name="com.top_logic.layout.form.boxes.reactive_tag.Icons.RF_HORIZONTAL_GAP_COLUMNS"
+		value="4rem"
+	/>
+	<dim name="RF_HORIZONTAL_GAP_FILTER"
+		expr="%spacing-06%"
+	/>
 	<icon name="com.top_logic.layout.form.boxes.tag.Icons.NULL"
 		expr="%com.top_logic.layout.form.control.Icons.MANDATORY_NULL%"
 	/>
@@ -1541,12 +1547,6 @@
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.CHEVRON_EXPAND"
 		value="css:bi bi-chevron-expand"
-	/>
-	<dim name="com.top_logic.layout.form.boxes.reactive_tag.Icons.RF_HORIZONTAL_GAP_COLUMNS"
-		value="4rem"
-	/>
-	<dim name="RF_HORIZONTAL_GAP_FILTER"
-		expr="%com.top_logic.layout.form.boxes.reactive_tag.Icons.RF_HORIZONTAL_GAP_COLUMNS%"
 	/>
 	<icon name="com.top_logic.layout.admin.component.Icons.TL_SERVICE_RUNNING"
 		expr="%ICONS_BUTTON_START%"

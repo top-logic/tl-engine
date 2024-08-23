@@ -13,8 +13,7 @@ PlaceDialog = {
 	//  ========== Tooltip 2023 by SHA ==========
 	generateTooltip: function(evt, target, content) {
 		let openTimeout = setTimeout(() => {
-			let targetZero = (target.offsetHeight == 0) && (target.offsetWidth == 0);
-			if (target.classList.contains("tlPopupOpen") || targetZero) {
+			if (target.classList.contains("tlPopupOpen")) {
 				return;
 			}
 			const outerDocument = document.body.firstElementChild;
@@ -81,7 +80,8 @@ PlaceDialog = {
 	},
 	
 	targetBoundingClientRect: function(evt, target) {
-		if (target.tagName == "AREA") {
+		let targetZero = (target.offsetHeight == 0) && (target.offsetWidth == 0);
+		if (targetZero || target.tagName == "AREA") {
 			// Use mouseposition
 			let mouseCoordinates = BAL.mouseCoordinates(evt);
 			return DOMRect.fromRect({

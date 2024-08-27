@@ -5,7 +5,7 @@
     <relativePath>../tl-parent-core</relativePath>
     <groupId>com.top-logic</groupId>
     <artifactId>tl-parent-core</artifactId>
-    <version>7.9.0-SNAPSHOT</version>
+    <version>0.0.5-easyplanning-SNAPSHOT</version>
   </parent>
 
   <artifactId>tl-graph-diagramjs</artifactId>
@@ -20,7 +20,7 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-graph-common</artifactId>
-	  <version>7.9.0-SNAPSHOT</version>
+	  <version>0.0.5-easyplanning-SNAPSHOT</version>
       <classifier>sources</classifier>
       <scope>provided</scope>
     </dependency>

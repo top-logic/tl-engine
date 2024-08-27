@@ -137,6 +137,12 @@ public class ParseExcel extends GenericMethod {
 							List<Object> rawRow = value.get(i);
 							AddRowMap(headers, rawRow, headersPositions, sheetEntries);
 						}
+						headers.clear();
+					} else {
+						generateDefaultHeaders(headers, value);
+						for (List<Object> rawRow : value) {
+							AddRowMap(headers, rawRow, null, sheetEntries);
+						}
 					}
 				} else {
 					generateDefaultHeaders(headers, value);

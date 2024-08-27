@@ -553,7 +553,7 @@ Jahre}{A=, B=, C=1000.0, D=qwertz, E=20.0, F=15.0, G=E5-F5, H=20.0, I=10.0, J=H5
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Ändere die Definition für parsed"
+			comment="Ändere die Definition für parsed (import by index)"
 		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
@@ -768,6 +768,807 @@ Jahre}{A=, B=, C=, D=, E=Einkauf, F=Verkauf, G=Differenz, H=Einkauf, I=Verkauf, 
 						<value><![CDATA[{A=, B=, C=, D=, E=, F=, G=, H=, I=, J=, K=}{A=, B=, C=, D=, E=, F=, G=, H=, I=, J=, K=}{A=, B=, C=Art. Nr., D=Name, E=Vorjahr, F=, G=, H=Aktuelles Jahr, I=, J=, K=Differenz
 Jahre}{A=, B=, C=, D=, E=Einkauf, F=Verkauf, G=Differenz, H=Einkauf, I=Verkauf, J=Differenz, K=}{A=, B=, C=1000.0, D=qwertz, E=20.0, F=15.0, G=E5-F5, H=20.0, I=10.0, J=H5-I5, K=J5-G5}{A=, B=, C=1001.0, D=asdf, E=30.0, F=30.0, G=E6-F6, H=40.0, I=35.0, J=H6-I6, K=J6-G6}{A=, B=, C=1002.0, D=yxcv, E=40.0, F=25.0, G=E7-F7, H=30.0, I=25.0, J=H7-I7, K=J7-G7}]]></value>
 					</expected-value>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Ändere die Definition für parsed (import by name + Header definition)"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor > Attribute"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+							ref="test.transient:ExcelFile#default"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Attribute > Attribute"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="switchToAJAXEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Funktion"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeEdit"
+							tab-path="Administration > Development > Modell Editor > Attribute"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[excelfile -> {
+ data = $excelfile.get(`test.transient:ExcelFile#file`);
+ parsed = $data.parseExcel(importSheets: "Datentypen", headers:{"Datentypen":"B2:E2"});
+ $parsed.toString()
+}]]></value>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="überprüfe die neue Werte"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor > Instanzen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="xls-File"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="parsed Value"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="xls-File"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="{Datentypen=[{Integer=120.0, Float=12.85, Percent=D3/C3, Date=Thu Aug 01 00:00:00 CEST 2024}, {Integer=200.0, Float=20.2, Percent=D4/C4, Date=Fri Aug 02 00:00:00 CEST 2024}, {Integer=300.0, Float=69.33, Percent=D5/C5, Date=Sat Aug 03 00:00:00 CEST 2024}, {Integer=, Float=, Percent=, Date=}, {Integer=SUM(C3:C5), Float=SUM(D3:D5), Percent=SUM(E3:E5), Date=Summe}]}"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
+						column-label="parsed Value"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="xls-File"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="{Datentypen=[{Integer=120.0, Float=12.85, Percent=D3/C3, Date=Thu Aug 01 00:00:00 CEST 2024}, {Integer=200.0, Float=20.2, Percent=D4/C4, Date=Fri Aug 02 00:00:00 CEST 2024}, {Integer=300.0, Float=69.33, Percent=D5/C5, Date=Sat Aug 03 00:00:00 CEST 2024}, {Integer=, Float=, Percent=, Date=}, {Integer=SUM(C3:C5), Float=SUM(D3:D5), Percent=SUM(E3:E5), Date=Summe}]}"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="xlsx.File"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="parsed Value"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="xlsx.File"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="{Datentypen=[{Integer=120.0, Float=12.85, Percent=D3/C3, Date=Thu Aug 01 00:00:00 CEST 2024}, {Integer=200.0, Float=20.2, Percent=D4/C4, Date=Fri Aug 02 00:00:00 CEST 2024}, {Integer=300.0, Float=69.33, Percent=D5/C5, Date=Sat Aug 03 00:00:00 CEST 2024}, {Integer=, Float=, Percent=, Date=}, {Integer=SUM(C3:C5), Float=SUM(D3:D5), Percent=SUM(E3:E5), Date=Summe}]}"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
+						column-label="parsed Value"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="xlsx.File"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="{Datentypen=[{Integer=120.0, Float=12.85, Percent=D3/C3, Date=Thu Aug 01 00:00:00 CEST 2024}, {Integer=200.0, Float=20.2, Percent=D4/C4, Date=Fri Aug 02 00:00:00 CEST 2024}, {Integer=300.0, Float=69.33, Percent=D5/C5, Date=Sat Aug 03 00:00:00 CEST 2024}, {Integer=, Float=, Percent=, Date=}, {Integer=SUM(C3:C5), Float=SUM(D3:D5), Percent=SUM(E3:E5), Date=Summe}]}"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Ändere die Definition für parsed (multi import by name + Header definition)"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor > Attribute"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+							ref="test.transient:ExcelFile#default"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Attribute > Attribute"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="switchToAJAXEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Funktion"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeEdit"
+							tab-path="Administration > Development > Modell Editor > Attribute"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[excelfile -> {
+ data = $excelfile.get(`test.transient:ExcelFile#file`);
+ parsed = $data.parseExcel(importSheets: ["HeaderV1", "HeaderV2"], 
+     headers:{"HeaderV1": ["C3", "D3", "E3->E4:F4", "H3->H4:J4"],
+         "HeaderV2": ["C4", "D4", "E3->E4:F4", "H3->H4:I4", "K4"]});
+ $parsed.toString()
+}]]></value>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="überprüfe die neue Werte"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor > Instanzen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="xls-File"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="parsed Value"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="xls-File"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[{HeaderV1=[{Aktuelles Jahr={Verkauf=10.0, Differenz=H5-I5, Einkauf=20.0}, Vorjahr={Verkauf=15.0, Einkauf=20.0}, Art. Nr.=1000.0, Name=qwertz}, {Aktuelles Jahr={Verkauf=35.0, Differenz=H6-I6, Einkauf=40.0}, Vorjahr={Verkauf=30.0, Einkauf=30.0}, Art. Nr.=1001.0, Name=asdf}, {Aktuelles Jahr={Verkauf=25.0, Differenz=H7-I7, Einkauf=30.0}, Vorjahr={Verkauf=25.0, Einkauf=40.0}, Art. Nr.=1002.0, Name=yxcv}], HeaderV2=[{Aktuelles Jahr={Verkauf=10.0, Einkauf=20.0}, Vorjahr={Verkauf=15.0, Einkauf=20.0}, Art. Nr.=1000.0, Differenz
+Jahre=J5-G5, Name=qwertz}, {Aktuelles Jahr={Verkauf=35.0, Einkauf=40.0}, Vorjahr={Verkauf=30.0, Einkauf=30.0}, Art. Nr.=1001.0, Differenz
+Jahre=J6-G6, Name=asdf}, {Aktuelles Jahr={Verkauf=25.0, Einkauf=30.0}, Vorjahr={Verkauf=25.0, Einkauf=40.0}, Art. Nr.=1002.0, Differenz
+Jahre=J7-G7, Name=yxcv}]}]]></value>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
+						column-label="parsed Value"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="xls-File"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[{HeaderV1=[{Aktuelles Jahr={Verkauf=10.0, Differenz=H5-I5, Einkauf=20.0}, Vorjahr={Verkauf=15.0, Einkauf=20.0}, Art. Nr.=1000.0, Name=qwertz}, {Aktuelles Jahr={Verkauf=35.0, Differenz=H6-I6, Einkauf=40.0}, Vorjahr={Verkauf=30.0, Einkauf=30.0}, Art. Nr.=1001.0, Name=asdf}, {Aktuelles Jahr={Verkauf=25.0, Differenz=H7-I7, Einkauf=30.0}, Vorjahr={Verkauf=25.0, Einkauf=40.0}, Art. Nr.=1002.0, Name=yxcv}], HeaderV2=[{Aktuelles Jahr={Verkauf=10.0, Einkauf=20.0}, Vorjahr={Verkauf=15.0, Einkauf=20.0}, Art. Nr.=1000.0, Differenz
+Jahre=J5-G5, Name=qwertz}, {Aktuelles Jahr={Verkauf=35.0, Einkauf=40.0}, Vorjahr={Verkauf=30.0, Einkauf=30.0}, Art. Nr.=1001.0, Differenz
+Jahre=J6-G6, Name=asdf}, {Aktuelles Jahr={Verkauf=25.0, Einkauf=30.0}, Vorjahr={Verkauf=25.0, Einkauf=40.0}, Art. Nr.=1002.0, Differenz
+Jahre=J7-G7, Name=yxcv}]}]]></value>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="xlsx.File"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="parsed Value"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="xlsx.File"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[{HeaderV1=[{Aktuelles Jahr={Verkauf=10.0, Differenz=H5-I5, Einkauf=20.0}, Vorjahr={Verkauf=15.0, Einkauf=20.0}, Art. Nr.=1000.0, Name=qwertz}, {Aktuelles Jahr={Verkauf=35.0, Differenz=H6-I6, Einkauf=40.0}, Vorjahr={Verkauf=30.0, Einkauf=30.0}, Art. Nr.=1001.0, Name=asdf}, {Aktuelles Jahr={Verkauf=25.0, Differenz=H7-I7, Einkauf=30.0}, Vorjahr={Verkauf=25.0, Einkauf=40.0}, Art. Nr.=1002.0, Name=yxcv}], HeaderV2=[{Aktuelles Jahr={Verkauf=10.0, Einkauf=20.0}, Vorjahr={Verkauf=15.0, Einkauf=20.0}, Art. Nr.=1000.0, Differenz
+Jahre=J5-G5, Name=qwertz}, {Aktuelles Jahr={Verkauf=35.0, Einkauf=40.0}, Vorjahr={Verkauf=30.0, Einkauf=30.0}, Art. Nr.=1001.0, Differenz
+Jahre=J6-G6, Name=asdf}, {Aktuelles Jahr={Verkauf=25.0, Einkauf=30.0}, Vorjahr={Verkauf=25.0, Einkauf=40.0}, Art. Nr.=1002.0, Differenz
+Jahre=J7-G7, Name=yxcv}]}]]></value>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
+						column-label="parsed Value"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="xlsx.File"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[{HeaderV1=[{Aktuelles Jahr={Verkauf=10.0, Differenz=H5-I5, Einkauf=20.0}, Vorjahr={Verkauf=15.0, Einkauf=20.0}, Art. Nr.=1000.0, Name=qwertz}, {Aktuelles Jahr={Verkauf=35.0, Differenz=H6-I6, Einkauf=40.0}, Vorjahr={Verkauf=30.0, Einkauf=30.0}, Art. Nr.=1001.0, Name=asdf}, {Aktuelles Jahr={Verkauf=25.0, Differenz=H7-I7, Einkauf=30.0}, Vorjahr={Verkauf=25.0, Einkauf=40.0}, Art. Nr.=1002.0, Name=yxcv}], HeaderV2=[{Aktuelles Jahr={Verkauf=10.0, Einkauf=20.0}, Vorjahr={Verkauf=15.0, Einkauf=20.0}, Art. Nr.=1000.0, Differenz
+Jahre=J5-G5, Name=qwertz}, {Aktuelles Jahr={Verkauf=35.0, Einkauf=40.0}, Vorjahr={Verkauf=30.0, Einkauf=30.0}, Art. Nr.=1001.0, Differenz
+Jahre=J6-G6, Name=asdf}, {Aktuelles Jahr={Verkauf=25.0, Einkauf=30.0}, Vorjahr={Verkauf=25.0, Einkauf=40.0}, Art. Nr.=1002.0, Differenz
+Jahre=J7-G7, Name=yxcv}]}]]></value>
+					</expected-value>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Ändere die Definition für parsed (raw)"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor > Attribute"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+							ref="test.transient:ExcelFile#default"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Attribute > Attribute"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="switchToAJAXEdit"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Funktion"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeEdit"
+							tab-path="Administration > Development > Modell Editor > Attribute"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[excelfile -> {
+ data = $excelfile.get(`test.transient:ExcelFile#file`);
+ parsed = $data.parseExcel(raw:true);
+ {"[" + $parsed.foreach(list -> 
+   { 
+    "[" + $list.foreach(entry -> $entry.toString()) + "]"
+   }) + "]"
+ };
+}]]></value>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="überprüfe die neue Werte"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor > Instanzen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="xls-File"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="parsed Value"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="xls-File"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="[[A1, B1, C1], [A2, B2, C2], [A3, B3, C3]]"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
+						column-label="parsed Value"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="xls-File"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="[[A1, B1, C1], [A2, B2, C2], [A3, B3, C3]]"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="xlsx.File"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+						/>
+						<path>
+							<named-member name="fieldTable"/>
+						</path>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="parsed Value"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="xlsx.File"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[[[], [], [, , , , Vorjahr, , , Aktuelles Jahr, , ], [, , Art. Nr., Name, Einkauf, Verkauf, Differenz, Einkauf, Verkauf, Differenz, Differenz
+Jahre], [, , 1.000, qwertz, 20, 15, E5-F5, 20, 10, H5-I5, J5-G5], [, , 1.001, asdf, 30, 30, E6-F6, 40, 35, H6-I6, J6-G6], [, , 1.002, yxcv, 40, 25, E7-F7, 30, 25, H7-I7, J7-G7]]]]></value>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
+						column-label="parsed Value"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="xlsx.File"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[[[], [], [, , , , Vorjahr, , , Aktuelles Jahr, , ], [, , Art. Nr., Name, Einkauf, Verkauf, Differenz, Einkauf, Verkauf, Differenz, Differenz
+Jahre], [, , 1.000, qwertz, 20, 15, E5-F5, 20, 10, H5-I5, J5-G5], [, , 1.001, asdf, 30, 30, E6-F6, 40, 35, H6-I6, J6-G6], [, , 1.002, yxcv, 40, 25, E7-F7, 30, 25, H7-I7, J7-G7]]]]></value>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableColumnLabel"
+						column-name="default"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+							/>
+							<path>
+								<named-member name="fieldTable"/>
+							</path>
+						</table>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="parsed Value"
+					/>
+				</action>
+			</actions>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Aufräumen"
+		>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="lösche die Instanzen"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Instanzen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+									<list>
+										<entry config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+											<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+											/>
+											<path>
+												<object>
+													<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+														<model-name config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
+															class-name="test.transient:ExcelFile"
+															object-label="xls-File"
+														/>
+													</business-object>
+												</object>
+											</path>
+										</entry>
+										<entry config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+											<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+												tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+											/>
+											<path>
+												<object>
+													<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+														<model-name config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
+															class-name="test.transient:ExcelFile"
+															object-label="xlsx.File"
+														/>
+													</business-object>
+												</object>
+											</path>
+										</entry>
+									</list>
+								</selectee>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
+								<owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+							command-label="Löschen..."
+							command-name="deleteInstance"
+							component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+							component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Lösche das Fachobjekt"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Eigenschaften"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="Test > Transiente Objekte > Excel file"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.meta.TLModelPartDeleteHandler"
+							command-label="Löschen..."
+							command-name="delete"
+							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/typeEditor.layout.xml#Editor"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
 				</action>
 			</actions>
 		</action>

@@ -27,6 +27,7 @@ import com.top_logic.model.annotate.TLAttributeAnnotation;
 	TLLinkTableBinding.LINK_TABLE,
 	TLLinkTableBinding.SOURCE_COLUMNS,
 	TLLinkTableBinding.DESTINATION_COLUMNS,
+	TLLinkTableBinding.ORDER_COLUMN,
 })
 @InApp
 @TagName("link-table-binding")
@@ -35,17 +36,20 @@ public interface TLLinkTableBinding extends TLAttributeAnnotation {
 	/**
 	 * @see #getLinkTable()
 	 */
-	final String LINK_TABLE = "link-table";
+	String LINK_TABLE = "link-table";
 
 	/**
 	 * @see #getSourceColumns()
 	 */
-	final String SOURCE_COLUMNS = "source-columns";
+	String SOURCE_COLUMNS = "source-columns";
 
 	/**
 	 * @see #getDestinationColumns()
 	 */
-	final String DESTINATION_COLUMNS = "destination-columns";
+	String DESTINATION_COLUMNS = "destination-columns";
+
+	/** @see #getOrderColumn() */
+	String ORDER_COLUMN = "order-column";
 
 	/**
 	 * The name of the link table.

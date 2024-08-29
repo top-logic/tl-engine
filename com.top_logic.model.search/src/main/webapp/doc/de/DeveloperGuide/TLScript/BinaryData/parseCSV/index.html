@@ -40,7 +40,7 @@
 			<td>Char</td>
 			<td>Trennzeichen für Spaltenwerte</td>
 			<td>Nein</td>
-			<td>','</td>
+			<td>';'</td>
 		</tr>
 		<tr>
 			<td>lineSeparator</td>
@@ -105,7 +105,7 @@
 
 <p><span style="color:#3498db"><strong>Ausgabe:</strong></span> [{<span style="color:#c0392b">date=</span>" 15.07.2024", <span style="color:#c0392b">number=</span>" 5", <span style="color:#c0392b">name=</span>" test"}, {<span style="color:#c0392b">date=</span>" 16.07.2024", <span style="color:#c0392b">number=</span>" 2", <span style="color:#c0392b">name=</span>" test2"}, {<span style="color:#c0392b">date</span>=" 17.07.2024", <span style="color:#c0392b">number=</span>, <span style="color:#c0392b">name=</span>}]</p>
 
-<p>Der Aufruf von <code class="hljs inlineCode">parseCSV(columnSeparator: ";")</code> liefert eine Liste von Maps. Dabei wird die erste Zeile als Header gewählt und deren Einträge als Schlüssel für die Maps verwendet. Anschließend wird für jede weitere Zeile aus deren Einträgen gemäß den Schlüsseln des Headers der zugehörigen Map erzeugt, wobei überschüssige Einträge der Zeile ignoriert und fehlenden Einträgen der Zeile mit leeren Strings aufgefüllt werden.</p>
+<p>Der Aufruf von <code class="hljs inlineCode">parseCSV()</code> liefert eine Liste von Maps. Dabei wird die erste Zeile als Header gewählt und deren Einträge als Schlüssel für die Maps verwendet. Anschließend wird für jede weitere Zeile aus deren Einträgen gemäß den Schlüsseln des Headers der zugehörigen Map erzeugt, wobei überschüssige Einträge der Zeile ignoriert und fehlenden Einträgen der Zeile mit leeren Strings aufgefüllt werden.</p>
 
 <h3>Beispiel 2:</h3>
 

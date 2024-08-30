@@ -23,11 +23,6 @@ import com.top_logic.basic.module.TypedRuntimeModule;
  * Service resolving file extensions to content types.
  */
 public class MimeTypesModule extends ManagedClass implements Reloadable {
-	/** The standard type for HTML. */
-	public static final String HTML_TYPE = "text/html";
-
-	/** The standard type for HTML. */
-	public static final String XML_TYPE = "text/xml";
 
 	/** The map containing all known MIME types. */
 	private FileTypeMap mimeMap;

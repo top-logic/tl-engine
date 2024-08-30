@@ -86,6 +86,7 @@ import com.top_logic.basic.util.StopWatch;
 import com.top_logic.basic.xml.XMLPrettyPrinter;
 import com.top_logic.dob.schema.config.MetaObjectName;
 import com.top_logic.dob.schema.config.MetaObjectsConfig;
+import com.top_logic.dob.xml.DOXMLConstants;
 import com.top_logic.knowledge.security.SecurityStorage;
 import com.top_logic.knowledge.service.InitialTableSetup;
 import com.top_logic.knowledge.service.KBUtils;
@@ -396,7 +397,7 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 				File newFile;
 				do {
 					baseName = "inapp-schema-" + id;
-					resourceName = ModuleLayoutConstants.AUTOCONF_FOLDER_RESOURCE + baseName + ".meta.xml";
+					resourceName = ModuleLayoutConstants.AUTOCONF_FOLDER_RESOURCE + baseName + DOXMLConstants.FILE_ENDING;
 					newFile = FileManager.getInstance().getIDEFile(resourceName);
 					id++;
 				} while (newFile.exists());
@@ -416,7 +417,7 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 							{
 								ResourceDeclaration decl = TypedConfiguration.newConfigItem(ResourceDeclaration.class);
 								decl.setResource(
-									"webinf://" + ModuleLayoutConstants.AUTOCONF_DIR + "/" + baseName + ".meta.xml");
+									"webinf://" + ModuleLayoutConstants.AUTOCONF_DIR + "/" + baseName + DOXMLConstants.FILE_ENDING);
 								typeSystem.getDeclarations().add(decl);
 							}
 						}

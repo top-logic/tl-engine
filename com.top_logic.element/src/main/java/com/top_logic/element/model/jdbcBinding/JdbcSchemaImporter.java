@@ -46,6 +46,7 @@ import com.top_logic.basic.db.model.util.DBSchemaUtils;
 import com.top_logic.basic.generate.CodeUtil;
 import com.top_logic.basic.generate.TokenSplitter;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.mime.MimeTypesConstants;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.sql.PooledConnection;
@@ -163,7 +164,7 @@ public class JdbcSchemaImporter extends AbstractCommandHandler {
 
 			@Override
 			public String getContentType() {
-				return "application/xml";
+				return MimeTypesConstants.APPLICATION_XML;
 			}
 
 			@Override

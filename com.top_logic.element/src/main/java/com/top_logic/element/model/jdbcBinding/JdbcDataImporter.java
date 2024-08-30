@@ -51,6 +51,7 @@ import com.top_logic.element.model.jdbcBinding.api.annotate.TLTableBinding;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassPart;
@@ -144,7 +145,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 	}
 
 	private void loadData(ImportContext context) throws SQLException {
-		for (TLType type : context.getModule().getTypes()) {
+		for (TLClass type : context.getModule().getClasses()) {
 			TypeLoader loader = typeLoader(context, type);
 
 			if (loader != null) {
@@ -191,9 +192,12 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		void load(PooledConnection connection) throws SQLException;
 	}
 
-	private TypeLoader typeLoader(ImportContext context, TLType type) {
+	private TypeLoader typeLoader(ImportContext context, TLClass type) {
 		TLTableBinding tableBinding = type.getAnnotation(TLTableBinding.class);
 		if (tableBinding == null) {
+			/* This is severity "info", not "warning", as that is normal: Not every type is
+			 * imported. */
+			logInfo("No table binding for type " + qualifiedName(type) + ". Type will not be imported.");
 			return null;
 		}
 
@@ -204,7 +208,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 			return null;
 		}
 
-		TypeSelector typeSelector = typeSelector((TLClass) type, tableBinding);
+		TypeSelector typeSelector = typeSelector(type, tableBinding);
 
 		List<String> primaryKey = tableBinding.getPrimaryKey();
 
@@ -212,13 +216,14 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		Map<Object, TLObject> typeIndex = context.typeIndex(tableName);
 		List<RowReader> readers = new ArrayList<>();
 		List<TypeLoader> subLoaders = new ArrayList<>();
-		for (TLStructuredTypePart property : ((TLClass) type).getAllParts()) {
+		for (TLStructuredTypePart property : type.getAllParts()) {
 			TLColumnBinding columnBinding = property.getAnnotation(TLColumnBinding.class);
 			if (columnBinding != null) {
 				columns.add(columnBinding.getName());
 				readers.add(propertyLoader(property, columnBinding));
+				continue;
 			}
-		
+
 			TLForeignKeyBinding foreignKeyBinding = property.getAnnotation(TLForeignKeyBinding.class);
 			if (foreignKeyBinding != null) {
 		
@@ -236,6 +241,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 						columns.add(keyColumnName);
 					}
 				}
+				continue;
 			}
 			
 			TLLinkTableBinding linkBinding = property.getAnnotation(TLLinkTableBinding.class);
@@ -293,13 +299,21 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 						}
 					});
 				}
+				continue;
 			}
+			if (property.isDerived()) {
+				/* Check this after building the import bindings, to make sure an import binding on
+				 * a derived attribute causes an error which notifies the developer of the
+				 * problem. */
+				continue;
+			}
+			logInfo("No import binding for attribute " + qualifiedName(property) + ". Attribute will not be imported.");
 		}
 
 		// All references with the currently imported type as target type.
-		for (TLObject referenceObject : context.referrers(type)) {
-			if (referenceObject instanceof TLReference) {
-				TLReference reference = (TLReference) referenceObject;
+		for (TLObject referenceAttribute : context.referrers(type)) {
+			if (referenceAttribute instanceof TLReference) {
+				TLReference reference = (TLReference) referenceAttribute;
 				TLReverseForeignKeyBinding reverseForeignKeyBinding =
 					reference.getAnnotation(TLReverseForeignKeyBinding.class);
 				if (reverseForeignKeyBinding != null) {
@@ -307,17 +321,27 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 
 					TLTableBinding sourceBinding = sourceType.getAnnotation(TLTableBinding.class);
 					if (sourceBinding == null) {
-						// TODO: Warning.
+						logErrorMissingTableBindingOnTarget(reference, sourceType);
 					} else {
 						String sourceTableName = sourceBinding.getName();
 
 						List<String> targetColumns = reverseForeignKeyBinding.getTargetColumns();
+						if (targetColumns.isEmpty()) {
+							logErrorNoTargetColumnsInReverseKey(reference, sourceType);
+							continue;
+						}
 						String orderColumn = reverseForeignKeyBinding.getOrderColumn();
 
 						boolean multiple = reference.isMultiple();
+						if ((orderColumn != null) && !multiple) {
+							logErrorOrderForSingleReference(reference, sourceType);
+						}
+						if ((orderColumn != null) && !reference.isOrdered()) {
+							logErrorOrderForUnorderedReference(reference, sourceType);
+						}
 
 						columns.addAll(targetColumns);
-						if (multiple && reference.isOrdered() && orderColumn != null) {
+						if (orderColumn != null) {
 							columns.add(orderColumn);
 
 							readers.add((TLObject target, ImportRow cursor) -> {
@@ -341,7 +365,12 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 											if (multiple) {
 												source.tAdd(reference, target);
 											} else {
-												source.tUpdate(reference, target);
+												Object oldTarget = source.tValue(reference);
+												if (oldTarget != null) {
+													logErrorReverseLinkValueClash(reference, source, oldTarget, target);
+												} else {
+													source.tUpdate(reference, target); // TODO JST weitere fälle von clashes finden
+												}
 											}
 										}
 									});
@@ -350,11 +379,13 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 						}
 					}
 				}
+			} else {
+				logErrorReferenceNoTLReference(type, referenceAttribute);
 			}
 		}
-
 		RowReader rowReader = TypedConfigUtil.createInstance(tableBinding.getRowReader());
 		if (rowReader != null) {
+			/* This is an optional post-processing of the imported rows. No else-block is needed. */
 			readers.add(rowReader);
 		}
 
@@ -366,27 +397,34 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 			try (ResultSet resultSet = allRows.executeQuery(connection)) {
 				ImportRow cursor = cursor(resultSet);
 				while (resultSet.next()) {
-					TLClass createType = typeSelector.getType(cursor);
+					TLClass createType = calcType(typeSelector, cursor);
+					if (createType == null) {
+						continue;
+					}
 					TLObject object = factory.createObject(createType);
 
 					for (RowReader loader : readers) {
-						loader.read(object, cursor);
+						try {
+							loader.read(object, cursor);
+						} catch (RuntimeException exception) {
+							logError("Failed to read row. Reader: " + loader + ". Row: " + resultSet, exception);
+						}
 					}
 
 					if (!primaryKey.isEmpty()) {
 						Object id = readId(cursor, primaryKey);
-						if (id == null) {
-							// TODO: Warning.
-						} else {
+						if (id != null) {
 							typeIndex.put(id, object);
+						} else {
+							logError("Primary key is null for object of type " + qualifiedName(createType) + ": " + object);
 						}
 					}
 					for (List<String> index : context.getNonPrimaryIndices(tableName)) {
 						Object id = readId(cursor, index);
-						if (id == null) {
-							// TODO JST: Warning.
-						} else {
+						if (id != null) {
 							context.typeBySecondaryIndex(tableName, index).put(id, object);
+						} else {
+							logWarn("Non-Primary key is null for object of type " + qualifiedName(createType) + ": " + object);
 						}
 					}
 				}
@@ -408,6 +446,15 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 			typeSelector = momomorphicTypeSelector(type);
 		}
 		return typeSelector;
+	}
+
+	private TLClass calcType(TypeSelector typeSelector, ImportRow cursor) {
+		try {
+			return typeSelector.getType(cursor);
+		} catch (RuntimeException exception) {
+			logError("Failed to determine TLClass for row. Type selector: " + typeSelector, exception);
+			return null;
+		}
 	}
 
 	private RowReader foreinKeyLoader(ImportContext context, TLStructuredTypePart property, List<String> columns,
@@ -480,10 +527,20 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 
 		return (TLObject object, ImportRow cursor) -> {
 			Object columnValue = cursor.getValue(columnName);
-			Object value = columnParser.getApplicationValue(columnValue);
+			Object value = parseValue(property, columnParser, columnValue);
 
 			object.tUpdate(property, value);
 		};
+	}
+
+	private Object parseValue(TLStructuredTypePart property, ColumnParser parser, Object value) {
+		try {
+			return parser.getApplicationValue(value);
+		} catch (RuntimeException exception) {
+			logError("Failed to parse value: '" + value + "'. Parser: " + parser
+				+ ". Attribute: " + qualifiedName(property), exception);
+			return null;
+		}
 	}
 
 	private ColumnParser columnParser(TLColumnBinding columnBinding) {
@@ -520,15 +577,20 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		if (normalizer == null) {
 			return value;
 		}
-		return normalizer.normalize(value);
+		try {
+			return normalizer.normalize(value);
+		} catch (RuntimeException exception) {
+			logError("Failed to normalize value: '" + value + "'. Normalizer: " + normalizer);
+			return null;
+		}
 	}
 
 	private ImportRow cursor(ResultSet resultSet) {
 		return column -> {
 			try {
 				return resultSet.getObject(column);
-			} catch (SQLException ex) {
-				throw new RuntimeException(ex);
+			} catch (SQLException exception) {
+				throw new RuntimeException("Failed to read column '" + column + "'.", exception);
 			}
 		};
 	}
@@ -541,9 +603,31 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		logError("Type " + qualifiedName(type) + " can not be imported, as its source SQL table '" + tableName + "' is missing.");
 	}
 
+	private void logErrorReferenceNoTLReference(TLType target, TLObject referenceAttribute) {
+		logError("Reference " + label(referenceAttribute) + " is not a " + TLReference.class.getSimpleName()
+			+ ", but refers to type " + qualifiedName(target));
+	}
+
 	private void logErrorMissingTableBindingOnTarget(TLStructuredTypePart reference, TLType targetType) {
-		logError("Reference " + qualifiedName(reference) + " can not be imported, as the target type "
+		logError("Reference " + qualifiedName(reference) + " can not be imported. The target type "
 			+ qualifiedName(targetType) + " has no " + TLTableBinding.class.getSimpleName() + " annotation.");
+	}
+
+	private void logErrorNoTargetColumnsInReverseKey(TLReference reference, TLClass sourceType) {
+		logError("Reference " + qualifiedName(reference) + ": The " + TLReverseForeignKeyBinding.class.getSimpleName()
+			+ " annotation on its target type " + qualifiedName(sourceType) + " does not specify key columns.");
+	}
+
+	private void logErrorOrderForSingleReference(TLReference reference, TLClass sourceType) {
+		logError("Reference " + qualifiedName(reference) + ": The " + TLReverseForeignKeyBinding.class.getSimpleName()
+			+ " annotation on its target type " + qualifiedName(sourceType) + " specifies an order column,"
+			+ " but it is a single value reference.");
+	}
+
+	private void logErrorOrderForUnorderedReference(TLReference reference, TLClass sourceType) {
+		logError("Reference " + qualifiedName(reference) + ": The " + TLReverseForeignKeyBinding.class.getSimpleName()
+			+ " annotation on its target type " + qualifiedName(sourceType) + " specifies an order column,"
+			+ " but the reference is not ordered.");
 	}
 
 	private void logErrorLinkTableUnknownSourceId(TLReference reference, Object sourceId, Object targetId) {
@@ -558,16 +642,38 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 
 	private void logErrorReverseLinkUnknownSourceId(TLReference reference, Object sourceId, TLObject target) {
 		logError("Reference " + qualifiedName(reference) + ": There is no object for source id: " + sourceId
-			+ ". Target: " + target);
+			+ ". Target: " + label(target));
 	}
 
 	private void logErrorLinkUnknownTargetId(TLStructuredTypePart reference, TLObject source, Object targetId) {
 		logError("Reference " + qualifiedName(reference) + ": There is no object for target id: " + targetId
-			+ ". Source: " + source);
+			+ ". Source: " + label(source));
+	}
+
+	private void logErrorReverseLinkValueClash(TLReference reference, Object source, Object oldTarget, Object newTarget) {
+		logError("Reference " + qualifiedName(reference) + ": This is a single value reference."
+			+ " But object '" + label(source) + "' references two objects: '" + label(oldTarget) + "' and: '"
+			+ label(newTarget));
+	}
+
+	private String label(Object object) {
+		return MetaLabelProvider.INSTANCE.getLabel(object);
 	}
 
 	private static void logError(String message) {
 		Logger.error(message, JdbcDataImporter.class);
+	}
+
+	private static void logError(String message, Throwable exception) {
+		Logger.error(message, exception, JdbcDataImporter.class);
+	}
+
+	private static void logWarn(String message) {
+		Logger.warn(message, JdbcDataImporter.class);
+	}
+
+	private static void logInfo(String message) {
+		Logger.info(message, JdbcDataImporter.class);
 	}
 
 }

@@ -21,6 +21,7 @@ import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.config.format.XMLFragmentString;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.mime.MimeTypesConstants;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.values.MultiLineText;
@@ -193,7 +194,7 @@ public interface PrimitiveTypes extends ConfigurationItem {
 	@InstanceFormat
 	@ItemDisplay(ItemDisplayType.VALUE)
 	@PropertyEditor(BinaryDataEditor.class)
-	@AcceptedTypes(value = { "text/xml", "application/xml", ".xml" })
+	@AcceptedTypes(value = { MimeTypesConstants.TEXT_XML, MimeTypesConstants.APPLICATION_XML, ".xml" })
 	@RenderWholeLine
 	List<BinaryData> getBinaries();
 

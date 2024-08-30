@@ -15,6 +15,13 @@
 						tab-path="Administration > Development"
 					/>
 				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor"
+					/>
+				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
 					failure-expected="false"
 					user-id="root"

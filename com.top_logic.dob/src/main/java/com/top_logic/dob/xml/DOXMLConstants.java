@@ -20,6 +20,9 @@ import com.top_logic.dob.sql.DBIndex;
  */
 public interface DOXMLConstants {
 
+	/** The normative file ending of Meta XML files. */
+	public static final String FILE_ENDING = ".meta.xml";
+
 	/** Generic name attribute */
 	public static final String NAME_ATTRIBUTE = "name";
 

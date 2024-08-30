@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.model.jdbcBinding;
 
+import static com.top_logic.model.util.TLModelUtil.*;
 import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
 
@@ -19,10 +20,12 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.ComparableComparator;
 import com.top_logic.basic.db.model.DBSchema;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
@@ -210,13 +213,33 @@ public class ImportContext {
 		 */
 		protected void resolve(TLObject source, TLReference reference) {
 			Collections.sort(_entries);
-			source.tUpdate(reference, resolveEntriesToTargets());
+			Object oldValue = source.tValue(reference);
+			List<TLObject> newValues = resolveEntriesToTargets();
+			if (oldValue != null) {
+				logErrorReferenceClash(reference, source, oldValue, newValues);
+			}
+			source.tUpdate(reference, newValues);
 		}
 
 		private List<TLObject> resolveEntriesToTargets() {
 			return _entries.stream()
 				.map(e -> e.getTarget())
+				.filter(Objects::nonNull)
 				.collect(toList());
+		}
+
+		private void logErrorReferenceClash(TLReference reference, Object source, Object newTarget,
+				Object oldTarget) {
+			logError("Reference " + qualifiedName(reference) + ": Multiple values for object '" + label(source)
+				+ "'. First: '" + label(oldTarget) + "'. Second: '" + label(newTarget));
+		}
+
+		private String label(Object object) {
+			return MetaLabelProvider.INSTANCE.getLabel(object);
+		}
+
+		private static void logError(String message) {
+			Logger.error(message, ReferencePromise.class);
 		}
 
 		private static abstract class RefEntry implements Comparable<RefEntry> {
@@ -275,7 +298,15 @@ public class ImportContext {
 
 			@Override
 			public TLObject getTarget() {
-				return _index.get(_targetId);
+				TLObject result = _index.get(_targetId);
+				if (result == null) {
+					logError("Failed to resolve id '" + _targetId + "'.");
+				}
+				return result;
+			}
+
+			private static void logError(String message) {
+				Logger.error(message, DeferredRefEntry.class);
 			}
 
 		}

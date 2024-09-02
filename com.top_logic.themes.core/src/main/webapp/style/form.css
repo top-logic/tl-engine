@@ -1634,6 +1634,13 @@ span.ddwttImmutableItem {
 	font-weight: var(--highlight-weight, normal);
 }
 
+.tl-table__cell span.cTextInput,
+.tl-table__cell span.cDateInput,
+.tl-table__cell span.cTimeInput,
+.tl-table__cell span.ddwttImmutableItem {
+	color: var(--highlight-fg, inherit);
+}
+
 .cTextInput input,
 .cIntegerInput.num input,
 .cExpandableTextInput input,

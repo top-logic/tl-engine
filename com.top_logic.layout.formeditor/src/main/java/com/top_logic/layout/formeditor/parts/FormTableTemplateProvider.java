@@ -128,8 +128,10 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 			FormMember field =
 				FormEditorUtil.createAnotherMetaAttributeForEdit(_formContext, _contentGroup, _part, rowType,
 					isDisabled, AnnotationContainer.EMPTY);
-			FormVisibility visibility = _col.getVisibility();
-			visibility.applyTo(field);
+			if (field != null) {
+				FormVisibility visibility = _col.getVisibility();
+				visibility.applyTo(field);
+			}
 			return field;
 		}
 	}

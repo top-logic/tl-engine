@@ -7,7 +7,6 @@ package com.top_logic.element.model.export.ui;
 
 import java.io.CharArrayWriter;
 import java.io.Writer;
-import java.nio.charset.Charset;
 import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
@@ -110,11 +109,16 @@ public class ModelExportCommand extends AbstractDownloadHandler {
 	 * or {@link TLModule}).
 	 */
 	public static BinaryData toXML(TLModelPart part) throws XMLStreamException {
+		byte[] bytes = toXMLBytes(part);
+		return BinaryDataFactory.createBinaryData(bytes, "text/xml", TLModelUtil.qualifiedName(part) + ".model.xml");
+	}
+
+	/** @see #toXML(TLModelPart) */
+	public static byte[] toXMLBytes(TLModelPart part) throws XMLStreamException {
 		CharArrayWriter buffer = new CharArrayWriter();
 		serializeModuleOrType(buffer, part, ElementSchemaConstants.MODEL_6_NS);
 		String xml = XMLPrettyPrinter.prettyPrint(buffer.toString());
-		return BinaryDataFactory.createBinaryData(xml.getBytes(Charset.forName("utf-8")), "text/xml",
-			TLModelUtil.qualifiedName(part) + ".model.xml");
+		return xml.getBytes(TypedConfiguration.DEFAULT_CHARSET);
 	}
 
 	/**

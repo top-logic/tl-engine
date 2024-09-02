@@ -53,6 +53,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLModule;
@@ -312,6 +313,9 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 
 		// All references with the currently imported type as target type.
 		for (TLObject referenceAttribute : context.referrers(type)) {
+			if (referenceAttribute instanceof TLAssociationEnd) {
+				continue;
+			}
 			if (referenceAttribute instanceof TLReference) {
 				TLReference reference = (TLReference) referenceAttribute;
 				TLReverseForeignKeyBinding reverseForeignKeyBinding =
@@ -369,7 +373,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 												if (oldTarget != null) {
 													logErrorReverseLinkValueClash(reference, source, oldTarget, target);
 												} else {
-													source.tUpdate(reference, target); // TODO JST weitere fälle von clashes finden
+													source.tUpdate(reference, target);
 												}
 											}
 										}

@@ -197,7 +197,7 @@
 		</class>
 		<class name="MEConfigDescriptor" abstract="true" tl5:name="MEConfigDescriptor"></class>
 		<class name="Mail" tl5:name="Mail">
-			<property name="attachements" type="BOOLEAN"/>
+			<property name="attachments" type="BOOLEAN"/>
 			<property name="dc_contributor" type="STRING">
 				<size:constraint upper="150"/>
 			</property>

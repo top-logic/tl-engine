@@ -58,7 +58,7 @@
 						interface-name="com.top_logic.mail.base.Mail"
 					/>
 					<instance-presentation icon="theme:mime.tl.mail.Mail"/>
-					<main-properties properties="name, mailID, attachements"/>
+					<main-properties properties="name, mailID, attachments"/>
 					<table name="Mail"/>
 				</annotations>
 				<attributes>
@@ -85,7 +85,7 @@
 							<delete-protected/>
 						</annotations>
 					</property>
-					<property name="attachements"
+					<property name="attachments"
 						mandatory="true"
 						type="tl.core:Boolean"
 					>

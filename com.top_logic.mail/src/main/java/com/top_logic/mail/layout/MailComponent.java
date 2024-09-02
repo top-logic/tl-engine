@@ -70,8 +70,8 @@ public class MailComponent extends FormComponent {
 	        theContext.addMember(this.createAddressField(FIELD_CC, theMail.getCC()));
 	        theContext.addMember(theGroup);
 
-	        if (theMail.hasAttachements()) {
-	        	for (Document theAttachment : theMail.getAttachements()) {
+	        if (theMail.hasAttachments()) {
+	        	for (Document theAttachment : theMail.getAttachments()) {
 					theGroup.addMember(this.createAttachmentField(theAttachment));
 	            }
 	        }

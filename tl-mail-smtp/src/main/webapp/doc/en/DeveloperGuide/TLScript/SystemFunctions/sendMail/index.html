@@ -8,10 +8,10 @@
      &lt;h1&gt;Hello {$receiver}&lt;h1&gt;
      &lt;p&gt;...&lt;/p&gt;
   }}},
-  attachements: [
+  attachments: [
     binary(...),
     {
-      "cid": "attachement1",
+      "cid": "attachment1",
       "data": binary(...)
     }
   ],
@@ -59,7 +59,7 @@
 			<td> </td>
 		</tr>
 		<tr>
-			<td><code class="hljs inlineCode">attachements</code></td>
+			<td><code class="hljs inlineCode">attachments</code></td>
 			<td>List of binary data or attachment descriptions (see below)</td>
 			<td>Additional content that is sent in the email.</td>
 			<td>no</td>
@@ -96,7 +96,7 @@
 <code>{
     "filename": "policies.pdf",
     "disposition": "attachment",
-    "description": "Some attachement.",
+    "description": "Some attachment.",
     "cid": "id1",
     "headers": {
         "key": "value"
@@ -108,7 +108,7 @@
 
 <ul>
 	<li><code class="hljs inlineCode">"filename"</code>: The file name for the attachment as it should be displayed in the recipient's email program. When the attachment is saved, this file name is suggested to the user.</li>
-	<li><code class="hljs inlineCode">"disposition"</code>: <code class="hljs inlineCode">"inline"</code> or <code class="hljs inlineCode">"attachement".</code> If <code class="hljs inlineCode">"inline"</code> is specified, the attachment is hidden from the recipient. This is useful if, for example, an image is sent that is embedded in the content of the e-mail. See <code class="hljs inlineCode">"cid"</code>.</li>
+	<li><code class="hljs inlineCode">"disposition"</code>: <code class="hljs inlineCode">"inline"</code> or <code class="hljs inlineCode">"attachment".</code> If <code class="hljs inlineCode">"inline"</code> is specified, the attachment is hidden from the recipient. This is useful if, for example, an image is sent that is embedded in the content of the e-mail. See <code class="hljs inlineCode">"cid"</code>.</li>
 	<li><code class="hljs inlineCode">"description"</code>An optional description of the attachment.</li>
 	<li><code class="hljs inlineCode">"cid"</code>The content ID of the attachment. This ID can be used, for example, to embed an attached image in an HTML email. If the value <code class="hljs inlineCode">"id1"</code> has been specified as <code class="hljs inlineCode">"cid"</code>, this attachment can be referenced from the HTML content of the email via <code class="hljs inlineCode">&lt;img src="cid:id1"/&gt;</code>, for example.</li>
 	<li><code class="hljs inlineCode">"headers"</code>Further optional header information that is set on the attachment.</li>

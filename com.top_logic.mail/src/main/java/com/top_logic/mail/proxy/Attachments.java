@@ -22,21 +22,21 @@ import com.top_logic.basic.tools.NameBuilder;
 /**
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
-public class Attachements {
+public class Attachments {
 
 	/** Held list of attachments. */
-	public transient List<Attachement> attachements = new ArrayList<>();
+	public transient List<Attachment> attachments = new ArrayList<>();
 
     /**
 	 * Create a representation of attachments.
 	 */
-    /*package protected*/ Attachements() {
+    Attachments() {
     }
 
     @Override
 	public String toString() {
 		return new NameBuilder(this)
-			.add("attachements", this.attachements.size())
+			.add("attachments", this.attachments.size())
 			.build();
     }
 
@@ -46,7 +46,7 @@ public class Attachements {
      * @return    The requested number of attachments.
      */
     public int getCount() {
-        return this.attachements.size(); 
+        return this.attachments.size(); 
     }
 
     /** 
@@ -55,12 +55,12 @@ public class Attachements {
      * @param     aPos    Number of attachment.
      * @return    The requested attachment.
      */
-    public Attachement getAttachement(int aPos) {
-        return this.attachements.get(aPos);
+    public Attachment getAttachment(int aPos) {
+        return this.attachments.get(aPos);
     }
 
-    /*package protected*/ void addAttachement(BodyPart aPart) throws MessagingException, UnsupportedEncodingException  {
-        this.attachements.add(new Attachement(aPart, this.getCount()));
+    /*package protected*/ void addAttachment(BodyPart aPart) throws MessagingException, UnsupportedEncodingException  {
+        this.attachments.add(new Attachment(aPart, this.getCount()));
     }
 
     /**
@@ -68,7 +68,7 @@ public class Attachements {
      * 
      * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
      */
-    public class Attachement {
+    public class Attachment {
 
         // Attributes
 
@@ -93,7 +93,7 @@ public class Attachements {
          * @throws   UnsupportedEncodingException If the charset conversion failed.
          * @throws   IllegalArgumentException    If given part is <code>null</code>.
          */
-        public Attachement(BodyPart aPart, int anID) throws MessagingException, UnsupportedEncodingException, IllegalArgumentException {
+        public Attachment(BodyPart aPart, int anID) throws MessagingException, UnsupportedEncodingException, IllegalArgumentException {
             if (aPart == null) {
                 throw new IllegalArgumentException("Given part is null");
             }
@@ -169,7 +169,7 @@ public class Attachements {
 
 					}
 				} catch (IOException ex) {
-					Logger.error("Problem to initialize size of Attachment", ex, Attachement.class);
+					Logger.error("Problem to initialize size of Attachment", ex, Attachment.class);
 				}
 
 				_size = Integer.valueOf(size);

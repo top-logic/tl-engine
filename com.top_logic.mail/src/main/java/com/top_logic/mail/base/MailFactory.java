@@ -28,8 +28,8 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.Document;
-import com.top_logic.mail.proxy.Attachements;
-import com.top_logic.mail.proxy.Attachements.Attachement;
+import com.top_logic.mail.proxy.Attachments;
+import com.top_logic.mail.proxy.Attachments.Attachment;
 import com.top_logic.mail.proxy.MailDataSourceAdaptor;
 import com.top_logic.mail.proxy.MailMessage;
 import com.top_logic.mail.proxy.MailReceiver;
@@ -195,7 +195,7 @@ public class MailFactory {
 		Mail theMail = MailFactory.getMail(kb().createKnowledgeObject(Mail.OBJECT_NAME));
 
 		Message theMessage     = aMail.getMessage();
-		boolean hasAttachments = aMail.hasAttachements();
+		boolean hasAttachments = aMail.hasAttachments();
 
 		theMail.setValue(Mail.MAIL_ID, theMailID);
 		theMail.setValue(Mail.NAME, StringServices.minimizeString(theMailName, 150, 147));
@@ -207,9 +207,9 @@ public class MailFactory {
 		theMail.setAddress(Mail.ATTR_CC, theMessage.getRecipients(RecipientType.CC));
 		theMail.setAddress(Mail.ATTR_BCC, theMessage.getRecipients(RecipientType.BCC));
 
-		theMail.setValue(Mail.HAS_ATTACHEMENT, hasAttachments);
+		theMail.setValue(Mail.HAS_ATTACHMENT, hasAttachments);
 		if (hasAttachments) {
-			addAttachments(theMail, theMessage, aMail.getAttachements());
+			addAttachments(theMail, theMessage, aMail.getAttachments());
         }
 
 		return theMail;
@@ -321,22 +321,23 @@ public class MailFactory {
 		return PersistencyLayer.getKnowledgeBase();
 	}
 
-	private static void addAttachments(Mail aMail, Message aMailMessage, Attachements someAttachements)
+	private static void addAttachments(Mail aMail, Message aMailMessage, Attachments someAttachments)
 			throws MessagingException, DataObjectException {
         KnowledgeObject theKO = aMail.tHandle();
         KnowledgeBase   theKB = theKO.getKnowledgeBase();
 
-        for (Attachement theAtt : someAttachements.attachements) {
+        for (Attachment theAtt : someAttachments.attachments) {
 			Document theDoc = createAttachment(aMailMessage, theAtt, theKB);
 			KnowledgeAssociation theKA  = theKB.createAssociation(theKO, theDoc.tHandle(), Mail.ATTACHED_DOCUMENTS_ASSOCIATION);
 
             if (theKA == null) {
-                Logger.warn("Unable to append attachement to mail wrapper for mail with ID '" + aMail.getMailID() + "'!", MailFactory.class);
+				Logger.warn("Unable to append attachment to mail wrapper for mail with ID '" + aMail.getMailID() + "'!",
+					MailFactory.class);
             }
         }
 	}
 
-	private static Document createAttachment(Message aMailMessage, Attachement anAttachment, KnowledgeBase aKB)
+	private static Document createAttachment(Message aMailMessage, Attachment anAttachment, KnowledgeBase aKB)
 			throws MessagingException {
 		String theURL = getMailURL(aMailMessage, anAttachment);
 
@@ -344,7 +345,7 @@ public class MailFactory {
 			anAttachment.getMimeType());
 	}
 
-	private static String getMailURL(Message aMessage, Attachement anAttachment) throws MessagingException {
+	private static String getMailURL(Message aMessage, Attachment anAttachment) throws MessagingException {
 		return (aMessage != null) ? MailFolder.MAIL_DSA_PREFIX + MailDataSourceAdaptor.getURL(aMessage, anAttachment) : "";
 	}
 

@@ -8,10 +8,10 @@
      &lt;h1&gt;Hello {$receiver}&lt;h1&gt;
      &lt;p&gt;...&lt;/p&gt;
   }}},
-  attachements: [
+  attachments: [
     binary(...),
     {
-      "cid": "attachement1",
+      "cid": "attachment1",
       "data": binary(...)
     }
   ],
@@ -59,8 +59,8 @@
 			<td> </td>
 		</tr>
 		<tr>
-			<td><code class="hljs inlineCode">attachements</code></td>
-			<td>Liste von Binärdaten oder Attachement-Beschreibungen (siehe unten)</td>
+			<td><code class="hljs inlineCode">attachments</code></td>
+			<td>Liste von Binärdaten oder Beschreibungen von Anhängen (siehe unten)</td>
 			<td>Zusätzliche Inhalte die in der E-Mail mitversendet werden.</td>
 			<td>nein</td>
 			<td><code class="hljs inlineCode">[]</code></td>
@@ -88,15 +88,15 @@
 
 <p>Ob der E-Mail-Versand erfolgreich war.</p>
 
-<h2>Attachement-Beschreibung</h2>
+<h2>Beschreibung eines Anhangs</h2>
 
-<p>Als Attachement kann entweder direkt ein Binärwert übergeben werden, oder ein JSON-Objekt, welches das Attachement näher beschreibt:</p>
+<p>Als Anhang kann entweder direkt ein Binärwert übergeben werden, oder ein JSON-Objekt, welches den Anhang näher beschreibt:</p>
 
 <pre>
 <code>{
     "filename": "policies.pdf",
     "disposition": "attachment",
-    "description": "Some attachement.",
+    "description": "Some attachment.",
     "cid": "id1",
     "headers": {
         "key": "value"
@@ -104,13 +104,13 @@
     "data": $binaryData
 }</code></pre>
 
-<p>Die Attribute der Attachement-Beschreibung haben dabei die folgende Bedeutung:</p>
+<p>Die Attribute der Beschreibung des Anhangs haben dabei die folgende Bedeutung:</p>
 
 <ul>
-	<li><code class="hljs inlineCode">"filename"</code>: Der Dateiname für das Attachement, wie er in dem E-Mail-Programm des Empfängers angezeigt werden soll. Beim Speichern des Attachements wird dieser Dateiname dem Nutzer vorgeschlagen.</li>
-	<li><code class="hljs inlineCode">"disposition"</code>: <code class="hljs inlineCode">"inline"</code> oder <code class="hljs inlineCode">"attachement".</code> Bei der Angabe <code class="hljs inlineCode">"inline"</code> wird das Attachement vor dem Empfänger versteckt. Das ist sinnvoll, wenn beispielsweise ein Bild mitgeschickt wird, das in den Inhalt der E-Mail eingebettet wird. Siehe <code class="hljs inlineCode">"cid"</code>.</li>
-	<li><code class="hljs inlineCode">"description"</code>: Eine optionale Beschreibung des Attachements.</li>
-	<li><code class="hljs inlineCode">"cid"</code>: Die Content-ID des Attachements. Über diese ID kann beispielsweise ein angehängtes Bild in eine HTML-E-Mail eingebettet werden. Wenn als <code class="hljs inlineCode">"cid"</code> der Wert <code class="hljs inlineCode">"id1"</code> angegeben wurde, kann dieses Attachement beispielsweise über <code class="hljs inlineCode">&lt;img src="cid:id1"/&gt;</code> aus dem HTML-Inhalt der E-Mail referenziert werden.</li>
-	<li><code class="hljs inlineCode">"headers"</code>: Weitere optionale Header-Informationen, die an dem Attachement gesetzt werden.</li>
-	<li><code class="hljs inlineCode">"data"</code>: Der eigentliche Inhalt des Attachements. Der Inhalt kann wie der Inhalt der E-Mail entweder eine Zeichenkette, HTML, oder Binärdaten sein.</li>
+	<li><code class="hljs inlineCode">"filename"</code>: Der Dateiname für den Anhang, wie er in dem E-Mail-Programm des Empfängers angezeigt werden soll. Beim Speichern des Anhangs wird dieser Dateiname dem Nutzer vorgeschlagen.</li>
+	<li><code class="hljs inlineCode">"disposition"</code>: <code class="hljs inlineCode">"inline"</code> oder <code class="hljs inlineCode">"attachment".</code> Bei der Angabe <code class="hljs inlineCode">"inline"</code> wird der Anhang vor dem Empfänger versteckt. Das ist sinnvoll, wenn beispielsweise ein Bild mitgeschickt wird, das in den Inhalt der E-Mail eingebettet wird. Siehe <code class="hljs inlineCode">"cid"</code>.</li>
+	<li><code class="hljs inlineCode">"description"</code>: Eine optionale Beschreibung des Anhangs.</li>
+	<li><code class="hljs inlineCode">"cid"</code>: Die Content-ID des Anhangs. Über diese ID kann beispielsweise ein angehängtes Bild in eine HTML-E-Mail eingebettet werden. Wenn als <code class="hljs inlineCode">"cid"</code> der Wert <code class="hljs inlineCode">"id1"</code> angegeben wurde, kann dieser Anhang beispielsweise über <code class="hljs inlineCode">&lt;img src="cid:id1"/&gt;</code> aus dem HTML-Inhalt der E-Mail referenziert werden.</li>
+	<li><code class="hljs inlineCode">"headers"</code>: Weitere optionale Header-Informationen, die an dem Anhang gesetzt werden.</li>
+	<li><code class="hljs inlineCode">"data"</code>: Der eigentliche Inhalt des Anhangs. Der Inhalt kann wie der Inhalt der E-Mail entweder eine Zeichenkette, HTML, oder Binärdaten sein.</li>
 </ul>

@@ -39,7 +39,7 @@ import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.mail.base.Mail;
 import com.top_logic.mail.base.MailFactory;
 import com.top_logic.mail.base.MailFolder;
-import com.top_logic.mail.proxy.Attachements.Attachement;
+import com.top_logic.mail.proxy.Attachments.Attachment;
 import com.top_logic.mail.proxy.MailDataSourceAdaptor;
 import com.top_logic.mail.proxy.MailMessage;
 import com.top_logic.mail.proxy.MailReceiver;
@@ -500,17 +500,17 @@ public class IMAPMailFolder extends AbstractContainerWrapper implements MailFold
      * Return the URL to create a {@link DataAccessProxy} for accessing mail information.
      * 
      * @param    aMessage         The mail to get the URL for, may be <code>null</code>.
-     * @param    anAttachement    The attachment to get the URL for, may be <code>null</code>.
+     * @param    anAttachment    The attachment to get the URL for, may be <code>null</code>.
      * @return   The requested URL, never <code>null</code>, but may be empty, if mail is <code>null</code>.
      * @throws   MessagingException    When getting URL fails.
      * @throws   IOException           When accessing the mail server fails.
      */
-    protected String getMailURL(Message aMessage, Attachement anAttachement) throws MessagingException, IOException {
+    protected String getMailURL(Message aMessage, Attachment anAttachment) throws MessagingException, IOException {
         if (aMessage == null) {
             return ("");
         }
         else {
-            return MailFolder.MAIL_DSA_PREFIX + MailDataSourceAdaptor.getURL(aMessage, anAttachement);
+            return MailFolder.MAIL_DSA_PREFIX + MailDataSourceAdaptor.getURL(aMessage, anAttachment);
         }
     }
 

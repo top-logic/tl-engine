@@ -80,7 +80,7 @@ public class SendMail extends GenericMethod {
 		String subject = asString(arguments[0]);
 		List<Address> to = asAddresses(arguments[1]);
 		Object body = arguments[2];
-		Collection<?> attachements = asCollection(arguments[3]);
+		Collection<?> attachments = asCollection(arguments[3]);
 		List<Address> cc = asAddresses(arguments[4]);
 		List<Address> bcc = asAddresses(arguments[5]);
 
@@ -93,16 +93,16 @@ public class SendMail extends GenericMethod {
 			addRecipients(message, RecipientType.CC, cc);
 			addRecipients(message, RecipientType.BCC, bcc);
 
-			if (attachements.isEmpty()) {
+			if (attachments.isEmpty()) {
 				message.setDataHandler(asDataHandler(body));
 			} else {
 				Multipart multipart = new MimeMultipart();
 				BodyPart bodyPart = asBodyPart(body, false);
 				multipart.addBodyPart(bodyPart);
 				
-				for (Object attachement : attachements) {
-					BodyPart attachementPart = asBodyPart(attachement, true);
-					multipart.addBodyPart(attachementPart);
+				for (Object attachment : attachments) {
+					BodyPart attachmentPart = asBodyPart(attachment, true);
+					multipart.addBodyPart(attachmentPart);
 				}
 
 				message.setContent(multipart);
@@ -293,7 +293,7 @@ public class SendMail extends GenericMethod {
 			.mandatory("subject")
 			.mandatory("to")
 			.mandatory("body")
-			.optional("attachements")
+			.optional("attachments")
 			.optional("cc")
 			.optional("bcc")
 			.build();

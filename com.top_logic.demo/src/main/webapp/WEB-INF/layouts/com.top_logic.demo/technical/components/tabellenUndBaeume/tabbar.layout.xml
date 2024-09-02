@@ -17,6 +17,7 @@
 			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/gridWithMultipleSelection/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/tableWithMultipleSelection/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTable_priorityTable_/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/formTable/tabLayout.layout.xml"/>
 		</components>
 	</arguments>
 </config:template-call>

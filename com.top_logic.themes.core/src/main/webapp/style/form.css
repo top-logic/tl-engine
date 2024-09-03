@@ -1626,18 +1626,19 @@ span.cIconSelect .input-image.cannot-edit i {
 	outline: none !important;
 }
 
-span.cTextInput,
-span.cDateInput,
-span.cTimeInput,
-span.ddwttImmutableItem {
+.cTextInput,
+.cDateInput,
+.cTimeInput,
+.ddwttImmutableItem {
 	color: var(--highlight, inherit);
 	font-weight: var(--highlight-weight, normal);
 }
 
-.tl-table__cell span.cTextInput,
-.tl-table__cell span.cDateInput,
-.tl-table__cell span.cTimeInput,
-.tl-table__cell span.ddwttImmutableItem {
+.tl-table__cell .cTextInput,
+.tl-table__cell .cTextInput,
+.tl-table__cell .cDateInput,
+.tl-table__cell .cTimeInput,
+.tl-table__cell .ddwttImmutableItem {
 	color: var(--highlight-fg, inherit);
 }
 

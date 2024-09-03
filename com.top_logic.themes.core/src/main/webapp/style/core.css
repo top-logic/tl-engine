@@ -1863,26 +1863,6 @@ span.ltcCounting input {
     to {border-color: rgba(247, 223, 68, 1);}
 }
 
-@keyframes showInfoServiceItemDetailMessage {
-    0% {height: 0;}
-    100% {height: auto;}
-}
-
-@keyframes hideInfoServiceItemDetailMessage {
-    0% {height: auto;}
-    100% {height: 0;}
-}
-
-@keyframes rotatedInfoServiceItemDetailExpandButton {
-    from {transform: rotateZ(0deg);}
-    to {transform: rotateZ(90deg);}
-}
-
-@keyframes regularInfoServiceItemDetailExpandButton {
-    from {transform: rotateZ(90deg);}
-    to {transform: rotateZ(0deg);}
-}
-
 /*
 ****					****
 ****	Tiles Styles	****

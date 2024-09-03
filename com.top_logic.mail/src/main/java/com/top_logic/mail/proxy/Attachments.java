@@ -20,7 +20,9 @@ import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.tools.NameBuilder;
 
 /**
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * List of {@link Attachment}s.
+ * 
+ * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class Attachments {
 
@@ -64,10 +66,10 @@ public class Attachments {
     }
 
     /**
-     * One attachment contained in a mail.
-     * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
-     */
+	 * A mail attachment.
+	 * 
+	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 */
     public class Attachment {
 
         // Attributes
@@ -156,18 +158,15 @@ public class Attachments {
             return this.id;
         }
 
+		/**
+		 * The size in bytes of this attachment.
+		 */
 		public int getSize() throws MessagingException {
 			if (_size == null) {
 				int size = 0;
 
-				try {
-					InputStream inputStream = getContent();
-					try {
-						size = (int) StreamUtilities.size(inputStream);
-					} finally {
-						inputStream.close();
-
-					}
+				try (InputStream inputStream = getContent()) {
+					size = (int) StreamUtilities.size(inputStream);
 				} catch (IOException ex) {
 					Logger.error("Problem to initialize size of Attachment", ex, Attachment.class);
 				}

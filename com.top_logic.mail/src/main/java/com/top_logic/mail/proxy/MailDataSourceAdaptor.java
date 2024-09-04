@@ -27,7 +27,7 @@ import com.top_logic.dob.simple.ExampleDataObject;
 import com.top_logic.dsa.DAPropertyNames;
 import com.top_logic.dsa.DatabaseAccessException;
 import com.top_logic.dsa.impl.AbstractDataSourceAdaptor;
-import com.top_logic.mail.proxy.Attachements.Attachement;
+import com.top_logic.mail.proxy.Attachments.Attachment;
 import com.top_logic.mail.proxy.exchange.ExchangeMail;
 
 
@@ -121,7 +121,7 @@ public class MailDataSourceAdaptor extends AbstractDataSourceAdaptor {
             else {
             	MailMessage  theMail = this.getMail(aName);
 
-                theResult = theMail.hasAttachements();
+                theResult = theMail.hasAttachments();
             }
         }
 
@@ -136,7 +136,7 @@ public class MailDataSourceAdaptor extends AbstractDataSourceAdaptor {
             MailMessage theMail = this.getMail(aName);
 
             if (theMail == null) {
-                Attachement theAtt = this.getAttachement(aName);
+                Attachment theAtt = this.getAttachment(aName);
                 theResult = (theAtt != null);
             }
             else {
@@ -154,7 +154,7 @@ public class MailDataSourceAdaptor extends AbstractDataSourceAdaptor {
                 int thePos = aPath.indexOf(MailDataSourceAdaptor.ATTACH_DELIMITER);
 
                 if (thePos > 0) {
-                    return this.getAttachement(aPath).getMimeType();
+                    return this.getAttachment(aPath).getMimeType();
                 }
                 else {
                     thePos = aPath.indexOf(MailDataSourceAdaptor.MAIL_DELIMITER);
@@ -197,10 +197,10 @@ public class MailDataSourceAdaptor extends AbstractDataSourceAdaptor {
                     MailMessage theMail = this.getMail(aName);
     
                     if (theMail != null) {
-                        Attachements theAttachements = theMail.getAttachements();
+						Attachments theAttachments = theMail.getAttachments();
 
-                        if (theAttachements != null) {
-                            theNames = new String[theAttachements.getCount()];
+						if (theAttachments != null) {
+							theNames = new String[theAttachments.getCount()];
         
                             for (int theCount = 0; theCount < theNames.length; theCount++) {
                                 theNames[theCount] = aName + MailDataSourceAdaptor.ATTACH_DELIMITER + Integer.toString(theCount);
@@ -318,7 +318,7 @@ public class MailDataSourceAdaptor extends AbstractDataSourceAdaptor {
             int thePos = aName.indexOf(MailDataSourceAdaptor.ATTACH_DELIMITER);
 
             if (thePos > 0) {
-                Attachement theAtt = this.getAttachement(aName);
+                Attachment theAtt = this.getAttachment(aName);
 
                 if (theAtt != null) {
                     try {
@@ -360,7 +360,7 @@ public class MailDataSourceAdaptor extends AbstractDataSourceAdaptor {
             int thePos = aName.indexOf(MailDataSourceAdaptor.ATTACH_DELIMITER);
 
             if (thePos > 0) {
-                Attachement theAtt = this.getAttachement(aName);
+                Attachment theAtt = this.getAttachment(aName);
 
                 theResult = (theAtt != null);
             }
@@ -395,10 +395,10 @@ public class MailDataSourceAdaptor extends AbstractDataSourceAdaptor {
             theName = theMail.getName();
         }
         else {
-            Attachement theAttachement = this.getAttachement(aName);
+			Attachment theAttachment = this.getAttachment(aName);
 
-            if (theAttachement != null) {
-				theName = theAttachement.getName();
+			if (theAttachment != null) {
+				theName = theAttachment.getName();
             }
             else {
                 Folder theFolder = this.getFolder(aName, false);
@@ -428,13 +428,13 @@ public class MailDataSourceAdaptor extends AbstractDataSourceAdaptor {
             }
         }
         else {
-            Attachement theAttachement = this.getAttachement(aName);
+			Attachment theAttachment = this.getAttachment(aName);
 
-            if (theAttachement != null) {
+			if (theAttachment != null) {
                 try {
-                    theMap.put(DAPropertyNames.NAME, theAttachement.getName());
+					theMap.put(DAPropertyNames.NAME, theAttachment.getName());
                     theMap.put(DAPropertyNames.IS_ENTRY, Boolean.TRUE);
-					theMap.put(DAPropertyNames.SIZE, Long.valueOf(theAttachement.getSize()));
+					theMap.put(DAPropertyNames.SIZE, Long.valueOf(theAttachment.getSize()));
                 }
                 catch (MessagingException ex) {
                     Logger.error("Unable to fill properties for " + aName, ex, this);
@@ -579,23 +579,23 @@ public class MailDataSourceAdaptor extends AbstractDataSourceAdaptor {
      * @param    aName    The name identifying the attachment, must not be <code>null</code>.
      * @return   The requested attachment or <code>null</code>, if attachment not found.
      */
-    protected Attachement getAttachement(String aName) {
-        Attachement theAtt = null;
+    protected Attachment getAttachment(String aName) {
+        Attachment theAtt = null;
         int         thePos = aName.indexOf(MailDataSourceAdaptor.ATTACH_DELIMITER);
 
         if (thePos > 0) {
             MailMessage theMail = this.getMail(aName.substring(0, thePos));
 
             if (theMail != null) {
-                Attachements theAttachements = theMail.getAttachements();
+				Attachments theAttachments = theMail.getAttachments();
     
-                if (theAttachements != null) {
+				if (theAttachments != null) {
                     String theID = aName.substring(thePos + 1);
     
                     try {
                         int theInt = Integer.valueOf(theID).intValue();
 
-                        theAtt = theAttachements.getAttachement(theInt);
+						theAtt = theAttachments.getAttachment(theInt);
                     }
                     catch (Exception ex) {
                         Logger.warn("Unable to get attachment '" + theID + "' from '" + aName + "'!", ex, this);
@@ -612,11 +612,11 @@ public class MailDataSourceAdaptor extends AbstractDataSourceAdaptor {
      * @param    aMail    The mail to get the attachments for, must not be <code>null</code>.
      * @return   The requested attachments or <code>null</code>, if no attachments found.
      */
-    protected Attachements getAttachements(Message aMail) {
+    protected Attachments getAttachments(Message aMail) {
         try {
             ExchangeMail theMail = new ExchangeMail(aMail);
 
-            return (theMail.getAttachements());
+            return (theMail.getAttachments());
         }
         catch (Exception ex) {
             Logger.warn("Unable to get attachments from '" + aMail + "'!", ex, this);
@@ -652,7 +652,7 @@ public class MailDataSourceAdaptor extends AbstractDataSourceAdaptor {
      * @throws   MessagingException   When accessing the mail header fails.
      * @see      AbstractMailServerMessage#getMailID(Message)
      */
-	public static String getURL(Message aMail, Attachement anAtt) throws MessagingException {
+	public static String getURL(Message aMail, Attachment anAtt) throws MessagingException {
         StringBuffer theResult = new StringBuffer();
 
         if (aMail != null) {

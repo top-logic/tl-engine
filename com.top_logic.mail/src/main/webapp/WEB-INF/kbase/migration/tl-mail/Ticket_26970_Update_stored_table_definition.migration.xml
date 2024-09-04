@@ -16,6 +16,12 @@
 		<dependency name="Ticket_25881_Removed_legacy_types"
 			module="tl-mail"
 		/>
+		<dependency name="Ticket_26398_remove_table_interfaces"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_26959_drop_api_generalization"
+			module="tl-model-search"
+		/>
 	</dependencies>
 	<processors>
 		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltTableDefinitionBaselineProcessor"

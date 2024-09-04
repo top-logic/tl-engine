@@ -2,10 +2,6 @@
 /* Design of a regular, unmodified table, which get 
 /* created through inapp configurations 
 */
-code:not(table) {
-	font-family: var(--font-family);
-}
-
 .tl-standard-table {
 	white-space: nowrap;
 	display: table;

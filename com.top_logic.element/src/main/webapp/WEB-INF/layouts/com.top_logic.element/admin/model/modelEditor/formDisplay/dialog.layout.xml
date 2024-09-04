@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments helpID="ID_4ed249fa_4949_44c9_bb87_4a732b0751fe"
+		createOpenerButtons="false"
+	>
+		<title>
+			<title key="dynamic.733c1bc6-3fc6-424e-bf76-5268778ca0ff">
+				<en>Form display</en>
+				<de>Formularanzeige</de>
+			</title>
+		</title>
+		<open-handler id="ID_acb63c77_8d07_4680_855d_681b5ed777dc"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+		>
+			<resourceKey key="dynamic.733c1bc6-3fc6-424e-bf76-5268778ca0ff">
+				<en>Form display</en>
+				<de>Formularanzeige</de>
+			</resourceKey>
+		</open-handler>
+		<components>
+			<layout-reference resource="com.top_logic.element/admin/model/modelEditor/formDisplay/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

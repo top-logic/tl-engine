@@ -23,18 +23,6 @@ body {
 	background: transparent;
 }
 
-@property --sb-track-transition {
-	syntax: "<color>";
-	inherits: true;
-	initial-value: transparent;
-}
-
-@property --sb-thumb-transition {
-	syntax: "<color>";
-	inherits: true;
-	initial-value: transparent;
-}
-
 .lcAuto, .lcScroll, .tl-overflow--auto {
 	--sb-track-transition: transparent;
 	--sb-thumb-transition: transparent;

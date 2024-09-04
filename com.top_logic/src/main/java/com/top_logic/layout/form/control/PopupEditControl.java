@@ -350,7 +350,7 @@ public class PopupEditControl extends AbstractFormFieldControl {
 
 	private void writeEditorButton(DisplayContext context, TagWriter out) throws IOException {
 		out.beginBeginTag(SPAN);
-		out.writeAttribute(CLASS_ATTR, FormConstants.FIXED_LEFT_CSS_CLASS);
+		out.writeAttribute(CLASS_ATTR, FormConstants.FIXED_RIGHT_CSS_CLASS);
 		out.endBeginTag();
 		{
 			new ButtonControl(_openEditor).write(context, out);

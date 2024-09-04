@@ -45,12 +45,6 @@ public class FallbackExternalStorage<C extends FallbackExternalStorage.Config<?>
 		super(context, config);
 	}
 
-	/** Per default we are readOnly */
-	@Override
-	public boolean isReadOnly() {
-		return true;
-	}
-
 	@Override
 	public Object getAttributeValue(TLObject object, TLStructuredTypePart attribute)
 			throws AttributeException {

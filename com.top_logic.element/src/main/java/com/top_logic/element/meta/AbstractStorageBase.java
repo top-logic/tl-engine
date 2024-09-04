@@ -17,6 +17,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.kbbased.storage.GenericMandatoryCheck;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.export.EmptyPreloadContribution;
@@ -116,6 +117,13 @@ public abstract class AbstractStorageBase<C extends AbstractStorageBase.Config<?
 	 */
 	protected abstract void internalSetAttributeValue(TLObject object, TLStructuredTypePart attribute, Object aValues)
 			throws NoSuchAttributeException, IllegalArgumentException, AttributeException;
+
+	@Override
+	public Object getFormValue(TLFormObjectBase formObject, TLStructuredTypePart part) {
+		// By default, the value of an attribute that is displayed in form is the value of the form
+		// field being shown.
+		return formObject.getFieldValue(part);
+	}
 
 	@Override
 	public PreloadContribution getPreload() {

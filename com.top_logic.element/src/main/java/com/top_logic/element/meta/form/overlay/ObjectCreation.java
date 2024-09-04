@@ -102,7 +102,7 @@ public class ObjectCreation extends FormObjectOverlay {
 	}
 
 	@Override
-	protected Object defaultValue(TLStructuredTypePart part) {
+	public Object defaultValue(TLStructuredTypePart part) {
 		DefaultProvider defaultProvider = DisplayAnnotations.getDefaultProvider(part);
 		if (defaultProvider != null) {
 			return defaultProvider.createDefault(_container, part, true);

@@ -61,7 +61,7 @@ public class ObjectEditing extends FormObjectOverlay {
 	}
 
 	@Override
-	protected Object defaultValue(TLStructuredTypePart part) {
+	public Object defaultValue(TLStructuredTypePart part) {
 		return _base.tValue(part);
 	}
 

@@ -23,7 +23,6 @@ import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.ChangeAware;
 import com.top_logic.element.meta.form.AttributeFormFactory;
-import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
@@ -110,6 +109,18 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 	}
 
 	@Override
+	public final FormMember getField(TLStructuredTypePart attribute) {
+		AttributeUpdate update = getUpdate(attribute);
+		return (update == null) ? null : update.getField();
+	}
+
+	@Override
+	public final Object getBaseValue(TLStructuredTypePart attribute) {
+		AttributeUpdate update = getUpdate(attribute);
+		return update == null ? defaultValue(attribute) : update.getCorrectValues();
+	}
+	
+	@Override
 	public final AttributeUpdate getUpdate(TLStructuredTypePart part) {
 		return _updates.get(part);
 	}
@@ -172,68 +183,32 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 
 	@Override
 	public Object tValue(TLStructuredTypePart part) {
-		if (part.isDerived() && (part.getModelKind() != ModelKind.REFERENCE || !((TLReference) part).isBackwards())) {
-			if (part.getName().equals(PersistentObject.T_TYPE_ATTR)) {
-				return tType();
-			} else {
-				return part.getStorageImplementation().getAttributeValue(this, part);
-			}
-		}
-
-		AttributeUpdate update = getUpdate(part);
-		if (update == null) {
-			return defaultValue(part);
-		}
-
-		FormMember member = update.getField();
-		if (member == null || !(member instanceof FormField)) {
-			return update.getCorrectValues();
-		}
-
-		FormField field = (FormField) member;
-		if (!field.hasValue()) {
-			return null;
-		}
-
-		return fromUIToDBValue(update, part, field);
+		return part.getStorageImplementation().getFormValue(this, part);
 	}
 
-	/**
-	 * Normalize value in a way as it has been retrieved from the persistency layer.
-	 * <p>
-	 * Without this code, attributes of type tl.core:Integer that have been edited in the UI return
-	 * de-facto values of type java.lang.Long. This is a problem, if those values are used in
-	 * set-contains comparisons.
-	 * </p>
-	 */
-	private Object fromUIToDBValue(AttributeUpdate update, TLStructuredTypePart part, FormField field) {
-		Object uiValue = update.convertValue(update.fieldToAttributeValue(field));
-		TLType type = part.getType();
-		if (type.getModelKind() == ModelKind.DATATYPE) {
-			StorageMapping<?> storageMapping = ((TLPrimitive) type).getStorageMapping();
-			if (part.isMultiple()) {
-				return toDBValues(part, storageMapping, uiValue);
-			} else {
-				return toDBValue(storageMapping, uiValue);
-			}
-		}
-		return uiValue;
-	}
+	@Override
+	public Object getFieldValue(TLStructuredTypePart part) {
+		FormMember member = getField(part);
 
-	/** Create a {@link Collection} for the values of the given {@link TLStructuredTypePart}. */
-	protected Collection<Object> createCollection(TLStructuredTypePart attribute) {
-		if (!attribute.isMultiple()) {
-			throw new IllegalArgumentException("Attribute is not multiple: " + qualifiedName(attribute));
-		}
-		if (attribute.isBag()) {
-			return new ArrayList<>();
+		if (member instanceof FormField field) {
+			if (!field.hasValue()) {
+				return null;
+			}
+
+			AttributeUpdate update = getUpdate(part);
+			Object uiValue = update.convertValue(update.fieldToAttributeValue(field));
+			TLType type = part.getType();
+			if (type.getModelKind() == ModelKind.DATATYPE) {
+				StorageMapping<?> storageMapping = ((TLPrimitive) type).getStorageMapping();
+				if (part.isMultiple()) {
+					return toDBValues(part, storageMapping, uiValue);
+				} else {
+					return toDBValue(storageMapping, uiValue);
+				}
+			}
+			return uiValue;
 		} else {
-			// Values must not appear multiple times, cannot use List.
-			if (attribute.isOrdered()) {
-				return new LinkedHashSet<>();
-			} else {
-				return new HashSet<>();
-			}
+			return getBaseValue(part);
 		}
 	}
 
@@ -248,6 +223,23 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 
 	private Object toDBValue(StorageMapping<?> storageMapping, Object uiValue) {
 		return storageMapping.getBusinessObject(storageMapping.getStorageObject(uiValue));
+	}
+
+	/** Create a {@link Collection} for the values of the given {@link TLStructuredTypePart}. */
+	private Collection<Object> createCollection(TLStructuredTypePart attribute) {
+		if (!attribute.isMultiple()) {
+			throw new IllegalArgumentException("Attribute is not multiple: " + qualifiedName(attribute));
+		}
+		if (attribute.isBag()) {
+			return new ArrayList<>();
+		} else {
+			// Values must not appear multiple times, cannot use List.
+			if (attribute.isOrdered()) {
+				return new LinkedHashSet<>();
+			} else {
+				return new HashSet<>();
+			}
+		}
 	}
 
 	@Override
@@ -283,12 +275,6 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 
 		return result;
 	}
-
-	/**
-	 * Computes the value to use, if the form has no field for the given
-	 * {@link TLStructuredTypePart} of this {@link TLObject}.
-	 */
-	protected abstract Object defaultValue(TLStructuredTypePart part);
 
 	@Override
 	public void tUpdate(TLStructuredTypePart part, Object value) {

@@ -1651,6 +1651,7 @@ div.lcHidden {
 	max-width: 100%;
 	overflow-y: auto;
 	overflow-x: hidden;
+	z-index: 100000;
 }
 
 .tl-info-service-item__hide-info-service_animation {
@@ -1660,9 +1661,9 @@ div.lcHidden {
 
 .tl-info-service-item {
 	position: relative;
-	margin: var(--spacing-02) var(--spacing-01) 0 0;
+	margin: var(--spacing-02) var(--spacing-01);
 	padding: 0 var(--spacing-03) var(--spacing-02) var(--spacing-03);
-	border-radius: 10px;
+	border-radius: .25rem;
 	box-shadow: var(--shadow-menu);
 	overflow-y: hidden;
 	overflow-x: auto;
@@ -1798,6 +1799,11 @@ p.tl-info-service-item__details-message-no-bottom {
 }
 
 .tl-info-service_pinned .tl-info-service-item__hide-info_animation {
+	animation-name: tl-info-service-item__hide-info_animation;
+	animation-duration: 0.2s;
+}
+
+.tl-info-service-item__hide-info_animation {
 	animation-name: tl-info-service-item__hide-info_animation;
 	animation-duration: 0.2s;
 }

@@ -2933,4 +2933,5 @@ i.tl-accent-1,
 i.tl-accent-3,
 i.tl-accent-2 {
 	--highlight-fg: var(--highlight);
+	color: var(--highlight, inherit);
 }

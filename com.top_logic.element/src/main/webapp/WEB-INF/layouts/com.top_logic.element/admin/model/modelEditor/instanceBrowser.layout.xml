@@ -15,6 +15,7 @@
 			name="Instances"
 			resPrefix="layouts.element.meta.InstanceBrowser.table"
 			securityProviderClass="securityRoot"
+			showDetailOpener="false"
 			showMaximize="true"
 		>
 			<selectionModelFactory multiple="true"/>
@@ -35,10 +36,62 @@
 			</buttons>
 			<tables>
 				<table name="fieldTable"
-					configurationProviders="com.top_logic.element.layout.instances.DirectInstancesTable"
 					fixedColumns="0"
-				/>
+				>
+					<configurationProviders>
+						<configurationProvider class="com.top_logic.layout.table.provider.ButtonColumnProvider"
+							columnId="ID_2e633c82_a2dd_405d_99f9_3dbcd691d296"
+							width="28px"
+						>
+							<columnLabel key="dynamic.7db5319b-12c8-4eb2-963b-0b09fc585627">
+								<en>Show in form</en>
+								<de>In Formular anzeigen</de>
+							</columnLabel>
+							<buttons>
+								<button id="ID_48e57815_325b_4f47_b8cf_2bb99488364e"
+									class="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+									dialog-name="com.top_logic.element/admin/model/modelEditor/formDisplay/dialog.layout.xml#Dialog"
+									group="Read"
+									image="css:fas fa-external-link-alt"
+									target="selection(self())"
+									targetComponent="com.top_logic.element/admin/model/modelEditor/formDisplay/detailsForm.layout.xml#Form"
+								>
+									<resourceKey key="dynamic.0c9c5652-0f5b-4b7b-84c6-98fe90888401">
+										<en>Show in form</en>
+										<de>In Formular anzeigen</de>
+									</resourceKey>
+									<executability>
+										<rule class="com.top_logic.tool.execution.EditorExecutabilityRule"
+											mode="EDIT_MODE"
+											visibility="DISABLED"
+										>
+											<reason>
+												<en>Only in view mode</en>
+												<de>Nicht während der Bearbeitung</de>
+											</reason>
+										</rule>
+									</executability>
+								</button>
+							</buttons>
+						</configurationProvider>
+						<column-customizations>
+							<column name="ID_2e633c82_a2dd_405d_99f9_3dbcd691d296">
+								<column-options
+									filter="false"
+									select="false"
+									show-header="false"
+									show-in-sidebar-filter="false"
+									sort="false"
+								/>
+							</column>
+						</column-customizations>
+						<configurationProvider class="com.top_logic.element.layout.instances.DirectInstancesTable"/>
+					</configurationProviders>
+				</table>
 			</tables>
+			<dialogs>
+				<layout-reference resource="com.top_logic.element/admin/model/modelEditor/formDisplay/dialog.layout.xml"/>
+			</dialogs>
 		</grid>
 	</components>
 </layout>

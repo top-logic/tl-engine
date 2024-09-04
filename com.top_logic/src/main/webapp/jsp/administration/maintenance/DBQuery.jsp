@@ -111,7 +111,9 @@ private static final int HISTORY_LENGTH = 256;
 				long startTime = System.currentTimeMillis();
 				if (query) {
 					writer.write("<h4>Executing query:</h4>");
+					writer.write("<code class=\"normal\">");
 					print(statement);
+					writer.write("</code>");
 					print(); print();
 					String[][] result = DBUtil.executeQueryAsTable(statement);
 					printResult(result);
@@ -221,7 +223,7 @@ private static final int HISTORY_LENGTH = 256;
 				<table>
 					<tr>
 						<td>
-							<code class="normal">
+							<div>
 								<%
 								try {
 									runWork(out, doSimulate, request);
@@ -232,7 +234,7 @@ private static final int HISTORY_LENGTH = 256;
 									rollback();
 								}
 								%>
-							</code>
+							</div>
 						</td>
 					</tr>
 				</table>

@@ -248,7 +248,11 @@ i[class*=" overlay-"] span::before {
 ****					****
 */
 a {
-	color: var(--highlight-fg, var(--link-primary));
+	color: var(--highlight, var(--link-primary));
+}
+
+.tl-table__cell a {
+	--highlight: var(--highlight-fg);
 }
 
 a, a:link {
@@ -257,17 +261,17 @@ a, a:link {
 }
 
 a:not(.disabled):hover {
-	color: var(--highlight-fg, var(--link-primary-hover));
+	color: var(--highlight, var(--link-primary-hover));
 	text-decoration: underline;
 }
 
 a:not(.disabled):active {
-	color: var(--highlight-fg, var(--text-primary));
+	color: var(--highlight, var(--text-primary));
 	text-decoration: underline;
 }
 
 a:not(.disabled):focus {
-    color: var(--highlight-fg, var(--link-primary-hover));
+    color: var(--highlight, var(--link-primary-hover));
 	outline: 1px solid var(--focus);
 	outline-offset: 2px;
 }

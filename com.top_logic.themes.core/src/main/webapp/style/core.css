@@ -23,18 +23,6 @@ body {
 	background: transparent;
 }
 
-@property --sb-track-transition {
-	syntax: "<color>";
-	inherits: true;
-	initial-value: transparent;
-}
-
-@property --sb-thumb-transition {
-	syntax: "<color>";
-	inherits: true;
-	initial-value: transparent;
-}
-
 .lcAuto, .lcScroll, .tl-overflow--auto {
 	--sb-track-transition: transparent;
 	--sb-thumb-transition: transparent;
@@ -1601,6 +1589,7 @@ div.lcHidden {
 	max-width: 100%;
 	overflow-y: auto;
 	overflow-x: hidden;
+	z-index: 100000;
 }
 
 .tl-info-service-item__hide-info-service_animation {
@@ -1610,9 +1599,9 @@ div.lcHidden {
 
 .tl-info-service-item {
 	position: relative;
-	margin: var(--spacing-02) var(--spacing-01) 0 0;
+	margin: var(--spacing-02) var(--spacing-01);
 	padding: 0 var(--spacing-03) var(--spacing-02) var(--spacing-03);
-	border-radius: 10px;
+	border-radius: .25rem;
 	box-shadow: var(--shadow-menu);
 	overflow-y: hidden;
 	overflow-x: auto;
@@ -1752,6 +1741,11 @@ p.tl-info-service-item__details-message-no-bottom {
 	animation-duration: 0.2s;
 }
 
+.tl-info-service-item__hide-info_animation {
+	animation-name: tl-info-service-item__hide-info_animation;
+	animation-duration: 0.2s;
+}
+
 @keyframes tl-info-service-item__show-info_animation {
     0% {opacity: 0;}
     100% {opacity: 0.9; margin-top: 3px;}
@@ -1799,26 +1793,6 @@ span.ltcCounting input {
 @keyframes pinnedInfoServiceItem {
     from {border-color: rgba(247, 223, 68, 0);}
     to {border-color: rgba(247, 223, 68, 1);}
-}
-
-@keyframes showInfoServiceItemDetailMessage {
-    0% {height: 0;}
-    100% {height: auto;}
-}
-
-@keyframes hideInfoServiceItemDetailMessage {
-    0% {height: auto;}
-    100% {height: 0;}
-}
-
-@keyframes rotatedInfoServiceItemDetailExpandButton {
-    from {transform: rotateZ(0deg);}
-    to {transform: rotateZ(90deg);}
-}
-
-@keyframes regularInfoServiceItemDetailExpandButton {
-    from {transform: rotateZ(90deg);}
-    to {transform: rotateZ(0deg);}
 }
 
 /*

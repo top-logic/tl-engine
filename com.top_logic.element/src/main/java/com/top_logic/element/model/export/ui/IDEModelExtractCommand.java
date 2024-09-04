@@ -75,7 +75,8 @@ public class IDEModelExtractCommand extends AbstractCommandHandler {
 
 	private static final String IN_APP_CONFIG_TEMPLATE = "inAppConfig.template.config.xml";
 
-	private static final String MODEL_RESOURCE_PREFIX = ModuleLayoutConstants.WEB_INF_RESOURCE_PREFIX + "/model";
+	/** The path to the model files. */
+	public static final String MODEL_RESOURCE_PREFIX = ModuleLayoutConstants.WEB_INF_RESOURCE_PREFIX + "/model";
 
 	private static final ExecutabilityRule ONLY_MODULE = new ExecutabilityRule() {
 		@Override

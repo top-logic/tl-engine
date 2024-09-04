@@ -111,7 +111,7 @@ public class IMAPMail extends AbstractContainerWrapper implements Mail {
     }
 
     @Override
-	public Collection<Document> getAttachements() {
+	public Collection<Document> getAttachments() {
         try {
 			List<Document> attachments = new ArrayList<>();
 
@@ -125,15 +125,15 @@ public class IMAPMail extends AbstractContainerWrapper implements Mail {
 
 			return attachments;
 		} catch (Exception ex) {
-			Logger.error("Unable to get attachements from " + this, ex, IMAPMail.class);
+			Logger.error("Unable to get attachments from " + this, ex, IMAPMail.class);
 
             return Collections.emptyList();
         }
     }
 
     @Override
-	public boolean hasAttachements() {
-		return Utils.isTrue((Boolean) this.getValue(Mail.HAS_ATTACHEMENT));
+	public boolean hasAttachments() {
+		return Utils.isTrue((Boolean) this.getValue(Mail.HAS_ATTACHMENT));
     }
 
     @Override

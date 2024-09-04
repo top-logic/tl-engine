@@ -20,23 +20,25 @@ import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.tools.NameBuilder;
 
 /**
- * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+ * List of {@link Attachment}s.
+ * 
+ * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
-public class Attachements {
+public class Attachments {
 
 	/** Held list of attachments. */
-	public transient List<Attachement> attachements = new ArrayList<>();
+	public transient List<Attachment> attachments = new ArrayList<>();
 
     /**
 	 * Create a representation of attachments.
 	 */
-    /*package protected*/ Attachements() {
+    Attachments() {
     }
 
     @Override
 	public String toString() {
 		return new NameBuilder(this)
-			.add("attachements", this.attachements.size())
+			.add("attachments", this.attachments.size())
 			.build();
     }
 
@@ -46,7 +48,7 @@ public class Attachements {
      * @return    The requested number of attachments.
      */
     public int getCount() {
-        return this.attachements.size(); 
+        return this.attachments.size(); 
     }
 
     /** 
@@ -55,20 +57,20 @@ public class Attachements {
      * @param     aPos    Number of attachment.
      * @return    The requested attachment.
      */
-    public Attachement getAttachement(int aPos) {
-        return this.attachements.get(aPos);
+    public Attachment getAttachment(int aPos) {
+        return this.attachments.get(aPos);
     }
 
-    /*package protected*/ void addAttachement(BodyPart aPart) throws MessagingException, UnsupportedEncodingException  {
-        this.attachements.add(new Attachement(aPart, this.getCount()));
+    /*package protected*/ void addAttachment(BodyPart aPart) throws MessagingException, UnsupportedEncodingException  {
+        this.attachments.add(new Attachment(aPart, this.getCount()));
     }
 
     /**
-     * One attachment contained in a mail.
-     * 
-     * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
-     */
-    public class Attachement {
+	 * A mail attachment.
+	 * 
+	 * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
+	 */
+    public class Attachment {
 
         // Attributes
 
@@ -93,7 +95,7 @@ public class Attachements {
          * @throws   UnsupportedEncodingException If the charset conversion failed.
          * @throws   IllegalArgumentException    If given part is <code>null</code>.
          */
-        public Attachement(BodyPart aPart, int anID) throws MessagingException, UnsupportedEncodingException, IllegalArgumentException {
+        public Attachment(BodyPart aPart, int anID) throws MessagingException, UnsupportedEncodingException, IllegalArgumentException {
             if (aPart == null) {
                 throw new IllegalArgumentException("Given part is null");
             }
@@ -156,20 +158,17 @@ public class Attachements {
             return this.id;
         }
 
+		/**
+		 * The size in bytes of this attachment.
+		 */
 		public int getSize() throws MessagingException {
 			if (_size == null) {
 				int size = 0;
 
-				try {
-					InputStream inputStream = getContent();
-					try {
-						size = (int) StreamUtilities.size(inputStream);
-					} finally {
-						inputStream.close();
-
-					}
+				try (InputStream inputStream = getContent()) {
+					size = (int) StreamUtilities.size(inputStream);
 				} catch (IOException ex) {
-					Logger.error("Problem to initialize size of Attachment", ex, Attachement.class);
+					Logger.error("Problem to initialize size of Attachment", ex, Attachment.class);
 				}
 
 				_size = Integer.valueOf(size);

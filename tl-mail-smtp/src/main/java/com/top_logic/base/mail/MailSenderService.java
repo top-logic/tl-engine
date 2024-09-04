@@ -16,6 +16,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 
+import javax.naming.NamingEnumeration;
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+
 import jakarta.mail.Address;
 import jakarta.mail.BodyPart;
 import jakarta.mail.Message;
@@ -28,12 +35,6 @@ import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
 
 import org.apache.commons.pool.ObjectPool;
 import org.apache.commons.pool.PoolableObjectFactory;
@@ -678,6 +679,9 @@ public final class MailSenderService extends ConfiguredManagedClass<MailSenderSe
      * Returns the actual session.
      */
     private Session getSession() {
+		if (!_activated) {
+			throw new TopLogicException(I18NConstants.SMTP_NOT_ACTIVE);
+		}
 		if (_session == null) {
 			_session = Session.getInstance(createProperties(), null);
         }

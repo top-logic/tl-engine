@@ -38,7 +38,7 @@ public abstract class AbstractMailServerMessage implements MailMessage {
     private boolean     isInitialized = false;
     private String      body;
     private String      bodyContentType;
-    private Attachements attachements;
+    private Attachments attachments;
 
     /** 
      * Create a new instance out of the given message.
@@ -231,11 +231,11 @@ public abstract class AbstractMailServerMessage implements MailMessage {
             parseContent(aPart.getContent(), contentType);
         }
         else {
-            if (this.attachements == null) {
-                this.attachements = new Attachements();
+            if (this.attachments == null) {
+                this.attachments = new Attachments();
             }
             
-            this.attachements.addAttachement(aPart);
+            this.attachments.addAttachment(aPart);
         }
     }
     
@@ -299,24 +299,24 @@ public abstract class AbstractMailServerMessage implements MailMessage {
     }
     
     @Override
-	public boolean hasAttachements() throws TopLogicException {
+	public boolean hasAttachments() throws TopLogicException {
         if (! this.isInitialized) {
             if (! this.initialize()) {
                 return false;
             }
         }
         
-        return this.attachements != null;
+        return this.attachments != null;
     }
 
     @Override
-	public Attachements getAttachements() throws TopLogicException {
+	public Attachments getAttachments() throws TopLogicException {
         if (! this.isInitialized) {
             if (! this.initialize()) {
                 return null;
             }
         }
-        return this.attachements;
+        return this.attachments;
     }
 
     /**

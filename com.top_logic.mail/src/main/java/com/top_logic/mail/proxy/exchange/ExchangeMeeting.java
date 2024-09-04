@@ -68,7 +68,7 @@ public class ExchangeMeeting extends AbstractMailMeeting {
     }
 
     @Override
-	public boolean hasAttachements() throws TopLogicException {
+	public boolean hasAttachments() throws TopLogicException {
         try {
             String[] theHeaders = this.getMessage().getHeader("X-MS-Has-Attach");
 

@@ -88,7 +88,7 @@ public class SimpleOpenDialog extends OpenModalDialogCommandHandler {
 		}
 		LayoutComponent dialog = component.getDialog(dialogName);
         if (dialog == null) {
-			throw new NullPointerException("Dialog with Name '" + dialogName + "' not found.");
+			throw new IllegalStateException("Dialog '" + dialogName + "' not found.");
         }
         return dialog;
     }

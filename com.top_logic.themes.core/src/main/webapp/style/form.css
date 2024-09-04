@@ -1628,6 +1628,7 @@ span.cIconSelect .input-image.cannot-edit i {
 
 .cTextInput,
 .cDateInput,
+.cDatetime,
 .cTimeInput,
 .ddwttImmutableItem {
 	color: var(--highlight, inherit);
@@ -1635,8 +1636,8 @@ span.cIconSelect .input-image.cannot-edit i {
 }
 
 .tl-table__cell .cTextInput,
-.tl-table__cell .cTextInput,
 .tl-table__cell .cDateInput,
+.tl-table__cell .cDatetime,
 .tl-table__cell .cTimeInput,
 .tl-table__cell .ddwttImmutableItem {
 	color: var(--highlight-fg, inherit);

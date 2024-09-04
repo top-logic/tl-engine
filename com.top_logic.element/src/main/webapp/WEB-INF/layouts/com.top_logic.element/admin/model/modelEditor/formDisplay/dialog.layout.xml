@@ -5,9 +5,7 @@
 	final="true"
 	template="com.top_logic/dialog.template.xml"
 >
-	<arguments helpID="ID_4ed249fa_4949_44c9_bb87_4a732b0751fe"
-		createOpenerButtons="false"
-	>
+	<arguments createOpenerButtons="false">
 		<title>
 			<title key="dynamic.733c1bc6-3fc6-424e-bf76-5268778ca0ff">
 				<en>Form display</en>

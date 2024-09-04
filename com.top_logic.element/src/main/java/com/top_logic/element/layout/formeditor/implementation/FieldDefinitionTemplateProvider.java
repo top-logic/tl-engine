@@ -279,11 +279,6 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 			return FormVisibility.DEFAULT;
 		}
 
-		if (part.isDerived()) {
-			// Never display a derived attribute with an active field.
-			return FormVisibility.DEFAULT;
-		}
-
 		if (formMode == FormMode.DESIGN) {
 			return FormVisibility.EDITABLE;
 		}
@@ -309,6 +304,9 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 		if (visibility != null) {
 			return formVisiblity(part, visibility.getValue());
 		} else {
+			if (part.isDerived()) {
+				return FormVisibility.READ_ONLY;
+			}
 			if (part.isMandatory()) {
 				return FormVisibility.MANDATORY;
 			} else {

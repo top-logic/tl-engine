@@ -45,10 +45,7 @@
 						>
 							<annotations>
 								<storage-algorithm>
-									<implementation class="com.top_logic.element.meta.kbbased.storage.ReadOnlyForeignKeyStorage"
-										storage-attribute="tType"
-										storage-type="TLObject"
-									/>
+									<implementation class="com.top_logic.element.meta.kbbased.storage.TTypeStorage" />
 								</storage-algorithm>
 								<visibility value="hidden"/>
 							</annotations>

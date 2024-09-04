@@ -105,4 +105,9 @@ public interface StorageDetail {
 	 */
 	void addConstraints(TLStructuredTypePart attribute, List<InstanceCheck> checks);
 
+	/**
+	 * The value for this attribute in the given (transient) form object.
+	 */
+	Object getFormValue(TLFormObjectBase formObject, TLStructuredTypePart part);
+
 }

@@ -28,6 +28,7 @@ import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder.EditMod
 import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder.PartModel;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -297,6 +298,16 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 	@Override
 	public Object getExplicitValue(TLObject object, TLStructuredTypePart attribute) {
 		return object.tValue(_storageAttr);
+	}
+
+	@Override
+	public Object getFormValue(TLFormObjectBase object, TLStructuredTypePart attribute) {
+		Object explicitValue = object.getFieldValue(attribute);
+		if (!Utils.isEmpty(explicitValue)) {
+			return explicitValue;
+		}
+
+		return object.getFieldValue(_fallbackAttr);
 	}
 
 	@Override

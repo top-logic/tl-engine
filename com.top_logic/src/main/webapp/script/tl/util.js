@@ -602,12 +602,11 @@ function hideClickResponsiveWaitpane(clickFunction) {
 }
 
 function showInfoArea() {
-	var infoServiceItems = [];
-	for(var i = 0; i < arguments.length; i++) {
-		infoServiceItems.push(arguments[i]);
-	}
+	var infoServiceItems = Array.from(arguments);
 	BAL.getTopLevelWindow()._showInfoArea(infoServiceItems);
 }
+
+let infoServiceContainerId = "tl-info-service";
 
 function _showInfoArea(infoServiceItems) {
 	if(_hasPendingInfoItems()) {
@@ -622,6 +621,9 @@ function _showInfoArea(infoServiceItems) {
 			infoServiceContainer = topLevelDocument.createElement("div");
 			infoServiceContainer.id = infoServiceContainerId;
 			BAL.DOM.addClass(infoServiceContainer, infoServiceContainerId);
+			
+			infoServiceContainer.removeInfoServiceListener = function() {};
+			
 			var pinningFunction = function(event) {
 				_stopInfoServiceFadeOut(infoServiceContainer);
 				BAL.removeEventListener(infoServiceContainer, "mouseenter", pinningFunction);
@@ -650,10 +652,13 @@ function _stopInfoServiceFadeOut(infoServiceContainer) {
 function closeInfoItem(itemId) {
 	var topLevelDocument = BAL.getTopLevelDocument();
 	var infoItem = topLevelDocument.getElementById(itemId);
+	if (!infoItem) return;
 	BAL.addAnimationEndListener(infoItem, function() {
-		var infoServiceContainer = topLevelDocument.getElementById("tl-info-service");
-		infoServiceContainer.removeChild(infoItem);
-		if(BAL.DOM.getChildElementCount(infoServiceContainer) == 0) {
+		var infoServiceContainer = topLevelDocument.getElementById(infoServiceContainerId);
+		if(infoItem && infoServiceContainer) {		
+			infoServiceContainer.removeChild(infoItem);
+		}
+		if(infoServiceContainer && BAL.DOM.getChildElementCount(infoServiceContainer) === 0) {
 			BAL.getBodyElement(topLevelDocument).removeChild(infoServiceContainer);
 		}
 	});
@@ -664,18 +669,17 @@ function closeInfoItem(itemId) {
 }
 
 function _hasPendingInfoItems() {
-	var infoServiceContainer = BAL.getTopLevelDocument().getElementById("tl-info-service");
+	var infoServiceContainer = BAL.getTopLevelDocument().getElementById(infoServiceContainerId);
 	return infoServiceContainer != null && _getPendingInfoItems().length > 0;
 }
 
 function _appendInfoItems(infoItems) {
-	for(var i = 0; i < infoItems.length; i++) {
-		_getPendingInfoItems().push(infoItems[i]);
-	}
+	let pendingInfoItems = _getPendingInfoItems();
+	pendingInfoItems.push(...infoItems);
 }
 
 function _getPendingInfoItems() {
-	var infoServiceContainer = BAL.getTopLevelDocument().getElementById("tl-info-service");
+	var infoServiceContainer = BAL.getTopLevelDocument().getElementById(infoServiceContainerId);
 	if(infoServiceContainer.pendingInfoItems == null) {
 		infoServiceContainer.pendingInfoItems = [];
 	}
@@ -719,15 +723,8 @@ function _showInfoServiceBox(infoServiceContainer) {
 
 function _modifyItemAnimation(keyframesName, step, infoItem) {
 	var keyframes = BAL.findKeyframesRule(keyframesName);
-	if (keyframes != null) {
+	if (keyframes) {
 		BAL.changeRule(keyframes, step, step + " {opacity: 0; margin-top: -" + BAL.getElementHeight(infoItem) + "px;}");
-	}
-}
-
-function _modifyDetailMessageAnimation(keyframesName, step, detailMessage) {
-	var keyframes = BAL.findKeyframesRule(keyframesName);
-	if (keyframes != null) {
-		BAL.changeRule(keyframes, step, step + " {height: " + BAL.getFullElementHeight(detailMessage) + "px;}");
 	}
 }
 

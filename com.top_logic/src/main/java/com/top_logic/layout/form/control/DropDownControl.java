@@ -463,6 +463,11 @@ public class DropDownControl extends AbstractSelectControl {
 	@Override
 	public void valueChanged(FormField field, Object oldValue, Object newValue) {
 		if (!skipEvent(field) && isAttached()) {
+			if (field.isImmutable()) {
+				requestRepaint();
+				return;
+			}
+
 			if (isMultiple()) {
 				addUpdate(new ElementReplacement(getTagLocID(), this::renderTags));
 

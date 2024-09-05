@@ -259,10 +259,6 @@ public class OpenModalDialogCommandHandler extends AbstractCommandHandler implem
                          Object model, Map<String, Object> someArguments) {
 		/* init the component */
 		LayoutComponent dialog = this.getDialog(aComponent, someArguments);
-		if (dialog == null) {
-		    throw new NullPointerException("Failed to getDialog()");
-		}
-
 		transferModel(dialog, model);
 
 		this.beforeOpening(aContext, aComponent, someArguments, dialog);
@@ -357,7 +353,11 @@ public class OpenModalDialogCommandHandler extends AbstractCommandHandler implem
 	 *         component.
 	 */
 	protected LayoutComponent getDialog(LayoutComponent component, Map<String, Object> someArguments) {
-		return component.getComponentByName(_dialogName);
+		LayoutComponent result = component.getComponentByName(_dialogName);
+		if (result == null) {
+			throw new IllegalStateException("Dialog '" + _dialogName + "' not found.");
+		}
+		return result;
     }
 
     /**

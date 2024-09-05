@@ -143,6 +143,12 @@ public class ChecklistControl extends AbstractControl implements ValueListener, 
 	}
 
 	@Override
+	protected void writeControlClassesContent(Appendable out) throws IOException {
+		super.writeControlClassesContent(out);
+		AbstractFormMemberControl.appendMemberControlClasses(out, getModel());
+	}
+
+	@Override
 	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
 		SelectField field = _selectField;
 		OptionModel<?> optionModel = field.getOptionModel();

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments model="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree)">
+		<name key="dynamic.22f788b4-6276-4626-9382-d4ed2102f261">
+			<en>Children as a form table</en>
+			<de>Kinder als Formulartabelle</de>
+		</name>
+		<forms>
+			<form type="DemoTypes:DemoTypes.All">
+				<formDefinition>
+					<formTable
+						form-field-name="736cf2fb-36c3-467b-a846-a54d875652a9"
+						rows="x -> $x.get(`tl.element:StructuredElementContainer#children`)"
+						type="DemoTypes:DemoTypes.A"
+					>
+						<label key="dynamic.b5e62884-db17-4a09-a219-b2e92f3b8e17">
+							<en>Children as a table</en>
+							<de>Kinder als Tabelle</de>
+						</label>
+						<columns>
+							<column name="name"/>
+							<column name="float"/>
+						</columns>
+					</formTable>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

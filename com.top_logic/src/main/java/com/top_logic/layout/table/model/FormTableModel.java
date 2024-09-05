@@ -209,10 +209,12 @@ public class FormTableModel extends DelegatingTableModel {
 		    theMember = theRowGroup.getMember(theFieldName);
 		} else {
 			theMember = fieldProvider.createField(rowObject, accessor, columnName);
-			assert theFieldName.equals(theMember.getName()) : "FieldProvider should create FormMember with name '"
-				+ theFieldName + "', but was '" + theMember.getName() + "'";
-			theMember.setStableIdSpecialCaseMarker(columnName);
-		    theRowGroup.addMember(theMember);
+			if (theMember != null) {
+				assert theFieldName.equals(theMember.getName()) : "FieldProvider should create FormMember with name '"
+					+ theFieldName + "', but was '" + theMember.getName() + "'";
+				theMember.setStableIdSpecialCaseMarker(columnName);
+				theRowGroup.addMember(theMember);
+			}
 		}
 		return theMember;
 	}

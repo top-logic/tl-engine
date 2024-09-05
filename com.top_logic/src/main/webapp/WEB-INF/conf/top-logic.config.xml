@@ -270,6 +270,7 @@
 		            <renderer kind="CODE" type="com.top_logic.base.services.simpleajax.HTMLFragment" implementation="com.top_logic.layout.basic.FragmentRenderer" />
 		            <renderer kind="CODE" type="com.top_logic.basic.io.binary.BinaryDataSource" implementation="com.top_logic.knowledge.wrap.DocumentDownloadRenderer" />
 		            <renderer kind="CODE" type="com.top_logic.html.template.config.HTMLTemplate" implementation="com.top_logic.html.template.config.ConfiguredTemplateRenderer" />
+		            <renderer kind="CODE" type="java.awt.Color" implementation="com.top_logic.layout.form.control.ColorRenderer" />
 				</renderers>
 				
 				<mappings>

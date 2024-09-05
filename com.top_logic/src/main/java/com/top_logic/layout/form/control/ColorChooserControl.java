@@ -49,7 +49,6 @@ public class ColorChooserControl extends AbstractFormFieldControl {
 	@Override
 	protected void writeEditable(DisplayContext context, TagWriter out) throws IOException {
 		FormField field = (FormField) getModel();
-		String bgColor = getHtmlColor();
 
 		out.beginBeginTag(SPAN);
 		writeControlAttributes(context, out);
@@ -57,8 +56,32 @@ public class ColorChooserControl extends AbstractFormFieldControl {
 		{
 			out.beginBeginTag(BUTTON);
 			writeInputIdAttr(out);
-			out.writeAttribute(CLASS_ATTR, "ColorChooser");
-			writeEditableStyle(out, bgColor);
+
+			Color color = getColorOrNull();
+			out.beginCssClasses();
+			{
+				out.append("ColorChooser");
+
+				if (color == null) {
+					out.append("noColor");
+				}
+
+				if (getModel().isActive()) {
+					out.append("active");
+				}
+			}
+			out.endCssClasses();
+
+			if (color != null) {
+				out.beginAttribute(STYLE_ATTR);
+				String bgColor = toHtmlColor(color);
+
+				out.append("background-color:");
+				out.append(bgColor);
+				out.append(";");
+				out.endAttribute();
+			}
+
 			if (field.isDisabled()) {
 				out.writeAttribute(DISABLED_ATTR, DISABLED_DISABLED_VALUE);
 			} else {
@@ -71,17 +94,6 @@ public class ColorChooserControl extends AbstractFormFieldControl {
 			out.endTag(BUTTON);
 		}
 		out.endTag(SPAN);
-	}
-
-	private void writeEditableStyle(TagWriter out, String bgColor) throws IOException {
-		out.beginAttribute(STYLE_ATTR);
-		out.append("background-color:");
-		out.append(bgColor);
-		out.append(";");
-		if (!getModel().isDisabled()) {
-			out.append("cursor:pointer;");
-		}
-		out.endAttribute();
 	}
 
 	private void writeOnClick(TagWriter out) throws IOException {
@@ -152,26 +164,23 @@ public class ColorChooserControl extends AbstractFormFieldControl {
 		public ResKey getI18NKey() {
 			return I18NConstants.OPEN_COLOR_SELECTION;
 		}
-
 	}
 	
 	/**
 	 * The {@link Color} business object being edited.
 	 */
 	public Color getColor() {
-		FormField field = (FormField) getModel();
-		Color result = (Color) field.getValue();
+		Color result = getColorOrNull();
 		if (result == null) {
 			return Color.black;
 		}
 		return result;
 	}
 
-	/**
-	 * The {@link #getColor()} in HTML hexadecimal representation.
-	 */
-	public String getHtmlColor() {
-		return toHtmlColor(getColor());
+	private Color getColorOrNull() {
+		FormField field = (FormField) getModel();
+		Color result = (Color) field.getValue();
+		return result;
 	}
 
 	/**

@@ -2164,6 +2164,14 @@ a img.type-image {
 	border-radius: var(--corner-radius);
 }
 
+.ColorChooser.active {
+	cursor:pointer;
+}
+
+.ColorChooser.noColor {
+	background-image: url("../images/semi64x64lg.png");
+}
+
 span.cColorDisplay {
 	border-style: solid;
 	border-color: black;

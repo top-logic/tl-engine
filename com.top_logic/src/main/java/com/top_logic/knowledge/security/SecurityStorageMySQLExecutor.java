@@ -61,9 +61,11 @@ public class SecurityStorageMySQLExecutor extends SecurityStorageExecutor {
                                                                " (" + SecurityStorage.ATTRIBUTE_BUSINESS_OBJECT + "," + SecurityStorage.ATTRIBUTE_ROLE + "," + SecurityStorage.ATTRIBUTE_REASON + ")";
 
     @Override
-	public boolean insert(Object[] aVector) throws SQLException {
+	public boolean insertIgnore(Object[] aVector) throws SQLException {
         checkVectorNotNull(aVector);
-        return DBUtil.executeUpdate(getWriteConnection(), MYSQL_INSERT_STATEMENT, aVector) > 0;
+		Connection writeConnection = getWriteConnection();
+		Object[] storageValues = storageValues(aVector);
+		return DBUtil.executeUpdate(writeConnection, MYSQL_INSERT_STATEMENT, storageValues) > 0;
     }
 
     @Override
@@ -79,14 +81,14 @@ public class SecurityStorageMySQLExecutor extends SecurityStorageExecutor {
     @Override
 	public int multiInsertIgnore(List<Object[]> vectors) throws SQLException {
         Connection writeConnection = getWriteCache().getConnection();
-        PreparedStatement pstm = writeConnection.prepareStatement(MYSQL_INSERT_STATEMENT);
 		int maxBatchSize = dbHelper.getMaxBatchSize(MYSQL_INSERT_STATEMENT_PARAMETERS);
-        try {
+		try (PreparedStatement pstm = writeConnection.prepareStatement(MYSQL_INSERT_STATEMENT)) {
             int result = 0, counter = 0;
 			for (Object[] vector : vectors) {
                 if (vector == null) continue;
                 checkVectorNotNull(vector);
-                DBUtil.setVector(pstm, vector);
+				Object[] storageValues = storageValues(vector);
+				DBUtil.setVector(pstm, storageValues);
                 pstm.addBatch();
                 counter++;
 				if (counter >= maxBatchSize) {
@@ -98,8 +100,6 @@ public class SecurityStorageMySQLExecutor extends SecurityStorageExecutor {
                 result += ArrayUtil.sum(pstm.executeBatch());
             }
             return result;
-        } finally {
-            pstm.close();
         }
     }
 

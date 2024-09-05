@@ -27,6 +27,7 @@ import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ListDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.db.schema.io.MORepositoryBuilder;
+import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
 import com.top_logic.basic.tooling.Workspace;
@@ -47,6 +48,7 @@ import com.top_logic.element.model.export.ui.ModelExportCommand;
 import com.top_logic.element.util.dbadmin.DBSchemaChangingCommand;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.layout.ModelSpec;
+import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLModule;
@@ -62,6 +64,25 @@ import com.top_logic.tool.execution.NullModelDisabled;
 
 /**
  * Generates a database schema for the selected {@link TLModule}.
+ * <p>
+ * Limitations:
+ * <ul>
+ * <li>There are no tests.</li>
+ * <li>After generating it might be necessary to stop the application, delete the database and add
+ * the new <code>meta.xml</code> file to the application configuration.</li>
+ * <li>The generated <code>meta.xml</code> file has to be added manually to the application
+ * configuration.</li>
+ * <li>It has not been tested whether generating the schema leaves the application in an
+ * inconsistent state. For example the stored database schema in the {@link DBProperties} might not
+ * have been updated.</li>
+ * <li>It only generates for one {@link TLModule}. Workaround: To generate for example for three
+ * modules (a, b, c), generate in the order: a, b, c, a, b. The first three iterations create the
+ * necessary tables. The next two generate the correct associations from these modules to the later
+ * modules. Between each generation, the steps given above might be necessary.</li>
+ * <li>Associations with monomorphic ends are created as non-monomorphic, as they are generated as
+ * subtypes of {@value ApplicationObjectUtil#WRAPPER_ATTRIBUTE_ASSOCIATION_BASE}</li>
+ * </ul>
+ * </p>
  * 
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
@@ -86,6 +107,16 @@ public class DBSchemaGeneratorCommand extends DBSchemaChangingCommand {
 		@Override
 		@ListDefault(NullModelDisabled.class)
 		List<PolymorphicConfiguration<? extends ExecutabilityRule>> getExecutability();
+
+		/**
+		 * Whether an existing database schema should be ignored.
+		 * <p>
+		 * This is applied to types from the configured {@link TLModule}. For types outside of it,
+		 * existing tables are always used and never overridden.
+		 * </p>
+		 */
+		boolean getOverrideExistingSchema();
+
 	}
 
 	private static final String MODEL_FILE_ENDING = ".model.xml";
@@ -107,7 +138,7 @@ public class DBSchemaGeneratorCommand extends DBSchemaChangingCommand {
 	}
 
 	private HandlerResult generate(TLModule module) {
-		DBSchemaGenerator generator = new DBSchemaGenerator(module);
+		DBSchemaGenerator generator = new DBSchemaGenerator(module, getConfigTyped().getOverrideExistingSchema());
 		generator.generate();
 		writeMetaObjects(module.getName(), generator.getMetaObjectConfig());
 		KBUtils.inTransaction(() -> {

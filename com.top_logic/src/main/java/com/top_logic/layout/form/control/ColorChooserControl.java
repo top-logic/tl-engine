@@ -99,35 +99,13 @@ public class ColorChooserControl extends AbstractFormFieldControl {
 
 	@Override
 	protected void writeImmutable(DisplayContext context, TagWriter out) throws IOException {
-		String bgColor = getHtmlColor();
-
 		out.beginBeginTag(SPAN);
 		writeControlAttributes(context, out);
 		out.endBeginTag();
 		{
-			// The inner span is necessary since the IE won't show the style
-			// attribute correctly
-			out.beginBeginTag(SPAN);
-			writeImmutableStyle(out, bgColor);
-			out.endBeginTag();
-
-			out.writeText(NBSP);
-			out.writeText(NBSP);
-			out.writeText(NBSP);
-			out.writeText(NBSP);
-			out.writeText(NBSP);
-
-			out.endTag(SPAN);
+			ColorRenderer.INSTANCE.write(context, out, getColor());
 		}
 		out.endTag(SPAN);
-	}
-
-	private void writeImmutableStyle(TagWriter out, String bgColor) throws IOException {
-		out.beginAttribute(STYLE_ATTR);
-		out.append("background-color:");
-		out.append(bgColor);
-		out.append("; cursor:default;");
-		out.endAttribute();
 	}
 
 	@Override

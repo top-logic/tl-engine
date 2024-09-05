@@ -271,35 +271,43 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 
 	static FormVisibility calculateVisibility(TLStructuredTypePart part, FormVisibility formVisibility,
 			FormMode formMode) throws UnreachableAssertion {
-		if (formVisibility != FormVisibility.DEFAULT || part == null) {
+		if (formVisibility != FormVisibility.DEFAULT) {
 			return formVisibility;
 		}
-		if (formMode == FormMode.DESIGN) {
+
+		if (part == null) {
 			return FormVisibility.DEFAULT;
 		}
-		boolean isMandatoryModel = part.isMandatory();
+
+		if (formMode == FormMode.DESIGN) {
+			return FormVisibility.EDITABLE;
+		}
+
 		if (formMode == FormMode.CREATE) {
-			return createFormVisibility(part, isMandatoryModel);
+			return createFormVisibility(part);
 		} else {
-			return editFormVisibility(part, isMandatoryModel);
+			return editFormVisibility(part);
 		}
 	}
 
-	private static FormVisibility createFormVisibility(TLStructuredTypePart part, boolean isMandatoryModel) {
+	private static FormVisibility createFormVisibility(TLStructuredTypePart part) {
 		TLCreateVisibility createVisibility = DisplayAnnotations.getCreateVisibilityAnnotation(part);
 		if (createVisibility != null) {
-			return formVisiblity(createVisibility.getValue(), isMandatoryModel);
+			return formVisiblity(part, createVisibility.getValue());
 		} else {
-			return editFormVisibility(part, isMandatoryModel);
+			return editFormVisibility(part);
 		}
 	}
 
-	private static FormVisibility editFormVisibility(TLStructuredTypePart part, boolean isMandatoryModel) {
+	private static FormVisibility editFormVisibility(TLStructuredTypePart part) {
 		TLVisibility visibility = DisplayAnnotations.getVisibilityAnnotation(part);
 		if (visibility != null) {
-			return formVisiblity(visibility.getValue(), isMandatoryModel);
+			return formVisiblity(part, visibility.getValue());
 		} else {
-			if (isMandatoryModel) {
+			if (part.isDerived()) {
+				return FormVisibility.READ_ONLY;
+			}
+			if (part.isMandatory()) {
 				return FormVisibility.MANDATORY;
 			} else {
 				return FormVisibility.DEFAULT;
@@ -307,10 +315,10 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 		}
 	}
 
-	private static FormVisibility formVisiblity(Visibility annotatedVisibility, boolean isMandatoryModel) {
+	private static FormVisibility formVisiblity(TLStructuredTypePart part, Visibility annotatedVisibility) {
 		switch (annotatedVisibility) {
 			case EDITABLE:
-				if (isMandatoryModel) {
+				if (part.isMandatory()) {
 					return FormVisibility.MANDATORY;
 				} else {
 					return FormVisibility.EDITABLE;

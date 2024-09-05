@@ -381,6 +381,50 @@
 								value="x -> $x.get(`test.webfolderref:MyType#other`).get(`test.webfolderref:MyType#folder`)"
 							/>
 						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+									tab-path=""
+								/>
+								<path>
+									<labeled-member label="Konfiguration"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Anpassungen"/>
+									<named-member name="add"/>
+								</path>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+										value="com.top_logic.model.annotate.TLVisibility"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Wert"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.EnumNaming$Name"
+										value="com.top_logic.model.annotate.Visibility:EDITABLE"
+									/>
+								</values>
+							</value>
+						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler"
 							command-label="Erstellen"
@@ -674,7 +718,6 @@
 					user-id="root"
 				/>
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					xmlns:config="http://www.top-logic.com/ns/config/6.0"
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
@@ -908,6 +951,13 @@
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
 					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="TestFolderRef"
+							/>
+						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
 							command-label="New"

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_29ebed8b_35b5_4c2d_89a9_3a15f248cd6d">
+		<tabLabel key="dynamic.3c41847e-b4a0-4e56-80bb-d1a48e3cc96e">
+			<en>Form table</en>
+			<de>Formulartabelle</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/formTable/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

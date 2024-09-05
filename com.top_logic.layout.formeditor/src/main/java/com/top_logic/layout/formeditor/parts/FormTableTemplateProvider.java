@@ -38,6 +38,7 @@ import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.basic.ErrorFragmentGenerator;
 import com.top_logic.layout.editor.config.OptionalTypeTemplateParameters;
 import com.top_logic.layout.form.FormContainer;
+import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.control.Icons;
 import com.top_logic.layout.form.model.FormContext;
@@ -48,16 +49,18 @@ import com.top_logic.layout.formeditor.parts.FormTableDefinition.AttributeColumn
 import com.top_logic.layout.formeditor.parts.FormTableDefinition.ColumnDisplay;
 import com.top_logic.layout.formeditor.parts.FormTableDefinition.ColumnDisplayVisitor;
 import com.top_logic.layout.table.AbstractCellRenderer;
+import com.top_logic.layout.table.CellAdapter;
+import com.top_logic.layout.table.CellClassProvider;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.table.TableRenderer.Cell;
 import com.top_logic.layout.table.command.TableCommandConfig;
 import com.top_logic.layout.table.command.TableCommandProvider;
+import com.top_logic.layout.table.filter.CellExistenceTester;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ColumnCustomization;
 import com.top_logic.layout.table.model.Enabled;
 import com.top_logic.layout.table.model.FieldProvider;
 import com.top_logic.layout.table.model.FormTableModel;
-import com.top_logic.layout.table.model.NoDefaultColumnAdaption;
 import com.top_logic.layout.table.model.ObjectTableModel;
 import com.top_logic.layout.table.model.TableConfigUtil;
 import com.top_logic.layout.table.model.TableConfiguration;
@@ -125,8 +128,10 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 			FormMember field =
 				FormEditorUtil.createAnotherMetaAttributeForEdit(_formContext, _contentGroup, _part, rowType,
 					isDisabled, AnnotationContainer.EMPTY);
-			FormVisibility visibility = _col.getVisibility();
-			visibility.applyTo(field);
+			if (field != null) {
+				FormVisibility visibility = _col.getVisibility();
+				visibility.applyTo(field);
+			}
 			return field;
 		}
 	}
@@ -198,7 +203,7 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 		if (commands.isEmpty()) {
 			return TableConfigurationFactory.emptyProvider();
 		}
-		return new NoDefaultColumnAdaption() {
+		return new TableConfigurationProvider() {
 			@Override
 			public void adaptConfigurationTo(TableConfiguration table) {
 				table.setCommands(
@@ -235,7 +240,7 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 			Collection<ColumnDisplay> colums,
 			ColumnDisplayVisitor<String, Void> columnNameProvider) {
 		ColumnDisplayVisitor<Void, ColumnConfiguration> adaptColumn = adaptColumnVisitor(formContext, contentGroup);
-		TableConfigurationProvider adaptColumns = new NoDefaultColumnAdaption() {
+		TableConfigurationProvider adaptColumns = new TableConfigurationProvider() {
 			@Override
 			public void adaptConfigurationTo(TableConfiguration table) {
 				for (ColumnDisplay column : colums) {
@@ -275,7 +280,7 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 	private TableConfigurationProvider deactivateTableFeatures(boolean inDesignMode) {
 		TableConfigurationProvider deactivateFeaturesForDesign;
 		if (inDesignMode) {
-			deactivateFeaturesForDesign = new NoDefaultColumnAdaption() {
+			deactivateFeaturesForDesign = new TableConfigurationProvider() {
 
 				@Override
 				public void adaptConfigurationTo(TableConfiguration table) {
@@ -311,7 +316,7 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 		if (labelKey == null) {
 			tableTitle = TableConfigurationFactory.emptyProvider();
 		} else {
-			tableTitle = new NoDefaultColumnAdaption() {
+			tableTitle = new TableConfigurationProvider() {
 
 				@Override
 				public void adaptConfigurationTo(TableConfiguration table) {
@@ -331,9 +336,31 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 				try {
 					TLStructuredTypePart part = AttributeDefinition.resolvePart(col);
 					if (part != null) {
+						TLStructuredTypePart definition = part.getDefinition();
+						String partName = definition.getName();
+
+						CellExistenceTester cellExistenceTester = new CellExistenceTester() {
+							@Override
+							public boolean isCellExistent(Object rowObject, String columnName) {
+								if (rowObject instanceof TLObject obj) {
+									TLStructuredTypePart definedPart = obj.tType().getPart(partName);
+									return definedPart != null && definedPart.getDefinition() == definition;
+								}
+								return false;
+							}
+						};
+
+						arg.setCellExistenceTester(cellExistenceTester);
+
 						arg.setFieldProvider(
 							new FieldProviderImpl(part, col, (AttributeFormContext) formContext, contentGroup));
 						arg.setControlProvider(MetaControlProvider.INSTANCE);
+
+						// Classes are displayed dynamically by the fields in the cells.
+						CellClassProvider cssClassProvider = arg.getCssClassProvider();
+						if (cssClassProvider != null) {
+							arg.setCssClassProvider(new FormCellClassProvider(cssClassProvider));
+						}
 					} else {
 						handleInvalidPart(col, arg);
 					}
@@ -428,6 +455,49 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 	@Override
 	public boolean openDialog() {
 		return OPEN_DIALOG;
+	}
+
+	/**
+	 * {@link CellClassProvider} that is wrapped around a custom {@link CellClassProvider} to shield
+	 * it from grid internals.
+	 */
+	private class FormCellClassProvider implements CellClassProvider {
+
+		private final CellClassProvider _wrappedTester;
+
+		FormCellClassProvider(CellClassProvider wrappedTester) {
+			_wrappedTester = wrappedTester;
+		}
+
+		@Override
+		public String getCellClass(Cell cell) {
+			Object value = cell.getValue();
+			if (value instanceof FormField field) {
+				if (field.isActive()) {
+					// Class is set on the field.
+					return null;
+				}
+			}
+			return _wrappedTester.getCellClass(wrap(cell));
+		}
+
+		private Cell wrap(Cell cell) {
+			return new CellAdapter() {
+				@Override
+				public Object getValue() {
+					Object value = super.getValue();
+					if (value instanceof FormField field) {
+						return field.getValue();
+					}
+					return value;
+				}
+
+				@Override
+				protected Cell impl() {
+					return cell;
+				}
+			};
+		}
 	}
 
 }

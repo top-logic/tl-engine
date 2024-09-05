@@ -47,6 +47,7 @@ import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.MySQLHelper;
 import com.top_logic.basic.sql.OracleHelper;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.basic.sql.PostgreSQLHelper;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.StopWatch;
 import com.top_logic.dob.MetaObject;
@@ -249,6 +250,9 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 		}
 		if (sqlDialect instanceof DB2Helper) {
 			return new SecurityStorageDB2Executor(connectionPool);
+		}
+		if (sqlDialect instanceof PostgreSQLHelper) {
+			return new SecurityStoragePostgreSQLExecutor(connectionPool);
 		}
 		// Add here more DBSpecific executors and maybe version checks
 		return new SecurityStorageExecutor(connectionPool);
@@ -618,7 +622,7 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
             throw new IllegalArgumentException("Illegal Arguments: aVector must be of length 4 and no parameter must be null.");
         }
         try {
-            return executor.insert(aVector);
+            return executor.insertIgnore(aVector);
         }
         catch (SQLException e) {
             throw new StorageException("Error while requesting the database.", e);
@@ -1622,7 +1626,12 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 			return theResult;
         }
 
-        public boolean insert(Object[] aVector) throws SQLException {
+		/**
+		 * Inserts given vector and ignores duplicate.
+		 * 
+		 * @see #multiInsertIgnore(List)
+		 */
+        public boolean insertIgnore(Object[] aVector) throws SQLException {
             checkVectorNotNull(aVector);
             Connection writeConnection = getWriteConnection();
 			Object[] storageValues = storageValues(aVector);
@@ -1630,6 +1639,11 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
 			return DBUtil.executeUpdate(writeConnection, SQL_INSERT_STATEMENT, storageValues) > 0;
         }
 
+		/**
+		 * Inserts all vectors and ignores duplicates.
+		 * 
+		 * @see #insertIgnore(Object[])
+		 */
         public int multiInsertIgnore(List<Object[]> vectors) throws SQLException {
         	Connection writeConnection = getWriteCache().getConnection();
 			int maxBatchLength =
@@ -1766,6 +1780,22 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
             }
         }
 
+		/**
+		 * Converts {@link TLID} objects in the given vector to their storage values.
+		 */
+		protected static Object[] storageValues(Object[] aVector) {
+			if (aVector == null) {
+				return null;
+			}
+
+			Object[] result = new Object[aVector.length];
+			for (int i = 0; i < aVector.length; i++) {
+				Object value = aVector[i];
+				result[i] = storageValue(value);
+			}
+			return result;
+		}
+
     }
 
 	protected static Object securityId(BoundObject obj) {
@@ -1808,22 +1838,6 @@ public class SecurityStorage implements ConfiguredInstance<SecurityStorage.Confi
         }
         return result;
     }
-
-	/**
-	 * Converts {@link TLID} objects in the given vector to their storage values.
-	 */
-	protected static Object[] storageValues(Object[] aVector) {
-		if (aVector == null) {
-			return null;
-		}
-		
-		Object[] result = new Object[aVector.length];
-		for (int i = 0; i < aVector.length; i++) {
-			Object value = aVector[i];
-			result[i] = storageValue(value);
-		}
-		return result;
-	}
 
 	/**
 	 * Converts the given value to its storage value.

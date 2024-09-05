@@ -1403,6 +1403,46 @@
 							<addResourcesToClasspath>false</addResourcesToClasspath>
 						</configuration>
 					</execution>
+
+					<!--
+						Inlining a templated layout. 
+						
+						The layout given as the `tl.layout` parameter is loaded, inlined and written back to the file 
+						system. The layout must be given as path relative to the parent directory of the current module 
+						(where the pom.xml is located).
+						
+						A valid command line would look as follows given that the module from which the goal is invoked
+						is named `my-app` and the layout to inline is `my/path/to/myView.layout.xml`:
+						
+						mvn exec:java@inline-layout -Dtl.layout="my-app/src/main/webapp/WEB-INF/layouts/my/path/to/myView.layout.xml"
+					-->
+                    <execution>
+						<id>inline-layout</id>
+						<goals>
+							<goal>java</goal>
+						</goals>
+						
+						<configuration>
+							<mainClass>com.top_logic.layout.component.LayoutModelProcessor</mainClass>
+							<arguments>
+								<argument>-workspace</argument>
+								<argument>${project.basedir}/..</argument>
+								<argument>-webapp</argument>
+								<argument>${project.basedir}/src/main/webapp</argument>
+								<argument>-in</argument>
+								<argument>${tl.layout}</argument>
+								<argument>inline</argument>
+							</arguments>
+
+							<!-- Necessary to have servlet classes in the class path. -->							
+							<classpathScope>test</classpathScope>
+
+							<includePluginDependencies>false</includePluginDependencies>
+							<includeProjectDependencies>true</includeProjectDependencies>
+							<addOutputToClasspath>true</addOutputToClasspath>
+							<addResourcesToClasspath>false</addResourcesToClasspath>
+						</configuration>
+                    </execution>
 					
 					<execution>
 						<id>migrate-ticket</id>

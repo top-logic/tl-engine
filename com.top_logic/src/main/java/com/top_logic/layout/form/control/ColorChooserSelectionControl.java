@@ -197,8 +197,8 @@ public class ColorChooserSelectionControl extends AbstractConstantControl {
 	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
 		DragAndDrop<Color> dnd = new DragAndDrop<>(getScope().getFrameScope());
 
-		String currentHtmlColor = _colorDisplay.getHtmlColor();
-		Color currentColor = toColor(currentHtmlColor);
+		Color currentColor = _colorDisplay.getColor();
+		String currentHtmlColor = ColorChooserControl.toHtmlColor(currentColor);
 		ColorDisplay oldColor = new ColorDisplay(this, dnd, currentColor, ColorDisplay.Kind.DRAG);
 		ColorDisplay newColor = new ColorDisplay(this, dnd, currentColor, ColorDisplay.Kind.DRAG);
 		_palette = new ColorPalette(this, _config, dnd);
@@ -346,7 +346,7 @@ public class ColorChooserSelectionControl extends AbstractConstantControl {
 			writeColorInputField(out, Resources.getInstance().getString(I18NConstants.BLUE_COMPONENT), "blue",
 				Integer.toString(color.getBlue()));
 
-			String currentColor = _colorDisplay.getHtmlColor();
+			String currentColor = ColorChooserControl.toHtmlColor(color);
 			writeColorInputField(out, Resources.getInstance().getString(I18NConstants.HEX_CODE), "hex", currentColor);
 		}
 		out.endTag(TABLE);

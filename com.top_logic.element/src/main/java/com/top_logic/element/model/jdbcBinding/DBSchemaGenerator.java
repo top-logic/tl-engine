@@ -5,7 +5,6 @@
  */
 package com.top_logic.element.model.jdbcBinding;
 
-import static com.top_logic.basic.StringServices.*;
 import static com.top_logic.basic.config.TypedConfiguration.*;
 import static com.top_logic.basic.config.misc.TypedConfigUtil.*;
 import static com.top_logic.basic.shared.collection.CollectionUtilShared.*;
@@ -19,6 +18,7 @@ import static java.util.Objects.*;
 import static java.util.stream.Collectors.*;
 import static java.util.stream.Collectors.toList;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -30,10 +30,12 @@ import java.util.Objects;
 import java.util.Set;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.TupleFactory.Pair;
 import com.top_logic.basic.config.Decision;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
+import com.top_logic.basic.exception.NotYetImplementedException;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.attr.MOPrimitive;
@@ -77,6 +79,8 @@ public class DBSchemaGenerator {
 
 	private final TLModule _module;
 
+	private final boolean _overrideExistingSchema;
+
 	private MetaObjectsConfig _moModuleConfig = newConfigItem(MetaObjectsConfig.class);
 
 	private Map<TLClass, MetaObjectConfig> _classMapping;
@@ -84,8 +88,9 @@ public class DBSchemaGenerator {
 	private Map<TLReference, AssociationConfig> _referenceToAssociationMapping = new HashMap<>();
 
 	/** Creates a {@link DBSchemaGenerator}. */
-	public DBSchemaGenerator(TLModule module) {
+	public DBSchemaGenerator(TLModule module, boolean overrideExistingSchema) {
 		_module = requireNonNull(module);
+		_overrideExistingSchema = overrideExistingSchema;
 	}
 
 	/** The generated schema. */
@@ -137,11 +142,14 @@ public class DBSchemaGenerator {
 		logInfo("Begin class: " + tlClass.getName());
 		TableName existingTable = tlClass.getAnnotation(TableName.class);
 		if (existingTable != null) {
-			logInfo("Skipping TLClass as it already has a table.");
-			return null;
+			if (!_overrideExistingSchema) {
+				logInfo("Skipping TLClass as it already has a table.");
+				return null;
+			}
+			logInfo("TLClass has already a table. Overriding it.");
 		}
 		MetaObjectConfig moClass = newConfigItem(MetaObjectConfig.class);
-		setProperty(moClass, MetaObjectConfig.OBJECT_NAME_ATTRIBUTE, tlClass.getName());
+		setProperty(moClass, MetaObjectConfig.OBJECT_NAME_ATTRIBUTE, generateMOClassName(tlClass));
 		if (tlClass.isAbstract()) {
 			setProperty(moClass, ABSTRACT_PROPERTY, true);
 		}
@@ -399,7 +407,12 @@ public class DBSchemaGenerator {
 	}
 
 	private String toAssociationName(TLReference tlReference) {
-		return ASSOCIATION_PREFIX + capitalizeString(tlReference.getName());
+		/* Attribute names are often not unique. Multiple types can have a reference to the same
+		 * type of objects. They are often named after the target type. That leads to name clashes.
+		 * Therefore, the attribute names are prefixed with their owner names. */
+		String className = toMOTypeName(tlReference.getOwner().getName());
+		String attributeName = toMOTypeName(tlReference.getName());
+		return ASSOCIATION_PREFIX + className + attributeName;
 	}
 
 	private AssociationReference generateAssociationReferenceOverride(TLStructuredType targetType, String name) {
@@ -446,12 +459,45 @@ public class DBSchemaGenerator {
 	private String getMOClass(TLClass tlClass) {
 		if (tlClass.getModule().equals(_module)) {
 			TableName tableAnnotation = tlClass.getAnnotation(TableName.class);
-			if (tableAnnotation != null) {
+			if ((tableAnnotation != null) && !_overrideExistingSchema) {
 				return tableAnnotation.getName();
 			}
-			return tlClass.getName();
+			return generateMOClassName(tlClass);
 		}
 		return TLAnnotations.getTable(tlClass);
+	}
+
+	private String generateMOClassName(TLClass tlClass) {
+		String localName = toMOTypeName(tlClass.getName());
+		if (isConflictingMOTypeName(tlClass, localName)) {
+			String moduleName = tlClass.getModule().getName();
+			String fullName = toMOTypeName(moduleName) + localName;
+			if (isConflictingMOTypeName(tlClass, fullName)) {
+				throw new NotYetImplementedException("Failed to generate unique name for type: " + qualifiedName(tlClass));
+			}
+			return fullName;
+		}
+		return localName;
+	}
+
+	private String toMOTypeName(String name) {
+		return Arrays.stream(name.split("[^a-zA-Z0-9]+"))
+			.map(StringServices::capitalizeString)
+			.collect(joining());
+	}
+
+	private boolean isConflictingMOTypeName(TLClass tlClass, String localName) {
+		if (tlClass.tKnowledgeBase().getMORepository().getTypeOrNull(localName) == null) {
+			return false;
+		}
+		TableName tableAnnotation = tlClass.getAnnotation(TableName.class);
+		if (tableAnnotation == null) {
+			return true;
+		}
+		if (!localName.equals(tableAnnotation.getName())) {
+			return true;
+		}
+		return !_overrideExistingSchema;
 	}
 
 	private static void logInfo(String message) {

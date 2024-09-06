@@ -408,7 +408,7 @@
 									</path>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="1"
+									name="Test fallback (1)"
 								/>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
@@ -432,7 +432,7 @@
 									</path>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="1"
+									name="Test fallback (1)"
 								/>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
@@ -456,7 +456,7 @@
 									</path>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="1"
+									name="Test fallback (1)"
 								/>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
@@ -480,7 +480,7 @@
 									</path>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="1"
+									name="Test fallback (1)"
 								/>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
@@ -511,7 +511,7 @@
 									</path>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="1"
+									name="Test fallback (1)"
 								/>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
@@ -535,7 +535,7 @@
 									</path>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-									name="1"
+									name="Test fallback (1)"
 								/>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
@@ -571,7 +571,7 @@
 							/>
 						</table>
 						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-							name="1"
+							name="Test fallback (1)"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
@@ -592,7 +592,7 @@
 							/>
 						</table>
 						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-							name="1"
+							name="Test fallback (1)"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
@@ -613,7 +613,7 @@
 							/>
 						</table>
 						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-							name="1"
+							name="Test fallback (1)"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
@@ -634,7 +634,7 @@
 							/>
 						</table>
 						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-							name="1"
+							name="Test fallback (1)"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
@@ -662,7 +662,7 @@
 							/>
 						</table>
 						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-							name="1"
+							name="Test fallback (1)"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
@@ -683,7 +683,7 @@
 							/>
 						</table>
 						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-							name="1"
+							name="Test fallback (1)"
 						/>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"

@@ -236,12 +236,26 @@ public class DisplayAnnotations {
 	}
 
 	/**
+	 * Whether the given {@link TLModelPart} is mandatory during create.
+	 */
+	public static boolean isMandatoryInCreate(TLModelPart part) {
+		return getCreateVisibility(part) == Visibility.MANDATORY;
+	}
+
+	/**
 	 * Whether the given {@link TLModelPart} is not derived and editable.
 	 */
 	public static boolean isEditable(TLModelPart part) {
 		return !TLModelUtil.isDerived(part) && getVisibility(part).isEditable();
 	}
 	
+	/**
+	 * Whether the given {@link TLModelPart} is mandatory.
+	 */
+	public static boolean isMandatory(TLStructuredTypePart part) {
+		return part.isMandatory() || getVisibility(part) == Visibility.MANDATORY;
+	}
+
 	/** @see #isHidden(AnnotationLookup) */
 	public static void setHidden(TLModelPart part, boolean value) {
 		if (isHidden(part) == value) {

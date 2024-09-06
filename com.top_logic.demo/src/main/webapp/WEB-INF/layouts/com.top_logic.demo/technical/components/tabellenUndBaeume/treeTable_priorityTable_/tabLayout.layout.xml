@@ -2,7 +2,6 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="true"
 	template="com.top_logic/tab.template.xml"
 >
 	<arguments helpID="ID_9e8231da_55a1_414b_8cd3_d236d9dae171">

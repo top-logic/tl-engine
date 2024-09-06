@@ -8,6 +8,7 @@ package com.top_logic.element.model.jdbcBinding;
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 import static com.top_logic.model.util.TLModelUtil.*;
 import static java.util.Collections.*;
+import static java.util.Objects.*;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -20,7 +21,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.top_logic.basic.Logger;
+import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
@@ -34,9 +35,11 @@ import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLColumnDefinition;
 import com.top_logic.basic.db.sql.SQLFactory;
 import com.top_logic.basic.db.sql.SQLSelect;
+import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.model.jdbcBinding.api.ColumnParser;
 import com.top_logic.element.model.jdbcBinding.api.ImportRow;
 import com.top_logic.element.model.jdbcBinding.api.KeyColumnNormalizer;
@@ -48,9 +51,11 @@ import com.top_logic.element.model.jdbcBinding.api.annotate.TLForeignKeyBinding.
 import com.top_logic.element.model.jdbcBinding.api.annotate.TLLinkTableBinding;
 import com.top_logic.element.model.jdbcBinding.api.annotate.TLReverseForeignKeyBinding;
 import com.top_logic.element.model.jdbcBinding.api.annotate.TLTableBinding;
-import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.DisplayDimension;
+import com.top_logic.layout.messagebox.ProgressDialog;
+import com.top_logic.layout.messagebox.ProgressDialog.State;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLAssociationEnd;
@@ -80,10 +85,80 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * <li>TLReverseForeignKeyBinding</li>
  * </ul>
  * </p>
+ * <p>
+ * Limitations: The messages displayed in the log are not internationalized, yet. The method
+ * {@link ImportContext#toLogMessage(String)} just convert the English text with
+ * {@link ResKey#text(String)}.
+ * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class JdbcDataImporter extends AbstractCommandHandler {
+
+	/** Used to report the progress and log messages. */
+	public static class JdbcDataImporterProgressHandle {
+
+		private final ProgressDialog _dialog;
+
+		private final I18NLog _log;
+
+		/** Creates a {@link JdbcDataImporterProgressHandle}. */
+		public JdbcDataImporterProgressHandle(ProgressDialog dialog, I18NLog log) {
+			_dialog = requireNonNull(dialog);
+			_log = requireNonNull(log);
+		}
+
+		/** Increment the display progress by one step. */
+		public void incrementProgress() {
+			_dialog.incProgress(1);
+		}
+
+		/** Whether the user canceled the operation. */
+		public boolean isCanceled() {
+			return _dialog.getState() == State.CANCELED;
+		}
+
+		/** The operation log displayed to the user. */
+		public I18NLog getLog() {
+			return _log;
+		}
+	}
+
+	private final class JdbcDataImporterProgressDialog extends ProgressDialog {
+
+		private final String _poolName;
+
+		private final TLModule _module;
+
+		private JdbcDataImporterProgressDialog(ResKey title, DisplayDimension width, DisplayDimension height,
+				String poolName, TLModule module) {
+			super(title, width, height);
+			_poolName = poolName;
+			_module = module;
+		}
+
+		@Override
+		protected int getStepCnt() {
+			// There are two additional steps: Starting the import and requesting the database scheme.
+			return 2 + countAttributes();
+		}
+
+		private int countAttributes() {
+			return _module.getClasses().size();
+		}
+
+		@Override
+		protected void run(I18NLog log) throws AbortExecutionException {
+			JdbcDataImporterProgressHandle progressHandle = new JdbcDataImporterProgressHandle(this, log);
+			logInfo(progressHandle, "Import started.");
+			progressHandle.incrementProgress();
+			KBUtils.inTransaction(() -> {
+				loadDataInTransaction(progressHandle, _poolName, _module);
+				logInfo(progressHandle, "Comitting data.");
+			});
+			logInfo(progressHandle, "Import finished.");
+		}
+	}
 
 	/**
 	 * Configuration options for {@link JdbcDataImporter}.
@@ -106,6 +181,8 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 
 	}
 
+	private ImportContext _context;
+
 	/**
 	 * Creates a {@link JdbcDataImporter}.
 	 */
@@ -114,51 +191,65 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 	}
 
 	@Override
-	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model,
-			Map<String, Object> someArguments) {
-
-		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			loadData();
-
-			tx.commit();
-		}
-
-		return HandlerResult.DEFAULT_RESULT;
-	}
-
-	private void loadData() {
+	public HandlerResult handleCommand(DisplayContext context, LayoutComponent component, Object model,
+			Map<String, Object> arguments) {
 		Config config = (Config) getConfig();
 		String poolName = config.getPoolName();
+		TLModule module = config.getModule().resolveModule();
+
+		ResKey title = I18NConstants.PROGRESS_DIALOG_TITLE;
+		DisplayDimension width = DisplayDimension.FIFTY_PERCENT;
+		DisplayDimension height = DisplayDimension.FIFTY_PERCENT;
+		return new JdbcDataImporterProgressDialog(title, width, height, poolName, module).open(context);
+	}
+
+	void loadDataInTransaction(JdbcDataImporterProgressHandle progressHandle, String poolName, TLModule module) {
 		ConnectionPool pool = ConnectionPoolRegistry.getConnectionPool(poolName);
 		PooledConnection connection = pool.borrowReadConnection();
 		try {
+			logInfo(progressHandle, "Requesting schema.");
 			DBSchema schema = DBSchemaUtils.extractSchema(pool);
-			TLModule module = config.getModule().resolveModule();
+			logInfo(progressHandle, "Analyzing schema.");
+			progressHandle.incrementProgress();
+			if (progressHandle.isCanceled()) {
+				throw new RuntimeException("Import aborted.");
+			}
 
-			ImportContext context = new ImportContext(connection, schema, module);
-			registerNonPrimaryIndices(context);
-			loadData(context);
+			_context = new ImportContext(progressHandle, connection, schema, module);
+			logInfo("Registering non-primary indices.");
+			registerNonPrimaryIndices();
+			logInfo("Importing data.");
+			loadData();
 		} catch (SQLException ex) {
 			throw new RuntimeException(ex);
 		} finally {
+			_context = null;
 			pool.releaseReadConnection(connection);
 		}
 	}
 
-	private void loadData(ImportContext context) throws SQLException {
-		for (TLClass type : context.getModule().getClasses()) {
-			TypeLoader loader = typeLoader(context, type);
-
-			if (loader != null) {
-				loader.load(context.getConnection());
-			}
-		}
-
-		context.resolve();
+	private void logInfo(JdbcDataImporterProgressHandle progressHandle, String message) {
+		progressHandle.getLog().info(ImportContext.toLogMessage(message));
 	}
 
-	private void registerNonPrimaryIndices(ImportContext context) {
-		for (TLClass type : context.getModule().getClasses()) {
+	private void loadData() throws SQLException {
+		for (TLClass type : _context.getModule().getClasses()) {
+			if (_context.getProgressHandle().isCanceled()) {
+				return;
+			}
+			logInfo("Importing class: " + type.getName());
+			TypeLoader loader = typeLoader(type);
+			if (loader != null) {
+				loader.load(_context.getConnection());
+			}
+			_context.getProgressHandle().incrementProgress();
+		}
+		logInfo("Finalizing import.");
+		_context.resolve();
+	}
+
+	private void registerNonPrimaryIndices() {
+		for (TLClass type : _context.getModule().getClasses()) {
 			for (TLClassPart attribute : type.getAllClassParts()) {
 				TLForeignKeyBinding foreignKeyBinding = attribute.getAnnotation(TLForeignKeyBinding.class);
 				if (foreignKeyBinding == null) {
@@ -168,23 +259,23 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 					continue;
 				}
 				List<String> indexColumns = getIndexColumns(foreignKeyBinding.getColumns(), foreignKeyBinding.getColumnConfigs());
-				registerNonPrimaryIndex(context, attribute, indexColumns);
+				registerNonPrimaryIndex(attribute, indexColumns);
 			}
 		}
 	}
 
-	private void registerNonPrimaryIndex(ImportContext context, TLClassPart attribute, List<String> indexColumns) {
+	private void registerNonPrimaryIndex(TLClassPart attribute, List<String> indexColumns) {
 		TLTableBinding tableBinding = attribute.getType().getAnnotation(TLTableBinding.class);
 		if (tableBinding == null) {
 			errorMissingTableBindingForNonPrimaryIndex(attribute, indexColumns);
 			return;
 		}
 		String targetTable = tableBinding.getName();
-		context.addNonPrimaryIndex(targetTable, indexColumns);
+		_context.addNonPrimaryIndex(targetTable, indexColumns);
 	}
 
 	private void errorMissingTableBindingForNonPrimaryIndex(TLStructuredTypePart attribute, List<String> indexColumns) {
-		logError("Missing " + TLTableBinding.class.getSimpleName() + " for type: "
+		_context.logError("Missing " + TLTableBinding.class.getSimpleName() + " for type: "
 			+ qualifiedName(attribute.getType()) + ". There is a non-primary foreign key index in "
 			+ qualifiedName(attribute) + " to it. Index: " + indexColumns);
 	}
@@ -193,7 +284,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		void load(PooledConnection connection) throws SQLException;
 	}
 
-	private TypeLoader typeLoader(ImportContext context, TLClass type) {
+	private TypeLoader typeLoader(TLClass type) {
 		TLTableBinding tableBinding = type.getAnnotation(TLTableBinding.class);
 		if (tableBinding == null) {
 			/* This is severity "info", not "warning", as that is normal: Not every type is
@@ -203,7 +294,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		}
 
 		String tableName = tableBinding.getName();
-		DBTable table = context.getSchema().getTable(tableName);
+		DBTable table = _context.getSchema().getTable(tableName);
 		if (table == null) {
 			logErrorTableMissing(type, tableName);
 			return null;
@@ -214,10 +305,13 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		List<String> primaryKey = tableBinding.getPrimaryKey();
 
 		Set<String> columns = new LinkedHashSet<>();
-		Map<Object, TLObject> typeIndex = context.typeIndex(tableName);
+		Map<Object, TLObject> typeIndex = _context.typeIndex(tableName);
 		List<RowReader> readers = new ArrayList<>();
 		List<TypeLoader> subLoaders = new ArrayList<>();
 		for (TLStructuredTypePart property : type.getAllParts()) {
+			if (_context.getProgressHandle().isCanceled()) {
+				throw new RuntimeException("Import aborted.");
+			}
 			TLColumnBinding columnBinding = property.getAnnotation(TLColumnBinding.class);
 			if (columnBinding != null) {
 				columns.add(columnBinding.getName());
@@ -236,7 +330,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 					String targetTableName = targetBinding.getName();
 					List<String> keyColumns = foreignKeyBinding.getColumns();
 					Map<String, KeyColumnConfig> columnConfigs = foreignKeyBinding.getColumnConfigs();
-					readers.add(foreinKeyLoader(context, property, keyColumns, columnConfigs, targetTableName));
+					readers.add(foreinKeyLoader(property, keyColumns, columnConfigs, targetTableName));
 
 					for (String keyColumnName : keyColumns) {
 						columns.add(keyColumnName);
@@ -261,7 +355,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 					linkColumns.add(columnDef(orderColumn));
 				}
 				SQLSelect select = select(linkColumns, table(linkBinding.getLinkTable()));
-				CompiledStatement linkRows = query(select).toSql(context.getSqlDialect());
+				CompiledStatement linkRows = query(select).toSql(_context.getSqlDialect());
 				
 				TLType targetType = reference.getType();
 				TLTableBinding targetBinding = targetType.getAnnotation(TLTableBinding.class);
@@ -269,7 +363,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 					logErrorMissingTableBindingOnTarget(reference, targetType);
 				} else {
 					String destTableName = targetBinding.getName();
-					Map<Object, TLObject> destIndex = context.typeIndex(destTableName);
+					Map<Object, TLObject> destIndex = _context.typeIndex(destTableName);
 					subLoaders.add((PooledConnection connection) -> {
 						try (ResultSet links = linkRows.executeQuery(connection)) {
 							ImportRow linkCursor = cursor(links);
@@ -279,10 +373,10 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 
 								if (isOrdered) {
 									Object orderValue = linkCursor.getValue(orderColumn);
-									context.reference(tableName, sourceId, reference)
+									_context.reference(tableName, sourceId, reference)
 										.addOrderedDeferred(destIndex, destId, orderValue);
 								} else {
-									context.addResolver(() -> {
+									_context.addResolver(() -> {
 										TLObject source = typeIndex.get(sourceId);
 										if (source == null) {
 											logErrorLinkTableUnknownSourceId(reference, sourceId, destId);
@@ -312,7 +406,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		}
 
 		// All references with the currently imported type as target type.
-		for (TLObject referenceAttribute : context.referrers(type)) {
+		for (TLObject referenceAttribute : _context.referrers(type)) {
 			if (referenceAttribute instanceof TLAssociationEnd) {
 				continue;
 			}
@@ -352,16 +446,16 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 								Object idRef = readId(cursor, targetColumns);
 								if (idRef != null) {
 									Object orderValue = cursor.getValue(orderColumn);
-									context.reference(sourceTableName, idRef, reference).addOrdered(target, orderValue);
+									_context.reference(sourceTableName, idRef, reference).addOrdered(target, orderValue);
 								}
 							});
 						} else {
-							Map<Object, TLObject> sourceIndex = context.typeIndex(sourceTableName);
+							Map<Object, TLObject> sourceIndex = _context.typeIndex(sourceTableName);
 
 							readers.add((TLObject target, ImportRow cursor) -> {
 								Object idRef = readId(cursor, targetColumns);
 								if (idRef != null) {
-									context.addResolver(() -> {
+									_context.addResolver(() -> {
 										TLObject source = sourceIndex.get(idRef);
 										if (source == null) {
 											logErrorReverseLinkUnknownSourceId(reference, idRef, target);
@@ -394,8 +488,8 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		}
 
 		SQLSelect select = select(columnDefs(columns), table(tableName));
-		CompiledStatement allRows = query(select).toSql(context.getSqlDialect());
-		TLFactory factory = context.getFactory();
+		CompiledStatement allRows = query(select).toSql(_context.getSqlDialect());
+		TLFactory factory = _context.getFactory();
 
 		return (PooledConnection connection) -> {
 			try (ResultSet resultSet = allRows.executeQuery(connection)) {
@@ -423,10 +517,10 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 							logError("Primary key is null for object of type " + qualifiedName(createType) + ": " + object);
 						}
 					}
-					for (List<String> index : context.getNonPrimaryIndices(tableName)) {
+					for (List<String> index : _context.getNonPrimaryIndices(tableName)) {
 						Object id = readId(cursor, index);
 						if (id != null) {
-							context.typeBySecondaryIndex(tableName, index).put(id, object);
+							_context.typeBySecondaryIndex(tableName, index).put(id, object);
 						} else {
 							logWarn("Non-Primary key is null for object of type " + qualifiedName(createType) + ": " + object);
 						}
@@ -461,15 +555,15 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		}
 	}
 
-	private RowReader foreinKeyLoader(ImportContext context, TLStructuredTypePart property, List<String> columns,
+	private RowReader foreinKeyLoader(TLStructuredTypePart property, List<String> columns,
 			Map<String, KeyColumnConfig> columnConfigs, String targetTableName) {
-		Map<Object, TLObject> targetIndex = getTargetIndex(context, columns, columnConfigs, targetTableName);
+		Map<Object, TLObject> targetIndex = getTargetIndex(columns, columnConfigs, targetTableName);
 		Map<String, KeyColumnNormalizer> normalizers = getNormalizers(columnConfigs);
 
 		return (TLObject object, ImportRow cursor) -> {
 			Object idRef = readId(cursor, columns, normalizers);
 			if (idRef != null) {
-				context.addResolver(() -> {
+				_context.addResolver(() -> {
 					TLObject target = targetIndex.get(idRef);
 					if (target == null) {
 						logErrorLinkUnknownTargetId(property, object, idRef);
@@ -492,12 +586,12 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		return map;
 	}
 
-	private Map<Object, TLObject> getTargetIndex(ImportContext context, List<String> columns,
+	private Map<Object, TLObject> getTargetIndex(List<String> columns,
 			Map<String, KeyColumnConfig> columnConfigs, String targetTableName) {
 		if (usesNonPrimaryIndex(columnConfigs)) {
-			return context.typeBySecondaryIndex(targetTableName, getIndexColumns(columns, columnConfigs));
+			return _context.typeBySecondaryIndex(targetTableName, getIndexColumns(columns, columnConfigs));
 		}
-		return context.typeIndex(targetTableName);
+		return _context.typeIndex(targetTableName);
 	}
 
 	private boolean usesNonPrimaryIndex(Map<String, KeyColumnConfig> columnConfigs) {
@@ -664,20 +758,20 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		return MetaLabelProvider.INSTANCE.getLabel(object);
 	}
 
-	private static void logError(String message) {
-		Logger.error(message, JdbcDataImporter.class);
+	private void logError(String message) {
+		_context.logError(message);
 	}
 
-	private static void logError(String message, Throwable exception) {
-		Logger.error(message, exception, JdbcDataImporter.class);
+	private void logError(String message, Throwable exception) {
+		_context.logError(message, exception);
 	}
 
-	private static void logWarn(String message) {
-		Logger.warn(message, JdbcDataImporter.class);
+	private void logWarn(String message) {
+		_context.logWarn(message);
 	}
 
-	private static void logInfo(String message) {
-		Logger.info(message, JdbcDataImporter.class);
+	private void logInfo(String message) {
+		_context.logInfo(message);
 	}
 
 }

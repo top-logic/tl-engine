@@ -770,7 +770,7 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 
 	void initCreateVisibility() {
 		setDisabled(derived() || annotatedCreateDiabled());
-		setMandatory(defaultMandatory());
+		setMandatory(defaultMandatoryInCreate());
 	}
 
 	void initDefaultEditVisibility(boolean externalDisabled) {
@@ -796,7 +796,11 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	}
 
 	private boolean defaultMandatory() {
-		return getAttribute().isMandatory();
+		return DisplayAnnotations.isMandatory(getAttribute());
+	}
+
+	private boolean defaultMandatoryInCreate() {
+		return DisplayAnnotations.isMandatoryInCreate(getAttribute());
 	}
 
 	/**

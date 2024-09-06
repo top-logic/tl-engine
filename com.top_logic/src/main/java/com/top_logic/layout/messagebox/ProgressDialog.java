@@ -84,7 +84,7 @@ public abstract class ProgressDialog extends AbstractDialog implements HTMLFragm
 		CANCELED,
 
 		/**
-		 * The background process has completed sucessfully.
+		 * The background process has completed successfully.
 		 */
 		COMPLETED,
 
@@ -309,7 +309,7 @@ public abstract class ProgressDialog extends AbstractDialog implements HTMLFragm
 	 * 100% when the operation completes.
 	 * </p>
 	 */
-	protected int getProgress() {
+	public int getProgress() {
 		return _progressValue;
 	}
 
@@ -326,7 +326,7 @@ public abstract class ProgressDialog extends AbstractDialog implements HTMLFragm
 	 * @throws AbortExecutionException
 	 *         If the user canceled the operation. This exception must not be caught.
 	 */
-	protected void incProgress(int delta) {
+	public void incProgress(int delta) {
 		setProgress(getProgress() + delta);
 	}
 
@@ -347,7 +347,7 @@ public abstract class ProgressDialog extends AbstractDialog implements HTMLFragm
 	 * @throws AbortExecutionException
 	 *         If the user canceled the operation. This exception must not be caught.
 	 */
-	protected void setProgress(int step) {
+	public void setProgress(int step) {
 		if (_state != State.RUNNING) {
 			throw new AbortExecutionException("Operation was canceled.", null);
 		}

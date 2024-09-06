@@ -7,12 +7,14 @@ package com.top_logic.layout.editor.commands;
 
 import java.io.File;
 
+import com.top_logic.basic.FileManager;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.editor.LayoutTemplateUtils;
 import com.top_logic.mig.html.layout.ComponentName;
+import com.top_logic.mig.html.layout.LayoutConstants;
 import com.top_logic.mig.html.layout.LayoutReference;
 import com.top_logic.mig.html.layout.LayoutScopeMapper;
 import com.top_logic.mig.html.layout.LayoutStorage;
@@ -79,19 +81,27 @@ public class LayoutExporter {
 		File base = LayoutUtils.getCurrentTopLayoutBaseDirectory();
 
 		if (relativePath != null) {
-			removeLayoutOverlayOnFilesystem(base, relativePath);
+			String layoutOverlayPath = LayoutUtils.createLayoutOverlayPath(relativePath);
+
+			removeLayoutOverlayOnFilesystem(base, layoutOverlayPath);
 			removeFromLayoutCache(relativePath);
 
-			writeLayoutOnFilesystem(new File(base, relativePath), layout);
+			// If there are still inherited overlays, the newly exported layout must be final.
+			// Otherwise, it is OK to create a regular layout. If there is an inherited full layout,
+			// the generated layout become a full override.
+			boolean markFinal = FileManager.getInstance()
+				.getDataOrNull("/" + LayoutConstants.LAYOUT_BASE_DIRECTORY + "/" + layoutOverlayPath) != null;
+
+			writeLayoutOnFilesystem(new File(base, relativePath), layout, markFinal);
 		}
 	}
 
-	private void writeLayoutOnFilesystem(File file, TLLayout layout) throws ConfigurationException {
-		LayoutTemplateUtils.writeTemplate(file, layout, true);
+	private void writeLayoutOnFilesystem(File file, TLLayout layout, boolean markFinal) throws ConfigurationException {
+		LayoutTemplateUtils.writeTemplate(file, layout, markFinal);
 	}
 
-	private void removeLayoutOverlayOnFilesystem(File base, String relativeLayoutPath) {
-		File overlay = new File(base, LayoutUtils.createLayoutOverlayPath(relativeLayoutPath));
+	private void removeLayoutOverlayOnFilesystem(File base, String layoutOverlayPath) {
+		File overlay = new File(base, layoutOverlayPath);
 
 		if (overlay.exists()) {
 			overlay.delete();

@@ -10,7 +10,9 @@ import static java.util.Collections.*;
 import static java.util.stream.Collectors.*;
 
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,11 +22,14 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.ComparableComparator;
 import com.top_logic.basic.db.model.DBSchema;
+import com.top_logic.basic.i18n.log.I18NLog;
+import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.element.model.jdbcBinding.JdbcDataImporter.JdbcDataImporterProgressHandle;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
@@ -41,6 +46,9 @@ import com.top_logic.util.model.ModelService;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class ImportContext {
+
+	private final JdbcDataImporterProgressHandle _progressHandle;
+
 	private final PooledConnection _connection;
 
 	private final DBSchema _schema;
@@ -67,7 +75,9 @@ public class ImportContext {
 	/**
 	 * Creates an {@link ImportContext}.
 	 */
-	public ImportContext(PooledConnection connection, DBSchema schema, TLModule module) throws SQLException {
+	public ImportContext(JdbcDataImporterProgressHandle progressHandle, PooledConnection connection, DBSchema schema,
+			TLModule module) throws SQLException {
+		_progressHandle = progressHandle;
 		_connection = connection;
 		_schema = schema;
 		_module = module;
@@ -88,6 +98,11 @@ public class ImportContext {
 			}
 		}
 		return referrers;
+	}
+
+	/** Increments the progress which is reported to the user. */
+	public JdbcDataImporterProgressHandle getProgressHandle() {
+		return _progressHandle;
 	}
 
 	/**
@@ -135,11 +150,12 @@ public class ImportContext {
 			for (var objectEntry : tableEntry.getValue().entrySet()) {
 				Object sourceId = objectEntry.getKey();
 				TLObject source = index.get(sourceId);
-				if (source == null) {
-					// TODO JST: Warning.
-				} else {
-					for (Entry<TLReference, ReferencePromise> refEntry : objectEntry.getValue().entrySet()) {
-						refEntry.getValue().resolve(source, refEntry.getKey());
+				for (Entry<TLReference, ReferencePromise> refEntry : objectEntry.getValue().entrySet()) {
+					TLReference reference = refEntry.getKey();
+					if (source == null) {
+						logErrorLinkUnknownTargetId(reference, tableName, source);
+					} else {
+						refEntry.getValue().resolve(source, reference);
 					}
 				}
 			}
@@ -147,6 +163,11 @@ public class ImportContext {
 		for (Runnable resolver : _resolvers) {
 			resolver.run();
 		}
+	}
+
+	private void logErrorLinkUnknownTargetId(TLStructuredTypePart reference, String tableName, TLObject sourceId) {
+		logError("Reference " + qualifiedName(reference) + ": There is no object for source id: " + sourceId
+			+ ". Table: " + tableName);
 	}
 
 	/**
@@ -185,20 +206,26 @@ public class ImportContext {
 		_resolvers.add(action);
 	}
 
-	// TODO JST in eigene Datei extrahieren
 	/**
 	 * Collected data for synthesizing a multiple reference from target objects with foreign key
 	 * references.
 	 */
 	public static class ReferencePromise {
 
+		private final I18NLog _log;
+
 		private final List<RefEntry> _entries = new ArrayList<>();
+
+		ReferencePromise(I18NLog log) {
+			super();
+			_log = log;
+		}
 
 		/**
 		 * Adds the ID of a value object with an order value to the reference.
 		 */
 		public void addOrderedDeferred(Map<Object, TLObject> index, Object destId, Object orderValue) {
-			_entries.add(new DeferredRefEntry(index, destId, orderValue));
+			_entries.add(new DeferredRefEntry(_log, index, destId, orderValue));
 		}
 
 		/**
@@ -215,10 +242,23 @@ public class ImportContext {
 			Collections.sort(_entries);
 			Object oldValue = source.tValue(reference);
 			List<TLObject> newValues = resolveEntriesToTargets();
-			if (oldValue != null) {
+			if (!isEmpty(oldValue)) {
 				logErrorReferenceClash(reference, source, oldValue, newValues);
 			}
 			source.tUpdate(reference, newValues);
+		}
+
+		private boolean isEmpty(Object oldValue) {
+			if (oldValue == null) {
+				return true;
+			}
+			if (oldValue instanceof Collection) {
+				return ((Collection<?>) oldValue).isEmpty();
+			}
+			if (oldValue instanceof Object[]) {
+				return ((Object[]) oldValue).length == 0;
+			}
+			return false;
 		}
 
 		private List<TLObject> resolveEntriesToTargets() {
@@ -228,8 +268,7 @@ public class ImportContext {
 				.collect(toList());
 		}
 
-		private void logErrorReferenceClash(TLReference reference, Object source, Object newTarget,
-				Object oldTarget) {
+		private void logErrorReferenceClash(TLReference reference, Object source, Object oldTarget, Object newTarget) {
 			logError("Reference " + qualifiedName(reference) + ": Multiple values for object '" + label(source)
 				+ "'. First: '" + label(oldTarget) + "'. Second: '" + label(newTarget));
 		}
@@ -238,8 +277,8 @@ public class ImportContext {
 			return MetaLabelProvider.INSTANCE.getLabel(object);
 		}
 
-		private static void logError(String message) {
-			Logger.error(message, ReferencePromise.class);
+		private void logError(String message) {
+			_log.error(toLogMessage(message));
 		}
 
 		private static abstract class RefEntry implements Comparable<RefEntry> {
@@ -283,6 +322,8 @@ public class ImportContext {
 
 		private static class DeferredRefEntry extends RefEntry {
 
+			private final I18NLog _log;
+
 			private final Map<Object, TLObject> _index;
 
 			private final Object _targetId;
@@ -290,8 +331,9 @@ public class ImportContext {
 			/**
 			 * Creates a {@link DeferredRefEntry}.
 			 */
-			public DeferredRefEntry(Map<Object, TLObject> index, Object targetId, Object orderValue) {
+			public DeferredRefEntry(I18NLog log, Map<Object, TLObject> index, Object targetId, Object orderValue) {
 				super(orderValue);
+				_log = log;
 				_index = index;
 				_targetId = targetId;
 			}
@@ -300,13 +342,9 @@ public class ImportContext {
 			public TLObject getTarget() {
 				TLObject result = _index.get(_targetId);
 				if (result == null) {
-					logError("Failed to resolve id '" + _targetId + "'.");
+					_log.error(toLogMessage("Failed to resolve id '" + _targetId + "'."));
 				}
 				return result;
-			}
-
-			private static void logError(String message) {
-				Logger.error(message, DeferredRefEntry.class);
 			}
 
 		}
@@ -327,7 +365,7 @@ public class ImportContext {
 		return _referenceByTableReferenceAndId
 			.computeIfAbsent(table, x -> new HashMap<>())
 			.computeIfAbsent(idRef, x -> new HashMap<>())
-			.computeIfAbsent(reference, x -> new ReferencePromise());
+			.computeIfAbsent(reference, x -> new ReferencePromise(_progressHandle.getLog()));
 	}
 
 	/**
@@ -335,6 +373,31 @@ public class ImportContext {
 	 */
 	public List<TLStructuredTypePart> referrers(TLType type) {
 		return _referrers.getOrDefault(type, emptyList());
+	}
+
+	/** Displays an info message in the log. */
+	public void logInfo(String message) {
+		_progressHandle.getLog().info(toLogMessage(message));
+	}
+
+	/** Displays a warning message in the log. */
+	public void logWarn(String message) {
+		_progressHandle.getLog().log(Level.WARN, toLogMessage(message));
+	}
+
+	/** Displays an error message in the log. */
+	public void logError(String message) {
+		_progressHandle.getLog().error(toLogMessage(message));
+	}
+
+	/** Displays an error message in the log. */
+	public void logError(String message, Throwable exception) {
+		_progressHandle.getLog().fatal(toLogMessage(message), exception);
+	}
+
+	static ResKey toLogMessage(String message) {
+		String timestamp = Instant.now().toString();
+		return ResKey.text(timestamp + ": " + message);
 	}
 
 }

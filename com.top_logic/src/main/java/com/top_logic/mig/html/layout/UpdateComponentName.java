@@ -300,8 +300,7 @@ public class UpdateComponentName extends XMain {
 				ByteArrayOutputStream outStream = new ByteArrayOutputStream();
 				XMLStreamWriter streamWriter =
 					XMLStreamUtil.getDefaultOutputFactory().createXMLStreamWriter(outStream, StringServices.UTF8);
-				try {
-					ConfigurationWriter configWriter = new ConfigurationWriter(streamWriter);
+				try (ConfigurationWriter configWriter = new ConfigurationWriter(streamWriter)) {
 					if (_config instanceof ApplicationAction) {
 						configWriter.write(ACTION, _globalDescriptorsByName.get(ACTION), _config);
 					} else if (_config instanceof SecurityConfig) {

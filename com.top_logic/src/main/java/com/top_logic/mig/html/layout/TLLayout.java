@@ -70,10 +70,10 @@ public interface TLLayout {
 	 * 
 	 * @param stream
 	 *        To write into.
-	 * @param isFinal
+	 * @param markFinal
 	 *        Whether the layout must not be enhanced with overlays, when it is de-serialized.
 	 * @throws IOException
 	 *         if the configuration could not be written.
 	 */
-	void writeTo(OutputStream stream, boolean isFinal) throws IOException;
+	void writeTo(OutputStream stream, boolean markFinal) throws IOException;
 }

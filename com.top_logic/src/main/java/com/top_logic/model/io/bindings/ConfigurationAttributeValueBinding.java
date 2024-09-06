@@ -128,8 +128,10 @@ public class ConfigurationAttributeValueBinding<C extends ConfigurationAttribute
 		if (value != null) {
 			value = InternationalizedUtil.fillLiteralI18N(TypedConfiguration.copy(value), true);
 			C config = getConfig();
-			new ConfigurationWriter(out).writeRootElement(config.getRootTag(),
-				TypedConfiguration.getConfigurationDescriptor(config.getRootType()), value);
+			try (ConfigurationWriter w = new ConfigurationWriter(out, false)) {
+				w.writeRootElement(config.getRootTag(),
+					TypedConfiguration.getConfigurationDescriptor(config.getRootType()), value);
+			}
 		}
 	}
 

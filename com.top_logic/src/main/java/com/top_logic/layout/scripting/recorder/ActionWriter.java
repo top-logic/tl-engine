@@ -101,15 +101,19 @@ public class ActionWriter {
 
 	private String writeAction(ApplicationAction action, XMLPrettyPrinter.Config config,
 			boolean writeNamespaceDeclaration) {
-		try {
-			StringWriter buffer = new StringWriter();
-			createConfigurationWriter(buffer).write("action", ApplicationAction.class, action);
-			String actionXml = buffer.toString();
-			String prettyXML = pretty(actionXml, config).trim();
-			return writeNamespaceDeclaration ? prettyXML : removeNamespaceDeclaration(prettyXML);
+		StringWriter buffer = new StringWriter();
+		try (ConfigurationWriter w = createConfigurationWriter(buffer)) {
+			w.write("action", ApplicationAction.class, action);
 		} catch (XMLStreamException ex) {
 			String errorMessage = "Action serialisation failed. Action: " + StringServices.getObjectDescription(action);
 			throw (AssertionError) new AssertionError(errorMessage).initCause(ex);
+		}
+
+		String actionXml = buffer.toString();
+
+		try {
+			String prettyXML = pretty(actionXml, config).trim();
+			return writeNamespaceDeclaration ? prettyXML : removeNamespaceDeclaration(prettyXML);
 		} catch (UnsupportedEncodingException ex) {
 			String errorMessage = "Action serialisation failed. Action: " + StringServices.getObjectDescription(action);
 			throw (AssertionError) new AssertionError(errorMessage).initCause(ex);

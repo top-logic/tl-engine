@@ -19,6 +19,9 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en No {@link TLModule} selected. */
 	public static ResKey NO_TL_MODULE_SELECTED;
 
+	/** @en JDBC data import */
+	public static ResKey PROGRESS_DIALOG_TITLE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

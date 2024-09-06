@@ -366,11 +366,6 @@ public class XMLImportCommand extends AbstractCommandHandler {
 				}
 			}
 
-			@Override
-			protected void setProgress(int step) {
-				super.setProgress(step);
-			}
-
 			boolean wasSuccessful() {
 				return _success;
 			}

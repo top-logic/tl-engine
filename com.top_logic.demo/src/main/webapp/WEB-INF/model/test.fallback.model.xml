@@ -24,6 +24,11 @@
 							fullQualifiedName="test.fallback:A#contents"
 							type="test.fallback:B"
 						/>
+						<field
+							attribute="topPrio"
+							fullQualifiedName="test.fallback:A#topPrio"
+							type="test.fallback:B"
+						/>
 					</form>
 				</form-definition>
 			</annotations>
@@ -39,6 +44,19 @@
 					navigate="true"
 					type="B"
 				/>
+				<reference name="topPrio"
+					kind="forwards"
+					navigate="true"
+					type="B"
+				>
+					<annotations>
+						<reference-display/>
+						<options-display value="table"/>
+						<options>
+							<options-by-expression function="x -> $x.get(`test.fallback:A#contents`)"/>
+						</options>
+					</annotations>
+				</reference>
 			</attributes>
 		</class>
 		<class name="B">
@@ -46,7 +64,7 @@
 				<generalization type="tl.model:TLObject"/>
 			</generalizations>
 			<annotations>
-				<id-column value="id"/>
+				<id-column value="text"/>
 			</annotations>
 			<attributes>
 				<property name="id"
@@ -237,6 +255,23 @@
 						<visibility value="hidden"/>
 					</annotations>
 				</property>
+				<reference name="dependsOn"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="B"
+				>
+					<annotations>
+						<reference-display/>
+						<options-display value="table"/>
+						<options>
+							<options-by-expression>
+								<function><![CDATA[// Sibblings
+x -> $x.container().get(`test.fallback:A#contents`)]]></function>
+							</options-by-expression>
+						</options>
+					</annotations>
+				</reference>
 			</attributes>
 		</class>
 	</module>

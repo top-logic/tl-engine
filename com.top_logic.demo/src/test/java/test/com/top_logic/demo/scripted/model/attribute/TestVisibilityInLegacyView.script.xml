@@ -617,7 +617,7 @@
 							<named-member name="content"/>
 							<object>
 								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="1"
+									value="0"
 								/>
 							</object>
 							<labeled-member label="Entfernen"/>

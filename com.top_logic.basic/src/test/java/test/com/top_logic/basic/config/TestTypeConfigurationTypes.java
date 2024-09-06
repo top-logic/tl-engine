@@ -134,10 +134,13 @@ public class TestTypeConfigurationTypes extends AbstractTypedConfigurationTestCa
 	private void doTestReadWrite(ConfigurationItem item) {
 		try {
 			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
 			XMLStreamWriter out = XMLStreamUtil.getDefaultOutputFactory().createXMLStreamWriter(buffer);
-			ConfigurationWriter writer = new ConfigurationWriter(out);
-			writer.write("test", ConfigurationItem.class, item);
-			out.close();
+			try (ConfigurationWriter writer = new ConfigurationWriter(out)) {
+				writer.write("test", ConfigurationItem.class, item);
+			} finally {
+				out.close();
+			}
 			
 			Map<String, ConfigurationDescriptor> globalDescriptorsByLocalName = Collections.singletonMap("test", TypedConfiguration.getConfigurationDescriptor(ConfigurationItem.class));
 			BinaryContent binaryContent = new MemoryBinaryContent(buffer.toByteArray(), "unknown location");

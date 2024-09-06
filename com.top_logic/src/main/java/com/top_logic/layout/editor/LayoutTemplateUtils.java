@@ -592,10 +592,11 @@ public class LayoutTemplateUtils {
 			out.writeAttribute(LayoutModelConstants.TEMPLATE_CALL_FINAL_ATTR, Boolean.toString(isFinal));
 			out.writeNamespace(ConfigurationSchemaConstants.CONFIG_NS_PREFIX, ConfigurationSchemaConstants.CONFIG_NS);
 
-			ConfigurationWriter configWriter = new ConfigurationWriter(out);
-			configWriter.setNamespaceWriting(false);
-			configWriter.writeRootElement(LayoutModelConstants.TEMPLATE_CALL_ARGUMENTS_ELEMENT,
-				arguments.descriptor(), arguments);
+			try (ConfigurationWriter configWriter = new ConfigurationWriter(out, false)) {
+				configWriter.setNamespaceWriting(false);
+				configWriter.writeRootElement(LayoutModelConstants.TEMPLATE_CALL_ARGUMENTS_ELEMENT,
+					arguments.descriptor(), arguments);
+			}
 			
 			out.writeEndElement();
 		} catch (XMLStreamException exception) {

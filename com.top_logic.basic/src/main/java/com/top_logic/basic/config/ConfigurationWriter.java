@@ -52,6 +52,8 @@ public class ConfigurationWriter implements AutoCloseable {
 
 	private boolean _writeXMLHeader;
 
+	private boolean _transitiveClose;
+
 	/**
 	 * Creates a {@link ConfigurationWriter}.
 	 * 
@@ -69,7 +71,20 @@ public class ConfigurationWriter implements AutoCloseable {
 	 *        The {@link XMLStreamWriter} to write to.
 	 */
 	public ConfigurationWriter(XMLStreamWriter out) {
+		this(out, true);
+	}
+
+	/**
+	 * Creates a {@link ConfigurationWriter}.
+	 *
+	 * @param out
+	 *        The {@link XMLStreamWriter} to write to.
+	 * @param transitiveClose
+	 *        Whether to close the underlying stream writer, if this writer is closed.
+	 */
+	public ConfigurationWriter(XMLStreamWriter out, boolean transitiveClose) {
 		this.out = out;
+		_transitiveClose = transitiveClose;
 		setNamespaceWriting(true);
 		setXMLHeaderWriting(true);
 	}
@@ -779,7 +794,9 @@ public class ConfigurationWriter implements AutoCloseable {
 
 	@Override
 	public void close() throws XMLStreamException {
-		out.close();
+		if (_transitiveClose) {
+			out.close();
+		}
 	}
 	
 }

@@ -885,32 +885,32 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 			return handler;
 		}
 
-		private void readMapEntry(XMLStreamReader reader, PropertyDescriptor property,
+		private void readMapEntry(XMLStreamReader reader, PropertyDescriptor owningProperty,
 				PropertyDescriptor mapKeyProperty, Map<Object, Object> mapValue, Set<Object> mapKeys)
 				throws XMLStreamException {
 			try {
-				ConfigurationDescriptor elementDescriptor = readElementDescriptor(property, reader);
+				ConfigurationDescriptor elementDescriptor = readElementDescriptor(owningProperty, reader);
 				PropertyDescriptor keyProperty =
 					elementDescriptor.getProperty(mapKeyProperty.getPropertyName());
 				final MapOperation mapOperation = getMapOperation(reader);
 				Object mapKey;
 				switch (mapOperation) {
 					case ADD_OR_UPDATE: {
-						Object reference = getKeyProperty(reader, keyProperty, elementDescriptor);
+						Object reference = getKeyProperty(reader, owningProperty, keyProperty, elementDescriptor);
 						final Object oldValue = mapValue.get(reference);
 						if (oldValue == null) {
-							mapKey = handleMapAdd(reader, elementDescriptor, mapValue, keyProperty, property);
+							mapKey = handleMapAdd(reader, elementDescriptor, mapValue, keyProperty, owningProperty);
 						} else {
-							mapKey = handleMapUpdate(reader, elementDescriptor, mapValue, keyProperty, property);
+							mapKey = handleMapUpdate(reader, elementDescriptor, mapValue, keyProperty, owningProperty);
 						}
 						break;
 					}
 					case ADD: {
-						mapKey = handleMapAdd(reader, elementDescriptor, mapValue, keyProperty, property);
+						mapKey = handleMapAdd(reader, elementDescriptor, mapValue, keyProperty, owningProperty);
 						break;
 					}
 					case REMOVE: {
-						mapKey = readKeyProperty(reader, keyProperty, elementDescriptor);
+						mapKey = readKeyProperty(reader, owningProperty, keyProperty, elementDescriptor);
 						mapValue.remove(mapKey);
 
 						/* May removed to insert at a different position */
@@ -923,7 +923,7 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 						break;
 					}
 					case UPDATE: {
-						mapKey = handleMapUpdate(reader, elementDescriptor, mapValue, keyProperty, property);
+						mapKey = handleMapUpdate(reader, elementDescriptor, mapValue, keyProperty, owningProperty);
 						break;
 					}
 					default: {
@@ -933,9 +933,9 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 				}
 				checkDuplicateKey(reader, mapKeys, keyProperty, mapKey);
 			} catch (ConfigurationException ex) {
-				errorInvalidMapEntry(reader, property, ex);
+				errorInvalidMapEntry(reader, owningProperty, ex);
 			} catch (RuntimeException ex) {
-				errorInvalidMapEntry(reader, property, ex);
+				errorInvalidMapEntry(reader, owningProperty, ex);
 			}
 		}
 
@@ -952,11 +952,11 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 			errorDuplicateKey(reader, keyProperty, key);
 		}
 
-		private void readListEntry(XMLStreamReader reader, PropertyDescriptor property,
+		private void readListEntry(XMLStreamReader reader, PropertyDescriptor owningProperty,
 				PropertyDescriptor declaredKeyProperty, ListHandler handler, Set<Object> listKeys)
 				throws XMLStreamException {
 			try {
-				ConfigurationDescriptor elementDescriptor = readElementDescriptor(property, reader);
+				ConfigurationDescriptor elementDescriptor = readElementDescriptor(owningProperty, reader);
 				PropertyDescriptor keyProperty;
 				if (declaredKeyProperty != null) {
 					keyProperty = elementDescriptor.getProperty(declaredKeyProperty.getPropertyName());
@@ -968,25 +968,26 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 				switch (listOperation) {
 					case ADD_OR_UPDATE: {
 						if (keyProperty == null) {
-							listKey = handleListAdd(reader, elementDescriptor, keyProperty, property, handler);
+							listKey = handleListAdd(reader, elementDescriptor, keyProperty, owningProperty, handler);
 							break;
 						}
-						Object keyPropValue = getKeyProperty(reader, keyProperty, elementDescriptor);
+						Object keyPropValue = getKeyProperty(reader, owningProperty, keyProperty, elementDescriptor);
 						final ConfigurationItem configToUpdate = handler.resolveReferenceOrNull(keyPropValue);
 						if (configToUpdate != null) {
-							handleListUpdate(reader, elementDescriptor, keyProperty, property, handler, configToUpdate);
+							handleListUpdate(reader, elementDescriptor, keyProperty, owningProperty, handler,
+								configToUpdate);
 							listKey = keyPropValue;
 						} else {
-							listKey = handleListAdd(reader, elementDescriptor, keyProperty, property, handler);
+							listKey = handleListAdd(reader, elementDescriptor, keyProperty, owningProperty, handler);
 						}
 						break;
 					}
 					case ADD: {
-						listKey = handleListAdd(reader, elementDescriptor, keyProperty, property, handler);
+						listKey = handleListAdd(reader, elementDescriptor, keyProperty, owningProperty, handler);
 						break;
 					}
 					case REMOVE: {
-						listKey = readKeyProperty(reader, keyProperty, elementDescriptor);
+						listKey = readKeyProperty(reader, owningProperty, keyProperty, elementDescriptor);
 						handler.remove(listKey);
 
 						/* May removed to insert at a different position */
@@ -999,7 +1000,7 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 						break;
 					}
 					case UPDATE: {
-						listKey = handleListUpdate(reader, elementDescriptor, keyProperty, property, handler);
+						listKey = handleListUpdate(reader, elementDescriptor, keyProperty, owningProperty, handler);
 						break;
 					}
 					default: {
@@ -1009,9 +1010,9 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 				}
 				checkDuplicateKey(reader, listKeys, keyProperty, listKey);
 			} catch (ConfigurationException ex) {
-				errorInvalidListEntry(reader, property, ex);
+				errorInvalidListEntry(reader, owningProperty, ex);
 			} catch (RuntimeException ex) {
-				errorInvalidListEntry(reader, property, ex);
+				errorInvalidListEntry(reader, owningProperty, ex);
 			}
 		}
 
@@ -1222,7 +1223,7 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 		private Object handleMapUpdate(XMLStreamReader reader, ConfigurationDescriptor elementDescriptor,
 				Map<Object, Object> mapValue, PropertyDescriptor keyProperty, PropertyDescriptor owningProperty)
 				throws ConfigurationException, XMLStreamException {
-			final Object reference = readKeyProperty(reader, keyProperty, elementDescriptor);
+			final Object reference = readKeyProperty(reader, owningProperty, keyProperty, elementDescriptor);
 			final Object oldValue = mapValue.get(reference);
 			if (oldValue == null) {
 				StringBuilder error = new StringBuilder();
@@ -1271,7 +1272,7 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 		private Object handleListUpdate(XMLStreamReader reader, ConfigurationDescriptor elementDescriptor,
 				PropertyDescriptor keyProperty, PropertyDescriptor owningProperty, ListHandler handler)
 				throws ConfigurationException, XMLStreamException {
-			final Object keyPropValue = readKeyProperty(reader, keyProperty, elementDescriptor);
+			final Object keyPropValue = readKeyProperty(reader, owningProperty, keyProperty, elementDescriptor);
 			final ConfigurationItem configToUpdate = handler.resolveReference(keyPropValue);
 			handleListUpdate(reader, elementDescriptor, keyProperty, owningProperty, handler, configToUpdate);
 			return keyPropValue;
@@ -1301,7 +1302,8 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 					}
 					case BEFORE: {
 						String externalReference = getEncodedReferenceKey(reader);
-						final Object reference = parseKeyProperty(reader, keyProperty, externalReference);
+						final Object reference =
+							parseKeyProperty(reader, owningProperty, keyProperty, externalReference);
 						ConfigurationItem newConfig =
 							readConfigItemUpdate(reader, elementDescriptor, configToUpdate, owningProperty);
 						handler.moveBefore(newConfig, reference);
@@ -1309,7 +1311,8 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 					}
 					case AFTER: {
 						String externalReference = getEncodedReferenceKey(reader);
-						final Object reference = parseKeyProperty(reader, keyProperty, externalReference);
+						final Object reference =
+							parseKeyProperty(reader, owningProperty, keyProperty, externalReference);
 						ConfigurationItem newConfig =
 							readConfigItemUpdate(reader, elementDescriptor, configToUpdate, owningProperty);
 						handler.moveAfter(newConfig, reference);
@@ -1322,10 +1325,11 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 			}
 		}
 
-		private Object readKeyProperty(XMLStreamReader reader, final PropertyDescriptor keyProperty,
+		private Object readKeyProperty(XMLStreamReader reader, PropertyDescriptor owningProperty,
+				final PropertyDescriptor keyProperty,
 				ConfigurationDescriptor elementDescriptor)
 				throws ConfigurationException {
-			return getKeyProperty(reader, keyProperty, elementDescriptor);
+			return getKeyProperty(reader, owningProperty, keyProperty, elementDescriptor);
 		}
 
 		private Object handleListAdd(XMLStreamReader reader, ConfigurationDescriptor elementDescriptor,
@@ -1346,14 +1350,16 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 				}
 				case BEFORE: {
 					String encodedExternalKeyProperty = getEncodedReferenceKey(reader);
-					final Object reference = parseKeyProperty(reader, keyProperty, encodedExternalKeyProperty);
+					final Object reference =
+						parseKeyProperty(reader, owningProperty, keyProperty, encodedExternalKeyProperty);
 					newConfig = readConfigurationItem(reader, elementDescriptor, elementDescriptor, owningProperty);
 					handler.insertBefore(reference, newConfig);
 					break;
 				}
 				case AFTER: {
 					String encodedExternalKeyProperty = getEncodedReferenceKey(reader);
-					final Object reference = parseKeyProperty(reader, keyProperty, encodedExternalKeyProperty);
+					final Object reference =
+						parseKeyProperty(reader, owningProperty, keyProperty, encodedExternalKeyProperty);
 					newConfig = readConfigurationItem(reader, elementDescriptor, elementDescriptor, owningProperty);
 					handler.insertAfter(reference, newConfig);
 					break;
@@ -1373,16 +1379,17 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 			return reader.getAttributeValue(ConfigurationSchemaConstants.CONFIG_NS, ConfigurationSchemaConstants.LIST_REFERENCE_ATTR_NAME);
 		}
 
-		private Object getKeyProperty(XMLStreamReader reader, PropertyDescriptor keyProperty,
+		private Object getKeyProperty(XMLStreamReader reader, PropertyDescriptor owningProperty,
+				PropertyDescriptor keyProperty,
 				ConfigurationDescriptor elementDescriptor) throws ConfigurationException {
 			String encodedKeyProperty = reader.getAttributeValue(null, keyProperty.getPropertyName());
 			if (!StringServices.isEmpty(encodedKeyProperty)) {
-				return parseKeyProperty(reader, keyProperty, encodedKeyProperty);
+				return parseKeyProperty(reader, owningProperty, keyProperty, encodedKeyProperty);
 			}
 			if (ConfigurationItem.CONFIGURATION_INTERFACE_NAME.equals(keyProperty.getPropertyName())) {
 				String annotatedType = readConfigurationInterface(reader);
 				if (annotatedType != null) {
-					return parseKeyProperty(reader, keyProperty, annotatedType);
+					return parseKeyProperty(reader, owningProperty, keyProperty, annotatedType);
 				}
 
 				return elementDescriptor.getConfigurationInterface();
@@ -1390,9 +1397,11 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 			return keyProperty.getDefaultValue();
 		}
 
-		private Object parseKeyProperty(XMLStreamReader reader, PropertyDescriptor keyProperty, String value) throws ConfigurationException {
+		private Object parseKeyProperty(XMLStreamReader reader, PropertyDescriptor owningProperty,
+				PropertyDescriptor keyProperty, String value) throws ConfigurationException {
 			if (keyProperty == null) {
-				throw new ConfigurationException("No key property given " + atLocation(reader) + ".");
+				throw new ConfigurationException("No positioning of list increment without key annotation at "
+					+ owningProperty + " " + atLocation(reader) + ".");
 			}
 			if (value == null) {
 				return keyProperty.getDefaultValue();
@@ -1401,7 +1410,7 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 
 			final Object reference = parseValue(reader, valueProvider, keyProperty, value);
 			if (reference == null) {
-				throw new ConfigurationException("Property resolves null for '" + value
+				throw new ConfigurationException("List positioning reference resolves to null for '" + value
 					+ "', but null is not an allowed reference " + atLocation(reader) + ".");
 			}
 			return reference;

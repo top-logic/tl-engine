@@ -19,14 +19,17 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.format.RegExpValueProvider;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.db.model.DBSchema;
 import com.top_logic.basic.db.model.DBTable;
@@ -179,6 +182,11 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		@Format(ModuleRefValueProvider.class)
 		TLModelPartRef getModule();
 
+		/** A warning or error log message matching any of these Regex patterns is ignored, i.e. not logged. */
+		@Name("knownProblems")
+		@ListBinding(format = RegExpValueProvider.class, attribute = "regex", tag = "problem")
+		List<Pattern> getKnownProblems();
+
 	}
 
 	private ImportContext _context;
@@ -214,8 +222,8 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 			if (progressHandle.isCanceled()) {
 				throw new RuntimeException("Import aborted.");
 			}
-
-			_context = new ImportContext(progressHandle, connection, schema, module);
+			List<Pattern> knownProblems = getConfigTyped().getKnownProblems();
+			_context = new ImportContext(knownProblems, progressHandle, connection, schema, module);
 			logInfo("Registering non-primary indices.");
 			registerNonPrimaryIndices();
 			logInfo("Importing data.");
@@ -772,6 +780,10 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 
 	private void logInfo(String message) {
 		_context.logInfo(message);
+	}
+
+	private Config getConfigTyped() {
+		return (Config) getConfig();
 	}
 
 }

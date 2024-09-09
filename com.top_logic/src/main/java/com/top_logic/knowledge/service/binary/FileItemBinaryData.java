@@ -7,12 +7,15 @@ package com.top_logic.knowledge.service.binary;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 import jakarta.servlet.http.Part;
 
 import com.top_logic.basic.Settings;
+import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.AbstractBinaryData;
 import com.top_logic.basic.io.binary.BinaryData;
 
@@ -49,7 +52,19 @@ public class FileItemBinaryData extends AbstractBinaryData {
 		if (_tempFile == null) {
 			File tempDir = Settings.getInstance().getTempDir();
 			_tempFile = File.createTempFile("upload", ".data", tempDir);
-			_part.write(_tempFile.getAbsolutePath());
+
+			// Note: When using this API, Tomcat 11 seems to delete the file directly after the
+			// request is completed. But typically, the framework needs the uploaded file after the
+			// upload request is done to store it to the database in a second request e.g.
+			// triggering the save button.
+			//
+			// _part.write(_tempFile.getAbsolutePath());
+
+			try (InputStream in = _part.getInputStream()) {
+				try (OutputStream out = new FileOutputStream(_tempFile)) {
+					StreamUtilities.copyStreamContents(in, out);
+				}
+			}
 		}
 
 		return new FileInputStream(_tempFile);

@@ -212,7 +212,7 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 	private static final class FieldAccessProvider implements TableConfigurationProvider {
 		final AttributeUpdateContainer _updateContainer;
 
-		final Accessor<TLFormObject> ACCESSOR = new ReadOnlyAccessor<>() {
+		final Accessor<TLFormObject> _formContextAccessor = new ReadOnlyAccessor<>() {
 			@Override
 			public Object getValue(TLFormObject row, String property) {
 				TLStructuredTypePart part = resolvePart(row, property);
@@ -220,14 +220,13 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 					// e.g. select column.
 					return null;
 				}
-				FormMember field = getField(row, part);
-				if (field instanceof FormField) {
-					return ((FormField) field).getValue();
-				}
-				if (field == null) {
+
+				TLFormObject overlay = _updateContainer.getOverlay(row, null);
+				if (overlay != null) {
+					return overlay.getFieldValue(part);
+				} else {
 					return row.tValueByName(property);
 				}
-				return null;
 			}
 		};
 
@@ -274,11 +273,11 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 		}
 
 		FormMember getField(TLObject row, TLStructuredTypePart part) {
-			AttributeUpdate update = _updateContainer.getAttributeUpdate(part, row);
-			if (update == null) {
+			TLFormObject overlay = _updateContainer.getOverlay(row, null);
+			if (overlay == null) {
 				return null;
 			}
-			return update.getField();
+			return overlay.getField(part);
 		}
 
 		TLStructuredTypePart resolvePart(TLObject row, String column) {
@@ -299,11 +298,13 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 		}
 
 		private void adaptColumn(ColumnConfiguration col) {
-			col.setAccessor(ACCESSOR);
-			if (!TableControl.SELECT_COLUMN_NAME.equals(col.getName())) {
-				col.setCellRenderer(
-					new CompositionFieldCellRenderer(col.finalRenderer(), col.getEditControlProvider()));
+			if (TableControl.SELECT_COLUMN_NAME.equals(col.getName())) {
+				return;
 			}
+
+			col.setCellRenderer(
+				new CompositionFieldCellRenderer(col.finalRenderer(), col.getEditControlProvider()));
+			col.setAccessor(_formContextAccessor);
 			col.setPreloadContribution(null);
 			CellExistenceTester tester = col.getCellExistenceTester();
 			if (tester != null && tester != AllCellsExist.INSTANCE && !(tester instanceof UnwrapFormTester)) {

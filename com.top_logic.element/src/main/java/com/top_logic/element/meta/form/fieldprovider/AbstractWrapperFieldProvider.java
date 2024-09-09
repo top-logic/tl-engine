@@ -128,11 +128,13 @@ public abstract class AbstractWrapperFieldProvider extends AbstractSelectFieldPr
 	}
 
 	/**
-	 * Return a provider for table descriptions.
+	 * {@link TableConfigurationProvider} for a table to display potential options for the given
+	 * {@link EditContext} in a table select dialog.
 	 * 
 	 * @param editContext
-	 *        The meta attribute to get the provider for, must not be <code>null</code>.
-	 * @return The requested provider, never <code>null</code>.
+	 *        Description of the values that are potentially displayed in the table.
+	 * @return {@link TableConfigurationProvider} for a table displaying values compatible with the
+	 *         given context.
 	 */
 	public static TableConfigurationProvider getTableConfigurationProvider(final EditContext editContext) {
 		TLType baseType = editContext.getValueType();

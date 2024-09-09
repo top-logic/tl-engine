@@ -138,9 +138,13 @@ public class DnDFileUtilities {
 	 * @return file name
 	 */
 	public static String getFileName(Part fileItem) {
-		int splitNameIndex = fileItem.getName().lastIndexOf(':');
+		String uploadName = fileItem.getSubmittedFileName();
+		if (uploadName == null) {
+			uploadName = fileItem.getName();
+		}
+		int splitNameIndex = uploadName.lastIndexOf(':');
 		String fileName =
-			(splitNameIndex != -1) ? fileItem.getName().substring(splitNameIndex + 1) : fileItem.getName();
+			(splitNameIndex != -1) ? uploadName.substring(splitNameIndex + 1) : fileItem.getName();
 		assert fileName != null : "File must have a non-null name.";
 		return fileName;
 	}

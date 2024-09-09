@@ -9,6 +9,7 @@ import static com.top_logic.basic.shared.string.StringServicesShared.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -16,9 +17,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.commons.fileupload2.core.FileItem;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Part;
 
-import com.top_logic.base.multipart.MultipartRequest;
 import com.top_logic.base.services.simpleajax.JSSnipplet;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.IDBuilder;
@@ -415,25 +417,25 @@ public class DataItemControl extends AbstractFormFieldControl implements Content
 
 	/**
 	 * Performs the actual upload. It takes informations about the uploaded file from the given
-	 * {@link MultipartRequest} and stored it into the local variable {@link #_uploadedFiles}. That
-	 * item is stored into the field when the ajax callback is performed.
+	 * {@link HttpServletRequest} and stored it into the local variable {@link #_uploadedFiles}.
+	 * That item is stored into the field when the ajax callback is performed.
 	 */
 	@Override
-	public void handleContent(DisplayContext context, String id, URLParser url) throws IOException {
-		final MultipartRequest request = (MultipartRequest) context.asRequest();
+	public void handleContent(DisplayContext context, String id, URLParser url) throws IOException, ServletException {
+		final HttpServletRequest request = context.asRequest();
 
-		uploadMulti(nameChecker(), request.getFiles());
+		uploadMulti(nameChecker(), request.getParts());
 	}
 
-	private void uploadMulti(Function<String, ResKey> nameChecker, List<? extends FileItem<?>> receivedFiles)
+	private void uploadMulti(Function<String, ResKey> nameChecker, Collection<Part> parts)
 			throws IllegalArgumentException {
-		for (FileItem<?> file : receivedFiles) {
+		for (Part file : parts) {
 			uploadSingle(nameChecker, file);
 		}
 	}
 
-	private void uploadSingle(Function<String, ResKey> nameChecker, FileItem<?> file) throws IllegalArgumentException {
-		final String name = file.getName();
+	private void uploadSingle(Function<String, ResKey> nameChecker, Part file) throws IllegalArgumentException {
+		final String name = file.getSubmittedFileName();
 		assert name != null : "File must have a non-null name.";
 		String fileName = toFileName(name);
 

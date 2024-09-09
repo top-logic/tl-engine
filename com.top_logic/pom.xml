@@ -44,10 +44,6 @@
       <artifactId>tl-convert</artifactId>
     </dependency>
 	<dependency>
-	    <groupId>org.apache.commons</groupId>
-	    <artifactId>commons-fileupload2-jakarta-servlet6</artifactId>
-	</dependency>
-	<dependency>
 	    <groupId>commons-io</groupId>
 	    <artifactId>commons-io</artifactId>
 	</dependency>

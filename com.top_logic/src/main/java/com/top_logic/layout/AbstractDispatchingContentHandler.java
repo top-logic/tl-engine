@@ -7,6 +7,8 @@ package com.top_logic.layout;
 
 import java.io.IOException;
 
+import jakarta.servlet.ServletException;
+
 /**
  * Base class for {@link ContentHandler} implementations that dispatches content generation of URL
  * sub paths to other content handlers.
@@ -22,7 +24,7 @@ public abstract class AbstractDispatchingContentHandler implements ContentHandle
 	 * @see ContentHandler#handleContent(DisplayContext, String, URLParser)
 	 */
 	@Override
-	public void handleContent(DisplayContext context, String id, URLParser url) throws IOException {
+	public void handleContent(DisplayContext context, String id, URLParser url) throws IOException, ServletException {
 		String resource = resourceToHandle(url);
 
 		if (resource == null) {

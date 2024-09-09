@@ -89,9 +89,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * </ul>
  * </p>
  * <p>
- * Limitations: The messages displayed in the log are not internationalized, yet. The method
- * {@link ImportContext#toLogMessage(String)} just convert the English text with
- * {@link ResKey#text(String)}.
+ * Limitations: The messages displayed in the log are not internationalized, yet.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>

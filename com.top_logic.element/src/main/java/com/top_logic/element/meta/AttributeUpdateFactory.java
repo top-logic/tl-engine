@@ -59,7 +59,7 @@ public class AttributeUpdateFactory {
 	 * <p>
 	 * The {@link AttributeUpdate} is {@link AttributeUpdate#isDisabled()} if
 	 * <code>isDisabled</code> or the attribute is
-	 * {@link DisplayAnnotations#isEditable(com.top_logic.model.TLModelPart) not editable}.
+	 * {@link DisplayAnnotations#isEditable(TLStructuredTypePart) not editable}.
 	 * </p>
 	 * 
 	 * @param updateContainer

@@ -15,6 +15,8 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import jakarta.servlet.http.Part;
+
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.Settings;
 import com.top_logic.basic.io.StreamUtilities;
@@ -371,6 +373,33 @@ public class BinaryDataFactory {
 				return MimeTypesModule.getInstance().getMimeType(filename);
 			}
 		};
+	}
+
+	/**
+	 * Wraps upload data as a {@link BinaryData}.
+	 */
+	public static BinaryData createUploadData(Part part) throws IOException {
+		File tempDir = Settings.getInstance().getTempDir();
+		File tempFile = File.createTempFile("upload", ".data", tempDir);
+	
+		// Note: When using this API, Tomcat 11 seems to delete the file directly after the
+		// request is completed. But typically, the framework needs the uploaded file after the
+		// upload request is done to store it to the database in a second request e.g.
+		// triggering the save button.
+		//
+		// _part.write(_tempFile.getAbsolutePath());
+	
+		try (InputStream in = part.getInputStream()) {
+			try (OutputStream out = new FileOutputStream(tempFile)) {
+				StreamUtilities.copyStreamContents(in, out);
+			}
+		}
+		String submittedFileName = part.getSubmittedFileName();
+		String name = submittedFileName != null ? submittedFileName : part.getName();
+	
+		String contentType = AbstractBinaryData.nonNullContentType(part.getContentType());
+	
+		return createBinaryData(tempFile, contentType, name);
 	}
 
 }

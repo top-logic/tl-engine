@@ -21,9 +21,6 @@ import com.top_logic.model.TLModelPart;
 @InApp
 public interface TLVisibility extends TLAttributeAnnotation {
 
-	/** Default {@link Visibility} when no {@link TLVisibility} annotation is set. */
-	Visibility DEFAULT_VISIBILITY = Visibility.EDITABLE;
-
 	/**
 	 * @see #getValue()
 	 */

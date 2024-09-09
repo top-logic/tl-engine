@@ -205,7 +205,7 @@ public class DisplayAnnotations {
 	public static Visibility getVisibility(AnnotationLookup part) {
 		TLVisibility annotation = getVisibilityAnnotation(part);
 		if (annotation == null) {
-			return TLVisibility.DEFAULT_VISIBILITY;
+			return Visibility.DEFAULT;
 		}
 		return annotation.getValue();
 	}
@@ -231,29 +231,29 @@ public class DisplayAnnotations {
 	/**
 	 * Whether the given {@link TLModelPart} is hidden during creation.
 	 */
-	public static boolean isEditableInCreate(TLModelPart part) {
-		return !TLModelUtil.isDerived(part) && getCreateVisibility(part).isEditable();
+	public static boolean isEditableInCreate(TLStructuredTypePart part) {
+		return getCreateVisibility(part).isEditable(part);
 	}
 
 	/**
 	 * Whether the given {@link TLModelPart} is mandatory during create.
 	 */
-	public static boolean isMandatoryInCreate(TLModelPart part) {
-		return getCreateVisibility(part) == Visibility.MANDATORY;
+	public static boolean isMandatoryInCreate(TLStructuredTypePart part) {
+		return getCreateVisibility(part).isMandatory(part);
 	}
 
 	/**
 	 * Whether the given {@link TLModelPart} is not derived and editable.
 	 */
-	public static boolean isEditable(TLModelPart part) {
-		return !TLModelUtil.isDerived(part) && getVisibility(part).isEditable();
+	public static boolean isEditable(TLStructuredTypePart part) {
+		return getVisibility(part).isEditable(part);
 	}
 	
 	/**
 	 * Whether the given {@link TLModelPart} is mandatory.
 	 */
 	public static boolean isMandatory(TLStructuredTypePart part) {
-		return part.isMandatory() || getVisibility(part) == Visibility.MANDATORY;
+		return getVisibility(part).isMandatory(part);
 	}
 
 	/** @see #isHidden(AnnotationLookup) */

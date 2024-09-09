@@ -304,25 +304,16 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 		if (visibility != null) {
 			return formVisiblity(part, visibility.getValue());
 		} else {
-			if (part.isDerived()) {
-				return FormVisibility.READ_ONLY;
-			}
-			if (part.isMandatory()) {
-				return FormVisibility.MANDATORY;
-			} else {
-				return FormVisibility.DEFAULT;
-			}
+			return defaultFormVisibility(part);
 		}
 	}
 
 	private static FormVisibility formVisiblity(TLStructuredTypePart part, Visibility annotatedVisibility) {
 		switch (annotatedVisibility) {
+			case DEFAULT:
+				return defaultFormVisibility(part);
 			case EDITABLE:
-				if (part.isMandatory()) {
-					return FormVisibility.MANDATORY;
-				} else {
-					return FormVisibility.EDITABLE;
-				}
+				return FormVisibility.EDITABLE;
 			case MANDATORY:
 				return FormVisibility.MANDATORY;
 			case HIDDEN:
@@ -331,6 +322,16 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 				return FormVisibility.READ_ONLY;
 		}
 		throw new UnreachableAssertion("Unexpected visibility " + annotatedVisibility);
+	}
+
+	private static FormVisibility defaultFormVisibility(TLStructuredTypePart part) {
+		if (part.isDerived()) {
+			return FormVisibility.READ_ONLY;
+		} else if (part.isMandatory()) {
+			return FormVisibility.MANDATORY;
+		} else {
+			return FormVisibility.DEFAULT;
+		}
 	}
 
 	@Override

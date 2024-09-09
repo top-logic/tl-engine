@@ -1627,7 +1627,6 @@
 							user-id="root"
 						/>
 						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-							xmlns:config="http://www.top-logic.com/ns/config/6.0"
 							user-id="root"
 						>
 							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
@@ -2047,50 +2046,8 @@
 						/>
 					</model-name>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
-					comment=""
-					user-id="root"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.FormFieldMandatoryNaming$FormFieldMandatoryName">
-						<form-member config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-							label="mandatoryAttributeReadOnlyInEdit"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Anlageformular"
-							/>
-						</form-member>
-					</actual-value>
-					<constraints>
-						<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
-							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-								value="true"
-							/>
-						</constraint>
-					</constraints>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
-					comment=""
-					user-id="root"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.FormFieldMandatoryNaming$FormFieldMandatoryName">
-						<form-member config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-							label="mandatoryAttributeHiddenInEdit"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Anlageformular"
-							/>
-						</form-member>
-					</actual-value>
-					<constraints>
-						<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
-							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-								value="true"
-							/>
-						</constraint>
-					</constraints>
-				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ModelNotExistsAssertionOp"
-					comment="Attribute is hidden in create."
+					comment="Attribute 'mandatoryAttributeHiddenInCreate' is hidden in create."
 					failure-pattern="Failed to find FormMember 'mandatoryAttributeHiddenInCreate'"
 					user-id="root"
 				>
@@ -2103,7 +2060,7 @@
 					</model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ModelNotExistsAssertionOp"
-					comment="Property is hidden."
+					comment="Property 'hiddenProperty' is hidden."
 					failure-pattern="Failed to find FormMember 'hiddenProperty'"
 					user-id="root"
 				>
@@ -2116,7 +2073,7 @@
 					</model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ModelNotExistsAssertionOp"
-					comment="Reference is hidden."
+					comment="Reference 'hiddenReference' is hidden."
 					failure-pattern="Failed to find FormMember 'hiddenReference'"
 					user-id="root"
 				>

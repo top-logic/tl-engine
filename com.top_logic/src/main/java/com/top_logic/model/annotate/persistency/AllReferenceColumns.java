@@ -22,7 +22,7 @@ public class AllReferenceColumns extends AllTableColumns {
 
 	@Override
 	protected Stream<? extends MOAttribute> getColumns(MetaObject table) {
-		return MetaObjectUtils.getReferences(table).stream().filter(AllReferenceColumns::isExcluded);
+		return MetaObjectUtils.getReferences(table).stream().filter(mo -> !isExcluded(mo));
 	}
 
 	private static boolean isExcluded(MOAttribute attribute) {

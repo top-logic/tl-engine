@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -183,6 +184,11 @@ public class PopupViewConfiguration extends AbstractConfiguredInstance<PopupView
 		Map<String, List<CommandModel>> commands = new HashMap<>();
 		for (CommandModelConfiguration commandConfig : _commands) {
 			CommandModel commandModel = commandConfig.createCommandModel(component);
+
+			if (commandModel == null) {
+				Logger.error("Faild to create command model: " + commandConfig, PopupViewConfiguration.class);
+				continue;
+			}
 
 			String clique;
 			CommandHandler handler = handler(commandModel);

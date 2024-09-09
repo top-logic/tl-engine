@@ -13,11 +13,15 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
 
 import com.top_logic.basic.FileManager;
+import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -45,15 +49,25 @@ import com.top_logic.element.meta.kbbased.storage.ListStorage;
 import com.top_logic.element.meta.kbbased.storage.SetStorage;
 import com.top_logic.element.model.export.ui.IDEModelExtractCommand;
 import com.top_logic.element.model.export.ui.ModelExportCommand;
-import com.top_logic.element.util.dbadmin.DBSchemaChangingCommand;
 import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.DisplayDimension;
+import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ModelSpec;
+import com.top_logic.layout.basic.Command;
+import com.top_logic.layout.basic.fragments.Fragments;
+import com.top_logic.layout.messagebox.MessageBox;
+import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
+import com.top_logic.layout.structure.DefaultLayoutData;
+import com.top_logic.layout.structure.Scrolling;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.config.annotation.TableName;
+import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
@@ -87,10 +101,10 @@ import com.top_logic.tool.execution.NullModelDisabled;
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
 @Label("Generate database schema")
-public class DBSchemaGeneratorCommand extends DBSchemaChangingCommand {
+public class DBSchemaGeneratorCommand extends AbstractCommandHandler {
 
 	/** {@link ConfigurationItem} for the {@link DBSchemaGeneratorCommand}. */
-	public interface Config extends DBSchemaChangingCommand.Config {
+	public interface Config extends AbstractCommandHandler.Config {
 
 		@Override
 		@StringDefault(CommandHandlerFactory.EXPORT_BUTTONS_GROUP)
@@ -123,13 +137,39 @@ public class DBSchemaGeneratorCommand extends DBSchemaChangingCommand {
 
 	private static final String KBASE = "kbase";
 
+	private static final Property<Boolean> NOTICE_GIVEN =
+		TypedAnnotatable.property(Boolean.class, "noticeGiven", Boolean.FALSE);
+
+	private static final String RESUMED = "resumed";
+
 	/** {@link TypedConfiguration} constructor for {@link DBSchemaGeneratorCommand}. */
 	public DBSchemaGeneratorCommand(InstantiationContext context, Config config) {
 		super(context, config);
 	}
 
 	@Override
-	protected HandlerResult changeSchema(Object model) {
+	public HandlerResult handleCommand(DisplayContext context, LayoutComponent component, Object model,
+			Map<String, Object> arguments) {
+
+		String resumed = RESUMED;
+		if (arguments.get(resumed) == null && !context.getSubSessionContext().get(NOTICE_GIVEN)) {
+			HandlerResult result = HandlerResult.suspended();
+			Command resume = result.resumeContinuation(Collections.singletonMap(RESUMED, Boolean.TRUE));
+			MessageBox.confirm(context.getWindowScope(), new DefaultLayoutData(
+				DisplayDimension.dim(400, DisplayUnit.PIXEL), 100,
+				DisplayDimension.dim(250, DisplayUnit.PIXEL), 100, Scrolling.AUTO), true,
+				Fragments.message(I18NConstants.GENERATE_SCHEMA_TITLE),
+				Fragments.message(I18NConstants.GENERATE_SCHEMA_NOTICE),
+				MessageBox.button(ButtonType.YES, resume), MessageBox.button(ButtonType.NO));
+			return result;
+		}
+
+		context.getSubSessionContext().set(NOTICE_GIVEN, Boolean.TRUE);
+
+		return changeSchema(model);
+	}
+
+	private HandlerResult changeSchema(Object model) {
 		if (!(model instanceof TLModule)) {
 			return HandlerResult.error(I18NConstants.NO_TL_MODULE_SELECTED);
 		}

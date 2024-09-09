@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.top_logic.basic.col.ComparableComparator;
 import com.top_logic.basic.db.model.DBSchema;
@@ -72,11 +74,13 @@ public class ImportContext {
 
 	private final Map<TLType, List<TLStructuredTypePart>> _referrers;
 
+	private final List<Pattern> _knownProblems;
+
 	/**
 	 * Creates an {@link ImportContext}.
 	 */
-	public ImportContext(JdbcDataImporterProgressHandle progressHandle, PooledConnection connection, DBSchema schema,
-			TLModule module) throws SQLException {
+	public ImportContext(List<Pattern> knownProblems, JdbcDataImporterProgressHandle progressHandle,
+			PooledConnection connection, DBSchema schema, TLModule module) throws SQLException {
 		_progressHandle = progressHandle;
 		_connection = connection;
 		_schema = schema;
@@ -86,6 +90,7 @@ public class ImportContext {
 		_factory = ModelService.getInstance().getFactory();
 
 		_referrers = Map.copyOf(computeTypeReferrers(module));
+		_knownProblems = List.copyOf(knownProblems);
 	}
 
 	private final Map<TLType, List<TLStructuredTypePart>> computeTypeReferrers(TLModule module) {
@@ -382,22 +387,37 @@ public class ImportContext {
 
 	/** Displays a warning message in the log. */
 	public void logWarn(String message) {
+		if (isKnownProblem(message)) {
+			return;
+		}
 		_progressHandle.getLog().log(Level.WARN, toLogMessage(message));
 	}
 
 	/** Displays an error message in the log. */
 	public void logError(String message) {
+		if (isKnownProblem(message)) {
+			return;
+		}
 		_progressHandle.getLog().error(toLogMessage(message));
 	}
 
 	/** Displays an error message in the log. */
 	public void logError(String message, Throwable exception) {
+		if (isKnownProblem(message)) {
+			return;
+		}
 		_progressHandle.getLog().fatal(toLogMessage(message), exception);
 	}
 
 	static ResKey toLogMessage(String message) {
 		String timestamp = Instant.now().toString();
 		return ResKey.text(timestamp + ": " + message);
+	}
+
+	private boolean isKnownProblem(String message) {
+		return _knownProblems.stream()
+			.map(regex -> regex.matcher(message))
+			.anyMatch(Matcher::find);
 	}
 
 }

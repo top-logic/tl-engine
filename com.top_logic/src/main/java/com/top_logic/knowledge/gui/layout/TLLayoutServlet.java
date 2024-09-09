@@ -32,7 +32,7 @@ import com.top_logic.util.TopLogicServlet;
  * @author <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  * @author Navid Vahdat
  */
-@MultipartConfig
+@MultipartConfig(fileSizeThreshold = 50000, maxFileSize = 10000000, maxRequestSize = 10000000, location = "/tmp")
 public class TLLayoutServlet extends TopLogicServlet implements LayoutConstants {
 
 	/**

@@ -8,7 +8,6 @@ package com.top_logic.knowledge.gui.layout;
 import java.io.IOException;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -32,7 +31,6 @@ import com.top_logic.util.TopLogicServlet;
  * @author <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  * @author Navid Vahdat
  */
-@MultipartConfig(fileSizeThreshold = 50000, maxFileSize = 10000000, maxRequestSize = 10000000, location = "/tmp")
 public class TLLayoutServlet extends TopLogicServlet implements LayoutConstants {
 
 	/**

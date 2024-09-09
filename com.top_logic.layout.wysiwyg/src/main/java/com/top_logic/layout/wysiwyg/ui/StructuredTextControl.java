@@ -38,13 +38,13 @@ import com.top_logic.basic.exception.I18NException;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.Theme;
 import com.top_logic.gui.ThemeFactory;
-import com.top_logic.knowledge.service.binary.FileItemBinaryData;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.ContentHandler;
 import com.top_logic.layout.DisplayContext;
@@ -837,7 +837,7 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 		var files = getFiles(context);
 
 		if (files.size() == 1) {
-			FileItemBinaryData fileItemBinaryData = getBinaryData(files.iterator().next());
+			BinaryData fileItemBinaryData = getBinaryData(files.iterator().next());
 
 			String imageId = saveFile(fileItemBinaryData);
 			if (Logger.isDebugEnabled(StructuredTextControl.class)) {
@@ -852,17 +852,17 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 		}
 	}
 
-	private FileItemBinaryData getBinaryData(Part file) {
-		return new FileItemBinaryData(file);
+	private BinaryData getBinaryData(Part file) throws IOException {
+		return BinaryDataFactory.createUploadData(file);
 	}
 
-	private void recordScriptingAction(DisplayContext context, FileItemBinaryData fileItemBinaryData) {
+	private void recordScriptingAction(DisplayContext context, BinaryData fileItemBinaryData) {
 		LayoutUtils.setWindowScope(context, getWindowScope());
 
 		ScriptingRecorder.recordAction(getImageUploadAction(fileItemBinaryData));
 	}
 
-	private ImageUploadAction getImageUploadAction(FileItemBinaryData fileItemBinaryData) {
+	private ImageUploadAction getImageUploadAction(BinaryData fileItemBinaryData) {
 		ImageUploadAction action = TypedConfiguration.newConfigItem(ImageUploadAction.class);
 
 		action.setField(ModelResolver.buildModelName(getFieldModel()));
@@ -875,7 +875,7 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 		return context.asRequest().getParts();
 	}
 
-	private String saveFile(FileItemBinaryData data) {
+	private String saveFile(BinaryData data) {
 		if (_shadowCopy == null) {
 			initShadowCopy();
 		}
@@ -899,7 +899,7 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 		_shadowCopy = structuredText;
 	}
 
-	private String getID(StructuredText structuredText, FileItemBinaryData data) {
+	private String getID(StructuredText structuredText, BinaryData data) {
 		String name = data.getName();
 		Map<String, BinaryData> images = structuredText.getImages();
 
@@ -935,7 +935,7 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 		return name.substring(0, name.lastIndexOf(suffix)) + ID_SEPARATOR + counter + suffix;
 	}
 
-	private void sendResponse(DisplayContext context, FileItemBinaryData data, String imageId) throws IOException {
+	private void sendResponse(DisplayContext context, BinaryData data, String imageId) throws IOException {
 		Map<String, Object> fileResponse = getFileResponse(context, data, imageId);
 		String response = JSON.toString(fileResponse);
 
@@ -946,7 +946,7 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 		}
 	}
 
-	private Map<String, Object> getFileResponse(DisplayContext context, FileItemBinaryData data, String imageId) {
+	private Map<String, Object> getFileResponse(DisplayContext context, BinaryData data, String imageId) {
 		Map<String, Object> fileResponse = new HashMap<>();
 
 		fileResponse.put(RESPONSE_UPLOADED_NAME, 1);

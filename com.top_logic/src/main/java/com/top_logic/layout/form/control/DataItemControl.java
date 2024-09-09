@@ -29,6 +29,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.listener.EventType.Bubble;
@@ -39,7 +40,6 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.knowledge.gui.layout.upload.DefaultDataItem;
-import com.top_logic.knowledge.service.binary.FileItemBinaryData;
 import com.top_logic.layout.AbstractDisplayValue;
 import com.top_logic.layout.ContentHandler;
 import com.top_logic.layout.Control;
@@ -428,13 +428,14 @@ public class DataItemControl extends AbstractFormFieldControl implements Content
 	}
 
 	private void uploadMulti(Function<String, ResKey> nameChecker, Collection<Part> parts)
-			throws IllegalArgumentException {
+			throws IllegalArgumentException, IOException {
 		for (Part file : parts) {
 			uploadSingle(nameChecker, file);
 		}
 	}
 
-	private void uploadSingle(Function<String, ResKey> nameChecker, Part file) throws IllegalArgumentException {
+	private void uploadSingle(Function<String, ResKey> nameChecker, Part file)
+			throws IllegalArgumentException, IOException {
 		final String name = file.getSubmittedFileName();
 		assert name != null : "File must have a non-null name.";
 		String fileName = toFileName(name);
@@ -460,7 +461,7 @@ public class DataItemControl extends AbstractFormFieldControl implements Content
 			return;
 		}
 
-		BinaryData data = new FileItemBinaryData(file);
+		BinaryData data = BinaryDataFactory.createUploadData(file);
 		String contentType = file.getContentType();
 
 		if (BinaryDataSource.CONTENT_TYPE_OCTET_STREAM.equals(contentType)) {

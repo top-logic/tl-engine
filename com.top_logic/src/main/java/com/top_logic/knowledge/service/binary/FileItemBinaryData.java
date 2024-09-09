@@ -41,7 +41,11 @@ public class FileItemBinaryData extends AbstractBinaryData {
     
     @Override
 	public long getSize() {
-		return _part.getSize();
+		if (_tempFile == null) {
+			return _part.getSize();
+		} else {
+			return _tempFile.length();
+		}
     }
     
     @Override

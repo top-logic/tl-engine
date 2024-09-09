@@ -673,8 +673,20 @@ public class ModelResolver {
 			TLReference orig;
 			if (referenceConfig.isOverride()) {
 				TLStructuredTypePart overriding = type.getPart(referenceName);
-				TLStructuredTypePart definition = overriding.getDefinition();
-				orig = (TLReference) definition;
+				if (overriding == null) {
+					log().info(
+						"Type '" + type + "' does not inherit a reference '" + referenceName
+							+ "', therefore it may not declare an override.",
+						Log.WARN);
+					orig = null;
+				} else if (overriding.getModelKind() != ModelKind.REFERENCE) {
+					log().error(
+						"Type '" + type + "' inherits a '" + overriding.getModelKind()
+							+ "' named '" + referenceName + "' which cannot be overridden as reference.");
+					orig = null;
+				} else {
+					orig = (TLReference) overriding.getDefinition();
+				}
 			} else {
 				orig = null;
 			}

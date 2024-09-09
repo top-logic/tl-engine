@@ -1369,7 +1369,7 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 				/* Note: This must be called after components resolved, because WindowScope is
 				 * installed there. */
 				LayoutUtils.setContextComponent(context, ml);
-				assert LayoutUtils.getWindowScope(context) != null;
+				assert LayoutUtils.getWindowScope(context) != null : "No window scope in main layout found.";
 
 				/* Initialize the models. */
 				ml.initialValidateModel(context);

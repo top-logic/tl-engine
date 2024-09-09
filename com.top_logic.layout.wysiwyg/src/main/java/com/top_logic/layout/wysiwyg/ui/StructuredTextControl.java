@@ -11,6 +11,7 @@ import static com.top_logic.mig.util.net.URLUtilities.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,17 +20,17 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Part;
 
-import org.apache.commons.fileupload2.core.FileItem;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 
-import com.top_logic.base.multipart.MultipartRequest;
 import com.top_logic.base.services.simpleajax.JSSnipplet;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -812,7 +813,7 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 	}
 
 	@Override
-	public void handleContent(DisplayContext context, String id, URLParser url) throws IOException {
+	public void handleContent(DisplayContext context, String id, URLParser url) throws IOException, ServletException {
 		String command = url.removeResource();
 
 		if (UPLOAD.equals(command)) {
@@ -833,11 +834,11 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 		}
 	}
 
-	private void uploadFile(DisplayContext context) throws IOException {
+	private void uploadFile(DisplayContext context) throws IOException, ServletException {
 		var files = getFiles(context);
 
 		if (files.size() == 1) {
-			FileItemBinaryData fileItemBinaryData = getBinaryData(files.get(0));
+			FileItemBinaryData fileItemBinaryData = getBinaryData(files.iterator().next());
 
 			String imageId = saveFile(fileItemBinaryData);
 			if (Logger.isDebugEnabled(StructuredTextControl.class)) {
@@ -852,7 +853,7 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 		}
 	}
 
-	private FileItemBinaryData getBinaryData(FileItem<?> file) {
+	private FileItemBinaryData getBinaryData(Part file) {
 		return new FileItemBinaryData(file);
 	}
 
@@ -871,11 +872,9 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 		return action;
 	}
 
-	private List<? extends FileItem<?>> getFiles(DisplayContext context) {
-		HttpServletRequest asRequest = context.asRequest();
-		MultipartRequest request = (MultipartRequest) asRequest;
-
-		return request.getFiles();
+	private Collection<Part> getFiles(DisplayContext context) throws IOException, ServletException {
+		HttpServletRequest request = context.asRequest();
+		return request.getParts();
 	}
 
 	private String saveFile(FileItemBinaryData data) {

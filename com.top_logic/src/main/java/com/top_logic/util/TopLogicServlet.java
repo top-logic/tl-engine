@@ -28,7 +28,6 @@ import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLInteractionContext;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
-import com.top_logic.base.multipart.MultipartRequest;
 import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.DebugHelper;
 import com.top_logic.basic.Logger;
@@ -327,21 +326,14 @@ public class TopLogicServlet extends HttpServlet {
 		boolean errorOccurred = true;
 		try {
 			/* Ensure a consistent handling of multi-part and simple requests. */
-			final HttpServletRequest wrappedRequest;
-			if ((!(rawRequest instanceof MultipartRequest)) && MultipartRequest.isMultipartContent(rawRequest)) {
-				wrappedRequest = new MultipartRequest(rawRequest);
-			} else {
-				wrappedRequest = rawRequest;
-			}
-
-			TLContextManager.inInteraction(sessionContext, getServletContext(), wrappedRequest, wrappedResponse,
+			TLContextManager.inInteraction(sessionContext, getServletContext(), rawRequest, wrappedResponse,
 				new InContext() {
 				@Override
 				public void inContext() {
 					long start = System.currentTimeMillis();
-					TopLogicServlet.this.inContext(wrappedRequest, wrappedResponse);
+						TopLogicServlet.this.inContext(rawRequest, wrappedResponse);
 					doPerformanceMeasuring(start, TLContextManager.getInteraction());
-					logTiming(wrappedRequest, start);
+						logTiming(rawRequest, start);
 				}
 			});
 			errorOccurred = false;

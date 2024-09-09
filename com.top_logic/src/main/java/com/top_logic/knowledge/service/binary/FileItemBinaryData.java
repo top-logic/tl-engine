@@ -8,24 +8,23 @@ package com.top_logic.knowledge.service.binary;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.commons.fileupload2.core.FileItem;
+import jakarta.servlet.http.Part;
 
 import com.top_logic.basic.io.binary.AbstractBinaryData;
 
 /**
- * Wrap a {@link FileItem} as BinaryData to avoid unnecessary copying of Uploaded Data.
+ * Wrap a {@link Part} as BinaryData to avoid unnecessary copying of Uploaded Data.
  * 
- * This class is not aware of changes of the underlying FileItem and therefore is not 
- * immutable.
+ * This class is not aware of changes of the underlying FileItem and therefore is not immutable.
  * 
- * @author    <a href="mailto:kha@top-logic.com">kha</a>
+ * @author <a href="mailto:kha@top-logic.com">kha</a>
  */
 public class FileItemBinaryData extends AbstractBinaryData {
 
     /** The Object wrapped by this class */
-	private final FileItem<?> fileItem;
+	private final Part fileItem;
 
-	public FileItemBinaryData(FileItem<?> aFileItem) {
+	public FileItemBinaryData(Part aFileItem) {
         this.fileItem = aFileItem;
     }
     
@@ -47,7 +46,8 @@ public class FileItemBinaryData extends AbstractBinaryData {
     
 	@Override
 	public String getName() {
-		return fileItem.getName();
+		String submittedFileName = fileItem.getSubmittedFileName();
+		return submittedFileName != null ? submittedFileName : fileItem.getName();
 	}
 
 	@Override

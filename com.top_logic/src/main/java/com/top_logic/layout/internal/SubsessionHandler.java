@@ -144,13 +144,15 @@ public class SubsessionHandler extends WindowHandler implements LayoutContext {
 	}
 
 	@Override
-	protected void deliverLocalContent(DisplayContext context, String id, URLParser url) throws IOException {
+	protected void deliverLocalContent(DisplayContext context, String id, URLParser url)
+			throws IOException, ServletException {
 		finishLogin(context);
 
 		internalHandleRequestLock(context, id, url);
 	}
 
-	private void internalHandleRequestLock(DisplayContext context, String id, URLParser url) throws IOException {
+	private void internalHandleRequestLock(DisplayContext context, String id, URLParser url)
+			throws IOException, ServletException {
 		Integer key = Integer.valueOf(_lock.reset());
 
 		try {
@@ -171,7 +173,8 @@ public class SubsessionHandler extends WindowHandler implements LayoutContext {
 		}
 	}
 
-	private void internalHandleBookmark(DisplayContext context, String id, URLParser url) throws IOException {
+	private void internalHandleBookmark(DisplayContext context, String id, URLParser url)
+			throws IOException, ServletException {
 		MainLayout mainLayout = getMainLayout();
 
 		HttpServletRequest request = context.asRequest();
@@ -291,12 +294,14 @@ public class SubsessionHandler extends WindowHandler implements LayoutContext {
 		}
 	}
 
-	private void reallyDeliverLocalContent(DisplayContext context, String id, URLParser url) throws IOException {
+	private void reallyDeliverLocalContent(DisplayContext context, String id, URLParser url)
+			throws IOException, ServletException {
 		super.deliverLocalContent(context, id, url);
 	}
 
 	@Override
-	protected void handleCompositeContent(DisplayContext context, String id, URLParser url) throws IOException {
+	protected void handleCompositeContent(DisplayContext context, String id, URLParser url)
+			throws IOException, ServletException {
 
 		String resourceName = context.asRequest().getRequestURI();
 		try {

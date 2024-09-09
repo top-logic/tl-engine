@@ -21,7 +21,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 
@@ -873,8 +872,7 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 	}
 
 	private Collection<Part> getFiles(DisplayContext context) throws IOException, ServletException {
-		HttpServletRequest request = context.asRequest();
-		return request.getParts();
+		return context.asRequest().getParts();
 	}
 
 	private String saveFile(FileItemBinaryData data) {

@@ -9,13 +9,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-import jakarta.servlet.http.Part;
-
 import com.top_logic.basic.io.binary.AbstractBinaryData;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.dsa.util.MimeTypes;
-import com.top_logic.knowledge.service.binary.FileItemBinaryData;
 
 /**
  * The class {@link DefaultDataItem} is a simple immutable implementation of
@@ -38,18 +35,6 @@ public class DefaultDataItem extends AbstractBinaryData {
 		BinaryData data = BinaryDataFactory.createBinaryData(file);
 		String contentType = MimeTypes.getInstance().getMimeType(name);
 		return new DefaultDataItem(name, data, contentType);
-	}
-
-	/**
-	 * Creates a {@link BinaryData} based on the given {@link Part}
-	 * 
-	 * @param item
-	 *        the item which provides the informations for the returned {@link BinaryData}.
-	 * 
-	 * @return a {@link BinaryData} representing the given {@link Part}
-	 */
-	public static BinaryData createDataItem(Part item) {
-		return new DefaultDataItem(item.getSubmittedFileName(), new FileItemBinaryData(item), item.getContentType());
 	}
 
 	private final String contentType;

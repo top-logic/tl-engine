@@ -22,6 +22,15 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en JDBC data import */
 	public static ResKey PROGRESS_DIALOG_TITLE;
 
+	/** @en Warning! */
+	public static ResKey GENERATE_SCHEMA_TITLE;
+
+	/**
+	 * @en This command must only be used during development on a developer system. It will leave
+	 *     the application in a state where it cannot be started anymore.
+	 */
+	public static ResKey GENERATE_SCHEMA_NOTICE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

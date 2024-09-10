@@ -130,8 +130,8 @@ import com.top_logic.layout.structure.InlineLayoutControlProvider;
 import com.top_logic.layout.structure.LayoutControl;
 import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.layout.structure.LayoutControlProvider.Layouting;
+import com.top_logic.layout.structure.OptionalToolbarOptions;
 import com.top_logic.layout.structure.PersonalizingExpandable;
-import com.top_logic.layout.structure.ToolbarOptions;
 import com.top_logic.layout.tabbar.TabInfo.TabConfig;
 import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.layout.toolbar.ToolBarChangeListener;
@@ -211,7 +211,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 * Configuration options for {@link LayoutComponent}.
 	 */
 	public interface Config
-			extends PolymorphicConfiguration<LayoutComponent>, LayoutComponentUIOptions, IComponent.ComponentConfig, ToolbarOptions,
+			extends PolymorphicConfiguration<LayoutComponent>, LayoutComponentUIOptions, IComponent.ComponentConfig,
+			OptionalToolbarOptions,
 			ExpandableConfig, WithGotoConfiguration, WithDefaultFor {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
@@ -248,11 +249,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		String BUTTONS_NAME = "buttons";
 
 		String COMPONENT = "component";
-
-		/**
-		 * @see #hasToolbar()
-		 */
-		String TOOLBAR = "toolbar";
 
 		/**
 		 * @see #hasButtonbar()
@@ -514,17 +510,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		@Name(COMPONENT_RESOLVER_NAME)
 		List<PolymorphicConfiguration<ComponentResolver>> getComponentResolvers();
 
-		/**
-		 * Whether a toolbar should be allocated for this component automatically.
-		 * 
-		 * <p>
-		 * Not allocating a toolbar prevents this component from being maximizable and removes the
-		 * possibility of collapsing the component within a flexible layout.
-		 * </p>
-		 * 
-		 * @see com.top_logic.layout.structure.LayoutControlFactory.Config#getAutomaticToolbars()
-		 */
-		@Name(TOOLBAR)
+		@Override
+		@BooleanDefault(false)
 		boolean hasToolbar();
 
 		/**

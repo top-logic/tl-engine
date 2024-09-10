@@ -685,10 +685,13 @@ div.dfListAdd {
 .rf_spanCol3 { grid-col-end: span 3; }
 .rf_spanCol4 { grid-col-end: span 4; }
 
+.cMediaQuery.dflSize0 .rf_columnsLayout.keep .rf_inputCell:not(.keepInline):not(.rf_noLabel),
+.keep .rf_labelAbove.rf_inputCell:not(.keepInline),
+.rf_columnsLayout.keep .rf_inputCell .rf_inputCell:not(.rf_noLabel),
 .rf_inputCell:not(.rf_noLabel) {
 	display: grid;
 	grid-template-columns: minmax(var(--RF_FIRST_COLUMN_WIDTH), max-content) minmax(0, 1fr);
-	grid-gap: .5rem .5rem;
+	grid-gap: var(--spacing-02) var(--spacing-02);
 }
 
 .rf_inputCell > div:nth-child(1) {
@@ -713,7 +716,7 @@ div.dfListAdd {
 
                                         .rf_labelAbove.rf_inputCell:not(.keepInline),
 .cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel),
-.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline):not(.rf_noLabel),
+.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1):not(.keep) > .rf_inputCell:not(.keepInline):not(.rf_noLabel),
 .cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline):not(.rf_noLabel),
 .rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel) {
 	display: grid;

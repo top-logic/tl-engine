@@ -358,10 +358,10 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 	 *         the layout referenced by the key.
 	 */
 	public static Map<String, List<BinaryData>> readLayouts() {
-		return new LayoutLoader().load();
+		return new LayoutAnalyzer().readAll();
 	}
 
-	private static class LayoutLoader {
+	private static class LayoutAnalyzer {
 		FileManager _fileManager = FileManager.getInstance();
 
 		Set<String> _mainLayouts =
@@ -373,7 +373,7 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 
 		Map<String, List<BinaryData>> _overlaysByLayoutKey = new HashMap<>();
 
-		public Map<String, List<BinaryData>> load() {
+		public Map<String, List<BinaryData>> readAll() {
 			Set<String> layoutDirs = _fileManager.getResourcePaths(ModuleLayoutConstants.LAYOUT_RESOURCE_PREFIX);
 
 			for (String layoutDir : layoutDirs) {
@@ -385,9 +385,6 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 				readRecursive(layoutDir);
 			}
 
-			/* Overlays are sorted in FileManager order i.e. from more specific to less specific.
-			 * Inverse order is needed. */
-			_overlaysByLayoutKey.values().forEach(Collections::reverse);
 			for (String layoutName : _layoutKeys) {
 				if (!_overlaysByLayoutKey.containsKey(layoutName)) {
 					_overlaysByLayoutKey.put(layoutName, Collections.emptyList());
@@ -421,6 +418,11 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 				String baseLayoutKey = getBaseLayoutKey(layoutKey);
 				try {
 					List<BinaryData> layoutOverlays = _fileManager.getDataOverlays(layoutResource);
+
+					// Overlays are in FileManager order i.e. from more specific to less specific.
+					// Inverse order is required.
+					Collections.reverse(layoutOverlays);
+
 					_overlaysByLayoutKey.put(baseLayoutKey, layoutOverlays);
 				} catch (IOException exception) {
 					Logger.error("Failed to load overlays for layout '" + baseLayoutKey + "'.", exception,
@@ -459,6 +461,14 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 				}
 			}
 			return conf.getExcludePatterns();
+		}
+
+		/**
+		 * Map with all read layout names as keys and (a potentially empty) list of corresponding
+		 * overrides as value.
+		 */
+		public Map<String, List<BinaryData>> getLayoutOverlays() {
+			return _overlaysByLayoutKey;
 		}
 	}
 
@@ -725,15 +735,38 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 	}
 
 	private void updateFilesystemCache(LayoutUpdate update) {
+		FileManager fileManager = FileManager.getInstance();
 		List<Theme> choosableThemes = getSortedChoosableThemes();
 
-		for (String layoutKeyToDelete : update.getLayoutKeysToUpdate()) {
+		for (String invalidLayoutKey : update.getInvalidLayoutKeys()) {
 			for (Theme theme : choosableThemes) {
-				dropCache(theme, layoutKeyToDelete);
+				dropCache(theme, invalidLayoutKey);
+			}
+
+			String layoutResource = layoutResource(invalidLayoutKey);
+			if (fileManager.getDataOrNull(layoutResource) != null) {
+				String overlayResource = overlayKey(layoutResource);
+				try {
+					List<BinaryData> overlayData = fileManager.getDataOverlays(overlayResource);
+					Collections.reverse(overlayData);
+					_overlays.put(invalidLayoutKey, overlayData);
+				} catch (IOException ex) {
+					Logger.error("Cannot access: " + overlayResource, LayoutStorage.class);
+				}
 			}
 		}
 
-		loadLayoutsForAllThemes(update.getLayoutKeysToUpdate(), choosableThemes);
+		loadLayoutsForAllThemes(update.getInvalidLayoutKeys(), choosableThemes);
+	}
+
+	private static String layoutResource(String layoutKey) {
+		return ModuleLayoutConstants.LAYOUT_RESOURCE_PREFIX + layoutKey;
+	}
+
+	private static String overlayKey(String layoutKey) {
+		return StringServices.changeSuffix(layoutKey,
+			LayoutModelConstants.LAYOUT_XML_FILE_SUFFIX,
+			LayoutModelConstants.LAYOUT_XML_OVERLAY_FILE_SUFFIX);
 	}
 
 	private void dropCache(Theme theme, String layoutKey) {

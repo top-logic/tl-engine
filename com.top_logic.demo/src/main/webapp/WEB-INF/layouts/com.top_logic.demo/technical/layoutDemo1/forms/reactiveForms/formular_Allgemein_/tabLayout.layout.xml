@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_358f3a9a_2aef_4e8c_bcbf_b7a8ae6ba2ba">
+		<tabLabel key="dynamic.b04f5118-ebb0-4492-8e88-a3ee6336ad6f">
+			<de>Formular (Allgemein)</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/forms/reactiveForms/formular_Allgemein_/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

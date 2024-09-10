@@ -9,10 +9,10 @@
 		value="16"
 	/>
 	<int name="FILTER_SINGLE_LINE_HEIGHT"
-		value="64"
+		value="58"
 	/>
 	<int name="EVENTLOG_SHARED_FILTER_HEIGHT"
-		value="64"
+		value="58"
 	/>
 	<icon name="com.top_logic.util.Icons.UNKNOWN_TYPE"
 		value="/mimetypes/unknown.png"

@@ -208,6 +208,9 @@ div.fptIconBar > span.fptIconOverlay {
 	margin: var(--spacing-02) 0;
 	white-space: nowrap;
 	overflow: hidden;
+	/* To center the label for the cases when it's in a grid or in a flexbox */
+	align-items: center;
+	align-content: center;
 }
 
 .rf_label .cLabel label.disabled,
@@ -409,9 +412,17 @@ div.rf_buttons {
 	overflow: auto;
 }
 
-div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
+.rf_columnsLayout.keep .rf_inputCell:not(.rf_labelAbove) {
 	display: flex !important;
 	align-items: center;
+}
+
+.rf_columnsLayout.keep .rf_inputCell:not(.rf_labelAbove) .rf_label {
+	flex-shrink: 0;
+}
+
+.rf_columnsLayout.keep .rf_inputCell:not(.rf_labelAbove) .rf_cell {
+	min-width: 10em;
 }
 
 .rf_cell {
@@ -497,7 +508,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 }
 
 .cMediaQuery.dflSize5 .rf_columnsLayout:not(.keep) > *:not(.rf_line),
-.cMediaQuery .rf_columnsLayout.cols5:not(.keep) > *:not(.rf_line) { 
+.cMediaQuery:is(.dflSize5) .rf_columnsLayout.cols5:not(.keep) > *:not(.rf_line) { 
   	min-width: calc(20% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
  	width: calc(20% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
   	box-sizing: border-box;

@@ -20,6 +20,14 @@
 		<property name="resetInvisible"
 			type="boolean"
 		/>
+		<property name="toolbar"
+			default="true"
+			type="boolean"
+		/>
+		<property name="buttonbar"
+			default="false"
+			type="boolean"
+		/>
 		<property name="securityObject"
 			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
 			type="com.top_logic.basic.config.PolymorphicConfiguration"
@@ -46,6 +54,7 @@
 	</properties>
 
 	<settings name="Form"
+		buttonbar="${buttonbar}"
 		dialogs="${dialogs}"
 		editMode="${editMode}"
 		isSecurityMaster="${isSecurityMaster}"
@@ -54,6 +63,7 @@
 		securityObject="${securityObject}"
 		securityProviderClass="${securityProviderClass}"
 		titleKey="${name}"
+		toolbar="${toolbar}"
 	>
 		<modelBuilder class="com.top_logic.element.layout.formeditor.builder.EditFormBuilder"
 			showNoModel="${showNoModel}"

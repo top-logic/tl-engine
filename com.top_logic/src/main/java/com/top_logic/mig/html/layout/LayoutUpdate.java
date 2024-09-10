@@ -175,7 +175,7 @@ public class LayoutUpdate {
 	/**
 	 * Returns all keys for layout parts that should be reloaded.
 	 */
-	public Collection<String> getLayoutKeysToUpdate() {
+	public Collection<String> getInvalidLayoutKeys() {
 		return _layoutKeysToUpdate;
 	}
 

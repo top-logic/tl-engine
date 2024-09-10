@@ -334,7 +334,7 @@ span.can-edit {
 }
 
 .frmBody {
-	padding: 0 var(--spacing-03);
+	margin: var(--spacing-02) var(--spacing-03) 0 var(--spacing-03);
 }
 
 div.frmBody > div.dropPane {
@@ -440,7 +440,7 @@ div.rf_buttons {
 }
 
 .rf_columnsLayout > .rf_groupCell {
-  	margin-left: calc(var(--RF_HORIZONTAL_GAP_COLUMNS) - 2px); /* 2px for the border */
+  	margin-left: calc(var(--RF_HORIZONTAL_GAP_COLUMNS));
 }
 
 .dflSize0 .rf_cellSmall,

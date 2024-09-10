@@ -4,7 +4,7 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	groups="commons"
 >
-	<properties extends="com.top_logic.layout.form.component.SelectorComponent$UIOptions, com.top_logic.layout.structure.ToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster">
+	<properties extends="com.top_logic.layout.form.component.SelectorComponent$UIOptions, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster">
 		<annotations>
 			<display-order>
 				<value>
@@ -23,6 +23,7 @@
 					<property name="defaultSelection"/>
 					<property name="isSecurityMaster"/>
 
+					<property name="toolbar"/>
 					<property name="showMaximize"/>
 					<property name="showMinimize"/>
 					<property name="showPopOut"/>
@@ -79,6 +80,7 @@
 		showMinimize="${showMinimize}"
 		showPopOut="${showPopOut}"
 		titleKey="${titleKey}"
+		toolbar="${toolbar}"
 		types="${types}"
 	>
 		<buttons>

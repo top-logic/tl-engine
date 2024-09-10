@@ -50,17 +50,13 @@ public class SeparateTableControlProvider extends ConfiguredLayoutControlProvide
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	public interface Config extends PolymorphicConfiguration<LayoutControlProvider>, ToolbarOptions, ExpandableConfig {
+	public interface Config
+			extends PolymorphicConfiguration<LayoutControlProvider>, OptionalToolbarOptions, ExpandableConfig {
 
 		/**
 		 * Name of the configuration property {@link #getTableName()}.
 		 */
 		static final String TABLE_NAME_ATTR = "tableName";
-
-		/**
-		 * Name of the configuration property {@link #hasToolbar()}.
-		 */
-		static final String TOOLBAR_ATTR = "toolbar";
 
 		/**
 		 * Name of the configuration property {@link #hasSidebar()}.
@@ -88,18 +84,6 @@ public class SeparateTableControlProvider extends ConfiguredLayoutControlProvide
 		@Name(TABLE_NAME_ATTR)
 		@Mandatory
 		String getTableName();
-
-		/**
-		 * Whether an explicit toolbar should be allocated for this table.
-		 * 
-		 * <p>
-		 * This should only be set to <code>false</code>, to prevent duplicate toolbars, if a
-		 * toolbar is allocated in the context by other means.
-		 * </p>
-		 */
-		@Name(TOOLBAR_ATTR)
-		@BooleanDefault(true)
-		boolean hasToolbar();
 
 		/**
 		 * Whether a filter sidebar for this table shall be shown, or not.

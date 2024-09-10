@@ -4,7 +4,7 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	groups="commons"
 >
-	<properties extends="com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.structure.ToolbarOptions, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig">
+	<properties extends="com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig">
 		<annotations>
 			<display-inherited value="APPEND"/>
 		</annotations>
@@ -85,7 +85,7 @@
 		showMinimize="${showMinimize}"
 		showPopOut="${showPopOut}"
 		titleKey="${name}"
-		toolbar="true"
+		toolbar="${toolbar}"
 	>
 		<buttons>
 			<include name="templates/editComponentCommands.xml"/>

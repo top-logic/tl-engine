@@ -738,7 +738,10 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 		FileManager fileManager = FileManager.getInstance();
 		List<Theme> choosableThemes = getSortedChoosableThemes();
 
-		for (String invalidLayoutKey : update.getInvalidLayoutKeys()) {
+		Collection<String> invalidLayoutKeys = update.getInvalidLayoutKeys();
+
+		for (Iterator<String> it = invalidLayoutKeys.iterator(); it.hasNext();) {
+			String invalidLayoutKey = it.next();
 			for (Theme theme : choosableThemes) {
 				dropCache(theme, invalidLayoutKey);
 			}
@@ -753,10 +756,12 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 				} catch (IOException ex) {
 					Logger.error("Cannot access: " + overlayResource, LayoutStorage.class);
 				}
+			} else {
+				it.remove();
 			}
 		}
 
-		loadLayoutsForAllThemes(update.getInvalidLayoutKeys(), choosableThemes);
+		loadLayoutsForAllThemes(invalidLayoutKeys, choosableThemes);
 	}
 
 	private static String layoutResource(String layoutKey) {

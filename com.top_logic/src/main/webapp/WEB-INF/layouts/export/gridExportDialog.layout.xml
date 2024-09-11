@@ -7,10 +7,10 @@
 		closableUsingX="true"
 		createOpenerButtons="false"
 		executability="Always"
-		height="170"
+		height="270"
 		openerCommandGroup="Read"
 		resizable="false"
-		width="400"
+		width="450"
 	/>
 
 	<components>

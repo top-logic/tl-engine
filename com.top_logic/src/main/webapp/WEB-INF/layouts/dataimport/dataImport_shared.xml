@@ -68,10 +68,10 @@
 					<layout name="${namePrefix}DataImportDialog">
 						<dialogInfo
 							closableUsingX="${closeableUsingX}"
-							height="600"
+							height="700"
 							openButtonSecComp="${namePrefix}DataImportStatus"
 							openerCommandGroup="Write"
-							width="700"
+							width="750"
 						/>
 
 						<components>

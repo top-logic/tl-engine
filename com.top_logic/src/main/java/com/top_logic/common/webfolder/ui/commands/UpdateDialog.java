@@ -131,7 +131,7 @@ public class UpdateDialog extends AbstractFormPageDialog {
 
 	public UpdateDialog(Document aModel, boolean manualLocking) {
 		super(I18NConstants.UPDATE_DIALOG, DisplayDimension.dim(500, DisplayUnit.PIXEL),
-			DisplayDimension.dim(300, DisplayUnit.PIXEL));
+			DisplayDimension.dim(400, DisplayUnit.PIXEL));
         
 		this.document = aModel;
 		UpdateDialog.UpdateCommand updateCommand = new UpdateDialog.UpdateCommand(this, document, getDiscardClosure());

@@ -53,8 +53,8 @@
 					>
 						<inject>
 							<dialogInfo
-								height="250"
-								width="450"
+								height="350"
+								width="500"
 							>
 								<open-handler id="displayDialog_${namePrefix}OrgUnitnewElementLayoutDialog"
 									clique="create"

@@ -37,8 +37,8 @@
 	>
 		<dialogInfo
 			defaultI18n="${defaultI18n}"
-			height="600"
-			width="800"
+			height="700"
+			width="850"
 		>
 			<open-handler id="displayDialog_${namePrefix}ShowHistoryDialog"
 				clique="additional"

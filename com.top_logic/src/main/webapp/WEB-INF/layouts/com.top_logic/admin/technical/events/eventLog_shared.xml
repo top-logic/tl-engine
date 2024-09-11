@@ -70,11 +70,11 @@
 					<layout name="${namePrefix}DialogLogEntriesSelection">
 						<dialogInfo
 							defaultI18n="layouts.admin.logEntries.openConfigureDialog"
-							height="480"
+							height="580"
 							image="theme:ICONS_CONFIGURE"
 							openHandlerName="eventFilterConfigurationOpener"
 							openerClique="settings"
-							width="600"
+							width="650"
 						/>
 
 						<components>

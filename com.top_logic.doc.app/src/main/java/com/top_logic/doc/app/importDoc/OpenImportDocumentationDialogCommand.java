@@ -56,7 +56,7 @@ public class OpenImportDocumentationDialogCommand extends AbstractCommandHandler
 				settings -> new ImportCommand(page, language, settings).processImport(),
 				I18NConstants.IMPORT_DIALOG.key("title"),
 				DisplayDimension.px(400),
-				DisplayDimension.px(200));
+				DisplayDimension.px(300));
 		return importDialog.open(aContext);
 	}
 

@@ -104,10 +104,10 @@
 			<inject>
 				<dialogInfo
 					defaultI18n="element.meta.metaElementTree.newEnumeration"
-					height="430"
+					height="530"
 					openerClique="createMenu"
 					openerCommandGroup="Create"
-					width="550"
+					width="600"
 				/>
 			</inject>
 		</include>
@@ -120,10 +120,10 @@
 			<inject>
 				<dialogInfo
 					defaultI18n="element.meta.metaElementTree.newType"
-					height="430"
+					height="530"
 					openerClique="createMenu"
 					openerCommandGroup="Create"
-					width="550"
+					width="600"
 				/>
 			</inject>
 		</include>
@@ -136,10 +136,10 @@
 			<inject>
 				<dialogInfo
 					defaultI18n="element.meta.metaElementTree.newModule"
-					height="430"
+					height="530"
 					openerClique="createMenu"
 					openerCommandGroup="Create"
-					width="550"
+					width="600"
 				/>
 			</inject>
 		</include>

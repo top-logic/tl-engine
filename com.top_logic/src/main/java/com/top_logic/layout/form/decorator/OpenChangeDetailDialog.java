@@ -104,7 +104,7 @@ public class OpenChangeDetailDialog implements Command {
 	private DefaultDialogModel createDialogModel() {
 		DefaultDialogModel dialogModel =
 			new DefaultDialogModel(new DefaultLayoutData(DisplayDimension.dim(640, DisplayUnit.PIXEL), 100,
-				DisplayDimension.dim(480, DisplayUnit.PIXEL), 100, Scrolling.AUTO),
+				DisplayDimension.dim(530, DisplayUnit.PIXEL), 100, Scrolling.AUTO),
 				new ResourceText(I18NConstants.COMPARE_DETAIL_DIALOG_TITLE), true, true, null);
 		return dialogModel;
 	}

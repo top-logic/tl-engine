@@ -128,10 +128,10 @@
 									createOpenerButtons="false"
 									defaultI18n="reporting.chart.gantt.export.dialog"
 									executability="${exportExecutability}"
-									height="200"
+									height="300"
 									openHandlerName="openExportDialog"
 									openerCommandGroup="Export"
-									width="320"
+									width="370"
 								/>
 
 								<components>

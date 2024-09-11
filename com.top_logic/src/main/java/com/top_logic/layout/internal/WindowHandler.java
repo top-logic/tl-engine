@@ -9,6 +9,7 @@ import static com.top_logic.mig.html.HTMLUtil.*;
 
 import java.io.IOException;
 
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.config.ApplicationConfig;
@@ -85,7 +86,7 @@ public class WindowHandler extends CompositeHandlerAdapter implements WindowCont
 	}
 
 	@Override
-	public void handleContent(DisplayContext context, String id, URLParser url) throws IOException {
+	public void handleContent(DisplayContext context, String id, URLParser url) throws IOException, ServletException {
 		if (url.isEmpty()) {
 			handleLocalContent(context, id, url);
 		} else {
@@ -103,7 +104,8 @@ public class WindowHandler extends CompositeHandlerAdapter implements WindowCont
 	 * 
 	 * @see #handleCompositeContent(DisplayContext, String, URLParser)
 	 */
-	protected void handleLocalContent(DisplayContext context, String id, URLParser url) throws IOException {
+	protected void handleLocalContent(DisplayContext context, String id, URLParser url)
+			throws IOException, ServletException {
 		WindowId windowId = getWindowId();
 		if (!windowId.matches(id) || !popTopLevelToken()) {
 			handleWindowIdMissmatch(context, windowId);
@@ -128,7 +130,8 @@ public class WindowHandler extends CompositeHandlerAdapter implements WindowCont
 	 * 
 	 * @see #handleContent(DisplayContext, String, URLParser)
 	 */
-	protected void deliverLocalContent(DisplayContext context, String id, URLParser url) throws IOException {
+	protected void deliverLocalContent(DisplayContext context, String id, URLParser url)
+			throws IOException, ServletException {
 		super.handleContent(context, id, url);
 	}
 
@@ -142,7 +145,8 @@ public class WindowHandler extends CompositeHandlerAdapter implements WindowCont
 	 * 
 	 * @see #handleLocalContent(DisplayContext, String, URLParser)
 	 */
-	protected void handleCompositeContent(DisplayContext context, String id, URLParser url) throws IOException {
+	protected void handleCompositeContent(DisplayContext context, String id, URLParser url)
+			throws IOException, ServletException {
 		super.handleContent(context, id, url);
 	}
 

@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -70,7 +71,7 @@ public class WindowRegistry<W extends WindowContext & ContentHandler> implements
 	}
 
 	@Override
-	public void handleContent(DisplayContext context, String id, URLParser url) throws IOException {
+	public void handleContent(DisplayContext context, String id, URLParser url) throws IOException, ServletException {
 		if (url.isEmpty()) {
 			handleWindowNameCreation(context);
 			return;
@@ -87,7 +88,8 @@ public class WindowRegistry<W extends WindowContext & ContentHandler> implements
 		dispatch(context, windowId, url);
 	}
 
-	private void dispatch(DisplayContext context, WindowId windowId, URLParser url) throws IOException {
+	private void dispatch(DisplayContext context, WindowId windowId, URLParser url)
+			throws IOException, ServletException {
 		W rootHandler = getContentHandler(windowId.getWindowName());
 
 		dispatch(context, rootHandler, windowId, url);
@@ -132,7 +134,8 @@ public class WindowRegistry<W extends WindowContext & ContentHandler> implements
 	 * @throws IOException
 	 *         See {@link #handleContent(DisplayContext, String, URLParser)}.
 	 */
-	protected void dispatch(DisplayContext context, W rootHandler, WindowId windowId, URLParser url) throws IOException {
+	protected void dispatch(DisplayContext context, W rootHandler, WindowId windowId, URLParser url)
+			throws IOException, ServletException {
 		if (rootHandler == null) {
 			ErrorPage.showPage(context, "srcNotFoundErrorPage");
 			return;

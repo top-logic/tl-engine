@@ -15,6 +15,8 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import jakarta.servlet.http.Part;
+
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.Settings;
 import com.top_logic.basic.io.StreamUtilities;
@@ -371,6 +373,22 @@ public class BinaryDataFactory {
 				return MimeTypesModule.getInstance().getMimeType(filename);
 			}
 		};
+	}
+
+	/**
+	 * Wraps upload data as a {@link BinaryData}.
+	 */
+	public static BinaryData createUploadData(Part part) throws IOException {
+		File tempDir = Settings.getInstance().getTempDir();
+		File tempFile = File.createTempFile("upload", ".data", tempDir);
+		part.write(tempFile.getAbsolutePath());
+
+		String submittedFileName = part.getSubmittedFileName();
+		String name = submittedFileName != null ? submittedFileName : part.getName();
+	
+		String contentType = AbstractBinaryData.nonNullContentType(part.getContentType());
+	
+		return createBinaryData(tempFile, contentType, name);
 	}
 
 }

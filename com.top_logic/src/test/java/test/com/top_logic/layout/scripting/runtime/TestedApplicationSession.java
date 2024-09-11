@@ -12,12 +12,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import jakarta.servlet.http.HttpSessionBindingEvent;
-import jakarta.servlet.http.HttpSessionBindingListener;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
@@ -25,6 +19,13 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import junit.framework.AssertionFailedError;
+
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSessionBindingEvent;
+import jakarta.servlet.http.HttpSessionBindingListener;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -44,7 +45,6 @@ import com.meterware.servletunit.ServletUnitHttpSession;
 
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSubSessionContext;
-import com.top_logic.base.multipart.MultipartRequest;
 import com.top_logic.base.services.simpleajax.AJAXConstants;
 import com.top_logic.base.services.simpleajax.AJAXServlet;
 import com.top_logic.basic.Logger;
@@ -80,7 +80,6 @@ import com.top_logic.layout.scripting.runtime.ApplicationSession;
 import com.top_logic.layout.scripting.runtime.GlobalVariableStore;
 import com.top_logic.layout.scripting.runtime.ScriptingRuntimeUtil;
 import com.top_logic.layout.scripting.runtime.action.ApplicationActionOp;
-import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
 import com.top_logic.layout.scripting.runtime.action.DynamicActionOp;
 import com.top_logic.layout.window.WindowComponent;
 import com.top_logic.mig.html.HTMLConstants;
@@ -526,13 +525,6 @@ public class TestedApplicationSession implements ApplicationSession, HttpSession
 
 	/* package protected */Object process(final ApplicationAction action, ServletContext servletContext,
 			HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
-		if (MultipartRequest.isMultipart(servletRequest)) {
-			try {
-				servletRequest = new MultipartRequest(servletRequest);
-			} catch (IOException ex) {
-				throw ApplicationAssertions.fail(action, "Cannot decode multipart request.", ex);
-			}
-		}
 		
 		final Object[] result = new Object[1];
 		TLContextManager.inInteraction(subsession, servletContext, servletRequest, servletResponse, new InContext() {

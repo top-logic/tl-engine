@@ -4316,7 +4316,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
     
     @Override
 	@Deprecated
-    public final void handleContent(DisplayContext context, String id, URLParser url) throws IOException {
+	public final void handleContent(DisplayContext context, String id, URLParser url)
+			throws IOException, ServletException {
 		getEnclosingFrameScope().handleContent(context, id, url);
     }
     

@@ -84,9 +84,9 @@
 			<inject>
 				<dialogInfo
 					defaultI18n="demo.table.demoLargeTableDialog"
-					height="450"
+					height="550"
 					image="theme:ICONS_OPEN_SELECTOR"
-					width="720"
+					width="770"
 				/>
 			</inject>
 		</include>

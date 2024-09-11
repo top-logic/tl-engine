@@ -70,7 +70,7 @@ public abstract class RevisionSelectDialog extends AbstractFormPageDialog {
 			currentModel,
 			revCallback,
 			DisplayDimension.dim(550, DisplayUnit.PIXEL),
-			DisplayDimension.dim(250, DisplayUnit.PIXEL),
+			DisplayDimension.dim(350, DisplayUnit.PIXEL),
 			true);
 	}
 

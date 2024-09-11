@@ -560,7 +560,7 @@ public class CockpitChartComponent extends AbstractChartComponent {
 		 */
 		public SelectChartTypeDialog(CockpitChartComponent opener) {
 			super(opener.getResPrefix(), DisplayDimension.dim(390, DisplayUnit.PIXEL),
-				DisplayDimension.dim(225, DisplayUnit.PIXEL));
+				DisplayDimension.dim(325, DisplayUnit.PIXEL));
 			_cockpit = opener;
 		}
 

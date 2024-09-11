@@ -106,6 +106,6 @@ public class OpenCreatePageDialogCommand extends PreconditionCommandHandler {
 		boolean isCreateChild = config().isCreateChild();
 		return new CreatePageDialog(component,
 			DisplayDimension.dim(400, DisplayUnit.PIXEL),
-			DisplayDimension.dim(260, DisplayUnit.PIXEL), selected, isCreateChild);
+			DisplayDimension.dim(400, DisplayUnit.PIXEL), selected, isCreateChild);
 	}
 }

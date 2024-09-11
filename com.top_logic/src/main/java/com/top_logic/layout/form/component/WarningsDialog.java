@@ -91,7 +91,7 @@ public class WarningsDialog {
 	/** Layout size definition for warning dialog. */
 	public static final DefaultLayoutData LAYOUT = new DefaultLayoutData(
 		DisplayDimension.dim(500, DisplayUnit.PIXEL), 100,
-		DisplayDimension.dim(250, DisplayUnit.PIXEL), 100, Scrolling.AUTO);
+		DisplayDimension.dim(350, DisplayUnit.PIXEL), 100, Scrolling.AUTO);
 
 	/**
 	 * Like {@link #openWarningsDialog(WindowScope, ResKey, FormContext, Command, Command)} without

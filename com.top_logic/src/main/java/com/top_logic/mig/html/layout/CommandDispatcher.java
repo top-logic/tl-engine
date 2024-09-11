@@ -92,7 +92,7 @@ public class CommandDispatcher {
 			ResKey message = CommandHandlerUtil.getConfirmKey(command, component, someArguments);
 			if (message != null) {
 				LayoutData layout =
-					DefaultLayoutData.newLayoutData(DisplayDimension.px(400), DisplayDimension.px(150));
+					DefaultLayoutData.newLayoutData(DisplayDimension.px(400), DisplayDimension.px(250));
 
 				HandlerResult suspended = HandlerResult.suspended();
 				Command continuation = suspended.resumeContinuation(COMMAND_APPROVED, Boolean.TRUE);

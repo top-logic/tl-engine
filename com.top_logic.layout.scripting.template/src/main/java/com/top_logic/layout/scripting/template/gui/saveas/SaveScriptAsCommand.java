@@ -83,7 +83,7 @@ public class SaveScriptAsCommand extends AbstractCommandHandler {
 		if (file.exists()) {
 			LayoutData layout = DefaultLayoutData.newLayoutData(
 				DisplayDimension.px(400),
-				DisplayDimension.px(150));
+				DisplayDimension.px(250));
 			CommandModel ok = MessageBox.button(ButtonType.OK, approveContext -> saveAndCloseDialog(component, file));
 			CommandModel cancelButton = MessageBox.button(ButtonType.CANCEL);
 			return MessageBox

@@ -82,7 +82,7 @@ public class ShowBookmarkLinkCommandHandler extends PreconditionCommandHandler {
 			protected void doExecute(DisplayContext context) {
 				MessageBox.newBuilder(MessageType.INFO)
 					.title(I18NConstants.CREATE_BOOKMARK_TITLE__MODEL.fill(model))
-					.layout(new DefaultLayoutData(DisplayDimension.px(350), 100, DisplayDimension.px(200), 100,
+					.layout(new DefaultLayoutData(DisplayDimension.px(350), 100, DisplayDimension.px(300), 100,
 						Scrolling.AUTO))
 					.message(this::renderContents)
 					.buttons(MessageBox.button(ButtonType.CLOSE))

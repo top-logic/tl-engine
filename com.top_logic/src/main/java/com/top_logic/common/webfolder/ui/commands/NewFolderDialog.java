@@ -142,7 +142,7 @@ public class NewFolderDialog extends AbstractFormPageDialog {
      */
 	public NewFolderDialog(WebFolder webFolder) {
 		super(I18NConstants.NEW_FOLDER_DIALOG, DisplayDimension.dim(400, DisplayUnit.PIXEL),
-			DisplayDimension.dim(310, DisplayUnit.PIXEL));
+			DisplayDimension.dim(400, DisplayUnit.PIXEL));
 		this.webFolder = webFolder;
     }
 

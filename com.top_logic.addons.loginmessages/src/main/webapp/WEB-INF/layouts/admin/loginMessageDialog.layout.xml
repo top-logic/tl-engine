@@ -6,11 +6,11 @@
 >
 	<dialogInfo
 		createOpenerButtons="false"
-		height="660px"
+		height="760px"
 		openHandlerName="openEditLoginMessageDialog"
 		openerCommandGroup="Read"
 		resizable="true"
-		width="850px"
+		width="900px"
 	/>
 
 	<components>

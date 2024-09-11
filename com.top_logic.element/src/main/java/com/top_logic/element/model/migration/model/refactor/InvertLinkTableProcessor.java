@@ -14,10 +14,12 @@ import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLFactory;
+import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
@@ -26,6 +28,11 @@ import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
+import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
+import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.MigrationException;
+import com.top_logic.model.migration.data.QualifiedPartName;
+import com.top_logic.model.migration.data.TypePart;
 
 /**
  * {@link MigrationProcessor} swapping link directions in an association table.
@@ -54,6 +61,35 @@ public class InvertLinkTableProcessor extends AbstractConfiguredInstance<InvertL
 		 */
 		@StringDefault(DBKnowledgeAssociation.REFERENCE_DEST_NAME)
 		String getDest();
+
+		/**
+		 * Name of the reference column of the given {@link #getTable()} that contains the reference
+		 * associated with the link stored in a table row.
+		 * 
+		 * <p>
+		 * The value is only relevant, if {@link #getReference()} is given.
+		 * </p>
+		 */
+		@Name("reference-column")
+		@StringDefault(ApplicationObjectUtil.META_ATTRIBUTE_ATTR)
+		String getReferenceColumn();
+
+		/**
+		 * The reference whose links should be inverted.
+		 * 
+		 * <p>
+		 * If not given, all links of the given {@link #getTable()} are inverted.
+		 * </p>
+		 * 
+		 * <p>
+		 * Note: Inverting links is not useful by its own, but only as part of a complex model
+		 * refactoring. Since the reference to which a link belongs is stored in the given
+		 * {@link #getReferenceColumn()}, this reference most likely must also be exchanged later
+		 * on.
+		 * </p>
+		 */
+		@Name("reference")
+		QualifiedPartName getReference();
 	}
 
 	/**
@@ -72,7 +108,10 @@ public class InvertLinkTableProcessor extends AbstractConfiguredInstance<InvertL
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		String tableName = getConfig().getTable();
-		log.info("Inverting links in table '" + tableName + "'. ");
+		QualifiedPartName invertedReference = getConfig().getReference();
+
+		log.info("Inverting links " + (invertedReference == null ? "" : "of reference '" + invertedReference + "' ")
+			+ "in table '" + tableName + "'. ");
 
 		MORepository repository = context.getPersistentRepository();
 		MOStructure table = (MOStructure) repository.getMetaObject(tableName);
@@ -80,15 +119,27 @@ public class InvertLinkTableProcessor extends AbstractConfiguredInstance<InvertL
 		MOReference srcRef = (MOReference) table.getAttribute(getConfig().getSrc());
 		MOReference destRef = (MOReference) table.getAttribute(getConfig().getDest());
 
+		MOReference metaRef =
+			invertedReference == null ? null : (MOReference) table.getAttribute(getConfig().getReferenceColumn());
+
+		Util util = context.getSQLUtils();
+
 		try {
+			TypePart reference =
+				invertedReference == null ? null : util.getTLTypePartOrFail(connection, invertedReference);
+
 			String srcTypeCol = srcRef.getColumn(ReferencePart.type).getDBName();
 			String srcIdCol = srcRef.getColumn(ReferencePart.name).getDBName();
 			String destTypeCol = destRef.getColumn(ReferencePart.type).getDBName();
 			String destIdCol = destRef.getColumn(ReferencePart.name).getDBName();
+
 			CompiledStatement sql = query(
 				update(
 					table(table.getDBMapping().getDBName()),
-					SQLFactory.literalTrueLogical(),
+					reference == null || metaRef == null ? 
+						SQLFactory.literalTrueLogical() : 
+						eqSQL(column(metaRef.getColumn(ReferencePart.name).getDBName()),
+							literal(DBType.ID, reference.getDefinition())),
 					columnNames(
 						// columnDef(srcRef.getColumn(ReferencePart.branch).getDBName()),
 						// columnDef(srcRef.getColumn(ReferencePart.revision).getDBName()),
@@ -107,7 +158,7 @@ public class InvertLinkTableProcessor extends AbstractConfiguredInstance<InvertL
 
 			int cnt = sql.executeUpdate(connection);
 			log.info("Inverted " + cnt + " links in table '" + table.getName() + "'.");
-		} catch (SQLException ex) {
+		} catch (SQLException | MigrationException ex) {
 			log.error("Failed to invert links in table '" + table.getName() + "': " + ex.getMessage());
 		}
 	}

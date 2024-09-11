@@ -58,8 +58,6 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 
 	private boolean _selectionValid = true;
 
-	List<SelectionVetoListener> _vetoListeners = Collections.emptyList();
-
 	/**
 	 * Creates a {@link SelectionPartControl}.
 	 * 
@@ -210,10 +208,7 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 	 *        Listener to check, before selection changes.
 	 */
 	public void addSelectionVetoListener(SelectionVetoListener listener) {
-		if (_vetoListeners == Collections.<SelectionVetoListener> emptyList()) {
-			_vetoListeners = new ArrayList<>();
-		}
-		_vetoListeners.add(listener);
+		_selectionPartModel.addSelectionVetoListener(listener);
 	}
 
 	/**
@@ -223,10 +218,7 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 	 *        Listener to remove.
 	 */
 	public void removeSelectionVetoListener(SelectionVetoListener listener) {
-		if (_vetoListeners.isEmpty()) {
-			return;
-		}
-		_vetoListeners.remove(listener);
+		_selectionPartModel.removeSelectionVetoListener(listener);
 	}
 
 	private static class ValueChanged extends ControlCommand {
@@ -293,6 +285,8 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 
 		private SelectionModel _selectionModel;
 
+		private List<SelectionVetoListener> _vetoListeners = Collections.emptyList();
+
 		/**
 		 * Create a new {@link SelectionPartModel}.
 		 */
@@ -350,12 +344,39 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 		 * @param control
 		 *        The holder for the veto listeners.
 		 */
-		abstract void updateSelectionVeto(SelectionPartControl control, boolean selected);
+		public abstract void updateSelectionVeto(SelectionPartControl control, boolean selected);
 
 		/**
 		 * Update of the {@link SelectionModel}.
 		 */
 		public abstract void updateSelection(boolean selected);
+
+		/**
+		 * Registers the given {@link SelectionVetoListener}.
+		 */
+		public void addSelectionVetoListener(SelectionVetoListener listener) {
+			if (_vetoListeners == Collections.<SelectionVetoListener> emptyList()) {
+				_vetoListeners = new ArrayList<>();
+			}
+			_vetoListeners.add(listener);
+		}
+
+		/**
+		 * Removes the given {@link SelectionVetoListener}.
+		 */
+		public void removeSelectionVetoListener(SelectionVetoListener listener) {
+			if (_vetoListeners.isEmpty()) {
+				return;
+			}
+			_vetoListeners.remove(listener);
+		}
+
+		/**
+		 * @return the {@link SelectionVetoListener}s.
+		 */
+		protected List<SelectionVetoListener> getVetoListeners() {
+			return _vetoListeners;
+		}
 
 	}
 	
@@ -393,9 +414,9 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 		}
 
 		@Override
-		void updateSelectionVeto(SelectionPartControl control, boolean selected) {
+		public void updateSelectionVeto(SelectionPartControl control, boolean selected) {
 			try {
-				for (SelectionVetoListener vetoListener : control._vetoListeners) {
+				for (SelectionVetoListener vetoListener : getVetoListeners()) {
 					vetoListener.checkVeto(getSelectionModel(), _selectionPart, SelectionType.TOGGLE_SINGLE);
 				}
 				updateSelection(selected);

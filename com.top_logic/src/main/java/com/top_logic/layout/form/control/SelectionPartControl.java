@@ -372,6 +372,8 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 		}
 
 		/**
+		 * Returns the {@link SelectionVetoListener}s.
+		 * 
 		 * @return the {@link SelectionVetoListener}s.
 		 */
 		protected List<SelectionVetoListener> getVetoListeners() {

@@ -699,12 +699,6 @@ div.dfListAdd {
 	grid-column: 1;
 }
 
-.rf_inputCell:not(.rf_labelAbove) > div:nth-child(2),
-.rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel):not(.rf_labelAbove) > div:nth-child(2) {
-	grid-row: 1;
-	grid-column: 2;
-}
-
 .rf_labelAbove.rf_inputCell:not(.keepInline) > div:nth-child(2),
 .cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),
 .cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),

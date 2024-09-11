@@ -66,8 +66,8 @@ public class StoreCurrentRevisionCommand extends AbstractCommandHandler {
 
 		public VariableNameDialog(ScriptRecorderTree scriptRecorder) {
 			super(I18NConstants.VARIABLE_NAME_DIALOG,
-				DisplayDimension.dim(330, DisplayUnit.PIXEL),
-				DisplayDimension.dim(150, DisplayUnit.PIXEL));
+				DisplayDimension.dim(350, DisplayUnit.PIXEL),
+				DisplayDimension.dim(250, DisplayUnit.PIXEL));
 			_scriptRecorderTree = scriptRecorder;
 		}
 

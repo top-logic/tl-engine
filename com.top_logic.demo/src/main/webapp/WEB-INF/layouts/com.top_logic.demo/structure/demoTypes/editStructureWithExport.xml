@@ -125,11 +125,11 @@
 										<inject>
 											<dialogInfo
 												executability="CreateElementRule"
-												height="250"
+												height="350"
 												image="theme:TREE_NEW_ELEMENT"
 												openerClique="create"
 												openerCommandGroup="Create"
-												width="450"
+												width="500"
 											/>
 										</inject>
 									</include>

@@ -145,7 +145,7 @@ public abstract class ImportOpenAPIConfiguration extends AbstractCommandHandler 
 	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model,
 			Map<String, Object> someArguments) {
 		DisplayDimension width = DisplayDimension.dim(300, DisplayUnit.PIXEL);
-		DisplayDimension height = DisplayDimension.dim(150, DisplayUnit.PIXEL);
+		DisplayDimension height = DisplayDimension.dim(250, DisplayUnit.PIXEL);
 		return new CreateConfigurationDialog<>(ImportConfiguration.class,
 			importConfig -> processUpload(importConfig, aComponent, model),
 			I18NConstants.IMPORT_OPEN_API_CONFIG_DIALOG_TITLE,

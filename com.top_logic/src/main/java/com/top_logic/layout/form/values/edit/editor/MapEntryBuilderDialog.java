@@ -109,7 +109,7 @@ public class MapEntryBuilderDialog extends AbstractFormDialog {
 
 	private static DefaultLayoutData createDialogLayout() {
 		DisplayDimension width = DisplayDimension.dim(30, DisplayUnit.PERCENT);
-		DisplayDimension height = DisplayDimension.dim(200, DisplayUnit.PIXEL);
+		DisplayDimension height = DisplayDimension.dim(300, DisplayUnit.PIXEL);
 
 		return new DefaultLayoutData(width, 100, height, 100, Scrolling.AUTO);
 	}

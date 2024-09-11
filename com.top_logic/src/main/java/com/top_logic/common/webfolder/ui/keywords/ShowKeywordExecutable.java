@@ -44,7 +44,8 @@ public class ShowKeywordExecutable extends AbstractWebfolderAction {
 		if (keywords.isEmpty()) {
 			return emptySearchResult(context);
 		}
-		KeywordsDialog dialog = new KeywordsDialog(keywords, DisplayDimension.FIFTY_PERCENT, DisplayDimension.dim(450, DisplayUnit.PIXEL));
+		KeywordsDialog dialog =
+			new KeywordsDialog(keywords, DisplayDimension.FIFTY_PERCENT, DisplayDimension.dim(520, DisplayUnit.PIXEL));
 		return dialog.open(context);
 	}
 

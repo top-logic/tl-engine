@@ -123,7 +123,7 @@ public class ImportDocumentationAsZipCommand extends AbstractImportExportDocumen
 				settings -> processImport(settings, page),
 				I18NConstants.IMPORT_DIALOG.key("title"),
 				DisplayDimension.px(300),
-				DisplayDimension.px(150));
+				DisplayDimension.px(250));
 		return importDialog.open(aContext);
 	}
 

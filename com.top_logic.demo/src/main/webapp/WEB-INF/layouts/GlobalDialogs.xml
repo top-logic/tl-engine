@@ -12,9 +12,9 @@
 		<dialogInfo
 			createOpenerButtons="false"
 			executability="Always"
-			height="500"
+			height="600"
 			openerCommandGroup="Read"
-			width="680"
+			width="730"
 		/>
 
 		<components>
@@ -42,9 +42,9 @@
 		<dialogInfo
 			createOpenerButtons="false"
 			executability="Always"
-			height="500"
+			height="600"
 			openerCommandGroup="Read"
-			width="680"
+			width="730"
 		/>
 	</securityLayout>
 	<layout-reference resource="reporting/flex/chart/chartDetailsDialog.layout.xml"/>

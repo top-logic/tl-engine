@@ -106,7 +106,7 @@ public class ZipDownloadDialog extends AbstractFormPageDialog {
      */
 	public ZipDownloadDialog(WebFolder webFolder) {
 		super(I18NConstants.ZIP_DOWNLOAD_FOLDER_DIALOG, DisplayDimension.dim(450, DisplayUnit.PIXEL),
-			DisplayDimension.dim(240, DisplayUnit.PIXEL));
+			DisplayDimension.dim(290, DisplayUnit.PIXEL));
 		this.info = new FolderInfo(webFolder);
 	}
 

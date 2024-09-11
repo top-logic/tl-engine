@@ -112,7 +112,7 @@ public abstract class AbstractShowObjectColumnRenderer<T> implements Renderer<T>
 		private LayoutData createLayoutData() {
 			return new DefaultLayoutData(
 				DisplayDimension.dim(800, DisplayUnit.PIXEL), 100,
-				DisplayDimension.dim(500, DisplayUnit.PIXEL), 100,
+				DisplayDimension.dim(600, DisplayUnit.PIXEL), 100,
 				Scrolling.AUTO);
 		}
 	}

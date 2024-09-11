@@ -21,6 +21,17 @@
 						application-type="com.top_logic.dob.meta.MOReference$HistoryType"
 					/>
 				</datatype>
+				<datatype name="DeletionPolicy"
+					db_type="string"
+					kind="Custom"
+				>
+					<annotations>
+						<config-type value="ENUM"/>
+					</annotations>
+					<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping"
+						application-type="com.top_logic.dob.meta.MOReference$DeletionPolicy"
+					/>
+				</datatype>
 				<datatype name="TLAnnotation"
 					db_type="clob"
 					kind="Custom"
@@ -667,6 +678,9 @@
 						/>
 						<property name="historyType"
 							type="tl.model:HistoryType"
+						/>
+						<property name="deletionPolicy"
+							type="tl.model:DeletionPolicy"
 						/>
 						<property name="endIndex"
 							type="tl.core:Integer"

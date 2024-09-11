@@ -17,6 +17,7 @@ import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.dob.MetaObject;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.meta.AssociationStorage;
 import com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil;
@@ -143,12 +144,27 @@ public abstract class LinkStorage<C extends LinkStorage.Config<?>> extends Colle
 	 *        The history type of the value of the reference.
 	 * @return The storage configuration.
 	 */
-	protected static <C extends LinkStorageConfig> C defaultConfig(Class<C> configType, boolean composite, HistoryType historyType) {
+	protected static <C extends LinkStorageConfig> C defaultConfig(Class<C> configType, boolean composite,
+			HistoryType historyType, DeletionPolicy deletionPolicy) {
 		C result = TypedConfiguration.newConfigItem(configType);
 		switch (historyType) {
 			case CURRENT:
 				if (composite) {
 					result.setTable(ApplicationObjectUtil.STRUCTURE_CHILD_ASSOCIATION);
+				} else {
+					switch (deletionPolicy) {
+						case CLEAR_REFERENCE:
+							break;
+						case DELETE_REFERER:
+							result.setTable(ApplicationObjectUtil.WRAPPER_DELETE_REFERER_ASSOCIATION);
+							break;
+						case STABILISE_REFERENCE:
+							result.setTable(ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION);
+							break;
+						case VETO:
+							result.setTable(ApplicationObjectUtil.WRAPPER_VETO_ASSOCIATION);
+							break;
+					}
 				}
 				break;
 			case HISTORIC:

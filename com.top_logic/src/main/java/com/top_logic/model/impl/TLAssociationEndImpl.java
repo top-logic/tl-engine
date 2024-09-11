@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.impl;
 
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
@@ -29,6 +30,7 @@ public class TLAssociationEndImpl extends AbstractStructuredTypePart<TLAssociati
 
 	private HistoryType _historyType = HistoryType.CURRENT;
 
+	private DeletionPolicy _deletionPolicy = DeletionPolicy.CLEAR_REFERENCE;
 
 	/*package protected*/ TLAssociationEndImpl(TLModelImpl model, String name) {
 		super(model, name);
@@ -86,6 +88,16 @@ public class TLAssociationEndImpl extends AbstractStructuredTypePart<TLAssociati
 	@Override
 	public void setHistoryType(HistoryType type) {
 		_historyType = type;
+	}
+
+	@Override
+	public DeletionPolicy getDeletionPolicy() {
+		return _deletionPolicy;
+	}
+
+	@Override
+	public void setDeletionPolicy(DeletionPolicy value) {
+		_deletionPolicy = value;
 	}
 
 }

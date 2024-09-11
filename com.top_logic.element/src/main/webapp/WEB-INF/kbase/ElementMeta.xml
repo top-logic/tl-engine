@@ -323,6 +323,9 @@
 		<mo_attribute att_name="historyType" att_type="String" mandatory="false">
 			<storage class="com.top_logic.dob.attr.storage.EnumAttributeStorage" enum="com.top_logic.dob.meta.MOReference$HistoryType" />
 		</mo_attribute>
+		<mo_attribute att_name="deletionPolicy" att_type="String" mandatory="false">
+			<storage class="com.top_logic.dob.attr.storage.EnumAttributeStorage" enum="com.top_logic.dob.meta.MOReference$DeletionPolicy" />
+		</mo_attribute>
 		<mo_attribute class="com.top_logic.dob.attr.ComputedMOAttribute" att_name="storageImplementation" att_type="Void"  mandatory="false">
 			<storage class="com.top_logic.dob.attr.storage.CachedComputedAttributeStorage">
 				<value-factory class="com.top_logic.element.meta.kbbased.StorageImplementationFactory" />
@@ -560,6 +563,27 @@
 	</association>
 	
 	<association super_class="hasWrapperAttValueBaseAssociation" object_name="hasWrapperAttValue" />
+	
+	<association super_class="hasWrapperAttValueBaseAssociation" object_name="hasWrapperDeleteReferer">
+		<attributes>
+		    <source
+				override="true"
+		    	target-type="Object"
+		    	deletion-policy="delete-referer" 
+				is-container="true"
+		    />
+		</attributes>
+	</association>
+
+	<association super_class="hasWrapperAttValueBaseAssociation" object_name="hasWrapperVeto">
+		<attributes>
+		    <destination
+				override="true"
+		    	target-type="Object"
+		    	deletion-policy="veto" 
+		    />
+		</attributes>
+	</association>
 
 		<!-- Database table storing references to historic objects. Note: This 
 			definition is actually a copy of "hasWrapperAttValueBaseAssociation". The 

@@ -10,6 +10,7 @@ import java.util.Set;
 
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Reference;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.model.impl.generated.TLReferenceBase;
 
@@ -164,6 +165,20 @@ public interface TLReference extends TLReferenceBase, TLClassPart {
 	 */
 	default void setHistoryType(HistoryType type) {
 		getEnd().setHistoryType(type);
+	}
+
+	/**
+	 * Specification how to handle deletions of objects referenced.
+	 */
+	default DeletionPolicy getDeletionPolicy() {
+		return getEnd().getDeletionPolicy();
+	}
+
+	/**
+	 * @see #getDeletionPolicy()
+	 */
+	default void setDeletionPolicy(DeletionPolicy value) {
+		getEnd().setDeletionPolicy(value);
 	}
 
 	/**

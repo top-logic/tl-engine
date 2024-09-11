@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.ex.NoSuchAttributeException;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.AssociationStorage;
@@ -82,10 +83,13 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 	 *        Whether the reference is a composition.
 	 * @param historyType
 	 *        The history type of the value of the reference.
+	 * @param deletionPolicy
+	 *        The deletion policy of the reference.
 	 * @return The storage configuration.
 	 */
-	public static Config<?> singletonLinkConfig(boolean composite, HistoryType historyType) {
-		return LinkStorage.defaultConfig(Config.class, composite, historyType);
+	public static Config<?> singletonLinkConfig(boolean composite, HistoryType historyType,
+			DeletionPolicy deletionPolicy) {
+		return LinkStorage.defaultConfig(Config.class, composite, historyType, deletionPolicy);
 	}
 
 	@Override

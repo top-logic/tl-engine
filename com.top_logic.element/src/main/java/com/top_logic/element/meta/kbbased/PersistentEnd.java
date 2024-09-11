@@ -8,6 +8,7 @@ package com.top_logic.element.meta.kbbased;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.AssociationQuery;
@@ -128,6 +129,16 @@ public class PersistentEnd extends ConfiguredAttributeImpl implements TLAssociat
 	@Override
 	public HistoryType getHistoryType() {
 		return (HistoryType) tGetData(PersistentReference.HISTORY_TYPE_ATTR);
+	}
+
+	@Override
+	public DeletionPolicy getDeletionPolicy() {
+		return (DeletionPolicy) tGetData(PersistentReference.DELETION_POLICY_ATTR);
+	}
+
+	@Override
+	public void setDeletionPolicy(DeletionPolicy value) {
+		tSetData(PersistentReference.DELETION_POLICY_ATTR, value);
 	}
 
 	@Override

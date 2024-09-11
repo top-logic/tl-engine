@@ -260,6 +260,7 @@ public class ModelConfigExtractor implements TLModelVisitor<ModelPartConfig, Voi
 			copyIfDifferent(config::isAggregate, config::setAggregate, model.getEnd().isAggregate());
 			copyIfDifferent(config::isComposite, config::setComposite, model.getEnd().isComposite());
 			copyIfDifferent(config::getHistoryType, config::setHistoryType, model.getEnd().getHistoryType());
+			copyIfDifferent(config::getDeletionPolicy, config::setDeletionPolicy, model.getEnd().getDeletionPolicy());
 			copyIfDifferent(config::getKind, config::setKind, kind(model));
 			if (TLModelUtil.getEnds(model.getEnd().getOwner()).size() == 2) {
 				TLAssociationEnd otherEnd = TLModelUtil.getOtherEnd(model.getEnd());
@@ -305,6 +306,7 @@ public class ModelConfigExtractor implements TLModelVisitor<ModelPartConfig, Voi
 			copyIfDifferent(config::isAggregate, config::setAggregate, model.isAggregate());
 			copyIfDifferent(config::isComposite, config::setComposite, model.isComposite());
 			copyIfDifferent(config::getHistoryType, config::setHistoryType, model.getHistoryType());
+			copyIfDifferent(config::getDeletionPolicy, config::setDeletionPolicy, model.getDeletionPolicy());
 		}
 		return config;
 	}

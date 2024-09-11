@@ -9,8 +9,13 @@ import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
+import com.top_logic.basic.func.Function1;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.meta.kbbased.PersistentReference;
+import com.top_logic.layout.form.model.FieldMode;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 
 /**
  * Configuration options for a reference.
@@ -31,6 +36,9 @@ public interface EndAspect extends PartConfig {
 
 	/** @see #getHistoryType() */
 	String HISTORY_TYPE_PROPERTY = "history-type";
+
+	/** @see #getDeletionPolicy() */
+	String DELETION_POLICY_PROPERTY = "deletion-policy";
 
 	/**
 	 * Whether the referenced object is a part of the refering object.
@@ -91,5 +99,32 @@ public interface EndAspect extends PartConfig {
 	 */
 	void setHistoryType(HistoryType type);
 
+	/**
+	 * Specification how to handle the case that a referenced object stored in this reference gets
+	 * deleted without the referring object being also deleted.
+	 * 
+	 * <p>
+	 * Note: The deletion policy is only relevant for references of history type
+	 * {@link HistoryType#CURRENT}.
+	 * </p>
+	 */
+	@Name(DELETION_POLICY_PROPERTY)
+	@DynamicMode(fun = CurrentOnly.class, args = @Ref(HISTORY_TYPE_PROPERTY))
+	DeletionPolicy getDeletionPolicy();
+
+	/**
+	 * @see #getDeletionPolicy()
+	 */
+	void setDeletionPolicy(DeletionPolicy value);
+
+	/**
+	 * {@link FieldMode} depending on a {@link HistoryType}.
+	 */
+	class CurrentOnly extends Function1<FieldMode, HistoryType> {
+		@Override
+		public FieldMode apply(HistoryType arg) {
+			return arg == HistoryType.CURRENT ? FieldMode.ACTIVE : FieldMode.DISABLED;
+		}
+	}
 }
 

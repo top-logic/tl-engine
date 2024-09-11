@@ -75,6 +75,7 @@ public class TLReferenceFormBuilder extends TLStructuredTypePartFormBuilder {
 		ReferenceModel.NAVIGATE_PROPERTY,
 
 		ReferenceModel.HISTORY_TYPE_PROPERTY,
+		ReferenceModel.DELETION_POLICY_PROPERTY,
 
 		ReferenceModel.LABEL,
 		ReferenceModel.DESCRIPTION,

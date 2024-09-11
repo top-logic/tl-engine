@@ -6,6 +6,7 @@
 package com.top_logic.model;
 
 import com.top_logic.basic.config.annotation.Reference;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.model.impl.generated.TLAssociationEndBase;
 
@@ -93,6 +94,22 @@ public interface TLAssociationEnd extends TLAssociationEndBase, TLAssociationPar
 	 * Setter for {@link #getHistoryType()}.
 	 */
 	void setHistoryType(HistoryType type);
+
+	/**
+	 * Specification how to handle the case that a referenced object stored in this reference gets
+	 * deleted without the referring object being also deleted.
+	 * 
+	 * <p>
+	 * Note: The deletion policy is only relevant for references of history type
+	 * {@link HistoryType#CURRENT}.
+	 * </p>
+	 */
+	DeletionPolicy getDeletionPolicy();
+
+	/**
+	 * @see #getDeletionPolicy()
+	 */
+	void setDeletionPolicy(DeletionPolicy value);
 
 	@Override
 	default ModelKind getModelKind() {

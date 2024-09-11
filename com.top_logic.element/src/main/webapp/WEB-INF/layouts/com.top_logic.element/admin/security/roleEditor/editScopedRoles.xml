@@ -25,10 +25,10 @@
 						<layout name="newRoleDialog">
 							<dialogInfo
 								executability="InViewMode"
-								height="280"
+								height="380"
 								openerClique="create"
 								openerCommandGroup="Create"
-								width="360"
+								width="410"
 							/>
 
 							<components>

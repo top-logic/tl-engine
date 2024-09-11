@@ -37,13 +37,13 @@
 						defaultI18n="reporting.flex.chart.displayDialog_NewStoredReportDialog"
 						disabledImage="theme:ICONS_BUTTON_SAVE_DISABLED"
 						executability="com.top_logic.reporting.flex.search.SearchResultChartConfigComponent$CanSaveSettings"
-						height="220"
+						height="320"
 						image="theme:ICONS_BUTTON_SAVE"
 						openButtonSecComp="${namePrefix}Configurator"
 						openHandlerClass="com.top_logic.reporting.flex.search.SearchResultChartConfigComponent$SaveAs"
 						openerClique="save"
 						openerCommandGroup="Create"
-						width="400"
+						width="450"
 					/>
 
 					<components>

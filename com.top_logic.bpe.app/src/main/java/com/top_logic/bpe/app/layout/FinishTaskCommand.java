@@ -323,7 +323,7 @@ public class FinishTaskCommand extends AbstractCommandHandler {
 		 */
 		public SelectTransitionDialog(Token token, HandlerResult suspended) {
 			super(I18NConstants.SELECT_TRANSITION_DIALOG, DisplayDimension.dim(550, DisplayUnit.PIXEL),
-				DisplayDimension.dim(220, DisplayUnit.PIXEL));
+				DisplayDimension.dim(320, DisplayUnit.PIXEL));
 			_token = token;
 			_displayType = findDisplayType(token);
 			_suspended = suspended;

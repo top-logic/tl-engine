@@ -94,10 +94,10 @@
 				>
 					<dialogInfo
 						defaultI18n="${resPrefix}.resources.uploadDialog.openCommand"
-						height="230"
+						height="330"
 						image="theme:ICON_FILE_IMPORT"
 						openerCommandGroup="Create"
-						width="350"
+						width="400"
 					/>
 					<form name="${namePrefix}ResourceUploadForm"
 						buttonComponent="${namePrefix}ResourceUploadButtons"

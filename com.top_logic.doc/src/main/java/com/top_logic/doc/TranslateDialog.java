@@ -93,7 +93,7 @@ public class TranslateDialog extends SimpleTemplateDialog {
 			I18NConstants.SOURCE_LANGUAGE_DIALOG.key("title"),
 			null,
 			I18NConstants.SOURCE_LANGUAGE_DIALOG.key("message"),
-			DisplayDimension.dim(350, DisplayUnit.PIXEL), DisplayDimension.dim(175, DisplayUnit.PIXEL));
+			DisplayDimension.dim(350, DisplayUnit.PIXEL), DisplayDimension.dim(250, DisplayUnit.PIXEL));
 		_pages = pages;
 		_targetLocale = targetLocale;
 		_overwrite = overwrite;

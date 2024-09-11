@@ -54,10 +54,10 @@
 							<layout name="${namePrefix}NewGroupDialog">
 								<dialogInfo
 									executability="InViewMode"
-									height="330"
+									height="430"
 									openerClique="create"
 									openerCommandGroup="Create"
-									width="400"
+									width="450"
 								/>
 
 								<components>

@@ -21,6 +21,7 @@ import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.messagebox.AbstractFormPageDialog;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.util.Resources;
 
 /**
@@ -66,8 +67,10 @@ public class CreatePageDialog extends AbstractFormPageDialog {
 	protected HTMLFragment createBodyContent() {
 		HTMLFragment titleInput = input(PAGE_TITLE);
 		HTMLFragment helpIdInput = input(HELP_ID);
-		return div(TL_DOC_CREATE_DIALOG_CSS, label(PAGE_TITLE), div(titleInput), label(HELP_ID),
-			div(helpIdInput));
+		return div(TL_DOC_CREATE_DIALOG_CSS, div(ReactiveFormCSS.RF_LABEL, label(PAGE_TITLE)),
+			div(ReactiveFormCSS.RF_CELL, titleInput),
+			div(ReactiveFormCSS.RF_LABEL, label(HELP_ID)),
+			div(ReactiveFormCSS.RF_CELL, helpIdInput));
 	}
 
 	@Override

@@ -100,7 +100,7 @@ public class VersionDialog extends AbstractFormPageDialog {
 	 */
 	public VersionDialog(ResPrefix aPrefix, Document document) {
 		super(I18NConstants.VERSION_DIALOG, DisplayDimension.dim(900, DisplayUnit.PIXEL),
-			DisplayDimension.dim(400, DisplayUnit.PIXEL));
+			DisplayDimension.dim(500, DisplayUnit.PIXEL));
 		this.document = document;
     }
 

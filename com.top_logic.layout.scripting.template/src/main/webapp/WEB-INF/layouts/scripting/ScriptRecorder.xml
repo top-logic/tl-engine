@@ -128,11 +128,11 @@
 					>
 						<dialogInfo
 							executability="com.top_logic.layout.scripting.template.gui.ServerScriptSelectorExecutability"
-							height="100px"
+							height="200px"
 							image="theme:ICONS_IMPORT"
 							openerClique="additional-apply"
 							openerCommandGroup="System"
-							width="600px"
+							width="650px"
 						/>
 						<components>
 							<component class="com.top_logic.layout.scripting.template.gui.ScriptUploadComponent"

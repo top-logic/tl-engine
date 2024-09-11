@@ -94,7 +94,7 @@ public abstract class AbstractConfirmationHandler extends AbstractCommandHandler
 	}
 
 	private DisplayDimension getConfirmationDialogHeight() {
-		return DisplayDimension.dim(250, DisplayUnit.PIXEL);
+		return DisplayDimension.dim(320, DisplayUnit.PIXEL);
 	}
 
 	private DisplayDimension getConfirmationDialogWidth() {

@@ -23,8 +23,8 @@
 				<include name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialog1.xml">
 					<inject>
 						<dialogInfo
-							height="300"
-							width="400"
+							height="400"
+							width="450"
 						/>
 					</inject>
 				</include>
@@ -40,8 +40,8 @@
 				>
 					<inject>
 						<dialogInfo
-							height="240"
-							width="240"
+							height="340"
+							width="290"
 						/>
 					</inject>
 				</include>
@@ -49,8 +49,8 @@
 				<include name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogInline1.xml">
 					<inject>
 						<dialogInfo
-							height="240"
-							width="240"
+							height="340"
+							width="290"
 						/>
 					</inject>
 				</include>
@@ -58,8 +58,8 @@
 				<include name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogInline2.xml">
 					<inject>
 						<dialogInfo
-							height="240"
-							width="240"
+							height="340"
+							width="290"
 						/>
 					</inject>
 				</include>
@@ -70,8 +70,8 @@
 					<inject>
 						<dialogInfo
 							closableUsingX="false"
-							height="170"
-							width="800"
+							height="270"
+							width="850"
 						/>
 					</inject>
 				</include>

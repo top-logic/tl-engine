@@ -5,10 +5,7 @@
  */
 package com.top_logic.knowledge.gui.layout.upload;
 
-import java.io.IOException;
 import java.util.List;
-
-import org.apache.commons.fileupload2.core.FileItem;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
@@ -102,46 +99,6 @@ public class SimpleFileNameStrategy implements FileNameStrategy {
 			return nameList.contains(name);
 		}
 	}
-
-	/**
-	 * Compute the name to be used for the given {@link FileItem}.
-	 * 
-	 * @param anItem
-	 *        The {@link FileItem} that should be named.
-	 * @return The server-side name of the given {@link FileItem}. Must not be <code>null</code> or
-	 *         empty.
-	 * @throws IOException
-	 *         The given {@link FileItem} cannot be named, or its client-side name violates
-	 *         constraints.
-	 */
-	public static String getFileName(FileItem<?> anItem) throws IOException {
-
-        String theName = anItem.getName();
-        
-        /* name must be defined */
-        if (StringServices.isEmpty(theName)) {
-            throw new IOException("FileItem without name.");
-        }
-        
-        int lastBS  = theName.lastIndexOf('\\');
-        if (lastBS >= 0) {
-            theName = theName.substring(1 + lastBS);
-        }
-        int lastS  = theName.lastIndexOf('/');
-        if (lastS >= 0) {
-            theName = theName.substring(1 + lastS);
-        }
-
-        /* name must be defined */
-        if (StringServices.isEmpty(theName)) {
-            throw new IOException("FileItem denotes a directory.");
-        }
-
-        return theName;
-
-        // This approach is not correct when mixing platforms (e.g Upload from Windows to Linux)
-        // theName = (new File(theName)).getName();
-    }
 
 	/**
 	 * Here you must return all the names which are not allowed as new entries. This method is

@@ -13,9 +13,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.fileupload2.core.FileItem;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Part;
 
-import com.top_logic.base.multipart.MultipartRequest;
 import com.top_logic.base.services.simpleajax.JSSnipplet;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
@@ -24,11 +25,11 @@ import com.top_logic.basic.col.TupleFactory.Pair;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.gui.layout.upload.DefaultDataItem;
-import com.top_logic.knowledge.service.binary.FileItemBinaryData;
 import com.top_logic.layout.AbstractDisplayValue;
 import com.top_logic.layout.ContentHandler;
 import com.top_logic.layout.Control;
@@ -432,22 +433,24 @@ public class GalleryControl extends AbstractControl implements GalleryModelListe
 	 * @param request
 	 *        Containing the files that where posted.
 	 */
-	private void performUpload(MultipartRequest request) {
+	private void performUpload(HttpServletRequest request) {
 		clearUploadedItems();
-		var receivedFiles = request.getFiles();
-		if (receivedFiles != null) {
-			for (int i = 0; i < receivedFiles.size(); i++) {
-				FileItem<?> fileItem = receivedFiles.get(i);
+		try {
+			var receivedFiles = request.getParts();
+			if (receivedFiles != null) {
+				for (Part fileItem : receivedFiles) {
+					String fileName = DnDFileUtilities.getFileName(fileItem);
+					if (Logger.isDebugEnabled(GalleryControl.class)) {
+						Logger.debug("Upload file named '" + fileName + "'", GalleryControl.class);
+					}
 
-				String fileName = DnDFileUtilities.getFileName(fileItem);
-				if (Logger.isDebugEnabled(GalleryControl.class)) {
-					Logger.debug("Upload file named '" + fileName + "'", GalleryControl.class);
+					BinaryData data = BinaryDataFactory.createUploadData(fileItem);
+					String contentType = DnDFileUtilities.getContentType(fileItem, fileName);
+					addUploadedItem(new DefaultDataItem(fileName, data, contentType));
 				}
-
-				BinaryData data = new FileItemBinaryData(fileItem);
-				String contentType = DnDFileUtilities.getContentType(fileItem, fileName);
-				addUploadedItem(new DefaultDataItem(fileName, data, contentType));
 			}
+		} catch (IOException | ServletException ex) {
+			throw new RuntimeException("Upload failed.", ex);
 		}
 	}
 

@@ -7,6 +7,7 @@ package com.top_logic.layout;
 
 import java.io.IOException;
 
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -33,7 +34,9 @@ public interface ContentHandler {
 	 *        resource which identifies this resource is already removed from that parser.
 	 * @throws IOException
 	 *         if some errors occurred
+	 * @throws ServletException
+	 *         If some servlet-specific error occurs.
 	 */
-	void handleContent(DisplayContext context, String id, URLParser url) throws IOException;
+	void handleContent(DisplayContext context, String id, URLParser url) throws IOException, ServletException;
 
 }

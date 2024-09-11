@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import jakarta.servlet.ServletException;
+
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.services.simpleajax.ClientAction;
 import com.top_logic.basic.Logger;
@@ -90,7 +92,7 @@ public class TopLevelComponentScope extends LayoutComponentScope {
 	}
 
 	@Override
-	public void handleContent(DisplayContext context, String id, URLParser url) throws IOException {
+	public void handleContent(DisplayContext context, String id, URLParser url) throws IOException, ServletException {
 		synchronized (this) {
 			// If an onunload notification has been received recently, the session
 			// timeout must be restored.

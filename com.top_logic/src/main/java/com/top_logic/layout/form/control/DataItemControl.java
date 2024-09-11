@@ -9,6 +9,7 @@ import static com.top_logic.basic.shared.string.StringServicesShared.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -16,9 +17,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.commons.fileupload2.core.FileItem;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Part;
 
-import com.top_logic.base.multipart.MultipartRequest;
 import com.top_logic.base.services.simpleajax.JSSnipplet;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.IDBuilder;
@@ -27,6 +29,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.listener.EventType.Bubble;
@@ -37,7 +40,6 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.knowledge.gui.layout.upload.DefaultDataItem;
-import com.top_logic.knowledge.service.binary.FileItemBinaryData;
 import com.top_logic.layout.AbstractDisplayValue;
 import com.top_logic.layout.ContentHandler;
 import com.top_logic.layout.Control;
@@ -415,25 +417,26 @@ public class DataItemControl extends AbstractFormFieldControl implements Content
 
 	/**
 	 * Performs the actual upload. It takes informations about the uploaded file from the given
-	 * {@link MultipartRequest} and stored it into the local variable {@link #_uploadedFiles}. That
-	 * item is stored into the field when the ajax callback is performed.
+	 * {@link HttpServletRequest} and stored it into the local variable {@link #_uploadedFiles}.
+	 * That item is stored into the field when the ajax callback is performed.
 	 */
 	@Override
-	public void handleContent(DisplayContext context, String id, URLParser url) throws IOException {
-		final MultipartRequest request = (MultipartRequest) context.asRequest();
+	public void handleContent(DisplayContext context, String id, URLParser url) throws IOException, ServletException {
+		final HttpServletRequest request = context.asRequest();
 
-		uploadMulti(nameChecker(), request.getFiles());
+		uploadMulti(nameChecker(), request.getParts());
 	}
 
-	private void uploadMulti(Function<String, ResKey> nameChecker, List<? extends FileItem<?>> receivedFiles)
-			throws IllegalArgumentException {
-		for (FileItem<?> file : receivedFiles) {
+	private void uploadMulti(Function<String, ResKey> nameChecker, Collection<Part> parts)
+			throws IllegalArgumentException, IOException {
+		for (Part file : parts) {
 			uploadSingle(nameChecker, file);
 		}
 	}
 
-	private void uploadSingle(Function<String, ResKey> nameChecker, FileItem<?> file) throws IllegalArgumentException {
-		final String name = file.getName();
+	private void uploadSingle(Function<String, ResKey> nameChecker, Part file)
+			throws IllegalArgumentException, IOException {
+		final String name = file.getSubmittedFileName();
 		assert name != null : "File must have a non-null name.";
 		String fileName = toFileName(name);
 
@@ -458,7 +461,7 @@ public class DataItemControl extends AbstractFormFieldControl implements Content
 			return;
 		}
 
-		BinaryData data = new FileItemBinaryData(file);
+		BinaryData data = BinaryDataFactory.createUploadData(file);
 		String contentType = file.getContentType();
 
 		if (BinaryDataSource.CONTENT_TYPE_OCTET_STREAM.equals(contentType)) {

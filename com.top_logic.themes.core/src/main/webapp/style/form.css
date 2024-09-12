@@ -205,12 +205,8 @@ div.fptIconBar > span.fptIconOverlay {
 }
 
 .rf_label {
-	margin: var(--spacing-02) 0;
 	white-space: nowrap;
-	overflow: hidden;
-	/* To center the label for the cases when it's in a grid or in a flexbox */
-	align-items: center;
-	align-content: center;
+	margin: var(--spacing-02) 0;
 }
 
 .rf_label .cLabel label.disabled,
@@ -406,10 +402,9 @@ div.rf_buttons {
 }
 
 .rf_columnsLayout.keep {
-	display: grid;
-	grid-gap: var(--spacing-02) var(--RF_HORIZONTAL_GAP_FILTER);
 	margin-top: var(--spacing-02);
 	overflow: auto;
+	flex-wrap: nowrap;
 }
 
 .rf_columnsLayout.keep .rf_inputCell:not(.rf_labelAbove) {
@@ -417,12 +412,13 @@ div.rf_buttons {
 	align-items: center;
 }
 
-.rf_columnsLayout.keep .rf_inputCell:not(.rf_labelAbove) .rf_label {
-	flex-shrink: 0;
+.rf_columnsLayout.keep .rf_inputCell.rf_labelAbove {
+	display: flex !important;
+	flex-direction: column;
 }
 
 .rf_columnsLayout.keep .rf_inputCell:not(.rf_labelAbove) .rf_cell {
-	min-width: 10em;
+	min-width: var(--RF_FIRST_COLUMN_WIDTH);
 }
 
 .rf_cell {
@@ -715,6 +711,7 @@ div.dfListAdd {
 .rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel) {
 	display: grid;
 	grid-template-columns: minmax(0px, 1fr);
+	grid-template-rows: 24px 1fr;
 	line-height: 24px;
 	margin-bottom: 0;
 }

@@ -1243,7 +1243,7 @@
 		value="4rem"
 	/>
 	<dim name="RF_VERTICAL_GAP_CELLS"
-		value="0.5rem"
+		value="1rem"
 	/>
 	<dim name="RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY"
 		value="90px"

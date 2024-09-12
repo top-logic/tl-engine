@@ -2,7 +2,6 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="true"
 	template="com.top_logic.model.search/genericForm.template.xml"
 >
 	<arguments>
@@ -15,44 +14,11 @@
 			<forms>
 				<form type="DemoTypes:DemoTypes.A">
 					<formDefinition>
-						<columnsLayout
-							columns="FOUR"
+						<group
+							columns="DEFAULT"
 							labelPlacement="ABOVE"
-							lineBreak="false"
+							wholeLine="true"
 						>
-							<field
-								attribute="dateTime"
-								fullQualifiedName="DemoTypes:DemoTypes.A#dateTime"
-								type="tl.core:DateTime"
-							>
-								<annotations/>
-							</field>
-							<field
-								attribute="idString"
-								fullQualifiedName="DemoTypes:DemoTypes.A#idString"
-								type="tl.core:String"
-								visibility="read-only"
-							>
-								<annotations/>
-							</field>
-							<field
-								attribute="parent"
-								fullQualifiedName="DemoTypes:DemoTypes.All#parent"
-								type="DemoTypes:DemoTypesContainer"
-								visibility="read-only"
-							>
-								<annotations/>
-							</field>
-							<field
-								attribute="parent"
-								fullQualifiedName="DemoTypes:DemoTypes.All#parent"
-								type="DemoTypes:DemoTypesContainer"
-								visibility="read-only"
-							>
-								<annotations/>
-							</field>
-						</columnsLayout>
-						<group labelPlacement="ABOVE">
 							<field
 								attribute="long"
 								fullQualifiedName="DemoTypes:DemoTypes.A#long"
@@ -71,7 +37,55 @@
 								fullQualifiedName="DemoTypes:DemoTypes.A#classificationSingle"
 								type="tl5.enum:tl.beacon.three"
 							/>
+							<field
+								attribute="comments"
+								fullQualifiedName="DemoTypes:DemoTypes.A#comments"
+								type="tl.comments:Comment"
+							/>
+							<label key="dynamic.6a1a34d9-908f-49be-bf2e-916e180d5e45">
+								<en>Label Above</en>
+								<de>Label Darüber</de>
+							</label>
 						</group>
+						<columnsLayout
+							columns="FIVE"
+							labelPlacement="ABOVE"
+							lineBreak="false"
+						>
+							<field
+								attribute="dateTime"
+								fullQualifiedName="DemoTypes:DemoTypes.A#dateTime"
+								type="tl.core:DateTime"
+							>
+								<annotations/>
+							</field>
+							<field
+								attribute="classificationSinglePopup"
+								fullQualifiedName="DemoTypes:DemoTypes.A#classificationSinglePopup"
+								type="tl5.enum:tl.beacon.three"
+							/>
+							<field
+								attribute="classificationUnorderedMulti"
+								fullQualifiedName="DemoTypes:DemoTypes.A#classificationUnorderedMulti"
+								type="DemoTypes:demo.federalstates"
+							/>
+							<field
+								attribute="idString"
+								fullQualifiedName="DemoTypes:DemoTypes.A#idString"
+								type="tl.core:String"
+								visibility="read-only"
+							>
+								<annotations/>
+							</field>
+							<field
+								attribute="parent"
+								fullQualifiedName="DemoTypes:DemoTypes.All#parent"
+								type="DemoTypes:DemoTypesContainer"
+								visibility="read-only"
+							>
+								<annotations/>
+							</field>
+						</columnsLayout>
 						<group labelPlacement="INLINE">
 							<field
 								attribute="checklistSingle"
@@ -89,11 +103,13 @@
 								type="tl.core:Long"
 							/>
 							<label key="dynamic.1c77ec4f-4236-4c19-a1d8-664c73e720ab">
-								<de>Inline</de>
+								<en>Label Inline</en>
+								<de>Label Inline</de>
 							</label>
 						</group>
 						<columnsLayout
 							columns="FOUR"
+							labelPlacement="INLINE"
 							lineBreak="false"
 						>
 							<field

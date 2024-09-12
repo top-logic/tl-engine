@@ -103,6 +103,28 @@
 		</index>
 	</association>
 
+	<association super_class="hasStructureChild" object_name="hasStructureChildDeleteReferer">
+		<attributes>
+		    <source
+				override="true"
+		    	target-type="Object"
+		    	deletion-policy="delete-referer" 
+				is-container="true"
+		    />
+		</attributes>
+	</association>
+	
+	<association super_class="hasStructureChild" object_name="hasStructureChildVeto">
+		<attributes>
+		    <destination
+				override="true"
+				is-container="true"
+		    	target-type="Object"
+		    	deletion-policy="veto" 
+		    />
+		</attributes>
+	</association>
+
 	<metaobject object_type="MOKnowledgeObject" object_name="TLModule" super_class="TLModelPart" abstract="false">
 		<annotations>
 			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">

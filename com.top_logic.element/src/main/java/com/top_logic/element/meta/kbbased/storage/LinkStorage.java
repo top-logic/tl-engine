@@ -150,7 +150,20 @@ public abstract class LinkStorage<C extends LinkStorage.Config<?>> extends Colle
 		switch (historyType) {
 			case CURRENT:
 				if (composite) {
-					result.setTable(ApplicationObjectUtil.STRUCTURE_CHILD_ASSOCIATION);
+					switch (deletionPolicy) {
+						case CLEAR_REFERENCE:
+							result.setTable(ApplicationObjectUtil.STRUCTURE_CHILD_ASSOCIATION);
+							break;
+						case DELETE_REFERER:
+							result.setTable(ApplicationObjectUtil.STRUCTURE_CHILD_DELETE_REFERER_ASSOCIATION);
+							break;
+						case STABILISE_REFERENCE:
+							// This an unsupported combination of settings.
+							break;
+						case VETO:
+							result.setTable(ApplicationObjectUtil.STRUCTURE_CHILD_VETO_ASSOCIATION);
+							break;
+					}
 				} else {
 					switch (deletionPolicy) {
 						case CLEAR_REFERENCE:

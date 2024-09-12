@@ -162,7 +162,7 @@ public class ApplicationObjectUtil {
 	 * Generic association for storing compositions that are also marked with
 	 * {@link DeletionPolicy#DELETE_REFERER}.
 	 */
-	public static final String STRUCTURE_CHILD_DELETE_REFERER_ASSOCIATION = "hasStructureChildDeleteReferer";
+	public static final String STRUCTURE_CHILD_DELETE_REFERER_ASSOCIATION = "hasChildDeleteReferer";
 
 	/**
 	 * Generic association for storing compositions that are also marked with

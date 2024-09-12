@@ -61,6 +61,7 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.BasicTypes;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.dob.schema.config.DBColumnType;
@@ -202,6 +203,8 @@ public class Util {
 	 */
 	private boolean _abstractColumn;
 
+	private boolean _deletionColumn;
+
 	/**
 	 * Creates a {@link Util}.
 	 */
@@ -218,7 +221,11 @@ public class Util {
 					String columnName = columns.getString("COLUMN_NAME");
 					if (SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR).equals(columnName)) {
 						setHistoryColumn(true);
-					} else if (SQLH.mangleDBName(TLStructuredTypePart.ABSTRACT_ATTR).equals(columnName)) {
+					} 
+					else if (SQLH.mangleDBName(TLAssociationEnd.DELETION_POLICY_ATTR).equals(columnName)) {
+						setDeletionColumn(true);
+					}
+					else if (SQLH.mangleDBName(TLStructuredTypePart.ABSTRACT_ATTR).equals(columnName)) {
 						setAbstractColumn(true);
 					}
 				}
@@ -227,6 +234,11 @@ public class Util {
 				log.info("No column '" + SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR) + "' found in table '"
 						+ metaAttributeTable
 						+ "'. This is ok if database belongs to a migration before TopLogic version 7.5.0.");
+			}
+			if (!hasDeletionColumn()) {
+				log.info("No column '" + SQLH.mangleDBName(TLAssociationEnd.DELETION_POLICY_ATTR) + "' found in table '"
+					+ metaAttributeTable
+					+ "'. This is ok if database belongs to a migration before TopLogic version 7.9.0.");
 			}
 			if (!hasAbstractColumn()) {
 				log.info("No column '" + SQLH.mangleDBName(TLStructuredTypePart.ABSTRACT_ATTR) + "' found in table '"
@@ -499,15 +511,17 @@ public class Util {
 		Boolean navigate = null;
 		HistoryType historyType = null;
 
+		// Only defined for association ends.
+		DeletionPolicy deletionPolicy = null;
+
 		return createTLStructuredTypePart(log, con, branch, module, className, partName, partID,
 			targetModule, targetType, TLStructuredTypeColumns.CLASS_PROPERTY_IMPL, endID, definitionID,
 			mandatory, isAbstract, composite, aggregate, multiple, bagValue,
-			orderedValue, navigate, historyType, annotations);
+			orderedValue, navigate, historyType, deletionPolicy, annotations);
 	}
 
 	/**
 	 * Creates a new {@link TLAssociationEnd}.
-	 * 
 	 * @param assEnd
 	 *        Name of the {@link TLAssociationEnd} to create.
 	 * @param target
@@ -517,18 +531,17 @@ public class Util {
 			PooledConnection con, QualifiedPartName assEnd,
 			QualifiedTypeName target, boolean mandatory, boolean isAbstract, boolean composite, boolean aggregate,
 			boolean multiple, boolean bag, boolean ordered, boolean navigate,
-			HistoryType historyType, AnnotatedConfig<TLAttributeAnnotation> annotations)
+			HistoryType historyType, DeletionPolicy deletionPolicy, AnnotatedConfig<TLAttributeAnnotation> annotations)
 			throws SQLException, MigrationException {
 		return createTLAssociationEnd(log, con,
 			TLContext.TRUNK_ID, assEnd.getModuleName(), assEnd.getTypeName(),
 			assEnd.getPartName(), target.getModuleName(),
 			target.getTypeName(), mandatory, isAbstract, composite, aggregate, multiple, bag, ordered, navigate,
-			historyType, toString(annotations));
+			historyType, deletionPolicy, toString(annotations));
 	}
 
 	/**
 	 * Creates a new {@link TLAssociationEnd}.
-	 * 
 	 * @param moduleName
 	 *        Name of the {@link TLModule} of the {@link TLAssociationEnd} to create.
 	 * @param ownerName
@@ -541,7 +554,7 @@ public class Util {
 			String partName, String targetModule,
 			String targetTypeName, boolean mandatory, boolean isAbstract, boolean composite, boolean aggregate,
 			boolean multiple, boolean bag, boolean ordered, boolean navigate,
-			HistoryType historyType, String annotations)
+			HistoryType historyType, DeletionPolicy deletionPolicy, String annotations)
 			throws SQLException, MigrationException {
 		Objects.requireNonNull(historyType);
 		TLID partID = newID(con);
@@ -551,7 +564,7 @@ public class Util {
 		return createTLStructuredTypePart(log, con, branch, moduleName, ownerName, partName, partID,
 			targetModule, targetTypeName, TLStructuredTypeColumns.ASSOCIATION_END_IMPL, endID, definitionID,
 			mandatory, isAbstract, composite, aggregate, multiple, bag,
-			ordered, navigate, historyType, annotations);
+			ordered, navigate, historyType, deletionPolicy, annotations);
 	}
 
 	private Reference internalCreateTLReference(Log log, PooledConnection con,
@@ -572,11 +585,16 @@ public class Util {
 		Boolean bag = null;
 		Boolean ordered = null;
 		Boolean navigate = null;
+
+		// Defined only for association ends.
 		HistoryType historyType = null;
+
+		// Defined only for association ends.
+		DeletionPolicy deletionPolicy = null;
 		return (Reference) createTLStructuredTypePart(log, con, branch, moduleName, ownerName, partName, partID,
 			targetTable, targetID, TLStructuredTypeColumns.REFERENCE_IMPL, endID, definitionID,
 			isMandatory, isAbstract, composite, aggregate, isMultiple, bag,
-			ordered, navigate, historyType, annotations);
+			ordered, navigate, historyType, deletionPolicy, annotations);
 	}
 
 	private TypePart createTLStructuredTypePart(Log log, PooledConnection con,
@@ -585,7 +603,7 @@ public class Util {
 			String targetTypeName, String impl, TLID endID,
 			TLID definitionID, Boolean mandatory, Boolean isAbstract, Boolean composite, Boolean aggregate,
 			Boolean multiple, Boolean bag, Boolean ordered, Boolean navigate,
-			HistoryType historyType, String annotations)
+			HistoryType historyType, DeletionPolicy deletionPolicy, String annotations)
 			throws SQLException, MigrationException {
 		Type targetType = getTLTypeOrFail(con, branch, targetModule, targetTypeName);
 		if (targetType == null) {
@@ -595,7 +613,7 @@ public class Util {
 
 		return createTLStructuredTypePart(log, con, branch, moduleName, ownerName, partName, partID,
 			targetType.getTable(), targetType.getID(), impl, endID, definitionID, mandatory, isAbstract, composite,
-			aggregate, multiple, bag, ordered, navigate, historyType, annotations);
+			aggregate, multiple, bag, ordered, navigate, historyType, deletionPolicy, annotations);
 	}
 
 	private TypePart createTLStructuredTypePart(Log log, PooledConnection con,
@@ -604,7 +622,7 @@ public class Util {
 			TLID targetID, String impl, TLID endID,
 			TLID definitionID, Boolean mandatory, Boolean isAbstract, Boolean composite, Boolean aggregate,
 			Boolean multiple, Boolean bag, Boolean ordered, Boolean navigate,
-			HistoryType historyType, String annotations)
+			HistoryType historyType, DeletionPolicy deletionPolicy, String annotations)
 			throws SQLException, MigrationException {
 		DBHelper sqlDialect = con.getSQLDialect();
 
@@ -619,7 +637,7 @@ public class Util {
 
 		internalCreateProperty(log, con, branch, partName, partID, targetTable, targetID, impl, endID,
 			definitionID, mandatory, isAbstract, composite, aggregate, multiple, bag, ordered, navigate, historyType,
-			annotations, sqlDialect, ownerClass, ownerOrder, revCreate);
+			deletionPolicy, annotations, sqlDialect, ownerClass, ownerOrder, revCreate);
 
 		TypePart typePart;
 		if (TLStructuredTypeColumns.REFERENCE_IMPL.equals(impl)) {
@@ -654,8 +672,8 @@ public class Util {
 	private void internalCreateProperty(Log log, PooledConnection con, long branch, String partName,
 			TLID partID, String targetTable, TLID targetID, String impl, TLID endID, TLID definitionID,
 			Boolean mandatory, Boolean isAbstract, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag,
-			Boolean ordered, Boolean navigate, HistoryType historyType, String annotations, DBHelper sqlDialect,
-			Type ownerClass, int ownerOrder, Long revCreate) throws SQLException {
+			Boolean ordered, Boolean navigate, HistoryType historyType, DeletionPolicy deletionPolicy, String annotations,
+			DBHelper sqlDialect, Type ownerClass, int ownerOrder, Long revCreate) throws SQLException {
 		if (!hasHistoryColumn()) {
 			/* There is no history column, therefore a potentially given history type can not be
 			 * set. */
@@ -676,6 +694,12 @@ public class Util {
 
 				historyType = null;
 			}
+		}
+		if (!hasDeletionColumn() && deletionPolicy != null) {
+			log.info(
+				"Cannot set deletion policy of '" + toString(ownerClass) + "#" + partName + "' to '" + deletionPolicy
+				+ "', since references do not yet have the corresponding property.", Protocol.WARN);
+			deletionPolicy = null;
 		}
 		CompiledStatement createProperty = query(
 			parameters(
@@ -725,7 +749,9 @@ public class Util {
 					SQLH.mangleDBName(TLAssociationEnd.ORDERED_ATTR),
 					SQLH.mangleDBName(TLAssociationEnd.BAG_ATTR),
 					SQLH.mangleDBName(TLAssociationEnd.NAVIGATE_ATTR),
-					historyType == null ? null : SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR)),
+					historyType == null ? null : SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR),
+					deletionPolicy == null ? null : SQLH.mangleDBName(TLAssociationEnd.DELETION_POLICY_ATTR)
+				),
 				listWithoutNull(
 					branchParamOrNull(),
 					parameter(DBType.ID, "identifier"),
@@ -749,12 +775,16 @@ public class Util {
 					parameter(DBType.BOOLEAN, "ordered"),
 					parameter(DBType.BOOLEAN, "bag"),
 					parameter(DBType.BOOLEAN, "navigate"),
-					historyType == null ? null : parameter(DBType.STRING, "historyType")))).toSql(sqlDialect);
+					historyType == null ? null : parameter(DBType.STRING, "historyType"),
+					deletionPolicy == null ? null : parameter(DBType.STRING, "deletionPolicy")
+				))).toSql(sqlDialect);
 
 		createProperty.executeUpdate(con, branch, partID, revCreate, annotations, partName, impl,
 			ownerClass.getID(), ownerOrder, targetTable, targetID, endID, definitionID, mandatory,
 			isAbstract, multiple, composite, aggregate, ordered, bag, navigate,
-			historyType == null ? null : historyType.getExternalName());
+			historyType == null ? null : historyType.getExternalName(),
+			deletionPolicy == null ? null : deletionPolicy.getExternalName()
+		);
 	}
 
 	private List<OrderValue> getOrders(PooledConnection con, long branch, TLID ownerId,
@@ -1229,7 +1259,6 @@ public class Util {
 
 	/**
 	 * Creates a new {@link TLReference}.
-	 * 
 	 * @param reference
 	 *        Qualified name of the reference to create.
 	 * @param target
@@ -1239,18 +1268,17 @@ public class Util {
 			PooledConnection con, QualifiedPartName reference,
 			QualifiedTypeName target, boolean mandatory, boolean isAbstract, boolean composite, boolean aggregate,
 			boolean multiple, boolean bag, boolean ordered, boolean navigate,
-			HistoryType historyType, AnnotatedConfig<TLAttributeAnnotation> annotations)
+			HistoryType historyType, DeletionPolicy deletionPolicy, AnnotatedConfig<TLAttributeAnnotation> annotations)
 			throws SQLException, MigrationException {
 		return createTLReference(log, con,
 			TLContext.TRUNK_ID, reference.getModuleName(), reference.getTypeName(),
 			reference.getPartName(), target.getModuleName(),
 			target.getTypeName(), mandatory, isAbstract, composite, aggregate, multiple, bag, ordered, navigate,
-			historyType, toString(annotations));
+			historyType, deletionPolicy, toString(annotations));
 	}
 
 	/**
 	 * Creates a new {@link TLReference}.
-	 * 
 	 * @param moduleName
 	 *        Name of the module of the reference to create.
 	 * @param ownerName
@@ -1267,7 +1295,7 @@ public class Util {
 			String partName, String targetModule,
 			String targetTypeName, boolean mandatory, boolean isAbstract, boolean composite, boolean aggregate,
 			boolean multiple, boolean bag, boolean ordered, boolean navigate,
-			HistoryType historyType, String annotations)
+			HistoryType historyType, DeletionPolicy deletionPolicy, String annotations)
 			throws SQLException, MigrationException {
 		Objects.requireNonNull(historyType);
 
@@ -1278,13 +1306,13 @@ public class Util {
 			associationType.getModule().getModuleName(), associationType.getTypeName(),
 			TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME,
 			moduleName, ownerName, false, false, false,
-			false, true, false, false, false, HistoryType.CURRENT, null);
+			false, true, false, false, false, HistoryType.CURRENT, DeletionPolicy.CLEAR_REFERENCE, null);
 
 		TypePart targetEnd = createTLAssociationEnd(log, con, branch,
 			associationType.getModule().getModuleName(), associationType.getTypeName(),
 			partName,
 			targetModule, targetTypeName, mandatory, isAbstract, composite,
-			aggregate, multiple, bag, ordered, navigate, historyType, null);
+			aggregate, multiple, bag, ordered, navigate, historyType, deletionPolicy, null);
 
 		Reference reference =
 			internalCreateTLReference(log, con, branch, moduleName, ownerName, partName, targetEnd.getID(),
@@ -3897,6 +3925,23 @@ public class Util {
 	 */
 	public void setHistoryColumn(boolean historyColumn) {
 		_historyColumn = historyColumn;
+	}
+
+	/**
+	 * Whether the model already has the column that stores the deletion policy for association
+	 * ends.
+	 * 
+	 * @see TLAssociationEnd#getDeletionPolicy()
+	 */
+	public boolean hasDeletionColumn() {
+		return _deletionColumn;
+	}
+
+	/**
+	 * @see #hasDeletionColumn()
+	 */
+	public void setDeletionColumn(boolean value) {
+		_deletionColumn = value;
 	}
 
 	/**

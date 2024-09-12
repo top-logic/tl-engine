@@ -88,7 +88,7 @@ public class CreateTLAssociationEndProcessor
 			getConfig().isAggregate(), getConfig().isMultiple(),
 			getConfig().isBag(),
 			getConfig().isOrdered(),
-			getConfig().canNavigate(), getConfig().getHistoryType(), getConfig());
+			getConfig().canNavigate(), getConfig().getHistoryType(), getConfig().getDeletionPolicy(), getConfig());
 
 		boolean updateModelBaseline;
 		if (tlModel == null || TLStructuredTypeColumns.isSyntheticAssociationName(partName.getTypeName())) {
@@ -99,7 +99,8 @@ public class CreateTLAssociationEndProcessor
 			MigrationUtils.createEnd(log, tlModel, partName, targetType, nullIfUnset(Config.MANDATORY),
 				nullIfUnset(Config.COMPOSITE), nullIfUnset(Config.AGGREGATE), nullIfUnset(Config.MULTIPLE),
 				nullIfUnset(Config.BAG), nullIfUnset(Config.ORDERED), nullIfUnset(Config.ABSTRACT),
-				nullIfUnset(Config.NAVIGATE), nullIfUnset(Config.HISTORY_TYPE), getConfig());
+				nullIfUnset(Config.NAVIGATE), nullIfUnset(Config.HISTORY_TYPE), nullIfUnset(Config.DELETION_POLICY),
+				getConfig());
 			updateModelBaseline = true;
 		}
 		log.info("Created part " + _util.qualifiedName(partName));

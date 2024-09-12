@@ -38,6 +38,28 @@
 	            target-type="Object"
 	          />
 	        </association>
+			<association
+			  object_name="hasStructureChildDeleteReferer"
+			  super_class="hasStructureChild"
+			>
+			  <source
+			    deletion-policy="delete-referer"
+			    is-container="true"
+			    override="true"
+			    target-type="Object"
+			  />
+			</association>
+			<association
+			  object_name="hasStructureChildVeto"
+			  super_class="hasStructureChild"
+			>
+			  <destination
+			    deletion-policy="veto"
+			    is-container="true"
+			    override="true"
+			    target-type="Object"
+			  />
+			</association>
 	      </schema>
 	    </processor>
 

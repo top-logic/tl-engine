@@ -21,6 +21,7 @@ import com.top_logic.element.meta.form.overlay.ObjectConstructor;
 import com.top_logic.element.meta.form.overlay.ObjectCreation;
 import com.top_logic.element.meta.form.overlay.ObjectEditing;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
+import com.top_logic.knowledge.service.event.Modification;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
@@ -679,9 +680,15 @@ public class AttributeUpdateContainer {
 		for (ObjectCreation create : _creates.values()) {
 			create.create();
 		}
+
+		Modification deletes = Modification.NONE;
 		for (FormObjectOverlay overlay : allOverlays()) {
-			overlay.store(this);
+			Modification deletion = overlay.store(this);
+
+			deletes = deletes.andThen(deletion);
 		}
+
+		deletes.execute();
     }
 
 	/**

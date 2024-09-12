@@ -808,6 +808,22 @@
 								</storage-algorithm>
 							</annotations>
 						</property>
+						<property name="deletionPolicy"
+							type="tl.model:DeletionPolicy"
+						>
+							<annotations>
+								<storage-algorithm>
+									<derived-storage>
+										<expression-evaluation>
+											<chain>
+												<get-value attribute="end"/>
+												<get-value attribute="deletionPolicy"/>
+											</chain>
+										</expression-evaluation>
+									</derived-storage>
+								</storage-algorithm>
+							</annotations>
+						</property>
 						<property name="ordered"
 							override="true"
 							type="tl.core:Boolean"

@@ -39,7 +39,7 @@
 	          />
 	        </association>
 			<association
-			  object_name="hasStructureChildDeleteReferer"
+			  object_name="hasChildDeleteReferer"
 			  super_class="hasStructureChild"
 			>
 			  <source

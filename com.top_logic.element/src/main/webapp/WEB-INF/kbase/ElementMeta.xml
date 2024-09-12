@@ -103,7 +103,7 @@
 		</index>
 	</association>
 
-	<association super_class="hasStructureChild" object_name="hasStructureChildDeleteReferer">
+	<association super_class="hasStructureChild" object_name="hasChildDeleteReferer">
 		<attributes>
 		    <source
 				override="true"

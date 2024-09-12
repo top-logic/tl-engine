@@ -159,6 +159,18 @@ public class ApplicationObjectUtil {
 	public static final String STRUCTURE_CHILD_ASSOCIATION = "hasStructureChild";
 
 	/**
+	 * Generic association for storing compositions that are also marked with
+	 * {@link DeletionPolicy#DELETE_REFERER}.
+	 */
+	public static final String STRUCTURE_CHILD_DELETE_REFERER_ASSOCIATION = "hasStructureChildDeleteReferer";
+
+	/**
+	 * Generic association for storing compositions that are also marked with
+	 * {@link DeletionPolicy#VETO}.
+	 */
+	public static final String STRUCTURE_CHILD_VETO_ASSOCIATION = "hasStructureChildVeto";
+
+	/**
 	 * Abstract KA being the root of all such derived wrapper attribute associations.
 	 * 
 	 * @see "com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil#WRAPPER_ATTRIBUTE_ASSOCIATION_BASE"

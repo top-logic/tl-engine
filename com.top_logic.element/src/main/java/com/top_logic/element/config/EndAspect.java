@@ -134,7 +134,7 @@ public interface EndAspect extends PartConfig {
 	}
 
 	/**
-	 * Option provider for {@link EndAspect#getDeletionPolicy()}
+	 * Option provider for {@link EndAspect#getDeletionPolicy()}.
 	 */
 	class DeletionPolicyOptions extends Function1<List<DeletionPolicy>, Boolean> {
 		@Override

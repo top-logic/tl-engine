@@ -8,6 +8,7 @@ package com.top_logic.element.model.migration.model;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.EndAspect;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
@@ -29,6 +30,9 @@ public abstract class AbstractEndAspectProcessor<C extends AbstractEndAspectProc
 
 		/** Name for {@link #getHistoryType()}. */
 		String HISTORY_TYPE = EndAspect.HISTORY_TYPE_PROPERTY;
+
+		/** Name for {@link #getDeletionPolicy()}. */
+		String DELETION_POLICY = EndAspect.DELETION_POLICY_PROPERTY;
 
 		/** Name for {@link #canNavigate()}. */
 		String NAVIGATE = EndAspect.NAVIGATE_PROPERTY;
@@ -83,6 +87,17 @@ public abstract class AbstractEndAspectProcessor<C extends AbstractEndAspectProc
 		 * Setter for {@link #getHistoryType()}.
 		 */
 		void setHistoryType(HistoryType value);
+
+		/**
+		 * See {@link EndAspect#getDeletionPolicy()}.
+		 */
+		@Name(DELETION_POLICY)
+		DeletionPolicy getDeletionPolicy();
+
+		/**
+		 * @see #getDeletionPolicy()
+		 */
+		void setDeletionPolicy(DeletionPolicy value);
 	}
 
 	/**

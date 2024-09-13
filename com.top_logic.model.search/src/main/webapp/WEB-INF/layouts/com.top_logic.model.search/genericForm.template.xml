@@ -4,13 +4,24 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	groups="commons"
 >
-	<properties extends="com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.mig.html.layout.WithDefaultFor, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.layout.editor.config.ButtonTemplateParameters">
+	<properties extends="
+		com.top_logic.layout.structure.OptionalToolbarOptions, 
+		com.top_logic.mig.html.layout.WithDefaultFor, 
+		com.top_logic.layout.editor.config.ButtonTemplateParameters, 
+		com.top_logic.layout.editor.config.DialogTemplateParameters, 
+		com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, 
+		com.top_logic.tool.boundsec.WithSecurityMaster, 
+		com.top_logic.layout.form.component.edit.EditMode$Config
+	">
 		<annotations>
+			<display-inherited value="APPEND"/>
 			<display-order>
 				<value>
 					<property name="name"/>
 
 					<property name="model"/>
+					<property name="modelBuilder"/>
+					<property name="editMode"/>
 
 					<property name="defaultFor"/>
 					<property name="isSecurityMaster"/>
@@ -19,10 +30,11 @@
 					<property name="showMaximize"/>
 					<property name="showMinimize"/>
 					<property name="showPopOut"/>
+					
+					<property name="buttonbar"/>
+					<property name="resetInvisible"/>
 
 					<property name="securityObject"/>
-
-					<property name="modelBuilder"/>
 
 					<property name="buttons"/>
 				</value>
@@ -49,7 +61,13 @@
 			<mandatory/>
 			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>
 		</property>
-
+		<property name="resetInvisible"
+			default="true"
+			type="boolean"
+		/>
+		<property name="buttonbar"
+			type="boolean"
+		/>
 		<property name="securityObject"
 			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
 			type="com.top_logic.basic.config.PolymorphicConfiguration"
@@ -63,20 +81,23 @@
 		</property>
 		<property name="buttons"
 			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
+			instance-type="com.top_logic.tool.boundsec.CommandHandler"
 			type="List"
 		>
-			<acceptable-classifiers value="customTransaction, commons"/>
+			<acceptable-classifiers value="form, commons, customTransaction"/>
 		</property>
 	</properties>
 
 	<!-- Note: A settings component is used here instead of a general form, since this provides an edit-mode channel that allows to switch modes from UI actions. -->
 	<settings name="Form"
+		buttonbar="${buttonbar}"
 		defaultFor="${defaultFor}"
 		dialogs="${dialogs}"
+		editMode="${editMode}"
 		isSecurityMaster="${isSecurityMaster}"
 		model="${model}"
 		modelBuilder="${modelBuilder}"
-		resetInvisible="true"
+		resetInvisible="${resetInvisible}"
 		securityObject="${securityObject}"
 		securityProviderClass="${securityProviderClass}"
 		showMaximize="${showMaximize}"

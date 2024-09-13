@@ -186,7 +186,7 @@ public class TreeOptionsByExpression extends AbstractConfiguredInstance<TreeOpti
 	}
 
 	private void addInstanceFilter(List<Filter<Object>> filters, EditContext context) {
-		filters.add(node -> TLModelUtil.isCompatibleInstance(context.getValueType(), (TLObject) node));
+		filters.add(node -> TLModelUtil.isCompatibleInstance(context.getValueType(), node));
 	}
 
 	@SuppressWarnings("deprecation")

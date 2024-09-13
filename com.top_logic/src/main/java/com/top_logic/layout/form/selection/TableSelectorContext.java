@@ -400,11 +400,15 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 		 * potential table ResPrefix. */
 		providers.add(new SetTableResPrefix(_targetSelectField.getResources()));
 		providers.add(getTableConfigurationFromField());
-		providers.add(new DialogSettingsProvider());
 		if (_targetSelectField.isOptionsTree()) {
 			providers.add(new TreeColumnProvider(_targetSelectField));
 			providers.add(TreeNodeUnwrappingProvider.INSTANCE);
 		}
+
+		// Note: This provider must be executed after a tree column has been potentially created,
+		// because it prevents clicks in all columns except the tree column.
+		providers.add(new DialogSettingsProvider());
+
 		providers.add(getRowClassProvider());
 		providers.add(GenericTableConfigurationProvider.showDefaultColumns());
 		return providers;

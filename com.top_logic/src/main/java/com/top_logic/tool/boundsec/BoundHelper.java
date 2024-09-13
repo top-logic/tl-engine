@@ -40,6 +40,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -386,7 +387,7 @@ public class BoundHelper extends ManagedClass {
      * @return the BoundCheckers that are registered to check the
      *         most specific type of the given BoundObject
      */
-	public Collection<BoundChecker> getBoundCheckers(BoundObject anObject, BoundChecker aChecker, BoundCommandGroup aBCG) {
+	public Collection<BoundChecker> getBoundCheckers(TLObject anObject, BoundChecker aChecker, BoundCommandGroup aBCG) {
         if (aChecker == null) {
 			return Collections.emptyList();
         }
@@ -717,7 +718,7 @@ public class BoundHelper extends ManagedClass {
      * @return true if the current user may view the given BoundObject,
      * false otherwise or if the object is <code>null</code>.
      */
-    public boolean allowView(BoundObject anObject, BoundChecker aChecker) {
+	public boolean allowView(TLObject anObject, BoundChecker aChecker) {
 		Iterator<BoundChecker> theCheckers = this.getBoundCheckers(anObject, aChecker, null).iterator();
 
         boolean allow = false;

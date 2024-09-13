@@ -47,6 +47,105 @@
 				/>
 			</attributes>
 		</class>
+		<class name="Goto">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field
+							attribute="text"
+							fullQualifiedName="test.transient:Goto#text"
+							type="tl.model.wysiwyg:Html"
+						>
+							<annotations>
+								<label-position value="hide-label"/>
+							</annotations>
+						</field>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="text"
+					type="tl.model.wysiwyg:Html"
+				/>
+				<property name="name"
+					type="tl.core:String"
+				>
+					<annotations>
+						<default-value>
+							<string value="Click me!"/>
+						</default-value>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<class name="Row">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<main-properties properties="name,date,number"/>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="test.transient:Row#name"
+							type="tl.core:String"
+						>
+							<annotations>
+								<render-whole-line/>
+							</annotations>
+						</field>
+						<field
+							attribute="date"
+							fullQualifiedName="test.transient:Row#date"
+							type="tl.core:Date"
+						/>
+						<field
+							attribute="number"
+							fullQualifiedName="test.transient:Row#number"
+							type="tl.core:Integer"
+						/>
+						<field
+							attribute="text"
+							fullQualifiedName="test.transient:Row#text"
+							type="tl.model.wysiwyg:Html"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="number"
+					type="tl.core:Integer"
+				/>
+				<property name="date"
+					type="tl.core:Date"
+				/>
+				<property name="text"
+					type="tl.model.wysiwyg:Html"
+				/>
+				<reference name="transientResult"
+					kind="forwards"
+					navigate="true"
+					type="Goto"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[row -> new(`test.transient:Goto`, transient: true)
+    ..set(`test.transient:Goto#text`, $row.get(`test.transient:Row#text`))]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
 		<class name="SettingsForm">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
@@ -81,49 +180,6 @@
 				/>
 				<property name="divisor"
 					type="tl.core:Integer"
-				/>
-			</attributes>
-		</class>
-		<class name="Row">
-			<generalizations>
-				<generalization type="tl.model:TLObject"/>
-			</generalizations>
-			<annotations>
-				<main-properties properties="name,date,number"/>
-				<form-definition>
-					<form>
-						<field
-							attribute="name"
-							fullQualifiedName="test.transient:Row#name"
-							type="tl.core:String"
-						>
-							<annotations>
-								<render-whole-line/>
-							</annotations>
-						</field>
-						<field
-							attribute="date"
-							fullQualifiedName="test.transient:Row#date"
-							type="tl.core:Date"
-						/>
-						<field
-							attribute="number"
-							fullQualifiedName="test.transient:Row#number"
-							type="tl.core:Integer"
-						/>
-					</form>
-				</form-definition>
-			</annotations>
-			<attributes>
-				<property name="name"
-					mandatory="true"
-					type="tl.core:String"
-				/>
-				<property name="number"
-					type="tl.core:Integer"
-				/>
-				<property name="date"
-					type="tl.core:Date"
 				/>
 			</attributes>
 		</class>

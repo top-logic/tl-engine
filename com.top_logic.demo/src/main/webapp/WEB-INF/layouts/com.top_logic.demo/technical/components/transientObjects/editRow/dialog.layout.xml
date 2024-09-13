@@ -23,6 +23,16 @@
 			<executability>
 				<rule-by-expression decision="selection -> $selection.size() == 1"/>
 			</executability>
+			<postCreateActions>
+				<setModel target="model(com.top_logic.demo/technical/components/transientObjects/editRow/dialog.layout.xml#Dialog)">
+					<input class="com.top_logic.model.search.providers.ValueTransformationByExpression"
+						function="selection -> $selection.singleElement()"
+					/>
+				</setModel>
+				<setEditMode>
+					<target name="com.top_logic.demo/technical/components/transientObjects/editRow/detailsForm.layout.xml#Form"/>
+				</setEditMode>
+			</postCreateActions>
 		</open-handler>
 		<components>
 			<layout-reference resource="com.top_logic.demo/technical/components/transientObjects/editRow/innerLayout.layout.xml"/>

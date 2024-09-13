@@ -66,7 +66,6 @@ import com.top_logic.layout.table.control.TableControl.SelectionStrategy;
 import com.top_logic.layout.table.control.TableControl.SelectionType;
 import com.top_logic.layout.table.display.IndexRange;
 import com.top_logic.layout.table.model.ColumnConfiguration;
-import com.top_logic.layout.table.model.NoDefaultColumnAdaption;
 import com.top_logic.layout.table.model.ObjectTableModel;
 import com.top_logic.layout.table.model.SetTableResPrefix;
 import com.top_logic.layout.table.model.TableConfiguration;
@@ -140,7 +139,6 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 	private Command createPurgingCloseCommand(final Command closeAction) {
 		return new Command() {
 
-			@SuppressWarnings("synthetic-access")
 			@Override
 			public HandlerResult executeCommand(DisplayContext context) {
 				TableField tableField = getTableField();
@@ -153,9 +151,8 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 	private void createTitle() {
 		Resources resources = Resources.getInstance();
 		ConstantField title = new ConstantField(SelectorContext.TITLE_FIELD_NAME, !AbstractFormField.IMMUTABLE) {
-
 			@Override
-			public Object visit(FormMemberVisitor v, Object arg) {
+			public <R, A> R visit(FormMemberVisitor<R, A> v, A arg) {
 				return v.visitFormMember(this, arg);
 			}
 		};
@@ -176,8 +173,7 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 			tableSelectionModel = new DefaultSingleSelectionModel(SelectionModelOwner.NO_OWNER);
 		}
 
-		List<TableConfigurationProvider> tableConfigurationProviders =
-			getTableConfigurationProviders(tableSelectionModel);
+		List<TableConfigurationProvider> tableConfigurationProviders = getTableConfigurationProviders();
 		TableConfiguration tableConfiguration = TableConfigurationFactory.build(tableConfigurationProviders);
 		TableField tableField;
 		if (!_targetSelectField.isOptionsTree()) {
@@ -371,7 +367,7 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 		}
 	}
 
-	private void setSelectionModel(TableField tableField, AbstractSelectionModel model) {
+	private static void setSelectionModel(TableField tableField, AbstractSelectionModel model) {
 		model.initOwner(tableField);
 		tableField.setSelectionModel(model);
 	}
@@ -398,13 +394,13 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 		selectionModel.setDeselectionFilter(selectableOptionsFilter);
 	}
 
-	private List<TableConfigurationProvider> getTableConfigurationProviders(SelectionModel selectionModel) {
+	private List<TableConfigurationProvider> getTableConfigurationProviders() {
 		List<TableConfigurationProvider> providers = new ArrayList<>();
 		/* Set the resources *before* the configuration from the selectfield to not override a
 		 * potential table ResPrefix. */
 		providers.add(new SetTableResPrefix(_targetSelectField.getResources()));
 		providers.add(getTableConfigurationFromField());
-		providers.add(new DialogSettingsProvider(_optionsPerPage));
+		providers.add(new DialogSettingsProvider());
 		if (_targetSelectField.isOptionsTree()) {
 			providers.add(new TreeColumnProvider(_targetSelectField));
 			providers.add(TreeNodeUnwrappingProvider.INSTANCE);
@@ -414,10 +410,9 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 		return providers;
 	}
 
-	private NoDefaultColumnAdaption getRowClassProvider() {
-		return new NoDefaultColumnAdaption() {
+	private TableConfigurationProvider getRowClassProvider() {
+		return new TableConfigurationProvider() {
 
-			@SuppressWarnings("synthetic-access")
 			@Override
 			public void adaptConfigurationTo(TableConfiguration table) {
 				FixedOptionClassProvider fixedOptionsClassProvider =
@@ -560,13 +555,7 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 		}
 	}
 
-	private final class DialogSettingsProvider extends NoDefaultColumnAdaption {
-		private final int _optionsPerPage;
-
-		DialogSettingsProvider(int optionsPerPage) {
-			_optionsPerPage = optionsPerPage;
-		}
-
+	private final class DialogSettingsProvider implements TableConfigurationProvider {
 		@Override
 		public void adaptConfigurationTo(TableConfiguration table) {
 			makeTableFrozen(table, _optionsPerPage);
@@ -612,7 +601,6 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 			column.setResourceProvider(toNoLinkResourceProvider(column));
 		}
 
-		@SuppressWarnings("synthetic-access")
 		private void makeColumnContentsUnclickable(ColumnConfiguration columnConfiguration) {
 			CellRenderer wrappedRenderer = columnConfiguration.finalCellRenderer();
 			columnConfiguration.setCellRenderer(new ClickPreventingCellRenderer(wrappedRenderer));
@@ -640,7 +628,7 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 		}
 	}
 
-	private static final class TreeColumnProvider extends NoDefaultColumnAdaption {
+	private static final class TreeColumnProvider implements TableConfigurationProvider {
 
 		private static final String NAME_COLUMN = "name";
 		private SelectField _targetSelectField;
@@ -707,7 +695,6 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 			_referenceSelection = new HashSet<>(referenceSelection);
 		}
 
-		@SuppressWarnings({ "synthetic-access" })
 		@Override
 		public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
 			boolean changed =

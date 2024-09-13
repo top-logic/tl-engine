@@ -15,6 +15,7 @@ import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.ResourceProvider;
+import com.top_logic.layout.basic.ResourceRenderer;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.XMLTag;
 import com.top_logic.layout.form.FormConstants;
@@ -23,30 +24,15 @@ import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.table.AbstractCellRenderer;
 import com.top_logic.layout.table.CellRenderer;
 import com.top_logic.layout.table.TableRenderer.Cell;
-import com.top_logic.layout.table.model.ColumnConfiguration;
-import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
-import com.top_logic.layout.tree.renderer.TreeCellRenderer;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.Media;
 import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
 import com.top_logic.util.css.CssUtil;
 
 /**
- * {@link CellRenderer} renders the cell value as link with an image of the row objects type before.
- * 
- * <p>
- * This renderer should be used only for flat tables. For tree like tables such as tree grids or
- * tree tables the more general {@link IDColumnCellRenderer} should be used instead.
- * </p>
- * 
- * <p>
- * The {@link IDColumnCellRenderer} uses the {@link TreeCellRenderer} to display an expand and
- * collapse button to navigate through the tree and the {@link IDColumnTableCellRenderer} to render
- * the cell content.
- * </p>
- * 
- * @see IDColumnCellRenderer
+ * {@link CellRenderer} renders the cell value as link ot the object prefixed with an image for the
+ * object.
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
@@ -59,12 +45,12 @@ public class IDColumnTableCellRenderer extends AbstractCellRenderer {
 	/**
 	 * Creates a {@link IDColumnTableCellRenderer} from configuration.
 	 */
-	public IDColumnTableCellRenderer(TableConfiguration tableConfig, ColumnConfiguration columnConfig) {
-		_cellRenderer = columnConfig.finalCellRenderer();
-		_rowObjectResourceProvider = getNonNullResourceProvider(tableConfig.getRowObjectResourceProvider());
+	public IDColumnTableCellRenderer(CellRenderer cellRenderer, ResourceProvider resourceProvider) {
+		_cellRenderer = cellRenderer;
+		_rowObjectResourceProvider = getNonNullResourceProvider(resourceProvider);
 	}
 
-	private ResourceProvider getNonNullResourceProvider(ResourceProvider resourceProvider) {
+	private static ResourceProvider getNonNullResourceProvider(ResourceProvider resourceProvider) {
 		if (resourceProvider != null) {
 			return resourceProvider;
 		} else {
@@ -90,7 +76,9 @@ public class IDColumnTableCellRenderer extends AbstractCellRenderer {
 		try {
 			Object cellValue = cell.getValue();
 			inEditMode = cellValue instanceof FormMember;
-			link = useLink ? _rowObjectResourceProvider.getLink(context, rowObject) : null;
+			link = useLink && context.get(ResourceRenderer.RENDER_LINKS)
+				? _rowObjectResourceProvider.getLink(context, rowObject)
+				: null;
 			tooltip = useToolTip ? _rowObjectResourceProvider.getTooltip(rowObject) : null;
 			cssClass = _rowObjectResourceProvider.getCssClass(cellValue);
 			hasCssClass = cssClass != null;

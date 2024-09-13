@@ -4,16 +4,11 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	groups="maintabbar"
 >
-	<properties extends="com.top_logic.layout.editor.config.DialogTemplateParameters">
+	<properties extends="com.top_logic.mig.html.layout.SubComponentConfig, com.top_logic.layout.editor.config.DialogTemplateParameters">
 		<property name="components"
 			element-type="com.top_logic.mig.html.layout.LayoutComponent$Config"
 			type="List"
 		>
-			<options
-				fun="com.top_logic.layout.editor.DynamicComponentOptions"
-				mapping="com.top_logic.layout.editor.DynamicComponentOptionMapping"
-			/>
-			<option-labels value="com.top_logic.layout.editor.DynamicComponentDefinition$Labels"/>
 			<available-templates value="tabbar"/>
 		</property>
 	</properties>

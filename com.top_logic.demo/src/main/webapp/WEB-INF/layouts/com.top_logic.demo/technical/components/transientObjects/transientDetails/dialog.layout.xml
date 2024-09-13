@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments helpID="ID_a4b41b92_d08f_41c7_b6e1_aa9e2716f3dc">
+		<title>
+			<title key="dynamic.bbfbbddf-10c1-46cf-b874-9a7d38535394">
+				<en>Transient details</en>
+				<de>Transiente Details</de>
+			</title>
+		</title>
+		<open-handler id="ID_9ccc49df_5358_4efe_9482_765ec05e144f"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+		>
+			<resourceKey key="dynamic.bbfbbddf-10c1-46cf-b874-9a7d38535394">
+				<en>Transient details</en>
+				<de>Transiente Details</de>
+			</resourceKey>
+		</open-handler>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/transientObjects/transientDetails/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

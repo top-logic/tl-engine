@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	final="true"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments defaultFor="test.transient:Goto">
+		<name key="dynamic.9be26755-7205-44bb-809c-901c5d65df56">
+			<en>Goto details</en>
+			<de>Goto-Details</de>
+		</name>
+		<editExecutability>
+			<rule-by-expression decision="false"/>
+		</editExecutability>
+	</arguments>
+</config:template-call>

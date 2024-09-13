@@ -2712,18 +2712,6 @@ div.ssiContentArea {
 	padding-right: 0px;
 }
 
-.clickGuardContainer {
-	position: absolute;
-	left: 0;
-	top: 0;
-	right: 0;
-	bottom: 0;
-	overflow: hidden;
-	background-color: white;
-	opacity: 0;
-	filter: alpha(opacity=0);
-}
-
 .activeGalleryManagementButton, .inactiveGalleryManagementButton {
 	display: inline-flex;
 	justify-content: center;

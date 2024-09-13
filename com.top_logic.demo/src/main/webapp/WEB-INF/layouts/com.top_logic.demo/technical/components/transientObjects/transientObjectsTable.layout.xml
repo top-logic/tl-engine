@@ -16,8 +16,8 @@
 			<layout-reference resource="com.top_logic.demo/technical/components/transientObjects/editRow/dialog.layout.xml"/>
 		</dialogs>
 		<name key="dynamic.c881f01b-e3aa-400d-b86b-13feb60731af">
-			<en>Transient objects</en>
-			<de>Transiente Objekte</de>
+			<en>Persistent lines</en>
+			<de>Persistente Zeilen</de>
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			supportsElement="element->$element.instanceOf(`test.transient:Row`)"

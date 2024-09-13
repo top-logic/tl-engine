@@ -46,6 +46,7 @@ import com.top_logic.mig.html.layout.DialogSupport;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.mig.html.layout.MainLayout;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.BoundChecker;
@@ -636,9 +637,9 @@ public class GotoHandler extends AbstractCommandHandler {
 	}
 
 	public static boolean canShow(Object anObject) {
-        if (anObject instanceof BoundObject) {
+		if (anObject instanceof TLObject) {
             BoundHelper theHelper = BoundHelper.getInstance();
-            return theHelper.allowView((BoundObject) anObject, theHelper.getRootChecker());
+			return theHelper.allowView((TLObject) anObject, theHelper.getRootChecker());
         }
         else {
             return false;

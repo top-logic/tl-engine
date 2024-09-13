@@ -52,10 +52,12 @@
 		<groupId>com.github.librepdf</groupId>
 		<artifactId>openpdf</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>ext-org-mozilla-pdfjs</artifactId>
-    </dependency>
+
+	<dependency>
+	    <groupId>org.webjars.npm</groupId>
+	    <artifactId>pdfjs-dist</artifactId>
+	</dependency>
+
 	<dependency>
 	    <groupId>org.codelibs</groupId>
 	    <artifactId>jcifs</artifactId>

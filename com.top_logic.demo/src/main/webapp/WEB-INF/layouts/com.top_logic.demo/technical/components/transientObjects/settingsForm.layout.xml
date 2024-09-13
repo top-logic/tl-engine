@@ -6,8 +6,8 @@
 >
 	<arguments>
 		<name key="dynamic.e537cf24-2ad5-486c-b98f-e4867f1f9c8e">
-			<en>Settings</en>
-			<de>Einstellungen</de>
+			<en>Settings (transient)</en>
+			<de>Einstellungen (transient)</de>
 		</name>
 		<model class="com.top_logic.model.search.providers.TransformLinkingByExpression"
 			function="output -> if ($output == null, new(`test.transient:SettingsForm`, transient: true), $output.copy())"
@@ -26,7 +26,9 @@
 					<de>Aktualisieren</de>
 				</resourceKey>
 				<postCreateActions>
-					<setModel target="output(self())"/>
+					<setModel target="output(self())">
+						<input/>
+					</setModel>
 				</postCreateActions>
 			</button>
 			<button id="ID_75dfd06a_2b51_4ba4_9888_d06e94b0bea6"
@@ -41,8 +43,12 @@
 					<de>Eingaben zurücksetzen</de>
 				</resourceKey>
 				<postCreateActions>
-					<setModel target="model(self())"/>
-					<setModel target="output(self())"/>
+					<setModel target="model(self())">
+						<input/>
+					</setModel>
+					<setModel target="output(self())">
+						<input/>
+					</setModel>
 				</postCreateActions>
 			</button>
 			<button id="ID_d52e3540_14f2_4d4f_97bb_bfc027c02453"
@@ -63,8 +69,12 @@
     $result;
 }]]></operation>
 				<postCreateActions>
-					<setModel target="model(self())"/>
-					<setModel target="output(self())"/>
+					<setModel target="model(self())">
+						<input/>
+					</setModel>
+					<setModel target="output(self())">
+						<input/>
+					</setModel>
 				</postCreateActions>
 			</button>
 			<button id="ID_0a6e5f33_0b6a_4096_aea2_27fa2ad7344a"
@@ -86,8 +96,12 @@
     $result;
 }]]></operation>
 				<postCreateActions>
-					<setModel target="model(self())"/>
-					<setModel target="output(self())"/>
+					<setModel target="model(self())">
+						<input/>
+					</setModel>
+					<setModel target="output(self())">
+						<input/>
+					</setModel>
 				</postCreateActions>
 			</button>
 		</buttons>

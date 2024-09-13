@@ -17,7 +17,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -42,7 +41,6 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.misc.NamedRegexp;
 import com.top_logic.basic.io.FileSystemCache;
-import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.PathUpdate;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -354,110 +352,124 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 	}
 
 	/**
-	 * Reads layout files from the file system and fill the arguments with the result.
+	 * Reads all layout files from file system.
+	 * 
+	 * @return A map of layout key to (an potentially empty) list of overlay resources to apply to
+	 *         the layout referenced by the key.
 	 */
 	public static Map<String, List<BinaryData>> readLayouts() {
-		Map<String, List<BinaryData>> overlaysByLayoutKey = new HashMap<>();
-		Set<String> mainLayouts =
+		return new LayoutAnalyzer().readAll();
+	}
+
+	private static class LayoutAnalyzer {
+		FileManager _fileManager = FileManager.getInstance();
+
+		Set<String> _mainLayouts =
 			CollectionUtil.toSet(ApplicationConfig.getInstance().getConfig(LayoutConfig.class).getLayouts());
-		List<NamedRegexp> excludePatterns = getExcludePatterns();
 
-		FileManager fileManager = FileManager.getInstance();
-		Set<String> layoutResources = fileManager.getResourcePaths(ModuleLayoutConstants.LAYOUT_RESOURCE_PREFIX);
-		Set<String> readLayouts = new HashSet<>();
+		List<NamedRegexp> _excludePatterns = getExcludePatterns();
 
-		for (String layoutResource : layoutResources) {
-			// Do not read theme specific layouts.
-			if (layoutResource.endsWith(Theme.LAYOUT_PREFIX + '/')) {
-				continue;
+		Set<String> _layoutKeys = new HashSet<>();
+
+		Map<String, List<BinaryData>> _overlaysByLayoutKey = new HashMap<>();
+
+		public Map<String, List<BinaryData>> readAll() {
+			Set<String> layoutDirs = _fileManager.getResourcePaths(ModuleLayoutConstants.LAYOUT_RESOURCE_PREFIX);
+
+			for (String layoutDir : layoutDirs) {
+				// Do not read theme specific layouts.
+				if (layoutDir.endsWith(Theme.LAYOUT_PREFIX + '/')) {
+					continue;
+				}
+
+				readRecursive(layoutDir);
 			}
 
-			if (fileManager.isDirectory(layoutResource)) {
-				read(readLayouts, overlaysByLayoutKey, excludePatterns, mainLayouts,
-					FileUtilities.getAllResourcePaths(layoutResource));
+			for (String layoutName : _layoutKeys) {
+				if (!_overlaysByLayoutKey.containsKey(layoutName)) {
+					_overlaysByLayoutKey.put(layoutName, Collections.emptyList());
+				}
 			}
 
-			read(readLayouts, overlaysByLayoutKey, excludePatterns, mainLayouts, layoutResource);
+			return _overlaysByLayoutKey;
 		}
 
-		/* Overlays are sorted in FileManager order i.e. from more specific to less specific.
-		 * Inverse order is needed. */
-		overlaysByLayoutKey.values().forEach(Collections::reverse);
-		for (String layoutName : readLayouts) {
-			if (!overlaysByLayoutKey.containsKey(layoutName)) {
-				overlaysByLayoutKey.put(layoutName, Collections.emptyList());
+		private void readRecursive(String layoutDir) {
+			if (_fileManager.isDirectory(layoutDir)) {
+				for (String resource : _fileManager.getResourcePaths(layoutDir)) {
+					readRecursive(resource);
+				}
+			} else {
+				readLayout(layoutDir);
 			}
 		}
 
-		return overlaysByLayoutKey;
-
-	}
-
-	private static void read(Set<String> readLayouts, Map<String, List<BinaryData>> overlaysByLayoutKey,
-			List<NamedRegexp> excludePatterns, Set<String> mainLayouts,
-			Set<String> allResourcePaths) {
-		for (String resource : allResourcePaths) {
-			read(readLayouts, overlaysByLayoutKey, excludePatterns, mainLayouts, resource);
-		}
-	}
-
-	private static void read(Set<String> readLayouts, Map<String, List<BinaryData>> overlaysByLayoutKey,
-			List<NamedRegexp> excludePatterns, Set<String> mainLayouts,
-			String layoutResource) {
-		if (FileManager.getInstance().isDirectory(layoutResource)) {
-			return;
-		}
-		String layoutKey = LayoutUtils.getLayoutKey(layoutResource);
-		if (excludeLayout(excludePatterns, layoutKey)) {
-			return;
-		}
-
-		if (layoutKey.endsWith(LayoutModelConstants.LAYOUT_XML_FILE_SUFFIX) || mainLayouts.contains(layoutKey)) {
-			readLayouts.add(layoutKey);
-		}
-
-		if (layoutKey.endsWith(LayoutModelConstants.LAYOUT_XML_OVERLAY_FILE_SUFFIX)) {
-			String overlayedLayoutKey = getOverlayedLayoutKey(layoutKey);
-			try {
-				List<BinaryData> layoutOverlays = FileManager.getInstance().getDataOverlays(layoutResource);
-				overlaysByLayoutKey.put(overlayedLayoutKey, layoutOverlays);
-			} catch (IOException exception) {
-				Logger.error("Failed to load overlays for layout '" + overlayedLayoutKey + "'.", exception,
-					LayoutStorage.class);
+		private void readLayout(String layoutResource) {
+			String layoutKey = LayoutUtils.getLayoutKey(layoutResource);
+			if (excludeLayout(layoutKey)) {
+				return;
 			}
 
-		}
-	}
+			if (layoutKey.endsWith(LayoutModelConstants.LAYOUT_XML_FILE_SUFFIX) || _mainLayouts.contains(layoutKey)) {
+				_layoutKeys.add(layoutKey);
+			}
 
-	private static String getOverlayedLayoutKey(String layoutKey) {
-		return StringServices.changeSuffix(layoutKey, LayoutModelConstants.LAYOUT_XML_OVERLAY_FILE_SUFFIX,
-			LayoutModelConstants.LAYOUT_XML_FILE_SUFFIX);
-	}
+			if (layoutKey.endsWith(LayoutModelConstants.LAYOUT_XML_OVERLAY_FILE_SUFFIX)) {
+				String baseLayoutKey = getBaseLayoutKey(layoutKey);
+				try {
+					List<BinaryData> layoutOverlays = _fileManager.getDataOverlays(layoutResource);
 
-	private static List<NamedRegexp> getExcludePatterns() {
-		Config conf;
-		if (LayoutStorage.Module.INSTANCE.isActive()) {
-			conf = LayoutStorage.getInstance().getConfig();
-		} else {
-			try {
-				conf = (Config) ApplicationConfig.getInstance().getServiceConfiguration(LayoutStorage.class);
-			} catch (ConfigurationException ex) {
-				throw new ConfigurationError(ex);
+					// Overlays are in FileManager order i.e. from more specific to less specific.
+					// Inverse order is required.
+					Collections.reverse(layoutOverlays);
+
+					_overlaysByLayoutKey.put(baseLayoutKey, layoutOverlays);
+				} catch (IOException exception) {
+					Logger.error("Failed to load overlays for layout '" + baseLayoutKey + "'.", exception,
+						LayoutStorage.class);
+				}
 			}
 		}
-		return conf.getExcludePatterns();
-	}
 
-	private static boolean excludeLayout(List<NamedRegexp> excludePatterns, String layoutKey) {
-		if (excludePatterns.isEmpty()) {
+		private boolean excludeLayout(String layoutKey) {
+			if (_excludePatterns.isEmpty()) {
+				return false;
+			}
+			for (NamedRegexp excludePattern : _excludePatterns) {
+				if (excludePattern.getPattern().matcher(layoutKey).matches()) {
+					return true;
+				}
+			}
 			return false;
 		}
-		for (NamedRegexp excludePattern : excludePatterns) {
-			if (excludePattern.getPattern().matcher(layoutKey).matches()) {
-				return true;
-			}
+
+		private static String getBaseLayoutKey(String overlayKey) {
+			return StringServices.changeSuffix(overlayKey,
+				LayoutModelConstants.LAYOUT_XML_OVERLAY_FILE_SUFFIX,
+				LayoutModelConstants.LAYOUT_XML_FILE_SUFFIX);
 		}
-		return false;
+
+		private List<NamedRegexp> getExcludePatterns() {
+			Config conf;
+			if (LayoutStorage.Module.INSTANCE.isActive()) {
+				conf = LayoutStorage.getInstance().getConfig();
+			} else {
+				try {
+					conf = (Config) ApplicationConfig.getInstance().getServiceConfiguration(LayoutStorage.class);
+				} catch (ConfigurationException ex) {
+					throw new ConfigurationError(ex);
+				}
+			}
+			return conf.getExcludePatterns();
+		}
+
+		/**
+		 * Map with all read layout names as keys and (a potentially empty) list of corresponding
+		 * overrides as value.
+		 */
+		public Map<String, List<BinaryData>> getLayoutOverlays() {
+			return _overlaysByLayoutKey;
+		}
 	}
 
 	private void fetchAvailableLayouts(Protocol log, Collection<String> layoutNames, Theme theme,
@@ -581,10 +593,7 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 	 */
 	public void removeLayout(Theme theme, String layoutKey) {
 		updateFilesystemCache();
-		{
-			_filesystemCache.removeLayout(theme, null, layoutKey);
-			_overlays.remove(layoutKey);
-		}
+		dropCache(theme, layoutKey);
 	}
 
 	/**
@@ -726,35 +735,54 @@ public class LayoutStorage extends KBBasedManagedClass<LayoutStorage.Config> {
 	}
 
 	private void updateFilesystemCache(LayoutUpdate update) {
-		updateOverlays(update.getOverlaysToAdd(), update.getOverlaysToDelete());
+		FileManager fileManager = FileManager.getInstance();
 		List<Theme> choosableThemes = getSortedChoosableThemes();
-		loadLayoutsForAllThemes(update.getLayoutKeysToUpdate(), choosableThemes);
 
-		for (String layoutKeyToDelete : update.getLayoutKeysToDelete()) {
+		Collection<String> invalidLayoutKeys = update.getInvalidLayoutKeys();
+
+		for (Iterator<String> it = invalidLayoutKeys.iterator(); it.hasNext();) {
+			String invalidLayoutKey = it.next();
 			for (Theme theme : choosableThemes) {
-				removeLayout(theme, layoutKeyToDelete);
+				dropCache(theme, invalidLayoutKey);
+			}
+
+			String layoutResource = layoutResource(invalidLayoutKey);
+			if (fileManager.getDataOrNull(layoutResource) != null) {
+				String overlayResource = overlayKey(layoutResource);
+				try {
+					List<BinaryData> overlayData = fileManager.getDataOverlays(overlayResource);
+					Collections.reverse(overlayData);
+					_overlays.put(invalidLayoutKey, overlayData);
+				} catch (IOException ex) {
+					Logger.error("Cannot access: " + overlayResource, LayoutStorage.class);
+				}
+			} else {
+				it.remove();
 			}
 		}
+
+		loadLayoutsForAllThemes(invalidLayoutKeys, choosableThemes);
+	}
+
+	private static String layoutResource(String layoutKey) {
+		return ModuleLayoutConstants.LAYOUT_RESOURCE_PREFIX + layoutKey;
+	}
+
+	private static String overlayKey(String layoutKey) {
+		return StringServices.changeSuffix(layoutKey,
+			LayoutModelConstants.LAYOUT_XML_FILE_SUFFIX,
+			LayoutModelConstants.LAYOUT_XML_OVERLAY_FILE_SUFFIX);
+	}
+
+	private void dropCache(Theme theme, String layoutKey) {
+		_filesystemCache.removeLayout(theme, null, layoutKey);
+		_overlays.remove(layoutKey);
 	}
 
 	private List<Theme> getSortedChoosableThemes() {
 		Collection<Theme> choosableThemes = ThemeFactory.getInstance().getChoosableThemes();
 
 		return CollectionUtil.topsort(theme -> theme.getParentThemes(), choosableThemes, false);
-	}
-
-	private void updateOverlays(Map<String, Set<BinaryData>> overlaysToAdd,
-			Map<String, Set<BinaryData>> overlaysToDelete) {
-		for (Entry<String, Set<BinaryData>> entry : overlaysToAdd.entrySet()) {
-			_overlays.computeIfAbsent(entry.getKey(), k -> new ArrayList<>()).addAll(entry.getValue());
-		}
-
-		for (Entry<String, Set<BinaryData>> entry : overlaysToDelete.entrySet()) {
-			_overlays.computeIfPresent(entry.getKey(), (k, overlays) -> {
-				overlays.removeAll(entry.getValue());
-				return overlays;
-			});
-		}
 	}
 
 	private TLLayout createLayout(Theme theme, String layoutKey) {

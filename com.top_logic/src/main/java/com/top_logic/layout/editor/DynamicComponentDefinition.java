@@ -626,8 +626,7 @@ public class DynamicComponentDefinition {
 			return;
 		}
 		XMLStreamWriter out = XMLStreamUtil.getDefaultOutputFactory().createXMLStreamWriter(outStream, "utf-8");
-		try {
-			ConfigurationWriter configurationWriter = new ConfigurationWriter(out);
+		try (ConfigurationWriter configurationWriter = new ConfigurationWriter(out)) {
 			configurationWriter.write(property.getPropertyName(), ConfigurationItem.class, itemValue);
 		} finally {
 			out.close();
@@ -637,8 +636,7 @@ public class DynamicComponentDefinition {
 	private void serializePropertyValue(OutputStream outStream, ConfigurationItem parameters,
 			PropertyDescriptor property) throws XMLStreamException {
 		XMLStreamWriter out = XMLStreamUtil.getDefaultOutputFactory().createXMLStreamWriter(outStream, "utf-8");
-		try {
-			ConfigurationWriter configurationWriter = new ConfigurationWriter(out);
+		try (ConfigurationWriter configurationWriter = new ConfigurationWriter(out)) {
 			// Write also empty lists, and maps
 			configurationWriter.writeNonPlainProperty(parameters, property, true);
 		} finally {

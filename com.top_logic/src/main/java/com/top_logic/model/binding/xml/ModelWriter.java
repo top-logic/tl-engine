@@ -199,12 +199,11 @@ public class ModelWriter extends DefaultDescendingTLModelVisitor<XMLStreamWriter
 	}
 	
 	private void writeAnnotations(TLModelPart model, XMLStreamWriter writer) {
-		try {
-			Collection<? extends TLAnnotation> annotations = model.getAnnotations();
-			if (annotations.size() > 0) {
-				ConfigurationDescriptor staticType =
+		Collection<? extends TLAnnotation> annotations = model.getAnnotations();
+		if (annotations.size() > 0) {
+			ConfigurationDescriptor staticType =
 					TypedConfiguration.getConfigurationDescriptor(ConfigurationItem.class);
-				ConfigurationWriter configWriter = new ConfigurationWriter(writer);
+			try (ConfigurationWriter configWriter = new ConfigurationWriter(writer, false)) {
 				for (ConfigurationItem annotation : sortAnnotations(annotations)) {
 					// Ignore annotations with instance formats, since the instances may not yet be
 					// well-prepared for configuration extraction.
@@ -213,9 +212,9 @@ public class ModelWriter extends DefaultDescendingTLModelVisitor<XMLStreamWriter
 					}
 					configWriter.writeRootElement(ANNOTATION_ELEMENT, staticType, annotation);
 				}
+			} catch (XMLStreamException ex) {
+				throw wrap(ex);
 			}
-		} catch (XMLStreamException ex) {
-			throw wrap(ex);
 		}
 	}
 

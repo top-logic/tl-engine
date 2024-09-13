@@ -584,18 +584,23 @@ public class LayoutTemplateUtils {
 		return I18NConstants.DYNAMIC_COMPONENT.append(resPrefix);
 	}
 
-	private static void writeTemplateInternal(XMLStreamWriter out, String template, ConfigurationItem arguments, boolean isFinal) {
+	private static void writeTemplateInternal(XMLStreamWriter out, String template, ConfigurationItem arguments,
+			boolean markFinal) {
 		try {
 			out.setPrefix(ConfigurationSchemaConstants.CONFIG_NS_PREFIX, ConfigurationSchemaConstants.CONFIG_NS);
 			out.writeStartElement(ConfigurationSchemaConstants.CONFIG_NS, LayoutModelConstants.TEMPLATE_CALL_ELEMENT);
 			out.writeAttribute(LayoutModelConstants.TEMPLATE_CALL_TEMPLATE_ATTR, template);
-			out.writeAttribute(LayoutModelConstants.TEMPLATE_CALL_FINAL_ATTR, Boolean.toString(isFinal));
+			// Do not write out the default.
+			if (markFinal) {
+				out.writeAttribute(LayoutModelConstants.TEMPLATE_CALL_FINAL_ATTR, Boolean.toString(markFinal));
+			}
 			out.writeNamespace(ConfigurationSchemaConstants.CONFIG_NS_PREFIX, ConfigurationSchemaConstants.CONFIG_NS);
 
-			ConfigurationWriter configWriter = new ConfigurationWriter(out);
-			configWriter.setNamespaceWriting(false);
-			configWriter.writeRootElement(LayoutModelConstants.TEMPLATE_CALL_ARGUMENTS_ELEMENT,
-				arguments.descriptor(), arguments);
+			try (ConfigurationWriter configWriter = new ConfigurationWriter(out, false)) {
+				configWriter.setNamespaceWriting(false);
+				configWriter.writeRootElement(LayoutModelConstants.TEMPLATE_CALL_ARGUMENTS_ELEMENT,
+					arguments.descriptor(), arguments);
+			}
 			
 			out.writeEndElement();
 		} catch (XMLStreamException exception) {
@@ -606,18 +611,18 @@ public class LayoutTemplateUtils {
 	/**
 	 * Writes the template to the given File.
 	 * 
-	 * @param isFinal
+	 * @param markFinal
 	 *        Whether the layout must not be enhanced with overlays, when it is de-serialized.
 	 * 
 	 * 
 	 * @throws ConfigurationException
 	 *         When the arguments of the given {@link LayoutTemplateCall} could not be parsed.
 	 */
-	public static void writeTemplate(File file, TLLayout layout, boolean isFinal) throws ConfigurationException {
+	public static void writeTemplate(File file, TLLayout layout, boolean markFinal) throws ConfigurationException {
 			FileUtilities.ensureFileExisting(file);
 
 			try (OutputStream outputStream = new FileOutputStream(file)) {
-				layout.writeTo(outputStream, isFinal);
+				layout.writeTo(outputStream, markFinal);
 			} catch (IOException ex) {
 				throw new IOError(ex);
 			}
@@ -637,20 +642,20 @@ public class LayoutTemplateUtils {
 	 *        Template name.
 	 * @param arguments
 	 *        Arguments of a template call.
-	 * @param isFinal
+	 * @param markFinal
 	 *        Whether the written template call is final, i.e. whether no overlays must be applied
 	 *        when it is read.
 	 * @throws IOException
 	 *         Template configuration could not be written into the given stream.
 	 */
 	public static void writeLayoutTemplateCall(OutputStream stream, String templateName, ConfigurationItem arguments,
-			boolean isFinal) throws IOException {
+			boolean markFinal) throws IOException {
 		String utf8 = StringServices.UTF8;
 		try {
 			XMLStreamWriter out = XMLStreamUtil.getDefaultOutputFactory().createXMLStreamWriter(stream, utf8);
 			try {
 				out.writeStartDocument(utf8, "1.0");
-				LayoutTemplateUtils.writeTemplateInternal(out, templateName, arguments, isFinal);
+				LayoutTemplateUtils.writeTemplateInternal(out, templateName, arguments, markFinal);
 			} finally {
 				out.close();
 			}

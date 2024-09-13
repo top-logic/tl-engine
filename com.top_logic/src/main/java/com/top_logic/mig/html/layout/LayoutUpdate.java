@@ -11,9 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -21,8 +19,6 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.PathUpdate;
-import com.top_logic.basic.io.binary.BinaryData;
-import com.top_logic.basic.io.binary.BinaryDataFactory;
 
 /**
  * Update describing a change to the existing layout.
@@ -38,12 +34,6 @@ public class LayoutUpdate {
 	private boolean _canIncrementalUpdate = true;
 
 	private Collection<String> _layoutKeysToUpdate = new HashSet<>();
-
-	private Collection<String> _layoutKeysToDelete = new HashSet<>();
-
-	private Map<String, Set<BinaryData>> _overlaysToAddByLayoutKey = new HashMap<>();
-
-	private Map<String, Set<BinaryData>> _overlaysToDeleteByLayoutKey = new HashMap<>();
 
 	/**
 	 * Create an update for the layout from the given general filesystem update.
@@ -94,21 +84,14 @@ public class LayoutUpdate {
 			String name = filename.toString();
 
 			if (LayoutUtils.isLayoutOverlay(name)) {
-				visitOverlayCreation(layoutDirectory, path);
+				invalidate(getLayoutKeyFromOverlay(layoutDirectory, path));
 			} else if (LayoutUtils.isLayout(name)) {
-				_layoutKeysToUpdate.add(getLayoutKeyFromLayout(layoutDirectory, path));
+				invalidate(getLayoutKeyFromLayout(layoutDirectory, path));
 			} else if (!LayoutUtils.isTemplate(name)) {
 				_canIncrementalUpdate = false;
 				return;
 			}
 		}
-	}
-
-	private void visitOverlayCreation(Path layoutDirectory, Path path) {
-		String layoutKey = getLayoutKeyFromOverlay(layoutDirectory, path);
-		_overlaysToAddByLayoutKey.computeIfAbsent(layoutKey, k -> new HashSet<>())
-			.add(BinaryDataFactory.createBinaryDataWithName(path, layoutKey));
-		_layoutKeysToUpdate.add(layoutKey);
 	}
 
 	private void visitFileDeletions(PathUpdate update) {
@@ -126,9 +109,9 @@ public class LayoutUpdate {
 						String name = filename.toString();
 
 						if (LayoutUtils.isLayoutOverlay(name)) {
-							visitOverlayDeletion(path, layoutDirectory);
+							invalidate(getLayoutKeyFromOverlay(layoutDirectory, path));
 						} else if (LayoutUtils.isLayout(name)) {
-							_layoutKeysToDelete.add(getLayoutKeyFromLayout(layoutDirectory, path));
+							invalidate(getLayoutKeyFromLayout(layoutDirectory, path));
 						} else if (!LayoutUtils.isTemplate(name)) {
 							_canIncrementalUpdate = false;
 							return;
@@ -137,13 +120,6 @@ public class LayoutUpdate {
 				}
 			}
 		}
-	}
-
-	private void visitOverlayDeletion(Path path, Path layoutDirectory) {
-		String layoutKey = getLayoutKeyFromOverlay(layoutDirectory, path);
-		_overlaysToDeleteByLayoutKey.computeIfAbsent(layoutKey, k -> new HashSet<>())
-			.add(BinaryDataFactory.createBinaryDataWithName(path, layoutKey));
-		_layoutKeysToUpdate.add(layoutKey);
 	}
 
 	private void visitFileChanges(PathUpdate update) {
@@ -161,9 +137,9 @@ public class LayoutUpdate {
 						String name = filename.toString();
 
 						if (LayoutUtils.isLayoutOverlay(name)) {
-							_layoutKeysToUpdate.add(getLayoutKeyFromOverlay(layoutDirectory, path));
+							invalidate(getLayoutKeyFromOverlay(layoutDirectory, path));
 						} else if (LayoutUtils.isLayout(name)) {
-							_layoutKeysToUpdate.add(getLayoutKeyFromLayout(layoutDirectory, path));
+							invalidate(getLayoutKeyFromLayout(layoutDirectory, path));
 						} else if (!LayoutUtils.isTemplate(name)) {
 							_canIncrementalUpdate = false;
 							return;
@@ -172,6 +148,10 @@ public class LayoutUpdate {
 				}
 			}
 		}
+	}
+
+	private void invalidate(String layoutKey) {
+		_layoutKeysToUpdate.add(layoutKey);
 	}
 
 	private String getLayoutKeyFromLayout(Path base, Path other) {
@@ -195,29 +175,8 @@ public class LayoutUpdate {
 	/**
 	 * Returns all keys for layout parts that should be reloaded.
 	 */
-	public Collection<String> getLayoutKeysToUpdate() {
+	public Collection<String> getInvalidLayoutKeys() {
 		return _layoutKeysToUpdate;
-	}
-
-	/**
-	 * Returns all keys for layout parts that can be removed.
-	 */
-	public Collection<String> getLayoutKeysToDelete() {
-		return _layoutKeysToDelete;
-	}
-
-	/**
-	 * Returns all new overlays for layout parts that should be applied.
-	 */
-	public Map<String, Set<BinaryData>> getOverlaysToAdd() {
-		return _overlaysToAddByLayoutKey;
-	}
-
-	/**
-	 * Returns all overlays for layout parts that can be removed.
-	 */
-	public Map<String, Set<BinaryData>> getOverlaysToDelete() {
-		return _overlaysToDeleteByLayoutKey;
 	}
 
 	/**
@@ -225,10 +184,7 @@ public class LayoutUpdate {
 	 */
 	public boolean hasChanges() {
 		if (_canIncrementalUpdate) {
-			boolean hasLayoutKeyChanges = !_layoutKeysToUpdate.isEmpty() || !_layoutKeysToDelete.isEmpty();
-			boolean hasOverlayChanges = !_overlaysToAddByLayoutKey.isEmpty() || !_overlaysToDeleteByLayoutKey.isEmpty();
-
-			return hasLayoutKeyChanges || hasOverlayChanges;
+			return !_layoutKeysToUpdate.isEmpty();
 		}
 
 		return true;

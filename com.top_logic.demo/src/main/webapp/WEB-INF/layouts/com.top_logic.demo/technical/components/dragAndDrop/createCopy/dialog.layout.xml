@@ -2,7 +2,6 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="true"
 	template="com.top_logic.model.search/transaction.template.xml"
 >
 	<arguments formType="test.dnd:NamedPlanElement">

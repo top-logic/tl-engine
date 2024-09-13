@@ -84,8 +84,9 @@ public class ExportRolesProfileHandler extends AbstractDownloadHandler {
 		SecurityConfig securityConfig = exportProfiles(layoutTrees);
 		XMLStreamWriter streamWriter =
 			XMLStreamUtil.getDefaultOutputFactory().createXMLStreamWriter(out, StringServicesShared.UTF8);
-		ConfigurationWriter configWriter = new ConfigurationWriter(streamWriter);
-		configWriter.write(XML_TAG_SECURITY, SecurityConfig.class, securityConfig);
+		try (ConfigurationWriter configWriter = new ConfigurationWriter(streamWriter, false)) {
+			configWriter.write(XML_TAG_SECURITY, SecurityConfig.class, securityConfig);
+		}
 	}
 
 	private SecurityConfig exportProfiles(Collection<LayoutConfigTree> layoutTrees) {

@@ -91,8 +91,8 @@ public class LayoutTemplateCall implements TLLayout {
 	}
 
 	@Override
-	public void writeTo(OutputStream stream, boolean isFinal) throws IOException {
-		LayoutTemplateUtils.writeLayoutTemplateCall(stream, _templateName, _arguments, isFinal);
+	public void writeTo(OutputStream stream, boolean markFinal) throws IOException {
+		LayoutTemplateUtils.writeLayoutTemplateCall(stream, _templateName, _arguments, markFinal);
 	}
 
 	@Override

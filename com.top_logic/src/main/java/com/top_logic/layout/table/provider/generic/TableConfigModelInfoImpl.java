@@ -108,23 +108,10 @@ public class TableConfigModelInfoImpl extends ColumnInfoFactory implements Table
 				Collection<? extends TLClass> contentTypes) {
 			Map<TLClass, List<TLStructuredTypePart>> result = linkedMap();
 			for (TLClass type : contentTypes) {
-				for (TLClass specialization : getSpecializations(type)) {
-					addGeneralizationParts(result, specialization);
-				}
+				addGeneralizationParts(result, type);
+				addSpecializtionParts(result, type);
 			}
 			return result;
-		}
-
-		private Collection<TLClass> getSpecializations(TLClass baseType) {
-			Set<TLClass> concreteTypes = getAllConcreteSubtypes(baseType);
-			if (concreteTypes.isEmpty()) {
-				return singletonList(baseType);
-			}
-			return concreteTypes;
-		}
-
-		private Set<TLClass> getAllConcreteSubtypes(TLClass baseType) {
-			return TLModelUtil.getReflexiveTransitiveSpecializations(TLModelUtil.IS_CONCRETE, baseType);
 		}
 
 		private void addGeneralizationParts(Map<TLClass, List<TLStructuredTypePart>> result, TLClass tlClass) {
@@ -132,6 +119,15 @@ public class TableConfigModelInfoImpl extends ColumnInfoFactory implements Table
 			if (isNew) {
 				for (TLClass superClass : tlClass.getGeneralizations()) {
 					addGeneralizationParts(result, superClass);
+				}
+			}
+		}
+
+		private void addSpecializtionParts(Map<TLClass, List<TLStructuredTypePart>> result, TLClass type) {
+			for (TLClass superClass : type.getSpecializations()) {
+				boolean isNew = addLocalParts(result, superClass);
+				if (isNew) {
+					addSpecializtionParts(result, superClass);
 				}
 			}
 		}

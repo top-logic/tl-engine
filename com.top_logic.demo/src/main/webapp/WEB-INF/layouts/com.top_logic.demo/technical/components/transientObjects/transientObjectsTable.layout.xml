@@ -5,6 +5,7 @@
 	template="com.top_logic/table.template.xml"
 >
 	<arguments
+		defaultColumns="name,date,number,transientResult"
 		defaultSelection="false"
 		model="output(com.top_logic.demo/technical/components/transientObjects/settingsForm.layout.xml#Form)"
 		multiSelection="true"
@@ -14,10 +15,11 @@
 		<dialogs>
 			<layout-reference resource="com.top_logic.demo/technical/components/transientObjects/createObject/dialog.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/transientObjects/editRow/dialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/transientObjects/transientDetails/dialog.layout.xml"/>
 		</dialogs>
 		<name key="dynamic.c881f01b-e3aa-400d-b86b-13feb60731af">
-			<en>Transient objects</en>
-			<de>Transiente Objekte</de>
+			<en>Persistent lines</en>
+			<de>Persistente Zeilen</de>
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			supportsElement="element->$element.instanceOf(`test.transient:Row`)"

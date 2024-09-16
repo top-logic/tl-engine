@@ -5,7 +5,7 @@
 >
 	<actions>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Navigiere zu Transiente Objekte -> Zeile"
+			comment="Navigiere zu test.transient -> Zeile"
 		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
@@ -45,7 +45,7 @@
 							/>
 						</context-model>
 						<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Test > Transiente Objekte"
+							path="Test > test.transient"
 						/>
 					</model-name>
 				</action>
@@ -55,7 +55,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Test > Transiente Objekte > Zeile"
+							path="Test > test.transient > Zeile"
 						/>
 						<selection-state boolean="true"/>
 					</selection>

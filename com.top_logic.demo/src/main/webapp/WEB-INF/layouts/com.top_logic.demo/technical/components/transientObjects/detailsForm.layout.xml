@@ -4,7 +4,11 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	template="com.top_logic.element/form.template.xml"
 >
-	<arguments name="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithForm.template.i18n.detail">
+	<arguments>
+		<name key="dynamic.7171e53c-496f-4478-bab8-01266f7ca993">
+			<en>Details (transient)</en>
+			<de>Details (transient)</de>
+		</name>
 		<model class="com.top_logic.model.search.providers.TransformLinkingByExpression"
 			input="selection(com.top_logic.demo/technical/components/transientObjects/transientObjectsTable.layout.xml#Table)"
 		>

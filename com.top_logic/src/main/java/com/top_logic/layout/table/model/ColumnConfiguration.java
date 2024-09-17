@@ -322,6 +322,9 @@ public abstract class ColumnConfiguration extends ColumnBase
 	 */
 	protected abstract void copyDefaultColumnWidth(String aWidth);
 
+	/**
+	 * Checks whether this {@link ColumnConfiguration} is classified by the given classifier.
+	 */
 	public final boolean isClassifiedBy(String aClassifier) {
 		Collection<String> theClassifiers = getClassifiers();
 		return theClassifiers == null ? false : theClassifiers.contains(aClassifier);
@@ -494,7 +497,14 @@ public abstract class ColumnConfiguration extends ColumnBase
 	 */
 	public abstract String getDefaultColumnWidth();
 
-	protected abstract Collection<String> getClassifiers();
+	/**
+	 * Classifiers of this column.
+	 *
+	 * @return The collection of classifiers of this column. May be empty. Must not be modified.
+	 * 
+	 * @see #setClassifiers(Collection)
+	 */
+	public abstract Collection<String> getClassifiers();
 
 	/** Adds the given CSS class(es) to this column. */
 	public void addCssClass(String cssClass) {
@@ -561,6 +571,12 @@ public abstract class ColumnConfiguration extends ColumnBase
 	 */
 	protected abstract void copySelectable(boolean selectable);
 
+	/**
+	 * Sets the classifiers for this {@link ColumnConfiguration}.
+	 * 
+	 * @see #getClassifiers()
+	 * @see #isClassifiedBy(String)
+	 */
 	public abstract void setClassifiers(Collection<String> classifiers);
 
 	/**

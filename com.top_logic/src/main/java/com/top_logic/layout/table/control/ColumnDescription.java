@@ -87,7 +87,7 @@ public class ColumnDescription extends ColumnConfiguration {
 	@Inspectable
     private String name;
 
-    private Collection<String> classifiers;
+	private Collection<String> _classifiers = Collections.emptySet();
 
     /** Show the name of the column in the table header. Default is <code>true</code>. */
 	private boolean showHeader = DEFAULT_SHOW_HEADER;
@@ -664,16 +664,12 @@ public class ColumnDescription extends ColumnConfiguration {
 	@Override
 	protected void copyClassifiers(Collection<String> classifiers) {
 		checkFrozen();
-		if (classifiers == null) {
-			this.classifiers = null;
-		} else {
-			this.classifiers = Collections.unmodifiableCollection(classifiers);
-		}
+		_classifiers = classifiers == null ? Collections.emptySet() : Collections.unmodifiableCollection(classifiers);
 	}
 	
 	@Override
-	protected Collection<String> getClassifiers() {
-		return classifiers;
+	public Collection<String> getClassifiers() {
+		return _classifiers;
 	}
 
 	@Override

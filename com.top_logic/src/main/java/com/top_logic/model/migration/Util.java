@@ -1608,7 +1608,7 @@ public class Util {
 		for (int i = orders.size(); i >= 0; i--) {
 			int insertOrder;
 			try {
-				insertOrder = OrderedLinkUtil.getInsertOrder(orders, orders.size(), OrderValue::getOrder);
+				insertOrder = OrderedLinkUtil.getInsertOrder(orders, i, OrderValue::getOrder);
 			} catch (IndexRangeTooShort ex) {
 				continue;
 			}

@@ -1782,7 +1782,7 @@ public class MigrationUtils {
 			if (targetTypeName.equals(typeName)) {
 				targetType = type;
 			} else {
-				targetType = getTLTypeOrFail(log, module, targetTypeSpec);
+				targetType = getTLTypeOrFail(log, module, targetTypeName);
 			}
 		} else {
 			targetType = getTLTypeOrFail(log, getTLModuleOrFail(tlModel, targetModuleName), targetTypeName);

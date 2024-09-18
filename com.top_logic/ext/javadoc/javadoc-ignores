@@ -1769,15 +1769,6 @@ com.top_logic.knowledge.security.SecurityStorage.java: Missing documentation: co
 com.top_logic.knowledge.security.SecurityStorage.java: Missing documentation: com.top_logic.knowledge.security.SecurityStorage.SecurityStorageExecutor.updateHint
 com.top_logic.knowledge.security.SecurityStorage.java: Missing documentation: com.top_logic.knowledge.security.SecurityStorage.objectId
 com.top_logic.knowledge.security.SecurityStorage.java: Missing documentation: com.top_logic.knowledge.security.SecurityStorage.securityId
-com.top_logic.knowledge.security.SecurityStorageMySQLExecutor.java: Invalid camel case word 'MySQL', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.security.SecurityStorageMySQLExecutor.java: Invalid camel case word 'SecurityStorageExecutor', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.security.SecurityStorageMySQLExecutor.java: Invalid camel case word 'SecurityStorageMySQLExecutor', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.security.SecurityStorageMySQLExecutor.java: Missing documentation: com.top_logic.knowledge.security.SecurityStorageMySQLExecutor.MYSQL_CLEAR_STATEMENT
-com.top_logic.knowledge.security.SecurityStorageMySQLExecutor.java: Missing documentation: com.top_logic.knowledge.security.SecurityStorageMySQLExecutor.MYSQL_CREATE_DEFAULT_INDEX
-com.top_logic.knowledge.security.SecurityStorageMySQLExecutor.java: Missing documentation: com.top_logic.knowledge.security.SecurityStorageMySQLExecutor.MYSQL_IS_EMPTY_STATEMENT
-com.top_logic.knowledge.security.SecurityStorageOracleExecutor.java: Invalid camel case word 'SecurityStorageExecutor', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.security.SecurityStorageOracleExecutor.java: Invalid camel case word 'SecurityStorageOracleExecutor', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.knowledge.security.SecurityStorageOracleExecutor.java: Missing documentation: com.top_logic.knowledge.security.SecurityStorageOracleExecutor.ORACLE_CLEAR_STATEMENT
 com.top_logic.knowledge.service.CommitHandler.java: Invalid camel case word 'CommitHandler', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.service.CommitHandler.java: Invalid camel case word 'aCommitable', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.knowledge.service.CommitHandler.java: Invalid camel case word 'addCommitable', this may only be used within JavaDoc links or HTML code tags.

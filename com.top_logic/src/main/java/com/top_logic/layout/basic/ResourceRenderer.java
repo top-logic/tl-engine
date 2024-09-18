@@ -12,6 +12,8 @@ import java.util.Iterator;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfiguredInstance;
@@ -46,6 +48,8 @@ import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.provider.LabelResourceProvider;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.table.CellObject;
+import com.top_logic.layout.table.CellRenderer;
+import com.top_logic.layout.table.TableRenderer.Cell;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.Media;
@@ -266,6 +270,18 @@ public class ResourceRenderer<C extends ResourceRenderer.Config<?>>
 	public static final ResourceRenderer<?> PLAIN_INSTANCE =
 		newResourceRenderer(MetaResourceProvider.INSTANCE, !USE_LINK, !USE_TOOLTIP, !USE_IMAGE);
 
+	/**
+	 * Whether object links should be displayed in the current context.
+	 * 
+	 * <p>
+	 * The property is set on {@link DisplayContext} to temporarily disable link rendering.
+	 * </p>
+	 * 
+	 * @see #noLinks(CellRenderer)
+	 */
+	public static final Property<Boolean> RENDER_LINKS =
+		TypedAnnotatable.property(Boolean.class, "renderLinks", Boolean.TRUE);
+
 	/** @see #getResourceProvider() */
 	private ResourceProvider _resourceProvider;
 
@@ -472,7 +488,7 @@ public class ResourceRenderer<C extends ResourceRenderer.Config<?>>
 		String cssClass;
 		boolean hasCssClass;
         try {
-			link = useLink ? _resourceProvider.getLink(context, value) : null;
+			link = useLink && context.get(RENDER_LINKS) ? _resourceProvider.getLink(context, value) : null;
 			tooltip = useToolTip ? _resourceProvider.getTooltip(value) : null;
 			cssClass = _resourceProvider.getCssClass(value);
 			hasCssClass = cssClass != null;
@@ -809,5 +825,22 @@ public class ResourceRenderer<C extends ResourceRenderer.Config<?>>
 	@Override
 	public <X> Renderer<? super X> generic(Class<X> expectedType) {
 		return this;
+	}
+
+	/**
+	 * Wraps the given {@link CellRenderer} with an instance preventing links being rendered.
+	 */
+	public static CellRenderer noLinks(CellRenderer cellRenderer) {
+		return new CellRenderer() {
+			@Override
+			public void writeCell(DisplayContext context, TagWriter out, Cell cell) throws IOException {
+				Boolean before = context.set(RENDER_LINKS, Boolean.FALSE);
+				try {
+					cellRenderer.writeCell(context, out, cell);
+				} finally {
+					context.set(RENDER_LINKS, before);
+				}
+			}
+		};
 	}
 }

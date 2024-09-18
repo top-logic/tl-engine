@@ -18,7 +18,9 @@ import com.top_logic.layout.ResourceView;
 import com.top_logic.layout.table.CellRenderer;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.model.ColumnConfiguration.DisplayMode;
-import com.top_logic.layout.table.renderer.IDColumnCellRenderer;
+import com.top_logic.layout.table.renderer.IDColumnTableCellRenderer;
+import com.top_logic.layout.tree.renderer.NoResourceProvider;
+import com.top_logic.layout.tree.renderer.TreeCellRenderer;
 import com.top_logic.util.Resources;
 import com.top_logic.util.css.CssUtil;
 
@@ -88,17 +90,37 @@ public class Column {
 		_parts = mkParts(config.getDeclaredColumns());
 		_size = mkSize(_parts);
 		_visible = config.isVisible();
-		_renderer = createColumnCellRenderer(header, name, config);
+		_renderer = createCellRenderer(header, name, config);
 	}
 
-	private CellRenderer createColumnCellRenderer(Header header, String name, ColumnConfiguration config) {
+	private CellRenderer createCellRenderer(Header header, String name, ColumnConfiguration config) {
 		TableConfiguration tableConfiguration = header.getTableConfiguration();
 
+		CellRenderer cellRenderer = config.finalCellRenderer();
 		if (name.equals(tableConfiguration.getIDColumn())) {
-			return new IDColumnCellRenderer(tableConfiguration, config);
+			return toIdColumn(cellRenderer, tableConfiguration);
 		} else {
-			return config.finalCellRenderer();
+			return cellRenderer;
 		}
+	}
+
+	/**
+	 * Upgrades a regular table column to an ID column with type image display and toggle buttons in
+	 * case of a tree table.
+	 */
+	public static CellRenderer toIdColumn(CellRenderer cellRenderer, TableConfiguration tableConfig) {
+		CellRenderer idCellRenderer = new IDColumnTableCellRenderer(cellRenderer, tableConfig.getRowObjectResourceProvider());
+
+		if (tableConfig.isTree()) {
+			return toTreeColumn(idCellRenderer);
+		}
+
+		return idCellRenderer;
+	}
+
+	private static CellRenderer toTreeColumn(CellRenderer cellRenderer) {
+		return new TreeCellRenderer(NoResourceProvider.INSTANCE, cellRenderer,
+			TreeCellRenderer.DEFAULT_INDENT_CHARS);
 	}
 
 	private static int mkSize(List<Column> parts) {

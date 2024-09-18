@@ -798,13 +798,36 @@
 						<storage-algorithm>
 							<set-storage table="hasDemoTypesCAttValue"/>
 						</storage-algorithm>
+						<options>
+							<treeoptions-by-expression
+								parents="node -> $node.referers(`tl.element:StructuredElementContainer#children`).singleElement()"
+								rootNode="`DemoTypes#ROOT`"
+							>
+								<children><![CDATA[node -> $node
+    .get(`tl.element:StructuredElementContainer#children`)
+    .filter(child -> !$child.instanceOf(`DemoTypes:X`))]]></children>
+							</treeoptions-by-expression>
+						</options>
 					</annotations>
 				</reference>
 				<reference name="typedSetUnordered"
 					kind="forwards"
 					multiple="true"
 					type="C"
-				/>
+				>
+					<annotations>
+						<options>
+							<treeoptions-by-expression
+								parents="node -> $node.container()"
+								rootNode="`DemoTypes#ROOT`"
+							>
+								<children><![CDATA[node -> $node
+    .get(`tl.element:StructuredElementContainer#children`)
+    .filter(child -> !$child.instanceOf(`DemoTypes:X`))]]></children>
+							</treeoptions-by-expression>
+						</options>
+					</annotations>
+				</reference>
 				<reference name="webFolder"
 					composite="true"
 					kind="forwards"
@@ -1252,6 +1275,7 @@
 			</generalizations>
 			<annotations>
 				<legacy-qualified-name qualified-name="DemoTypes.C.All"/>
+				<main-properties properties="name,stringInBAndC,dependentDate,enumInBAndC,genericInBAndC,isAssignable"/>
 			</annotations>
 			<attributes>
 				<property name="stringInBAndC"

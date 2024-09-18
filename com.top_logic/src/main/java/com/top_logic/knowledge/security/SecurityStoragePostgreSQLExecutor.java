@@ -16,7 +16,7 @@ import com.top_logic.knowledge.security.SecurityStorage.SecurityStorageExecutor;
 import com.top_logic.util.db.DBUtil;
 
 /**
- * This is a {@link SecurityStorageExecutor} optimized for PostgreSQL database access.
+ * This is a {@link SecurityStorageExecutor} optimized for <code>PostgreSQL</code> database access.
  *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

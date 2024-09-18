@@ -18,6 +18,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.ConfigurationError;
@@ -1224,7 +1225,10 @@ public class ModelResolver {
 
 	private void errorNoOverride(TLClassPart classPart) {
 		String message = "Override failed. " + qualifiedName(classPart)
-			+ "' is declared to be an override, but is not overriding anything.";
+			+ "' is declared to be an override, but is not overriding anything (" + qualifiedName(classPart.getOwner())
+			+ " extends " + classPart.getOwner().getGeneralizations().stream().map(TLModelUtil::qualifiedName)
+				.collect(Collectors.joining(", "))
+			+ ".)";
 		log().error(message, new ConfigurationError(message));
 	}
 

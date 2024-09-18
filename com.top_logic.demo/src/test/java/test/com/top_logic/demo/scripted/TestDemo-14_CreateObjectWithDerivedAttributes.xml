@@ -1235,91 +1235,68 @@
 						</value>
 					</field-values>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-					comment=""
-					failure-message=""
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
 				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-						tab-path="Strukturen > Typendemo > Typendemo"
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
-									field-label-comment="typedSetOrdered"
-								>
-									<attribute-ref attribute-name="typedSetOrdered">
-										<type type-name="DemoTypes.A">
-											<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
-										</type>
-									</attribute-ref>
-									<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
-										structure-name="DemoTypes"
-									>
-										<structure-path>
-											<node name="Test Derived Attributes"/>
-											<node name="TDA1"/>
-										</structure-path>
-									</self-ref>
-								</field>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-								<list>
-									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-										label="A1C1"
-									/>
-									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-										label="A1C2"
-									/>
-								</list>
-							</value>
-						</value>
-					</field-values>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="typedSetOrdered"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableNaming$GlobalVariableName"
+								name="A1C1"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableNaming$GlobalVariableName"
+								name="A1C2"
+							/>
+						</values>
+					</value>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
-					comment=""
-					failure-message=""
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
 				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-						tab-path="Strukturen > Typendemo > Typendemo"
-					/>
-					<field-values>
-						<value>
-							<field-path>
-								<field config:interface="com.top_logic.layout.scripting.recorder.ref.field.AttributeFieldRef"
-									field-label-comment="typedSetUnordered"
-								>
-									<attribute-ref attribute-name="typedSetUnordered">
-										<type type-name="DemoTypes.A">
-											<scope-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.NullValue"/>
-										</type>
-									</attribute-ref>
-									<self-ref config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NodeRef"
-										structure-name="DemoTypes"
-									>
-										<structure-path>
-											<node name="Test Derived Attributes"/>
-											<node name="TDA1"/>
-										</structure-path>
-									</self-ref>
-								</field>
-							</field-path>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-								<list>
-									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-										label="A1C1"
-									/>
-									<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.LabeledValue"
-										label="A1C2"
-									/>
-								</list>
-							</value>
-						</value>
-					</field-values>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="typedSetOrdered"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableNaming$GlobalVariableName"
+								name="A1C1"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="typedSetUnordered"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableNaming$GlobalVariableName"
+								name="A1C1"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableNaming$GlobalVariableName"
+								name="A1C2"
+							/>
+						</values>
+					</value>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FormInputOp"
 					comment=""

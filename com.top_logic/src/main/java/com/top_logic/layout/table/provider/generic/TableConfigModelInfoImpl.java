@@ -108,29 +108,27 @@ public class TableConfigModelInfoImpl extends ColumnInfoFactory implements Table
 				Collection<? extends TLClass> contentTypes) {
 			Map<TLClass, List<TLStructuredTypePart>> result = linkedMap();
 			for (TLClass type : contentTypes) {
-				for (TLClass specialization : getSpecializations(type)) {
-					addGeneralizationParts(result, specialization);
-				}
+				addSpecializtionParts(result, type);
+			}
+			for (TLClass type : new ArrayList<>(result.keySet())) {
+				addGeneralizationParts(result, type);
 			}
 			return result;
 		}
 
-		private Collection<TLClass> getSpecializations(TLClass baseType) {
-			Set<TLClass> concreteTypes = getAllConcreteSubtypes(baseType);
-			if (concreteTypes.isEmpty()) {
-				return singletonList(baseType);
+		private void addSpecializtionParts(Map<TLClass, List<TLStructuredTypePart>> result, TLClass type) {
+			boolean isNew = addLocalParts(result, type);
+			if (isNew) {
+				for (TLClass superClass : type.getSpecializations()) {
+					addSpecializtionParts(result, superClass);
+				}
 			}
-			return concreteTypes;
-		}
-
-		private Set<TLClass> getAllConcreteSubtypes(TLClass baseType) {
-			return TLModelUtil.getReflexiveTransitiveSpecializations(TLModelUtil.IS_CONCRETE, baseType);
 		}
 
 		private void addGeneralizationParts(Map<TLClass, List<TLStructuredTypePart>> result, TLClass tlClass) {
-			boolean isNew = addLocalParts(result, tlClass);
-			if (isNew) {
-				for (TLClass superClass : tlClass.getGeneralizations()) {
+			for (TLClass superClass : tlClass.getGeneralizations()) {
+				boolean isNew = addLocalParts(result, superClass);
+				if (isNew) {
 					addGeneralizationParts(result, superClass);
 				}
 			}

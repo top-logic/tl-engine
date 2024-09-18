@@ -6,10 +6,8 @@
 package com.top_logic.layout.form.selection;
 
 import static com.top_logic.layout.form.selection.TreeSelectorContextUtil.*;
-import static com.top_logic.layout.provider.LabelResourceProvider.*;
 import static com.top_logic.mig.html.NoLinkResourceProvider.*;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,16 +21,15 @@ import java.util.Set;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.filter.FilterFactory;
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.SingleSelectionModel;
 import com.top_logic.layout.basic.AbstractCommandModel;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
+import com.top_logic.layout.basic.ResourceRenderer;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.component.model.AbstractSelectionModel;
 import com.top_logic.layout.component.model.SelectionListener;
@@ -51,22 +48,19 @@ import com.top_logic.layout.form.model.TreeTableField;
 import com.top_logic.layout.form.tag.TableTag;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.scripting.recorder.DynamicRecordable;
-import com.top_logic.layout.table.AbstractCellRenderer;
-import com.top_logic.layout.table.CellRenderer;
 import com.top_logic.layout.table.CombiningRowClassProvider;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.table.RowClassProvider;
 import com.top_logic.layout.table.SortConfig;
 import com.top_logic.layout.table.SortConfigFactory;
-import com.top_logic.layout.table.TableRenderer.Cell;
 import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.control.TableControl.DefaultSelectionStrategy;
 import com.top_logic.layout.table.control.TableControl.SelectionStrategy;
 import com.top_logic.layout.table.control.TableControl.SelectionType;
 import com.top_logic.layout.table.display.IndexRange;
+import com.top_logic.layout.table.model.Column;
 import com.top_logic.layout.table.model.ColumnConfiguration;
-import com.top_logic.layout.table.model.NoDefaultColumnAdaption;
 import com.top_logic.layout.table.model.ObjectTableModel;
 import com.top_logic.layout.table.model.SetTableResPrefix;
 import com.top_logic.layout.table.model.TableConfiguration;
@@ -74,7 +68,6 @@ import com.top_logic.layout.table.model.TableConfigurationFactory;
 import com.top_logic.layout.table.model.TableConfigurationProvider;
 import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
 import com.top_logic.layout.table.renderer.DefaultTableRenderer;
-import com.top_logic.layout.table.renderer.UnclickableCellRenderer;
 import com.top_logic.layout.table.tree.TreeNodeUnwrappingProvider;
 import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.layout.toolbar.ToolBarGroup;
@@ -86,12 +79,10 @@ import com.top_logic.layout.tree.model.TreeBuilder;
 import com.top_logic.layout.tree.model.TreeTableBuilderAdapter;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.layout.tree.model.TreeUIModelUtil;
-import com.top_logic.layout.tree.renderer.NoResourceProvider;
 import com.top_logic.layout.tree.renderer.TreeCellRenderer;
 import com.top_logic.mig.html.AbstractRestrainedSelectionModel;
 import com.top_logic.mig.html.DefaultMultiSelectionModel;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
-import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.mig.html.provider.resource.INoLinkResourceProvider;
@@ -140,7 +131,6 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 	private Command createPurgingCloseCommand(final Command closeAction) {
 		return new Command() {
 
-			@SuppressWarnings("synthetic-access")
 			@Override
 			public HandlerResult executeCommand(DisplayContext context) {
 				TableField tableField = getTableField();
@@ -153,9 +143,8 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 	private void createTitle() {
 		Resources resources = Resources.getInstance();
 		ConstantField title = new ConstantField(SelectorContext.TITLE_FIELD_NAME, !AbstractFormField.IMMUTABLE) {
-
 			@Override
-			public Object visit(FormMemberVisitor v, Object arg) {
+			public <R, A> R visit(FormMemberVisitor<R, A> v, A arg) {
 				return v.visitFormMember(this, arg);
 			}
 		};
@@ -176,8 +165,7 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 			tableSelectionModel = new DefaultSingleSelectionModel(SelectionModelOwner.NO_OWNER);
 		}
 
-		List<TableConfigurationProvider> tableConfigurationProviders =
-			getTableConfigurationProviders(tableSelectionModel);
+		List<TableConfigurationProvider> tableConfigurationProviders = getTableConfigurationProviders();
 		TableConfiguration tableConfiguration = TableConfigurationFactory.build(tableConfigurationProviders);
 		TableField tableField;
 		if (!_targetSelectField.isOptionsTree()) {
@@ -371,7 +359,7 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 		}
 	}
 
-	private void setSelectionModel(TableField tableField, AbstractSelectionModel model) {
+	private static void setSelectionModel(TableField tableField, AbstractSelectionModel model) {
 		model.initOwner(tableField);
 		tableField.setSelectionModel(model);
 	}
@@ -398,26 +386,29 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 		selectionModel.setDeselectionFilter(selectableOptionsFilter);
 	}
 
-	private List<TableConfigurationProvider> getTableConfigurationProviders(SelectionModel selectionModel) {
+	private List<TableConfigurationProvider> getTableConfigurationProviders() {
 		List<TableConfigurationProvider> providers = new ArrayList<>();
 		/* Set the resources *before* the configuration from the selectfield to not override a
 		 * potential table ResPrefix. */
 		providers.add(new SetTableResPrefix(_targetSelectField.getResources()));
 		providers.add(getTableConfigurationFromField());
-		providers.add(new DialogSettingsProvider(_optionsPerPage));
 		if (_targetSelectField.isOptionsTree()) {
-			providers.add(new TreeColumnProvider(_targetSelectField));
+			providers.add(TreeSelectionProvider.INSTANCE);
 			providers.add(TreeNodeUnwrappingProvider.INSTANCE);
 		}
+
+		// Note: This provider must be executed after a tree column has been potentially created,
+		// because it prevents clicks in all columns except the tree column.
+		providers.add(new DialogSettingsProvider());
+
 		providers.add(getRowClassProvider());
 		providers.add(GenericTableConfigurationProvider.showDefaultColumns());
 		return providers;
 	}
 
-	private NoDefaultColumnAdaption getRowClassProvider() {
-		return new NoDefaultColumnAdaption() {
+	private TableConfigurationProvider getRowClassProvider() {
+		return new TableConfigurationProvider() {
 
-			@SuppressWarnings("synthetic-access")
 			@Override
 			public void adaptConfigurationTo(TableConfiguration table) {
 				FixedOptionClassProvider fixedOptionsClassProvider =
@@ -560,15 +551,18 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 		}
 	}
 
-	private final class DialogSettingsProvider extends NoDefaultColumnAdaption {
-		private final int _optionsPerPage;
-
-		DialogSettingsProvider(int optionsPerPage) {
-			_optionsPerPage = optionsPerPage;
-		}
-
+	private final class DialogSettingsProvider implements TableConfigurationProvider {
 		@Override
 		public void adaptConfigurationTo(TableConfiguration table) {
+			String idColumn = table.getIDColumn();
+			if (idColumn != null) {
+				ColumnConfiguration column = table.getDeclaredColumn(idColumn);
+				column.setCellRenderer(Column.toIdColumn(column.finalCellRenderer(), table));
+
+				// Prevent generic logic from wrapping the cell again.
+				table.setIDColumn(null);
+			}
+
 			makeTableFrozen(table, _optionsPerPage);
 			makeTableContentsUnclickable(table);
 			firstSortBySelectColumn(table);
@@ -582,40 +576,18 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 
 		private void makeTableContentsUnclickable(TableConfiguration table) {
 			for (ColumnConfiguration columnConfiguration : table.getElementaryColumns()) {
-				if (isTreeCellColumn(columnConfiguration)) {
-					makeNodeLinkUnclickable(columnConfiguration);
-				} else if (isNotSelectionColumn(columnConfiguration)) {
-					makeColumnContentsUnclickable(columnConfiguration);
+				if (!isSelectionColumn(columnConfiguration)) {
+					noLinks(columnConfiguration);
 				}
 			}
 		}
 
-		private boolean isTreeCellColumn(ColumnConfiguration columnConfiguration) {
-			return columnConfiguration.finalCellRenderer() instanceof TreeCellRenderer;
+		private boolean isSelectionColumn(ColumnConfiguration columnConfiguration) {
+			return columnConfiguration.getName().equals(TableControl.SELECT_COLUMN_NAME);
 		}
 
-		private boolean isNotSelectionColumn(ColumnConfiguration columnConfiguration) {
-			return !columnConfiguration.getName().equals(TableControl.SELECT_COLUMN_NAME);
-		}
-
-		private void makeNodeLinkUnclickable(ColumnConfiguration column) {
-			suppressLinksFromResourceProvider(column);
-
-			TreeCellRenderer cellRenderer = (TreeCellRenderer) column.getCellRenderer();
-			if (!(cellRenderer.getContentRenderer() instanceof UnclickableCellRenderer)) {
-				cellRenderer.setContentRenderer(
-					UnclickableUniformCellRenderer.withoutImage(column.getResourceProvider()));
-			}
-		}
-
-		private void suppressLinksFromResourceProvider(ColumnConfiguration column) {
-			column.setResourceProvider(toNoLinkResourceProvider(column));
-		}
-
-		@SuppressWarnings("synthetic-access")
-		private void makeColumnContentsUnclickable(ColumnConfiguration columnConfiguration) {
-			CellRenderer wrappedRenderer = columnConfiguration.finalCellRenderer();
-			columnConfiguration.setCellRenderer(new ClickPreventingCellRenderer(wrappedRenderer));
+		private void noLinks(ColumnConfiguration column) {
+			column.setCellRenderer(ResourceRenderer.noLinks(column.finalCellRenderer()));
 		}
 
 		private void firstSortBySelectColumn(TableConfiguration table) {
@@ -640,21 +612,24 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 		}
 	}
 
-	private static final class TreeColumnProvider extends NoDefaultColumnAdaption {
+	private static final class TreeSelectionProvider implements TableConfigurationProvider {
 
-		private static final String NAME_COLUMN = "name";
-		private SelectField _targetSelectField;
+		/**
+		 * Singleton {@link TreeSelectionProvider} instance.
+		 */
+		public static final TreeSelectionProvider INSTANCE = new TreeSelectionProvider();
 
-		TreeColumnProvider(SelectField targetSelectField) {
-			_targetSelectField = targetSelectField;
+		private TreeSelectionProvider() {
+			// Singleton constructor.
 		}
 
 		@Override
 		public void adaptConfigurationTo(TableConfiguration table) {
-			if (!hasTreeColumn(table)) {
-				ColumnConfiguration treeColumn = getNameColumn(table);
-				suppressLinksFromResourceProvider(treeColumn);
-				treeColumn.setCellRenderer(createTreeCellRenderer(treeColumn));
+			table.setTree(true);
+
+			if (hasTreeColumn(table)) {
+				// Prevent generic logic from wrapping the cell agaion.
+				table.setIDColumn(null);
 			}
 		}
 
@@ -666,37 +641,6 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 			}
 			return false;
 		}
-
-		private void suppressLinksFromResourceProvider(ColumnConfiguration treeColumn) {
-			treeColumn.setResourceProvider(adaptResourceProvider(treeColumn));
-		}
-
-		private ResourceProvider adaptResourceProvider(ColumnConfiguration column) {
-			if (!column.getResourceProvider().equals(ColumnConfiguration.DEFAULT_RESOURCE_PROVIDER)) {
-				/* If there is explicitly a special ResourceProvider for this column, use that and
-				 * not the standard, which would be the OptionLabelProvider from the SelectField. */
-				return toNoLinkResourceProvider(column);
-			}
-			/* Wrap the option LabelProvider into a NoLinkResourceProvider, as the "LabelProvider"
-			 * might implement ResourceProvider, too and create links. */
-			return createNoLinkResourceProvider(toResourceProvider(_targetSelectField.getOptionLabelProvider()));
-		}
-
-		private TreeCellRenderer createTreeCellRenderer(ColumnConfiguration column) {
-			return new TreeCellRenderer(NoResourceProvider.INSTANCE, getContentRenderer(column),
-				TreeCellRenderer.DEFAULT_INDENT_CHARS);
-		}
-
-		private CellRenderer getContentRenderer(ColumnConfiguration column) {
-			if (column.finalCellRenderer() instanceof UnclickableCellRenderer) {
-				return column.finalCellRenderer();
-			}
-			return UnclickableUniformCellRenderer.withoutImage(column.getResourceProvider());
-		}
-
-		private ColumnConfiguration getNameColumn(TableConfiguration table) {
-			return table.getDeclaredColumn(NAME_COLUMN);
-		}
 	}
 
 	private final class SelectionChangedListener implements SelectionListener {
@@ -707,69 +651,12 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 			_referenceSelection = new HashSet<>(referenceSelection);
 		}
 
-		@SuppressWarnings({ "synthetic-access" })
 		@Override
 		public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
 			boolean changed =
 				!CollectionUtil.containsSame(_referenceSelection, selectedObjects);
 			setExecutability(getApplyCommand(), changed);
 		}
-	}
-
-	private final class ClickPreventingCellRenderer extends AbstractCellRenderer implements UnclickableCellRenderer {
-
-		private static final String CLICK_GUARD_CONTAINER_CLASS = "clickGuardContainer";
-
-		private CellRenderer _wrappedRenderer;
-
-		private ClickPreventingCellRenderer(CellRenderer wrappedRenderer) {
-			_wrappedRenderer = wrappedRenderer;
-		}
-
-		@Override
-		public void writeCell(DisplayContext context, TagWriter out, Cell cell) throws IOException {
-			FrameScope idSource = cell.getView().getFrameScope();
-			String beforeGuard = idSource.createNewID();
-			String afterGuard = idSource.createNewID();
-
-			// Content to ensure that the guarded element can not be reached by "tab".
-			out.beginBeginTag(HTMLConstants.DIV);
-			out.writeAttribute(HTMLConstants.ID_ATTR, beforeGuard);
-			out.writeAttribute(HTMLConstants.TL_TAB_NEXT, afterGuard);
-			out.endBeginTag();
-			out.endTag(HTMLConstants.DIV);
-
-			writeGuarded(context, out, cell);
-
-			// Content to ensure that the guarded element can not be reached by "tab".
-			out.beginBeginTag(HTMLConstants.DIV);
-			out.writeAttribute(HTMLConstants.ID_ATTR, afterGuard);
-			out.writeAttribute(HTMLConstants.TL_TAB_PREV, beforeGuard);
-			out.endBeginTag();
-			out.endTag(HTMLConstants.DIV);
-		}
-
-		private void writeGuarded(DisplayContext context, TagWriter out, Cell cell) throws IOException {
-			_wrappedRenderer.writeCell(context, out, cell);
-			writeClickGuardContainer(out, cell);
-		}
-
-		private void writeClickGuardContainer(TagWriter out, Cell cell) throws IOException {
-			TableControl tableControl = cell.getRenderState().getView();
-			boolean isSelectable = tableControl.isRowSelectable(cell.getRowIndex())
-				&& cell.getColumn().getConfig().isSelectable();
-
-			out.beginBeginTag(HTMLConstants.DIV);
-			out.writeAttribute(HTMLConstants.CLASS_ATTR, CLICK_GUARD_CONTAINER_CLASS);
-			if (isSelectable) {
-				out.beginAttribute(HTMLConstants.ONCLICK_ATTR);
-				tableControl.appendSelectAction(out, cell.getRowIndex(), cell.getColumnIndex());
-				out.endAttribute();
-			}
-			out.endBeginTag();
-			out.endTag(HTMLConstants.DIV);
-		}
-
 	}
 
 	private static class FixedOptionsTreeTableFilter implements Filter<DefaultTreeTableNode> {

@@ -12,6 +12,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.Renderer;
+import com.top_logic.layout.basic.ResourceRenderer;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.mig.html.HTMLConstants;
@@ -62,7 +63,9 @@ public class IconOnlyRenderer implements Renderer<Object> {
         else {
             theImage = MetaResourceProvider.INSTANCE.getImage(aValue, Flavor.DEFAULT);
             theText  = this.withTooltip ? MetaResourceProvider.INSTANCE.getLabel(aValue) : null;
-            theURL   = MetaResourceProvider.INSTANCE.getLink(aContext, aValue);
+			theURL =
+				aContext.get(ResourceRenderer.RENDER_LINKS) ? MetaResourceProvider.INSTANCE.getLink(aContext, aValue)
+					: null;
             hasURL   = !StringServices.isEmpty(theURL);
 			cssClass = MetaResourceProvider.INSTANCE.getCssClass(aValue);
 			hasCssClass = cssClass != null;

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28263_add_deletion_policy_to_reference"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_28230_special_storage_for_ttype"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+	    <processor class="com.top_logic.knowledge.service.migration.processors.AddApplicationTypesProcessor">
+	      <schema>
+	        <association
+	          object_name="hasWrapperVeto"
+	          super_class="hasWrapperAttValueBaseAssociation"
+	        >
+	          <destination
+	            deletion-policy="veto"
+	            override="true"
+	            target-type="Object"
+	          />
+	        </association>
+	        <association
+	          object_name="hasWrapperDeleteReferer"
+	          super_class="hasWrapperAttValueBaseAssociation"
+	        >
+	          <source
+	            deletion-policy="delete-referer"
+	            is-container="true"
+	            override="true"
+	            target-type="Object"
+	          />
+	        </association>
+			<association
+			  object_name="hasChildDeleteReferer"
+			  super_class="hasStructureChild"
+			>
+			  <source
+			    deletion-policy="delete-referer"
+			    is-container="true"
+			    override="true"
+			    target-type="Object"
+			  />
+			</association>
+			<association
+			  object_name="hasStructureChildVeto"
+			  super_class="hasStructureChild"
+			>
+			  <destination
+			    deletion-policy="veto"
+			    is-container="true"
+			    override="true"
+			    target-type="Object"
+			  />
+			</association>
+	      </schema>
+	    </processor>
+
+		<add-mo-attribute table="MetaAttribute" before="storageImplementation">
+			<mo_attribute att_name="deletionPolicy" att_type="String" mandatory="false">
+				<storage class="com.top_logic.dob.attr.storage.EnumAttributeStorage" enum="com.top_logic.dob.meta.MOReference$DeletionPolicy" />
+			</mo_attribute>
+		</add-mo-attribute>
+		
+		<processor class="com.top_logic.element.model.migration.Ticket28263InitDeletionPolicy"/>
+
+		<create-datatype name="tl.model:DeletionPolicy"
+		  db_type="string"
+		  kind="Custom"
+		>
+		  <annotations>
+		    <config-type value="ENUM"/>
+		  </annotations>
+		  <storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping"
+		    application-type="com.top_logic.dob.meta.MOReference$DeletionPolicy"
+		  />
+		</create-datatype>
+		
+		<create-property name="tl.model:TLAssociationEnd#deletionPolicy"
+		  type="tl.model:DeletionPolicy"
+		/>
+		<create-property name="tl.model:TLReference#deletionPolicy"
+		  type="tl.model:DeletionPolicy"
+		>
+		  <annotations>
+		    <storage-algorithm>
+		      <derived-storage>
+		        <expression-evaluation>
+		          <chain>
+		            <get-value attribute="end"/>
+		            <get-value attribute="deletionPolicy"/>
+		          </chain>
+		        </expression-evaluation>
+		      </derived-storage>
+		    </storage-algorithm>
+		  </annotations>
+		</create-property>
+
+		<reorder-part name="tl.model:TLAssociationEnd#deletionPolicy"
+		  before="endIndex"
+		/>
+		<reorder-part name="tl.model:TLReference#deletionPolicy"
+		  before="ordered"
+		/>
+	</processors>
+	<migration>
+	</migration>
+	<post-processors/>
+</migration>

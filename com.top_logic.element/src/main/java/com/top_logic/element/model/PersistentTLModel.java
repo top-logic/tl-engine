@@ -10,6 +10,7 @@ import java.util.Collection;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.DuplicateAttributeException;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.MetaAttributeFactory;
@@ -189,8 +190,9 @@ public class PersistentTLModel extends DynamicModelPart implements TLModel {
 		TLAssociationEnd end = MetaAttributeFactory.getInstance().createEnd(kb);
 		end.setName(name);
 		end.setType(targetType);
-		/* Ensure that a history type is always set, as most code expects it. */
+		/* Ensure that a history type and deletion policy is always set, as most code expects it. */
 		end.setHistoryType(HistoryType.CURRENT);
+		end.setDeletionPolicy(DeletionPolicy.CLEAR_REFERENCE);
 		addStructuredTypePart(association, end);
 		return end;
 	}

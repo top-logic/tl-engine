@@ -13,6 +13,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.dob.DataObject;
 import com.top_logic.dob.MOAttribute;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.AttributeOperations;
@@ -81,6 +82,10 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 					config = ReverseStorage.defaultConfig();
 				} else {
 					HistoryType historyType = end.getHistoryType();
+					DeletionPolicy deletionPolicy = end.getDeletionPolicy();
+					if (deletionPolicy == null) {
+						deletionPolicy = DeletionPolicy.CLEAR_REFERENCE;
+					}
 					boolean composite = end.isComposite();
 					boolean ordered = end.isOrdered();
 					boolean multiple = end.isMultiple();
@@ -90,17 +95,17 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 							if (endType.getName().equals(GalleryImage.GALLERY_IMAGE_TYPE)) {
 								config = ImageGalleryStorage.imageGalleryConfig();
 							} else {
-								config = ListStorage.listConfig(composite, historyType);
+								config = ListStorage.listConfig(composite, historyType, deletionPolicy);
 							}
 						} else {
-							config = SetStorage.setConfig(composite, historyType);
+							config = SetStorage.setConfig(composite, historyType, deletionPolicy);
 						}
 					} else {
 						TLType endType = end.getType();
 						if (Document.DOCUMENT_TYPE.equals(TLModelUtil.qualifiedName(endType))) {
 							config = TypedConfiguration.newConfigItem(DocumentStorage.Config.class);
 						} else {
-							config = SingletonLinkStorage.singletonLinkConfig(composite, historyType);
+							config = SingletonLinkStorage.singletonLinkConfig(composite, historyType, deletionPolicy);
 						}
 					}
 				}

@@ -58,6 +58,7 @@ public class TLCharacteristicsCopier {
 			destinationEnd.setComposite(sourceEnd.isComposite());
 			destinationEnd.setNavigate(sourceEnd.canNavigate());
 			destinationEnd.setHistoryType(sourceEnd.getHistoryType());
+			destinationEnd.setDeletionPolicy(sourceEnd.getDeletionPolicy());
 		}
 	}
 

@@ -54,6 +54,13 @@ public class PersistentReference extends ConfiguredAttributeImpl implements TLRe
 	 */
 	public static final String HISTORY_TYPE_ATTR = "historyType";
 
+	/**
+	 * Name of the database attribute in which the deletion policy is stored.
+	 * 
+	 * @see #getDeletionPolicy()
+	 */
+	public static final String DELETION_POLICY_ATTR = "deletionPolicy";
+
 	/** @see TLAssociationEnd#isOrdered() */
 	public static final String ORDERED_ATTR = "ordered";
 

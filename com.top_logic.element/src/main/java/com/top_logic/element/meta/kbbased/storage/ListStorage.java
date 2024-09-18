@@ -23,6 +23,7 @@ import com.top_logic.basic.util.Utils;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.AttributeException;
@@ -310,10 +311,12 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 	 *        Whether the reference is a composition.
 	 * @param historyType
 	 *        The history type of the value of the reference.
+	 * @param deletionPolicy
+	 *        The deletion policy of the reference.
 	 * @return The storage configuration.
 	 */
-	public static Config<?> listConfig(boolean composite, HistoryType historyType) {
-		return defaultConfig(Config.class, composite, historyType);
+	public static Config<?> listConfig(boolean composite, HistoryType historyType, DeletionPolicy deletionPolicy) {
+		return defaultConfig(Config.class, composite, historyType, deletionPolicy);
 	}
 
 }

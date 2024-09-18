@@ -54,6 +54,15 @@ public interface TLAssociationEndBase extends com.top_logic.model.TLStructuredTy
 	String HISTORY_TYPE_ATTR = "historyType";
 
 	/**
+	 * Part <code>deletionPolicy</code> of <code>TLAssociationEnd</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model:DeletionPolicy</code> in configuration.
+	 * </p>
+	 */
+	String DELETION_POLICY_ATTR = "deletionPolicy";
+
+	/**
 	 * Part <code>navigate</code> of <code>TLAssociationEnd</code>
 	 * 
 	 * <p>

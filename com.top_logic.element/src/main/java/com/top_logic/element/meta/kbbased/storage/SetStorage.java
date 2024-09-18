@@ -29,6 +29,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.filt.DOAttributeComparator;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.AttributeException;
@@ -531,10 +532,12 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 	 *        Whether the reference is a composition.
 	 * @param historyType
 	 *        The history type of the value of the reference.
+	 * @param deletionPolicy
+	 *        The deletion policy of the reference.
 	 * @return The {@link SetStorage} configuration.
 	 */
-	public static Config<?> setConfig(boolean composite, HistoryType historyType) {
-		return defaultConfig(Config.class, composite, historyType);
+	public static Config<?> setConfig(boolean composite, HistoryType historyType, DeletionPolicy deletionPolicy) {
+		return defaultConfig(Config.class, composite, historyType, deletionPolicy);
 	}
 
 	/**

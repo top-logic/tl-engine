@@ -28,6 +28,7 @@ import com.top_logic.basic.col.factory.CollectionFactory;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.AssociationConfig;
 import com.top_logic.element.config.AssociationConfig.EndConfig;
@@ -694,14 +695,17 @@ public class ModelResolver {
 			TLAssociation association = TLModelUtil.addAssociation(module, type.getScope(), associationName);
 
 			HistoryType historyType;
+			DeletionPolicy deletionPolicy;
 			boolean composite;
 			boolean canNavigate;
 			if (orig == null) {
 				historyType = referenceConfig.getHistoryType();
+				deletionPolicy = referenceConfig.getDeletionPolicy();
 				composite = referenceConfig.isComposite();
 				canNavigate = referenceConfig.canNavigate();
 			} else {
 				historyType = orig.getHistoryType();
+				deletionPolicy = orig.getDeletionPolicy();
 				composite = orig.isComposite();
 				canNavigate = orig.getEnd().canNavigate();
 			}
@@ -735,6 +739,7 @@ public class ModelResolver {
 			destEnd.setAggregate(false);
 			destEnd.setNavigate(canNavigate);
 			destEnd.setHistoryType(historyType);
+			destEnd.setDeletionPolicy(deletionPolicy);
 			applyMultiplicity(referenceConfig, destEnd);
 
 			if (orig != null) {

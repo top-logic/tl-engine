@@ -165,6 +165,7 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 	private void copyEndValues(Log log, PooledConnection connection, long branch, TLID sourceID, TLID destId,
 			QualifiedPartName partName, QualifiedPartName definition) throws SQLException {
 		boolean withHistoryColumn = _util.hasHistoryColumn();
+		boolean withDeletionColumn = _util.hasDeletionColumn();
 		CompiledStatement getValuesQuery = query(
 			parameters(
 				_util.branchParamDef(),
@@ -178,7 +179,8 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 					columnDef(SQLH.mangleDBName(TLAssociationEnd.AGGREGATE_ATTR)),
 					columnDef(SQLH.mangleDBName(TLAssociationEnd.COMPOSITE_ATTR)),
 					columnDef(SQLH.mangleDBName(TLAssociationEnd.NAVIGATE_ATTR)),
-					withHistoryColumn ? columnDef(SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR)) : null),
+					withHistoryColumn ? columnDef(SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR)) : null,
+					withDeletionColumn ? columnDef(SQLH.mangleDBName(TLAssociationEnd.DELETION_POLICY_ATTR)) : null),
 				table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
 				and(
 					_util.eqBranch(),
@@ -195,7 +197,14 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 		boolean aggregate = false;
 		boolean composite = false;
 		boolean navigate = false;
+
 		String historyType = null;
+		String deletionPolicy = null;
+
+		int index = 8;
+		int historyIndex = withHistoryColumn ? index++ : 0;
+		int deletionIndex = withDeletionColumn ? index++ : 0;
+
 		try (ResultSet endValues =
 			getValuesQuery.executeQuery(connection, branch, sourceID)) {
 			if (endValues.next()) {
@@ -207,7 +216,10 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 				composite = endValues.getBoolean(6);
 				navigate = endValues.getBoolean(7);
 				if (withHistoryColumn) {
-					historyType = endValues.getString(8);
+					historyType = endValues.getString(historyIndex);
+				}
+				if (withDeletionColumn) {
+					deletionPolicy = endValues.getString(deletionIndex);
 				}
 			} else {
 				log.error("Unable to get values to copy from definition '" + definition.getName() + "' to override '"
@@ -227,7 +239,8 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 				parameterDef(DBType.BOOLEAN, TLAssociationEnd.AGGREGATE_ATTR),
 				parameterDef(DBType.BOOLEAN, TLAssociationEnd.COMPOSITE_ATTR),
 				parameterDef(DBType.BOOLEAN, TLAssociationEnd.NAVIGATE_ATTR),
-				parameterDef(DBType.STRING, TLAssociationEnd.HISTORY_TYPE_ATTR)),
+				parameterDef(DBType.STRING, TLAssociationEnd.HISTORY_TYPE_ATTR),
+				parameterDef(DBType.STRING, TLAssociationEnd.DELETION_POLICY_ATTR)),
 			update(
 				table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
 				and(
@@ -243,7 +256,9 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 					SQLH.mangleDBName(TLAssociationEnd.AGGREGATE_ATTR),
 					SQLH.mangleDBName(TLAssociationEnd.COMPOSITE_ATTR),
 					SQLH.mangleDBName(TLAssociationEnd.NAVIGATE_ATTR),
-					withHistoryColumn ? SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR) : null),
+					withHistoryColumn ? SQLH.mangleDBName(TLAssociationEnd.HISTORY_TYPE_ATTR) : null,
+					withDeletionColumn ? SQLH.mangleDBName(TLAssociationEnd.DELETION_POLICY_ATTR) : null
+				),
 				Util.listWithoutNull(
 					parameter(DBType.BOOLEAN, TLStructuredTypePart.BAG_ATTR),
 					parameter(DBType.BOOLEAN, TLStructuredTypePart.MANDATORY_ATTR),
@@ -252,10 +267,11 @@ public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTyp
 					parameter(DBType.BOOLEAN, TLAssociationEnd.AGGREGATE_ATTR),
 					parameter(DBType.BOOLEAN, TLAssociationEnd.COMPOSITE_ATTR),
 					parameter(DBType.BOOLEAN, TLAssociationEnd.NAVIGATE_ATTR),
-					withHistoryColumn ? parameter(DBType.STRING, TLAssociationEnd.HISTORY_TYPE_ATTR) : null)))
-						.toSql(connection.getSQLDialect());
+					withHistoryColumn ? parameter(DBType.STRING, TLAssociationEnd.HISTORY_TYPE_ATTR) : null,
+					withDeletionColumn ? parameter(DBType.STRING, TLAssociationEnd.DELETION_POLICY_ATTR) : null
+				))).toSql(connection.getSQLDialect());
 		updateValuesQuery.executeUpdate(connection, branch, destId, bag, mandatory, multiple, ordered, aggregate,
-			composite, navigate, historyType);
+			composite, navigate, historyType, deletionPolicy);
 	}
 
 	private void copyPropertyValues(Log log, PooledConnection connection, long branch, TLID sourceID, TLID destId,

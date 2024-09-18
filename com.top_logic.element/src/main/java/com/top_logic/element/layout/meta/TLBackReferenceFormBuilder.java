@@ -26,6 +26,7 @@ import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.func.Function2;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.ReferenceConfig;
 import com.top_logic.element.meta.kbbased.KBBasedMetaAttribute;
@@ -152,6 +153,10 @@ public class TLBackReferenceFormBuilder extends TLReferenceFormBuilder {
 		@Hidden
 		@ComplexDefault(CurrentDefault.class)
 		HistoryType getHistoryType();
+
+		@Override
+		@Hidden
+		DeletionPolicy getDeletionPolicy();
 
 		@Override
 		@Derived(fun = ResolveTypeKind.class, args = { @Ref(COMPOSITE_PROPERTY), @Ref(RESOLVED_TYPE) })

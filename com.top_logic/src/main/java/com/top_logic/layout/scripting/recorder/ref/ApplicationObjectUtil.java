@@ -14,6 +14,7 @@ import com.top_logic.basic.col.Maybe;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.ex.UnknownTypeException;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.knowledge.objects.InvalidLinkException;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
@@ -158,6 +159,18 @@ public class ApplicationObjectUtil {
 	public static final String STRUCTURE_CHILD_ASSOCIATION = "hasStructureChild";
 
 	/**
+	 * Generic association for storing compositions that are also marked with
+	 * {@link DeletionPolicy#DELETE_REFERER}.
+	 */
+	public static final String STRUCTURE_CHILD_DELETE_REFERER_ASSOCIATION = "hasChildDeleteReferer";
+
+	/**
+	 * Generic association for storing compositions that are also marked with
+	 * {@link DeletionPolicy#VETO}.
+	 */
+	public static final String STRUCTURE_CHILD_VETO_ASSOCIATION = "hasStructureChildVeto";
+
+	/**
 	 * Abstract KA being the root of all such derived wrapper attribute associations.
 	 * 
 	 * @see "com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil#WRAPPER_ATTRIBUTE_ASSOCIATION_BASE"
@@ -170,6 +183,18 @@ public class ApplicationObjectUtil {
 	 * @see "com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil#WRAPPER_ATTRIBUTE_ASSOCIATION"
 	 */
 	public static final String WRAPPER_ATTRIBUTE_ASSOCIATION = "hasWrapperAttValue";
+
+	/**
+	 * Generic association to store links for references marked with deletion policy
+	 * {@link DeletionPolicy#DELETE_REFERER}.
+	 */
+	public static final String WRAPPER_DELETE_REFERER_ASSOCIATION = "hasWrapperDeleteReferer";
+
+	/**
+	 * Generic association to store links for references marked with deletion policy
+	 * {@link DeletionPolicy#VETO}.
+	 */
+	public static final String WRAPPER_VETO_ASSOCIATION = "hasWrapperVeto";
 
 	/**
 	 * Name of the table in which references to historic items are stored.

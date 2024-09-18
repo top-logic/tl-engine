@@ -37,6 +37,7 @@ import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.basic.xml.DOMUtil;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.dob.schema.config.DBColumnType;
 import com.top_logic.dob.xml.DOXMLConstants;
@@ -186,7 +187,7 @@ public class MigrationUtils {
 			HistoryType historyType, AnnotatedConfig<?> annotations, String endName) throws MigrationException {
 		Element reference =
 			createReference(log, model, referenceName, inverseReference.getOwner(), mandatory, composite, aggregate,
-				multiple, bag, ordered, isAbstract, navigate, historyType, annotations, endName);
+				multiple, bag, ordered, isAbstract, navigate, historyType, null, annotations, endName);
 		reference.setAttribute(ReferenceConfig.INVERSE_REFERENCE, inverseReference.getPartName());
 		reference.setAttribute(ReferenceConfig.KIND, ReferenceKind.BACKWARDS.getExternalName());
 		return reference;
@@ -194,7 +195,6 @@ public class MigrationUtils {
 
 	/**
 	 * Creates a new {@link TLReference}.
-	 * 
 	 * @param referenceName
 	 *        Name of the {@link TLReference} to create.
 	 * @param target
@@ -204,11 +204,11 @@ public class MigrationUtils {
 			QualifiedTypeName target,
 			Boolean mandatory, Boolean composite,
 			Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered, Boolean isAbstract, Boolean navigate,
-			HistoryType historyType, AnnotatedConfig<?> annotations, String endName)
+			HistoryType historyType, DeletionPolicy deletionPolicy, AnnotatedConfig<?> annotations, String endName)
 			throws MigrationException {
 		Element reference = internalCreateEndAspect(log, model, referenceName, target,
 			REFERENCE_CONFIG_TAG_NAME, mandatory, composite, aggregate, multiple, bag, ordered, isAbstract,
-			navigate, historyType, annotations);
+			navigate, historyType, deletionPolicy, annotations);
 		if (endName != null) {
 			reference.setAttribute(ReferenceConfig.END, endName);
 		}
@@ -217,7 +217,6 @@ public class MigrationUtils {
 
 	/**
 	 * Creates a new {@link TLAssociationEnd}.
-	 * 
 	 * @param endName
 	 *        Name of the {@link TLAssociationEnd} to create.
 	 * @param target
@@ -227,9 +226,10 @@ public class MigrationUtils {
 			Boolean mandatory, Boolean composite,
 			Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered, Boolean isAbstract, Boolean navigate,
 			HistoryType historyType,
-			AnnotatedConfig<?> annotations) throws MigrationException {
+			DeletionPolicy deletionPolicy, AnnotatedConfig<?> annotations) throws MigrationException {
 		return internalCreateEndAspect(log, model, endName, target, END_CONFIG_TAG_NAME,
-			mandatory, composite, aggregate, multiple, bag, ordered, isAbstract, navigate, historyType, annotations);
+			mandatory, composite, aggregate, multiple, bag, ordered, isAbstract, navigate, historyType, deletionPolicy,
+			annotations);
 	}
 
 	private static Element internalCreateEndAspect(Log log, Document model, QualifiedPartName part,
@@ -238,7 +238,7 @@ public class MigrationUtils {
 			Boolean mandatory, Boolean composite, Boolean aggregate, Boolean multiple, Boolean bag, Boolean ordered,
 			Boolean isAbstract, Boolean navigate,
 			HistoryType historyType,
-			AnnotatedConfig<?> annotations) throws MigrationException {
+			DeletionPolicy deletionPolicy, AnnotatedConfig<?> annotations) throws MigrationException {
 		Element end = internalCreatePart(log, model, part, target, tagName, mandatory, multiple, bag, ordered,
 			isAbstract, annotations);
 		if (composite != null) {
@@ -252,6 +252,9 @@ public class MigrationUtils {
 		}
 		if (historyType != null) {
 			end.setAttribute(EndAspect.HISTORY_TYPE_PROPERTY, historyType.getExternalName());
+		}
+		if (deletionPolicy != null) {
+			end.setAttribute(EndAspect.DELETION_POLICY_PROPERTY, deletionPolicy.getExternalName());
 		}
 
 		return end;

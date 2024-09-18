@@ -22,6 +22,7 @@ import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.func.Function2;
 import com.top_logic.basic.shared.string.StringServicesShared;
 import com.top_logic.basic.util.Utils;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.ReferenceConfig;
 import com.top_logic.element.layout.meta.TLPropertyFormBuilder.PropertyModel;
@@ -75,6 +76,7 @@ public class TLReferenceFormBuilder extends TLStructuredTypePartFormBuilder {
 		ReferenceModel.NAVIGATE_PROPERTY,
 
 		ReferenceModel.HISTORY_TYPE_PROPERTY,
+		ReferenceModel.DELETION_POLICY_PROPERTY,
 
 		ReferenceModel.LABEL,
 		ReferenceModel.DESCRIPTION,
@@ -134,6 +136,25 @@ public class TLReferenceFormBuilder extends TLStructuredTypePartFormBuilder {
 		@ComplexDefault(CurrentDefault.class)
 		@DynamicMode(fun = ActiveIf.class, args = @Ref({ EDIT_MODEL, EditModel.CREATING }))
 		HistoryType getHistoryType();
+
+		@Override
+		@DynamicMode(fun = CurrentAndCreating.class, args = {
+			@Ref(HISTORY_TYPE_PROPERTY),
+			@Ref({ EDIT_MODEL, EditModel.CREATING })
+		})
+		DeletionPolicy getDeletionPolicy();
+
+		/**
+		 * {@link FieldMode} of {@link ReferenceModel#getDeletionPolicy()}.
+		 */
+		class CurrentAndCreating extends Function2<FieldMode, HistoryType, Boolean> {
+			@Override
+			public FieldMode apply(HistoryType arg1, Boolean creating) {
+				return arg1 == HistoryType.CURRENT ? 
+					(Utils.isTrue(creating) ? FieldMode.ACTIVE : FieldMode.IMMUTABLE)
+					: FieldMode.DISABLED;
+			}
+		}
 
 		@Override
 		@FormattedDefault(ReferenceKind.Names.FORWARDS_NAME)

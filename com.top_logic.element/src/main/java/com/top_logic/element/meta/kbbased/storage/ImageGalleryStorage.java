@@ -16,6 +16,7 @@ import com.top_logic.basic.col.TupleFactory.Pair;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.dob.ex.NoSuchAttributeException;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.model.imagegallery.GalleryImage;
@@ -132,7 +133,7 @@ public class ImageGalleryStorage<C extends ImageGalleryStorage.Config<?>> extend
 	 * Creates a configuration for the {@link ImageGalleryStorage}.
 	 */
 	public static Config<?> imageGalleryConfig() {
-		return defaultConfig(Config.class, false, HistoryType.CURRENT);
+		return defaultConfig(Config.class, false, HistoryType.CURRENT, DeletionPolicy.CLEAR_REFERENCE);
 	}
 
 }

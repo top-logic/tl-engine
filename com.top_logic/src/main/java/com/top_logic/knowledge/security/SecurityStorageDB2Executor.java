@@ -22,7 +22,7 @@ import com.top_logic.util.db.DBUtil;
 
 /**
  * {@link SecurityStorageDB2Executor} is a {@link SecurityStorageExecutor} which cares about special
- * DB2 handling.
+ * <code>DB2</code> handling.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

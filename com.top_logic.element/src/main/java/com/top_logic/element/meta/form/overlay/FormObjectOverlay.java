@@ -23,6 +23,7 @@ import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.ChangeAware;
 import com.top_logic.element.meta.form.AttributeFormFactory;
+import com.top_logic.knowledge.service.event.Modification;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
@@ -300,22 +301,25 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 	 * @param updateContainer
 	 *        All updates of the current transaction.
 	 */
-	public void store(AttributeUpdateContainer updateContainer) {
+	public Modification store(AttributeUpdateContainer updateContainer) {
 		Iterable<AttributeUpdate> updates = getUpdates();
 		for (AttributeUpdate update : updates) {
 			update.checkUpdate();
 		}
+
+		Modification result = Modification.NONE;
 		for (AttributeUpdate update : updates) {
 			if (this instanceof ChangeAware) {
 				TLStructuredTypePart attribute = update.getAttribute();
 				((ChangeAware) this).notifyPreChange(attribute.getName(), update.getCorrectValues());
 			}
 		
-			update.store();
+			result = result.andThen(update.store());
 		}
 		if (this instanceof ChangeAware) {
 			((ChangeAware) this).updateValues(updateContainer);
 		}
+		return result;
 	}
 
 	@Override

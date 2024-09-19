@@ -22,6 +22,7 @@ import com.top_logic.element.meta.form.AttributeFormFactory;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.gui.MetaAttributeGUIHelper;
 import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.knowledge.service.event.Modification;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
@@ -58,8 +59,9 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 		 * 
 		 * @param update
 		 *        The container for the value to persist.
+		 * @return An action that deletes objects that are marked for deletion.
 		 */
-		void store(AttributeUpdate update);
+		Modification store(AttributeUpdate update);
 
 	}
 
@@ -69,13 +71,15 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	 */
 	public static class DefaultStorageAlgorithm implements StoreAlgorithm {
 		@Override
-		public void store(AttributeUpdate update) {
+		public Modification store(AttributeUpdate update) {
 			TLObject object = update.getObject();
 			TLStructuredTypePart attribute = update.getAttribute();
 			AttributeOperations.checkAlive(object, attribute);
 
 			StorageImplementation storage = AttributeOperations.getStorageImplementation(object, attribute);
 			storage.update(update);
+
+			return Modification.NONE;
 		}
 	}
 
@@ -626,10 +630,12 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 
 	/**
 	 * Forces this update to persist its value.
+	 * 
+	 * @return An action that deletes objects that are marked for deletion.
 	 */
 	@FrameworkInternal
-	public void store() {
-		_storeAlgorithm.store(this);
+	public Modification store() {
+		return _storeAlgorithm.store(this);
 	}
 
 	/**

@@ -119,6 +119,8 @@ final class ReplayContext extends DefaultDBContext {
 			/* There is already a first revision in the database, because it is created during
 			 * startup. */
 			newRevision = (RevisionImpl) kb.getRevision(expectedCommitNumber);
+			// Let the KB expect "expectedCommitNumber" as next revision
+			kb.resetLastRevision(expectedCommitNumber - 1);
 		} else {
 			newRevision =
 				kb.internalCreateRevision(expectedCommitNumber, getUpdater(), lastRevisionDate, Messages.SYNTHESIZED_COMMIT_DURING_REPLAY);

@@ -115,7 +115,7 @@ public class MegaMenuOptionControl extends AbstractConstantControl {
 
 	}
 
-	/** Name of the option. */
+	/** Writes the label of the option. */
 	@TemplateVariable("label")
 	public void writeLabel(TagWriter out) throws IOException {
 		ResKey currOption = _option.getConfig().getTabInfo().getLabel();
@@ -124,9 +124,13 @@ public class MegaMenuOptionControl extends AbstractConstantControl {
 		out.append(optionLabel);
 	}
 
-	/** Tooltip of the option. */
-	@TemplateVariable("tooltip")
-	public void writeTooltip(TagWriter out) throws IOException {
+	/**
+	 * Writes the description for the option.
+	 * 
+	 * @implSpec Uses the tooltip of the option as description.
+	 */
+	@TemplateVariable("description")
+	public void writeDescription(TagWriter out) throws IOException {
 		ResKey currOption = _option.getConfig().getTabInfo().getLabel();
 		LabelProvider optionLabelProvider = _megaMenu.getOptionLabelProvider();
 		ResourceProvider optionResourceProvider = LabelResourceProvider.toResourceProvider(optionLabelProvider);

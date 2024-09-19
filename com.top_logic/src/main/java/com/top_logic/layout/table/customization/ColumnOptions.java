@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ColumnConfigurator;
+import com.top_logic.layout.table.provider.generic.SuppressExportConfigurator;
 
 /**
  * Configures several options for the column.
@@ -60,6 +61,12 @@ public class ColumnOptions extends AbstractConfiguredInstance<ColumnOptions.Conf
 		 */
 		@BooleanDefault(true)
 		boolean canSelect();
+
+		/**
+		 * Whether the value for this column is exported to Excel.
+		 */
+		@BooleanDefault(true)
+		boolean getExport();
 	}
 
 	/**
@@ -85,6 +92,9 @@ public class ColumnOptions extends AbstractConfiguredInstance<ColumnOptions.Conf
 		column.setExcludeFilterFromSidebar(!config.showInSidebarFilter());
 		column.setShowHeader(config.getShowHeader());
 		column.setSelectable(config.canSelect());
+		if (!config.getExport()) {
+			SuppressExportConfigurator.INSTANCE.adapt(column);
+		}
 	}
 
 }

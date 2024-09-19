@@ -7,11 +7,14 @@
 	<arguments
 		helpID="ID_a9506dcf_efb8_4d19_81c8_a5e5b1a9e63e"
 		securityDomain=""
-		tabIcon=""
 	>
 		<tabLabel key="dynamic.f27916bf-4770-4f59-b848-47a0c7b118c0">
 			<en>Combining channel</en>
 			<de>Kanalkombination</de>
+			<tooltip>
+				<en>The combined component channel is tested in this view.</en>
+				<de>In dieser Sicht wird der kombinierte Komponentenkanal getestet.</de>
+			</tooltip>
 		</tabLabel>
 		<components>
 			<layout-reference resource="com.top_logic.demo/technical/components/combiningChannel/verticalLayout.layout.xml"/>

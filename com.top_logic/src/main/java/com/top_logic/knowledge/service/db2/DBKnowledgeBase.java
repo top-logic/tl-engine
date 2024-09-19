@@ -306,6 +306,15 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 
 	private final SequenceManager sequenceManager = new RowLevelLockingSequenceManager();
 
+	/**
+	 * Commit number of the {@link UpdateEvent} that was sent as last.
+	 * 
+	 * <p>
+	 * Note: Must be accessed from within a context synchronized at this KB.
+	 * </p>
+	 * 
+	 * @see #fireEvent(UpdateEvent)
+	 */
 	private long _lastSentEvent = 0;
 
 	/**
@@ -739,6 +748,18 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		}
 		synchronized (this) {
 			_lastSentEvent = lastGlobalRevision;
+		}
+	}
+
+	/**
+	 * Unconditionally sets {@link #getLastLocalRevision()} to the given revision.
+	 */
+	void resetLastRevision(long revision) {
+		synchronized (refetchLock) {
+			this.lastLocalRevision = revision;
+		}
+		synchronized (this) {
+			_lastSentEvent = revision;
 		}
 	}
 

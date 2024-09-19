@@ -31,6 +31,7 @@ import com.top_logic.element.meta.form.MetaControlProvider;
 import com.top_logic.element.meta.form.controlprovider.CompositionControlProvider;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.knowledge.service.event.Modification;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.Control;
@@ -114,10 +115,14 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 
 	private static final StoreAlgorithm DELETE_AND_STORE = new AttributeUpdate.DefaultStorageAlgorithm() {
 		@Override
-		public void store(AttributeUpdate update) {
+		public Modification store(AttributeUpdate update) {
 			Set<TLObject> deleted = ((Composite) update.getField()).getProxy().get(DELETED);
-			KBUtils.deleteAll(deleted);
 			super.store(update);
+
+			// Note: Deletion must be delayed until all other updates have been processed.
+			// Otherwise, the update may fails because it still accesses deleted objects that have
+			// been implicitly deleted due to deletion policies on references.
+			return () -> KBUtils.deleteAll(deleted);
 		}
 	};
 

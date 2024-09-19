@@ -306,6 +306,8 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 
 	private final SequenceManager sequenceManager = new RowLevelLockingSequenceManager();
 
+	private long _lastSentEvent = 0;
+
 	/**
 	 * The contents of the {@link #cache} contains contents up to this revision number.
 	 * 
@@ -734,6 +736,9 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		synchronized (refetchLock) {
 			this.lastLocalRevision = lastGlobalRevision;
 			syncRefetchUpdateRevisionAndPublishUpdate(new UpdateChainLink(lastLocalRevision));
+		}
+		synchronized (this) {
+			_lastSentEvent = lastGlobalRevision;
 		}
 	}
 
@@ -2880,13 +2885,50 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		return new UpdateChainView(sessionUpdateLink());
 	}
 
-	void fireUpdateHighPrio(UpdateEvent event) {
+	/**
+	 * This method is called outside the refetch lock. Therefore it is possible, the events are not
+	 * send in correct order. The method waits until ththe event, if it is the "next" or caches the
+	 * event until the all previous events were sent.
+	 */
+	private void fireEvent(UpdateEvent event) {
+		synchronized (this) {
+			while (true) {
+				long commitNumber = event.getCommitNumber();
+				assert commitNumber > _lastSentEvent;
+				if (commitNumber == _lastSentEvent + 1) {
+					// Unlock before sending event!
+					_lastSentEvent = commitNumber;
+					this.notifyAll();
+
+					try {
+						fireUpdateHighPrio(event);
+						// Notify synchronous listeners.
+						fireUpdate(event);
+					} catch (Throwable ex) {
+						Logger.error("Unable to process event with number '" + commitNumber, ex);
+						throw ex;
+					}
+					break;
+				} else {
+					try {
+						this.wait();
+					} catch (InterruptedException ex) {
+						Logger.warn("Thread waiting for sending event with number '" + commitNumber
+								+ "' interrupted. Last sent event: " + +_lastSentEvent,
+							ex);
+					}
+				}
+			}
+		}
+	}
+
+	private void fireUpdateHighPrio(UpdateEvent event) {
 		for (UpdateListener updateListener : _updateListenersHighPrio) {
 			updateListener.notifyUpdate(this, event);
 		}
 	}
 
-    protected void fireUpdate(UpdateEvent event) {
+	private void fireUpdate(UpdateEvent event) {
 		updateWrappers(event);
 		for (UpdateListener updateListener : updateListeners) {
 			updateListener.notifyUpdate(this, event);
@@ -3678,10 +3720,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 			syncRefetchPublishUpdate(remoteRevision);
 		}
 		
-		fireUpdateHighPrio(event);
-
-		// Notify synchronous listeners.
-		fireUpdate(event);
+		fireEvent(event);
 	}
 
 	void updateCaches(UpdateEvent event) {
@@ -4115,9 +4154,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		}
 		
 		if (success) {
-			fireUpdateHighPrio(commitLink.getUpdateEvent());
-
-			fireUpdate(commitLink.getUpdateEvent());
+			fireEvent(commitLink.getUpdateEvent());
 		}
 	}
 

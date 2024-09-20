@@ -62,7 +62,7 @@ import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.compare.CompareAlgorithm;
 import com.top_logic.layout.compare.CompareAlgorithmHolder;
 import com.top_logic.layout.component.ComponentUtil;
-import com.top_logic.layout.component.Selectable;
+import com.top_logic.layout.component.InAppSelectable;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.FormHandler;
@@ -109,6 +109,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
@@ -118,7 +119,7 @@ import com.top_logic.util.model.ModelService;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class TableComponent extends BuilderComponent implements SelectableWithSelectionModel,
+public class TableComponent extends BuilderComponent implements SelectableWithSelectionModel, InAppSelectable,
 		FormHandler, TableDataOwner, ControlRepresentable, CompareAlgorithmHolder, ComponentRowSource {
 
 	/**
@@ -126,7 +127,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	 */
 	@TagName(Config.TAG_NAME)
 	public interface Config
-			extends BuilderComponent.Config, ColumnsChannel.Config, Selectable.SelectableConfig, SelectionModelConfig {
+			extends BuilderComponent.Config, ColumnsChannel.Config, InAppSelectable.InAppSelectableConfig, SelectionModelConfig {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -397,29 +398,37 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 	private SelectionModel _selectionModel;
 
-    /**
+	private CommandHandler _onSelectionChange;
+
+	/**
 	 * Create a {@link TableComponent}.
 	 */
-	public TableComponent(final InstantiationContext context, final Config attr) throws ConfigurationException {
-		super(context, attr);
-		_types = resolveTypes(context, attr);
-        this.useFooterForPaging = attr.getUseFooterForPaging();
+	public TableComponent(final InstantiationContext context, final Config config) throws ConfigurationException {
+		super(context, config);
+		_types = resolveTypes(context, config);
+		this.useFooterForPaging = config.getUseFooterForPaging();
 
-        this.selectable         = attr.getSelectable();
-        this.cachingApplModel   = attr.getCaching();
-        this.defaultSortable    = attr.getDefaultSortable();
+		this.selectable = config.getSelectable();
+		this.cachingApplModel = config.getCaching();
+		this.defaultSortable = config.getDefaultSortable();
 
         // initialization of the column comparators of the newly created TableComponent is done in #componentsResolved to allow for post changes 
         // of the columnDescriptionManager.
         // initColumnComparatorsFromColumnDescriptions();
-        this.columnBuilder          = this.createColumnBuilder(context, attr);
-		this.formMemberProvider = attr.getFormMemberProvider();
+		this.columnBuilder = this.createColumnBuilder(context, config);
+		this.formMemberProvider = config.getFormMemberProvider();
 
-		TableConfig table = attr.getTable();
+		TableConfig table = config.getTable();
 		if (table != null) {
 			_configuredProvider = TableConfigurationFactory.toProvider(context, table);
 		}
-		_selectionModel = createSelectionModel(attr);
+		_selectionModel = createSelectionModel(config);
+		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+	}
+
+	@Override
+	public CommandHandler getOnSelectionHandler() {
+		return _onSelectionChange;
 	}
 
 	private Set<TLType> resolveTypes(InstantiationContext context, Config config) {

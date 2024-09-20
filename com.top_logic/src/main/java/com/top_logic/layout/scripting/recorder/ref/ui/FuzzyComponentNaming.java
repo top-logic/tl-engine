@@ -7,6 +7,7 @@ package com.top_logic.layout.scripting.recorder.ref.ui;
 
 import static com.top_logic.basic.col.TransformIterators.*;
 import static com.top_logic.basic.shared.collection.CollectionUtilShared.*;
+import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,11 +16,12 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.BooleanFlag;
 import com.top_logic.basic.col.DescendantDFSIterator;
+import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.col.TreeView;
 import com.top_logic.basic.col.search.SearchResult;
-import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.util.ResKey;
@@ -28,9 +30,8 @@ import com.top_logic.layout.WindowScope;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.component.AJAXComponent;
 import com.top_logic.layout.component.TabComponent;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.scripting.ScriptingUtil;
-import com.top_logic.layout.scripting.recorder.ref.AbstractModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.GlobalModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.runtime.ActionContext;
@@ -65,7 +66,7 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href="mailto:Jan Stolzenburg@top-logic.com">Jan Stolzenburg</a>
  */
-public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutComponent, FuzzyComponentNaming.Name>
+public class FuzzyComponentNaming extends GlobalModelNamingScheme<LayoutComponent, FuzzyComponentNaming.Name>
 		implements LayoutComponentResolver {
 
 	/** The {@link ModelName} used by the {@link FuzzyComponentNaming}. */
@@ -114,19 +115,19 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 		for (int i = 0, componentNamesSize = componentLabels.size(); i < componentNamesSize;) {
 			String label = componentLabels.get(i);
 			int processedLabels = 1;
-			List<String> path = componentLabels.subList(0, i + 1);
 			SearchResult<LayoutComponent> searchResult = new SearchResult<>();
-			for (TabComponent tab : children(layout, TabComponent.class)) {
+			for (TabComponent tab : descendantsOrSelf(layout, TabComponent.class)) {
 				int index = NamedTabSwitchOp.findCardIndexByLabel(tab, label);
 				if (index == NamedTabSwitchOp.NOTHING_FOUND) {
 					continue;
 				}
 				LayoutComponent childComponent = tab.getChild(index);
-				assert childComponent != null : "Component for tab " + printPath(path) + " is missing.";
+				assert childComponent != null : "No component for tab " + printSubPath(componentLabels, i + 1) + ".";
 				searchResult.add(childComponent);
 			}
+			Resources resources = Resources.getInstance();
 			roots:
-			for (RootTileComponent tile : children(layout, RootTileComponent.class)) {
+			for (RootTileComponent tile : descendantsOrSelf(layout, RootTileComponent.class)) {
 				List<LayoutComponent> displayedPath = tile.displayedPath();
 				if (displayedPath.isEmpty()) {
 					continue;
@@ -136,13 +137,14 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 					if (labelsIndex >= componentNamesSize) {
 						continue roots;
 					}
-					if (!componentLabels.get(labelsIndex).equals(displayedPathContentLabel(inPath))) {
+
+					if (!componentLabels.get(labelsIndex).equals(componentLabel(resources, inPath))) {
 						continue roots;
 					}
 					labelsIndex++;
 				}
 				processedLabels = displayedPath.size();
-				searchResult.add(displayedComponent(displayedPath.get(displayedPath.size() - 1)));
+				searchResult.add(displayedPath.get(displayedPath.size() - 1));
 			}
 
 			switch (searchResult.getResults().size()) {
@@ -153,7 +155,7 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 								InlinedTileComponent inlinedComponent =
 									TileComponentFinder.getFirstOfType(InlinedTileComponent.class, child);
 								if (inlinedComponent != null
-									&& label.equals(displayedPathContentLabel(inlinedComponent))) {
+									&& label.equals(componentLabel(resources, inlinedComponent))) {
 									/* Workaround: When recording the selection of an element in an
 									 * InlinedTileComponent, the record occurs when the InlinedTile
 									 * is visible, i.e. it is displayed in the tile path. When
@@ -168,14 +170,16 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 							// Last entry can be the title of the component.
 							layout = resolveByTitle(layout, label);
 							if (layout == null) {
-								ApplicationAssertions.fail(name,
-									"Tab or component with title '" + label + "' not found.");
+								ApplicationAssertions.fail(name, "Component with title '" + label + "' not found in "
+									+ printSubPath(componentLabels, i + 1) + ".");
 							}
 						}
 					} else {
 						// Will break command execution, because there is no result
-						searchResult.getSingleResult("Search for tab " + printPath(path) + " failed.");
-						assert false : "There is no result.";
+						searchResult
+							.getSingleResult(
+								"No component " + printPath(componentLabels) + " found.");
+						throw new UnreachableAssertion("No result, getSingleResult() must fail.");
 					}
 					break;
 				}
@@ -185,8 +189,9 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 				}
 				default: {
 					// Will break command execution, because there is more than one result
-					searchResult.getSingleResult("Search for tab " + printPath(path) + " failed.");
-					assert false : "There is more than one result.";
+					searchResult.getSingleResult(
+						"Search for tab " + printPath(componentLabels) + " failed.");
+					throw new UnreachableAssertion("Non-unique result, getSingleResult() must fail.");
 				}
 			}
 			i += processedLabels;
@@ -206,8 +211,7 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 				if (!aComponent.isVisible()) {
 					return false;
 				}
-				ResKey titleKey = LayoutComponent.Config.getEffectiveTitleKey(aComponent.getConfig());
-				if (title.equals(resources.getString(titleKey, StringServices.EMPTY_STRING))) {
+				if (title.equals(componentLabel(resources, aComponent))) {
 					searchResult.add(aComponent);
 					// Stop descending
 					return false;
@@ -237,19 +241,12 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 	}
 
 	@Override
-	protected boolean isCompatibleModel(LayoutComponent model) {
-		Name name = TypedConfiguration.newConfigItem(Name.class);
-		DisplayContext context = DefaultDisplayContext.getDisplayContext();
-		initName(name, model);
-		Object resolved = locateModel(context, name);
-		return resolved == model;
-	}
+	public Maybe<Name> buildName(LayoutComponent model) {
+		List<String> path = buildPath(model);
+		if (path == null) {
+			return Maybe.none();
+		}
 
-	@Override
-	protected void initName(Name name, LayoutComponent model) {
-		List<String> path = new ArrayList<>();
-		buildPath(path, model);
-		Collections.reverse(path);
 		LayoutComponent parent = getParent(model);
 		boolean pathIsSufficient = parent == null || parent instanceof TabComponent;
 		if (!pathIsSufficient) {
@@ -259,13 +256,14 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 				pathIsSufficient = true;
 			}
 		}
+
+		Name name = createName();
 		if (pathIsSufficient) {
 			// Component is root layout, direct child of a tab, or part of the displayed path in a
 			// tile. No additional information needed.
 		} else {
-			ResKey titleKey = LayoutComponent.Config.getEffectiveTitleKey(model.getConfig());
 			Resources resources = Resources.getInstance();
-			String title = resources.getString(titleKey, StringServices.EMPTY_STRING);
+			String title = componentLabel(resources, model);
 			if (!StringServices.EMPTY_STRING.equals(title) && isUniqueTitle(resources, model, title)) {
 				path.add(title);
 			} else {
@@ -273,6 +271,14 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 			}
 		}
 		name.setTabPath(path);
+
+		// Try to resolve.
+		DisplayContext context = DefaultDisplayContext.getDisplayContext();
+		Object resolved = locateModel(context, name);
+		if (resolved != model) {
+			return Maybe.none();
+		}
+		return Maybe.some(name);
 	}
 
 	private boolean isUniqueTitle(Resources resources, LayoutComponent model, String title) {
@@ -300,8 +306,7 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 				if (!uniqueTitle.get() || aComponent == model) {
 					return false;
 				}
-				ResKey titleKey = LayoutComponent.Config.getEffectiveTitleKey(aComponent.getConfig());
-				if (title.equals(resources.getString(titleKey, StringServices.EMPTY_STRING))) {
+				if (title.equals(componentLabel(resources, aComponent))) {
 					uniqueTitle.set(false);
 					return false;
 				}
@@ -311,7 +316,12 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 		return uniqueTitle.get();
 	}
 
-	private void buildPath(List<String> path, LayoutComponent component) {
+	/**
+	 * The path of labels to find the given component, or <code>null</code> if this is not possible.
+	 */
+	private List<String> buildPath(LayoutComponent component) {
+		List<String> path = new ArrayList<>();
+
 		while (true) {
 			LayoutComponent parent = getParent(component);
 			if (parent == null) {
@@ -327,7 +337,11 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 				RootTileComponent rootTile = RootTileComponent.getRootTile(displayedComponent); 
 				List<LayoutComponent> displayedPath = rootTile.displayedPath();
 				for (int i = displayedPath.lastIndexOf(displayedComponent); i >= 0; i--) {
-					String label = displayedPathContentLabel(displayedPath.get(i));
+					String label = componentLabel(Resources.getInstance(), displayedPath.get(i));
+					if (StringServices.EMPTY_STRING.equals(label)) {
+						// Component without name cannot be identified.
+						return null;
+					}
 					path.add(label);
 				}
 				component = rootTile;
@@ -336,14 +350,19 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 			}
 		}
 
+		Collections.reverse(path);
+		return path;
 	}
 
-	private String displayedPathContentLabel(LayoutComponent displayedPathContent) {
-		return MetaLabelProvider.INSTANCE.getLabel(displayedComponent(displayedPathContent));
-	}
-
-	private LayoutComponent displayedComponent(LayoutComponent displayedPathContent) {
-		return displayedPathContent;
+	private String componentLabel(Resources resources, LayoutComponent model) {
+		if (model.getParent() instanceof ContextTileComponent context) {
+			if (context.getContent() == model) {
+				// Constant signaling that the content of a context selector is resolved.
+				return "{0}";
+			}
+		}
+		ResKey titleKey = LayoutComponent.Config.getEffectiveTitleKey(model.getConfig());
+		return resources.getString(titleKey, StringServices.EMPTY_STRING);
 	}
 
 	private LayoutComponent getParent(LayoutComponent component) {
@@ -363,7 +382,7 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 		return tabInfo.getLabel();
 	}
 
-	private <T extends LayoutComponent> Iterable<T> children(LayoutComponent component, Class<T> implClass) {
+	private <T extends LayoutComponent> Iterable<T> descendantsOrSelf(LayoutComponent component, Class<T> implClass) {
 		if (implClass.isInstance(component)) {
 			return Collections.singletonList(implClass.cast(component));
 		}
@@ -401,6 +420,10 @@ public class FuzzyComponentNaming extends AbstractModelNamingScheme<LayoutCompon
 		SearchResult<LayoutComponent> result = new SearchResult<>();
 		findComponent(Collections.singletonList(component), name, result);
 		return result.getSingleResult("Search for component '" + name + "' in " + printPath(path) + " failed.");
+	}
+
+	private String printSubPath(List<String> componentLabels, int i) {
+		return printPath(componentLabels.subList(0, i));
 	}
 
 	private String printPath(List<String> path) {

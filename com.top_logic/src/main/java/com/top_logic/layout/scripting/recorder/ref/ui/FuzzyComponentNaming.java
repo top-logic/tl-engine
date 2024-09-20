@@ -5,22 +5,21 @@
  */
 package com.top_logic.layout.scripting.recorder.ref.ui;
 
-import static com.top_logic.basic.col.TransformIterators.*;
-import static com.top_logic.basic.shared.collection.CollectionUtilShared.*;
-import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.BooleanFlag;
 import com.top_logic.basic.col.DescendantDFSIterator;
 import com.top_logic.basic.col.Maybe;
+import com.top_logic.basic.col.TransformIterators;
 import com.top_logic.basic.col.TreeView;
+import com.top_logic.basic.col.factory.CollectionFactory;
 import com.top_logic.basic.col.search.SearchResult;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
@@ -234,7 +233,7 @@ public class FuzzyComponentNaming extends GlobalModelNamingScheme<LayoutComponen
 	}
 
 	private List<DialogWindowControl> getDialogs(WindowScope windowScope) {
-		List<DialogWindowControl> dialogs = list(windowScope.getDialogs());
+		List<DialogWindowControl> dialogs = CollectionFactory.list(windowScope.getDialogs());
 		/* Change the order from top-most dialog last to top-most dialog first. */
 		Collections.reverse(dialogs);
 		return dialogs;
@@ -389,8 +388,8 @@ public class FuzzyComponentNaming extends GlobalModelNamingScheme<LayoutComponen
 		return new Iterable<>() {
 			@Override
 			public Iterator<T> iterator() {
-				return transform(
-					transform(descend(), implClass::isInstance),
+				return TransformIterators.transform(
+					TransformIterators.transform(descend(), implClass::isInstance),
 					implClass::cast);
 			}
 
@@ -438,7 +437,7 @@ public class FuzzyComponentNaming extends GlobalModelNamingScheme<LayoutComponen
 			// if the searched component was within a tab.
 			return;
 		}
-		findComponent(nonNull(component.getChildList()), name, result);
+		findComponent(CollectionUtil.nonNull(component.getChildList()), name, result);
 	}
 
 	private void findComponent(

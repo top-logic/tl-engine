@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<properties extends="com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.layout.structure.ToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster">
+	<properties extends="com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.layout.structure.ToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.layout.component.InAppSelectable$InAppSelectableConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster">
 		<annotations>
 			<display-order>
 				<value>
@@ -33,6 +33,7 @@
 					<property name="dragSource"/>
 					<property name="dropTargets"/>
 					<property name="buttons"/>
+					<property name="onSelectionChange"/>
 				</value>
 			</display-order>
 		</annotations>
@@ -102,6 +103,9 @@
 			default="1"
 			type="Integer"
 		/>
+		<property name="onSelectionChange"
+			instance-type="com.top_logic.layout.component.OnSelectionChangeHandler"
+		/>
 	</properties>
 
 	<tree-table name="TreeTable"
@@ -113,6 +117,7 @@
 		isSecurityMaster="${isSecurityMaster}"
 		model="${model}"
 		objectType="${type}"
+		onSelectionChange="${onSelectionChange}"
 		partnerGroup="${partnerGroup}"
 		rootVisible="${rootVisible}"
 		securityObject="${securityObject}"

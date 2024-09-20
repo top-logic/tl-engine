@@ -33,6 +33,7 @@
 					<property name="securityObject"/>
 
 					<property name="buttons"/>
+					<property name="onSelectionChange"/>
 				</value>
 			</display-order>
 		</annotations>
@@ -59,6 +60,9 @@
 			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
 			<hidden/>
 		</property>
+		<property name="onSelectionChange"
+			instance-type="com.top_logic.layout.component.OnSelectionChangeHandler"
+		/>
 	</properties>
 
 	<selector name="Selector"
@@ -69,6 +73,7 @@
 		isSecurityMaster="${isSecurityMaster}"
 		model="${model}"
 		multiple="${multiple}"
+		onSelectionChange="${onSelectionChange}"
 		optionBuilder="${optionBuilder}"
 		optionLabelProvider="${optionLabelProvider}"
 		partnerGroup="${partnerGroup}"

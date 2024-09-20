@@ -36,7 +36,7 @@ import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.channel.ComponentChannel.ChannelValueFilter;
 import com.top_logic.layout.component.ComponentUtil;
-import com.top_logic.layout.component.Selectable;
+import com.top_logic.layout.component.InAppSelectable;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.model.FieldMode;
@@ -59,6 +59,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelPartRefsFormat;
+import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.util.Resources;
 
 /**
@@ -71,12 +72,12 @@ import com.top_logic.util.Resources;
  * </p>
  */
 public abstract class AbstractSelectorComponent extends FormComponent
-		implements Selectable, ValueListener, ValueVetoListener {
+		implements InAppSelectable, ValueListener, ValueVetoListener {
 
 	/**
 	 * {@link AbstractSelectorComponent} options directly displayed in the component's template.
 	 */
-	public interface UIOptions extends LayoutComponentUIOptions, Selectable.SelectableConfig {
+	public interface UIOptions extends LayoutComponentUIOptions, InAppSelectableConfig {
 
 		/**
 		 * @see #isMultiple()
@@ -184,6 +185,8 @@ public abstract class AbstractSelectorComponent extends FormComponent
 		}
 	};
 
+	private CommandHandler _onSelectionChange;
+
 	/**
 	 * Creates a {@link AbstractSelectorComponent} from configuration.
 	 * 
@@ -195,6 +198,12 @@ public abstract class AbstractSelectorComponent extends FormComponent
 	@CalledByReflection
 	public AbstractSelectorComponent(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
+		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+	}
+
+	@Override
+	public CommandHandler getOnSelectionHandler() {
+		return _onSelectionChange;
 	}
 
 	/**

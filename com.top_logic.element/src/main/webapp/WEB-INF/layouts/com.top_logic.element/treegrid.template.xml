@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<properties extends="com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.layout.structure.ToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.element.layout.meta.FormContextModificatorTemplateParameters, com.top_logic.tool.boundsec.WithSecurityMaster">
+	<properties extends="com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.layout.structure.ToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.layout.component.InAppSelectable$InAppSelectableConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.element.layout.meta.FormContextModificatorTemplateParameters, com.top_logic.tool.boundsec.WithSecurityMaster">
 		<annotations>
 			<display-inherited value="APPEND"/>
 
@@ -41,6 +41,7 @@
 					<property name="dragSource"/>
 					<property name="dropTargets"/>
 					<property name="buttons"/>
+					<property name="onSelectionChange"/>
 				</value>
 			</display-order>
 		</annotations>
@@ -138,9 +139,12 @@
 			/>
 			<entry-tag value="dropTarget"/>
 		</property>
+		<property name="onSelectionChange"
+			instance-type="com.top_logic.layout.component.OnSelectionChangeHandler"
+		/>
 	</properties>
 
-	<component class="com.top_logic.element.layout.grid.GridComponent"
+	<grid name="Grid"
 		adjustSelectionWhenCollapsing="${adjustSelectionWhenCollapsing}"
 		defaultSelection="${defaultSelection}"
 		deleteCommand=""
@@ -154,7 +158,7 @@
 		isSecurityMaster="${isSecurityMaster}"
 		model="${model}"
 		modelBuilder="${modelBuilder}"
-		name="Grid"
+		onSelectionChange="${onSelectionChange}"
 		page=""
 		partnerGroup="${partnerGroup}"
 		resPrefix="layout.element.grid.Grid."
@@ -200,5 +204,5 @@
 				fixedColumns="${fixedColumns}"
 			/>
 		</tables>
-	</component>
+	</grid>
 </config:template>

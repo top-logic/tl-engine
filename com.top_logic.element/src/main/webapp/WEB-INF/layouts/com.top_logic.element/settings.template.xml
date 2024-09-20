@@ -24,10 +24,6 @@
 			default="true"
 			type="boolean"
 		/>
-		<property name="buttonbar"
-			default="false"
-			type="boolean"
-		/>
 		<property name="securityObject"
 			instance-type="com.top_logic.tool.boundsec.SecurityObjectProvider"
 			type="com.top_logic.basic.config.PolymorphicConfiguration"
@@ -54,7 +50,6 @@
 	</properties>
 
 	<settings name="Form"
-		buttonbar="${buttonbar}"
 		dialogs="${dialogs}"
 		editMode="${editMode}"
 		isSecurityMaster="${isSecurityMaster}"

@@ -33,6 +33,7 @@
 					<property name="securityObject"/>
 
 					<property name="buttons"/>
+					<property name="afterSelectionChange"/>
 				</value>
 			</display-order>
 		</annotations>
@@ -59,9 +60,13 @@
 			<options fun="com.top_logic.layout.form.values.edit.DefaultSecurityProviderKeys"/>
 			<hidden/>
 		</property>
+		<property name="afterSelectionChange">
+			<options fun="com.top_logic.model.search.ui.selector.AfterSelectionChangeCommand$OnlyAfterSelectionChange"/>
+		</property>
 	</properties>
 
 	<selector name="Selector"
+		afterSelectionChange="${afterSelectionChange}"
 		alphabeticalOrder="${alphabeticalOrder}"
 		defaultSelection="${defaultSelection}"
 		defaultSelectionProvider="${defaultSelectionProvider}"

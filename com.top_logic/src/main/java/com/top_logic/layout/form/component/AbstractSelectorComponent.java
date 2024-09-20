@@ -22,6 +22,7 @@ import com.top_logic.basic.col.Equality;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
@@ -29,6 +30,7 @@ import com.top_logic.basic.func.Function1;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.VetoException;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.DirtyHandling;
 import com.top_logic.layout.basic.check.ChangeHandler;
 import com.top_logic.layout.basic.check.MasterSlaveCheckProvider;
@@ -59,6 +61,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelPartRefsFormat;
+import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.util.Resources;
 
 /**
@@ -77,6 +80,9 @@ public abstract class AbstractSelectorComponent extends FormComponent
 	 * {@link AbstractSelectorComponent} options directly displayed in the component's template.
 	 */
 	public interface UIOptions extends LayoutComponentUIOptions, Selectable.SelectableConfig {
+
+		/** @see #getAfterSelectionChance() */
+		String AFTER_SELECTION_CHANGE = "afterSelectionChange";
 
 		/**
 		 * @see #isMultiple()
@@ -144,6 +150,13 @@ public abstract class AbstractSelectorComponent extends FormComponent
 		@Name(MULTIPLE)
 		boolean isMultiple();
 
+		/**
+		 * Command that is executed when the selection of the {@link AbstractSelectorComponent}
+		 * changes.
+		 */
+		@Name(AFTER_SELECTION_CHANGE)
+		@Label("Operation after selection change")
+		CommandHandler.ConfigBase<? extends CommandHandler> getAfterSelectionChance();
 	}
 
 	/**
@@ -184,6 +197,8 @@ public abstract class AbstractSelectorComponent extends FormComponent
 		}
 	};
 
+	private CommandHandler _afterSelectionChange;
+
 	/**
 	 * Creates a {@link AbstractSelectorComponent} from configuration.
 	 * 
@@ -195,6 +210,7 @@ public abstract class AbstractSelectorComponent extends FormComponent
 	@CalledByReflection
 	public AbstractSelectorComponent(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
+		_afterSelectionChange = context.getInstance(config.getAfterSelectionChance());
 	}
 
 	/**
@@ -299,6 +315,10 @@ public abstract class AbstractSelectorComponent extends FormComponent
 	protected void onSelectionChange(Object newValue) {
 		if (hasFormContext()) {
 			updateUI(selectField(), newValue);
+		}
+		if (_afterSelectionChange != null) {
+			DisplayContext dc = DefaultDisplayContext.getDisplayContext();
+			_afterSelectionChange.handleCommand(dc, this, newValue, CommandHandler.NO_ARGS);
 		}
 	}
 

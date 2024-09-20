@@ -26,7 +26,7 @@ import com.top_logic.tool.boundsec.CommandHandler;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public interface WithPostCreateActions extends CommandHandler {
+public interface WithPostCreateActions {
 
 	/**
 	 * Configuration options for {@link WithPostCreateActions}.

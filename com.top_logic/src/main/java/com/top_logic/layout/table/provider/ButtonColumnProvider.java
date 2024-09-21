@@ -44,6 +44,7 @@ import com.top_logic.layout.scripting.runtime.action.GenericCommnadActionOp;
 import com.top_logic.layout.table.CellRenderer;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableRenderer.Cell;
+import com.top_logic.layout.table.model.ColumnConfig;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ColumnConfiguration.DisplayMode;
 import com.top_logic.layout.table.model.TableConfiguration;
@@ -129,6 +130,7 @@ public class ButtonColumnProvider
 		column.setAccessor(IdentityAccessor.INSTANCE);
 		column.setSortable(false);
 		column.setFilterProvider(null);
+		column.setClassifiers(Collections.singleton(ColumnConfig.CLASSIFIER_NO_EXPORT));
 
 		DisplayDimension width = config.getWidth();
 		if (width != null) {

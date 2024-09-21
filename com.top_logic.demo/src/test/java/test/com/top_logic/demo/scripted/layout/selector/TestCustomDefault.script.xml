@@ -66,10 +66,15 @@
 			failure-expected="false"
 			user-id="root"
 		>
-			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Anlegen"
-			>
-				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+				<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+				<path>
+					<named-member name="modelBox0"/>
+					<named-member name="modelContent0"/>
+					<labeled-member label="Berechnung der Standardauswahl"/>
+					<named-member name="outerContainer"/>
+					<labeled-member label="Anlegen"/>
+				</path>
 			</model-name>
 		</action>
 		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"

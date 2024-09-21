@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Optional;
 
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
@@ -185,10 +184,8 @@ public class TabContent implements WithProperties {
 			ResKey labelKey = ((TabInfo) cardInfo).getLabelKey();
 			if (labelKey != null) {
 				String tooltip = Resources.getInstance().getString(labelKey.tooltipOptional());
-				if (!StringServices.isEmpty(tooltip)) {
-					OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context,
-						out, tooltip);
-				}
+				String caption = OverlibTooltipFragmentGenerator.NO_CAPTION;
+				OverlibTooltipFragmentGenerator.INSTANCE.writeTooltip(context, out, tooltip, caption);
 			}
 		}
 	}

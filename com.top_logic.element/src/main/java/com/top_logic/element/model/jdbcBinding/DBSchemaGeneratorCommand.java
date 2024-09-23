@@ -35,6 +35,7 @@ import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
 import com.top_logic.basic.tooling.Workspace;
+import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.dob.schema.config.AssociationConfig;
 import com.top_logic.dob.schema.config.MetaObjectConfig;
@@ -290,11 +291,12 @@ public class DBSchemaGeneratorCommand extends AbstractCommandHandler {
 	private LinkStorage.Config<?> createAssociationReferenceStorageConfig(String tableName, TLReference tlReference) {
 		boolean isComposite = tlReference.isComposite();
 		HistoryType historyType = tlReference.getHistoryType();
+		DeletionPolicy deletionPolicy = tlReference.getDeletionPolicy();
 		LinkStorage.Config<?> storageConfig;
 		if (tlReference.isOrdered()) {
-			storageConfig = ListStorage.listConfig(isComposite, historyType);
+			storageConfig = ListStorage.listConfig(isComposite, historyType, deletionPolicy);
 		} else {
-			storageConfig = SetStorage.setConfig(isComposite, historyType);
+			storageConfig = SetStorage.setConfig(isComposite, historyType, deletionPolicy);
 		}
 		storageConfig.setTable(tableName);
 		return storageConfig;

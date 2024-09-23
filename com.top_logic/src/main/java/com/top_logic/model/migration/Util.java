@@ -723,7 +723,8 @@ public class Util {
 				parameterDef(DBType.BOOLEAN, "ordered"),
 				parameterDef(DBType.BOOLEAN, "bag"),
 				parameterDef(DBType.BOOLEAN, "navigate"),
-				parameterDef(DBType.STRING, "historyType")),
+				parameterDef(DBType.STRING, "historyType"),
+				parameterDef(DBType.STRING, "deletionPolicy")),
 			insert(
 				table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
 				listWithoutNull(

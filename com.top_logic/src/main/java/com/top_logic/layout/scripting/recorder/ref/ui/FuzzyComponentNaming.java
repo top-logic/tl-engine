@@ -134,7 +134,7 @@ public class FuzzyComponentNaming extends GlobalModelNamingScheme<LayoutComponen
 				int labelsIndex = i;
 				for (LayoutComponent inPath : displayedPath) {
 					if (labelsIndex >= componentNamesSize) {
-						continue roots;
+						break;
 					}
 
 					if (!componentLabels.get(labelsIndex).equals(componentLabel(resources, inPath))) {
@@ -142,8 +142,8 @@ public class FuzzyComponentNaming extends GlobalModelNamingScheme<LayoutComponen
 					}
 					labelsIndex++;
 				}
-				processedLabels = displayedPath.size();
-				searchResult.add(displayedPath.get(displayedPath.size() - 1));
+				processedLabels = labelsIndex - 1;
+				searchResult.add(displayedPath.get(processedLabels));
 			}
 
 			switch (searchResult.getResults().size()) {

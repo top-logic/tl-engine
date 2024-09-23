@@ -178,8 +178,8 @@ public class POIPowerpointUtil {
 				else if (theShape instanceof TableShape<?, ?>) {
 					parseTable(aSlide, someTokens, pictures, theShape);
 				}
-				else if (theShape instanceof GroupShape<?, ?>) {
-					GroupShape<?, ?> theGrp = (GroupShape<?, ?>) theShape;
+				else if (theShape instanceof GroupShape) {
+					GroupShape theGrp = (GroupShape) theShape;
 					List<? extends Shape<?, ?>> sh = POIPowerpointUtil.shapesStable(theGrp);
 					parseForTokens(aSlide, sh, someTokens);
 				}
@@ -235,7 +235,7 @@ public class POIPowerpointUtil {
 						String theToken = theTokens.get(k);
 						
 						if (! theToken.startsWith(PREFIX_FIXEDTABLE)) {
-							GroupShape<?, ?> theGrp = (GroupShape<?, ?>) aShape;
+							GroupShape theGrp = (GroupShape) aShape;
 							List<? extends Shape<?, ?>> sh = POIPowerpointUtil.shapesStable(theGrp);
 							parseForTokens(aSlide, sh, someTokens);
 							return;
@@ -409,8 +409,8 @@ public class POIPowerpointUtil {
 			List theHeaderShapes = new ArrayList();
 			for (int i = 0; i < someShapes.size(); i++) {
 				Shape theShape = someShapes.get(i);
-				if (theShape instanceof GroupShape<?, ?>) {
-					GroupShape<?, ?> theGrp = (GroupShape<?, ?>) theShape;
+				if (theShape instanceof GroupShape) {
+					GroupShape theGrp = (GroupShape) theShape;
 					List<? extends Shape<?, ?>> sh = POIPowerpointUtil.shapesStable(theGrp);
 					firstCopyCell = parseShapeGroup(sh, theValueShapes, theParentShapes, thePictureShape, theHeaderShapes, theChildrenShapes);
 				}
@@ -468,8 +468,8 @@ public class POIPowerpointUtil {
 			Map someParentShapes, List somePictureShape, List someHeaderShapes, Map someChildrenShapes) {
 		TextShape theCopyReferenceShape = null;
 		for (Shape theShape : aShapeArray) {
-			if (theShape instanceof GroupShape<?, ?>) {
-				GroupShape<?, ?> theGrp = (GroupShape<?, ?>) theShape;
+			if (theShape instanceof GroupShape) {
+				GroupShape theGrp = (GroupShape) theShape;
 				List<? extends Shape<?, ?>> sh = POIPowerpointUtil.shapesStable(theGrp);
 				theCopyReferenceShape = parseShapeGroup(sh, someValueShapes, someParentShapes, somePictureShape, someHeaderShapes, someChildrenShapes);
 			}
@@ -653,8 +653,8 @@ public class POIPowerpointUtil {
 		Map theChildren = new HashMap();
 		for (int i = 0; i < aShapeArray.size(); i++) {
 			Shape theShape = aShapeArray.get(i);
-			if (theShape instanceof GroupShape<?, ?>) {
-				GroupShape<?, ?> theGrp = (GroupShape<?, ?>) theShape;
+			if (theShape instanceof GroupShape) {
+				GroupShape theGrp = (GroupShape) theShape;
 				List<? extends Shape<?, ?>> sh = POIPowerpointUtil.shapesStable(theGrp);
 				createTable(aSlide, sh, someTokens);
 			}
@@ -1106,8 +1106,8 @@ public class POIPowerpointUtil {
 				TableShape<?, ?> table = (TableShape<?, ?>) theShape;
 				System.out.println(anIndentation + "ShapeType: Table");
 			}
-			else if (theShape instanceof GroupShape<?, ?>) {
-				GroupShape<?, ?> theGrp = (GroupShape<?, ?>) theShape;
+			else if (theShape instanceof GroupShape) {
+				GroupShape theGrp = (GroupShape) theShape;
 				System.out.println(anIndentation + "ShapeType: ShapeGroup");
 				printShapes(anIndentation + "\t", POIPowerpointUtil.shapes(theGrp));
 			}

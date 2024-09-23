@@ -79,7 +79,7 @@ class SlideReplacer {
 					SlideShow<?, ?> theShow =
 						this.powerpoint.createSlideShow(this.getTemplateFileInputStream(theFilename));
 					// TODO Copy all slides!?
-					Slide<?, ?> theSlide = theShow.getSlides().get(0);
+					Slide theSlide = theShow.getSlides().get(0);
 					List<? extends Shape<?, ?>> theShapes = POIPowerpointUtil.shapesStable(theSlide);
 
 					for (Iterator<OfficeExportValueHolder> theContext =

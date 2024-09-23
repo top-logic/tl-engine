@@ -165,7 +165,7 @@ public class POIPowerpoint extends Powerpoint {
 	
 	protected void processSlideMaster(MasterSheet<?, ?> aMaster, POIPowerpointUtil aUtil, Map someReplacements)
 			throws IOException {
-	    aUtil.parseForTokens(aMaster, POIPowerpointUtil.shapesStable(aMaster), someReplacements);
+		aUtil.parseForTokens(aMaster, POIPowerpointUtil.shapesStable((MasterSheet) aMaster), someReplacements);
 	}
 	
 	protected void processSlide(Slide aSlide, POIPowerpointUtil aUtil, Map someReplacements) throws IOException {

@@ -310,7 +310,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	 * Commit number of the {@link UpdateEvent} that was sent as last.
 	 * 
 	 * <p>
-	 * Note: Must be accessed from within a context synchronized at this KB.
+	 * Note: Must be accessed from within a context synchronized at {@link #refetchLock}.
 	 * </p>
 	 * 
 	 * @see #fireEvent(UpdateEvent)
@@ -745,8 +745,6 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		synchronized (refetchLock) {
 			this.lastLocalRevision = lastGlobalRevision;
 			syncRefetchUpdateRevisionAndPublishUpdate(new UpdateChainLink(lastLocalRevision));
-		}
-		synchronized (this) {
 			_lastSentEvent = lastGlobalRevision;
 		}
 	}
@@ -757,8 +755,6 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	void resetLastRevision(long revision) {
 		synchronized (refetchLock) {
 			this.lastLocalRevision = revision;
-		}
-		synchronized (this) {
 			_lastSentEvent = revision;
 		}
 	}
@@ -2912,14 +2908,14 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	 * event until the all previous events were sent.
 	 */
 	private void fireEvent(UpdateEvent event) {
-		synchronized (this) {
+		synchronized (refetchLock) {
 			while (true) {
 				long commitNumber = event.getCommitNumber();
 				assert commitNumber > _lastSentEvent;
 				if (commitNumber == _lastSentEvent + 1) {
 					// Unlock before sending event!
 					_lastSentEvent = commitNumber;
-					this.notifyAll();
+					refetchLock.notifyAll();
 
 					try {
 						fireUpdateHighPrio(event);
@@ -2932,7 +2928,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 					break;
 				} else {
 					try {
-						this.wait();
+						refetchLock.wait();
 					} catch (InterruptedException ex) {
 						Logger.warn("Thread waiting for sending event with number '" + commitNumber
 								+ "' interrupted. Last sent event: " + +_lastSentEvent,

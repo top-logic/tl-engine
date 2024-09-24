@@ -833,7 +833,8 @@
 							</selection>
 							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="InAppTiles > Gruppenkachel > Kachel1 > Personen > Personen"
+									name="82b80919-8d1a-4fc7-b45f-5a413eb57363.layout.xml#Table"
+									tab-path="InAppTiles > Gruppenkachel > Kachel1 > {0}"
 								/>
 							</selection-model-name>
 						</action>
@@ -961,7 +962,7 @@
 						>
 							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="InAppTiles > Gruppenkachel > Kachel1 > Personen > Detail des Kontexts"
+									tab-path="InAppTiles > Gruppenkachel > Kachel1 > {0} > {0}"
 								/>
 							</actual-value>
 							<constraints>
@@ -969,8 +970,6 @@
 									<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.IndexedObjectNaming$Name"
 										table="GenericObject"
 									>
-										<branch config:interface=""/>
-										<revision config:interface=""/>
 										<attributes>
 											<attribute name="tType">
 												<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
@@ -1039,7 +1038,8 @@
 							</selection>
 							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="InAppTiles > Gruppenkachel > Kachel1 > Personen > Personen"
+									name="82b80919-8d1a-4fc7-b45f-5a413eb57363.layout.xml#Table"
+									tab-path="InAppTiles > Gruppenkachel > Kachel1 > {0}"
 								/>
 							</selection-model-name>
 						</action>
@@ -1049,7 +1049,7 @@
 						>
 							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="InAppTiles > Gruppenkachel > Kachel1 > Personen > Detail des Kontexts"
+									tab-path="InAppTiles > Gruppenkachel > Kachel1 > {0} > {0}"
 								/>
 							</actual-value>
 							<constraints>
@@ -1144,7 +1144,7 @@
 						>
 							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="InAppTiles > Gruppenkachel > Kachel1 > Personen > Detail des Kontexts"
+									tab-path="InAppTiles > Gruppenkachel > Kachel1 > {0} > {0}"
 								/>
 							</actual-value>
 							<constraints>
@@ -1191,7 +1191,8 @@
 							</selection>
 							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="InAppTiles > Gruppenkachel > Kachel1 > Personen > Personen"
+									name="82b80919-8d1a-4fc7-b45f-5a413eb57363.layout.xml#Table"
+									tab-path="InAppTiles > Gruppenkachel > Kachel1 > {0}"
 								/>
 							</selection-model-name>
 						</action>
@@ -1201,7 +1202,7 @@
 						>
 							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="InAppTiles > Gruppenkachel > Kachel1 > Personen > Detail des Kontexts"
+									tab-path="InAppTiles > Gruppenkachel > Kachel1 > {0} > {0}"
 								/>
 							</actual-value>
 							<constraints>
@@ -1653,7 +1654,8 @@
 							>
 								<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Kontext Baumtabelle"
+										name="3121a91a-8c0a-49a1-b5c5-561662362118.layout.xml#TreeTable"
+										tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0}"
 									/>
 								</context-model>
 								<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
@@ -1673,7 +1675,8 @@
 							</selection>
 							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Kontext Baumtabelle"
+									name="3121a91a-8c0a-49a1-b5c5-561662362118.layout.xml#TreeTable"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0}"
 								/>
 							</selection-model-name>
 						</action>
@@ -1804,7 +1807,7 @@
 							user-id="root"
 						>
 							<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel"
+								tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0} > {0}"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -1931,18 +1934,17 @@
 						>
 							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel > Objekt-Details > Details"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0} > {0} > Objekt-Details > Details"
 								/>
 							</actual-value>
 							<constraints>
 								<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
 									<expected-value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
 										path="TestTiles > A0"
+										singleton="ROOT"
+										singleton-label="ROOT"
 										structure="DemoTypes"
-									>
-										<branch config:interface=""/>
-										<revision config:interface=""/>
-									</expected-value>
+									/>
 								</constraint>
 							</constraints>
 						</action>
@@ -1975,7 +1977,26 @@
 							>
 								<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Kontext Baumtabelle"
+										name="3121a91a-8c0a-49a1-b5c5-561662362118.layout.xml#TreeTable"
+										tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0}"
+									/>
+								</context-model>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path=""
+								/>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+								expand="true"
+							>
+								<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="3121a91a-8c0a-49a1-b5c5-561662362118.layout.xml#TreeTable"
+										tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0}"
 									/>
 								</context-model>
 								<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
@@ -1995,7 +2016,8 @@
 							</selection>
 							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Kontext Baumtabelle"
+									name="3121a91a-8c0a-49a1-b5c5-561662362118.layout.xml#TreeTable"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0}"
 								/>
 							</selection-model-name>
 						</action>
@@ -2004,7 +2026,7 @@
 							user-id="root"
 						>
 							<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel"
+								tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0} > {0}"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
@@ -2013,18 +2035,17 @@
 						>
 							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel > Objekt-Details > Details"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0} > {0} > Objekt-Details > Details"
 								/>
 							</actual-value>
 							<constraints>
 								<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
 									<expected-value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
 										path="TestTiles > A0 > C1"
+										singleton="ROOT"
+										singleton-label="ROOT"
 										structure="DemoTypes"
-									>
-										<branch config:interface=""/>
-										<revision config:interface=""/>
-									</expected-value>
+									/>
 								</constraint>
 							</constraints>
 						</action>
@@ -2088,7 +2109,8 @@
 							>
 								<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Kontext Baumtabelle"
+										name="3121a91a-8c0a-49a1-b5c5-561662362118.layout.xml#TreeTable"
+										tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0}"
 									/>
 								</context-model>
 								<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
@@ -2108,7 +2130,8 @@
 							</selection>
 							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Kontext Baumtabelle"
+									name="3121a91a-8c0a-49a1-b5c5-561662362118.layout.xml#TreeTable"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0}"
 								/>
 							</selection-model-name>
 						</action>
@@ -2117,7 +2140,7 @@
 							user-id="root"
 						>
 							<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel"
+								tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0} > {0}"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
@@ -2126,18 +2149,17 @@
 						>
 							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel > Objekt-Details > Details"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0} > {0} > Objekt-Details > Details"
 								/>
 							</actual-value>
 							<constraints>
 								<constraint class="com.top_logic.layout.scripting.check.EqualsCheck">
 									<expected-value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
 										path="TestTiles > A0 > C0"
+										singleton="ROOT"
+										singleton-label="ROOT"
 										structure="DemoTypes"
-									>
-										<branch config:interface=""/>
-										<revision config:interface=""/>
-									</expected-value>
+									/>
 								</constraint>
 							</constraints>
 						</action>
@@ -2352,7 +2374,7 @@
 							user-id="root"
 						>
 							<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel"
+								tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0} > {0}"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.assertion.CheckActionOp"
@@ -2362,7 +2384,7 @@
 							<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
 								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 									name="8b3425f3-b481-4395-950d-04f551c98c0b.layout.xml#Chart"
-									tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel > Anzahl checklistSingle"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0} > {0} > Anzahl checklistSingle"
 								/>
 							</actual-value>
 							<constraints>
@@ -2537,13 +2559,25 @@
 								</component-keys>
 							</identifiers>
 						</action>
-						<action class="com.top_logic.mig.html.layout.tiles.scripting.SelectTileActionOp"
-							tile-label="Dokument"
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
 							user-id="root"
 						>
-							<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel"
-							/>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+									label-path="Kachel2 > Kontext Baumtabelle"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.tree.breadcrumb.BreadcrumbDataName">
+								<breadcrumb-data-owner config:interface="com.top_logic.layout.tree.breadcrumb.GenericBreadcrumbDataOwnerNaming$GenericBreadcrumbDataName">
+									<algorithm class="com.top_logic.layout.tree.breadcrumb.GenericBreadcrumbDataOwner$AnnotatedModel"/>
+									<reference config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="debd57f3-23b6-4595-8268-40491501d6b5.layout.xml#RootTile"
+										tab-path="InAppTiles"
+									/>
+								</breadcrumb-data-owner>
+							</selection-model-name>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 							change-kind="ABSOLUTE"
@@ -2587,11 +2621,30 @@
 							user-id="root"
 						>
 							<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
+								expand="false"
+							>
+								<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										name="3121a91a-8c0a-49a1-b5c5-561662362118.layout.xml#TreeTable"
+										tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0}"
+									/>
+								</context-model>
+								<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path=""
+								/>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
 								expand="true"
 							>
 								<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Kontext Baumtabelle"
+										name="3121a91a-8c0a-49a1-b5c5-561662362118.layout.xml#TreeTable"
+										tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0}"
 									/>
 								</context-model>
 								<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
@@ -2611,7 +2664,8 @@
 							</selection>
 							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Kontext Baumtabelle"
+									name="3121a91a-8c0a-49a1-b5c5-561662362118.layout.xml#TreeTable"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0}"
 								/>
 							</selection-model-name>
 						</action>
@@ -2620,7 +2674,7 @@
 							user-id="root"
 						>
 							<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel"
+								tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0} > {0}"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -2728,7 +2782,7 @@
 							user-id="root"
 						>
 							<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel"
+								tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0} > {0}"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -2970,7 +3024,8 @@
 							</selection>
 							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Kontext Baumtabelle"
+									name="3121a91a-8c0a-49a1-b5c5-561662362118.layout.xml#TreeTable"
+									tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0}"
 								/>
 							</selection-model-name>
 						</action>
@@ -2979,7 +3034,7 @@
 							user-id="root"
 						>
 							<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel"
+								tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0} > {0}"
 							/>
 						</action>
 					</actions>
@@ -3005,6 +3060,26 @@
 			user-id="root"
 		>
 			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+			change-kind="ABSOLUTE"
+			user-id="root"
+		>
+			<selection>
+				<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+					label-path=""
+				/>
+				<selection-state boolean="true"/>
+			</selection>
+			<selection-model-name config:interface="com.top_logic.layout.tree.breadcrumb.BreadcrumbDataName">
+				<breadcrumb-data-owner config:interface="com.top_logic.layout.tree.breadcrumb.GenericBreadcrumbDataOwnerNaming$GenericBreadcrumbDataName">
+					<algorithm class="com.top_logic.layout.tree.breadcrumb.GenericBreadcrumbDataOwner$AnnotatedModel"/>
+					<reference config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						name="debd57f3-23b6-4595-8268-40491501d6b5.layout.xml#RootTile"
+						tab-path="InAppTiles"
+					/>
+				</breadcrumb-data-owner>
+			</selection-model-name>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 			user-id="root"

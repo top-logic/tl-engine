@@ -2909,6 +2909,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	 */
 	private void fireEvent(UpdateEvent event) {
 		synchronized (refetchLock) {
+			boolean wasInterrupted = false;
 			while (true) {
 				long commitNumber = event.getCommitNumber();
 				assert commitNumber > _lastSentEvent;
@@ -2923,6 +2924,9 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 						fireUpdate(event);
 					} catch (Throwable ex) {
 						Logger.error("Unable to process event with number '" + commitNumber, ex);
+						if (wasInterrupted) {
+							Thread.currentThread().interrupt();
+						}
 						throw ex;
 					}
 					break;
@@ -2933,8 +2937,12 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 						Logger.warn("Thread waiting for sending event with number '" + commitNumber
 								+ "' interrupted. Last sent event: " + +_lastSentEvent,
 							ex);
+						wasInterrupted = true;
 					}
 				}
+			}
+			if (wasInterrupted) {
+				Thread.currentThread().interrupt();
 			}
 		}
 	}

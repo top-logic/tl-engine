@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/treegrid.template.xml"
+>
+	<arguments
+		defaultColumns="name,string,float,date,booleanMandatory,booleanRadioMandatory,booleanSelectMandatory"
+		defaultSelection="false"
+		rootVisible="false"
+		type="DemoPlain:A"
+	>
+		<name key="dynamic.105837ef-ad6d-4e69-b126-a59707ecc4e6">
+			<en>Synthetic root node</en>
+			<de>Synthetischer Root-Knoten</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			children="node->$node == `SecurityStructure#ROOT` ? all(`DemoPlain:DemoPlain.A`) : $node.get(`DemoPlain:DemoPlain.A#typedSetOrdered`)"
+			nodePredicate="node->$node == `SecurityStructure#ROOT` || $node.instanceOf(`DemoPlain:DemoPlain.All`)"
+			parents="node->$node == `SecurityStructure#ROOT` ? null : $node.referers(`DemoPlain:DemoPlain.A#typedSetOrdered`) || `SecurityStructure#ROOT`"
+			rootNode="`SecurityStructure#ROOT`"
+		/>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+			<button id="ID_c9a21a48_270c_4f79_a4d7_27f9315b46ce"
+				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
+				createContext="`SecurityStructure#ROOT`"
+				image="css:bi bi-plus-circle-fill"
+			>
+				<resourceKey key="dynamic.ec02403e-66b9-4828-8d08-5e06ea99fdef">
+					<en>New top-level node</en>
+					<de>Neuer Top-Level-Knoten</de>
+				</resourceKey>
+				<checkScopeProvider/>
+				<type-options type="DemoPlain:A"/>
+			</button>
+			<button id="createNewRow"
+				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
+				createContext="model -> $model || `SecurityStructure#ROOT`"
+				initOperation="createContext -> newObject -> target -> $createContext.add(`DemoPlain:DemoPlain.A#typedSetOrdered`, $newObject)"
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.0d8620c0-46ec-4872-8e51-40da8a927b8c">
+					<en>New sub-element</en>
+					<de>Neues Unterelement</de>
+				</resourceKey>
+				<checkScopeProvider/>
+				<type-options class="com.top_logic.element.layout.create.AttributeBasedCreateTypeOptions"
+					attribute="DemoPlain:DemoPlain.A#typedSetOrdered"
+					owner="DemoPlain:A"
+				/>
+			</button>
+			<button id="ID_772edff0_d861_4bcd_be1b_244bf07dffa4"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

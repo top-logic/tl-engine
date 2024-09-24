@@ -83,8 +83,8 @@ public class CompositionControlProvider implements ControlProvider {
 
 				@Override
 				protected HandlerResult internalExecuteCommand(DisplayContext context) {
-					DisplayDimension width = DisplayDimension.dim(100, DisplayUnit.PERCENT);
-					DisplayDimension height = DisplayDimension.dim(130, DisplayUnit.PERCENT);
+					DisplayDimension width = DisplayDimension.dim(80, DisplayUnit.PERCENT);
+					DisplayDimension height = DisplayDimension.dim(80, DisplayUnit.PERCENT);
 
 					AttributeUpdate update = AttributeFormFactory.getAttributeUpdate(getModel());
 					HTMLFragment title;

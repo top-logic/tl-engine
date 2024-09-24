@@ -131,8 +131,9 @@ public class FuzzyComponentNaming extends GlobalModelNamingScheme<LayoutComponen
 				if (displayedPath.isEmpty()) {
 					continue;
 				}
-				int labelsIndex = i;
+				int pathIndex = 0;
 				for (LayoutComponent inPath : displayedPath) {
+					int labelsIndex = i + pathIndex;
 					if (labelsIndex >= componentNamesSize) {
 						break;
 					}
@@ -140,10 +141,10 @@ public class FuzzyComponentNaming extends GlobalModelNamingScheme<LayoutComponen
 					if (!componentLabels.get(labelsIndex).equals(componentLabel(resources, inPath))) {
 						continue roots;
 					}
-					labelsIndex++;
+					pathIndex++;
 				}
-				processedLabels = labelsIndex - 1;
-				searchResult.add(displayedPath.get(processedLabels));
+				processedLabels = pathIndex;
+				searchResult.add(displayedPath.get(pathIndex - 1));
 			}
 
 			switch (searchResult.getResults().size()) {
@@ -271,6 +272,10 @@ public class FuzzyComponentNaming extends GlobalModelNamingScheme<LayoutComponen
 		}
 		name.setTabPath(path);
 
+		return checkName(name, model);
+	}
+
+	private Maybe<Name> checkName(Name name, LayoutComponent model) {
 		// Try to resolve.
 		DisplayContext context = DefaultDisplayContext.getDisplayContext();
 		Object resolved = locateModel(context, name);
@@ -355,10 +360,8 @@ public class FuzzyComponentNaming extends GlobalModelNamingScheme<LayoutComponen
 
 	private String componentLabel(Resources resources, LayoutComponent model) {
 		if (model.getParent() instanceof ContextTileComponent context) {
-			if (context.getContent() == model) {
-				// Constant signaling that the content of a context selector is resolved.
-				return "{0}";
-			}
+			// Constant signaling that the content of a context selector is resolved.
+			return "{0}";
 		}
 		ResKey titleKey = LayoutComponent.Config.getEffectiveTitleKey(model.getConfig());
 		return resources.getString(titleKey, StringServices.EMPTY_STRING);

@@ -43,9 +43,9 @@
 							createOpenerButtons="false"
 							defaultI18n="element.meta.attribute.edit.displayDialog_createMetaAttr"
 							executability="Always"
-							height="430"
+							height="530"
 							openerClique="internal"
-							width="550"
+							width="600"
 						/>
 					</inject>
 				</include>
@@ -65,9 +65,9 @@
 							createOpenerButtons="false"
 							defaultI18n="element.meta.metaElementTree.newType"
 							executability="Always"
-							height="430"
+							height="530"
 							openerClique="internal"
-							width="550"
+							width="600"
 						/>
 					</inject>
 				</include>
@@ -87,9 +87,9 @@
 							createOpenerButtons="false"
 							defaultI18n="element.meta.metaElementTree.newEnumeration"
 							executability="Always"
-							height="430"
+							height="530"
 							openerClique="internal"
-							width="550"
+							width="600"
 						/>
 					</inject>
 				</include>
@@ -221,11 +221,11 @@
 								<inject>
 									<dialogInfo
 										defaultI18n="model.graph.backReference.create.dialog"
-										height="430"
+										height="530"
 										openButtonSecComp="createBackReferenceTypePartForm"
 										openerClique="createMenu"
 										openerCommandGroup="Create"
-										width="550"
+										width="600"
 									>
 										<executability>
 											<rule class="com.top_logic.graph.diagramjs.server.util.IsReferenceRule"/>

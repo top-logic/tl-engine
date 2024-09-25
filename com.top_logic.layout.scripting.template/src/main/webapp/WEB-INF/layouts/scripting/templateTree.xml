@@ -30,11 +30,11 @@
 				<dialogInfo
 					createOpenerButtons="false"
 					executability="com.top_logic.layout.scripting.template.gui.templates.IsTemplateSelected"
-					height="400px"
+					height="500px"
 					openHandlerClass="com.top_logic.layout.scripting.template.gui.templates.OpenOnlyIfSimpleTemplate"
 					openHandlerName="openTemplateInstantiation"
 					openerCommandGroup="System"
-					width="600px"
+					width="650px"
 				/>
 
 				<components>

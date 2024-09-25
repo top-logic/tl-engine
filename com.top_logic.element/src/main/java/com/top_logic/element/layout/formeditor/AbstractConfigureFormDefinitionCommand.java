@@ -157,7 +157,7 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 		ScriptingRecorder.annotateAsDontRecord(no);
 		return MessageBox.newBuilder(MessageType.CONFIRM)
 			.message(Fragments.htmlSource(com.top_logic.mig.html.layout.I18NConstants.STORE_FOR_MODEL))
-			.layout(DisplayDimension.px(400), DisplayDimension.px(200))
+			.layout(DisplayDimension.px(400), DisplayDimension.px(300))
 			.buttons(yes, no)
 			.confirm(context.getWindowScope());
 	}

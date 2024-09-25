@@ -43,9 +43,9 @@
 				>
 					<dialogInfo
 						defaultI18n="${resPrefix}.themes.create.dialog"
-						height="350"
+						height="450"
 						image="theme:ICON_PLUS"
-						width="450"
+						width="500"
 					/>
 
 					<components>

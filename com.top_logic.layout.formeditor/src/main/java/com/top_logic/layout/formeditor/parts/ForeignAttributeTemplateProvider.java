@@ -120,7 +120,7 @@ public class ForeignAttributeTemplateProvider extends AbstractFormElementProvide
 
 	@Override
 	protected DisplayDimension getDialogHeight() {
-		return DisplayDimension.dim(500, DisplayUnit.PIXEL);
+		return DisplayDimension.dim(600, DisplayUnit.PIXEL);
 	}
 
 	@Override

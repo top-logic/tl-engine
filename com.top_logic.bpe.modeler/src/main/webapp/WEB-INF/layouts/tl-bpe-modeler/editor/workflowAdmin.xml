@@ -79,11 +79,11 @@
 			<dialogs>
 				<layout name="${namePrefix}New">
 					<dialogInfo
-						height="180"
+						height="280"
 						image="theme:ICON_PLUS"
 						openerClique="create"
 						openerCommandGroup="Create"
-						width="350"
+						width="400"
 					/>
 
 					<form name="${namePrefix}NewForm"
@@ -110,11 +110,11 @@
 				</layout>
 				<layout name="${namePrefix}Upload">
 					<dialogInfo
-						height="150"
+						height="250"
 						image="theme:ICON_FILE_IMPORT"
 						openerClique="workflowState"
 						openerCommandGroup="Create"
-						width="350"
+						width="400"
 					/>
 
 					<form name="${namePrefix}UploadForm"
@@ -140,8 +140,8 @@
 				</layout>
 				<layout name="${namePrefix}Update">
 					<dialogInfo
-						height="200"
-						width="350"
+						height="300"
+						width="400"
 					>
 						<open-handler id="displayDialog_${namePrefix}Update"
 							clique="workflowState"
@@ -176,11 +176,11 @@
 				</layout>
 				<layout name="${namePrefix}Copy">
 					<dialogInfo
-						height="150"
+						height="350"
 						image="theme:ICON_CODE_BRANCH"
 						openerClique="workflowState"
 						openerCommandGroup="Write"
-						width="350"
+						width="400"
 					/>
 
 					<form name="${namePrefix}CopyForm"

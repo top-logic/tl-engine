@@ -20,14 +20,23 @@ public interface ReactiveFormCSS {
 	/** Marker CSS class to find inner drop target. */
 	String RF_INNER_TARGET = "rf_innerTarget";
 
+	/** Container for forms. */
 	String RF_CONTAINER = "rf_container";
 
 	/** CSS class for elements in which an object can be dropped. */
 	String RF_DROP_TARGET = "rf_dropTarget";
 
+	/** CSS class to indicate that the form must not have a line break. */
 	String CSS_CLASS_KEEP = "keep";
 
+	/** Wrapper for forms. */
 	String RF_WRAPPER = "rf_wrapper";
+
+	/** CSS class for form cells. */
+	String RF_CELL = "rf_cell";
+
+	/** CSS class for form labels. */
+	String RF_LABEL = "rf_label";
 
 	/**
 	 * CSS class to mark an element to be rendered over the whole display width. The number of

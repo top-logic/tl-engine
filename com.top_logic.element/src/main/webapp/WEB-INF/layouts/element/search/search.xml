@@ -52,8 +52,8 @@
 							<layout name="${namePrefix}NewStoredQueryDialog">
 								<dialogInfo
 									defaultI18n="element.search.displayDialog_NewStoredQueryDialog"
-									height="220"
-									width="320"
+									height="320"
+									width="370"
 								/>
 
 								<components>

@@ -79,7 +79,7 @@ public class MacroTemplateProvider extends AbstractFormElementProvider<MacroPart
 
 	@Override
 	protected DisplayDimension getDialogHeight() {
-		return DisplayDimension.dim(470, DisplayUnit.PIXEL);
+		return DisplayDimension.dim(550, DisplayUnit.PIXEL);
 	}
 
 	@Override

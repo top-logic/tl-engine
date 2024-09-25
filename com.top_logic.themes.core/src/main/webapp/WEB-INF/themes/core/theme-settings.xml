@@ -1748,9 +1748,6 @@
 	<icon name="ICONS_HELP_DISABLED"
 		expr="%ICONS_HELP%"
 	/>
-	<icon name="IMAGE_BUTTONS_ORG_UNIT22"
-		value="colored:tl-icon hierarchy"
-	/>
 	<icon name="MIMETYPES_TAG"
 		value="/mimetypes/tag.png"
 	/>

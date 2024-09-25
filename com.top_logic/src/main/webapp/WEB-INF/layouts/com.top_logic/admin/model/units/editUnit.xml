@@ -44,11 +44,11 @@
 				<layout name="newUnitDialog">
 					<dialogInfo
 						executability="InViewMode"
-						height="290"
+						height="390"
 						openHandlerClass="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
 						openerClique="create"
 						openerCommandGroup="Create"
-						width="400"
+						width="450"
 					/>
 
 					<components>

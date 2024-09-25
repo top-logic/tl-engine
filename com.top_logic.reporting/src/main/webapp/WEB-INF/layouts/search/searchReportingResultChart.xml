@@ -64,12 +64,12 @@
 										<dialogInfo
 											defaultI18n="reporting.chart.displayDialog_NewStoredReportDialog"
 											executability="NullModelDisabled"
-											height="320"
+											height="420"
 											openButtonSecComp="${namePrefix}ChartConfigurationComponent"
 											openHandlerClass="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
 											openerClique="create"
 											openerCommandGroup="Create"
-											width="420"
+											width="470"
 										/>
 
 										<components>

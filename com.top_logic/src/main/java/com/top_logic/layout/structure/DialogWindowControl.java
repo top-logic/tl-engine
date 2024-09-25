@@ -50,16 +50,6 @@ import com.top_logic.util.css.CssUtil;
 public class DialogWindowControl extends WindowControl<DialogWindowControl> implements DialogClosedListener {
 
 	/**
-	 * Additional height added to ensure dialog windows are displayed correctly in the core theme.
-	 */
-	private static final int HEIGHT_ENLARGER = 100;
-
-	/**
-	 * Additional width added to ensure dialog windows are displayed correctly in the core theme.
-	 */
-	private static final int WIDTH_ENLARGER = 50;
-
-	/**
 	 * Property that is set to the {@link DisplayContext} when the "maxmimized changed" event is
 	 * triggered by the client. In this case it is not necessary to repaint control, because client
 	 * side is already up to date.
@@ -134,14 +124,14 @@ public class DialogWindowControl extends WindowControl<DialogWindowControl> impl
 		String heightUnit;
 		if (getDialogModel().hasCustomizedSize()) {
 			Dimension customizedSize = getDialogModel().getCustomizedSize();
-			width = Integer.toString(customizedSize.width + WIDTH_ENLARGER);
-			height = Integer.toString(customizedSize.height + HEIGHT_ENLARGER);
+			width = Integer.toString(customizedSize.width);
+			height = Integer.toString(customizedSize.height);
 			widthUnit = heightUnit = "px";
 		} else {
 			LayoutData constraint = getConstraint();
-			width = Float.toString(constraint.getWidth() + WIDTH_ENLARGER);
+			width = Float.toString(constraint.getWidth());
 			widthUnit = constraint.getWidthUnit().toString();
-			height = Float.toString(constraint.getHeight() + HEIGHT_ENLARGER);
+			height = Float.toString(constraint.getHeight());
 			heightUnit = constraint.getHeightUnit().toString();
 		}
 		out.append("(function() {\n");

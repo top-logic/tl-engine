@@ -38,7 +38,7 @@ public class CreateStylesheetDialog extends SimpleFormDialog {
 	public CreateStylesheetDialog(LayoutComponent component) {
 		super(I18NConstants.CREATE_STYLESHEET_DIALOG_TITLE, null, I18NConstants.CREATE_STYLESHEET_DIALOG_MESSAGE,
 			DisplayDimension.dim(330, DisplayUnit.PIXEL),
-			DisplayDimension.dim(150, DisplayUnit.PIXEL));
+			DisplayDimension.dim(210, DisplayUnit.PIXEL));
 
 		_component = (TableComponent) component;
 	}

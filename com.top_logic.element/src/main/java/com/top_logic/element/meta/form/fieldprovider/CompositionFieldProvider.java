@@ -630,7 +630,7 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 			} else {
 				SimpleFormDialog dialog =
 					new SimpleFormDialog(I18NConstants.CREATE_COMPOSITION_ROW, DisplayDimension.px(350),
-						DisplayDimension.px(180)) {
+						DisplayDimension.px(280)) {
 						private SelectField _selectField;
 
 						@Override

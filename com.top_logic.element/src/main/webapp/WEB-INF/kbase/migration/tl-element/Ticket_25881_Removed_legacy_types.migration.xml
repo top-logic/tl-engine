@@ -1537,6 +1537,55 @@
 		<processor class="com.top_logic.element.model.migration.XsltModelBaselineProcessor"
 			transform="/WEB-INF/kbase/migration/tl-element/Ticket_25881_Removed_legacy_types_model_transform.xslt"
 		/>
+
+		<delete-property name="SecurityStructure:Root#name"/>
+		<remove-class-generalizations name="SecurityStructure:Root">
+		  <generalization type="SecurityStructure:SecurityRoot"/>
+		</remove-class-generalizations>
+		<delete-class name="SecurityStructure:SecurityRoot"/>
+		<create-class name="SecurityStructure:SecurityStructure.Root"
+		  abstract="true"
+		  without-primary-generalization="true"
+		>
+		  <annotations>
+		    <instance-presentation icon="theme:TREE_TEST_I"/>
+		    <legacy-qualified-name qualified-name="SecurityStructure.Root"/>
+		  </annotations>
+		</create-class>
+		<add-class-generalizations name="SecurityStructure:Root">
+		  <generalizations>
+		    <generalization type="SecurityStructure:SecurityStructure.Root"/>
+		  </generalizations>
+		</add-class-generalizations>
+		<reorder-generalization
+		  before="tl.element:StructuredElement"
+		  generalization="SecurityStructure:SecurityStructure.Root"
+		  type="SecurityStructure:Root"
+		/>
+		<add-class-generalizations name="SecurityStructure:SecurityStructure.Root">
+		  <generalizations>
+		    <generalization type="tl.element:StructuredElement"/>
+		  </generalizations>
+		</add-class-generalizations>
+		<create-property name="SecurityStructure:SecurityStructure.Root#name"
+		  mandatory="true"
+		  type="tl.core:String"
+		>
+		  <annotations>
+		    <delete-protected/>
+		    <default-value>
+		      <string value="SecurityRoot"/>
+		    </default-value>
+		  </annotations>
+		</create-property>
+		<create-reference name="SecurityStructure:SecurityStructure.Root#Nutzer"
+		  multiple="true"
+		  type="tl.accounts:Person"
+		/>
+		<create-reference name="SecurityStructure:SecurityStructure.Root#Hauptbenutzer"
+		  multiple="true"
+		  type="tl.accounts:Person"
+		/>
 	</processors>
 	<migration/>
 	<post-processors/>

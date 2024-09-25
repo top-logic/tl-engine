@@ -72,7 +72,7 @@ public class LoginMessagesMainLayout extends TLMainLayout {
 	/**
 	 * Default message window width in px. Can be overridden for each individual message.
 	 */
-	private static final Integer DEFAULT_MESSAGE_WINDOW_HEIGHT = 300;
+	private static final Integer DEFAULT_MESSAGE_WINDOW_HEIGHT = 400;
 
 	private static final String MESSAGE_FIELD_NAME = "loginMessage";
 

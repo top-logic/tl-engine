@@ -13,13 +13,13 @@
 		<layout name="SaveSearchAs">
 			<dialogInfo
 				disabledImage="theme:ICONS_BUTTON_SAVE_DISABLED"
-				height="220px"
+				height="360px"
 				image="theme:ICONS_BUTTON_SAVE"
 				openHandlerClass="com.top_logic.model.search.ui.selector.saveas.SaveSearchAsOpenDialogCommand"
 				openerClique="save"
 				openerCommandGroup="Create"
 				resizable="true"
-				width="400px"
+				width="450px"
 			/>
 
 			<components>

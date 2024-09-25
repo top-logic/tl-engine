@@ -62,7 +62,7 @@ public class StaticHTMLTemplateProvider extends AbstractFormElementProvider<Stat
 
 	@Override
 	protected DisplayDimension getDialogHeight() {
-		return DisplayDimension.dim(470, DisplayUnit.PIXEL);
+		return DisplayDimension.dim(520, DisplayUnit.PIXEL);
 	}
 
 	@Override

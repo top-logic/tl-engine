@@ -57,8 +57,8 @@ public class RolesProfileImportDialog extends SimpleFormDialog {
 	 */
 	public RolesProfileImportDialog(LayoutComponent rolesProfileComponent) {
 		super(I18NConstants.IMPORT_ROLES_PROFILES_DIALOG,
-			DisplayDimension.dim(330, DisplayUnit.PIXEL),
-			DisplayDimension.dim(150, DisplayUnit.PIXEL));
+			DisplayDimension.dim(380, DisplayUnit.PIXEL),
+			DisplayDimension.dim(210, DisplayUnit.PIXEL));
 		_rolesProfileComponent = rolesProfileComponent;
 	}
 

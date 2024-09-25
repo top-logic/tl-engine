@@ -132,22 +132,22 @@ public abstract class AbstractReporterTest  extends BasicTestCase implements Rep
         valueMap.put("key3",      "value3");
         valueMap.put("jitter",    new JitterBug());
         if(ReportDescriptor.PPT.equals(aType)){
-			templateFileName = "./" + ModuleLayoutConstants.PATH_TO_MODULE_ROOT + "/../com.top_logic.reporting/"
+			templateFileName = "/./" + ModuleLayoutConstants.PATH_TO_MODULE_ROOT + "/../com.top_logic.reporting/"
 				+ ModuleLayoutConstants.SRC_TEST_DIR + "/test/data/templates/ppt/simple.ppt";
         }
         if(ReportDescriptor.EXCEL.equals(aType)){
         	if (ReportDescriptor.MODE_GETVALUES.equals(aMode)) {
-				templateFileName = "./" + ModuleLayoutConstants.PATH_TO_MODULE_ROOT + "/../com.top_logic.reporting/"
+				templateFileName = "/./" + ModuleLayoutConstants.PATH_TO_MODULE_ROOT + "/../com.top_logic.reporting/"
 					+ ModuleLayoutConstants.SRC_TEST_DIR + "/test/data/templates/xls/simple.xls";
         		valueMap = null; // new MapBuilder().put("Tabelle1", Collections.singleton("A1")).toMap();
         	}
         	else {
-				templateFileName = "./" + ModuleLayoutConstants.PATH_TO_MODULE_ROOT + "/../com.top_logic.reporting/"
+				templateFileName = "/./" + ModuleLayoutConstants.PATH_TO_MODULE_ROOT + "/../com.top_logic.reporting/"
 					+ ModuleLayoutConstants.SRC_TEST_DIR + "/test/data/templates/xls/simple.xls";
         	}
         }
         if(ReportDescriptor.WORD.equals(aType)){
-			templateFileName = "./" + ModuleLayoutConstants.PATH_TO_MODULE_ROOT + "/../com.top_logic.reporting/"
+			templateFileName = "/./" + ModuleLayoutConstants.PATH_TO_MODULE_ROOT + "/../com.top_logic.reporting/"
 				+ ModuleLayoutConstants.SRC_TEST_DIR + "/test/data/templates/doc/simple.doc";
         }
 

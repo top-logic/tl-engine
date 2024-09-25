@@ -6,10 +6,10 @@
 	<dialogInfo
 		createOpenerButtons="false"
 		executability="Always"
-		height="170"
+		height="270"
 		openerCommandGroup="Read"
 		resizable="true"
-		width="410"
+		width="460"
 	/>
 
 	<components>

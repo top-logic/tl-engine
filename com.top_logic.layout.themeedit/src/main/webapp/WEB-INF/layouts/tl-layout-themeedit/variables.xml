@@ -83,8 +83,8 @@
 					titleKey="${resPrefix}.variables.editor.dialog.title"
 				>
 					<dialogInfo
-						height="400"
-						width="450"
+						height="500"
+						width="500"
 					>
 						<open-handler id="openVariableEditor"
 							disabledImage="theme:ICONS_BUTTON_EDIT_DISABLED"
@@ -161,9 +161,9 @@
 					<dialogInfo
 						defaultI18n="${resPrefix}.create.variable.dialog"
 						executability="com.top_logic.layout.themeedit.browser.providers.theme.ThemeIsNotProtectedRule"
-						height="480"
+						height="580"
 						image="theme:ICON_PLUS"
-						width="600"
+						width="650"
 					/>
 					<components>
 						<form name="${namePrefix}CreateVariable"

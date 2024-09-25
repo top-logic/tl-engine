@@ -273,7 +273,7 @@ public class ManageMultipleTableSettings extends MultipleSettingsCommand {
 	public HandlerResult executeCommand(DisplayContext context) {
 		ManageMultipleTableSettingsDialog dialog =
 			new ManageMultipleTableSettingsDialog(DefaultDialogModel.dialogModel(I18NConstants.EDIT_TABLE_SETTINGS_DIALOG, DisplayDimension.px(480),
-				DisplayDimension.px(430)));
+				DisplayDimension.px(530)));
 		return dialog.open(context);
 	}
 

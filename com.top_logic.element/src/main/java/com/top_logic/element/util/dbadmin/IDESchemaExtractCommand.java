@@ -101,7 +101,7 @@ public class IDESchemaExtractCommand extends AbstractCommandHandler {
 			Command resume = result.resumeContinuation(Collections.singletonMap("resumed", Boolean.TRUE));
 			MessageBox.confirm(context.getWindowScope(), new DefaultLayoutData(
 				DisplayDimension.dim(400, DisplayUnit.PIXEL), 100,
-				DisplayDimension.dim(250, DisplayUnit.PIXEL), 100, Scrolling.AUTO), true,
+				DisplayDimension.dim(350, DisplayUnit.PIXEL), 100, Scrolling.AUTO), true,
 				Fragments.message(I18NConstants.UPDATE_SCHEMA_TITLE),
 				Fragments.message(I18NConstants.UPDATE_SCHEMA_NOTICE),
 				MessageBox.button(ButtonType.YES, resume), MessageBox.button(ButtonType.NO));

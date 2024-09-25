@@ -42,7 +42,7 @@ public abstract class UploadDataDialog extends SimpleFormDialog {
 	 */
 	public UploadDataDialog(ResPrefix uploadDialogPrefix) {
 		super(uploadDialogPrefix,
-			DisplayDimension.dim(330, DisplayUnit.PIXEL),
+			DisplayDimension.dim(400, DisplayUnit.PIXEL),
 			DisplayDimension.dim(150, DisplayUnit.PIXEL));
 	}
 

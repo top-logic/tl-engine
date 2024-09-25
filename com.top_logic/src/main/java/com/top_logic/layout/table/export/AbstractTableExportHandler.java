@@ -104,7 +104,7 @@ public abstract class AbstractTableExportHandler extends AbstractCommandHandler 
 	}
 
 	private ProgressDialog createProgressDialog(final LayoutComponent aComponent) {
-		return new ProgressDialog(I18NConstants.PERFORMING_EXPORT, DisplayDimension.px(500), DisplayDimension.px(250)) {
+		return new ProgressDialog(I18NConstants.PERFORMING_EXPORT, DisplayDimension.px(500), DisplayDimension.px(350)) {
 
 			private final int _rowCount = extractTableData(aComponent).getViewModel().getRowCount();
 

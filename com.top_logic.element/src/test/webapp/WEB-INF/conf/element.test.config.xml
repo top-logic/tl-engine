@@ -125,6 +125,16 @@
 						<declaration resource="webinf://kbase/TestTypesMeta.xml" />
 			        </declarations>
 			    </type-system>
+				<type-system name="TestTypes" class="com.top_logic.knowledge.service.TypeSystemSetup">
+					<declarations>
+						<declaration resource="webinf://kbase/BasicMeta.xml"/>
+					</declarations>
+					<providers>
+						<provider name="basic">
+							<impl class="com.top_logic.knowledge.service.db2.BasicTypeProvider" />
+						</provider>
+					</providers>
+				</type-system>
 			</type-systems>
 		</config>
 

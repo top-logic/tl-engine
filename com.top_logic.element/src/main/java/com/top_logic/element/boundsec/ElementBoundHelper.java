@@ -9,7 +9,8 @@ import java.util.List;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.module.ServiceDependencies;
-import com.top_logic.element.structured.StructuredElementFactory;
+import com.top_logic.element.model.DynamicModelService;
+import com.top_logic.element.model.ModelFactory;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
@@ -105,9 +106,8 @@ public class ElementBoundHelper extends BoundHelper {
 	 */
 	public final BoundObject securityRoot() {
 		if (_securityRoot == null) {
-			StructuredElementFactory factory =
-				StructuredElementFactory.getInstanceForStructure(SECURITY_STRUCTURE_NAME);
-			_securityRoot = (BoundObject) factory.getRoot();
+			ModelFactory factory = DynamicModelService.getFactoryFor(SECURITY_STRUCTURE_NAME);
+			_securityRoot = (BoundObject) factory.getModule().getSingleton(TLModule.DEFAULT_SINGLETON_NAME);
 		}
 
 		return _securityRoot;

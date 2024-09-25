@@ -43,7 +43,7 @@ public class StructureDomainMapper implements Mapping<Object, String> {
      * Get the name of the structure used for security checks in case no specific structure is given
      */
     private String getGlobalStructureName() {
-        return ((StructuredElement) ElementBoundHelper.getSecurityRoot()).getStructureName();
+		return ElementBoundHelper.getSecurityRoot().tType().getModule().getName();
     }
 
 }

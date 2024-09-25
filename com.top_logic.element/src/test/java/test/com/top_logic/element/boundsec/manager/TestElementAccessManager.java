@@ -52,7 +52,6 @@ import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.element.singleton.ElementSingletonManager;
 import com.top_logic.element.structured.StructuredElement;
 import com.top_logic.element.structured.StructuredElementFactory;
-import com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper;
 import com.top_logic.element.structured.wrap.StructuredElementWrapper;
 import com.top_logic.knowledge.security.SecurityStorage;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -63,6 +62,7 @@ import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
@@ -731,12 +731,13 @@ public class TestElementAccessManager extends BasicTestCase {
             // Test singleton rule stuff:
 
 			Transaction tx3 = begin();
-			AttributedStructuredElementWrapper theSecurityRoot =
-				(AttributedStructuredElementWrapper) ElementSingletonManager
+			TLObject theSecurityRoot =
+				ElementSingletonManager
 					.getSingleton(ElementSingletonManager.SINGLETON_PREFIX_STRUCTURE_ROOT + "SecurityStructure");
-            theSecurityRoot.setValue("Name", "SecurityRoot");
-            theSecurityRoot.setValue(nutzerAttr, Collections.singletonList(personAphrodite));
-            theSecurityRoot.setValue(hauptnutzerAttr, CollectionUtil.toList(new Person[] {personAphrodite, personAthene}));
+			theSecurityRoot.tUpdateByName("name", "SecurityRoot");
+			theSecurityRoot.tUpdateByName(nutzerAttr, Collections.singletonList(personAphrodite));
+			theSecurityRoot.tUpdateByName(hauptnutzerAttr,
+				CollectionUtil.toList(new Person[] { personAphrodite, personAthene }));
 			commit(tx3);
 
             Person[] otherPersons = new Person[] {personHades, personPoseidon, personZeus};
@@ -772,8 +773,8 @@ public class TestElementAccessManager extends BasicTestCase {
             assertRoles(theAM, otherPersons,    theRoot,        noRoles);
 
 			Transaction tx4 = begin();
-			theSecurityRoot.setValue(nutzerAttr, null);
-            theSecurityRoot.setValue(hauptnutzerAttr, null);
+			theSecurityRoot.tUpdateByName(nutzerAttr, null);
+			theSecurityRoot.tUpdateByName(hauptnutzerAttr, null);
 			commit(tx4);
 
             // Assert no roles:

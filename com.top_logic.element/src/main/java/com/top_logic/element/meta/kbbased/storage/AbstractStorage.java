@@ -59,7 +59,8 @@ public abstract class AbstractStorage<C extends AbstractStorage.Config<?>> exten
 		try {
 			/* The form-value from the form that was editing will be saved in persistent model if
 			 * the update is enabled and, the value value is changed or it is a new object. */
-			if (update == null || update.isDisabled() || (!update.isChanged() && !update.isUpdateForCreate())) {
+			if (update == null || (update.isDisabled() && !update.isChanged())
+				|| (!update.isChanged() && !update.isUpdateForCreate())) {
 				return;
 			}
 

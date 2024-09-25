@@ -674,7 +674,7 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 			return;
 		}
 
-		if (isDisabled()) {
+		if (isDisabled() && !isChanged()) {
 			return;
 		}
 

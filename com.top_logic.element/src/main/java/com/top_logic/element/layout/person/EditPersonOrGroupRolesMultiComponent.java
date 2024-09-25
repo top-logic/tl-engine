@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.element.layout.structured.DummyTreeModel;
 import com.top_logic.element.layout.structured.StructuredElementTreeModel;
 import com.top_logic.element.structured.StructuredElement;
 import com.top_logic.knowledge.wrap.WrapperNameComparator;
@@ -59,6 +60,7 @@ import com.top_logic.layout.tree.renderer.TreeTableRenderer;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLModuleSingleton;
+import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
@@ -222,7 +224,12 @@ public class EditPersonOrGroupRolesMultiComponent extends EditComponent {
 
 		List<TLTreeModel<?>> models = new ArrayList<>();
 		for (TLModuleSingleton link : securityModule.getSingletons()) {
-			models.add(new StructuredElementTreeModel((StructuredElement) link.getSingleton()));
+			TLObject root = link.getSingleton();
+			if (root instanceof StructuredElement structure) {
+				models.add(new StructuredElementTreeModel(structure));
+			} else {
+				models.add(new DummyTreeModel(root));
+			}
 		}
 
 		return new ComposingTreeModel(models);

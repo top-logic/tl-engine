@@ -59,6 +59,7 @@ import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.component.ComponentUtil;
+import com.top_logic.layout.component.InAppSelectable;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.structure.ContentLayouting;
@@ -118,6 +119,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundComponent;
+import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.util.Utils;
 import com.top_logic.util.model.ModelService;
 
@@ -127,14 +129,15 @@ import com.top_logic.util.model.ModelService;
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
 public class TreeTableComponent extends BoundComponent
-		implements SelectableWithSelectionModel, ControlRepresentable, TreeTableDataOwner, ComponentRowSource,
-		WithSelectionPath {
+		implements SelectableWithSelectionModel, InAppSelectable, ControlRepresentable, TreeTableDataOwner,
+		ComponentRowSource, WithSelectionPath {
 
 	/**
 	 * Configuration options for {@link TreeTableComponent}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends BoundComponent.Config, TreeViewConfig, SelectionModelConfig {
+	public interface Config
+			extends BoundComponent.Config, TreeViewConfig, SelectionModelConfig, InAppSelectable.InAppSelectableConfig {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -305,6 +308,8 @@ public class TreeTableComponent extends BoundComponent
 
 	private boolean _isSelectionValid;
 
+	private CommandHandler _onSelectionChange;
+
 	/**
 	 * Legacy constructor for creating an {@link TreeTableComponent} via {@link Config}.
 	 */
@@ -323,6 +328,12 @@ public class TreeTableComponent extends BoundComponent
 		if (table != null) {
 			_tableConfigProvider = TableConfigurationFactory.toProvider(context, table);
 		}
+		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+	}
+
+	@Override
+	public CommandHandler getOnSelectionHandler() {
+		return _onSelectionChange;
 	}
 
 	private Set<TLType> resolveTypes(InstantiationContext context, Config config) {

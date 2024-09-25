@@ -110,6 +110,7 @@ import com.top_logic.layout.channel.SelectionChannel;
 import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.compare.CompareAlgorithm;
 import com.top_logic.layout.compare.CompareAlgorithmHolder;
+import com.top_logic.layout.component.InAppSelectable;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.NoSelectionModel;
 import com.top_logic.layout.component.model.SelectionListener;
@@ -228,7 +229,7 @@ import com.top_logic.util.model.TL5Types;
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class GridComponent extends EditComponent implements
-		SelectableWithSelectionModel,
+		SelectableWithSelectionModel, InAppSelectable,
 		ControlRepresentable, SelectionVetoListener, CompareAlgorithmHolder,
 		ComponentRowSource, WithSelectionPath {
 
@@ -236,7 +237,7 @@ public class GridComponent extends EditComponent implements
 	 * Configuration options for {@link GridComponent}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends EditComponent.Config, ColumnsChannel.Config, TreeViewConfig, SelectionModelConfig {
+	public interface Config extends EditComponent.Config, ColumnsChannel.Config, TreeViewConfig, SelectionModelConfig, InAppSelectableConfig {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -521,25 +522,34 @@ public class GridComponent extends EditComponent implements
 
 	private boolean _addTechnicalColumn;
 
+	private CommandHandler _onSelectionChange;
+
 	/**
 	 * Create a new GridComponent from XML.
 	 */
-    public GridComponent(InstantiationContext context, Config someAttrs) throws ConfigurationException {
-		super(context, someAttrs);
-		this.modifier = createModifier(context, someAttrs.getModifier());
-		this.applyHandler = (someAttrs.getGridApplyHandlerClass() == null) ? DefaultGridApplyHandler.INSTANCE
-			: context.getInstance(someAttrs.getGridApplyHandlerClass());
+	public GridComponent(InstantiationContext context, Config config) throws ConfigurationException {
+		super(context, config);
+		this.modifier = createModifier(context, config.getModifier());
+		this.applyHandler = (config.getGridApplyHandlerClass() == null) ? DefaultGridApplyHandler.INSTANCE
+			: context.getInstance(config.getGridApplyHandlerClass());
 		this.rowSecurityProvider =
-			(someAttrs.getRowSecurityProviderClass() == null) ? DefaultGridRowSecurityObjectProvider.INSTANCE
-				: context.getInstance(someAttrs.getRowSecurityProviderClass());
-        this.excludeColumns        = Collections.unmodifiableSet(CollectionUtil.toSet(StringServices.toArray(someAttrs.getExcludeColumns())));
-        this.openInEdit            = someAttrs.getOpenInEdit();
-		this._editComponentName = someAttrs.getEditComponentName();
-		_showDetailOpener = someAttrs.getShowDetailOpener();
-		this.nodeTypes = someAttrs.getElementTypes();
-		_selectionModel = initSelectionModel(someAttrs);
-		_componentTableConfigProvider = someAttrs.getComponentTableConfigProvider();
-		_addTechnicalColumn = someAttrs.getAddTechnicalColumn();
+			(config.getRowSecurityProviderClass() == null) ? DefaultGridRowSecurityObjectProvider.INSTANCE
+				: context.getInstance(config.getRowSecurityProviderClass());
+		this.excludeColumns =
+			Collections.unmodifiableSet(CollectionUtil.toSet(StringServices.toArray(config.getExcludeColumns())));
+		this.openInEdit = config.getOpenInEdit();
+		this._editComponentName = config.getEditComponentName();
+		_showDetailOpener = config.getShowDetailOpener();
+		this.nodeTypes = config.getElementTypes();
+		_selectionModel = initSelectionModel(config);
+		_componentTableConfigProvider = config.getComponentTableConfigProvider();
+		_addTechnicalColumn = config.getAddTechnicalColumn();
+		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+	}
+
+	@Override
+	public CommandHandler getOnSelectionHandler() {
+		return _onSelectionChange;
 	}
 
 	private FormContextModificator createModifier(InstantiationContext context,

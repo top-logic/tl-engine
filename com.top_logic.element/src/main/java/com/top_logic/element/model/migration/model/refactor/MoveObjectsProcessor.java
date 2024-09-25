@@ -209,6 +209,8 @@ public class MoveObjectsProcessor extends AbstractConfiguredInstance<MoveObjects
 			List<SQLColumnDefinition> columnDefs = new ArrayList<>();
 			for (MOAttribute attr : sourceTable.getAttributes()) {
 				if (destTable.getAttributeOrNull(attr.getName()) == null) {
+					log.info("Ignoring column '" + attr.getName() + "' while moving objects from '"
+						+ sourceTableName + "' to '" + destTableName + "' (does not exist in destination).");
 					continue;
 				}
 

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_53d69760_aab3_4f6d_b731_d093967598e7">
+		<tabLabel key="dynamic.a5677a2e-e62d-4ca1-9893-ba1d429ab734">
+			<en>Synthetic root node</en>
+			<de>Synthetischer Root-Knoten</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/syntheticRootNode/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

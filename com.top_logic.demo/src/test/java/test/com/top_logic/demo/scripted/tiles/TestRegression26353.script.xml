@@ -237,7 +237,7 @@
 								<selection-state boolean="true"/>
 							</selection>
 							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="26353 > As > As"
+								tab-path="26353 > As > {0}"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -437,7 +437,7 @@
 								<selection-state boolean="true"/>
 							</selection>
 							<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="26353 > As > As"
+								tab-path="26353 > As > {0}"
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -602,7 +602,7 @@
 							</selection>
 							<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
 								<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="26353 > As > Kontextmodell {0} > Kontextmodell {0}"
+									tab-path="26353 > As > {0} > {0}"
 								/>
 							</selection-model-name>
 						</action>

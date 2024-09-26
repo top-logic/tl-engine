@@ -408,31 +408,29 @@ public class LuceneThread extends Thread {
 	 * This method returns the next element to add. <code>null</code> indicates to stop adding now.
 	 */
 	private ContentObject removeFirstToAdd() {
-		ContentObject toAdd;
-		synchronized (monitor) {
-        	if (!deleteQueue.isEmpty()) {
-        		return null; // delete has higher priority;
-        	}
-			if (addQueue.isEmpty()) {
-				return null;
-			} else {
-				do {
-					ContentObject addObject = addQueue.removeFirst();
-					if (addObject.getKnowledgeObject().isAlive()) {
-						toAdd = addObject;
-						break;
-					}
-					/* The object was deleted in between. This may happen, because between the
-					 * deletion of the object and the request for deletion (i.e. adding to delete
-					 * queue and removing from add queue), some time may went by. */
-					if (addQueue.isEmpty()) {
-						return null;
-					}
-				} while (true);
+		while (true) {
+			ContentObject addObject;
+			synchronized (monitor) {
+				if (!deleteQueue.isEmpty()) {
+					return null; // delete has higher priority;
+				}
+				if (addQueue.isEmpty()) {
+					return null;
+				}
+				addObject = addQueue.removeFirst();
 			}
+			/* Update session revision to ensure that this thread is up-to-date when checking object
+			 * for alive. */
+			updateSessionRevision();
+
+			if (!addObject.getKnowledgeObject().isAlive()) {
+				/* The object was deleted in between. This may happen, because between the deletion
+				 * of the object and the request for deletion (i.e. adding to delete queue and
+				 * removing from add queue), some time may went by. */
+				continue;
+			}
+			return addObject;
 		}
-		updateSessionRevision();
-		return toAdd;
 	}
 
 	private void updateSessionRevision() {

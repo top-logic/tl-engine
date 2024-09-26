@@ -316,7 +316,29 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	 * @see #refetchLock
 	 */
 	private long lastLocalRevision = 0;
+
+	/**
+	 * Commit number of the {@link UpdateEvent} that was sent as last.
+	 * 
+	 * <p>
+	 * Note: Must be accessed from within a context synchronized at {@link #_sendEventLock}.
+	 * </p>
+	 * 
+	 * @see #fireEvent(UpdateEvent)
+	 */
+	private long _lastSentEvent = 0;
 	
+	/**
+	 * Variable holding the {@link Thread} that currently sends events.
+	 * 
+	 * <p>
+	 * Note: Must be accessed from within a context synchronized at {@link #_sendEventLock}.
+	 * </p>
+	 * 
+	 * @see #fireEvent(UpdateEvent)
+	 */
+	private Thread _eventSendingThread = null;
+
 	/** Entry in {@link SequenceManager} holding the last commit number. */
 	public static final String REVISION_SEQUENCE = "rev";
 	
@@ -419,6 +441,18 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	 * @see #updateChainTail
 	 */
 	private final Object refetchLock = new Object();
+
+	/**
+	 * Object to synchronize sending of {@link UpdateEvent}s.
+	 * 
+	 * @see #_lastSentEvent
+	 * @see #_eventSendingThread
+	 * @see #fireEvent(UpdateEvent)
+	 * 
+	 * @implNote Sending events must not be synchronized on {@link #refetchLock}, because in this
+	 *           case also the simple access to the session revision was locked.
+	 */
+	private final Object _sendEventLock = new Object();
 
 	/**
 	 * @see KnowledgeBaseConfiguration#isSingleNodeOptimization()
@@ -734,6 +768,21 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		synchronized (refetchLock) {
 			this.lastLocalRevision = lastGlobalRevision;
 			syncRefetchUpdateRevisionAndPublishUpdate(new UpdateChainLink(lastLocalRevision));
+		}
+		synchronized (_sendEventLock) {
+			_lastSentEvent = lastGlobalRevision;
+		}
+	}
+
+	/**
+	 * Unconditionally sets {@link #getLastLocalRevision()} to the given revision.
+	 */
+	void resetLastRevision(long revision) {
+		synchronized (refetchLock) {
+			this.lastLocalRevision = revision;
+		}
+		synchronized (_sendEventLock) {
+			_lastSentEvent = revision;
 		}
 	}
 
@@ -2880,13 +2929,69 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		return new UpdateChainView(sessionUpdateLink());
 	}
 
-	void fireUpdateHighPrio(UpdateEvent event) {
+	/**
+	 * This method is called outside the global refetch lock. Therefore it is possible, that the
+	 * events are not send in correct order. The method processes the event if it is the "next" or
+	 * waits until all previous events were sent.
+	 */
+	private void fireEvent(UpdateEvent event) {
+		long commitNumber = event.getCommitNumber();
+		Thread currentThread = Thread.currentThread();
+
+		synchronized (_sendEventLock) {
+			if (_eventSendingThread == currentThread) {
+				throw new IllegalStateException(
+					"The current thread is already sending events. That event must have been fully processed before the event for commit revision '"
+							+ commitNumber + "' can be processed. It is not allowed to commit anything in an "
+							+ UpdateListener.class.getSimpleName() + ".");
+			}
+			boolean wasInterrupted = false;
+			while (true) {
+				assert commitNumber > _lastSentEvent;
+				if (commitNumber == _lastSentEvent + 1) {
+					// Unlock before sending event!
+					_lastSentEvent = commitNumber;
+					_sendEventLock.notifyAll();
+
+					_eventSendingThread = currentThread;
+					try {
+						fireUpdateHighPrio(event);
+						// Notify synchronous listeners.
+						fireUpdate(event);
+					} catch (Throwable ex) {
+						Logger.error("Unable to process event with number '" + commitNumber, ex);
+						if (wasInterrupted) {
+							currentThread.interrupt();
+						}
+						throw ex;
+					} finally {
+						_eventSendingThread = null;
+					}
+					break;
+				} else {
+					try {
+						_sendEventLock.wait();
+					} catch (InterruptedException ex) {
+						Logger.warn("Thread waiting for sending event with number '" + commitNumber
+								+ "' interrupted. Last sent event: " + +_lastSentEvent,
+							ex);
+						wasInterrupted = true;
+					}
+				}
+			}
+			if (wasInterrupted) {
+				currentThread.interrupt();
+			}
+		}
+	}
+
+	private void fireUpdateHighPrio(UpdateEvent event) {
 		for (UpdateListener updateListener : _updateListenersHighPrio) {
 			updateListener.notifyUpdate(this, event);
 		}
 	}
 
-    protected void fireUpdate(UpdateEvent event) {
+	private void fireUpdate(UpdateEvent event) {
 		updateWrappers(event);
 		for (UpdateListener updateListener : updateListeners) {
 			updateListener.notifyUpdate(this, event);
@@ -3678,10 +3783,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 			syncRefetchPublishUpdate(remoteRevision);
 		}
 		
-		fireUpdateHighPrio(event);
-
-		// Notify synchronous listeners.
-		fireUpdate(event);
+		fireEvent(event);
 	}
 
 	void updateCaches(UpdateEvent event) {
@@ -4115,9 +4217,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		}
 		
 		if (success) {
-			fireUpdateHighPrio(commitLink.getUpdateEvent());
-
-			fireUpdate(commitLink.getUpdateEvent());
+			fireEvent(commitLink.getUpdateEvent());
 		}
 	}
 

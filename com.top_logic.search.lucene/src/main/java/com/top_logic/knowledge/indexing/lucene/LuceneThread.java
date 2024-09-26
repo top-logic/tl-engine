@@ -408,6 +408,7 @@ public class LuceneThread extends Thread {
 	 * This method returns the next element to add. <code>null</code> indicates to stop adding now.
 	 */
 	private ContentObject removeFirstToAdd() {
+		ContentObject toAdd;
 		synchronized (monitor) {
         	if (!deleteQueue.isEmpty()) {
         		return null; // delete has higher priority;
@@ -415,11 +416,11 @@ public class LuceneThread extends Thread {
 			if (addQueue.isEmpty()) {
 				return null;
 			} else {
-				updateSessionRevision();
 				do {
 					ContentObject addObject = addQueue.removeFirst();
 					if (addObject.getKnowledgeObject().isAlive()) {
-						return addObject;
+						toAdd = addObject;
+						break;
 					}
 					/* The object was deleted in between. This may happen, because between the
 					 * deletion of the object and the request for deletion (i.e. adding to delete
@@ -430,6 +431,8 @@ public class LuceneThread extends Thread {
 				} while (true);
 			}
 		}
+		updateSessionRevision();
+		return toAdd;
 	}
 
 	private void updateSessionRevision() {
@@ -521,14 +524,16 @@ public class LuceneThread extends Thread {
      * This method returns the next element to delete. <code>null</code> indicates that all elements are deleted.
      */
     private ObjectKey removeFirstToDelete() {
+		ObjectKey toDelete;
     	synchronized (monitor) {
     		if (deleteQueue.isEmpty()) {
     			return null; // nothing to delete
     		} else {
-				updateSessionRevision();
-    			return deleteQueue.removeFirst();
+				toDelete = deleteQueue.removeFirst();
     		}
     	}
+		updateSessionRevision();
+		return toDelete;
     }
     
     private void deleteContent(ObjectKey key, IndexWriter writer, IndexReader reader) {

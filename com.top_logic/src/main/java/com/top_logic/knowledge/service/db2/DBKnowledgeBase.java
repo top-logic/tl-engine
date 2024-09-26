@@ -307,17 +307,6 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	private final SequenceManager sequenceManager = new RowLevelLockingSequenceManager();
 
 	/**
-	 * Commit number of the {@link UpdateEvent} that was sent as last.
-	 * 
-	 * <p>
-	 * Note: Must be accessed from within a context synchronized at {@link #refetchLock}.
-	 * </p>
-	 * 
-	 * @see #fireEvent(UpdateEvent)
-	 */
-	private long _lastSentEvent = 0;
-
-	/**
 	 * The contents of the {@link #cache} contains contents up to this revision number.
 	 * 
 	 * <p>
@@ -327,12 +316,23 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	 * @see #refetchLock
 	 */
 	private long lastLocalRevision = 0;
+
+	/**
+	 * Commit number of the {@link UpdateEvent} that was sent as last.
+	 * 
+	 * <p>
+	 * Note: Must be accessed from within a context synchronized at {@link #_sendEventLock}.
+	 * </p>
+	 * 
+	 * @see #fireEvent(UpdateEvent)
+	 */
+	private long _lastSentEvent = 0;
 	
 	/**
 	 * Variable holding the {@link Thread} that currently sends events.
 	 * 
 	 * <p>
-	 * Note: Must be accessed from within a context synchronized at {@link #refetchLock}.
+	 * Note: Must be accessed from within a context synchronized at {@link #_sendEventLock}.
 	 * </p>
 	 * 
 	 * @see #fireEvent(UpdateEvent)
@@ -441,6 +441,18 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	 * @see #updateChainTail
 	 */
 	private final Object refetchLock = new Object();
+
+	/**
+	 * Object to synchronize sending of {@link UpdateEvent}s.
+	 * 
+	 * @see #_lastSentEvent
+	 * @see #_eventSendingThread
+	 * @see #fireEvent(UpdateEvent)
+	 * 
+	 * @implNote Sending events must not be synchronized on {@link #refetchLock}, because in this
+	 *           case also the simple access to the session revision was locked.
+	 */
+	private final Object _sendEventLock = new Object();
 
 	/**
 	 * @see KnowledgeBaseConfiguration#isSingleNodeOptimization()
@@ -756,6 +768,8 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		synchronized (refetchLock) {
 			this.lastLocalRevision = lastGlobalRevision;
 			syncRefetchUpdateRevisionAndPublishUpdate(new UpdateChainLink(lastLocalRevision));
+		}
+		synchronized (_sendEventLock) {
 			_lastSentEvent = lastGlobalRevision;
 		}
 	}
@@ -766,6 +780,8 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	void resetLastRevision(long revision) {
 		synchronized (refetchLock) {
 			this.lastLocalRevision = revision;
+		}
+		synchronized (_sendEventLock) {
 			_lastSentEvent = revision;
 		}
 	}
@@ -2922,7 +2938,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		long commitNumber = event.getCommitNumber();
 		Thread currentThread = Thread.currentThread();
 
-		synchronized (refetchLock) {
+		synchronized (_sendEventLock) {
 			if (_eventSendingThread == currentThread) {
 				throw new IllegalStateException(
 					"The current thread is already sending events. That event must have been fully processed before the event for commit revision '"
@@ -2935,7 +2951,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 				if (commitNumber == _lastSentEvent + 1) {
 					// Unlock before sending event!
 					_lastSentEvent = commitNumber;
-					refetchLock.notifyAll();
+					_sendEventLock.notifyAll();
 
 					_eventSendingThread = currentThread;
 					try {
@@ -2954,7 +2970,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 					break;
 				} else {
 					try {
-						refetchLock.wait();
+						_sendEventLock.wait();
 					} catch (InterruptedException ex) {
 						Logger.warn("Thread waiting for sending event with number '" + commitNumber
 								+ "' interrupted. Last sent event: " + +_lastSentEvent,

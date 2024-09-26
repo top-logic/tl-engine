@@ -1309,18 +1309,15 @@
 					user-id="root"
 				>
 					<selection>
-						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-							<list>
-								<entry config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-									path=""
-								/>
-							</list>
-						</selectee>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path=""
+						/>
 						<selection-state boolean="true"/>
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Kontext Baumtabelle"
+							name="3121a91a-8c0a-49a1-b5c5-561662362118.layout.xml#TreeTable"
+							tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0}"
 						/>
 					</selection-model-name>
 				</action>
@@ -1329,7 +1326,7 @@
 					user-id="root"
 				>
 					<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="InAppTiles > Gruppenkachel > Kachel2 > Kontext Baumtabelle > Gruppenkachel"
+						tab-path="InAppTiles > Gruppenkachel > Kachel2 > {0} > {0}"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"

@@ -98,7 +98,7 @@
 						<selection-state boolean="true"/>
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > Produkte"
+						tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > {0}"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -177,7 +177,7 @@
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > Releases von {0} > Releases von {0}"
+							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > {0} > {0}"
 						/>
 					</selection-model-name>
 				</action>
@@ -186,7 +186,7 @@
 					user-id="root"
 				>
 					<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > Releases von {0} > Release {0}"
+						tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > {0} > {0}"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -206,7 +206,7 @@
 						label="Datum"
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > Releases von {0} > Release {0} > Eigenschaften > Einstellungen"
+							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > {0} > {0} > Eigenschaften > Einstellungen"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
@@ -248,7 +248,7 @@
 					user-id="root"
 				>
 					<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > Releases von {0} > Release {0}"
+						tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > {0} > {0}"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -268,7 +268,7 @@
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							name="com.top_logic.demo/technical/components/tiles/ticketsGrid/ticketsGrid.layout.xml#Grid"
-							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > Releases von {0} > Release {0} > Offene Tickets"
+							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > {0} > {0} > Offene Tickets"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
@@ -307,7 +307,7 @@
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							name="com.top_logic.demo/technical/components/tiles/ticketsGrid/ticketsGrid.layout.xml#Grid"
-							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > Releases von {0} > Release {0} > Offene Tickets"
+							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > {0} > {0} > Offene Tickets"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
@@ -341,7 +341,7 @@
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							name="com.top_logic.demo/technical/components/tiles/ticketsGrid/ticketsGrid.layout.xml#Grid"
-							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > Releases von {0} > Release {0} > Offene Tickets"
+							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > {0} > {0} > Offene Tickets"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
@@ -390,7 +390,7 @@
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > Releases von {0} > Releases von {0}"
+							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > {0} > {0}"
 						/>
 					</selection-model-name>
 				</action>
@@ -399,7 +399,7 @@
 					user-id="root"
 				>
 					<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > Releases von {0} > Release {0}"
+						tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > {0} > {0}"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -419,7 +419,7 @@
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							name="com.top_logic.demo/technical/components/tiles/ticketsGrid/ticketsGrid.layout.xml#Grid"
-							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > Releases von {0} > Release {0} > Offene Tickets"
+							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > {0} > {0} > Offene Tickets"
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
@@ -468,7 +468,7 @@
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > Releases von {0} > Releases von {0}"
+							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > {0} > {0}"
 						/>
 					</selection-model-name>
 				</action>
@@ -477,7 +477,7 @@
 					user-id="root"
 				>
 					<group config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > Releases von {0} > Release {0}"
+						tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > {0} > {0}"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
@@ -497,7 +497,7 @@
 					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							name="com.top_logic.demo/technical/components/tiles/ticketsGrid/ticketsGrid.layout.xml#Grid"
-							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > Releases von {0} > Release {0} > Offene Tickets"
+							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > {0} > {0} > Offene Tickets"
 						/>
 						<path>
 							<named-member name="fieldTable"/>
@@ -521,7 +521,7 @@
 					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							name="com.top_logic.demo/technical/components/tiles/ticketsGrid/ticketsGrid.layout.xml#Grid"
-							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > Releases von {0} > Release {0} > Offene Tickets"
+							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > {0} > {0} > Offene Tickets"
 						/>
 						<path>
 							<named-member name="fieldTable"/>
@@ -545,7 +545,7 @@
 					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							name="com.top_logic.demo/technical/components/tiles/ticketsGrid/ticketsGrid.layout.xml#Grid"
-							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > Releases von {0} > Release {0} > Offene Tickets"
+							tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > {0} > {0} > Offene Tickets"
 						/>
 						<path>
 							<named-member name="fieldTable"/>
@@ -556,7 +556,7 @@
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 			comment="Daten löschen"
-		>	
+		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 					change-kind="ABSOLUTE"
@@ -599,7 +599,7 @@
 						<selection-state boolean="true"/>
 					</selection>
 					<selection-model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > Produkte"
+						tab-path="Technisches Demo > Komponenten > Kacheln > Produkte > {0}"
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"

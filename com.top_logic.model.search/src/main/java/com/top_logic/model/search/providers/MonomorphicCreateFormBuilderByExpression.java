@@ -14,7 +14,6 @@ import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.element.layout.create.MonomorphicCreateFormBuilder;
-import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -88,15 +87,12 @@ public class MonomorphicCreateFormBuilderByExpression extends MonomorphicCreateF
 	}
 
 	@Override
-	protected TLFormObject fillFormContext(LayoutComponent component, AttributeFormContext formContext,
-			Object businessModel) {
-		TLFormObject result = super.fillFormContext(component, formContext, businessModel);
+	protected void initializeCreation(LayoutComponent component, TLFormObject newCreation, Object businessModel) {
+		super.initializeCreation(component, newCreation, businessModel);
 
 		if (_initialization != null) {
-			_initialization.execute(result, businessModel);
+			_initialization.execute(newCreation, businessModel);
 		}
-
-		return result;
 	}
 
 }

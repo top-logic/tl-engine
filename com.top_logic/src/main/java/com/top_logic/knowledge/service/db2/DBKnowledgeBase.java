@@ -328,6 +328,17 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	 */
 	private long lastLocalRevision = 0;
 	
+	/**
+	 * Variable holding the {@link Thread} that currently sends events.
+	 * 
+	 * <p>
+	 * Note: Must be accessed from within a context synchronized at {@link #refetchLock}.
+	 * </p>
+	 * 
+	 * @see #fireEvent(UpdateEvent)
+	 */
+	private Thread _eventSendingThread = null;
+
 	/** Entry in {@link SequenceManager} holding the last commit number. */
 	public static final String REVISION_SEQUENCE = "rev";
 	
@@ -2903,21 +2914,30 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	}
 
 	/**
-	 * This method is called outside the refetch lock. Therefore it is possible, the events are not
-	 * send in correct order. The method waits until ththe event, if it is the "next" or caches the
-	 * event until the all previous events were sent.
+	 * This method is called outside the global refetch lock. Therefore it is possible, that the
+	 * events are not send in correct order. The method processes the event if it is the "next" or
+	 * waits until all previous events were sent.
 	 */
 	private void fireEvent(UpdateEvent event) {
+		long commitNumber = event.getCommitNumber();
+		Thread currentThread = Thread.currentThread();
+
 		synchronized (refetchLock) {
+			if (_eventSendingThread == currentThread) {
+				throw new IllegalStateException(
+					"The current thread is already sending events. That event must have been fully processed before the event for commit revision '"
+							+ commitNumber + "' can be processed. It is not allowed to commit anything in an "
+							+ UpdateListener.class.getSimpleName() + ".");
+			}
 			boolean wasInterrupted = false;
 			while (true) {
-				long commitNumber = event.getCommitNumber();
 				assert commitNumber > _lastSentEvent;
 				if (commitNumber == _lastSentEvent + 1) {
 					// Unlock before sending event!
 					_lastSentEvent = commitNumber;
 					refetchLock.notifyAll();
 
+					_eventSendingThread = currentThread;
 					try {
 						fireUpdateHighPrio(event);
 						// Notify synchronous listeners.
@@ -2925,9 +2945,11 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 					} catch (Throwable ex) {
 						Logger.error("Unable to process event with number '" + commitNumber, ex);
 						if (wasInterrupted) {
-							Thread.currentThread().interrupt();
+							currentThread.interrupt();
 						}
 						throw ex;
+					} finally {
+						_eventSendingThread = null;
 					}
 					break;
 				} else {
@@ -2942,7 +2964,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 				}
 			}
 			if (wasInterrupted) {
-				Thread.currentThread().interrupt();
+				currentThread.interrupt();
 			}
 		}
 	}

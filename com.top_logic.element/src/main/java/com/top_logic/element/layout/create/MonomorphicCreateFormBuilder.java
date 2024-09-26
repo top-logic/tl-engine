@@ -112,6 +112,7 @@ public class MonomorphicCreateFormBuilder extends ConfiguredDynamicFormBuilder {
 		TLObject container = businessModel instanceof TLObject ? (TLObject) businessModel : null;
 		TLStructuredType type = getFormType();
 		TLFormObject newCreation = formContext.createObject(type, null, container);
+		initializeCreation(component, newCreation, businessModel);
 
 		FormContainer editorGroup = formContext.createFormContainerForOverlay(newCreation);
 		formContext.addMember(editorGroup);
@@ -127,6 +128,20 @@ public class MonomorphicCreateFormBuilder extends ConfiguredDynamicFormBuilder {
 		FormEditorUtil.createAttributes(context, typedForm.getFormDefinition());
 
 		return newCreation;
+	}
+
+	/**
+	 * Initializes the given {@link TLFormObject} before fields for the form context are created.
+	 * 
+	 * @param component
+	 *        The context component.
+	 * @param creation
+	 *        The {@link TLFormObject} base of the currently created {@link FormContext}.
+	 * @param businessModel
+	 *        The context component's model.
+	 */
+	protected void initializeCreation(LayoutComponent component, TLFormObject creation, Object businessModel) {
+		// no initialization by default
 	}
 
 	@Override

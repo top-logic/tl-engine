@@ -6,6 +6,7 @@
 package com.top_logic.tool.boundsec.wrap;
 
 import java.util.Collection;
+import java.util.Collections;
 
 import com.top_logic.basic.TLID;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -69,7 +70,7 @@ public abstract class AbstractBoundWrapper extends AbstractWrapper implements Bo
 
     @Override
 	public Collection<? extends BoundObject> getSecurityChildren() {
-        return null;
+		return Collections.emptyList();
     }
 
     @Override

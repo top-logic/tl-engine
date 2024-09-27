@@ -367,7 +367,8 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 							// Read regular element property content.
 							if (buffer != null) {
 								StringBuilder error = new StringBuilder();
-								error.append("Must not mix formatted content with element content ");
+								error.append("Must not mix formatted content '" + buffer.toString()
+									+ "' with element (start tag '" + reader.getLocalName() + "') content ");
 								appendAtLocation(error, reader);
 								error.append(".");
 								context.error(error.toString());
@@ -379,7 +380,8 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 							if (buffer != null) {
 								if (attributeRead) {
 									StringBuilder error = new StringBuilder();
-									error.append("Must not mix formatted content with attribute content ");
+									error.append("Must not mix formatted content '" + buffer.toString()
+										+ "' with attribute content ");
 									appendAtLocation(error, reader);
 									error.append(".");
 									context.error(error.toString());
@@ -779,7 +781,7 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 						//$FALL-THROUGH$
 					case XMLStreamConstants.CDATA:
 						if (entry) {
-							throw errorNoMixedContent(property, reader);
+							throw errorNoMixedContent(property, reader, reader.getText());
 						}
 						if (buffer == null) {
 							buffer = new StringBuilder();
@@ -789,7 +791,7 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 
 					case XMLStreamConstants.START_ELEMENT:
 						if (buffer != null) {
-							throw errorNoMixedContent(property, reader);
+							throw errorNoMixedContent(property, reader, buffer.toString());
 						}
 						entry = true;
 						handler.readEntry(reader, property);
@@ -818,10 +820,10 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 			}
 		}
 
-		private XMLStreamException errorNoMixedContent(PropertyDescriptor property, XMLStreamReader reader)
+		private XMLStreamException errorNoMixedContent(PropertyDescriptor property, XMLStreamReader reader, String text)
 				throws XMLStreamException {
 			throw new XMLStreamException(
-				"Must not mix text and element content within list property '" +
+				"Must not mix text '" + text + "' and element content within list property '" +
 					property.getPropertyName() + "' " + atLocation(reader));
 		}
 

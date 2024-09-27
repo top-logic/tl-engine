@@ -56,10 +56,12 @@ public class Fill extends GenericMethod {
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Object input = arguments[0];
-		if (input instanceof ResKey reskey) {
+		if (input instanceof ResKey) {
+			ResKey reskey = (ResKey) input;
 			return reskey.asResKeyN().fill(Arrays.copyOfRange(arguments, 1, arguments.length));
 		}
-		if (input instanceof String pattern) {
+		if (input instanceof String) {
+			String pattern = (String) input;
 			MessageFormat format = new MessageFormat(pattern, TLContext.getLocale());
 			return format.format(Arrays.copyOfRange(arguments, 1, arguments.length));
 		}

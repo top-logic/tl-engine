@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-core</artifactId>
-		<version>7.9.0-SNAPSHOT</version>
+		<version>0.0.7-easyplanning-SNAPSHOT</version>
 
 		<relativePath>../tl-parent-core</relativePath>
 	</parent>
@@ -225,7 +225,7 @@
 			<plugin>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-maven-plugin</artifactId>
-				<version>7.9.0-SNAPSHOT</version>
+				<version>0.0.7-easyplanning-SNAPSHOT</version>
 
 				<executions>
 					<execution>

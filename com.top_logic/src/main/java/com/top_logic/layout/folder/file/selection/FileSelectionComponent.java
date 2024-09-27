@@ -288,8 +288,8 @@ public class FileSelectionComponent extends FolderComponent implements Selectabl
 	}
 
 	@Override
-	protected String getRootLabel() {
-		return fileModel().getName();
+	protected ResKey getRootLabel() {
+		return ResKey.text(fileModel().getName());
 	}
 
 	@Override

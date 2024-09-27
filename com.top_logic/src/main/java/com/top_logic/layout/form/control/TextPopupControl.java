@@ -15,6 +15,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.gui.layout.ButtonBar;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
@@ -206,7 +207,7 @@ public class TextPopupControl extends PopupEditControl {
 	private void initEditField(final AbstractFormField originalField, final FormField editField,
 			final Command apply) {
 		ScriptingRecorder.annotateAsDontRecord(editField);
-		editField.setLabel("");
+		editField.setLabel(ResKey.text(""));
 		editField.initializeField(originalField.getValue());
 		if (!originalField.isImmutable()) {
 			editField.addKeyListener(new KeyEventListener(CTRL_RETURN) {

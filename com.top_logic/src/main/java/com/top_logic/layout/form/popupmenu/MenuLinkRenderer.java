@@ -9,6 +9,7 @@ import static com.top_logic.mig.html.HTMLConstants.*;
 
 import java.io.IOException;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
@@ -52,7 +53,7 @@ public class MenuLinkRenderer implements LinkRenderer {
 			out.endCssClasses();
 
 			String tooltip = ButtonRenderer.lookupTooltipLabelFallback(button, true, true);
-			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip,
+			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, ResKey.text(tooltip),
 				button.getTooltipCaption());
 
 			if (!button.isDisabled()) {
@@ -72,7 +73,7 @@ public class MenuLinkRenderer implements LinkRenderer {
 		out.beginBeginTag(SPAN);
 		out.writeAttribute(CLASS_ATTR, MENU_ENTRY_CELL_CLASS);
 		out.endBeginTag();
-		out.writeText(button.getLabel());
+		out.writeText(context.getResources().getString(button.getLabel()));
 		out.endTag(SPAN);
 	}
 

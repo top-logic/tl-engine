@@ -13,6 +13,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
@@ -121,7 +122,7 @@ public abstract class AbstractButtonRenderer<C extends AbstractButtonRenderer.Co
 	/**
 	 * Return the tooltip that should be displayed for that {@link AbstractButtonControl}
 	 */
-    protected String getTooltip(AbstractButtonControl<?> aButtonControl) {
+	protected ResKey getTooltip(AbstractButtonControl<?> aButtonControl) {
         // overwrite tooltip with reason for non-executability
         if (aButtonControl.isDisabled() && execStateInTooltip) {
             return aButtonControl.getDisabledReason();
@@ -134,7 +135,7 @@ public abstract class AbstractButtonRenderer<C extends AbstractButtonRenderer.Co
      */
 	protected final void writeTooltip(DisplayContext context, AbstractButtonControl<?> button, TagWriter out)
 			throws IOException {
-		String tooltip = this.getTooltip(button);
+		ResKey tooltip = this.getTooltip(button);
 		if (!StringServices.isEmpty(tooltip)) {
 			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip,
 				button.getTooltipCaption());

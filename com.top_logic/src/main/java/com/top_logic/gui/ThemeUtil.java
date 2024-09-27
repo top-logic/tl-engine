@@ -34,6 +34,7 @@ import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.NewLineStyle;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.basic.xml.XMLPrettyPrinter;
@@ -322,7 +323,7 @@ public class ThemeUtil {
 	/**
 	 * Writes the given {@link ThemeImage} with a custom given tooltip.
 	 */
-	public static void writeThemeImage(DisplayContext context, TagWriter out, ThemeImage image, String tooltip)
+	public static void writeThemeImage(DisplayContext context, TagWriter out, ThemeImage image, ResKey tooltip)
 			throws IOException {
 		XMLTag icon = image.toIcon();
 		icon.beginBeginTag(context, out);

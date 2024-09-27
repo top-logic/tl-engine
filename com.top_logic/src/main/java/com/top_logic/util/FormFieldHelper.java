@@ -449,7 +449,8 @@ public class FormFieldHelper {
      * @deprecated Use the create*Field methods instead to ensure the right field type
      */
     @Deprecated
-    public FormField createField(String aName, Object aValue, String aLabel, FormContainer aContext, boolean isImmutable, boolean isMandatory) {
+	public FormField createField(String aName, Object aValue, ResKey aLabel, FormContainer aContext,
+			boolean isImmutable, boolean isMandatory) {
         String theName = StringServices.isEmpty(aName) ? createName(aContext) : aName;
         Object theValue = aValue;
         FormField theField;
@@ -481,22 +482,24 @@ public class FormFieldHelper {
     }
 
     /**
-     * Creates a BooleanField with the given name and the given boolean as value and adds it
-     * to the given FormContainer.
-     *
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean) for parameters
-     */
-    public BooleanField createBooleanField(String aName, boolean aValue, String aLabel, FormContainer aContext, boolean isImmutable, boolean isMandatory) {
+	 * Creates a BooleanField with the given name and the given boolean as value and adds it to the
+	 * given FormContainer.
+	 *
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean) for parameters
+	 */
+	public BooleanField createBooleanField(String aName, boolean aValue, ResKey aLabel, FormContainer aContext,
+			boolean isImmutable, boolean isMandatory) {
         return createBooleanField(aName, Boolean.valueOf(aValue), aLabel, aContext, isImmutable, isMandatory);
     }
 
     /**
-     * Creates a BooleanField with the given name and the given object as value and adds it
-     * to the given FormContainer.
-     *
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean) for parameters
-     */
-    public BooleanField createBooleanField(String aName, Object aValue, String aLabel, FormContainer aContext, boolean isImmutable, boolean isMandatory) {
+	 * Creates a BooleanField with the given name and the given object as value and adds it to the
+	 * given FormContainer.
+	 *
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean) for parameters
+	 */
+	public BooleanField createBooleanField(String aName, Object aValue, ResKey aLabel, FormContainer aContext,
+			boolean isImmutable, boolean isMandatory) {
         String theName = StringServices.isEmpty(aName) ? createName(aContext) : aName;
         Object theValue = aValue;
         BooleanField theField = FormFactory.newBooleanField(theName);
@@ -508,12 +511,13 @@ public class FormFieldHelper {
     }
 
     /**
-     * Creates a ComplexField with the given name and the given object as value and adds it
-     * to the given FormContainer.
-     *
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean) for parameters
-     */
-    public ComplexField createComplexField(String aName, Object aValue, String aLabel, FormContainer aContext, boolean isImmutable, boolean isMandatory) {
+	 * Creates a ComplexField with the given name and the given object as value and adds it to the
+	 * given FormContainer.
+	 *
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean) for parameters
+	 */
+	public ComplexField createComplexField(String aName, Object aValue, ResKey aLabel, FormContainer aContext,
+			boolean isImmutable, boolean isMandatory) {
         String theName = StringServices.isEmpty(aName) ? createName(aContext) : aName;
         Object theValue = aValue;
         ComplexField theField;
@@ -536,13 +540,13 @@ public class FormFieldHelper {
     }
 
     /**
-     * Creates a multiple selection SelectField with the given name and aValue as option
-     * list and adds it to the given FormContainer. All options gets selected initially.
-     *
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean) for
-     *      parameters
-     */
-    public SelectField createSelectField(String aName, Object aValue, String aLabel, FormContainer aContext, boolean isImmutable, boolean isMandatory) {
+	 * Creates a multiple selection SelectField with the given name and aValue as option list and
+	 * adds it to the given FormContainer. All options gets selected initially.
+	 *
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean) for parameters
+	 */
+	public SelectField createSelectField(String aName, Object aValue, ResKey aLabel, FormContainer aContext,
+			boolean isImmutable, boolean isMandatory) {
         String theName = StringServices.isEmpty(aName) ? createName(aContext) : aName;
         Object theValue = aValue;
         SelectField theField;
@@ -558,18 +562,19 @@ public class FormFieldHelper {
     }
 
     /**
-     * Creates a multiple selection SelectField with the given name and the given object
-     * list and adds it to the given FormContainer. Selects initially aValue, which may be a
-     * list of options to select.
-     *
-     * @param aOptionList
-     *            the options of the SelectField
-     * @param aValue
-     *            the initially selected option(s) of the SelectField
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean) for the
-     *      other parameters
-     */
-    public SelectField createSelectField(String aName, List aOptionList, Object aValue, String aLabel, FormContainer aContext, boolean isImmutable, boolean isMandatory) {
+	 * Creates a multiple selection SelectField with the given name and the given object list and
+	 * adds it to the given FormContainer. Selects initially aValue, which may be a list of options
+	 * to select.
+	 *
+	 * @param aOptionList
+	 *        the options of the SelectField
+	 * @param aValue
+	 *        the initially selected option(s) of the SelectField
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean) for the other
+	 *      parameters
+	 */
+	public SelectField createSelectField(String aName, List aOptionList, Object aValue, ResKey aLabel,
+			FormContainer aContext, boolean isImmutable, boolean isMandatory) {
         String theName = StringServices.isEmpty(aName) ? createName(aContext) : aName;
         Object theValue = aValue;
         SelectField theField = FormFactory.newSelectField(theName, aOptionList, true, isImmutable);
@@ -581,17 +586,17 @@ public class FormFieldHelper {
     }
 
     /**
-     * Creates a single selection SelectField with the given name and the given object list and adds it to the given FormContainer.
-     * Selects the given object initially
-     *
-     * @param aOptionList
-     *            the options of the SelectField
-     * @param aValue
-     *            the selected option of the SelectField
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean) for
-     *      parameters
-     */
-    public SelectField createSingleSelectField(String aName, List aOptionList, Object aValue, String aLabel, FormContainer aContext, boolean isImmutable, boolean isMandatory) {
+	 * Creates a single selection SelectField with the given name and the given object list and adds
+	 * it to the given FormContainer. Selects the given object initially
+	 *
+	 * @param aOptionList
+	 *        the options of the SelectField
+	 * @param aValue
+	 *        the selected option of the SelectField
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean) for parameters
+	 */
+	public SelectField createSingleSelectField(String aName, List aOptionList, Object aValue, ResKey aLabel,
+			FormContainer aContext, boolean isImmutable, boolean isMandatory) {
         String theName = StringServices.isEmpty(aName) ? createName(aContext) : aName;
         Object theValue = aValue;
         SelectField theField = FormFactory.newSelectField(theName, aOptionList, false, isImmutable);
@@ -611,12 +616,13 @@ public class FormFieldHelper {
     }
 
     /**
-     * Creates a StringField with the given name and the given object as value and adds it
-     * to the given FormContainer.
-     *
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean) for parameters
-     */
-    public StringField createStringField(String aName, Object aValue, String aLabel, FormContainer aContext, boolean isImmutable, boolean isMandatory) {
+	 * Creates a StringField with the given name and the given object as value and adds it to the
+	 * given FormContainer.
+	 *
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean) for parameters
+	 */
+	public StringField createStringField(String aName, Object aValue, ResKey aLabel, FormContainer aContext,
+			boolean isImmutable, boolean isMandatory) {
         String theName = StringServices.isEmpty(aName) ? createName(aContext) : aName;
         Object theValue = aValue;
         StringField theField = FormFactory.newStringField(theName);
@@ -631,9 +637,9 @@ public class FormFieldHelper {
 	 * Creates an {@link ExpandableStringField} with the given name and the given Object as value
 	 * and adds it to the given FormContainer.
 	 * 
-	 * @see #createField(String, Object, String, FormContainer, boolean, boolean) for parameters
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean) for parameters
 	 */
-	public ExpandableStringField createExpandableStringField(String aName, Object aValue, String aLabel,
+	public ExpandableStringField createExpandableStringField(String aName, Object aValue, ResKey aLabel,
 			FormContainer aContext, boolean isImmutable, boolean isMandatory) {
 		String theName = StringServices.isEmpty(aName) ? createName(aContext) : aName;
 		Object theValue = aValue;
@@ -646,11 +652,12 @@ public class FormFieldHelper {
 	}
 
     /**
-     * Sets the fields parameter.
-     *
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean) for the parameters
-     */
-    private void setFieldParameters(FormField aField, String aName, Object aValue, String aLabel, FormContainer aContext, boolean isImmutable, boolean isMandatory) {
+	 * Sets the fields parameter.
+	 *
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean) for the parameters
+	 */
+	private void setFieldParameters(FormField aField, String aName, Object aValue, ResKey aLabel,
+			FormContainer aContext, boolean isImmutable, boolean isMandatory) {
         aField.initializeField(aValue);
         if (aField instanceof SelectField) {
             ((SelectField)aField).setOptionLabelProvider(MetaResourceProvider.INSTANCE);
@@ -666,134 +673,160 @@ public class FormFieldHelper {
     }
 
     /**
-     * Parameter: isMandatory = false
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean)
-     * @deprecated Use the create*Field methods instead to ensure the right field type
-     */
+	 * Parameter: isMandatory = false
+	 * 
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean)
+	 * @deprecated Use the create*Field methods instead to ensure the right field type
+	 */
     @Deprecated
-    public FormField createField(String aName, Object aValue, String aLabel, FormContainer aContext, boolean isImmutable) {
+	public FormField createField(String aName, Object aValue, ResKey aLabel, FormContainer aContext,
+			boolean isImmutable) {
         return createField(aName, aValue, aLabel, aContext, isImmutable, false);
     }
 
     /**
-     * Parameter: isImmutable = false; isMandatory = false
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean)
-     * @deprecated Use the create*Field methods instead to ensure the right field type
-     */
+	 * Parameter: isImmutable = false; isMandatory = false
+	 * 
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean)
+	 * @deprecated Use the create*Field methods instead to ensure the right field type
+	 */
     @Deprecated
-    public FormField createField(String aName, Object aValue, String aLabel, FormContainer aContext) {
+	public FormField createField(String aName, Object aValue, ResKey aLabel, FormContainer aContext) {
         return createField(aName, aValue, aLabel, aContext, false, false);
     }
 
     /**
-     * Parameter: isMandatory = false
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean)
-     */
-    public BooleanField createBooleanField(String aName, Object aValue, String aLabel, FormContainer aContext, boolean isImmutable) {
+	 * Parameter: isMandatory = false
+	 * 
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean)
+	 */
+	public BooleanField createBooleanField(String aName, Object aValue, ResKey aLabel, FormContainer aContext,
+			boolean isImmutable) {
         return createBooleanField(aName, aValue, aLabel, aContext, isImmutable, false);
     }
 
     /**
-     * Parameter: isImmutable = false; isMandatory = false
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean)
-     */
-    public BooleanField createBooleanField(String aName, Object aValue, String aLabel, FormContainer aContext) {
+	 * Parameter: isImmutable = false; isMandatory = false
+	 * 
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean)
+	 */
+	public BooleanField createBooleanField(String aName, Object aValue, ResKey aLabel, FormContainer aContext) {
         return createBooleanField(aName, aValue, aLabel, aContext, false, false);
     }
 
     /**
-     * Parameter: isMandatory = false
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean)
-     */
-    public BooleanField createBooleanField(String aName, boolean aValue, String aLabel, FormContainer aContext, boolean isImmutable) {
+	 * Parameter: isMandatory = false
+	 * 
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean)
+	 */
+	public BooleanField createBooleanField(String aName, boolean aValue, ResKey aLabel, FormContainer aContext,
+			boolean isImmutable) {
         return createBooleanField(aName, aValue, aLabel, aContext, isImmutable, false);
     }
 
     /**
-     * Parameter: isImmutable = false; isMandatory = false
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean)
-     */
-    public BooleanField createBooleanField(String aName, boolean aValue, String aLabel, FormContainer aContext) {
+	 * Parameter: isImmutable = false; isMandatory = false
+	 * 
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean)
+	 */
+	public BooleanField createBooleanField(String aName, boolean aValue, ResKey aLabel, FormContainer aContext) {
         return createBooleanField(aName, aValue, aLabel, aContext, false, false);
     }
 
     /**
-     * Parameter: isMandatory = false
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean)
-     */
-    public ComplexField createComplexField(String aName, Object aValue, String aLabel, FormContainer aContext, boolean isImmutable) {
+	 * Parameter: isMandatory = false
+	 * 
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean)
+	 */
+	public ComplexField createComplexField(String aName, Object aValue, ResKey aLabel, FormContainer aContext,
+			boolean isImmutable) {
         return createComplexField(aName, aValue, aLabel, aContext, isImmutable, false);
     }
 
     /**
-     * Parameter: isImmutable = false; isMandatory = false
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean)
-     */
-    public ComplexField createComplexField(String aName, Object aValue, String aLabel, FormContainer aContext) {
+	 * Parameter: isImmutable = false; isMandatory = false
+	 * 
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean)
+	 */
+	public ComplexField createComplexField(String aName, Object aValue, ResKey aLabel, FormContainer aContext) {
         return createComplexField(aName, aValue, aLabel, aContext, false, false);
     }
 
     /**
-     * Parameter: isMandatory = false
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean)
-     */
-    public SelectField createSelectField(String aName, Object aValue, String aLabel, FormContainer aContext, boolean isImmutable) {
+	 * Parameter: isMandatory = false
+	 * 
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean)
+	 */
+	public SelectField createSelectField(String aName, Object aValue, ResKey aLabel, FormContainer aContext,
+			boolean isImmutable) {
         return createSelectField(aName, aValue, aLabel, aContext, isImmutable, false);
     }
 
     /**
-     * Parameter: isImmutable = false; isMandatory = false
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean)
-     */
-    public SelectField createSelectField(String aName, Object aValue, String aLabel, FormContainer aContext) {
+	 * Parameter: isImmutable = false; isMandatory = false
+	 * 
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean)
+	 */
+	public SelectField createSelectField(String aName, Object aValue, ResKey aLabel, FormContainer aContext) {
         return createSelectField(aName, aValue, aLabel, aContext, false, false);
     }
 
     /**
-     * Parameter: isMandatory = false
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean)
-     */
-    public SelectField createSelectField(String aName, List aOptionList, Object aValue, String aLabel, FormContainer aContext, boolean isImmutable) {
+	 * Parameter: isMandatory = false
+	 * 
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean)
+	 */
+	public SelectField createSelectField(String aName, List aOptionList, Object aValue, ResKey aLabel,
+			FormContainer aContext, boolean isImmutable) {
         return createSelectField(aName, aOptionList, aValue, aLabel, aContext, isImmutable, false);
     }
 
     /**
-     * Parameter: isImmutable = false; isMandatory = false
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean)
-     */
-    public SelectField createSelectField(String aName, List aOptionList, Object aValue, String aLabel, FormContainer aContext) {
+	 * Parameter: isImmutable = false; isMandatory = false
+	 * 
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean)
+	 */
+	public SelectField createSelectField(String aName, List aOptionList, Object aValue, ResKey aLabel,
+			FormContainer aContext) {
         return createSelectField(aName, aOptionList, aValue, aLabel, aContext, false, false);
     }
 
     /**
-     * Parameter: isMandatory = false
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean)
-     */
-    public SelectField createSingleSelectField(String aName, List aOptionList, Object aValue, String aLabel, FormContainer aContext, boolean isImmutable) {
+	 * Parameter: isMandatory = false
+	 * 
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean)
+	 */
+	public SelectField createSingleSelectField(String aName, List aOptionList, Object aValue, ResKey aLabel,
+			FormContainer aContext, boolean isImmutable) {
         return createSingleSelectField(aName, aOptionList, aValue, aLabel, aContext, isImmutable, false);
     }
 
     /**
-     * Parameter: isImmutable = false; isMandatory = false
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean)
-     */
-    public SelectField createSingleSelectField(String aName, List aOptionList, Object aValue, String aLabel, FormContainer aContext) {
+	 * Parameter: isImmutable = false; isMandatory = false
+	 * 
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean)
+	 */
+	public SelectField createSingleSelectField(String aName, List aOptionList, Object aValue, ResKey aLabel,
+			FormContainer aContext) {
         return createSingleSelectField(aName, aOptionList, aValue, aLabel, aContext, false, false);
     }
 
     /**
-     * Parameter: isMandatory = false
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean)
-     */
-    public StringField createStringField(String aName, Object aValue, String aLabel, FormContainer aContext, boolean isImmutable) {
+	 * Parameter: isMandatory = false
+	 * 
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean)
+	 */
+	public StringField createStringField(String aName, Object aValue, ResKey aLabel, FormContainer aContext,
+			boolean isImmutable) {
         return createStringField(aName, aValue, aLabel, aContext, isImmutable, false);
     }
 
     /**
-     * Parameter: isImmutable = false; isMandatory = false
-     * @see #createField(String, Object, String, FormContainer, boolean, boolean)
-     */
-    public StringField createStringField(String aName, Object aValue, String aLabel, FormContainer aContext) {
+	 * Parameter: isImmutable = false; isMandatory = false
+	 * 
+	 * @see #createField(String, Object, ResKey, FormContainer, boolean, boolean)
+	 */
+	public StringField createStringField(String aName, Object aValue, ResKey aLabel, FormContainer aContext) {
         return createStringField(aName, aValue, aLabel, aContext, false, false);
     }
 

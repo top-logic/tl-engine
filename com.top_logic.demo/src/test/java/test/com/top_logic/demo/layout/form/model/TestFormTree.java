@@ -14,7 +14,7 @@ import test.com.top_logic.layout.tree.TDListener;
 import test.com.top_logic.layout.tree.model.AbstractTLTreeModelTest;
 import test.com.top_logic.layout.tree.model.DummyTreeUIModel;
 
-import com.top_logic.demo.knowledge.test.layout.EditTreeDemo;
+import com.top_logic.demo.layout.form.demo.TestLayoutProblems;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.AbstractFormMemberVisitor;
@@ -142,10 +142,10 @@ public class TestFormTree extends AbstractTLTreeModelTest<DefaultMutableTLTreeNo
     }
     
     static TLTreeModel createTestModel() {
-        return EditTreeDemo.createDemoRoot(); 
+		return new DefaultMutableTLTreeModel(TestLayoutProblems.INFINITE_TREE, "root");
      }
-    
-    /**
+
+	/**
      * Test minimal usage of FormTree.
      */
     public void testMinimalTree() {

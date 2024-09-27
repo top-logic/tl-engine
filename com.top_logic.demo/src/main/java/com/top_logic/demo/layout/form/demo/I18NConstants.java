@@ -77,6 +77,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResPrefix MEGAMENU;
 
 	/**
+	 * @en {0}{1}
+	 */
+	public static ResKey2 CHANGED_LABEL__PREFIX_PREV;
+
+	/**
 	 * @en Modified no selection
 	 * @tooltip Modified tooltip from no selection.
 	 */

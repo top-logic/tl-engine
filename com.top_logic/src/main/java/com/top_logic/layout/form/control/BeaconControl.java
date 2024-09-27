@@ -131,7 +131,7 @@ public class BeaconControl extends AbstractSelectControl {
 		boolean disabled = field.isDisabled();
 		for (int i = 0, length = getIconCount(icons); i < length; i++) {
         	String optionID = sField != null ? sField.getOptionID(options.get(i)) : Integer.toString(i);
-        	String optionLabel = getOptionLabel(context, i);
+			ResKey optionLabel = getOptionLabel(context, i);
         	boolean isSelected = selected == i;
 			String optionIcon = contextPath + getInactiveIcon(icons, i);
 			String selectedIcon = contextPath + getSelectedIcon(icons, i);
@@ -150,7 +150,7 @@ public class BeaconControl extends AbstractSelectControl {
             out.writeAttribute(SRC_ATTR, isSelected ? selectedIcon : optionIcon);
 			out.writeAttribute(DATA_SELECTED_IMAGE, selectedIcon);
 			out.writeAttribute(DATA_OPTION_IMAGE, optionIcon);
-			out.writeAttribute(ALT_ATTR, optionLabel);
+			out.writeAttribute(ALT_ATTR, context.getResources().getString(optionLabel));
 			out.writeAttribute(TITLE_ATTR, "");
 			writeOnClick(out, FormConstants.BEACON_HANDLER_CLASS, this, "," + asArray);
 			if (disabled) {
@@ -169,8 +169,8 @@ public class BeaconControl extends AbstractSelectControl {
 		return icons.size() + emptyIcon;
 	}
 
-	private String getOptionLabel(DisplayContext context, int optionIndex) {
-		return context.getResources().getString(ResKey.legacy("beacon_" + type + '_' + optionIndex));
+	private ResKey getOptionLabel(DisplayContext context, int optionIndex) {
+		return ResKey.legacy("beacon_" + type + '_' + optionIndex);
 	}
 
 	private String getInactiveIcon(IconConfig icons, int optionIndex) {
@@ -202,9 +202,9 @@ public class BeaconControl extends AbstractSelectControl {
 		IconConfig icons = getIconConfig(type);
         		
 		out.beginBeginTag(IMG);
-    	String optionLabel = getOptionLabel(context, selected);
+		ResKey optionLabel = getOptionLabel(context, selected);
 		out.writeAttribute(SRC_ATTR, contextPath + getSelectedIcon(icons, selected));
-        			out.writeAttribute(ALT_ATTR, optionLabel);
+		out.writeAttribute(ALT_ATTR, context.getResources().getString(optionLabel));
 					out.writeAttribute(TITLE_ATTR, "");
 					OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, optionLabel);
         			out.endEmptyTag();

@@ -9,6 +9,7 @@ import static com.top_logic.basic.shared.collection.factory.CollectionFactorySha
 
 import java.util.List;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.common.folder.FolderFieldProvider;
 import com.top_logic.common.folder.model.FolderNode;
 import com.top_logic.common.webfolder.model.FolderContent;
@@ -262,7 +263,7 @@ public class WebFolderFieldProvider extends FolderFieldProvider {
 			Command theExecutable = new VersionExecutable(document);
 			CommandField theField = WebFolderFieldProvider.createField(name, theExecutable, null, null);
 			theField.setInheritDeactivation(false);
-			theField.setLabel(String.valueOf(document.getVersionNumber()));
+			theField.setLabel(ResKey.text(String.valueOf(document.getVersionNumber())));
             return theField;
         }
         else {
@@ -280,7 +281,7 @@ public class WebFolderFieldProvider extends FolderFieldProvider {
 	protected HiddenField createHiddenField(String aName) {
 		HiddenField theField = FormFactory.newHiddenField(aName);
 
-		theField.setLabel("");
+		theField.setLabel(ResKey.text(""));
 
 		return theField;
 	}

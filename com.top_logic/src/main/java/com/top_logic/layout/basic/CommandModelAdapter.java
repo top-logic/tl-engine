@@ -127,7 +127,7 @@ public class CommandModelAdapter extends AbstractButtonUIModel implements Wrappe
 	}
 
 	@Override
-	public String getLabel() {
+	public ResKey getLabel() {
 		return impl.getLabel();
 	}
 
@@ -152,17 +152,17 @@ public class CommandModelAdapter extends AbstractButtonUIModel implements Wrappe
 	}
 
 	@Override
-	public String getTooltip() {
+	public ResKey getTooltip() {
 		return impl.getTooltip();
 	}
 
 	@Override
-	public String getTooltipCaption() {
+	public ResKey getTooltipCaption() {
 		return impl.getTooltipCaption();
 	}
 
 	@Override
-	public String getAltText() {
+	public ResKey getAltText() {
 		return impl.getAltText();
 	}
 
@@ -217,7 +217,7 @@ public class CommandModelAdapter extends AbstractButtonUIModel implements Wrappe
 	}
 
 	@Override
-	public String setLabel(String label) {
+	public ResKey setLabel(ResKey label) {
 		return impl.setLabel(label);
 	}
 
@@ -227,17 +227,17 @@ public class CommandModelAdapter extends AbstractButtonUIModel implements Wrappe
 	}
 
 	@Override
-	public void setTooltip(String aTooltip) {
+	public void setTooltip(ResKey aTooltip) {
 		impl.setTooltip(aTooltip);
 	}
 
 	@Override
-	public void setTooltipCaption(String aTooltip) {
+	public void setTooltipCaption(ResKey aTooltip) {
 		impl.setTooltipCaption(aTooltip);
 	}
 
 	@Override
-	public void setAltText(String anAltText) {
+	public void setAltText(ResKey anAltText) {
 		impl.setAltText(anAltText);
 	}
 

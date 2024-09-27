@@ -10,6 +10,7 @@ import static com.top_logic.mig.html.HTMLConstants.*;
 import java.awt.Color;
 import java.io.IOException;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.ThemeUtil;
 import com.top_logic.layout.DisplayContext;
@@ -45,7 +46,7 @@ public class ThemeVarValueRenderer implements Renderer<Object> {
 			ThemeImageRenderer.INSTANCE.write(context, out, (ThemeImage) value);
 		} else if (value instanceof ThemeResourceImage) {
 			ThemeImage themeImage = ((ThemeResourceImage) value).getImage();
-			String tooltip = ((ThemeResourceImage) value).getTooltip();
+			ResKey tooltip = ((ThemeResourceImage) value).getTooltip();
 
 			ThemeUtil.writeThemeImage(context, out, themeImage, tooltip);
 		} else {
@@ -54,7 +55,7 @@ public class ThemeVarValueRenderer implements Renderer<Object> {
 	}
 
 	private void writeColor(DisplayContext context, TagWriter out, Object value) throws IOException {
-		String colorSpec = ColorFormat.formatColor((Color) value);
+		ResKey colorSpec = ResKey.text(ColorFormat.formatColor((Color) value));
 		out.beginBeginTag(SPAN);
 		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(context, out, colorSpec);
 		out.writeAttribute(CLASS_ATTR, "colorDisplay");

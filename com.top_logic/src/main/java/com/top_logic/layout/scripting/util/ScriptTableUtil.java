@@ -17,6 +17,7 @@ import com.top_logic.layout.scripting.recorder.ref.value.TableColumnRef;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableModel;
 import com.top_logic.layout.table.model.Column;
+import com.top_logic.util.Resources;
 import com.top_logic.util.Utils;
 
 /**
@@ -40,7 +41,7 @@ public class ScriptTableUtil {
 	 * @return Never null. Is allowed to be the empty String.
 	 */
 	public static String getColumnLabel(String columnName, TableData tableData) {
-		return getColumn(columnName, tableData).getLabel(tableData);
+		return Resources.getInstance().getString(getColumn(columnName, tableData).getLabel(tableData));
 	}
 
 	/**
@@ -159,7 +160,7 @@ public class ScriptTableUtil {
 			if (onlyVisible && !column.isVisible()) {
 				continue;
 			}
-			String actualLabel = column.getLabel(tableData);
+			String actualLabel = Resources.getInstance().getString(column.getLabel(tableData));
 			searchResult.addCandidate(actualLabel);
 			if (Utils.equals(actualLabel, searchedLabel)) {
 				searchResult.add(column);

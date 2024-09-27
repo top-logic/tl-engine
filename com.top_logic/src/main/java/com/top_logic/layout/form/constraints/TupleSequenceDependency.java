@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.form.constraints;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.CheckException;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.I18NConstants;
@@ -45,7 +46,7 @@ public class TupleSequenceDependency extends AbstractDependency {
 		int startIdx  = 0;
 		int endIdx    = 1;
 		int brokenIdx = 0;
-		String violatesLabel  = null;
+		ResKey violatesLabel = null;
 		
 		// only the fields up to the checkedFieldIndex need to be checked at all
 		while(endIdx < size() && (startIdx <= checkedFieldIndex)) { 

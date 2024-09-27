@@ -24,7 +24,6 @@ import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.mig.html.layout.VisibilityListener;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
 /**
@@ -148,7 +147,7 @@ public class I18NTranslationUtil {
 		};
 		command.setImage(Icons.TRANSLATE);
 		command.setNotExecutableImage(Icons.TRANSLATE);
-		command.setLabel(Resources.getInstance().getString(I18NConstants.TRANSLATE));
+		command.setLabel(I18NConstants.TRANSLATE);
 		command.setCssClasses(TRANSLATE_COMMAND_CSS_CLASS);
 
 		// Translation is recorded explicitly.

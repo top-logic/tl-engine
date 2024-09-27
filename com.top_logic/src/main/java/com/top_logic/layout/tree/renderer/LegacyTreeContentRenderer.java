@@ -150,7 +150,7 @@ public abstract class LegacyTreeContentRenderer extends TreeContentRenderer impl
 		boolean isExpanded = nodeContext.getTree().getModel().isExpanded(node);
 		ResourceProvider resourceProvider = getResourceProvider();
 		ThemeImage nodeImage = resourceProvider.getImage(node, isExpanded ? Flavor.EXPANDED : Flavor.DEFAULT);
-		String tooltip = resourceProvider.getTooltip(node);
+		ResKey tooltip = ResKey.text(resourceProvider.getTooltip(node));
 
 		if (nodeImage != null) {
 			writer.beginBeginTag(SPAN);
@@ -192,7 +192,7 @@ public abstract class LegacyTreeContentRenderer extends TreeContentRenderer impl
 
 	protected void renderTextLinkStart(DisplayContext context, TagWriter writer, final TreeControl tree,
 			Object node, boolean canSelect) throws IOException {
-		String tooltip = getResourceProvider().getTooltip(node);
+		ResKey tooltip = ResKey.text(getResourceProvider().getTooltip(node));
 		writeTextLinkStart(context, writer, canSelect, new OnClickWriter() {
 			@Override
 			public void writeOnClickSelect(TagWriter out, Object node) throws IOException {
@@ -268,11 +268,11 @@ public abstract class LegacyTreeContentRenderer extends TreeContentRenderer impl
 	 * </p>
 	 * 
 	 * @see #writeTextLinkStart(DisplayContext, TagWriter, String, boolean, OnClickWriter, Object,
-	 *      String)
+	 *      ResKey)
 	 */
 	public static void writeTextLinkStart(DisplayContext context, TagWriter out, boolean selectable,
 			OnClickWriter selectAction, Object node,
-			String tooltip) throws IOException {
+			ResKey tooltip) throws IOException {
 		writeTextLinkStart(context, out, ANCHOR, selectable, selectAction, node, tooltip);
 	}
 
@@ -297,7 +297,7 @@ public abstract class LegacyTreeContentRenderer extends TreeContentRenderer impl
 	 */
 	protected static void writeTextLinkStart(DisplayContext context, TagWriter out, String selectableLinkTag,
 			boolean selectable,
-			OnClickWriter selectAction, Object node, String tooltip) throws IOException {
+			OnClickWriter selectAction, Object node, ResKey tooltip) throws IOException {
 		if (selectable) {
 			out.beginBeginTag(selectableLinkTag);
 			if (ANCHOR.equals(selectableLinkTag)) {
@@ -317,10 +317,10 @@ public abstract class LegacyTreeContentRenderer extends TreeContentRenderer impl
 
 	/**
 	 * Writes the end tag to the corresponding
-	 * {@link #writeTextLinkStart(DisplayContext, TagWriter, boolean, OnClickWriter, Object, String)
+	 * {@link #writeTextLinkStart(DisplayContext, TagWriter, boolean, OnClickWriter, Object, ResKey)
 	 * start link}.
 	 * 
-	 * @see #writeTextLinkStart(DisplayContext, TagWriter, boolean, OnClickWriter, Object, String)
+	 * @see #writeTextLinkStart(DisplayContext, TagWriter, boolean, OnClickWriter, Object, ResKey)
 	 */
 	public static void writeTextLinkStop(TagWriter out, boolean selectable) throws IOException {
 		writeTextLinkStop(out, ANCHOR, selectable);
@@ -328,11 +328,11 @@ public abstract class LegacyTreeContentRenderer extends TreeContentRenderer impl
 
 	/**
 	 * Writes the end tag to the corresponding
-	 * {@link #writeTextLinkStart(DisplayContext, TagWriter, String, boolean, OnClickWriter, Object, String)
+	 * {@link #writeTextLinkStart(DisplayContext, TagWriter, String, boolean, OnClickWriter, Object, ResKey)
 	 * start link}.
 	 * 
 	 * @see #writeTextLinkStart(DisplayContext, TagWriter, String, boolean, OnClickWriter, Object,
-	 *      String)
+	 *      ResKey)
 	 */
 	protected static void writeTextLinkStop(TagWriter out, String selectableLinkTag, boolean selectable) {
 		if (selectable) {

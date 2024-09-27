@@ -3005,14 +3005,14 @@ public abstract class LayoutComponent extends ModelEventAdapter
     }
 
     /**
-     * Returns the I18Ned string for the given key, prefixed with the resource prefix.
-     *
-     * @param aKey
-     *        the I18N lookup key end
-     * @return the translated string for the key 'getResPrefix() + aKey'
-     */
-    public String getResString(String aKey) {
-		return Resources.getInstance().getString(getResPrefix().key(aKey));
+	 * Returns the I18N key for the given local key, prefixed with the resource prefix.
+	 *
+	 * @param aKey
+	 *        the I18N lookup key end
+	 * @return the translated string for the key 'getResPrefix() + aKey'
+	 */
+	public ResKey getResString(String aKey) {
+		return getResPrefix().key(aKey);
     }
 
     /**

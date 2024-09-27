@@ -8,6 +8,7 @@ package com.top_logic.layout.form.tag;
 import java.io.IOException;
 
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
@@ -36,7 +37,7 @@ public class HRTag extends ResourceTag {
     @Override
 	protected int startFormMember() throws IOException {
 		if (hasResource()) {
-			String theTooltip = this.getTooltip();
+			ResKey theTooltip = this.getTooltip();
 
 			TagWriter out = getOut();
 			out.beginBeginTag(DIV);
@@ -67,7 +68,7 @@ public class HRTag extends ResourceTag {
 						out.endBeginTag();
 						{
 							// Write internationalized text.
-							this.writeText(this.getLabel());
+							this.writeText(context.getResources().getString(this.getLabel()));
 
 				            if (this.hasInfo()) {
 								this.writeContent(NBSP);

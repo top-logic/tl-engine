@@ -9,7 +9,6 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.AbstractCommandModel;
 import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * Clears the display description.
@@ -20,8 +19,6 @@ public class ClearFormCommandModel extends AbstractCommandModel {
 
 	private FormDefinition _tmp;
 
-	private static final String LABEL = Resources.getInstance().getString(I18NConstants.DELETE_FORM);
-
 	/**
 	 * Creates a new {@link ClearFormCommandModel}.
 	 * 
@@ -31,7 +28,7 @@ public class ClearFormCommandModel extends AbstractCommandModel {
 	public ClearFormCommandModel(FormDefinition tmp) {
 		_tmp = tmp;
 
-		setLabel(LABEL);
+		setLabel(I18NConstants.DELETE_FORM);
 		setImage(Icons.DELETE_FORM);
 		setNotExecutableImage(Icons.DELETE_FORM_DISABLED);
 	}

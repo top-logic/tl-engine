@@ -12,7 +12,6 @@ import com.top_logic.mig.html.layout.tiles.CompositeTile;
 import com.top_logic.mig.html.layout.tiles.PersonalizedTile;
 import com.top_logic.mig.html.layout.tiles.TileLayout;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * Command to hide a given {@link TileLayout}.
@@ -27,7 +26,7 @@ public class HideTileCommand extends TileMenuCommand<TileLayout> {
 	public HideTileCommand(TileContainerComponent container, TileLayout tileToHide) {
 		super(container, tileToHide);
 		setImage(Icons.HIDE_TILE_COMMAND);
-		setLabel(Resources.getInstance().getString(I18NConstants.HIDE_TILE_LAYOUT));
+		setLabel(I18NConstants.HIDE_TILE_LAYOUT);
 	}
 
 	@Override

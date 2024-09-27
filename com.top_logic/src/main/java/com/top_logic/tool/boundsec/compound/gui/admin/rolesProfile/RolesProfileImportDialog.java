@@ -37,7 +37,6 @@ import com.top_logic.mig.html.layout.LayoutConfigTree;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.gui.profile.EditRolesProfileComponent;
 import com.top_logic.tool.boundsec.gui.profile.EditSecurityProfileComponent;
-import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -73,7 +72,7 @@ public class RolesProfileImportDialog extends SimpleFormDialog {
 	protected void fillButtons(List<CommandModel> buttons) {
 		buttons.add(MessageBox.button(ButtonType.CANCEL, getDialogModel().getCloseAction()));
 		CommandModel updateCommand = CommandModelFactory.commandModel(new RolesProfileImportCommand(this));
-		updateCommand.setLabel(Resources.getInstance().getString(I18NConstants.IMPORT_ROLES_PROFILE));
+		updateCommand.setLabel(I18NConstants.IMPORT_ROLES_PROFILE);
 		CommandModelUtilities.setNonExecutable(updateCommand, I18NConstants.IMPORT_ROLES_PROFILE_NOTHING_SELECTED);
 		getUploadField().addValueListener(new RolesProfileUploadFieldListener(updateCommand));
 		buttons.add(updateCommand);

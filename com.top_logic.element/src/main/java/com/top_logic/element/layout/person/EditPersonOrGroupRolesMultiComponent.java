@@ -20,6 +20,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.layout.structured.DummyTreeModel;
 import com.top_logic.element.layout.structured.StructuredElementTreeModel;
@@ -278,7 +279,7 @@ public class EditPersonOrGroupRolesMultiComponent extends EditComponent {
 				FormFactory.newSelectField(COL_SELECTION, _possibleRoles, true, false);
 			
 			theField.initSelection(CollectionUtil.toList(currRoles));
-			theField.setLabel(theBO.getName());
+			theField.setLabel(ResKey.text(theBO.getName()));
 			theField.setOptionComparator(LabelComparator.newCachingInstance());
 
 			BooleanField theChkBox = FormFactory.newBooleanField(COL_CHECKBOX, Boolean.FALSE, false);

@@ -38,7 +38,6 @@ import com.top_logic.layout.structure.DialogClosedListener;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -182,7 +181,7 @@ public abstract class ProgressDialog extends AbstractDialog implements HTMLFragm
 	}
 
 	private void setButtonType(CommandModel button, ButtonType buttonType) {
-		button.setLabel(Resources.getInstance().getString(buttonType.getButtonLabelKey()));
+		button.setLabel(buttonType.getButtonLabelKey());
 		button.setImage(buttonType.getButtonImage());
 		button.setNotExecutableImage(buttonType.getDisabledButtonImage());
 	}

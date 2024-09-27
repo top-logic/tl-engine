@@ -231,7 +231,7 @@ public class FinishTaskCommand extends AbstractCommandHandler {
 
 			@Override
 			public void setLabel(SelectField field, Token token) {
-				field.setLabel(_gateway.getName());
+				field.setLabelText(_gateway.getName());
 			}
 
 		}

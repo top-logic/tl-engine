@@ -55,8 +55,7 @@ public class ErrorFragmentGenerator {
 		out.beginBeginTag(tagName);
 		out.writeAttribute(CLASS_ATTR, ERROR_FRAGMENT_CONTAINER_CLASS);
 		if (tooltip != null) {
-			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(context, out,
-				Resources.getInstance().getString(tooltip));
+			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(context, out, tooltip);
 		}
 		out.endBeginTag();
 		writeErrorImage(context, out);

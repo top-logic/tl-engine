@@ -8,6 +8,7 @@ package com.top_logic.layout.tree.renderer;
 import java.io.IOException;
 import java.util.List;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.Control;
@@ -339,7 +340,7 @@ public class TreeTableRenderer extends LegacyTreeRenderer {
 			 * made the start of the text, or the expansion image visible. Therefore in tree tables
 			 * no anchor should be written (See #5857, #14874). */
 			String selectableNodeTag = SPAN;
-			String tooltip = getResourceProvider().getTooltip(node);
+			ResKey tooltip = ResKey.text(getResourceProvider().getTooltip(node));
 			writeTextLinkStart(context, writer, selectableNodeTag, canSelect, OnClickWriter.NONE, node, tooltip);
 			renderNodeText(writer, nodeContext);
 			writeTextLinkStop(writer, selectableNodeTag, canSelect);

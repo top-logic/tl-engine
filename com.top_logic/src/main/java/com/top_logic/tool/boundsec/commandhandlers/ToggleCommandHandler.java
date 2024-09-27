@@ -22,7 +22,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 import com.top_logic.util.css.CssUtil;
 
 /**
@@ -124,7 +123,7 @@ public abstract class ToggleCommandHandler extends AbstractCommandHandler {
 
 		CommandModel commandModel = getCommandModel(someArguments);
 		if (commandModel instanceof ToggleCommandModel) {
-			((ToggleCommandModel) commandModel).updateCommandModel(aContext.getResources(), aComponent, state);
+			((ToggleCommandModel) commandModel).updateCommandModel(aComponent, state);
 		}
 
 		return HandlerResult.DEFAULT_RESULT;
@@ -160,18 +159,18 @@ public abstract class ToggleCommandHandler extends AbstractCommandHandler {
 			boolean state = handler.getState(component);
 
 			if (state != _state) {
-				updateCommandModel(Resources.getInstance(), component, state);
+				updateCommandModel(component, state);
 			}
 		}
 
-		void updateCommandModel(Resources resources, LayoutComponent component, boolean state) {
+		void updateCommandModel(LayoutComponent component, boolean state) {
 			ToggleCommandHandler handler = (ToggleCommandHandler) getCommandHandler();
 			setImage(handler.getImage(component, state));
 			ResKey labelKey = handler.getResourceKey(component, state);
-			setLabel(resources.getString(labelKey));
+			setLabel(labelKey);
 			setCssClasses(handler.getCssClasses(component, state));
 			if (labelKey != null) {
-				setTooltip(resources.getString(labelKey.tooltipOptional()));
+				setTooltip(labelKey.tooltipOptional());
 			}
 
 			_state = state;

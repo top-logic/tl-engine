@@ -19,7 +19,6 @@ import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.tag.js.JSObject;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
-import com.top_logic.util.Resources;
 import com.top_logic.util.css.CssUtil;
 
 /**
@@ -136,8 +135,7 @@ public class ButtonWriter {
 		writeOnClick(out);
 
 		if(_tooltip != null) {
-			String alternativeText = Resources.getInstance().getString(_tooltip);
-			HTMLUtil.writeImageTooltip(context, out, alternativeText);
+			HTMLUtil.writeImageTooltip(context, out, _tooltip);
 		}
 
 		if (!StringServices.isEmpty(_autocomplete)) {
@@ -185,8 +183,7 @@ public class ButtonWriter {
 		out.writeAttribute(HTMLConstants.ID_ATTR, _id);
 
 		if (_disabledTooltip != null) {
-			String alternativeText = Resources.getInstance().getString(_disabledTooltip);
-			HTMLUtil.writeImageTooltip(context, out, alternativeText);
+			HTMLUtil.writeImageTooltip(context, out, _disabledTooltip);
 		}
 
 		if (!StringServices.isEmpty(_autocomplete)) {

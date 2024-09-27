@@ -30,7 +30,7 @@ public final class DefaultFormMemberLabelRenderer implements Renderer<FormMember
 
 	@Override
 	public void write(DisplayContext context, TagWriter out, FormMember value) throws IOException {
-		out.writeText(value.getLabel());
+		out.writeText(context.getResources().getString(value.getLabel()));
 	}
 
 }

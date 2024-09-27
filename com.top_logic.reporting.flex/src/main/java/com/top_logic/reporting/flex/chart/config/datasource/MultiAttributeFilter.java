@@ -36,7 +36,9 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.DOMUtil;
+import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.layout.meta.search.SearchFilterSupport;
 import com.top_logic.element.meta.AttributeException;
@@ -491,7 +493,7 @@ public class MultiAttributeFilter implements InteractiveBuilder<Filter<Object>, 
 					shortLabel = shortLabel + "...";
 				}
 				StringField result = FormFactory.newStringField(fieldName, shortLabel, true);
-				result.setTooltip(label);
+				result.setTooltip(ResKey.text(TagUtil.encodeXML(label)));
 				result.setControlProvider(DefaultTooltipControlProvider.INSTANCE);
 				return result;
 			}

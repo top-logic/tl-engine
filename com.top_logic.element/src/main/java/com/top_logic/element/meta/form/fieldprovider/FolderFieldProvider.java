@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.meta.form.fieldprovider;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.form.AbstractFieldProvider;
 import com.top_logic.element.meta.form.DefaultAttributeFormFactory;
 import com.top_logic.element.meta.form.EditContext;
@@ -14,7 +15,6 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.FolderField;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.util.Resources;
 
 /**
  * {@link FieldProvider} for {@link TLStructuredTypePart}s of type {@link WebFolder}.
@@ -35,7 +35,7 @@ public class FolderFieldProvider extends AbstractFieldProvider {
 		if (folder == null) {
 			return null;
 		}
-		String label = Resources.getInstance().getString(editContext.getLabelKey());
+		ResKey label = editContext.getLabelKey();
 		FolderField resultMember =
 			FolderField.createFolderField(fieldName, folder, label,
 				DefaultAttributeFormFactory.ATTRIBUTED_CONFIG_NAME_MAPPING);

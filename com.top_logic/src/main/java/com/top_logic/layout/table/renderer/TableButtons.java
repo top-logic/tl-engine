@@ -112,11 +112,6 @@ public class TableButtons {
 	 */
 	public static final class ColumnNumberConstraint extends AbstractConstraint {
 
-		static final ResKey ERR_NO_EMPTY_COLUMN_LIST = DefaultTableRenderer.GENERAL_PREFIX.key("errNoEmptyColumnList");
-
-		static final ResKey ERR_TOO_MANY_COLUMNS_SELECTED__CNT_MAX = DefaultTableRenderer.GENERAL_PREFIX
-			.key("errTooManyColumnsSelected(cnt,max)");
-
 		private final int _maxColumns;
 
 		public ColumnNumberConstraint(int maxColumns) {
@@ -128,9 +123,9 @@ public class TableButtons {
 			List<?> selection = (List<?>) value;
 			int selectionSize = selection.size();
 			if (isEmptySelection(selection)) {
-				throw new CheckException(Resources.getInstance().getString(ERR_NO_EMPTY_COLUMN_LIST));
+				throw new CheckException(Resources.getInstance().getString(I18NConstants.ERR_NO_EMPTY_COLUMN_LIST));
 			} else if (selectionSize > _maxColumns) {
-				throw new CheckException(Resources.getInstance().getMessage(ERR_TOO_MANY_COLUMNS_SELECTED__CNT_MAX,
+				throw new CheckException(Resources.getInstance().getMessage(I18NConstants.ERR_TOO_MANY_COLUMNS_SELECTED__CNT_MAX,
 					selectionSize, _maxColumns));
 			}
 			return true;
@@ -140,22 +135,6 @@ public class TableButtons {
 			return selection.size() == 0 || (selection.size() == 1 && selection.get(0) == TableSeparator.INSTANCE);
 		}
 	}
-
-	public static final ResKey OPEN_SORT_CONFIG_DIALOG_TOOLTIP = DefaultTableRenderer.GENERAL_PREFIX
-		.key("openSortDialog");
-
-	public static final ResKey OPEN_COLUMN_CONFIG_DIALOG_TOOLTIP = DefaultTableRenderer.GENERAL_PREFIX
-		.key("openColumnDialog");
-
-	public static final ResKey OPEN_COLUMN_ORDER_DIALOG_TOOLTIP = DefaultTableRenderer.GENERAL_PREFIX
-		.key("openColumnOrderDialog");
-
-	private static final ResKey REMOVE_FILTER_TOOLTIP = DefaultTableRenderer.GENERAL_PREFIX.key("removeFilter");
-	
-	private static final ResKey REMOVE_CERTAIN_FILTER_TOOLTIP = DefaultTableRenderer.GENERAL_PREFIX
-		.key("removeCertainFilter");
-
-	private static final ResKey GLOBAL_FILTER_TOOLTIP = DefaultTableRenderer.GENERAL_PREFIX.key("globalFilter");
 
 	/**
 	 * Marker to find the internal export command in a tool-bar group.
@@ -270,7 +249,7 @@ public class TableButtons {
 			}
 		};
 
-		return createButton(openSortConfig, table, Icons.SORT_BUTTON_ICON, OPEN_SORT_CONFIG_DIALOG_TOOLTIP);
+		return createButton(openSortConfig, table, Icons.SORT_BUTTON_ICON, I18NConstants.OPEN_SORT_CONFIG_DIALOG_TOOLTIP);
 	}
 
 	/**
@@ -282,7 +261,7 @@ public class TableButtons {
 		TableModel model = table.getTableModel();
 		boolean canSelectColumns =
 			model.getTableConfiguration().getColumnCustomization() == ColumnCustomization.SELECTION;
-		ResKey tooltipKey = canSelectColumns ? OPEN_COLUMN_CONFIG_DIALOG_TOOLTIP : OPEN_COLUMN_ORDER_DIALOG_TOOLTIP;
+		ResKey tooltipKey = canSelectColumns ? I18NConstants.OPEN_COLUMN_CONFIG_DIALOG_TOOLTIP : I18NConstants.OPEN_COLUMN_ORDER_DIALOG_TOOLTIP;
 		CommandModel button = createButton(openColumnSelector, table, Icons.TBL_COLUMN_CONFIG, tooltipKey);
 
 		// Do not record opening, because closing is also not recorded.
@@ -322,7 +301,7 @@ public class TableButtons {
 		FilterListeningCommand commandModel = new FilterListeningCommand(theResetCommand, executability);
 		commandModel.attachTable(table);
 
-		initButton(commandModel, table, Icons.REMOVE_FILTER, Icons.REMOVE_FILTER_DISABLED, REMOVE_FILTER_TOOLTIP);
+		initButton(commandModel, table, Icons.REMOVE_FILTER, Icons.REMOVE_FILTER_DISABLED, I18NConstants.REMOVE_FILTER_TOOLTIP);
 		return commandModel;
 	}
 
@@ -360,7 +339,7 @@ public class TableButtons {
 		}
 		
 		initButton(theCommandModel, table, Icons.REMOVE_FILTER, Icons.REMOVE_FILTER_DISABLED,
-			REMOVE_CERTAIN_FILTER_TOOLTIP);
+			I18NConstants.REMOVE_CERTAIN_FILTER_TOOLTIP);
 
 		ButtonControl button = new TableFilterButtonControl(theCommandModel, viewModel.getFilter(columnName));
 		
@@ -399,7 +378,7 @@ public class TableButtons {
 				setImage(filterImage);
 			}
 		};
-		initButton(commandModel, tableData, null, null, GLOBAL_FILTER_TOOLTIP);
+		initButton(commandModel, tableData, null, null, I18NConstants.GLOBAL_FILTER_TOOLTIP);
 
 		commandModel.updateFilterState();
 		commandModel.attachTable(tableData);
@@ -458,11 +437,9 @@ public class TableButtons {
 		}
 		button.setImage(image);
 		button.setNotExecutableImage(disabledImage);
-		Resources resources = Resources.getInstance();
-		String labelText = resources.getString(labelKey);
-		button.setTooltip(resources.getString(ResKey.fallback(labelKey.tooltip(), labelKey)));
-		button.setAltText(labelText);
-		button.setLabel(labelText);
+		button.setTooltip(ResKey.fallback(labelKey.tooltip(), labelKey));
+		button.setAltText(labelKey);
+		button.setLabel(labelKey);
 	}
 
 	/**
@@ -498,7 +475,7 @@ public class TableButtons {
 		@Override
 		public HandlerResult executeCommand(DisplayContext commandContext) {
 			FormContext selectContext =
-				new FormContext("columnSelect", DefaultTableRenderer.GENERAL_PREFIX);
+				new FormContext("columnSelect", I18NConstants.TABLE);
 			final TableViewModel model = viewModel();
 			SelectField columnsSelect = getColumnsSelectField(model);
 	

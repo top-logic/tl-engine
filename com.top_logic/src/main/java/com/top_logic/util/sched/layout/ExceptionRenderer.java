@@ -10,6 +10,7 @@ import java.io.IOException;
 import com.lowagie.text.html.HtmlEncoder;
 
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
@@ -35,9 +36,9 @@ public class ExceptionRenderer implements Renderer<String> {
 		if (StringServices.isEmpty(aValue)) {
 			return;
 		}
-		String theString = HtmlEncoder.encode(aValue);
+		ResKey tooltip = ResKey.text(HtmlEncoder.encode(aValue));
 
-		Icons.EXCEPTION.writeWithTooltip(aContext, anOut, theString);
+		Icons.EXCEPTION.writeWithTooltip(aContext, anOut, tooltip);
 	}
 }
 

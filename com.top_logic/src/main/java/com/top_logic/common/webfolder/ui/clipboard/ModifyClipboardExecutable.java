@@ -5,6 +5,7 @@
  */
 package com.top_logic.common.webfolder.ui.clipboard;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Clipboard;
@@ -84,14 +85,14 @@ public class ModifyClipboardExecutable extends CommandField {
 					this.removeFromClipboardCommit(this.model, clipboard);
 				}
 				setImage(Icons.ADD_CLIPBOARD);
-				setTooltip(theRes.getString(I18NConstants.ADD_TOOLTIP));
+				setTooltip(I18NConstants.ADD_TOOLTIP);
 				this.state = State.NOT_IN_CLIPBOARD;
 			} else if (this.state == State.NOT_IN_CLIPBOARD) {
 				if (!inClipboard) {
 					this.addToClipboardCommit(this.model, clipboard);
 				}
 				setImage(Icons.REMOVE_CLIPBOARD);
-				setTooltip(theRes.getString(I18NConstants.REMOVE_TOOLTIP));
+				setTooltip(I18NConstants.REMOVE_TOOLTIP);
 				this.state = State.IN_CLIPBOARD;
 			}
 		}
@@ -155,21 +156,18 @@ public class ModifyClipboardExecutable extends CommandField {
 	 * {@link ExecutableState} is directly passed into the {@link Command}.
 	 */
 	public static CommandField createField(Wrapper aWrapper, String aName, ExecutableState executability) {
-
-		Resources theRes = Resources.getInstance();
-
 		ThemeImage theImage;
-		String theTool;
+		ResKey theTool;
 		State theState;
 		{
 			// Init the field status which depends if the wrapper is in clipboard or not
 			if (Clipboard.getInstance().contains(aWrapper)) {
 				theImage = Icons.REMOVE_CLIPBOARD;
-				theTool = theRes.getString(I18NConstants.REMOVE_TOOLTIP);
+				theTool = I18NConstants.REMOVE_TOOLTIP;
 				theState = State.IN_CLIPBOARD;
 			} else {
 				theImage = Icons.ADD_CLIPBOARD;
-				theTool = theRes.getString(I18NConstants.ADD_TOOLTIP);
+				theTool = I18NConstants.ADD_TOOLTIP;
 				theState = State.NOT_IN_CLIPBOARD;
 			}
 		}

@@ -13,7 +13,6 @@ import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
-import com.top_logic.util.Resources;
 
 /**
  * {@link Tag} for directly displaying some application resource.
@@ -124,7 +123,7 @@ public class ResourceTag extends AbstractFormTag {
 	
 	@Override
 	protected int startFormMember() throws IOException {
-		String tooltip = getTooltip();
+		ResKey tooltip = getTooltip();
 		boolean hasTooltip = tooltip != null;
 		
 		if (hasTooltip) {
@@ -136,7 +135,7 @@ public class ResourceTag extends AbstractFormTag {
 		if (_image != null) {
 			_image.write(getDisplayContext(), getOut());
 		} else {
-			writeText(getLabel());
+			writeText(getDisplayContext().getResources().getString(getLabel()));
 		}
 		
 		if (hasTooltip) {
@@ -146,11 +145,11 @@ public class ResourceTag extends AbstractFormTag {
 		return SKIP_BODY;
 	}
 
-	protected String getLabel() {
+	protected ResKey getLabel() {
 		if (!hasResource()) {
-			return "";
+			return ResKey.text("");
 		}
-		String label;
+		ResKey label;
 		if (defaultKey != null) {
 			// There is a default. Do not mark the key resource as missing,
 			// if it does not exist.
@@ -170,11 +169,11 @@ public class ResourceTag extends AbstractFormTag {
 		return label;
 	}
 
-	protected String getTooltip() {
+	protected ResKey getTooltip() {
 		if (!hasResource()) {
 			return null;
 		}
-		String label;
+		ResKey label;
 		if (defaultKey != null) {
 			// There is a default. Do not mark the key resource as missing,
 			// if it does not exist.
@@ -204,15 +203,15 @@ public class ResourceTag extends AbstractFormTag {
 	/**
 	 * Looks up the default resource key in the global resources.
 	 */
-	protected final String lookupDefaultKeyMandatory(String suffix) {
-		return Resources.getInstance().getString(this.defaultKey.suffix(suffix));
+	protected final ResKey lookupDefaultKeyMandatory(String suffix) {
+		return this.defaultKey.suffix(suffix);
 	}
 	
 	/**
 	 * Looks up the default resource key in the global resources.
 	 */
-	protected final String lookupDefaultKeyOptional(String suffix) {
-		return Resources.getInstance().getString(this.defaultKey.suffix(suffix), null);
+	protected final ResKey lookupDefaultKeyOptional(String suffix) {
+		return this.defaultKey.suffix(suffix).fallback(ResKey.text(null));
 	}
 
 	/**
@@ -222,9 +221,9 @@ public class ResourceTag extends AbstractFormTag {
 	 * Do not mark a missing resource as such.
 	 * </p>
 	 */
-	protected final String lookupKeyOptional(String suffix) {
+	protected final ResKey lookupKeyOptional(String suffix) {
 		if (this.key != null) {
-			return Resources.getInstance().getString(globalWithSuffix(suffix), null);
+			return globalWithSuffix(suffix).fallback(ResKey.text(null));
 		} else {
 			return getParentFormContainer().getResources().getStringResource(localWithSuffix(suffix), null);
 		}
@@ -237,9 +236,9 @@ public class ResourceTag extends AbstractFormTag {
 	 * Does mark a missing resource as such.
 	 * </p>
 	 */
-	protected final String lookupKeyMandatory(String suffix) {
+	protected final ResKey lookupKeyMandatory(String suffix) {
 		if (this.key != null) {
-			return Resources.getInstance().getString(globalWithSuffix(suffix));
+			return globalWithSuffix(suffix);
 		} else {
 			return getParentFormContainer().getResources().getStringResource(localWithSuffix(suffix));
 		}

@@ -216,7 +216,6 @@ import com.top_logic.tool.execution.CombinedExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.tool.execution.InEditModeExecutable;
-import com.top_logic.util.Resources;
 import com.top_logic.util.Utils;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.TL5Types;
@@ -2256,7 +2255,7 @@ public class GridComponent extends EditComponent implements
 			if (isTransient(rowObject)) {
 				HiddenField changeMarker = FormFactory.newHiddenField(NEW_OBJECT_MARKER_FIELD, 1);
 				changeMarker.setDefaultValue(0);
-				changeMarker.setLabel(Resources.getInstance().getString(I18NConstants.NEW_OBJECT_MARKER));
+				changeMarker.setLabel(I18NConstants.NEW_OBJECT_MARKER);
 				row.addMember(changeMarker);
 			}
             

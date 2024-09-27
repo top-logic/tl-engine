@@ -8,6 +8,7 @@ package com.top_logic.layout.scripting.recorder.ref.ui.form;
 import java.util.Iterator;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -17,6 +18,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.scripting.runtime.ActionContext;
+import com.top_logic.util.Resources;
 
 /**
  * {@link Filter} for {@link FormMember} base on its label.
@@ -93,7 +95,7 @@ public class FieldLabelMatcher extends AbstractFieldMatcher<FieldLabelMatcher.Co
 	}
 
 	static String label(FormMember member) {
-		return member.getLabel().trim();
+		return StringServices.nonNull(Resources.getInstance().getString(member.getLabel())).trim();
 	}
 
 	/**

@@ -98,7 +98,6 @@ import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.util.Resources;
 
 /**
  * Creates the edit UI for list-valued properties using the {@link Options} annotation for choosing
@@ -178,9 +177,9 @@ public class ListEditor implements Editor {
 			CommandField sortButton = button(list, LIST_SORT, Icons.SORT_ELEMENTS, openSortDialog);
 			sortButton.setControlProvider(Buttons.SORT_BUTTON);
 			sortButton.setNotExecutableImage(Icons.SORT_ELEMENTS_DISABLED);
-			sortButton.setLabel(Resources.getInstance().getString(
+			sortButton.setLabel(
 				I18NConstants.OPEN_SORT_DIALOG__PROPERTY.fill(
-					Labels.propertyLabel(valueModel))));
+					Labels.propertyLabel(valueModel)));
 			ScriptingRecorder.annotateAsDontRecord(sortButton);
 			bindExecutability(sortButton, map(members(content), new Mapping<List<?>, ExecutableState>() {
 				@Override
@@ -374,13 +373,12 @@ public class ListEditor implements Editor {
 				return HandlerResult.DEFAULT_RESULT;
 			}
 		};
-		Resources resources = Resources.getInstance();
 		if (collapse) {
 			command.setImage(com.top_logic.layout.basic.Icons.COLLAPSE_ALL);
-			command.setLabel(resources.getString(I18NConstants.COLLAPSE_ALL_ENTRIES_IN_LIST));
+			command.setLabel(I18NConstants.COLLAPSE_ALL_ENTRIES_IN_LIST);
 		} else {
 			command.setImage(com.top_logic.layout.basic.Icons.EXPAND_ALL);
-			command.setLabel(resources.getString(I18NConstants.EXPAND_ALL_ENTRIES_IN_LIST));
+			command.setLabel(I18NConstants.EXPAND_ALL_ENTRIES_IN_LIST);
 		}
 		return new ButtonControl(command);
 	}
@@ -594,12 +592,12 @@ public class ListEditor implements Editor {
 				// Lazy access to group label resource.
 				elementGroup.setResources(new AbstractResourceView() {
 					@Override
-					protected String getResource(String resourceKey, boolean optional) {
+					protected ResKey getResource(String resourceKey, boolean optional) {
 						if (!EditorUtils.LIST_ITEM_GROUP.equals(resourceKey)) {
 							return null;
 						}
 
-						return _editorFactory.getGroupLabels().getLabel(element);
+						return ResKey.text(_editorFactory.getGroupLabels().getLabel(element));
 					}
 				});
 			}
@@ -632,8 +630,8 @@ public class ListEditor implements Editor {
 			}
 		}
 
-		private String createTooltipText(ConfigurationItem configuration) {
-			return Resources.getInstance().getString(ResKey.forConfig(configuration).tooltipOptional());
+		private ResKey createTooltipText(ConfigurationItem configuration) {
+			return ResKey.forConfig(configuration).tooltipOptional();
 		}
 	}
 
@@ -709,7 +707,7 @@ public class ListEditor implements Editor {
 			ScriptingRecorder.annotateAsDontRecord(sortContext);
 
 			SelectField currentElements = multiSelectField(sortContext, LIST_SORT);
-			currentElements.setLabel(Labels.propertyLabel(_valueModel));
+			currentElements.setLabel(Labels.propertyLabelKey(_valueModel));
 			selections(currentElements, CollectionUtil.toList(contentGroup.getMembers()));
 			currentElements.setCustomOrder(true);
 

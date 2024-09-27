@@ -33,7 +33,6 @@ import com.top_logic.layout.table.model.TableConfigurationProvider;
 import com.top_logic.layout.table.renderer.DefaultTableRenderer;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.tool.export.pdf.PDFRenderer;
-import com.top_logic.util.Resources;
 
 /**
  * {@link HTMLFragment} to render a simple HTML table for PDF export.
@@ -74,7 +73,7 @@ public class SimplePDFTableFragment implements HTMLFragment {
 		out.beginTag(HTMLConstants.TABLE);
 
 		out.beginTag(HTMLConstants.THEAD);
-		writeTableHeader(out, tableData, columnsInfo);
+		writeTableHeader(context, out, tableData, columnsInfo);
 		out.endTag(HTMLConstants.THEAD);
 
 		out.beginTag(HTMLConstants.TBODY);
@@ -106,19 +105,21 @@ public class SimplePDFTableFragment implements HTMLFragment {
 		}
 	}
 
-	private void writeTableHeader(TagWriter out, TableData tableData, TableRenderer.ColumnsInfo columnsInfo) {
-		writeTitle(out, tableData, columnsInfo);
-		writeGroupRows(out, tableData, columnsInfo);
+	private void writeTableHeader(DisplayContext context, TagWriter out, TableData tableData,
+			TableRenderer.ColumnsInfo columnsInfo) {
+		writeTitle(context, out, tableData, columnsInfo);
+		writeGroupRows(context, out, tableData, columnsInfo);
 	}
 
-	private void writeTitle(TagWriter out, TableData tableData, TableRenderer.ColumnsInfo columnsInfo) {
+	private void writeTitle(DisplayContext context, TagWriter out, TableData tableData,
+			TableRenderer.ColumnsInfo columnsInfo) {
 		out.beginTag(HTMLConstants.TR);
 
 		out.beginBeginTag(HTMLConstants.TH);
 		out.writeAttribute(HTMLConstants.CLASS_ATTR, "title");
 		out.writeAttribute(HTMLConstants.COLSPAN_ATTR, columnsInfo.getColumnCount());
 		out.endBeginTag();
-		String title = getTableTitle(tableData);
+		String title = context.getResources().getString(getTableTitle(tableData));
 		if (!title.isEmpty()) {
 			out.writeText(title);
 		} else {
@@ -130,10 +131,11 @@ public class SimplePDFTableFragment implements HTMLFragment {
 		out.endTag(HTMLConstants.TR);
 	}
 
-	private void writeGroupRows(TagWriter out, TableData data, TableRenderer.ColumnsInfo columnsInfo) {
+	private void writeGroupRows(DisplayContext context, TagWriter out, TableData data,
+			TableRenderer.ColumnsInfo columnsInfo) {
 		int groupHeaderLine = 0;
 		for (List<Column> line : columnsInfo.getGroupRows()) {
-			writeGroupRow(out, data, 0, columnsInfo.getColumnCount(), groupHeaderLine, line);
+			writeGroupRow(context, out, data, 0, columnsInfo.getColumnCount(), groupHeaderLine, line);
 
 			groupHeaderLine++;
 		}
@@ -141,7 +143,7 @@ public class SimplePDFTableFragment implements HTMLFragment {
 		out.beginTag(HTMLConstants.TR);
 		for (Column column : columnsInfo.getColumns()) {
 			out.beginTag(HTMLConstants.TH);
-			writeHeaderContent(out, data, column);
+			writeHeaderContent(context, out, data, column);
 			out.endTag(HTMLConstants.TH);
 
 		}
@@ -149,19 +151,20 @@ public class SimplePDFTableFragment implements HTMLFragment {
 
 	}
 
-	private void writeHeaderContent(TagWriter out, TableData data, Column column) {
+	private void writeHeaderContent(DisplayContext context, TagWriter out, TableData data, Column column) {
 		ColumnConfiguration theColDesc = column.getConfig();
 		if (!theColDesc.isShowHeader()) {
 			return;
 		}
-		String columnLabel = column.getLabel(data);
+		String columnLabel = context.getResources().getString(column.getLabel(data));
 		if (StringServices.isEmpty(columnLabel)) {
 			columnLabel = HTMLConstants.NBSP;
 		}
 		out.writeText(columnLabel);
 	}
 
-	private void writeGroupRow(TagWriter out, TableData data, int startColumn, int stopColumn, int groupHeaderLine,
+	private void writeGroupRow(DisplayContext context, TagWriter out, TableData data, int startColumn, int stopColumn,
+			int groupHeaderLine,
 			List<Column> line) {
 		out.beginTag(HTMLConstants.TR);
 
@@ -183,7 +186,7 @@ public class SimplePDFTableFragment implements HTMLFragment {
 			out.endBeginTag();
 			String label;
 			if (hasLabel) {
-				label = group.getLabel(data);
+				label = context.getResources().getString(group.getLabel(data));
 			} else {
 				label = HTMLConstants.NBSP;
 			}
@@ -194,13 +197,13 @@ public class SimplePDFTableFragment implements HTMLFragment {
 		out.endTag(HTMLConstants.TR);
 	}
 
-	private String getTableTitle(TableData model) {
+	private ResKey getTableTitle(TableData model) {
 		TableConfiguration tableConfig = model.getTableModel().getTableConfiguration();
 		ResKey titleKey = tableConfig.getTitleKey();
 		if (titleKey != null) {
-			return Resources.getInstance().getString(titleKey);
+			return titleKey;
 		}
-		return tableConfig.getResPrefix().getStringResource(TableControl.RES_TITLE, "");
+		return tableConfig.getResPrefix().getStringResource(TableControl.RES_TITLE, ResKey.text(""));
 	}
 
 	/**

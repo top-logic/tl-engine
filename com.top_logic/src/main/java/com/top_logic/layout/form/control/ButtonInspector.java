@@ -183,7 +183,7 @@ public class ButtonInspector extends GuiInspectorCommand<ButtonControl, ButtonCo
 			result.setArguments(ReferenceFactory.attributeValues(command.getArguments()));
 			CommandHandler commandHandler = command.getCommandHandler();
 			result.setCommandImplementationComment(commandHandler.getClass().getName());
-			result.setCommandLabel(command.getLabel());
+			result.setCommandLabel(Resources.getInstance().getString(command.getLabel()));
 			String id = commandHandler.getID();
 			if (!UUIDInitializer.ID_PATTERN.matcher(id).matches()) {
 				result.setCommandName(id);
@@ -294,7 +294,7 @@ public class ButtonInspector extends GuiInspectorCommand<ButtonControl, ButtonCo
 	}
 
 	static ModelName labeledButtonName(ButtonControl button) {
-		String commandLabel = button.getLabel();
+		String commandLabel = Resources.getInstance().getString(button.getLabel());
 		if (StringServices.isEmpty(commandLabel)) {
 			// Can not find button with empty label
 			return null;

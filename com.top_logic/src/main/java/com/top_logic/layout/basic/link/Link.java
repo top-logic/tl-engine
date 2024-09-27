@@ -8,6 +8,7 @@ package com.top_logic.layout.basic.link;
 import java.io.IOError;
 import java.io.IOException;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.template.NoSuchPropertyException;
@@ -138,7 +139,7 @@ public interface Link extends WithProperties {
 	/**
 	 * The {@link HTMLConstants#ALT_ATTR alternative text} for the button {@link #getImage() icon}.
 	 */
-	String getAltText();
+	ResKey getAltText();
 
 	/**
 	 * The access key to use for directly invoking this button.
@@ -150,17 +151,17 @@ public interface Link extends WithProperties {
 	/**
 	 * The button label.
 	 */
-	String getLabel();
+	ResKey getLabel();
 
 	/**
 	 * The tooltip text displayed over the button.
 	 */
-	String getTooltip();
+	ResKey getTooltip();
 
 	/**
 	 * The caption of the {@link #getTooltip() tooltip}.
 	 */
-	String getTooltipCaption();
+	ResKey getTooltipCaption();
 
 	/**
 	 * Writes the CSS classes to add to the top-level button element.

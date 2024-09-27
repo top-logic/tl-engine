@@ -151,8 +151,8 @@ public class ColorChooserSelectionControl extends AbstractConstantControl {
 		}
 
 		@Override
-		public String getTooltip() {
-			return Resources.getInstance().getString(I18NConstants.RESET_COLORS);
+		public ResKey getTooltip() {
+			return I18NConstants.RESET_COLORS;
 		}
 
 		@Override
@@ -708,8 +708,8 @@ public class ColorChooserSelectionControl extends AbstractConstantControl {
 			if (_color != null) {
 				out.writeAttribute(STYLE_ATTR, "background-color: " + ColorChooserControl.toHtmlColor(_color));
 			} else {
-				String tooltipHtml = Resources.getInstance().getString(I18NConstants.CUSTOMIZE_COLOR_TOOLTIP);
-				OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltipHtml);
+				OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out,
+					I18NConstants.CUSTOMIZE_COLOR_TOOLTIP);
 			}
 
 			out.writeAttribute(ONDBLCLICK_ATTR, "services.form.ColorDisplay.selectColor('" + getID() + "');");

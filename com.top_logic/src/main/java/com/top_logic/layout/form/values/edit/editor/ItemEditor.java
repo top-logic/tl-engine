@@ -17,6 +17,7 @@ import com.top_logic.basic.config.ConfigurationListener;
 import com.top_logic.basic.config.NamePath;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.LabelProvider;
@@ -135,7 +136,7 @@ public class ItemEditor implements Editor {
 						FormField field = field(contents, NO_CONTENTS_FIELD);
 						field.setImmutable(true);
 						field.initializeField(Resources.getInstance().getString(I18NConstants.NO_CONTENTS));
-						field.setLabel("");
+						field.setLabel(ResKey.text(""));
 					}
 				}
 

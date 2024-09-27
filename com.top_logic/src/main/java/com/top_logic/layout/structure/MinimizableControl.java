@@ -197,7 +197,7 @@ public class MinimizableControl extends WrappingControl<MinimizableControl> impl
 			out.append(");");
 			out.endAttribute();
 			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(context, out,
-				context.getResources().getString(I18NConstants.TOGGLE_MINIMIZE_LABEL));
+				I18NConstants.TOGGLE_MINIMIZE_LABEL);
 			out.endBeginTag();
 			out.endTag(DIV);
 		}

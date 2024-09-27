@@ -71,7 +71,7 @@ public class TestAbstractCommandHandler extends AbstractLayoutTest {
 
 	public static class TestingCommandChangeModel extends AbstractCommandHandler {
 
-		static String CHANGED_LABEL = "changedLabel";
+		static ResKey CHANGED_LABEL = ResKey.text("changedLabel");
 
 		public TestingCommandChangeModel(InstantiationContext context, Config config) {
 			super(context, config);
@@ -342,7 +342,7 @@ public class TestAbstractCommandHandler extends AbstractLayoutTest {
 			new SimpleComponent(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
 				TypedConfiguration.newConfigItem(SimpleComponent.Config.class));
 		CommandModel commandModel = CommandModelFactory.commandModel(handler, comp);
-		String origLabel = "label";
+		ResKey origLabel = ResKey.text("label");
 		assertNotEquals(origLabel, TestingCommandChangeModel.CHANGED_LABEL);
 		commandModel.setLabel(origLabel);
 		assertEquals(origLabel, commandModel.getLabel());

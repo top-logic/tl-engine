@@ -157,8 +157,7 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 
 		/* Set label explicit, because generic just sets the label for the wrapping group. */
 		ResKey labelKey = update.getLabelKey();
-		tableField.setLabel(Resources.getInstance()
-			.getString(I18NConstants.COMPOSITE_FIELD_LABEL__ATTRIBUTE.fill(labelKey)));
+		tableField.setLabel(I18NConstants.COMPOSITE_FIELD_LABEL__ATTRIBUTE.fill(labelKey));
 		Composite result =
 			new Composite(update, fieldName, resources, tableModel, tableField);
 		result.addMember(tableField);

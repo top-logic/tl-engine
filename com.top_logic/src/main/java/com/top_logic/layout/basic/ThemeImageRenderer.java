@@ -7,6 +7,7 @@ package com.top_logic.layout.basic;
 
 import java.io.IOException;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.ThemeUtil;
 import com.top_logic.layout.DisplayContext;
@@ -26,7 +27,7 @@ public class ThemeImageRenderer implements Renderer<ThemeImage> {
 
 	@Override
 	public void write(DisplayContext context, TagWriter out, ThemeImage value) throws IOException {
-		ThemeUtil.writeThemeImage(context, out, value, value.toEncodedForm());
+		ThemeUtil.writeThemeImage(context, out, value, ResKey.text(value.toEncodedForm()));
 	}
 
 }

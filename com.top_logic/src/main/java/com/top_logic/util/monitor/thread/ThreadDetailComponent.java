@@ -36,7 +36,6 @@ import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.layout.toolbar.ToolBarGroup;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * Display details for a {@link ThreadData}.
@@ -281,7 +280,7 @@ public class ThreadDetailComponent extends FormComponent implements Runnable {
 		ThemeImage image = _active ? Icons.BUTTON_STOP : Icons.BUTTON_START;
 		ResKey labelKey = _active ? I18NConstants.STOP_MONITORING : I18NConstants.START_MONITORING;
 
-		_toggleCommand.setLabel(Resources.getInstance().getString(labelKey));
+		_toggleCommand.setLabel(labelKey);
 		_toggleCommand.setImage(image);
 	}
 

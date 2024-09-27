@@ -9,6 +9,7 @@ import static com.top_logic.mig.html.HTMLConstants.*;
 
 import java.io.IOException;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.ContentDecorator;
 import com.top_logic.layout.DisplayContext;
@@ -110,7 +111,7 @@ public class FilterDecorator implements ContentDecorator {
 		return collapsed ? Icons.BOX_COLLAPSED : Icons.BOX_EXPANDED;
 	}
 
-	private String getAltText(boolean collapsed, String label, DisplayContext context) {
+	private String getAltText(boolean collapsed, ResKey label, DisplayContext context) {
 		return context.getResources().getString((collapsed ? I18NConstants.FORM_GROUP_COLLAPSED__LABEL : I18NConstants.FORM_GROUP_EXPANDED__LABEL).fill(label));
 	}
 

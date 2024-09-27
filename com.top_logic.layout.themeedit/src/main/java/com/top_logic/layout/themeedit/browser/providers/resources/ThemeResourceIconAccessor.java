@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.themeedit.browser.providers.resources;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.ReadOnlyAccessor;
 import com.top_logic.layout.basic.ThemeImage;
@@ -33,6 +34,6 @@ public class ThemeResourceIconAccessor extends ReadOnlyAccessor<ThemeResource> {
 			tooltip = icon.toEncodedForm();
 		}
 
-		return new ThemeResourceImage(icon, tooltip);
+		return new ThemeResourceImage(icon, ResKey.text(tooltip));
 	}
 }

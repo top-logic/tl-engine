@@ -9,6 +9,7 @@ import java.io.IOException;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
@@ -51,7 +52,7 @@ public class MenuButtonRenderer extends AbstractButtonRenderer<MenuButtonRendere
 	}
 
 	@Override
-	protected String getTooltip(AbstractButtonControl<?> aButtonControl) {
+	protected ResKey getTooltip(AbstractButtonControl<?> aButtonControl) {
 		return null; // Tooltip supression for commands of command menu.
 	}
 

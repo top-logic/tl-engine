@@ -25,7 +25,6 @@ import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.mig.html.layout.CommandRegistry;
 import com.top_logic.tool.boundsec.CommandHandler;
-import com.top_logic.util.Resources;
 
 /**
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
@@ -107,7 +106,7 @@ public class ConfigureLogEntriesComponent  extends FormComponent {
 		String groupName = group.getName();
 		CommandHandler command = ToggleCommand.newInstance(groupName, value);
 		CommandField commandField = FormFactory.newCommandField(command.getID(), command, this);
-		commandField.setLabel(Resources.getInstance().getString(label));
+		commandField.setLabel(label);
 		group.addMember(commandField);
 	}
 

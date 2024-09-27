@@ -61,10 +61,12 @@ final class PopupEntriesProvider implements Provider<List<List<CommandModel>>> {
 			menu.add(createEntry(labelProvider, option));
 		}
 
+		Resources resources = Resources.getInstance();
+
 		Collections.sort(menu, LabelComparator.newInstance(new LabelProvider() {
 			@Override
 			public String getLabel(Object object) {
-				return ((CommandModel) object).getLabel();
+				return resources.getString(((CommandModel) object).getLabel());
 			}
 		}));
 
@@ -87,27 +89,27 @@ final class PopupEntriesProvider implements Provider<List<List<CommandModel>>> {
 	}
 
 	private CommandModel createEmptyEntry() {
-		String label = getEmptyEntryLabel();
+		ResKey label = getEmptyEntryLabel();
 		return createMenuEntry(null, label);
 	}
 
 	private CommandModel createEntry(LabelProvider labelProvider, Object option) {
-		String label = labelProvider.getLabel(option);
+		ResKey label = ResKey.text(labelProvider.getLabel(option));
 		return createMenuEntry(option, label);
 	}
 
-	private CommandModel createMenuEntry(Object value, String label) {
+	private CommandModel createMenuEntry(Object value, ResKey label) {
 		CommandModel entryModel =
 			CommandModelFactory.commandModel(new SetValue(_editorFactory, getValueModel(), optionMapping(), value));
 		entryModel.setLabel(label);
 		return entryModel;
 	}
 
-	private String getEmptyEntryLabel() {
+	private ResKey getEmptyEntryLabel() {
 		ResKey propertySpecificLabel = Labels.propertyLabelKey(getProperty(), "@empty");
 		ResKey genericLabel = I18NConstants.ITEM_SELECTION_POPUP_EMPTY_ENTRY;
 		ResKey labelKey = ResKey.fallback(propertySpecificLabel, genericLabel);
-		return Resources.getInstance().getString(labelKey);
+		return labelKey;
 	}
 
 	private PropertyDescriptor getProperty() {

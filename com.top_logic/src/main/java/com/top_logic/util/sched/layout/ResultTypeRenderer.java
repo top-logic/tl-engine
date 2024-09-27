@@ -32,8 +32,7 @@ public class ResultTypeRenderer implements Renderer<ResultType> {
 	public void write(DisplayContext aContext, TagWriter anOut, ResultType aValue) throws IOException {
 		ResultType theType = (aValue != null) ? (ResultType) aValue : ResultType.UNKNOWN;
 
-		theType.getIcon().writeWithPlainTooltip(aContext, anOut,
-			aContext.getResources().getString(theType.getMessageI18N()));
+		theType.getIcon().writeWithPlainTooltip(aContext, anOut, theType.getMessageI18N());
 	}
 }
 

@@ -22,7 +22,6 @@ import com.top_logic.layout.template.WithProperties;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.Card;
-import com.top_logic.util.Resources;
 
 /**
  * Contains information about an individual tab from a tab bar.
@@ -183,8 +182,8 @@ public class TabContent implements WithProperties {
 		if (cardInfo instanceof TabInfo) {
 			ResKey labelKey = ((TabInfo) cardInfo).getLabelKey();
 			if (labelKey != null) {
-				String tooltip = Resources.getInstance().getString(labelKey.tooltipOptional());
-				String caption = OverlibTooltipFragmentGenerator.NO_CAPTION;
+				ResKey tooltip = labelKey.tooltipOptional();
+				ResKey caption = OverlibTooltipFragmentGenerator.NO_CAPTION;
 				OverlibTooltipFragmentGenerator.INSTANCE.writeTooltip(context, out, tooltip, caption);
 			}
 		}

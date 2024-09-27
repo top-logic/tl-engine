@@ -616,11 +616,10 @@ public class CalendarControl extends AbstractConstantControl {
 			out.writeAttribute(CLASS_ATTR, HEADER_CSS_CLASS);
 			out.endBeginTag();
 			{
-				String tooltipToday = context.getResources().getString(I18NConstants.CALENDAR_SHOW_TODAY);
-
 				out.beginBeginTag(ANCHOR);
 				_control.writeOnClickDirection(out, new Date(), null, Mode.MONTH);
-				OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltipToday);
+				OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out,
+					I18NConstants.CALENDAR_SHOW_TODAY);
 				out.writeAttribute(HREF_ATTR, "#");
 				out.endBeginTag();
 				{
@@ -630,12 +629,10 @@ public class CalendarControl extends AbstractConstantControl {
 
 				ResKey upKey = _mode.upKey();
 				if (upKey != null) {
-					String tooltip = context.getResources().getString(upKey);
-
 					out.beginBeginTag(ANCHOR);
 					out.writeAttribute(CLASS_ATTR, CAL_VIEW_SWITCH_CSS_CLASS);
 					_control.writeOnClickDirection(out, Navigation.ZOOM_OUT, null);
-					OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip);
+					OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, upKey);
 					out.writeAttribute(HREF_ATTR, "#");
 					out.endBeginTag();
 				}
@@ -753,7 +750,7 @@ public class CalendarControl extends AbstractConstantControl {
 			{
 				icon.writeWithCssTooltip(context, out,
 					CssUtil.joinCssClasses(FormConstants.INPUT_IMAGE_CSS_CLASS, cssClass),
-					context.getResources().getString(resourceKey));
+					resourceKey);
 			}
 			out.endTag(ANCHOR);
 		}

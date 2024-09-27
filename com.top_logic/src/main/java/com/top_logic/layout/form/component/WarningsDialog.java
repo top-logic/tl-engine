@@ -126,7 +126,7 @@ public class WarningsDialog {
 		MessageArea message = new MessageArea(MessageType.INFO.getTypeImage()) {
 			@Override
 			protected void writeMessage(DisplayContext context, TagWriter out) throws IOException {
-				Resources resources = Resources.getInstance();
+				Resources resources = context.getResources();
 				
 				out.beginTag("h2");
 				out.writeText(
@@ -144,7 +144,7 @@ public class WarningsDialog {
 				for (Iterator<? extends FormField> it = formContext.getDescendantFields(); it.hasNext();) {
 					FormField field = it.next();
 					if (field.hasWarnings()) {
-						String label = StringServices.nonEmpty(field.getLabel());
+						String label = StringServices.nonEmpty(resources.getString(field.getLabel()));
 						for (String warning : field.getWarnings()) {
 							out.beginTag(LI);
 							if (label != null) {

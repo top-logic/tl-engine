@@ -18,7 +18,6 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.BoundCommand;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * {@link DynamicCommandModel} calling a {@link CommandHandler} on a specific
@@ -48,9 +47,8 @@ public class ComponentCommandModel extends DynamicDelegatingCommandModel {
 		if (label == null) {
 			throw new IllegalArgumentException("'label' must not be 'null'.");
 		}
-		Resources resources = Resources.getInstance();
-		setLabel(resources.getString(label));
-		setTooltip(resources.getString(label.tooltipOptional()));
+		setLabel(label);
+		setTooltip(label.tooltipOptional());
 		setImage(command.getImage(component));
 		setNotExecutableImage(command.getNotExecutableImage(component));
 		setCssClasses(command.getCssClasses(component));

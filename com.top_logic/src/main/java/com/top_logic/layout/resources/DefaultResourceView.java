@@ -47,15 +47,15 @@ public class DefaultResourceView implements ResourceView {
 	}
 
 	@Override
-	public String getStringResource(String resourceKey) {
+	public ResKey getStringResource(String resourceKey) {
 		// Use the key as local suffix to the context-provided prefix.
-		return Resources.getInstance().getString(getQualifiedResourceName(resourceKey));
+		return getQualifiedResourceName(resourceKey);
 	}
 
 	@Override
-	public String getStringResource(String resourceKey, String defaultValue) {
+	public ResKey getStringResource(String resourceKey, ResKey defaultValue) {
 		// Use the key as local suffix to the context-provided prefix.
-		return Resources.getInstance().getString(getQualifiedResourceName(resourceKey), defaultValue);
+		return getQualifiedResourceName(resourceKey).fallback(defaultValue);
 	}
 
 	@Override

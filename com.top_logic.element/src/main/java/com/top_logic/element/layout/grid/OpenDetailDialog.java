@@ -174,7 +174,7 @@ public class OpenDetailDialog extends AbstractCommandModel {
 	public void initialize(DisplayContext context) {
 		setImage(Icons.OPEN_DETAIL);
 		setNotExecutableImage(Icons.OPEN_DETAIL_DISABLED);
-		setLabel(context.getResources().getString(I18NConstants.GRID_GOTO));
+		setLabel(I18NConstants.GRID_GOTO);
 		if (!canShow()) {
 			setNotExecutable(I18NConstants.NO_GOTO_NO_DEFAULT_LAYOUT);
 		}

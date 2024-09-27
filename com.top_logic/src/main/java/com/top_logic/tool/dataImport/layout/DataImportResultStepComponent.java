@@ -10,6 +10,7 @@ import java.util.Map;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.model.FormContext;
@@ -24,6 +25,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.dataImport.AbstractDataImporter;
 import com.top_logic.tool.execution.ExecutabilityRule;
+import com.top_logic.util.Resources;
 
 /**
  * The DataImportResultStepComponent is the step after the parsing step of the
@@ -52,7 +54,7 @@ public class DataImportResultStepComponent extends FormComponent {
         ProgressResult theResult = theImporter.getParseResult();
         DataImportAssistant.createMessageFieldsFor(theResult, theContext, getResPrefix());
 
-        String theMessage;
+		ResKey theMessage;
         if (theImporter.isInActiveMode()) {
             theMessage = getResString("importerRunning");
         }
@@ -61,7 +63,7 @@ public class DataImportResultStepComponent extends FormComponent {
         }
 
         StringField theField = FormFactory.newStringField(DataImportAssistant.FIELD_MESSAGE, IMMUTABLE);
-        theField.setValue(theMessage);
+		theField.setValue(Resources.getInstance().getString(theMessage));
         theContext.addMember(theField);
 
         return theContext;
@@ -109,7 +111,7 @@ public class DataImportResultStepComponent extends FormComponent {
                 return HandlerResult.DEFAULT_RESULT;
             }
             HandlerResult theResult = new HandlerResult();
-			theResult.addErrorText(aComponent.getResString("tokenExpired"));
+			theResult.addErrorMessage(aComponent.getResString("tokenExpired"));
             return theResult;
         }
 

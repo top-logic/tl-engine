@@ -260,9 +260,9 @@ public class TestFragments extends TestCase {
 
 	public void testMemberAspects() throws IOException {
 		StringField field = FormFactory.newStringField("foo");
-		field.setLabel("foo-label");
-		field.setTooltip("foo-tooltip");
-		field.setTooltipCaption("foo-tooltip-caption");
+		field.setLabel(ResKey.text("foo-label"));
+		field.setTooltip(ResKey.text("foo-tooltip"));
+		field.setTooltipCaption(ResKey.text("foo-tooltip-caption"));
 		ControlProvider cp = new ControlProvider() {
 			@Override
 			public Control createControl(Object model, String style) {

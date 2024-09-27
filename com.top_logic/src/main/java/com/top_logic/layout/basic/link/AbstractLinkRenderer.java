@@ -7,7 +7,7 @@ package com.top_logic.layout.basic.link;
 
 import java.io.IOException;
 
-import com.top_logic.basic.StringServices;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
@@ -27,10 +27,10 @@ public abstract class AbstractLinkRenderer implements LinkRenderer {
 	 *         If writing to the underlying writer fails.
 	 */
 	protected <B> void writeTooltipAttributes(DisplayContext context, TagWriter out, Link button) throws IOException {
-		String tooltip = button.getTooltip();
-		String label = button.getLabel();
+		ResKey tooltip = button.getTooltip();
+		ResKey label = button.getLabel();
 
-		if (StringServices.isEmpty(tooltip)) {
+		if (tooltip == null) {
 			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(context, out, label);
 		} else {
 			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip,

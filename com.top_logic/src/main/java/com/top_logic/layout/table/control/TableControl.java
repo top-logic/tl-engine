@@ -344,7 +344,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	 * The table's title.
 	 */
 	@TemplateVariable("title")
-	public String title() {
+	public ResKey title() {
 		return getTitle();
 	}
 
@@ -535,12 +535,12 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	 *
 	 * @return The text to be used, may be <code>null</code>.
 	 */
-	public String getTitle() {
+	public ResKey getTitle() {
 		ResKey titleKey = getApplicationModel().getTableConfiguration().getTitleKey();
 		if (titleKey != null) {
-			return Resources.getInstance().getString(titleKey);
+			return titleKey;
 		}
-		return getResources().getStringResource(TableControl.RES_TITLE, "");
+		return getResources().getStringResource(TableControl.RES_TITLE, ResKey.text(""));
 	}
 
 	/**
@@ -1662,9 +1662,9 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		Command sortAscCommand = new SortCommand(tableData, columnName, true, dialogModel);
 		Command sortDescCommand = new SortCommand(tableData, columnName, false, dialogModel);
 		CommandModel descCommandModel = CommandModelFactory.commandModel(sortDescCommand);
-		descCommandModel.setLabel(Resources.getInstance().getString(I18NConstants.SORT_DESC_BUTTON));
+		descCommandModel.setLabel(I18NConstants.SORT_DESC_BUTTON);
 		CommandModel ascCommandModel = CommandModelFactory.commandModel(sortAscCommand);
-		ascCommandModel.setLabel(Resources.getInstance().getString(I18NConstants.SORT_ASC_BUTTON));
+		ascCommandModel.setLabel(I18NConstants.SORT_ASC_BUTTON);
 		ScriptingRecorder.annotateAsDontRecord(ascCommandModel);
 		ScriptingRecorder.annotateAsDontRecord(descCommandModel);
 

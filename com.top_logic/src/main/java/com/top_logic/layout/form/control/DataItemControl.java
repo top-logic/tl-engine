@@ -601,7 +601,7 @@ public class DataItemControl extends AbstractFormFieldControl implements Content
 		out.writeAttribute(ONCLICK_ATTR, "var e = BAL.getEvent(event); e.stopPropagation(); return true;");
 
 		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out,
-			context.getResources().getString(I18NConstants.UPLOAD_LABEL.tooltip()));
+			I18NConstants.UPLOAD_LABEL.tooltip());
 		if (getModel().isActive()) {
 			out.writeAttribute(CLASS_ATTR,
 				CssUtil.joinCssClasses(FormConstants.IS_UPLOAD_CSS_CLASS,

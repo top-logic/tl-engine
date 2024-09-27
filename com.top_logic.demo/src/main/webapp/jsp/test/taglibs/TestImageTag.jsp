@@ -12,8 +12,6 @@
 		<basic:image
 			alt="Direct alternative text"
 			icon="<%= Icons.SYSTEMSTATE_GREEN %>"
-			tooltip="Direct tooltip"
-			tooltipCaption="Direct caption"
 		/>
 		<basic:image
 			altKey="demo.imageTag.altText"

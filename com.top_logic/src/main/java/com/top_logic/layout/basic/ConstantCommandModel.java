@@ -37,7 +37,7 @@ public abstract class ConstantCommandModel extends PropertyObservableBase implem
 	}
 
 	@Override
-	public final String setLabel(String label) {
+	public final ResKey setLabel(ResKey label) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -52,17 +52,17 @@ public abstract class ConstantCommandModel extends PropertyObservableBase implem
 	}
 
 	@Override
-	public final void setTooltip(String aTooltip) {
+	public final void setTooltip(ResKey aTooltip) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public final void setTooltipCaption(String aTooltip) {
+	public final void setTooltipCaption(ResKey aTooltip) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public final void setAltText(String anAltText) {
+	public final void setAltText(ResKey anAltText) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -102,7 +102,7 @@ public abstract class ConstantCommandModel extends PropertyObservableBase implem
 	}
 	
 	@Override
-	public String getLabel() {
+	public ResKey getLabel() {
 		return null;
 	}
 	
@@ -142,12 +142,12 @@ public abstract class ConstantCommandModel extends PropertyObservableBase implem
 	}
 
 	@Override
-	public String getTooltip() {
+	public ResKey getTooltip() {
 		return null;
 	}
 	
 	@Override
-	public String getTooltipCaption() {
+	public ResKey getTooltipCaption() {
 		return null;
 	}
 
@@ -157,7 +157,7 @@ public abstract class ConstantCommandModel extends PropertyObservableBase implem
 	}
 	
 	@Override
-	public String getAltText() {
+	public ResKey getAltText() {
 		return null;
 	}
 

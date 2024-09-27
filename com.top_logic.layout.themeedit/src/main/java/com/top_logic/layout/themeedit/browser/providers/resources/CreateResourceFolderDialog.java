@@ -21,7 +21,6 @@ import com.top_logic.layout.messagebox.SimpleFormDialog;
 import com.top_logic.layout.themeedit.browser.providers.I18NConstants;
 import com.top_logic.layout.tree.component.TreeComponent;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.util.Resources;
 
 /**
  * A {@link SimpleFormDialog} for creating a new resource folder.
@@ -53,7 +52,7 @@ public class CreateResourceFolderDialog extends SimpleFormDialog {
 
 	private CommandModel createResourceFolderCommand() {
 		CommandModel createCommand = CommandModelFactory.commandModel(new CreateResourceFolderCommand(this));
-		createCommand.setLabel(Resources.getInstance().getString(I18NConstants.CREATE_RESOURCE_FOLDER));
+		createCommand.setLabel(I18NConstants.CREATE_RESOURCE_FOLDER);
 
 		return createCommand;
 	}

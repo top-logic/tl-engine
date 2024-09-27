@@ -12,12 +12,14 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ButtonUIModel;
 import com.top_logic.layout.basic.ConstantDisplayValue;
 import com.top_logic.layout.basic.link.Link;
+import com.top_logic.util.Resources;
 
 /**
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
@@ -57,11 +59,8 @@ public class ButtonRenderer extends AbstractButtonRenderer<ButtonRenderer.Config
 		super(context, config);
 	}
 
-    /**
-     * @see com.top_logic.layout.form.control.AbstractButtonRenderer#handleLabelPropertyChange(AbstractButtonControl, java.lang.String)
-     */
     @Override
-	public void handleLabelPropertyChange(AbstractButtonControl<?> aButton, String aNewLabel) {
+	public void handleLabelPropertyChange(AbstractButtonControl<?> aButton, ResKey aNewLabel) {
         if (!aButton.isRepaintRequested()) {
 			if (hasImage(aButton)) {
                 addUpdate(aButton, new PropertyUpdate(aButton.getID(), TITLE_ATTR, new ConstantDisplayValue(getLabel(aButton))));
@@ -129,18 +128,21 @@ public class ButtonRenderer extends AbstractButtonRenderer<ButtonRenderer.Config
     }
 
     protected String getLabel(AbstractButtonControl<?> aButtonControl) {
+		String label = Resources.getInstance().getString(aButtonControl.getLabel());
+
         if (aButtonControl.isDisabled() && ! execStateInTooltip) {
-			return aButtonControl.getLabel() + " (" + aButtonControl.getDisabledReason() + ")";
+			return label + " (" + aButtonControl.getDisabledReason() + ")";
         }
-        return aButtonControl.getLabel();
+		return label;
     }
     
 	/**
 	 * @see AbstractButtonRenderer#getTooltip(AbstractButtonControl)
 	 */
 	@Override
-	protected String getTooltip(AbstractButtonControl<?> aButtonControl) {
-		return lookupTooltipLabelFallback(aButtonControl, aButtonControl.getImage() == null, execStateInTooltip);
+	protected ResKey getTooltip(AbstractButtonControl<?> aButtonControl) {
+		return ResKey
+			.text(lookupTooltipLabelFallback(aButtonControl, aButtonControl.getImage() == null, execStateInTooltip));
 	}
 
 	/**
@@ -161,23 +163,23 @@ public class ButtonRenderer extends AbstractButtonRenderer<ButtonRenderer.Config
 			return lookupDisabledTooltipLabelFallback((AbstractButtonControl<?>) button, labelRendered);
 		}
 
-		String tooltip = button.getTooltip();
+		String tooltip = resolve(button.getTooltip());
 		if (tooltip == null && !labelRendered) {
-			return TagUtil.encodeXML(button.getLabel());
+			return TagUtil.encodeXML(resolve(button.getLabel()));
 		}
 		return tooltip;
 	}
 
 	private static final String lookupDisabledTooltipLabelFallback(AbstractButtonControl<?> button,
 			boolean labelRendered) {
-		String disabledReason = button.getDisabledReason();
+		String disabledReason = resolve(button.getDisabledReason());
 
-		String tooltip = button.getTooltip();
+		String tooltip = resolve(button.getTooltip());
 		if (StringServices.isEmpty(tooltip)) {
 			if (labelRendered) {
 				return TagUtil.encodeXML(disabledReason);
 			} else {
-				tooltip = TagUtil.encodeXML(button.getLabel());
+				tooltip = TagUtil.encodeXML(resolve(button.getLabel()));
 			}
 		}
 		if (StringServices.isEmpty(disabledReason)) {
@@ -186,7 +188,11 @@ public class ButtonRenderer extends AbstractButtonRenderer<ButtonRenderer.Config
 		return tooltip + " (" + TagUtil.encodeXML(disabledReason) + ")";
 	}
     
-    @Override
+    private static String resolve(ResKey key) {
+		return Resources.getInstance().getString(key);
+	}
+
+	@Override
 	public void handleClassPropertyChange(AbstractButtonControl<?> button, String oldValue, String newValue) {
     	if (!button.isRepaintRequested()) {
     		if (StringServices.isEmpty(newValue)) {

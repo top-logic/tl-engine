@@ -77,10 +77,10 @@ public class TestCommandModelUtilities extends BasicTestCase {
 		model.setImage(image);
 		ThemeImage notExecImage = ICON;
 		model.setNotExecutableImage(notExecImage );
-		model.setTooltip("MyToolTip");
-		model.setTooltipCaption("MyToolTipCaption");
+		model.setTooltip(ResKey.text("MyToolTip"));
+		model.setTooltipCaption(ResKey.text("MyToolTipCaption"));
 		model.setVisible(true);
-		model.setLabel("label");
+		model.setLabel(ResKey.text("label"));
 		
 		CommandModel targetModel = new AbstractCommandModel() {
 			@Override

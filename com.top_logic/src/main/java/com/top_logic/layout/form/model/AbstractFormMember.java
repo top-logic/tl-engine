@@ -21,6 +21,7 @@ import com.top_logic.basic.listener.EventType;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.listener.PropertyListener;
 import com.top_logic.basic.listener.PropertyObservableBase;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.IdentifierSource;
 import com.top_logic.layout.ResourceView;
 import com.top_logic.layout.basic.Listeners;
@@ -78,7 +79,7 @@ public abstract class AbstractFormMember extends PropertyObservableBase implemen
 	private FormContainer parent;
 	
 	@Inspectable
-	private String label = null;
+	private ResKey _label = null;
 	
 	/**
 	 * A tooltip can be set via the I18N resource-key + ".tooltip".
@@ -87,10 +88,10 @@ public abstract class AbstractFormMember extends PropertyObservableBase implemen
 	 * "example.booleanField.tooltip". If this resource key doesn't exist no tooltip will be generated.
 	 */
 	@Inspectable
-	private String tooltip = null;
+	private ResKey _tooltip = null;
 	
 	@Inspectable
-	private String tooltipCaption = null;
+	private ResKey _tooltipCaption = null;
 	
 	/**
 	 * The display mode of a {@link FormMember} describes its current effective
@@ -468,41 +469,41 @@ public abstract class AbstractFormMember extends PropertyObservableBase implemen
 	}
 	
 	@Override
-	public String getTooltip() {
-		if(this.tooltip != null) {
-			return this.tooltip;
+	public ResKey getTooltip() {
+		if (this._tooltip != null) {
+			return this._tooltip;
 		}
 
 		return this.getResources().getStringResource("tooltip", null);
 	}
     
 	@Override
-	public void setTooltip(String newTooltip) {
-	    String oldTooltip = this.tooltip;
+	public void setTooltip(ResKey newTooltip) {
+		ResKey oldTooltip = this._tooltip;
 		if (! StringServices.equals(oldTooltip, newTooltip)) {
-            this.tooltip = newTooltip;
+			this._tooltip = newTooltip;
 			firePropertyChanged(TOOLTIP_PROPERTY, self(), oldTooltip, newTooltip);
         }
 	}
 	
 	@Override
-	public String getTooltipCaption() {
-		if(this.tooltipCaption != null) {
-			return this.tooltipCaption;
+	public ResKey getTooltipCaption() {
+		if (this._tooltipCaption != null) {
+			return this._tooltipCaption;
 		}
 		
 		return this.getResources().getStringResource(TOOLTIP_CAPTION_SUFFIX, null);
 	}
 	
 	@Override
-	public void setTooltipCaption(String aTooltipCaption) {
-		this.tooltipCaption = aTooltipCaption;
+	public void setTooltipCaption(ResKey aTooltipCaption) {
+		this._tooltipCaption = aTooltipCaption;
 	}
 
 	@Override
-	public String getLabel() {
-		if (this.label != null)
-			return this.label;
+	public ResKey getLabel() {
+		if (this._label != null)
+			return this._label;
 		
 		// The label of a form member is defined by its parent.
 		FormContainer myParent = getParent();
@@ -513,9 +514,9 @@ public abstract class AbstractFormMember extends PropertyObservableBase implemen
 	}
 
 	@Override
-	public String setLabel(String newLabel) {
-		String oldLabel = label;
-		label = newLabel;
+	public ResKey setLabel(ResKey newLabel) {
+		ResKey oldLabel = _label;
+		_label = newLabel;
 
 		if (!StringServices.equals(oldLabel, newLabel)) {
 			firePropertyChanged(LABEL_PROPERTY, self(), oldLabel, newLabel);
@@ -526,7 +527,7 @@ public abstract class AbstractFormMember extends PropertyObservableBase implemen
 
 	@Override
 	public boolean hasLabel() {
-		if (this.label != null)
+		if (this._label != null)
 			return true;
 
 		// The label of a form member is defined by its parent.

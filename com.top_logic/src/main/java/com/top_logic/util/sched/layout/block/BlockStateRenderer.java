@@ -9,11 +9,11 @@ import java.io.IOException;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.basic.ThemeImage;
-import com.top_logic.layout.provider.EnumResourceProvider;
 import com.top_logic.util.sched.Scheduler;
 import com.top_logic.util.sched.task.Task;
 
@@ -41,7 +41,7 @@ public class BlockStateRenderer implements Renderer<BlockState> {
 		if (icon == null) {
 			return;
 		}
-		String label = EnumResourceProvider.INSTANCE.getLabel(blockState);
+		ResKey label = ResKey.forEnum(blockState);
 		icon.writeWithTooltip(displayContext, out, label);
 	}
 

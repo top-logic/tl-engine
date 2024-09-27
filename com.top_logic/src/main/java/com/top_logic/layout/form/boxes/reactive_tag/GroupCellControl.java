@@ -9,8 +9,8 @@ import java.io.IOException;
 import java.util.Objects;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.listener.EventType.Bubble;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.AbstractCommandModel;
@@ -259,7 +259,7 @@ public class GroupCellControl extends ConstantControl<HTMLFragment> implements C
 			}
 		};
 
-		command.setLabel(StringServices.EMPTY_STRING);
+		command.setLabel(ResKey.text(""));
 		class UpdateImageListener implements CollapsedListener {
 
 			@Override

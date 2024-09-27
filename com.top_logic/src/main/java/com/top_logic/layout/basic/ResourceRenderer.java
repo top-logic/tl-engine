@@ -28,6 +28,7 @@ import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.gui.layout.LayoutConfig;
 import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
@@ -481,7 +482,7 @@ public class ResourceRenderer<C extends ResourceRenderer.Config<?>>
 	    }
 
 		String link;
-        String tooltip;
+		ResKey tooltip;
         boolean hasLink;
         boolean hasTooltip;
         String theLabel;
@@ -489,7 +490,7 @@ public class ResourceRenderer<C extends ResourceRenderer.Config<?>>
 		boolean hasCssClass;
         try {
 			link = useLink && context.get(RENDER_LINKS) ? _resourceProvider.getLink(context, value) : null;
-			tooltip = useToolTip ? _resourceProvider.getTooltip(value) : null;
+			tooltip = useToolTip ? ResKey.text(_resourceProvider.getTooltip(value)) : null;
 			cssClass = _resourceProvider.getCssClass(value);
 			hasCssClass = cssClass != null;
             hasLink    = link != null;
@@ -538,7 +539,8 @@ public class ResourceRenderer<C extends ResourceRenderer.Config<?>>
             if (theShort != null) {
                 if (!hasTooltip) {
 					out.beginBeginTag(HTMLConstants.SPAN);
-					OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, theLabel);
+					OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(context, out,
+						ResKey.text(theLabel));
                     out.endBeginTag();
                 }
                 if (theShort.trim().length() == 0) {
@@ -611,7 +613,7 @@ public class ResourceRenderer<C extends ResourceRenderer.Config<?>>
 		out.writeAttribute(CLASS_ATTR, _resourceProvider.getCssClass(aCell));
 		out.writeAttribute(STYLE_ATTR, aCell.getStyle());
         if (theTooltip != null) {
-			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, theTooltip);
+			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, ResKey.text(theTooltip));
         }
         out.endBeginTag();
         if (theImage != null) {

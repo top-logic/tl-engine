@@ -25,6 +25,7 @@ import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.unit.Unit;
 import com.top_logic.knowledge.wrap.unit.UnitWrapper;
+import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.component.EditComponent;
 import com.top_logic.layout.form.constraints.SelectionSizeConstraint;
@@ -197,13 +198,12 @@ public class EditUnitComponent extends EditComponent {
 
 	private static FormGroup createLanguageGroup(Wrapper model, String uniqueAttribute, String... i18nAttributeKeys) {
 		String[] supportedLanguages = ResourcesModule.getInstance().getSupportedLocaleNames();
-		FormGroup languageGroup = new FormGroup(TRANSLATIONS_GROUP_NAME, I18NConstants.I18N_FORM_GROUP_PREFIX);
+		FormGroup languageGroup = new FormGroup(TRANSLATIONS_GROUP_NAME, ResPrefix.NONE);
 		Resources resources = Resources.getInstance();
-		String groupLabel = resources.getString(I18NConstants.I18N_FORM_GROUP_TITLE);
-		languageGroup.setLabel(groupLabel);
+		languageGroup.setLabel(I18NConstants.I18N_FORM_GROUP_TITLE);
 		int i = 0;
 		for (String i18nAttributeKey : i18nAttributeKeys) {
-			FormGroup g = new FormGroup("group_" + i++, I18NConstants.I18N_FORM_GROUP_PREFIX);
+			FormGroup g = new FormGroup("group_" + i++, ResPrefix.NONE);
 			String attribute = resources.getString(ResKey.legacy(i18nAttributeKey));
 			String resourcePrefix = i18nAttributeKey + '.';
 			for (String supportedLanguage : supportedLanguages) {
@@ -225,7 +225,9 @@ public class EditUnitComponent extends EditComponent {
 		String fieldName = language;
 		StringField newField =
 			FormFactory.newStringField(fieldName, currentI18N, isMandatory, !FormFactory.IMMUTABLE, constraint);
-		String fieldLabel = resources.getMessage(I18NConstants.I18N_FORM_GROUP_PREFIX.key(fieldName), i18nAttribute);
+		ResKey fieldLabel =
+			I18NConstants.WITH_LANGUAGE__FIELD_LANG.fill(i18nAttribute,
+				com.top_logic.layout.form.values.edit.editor.I18NConstants.LANGUAGE.key(fieldName));
 		newField.setLabel(fieldLabel);
 		newField.set(I18N_PREFIX_PROPERTY, resourcePrefix);
 		return newField;

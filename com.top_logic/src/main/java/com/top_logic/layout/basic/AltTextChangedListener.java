@@ -7,6 +7,7 @@ package com.top_logic.layout.basic;
 
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.listener.PropertyListener;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * Listener to handle changes of the alternative text of an object.
@@ -28,7 +29,7 @@ public interface AltTextChangedListener extends PropertyListener {
 	 *        New alternative text.
 	 * @return Whether this event shall bubble.
 	 */
-	Bubble handleAltTextChanged(Object sender, String oldValue, String newValue);
+	Bubble handleAltTextChanged(Object sender, ResKey oldValue, ResKey newValue);
 
 }
 

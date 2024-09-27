@@ -20,7 +20,6 @@ import com.top_logic.mig.html.layout.DialogComponent;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * {@link DialogEnhancer} adding a button that opens the documentation for the dialog.
@@ -88,7 +87,7 @@ public class DialogDocumentationEnhancer extends AbstractConfiguredInstance<Dial
 
 		});
 		openingModel.setImage(com.top_logic.doc.command.Icons.OPEN_DOCUMENTATION);
-		openingModel.setLabel(Resources.getInstance().getString(I18NConstants.OPEN_DOCUMENTATION));
+		openingModel.setLabel(I18NConstants.OPEN_DOCUMENTATION);
 
 		dialog.getToolbar().defineGroup(CommandHandlerFactory.HELP_GROUP).addButton(openingModel);
 	}

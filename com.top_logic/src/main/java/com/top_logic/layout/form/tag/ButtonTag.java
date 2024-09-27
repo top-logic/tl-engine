@@ -164,12 +164,11 @@ public class ButtonTag extends AbstractFormTag {
         	return SKIP_BODY;
         }
 
-		String labelOverride;
-		String tooltipOverride;
+		ResKey labelOverride;
+		ResKey tooltipOverride;
 		if (this.reskey != null) {
-			Resources resources = Resources.getInstance();
-			labelOverride = resources.getString(reskey);
-			tooltipOverride = resources.getString(reskey.tooltipOptional());
+			labelOverride = reskey;
+			tooltipOverride = reskey.tooltipOptional();
         } else {
 			labelOverride = null;
 			tooltipOverride = null;

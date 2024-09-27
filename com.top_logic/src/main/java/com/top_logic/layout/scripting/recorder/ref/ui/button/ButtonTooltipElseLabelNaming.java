@@ -5,8 +5,10 @@
  */
 package com.top_logic.layout.scripting.recorder.ref.ui.button;
 
-import static com.top_logic.basic.StringServices.*;
+import static com.top_logic.basic.StringServices.isEmpty;
+import static com.top_logic.basic.shared.string.StringServicesShared.*;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
@@ -37,11 +39,11 @@ public class ButtonTooltipElseLabelNaming
 
 	@Override
 	public String locateButtonAspect(ActionContext context, CommandModel button) {
-		String tooltip = button.getTooltip();
+		ResKey tooltip = button.getTooltip();
 		if (isEmpty(tooltip)) {
-			return nonNull(button.getLabel());
+			return nonNull(context.getDisplayContext().getResources().getString(button.getLabel()));
 		}
-		return nonNull(tooltip);
+		return nonNull(context.getDisplayContext().getResources().getString(tooltip));
 	}
 
 }

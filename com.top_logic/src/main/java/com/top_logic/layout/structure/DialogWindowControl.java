@@ -39,7 +39,6 @@ import com.top_logic.layout.toolbar.ToolbarControl;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 import com.top_logic.util.css.CssUtil;
 
 /**
@@ -261,11 +260,10 @@ public class DialogWindowControl extends WindowControl<DialogWindowControl> impl
 
 	private void writeMaximizeButton(DisplayContext context, TagWriter out) throws IOException {
 		XMLTag maximizeTag = Icons.WINDOW_MAXIMIZE.toButton();
-		String maximizeDialogName = Resources.getInstance().getString(MAXIMIZE_DIALOG);
 		maximizeTag.beginBeginTag(context, out);
 		CssUtil.writeCombinedCssClasses(out, FormConstants.INPUT_IMAGE_CSS_CLASS, "dlgMaximize");
-		out.writeAttribute(ALT_ATTR, maximizeDialogName);
-		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, maximizeDialogName);
+		out.writeAttribute(ALT_ATTR, context.getResources().getString(MAXIMIZE_DIALOG));
+		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(context, out, MAXIMIZE_DIALOG);
 		writeMaximizeCommand(out);
 		out.writeAttribute(ONMOUSEDOWN_ATTR, "return dlgIgnore(arguments[0]);");
 		maximizeTag.endEmptyTag(context, out);
@@ -273,11 +271,10 @@ public class DialogWindowControl extends WindowControl<DialogWindowControl> impl
 
 	private void writeRestoreButton(DisplayContext context, TagWriter out) throws IOException {
 		XMLTag restoreTag = Icons.WINDOW_NORMALIZE_AFTER_MAXIMIZED.toButton();
-		String restoreDialogName = Resources.getInstance().getString(RESTORE_DIALOG);
 		restoreTag.beginBeginTag(context, out);
 		CssUtil.writeCombinedCssClasses(out, FormConstants.INPUT_IMAGE_CSS_CLASS, "dlgRestore");
-		out.writeAttribute(ALT_ATTR, restoreDialogName);
-		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, restoreDialogName);
+		out.writeAttribute(ALT_ATTR, context.getResources().getString(RESTORE_DIALOG));
+		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(context, out, RESTORE_DIALOG);
 		writeRestoreCommand(out);
 		out.writeAttribute(ONMOUSEDOWN_ATTR, "return dlgIgnore(arguments[0]);");
 		restoreTag.endEmptyTag(context, out);
@@ -285,12 +282,11 @@ public class DialogWindowControl extends WindowControl<DialogWindowControl> impl
 
 	private void writeCloseButton(DisplayContext context, TagWriter out) throws IOException {
 		XMLTag tag = Icons.CLOSE_DIALOG.toButton();
-		String dialogName = Resources.getInstance().getString(CLOSE_DIALOG);
 		tag.beginBeginTag(context, out);
 		CssUtil.writeCombinedCssClasses(out, FormConstants.INPUT_IMAGE_CSS_CLASS, "dlgClose");
-		out.writeAttribute(ALT_ATTR, dialogName);
+		out.writeAttribute(ALT_ATTR, context.getResources().getString(CLOSE_DIALOG));
 		out.writeAttribute(TITLE_ATTR, "");
-		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, dialogName);
+		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(context, out, CLOSE_DIALOG);
 		writeCloseDialogCommand(out);
 		out.writeAttribute(ONMOUSEDOWN_ATTR, "return dlgIgnore(arguments[0]);");
 		tag.endEmptyTag(context, out);

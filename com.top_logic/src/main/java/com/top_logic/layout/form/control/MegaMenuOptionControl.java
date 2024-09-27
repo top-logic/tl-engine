@@ -130,7 +130,7 @@ public class MegaMenuOptionControl extends AbstractConstantControl {
 	 * @implSpec Uses the tooltip of the option as description.
 	 */
 	@TemplateVariable("description")
-	public void writeDescription(TagWriter out) throws IOException {
+	public void writeDescription(DisplayContext context, TagWriter out) throws IOException {
 		ResKey currOption = _option.getConfig().getTabInfo().getLabel();
 		LabelProvider optionLabelProvider = _megaMenu.getOptionLabelProvider();
 		ResourceProvider optionResourceProvider = LabelResourceProvider.toResourceProvider(optionLabelProvider);

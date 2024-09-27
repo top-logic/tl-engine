@@ -83,7 +83,7 @@ public class LinkButtonRenderer extends AbstractButtonRenderer<LinkButtonRendere
 		ButtonUIModel model = button.getModel();
 		writeAccessKeyAttribute(out, model);
 
-		String label = button.getLabel();
+		String label = context.getResources().getString(button.getLabel());
 		writeTooltip(context, button, out);
 
 		writeControlTagAttributes(context, out, button);
@@ -103,7 +103,7 @@ public class LinkButtonRenderer extends AbstractButtonRenderer<LinkButtonRendere
 
 		writeControlTagAttributes(context, out, button);
 		out.endBeginTag();
-		writeLabel(out, button.getLabel());
+		writeLabel(out, context.getResources().getString(button.getLabel()));
 		out.endTag(SPAN);
 	}
 

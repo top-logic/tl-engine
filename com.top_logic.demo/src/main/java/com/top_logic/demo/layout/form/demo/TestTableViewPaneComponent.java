@@ -20,6 +20,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
@@ -131,16 +132,16 @@ public class TestTableViewPaneComponent extends FormComponent {
 		FormContext context = new FormContext(this);
 
 		demoTable = createDemoTable(context);
-		horizontalScrollPosition = createIntField("x: ", context, 0);
-		horizontalScrollPositionOffset = createIntField("x-offset: ", context, 0);
-		verticalScrollPosition = createIntField("y: ", context, 0);
-		verticalScrollPositionOffset = createIntField("y-offset: ", context, 0);
-		paneLeftBound = createIntField("leftBound: ", context, -1);
-		paneRightBound = createIntField("rightBound: ", context, -1);
-		forcedVisibleColumn = createIntField("forcedVisibleColumn: ", context, -1);
-		paneTopBound = createIntField("topBound: ", context, -1);
-		paneBottomBound = createIntField("bottomBound: ", context, -1);
-		forcedVisibleRow = createIntField("forcedVisibleRow: ", context, -1);
+		horizontalScrollPosition = createIntField("x", context, 0);
+		horizontalScrollPositionOffset = createIntField("xOffset", context, 0);
+		verticalScrollPosition = createIntField("y", context, 0);
+		verticalScrollPositionOffset = createIntField("yOffset", context, 0);
+		paneLeftBound = createIntField("leftBound", context, -1);
+		paneRightBound = createIntField("rightBound", context, -1);
+		forcedVisibleColumn = createIntField("forceVisibleColumn", context, -1);
+		paneTopBound = createIntField("topBound", context, -1);
+		paneBottomBound = createIntField("bottomBound", context, -1);
+		forcedVisibleRow = createIntField("forcedVisibleRow", context, -1);
 		applyPaneField = createApplyPaneField(context);
 		return context;
 	}
@@ -214,17 +215,17 @@ public class TestTableViewPaneComponent extends FormComponent {
 				return getClientDisplayData().getVisiblePaneRequest();
 			}
 		});
-		commandField.setLabel("Apply view settings");
+		commandField.setLabel(ResKey.text("Apply view settings"));
 		context.addMember(commandField);
 		return commandField;
 	}
 
-	private IntField createIntField(String label, FormContext context, int intialValue) {
-		IntField intField = FormFactory.newIntField(label);
+	private IntField createIntField(String name, FormContext context, int intialValue) {
+		IntField intField = FormFactory.newIntField(name);
 		intField.setAsInt(intialValue);
 		intField.setMandatory(true);
 		intField.addConstraint(new IntRangeConstraint(-1, null));
-		intField.setLabel(label);
+		intField.setLabel(ResKey.text(name));
 		context.addMember(intField);
 		return intField;
 	}

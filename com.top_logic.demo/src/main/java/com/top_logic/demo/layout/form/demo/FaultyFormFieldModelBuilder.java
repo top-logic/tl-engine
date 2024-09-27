@@ -8,6 +8,7 @@ package com.top_logic.demo.layout.form.demo;
 import java.io.IOException;
 import java.util.Arrays;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.Control;
@@ -112,7 +113,7 @@ public class FaultyFormFieldModelBuilder implements ModelBuilder {
 			FormFactory.newStringField("justNumbers", false, false, NumbersOnlyConstraint.INSTANCE);
 		deckField.addMember(new FormGroup("faultyTab", resPrefix, new FormMember[] { justNumbersField }) {
 			@Override
-			public String getLabel() {
+			public ResKey getLabel() {
 				throw new UnsupportedOperationException("Faulty label");
 			}
 		});

@@ -115,11 +115,11 @@ public interface ButtonUIModel extends Focusable, TypedAnnotatable, VisibilityMo
 	 * 
 	 * @see AltTextChangedListener
 	 */
-	EventType<AltTextChangedListener, Object, String> ALT_TEXT_PROPERTY =
+	EventType<AltTextChangedListener, Object, ResKey> ALT_TEXT_PROPERTY =
 		new EventType<>("altText") {
 
 			@Override
-			public Bubble dispatch(AltTextChangedListener listener, Object sender, String oldValue, String newValue) {
+			public Bubble dispatch(AltTextChangedListener listener, Object sender, ResKey oldValue, ResKey newValue) {
 				return listener.handleAltTextChanged(sender, oldValue, newValue);
 			}
 
@@ -192,45 +192,45 @@ public interface ButtonUIModel extends Focusable, TypedAnnotatable, VisibilityMo
 	 * 
 	 * Returns the old label.
 	 */
-	String setLabel(String label);
+	ResKey setLabel(ResKey label);
 
 	/**
 	 * The label for this {@link ButtonUIModel}.
 	 * 
 	 * @return must not be <code>null</code>.
 	 */
-	String getLabel();
+	ResKey getLabel();
 
 	/**
 	 * Tooltip for this {@link ButtonUIModel}.
 	 * 
 	 * @return may be <code>null</code>.
 	 */
-	String getTooltip();
+	ResKey getTooltip();
 
 	/**
 	 * Sets the tooltip of this {@link ButtonUIModel}.
 	 */
-	void setTooltip(String aTooltip);
+	void setTooltip(ResKey aTooltip);
 
 	/**
 	 * Tooltip caption for this {@link ButtonUIModel}.
 	 * 
 	 * @return may be <code>null</code>.
 	 */
-	String getTooltipCaption();
+	ResKey getTooltipCaption();
 
 	/**
 	 * Sets the tooltip caption of this {@link ButtonUIModel}.
 	 */
-	void setTooltipCaption(String aTooltip);
+	void setTooltipCaption(ResKey aTooltip);
 
 	/**
 	 * Alternative image text for this {@link ButtonUIModel}.
 	 * 
 	 * @return is never <code>null</code>.
 	 */
-	String getAltText();
+	ResKey getAltText();
 
 	/**
 	 * In adition to 'normal' text, this method allows <code>null</code> (meaning: use fallbacks)
@@ -238,7 +238,7 @@ public interface ButtonUIModel extends Focusable, TypedAnnotatable, VisibilityMo
 	 * 
 	 * @see ButtonUIModel#ALT_TEXT_PROPERTY
 	 */
-	void setAltText(String anAltText);
+	void setAltText(ResKey anAltText);
 
 	/**
 	 * The keyboard shortcut to trigger this command directly (ALT+&lt;accesskey&gt;).

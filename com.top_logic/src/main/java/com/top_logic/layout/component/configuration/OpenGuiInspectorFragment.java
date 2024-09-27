@@ -17,7 +17,6 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.link.Link;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.scripting.recorder.gui.inspector.GuiInspectorCommand;
-import com.top_logic.util.Resources;
 
 /**
  * {@link HTMLFragment}, which renders the trigger, that opens the {@link GuiInspectorCommand}
@@ -68,12 +67,12 @@ public class OpenGuiInspectorFragment implements View, Link {
 	}
 
 	@Override
-	public String getTooltip() {
+	public ResKey getTooltip() {
 		return getLabel();
 	}
 
 	@Override
-	public String getTooltipCaption() {
+	public ResKey getTooltipCaption() {
 		return null;
 	}
 
@@ -83,12 +82,12 @@ public class OpenGuiInspectorFragment implements View, Link {
 	}
 
 	@Override
-	public String getLabel() {
-		return Resources.getInstance().getString(labelKey);
+	public ResKey getLabel() {
+		return labelKey;
 	}
 
 	@Override
-	public String getAltText() {
+	public ResKey getAltText() {
 		return getLabel();
 	}
 

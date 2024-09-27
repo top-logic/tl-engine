@@ -7,6 +7,7 @@ package com.top_logic.layout.form;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.layout.LabelProvider;
+import com.top_logic.util.Resources;
 
 /**
  * {@link LabelProvider} which returns the label of a {@link FormMember}.
@@ -26,7 +27,7 @@ public class FormMemberLabelProvider implements LabelProvider {
 		if (object == null) {
 			return StringServices.EMPTY_STRING;
 		}
-		return ((FormMember) object).getLabel();
+		return Resources.getInstance().getString(((FormMember) object).getLabel());
 	}
 
 }

@@ -386,7 +386,7 @@ public abstract class ThemeImage implements HTMLFragment {
 	/**
 	 * Convenience method for rendering this image with a HTML tooltip.
 	 */
-	public void writeWithTooltip(DisplayContext context, TagWriter out, String tooltipHTML) throws IOException {
+	public void writeWithTooltip(DisplayContext context, TagWriter out, ResKey tooltipHTML) throws IOException {
 		writeWithCssTooltip(context, out, null, tooltipHTML);
 	}
 
@@ -400,7 +400,7 @@ public abstract class ThemeImage implements HTMLFragment {
 	/**
 	 * Convenience method for rendering this image with an added CSS class and a HTML tooltip.
 	 */
-	public void writeWithCssTooltip(DisplayContext context, TagWriter out, String cssClass, String tooltipHTML)
+	public void writeWithCssTooltip(DisplayContext context, TagWriter out, String cssClass, ResKey tooltipHTML)
 			throws IOException {
 		write(context, out, cssClass, tooltipHTML, null);
 	}
@@ -409,8 +409,8 @@ public abstract class ThemeImage implements HTMLFragment {
 	 * Convenience method for rendering this image with an added CSS class, a HTML tooltip, and a
 	 * tooltip caption.
 	 */
-	public void write(DisplayContext context, TagWriter out, String cssClass, String tooltipHTML,
-			String captionHTML) throws IOException {
+	public void write(DisplayContext context, TagWriter out, String cssClass, ResKey tooltipHTML,
+			ResKey captionHTML) throws IOException {
 		write(context, out, null, cssClass, tooltipHTML, captionHTML);
 	}
 
@@ -427,8 +427,8 @@ public abstract class ThemeImage implements HTMLFragment {
 	 * @param captionHTML
 	 *        The caption of the tooltip for the icon. May be <code>null</code>.
 	 */
-	public void write(DisplayContext context, TagWriter out, String id, String cssClass, String tooltipHTML,
-			String captionHTML) throws IOException {
+	public void write(DisplayContext context, TagWriter out, String id, String cssClass, ResKey tooltipHTML,
+			ResKey captionHTML) throws IOException {
 		XMLTag icon = toIcon();
 		icon.beginBeginTag(context, out);
 		out.writeAttribute(HTMLConstants.ID_ATTR, id);
@@ -442,19 +442,20 @@ public abstract class ThemeImage implements HTMLFragment {
 	/**
 	 * Convenience method for rendering this image with a plain text tooltip.
 	 */
-	public void writeWithPlainTooltip(DisplayContext context, TagWriter out, String tooltipText) throws IOException {
+	public void writeWithPlainTooltip(DisplayContext context, TagWriter out, ResKey tooltipText) throws IOException {
 		writeWithCssPlainTooltip(context, out, null, tooltipText);
 	}
 
 	/**
 	 * Convenience method for rendering this image with a CSS class and a plain text tooltip.
 	 */
-	public void writeWithCssPlainTooltip(DisplayContext context, TagWriter out, String cssClass, String tooltipText)
+	public void writeWithCssPlainTooltip(DisplayContext context, TagWriter out, String cssClass, ResKey tooltipText)
 			throws IOException {
 		XMLTag icon = toIcon();
 		icon.beginBeginTag(context, out);
 		out.writeAttribute(HTMLConstants.CLASS_ATTR, cssClass);
-		out.writeAttribute(HTMLConstants.ALT_ATTR, tooltipText == null ? StringServices.EMPTY_STRING : tooltipText);
+		out.writeAttribute(HTMLConstants.ALT_ATTR,
+			tooltipText == null ? StringServices.EMPTY_STRING : context.getResources().getString(tooltipText));
 		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(context, out, tooltipText);
 		out.writeAttribute(HTMLConstants.TITLE_ATTR, StringServices.EMPTY_STRING);
 		icon.endEmptyTag(context, out);
@@ -462,10 +463,8 @@ public abstract class ThemeImage implements HTMLFragment {
 
 	/**
 	 * Creates a {@link HTMLFragment} from this image.
-	 * 
-	 * @see #write(DisplayContext, TagWriter, String, String, String)
 	 */
-	public HTMLFragment toFragment(final String cssClass, final String tooltipHTML, final String captionHTML) {
+	public HTMLFragment toFragment(final String cssClass, final ResKey tooltipHTML, final ResKey captionHTML) {
 		return new HTMLFragment() {
 			@Override
 			public void write(DisplayContext context, TagWriter out) throws IOException {

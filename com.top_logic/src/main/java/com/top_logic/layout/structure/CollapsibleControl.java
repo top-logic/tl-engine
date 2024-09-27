@@ -36,7 +36,6 @@ import com.top_logic.layout.toolbar.ToolbarControl;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * The class {@link CollapsibleControl} is a special {@link WrappingControl} which allows to
@@ -255,8 +254,8 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 		public PopOut() {
 			setImage(com.top_logic.layout.structure.Icons.WINDOW_POP_OUT);
 			ResKey tooltipKey = I18NConstants.POP_OUT_VIEW_TEXT;
-			setTooltip(Resources.getInstance().getString(tooltipKey));
-			setLabel(Resources.getInstance().getString(tooltipKey));
+			setTooltip(tooltipKey);
+			setLabel(tooltipKey);
 		}
 
 		@Override
@@ -308,8 +307,8 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 
 			setImage(collapsed ? com.top_logic.layout.structure.Icons.WINDOW_NORMALIZE : Icons.WINDOW_MINIMIZE);
 			ResKey tooltipKey = collapsed ? I18NConstants.EXPAND_IMAGE_TEXT : I18NConstants.COLLAPSE_IMAGE_TEXT;
-			setTooltip(Resources.getInstance().getString(tooltipKey));
-			setLabel(Resources.getInstance().getString(tooltipKey));
+			setTooltip(tooltipKey);
+			setLabel(tooltipKey);
 		}
 
 	}
@@ -341,8 +340,8 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 			setImage(maximized ? com.top_logic.layout.structure.Icons.WINDOW_NORMALIZE_AFTER_MAXIMIZED
 				: com.top_logic.layout.structure.Icons.WINDOW_MAXIMIZE);
 			ResKey tooltipKey = maximized ? I18NConstants.RESTORE_WINDOW : I18NConstants.MAXIMIZE_WINDOW;
-			setTooltip(Resources.getInstance().getString(tooltipKey));
-			setLabel(Resources.getInstance().getString(tooltipKey));
+			setTooltip(tooltipKey);
+			setLabel(tooltipKey);
 		}
 	}
 

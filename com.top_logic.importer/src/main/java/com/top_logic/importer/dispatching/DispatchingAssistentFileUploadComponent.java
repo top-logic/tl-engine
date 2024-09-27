@@ -182,7 +182,7 @@ public class DispatchingAssistentFileUploadComponent extends AssistentFileUpload
                     FormField theField = theIt.next();
 
                     if (theField.hasError()) {
-                        theResult.addErrorMessage(ResKey.text(theField.getLabel()), theField.getError());
+						theResult.addErrorMessage(theField.getLabel(), theField.getError());
                     }
                 }
 

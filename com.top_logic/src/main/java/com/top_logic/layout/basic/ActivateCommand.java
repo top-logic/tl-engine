@@ -80,7 +80,7 @@ public class ActivateCommand extends ControlCommand {
 
 		if (PerformanceMonitor.isEnabled()) {
 			ProcessingInfo processingInfo = commandContext.getProcessingInfo();
-			processingInfo.setCommandName(ResKey.text(theButtonControl.getModel().getLabel()));
+			processingInfo.setCommandName(theButtonControl.getModel().getLabel());
 			processingInfo.setProcessingKind(ProcessingKind.COMMAND_EXECUTION);
 			if (commandModel instanceof AbstractFormMember) {
 				LayoutComponent componentForMember =

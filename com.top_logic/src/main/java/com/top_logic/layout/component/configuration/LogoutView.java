@@ -19,6 +19,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.AbstractDisplayValue;
 import com.top_logic.layout.DisplayContext;
@@ -31,7 +32,6 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.link.Link;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.util.Resources;
 
 /**
  * The class {@link LogoutView} renders the LogoutCommand.
@@ -118,22 +118,22 @@ public class LogoutView extends AbstractConfiguredInstance<LogoutView.Config>
 	}
 
 	@Override
-	public String getTooltip() {
+	public ResKey getTooltip() {
 		return getLabel();
 	}
 
 	@Override
-	public String getTooltipCaption() {
+	public ResKey getTooltipCaption() {
 		return null;
 	}
 
 	@Override
-	public String getLabel() {
-		return Resources.getInstance().getString(I18NConstants.LOGOUT);
+	public ResKey getLabel() {
+		return I18NConstants.LOGOUT;
 	}
 
 	@Override
-	public String getAltText() {
+	public ResKey getAltText() {
 		return getLabel();
 	}
 

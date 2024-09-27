@@ -32,7 +32,6 @@ import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.SimpleOpenDialog;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.util.Resources;
 
 /**
  * Very special renderer for comments assigned to a wrapper.
@@ -145,17 +144,15 @@ public class CommentTableRenderer extends DefaultTableRenderer {
 
 		if (!theState.isHidden()) {
 			ResKey labelKey = command.getResourceKey(aComp);
-			Resources resources = context.getResources();
-			String label = resources.getString(labelKey);
 			CommandModel commandModel = CommandModelFactory.commandModel(command, aComp, arguments);
 			if (theState.isDisabled()) {
 				commandModel.setNotExecutable(theState.getI18NReasonKey());
-				commandModel.setAltText(resources.getString(theState.getI18NReasonKey()));
+				commandModel.setAltText(theState.getI18NReasonKey());
 			} else {
 				commandModel.setExecutable();
-				commandModel.setAltText(label);
+				commandModel.setAltText(labelKey);
 			}
-			commandModel.setLabel(label);
+			commandModel.setLabel(labelKey);
 			commandModel.setImage(enabledImage);
 			commandModel.setNotExecutableImage(disabledImage);
 

@@ -12,6 +12,7 @@ import java.util.Set;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.Filter;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
@@ -311,7 +312,7 @@ public class ChoiceControl extends AbstractSelectControl implements OptionModelL
 		out.writeAttribute(FOR_ATTR, widgetID);
 		LabelProvider theProvider = field.getOptionLabelProvider();
 		if (theProvider instanceof ResourceProvider) {
-		    String theTool = ((ResourceProvider) theProvider).getTooltip(option);
+			ResKey theTool = ResKey.text(((ResourceProvider) theProvider).getTooltip(option));
 		    if (! StringServices.isEmpty(theTool)) {
 				OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, theTool);
 		    }	    

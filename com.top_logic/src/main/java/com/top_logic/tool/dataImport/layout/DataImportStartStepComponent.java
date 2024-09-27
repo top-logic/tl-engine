@@ -29,6 +29,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.dataImport.AbstractDataImporter;
 import com.top_logic.tool.execution.ExecutabilityRule;
+import com.top_logic.util.Resources;
 
 /**
  * The DataImportStartStepComponent is the first step of the DataImportAssistant.
@@ -62,31 +63,33 @@ public class DataImportStartStepComponent extends FormComponent {
 
         AbstractDataImporter theImporter = DataImportAssistant.getImporter(this);
         theValue = theFormatter.formatDateTime(theImporter.getLastImportRun());
-        if (StringServices.isEmpty(theValue)) theValue = getResString("noLastRun");
+		if (StringServices.isEmpty(theValue))
+			theValue = Resources.getInstance().getString(getResString("noLastRun"));
         theField = FormFactory.newStringField(FIELD_LAST_RUN, IMMUTABLE);
         theField.setValue(theValue);
         theContext.addMember(theField);
 
         theValue = theFormatter.formatDate(theImporter.getSystemDataTimestamp());
-        if (StringServices.isEmpty(theValue)) theValue = getResString("noSystemDataTS");
+		if (StringServices.isEmpty(theValue))
+			theValue = Resources.getInstance().getString(getResString("noSystemDataTS"));
         theField = FormFactory.newStringField(FIELD_SYSTEM_DATA_TS, IMMUTABLE);
         theField.setValue(theValue);
         theContext.addMember(theField);
 
 		Lock theToken = DataImportAssistant.getToken(this);
 		if (!theToken.check() || theImporter.isInActiveMode()) {
-            theMessage = getResString("importerRunning");
+			theMessage = Resources.getInstance().getString(getResString("importerRunning"));
             theValue = StringServices.EMPTY_STRING;
         }
         else {
             ProgressResult theResult = theImporter.prepareImport();
             if (theResult.isSuccess()) {
-                theMessage = getResString("importerReady");
+				theMessage = Resources.getInstance().getString(getResString("importerReady"));
                 theValue = theFormatter.formatDate((Date)theResult.getValue(AbstractDataImporter.RESULT_IMPORT_DATE));
             }
             else {
-                theMessage = getResString("importerNotReady");
-                theValue = getResString("noImportDataTS");
+				theMessage = Resources.getInstance().getString(getResString("importerNotReady"));
+				theValue = Resources.getInstance().getString(getResString("noImportDataTS"));
             }
             DataImportAssistant.createMessageFieldsFor(theResult, theContext, getResPrefix());
         }
@@ -157,7 +160,7 @@ public class DataImportStartStepComponent extends FormComponent {
                 return HandlerResult.DEFAULT_RESULT;
             }
             HandlerResult theResult = new HandlerResult();
-			theResult.addErrorText(aComponent.getResString("tokenExpired"));
+			theResult.addError(aComponent.getResString("tokenExpired"));
             return theResult;
         }
 

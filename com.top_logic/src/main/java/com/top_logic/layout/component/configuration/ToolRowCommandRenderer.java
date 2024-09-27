@@ -49,7 +49,7 @@ public class ToolRowCommandRenderer extends AbstractLinkRenderer {
 					tag.beginBeginTag(context, out);
 					out.writeAttribute(CLASS_ATTR, FormConstants.INPUT_IMAGE_CSS_CLASS);
 					writeDisabledAttribute(out, button);
-					out.writeAttribute(ALT_ATTR, button.getAltText());
+					out.writeAttribute(ALT_ATTR, context.getResources().getString(button.getAltText()));
 					out.writeAttribute(ONCLICK_ATTR, button.getOnclick());
 					tag.endEmptyTag(context, out);
 				} else {
@@ -59,7 +59,7 @@ public class ToolRowCommandRenderer extends AbstractLinkRenderer {
 					out.writeAttribute(ONCLICK_ATTR, button.getOnclick());
 					out.endBeginTag();
 					{
-						String label = button.getLabel();
+						String label = context.getResources().getString(button.getLabel());
 						out.writeText(label);
 					}
 					out.endTag(ANCHOR);

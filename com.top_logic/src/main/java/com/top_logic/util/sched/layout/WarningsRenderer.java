@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.List;
 
 import com.top_logic.basic.CollectionUtil;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
@@ -33,8 +34,8 @@ public class WarningsRenderer implements Renderer<List<String>> {
 		if (CollectionUtil.isEmptyOrNull(warnings)) {
 			return;
 		}
-		String tooltipHTML = TaskFormUtil.createWarningsTooltipText(warnings);
-		String tooltipCaption = TaskFormUtil.createWarningsTooltipCaption(warnings);
+		ResKey tooltipHTML = TaskFormUtil.createWarningsTooltipText(warnings);
+		ResKey tooltipCaption = TaskFormUtil.createWarningsTooltipCaption(warnings);
 		TaskResult.ResultType.WARNING.getIcon().write(displayContext, out, null, tooltipHTML, tooltipCaption);
 	}
 

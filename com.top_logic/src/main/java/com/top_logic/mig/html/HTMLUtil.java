@@ -31,6 +31,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.character.NonClosingProxyWriter;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
@@ -1122,9 +1123,9 @@ public class HTMLUtil {
 	 * @throws IOException
 	 *         If writing to the underlying writer fails.
 	 */
-	public static void writeImageTooltip(DisplayContext context, TagWriter out, String tooltipText) throws IOException {
+	public static void writeImageTooltip(DisplayContext context, TagWriter out, ResKey tooltipText) throws IOException {
 		// Alternative text.
-		out.writeAttribute(ALT_ATTR, tooltipText);
+		out.writeAttribute(ALT_ATTR, context.getResources().getString(tooltipText));
 
 		// The tooltip source.
 		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(context, out, tooltipText);
@@ -1146,7 +1147,7 @@ public class HTMLUtil {
 	 * @throws IOException
 	 *         If writing to the underlying writer fails.
 	 */
-	public static void writeImageTooltipHtml(DisplayContext context, TagWriter out, String tooltipHtml)
+	public static void writeImageTooltipHtml(DisplayContext context, TagWriter out, ResKey tooltipHtml)
 			throws IOException {
 		// Alternative text.
 		out.writeAttribute(ALT_ATTR, StringServices.EMPTY_STRING);

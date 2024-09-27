@@ -6,6 +6,7 @@
 package com.top_logic.model.search.expr;
 
 import java.util.Collection;
+import java.util.Map;
 
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.Visitor;
@@ -42,19 +43,19 @@ public class IsEmpty extends UnaryOperation implements BooleanExpression {
 	 * Computes the result based on concrete values.
 	 */
 	public final Object compute(Object value) {
-		return isNull(value) || isEmptyCollection(value) || isEmptyString(value);
-	}
-
-	private static boolean isNull(Object value) {
-		return value == null;
-	}
-
-	private static boolean isEmptyCollection(Object value) {
-		return (value instanceof Collection<?>) && ((Collection<?>) value).isEmpty();
-	}
-
-	private static boolean isEmptyString(Object value) {
-		return (value instanceof String) && ((String) value).isEmpty();
+		if (value == null) {
+			return true;
+		}
+		if (value instanceof Collection<?> col) {
+			return col.isEmpty();
+		}
+		if (value instanceof Map<?, ?> map) {
+			return map.isEmpty();
+		}
+		if (value instanceof String str) {
+			return str.isEmpty();
+		}
+		return false;
 	}
 
 	@Override

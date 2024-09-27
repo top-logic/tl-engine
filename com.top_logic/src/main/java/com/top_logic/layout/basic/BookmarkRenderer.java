@@ -10,6 +10,7 @@ import java.io.IOException;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.LabelProvider;
@@ -133,10 +134,10 @@ public class BookmarkRenderer extends ResourceRenderer<ResourceRenderer.Config<B
 	/**
 	 * Produces a tooltip for the bookmark icon.
 	 */
-	public static String getBookmarkTooltipLabel(DisplayContext context, String label) {
+	public static ResKey getBookmarkTooltipLabel(DisplayContext context, String label) {
 		return StringServices.isEmpty(label)
-			? context.getResources().getString(I18NConstants.BOOKMARK_TOOLTIP__LABEL_EMPTY)
-			: context.getResources().getString(I18NConstants.BOOKMARK_TOOLTIP__LABEL.fill(label));
+			? I18NConstants.BOOKMARK_TOOLTIP__LABEL_EMPTY
+			: I18NConstants.BOOKMARK_TOOLTIP__LABEL.fill(label);
 	}
 
 	/**

@@ -39,7 +39,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * {@link AbstractFormDialogBase} to edit a {@link FormDefinition}.
@@ -170,12 +169,8 @@ public class GUIEditorDialog extends AbstractFormDialogBase {
 
 	private CommandModel applyCommandModel(Command command) {
 		CommandModel apply = MessageBox.button(ButtonType.OK, command);
-		apply.setLabel(label(com.top_logic.layout.form.component.I18NConstants.SAVE));
+		apply.setLabel(com.top_logic.layout.form.component.I18NConstants.SAVE);
 		return apply;
-	}
-
-	private String label(ResKey key) {
-		return Resources.getInstance().getString(key);
 	}
 
 	/**

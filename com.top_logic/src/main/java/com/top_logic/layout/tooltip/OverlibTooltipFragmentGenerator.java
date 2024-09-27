@@ -12,6 +12,7 @@ import org.jfree.chart.imagemap.ToolTipTagFragmentGenerator;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.DisplayContext;
@@ -31,7 +32,7 @@ public class OverlibTooltipFragmentGenerator implements ToolTipTagFragmentGenera
 	 * {@link #writeTooltipAttributes(DisplayContext, TagWriter, HTMLFragment, HTMLFragment)} for
 	 * suppressing a tool-tip caption.
 	 */
-	public static final String NO_CAPTION = null;
+	public static final ResKey NO_CAPTION = null;
 
     /** The single instance of this class. */
     public static final OverlibTooltipFragmentGenerator INSTANCE = new OverlibTooltipFragmentGenerator();
@@ -47,7 +48,7 @@ public class OverlibTooltipFragmentGenerator implements ToolTipTagFragmentGenera
 	 * @see org.jfree.chart.imagemap.ToolTipTagFragmentGenerator#generateToolTipFragment(java.lang.String)
 	 * 
 	 * @deprecated Result cannot safely be written to {@link TagWriter}, use
-	 *             {@link #writeTooltipAttributes(DisplayContext, TagWriter, String)} instead.
+	 *             {@link #writeTooltipAttributes(DisplayContext, TagWriter, ResKey)} instead.
 	 */
 	@Override
 	@Deprecated
@@ -57,7 +58,7 @@ public class OverlibTooltipFragmentGenerator implements ToolTipTagFragmentGenera
 			TagWriter out = new TagWriter();
 			out.setState(TagWriter.State.START_TAG);
 			try {
-				new HtmlToolTip(aToolTipText, NO_CAPTION).writeAttribute(context, out);
+				new HtmlToolTip(aToolTipText, null).writeAttribute(context, out);
 			} catch (IOException ex) {
 				throw new IOError(ex);
 			}
@@ -79,9 +80,10 @@ public class OverlibTooltipFragmentGenerator implements ToolTipTagFragmentGenera
 	 * @param tooltipHtml
 	 *        The HTML source code to display as tool-tip text.
 	 */
-	public void writeTooltipAttributes(DisplayContext context, TagWriter out, String tooltipHtml) throws IOException {
-		if (!StringServices.isEmpty(tooltipHtml)) {
-			new HtmlToolTip(tooltipHtml, NO_CAPTION).writeAttribute(context, out);
+	public void writeTooltipAttributes(DisplayContext context, TagWriter out, ResKey tooltipHtml) throws IOException {
+		String content = context.getResources().getString(tooltipHtml);
+		if (!StringServices.isEmpty(content)) {
+			new HtmlToolTip(content, null).writeAttribute(context, out);
 		}
     }
     
@@ -95,10 +97,11 @@ public class OverlibTooltipFragmentGenerator implements ToolTipTagFragmentGenera
 	 * @param tooltipText
 	 *        The plain text to display as tool-tip text.
 	 */
-	public void writeTooltipAttributesPlain(DisplayContext context, TagWriter out, String tooltipText)
+	public void writeTooltipAttributesPlain(DisplayContext context, TagWriter out, ResKey tooltipText)
 			throws IOException {
-		if (!StringServices.isEmpty(tooltipText)) {
-			new PlainToolTip(tooltipText, NO_CAPTION).writeAttribute(context, out);
+		String content = context.getResources().getString(tooltipText);
+		if (!StringServices.isEmpty(content)) {
+			new PlainToolTip(content, null).writeAttribute(context, out);
 		}
 	}
 	
@@ -114,10 +117,13 @@ public class OverlibTooltipFragmentGenerator implements ToolTipTagFragmentGenera
 	 * @param captionHtml
 	 *        The HTML source code to display as tool-tip caption.
 	 */
-	public void writeTooltipAttributes(DisplayContext context, TagWriter out, String tooltipHtml, String captionHtml)
+	public void writeTooltipAttributes(DisplayContext context, TagWriter out, ResKey tooltipHtml, ResKey captionHtml)
 			throws IOException {
-		if (!StringServices.isEmpty(tooltipHtml)) {
-			new HtmlToolTip(tooltipHtml, captionHtml).writeAttribute(context, out);
+		String content = context.getResources().getString(tooltipHtml);
+		String caption = context.getResources().getString(captionHtml);
+
+		if (!StringServices.isEmpty(content)) {
+			new HtmlToolTip(content, caption).writeAttribute(context, out);
 		}
     }
 
@@ -133,10 +139,12 @@ public class OverlibTooltipFragmentGenerator implements ToolTipTagFragmentGenera
 	 * @param captionText
 	 *        The plain text to display as tool-tip caption.
 	 */
-	public void writeTooltipAttributesPlain(DisplayContext context, TagWriter out, String tooltipText,
-			String captionText) throws IOException {
-		if (!StringServices.isEmpty(tooltipText)) {
-			new PlainToolTip(tooltipText, captionText).writeAttribute(context, out);
+	public void writeTooltipAttributesPlain(DisplayContext context, TagWriter out, ResKey tooltipText,
+			ResKey captionText) throws IOException {
+		String content = context.getResources().getString(tooltipText);
+		String caption = context.getResources().getString(captionText);
+		if (!StringServices.isEmpty(content)) {
+			new PlainToolTip(content, caption).writeAttribute(context, out);
 		}
 	}
 
@@ -198,10 +206,14 @@ public class OverlibTooltipFragmentGenerator implements ToolTipTagFragmentGenera
 	 * @param captionHtml
 	 *        The HTML source code to display as tool-tip caption.
 	 */
-	public void writeTooltip(DisplayContext context, TagWriter out, String tooltipHtml, String captionHtml)
+	public void writeTooltip(DisplayContext context, TagWriter out, ResKey tooltipHtml, ResKey captionHtml)
 			throws IOException {
-		if (!StringServices.isEmpty(tooltipHtml)) {
-			new HtmlToolTip(tooltipHtml, captionHtml).write(context, out);
+
+		String content = context.getResources().getString(tooltipHtml);
+		String caption = context.getResources().getString(captionHtml);
+
+		if (!StringServices.isEmpty(content)) {
+			new HtmlToolTip(content, caption).write(context, out);
 		}
 	}
 

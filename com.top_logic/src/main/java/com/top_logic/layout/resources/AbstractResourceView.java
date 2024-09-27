@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.resources;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.ResourceView;
 
 /**
@@ -22,8 +23,8 @@ public abstract class AbstractResourceView implements ResourceView {
 	}
 
 	@Override
-	public String getStringResource(String resourceKey, String defaultValue) {
-		String result = getResource(resourceKey, true);
+	public ResKey getStringResource(String resourceKey, ResKey defaultValue) {
+		ResKey result = getResource(resourceKey, true);
 		if (result == null) {
 			return defaultValue;
 		}
@@ -31,7 +32,7 @@ public abstract class AbstractResourceView implements ResourceView {
 	}
 
 	@Override
-	public String getStringResource(String resourceKey) {
+	public ResKey getStringResource(String resourceKey) {
 		return getResource(resourceKey, false);
 	}
 
@@ -46,6 +47,6 @@ public abstract class AbstractResourceView implements ResourceView {
 	 *         optional and no translation exists. A resource that is not optional but does not
 	 *         exist returns a missing resource marker and logs the missing resource.
 	 */
-	protected abstract String getResource(String resourceKey, boolean optional);
+	protected abstract ResKey getResource(String resourceKey, boolean optional);
 
 }

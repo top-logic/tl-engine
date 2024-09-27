@@ -7,6 +7,7 @@ package com.top_logic.layout.table.filter;
 
 import static com.top_logic.layout.table.filter.StaticFilterWrapperView.*;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.form.model.BooleanField;
@@ -45,7 +46,7 @@ public class StaticFilterWrapperViewBuilder implements FilterViewBuilder<StaticF
 		/* Definition of the filter settings */
 		// "active field" setting
 		BooleanField activeFieldCheckbox = createActiveField(config.isActive());
-		activeFieldCheckbox.setLabel(config.getFilterDescription().get(context));
+		activeFieldCheckbox.setLabel(ResKey.text(config.getFilterDescription().get(context)));
 		filterSettings.addMember(activeFieldCheckbox);
 
 		StringField matchCountField = createMatchCountField(config.getMatchCount());

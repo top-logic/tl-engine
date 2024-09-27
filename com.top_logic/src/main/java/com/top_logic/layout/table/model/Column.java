@@ -21,7 +21,6 @@ import com.top_logic.layout.table.model.ColumnConfiguration.DisplayMode;
 import com.top_logic.layout.table.renderer.IDColumnTableCellRenderer;
 import com.top_logic.layout.tree.renderer.NoResourceProvider;
 import com.top_logic.layout.tree.renderer.TreeCellRenderer;
-import com.top_logic.util.Resources;
 import com.top_logic.util.css.CssUtil;
 
 /**
@@ -429,7 +428,7 @@ public class Column {
 	 *        The context table.
 	 * @return The internationalized column label.
 	 */
-	public String getLabel(TableData table) {
+	public ResKey getLabel(TableData table) {
 		TableConfiguration tableConfiguration = table.getTableModel().getTableConfiguration();
 		return getLabel(tableConfiguration);
 	}
@@ -441,25 +440,25 @@ public class Column {
 	 *        The context table.
 	 * @return The internationalized column label.
 	 */
-	public String getLabel(TableConfiguration tableConfiguration) {
+	public ResKey getLabel(TableConfiguration tableConfiguration) {
 		return getColumnLabel(tableConfiguration, getConfig(), getName());
 	}
 
 	/**
 	 * Algorithm to compute a column label.
 	 */
-	public static String getColumnLabel(TableConfiguration tableConfiguration, ColumnConfiguration columnConfig,
+	public static ResKey getColumnLabel(TableConfiguration tableConfiguration, ColumnConfiguration columnConfig,
 			String columnName) {
 		String label = columnConfig.getColumnLabel();
 		if (!StringServices.isEmpty(label)) {
-			return label;
+			return ResKey.text(label);
 		}
 	
 		ResKey labelKey = columnConfig.getColumnLabelKey();
 		if (labelKey != null) {
 			// Note: the key is an absolute resource name and must not be
 			// passed to the getColumnHeaderText() processing.
-			return Resources.getInstance().getString(labelKey);
+			return labelKey;
 		}
 	
 		return tableConfiguration.getResPrefix().getStringResource(columnName);
@@ -468,7 +467,7 @@ public class Column {
 	/**
 	 * The tool-tip to use for the {@link #getLabel(TableData)}.
 	 */
-	public String getTooltip(TableData table) {
+	public ResKey getTooltip(TableData table) {
 		TableConfiguration tableConfiguration = table.getTableModel().getTableConfiguration();
 		return getTooltip(tableConfiguration);
 	}
@@ -476,28 +475,25 @@ public class Column {
 	/**
 	 * The tool-tip to use for the {@link #getLabel(TableConfiguration)}.
 	 */
-	public String getTooltip(TableConfiguration tableConfiguration) {
+	public ResKey getTooltip(TableConfiguration tableConfiguration) {
 		ColumnConfiguration columnConfig = getConfig();
+
+		ResKey result = null;
 
 		ResKey labelKey = columnConfig.getColumnLabelKey();
 		if (labelKey != null) {
 			// Note: the key is an absolute resource name and must not be
 			// passed to the getColumnHeaderText() processing.
-			String result = Resources.getInstance().getString(labelKey.tooltipOptional());
-			if (result != null) {
-				return result;
-			}
+			result = labelKey.tooltipOptional().fallback(result);
 		}
 
 		ResourceView resPrefix = tableConfiguration.getResPrefix();
-		String result = resPrefix.getStringResource(getName() + ResKey.TOOLTIP, null);
-		if (result != null) {
-			return result;
-		}
+		ResKey local = resPrefix.getStringResource(getName() + ResKey.TOOLTIP, null);
+		result = ResKey.fallback(result, local);
 
 		// By default use the label also as tooltip to make the column label readable, if the colum
 		// width is to small.
-		return getLabel(tableConfiguration);
+		return ResKey.fallback(result, getLabel(tableConfiguration));
 	}
 
 }

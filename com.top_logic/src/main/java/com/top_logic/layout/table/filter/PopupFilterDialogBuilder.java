@@ -50,7 +50,6 @@ import com.top_logic.layout.table.I18NConstants;
 import com.top_logic.layout.table.control.TableControl.SortCommand;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 import com.top_logic.util.ToBeValidated;
 
 /**
@@ -308,7 +307,7 @@ public class PopupFilterDialogBuilder implements FilterDialogBuilder {
 	private CommandField createCommandField(String applyFieldName, ResKey applyLabel, ThemeImage applyImage,
 			Command applyCommand) {
 		CommandField applyButton = FormFactory.newCommandField(applyFieldName, applyCommand);
-		applyButton.setLabel(Resources.getInstance().getString(applyLabel));
+		applyButton.setLabel(applyLabel);
 		applyButton.setImage(applyImage);
 		return applyButton;
 	}
@@ -338,7 +337,7 @@ public class PopupFilterDialogBuilder implements FilterDialogBuilder {
 	private FormField createInversionOptionFormField(TableFilterModel filterModel) {
 		BooleanField inversionOptionField =
 			FormFactory.newBooleanField(INVERT_FIELD, filterModel.isInversionStateActive(), false);
-		inversionOptionField.setLabel(Resources.getInstance().getString(I18NConstants.FILTER_INVERT));
+		inversionOptionField.setLabel(I18NConstants.FILTER_INVERT);
 
 		return inversionOptionField;
 	}

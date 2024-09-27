@@ -22,7 +22,6 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.InViewModeExecutable;
-import com.top_logic.util.Resources;
 
 /**
  * Provide the mechanism to create a second form context and place that in the original one.
@@ -119,16 +118,15 @@ public abstract class AbstractCompareCommandHandler<C extends FormComponent> ext
 	 */
 	protected void adaptCommandModel(DisplayContext context, CommandModel model, LayoutComponent component,
 			boolean comparisonActive) {
-		Resources resources = context.getResources();
-		String label;
-		String tooltip;
+		ResKey label;
+		ResKey tooltip;
 		if (comparisonActive) {
-			label = createActivatedLabel(resources, component);
+			label = createActivatedLabel(component);
 			ResKey labelKey = this.getResourceKey(component);
-			tooltip = labelKey == null ? null : resources.getString(labelKey.tooltipOptional());
+			tooltip = labelKey == null ? null : labelKey.tooltipOptional();
 		} else {
-			label = createDeactivatedLabel(resources, component);
-			tooltip = getDeactivatedTooltip(resources, component);
+			label = createDeactivatedLabel(component);
+			tooltip = getDeactivatedTooltip(component);
 		}
 		model.setLabel(label);
 		if (tooltip != null) {
@@ -138,35 +136,31 @@ public abstract class AbstractCompareCommandHandler<C extends FormComponent> ext
 		}
 	}
 
-	private String createDeactivatedLabel(Resources resources, LayoutComponent targetComponent) {
+	private ResKey createDeactivatedLabel(LayoutComponent targetComponent) {
 		String deactivated = ".deactivated";
 		ResKey key = targetComponent.getResPrefix().key(getID()).suffix(deactivated);
 		ResKey defaultKey = getResourceKey(targetComponent).suffix(deactivated);
 
-		return resources.getStringWithDefaultKey(key, defaultKey);
+		return key.fallback(defaultKey);
 	}
 
-	private String createActivatedLabel(Resources resources, LayoutComponent targetComponent) {
-		return resources.getString(this.getResourceKey(targetComponent));
+	private ResKey createActivatedLabel(LayoutComponent targetComponent) {
+		return this.getResourceKey(targetComponent);
 	}
 
-	private String getDeactivatedTooltip(Resources res, LayoutComponent targetComponent) {
+	private ResKey getDeactivatedTooltip(LayoutComponent targetComponent) {
 		String deactivated = ".deactivated";
 		ResKey componentInfoKey =
 			targetComponent.getResPrefix().append(getID()).key(deactivated).tooltipOptional();
-		String componentInfoValue = res.getString(componentInfoKey);
-		if (componentInfoValue != null) {
-			return componentInfoValue;
-		}
 
 		ResKey defaultLabelKey = getResourceKey(targetComponent).suffix(deactivated);
 		if (defaultLabelKey == null) {
 			// No default tooltip specified.
-			return null;
+			return componentInfoKey;
 		}
 
 		ResKey defaultInfoKey = defaultLabelKey.tooltipOptional();
-		return res.getString(defaultInfoKey);
+		return componentInfoKey.fallback(defaultInfoKey);
 
 	}
 

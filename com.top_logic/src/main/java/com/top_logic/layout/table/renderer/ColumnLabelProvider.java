@@ -10,6 +10,7 @@ import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.model.Column;
 import com.top_logic.layout.table.model.Header;
+import com.top_logic.util.Resources;
 
 /**
  * {@link LabelProvider} for column names of a {@link TableControl}.
@@ -41,7 +42,7 @@ public final class ColumnLabelProvider implements LabelProvider {
 			return null;
 		}
 
-		return column.getLabel(_table);
+		return Resources.getInstance().getString(column.getLabel(_table));
 	}
 
 	/**

@@ -89,10 +89,10 @@ public class ToggleCompareModeHandler extends AbstractCommandHandler {
 		ResKey resKey = getResourceKey(component);
 		if (compareModeActive) {
 			commandModel.setImage(getDeactivateImage());
-			commandModel.setLabel(context.getResources().getStringWithDefaultKey(resKey.suffix(".active"), resKey));
+			commandModel.setLabel(resKey.suffix(".active").fallback(resKey));
 		} else {
 			commandModel.setImage(getImage(component));
-			commandModel.setLabel(context.getResources().getString(resKey));
+			commandModel.setLabel(resKey);
 		}
 	}
 

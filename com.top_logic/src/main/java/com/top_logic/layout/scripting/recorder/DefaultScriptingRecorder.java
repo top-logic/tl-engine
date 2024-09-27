@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.scripting.recorder;
 
-import static com.top_logic.basic.shared.string.StringServicesShared.*;
 import static com.top_logic.layout.scripting.action.ActionFactory.*;
 import static com.top_logic.layout.scripting.recorder.ScriptingRecorder.FollowupActionRecording.*;
 
@@ -36,6 +35,7 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.thread.StackTrace;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.WindowScope;
@@ -387,8 +387,8 @@ public class DefaultScriptingRecorder extends ScriptingRecorder {
 			return;
 		}
 
-		String label = buttonControl.getLabel();
-		if (isEmpty(label)) {
+		ResKey label = buttonControl.getLabel();
+		if (label == null) {
 			return;
 		}
 		ComponentName componentName = component.getName();

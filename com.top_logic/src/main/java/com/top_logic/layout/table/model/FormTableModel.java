@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.VetoException;
 import com.top_logic.layout.form.FormContainer;
@@ -281,7 +282,7 @@ public class FormTableModel extends DelegatingTableModel {
 	 * </p>
 	 */
 	private void markTechnical(FormGroup group) {
-		group.setLabel("");
+		group.setLabel(ResKey.text(""));
 	}
     
     public FormContainer getFormContainer() {

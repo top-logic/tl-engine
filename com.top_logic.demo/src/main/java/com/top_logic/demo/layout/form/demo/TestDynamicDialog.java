@@ -151,7 +151,7 @@ final class TestDynamicDialog extends AbstractFormDialog {
 		final FormGroup group = new FormGroup("group-" + nextId(container), container.getResources());
 		{
 			StringField input = FormFactory.newStringField(INPUT);
-			input.setLabel("Input");
+			input.setLabel(ResKey.text("Input"));
 			group.addMember(input);
 			CommandField add = FormFactory.newCommandField(ADD, new Command() {
 				@Override
@@ -161,7 +161,7 @@ final class TestDynamicDialog extends AbstractFormDialog {
 					return HandlerResult.DEFAULT_RESULT;
 				}
 			});
-			add.setLabel("Add");
+			add.setLabel(ResKey.text("Add"));
 			group.addMember(add);
 			group.addMember(new FormGroup("list", group.getResources()));
 			if (container.get(NEXT_ID).intValue() % 3 == 0) {

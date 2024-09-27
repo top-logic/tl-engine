@@ -33,6 +33,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.wrap.currency.Currency;
 import com.top_logic.layout.Accessor;
@@ -246,7 +247,7 @@ public class EditCurrencyListComponent extends EditComponent implements RowObjec
 
     private List createNameField(String aValue, FormContainer aGroup, boolean isRemoveable) {
         String theName = FIELD_PREFIX + COLUMN_NAME + idCounter;
-		String theLabel = Resources.getInstance().getMessage(getResPrefix().key(LABEL_SUFFIX), aValue);
+		ResKey theLabel = getResPrefix().key(LABEL_SUFFIX).asResKey1().fill(aValue);
         ComplexField theField = fieldHelper.createComplexField(theName, aValue, theLabel, aGroup, !allowRenaming || !isRemoveable);
         theField.setFormatAndParser(UpperCaseStringFormat.INSTANCE);
         theField.addConstraint(CurrencyConstraint.INSTANCE);
@@ -258,7 +259,7 @@ public class EditCurrencyListComponent extends EditComponent implements RowObjec
 
     private List createFactorField(Double aValue, FormContainer aGroup) {
         String theName = FIELD_PREFIX + COLUMN_FACTOR + idCounter;
-		String theLabel = Resources.getInstance().getMessage(getResPrefix().key(FACTOR_SUFFIX), aValue);
+		ResKey theLabel = getResPrefix().key(FACTOR_SUFFIX).asResKey1().fill(aValue);
         ComplexField theField = fieldHelper.createComplexField(theName, aValue, theLabel, aGroup);
         theField.addConstraint(NotEmptyConstraint.INSTANCE);
         List theControls = fieldHelper.createControls(theField, this);
@@ -267,7 +268,7 @@ public class EditCurrencyListComponent extends EditComponent implements RowObjec
     }
 
     private ButtonControl createButton(FormContainer aGroup) {
-		String theLabel = Resources.getInstance().getString(getResPrefix().key("delete"));
+		ResKey theLabel = getResPrefix().key("delete");
 		Map arguments = Collections.singletonMap(REMOVE_ID, String.valueOf(idCounter));
 		CommandModel theCommandModel =
 			CommandModelFactory.commandModel(getCommandById(RemoveCurrencyCommand.COMMAND), this, arguments);

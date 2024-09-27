@@ -37,7 +37,7 @@ public abstract class AbstractButtonField extends AbstractFormMember implements 
 	private boolean isExecutable = true;
 
 	@Inspectable
-	private String altText;
+	private ResKey altText;
 
 	@Inspectable
 	private char _accessKey;
@@ -273,8 +273,8 @@ public abstract class AbstractButtonField extends AbstractFormMember implements 
 	}
 
 	@Override
-	public String setLabel(String newLabel) {
-		String oldLabel = super.setLabel(newLabel);
+	public ResKey setLabel(ResKey newLabel) {
+		ResKey oldLabel = super.setLabel(newLabel);
 
 		//altText uses the label as fallback. Changing the Label could change the altText.
 		if ((altText == null) && !StringServices.equals(oldLabel, newLabel)) {
@@ -284,7 +284,7 @@ public abstract class AbstractButtonField extends AbstractFormMember implements 
 	}
 
 	@Override
-	public String getAltText() {
+	public ResKey getAltText() {
 		if (altText != null) {
 			return altText;
 		}
@@ -297,20 +297,20 @@ public abstract class AbstractButtonField extends AbstractFormMember implements 
 			return getLabel();
 		}
 
-		return "";
+		return ResKey.text("");
 	}
 
 	@Override
-	public void setAltText(String newAltText) {
-		String oldAltTextRespectingFallbacks = getAltText();
+	public void setAltText(ResKey newAltText) {
+		ResKey oldAltTextRespectingFallbacks = getAltText();
 		altText = newAltText;
-		String newTextRespectingFallbacks = getAltText();
+		ResKey newTextRespectingFallbacks = getAltText();
 
 		fireAltTextChangedIfChangeIsVisible(oldAltTextRespectingFallbacks, newTextRespectingFallbacks);
 	}
 
-	private void fireAltTextChangedIfChangeIsVisible(String oldAltTextIncludingFallbacks,
-			String newTextIncludingFallbacks) {
+	private void fireAltTextChangedIfChangeIsVisible(ResKey oldAltTextIncludingFallbacks,
+			ResKey newTextIncludingFallbacks) {
 		if (!StringServices.equals(newTextIncludingFallbacks, oldAltTextIncludingFallbacks)) {
 			firePropertyChanged(ALT_TEXT_PROPERTY, self(), oldAltTextIncludingFallbacks, newTextIncludingFallbacks);
 		}

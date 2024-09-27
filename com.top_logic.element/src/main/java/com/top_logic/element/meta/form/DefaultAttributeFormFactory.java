@@ -419,10 +419,9 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 
 	protected void initFormMember(AttributeUpdate aAttributeUpdate, FormMember result) {
 		ResKey resKey = aAttributeUpdate.getLabelKey();
-		Resources resources = Resources.getInstance();
-		result.setLabel(resources.getString(resKey));
-		result.setTooltip(resources.getString(resKey.tooltipOptional()));
-		result.setTooltipCaption(resources.getString(resKey.suffix(FormMember.TOOLTIP_CAPTION_SUFFIX), null));
+		result.setLabel(resKey);
+		result.setTooltip(resKey.tooltipOptional());
+		result.setTooltipCaption(resKey.suffix(FormMember.TOOLTIP_CAPTION_SUFFIX).fallback(ResKey.text(null)));
 		
 		if (AttributeOperations.isReadOnly(aAttributeUpdate.getAttribute())) {
 			/* The value for the attribute can not be updated. Therefore a constraint is not useful,

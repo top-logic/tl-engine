@@ -42,7 +42,6 @@ import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * {@link Editor} for a {@link FormDefinition}.
@@ -142,7 +141,7 @@ public class FormDefinitionEditor implements Editor {
 		commandField.setNotExecutableImage(Icons.OPEN_GUI_EDITOR_DISABLED);
 		// Reason key when whole form is not editable.
 		commandField.setNotExecutableReasonKey(com.top_logic.common.webfolder.ui.I18NConstants.FIELD_DISABLED);
-		commandField.setTooltip(Resources.getInstance().getString(I18NConstants.OPEN_FORM_EDITOR_DIALOG));
+		commandField.setTooltip(I18NConstants.OPEN_FORM_EDITOR_DIALOG);
 		if (configItem.getFormContextType() == null) {
 			setNotExecutable(commandField);
 		}

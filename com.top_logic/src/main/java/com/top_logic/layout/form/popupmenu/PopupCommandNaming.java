@@ -18,6 +18,7 @@ import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
+import com.top_logic.util.Resources;
 
 /**
  * {@link ModelNamingScheme} that is capable of finding a {@link CommandModel} in a
@@ -89,7 +90,7 @@ public class PopupCommandNaming extends GlobalModelNamingScheme<CommandModel, Po
 		}
 
 		Name name = createName();
-		name.setLabel(model.getLabel());
+		name.setLabel(Resources.getInstance().getString(model.getLabel()));
 		name.setPopup(popupName.get());
 		return Maybe.some(name);
 	}

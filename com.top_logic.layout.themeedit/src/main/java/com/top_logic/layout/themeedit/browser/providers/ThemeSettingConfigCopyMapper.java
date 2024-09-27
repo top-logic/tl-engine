@@ -86,10 +86,8 @@ public class ThemeSettingConfigCopyMapper implements Function<Object, Configurat
 			out.write(varName.substring(0, sepIdx));
 			out.endTag(H3);
 
-			String helpHtml = resources.getString(ResKey.internalCreate(varName), null);
-			if (helpHtml != null) {
-				out.writeContent(HtmlToolTip.ensureSafeHTMLTooltip(helpHtml));
-			}
+			ResKey helpHtml = ResKey.internalCreate(varName).fallback(ResKey.text(null));
+			out.writeContent(HtmlToolTip.ensureSafeHTMLTooltip(context, helpHtml));
 		}
 
 		ThemeVar<?> themeVar = ThemeFactory.getInstance().getDeclaredVars().get(themeSetting.getName());
@@ -127,13 +125,10 @@ public class ThemeSettingConfigCopyMapper implements Function<Object, Configurat
 			out.endTag(CODE);
 			out.endTag(DT);
 
-			String documentation = resources.getString(property.getDocumentation(), null);
-			if (documentation != null) {
-				out.beginTag(DD);
-				out.writeContent(
-					HtmlToolTip.ensureSafeHTMLTooltip(documentation));
-				out.endTag(DD);
-			}
+			ResKey documentation = property.getDocumentation().fallback(ResKey.text(""));
+			out.beginTag(DD);
+			out.writeContent(HtmlToolTip.ensureSafeHTMLTooltip(context, documentation));
+			out.endTag(DD);
 		}
 		out.endTag(DL);
 	}

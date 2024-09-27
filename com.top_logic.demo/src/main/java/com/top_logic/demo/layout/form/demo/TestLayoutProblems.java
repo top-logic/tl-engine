@@ -31,7 +31,6 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.demo.knowledge.test.layout.EditTreeDemo;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.Control;
@@ -107,9 +106,12 @@ import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.table.model.TableConfigurationFactory;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
 import com.top_logic.layout.tree.NodeContext;
+import com.top_logic.layout.tree.model.AbstractTLTreeNodeBuilder;
 import com.top_logic.layout.tree.model.DefaultMutableTLTreeModel;
+import com.top_logic.layout.tree.model.DefaultMutableTLTreeNode;
 import com.top_logic.layout.tree.model.DefaultStructureTreeUIModel;
 import com.top_logic.layout.tree.model.TLTreeModel;
+import com.top_logic.layout.tree.model.TreeBuilder;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.layout.tree.renderer.ConfigurableTreeContentRenderer;
 import com.top_logic.layout.tree.renderer.ConfigurableTreeRenderer;
@@ -538,7 +540,7 @@ public class TestLayoutProblems extends FormComponent {
 	private FormMember ticket_5310() {
 		final ResPrefix i18nPrefix = getResPrefix().append("ticket5310");
 		final FormGroup group = new FormGroup("Ticket_5310", i18nPrefix);
-		TLTreeModel applicationModel = new DefaultMutableTLTreeModel(EditTreeDemo.INFINITE_TREE, null);
+		TLTreeModel applicationModel = new DefaultMutableTLTreeModel(INFINITE_TREE, null);
 		TreeUIModel treeModel = new DefaultStructureTreeUIModel(applicationModel );
 		NodeGroupInitializer nodeGroupProvider = new NodeGroupInitializer() {
 			
@@ -655,16 +657,16 @@ public class TestLayoutProblems extends FormComponent {
 			public HandlerResult executeCommand(DisplayContext context) {
 				if (setLargeList) {
 					selectField.setOptions(options1);
-					setLabel("Set small options");
+					setLabel(ResKey.text("Set small options"));
 				} else {
 					selectField.setOptions(options2);
-					setLabel("Set large options");
+					setLabel(ResKey.text("Set large options"));
 				}
 				setLargeList = !setLargeList;
 				return HandlerResult.DEFAULT_RESULT;
 			}
 		};
-		setOptions.setLabel("Set small options");
+		setOptions.setLabel(ResKey.text("Set small options"));
 		group.addMember(setOptions);
 		final CommandField setValue = new CommandField("setValue") {
 
@@ -674,16 +676,16 @@ public class TestLayoutProblems extends FormComponent {
 			public HandlerResult executeCommand(DisplayContext context) {
 				if (setLargeList) {
 					selectField.setValue(options1);
-					setLabel("Set small value");
+					setLabel(ResKey.text("Set small value"));
 				} else {
 					selectField.setValue(options2);
-					setLabel("Set large value");
+					setLabel(ResKey.text("Set large value"));
 				}
 				setLargeList = !setLargeList;
 				return HandlerResult.DEFAULT_RESULT;
 			}
 		};
-		setValue.setLabel("Set small value");
+		setValue.setLabel(ResKey.text("Set small value"));
 		group.addMember(setValue);
 		return group;
 	}
@@ -764,7 +766,8 @@ public class TestLayoutProblems extends FormComponent {
 			out.beginBeginTag(SPAN);
 			writeControlAttributes(context, out);
 			out.writeAttribute(STYLE_ATTR, "background-color: red");
-			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, _tooltipField.getAsString());
+			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out,
+				ResKey.text(_tooltipField.getAsString()));
 			out.endBeginTag();
 			out.writeText("Tooltip-Element");
 			out.endTag(SPAN);
@@ -1312,6 +1315,28 @@ public class TestLayoutProblems extends FormComponent {
 	}
 
 	long _time = -1;
+	public static final TreeBuilder INFINITE_TREE = new AbstractTLTreeNodeBuilder() {
+		@Override
+		public List<DefaultMutableTLTreeNode> createChildList(DefaultMutableTLTreeNode node) {
+			int cnt;
+			if (node.getParent() == null) {
+				cnt = 5;
+			} else {
+				cnt = (int) (Math.random() * 10);
+			}
+	
+			List<DefaultMutableTLTreeNode> result = new ArrayList<>();
+			for (int n = 0; n < cnt; n++) {
+				result.add(createNode(node.getModel(), node, node.getBusinessObject() + "." + n));
+			}
+			return result;
+		}
+	
+		@Override
+		public boolean isFinite() {
+			return false;
+		}
+	};
 
 	/**
 	 * Returns a command which sets the values of each field in the

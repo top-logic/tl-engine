@@ -13,6 +13,7 @@ import java.util.List;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.Named;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.common.folder.FolderDefinition;
 import com.top_logic.common.webfolder.WebFolderUtils;
 import com.top_logic.knowledge.gui.layout.upload.SimpleFileNameStrategy;
@@ -221,7 +222,7 @@ public abstract class UploadDialog extends AbstractFormPageDialog {
 
 		DataField dataField = FormFactory.newDataField(SimpleFormDialog.INPUT_FIELD, FormFactory.MULTIPLE,
 			new SimpleFileNameStrategy(blackList, whiteList));
-		dataField.setLabel("");
+		dataField.setLabel(ResKey.text(""));
 		dataField.setDownload(false);
 		dataField.setMaxUploadSize(_maxUploadSize);
 		context.addMember(dataField);

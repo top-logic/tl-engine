@@ -21,7 +21,6 @@ import com.top_logic.mig.html.layout.tiles.CompositeTile;
 import com.top_logic.mig.html.layout.tiles.TileLayout;
 import com.top_logic.mig.html.layout.tiles.component.StaticPreview.Config;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * Command to edit the preview of a given {@link TileLayout}.
@@ -36,7 +35,7 @@ public class EditTilePreviewCommand<T extends TileLayout & LabeledConfiguration 
 	public EditTilePreviewCommand(TileContainerComponent container, T tile) {
 		super(container, tile);
 		setImage(Icons.EDIT_TILE_PREVIEW_ICON);
-		setLabel(Resources.getInstance().getString(I18NConstants.EDIT_TILE_PREVIEW_COMMAND));
+		setLabel(I18NConstants.EDIT_TILE_PREVIEW_COMMAND);
 	}
 
 	@Override

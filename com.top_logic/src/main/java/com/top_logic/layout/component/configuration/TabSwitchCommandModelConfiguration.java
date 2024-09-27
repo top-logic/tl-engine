@@ -17,7 +17,6 @@ import com.top_logic.layout.component.TabComponent;
 import com.top_logic.layout.tabbar.TabInfo.TabConfig;
 import com.top_logic.layout.tabbar.TabSwitchCommandModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.util.Resources;
 
 /**
  * The class {@link TabSwitchCommandModelConfiguration} creates a view to a
@@ -87,10 +86,9 @@ public class TabSwitchCommandModelConfiguration<C extends TabSwitchCommandModelC
 
 	private void applyTabInfo(TabSwitchCommandModel command, TabConfig tabInfo) {
 		command.setImage(tabInfo.getImage());
-		Resources resources = Resources.getInstance();
 		ResKey label = tabInfo.getLabel();
-		command.setLabel(resources.getString(label));
-		command.setTooltip(resources.getString(label.tooltipOptional()));
+		command.setLabel(label);
+		command.setTooltip(label.tooltipOptional());
 		command.setActiveImage(tabInfo.getImageSelected());
 	}
 

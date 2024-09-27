@@ -176,17 +176,17 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 		addListener(FormMember.LABEL_PROPERTY, new LabelChangedListener() {
 
 			@Override
-			public Bubble handleLabelChanged(Object sender, String oldLabel, String newLabel) {
+			public Bubble handleLabelChanged(Object sender, ResKey oldLabel, ResKey newLabel) {
 				if (sender != I18NField.this) {
 					// Label was set to a child of group where this listener was added to.
 					return Bubble.BUBBLE;
 				}
-				String proxyLabel;
+				ResKey proxyLabel;
 				if (newLabel == null) {
 					proxyLabel = newLabel;
 				} else {
 					ResKey label = I18NConstants.I18N_PROXY_FIELD_LABEL__FIELD.fill(newLabel);
-					proxyLabel = Resources.getInstance().getString(label);
+					proxyLabel = label;
 
 				}
 				field.setLabel(proxyLabel);

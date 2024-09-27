@@ -289,7 +289,7 @@ public abstract class AbstractApplyCommandHandler extends AbstractFormCommandHan
         if (! hasFieldError) {
         	if (invalidFieldWithoutError != null) {
         		Logger.error("Only invalid fields without error message: " + invalidFieldWithoutError, new UnreachableAssertion("Stack trace"), AbstractApplyCommandHandler.class);
-				aResult.addErrorText(invalidFieldWithoutError.getLabel());
+				aResult.addError(invalidFieldWithoutError.getLabel());
         	}
 			if (aResult.isSuccess()) {
 				aResult.addErrorMessage(genericErrorKey);

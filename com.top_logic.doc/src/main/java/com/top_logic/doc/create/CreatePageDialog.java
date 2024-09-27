@@ -22,7 +22,6 @@ import com.top_logic.layout.messagebox.AbstractFormPageDialog;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.form.ReactiveFormCSS;
-import com.top_logic.util.Resources;
 
 /**
  * {@link AbstractFormPageDialog} containing {@link StringField}s for the title and help id to
@@ -82,11 +81,11 @@ public class CreatePageDialog extends AbstractFormPageDialog {
 	@Override
 	protected void fillFormContext(FormContext context) {
 		StringField titleField = FormFactory.newStringField(PAGE_TITLE);
-		titleField.setLabel(Resources.getInstance().getString(I18NConstants.CREATE_PAGE_PAGE_TITLE));
+		titleField.setLabel(I18NConstants.CREATE_PAGE_PAGE_TITLE);
 		titleField.setMandatory(true);
 
 		StringField helpIdField = FormFactory.newStringField(HELP_ID);
-		helpIdField.setLabel(Resources.getInstance().getString(I18NConstants.CREATE_PAGE_HELP_ID));
+		helpIdField.setLabel(I18NConstants.CREATE_PAGE_HELP_ID);
 		context.addMember(titleField);
 		context.addMember(helpIdField);
 	}

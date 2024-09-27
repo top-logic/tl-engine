@@ -7,6 +7,7 @@ package com.top_logic.layout.form;
 
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.listener.PropertyListener;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * Handles change of the label of a given object.
@@ -28,7 +29,7 @@ public interface LabelChangedListener extends PropertyListener {
 	 *        The current label.
 	 * @return Whether this event shall bubble.
 	 */
-	Bubble handleLabelChanged(Object sender, String oldLabel, String newLabel);
+	Bubble handleLabelChanged(Object sender, ResKey oldLabel, ResKey newLabel);
 
 }
 

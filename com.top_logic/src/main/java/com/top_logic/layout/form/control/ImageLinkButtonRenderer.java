@@ -10,6 +10,7 @@ import java.io.IOException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ButtonUIModel;
@@ -116,7 +117,7 @@ public class ImageLinkButtonRenderer extends AbstractButtonRenderer<ImageLinkBut
 			out.writeAttribute(TABINDEX_ATTR, button.getTabindex());
 		}
 
-		out.writeAttribute(ALT_ATTR, button.getAltText());
+		out.writeAttribute(ALT_ATTR, context.getResources().getString(button.getAltText()));
 		/*
 		 * Older versions of the Internet Explorer display the text in the "alt" attribute if the
 		 * "title" attribute is not set. As there is already a JavaScript tooltip in many cases,
@@ -129,7 +130,7 @@ public class ImageLinkButtonRenderer extends AbstractButtonRenderer<ImageLinkBut
 	}
 
 	protected void writeLink(DisplayContext context, TagWriter out, AbstractButtonControl<?> button) throws IOException {
-		String label = button.getLabel();
+		String label = context.getResources().getString(button.getLabel());
 		if (button.isDisabled()) {
 			out.beginBeginTag(controlTag());
 			out.writeAttribute(ID_ATTR, getLinkId(button));
@@ -173,7 +174,7 @@ public class ImageLinkButtonRenderer extends AbstractButtonRenderer<ImageLinkBut
 	}
 
     @Override
-	public void handleLabelPropertyChange(AbstractButtonControl<?> button, String aNewLabel) {
+	public void handleLabelPropertyChange(AbstractButtonControl<?> button, ResKey aNewLabel) {
 		//
 	}
 

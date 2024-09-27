@@ -16,7 +16,6 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
-import com.top_logic.util.Resources;
 
 /**
  * An {@link AdditionalHeaderControl} that writes a label and a tooltip.
@@ -39,14 +38,14 @@ public abstract class SimpleAdditionalHeaderControl extends AdditionalHeaderCont
 
 	@Override
 	protected void internalWriteContent(DisplayContext context, TagWriter out) {
-		out.writeText(getLabel());
+		out.writeText(context.getResources().getString(getLabel()));
 	}
 
 	@Override
 	protected void writeControlAttributes(DisplayContext context, TagWriter out) throws IOException {
 		super.writeControlAttributes(context, out);
-		String tooltip = getTooltip();
-		if (isEmpty(tooltip)) {
+		ResKey tooltip = getTooltip();
+		if (tooltip == null) {
 			return;
 		}
 		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(context, out, tooltip);
@@ -57,7 +56,7 @@ public abstract class SimpleAdditionalHeaderControl extends AdditionalHeaderCont
 	 * 
 	 * @return Null is equivalent to the empty String.
 	 */
-	protected String getLabel() {
+	protected ResKey getLabel() {
 		return composeStaticWithDynamicPart(getStaticLabelPart(), getDynamicLabelPart());
 	}
 
@@ -78,7 +77,7 @@ public abstract class SimpleAdditionalHeaderControl extends AdditionalHeaderCont
 	 * 
 	 * @return Null is equivalent to the empty String.
 	 */
-	protected String getTooltip() {
+	protected ResKey getTooltip() {
 		return composeStaticWithDynamicPart(getStaticTooltipPart(), getDynamicTooltipPart());
 	}
 
@@ -105,23 +104,19 @@ public abstract class SimpleAdditionalHeaderControl extends AdditionalHeaderCont
 	 * If one of these two is null or the empty String, only the other one is used.
 	 * </p>
 	 */
-	protected String composeStaticWithDynamicPart(ResKey staticPart, Object dynamicPart) {
+	protected ResKey composeStaticWithDynamicPart(ResKey staticPart, Object dynamicPart) {
 		String dynamicPartLabel = getLabel(dynamicPart);
 		if (staticPart == null) {
-			return dynamicPartLabel;
+			return ResKey.text(dynamicPartLabel);
 		}
 		if (isEmpty(dynamicPartLabel)) {
-			return translate(staticPart);
+			return staticPart;
 		}
-		return translate(ResKey.message(staticPart, dynamicPartLabel));
+		return staticPart.asResKey1().fill(dynamicPartLabel);
 	}
 
 	private String getLabel(Object dynamicPart) {
 		return MetaLabelProvider.INSTANCE.getLabel(dynamicPart);
-	}
-
-	private String translate(ResKey i18n) {
-		return Resources.getInstance().getString(i18n);
 	}
 
 }

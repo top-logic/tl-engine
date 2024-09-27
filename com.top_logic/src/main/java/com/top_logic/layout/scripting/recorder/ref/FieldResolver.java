@@ -36,6 +36,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.Resources;
 
 /**
  * {@link FieldRefVisitor} that resolves {@link FieldRef}s to {@link FormMember}s.
@@ -93,7 +94,7 @@ public class FieldResolver implements FieldRefVisitor {
 		if (!member.hasLabel()) {
 			return "[No Label: " + member.getName() + "]";
 		}
-		return member.getLabel();
+		return Resources.getInstance().getString(member.getLabel());
 	}
 
 	@Override

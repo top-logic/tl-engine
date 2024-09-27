@@ -28,6 +28,7 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.tools.NameBuilder;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.ThemeFactory;
@@ -35,9 +36,7 @@ import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.InvisibleView;
-import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.ResourceProvider;
-import com.top_logic.layout.TextView;
 import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.View;
 import com.top_logic.layout.basic.DefaultDisplayContext;
@@ -47,6 +46,7 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.WithPropertiesDelegate;
 import com.top_logic.layout.basic.WithPropertiesDelegateFactory;
 import com.top_logic.layout.basic.XMLTag;
+import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.control.TableHeaderSelectionControl;
@@ -165,46 +165,6 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	public static final String CELL_INNER_SPACER_CSS_CLASS = "tblCellInnerSpacer";
 
 	public static final String CELL_ADJUSTMENT_CSS_CLASS = "tblCellAdjustment";
-
-	/**
-	 * Filename without its extension for the paging icon to go to the first table page.
-	 */
-	public static final String TABLE_FIRST_PAGE_ICON_NAME = "tblFirst";
-
-	/**
-	 * Filename without its extension for the disabled paging icon to go to the first table page.
-	 */
-	public static final String TABLE_DISABLED_FIRST_PAGE_ICON_NAME = "tblFirstDisabled";
-
-	/**
-	 * Filename without its extension for the paging icon to go to the previous table page.
-	 */
-	public static final String TABLE_PREVIOUS_PAGE_ICON_NAME = "tblPrev";
-
-	/**
-	 * Filename without its extension for the disabled paging icon to go to the previous table page.
-	 */
-	public static final String TABLE_DISABLED_PREVIOUS_PAGE_ICON_NAME = "tblPrevDisabled";
-
-	/**
-	 * Filename without its extension for the paging icon to go to the next table page.
-	 */
-	public static final String TABLE_NEXT_PAGE_ICON_NAME = "tblNext";
-
-	/**
-	 * Filename without its extension for the disabled paging icon to go to the next table page.
-	 */
-	public static final String TABLE_DISABLED_NEXT_PAGE_ICON_NAME = "tblNextDisabled";
-
-	/**
-	 * Filename without its extension for the paging icon to go to the last table page.
-	 */
-	public static final String TABLE_LAST_PAGE_ICON_NAME = "tblLast";
-
-	/**
-	 * Filename without its extension for the disabled paging icon to go to the last table page.
-	 */
-	public static final String TABLE_DISABLED_LAST_PAGE_ICON_NAME = "tblLastDisabled";
 
 	/**
 	 * CSS class name to style a table header row.
@@ -715,11 +675,11 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 
 				private void writeGroupColumnLabel(int colspan, Column group, int rowIndex,
 						DisplayContext context, TagWriter out) throws IOException {
-					String label;
+					ResKey label;
 					if (getModel().getHeader().hasLabel(group, rowIndex)) {
 						label = group.getLabel(getView().getTableData());
 					} else {
-						label = NBSP;
+						label = ResKey.text(NBSP);
 					}
 
 					getRenderer().writeGroupColumnContent(context, out, DefaultRenderState.this, group, colspan, 0,
@@ -1279,23 +1239,6 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	 */
 	public static final CellRenderer DEFAULT_CELL_RENDERER = DefaultCellRenderer.INSTANCE;
 
-	protected static final ResPrefix GENERAL_PREFIX = I18NConstants.TABLE;
-
-	/** {@link ResKey} for ascending sort order to show the status in the tooltip of the icon. */
-	protected static final ResKey SORT_ASC_KEY = GENERAL_PREFIX.key("asc");
-
-	/** {@link ResKey} for descending sort order to show the status in the tooltip of the icon. */
-	protected static final ResKey SORT_DESC_KEY = GENERAL_PREFIX.key("desc");
-
-	/** {@link ResKey} for the tooltip of a filter icon */
-	protected static final ResKey FILTER_KEY = GENERAL_PREFIX.key("filter");
-
-	/** {@link ResKey} for the tooltip of a filter-sort icon */
-	protected static final ResKey FILTER_SORT_KEY = GENERAL_PREFIX.key("filterSort");
-
-	/** {@link ResKey} for the tooltip of a sort icon */
-	protected static final ResKey SORT_KEY = GENERAL_PREFIX.key("sort");
-
 	protected static final ThemeImage EMPTY_IMAGE = ThemeImage.themeIcon("TABLE_EMPTY");
 
 	protected static final String RES_SUMMARY = "summary";
@@ -1599,7 +1542,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	@Override
 	public void writeGroupColumnContent(DisplayContext context, TagWriter out, RenderState state, Column group,
 			int columnIndex, int groupSpan,
-			String label) {
+			ResKey label) {
 		out.beginBeginTag(SPAN);
 		out.writeAttribute(CLASS_ATTR, CELL_ADJUSTMENT_CSS_CLASS);
 		out.endBeginTag();
@@ -1608,7 +1551,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 			out.writeAttribute(CLASS_ATTR, CELL_INNER_SPACER_CSS_CLASS);
 			out.endBeginTag();
 			{
-				out.writeText(label);
+				out.writeText(context.getResources().getString(label));
 			}
 			out.endTag(SPAN);
 		}
@@ -1748,7 +1691,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	 * 
 	 * @return The label for the column.
 	 */
-	public static String getColumnLabel(RenderState state, int columnIndex) {
+	public static ResKey getColumnLabel(RenderState state, int columnIndex) {
 		return getColumn(state, columnIndex).getLabel(state.getView().getTableData());
 	}
 
@@ -1787,8 +1730,8 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 					// writeOnMouseDownMakeDragable(out, state.getView(), column,
 					// customColumnOrder, sortable);
 				}
-				String tooltip = getTooltip(state, column);
-				String tooltipCaption = getTooltipCaption(state.getView(), column);
+				ResKey tooltip = getTooltip(state, column);
+				ResKey tooltipCaption = getTooltipCaption(state.getView(), column);
 
 				out1.endBeginTag();
 				{
@@ -1798,7 +1741,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 							tooltipCaption);
 						out1.endBeginTag();
 					}
-					writeHeaderContent(state, out1, column);
+					writeHeaderContent(state, context, out1, column);
 
 					if (tooltip != null) {
 						out1.endTag(SPAN);
@@ -1837,7 +1780,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		ThemeImage sortImage = null;
 		ThemeImage filterImage = null;
 		String filterCss = null;
-		ResKey sortKey = null;
+		ResKey1 sortKey = null;
 
 		TableViewModel model = state.getModel();
 		boolean sortable = model.isSortable(column);
@@ -1861,7 +1804,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 				} else {
 					sortImage = sortedAsc ? Icons.SORT_ASC : Icons.SORT_DESC;
 				}
-				sortKey = sortedAsc ? SORT_ASC_KEY : SORT_DESC_KEY;
+				sortKey = sortedAsc ? I18NConstants.SORT_ASC__MSG : I18NConstants.SORT_DESC__MSG;
 			} else {
 				sortImage = Icons.SORTABLE;
 			}
@@ -1892,15 +1835,15 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	 * @param sortImage
 	 *        The icon to display the sort state. <code>null</code> if the column is not sortable.
 	 * @param filterImage
-	 *        The icon to display the filter state. <code>null</code> if the column is not
-	 *        filterable.
+	 *        The icon to display the filter state. <code>null</code> if the column cannot be
+	 *        filtered.
 	 * @param sortStateKey
-	 *        Key for the state of sorting.
+	 *        Key for the state of sorting, or <code>null</code> if not sorted.
 	 * @param filterCss
 	 *        CSS class for filter. <code>null</code> if no additional class is set.
 	 */
 	private void writeFilterSortIcon(DisplayContext context, TagWriter out, RenderState state, int column,
-			TableViewModel model, ThemeImage sortImage, ThemeImage filterImage, ResKey sortStateKey, String filterCss)
+			TableViewModel model, ThemeImage sortImage, ThemeImage filterImage, ResKey1 sortStateKey, String filterCss)
 			throws IOException {
 		if (filterImage == null && sortImage == null) {
 			return;
@@ -1915,19 +1858,18 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		writeOnClickOpenDialog(out, view, columnName, filterable);
 		out.endBeginTag();
 		{
-			String headerLabel = getColumnLabel(state, column);
-			String tooltip;
-			String sortStateMessage = " " + Resources.getInstance().getString(sortStateKey);
+			ResKey headerLabel = getColumnLabel(state, column);
+			ResKey tooltip;
 			if (filterImage == null) {
-				tooltip = context.getResources().getMessage(SORT_KEY, headerLabel);
-				tooltip = sortStateKey != null ? tooltip + sortStateMessage : tooltip;
+				tooltip = I18NConstants.SORT_KEY__COLUMN.fill(headerLabel);
+				tooltip = sortStateKey == null ? tooltip : sortStateKey.fill(tooltip);
 				writeSortImage(context, out, sortImage, null, tooltip);
 			} else if (sortImage == null) {
-				tooltip = context.getResources().getMessage(FILTER_KEY, headerLabel);
+				tooltip = I18NConstants.FILTER_KEY__COLUMN.fill(headerLabel);
 				writeFilterIcon(context, out, filterImage, filterCss, tooltip);
 			} else {
-				tooltip = context.getResources().getMessage(FILTER_SORT_KEY, headerLabel);
-				tooltip = sortStateKey != null ? tooltip + sortStateMessage : tooltip;
+				tooltip = I18NConstants.FILTER_SORT_KEY__COLUMN.fill(headerLabel);
+				tooltip = sortStateKey == null ? tooltip : sortStateKey.fill(tooltip);
 				writeSortImage(context, out, sortImage, TABLE_FILTER_SORT_ICON_CSS_CLASS, tooltip);
 				writeFilterIcon(context, out, filterImage, filterCss, tooltip);
 			}
@@ -1951,14 +1893,14 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	 *        Tooltip and alt-attribute of the icon.
 	 */
 	protected void writeFilterIcon(DisplayContext context, TagWriter out, ThemeImage filterIcon,
-			String filterCss, String tooltip) throws IOException {
+			String filterCss, ResKey tooltip) throws IOException {
 		XMLTag tag = filterIcon.toIcon();
 		tag.beginBeginTag(context, out);
 		out.beginCssClasses();
 		out.append(FILTER_BUTTON_CSS_CLASS);
 		out.append(filterCss);
 		out.endCssClasses();
-		out.writeAttribute(ALT_ATTR, tooltip);
+		out.writeAttribute(ALT_ATTR, context.getResources().getString(tooltip));
 		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip, null);
 		tag.endEmptyTag(context, out);
 	}
@@ -2007,16 +1949,18 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	/**
 	 * Write the real content of the header (without technical sorting code, etc...)
 	 */
-	protected void writeHeaderContent(RenderState state, TagWriter out, int column) throws IOException {
+	protected void writeHeaderContent(RenderState state, DisplayContext context, TagWriter out, int column)
+			throws IOException {
 		ColumnConfiguration theColDesc = getColumnConfiguration(state, column);
 		if (!theColDesc.isShowHeader()) {
 			return;
 		}
-		String columnLabel = getColumnLabel(state, column);
-		if (StringServices.isEmpty(columnLabel)) {
-			columnLabel = NBSP;
+		ResKey columnLabel = getColumnLabel(state, column);
+		if (columnLabel != null) {
+			out.writeText(NBSP);
+		} else {
+			out.writeText(context.getResources().getString(columnLabel));
 		}
-		out.writeText(columnLabel);
 	}
 
 	/**
@@ -2027,7 +1971,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	 * 
 	 * @return the tooltip for this cell or <code>null</code> if no tooltip should be rendered.
 	 */
-	protected String getTooltip(RenderState state, int column) {
+	protected ResKey getTooltip(RenderState state, int column) {
 		return getColumn(state, column).getTooltip(state.getView().getTableData());
 	}
 	
@@ -2039,7 +1983,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	 * 
 	 * @return the tooltip caption for this cell or <code>null</code> if no caption should be added.
 	 */
-	protected String getTooltipCaption(TableControl view, int column) {
+	protected ResKey getTooltipCaption(TableControl view, int column) {
 		return null;
 	}
 
@@ -2057,7 +2001,8 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	 * @param tooltip
 	 * 		  Tooltip and alt-Attribute of the icon.
 	 */
-	protected void writeSortImage(DisplayContext context, TagWriter out, ThemeImage image, String cssClass, String tooltip)
+	protected void writeSortImage(DisplayContext context, TagWriter out, ThemeImage image, String cssClass,
+			ResKey tooltip)
 			throws IOException {
 
 		XMLTag tag = image.toIcon();
@@ -2066,7 +2011,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		out.append(FILTER_BUTTON_CSS_CLASS);
 		out.append(cssClass);
 		out.endCssClasses();
-		out.writeAttribute(ALT_ATTR, tooltip);
+		out.writeAttribute(ALT_ATTR, context.getResources().getString(tooltip));
 		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip, null);
 		out.writeAttribute(BORDER_ATTR, 0);
 		out.writeAttribute(ONDRAGSTART_ATTR, "return false;");
@@ -2085,8 +2030,8 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	 * 
 	 * @return Never null. Use the {@link InvisibleView} if there is no title.
 	 */
-	protected View getTitleView(TableControl control) {
-		return new TextView(control.getTitle());
+	protected HTMLFragment getTitleView(TableControl control) {
+		return Fragments.message(control.getTitle());
 	}
 
 	@Override
@@ -2241,11 +2186,10 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	private HTMLFragment createFirstPageButtonFragment(TableControl view, boolean hasPreviousPage) {
 		return (context, out) -> {
 			if (hasPreviousPage) {
-				writePagingCommand(context, out, view, TABLE_FIRST_PAGE_ICON_NAME, Icons.TBL_FIRST,
+				writePagingCommand(context, out, view, I18NConstants.FIRST_PAGE, Icons.TBL_FIRST,
 					view.getFirstPageCommand());
 			} else {
-				writePagingCommand(context, out, view, TABLE_DISABLED_FIRST_PAGE_ICON_NAME,
-					Icons.TBL_FIRST_DISABLED, null);
+				writePagingCommand(context, out, view, I18NConstants.FIRST_PAGE, Icons.TBL_FIRST_DISABLED, null);
 			}
 		};
 	}
@@ -2253,11 +2197,10 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	private HTMLFragment createPreviousPageButtonFragment(TableControl view, boolean hasPreviousPage) {
 		return (context, out) -> {
 			if (hasPreviousPage) {
-				writePagingCommand(context, out, view, TABLE_PREVIOUS_PAGE_ICON_NAME, Icons.TBL_PREV,
+				writePagingCommand(context, out, view, I18NConstants.PREVIOUS_PAGE, Icons.TBL_PREV,
 					view.getPreviousPageCommand());
 			} else {
-				writePagingCommand(context, out, view, TABLE_DISABLED_PREVIOUS_PAGE_ICON_NAME,
-					Icons.TBL_PREV_DISABLED, null);
+				writePagingCommand(context, out, view, I18NConstants.PREVIOUS_PAGE, Icons.TBL_PREV_DISABLED, null);
 			}
 		};
 	}
@@ -2265,11 +2208,10 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	private HTMLFragment createNextPageButtonFragment(TableControl view, boolean hasNextPage) {
 		return (context, out) -> {
 			if (hasNextPage) {
-				writePagingCommand(context, out, view, TABLE_NEXT_PAGE_ICON_NAME, Icons.TBL_NEXT,
+				writePagingCommand(context, out, view, I18NConstants.NEXT_PAGE, Icons.TBL_NEXT,
 					view.getNextPageCommand());
 			} else {
-				writePagingCommand(context, out, view, TABLE_DISABLED_NEXT_PAGE_ICON_NAME,
-					Icons.TBL_NEXT_DISABLED, null);
+				writePagingCommand(context, out, view, I18NConstants.NEXT_PAGE, Icons.TBL_NEXT_DISABLED, null);
 			}
 		};
 	}
@@ -2277,11 +2219,10 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	private HTMLFragment createLastPageButtonFragment(TableControl view, boolean hasNextPage) {
 		return (context, out) -> {
 			if (hasNextPage) {
-				writePagingCommand(context, out, view, TABLE_LAST_PAGE_ICON_NAME, Icons.TBL_LAST,
+				writePagingCommand(context, out, view, I18NConstants.LAST_PAGE, Icons.TBL_LAST,
 					view.getLastPageCommand());
 			} else {
-				writePagingCommand(context, out, view, TABLE_DISABLED_LAST_PAGE_ICON_NAME,
-					Icons.TBL_LAST_DISABLED, null);
+				writePagingCommand(context, out, view, I18NConstants.LAST_PAGE, Icons.TBL_LAST_DISABLED, null);
 			}
 		};
 	}
@@ -2315,7 +2256,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	 * 
 	 * @param out
 	 *        The writer to write the command.
-	 * @param key
+	 * @param tooltip
 	 *        The name of the image (without page and extension).
 	 * @param command
 	 *        The command to execute.
@@ -2324,23 +2265,17 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	 *         If writing fails.
 	 */
 	protected void writePagingCommand(DisplayContext context, TagWriter out,
-			TableControl view, String key, ThemeImage image, TableCommand command)
+			TableControl view, ResKey tooltip, ThemeImage image, TableCommand command)
 			throws IOException {
-		String tooltipText = view.getResources().getStringResource(key, null);
-		if (tooltipText == null) {
-			// Fallback, use default fallback resources.
-			tooltipText = Resources.getInstance().getString(GENERAL_PREFIX.key(key));
-		}
-
 		if (command != null) {
 			out.beginBeginTag(ANCHOR);
 			out.writeAttribute(HREF_ATTR, "#");
 			writeOnClick(out, view, command);
 			out.endBeginTag();
-			image.writeWithCssPlainTooltip(context, out, null, tooltipText);
+			image.writeWithCssPlainTooltip(context, out, null, tooltip);
 			out.endTag(ANCHOR);
 		} else {
-			image.writeWithCssPlainTooltip(context, out, FormConstants.DISABLED_CSS_CLASS, tooltipText);
+			image.writeWithCssPlainTooltip(context, out, FormConstants.DISABLED_CSS_CLASS, tooltip);
 		}
 	}
 

@@ -68,7 +68,6 @@ import com.top_logic.layout.tree.breadcrumb.BreadcrumbRenderer;
 import com.top_logic.layout.tree.breadcrumb.DefaultBreadcrumbRenderer;
 import com.top_logic.layout.tree.model.TreeBuilder;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.util.Resources;
 
 /**
  * The WebFolderUIFactory provides methods to create stuff for displaying a WebFolder
@@ -323,7 +322,7 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 		ZipDownloadExecutable executable = new ZipDownloadExecutable(selectionModel);
 		CommandField field =
 			WebFolderFieldProvider.createField(fieldName, executable, executableImage, disabledImage);
-		field.setTooltip(Resources.getInstance().getString(I18NConstants.ZIP_DOWNLOAD_FOLDER_TOOLTIP));
+		field.setTooltip(I18NConstants.ZIP_DOWNLOAD_FOLDER_TOOLTIP);
 
 		// When the corresponding form context is immutable it would be not
 		// possible to execute the command. As download is essentially the
@@ -483,7 +482,7 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 	 * @param rootLabel
 	 *        A special text to write for the root node or null if no special handling is desired.
 	 */
-	public BreadcrumbRenderer createBreadcrumbRenderer(String rootLabel) {
+	public BreadcrumbRenderer createBreadcrumbRenderer(ResKey rootLabel) {
 		PolymorphicConfiguration<? extends BreadcrumbRenderer> rendererConfig = getConfig().getBreadcrumbRenderer();
 		if (rootLabel != null) {
 			setRootLabel(rootLabel, rendererConfig);
@@ -491,14 +490,13 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 		return TypedConfigUtil.createInstance(rendererConfig);
 	}
 
-	private void setRootLabel(String rootLabel, PolymorphicConfiguration<? extends BreadcrumbRenderer> rendererConfig) {
+	private void setRootLabel(ResKey rootLabel, PolymorphicConfiguration<? extends BreadcrumbRenderer> rendererConfig) {
 		if (!(rendererConfig instanceof DefaultBreadcrumbRenderer.Config)) {
 			return;
 		}
 		DefaultBreadcrumbRenderer.Config defaultRendererConfig = (DefaultBreadcrumbRenderer.Config) rendererConfig;
 		BreadcrumbContentRenderer.Config contentRendererConfig = defaultRendererConfig.getContentRenderer();
-		ResKey rootLabelKey = ResKey.text(rootLabel);
-		TypedConfigUtil.setProperty(contentRendererConfig, BreadcrumbContentRenderer.Config.ROOT_LABEL, rootLabelKey);
+		TypedConfigUtil.setProperty(contentRendererConfig, BreadcrumbContentRenderer.Config.ROOT_LABEL, rootLabel);
 	}
 
 	/**

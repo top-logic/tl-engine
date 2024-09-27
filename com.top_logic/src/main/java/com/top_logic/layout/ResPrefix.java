@@ -85,13 +85,13 @@ public abstract class ResPrefix implements ResourceView {
 	}
 
 	@Override
-	public String getStringResource(String suffix) {
-		return Resources.getInstance().getString(key(suffix));
+	public ResKey getStringResource(String suffix) {
+		return key(suffix);
 	}
 
 	@Override
-	public String getStringResource(String suffix, String defaultValue) {
-		return Resources.getInstance().getString(key(suffix), defaultValue);
+	public ResKey getStringResource(String suffix, ResKey defaultValue) {
+		return key(suffix).fallback(defaultValue);
 	}
 
 	@Override

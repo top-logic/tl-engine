@@ -125,7 +125,7 @@ public class LogoutTimerControl extends AbstractControlBase {
 			out.writeText(' ');
 			XMLTag tag = Icons.REFRESH_SMALL.toButton();
 			tag.beginBeginTag(context, out);
-			HTMLUtil.writeImageTooltip(context, out, context.getResources().getString(I18NConstants.SESSION_REFRESH));
+			HTMLUtil.writeImageTooltip(context, out, I18NConstants.SESSION_REFRESH);
 			tag.endEmptyTag(context, out);
 
 			out.beginScript();

@@ -16,6 +16,7 @@ import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.model.Column;
 import com.top_logic.layout.table.model.ColumnConfiguration.DisplayMode;
 import com.top_logic.layout.table.tree.TreeTableAccessor;
+import com.top_logic.util.Resources;
 
 /**
  * Returns {@link CompareInfo} for the compare column from the {@link CompareRowObject}.
@@ -91,7 +92,7 @@ public class CompareInfoAccessor extends ReadOnlyAccessor<Object> {
 					(CompareInfo) _tableModel.getValueAt(rawRowObject, column.getName());
 				if (attributeCompareInfo != null) {
 					compareInfo.addCompareInfo(column.getName(), attributeCompareInfo,
-						column.getLabel(_tableModel.getTableConfiguration()));
+						Resources.getInstance().getString(column.getLabel(_tableModel.getTableConfiguration())));
 				}
 			}
 		}

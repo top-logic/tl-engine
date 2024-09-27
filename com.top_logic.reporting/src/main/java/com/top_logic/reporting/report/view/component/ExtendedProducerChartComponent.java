@@ -33,6 +33,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.LinkGenerator;
 import com.top_logic.layout.basic.CommandHandlerCommand;
@@ -58,7 +59,6 @@ import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
 import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
-import com.top_logic.util.Resources;
 
 /**
  * Chart component providing a handling of held business objects to the {@link JFreeChart} via the {@link ChartData}.
@@ -316,12 +316,11 @@ public class ExtendedProducerChartComponent extends DefaultProducerChartComponen
      */
     protected List<CommandModel> getChartSelectionModels() {
         List<CommandModel> theModels  = new ArrayList<>();
-        Resources          theRes     = Resources.getInstance();
         CommandHandler     theCommand = CommandHandlerFactory.getInstance().getHandler(ChoiceChartCommand.COMMAND_ID);
 
 		for (Iterator<ChartType> theIter = this.getSupportedChartTypes().iterator(); theIter.hasNext();) {
 			ChartType theType = theIter.next();
-			String theLabel = this.getI18NLabel(theRes, theType.getName());
+			ResKey theLabel = this.getI18NLabel(theType.getName());
 			CommandModel theModel = this.getCommandModelFor(theCommand, theType.getName());
 
             theModel.setLabel(theLabel);
@@ -333,16 +332,17 @@ public class ExtendedProducerChartComponent extends DefaultProducerChartComponen
         return theModels;
     }
 
-    /** 
-     * Return the I18N label for the command model in {@link #getChartSelectionModels()}.
-     * 
-     * @param    aRes            The resources to be used for I18N, must not be <code>null</code>.
-     * @param    aChartType      The requested chart type, must not be <code>null</code>.
-     * @return   The requested I18N for the given chart type.
-     * @see      #getChartSelectionModels()
-     */
-    protected String getI18NLabel(Resources aRes, String aChartType) {
-		return aRes.getString(I18NConstants.TL.key(aChartType));
+    /**
+	 * Return the I18N label for the command model in {@link #getChartSelectionModels()}.
+	 * 
+	 * @param aChartType
+	 *        The requested chart type, must not be <code>null</code>.
+	 * 
+	 * @return The requested I18N for the given chart type.
+	 * @see #getChartSelectionModels()
+	 */
+	protected ResKey getI18NLabel(String aChartType) {
+		return I18NConstants.TL.key(aChartType);
     }
 
     /**

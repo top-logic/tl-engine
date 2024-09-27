@@ -13,6 +13,7 @@ import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.SetBuilder;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.listener.EventType;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.IdentifierSource;
 import com.top_logic.layout.ResourceView;
 import com.top_logic.layout.basic.Focusable;
@@ -166,11 +167,11 @@ public interface FormMember extends FormContextProxy, Focusable, VisibilityModel
 	 * @see #getLabel()
 	 * @see LabelChangedListener
 	 */
-	EventType<LabelChangedListener, Object, String> LABEL_PROPERTY =
+	EventType<LabelChangedListener, Object, ResKey> LABEL_PROPERTY =
 		new EventType<>("label") {
 
 			@Override
-			public Bubble dispatch(LabelChangedListener listener, Object sender, String oldValue, String newValue) {
+			public Bubble dispatch(LabelChangedListener listener, Object sender, ResKey oldValue, ResKey newValue) {
 				return listener.handleLabelChanged(sender, oldValue, newValue);
 			}
 		};
@@ -180,11 +181,11 @@ public interface FormMember extends FormContextProxy, Focusable, VisibilityModel
 	 * 
 	 * @see TooltipChangedListener
 	 */
-	EventType<TooltipChangedListener, Object, String> TOOLTIP_PROPERTY =
+	EventType<TooltipChangedListener, Object, ResKey> TOOLTIP_PROPERTY =
 		new EventType<>("tooltip") {
 
 			@Override
-			public Bubble dispatch(TooltipChangedListener listener, Object sender, String oldValue, String newValue) {
+			public Bubble dispatch(TooltipChangedListener listener, Object sender, ResKey oldValue, ResKey newValue) {
 				return listener.handleTooltipChanged(sender, oldValue, newValue);
 			}
 		};
@@ -364,7 +365,7 @@ public interface FormMember extends FormContextProxy, Focusable, VisibilityModel
 	 * 
 	 * @see FormMember#hasLabel()
 	 */
-    public String getLabel();
+	public ResKey getLabel();
     
     /**
 	 * Explicitly sets a label for this member.
@@ -380,8 +381,20 @@ public interface FormMember extends FormContextProxy, Focusable, VisibilityModel
 	 * 
 	 * @see #getLabel()
 	 */
-	public String setLabel(String label);
+	public ResKey setLabel(ResKey labelKey);
 	
+	/**
+	 * Sets the label to the constant (non-internationalized) given string.
+	 * 
+	 * <p>
+	 * Note: For all labels in a application that are not derived from data, use the
+	 * {@link #setLabel(ResKey)} method to get a correctly internationalized application.
+	 * </p>
+	 */
+	default ResKey setLabelText(String label) {
+		return setLabel(ResKey.text(label));
+	}
+
 	/**
 	 * Whether this {@link FormMember} has an explicitly set label or the default mechanism leads to
 	 * an internationalised text.
@@ -393,22 +406,22 @@ public interface FormMember extends FormContextProxy, Focusable, VisibilityModel
 	/**
 	 * HTML fragment to render inside a tooltip on the label of this field.
 	 */
-	String getTooltip();
+	ResKey getTooltip();
 
 	/**
 	 * @see #getTooltip()
 	 */
-	void setTooltip(String newTooltip);
+	void setTooltip(ResKey newTooltip);
 
 	/**
 	 * HTML fragment to render inside the tooltip caption, see {@link #getTooltip()}.
 	 */
-	String getTooltipCaption();
+	ResKey getTooltipCaption();
 
 	/***
 	 * @see #getTooltipCaption()
 	 */
-	void setTooltipCaption(String aTooltipCaption);
+	void setTooltipCaption(ResKey aTooltipCaption);
 
 	/**
 	 * The current custom CSS class names of this {@link FormMember}.

@@ -167,7 +167,7 @@ public class PopupDialogRenderer extends DefaultControlRenderer<PopupDialogContr
 				out.writeAttribute(ALT_ATTR, Resources.getInstance().getString(I18NConstants.CLOSE_DIALOG));
 				out.writeAttribute(TITLE_ATTR, "");
 				OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out,
-					Resources.getInstance().getString(I18NConstants.CLOSE_DIALOG));
+					I18NConstants.CLOSE_DIALOG);
 				writeOnClick(out, popupDialog);
 				tag.endEmptyTag(context, out);
 

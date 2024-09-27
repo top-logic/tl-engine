@@ -48,7 +48,6 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.func.misc.AlwaysNull;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.DOMUtil;
-import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.CompositeControl;
@@ -851,9 +850,8 @@ public abstract class StructureEditComponent<N extends MutableTLTreeNode<N>> ext
 	private CommandField init(String aName, String clique, ThemeImage aImage, ThemeImage aDisabledImage,
 			CommandField commandField) {
 		commandField.setImage(aImage);
-		String label = Resources.getInstance().getString(I18NConstants.STRUCTURE_EDIT_BUTTONS.key(aName));
+		ResKey label = I18NConstants.STRUCTURE_EDIT_BUTTONS.key(aName);
         commandField.setLabel(label);
-		commandField.setTooltip(TagUtil.encodeXML(label));
         commandField.setNotExecutableImage(aDisabledImage);
         commandField.setInheritDeactivation(false);
 		commandField.set(CLIQUE, clique);

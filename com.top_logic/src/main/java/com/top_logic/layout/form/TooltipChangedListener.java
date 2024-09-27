@@ -7,6 +7,7 @@ package com.top_logic.layout.form;
 
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.listener.PropertyListener;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * Handles change of the tooltip of a given object.
@@ -28,7 +29,7 @@ public interface TooltipChangedListener extends PropertyListener {
 	 *        The current tooltip.
 	 * @return Whether this event shall bubble.
 	 */
-	Bubble handleTooltipChanged(Object sender, String oldValue, String newValue);
+	Bubble handleTooltipChanged(Object sender, ResKey oldValue, ResKey newValue);
 
 }
 

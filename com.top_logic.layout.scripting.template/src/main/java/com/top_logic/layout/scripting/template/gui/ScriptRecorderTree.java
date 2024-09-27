@@ -29,7 +29,6 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.IndexPosition;
@@ -435,10 +434,8 @@ public class ScriptRecorderTree extends BoundComponent implements TreeDataOwner,
 				tree.startRecording();
 			}
 			ResKey labelKey = tree.isRecording() ? _config.getPauseLabel() : getResourceKey(component);
-			String label = displayContext.getResources().getString(labelKey);
 			CommandModel commandModel = getCommandModel(arguments);
-			commandModel.setLabel(label);
-			commandModel.setTooltip(TagUtil.encodeXML(label));
+			commandModel.setLabel(labelKey);
 			commandModel.setImage(tree.isRecording() ? _config.getPauseImage() : getImage(component));
 			return HandlerResult.DEFAULT_RESULT;
 		}

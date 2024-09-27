@@ -19,7 +19,6 @@ import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.scripting.action.assertion.GuiAssertion;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.scripting.recorder.gui.inspector.plugin.GuiInspectorPlugin;
-import com.top_logic.util.Resources;
 
 /**
  * A {@link GuiInspectorPlugin} that enables the developer/tester to record an assertion.
@@ -84,7 +83,7 @@ public abstract class AssertionPlugin<M> extends GuiInspectorPlugin<M> {
 		commentField = FormFactory.newStringField(FIELD_NAME_COMMENT);
 		group.addMember(commentField);
 		ResKey labelKey = ResKey.fallback(getI18nPrefix().key(commentField.getName()), I18NConstants.COMMENT_FIELD);
-		commentField.setLabel(Resources.getInstance().getString(labelKey));
+		commentField.setLabel(labelKey);
 	}
 
 	/**

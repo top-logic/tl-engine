@@ -8,6 +8,7 @@ package com.top_logic.common.webfolder.ui.commands;
 import com.top_logic.common.webfolder.WebFolderUtils;
 import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.layout.LabelProvider;
+import com.top_logic.util.Resources;
 
 /**
  * Return the name of a webfolder used inside a zip file
@@ -24,7 +25,8 @@ public class ZipFolderNameProvider implements LabelProvider {
 		if (folder.getOwner() instanceof WebFolder) {
 			return folder.getName();
 		}
-		return WebFolderUtils.DEFAULT_WEBFOLDER_TABLE_RESOURCES.getStringResource("firstNode");
+		return Resources.getInstance()
+			.getString(WebFolderUtils.DEFAULT_WEBFOLDER_TABLE_RESOURCES.getStringResource("firstNode"));
 	}
 
 }

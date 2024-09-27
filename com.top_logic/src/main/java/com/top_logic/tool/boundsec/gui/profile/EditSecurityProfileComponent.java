@@ -317,9 +317,9 @@ public class EditSecurityProfileComponent extends EditComponent
 			}
 			Boolean hasRight = Boolean.valueOf(node.hasRight(colRoles));
 			BooleanField field = FormFactory.newBooleanField(fieldName, hasRight, !FormFactory.IMMUTABLE);
-			field.setLabel(fieldName + ": " + ExportNameLabels.INSTANCE.getLabel(node));
-			field.setTooltipCaption(_config.getDeclaredColumn(aProperty).getColumnLabel());
-			field.setTooltip(node.getRoleNamesAsTooltip(colRoles));
+			field.setLabel(ResKey.text(fieldName + ": " + ExportNameLabels.INSTANCE.getLabel(node)));
+			field.setTooltipCaption(ResKey.text(_config.getDeclaredColumn(aProperty).getColumnLabel()));
+			field.setTooltip(ResKey.text(node.getRoleNamesAsTooltip(colRoles)));
 			field.setControlProvider(DefaultTooltipControlProvider.INSTANCE);
 			field.set(COMMAND_NODE, node);
 			return field;

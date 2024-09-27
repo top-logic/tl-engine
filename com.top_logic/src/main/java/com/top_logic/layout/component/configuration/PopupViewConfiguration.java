@@ -41,7 +41,6 @@ import com.top_logic.layout.toolbar.ToolbarControl;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
-import com.top_logic.util.Resources;
 
 /**
  * {@link ViewConfiguration} that displays a pop-up menu with commands configured by a list of
@@ -226,10 +225,9 @@ public class PopupViewConfiguration extends AbstractConfiguredInstance<PopupView
 		Menu menu = ToolbarControl.createMenu(toolbar, false);
 		DefaultPopupMenuModel menuModel = new DefaultPopupMenuModel(_icon, menu);
 		menuModel.setCssClasses(_cssClass);
-		Resources resources = Resources.getInstance();
 		if (_label != null) {
-			menuModel.setLabel(resources.getString(_label, null));
-			menuModel.setTooltip(resources.getString(_label.tooltipOptional()));
+			menuModel.setLabel(_label);
+			menuModel.setTooltip(_label.tooltipOptional());
 		}
 		return menuModel;
 	}

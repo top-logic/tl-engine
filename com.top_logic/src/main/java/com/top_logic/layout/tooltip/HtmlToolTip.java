@@ -10,6 +10,7 @@ import java.io.IOException;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.exception.I18NException;
 import com.top_logic.basic.html.SafeHTML;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
@@ -54,6 +55,13 @@ public final class HtmlToolTip implements ToolTip {
 	@Override
 	public void writeContent(DisplayContext context, TagWriter out) throws IOException {
 		out.writeContent(ensureSafeHTMLTooltip(_tooltipHtml));
+	}
+
+	/**
+	 * Converts the given tooltip HTML to a safe variant.
+	 */
+	public static String ensureSafeHTMLTooltip(DisplayContext context, ResKey tooltip) {
+		return ensureSafeHTMLTooltip(context.getResources().getString(tooltip));
 	}
 
 	/**

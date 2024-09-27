@@ -7,6 +7,7 @@ package com.top_logic.layout.tree.renderer;
 
 import java.io.IOException;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ResourceProvider;
@@ -31,7 +32,7 @@ public class ReferencedSelectionContentRenderer extends ConfigurableTreeContentR
 	@Override
 	protected void renderTextLinkStart(DisplayContext context, TagWriter writer, TreeControl tree,
 			Object node, boolean canSelect) throws IOException {
-		String tooltip = getResourceProvider().getTooltip(node);
+		ResKey tooltip = ResKey.text(getResourceProvider().getTooltip(node));
 		writeTextLinkStart(context, writer, SPAN, canSelect, OnClickWriter.NONE, node, tooltip);
 	}
 

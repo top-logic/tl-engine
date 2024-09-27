@@ -35,19 +35,19 @@ public class DefaultButtonUIModel extends AbstractButtonUIModel implements LazyT
 	private ThemeImage activeImage;
 
 	@Inspectable
-	private String label;
+	private ResKey label;
 
 	@Inspectable
 	private String cssClasses;
 
 	@Inspectable
-	private String tooltip;
+	private ResKey tooltip;
 
 	@Inspectable
-	String tooltipCaption;
+	ResKey tooltipCaption;
 
 	@Inspectable
-	private String altText;
+	private ResKey altText;
 
 	@Inspectable
 	private boolean _progress;
@@ -145,22 +145,20 @@ public class DefaultButtonUIModel extends AbstractButtonUIModel implements LazyT
 	}
 
 	@Override
-	public String getLabel() {
+	public ResKey getLabel() {
 		return this.label;
 	}
 
 	/**
 	 * If the label changes, an event with index {@link AbstractFormMember#LABEL_PROPERTY} is fired.
-	 * 
-	 * @see CommandModel#setLabel(String)
 	 */
 	@Override
-	public String setLabel(String newLabel) {
-		String oldLabelRespectingFallbacks = getLabel();
-		String oldAltTextRespectingFallbacks = getAltText();
+	public ResKey setLabel(ResKey newLabel) {
+		ResKey oldLabelRespectingFallbacks = getLabel();
+		ResKey oldAltTextRespectingFallbacks = getAltText();
 		label = newLabel;
-		String newLabelRespectingFallbacks = getLabel();
-		String newAltTextRespectingFallbacks = getAltText();
+		ResKey newLabelRespectingFallbacks = getLabel();
+		ResKey newAltTextRespectingFallbacks = getAltText();
 
 		//Don't fire at invisible changes.
 		if (!StringServices.equals(oldLabelRespectingFallbacks, newLabelRespectingFallbacks)) {
@@ -175,18 +173,16 @@ public class DefaultButtonUIModel extends AbstractButtonUIModel implements LazyT
 	}
 
     @Override
-	public String getTooltip() {
+	public ResKey getTooltip() {
         return this.tooltip;
     }
     
     /**
 	 * If the tooltip changes, an event with index* {@link FormMember#TOOLTIP_PROPERTY} is fired.
-	 * 
-	 * @see CommandModel#setTooltip(String)
 	 */
     @Override
-	public void setTooltip(String aTooltip) {
-        String currentTooltip = getTooltip();
+	public void setTooltip(ResKey aTooltip) {
+		ResKey currentTooltip = getTooltip();
         if (!Utils.equals(currentTooltip, aTooltip)) {
             this.tooltip = aTooltip;
 			notifyListeners(AbstractFormMember.TOOLTIP_PROPERTY, this, currentTooltip, aTooltip);
@@ -194,19 +190,17 @@ public class DefaultButtonUIModel extends AbstractButtonUIModel implements LazyT
     }
 	
     @Override
-	public String getTooltipCaption() {
+	public ResKey getTooltipCaption() {
         return this.tooltipCaption;
     }
     
 	/**
 	 * If the tooltip caption changes, a event with index
 	 * {@link AbstractFormMember#TOOLTIP_PROPERTY} is fired.
-	 * 
-	 * @see CommandModel#setTooltipCaption(String)
 	 */
     @Override
-	public void setTooltipCaption(String aTooltip) {
-        String currentTooltip = getTooltipCaption();
+	public void setTooltipCaption(ResKey aTooltip) {
+		ResKey currentTooltip = getTooltipCaption();
         if (!Utils.equals(currentTooltip, aTooltip)) {
             this.tooltipCaption = aTooltip;
 			notifyListeners(AbstractFormMember.TOOLTIP_PROPERTY, this, currentTooltip, aTooltip);
@@ -217,7 +211,7 @@ public class DefaultButtonUIModel extends AbstractButtonUIModel implements LazyT
 	 * @see CommandModel#getAltText()
 	 */
 	@Override
-	public String getAltText() {
+	public ResKey getAltText() {
 		if (altText != null) {
 			return altText;
 		}
@@ -226,25 +220,23 @@ public class DefaultButtonUIModel extends AbstractButtonUIModel implements LazyT
 			return getLabel();
 		}
 
-		return "";
+		return ResKey.text("");
 	}
 
 	/**
 	 * If the altText changes, a event with index {@link ButtonUIModel#ALT_TEXT_PROPERTY} is fired.
-	 * 
-	 * @see CommandModel#setAltText(String)
 	 */
 	@Override
-	public void setAltText(String newAltText) {
-		String oldAltTextRespectingFallbacks = getAltText();
+	public void setAltText(ResKey newAltText) {
+		ResKey oldAltTextRespectingFallbacks = getAltText();
 		altText = newAltText;
-		String newTextRespectingFallbacks = getAltText();
+		ResKey newTextRespectingFallbacks = getAltText();
 
 		fireAltTextChangedIfChangeIsVisible(oldAltTextRespectingFallbacks, newTextRespectingFallbacks);
 	}
 
-	private void fireAltTextChangedIfChangeIsVisible(String oldAltTextIncludingFallbacks,
-			String newTextIncludingFallbacks) {
+	private void fireAltTextChangedIfChangeIsVisible(ResKey oldAltTextIncludingFallbacks,
+			ResKey newTextIncludingFallbacks) {
 		if (!StringServices.equals(newTextIncludingFallbacks, oldAltTextIncludingFallbacks)) {
 			notifyListeners(ALT_TEXT_PROPERTY, this, oldAltTextIncludingFallbacks, newTextIncludingFallbacks);
 		}

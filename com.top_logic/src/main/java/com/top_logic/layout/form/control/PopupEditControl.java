@@ -62,7 +62,6 @@ import com.top_logic.layout.structure.LayoutData;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.structure.Scrolling;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * Control displaying a value with a popup button opening a popup dialog for editing this value.
@@ -304,7 +303,7 @@ public class PopupEditControl extends AbstractFormFieldControl {
 		ControlCommandModel result = new ControlCommandModel(POPUP_COMMAND, this);
 		result.setImage(Icons.OPEN_TEXT_EDITOR);
 		result.setNotExecutableImage(Icons.OPEN_TEXT_EDITOR_DISABLED);
-		result.setTooltip(Resources.getInstance().getString(I18NConstants.TEXT_POPUP_OPEN));
+		result.setTooltip(I18NConstants.TEXT_POPUP_OPEN);
 		ScriptingRecorder.annotateAsDontRecord(result);
 		updateOpenerExecutability(result);
 		return result;

@@ -29,7 +29,6 @@ import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.layout.Adorner;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.util.Resources;
 
 /**
  * Describes a complete img-tag to be used as lightwight component.
@@ -74,7 +73,7 @@ public class ImageInfo extends Adorner  {
     protected String target;
 
     /** Translated Alttext */
-    protected transient String iAlt;
+	protected transient ResKey iAlt;
    
     // Nice to have: mouseOver, overtag ...
 
@@ -107,9 +106,9 @@ public class ImageInfo extends Adorner  {
     }
 
     /** Translate alt Text on demand. */
-    protected String translateAlt() {
+	protected ResKey translateAlt() {
         if (this.iAlt == null) {
-            this.iAlt = (this.alt == null) ? "" : Resources.getInstance().getString(this.alt);
+			this.iAlt = (this.alt == null) ? ResKey.text("") : this.alt;
         }
         return this.iAlt;
     }

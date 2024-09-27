@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.listener.EventType.Bubble;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
@@ -174,7 +175,7 @@ public class ErrorControl extends AbstractControl implements CSSClassListener, R
 
 				if (hasError || hasWarnings) {
 					OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out,
-						tooltipContent(reportedFields));
+						tooltipContent(context, reportedFields));
 				}
 	
 				// Required attribute. Could mark the the image as error display
@@ -188,7 +189,7 @@ public class ErrorControl extends AbstractControl implements CSSClassListener, R
 					out.writeAttribute(CLASS_ATTR, this.getCssClass(hasError, hasWarnings));
 					out.endBeginTag();
 					{
-						writeProblems(out, reportedFields);
+						writeProblems(context, out, reportedFields);
 					}
 					out.endTag(SPAN);
 				}
@@ -197,13 +198,13 @@ public class ErrorControl extends AbstractControl implements CSSClassListener, R
 		out.endTag(SPAN);
 	}
 
-	private String tooltipContent(List<FormField> reportedFields) {
+	private ResKey tooltipContent(DisplayContext context, List<FormField> reportedFields) {
 		TagWriter out = new TagWriter();
-		writeProblems(out, reportedFields);
-		return out.toString();
+		writeProblems(context, out, reportedFields);
+		return ResKey.text(out.toString());
 	}
 
-	private void writeProblems(TagWriter out, List<FormField> reportedFields) {
+	private void writeProblems(DisplayContext context, TagWriter out, List<FormField> reportedFields) {
 		boolean multipleModels = _models.size() > 1;
 
 		boolean first = true;
@@ -216,7 +217,7 @@ public class ErrorControl extends AbstractControl implements CSSClassListener, R
 					out.endEmptyTag();
 				}
 				if (multipleModels) {
-					out.writeText(field.getLabel());
+					out.writeText(context.getResources().getString(field.getLabel()));
 					out.writeText(": ");
 				}
 				writeLines(out, field.getError());
@@ -230,7 +231,7 @@ public class ErrorControl extends AbstractControl implements CSSClassListener, R
 						out.endEmptyTag();
 					}
 					if (multipleModels) {
-						out.writeText(field.getLabel());
+						out.writeText(context.getResources().getString(field.getLabel()));
 						out.writeText(": ");
 					}
 					writeLines(out, warning);

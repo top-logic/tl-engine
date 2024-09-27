@@ -48,7 +48,6 @@ import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.layout.wysiwyg.ui.TLObjectLinkUtil;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.model.TLObject;
-import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -1009,8 +1008,7 @@ public class TracWikiImporter {
 	 */
 	private void addImportErrorHint(Element element, ResKey hint) {
 		StringWriter writer = new StringWriter();
-		String hintText = Resources.getInstance().getString(hint);
-		writeErrorIcon(writer, hintText, ICON_IMPORT_ERROR);
+		writeErrorIcon(writer, hint, ICON_IMPORT_ERROR);
 		element.before(writer.toString());
 		element.previousElementSibling().attr(CONTENTEDITABLE, Boolean.FALSE.toString());
 	}
@@ -1033,8 +1031,7 @@ public class TracWikiImporter {
 	 */
 	private void addImportErrorHintToTable(Element element, ResKey hint) {
 		StringWriter writer = new StringWriter();
-		String hintText = Resources.getInstance().getString(hint);
-		writeErrorIcon(writer, hintText, null);
+		writeErrorIcon(writer, hint, null);
 		element.before(writer.toString());
 		Element icon = element.previousElementSibling();
 		Element paragraph = wrapElement(icon, HTMLConstants.PARAGRAPH).parent();
@@ -1066,7 +1063,7 @@ public class TracWikiImporter {
 	 * @param cssClass
 	 *        CSS class of the icon.
 	 */
-	private void writeErrorIcon(StringWriter stringWriter, String hintText, String cssClass) {
+	private void writeErrorIcon(StringWriter stringWriter, ResKey hintText, String cssClass) {
 		try (TagWriter writer = new TagWriter(stringWriter)) {
 			if (cssClass == null) {
 				Icons.IMPORT_ERROR_ICON.writeWithTooltip(null, writer, hintText);

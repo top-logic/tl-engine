@@ -9,6 +9,7 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.scripting.recorder.ref.value.AspectNaming;
 import com.top_logic.layout.scripting.runtime.ActionContext;
+import com.top_logic.util.Resources;
 
 /**
  * {@link ModelNamingScheme} for resolving the label of a given form member.
@@ -45,7 +46,7 @@ public class FieldLabelNaming extends AspectNaming<String, FieldLabelNaming.Name
 
 	@Override
 	protected String localteModel(ActionContext context, Name name, FormMember member) {
-		return member.getLabel();
+		return Resources.getInstance().getString(member.getLabel());
 	}
 
 }

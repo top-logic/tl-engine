@@ -92,7 +92,7 @@ public interface IButtonRenderer extends ControlRenderer<AbstractButtonControl<?
 	 * @param newLabel
 	 *        The new label to be set.
 	 */
-	default void handleLabelPropertyChange(AbstractButtonControl<?> button, String newLabel) {
+	default void handleLabelPropertyChange(AbstractButtonControl<?> button, ResKey newLabel) {
 		button.requestRepaint();
 	}
 

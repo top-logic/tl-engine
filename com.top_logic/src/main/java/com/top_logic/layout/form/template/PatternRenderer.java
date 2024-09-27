@@ -19,6 +19,7 @@ import org.w3c.dom.Node;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DefaultControlRenderer;
@@ -236,8 +237,8 @@ public class PatternRenderer extends DefaultControlRenderer<FormTemplateControl>
 		} 
 		else if (hasLocalName(TEXT_TEMPLATE_ELEMENT, currentElement)) {
 			String textKey = currentElement.getAttribute(FormTemplateConstants.KEY_TEXT_ATTRIBUTE);
-			String text = getResource(template, textKey);
-			out.writeText(text);
+			ResKey text = getResource(template, textKey);
+			out.writeText(context.getResources().getString(text));
 		} 
 		else if (hasLocalName(IMAGE_TEMPLATE_ELEMENT, currentElement)) {
 			String imageSrc = currentElement.getAttribute(SRC_IMG_ATTRIBUTE);
@@ -249,8 +250,8 @@ public class PatternRenderer extends DefaultControlRenderer<FormTemplateControl>
 					return;
 				}
 				
-				String imageResourceSrc = getResourceOrNull(template, imageKey);
-				imageSrc = imageResourceSrc;
+				ResKey imageResourceSrc = getResourceOrNull(template, imageKey);
+				imageSrc = context.getResources().getString(imageResourceSrc);
 				if (imageSrc == null) {
 					// Mark resouce as missing.
 					getResource(template, imageKey);
@@ -263,17 +264,17 @@ public class PatternRenderer extends DefaultControlRenderer<FormTemplateControl>
 				}
 			}
 			
-			String alt;
+			ResKey alt;
 			String altKey = currentElement.getAttribute(FormTemplateConstants.ALT_IMG_ATTRIBUTE);
 			if (StringServices.isEmpty(altKey)) {
-				alt = "";
+				alt = ResKey.text("");
 			} else {
 				alt = getResource(template, altKey);
 			}
 			
 			XMLTag icon = ThemeImage.icon(imageSrc).toIcon();
 			icon.beginBeginTag(context, out);
-			out.writeAttribute(ALT_ATTR, alt);
+			out.writeAttribute(ALT_ATTR, context.getResources().getString(alt));
 			icon.endBeginTag(context, out);
 			icon.endTag(context, out);
 		}
@@ -286,11 +287,11 @@ public class PatternRenderer extends DefaultControlRenderer<FormTemplateControl>
 		}
 	}
 
-	private static String getResourceOrNull(FormTemplate template, String localKey) {
+	private static ResKey getResourceOrNull(FormTemplate template, String localKey) {
 		return template.getResources().getStringResource(localKey, null);
 	}
 
-	private static String getResource(FormTemplate template, String localKey) {
+	private static ResKey getResource(FormTemplate template, String localKey) {
 		return template.getResources().getStringResource(localKey);
 	}
 

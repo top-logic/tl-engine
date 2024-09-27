@@ -21,6 +21,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.demo.layout.form.demo.model.DemoAddress;
 import com.top_logic.demo.layout.form.demo.model.DemoAddressContext;
 import com.top_logic.demo.layout.form.demo.model.DemoOrder;
@@ -116,7 +117,7 @@ public class DemoOrderForm extends EditComponent implements ModelProvider {
 				member.getQualifiedName().replace('.', '_'), 
 				ReflectiveProperties.SINGLETON);
 			result.addMember(properties);
-			properties.setLabel("field '" + member.getLabel() + "'");
+			properties.setLabel(ResKey.text("field '" + member.getLabel() + "'"));
 			
 			{
 				FormField reflectiveField = 
@@ -415,12 +416,12 @@ public class DemoOrderForm extends EditComponent implements ModelProvider {
 		}
 		
 		@Override
-		public String getStringResource(String i18nKey) {
-			return "property '" + i18nKey + "'";
+		public ResKey getStringResource(String i18nKey) {
+			return ResKey.text("property '" + i18nKey + "'");
 		}
 
 		@Override
-		public String getStringResource(String i18nKey, String defaultValue) {
+		public ResKey getStringResource(String i18nKey, ResKey defaultValue) {
 			// There is a resource for every key, no default is ever required.
 			return getStringResource(i18nKey);
 		}

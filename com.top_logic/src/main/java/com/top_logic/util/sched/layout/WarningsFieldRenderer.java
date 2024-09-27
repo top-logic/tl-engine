@@ -7,6 +7,7 @@ package com.top_logic.util.sched.layout;
 
 import java.io.IOException;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
@@ -33,8 +34,8 @@ final class WarningsFieldRenderer implements Renderer<FormField> {
 		FormField field = value;
 		Boolean hasWarnings = (Boolean) field.getValue();
 		if (hasWarnings) {
-			String tooltip = field.getTooltip();
-			String tooltipCaption = field.getTooltipCaption();
+			ResKey tooltip = field.getTooltip();
+			ResKey tooltipCaption = field.getTooltipCaption();
 			TaskResult.ResultType.WARNING.getIcon().write(context, out, null, tooltip, tooltipCaption);
 		}
 	}

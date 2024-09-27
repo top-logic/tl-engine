@@ -57,20 +57,14 @@ public class MetaElementResourceView implements ResourceView {
         this.cache     = new HashMap();
     }
 
-    /**
-     * @see com.top_logic.layout.ResourceView#getStringResource(java.lang.String)
-     */
     @Override
-	public String getStringResource(String aKey) {
-        return Resources.getInstance().getString(this.getQualifiedResourceName(aKey));
+	public ResKey getStringResource(String aKey) {
+		return this.getQualifiedResourceName(aKey);
     }
 
-    /**
-     * @see com.top_logic.layout.ResourceView#getStringResource(java.lang.String, java.lang.String)
-     */
     @Override
-	public String getStringResource(String aKey, String aDefault) {
-        return Resources.getInstance().getString(this.getQualifiedResourceName(aKey), aDefault);
+	public ResKey getStringResource(String aKey, ResKey aDefault) {
+		return this.getQualifiedResourceName(aKey).fallback(aDefault);
     }
 
     /**

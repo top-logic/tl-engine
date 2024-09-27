@@ -8,8 +8,8 @@ package com.top_logic.layout.form.control;
 import java.io.IOException;
 import java.util.Map;
 
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.listener.EventType.Bubble;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
@@ -155,7 +155,8 @@ public class LabelControl extends AbstractFormMemberControl implements OptionsLi
 			Object theOption = (option != null) ? option : selectField.getOptions().get(index);
 			label = selectField.getOptionLabel(theOption);
 		} else {
-			label = field.getLabel();
+			ResKey labelKey = field.getLabel();
+			label = context.getResources().getString(labelKey);
 			if (!label.isEmpty() && this.colon) {
 				label += COLON;
 			}
@@ -198,9 +199,9 @@ public class LabelControl extends AbstractFormMemberControl implements OptionsLi
 
 			// TODO: Remove spurious cast by pulling up "tooltip" to FormMember.
 			if (field instanceof AbstractFormMember) {
-				String tooltip = ((AbstractFormMember) field).getTooltip();
-				if (!StringServices.isEmpty(tooltip)) {
-					String tooltipCaption = ((AbstractFormMember) field).getTooltipCaption();
+				ResKey tooltip = ((AbstractFormMember) field).getTooltip();
+				if (tooltip != null) {
+					ResKey tooltipCaption = ((AbstractFormMember) field).getTooltipCaption();
 					OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip,
 						tooltipCaption);
 				}
@@ -270,12 +271,12 @@ public class LabelControl extends AbstractFormMemberControl implements OptionsLi
 	}
 
 	@Override
-	public Bubble handleLabelChanged(Object sender, String oldLabel, String newLabel) {
+	public Bubble handleLabelChanged(Object sender, ResKey oldLabel, ResKey newLabel) {
 		return repaintOnEvent(sender);
 	}
 
 	@Override
-	public Bubble handleTooltipChanged(Object sender, String oldValue, String newValue) {
+	public Bubble handleTooltipChanged(Object sender, ResKey oldValue, ResKey newValue) {
 		return repaintOnEvent(sender);
 	}
 

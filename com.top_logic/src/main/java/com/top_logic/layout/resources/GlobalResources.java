@@ -27,13 +27,13 @@ public class GlobalResources implements ResourceView {
 	}
 
 	@Override
-	public String getStringResource(String resourceKey) {
-		return Resources.getInstance().getString(key(resourceKey));
+	public ResKey getStringResource(String resourceKey) {
+		return key(resourceKey);
 	}
 
 	@Override
-	public String getStringResource(String resourceKey, String defaultValue) {
-		return Resources.getInstance().getString(key(resourceKey), defaultValue);
+	public ResKey getStringResource(String resourceKey, ResKey defaultValue) {
+		return key(resourceKey).fallback(defaultValue);
 	}
 
 	@Override

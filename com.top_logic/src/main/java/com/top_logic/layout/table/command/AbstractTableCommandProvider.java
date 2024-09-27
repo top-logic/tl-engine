@@ -21,7 +21,6 @@ import com.top_logic.layout.table.TableData;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.conditional.CommandStep;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.util.Resources;
 
 /**
  * Base class for {@link TableCommandProvider}s that thake their visual aspects from their
@@ -172,19 +171,18 @@ public abstract class AbstractTableCommandProvider<C extends AbstractTableComman
 		if (tooltipKey == null && labelKey != null) {
 			tooltipKey = labelKey.tooltipOptional();
 		}
-		Resources resources = Resources.getInstance();
 		if (labelKey != null) {
-			result.setLabel(resources.getString(labelKey));
+			result.setLabel(labelKey);
 		}
 		if (tooltipKey != null) {
-			result.setTooltip(resources.getString(tooltipKey));
+			result.setTooltip(tooltipKey);
 
 			ResKey tooltipCaptionKey = config.getTooltipCaption();
 			if (tooltipCaptionKey == null) {
 				tooltipCaptionKey = defaultTooltipCaptionKey();
 			}
 			if (tooltipCaptionKey != null) {
-				result.setTooltipCaption(resources.getString(tooltipCaptionKey));
+				result.setTooltipCaption(tooltipCaptionKey);
 			}
 		}
 

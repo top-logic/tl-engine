@@ -9,6 +9,7 @@ import static com.top_logic.mig.html.HTMLConstants.*;
 
 import java.io.IOException;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
@@ -75,8 +76,8 @@ public class DefaultCompareInfoDecorator implements DetailDecorator {
 	 *        The info object containing all needed information.
 	 * @return The requested too tip.
 	 */
-	protected String getTooltip(DisplayContext context, CompareInfo info) {
-		return context.getResources().getString(info.getTooltip());
+	protected ResKey getTooltip(DisplayContext context, CompareInfo info) {
+		return info.getTooltip();
 	}
 
 }

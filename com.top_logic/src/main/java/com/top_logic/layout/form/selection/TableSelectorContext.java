@@ -21,6 +21,7 @@ import java.util.Set;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.filter.FilterFactory;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ResPrefix;
@@ -88,7 +89,6 @@ import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.mig.html.provider.resource.INoLinkResourceProvider;
 import com.top_logic.tool.boundsec.DefaultHandlerResult;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * Base class for {@link FormContext} implementations of table based selection views.
@@ -141,15 +141,14 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 	}
 
 	private void createTitle() {
-		Resources resources = Resources.getInstance();
 		ConstantField title = new ConstantField(SelectorContext.TITLE_FIELD_NAME, !AbstractFormField.IMMUTABLE) {
 			@Override
 			public <R, A> R visit(FormMemberVisitor<R, A> v, A arg) {
 				return v.visitFormMember(this, arg);
 			}
 		};
-		String targetFieldLabel = _targetSelectField.getLabel();
-		title.setLabel(resources.getString(I18NConstants.POPUP_SELECT_TITLE__FIELD.fill(targetFieldLabel)));
+		ResKey targetFieldLabel = _targetSelectField.getLabel();
+		title.setLabel(I18NConstants.POPUP_SELECT_TITLE__FIELD.fill(targetFieldLabel));
 		addMember(title);
 
 	}
@@ -305,19 +304,19 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 	}
 
 	private CommandModel createExpandAllCommand(final TreeUIModel<?> treeModel) {
-		String commandLabel =
-			Resources.getInstance().getString(com.top_logic.layout.form.selection.I18NConstants.EXPAND_ALL);
+		ResKey commandLabel =
+			com.top_logic.layout.form.selection.I18NConstants.EXPAND_ALL;
 		return createExpansionChangeCommand(com.top_logic.layout.basic.Icons.EXPAND_ALL, commandLabel, treeModel, true);
 	}
 
 	private CommandModel createCollapseAllCommand(final TreeUIModel<?> treeModel) {
-		String commandLabel =
-			Resources.getInstance().getString(com.top_logic.layout.form.selection.I18NConstants.COLLAPSE_ALL);
+		ResKey commandLabel =
+			com.top_logic.layout.form.selection.I18NConstants.COLLAPSE_ALL;
 		return createExpansionChangeCommand(com.top_logic.layout.basic.Icons.COLLAPSE_ALL, commandLabel, treeModel,
 			false);
 	}
 
-	private CommandModel createExpansionChangeCommand(ThemeImage commandImage, String commandLabel,
+	private CommandModel createExpansionChangeCommand(ThemeImage commandImage, ResKey commandLabel,
 			final TreeUIModel<?> treeModel, final boolean expand) {
 		CommandModel expansionChangeCommand = new AbstractCommandModel() {
 
@@ -328,8 +327,7 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 			}
 		};
 		expansionChangeCommand.setImage(commandImage);
-		expansionChangeCommand
-			.setLabel(commandLabel);
+		expansionChangeCommand.setLabel(commandLabel);
 		return expansionChangeCommand;
 	}
 

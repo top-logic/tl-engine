@@ -61,6 +61,7 @@ import com.top_logic.basic.config.misc.PropertyValueImpl;
 import com.top_logic.basic.config.order.DefaultOrderStrategy;
 import com.top_logic.basic.config.order.OrderStrategy;
 import com.top_logic.basic.func.GenericFunction;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.FormContainer;
@@ -963,7 +964,7 @@ public class EditorFactory implements AnnotationCustomizations {
 		}
 	
 		@Override
-		protected String getResource(String resourceKey, boolean optional) {
+		protected ResKey getResource(String resourceKey, boolean optional) {
 			int sepIndex = resourceKey.indexOf('.');
 			String baseKey;
 			if (sepIndex >= 0) {
@@ -980,20 +981,20 @@ public class EditorFactory implements AnnotationCustomizations {
 						Logger.error("No such property '" + baseKey + "' in '"
 							+ _descriptor.getConfigurationInterface().getName() + "'.", PropertyBasedResources.class);
 					}
-					return optional ? null : "[" + resourceKey + "]";
+					return optional ? null : ResKey.text("[" + resourceKey + "]");
 				}
 			}
 	
-			String propertyLabel;
+			ResKey propertyLabel;
 			if (sepIndex >= 0) {
 				String keySuffix = resourceKey.substring(sepIndex);
-				propertyLabel = Labels.propertyLabel(property, keySuffix, true);
+				propertyLabel = Labels.propertyLabelKey(property, keySuffix);
 			} else {
-				propertyLabel = Labels.propertyLabel(property, true);
+				propertyLabel = Labels.propertyLabelKey(property);
 			}
 
-			if (!optional && propertyLabel == null) {
-				return enhancePropertyNameFormat(property.getPropertyName());
+			if (!optional) {
+				return propertyLabel.fallback(ResKey.text(enhancePropertyNameFormat(property.getPropertyName())));
 			}
 			return propertyLabel;
 		}

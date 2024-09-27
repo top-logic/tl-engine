@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.form;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.ResourceView;
 
 /**
@@ -29,12 +30,12 @@ public final class PlainKeyResources implements ResourceView {
 	}
 
 	@Override
-	public String getStringResource(String resourceKey, String defaultValue) {
+	public ResKey getStringResource(String resourceKey, ResKey defaultValue) {
 		return getStringResource(resourceKey);
 	}
 
 	@Override
-	public String getStringResource(String resourceKey) {
-		return resourceKey;
+	public ResKey getStringResource(String resourceKey) {
+		return ResKey.text(resourceKey);
 	}
 }

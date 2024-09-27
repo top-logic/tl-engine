@@ -34,7 +34,6 @@ import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.Utils;
 
@@ -139,9 +138,9 @@ public class ChangePasswordComponent extends FormComponent {
 		}
 	}
 
-	private String getPasswordFieldTooltip() {
+	private ResKey getPasswordFieldTooltip() {
 		PasswordValidator validator = getPasswordValidator();
-		return Resources.getInstance().getMessage(I18NConstants.PASSWORD_FIELD_TOOLTIP, validator.getMinPwdLength(),
+		return I18NConstants.PASSWORD_FIELD_TOOLTIP.asResKey2().fill(validator.getMinPwdLength(),
 			validator.getNumberContentCrit());
 	}
 

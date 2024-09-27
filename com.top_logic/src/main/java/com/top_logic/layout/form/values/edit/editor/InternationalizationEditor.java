@@ -217,8 +217,8 @@ public class InternationalizationEditor implements Editor {
 				StringField suffixField = FormFactory.newStringField(suffixFieldName(language, keySuffix));
 
 				ResKey i18N = derivedKeyDefinitions.get(keySuffix);
-				suffixField.setLabel(resources.getString(i18N));
-				suffixField.setTooltip(resources.getString(i18N.tooltipOptional()));
+				suffixField.setLabel(i18N);
+				suffixField.setTooltip(i18N.tooltipOptional());
 				suffixField.set(LOCALE, locale);
 				suffixField.set(SUFFIX, keySuffix);
 
@@ -325,15 +325,14 @@ public class InternationalizationEditor implements Editor {
 					derivedMember.setVisible(_membersVisible);
 				}
 				CommandModel button = context.get(Command.EXECUTING_CONTROL).getModel();
-				Resources resources = context.getResources();
 				if (_membersVisible) {
 					button.setImage(Icons.HIDE_DERIVED_RESOURCES);
-					button.setLabel(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES));
-					button.setTooltip(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES.tooltipOptional()));
+					button.setLabel(I18NConstants.HIDE_DERIVED_RESOURCES);
+					button.setTooltip(I18NConstants.HIDE_DERIVED_RESOURCES.tooltipOptional());
 				} else {
 					button.setImage(Icons.DISPLAY_DERIVED_RESOURCES);
-					button.setLabel(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES));
-					button.setTooltip(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES.tooltipOptional()));
+					button.setLabel(I18NConstants.DISPLAY_DERIVED_RESOURCES);
+					button.setTooltip(I18NConstants.DISPLAY_DERIVED_RESOURCES.tooltipOptional());
 				}
 				PersonalConfiguration.getPersonalConfiguration().setBooleanValue(configKey.get(), _membersVisible);
 				return HandlerResult.DEFAULT_RESULT;
@@ -346,13 +345,12 @@ public class InternationalizationEditor implements Editor {
 		CommandField button = button(container, DISPLAY_DERIVED_FIELD, icon, command);
 		/* Let the user display the derived resources, also when they can not be changed. */
 		button.setInheritDeactivation(false);
-		Resources resources = Resources.getInstance();
 		if (initiallyVisible) {
-			button.setLabel(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES));
-			button.setTooltip(resources.getString(I18NConstants.HIDE_DERIVED_RESOURCES.tooltipOptional()));
+			button.setLabel(I18NConstants.HIDE_DERIVED_RESOURCES);
+			button.setTooltip(I18NConstants.HIDE_DERIVED_RESOURCES.tooltipOptional());
 		} else {
-			button.setLabel(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES));
-			button.setTooltip(resources.getString(I18NConstants.DISPLAY_DERIVED_RESOURCES.tooltipOptional()));
+			button.setLabel(I18NConstants.DISPLAY_DERIVED_RESOURCES);
+			button.setTooltip(I18NConstants.DISPLAY_DERIVED_RESOURCES.tooltipOptional());
 		}
 
 	}
@@ -368,9 +366,9 @@ public class InternationalizationEditor implements Editor {
 	 * Translates the given language (e.g. "de"/"en") into "Deutsch"/"Englisch" (resp.
 	 * "German"/"English") according to the language of the given {@link I18NBundle}.
 	 */
-	public static String translateLanguageName(I18NBundle res, Locale language) {
-		return res.getString(I18NConstants.LANGUAGE.key(language.getLanguage()),
-			language.getDisplayLanguage(res.getLocale()));
+	public static ResKey translateLanguageName(I18NBundle res, Locale language) {
+		return I18NConstants.LANGUAGE.key(language.getLanguage())
+			.fallback(ResKey.text(language.getDisplayLanguage(res.getLocale())));
 	}
 
 	/**

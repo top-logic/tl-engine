@@ -5,8 +5,6 @@
  */
 package com.top_logic.layout.scripting.recorder.ref;
 
-import static com.top_logic.basic.shared.string.StringServicesShared.*;
-
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -91,6 +89,7 @@ import com.top_logic.layout.tree.model.TLTreeModel;
 import com.top_logic.model.TLModuleSingleton;
 import com.top_logic.model.TLModuleSingletons;
 import com.top_logic.model.TLObject;
+import com.top_logic.util.Resources;
 import com.top_logic.util.Utils;
 import com.top_logic.util.model.CompatibilityService;
 
@@ -611,8 +610,8 @@ public class ReferenceFactory {
 		private final List<FieldRef> path = new ArrayList<>();
 
 		public void add(final FormMember source, FieldRef fieldRef) {
-			if (source.hasLabel() && !isEmpty(source.getLabel())) {
-				String label = nonNull(source.getLabel());
+			if (source.hasLabel()) {
+				String label = Resources.getInstance().getString(source.getLabel());
 				fieldRef.setFieldLabelComment(label);
 			}
 			path.add(fieldRef);

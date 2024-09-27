@@ -21,7 +21,6 @@ import com.top_logic.layout.form.template.FormPatternConstants;
 import com.top_logic.layout.form.template.FormTemplate;
 import com.top_logic.layout.form.template.FormTemplateConstants;
 import com.top_logic.mig.html.HTMLConstants;
-import com.top_logic.util.Resources;
 
 /**
  * {@link AbstractFormDialog} that can display a single input element.
@@ -135,7 +134,7 @@ public abstract class SimpleFormDialog extends AbstractFormDialog {
 		if (result != null && result.hasMember(INPUT_FIELD)) {
 			FormMember input = result.getMember(INPUT_FIELD);
 			if (!input.hasLabel()) {
-				input.setLabel(Resources.getInstance().getString(_message, null));
+				input.setLabel(_message);
 			}
 		}
 

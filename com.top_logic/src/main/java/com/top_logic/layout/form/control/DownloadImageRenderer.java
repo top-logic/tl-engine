@@ -9,6 +9,7 @@ import java.io.IOException;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DefaultControlRenderer;
 import com.top_logic.layout.DisplayContext;
@@ -76,7 +77,8 @@ public class DownloadImageRenderer extends DefaultControlRenderer<IDownloadContr
 
 			out.beginBeginTag(SPAN);
 			out.writeAttribute(CLASS_ATTR, "content");
-			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, dataItem.getName());
+			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out,
+				ResKey.text(dataItem.getName()));
 			out.endBeginTag();
 			DownloadImageRenderer.writeImage(context, out, dataItem);
 			out.writeText(dataItem.getName());

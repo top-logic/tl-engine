@@ -11,6 +11,7 @@ import java.util.Iterator;
 
 import com.top_logic.base.services.simpleajax.ContentReplacement;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
@@ -67,7 +68,8 @@ public class IconErrorRenderer extends AbstractErrorRenderer {
 
 			StringWriter theWriter = new StringWriter();
 			renderErrorMessage(new TagWriter(theWriter), error);
-			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, theWriter.toString());
+			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out,
+				ResKey.text(theWriter.toString()));
 			
 			out.writeAttribute(ALT_ATTR, 
 				Resources.getInstance().getString(I18NConstants.ERROR_ICON_ALT));

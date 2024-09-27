@@ -359,7 +359,7 @@ public class FuzzyComponentNaming extends GlobalModelNamingScheme<LayoutComponen
 	}
 
 	private String componentLabel(Resources resources, LayoutComponent model) {
-		if (model.getParent() instanceof ContextTileComponent context) {
+		if (model.getParent() instanceof ContextTileComponent) {
 			// Constant signaling that the content of a context selector is resolved.
 			return "{0}";
 		}

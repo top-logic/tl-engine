@@ -221,7 +221,8 @@ public class IconChooserControl extends AbstractVisibleControl {
 		out.endBeginTag();
 
 		tag.beginBeginTag(context, out);
-		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, TagUtil.encodeXML(label));
+		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out,
+			ResKey.text(TagUtil.encodeXML(label)));
 		writeOnClick(out, onclickName);
 		tag.endEmptyTag(context, out);
 

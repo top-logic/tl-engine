@@ -12,6 +12,7 @@ import java.util.List;
 import com.lowagie.text.html.HtmlEncoder;
 
 import com.top_logic.basic.CollectionUtil;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.basic.SimpleConstantControl;
 import com.top_logic.layout.form.FormField;
@@ -20,7 +21,6 @@ import com.top_logic.layout.form.model.BooleanField;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.form.template.ControlProvider;
-import com.top_logic.util.Resources;
 import com.top_logic.util.sched.layout.table.results.TaskResultAccessor;
 import com.top_logic.util.sched.task.Task;
 import com.top_logic.util.sched.task.result.TaskResult;
@@ -50,7 +50,7 @@ public class TaskFormUtil {
 		return field;
 	}
 
-	public static String createWarningsTooltipText(List<String> warnings) {
+	public static ResKey createWarningsTooltipText(List<String> warnings) {
 		StringBuilder tooltipTextBuilder = new StringBuilder();
 		tooltipTextBuilder.append("<ol>");
 		for (String warning : warnings) {
@@ -59,14 +59,14 @@ public class TaskFormUtil {
 			tooltipTextBuilder.append("</li>");
 		}
 		tooltipTextBuilder.append("</ol>");
-		return tooltipTextBuilder.toString();
+		return ResKey.text(tooltipTextBuilder.toString());
 	}
 
-	public static String createWarningsTooltipCaption(List<String> warnings) {
+	public static ResKey createWarningsTooltipCaption(List<String> warnings) {
 		if (warnings.size() == 1) {
-			return Resources.getInstance().getMessage(I18NConstants.TOOLTIP_CAPTION_WARNINGS_SINGULAR, warnings.size());
+			return I18NConstants.TOOLTIP_CAPTION_WARNINGS_SINGULAR.asResKey1().fill(warnings.size());
 		} else {
-			return Resources.getInstance().getMessage(I18NConstants.TOOLTIP_CAPTION_WARNINGS_PLURAL, warnings.size());
+			return I18NConstants.TOOLTIP_CAPTION_WARNINGS_PLURAL.asResKey1().fill(warnings.size());
 		}
 	}
 

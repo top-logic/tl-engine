@@ -7,6 +7,7 @@ package com.top_logic.layout.form.constraints;
 
 import java.util.List;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.CheckException;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.I18NConstants;
@@ -63,7 +64,7 @@ public class SequenceDependency extends AbstractDependency {
 		// Check if the given value is in the correct (ascending) sequence.
 
 		// Check for greater or equal
-		String  violatesGELabel  = null;
+		ResKey violatesGELabel = null;
 		for (int i = checkedFieldIndex - 1; i >= 0; i--) {
             Comparable theLowerValue = this.getDependencyValue(i, false);
 
@@ -81,7 +82,7 @@ public class SequenceDependency extends AbstractDependency {
             }
 		}
 
-		String  violatesLELabel  = null;
+		ResKey violatesLELabel = null;
 
 		// Check lower or equal
         for (int cnt = size(), i = checkedFieldIndex + 1; i < cnt; i++) {

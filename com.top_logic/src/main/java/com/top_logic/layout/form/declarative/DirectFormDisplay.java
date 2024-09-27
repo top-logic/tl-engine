@@ -40,7 +40,6 @@ import com.top_logic.layout.structure.LayoutControlProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.util.Resources;
 import com.top_logic.util.TLMimeTypes;
 
 /**
@@ -403,11 +402,11 @@ public class DirectFormDisplay {
 	private void initTypeTooltip(Object model, IconControl icon) {
 		ResKey imageTooltipKey = getConfig().getImageTooltipKey();
 		if (imageTooltipKey != null) {
-			icon.setTooltip(Resources.getInstance().getString(imageTooltipKey));
+			icon.setTooltip(imageTooltipKey);
 		} else {
 			TLType type = getModelType(model);
 			if (type != null) {
-				icon.setTooltip(MetaResourceProvider.INSTANCE.getLabel(type));
+				icon.setTooltip(ResKey.text(MetaResourceProvider.INSTANCE.getLabel(type)));
 			}
 		}
 	}

@@ -8,6 +8,7 @@ package com.top_logic.layout.form.control;
 import java.io.IOException;
 
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.AbstractConstantControl;
@@ -78,7 +79,7 @@ public class GotoLinkControl extends AbstractConstantControl implements ValueLis
 			out.writeAttribute(TARGET_ATTR, HTMLConstants.BLANK_VALUE);
 			out.endBeginTag();
 
-			_icon.writeWithTooltip(context, out, createUrlText());
+			_icon.writeWithTooltip(context, out, ResKey.text(createUrlText()));
 
 			out.endTag(ANCHOR);
 			out.endTag(SPAN);

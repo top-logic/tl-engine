@@ -515,22 +515,22 @@ public class TreeNavigatorControl<N> extends AbstractControlBase implements Sing
 		}
 
 		@Override
-		public String getAltText() {
+		public ResKey getAltText() {
 			return null;
 		}
 
 		@Override
-		public String getLabel() {
-			return _resourceProvider.getLabel(_node);
+		public ResKey getLabel() {
+			return ResKey.text(_resourceProvider.getLabel(_node));
 		}
 
 		@Override
-		public String getTooltip() {
+		public ResKey getTooltip() {
 			return null;
 		}
 
 		@Override
-		public String getTooltipCaption() {
+		public ResKey getTooltipCaption() {
 			return null;
 		}
 

@@ -351,7 +351,7 @@ public abstract class FolderComponent extends BuilderComponent implements FormHa
 	 * The label is used for the root node of the breadcrumb.
 	 * </p>
 	 */
-	protected String getRootLabel() {
+	protected ResKey getRootLabel() {
 		return WebFolderUtils.DEFAULT_WEBFOLDER_TABLE_RESOURCES.getStringResource("firstNode");
 	}
 

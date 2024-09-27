@@ -12,6 +12,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.component.model.FormDeckPaneModel;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.DeckField;
@@ -50,12 +51,12 @@ public interface CardSelection extends AbstractFormAction {
 	 * is used.
 	 */
 	@Nullable
-	String getCardName();
+	ResKey getCardName();
 
 	/**
 	 * Setter for {@link #getCardName()}
 	 */
-	void setCardName(String value);
+	void setCardName(ResKey value);
 
 	/**
 	 * Records a {@link CardSelection} for the given {@link DeckField} if possible.
@@ -100,7 +101,7 @@ public interface CardSelection extends AbstractFormAction {
 		@Override
 		protected Object processInternal(ActionContext context, Object argument) throws Throwable {
 			DeckField field = (DeckField) ModelResolver.locateModel(context, getConfig().getField());
-			String cardName = getConfig().getCardName();
+			ResKey cardName = getConfig().getCardName();
 			FormDeckPaneModel model = field.getModel();
 			if (cardName != null) {
 				List<Card> cards = model.getSelectableCards();

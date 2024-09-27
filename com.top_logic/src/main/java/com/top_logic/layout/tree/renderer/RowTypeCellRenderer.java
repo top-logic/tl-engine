@@ -21,6 +21,7 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.DisplayContext;
@@ -272,7 +273,7 @@ public class RowTypeCellRenderer extends AbstractCellRenderer
 	 */
 	protected void writeDecorationContent(DisplayContext context, TagWriter out, Cell cell) throws IOException {
 		Object rowObject = cell.getRowObject();
-		String tooltip = getResourceProvider().getTooltip(rowObject);
+		ResKey tooltip = ResKey.text(getResourceProvider().getTooltip(rowObject));
 		ThemeImage image = getResourceProvider().getImage(rowObject, Flavor.DEFAULT);
 
 		if (image != null) {
@@ -300,7 +301,8 @@ public class RowTypeCellRenderer extends AbstractCellRenderer
 		_contentRenderer.writeCell(context, out, cell);
 	}
 
-	private void writeImageTag(DisplayContext context, TagWriter out, Object node, ThemeImage image, String tooltip) throws IOException {
+	private void writeImageTag(DisplayContext context, TagWriter out, Object node, ThemeImage image, ResKey tooltip)
+			throws IOException {
 		XMLTag tag = image.toIcon();
 		tag.beginBeginTag(context, out);
 		out.writeAttribute(CLASS_ATTR, FormConstants.TREE_TYPE_IMAGE_CSS_CLASS);

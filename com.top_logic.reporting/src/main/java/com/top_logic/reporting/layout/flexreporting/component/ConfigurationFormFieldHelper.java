@@ -162,8 +162,8 @@ public class ConfigurationFormFieldHelper {
     public FormGroup createFormGroup(ConfigurationItem anItem, ConfigurationDescriptor aConfigDesc, String aFormGroupName, ResourceView someResources) {
         FormGroup theGroup = new FormGroup(aFormGroupName, someResources);
 		ResourceProvider provider = new ConfigurationDescriptorResourceProvider();
-		theGroup.setLabel(provider.getLabel(theGroup));
-		theGroup.setTooltip(provider.getTooltip(aConfigDesc));
+		theGroup.setLabel(ResKey.text(provider.getLabel(theGroup)));
+		theGroup.setTooltip(ResKey.text(provider.getTooltip(aConfigDesc)));
 
         for (PropertyDescriptor property : aConfigDesc.getProperties()) {
             String thePropName = property.getPropertyName();

@@ -10,7 +10,7 @@ import static com.top_logic.mig.html.HTMLConstants.*;
 import java.io.IOException;
 
 import com.top_logic.basic.Configuration;
-import com.top_logic.basic.StringServices;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.ContentDecorator;
 import com.top_logic.layout.DisplayContext;
@@ -94,10 +94,10 @@ public class FieldsetDecorator implements ContentDecorator {
 		writer.endBeginTag();
 		{
 			writer.beginBeginTag(LEGEND);
-			String tooltip = member.getTooltip();
-			String tooltipCaption = member.getTooltipCaption();
+			ResKey tooltip = member.getTooltip();
+			ResKey tooltipCaption = member.getTooltipCaption();
 
-			if (!StringServices.isEmpty(tooltip)) {
+			if (tooltip != null) {
 				OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, writer, tooltip,
 					tooltipCaption);
 			}
@@ -115,7 +115,7 @@ public class FieldsetDecorator implements ContentDecorator {
 					CssUtil.writeCombinedCssClasses(writer,
 						FormConstants.INPUT_IMAGE_CSS_CLASS,
 						FormConstants.TOGGLE_BUTTON_CSS_CLASS);
-					HTMLUtil.writeImageTooltip(context, writer, getAltText(collapsed, member.getLabel(), context));
+					HTMLUtil.writeImageTooltip(context, writer, getAltText(collapsed, member.getLabel()));
 					control.writeOnClickToggle(writer);
 					tag.endEmptyTag(context, writer);
 				}
@@ -132,9 +132,9 @@ public class FieldsetDecorator implements ContentDecorator {
 		return collapsed ? Icons.GROUP_COLLAPSED : Icons.GROUP_EXPANDED;
 	}
 
-	private String getAltText(boolean collapsed, String label, DisplayContext context) {
-		return context.getResources().getString(collapsed ? I18NConstants.FORM_GROUP_COLLAPSED__LABEL.fill(label)
-			: I18NConstants.FORM_GROUP_EXPANDED__LABEL.fill(label));
+	private ResKey getAltText(boolean collapsed, ResKey label) {
+		return collapsed ? I18NConstants.FORM_GROUP_COLLAPSED__LABEL.fill(label)
+			: I18NConstants.FORM_GROUP_EXPANDED__LABEL.fill(label);
 	}
 
 	private String getFieldsetClass(boolean collapsed) {

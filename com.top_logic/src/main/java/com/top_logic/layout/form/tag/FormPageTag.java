@@ -749,13 +749,13 @@ public class FormPageTag extends PageAreaTag implements FormTagProperties {
 
 	private void initTypeTooltip(final IconControl icon) {
 		if (_imageTooltipKey != null) {
-			icon.setTooltip(Resources.getInstance().decodeMessageFromKeyWithEncodedArguments(_imageTooltipKey));
+			icon.setTooltip(_imageTooltipKey);
 		} else {
 			basedOnType(new ControlValue<>(icon) {
 				@Override
 				public void setValue(Object type) {
 					if (type != null) {
-						icon.setTooltip(MetaResourceProvider.INSTANCE.getLabel(type));
+						icon.setTooltip(ResKey.text(MetaResourceProvider.INSTANCE.getLabel(type)));
 					}
 				}
 			});

@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.resources;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.ResourceView;
 
 /**
@@ -27,12 +28,12 @@ public class NestedResourceView implements ResourceView {
 	}
 
 	@Override
-	public String getStringResource(String resourceKey) {
+	public ResKey getStringResource(String resourceKey) {
 		return parent.getStringResource(getRelativeResourceName(resourceKey));
 	}
 
 	@Override
-	public String getStringResource(String resourceKey, String defaultValue) {
+	public ResKey getStringResource(String resourceKey, ResKey defaultValue) {
 		return parent.getStringResource(getRelativeResourceName(resourceKey), defaultValue);
 	}
 

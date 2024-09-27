@@ -8,6 +8,7 @@ package com.top_logic.layout.basic;
 import java.io.IOException;
 
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
@@ -54,7 +55,7 @@ public class CutLabelRenderer implements Renderer<Object> {
 		out.beginBeginTag(SelectTag.SPAN);
 		if (label.length() >= _maxLengthShown) {
 			// Show complete value in tool tip, if no explicit tool tip is given.
-			String valueAsTooltip = TagUtil.encodeXML(label);
+			ResKey valueAsTooltip = ResKey.text(TagUtil.encodeXML(label));
 			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, valueAsTooltip);
 
 			label = StringServices.minimizeString(label, _maxLengthShown, _maxLengthShown - 3);

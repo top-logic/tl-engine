@@ -95,7 +95,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.VisibilityListener;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.util.Resources;
 import com.top_logic.util.css.CssUtil;
 
 /**
@@ -345,7 +344,7 @@ public class Fields {
 
 		@Override
 		public void handleChange(Value<?> target) {
-			_dest.setLabel(Resources.getInstance().getString(_value.get()));
+			_dest.setLabel(_value.get());
 		}
 	}
 
@@ -361,7 +360,7 @@ public class Fields {
 
 		@Override
 		public void handleChange(Value<?> target) {
-			_dest.setTooltip(Resources.getInstance().getString(_value.get()));
+			_dest.setTooltip(_value.get());
 		}
 	}
 
@@ -377,7 +376,7 @@ public class Fields {
 
 		@Override
 		public void handleChange(Value<?> target) {
-			_dest.setTooltipCaption(Resources.getInstance().getString(_value.get()));
+			_dest.setTooltipCaption(_value.get());
 		}
 	}
 

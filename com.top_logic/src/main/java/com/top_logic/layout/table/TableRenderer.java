@@ -18,6 +18,7 @@ import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
@@ -529,7 +530,7 @@ public interface TableRenderer<C extends TableRenderer.Config<?>> extends ITable
 
 	void writeGroupColumnContent(DisplayContext context, TagWriter out, RenderState state, Column group,
 			int columnIndex, int groupSpan,
-			String label) throws IOException;
+			ResKey label) throws IOException;
 
 	/**
 	 * Writes the {@link ColumnBaseConfig#getAdditionalHeaders() additional header}.

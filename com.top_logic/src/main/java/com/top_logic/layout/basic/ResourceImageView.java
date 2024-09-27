@@ -9,7 +9,7 @@ import static com.top_logic.mig.html.HTMLConstants.*;
 
 import java.io.IOException;
 
-import com.top_logic.basic.StringServices;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ResPrefix;
@@ -84,13 +84,13 @@ public class ResourceImageView extends DefaultView {
 		Resources resources = context.getResources();
 
 		String alt = resources.getString(_imageResourceKey.key(RESOURCE_SUFFIX_ALT));
-		String tooltip = resources.getString(_imageResourceKey.key(RESOURCE_SUFFIX_TOOLTIP));
+		ResKey tooltip = _imageResourceKey.key(RESOURCE_SUFFIX_TOOLTIP);
 		
 		XMLTag tag = _image.toIcon();
 		tag.beginBeginTag(context, out);
 		out.writeAttribute(ALT_ATTR, alt);
-		if (! StringServices.isEmpty(tooltip)) {
-			String tooltipCaption = resources.getString(_imageResourceKey.key(RESOURCE_SUFFIX_TOOLTIP_CAPTION));
+		if (tooltip != null) {
+			ResKey tooltipCaption = _imageResourceKey.key(RESOURCE_SUFFIX_TOOLTIP_CAPTION);
 			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip, tooltipCaption);
 		}
 		tag.endEmptyTag(context, out);

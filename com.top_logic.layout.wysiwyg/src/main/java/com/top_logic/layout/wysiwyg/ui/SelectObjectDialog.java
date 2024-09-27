@@ -200,7 +200,7 @@ public class SelectObjectDialog {
 
 	private ConstantField getTitleField() {
 		ConstantField constantField = getConstantTitleField();
-		constantField.setLabel(Resources.getInstance().getString(I18NConstants.TITLE_FIELD_LABEL));
+		constantField.setLabel(I18NConstants.TITLE_FIELD_LABEL);
 
 		return constantField;
 	}
@@ -241,7 +241,7 @@ public class SelectObjectDialog {
 
 	private CommandField getAcceptCommand(Command closeCommand, ListField optionField) {
 		CommandField accept = FormFactory.newCommandField(ACCEPT_COMMAND_NAME, createLinkCommand(closeCommand, optionField));
-		accept.setLabel(Resources.getInstance().getString(I18NConstants.ACCEPT_COMMAND_LABEL));
+		accept.setLabel(I18NConstants.ACCEPT_COMMAND_LABEL);
 		accept.setShowProgress();
 
 		setDoubleClickCommand(optionField, accept);
@@ -290,7 +290,7 @@ public class SelectObjectDialog {
 
 	private CommandField getCancelCommand(Command closeCommand) {
 		CommandField cancel = FormFactory.newCommandField(CANCEL_COMMAND_NAME, closeCommand);
-		cancel.setLabel(Resources.getInstance().getString(I18NConstants.CANCEL_COMMAND_LABEL));
+		cancel.setLabel(I18NConstants.CANCEL_COMMAND_LABEL);
 
 		return cancel;
 	}
@@ -316,7 +316,7 @@ public class SelectObjectDialog {
 	private ListField getOptionField() {
 		ListField optionField = FormFactory.newListField(OPTIONS_FIELD_NAME, new DefaultListModel<>());
 
-		optionField.setLabel(Resources.getInstance().getString(I18NConstants.OPTIONS_FIELD_LABEL));
+		optionField.setLabel(I18NConstants.OPTIONS_FIELD_LABEL);
 		optionField.set(CONTROL, getOptionControl(optionField));
 		optionField.setControlProvider(getOptionControlProvider());
 
@@ -345,7 +345,7 @@ public class SelectObjectDialog {
 		StringField searchField = FormFactory.newStringField(SEARCH_FIELD_NAME);
 
 		searchField.setControlProvider(getSearchControlProvider(searchField, optionField));
-		searchField.setLabel(Resources.getInstance().getString(I18NConstants.SEARCH_FIELD_LABEL));
+		searchField.setLabel(I18NConstants.SEARCH_FIELD_LABEL);
 		searchField.addValueListener(getSearchValueListener(getSearchCommand(searchField, optionField), optionField));
 
 		return searchField;

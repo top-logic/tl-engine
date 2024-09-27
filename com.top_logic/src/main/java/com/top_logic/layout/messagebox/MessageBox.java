@@ -44,7 +44,6 @@ import com.top_logic.layout.structure.LayoutData;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.structure.Scrolling;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * Utility to produce simple confirm dialogs.
@@ -602,9 +601,8 @@ public class MessageBox extends MessageBoxShortcuts {
 	 */
 	public static CommandModel button(ResKey labelKey, ThemeImage image, ThemeImage disabledImage, Command continuation) {
 		CommandModel result = CommandModelFactory.commandModel(continuation);
-		Resources resources = Resources.getInstance();
-		result.setLabel(resources.getString(labelKey));
-		result.setTooltip(resources.getString(labelKey.tooltipOptional()));
+		result.setLabel(labelKey);
+		result.setTooltip(labelKey.tooltipOptional());
 		result.setImage(image);
 		result.setNotExecutableImage(disabledImage);
 		return result;

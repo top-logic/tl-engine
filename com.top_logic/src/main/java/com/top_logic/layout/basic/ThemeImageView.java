@@ -7,7 +7,6 @@ package com.top_logic.layout.basic;
 
 import java.io.IOException;
 
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
@@ -54,11 +53,11 @@ public class ThemeImageView extends DefaultView {
 	@Override
 	public void write(DisplayContext context, TagWriter out) throws IOException {
 		ResKey altTextResKey = getAltTextResKey();
-		String altText;
+		ResKey altText;
 		if (altTextResKey == null) {
-			altText = StringServices.EMPTY_STRING;
+			altText = ResKey.text("");
 		} else {
-			altText = context.getResources().getString(altTextResKey);
+			altText = altTextResKey;
 		}
 
 		getImage().writeWithPlainTooltip(context, out, altText);

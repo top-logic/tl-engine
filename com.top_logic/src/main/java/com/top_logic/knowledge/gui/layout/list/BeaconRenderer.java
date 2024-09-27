@@ -52,21 +52,20 @@ public class BeaconRenderer implements Renderer<FastListElement> {
         	} catch (Exception ex) {
         		Logger.warn("Cannot determine index of the given FastListElement (" + element + ") in List.", ex, BeaconRenderer.class);
         	}
-        	String tooltip = getTooltip(aContext, index);
+		ResKey tooltip = getTooltip(aContext, index);
         	anOut.beginBeginTag(HTMLConstants.IMG);
         	anOut.writeAttribute(HTMLConstants.BORDER_ATTR, 0);
-        	anOut.writeAttribute(HTMLConstants.ALT_ATTR, tooltip);
+			anOut.writeAttribute(HTMLConstants.ALT_ATTR, aContext.getResources().getString(tooltip));
 			anOut.writeAttribute(HTMLConstants.TITLE_ATTR, "");
-			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(aContext, anOut, tooltip);
+			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(aContext, anOut, tooltip);
         	anOut.writeAttribute(HTMLConstants.SRC_ATTR, aContext.getContextPath() + theLink);
         	anOut.endEmptyTag();
         }
     }
 
-	private String getTooltip(DisplayContext aContext, int index) {
+	private ResKey getTooltip(DisplayContext aContext, int index) {
 		int tooltipIndex = Math.min(0, index);
-		return aContext.getResources().getString(
-			ResKey.legacy("beacon_" + BeaconFormFieldControlProvider.VAL_TYPE_BEACON + '_' + tooltipIndex));
+		return ResKey.legacy("beacon_" + BeaconFormFieldControlProvider.VAL_TYPE_BEACON + '_' + tooltipIndex);
 	}
 
     public static String getImageKey(FastListElement aBeaconValue){

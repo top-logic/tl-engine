@@ -138,7 +138,7 @@ public abstract class AttributeFormFactory {
 
 				// Make the group representing the complex attribute have the
 				// attribute's label.
-				range.setLabel(TLModelI18N.getI18NName(metaAttribute));
+				range.setLabel(TLModelI18N.getI18NKey(metaAttribute));
 
 				result = range;
 			}

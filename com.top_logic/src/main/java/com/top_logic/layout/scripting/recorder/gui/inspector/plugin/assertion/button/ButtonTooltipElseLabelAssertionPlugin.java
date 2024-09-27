@@ -18,6 +18,7 @@ import com.top_logic.layout.scripting.recorder.gui.inspector.I18NConstants;
 import com.top_logic.layout.scripting.recorder.gui.inspector.plugin.assertion.SingleValueAssertionPlugin;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ui.button.ButtonTooltipElseLabelNaming.ButtonTooltipElseLabelName;
+import com.top_logic.util.Resources;
 
 /**
  * {@link SingleValueAssertionPlugin} for the tooltip of a button, using the label as a fallback.
@@ -45,9 +46,9 @@ public class ButtonTooltipElseLabelAssertionPlugin extends LabeledButtonAssertio
 
 	@Override
 	protected Object getInitialValue() {
-		String tooltip = getModel().getTooltip();
+		String tooltip = Resources.getInstance().getString(getModel().getTooltip());
 		if (isEmpty(tooltip)) {
-			return nonNull(getModel().getLabel());
+			return nonNull(Resources.getInstance().getString(getModel().getLabel()));
 		}
 		return nonNull(tooltip);
 	}

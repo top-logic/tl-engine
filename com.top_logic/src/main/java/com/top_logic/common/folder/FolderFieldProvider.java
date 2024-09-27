@@ -5,8 +5,8 @@
  */
 package com.top_logic.common.folder;
 
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.common.folder.model.FolderNode;
 import com.top_logic.common.folder.ui.commands.ContentDownload;
 import com.top_logic.common.folder.ui.commands.Icons;
@@ -88,7 +88,7 @@ public class FolderFieldProvider implements FieldProvider {
 			/* Set here empty label: For a HiddenField no control is rendered. Then a
 			 * "fallback renderer" is used which is de facto the ResourceRenderer which renders the
 			 * label for an form field. */
-			hiddenField.setLabel(StringServices.EMPTY_STRING);
+			hiddenField.setLabel(ResKey.text(""));
 			return hiddenField;
 		}
 	}

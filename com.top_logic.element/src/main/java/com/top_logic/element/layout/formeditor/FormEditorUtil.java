@@ -8,6 +8,7 @@ package com.top_logic.element.layout.formeditor;
 import static com.top_logic.layout.form.template.model.Templates.*;
 
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.meta.I18NConstants;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.AttributeUpdate;
@@ -206,7 +207,7 @@ public class FormEditorUtil {
 
 	private static FormField createPlaceholder(TLStructuredTypePart aMA) {
 		FormField field = FormFactory.newStringField(aMA.getName() + aMA.tId());
-		field.setLabel(MetaLabelProvider.INSTANCE.getLabel(aMA));
+		field.setLabel(ResKey.text(MetaLabelProvider.INSTANCE.getLabel(aMA)));
 		field.initializeField(Resources.getInstance().getString(I18NConstants.FORM_EDITOR__NO_ATTRIBUTED_OBJECT));
 		field.setImmutable(true);
 

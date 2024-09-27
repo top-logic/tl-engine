@@ -15,7 +15,6 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -68,7 +67,7 @@ public class SwitchSearchScopeCommandHandler extends AJAXCommandHandler {
         aComp.setSearchScope(theNewScope);
 
         if (theModel != null) {
-            theModel.setLabel(Resources.getInstance().getString(theLabel));
+            theModel.setLabel(theLabel);
         }
     }
     

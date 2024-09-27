@@ -6,8 +6,8 @@
 package com.top_logic.util.resource;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
-import com.top_logic.layout.ResPrefix;
 
 /**
  * {@link I18NConstants} for this package
@@ -18,7 +18,10 @@ import com.top_logic.layout.ResPrefix;
  */
 public class I18NConstants extends I18NConstantsBase {
 
-	public static ResPrefix I18N_FORM_GROUP_PREFIX;
+	/**
+	 * @en {0} ({1})
+	 */
+	public static ResKey2 WITH_LANGUAGE__FIELD_LANG;
 
 	/** Key for the title of the form group containing I18N fields. */
 	public static ResKey I18N_FORM_GROUP_TITLE;

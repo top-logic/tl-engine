@@ -10,8 +10,6 @@ import java.io.IOException;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.gui.Theme;
-import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.basic.ThemeImage;
@@ -24,15 +22,6 @@ import com.top_logic.util.sched.task.result.TaskResult.ResultType;
  * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class CombinedStateRenderer implements Renderer<Object> {
-
-	private Theme theme;
-
-	/** 
-	 * Creates a {@link ResultTypeRenderer}.
-	 */
-	public CombinedStateRenderer() {
-		this.theme = ThemeFactory.getTheme();
-	}
 
 	@Override
 	public void write(DisplayContext context, TagWriter out, Object value) throws IOException {
@@ -54,8 +43,7 @@ public class CombinedStateRenderer implements Renderer<Object> {
 				+ StringServices.getObjectDescription(value));
 		}
 
-		String altText = context.getResources().getString(messageKey);
-		image.writeWithPlainTooltip(context, out, altText);
+		image.writeWithPlainTooltip(context, out, messageKey);
 	}
 }
 

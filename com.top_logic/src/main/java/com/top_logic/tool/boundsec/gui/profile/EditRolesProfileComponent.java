@@ -30,6 +30,7 @@ import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
@@ -350,8 +351,8 @@ public class EditRolesProfileComponent extends EditComponent {
                     String theId = theCommandGroup.getID();
                     Collection theRFCG = ((BoundChecker) node).getRolesForCommandGroup(theCommandGroup);
                     BooleanField theBooleanField = FormFactory.newBooleanField(theId);
-					String theLabel = CommandGroupResourceProvider.INSTANCE.getLabel(theCommandGroup);
-					String theToolTip = CommandGroupResourceProvider.INSTANCE.getTooltip(theCommandGroup);
+					ResKey theLabel = ResKey.text(CommandGroupResourceProvider.INSTANCE.getLabel(theCommandGroup));
+					ResKey theToolTip = ResKey.text(CommandGroupResourceProvider.INSTANCE.getTooltip(theCommandGroup));
                     theBooleanField.setLabel(theLabel);
                     theBooleanField.setTooltip(theToolTip);
 					theBooleanField.initializeField(

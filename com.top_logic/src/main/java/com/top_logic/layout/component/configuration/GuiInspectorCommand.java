@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.component.configuration;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.AbstractCommandModel;
 import com.top_logic.layout.basic.ThemeImage;
@@ -12,7 +13,6 @@ import com.top_logic.layout.form.control.AbstractButtonControl;
 import com.top_logic.layout.form.popupmenu.Icons;
 import com.top_logic.layout.layoutRenderer.I18NConstants;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * Renders the button with a {@link GuiInspectorInvokeExpressionProvider} to trigger the
@@ -37,8 +37,8 @@ public class GuiInspectorCommand extends AbstractCommandModel {
 	}
 
 	@Override
-	public String getLabel() {
-		return Resources.getInstance().getString(I18NConstants.GUI_INSPECTOR);
+	public ResKey getLabel() {
+		return I18NConstants.GUI_INSPECTOR;
 	}
 
 	@Override

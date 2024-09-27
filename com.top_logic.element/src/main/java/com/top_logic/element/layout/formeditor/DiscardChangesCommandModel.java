@@ -15,7 +15,6 @@ import com.top_logic.layout.basic.AbstractCommandModel;
 import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.model.form.implementation.FormElementTemplateProvider;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * Sets the display description of a given model to the last persistent version of it. So all
@@ -28,8 +27,6 @@ public class DiscardChangesCommandModel extends AbstractCommandModel {
 	private FormDefinition _origin;
 
 	private FormDefinition _tmp;
-
-	private static final String LABEL = Resources.getInstance().getString(I18NConstants.DISCARD_CHANGES);
 
 	/**
 	 * 
@@ -44,7 +41,7 @@ public class DiscardChangesCommandModel extends AbstractCommandModel {
 		_origin = origin;
 		_tmp = tmp;
 
-		setLabel(LABEL);
+		setLabel(I18NConstants.DISCARD_CHANGES);
 		setImage(Icons.DISCARD_CHANGES);
 		setNotExecutableImage(Icons.DISCARD_CHANGES_DISABLED);
 	}

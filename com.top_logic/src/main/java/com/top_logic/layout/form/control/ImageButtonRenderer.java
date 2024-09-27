@@ -14,6 +14,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ButtonUIModel;
@@ -124,7 +125,7 @@ public class ImageButtonRenderer extends AbstractButtonRenderer<ImageButtonRende
 					out.writeAttribute(TABINDEX_ATTR, button.getTabindex());
 				}
 			}
-			out.writeAttribute(ALT_ATTR, button.getAltText());
+			out.writeAttribute(ALT_ATTR, context.getResources().getString(button.getAltText()));
 			/*
 			 * Older versions of the Internet Explorer display the text in the "alt" attribute if the "title" attribute is not set.
 			 * As there is already a JavaScript tooltip in many cases, these versions of the IE display two tooltips.
@@ -143,7 +144,7 @@ public class ImageButtonRenderer extends AbstractButtonRenderer<ImageButtonRende
 	}
 
     @Override
-	public void handleLabelPropertyChange(AbstractButtonControl<?> button, String aNewLabel) {
+	public void handleLabelPropertyChange(AbstractButtonControl<?> button, ResKey aNewLabel) {
     	// nothing to do since no label is written
     }
 
@@ -157,12 +158,9 @@ public class ImageButtonRenderer extends AbstractButtonRenderer<ImageButtonRende
     	}
     }
 
-    /**
-     * @see com.top_logic.layout.form.control.AbstractButtonRenderer#getTooltip(AbstractButtonControl)
-     */
     @Override
-	protected String getTooltip(AbstractButtonControl<?> aButtonControl) {
-		return ButtonRenderer.lookupTooltipLabelFallback(aButtonControl, false, execStateInTooltip);
+	protected ResKey getTooltip(AbstractButtonControl<?> aButtonControl) {
+		return ResKey.text(ButtonRenderer.lookupTooltipLabelFallback(aButtonControl, false, execStateInTooltip));
     }
 
 }

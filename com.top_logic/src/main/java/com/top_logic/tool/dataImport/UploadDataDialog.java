@@ -22,7 +22,6 @@ import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.messagebox.SimpleFormDialog;
-import com.top_logic.util.Resources;
 
 /**
  * A {@link SimpleFormDialog} to upload a data file.
@@ -97,7 +96,7 @@ public abstract class UploadDataDialog extends SimpleFormDialog {
 	private CommandModel createImportCommand() {
 		CommandModel importCommand = CommandModelFactory.commandModel(getUploadDataCommand());
 
-		importCommand.setLabel(Resources.getInstance().getString(I18NConstants.IMPORT));
+		importCommand.setLabel(I18NConstants.IMPORT);
 
 		return importCommand;
 	}

@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.version.model.VersionInfo;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
@@ -64,7 +65,8 @@ public class DependencyNameCellRenderer extends AbstractCellRenderer {
 			}
 
 			out.beginBeginTag(SPAN);
-			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip.toString());
+			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out,
+				ResKey.text(tooltip.toString()));
 			out.endBeginTag();
 
 			URL url = validateUrl(version);

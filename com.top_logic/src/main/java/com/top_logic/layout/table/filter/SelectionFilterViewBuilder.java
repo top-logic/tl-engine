@@ -19,7 +19,6 @@ import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.provider.DefaultLabelProvider;
-import com.top_logic.util.Resources;
 import com.top_logic.util.TLCollator;
 
 /**
@@ -69,7 +68,7 @@ public class SelectionFilterViewBuilder implements FilterViewBuilder<SelectionFi
 		}
 		optionsField.setOptionComparator(optionComparator);
 		optionsField.setOptionLabelProvider(optionLabelProvider);
-		optionsField.setLabel(Resources.getInstance().getString(I18NConstants.FILTER_VALUES));
+		optionsField.setLabel(I18NConstants.FILTER_VALUES);
 		return optionsField;
 	}
 

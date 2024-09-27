@@ -18,7 +18,6 @@ import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ComponentCommandModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandHandler;
-import com.top_logic.util.Resources;
 
 /**
  * Configuration of a {@link ToolBarGroup} in the context of a {@link LayoutComponent}.
@@ -108,10 +107,10 @@ public interface ToolBarGroupConfig extends NamedConfigMandatory {
 					return null;
 				}
 				if (isSet(uiConfig, ButtonUIConfig.TOOLTIP_KEY)) {
-					button.setTooltip(resolve(uiConfig.getTooltipKey()));
+					button.setTooltip(uiConfig.getTooltipKey());
 				}
 				if (isSet(uiConfig, ButtonUIConfig.TOOLTIP_CAPTION_KEY)) {
-					button.setTooltipCaption(resolve(uiConfig.getTooltipCaptionKey()));
+					button.setTooltipCaption(uiConfig.getTooltipCaptionKey());
 				}
 				if (isSet(uiConfig, ButtonUIConfig.ACCESS_KEY)) {
 					button.setAccessKey(uiConfig.getAccessKey());
@@ -124,7 +123,7 @@ public interface ToolBarGroupConfig extends NamedConfigMandatory {
 					button.setNotExecutableImage(uiConfig.getNotExecutableImage());
 				}
 				if (isSet(uiConfig, ButtonUIConfig.ALT_KEY)) {
-					button.setAltText(resolve(uiConfig.getAltKey()));
+					button.setAltText(uiConfig.getAltKey());
 				}
 
 				if (isSet(uiConfig, ButtonUIConfig.CSS_CLASSES)) {
@@ -135,10 +134,6 @@ public interface ToolBarGroupConfig extends NamedConfigMandatory {
 
 			private static boolean isSet(ButtonUIConfig uiConfig, String property) {
 				return uiConfig.valueSet(uiConfig.descriptor().getProperty(property));
-			}
-
-			private static String resolve(ResKey key) {
-				return Resources.getInstance().getString(key);
 			}
 
 		}

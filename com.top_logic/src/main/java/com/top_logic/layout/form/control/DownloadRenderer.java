@@ -8,6 +8,7 @@ package com.top_logic.layout.form.control;
 import java.io.IOException;
 
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DefaultControlRenderer;
@@ -37,7 +38,7 @@ public class DownloadRenderer extends DefaultControlRenderer<IDownloadControl> {
 		BinaryDataSource dataItem = control.dataItem();
 		if (dataItem != null) {
 			String fileName = dataItem.getName();
-			String tooltip = context.getResources().getString(I18NConstants.DOWNLOAD_TOOLTIP__FILENAME.fill(fileName));
+			ResKey tooltip = I18NConstants.DOWNLOAD_TOOLTIP__FILENAME.fill(fileName);
 			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip);
 		} else {
 			out.writeAttribute(DISABLED_ATTR, DISABLED_DISABLED_VALUE);

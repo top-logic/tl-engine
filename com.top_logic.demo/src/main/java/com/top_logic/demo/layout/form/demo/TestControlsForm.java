@@ -1184,8 +1184,8 @@ public class TestControlsForm extends FormComponent {
 		addTestKeyEventListener(controlsGroup);
 
 		final StringField infoField = FormFactory.newStringField("infoControl");
-		infoField.setTooltip("Lorem ipsum...");
-		infoField.setTooltipCaption("Caption");
+		infoField.setTooltip(ResKey.text("Lorem ipsum..."));
+		infoField.setTooltipCaption(ResKey.text("Caption"));
 		controlsGroup.addMember(infoField);
 
 		controlsGroup.addMember(createCalendarMarkerDemoField());
@@ -1944,7 +1944,7 @@ public class TestControlsForm extends FormComponent {
 					}
 				};
 				CommandModel button = CommandModelFactory.commandModel(command);
-				button.setLabel("Show context info.");
+				button.setLabel(ResKey.text("Show context info."));
 				return Menu.create(button);
 			}
 		};
@@ -1960,15 +1960,15 @@ public class TestControlsForm extends FormComponent {
 		CommandModel command2 = simpleCommandModel("command2", null, null);
 		PopupMenuField visibilityTestMenuOpener =
 			DefaultPopupMenuField.newField("visibilityOfMenuOpenerTest", command1, command2);
-		visibilityTestMenuOpener.setLabel("PopupMenu which is just visible if any content is visible.");
+		visibilityTestMenuOpener.setLabel(ResKey.text("PopupMenu which is just visible if any content is visible."));
 		BooleanField command1Visibility =
 			FormFactory.newBooleanField("command1Visibility", Boolean.TRUE, !FormFactory.IMMUTABLE);
 		command1Visibility
 			.addValueListener((field, oldVal, newVal) -> command1.setVisible(Utils.isTrue((Boolean) newVal)));
-		command1Visibility.setLabel("Visibility of " + command1.getLabel() + " in menu.");
+		command1Visibility.setLabel(ResKey.text("Visibility of " + command1.getLabel() + " in menu."));
 		BooleanField command2Visibility =
 			FormFactory.newBooleanField("command2Visibility", Boolean.TRUE, !FormFactory.IMMUTABLE);
-		command2Visibility.setLabel("Visibility of " + command2.getLabel() + " in menu.");
+		command2Visibility.setLabel(ResKey.text("Visibility of " + command2.getLabel() + " in menu."));
 		command2Visibility
 			.addValueListener((field, oldVal, newVal) -> command2.setVisible(Utils.isTrue((Boolean) newVal)));
 
@@ -1987,7 +1987,7 @@ public class TestControlsForm extends FormComponent {
 		commands.add(exportModel);
 		commands.add(simpleCommandModel("Löschen", null, null));
 		PopupMenuField popupMenuField = DefaultPopupMenuField.newField("openPopupMenu", commands);
-		popupMenuField.setLabel("Open command menu");
+		popupMenuField.setLabel(ResKey.text("Open command menu"));
 		controlsGroup.addMember(popupMenuField);
 	}
 
@@ -1999,11 +1999,11 @@ public class TestControlsForm extends FormComponent {
 				return HandlerResult.DEFAULT_RESULT;
 			}
 		};
-		commandModel.setLabel("Invalidate component");
+		commandModel.setLabel(ResKey.text("Invalidate component"));
 		commandModel.setVisible(false);
 		PopupMenuField invalidateComponentField =
 			DefaultPopupMenuField.newField("openInvalidateCompnoentField", commandModel);
-		invalidateComponentField.setLabel("Open invalidate component menu");
+		invalidateComponentField.setLabel(ResKey.text("Open invalidate component menu"));
 		controlsGroup.addMember(invalidateComponentField);
 	}
 
@@ -2016,7 +2016,7 @@ public class TestControlsForm extends FormComponent {
 				return HandlerResult.DEFAULT_RESULT;
 			}
 		};
-		commandModel.setLabel(label);
+		commandModel.setLabel(ResKey.text(label));
 		if (image != null) {
 			commandModel.setImage(image);
 		}
@@ -2039,7 +2039,7 @@ public class TestControlsForm extends FormComponent {
 	private void addOpenCalendarControl(FormGroup controlsGroup) {
 		Date initialDate = null;
 		ComplexField displayField = FormFactory.newDateField("displayDate", initialDate, FormFactory.IMMUTABLE);
-		displayField.setLabel(Resources.getInstance().getString(I18NConstants.DISPLAY_SELECTED_DATE));
+		displayField.setLabel(I18NConstants.DISPLAY_SELECTED_DATE);
 		displayField.setControlProvider(ValueDisplay.INSTANCE);
 		ComplexField editField = FormFactory.newDateField("openCalendar", initialDate, !FormFactory.IMMUTABLE);
 		editField.setControlProvider(OpenCalendar.INSTANCE);
@@ -2290,7 +2290,7 @@ public class TestControlsForm extends FormComponent {
 		Constraint constraint = new DateRangeConstraint(null, initialValue);
 		dateTimeField.addConstraint(constraint);
 		final StringField valueField = FormFactory.newStringField("dateTimeFieldValue", true);
-		valueField.setLabel("Value of date time field");
+		valueField.setLabel(ResKey.text("Value of date time field"));
 		class Listener implements ValueListener, HasErrorChanged {
 
 			@Override
@@ -2471,9 +2471,9 @@ public class TestControlsForm extends FormComponent {
 
 	private CommandField createCommandModel(String name) {
 		CommandField field = FormFactory.newCommandField(name, createAlertCommand("Button pressed"));
-		field.setLabel("Label of command model.");
-		field.setTooltip("Tooltip of command model.");
-		field.setTooltipCaption("Tooltip caption of command model.");
+		field.setLabel(ResKey.text("Label of command model."));
+		field.setTooltip(ResKey.text("Tooltip of command model."));
+		field.setTooltipCaption(ResKey.text("Tooltip caption of command model."));
 		field.setImage(com.top_logic.layout.form.tag.Icons.OPEN_CHOOSER);
 		field.setNotExecutableImage(com.top_logic.layout.form.tag.Icons.OPEN_CHOOSER_DISABLED);
 		return field;
@@ -2630,7 +2630,7 @@ public class TestControlsForm extends FormComponent {
 					}
 				};
 				CommandModel result = CommandModelFactory.commandModel(command);
-				result.setLabel(value);
+				result.setLabel(ResKey.text(value));
 				return result;
 			}
 		});
@@ -2805,14 +2805,14 @@ public class TestControlsForm extends FormComponent {
 		FormGroup mkRow() {
 			FormGroup row = new FormGroup("row-" + _ids.createNewID(), PlainKeyResources.INSTANCE);
 			CommandField addRow = new ADD_ROW("addRow");
-			addRow.setLabel("+");
+			addRow.setLabel(ResKey.text("+"));
 			row.addMember(addRow);
 			FormArray values = new FormArray("values", ResPrefix.NONE);
 			row.addMember(values);
 			FormMember value = mkValue();
 			values.addMember(value);
 			CommandField addValue = new ADD_VALUE("addValue");
-			addValue.setLabel("+");
+			addValue.setLabel(ResKey.text("+"));
 			row.addMember(addValue);
 			return row;
 		}
@@ -2831,7 +2831,7 @@ public class TestControlsForm extends FormComponent {
 			group.addMember(valueInput);
 
 			CommandField removeValue = new REMOVE_VALUE("removeValue");
-			removeValue.setLabel("-");
+			removeValue.setLabel(ResKey.text("-"));
 			group.addMember(removeValue);
 			return group;
 		}
@@ -2911,28 +2911,29 @@ public class TestControlsForm extends FormComponent {
 		{
 			StringField field = FormFactory.newStringField("maxLength20");
 			field.addConstraint(new StringLengthConstraint(0, 20));
-			field.setTooltip("Field with a length constraint of 20 characters maximum");
+			field.setTooltip(ResKey.text("Field with a length constraint of 20 characters maximum"));
 			group.addMember(field);
 		}
 
 		{
 			StringField field = FormFactory.newStringField("minLength10");
 			field.addConstraint(new StringLengthConstraint(10));
-			field.setTooltip("Field with a minimum length constraint of 10 characters");
+			field.setTooltip(ResKey.text("Field with a minimum length constraint of 10 characters"));
 			group.addMember(field);
 		}
 
 		{
 			StringField field = FormFactory.newStringField("lengthBetween10And20");
 			field.addConstraint(new StringLengthConstraint(10, 20));
-			field.setTooltip("Field with a range constraint of 10 to 20 characters");
+			field.setTooltip(ResKey.text("Field with a range constraint of 10 to 20 characters"));
 			group.addMember(field);
 		}
 
 		{
 			StringField field = FormFactory.newStringField("lengthBetween10And20OrEmpty");
 			field.addConstraint(new StringLengthConstraint(10, 20, true));
-			field.setTooltip("Field with a range constraint of 10 to 20 characters that may also be empty");
+			field
+				.setTooltip(ResKey.text("Field with a range constraint of 10 to 20 characters that may also be empty"));
 			group.addMember(field);
 		}
 
@@ -2944,14 +2945,15 @@ public class TestControlsForm extends FormComponent {
 			StringField field = FormFactory.newStringField("maxRows5a15");
 			field.addConstraint(new ExtendedStringLengthConstraint(5, 15, ProportionalCharSizeMap.INSTANCE));
 			field.setControlProvider(multiLine);
-			field.setTooltip("Field with a text block constraint of 5 row with at most 15 characters");
+			field.setTooltip(ResKey.text("Field with a text block constraint of 5 row with at most 15 characters"));
 			group.addMember(field);
 		}
 
 		{
 			StringField field = FormFactory.newStringField("maxRows5a15Or50Char");
 			field.addConstraint(new ExtendedStringLengthConstraint(5, 15, ProportionalCharSizeMap.INSTANCE, 50));
-			field.setTooltip("Field with a text block constraint of 5 row with at most 15 characters and a maximum character limit of 50");
+			field.setTooltip(ResKey.text(
+				"Field with a text block constraint of 5 row with at most 15 characters and a maximum character limit of 50"));
 			field.setControlProvider(multiLine);
 			group.addMember(field);
 		}
@@ -3075,7 +3077,7 @@ public class TestControlsForm extends FormComponent {
 			}
 		};
 		button.setImage(com.top_logic.layout.form.tag.Icons.OPEN_CHOOSER);
-		button.setTooltip("Show selected rows.");
+		button.setTooltip(ResKey.text("Show selected rows."));
 		tableField.getToolBar().defineGroup(CommandHandlerFactory.ADDITIONAL_GROUP).addButton(button);
 		return tableField;
 	}
@@ -3974,11 +3976,11 @@ public class TestControlsForm extends FormComponent {
 
 	static void updateLabel(FormField field, boolean addPrefix, String prefix) {
 		if (addPrefix) {
-			field.setLabel(prefix + field.getLabel());
+			field.setLabel(I18NConstants.CHANGED_LABEL__PREFIX_PREV.fill(prefix, field.getLabel()));
 		} else {
-			int idx = field.getLabel().indexOf(prefix);
-			if (idx >= 0) {
-				field.setLabel(field.getLabel().substring(0, idx) + field.getLabel().substring(idx + prefix.length()));
+			ResKey label = field.getLabel();
+			if (label.plain() == I18NConstants.CHANGED_LABEL__PREFIX_PREV) {
+				field.setLabel((ResKey) label.arguments()[1]);
 			}
 		}
 	}

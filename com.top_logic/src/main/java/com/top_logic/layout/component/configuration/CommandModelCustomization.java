@@ -16,7 +16,6 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ThemeImage;
-import com.top_logic.util.Resources;
 
 /**
  * Configured view-related properties that can be applied to an existing {@link CommandModel}
@@ -126,15 +125,14 @@ public class CommandModelCustomization<C extends CommandModelCustomization.Confi
 		ThemeImage notExecutableImage = config.getNotExecutableImage();
 		ThemeImage activeImage = config.getNotExecutableImage();
 
-		Resources resources = Resources.getInstance();
 		if (labelKey != null) {
-			model.setLabel(resources.getString(labelKey));
+			model.setLabel(labelKey);
 		}
 		if (tooltipKey != null) {
-			model.setTooltip(resources.getString(tooltipKey));
+			model.setTooltip(tooltipKey);
 		}
 		if (altTextKey != null) {
-			model.setAltText(resources.getString(altTextKey));
+			model.setAltText(altTextKey);
 		}
 		if (cssClasses != null) {
 			model.setCssClasses(cssClasses);

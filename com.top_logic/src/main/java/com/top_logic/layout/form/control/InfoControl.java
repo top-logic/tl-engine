@@ -9,6 +9,7 @@ import java.io.IOException;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.listener.EventType.Bubble;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
@@ -71,8 +72,8 @@ public class InfoControl extends AbstractFormMemberControl implements TooltipCha
 		}
 
 
-		String tooltip = "";
-		String tooltipCaption = "";
+		ResKey tooltip = null;
+		ResKey tooltipCaption = null;
 		// TODO: Remove spurious cast by pulling up "tooltip" to FormMember.
 		if (field instanceof AbstractFormMember) {
 			tooltip = ((AbstractFormMember)field).getTooltip();
@@ -93,11 +94,13 @@ public class InfoControl extends AbstractFormMemberControl implements TooltipCha
 		out.endTag(SPAN);
 	}
 
-	private void writeImage(TagWriter out, DisplayContext context, String tooltip, String tooltipCaption) throws IOException {
+	private void writeImage(TagWriter out, DisplayContext context, ResKey tooltip, ResKey tooltipCaption)
+			throws IOException {
 		image.write(context, out, null, tooltip, tooltipCaption);
 	}
 
-	private void writeText(TagWriter out, DisplayContext context, String tooltip, String tooltipCaption) throws IOException {
+	private void writeText(TagWriter out, DisplayContext context, ResKey tooltip, ResKey tooltipCaption)
+			throws IOException {
 		out.beginBeginTag(SPAN);
 		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip, tooltipCaption);
 		out.endBeginTag();
@@ -130,7 +133,7 @@ public class InfoControl extends AbstractFormMemberControl implements TooltipCha
 	}
 
 	@Override
-	public Bubble handleTooltipChanged(Object sender, String oldValue, String newValue) {
+	public Bubble handleTooltipChanged(Object sender, ResKey oldValue, ResKey newValue) {
 		return repaintOnEvent(sender);
 	}
 

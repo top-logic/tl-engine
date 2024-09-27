@@ -8,6 +8,7 @@ package com.top_logic.layout.table.renderer;
 import java.io.IOException;
 
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Flavor;
@@ -79,7 +80,7 @@ public class IconOnlyRenderer implements Renderer<Object> {
 			theWriter.writeAttribute(HTMLConstants.CLASS_ATTR, cssClass);
 			theWriter.endBeginTag();
         }
-		theImage.writeWithPlainTooltip(aContext, aOut, theText);
+		theImage.writeWithPlainTooltip(aContext, aOut, ResKey.text(theText));
         if (hasURL) {
             HTMLUtil.endA(theWriter);
         }

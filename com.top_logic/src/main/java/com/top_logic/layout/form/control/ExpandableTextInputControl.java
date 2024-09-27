@@ -27,7 +27,6 @@ import com.top_logic.layout.form.format.WikiWrite;
 import com.top_logic.layout.form.model.ExpandableStringField;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 import com.top_logic.util.Utils;
 import com.top_logic.util.css.CssUtil;
 
@@ -110,7 +109,7 @@ public class ExpandableTextInputControl extends TextInputControl implements Coll
 		ControlCommand aCommand = getToggleFieldModeCommand();
 
         /* 2. Render the dialog popup button. */
-		String buttonTooltip = Resources.getInstance().getString(TOGGLE_BUTTON_TOOLTIP);
+		ResKey buttonTooltip = TOGGLE_BUTTON_TOOLTIP;
 		
 		XMLTag tag = getButton();		
 		tag.beginBeginTag(context, out);
@@ -156,7 +155,7 @@ public class ExpandableTextInputControl extends TextInputControl implements Coll
 		out.writeAttribute(STYLE_ATTR, getInputStyle());
     
         if (!isExpanded && (this.getMaxLengthShown() > -1)) {
-			String encoded = TagUtil.encodeXML(value);
+			ResKey encoded = ResKey.text(TagUtil.encodeXML(value));
 			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, encoded);
             value = StringServices.minimizeString(value, this.getMaxLengthShown(), getStartCutPosition());
         }

@@ -22,6 +22,7 @@ import com.top_logic.base.chart.util.ChartType;
 import com.top_logic.base.services.simpleajax.AbstractSystemAjaxCommand;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.CommandModel;
@@ -34,7 +35,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * The ChoiceJFreeChartComponent implements the {@link ChartChoice} interface.
@@ -190,7 +190,7 @@ public abstract class ChoiceJFreeChartComponent extends JFreeChartComponent impl
 		Iterator<ChartType> theIter = theChartTypes.iterator();
 		while (theIter.hasNext()) {
 			ChartType theChartType = theIter.next();
-			String theLabel = getI18NLabel(theChartType.getName());
+			ResKey theLabel = getI18NLabel(theChartType.getName());
 			CommandModel model = getCommandModelFor(theChartType.getName());
 			model.setLabel(theLabel);
 			model.setImage(theChartType.getIcon());
@@ -201,8 +201,8 @@ public abstract class ChoiceJFreeChartComponent extends JFreeChartComponent impl
 		return theModels;
 	}
 
-    private String getI18NLabel(String aChartType) {
-		return Resources.getInstance().getString(I18NConstants.CHART_TYPE.key(aChartType));
+	private ResKey getI18NLabel(String aChartType) {
+		return I18NConstants.CHART_TYPE.key(aChartType);
     }
 
     /**

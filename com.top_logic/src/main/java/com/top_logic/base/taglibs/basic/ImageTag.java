@@ -45,14 +45,11 @@ public class ImageTag extends AbstractTagBase {
 	/** @see #setAltKey(Object) */
 	private ResKey _altKey;
 
-	/** @see #getTooltip() */
-	private String _tooltip;
-
 	/** @see #getTooltipCaption() */
-	private String _tooltipCaption;
+	private ResKey _tooltipCaption;
 
 	/** @see #setTooltipKey(Object) */
-	private ResKey _tooltipKey;
+	private ResKey _tooltip;
 
 	/** @see #getBorder() */
 	private String _border;
@@ -168,19 +165,19 @@ public class ImageTag extends AbstractTagBase {
 	 * Tooltip contents to be displayed on the image.
 	 * 
 	 * <p>
-	 * Only one of {@link #setTooltip(String)} or {@link #setTooltipKey(Object)} must be specified.
+	 * Only one of {@link #setTooltip(ResKey)} or {@link #setTooltipKey(Object)} must be specified.
 	 * </p>
 	 * 
 	 * @see #setTooltipKey(Object)
 	 */
-	public String getTooltip() {
+	public ResKey getTooltip() {
 		return _tooltip;
 	}
 
 	/**
-	 * @see #setTooltip(String)
+	 * @see #setTooltip(ResKey)
 	 */
-	public void setTooltip(String tooltip) {
+	public void setTooltip(ResKey tooltip) {
 		_tooltip = tooltip;
 	}
 
@@ -193,10 +190,10 @@ public class ImageTag extends AbstractTagBase {
 	 * </p>
 	 * 
 	 * <p>
-	 * Only one of {@link #setTooltip(String)} or {@link #setTooltipKey(Object)} must be specified.
+	 * Only one of {@link #setTooltip(ResKey)} or {@link #setTooltipKey(Object)} must be specified.
 	 * </p>
 	 * 
-	 * @see #setTooltip(String)
+	 * @see #setTooltip(ResKey)
 	 */
 	public void setTooltipKey(Object tooltipKey) {
 		ResKey key;
@@ -209,7 +206,7 @@ public class ImageTag extends AbstractTagBase {
 	}
 
 	private void internalSetTooltipKey(ResKey tooltipKey) {
-		_tooltipKey = tooltipKey;
+		_tooltip = tooltipKey;
 	}
 
 	/**
@@ -219,14 +216,14 @@ public class ImageTag extends AbstractTagBase {
 	 * Must only be specified, if {@link #getTooltip()} is given.
 	 * </p>
 	 */
-	public String getTooltipCaption() {
+	public ResKey getTooltipCaption() {
 		return _tooltipCaption;
 	}
 
 	/**
 	 * @see #getTooltipCaption()
 	 */
-	public void setTooltipCaption(String tooltipCaption) {
+	public void setTooltipCaption(ResKey tooltipCaption) {
 		_tooltipCaption = tooltipCaption;
 	}
 
@@ -320,13 +317,12 @@ public class ImageTag extends AbstractTagBase {
 	}
 
 	private void writeTooltipAttribute(DisplayContext context, TagWriter out) throws IOException {
-		String tooltip;
-		String tooltipCaption;
-		ResKey tooltipKey = _tooltipKey;
+		ResKey tooltip;
+		ResKey tooltipCaption;
+		ResKey tooltipKey = _tooltip;
 		if (tooltipKey != null) {
-			Resources resources = getDisplayContext().getResources();
-			tooltip = resources.getString(tooltipKey);
-			tooltipCaption = resources.getString(Resources.derivedKey(tooltipKey, ".title"), null);
+			tooltip = tooltipKey;
+			tooltipCaption = Resources.derivedKey(tooltipKey, ".title").fallback(ResKey.text(null));
 		} else {
 			tooltip = getTooltip();
 			tooltipCaption = getTooltipCaption();
@@ -347,7 +343,7 @@ public class ImageTag extends AbstractTagBase {
 		_altKey = null;
 		_tooltip = null;
 		_tooltipCaption = null;
-		_tooltipKey = null;
+		_tooltip = null;
 		_border = null;
 		_cssClass = null;
 	}

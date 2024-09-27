@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.scripting.recorder.ref.ui.button;
 
-import static com.top_logic.basic.StringServices.*;
+import static com.top_logic.basic.shared.string.StringServicesShared.*;
 
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
@@ -36,7 +36,7 @@ public class ButtonTooltipNaming
 
 	@Override
 	public String locateButtonAspect(ActionContext context, CommandModel button) {
-		return nonNull(button.getTooltip());
+		return nonNull(context.getDisplayContext().getResources().getString(button.getTooltip()));
 	}
 
 }

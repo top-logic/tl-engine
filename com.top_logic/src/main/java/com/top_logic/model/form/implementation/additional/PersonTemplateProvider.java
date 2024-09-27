@@ -46,7 +46,7 @@ public abstract class PersonTemplateProvider implements FormElementTemplateProvi
 			noPersonField.initializeField(Resources.getInstance().getString(I18NConstants.NO_ACCOUNT_AVAILABLE));
 			field = noPersonField;
 		}
-		field.setLabel(Resources.getInstance().getString(fieldLabel()));
+		field.setLabel(fieldLabel());
 		context.getContentGroup().addMember(field);
 		if (field instanceof BooleanField) {
 			return Templates.fieldBoxInputFirst(field.getName());

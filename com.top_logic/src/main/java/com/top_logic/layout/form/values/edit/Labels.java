@@ -40,6 +40,15 @@ public class Labels {
 	}
 
 	/**
+	 * A label for the property described by the given {@link ValueModel}.
+	 * 
+	 * @see #propertyLabel(PropertyDescriptor, boolean)
+	 */
+	public static ResKey propertyLabelKey(ValueModel setting) {
+		return propertyLabelKey(setting.getProperty());
+	}
+
+	/**
 	 * Installs the {@link SelectField#setEmptyLabel(String) empty label} for the given field based
 	 * on the given property.
 	 * 

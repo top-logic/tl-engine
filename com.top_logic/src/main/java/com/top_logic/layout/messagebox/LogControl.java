@@ -94,7 +94,7 @@ public class LogControl extends AbstractControlBase {
 		out.append(message.getLevel().toString());
 		out.endCssClasses();
 
-		String tooltipHtml = resources.getString(message.getMessage().tooltipOptional());
+		ResKey tooltipHtml = message.getMessage().tooltipOptional();
 		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltipHtml);
 
 		out.endBeginTag();

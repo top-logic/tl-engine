@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.themeedit.browser.resource;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
 
 /**
@@ -14,7 +15,8 @@ import com.top_logic.layout.basic.ThemeImage;
  */
 public class ThemeResourceImage {
 	ThemeImage _image;
-	String _tooltip;
+
+	ResKey _tooltip;
 
 	/**
 	 * Create a new {@link ThemeResourceImage}.
@@ -24,7 +26,7 @@ public class ThemeResourceImage {
 	 * @param tooltip
 	 *        Tool-tip as plain text.
 	 */
-	public ThemeResourceImage(ThemeImage image, String tooltip) {
+	public ThemeResourceImage(ThemeImage image, ResKey tooltip) {
 		_image = image;
 		_tooltip = tooltip;
 	}
@@ -41,7 +43,7 @@ public class ThemeResourceImage {
 	 * 
 	 * @return Tool-tip as plain text.
 	 */
-	public String getTooltip() {
+	public ResKey getTooltip() {
 		return _tooltip;
 	}
 }

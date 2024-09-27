@@ -124,7 +124,7 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 
 			if (tooltip != null) {
 				// add tooltip caption for the mouse hover effect.
-				OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip);
+				OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, ResKey.text(tooltip));
 			}
 			out.endBeginTag();
 
@@ -189,9 +189,9 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 					String emptyLabel = getEmptyLabel();
 					String emptyTooltip = getEmptyTooltip();
 					if (!options.isEmpty()) {
-						displayOption(out, emptyLabel, emptyTooltip, null, true);
+						displayOption(context1, out, emptyLabel, emptyTooltip, null, true);
 					} else {
-						displayOption(out, emptyLabel, null, null, true);
+						displayOption(context1, out, emptyLabel, null, null, true);
 					}
 				}
 
@@ -206,14 +206,15 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 					if (isSelectField && fixedOptions != null && fixedOptions.accept(currOption)) {
 						displayFixedOption(out, optionLabel, tooltip, currOption);
 					} else {
-						displayOption(out, optionLabel, tooltip, currOption, false);
+						displayOption(context1, out, optionLabel, tooltip, currOption, false);
 					}
 				}
 
 				out.endTag(HTMLConstants.DIV);
 			}
 
-			private void displayOption(TagWriter out, String optionLabel, String tooltip, Object currOption,
+			private void displayOption(DisplayContext context, TagWriter out, String optionLabel, String tooltip,
+					Object currOption,
 					boolean noOptionIsCallingThisMethod)
 					throws IOException {
 				out.beginBeginTag(HTMLConstants.ANCHOR);
@@ -265,11 +266,11 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 					out.endBeginTag();
 
 					displayOptionIcon(context, out, icon);
-					displayOptionText(out, optionLabel, tooltip);
+					displayOptionText(context, out, optionLabel, tooltip);
 
 					out.endTag(HTMLConstants.DIV);
 				} else {
-					displayOptionText(out, optionLabel, tooltip);
+					displayOptionText(context, out, optionLabel, tooltip);
 				}
 
 			}
@@ -285,7 +286,8 @@ public class MegaMenuControl extends AbstractFormFieldControl {
 				out.endTag(HTMLConstants.DIV);
 			}
 
-			private void displayOptionText(TagWriter out, String optionLabel, String tooltip) throws IOException {
+			private void displayOptionText(DisplayContext context, TagWriter out, String optionLabel, String tooltip)
+					throws IOException {
 				out.beginBeginTag(HTMLConstants.DIV);
 				out.writeAttribute(HTMLConstants.CLASS_ATTR, "tl-mega-menu__option-text-container");
 				out.endBeginTag();

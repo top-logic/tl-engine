@@ -12,6 +12,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.generate.CodeUtil;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.model.FormContext;
@@ -19,7 +20,6 @@ import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.scripting.template.gui.templates.node.TemplateResource;
 import com.top_logic.template.model.TemplateMOAttribute;
-import com.top_logic.util.Resources;
 
 /**
  * {@link FormComponent} that displays all parameters of a template and allows to create template
@@ -60,18 +60,20 @@ public class TemplateParameterComponent extends FormComponent {
 			for (MOAttribute attribute : attributes) {
 				StringField field = FormFactory.newStringField(attribute.getName());
 
+				ResKey labelKey;
 				String label = CodeUtil.toUpperCaseStart(attribute.getName());
 				if (((TemplateMOAttribute) attribute).hasDefaultValue()) {
 					Object defaultValue = _template.getDefaultValue(attribute);
 					if (StringServices.isEmpty(defaultValue)) {
-						label = Resources.getInstance().getString(I18NConstants.EMPLTY_DEFAULT_LABEL__LABEL.fill(label));
+						labelKey = I18NConstants.EMPLTY_DEFAULT_LABEL__LABEL.fill(label);
 					} else {
-						label = Resources.getInstance().getString(I18NConstants.DEFAULT_LABEL__LABEL_DEFAULT.fill(label, defaultValue));
+						labelKey = I18NConstants.DEFAULT_LABEL__LABEL_DEFAULT.fill(label, defaultValue);
 					}
 				} else {
+					labelKey = ResKey.text(label);
 					field.setMandatory(true);
 				}
-				field.setLabel(label);
+				field.setLabel(labelKey);
 
 				result.addMember(field);
 			}

@@ -5,8 +5,7 @@
  */
 package com.top_logic.layout.scripting.recorder.ref.ui.form;
 
-import static com.top_logic.basic.shared.string.StringServicesShared.*;
-
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
@@ -18,7 +17,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class FormMemberTooltipNaming
-		extends FormMemberAspectNaming<String, FormMemberTooltipNaming.FormMemberTooltipName> {
+		extends FormMemberAspectNaming<ResKey, FormMemberTooltipNaming.FormMemberTooltipName> {
 
 	/**
 	 * The {@link ModelName} of the {@link FormMemberTooltipNaming}.
@@ -31,12 +30,12 @@ public class FormMemberTooltipNaming
 
 	/** Creates a {@link FormMemberTooltipNaming}. */
 	public FormMemberTooltipNaming() {
-		super(String.class, FormMemberTooltipName.class);
+		super(ResKey.class, FormMemberTooltipName.class);
 	}
 
 	@Override
-	public String locateFormMemberAspect(ActionContext context, FormMemberTooltipName name, FormMember formMember) {
-		return nonNull(formMember.getTooltip());
+	public ResKey locateFormMemberAspect(ActionContext context, FormMemberTooltipName name, FormMember formMember) {
+		return formMember.getTooltip();
 	}
 
 }

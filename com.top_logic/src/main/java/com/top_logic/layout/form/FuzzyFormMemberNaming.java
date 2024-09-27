@@ -19,6 +19,7 @@ import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutContainer;
+import com.top_logic.util.Resources;
 
 /**
  * {@link ModelNamingScheme} of {@link FormMember}s using the tab path and their plain UI label as
@@ -76,7 +77,7 @@ public class FuzzyFormMemberNaming extends GlobalModelNamingScheme<FormMember, F
 			return Maybe.none();
 		}
 
-		String label = model.getLabel();
+		String label = Resources.getInstance().getString(model.getLabel());
 		if (StringServices.isEmpty(label)) {
 			return Maybe.none();
 		}

@@ -10,6 +10,7 @@ import static com.top_logic.mig.html.HTMLConstants.*;
 import java.io.IOException;
 
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.layout.DisplayContext;
@@ -64,7 +65,7 @@ public class IDColumnTableCellRenderer extends AbstractCellRenderer {
 		boolean useToolTip = context.getOutputMedia() != Media.PDF;
 
 		String link;
-		String tooltip;
+		ResKey tooltip;
 		boolean hasLink;
 		boolean hasTooltip;
 		String cssClass;
@@ -79,7 +80,7 @@ public class IDColumnTableCellRenderer extends AbstractCellRenderer {
 			link = useLink && context.get(ResourceRenderer.RENDER_LINKS)
 				? _rowObjectResourceProvider.getLink(context, rowObject)
 				: null;
-			tooltip = useToolTip ? _rowObjectResourceProvider.getTooltip(rowObject) : null;
+			tooltip = useToolTip ? ResKey.text(_rowObjectResourceProvider.getTooltip(rowObject)) : null;
 			cssClass = _rowObjectResourceProvider.getCssClass(cellValue);
 			hasCssClass = cssClass != null;
 			hasLink = link != null && !inEditMode;
@@ -135,7 +136,7 @@ public class IDColumnTableCellRenderer extends AbstractCellRenderer {
 
 	}
 
-	private void writeImageTag(DisplayContext context, TagWriter out, Object node, ThemeImage image, String tooltip)
+	private void writeImageTag(DisplayContext context, TagWriter out, Object node, ThemeImage image, ResKey tooltip)
 			throws IOException {
 		XMLTag tag = image.toIcon();
 		tag.beginBeginTag(context, out);

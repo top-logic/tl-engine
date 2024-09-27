@@ -14,6 +14,7 @@ import jakarta.servlet.ServletResponse;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.annotation.FrameworkInternal;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Drag;
@@ -1001,13 +1002,13 @@ public interface HTMLConstants {
 	 * </p>
 	 * 
 	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributesPlain(DisplayContext, TagWriter,
-	 *      String) Write a HTML tooltip.
+	 *      ResKey) Write a HTML tooltip.
 	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributesPlain(DisplayContext, TagWriter,
-	 *      String, String) Write a HTML tooltip with caption.
+	 *      ResKey, ResKey) Write a HTML tooltip with caption.
 	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributes(DisplayContext, TagWriter,
-	 *      String) Write a plain text tooltip.
+	 *      ResKey) Write a plain text tooltip.
 	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributes(DisplayContext, TagWriter,
-	 *      String, String) Write a plain text tooltip with caption.
+	 *      ResKey, ResKey) Write a plain text tooltip with caption.
 	 */
 	@FrameworkInternal
 	public static final String TL_TOOLTIP_ATTR = DATA_ATTRIBUTE_PREFIX + "tooltip";

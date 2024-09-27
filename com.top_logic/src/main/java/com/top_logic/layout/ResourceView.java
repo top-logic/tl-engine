@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout;
 
+import com.top_logic.basic.util.ResKey;
+
 /**
  * View into the application resources.
  * 
@@ -29,9 +31,9 @@ public interface ResourceView {
 	 *     a text is returned that is good for finding missing resources during 
 	 *     debugging. 
 	 */
-	public String getStringResource(String resourceKey);
+	public ResKey getStringResource(String resourceKey);
 
-	public String getStringResource(String resourceKey, String defaultValue);
+	public ResKey getStringResource(String resourceKey, ResKey defaultValue);
 
 	/**
 	 * Check, whether a resource is associated with the given key.

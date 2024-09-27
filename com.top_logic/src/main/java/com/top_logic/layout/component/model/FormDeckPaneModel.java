@@ -255,7 +255,7 @@ public class FormDeckPaneModel extends DefaultDeckPaneModel implements HasErrorC
 	
 		@Override
 		public void writeCardInfo(DisplayContext context, Appendable out) throws IOException {
-			out.append(member.getLabel());
+			out.append(context.getResources().getString(member.getLabel()));
 			if (member instanceof AbstractFormContainer && out instanceof TagWriter) {
 				TagWriter tagWriter = (TagWriter) out;
 				final ThemeImage img;

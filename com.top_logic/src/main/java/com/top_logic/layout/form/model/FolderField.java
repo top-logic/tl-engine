@@ -7,6 +7,7 @@ package com.top_logic.layout.form.model;
 
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.listener.EventType.Bubble;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.common.folder.FolderDefinition;
 import com.top_logic.common.webfolder.WebFolderUtils;
 import com.top_logic.common.webfolder.model.WebFolderTreeBuilder;
@@ -43,7 +44,7 @@ public class FolderField extends FormGroup implements FolderDataOwner {
 
 	private FolderData data;
 
-	private FolderField(String name, ResourceView aLabelRessource, Object rootUserObject, String rootNodeText,
+	private FolderField(String name, ResourceView aLabelRessource, Object rootUserObject, ResKey rootNodeText,
 			ExecutableState canAddToClipboard, ExecutableState canUpload, ExecutableState canZipDownload,
 			ExecutableState canCreateFolder, ExecutableState canUpdate, ExecutableState canDelete,
 			Mapping<FormMember, String> configNameMapping) {
@@ -107,11 +108,11 @@ public class FolderField extends FormGroup implements FolderDataOwner {
 		return createFolderField(name, aFolder, null);
 	}
 
-	public static FolderField createFolderField(String name, WebFolder aFolder, String rootNodeText) {
+	public static FolderField createFolderField(String name, WebFolder aFolder, ResKey rootNodeText) {
 		return createFolderField(name, aFolder, rootNodeText, FormMember.QUALIFIED_NAME_MAPPING);
 	}
 
-	public static FolderField createFolderField(String name, WebFolder aFolder, String rootNodeText,
+	public static FolderField createFolderField(String name, WebFolder aFolder, ResKey rootNodeText,
 			Mapping<FormMember, String> configNameMapping) {
 		ExecutableState canZipDownload = ExecutableState.EXECUTABLE;
 		ExecutableState canAddToClipboard = WebFolderComponent.defaultClipability(aFolder);
@@ -120,7 +121,7 @@ public class FolderField extends FormGroup implements FolderDataOwner {
 			canZipDownload, defaultModifiability, defaultModifiability, defaultModifiability, configNameMapping);
 	}
 
-	public static FolderField createFolderField(String name, WebFolder aFolder, String rootNodeText,
+	public static FolderField createFolderField(String name, WebFolder aFolder, ResKey rootNodeText,
 			ExecutableState canAddToClipboard, ExecutableState canUpload, ExecutableState canZipDownload,
 			ExecutableState canCreateFolder, ExecutableState canUpdate, ExecutableState canDelete,
 			Mapping<FormMember, String> configNameMapping) {

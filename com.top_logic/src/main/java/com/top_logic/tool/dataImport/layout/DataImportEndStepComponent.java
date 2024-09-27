@@ -7,12 +7,14 @@ package com.top_logic.tool.dataImport.layout;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.progress.ProgressResult;
 import com.top_logic.tool.dataImport.AbstractDataImporter;
+import com.top_logic.util.Resources;
 
 /**
  * The DataImportEndStepComponent is the last step of the DataImportAssistant.
@@ -41,8 +43,9 @@ public class DataImportEndStepComponent extends FormComponent {
         DataImportAssistant.createMessageFieldsFor(theResult, theContext, getResPrefix());
 
         StringField theField = FormFactory.newStringField(DataImportAssistant.FIELD_MESSAGE, IMMUTABLE);
-        String theMessage = getResString(theResult != null && theResult.isSuccess() ? "commitSucceeded" : "commitFailed");
-        theField.setValue(theMessage);
+		ResKey theMessage =
+			getResString(theResult != null && theResult.isSuccess() ? "commitSucceeded" : "commitFailed");
+		theField.setValue(Resources.getInstance().getString(theMessage));
         theContext.addMember(theField);
 
         return theContext;

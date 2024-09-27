@@ -13,7 +13,6 @@ import com.top_logic.layout.form.model.CommandField;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
-import com.top_logic.util.Resources;
 
 /**
  * A utility class to create buttons for a SelectorContext.
@@ -88,7 +87,7 @@ public class SelectorContextUtil {
 	 */
 	public static CommandField createCommandField(String name, Command command, ResKey label) {
 		CommandField field = FormFactory.newCommandField(name, command);
-		field.setLabel(Resources.getInstance().getString(label));
+		field.setLabel(label);
 
 		return field;
 	}

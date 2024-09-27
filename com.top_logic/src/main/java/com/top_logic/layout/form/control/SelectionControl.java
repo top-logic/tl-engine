@@ -398,7 +398,7 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 			boolean isDisabled = model.isDisabled();
 			String id = getOpenButtonID();
 			ControlCommand command = getOpenSelectorCommand();
-			String label = model.getLabel();
+			ResKey label = model.getLabel();
 
 			writePopupButton(context, out, this, isDisabled, id, command, label);
 		}
@@ -420,8 +420,7 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 		out.writeAttribute(ID_ATTR, getClearButtonSpanID());
 		if (onlyFixedSelection) {
 			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out,
-				Resources.getInstance().getString(
-					com.top_logic.layout.form.I18NConstants.ONLY_FIXED_OPTIONS_SELETED_MESSAGE));
+				com.top_logic.layout.form.I18NConstants.ONLY_FIXED_OPTIONS_SELETED_MESSAGE);
 		}
 		out.endBeginTag();
 
@@ -565,7 +564,8 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 		out.append(";");
 	}
 
-    public static void writePopupButton(DisplayContext aContext, TagWriter anOut, Control aControl, boolean isDisabled, String anId, ControlCommand aCommand, String aLabel) throws IOException {
+	public static void writePopupButton(DisplayContext aContext, TagWriter anOut, Control aControl, boolean isDisabled,
+			String anId, ControlCommand aCommand, ResKey aLabel) throws IOException {
         /* 2. Render the dialog popup button. */
 
 		ButtonWriter buttonWriter =

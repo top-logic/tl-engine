@@ -11,7 +11,6 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.tiles.CompositeTile;
 import com.top_logic.mig.html.layout.tiles.TileLayout;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * Command to remove a given {@link TileLayout}.
@@ -27,7 +26,7 @@ public class RemoveTileCommand extends TileMenuCommand<TileLayout> {
 		super(container, tileToRemove);
 		setImage(com.top_logic.layout.form.treetable.component.Icons.DELETE_MENU);
 		setNotExecutableImage(com.top_logic.layout.form.treetable.component.Icons.DELETE_MENU_DISABLED);
-		setLabel(Resources.getInstance().getString(I18NConstants.DELETE_TILE_LAYOUT));
+		setLabel(I18NConstants.DELETE_TILE_LAYOUT);
 	}
 
 	@Override

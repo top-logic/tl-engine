@@ -106,7 +106,7 @@ public class AccordionEntryRenderer extends AbstractLinkRenderer {
 			out.writeAttribute(CLASS_ATTR, "accText");
 			out.endBeginTag();
 			{
-				out.writeText(button.getLabel());
+				out.writeText(context.getResources().getString(button.getLabel()));
 			}
 			out.endTag(SPAN);
 		}
@@ -132,7 +132,7 @@ public class AccordionEntryRenderer extends AbstractLinkRenderer {
 			out.append(button.isDisabled() ? FormConstants.DISABLED_CSS_CLASS : null);
 		}
 		out.endCssClasses();
-		out.writeAttribute(ALT_ATTR, button.getAltText());
+		out.writeAttribute(ALT_ATTR, context.getResources().getString(button.getAltText()));
 		out.writeAttribute(TITLE_ATTR, "");
 		icon.endEmptyTag(context, out);
 	}

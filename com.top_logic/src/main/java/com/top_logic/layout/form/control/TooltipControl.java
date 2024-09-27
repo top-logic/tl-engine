@@ -8,8 +8,8 @@ package com.top_logic.layout.form.control;
 import java.io.IOException;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.listener.EventType.Bubble;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.FormMember;
@@ -63,9 +63,9 @@ public class TooltipControl extends AbstractFormMemberControl implements Tooltip
 		writeControlAttributes(context, out);
         FormMember field = getModel();
         if (field instanceof AbstractFormMember && field.isVisible()) {
-            String tooltip = ((AbstractFormMember)field).getTooltip();
-            String tooltipCaption = ((AbstractFormMember)field).getTooltipCaption();
-            if (!StringServices.isEmpty(tooltip)) {
+			ResKey tooltip = ((AbstractFormMember) field).getTooltip();
+			ResKey tooltipCaption = ((AbstractFormMember) field).getTooltipCaption();
+			if (tooltip != null) {
 				OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip, tooltipCaption);
             }
         }
@@ -93,7 +93,7 @@ public class TooltipControl extends AbstractFormMemberControl implements Tooltip
 	}
 
 	@Override
-	public Bubble handleTooltipChanged(Object sender, String oldValue, String newValue) {
+	public Bubble handleTooltipChanged(Object sender, ResKey oldValue, ResKey newValue) {
 		return repaintOnEvent(sender);
 	}
 

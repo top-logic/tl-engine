@@ -59,7 +59,6 @@ import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.ValueModel;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.mig.html.HTMLConstants;
-import com.top_logic.util.Resources;
 
 /**
  * Editor utilities.
@@ -359,8 +358,7 @@ public class EditorUtils {
 	 */
 	public static BooleanField addChangeField(FormContainer container, ValueModel valueModel) {
 		BooleanField changed = checkbox(container, StringServices.randomUUID());
-		changed.setLabel(Resources.getInstance()
-			.getString(I18NConstants.CHANGES_IN__ATTRIBUTE.fill(Labels.propertyLabel(valueModel))));
+		changed.setLabel(I18NConstants.CHANGES_IN__ATTRIBUTE.fill(Labels.propertyLabel(valueModel)));
 		return changed;
 	}
 

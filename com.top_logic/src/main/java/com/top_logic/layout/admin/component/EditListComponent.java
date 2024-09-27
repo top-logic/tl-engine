@@ -318,8 +318,7 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
     protected void addMoreToContext(FormContext aContext, FastList aModel) {
 		for (Locale locale : ResourcesModule.getInstance().getSupportedLocales()) {
 			String displayLanguage = Resources.getDisplayLanguage(locale);
-			String theLabel =
-				Resources.getInstance().getMessage(getResPrefix().key(FIELD_I18N_PREFIX), displayLanguage);
+			ResKey theLabel = getResPrefix().key(FIELD_I18N_PREFIX).asResKey1().fill(displayLanguage);
 			fieldHelper.createStringField(FIELD_PREFIX + FIELD_I18N_PREFIX + locale.toString(),
 				Resources.getInstance(locale).getString(FastListElementLabelProvider.labelKey(aModel), null), theLabel,
 				aContext);
@@ -1191,7 +1190,7 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
 	 */
 	protected Collection createDescriptionField(String aName, String aValue, FormContainer aGroup) {
 		StringField theField = fieldHelper.createStringField(aName, aValue, null, aGroup, false, !MANDATORY);
-		theField.setLabel(Resources.getInstance().getString(getResPrefix().key(COLUMN_DESCRIPTION)));
+		theField.setLabel(getResPrefix().key(COLUMN_DESCRIPTION));
 		theField.addConstraint(ELEMENT_DESCRIPTION_LENGTH_CONSTRAINT);
 		return fieldHelper.createControls(theField, this);
 	}
@@ -1214,7 +1213,7 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
     protected List createStringField(String aName, String aValue, FormContainer aGroup, boolean aNameFieldFlag) {
         StringField theField = fieldHelper.createStringField(aName, aValue, null, aGroup, false, aNameFieldFlag);
         if (aNameFieldFlag) {
-			theField.setLabel(Resources.getInstance().getString(getResPrefix().key(COLUMN_NAME)));
+			theField.setLabel(getResPrefix().key(COLUMN_NAME));
 			theField.addConstraint(ELEMENT_NAME_LENGTH_CONSTRAINT);
             theField.addConstraint(ALLOWED_CHARS_CONSTRAINT);
             constraints.add(theField);

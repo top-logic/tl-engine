@@ -325,7 +325,8 @@ public class AccordionControl<N> extends AbstractControlBase implements SingleSe
 		// No link navigation.
 		out.writeAttribute(HREF_ATTR, "#");
 
-		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, _resources.getTooltip(child));
+		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out,
+			ResKey.text(_resources.getTooltip(child)));
 	}
 
 	private void writeOnClickNode(TagWriter out, N child) throws IOException {

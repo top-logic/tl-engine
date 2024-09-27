@@ -92,10 +92,11 @@ public class BlockTextInputControl extends ExpandableTextInputControl {
 		out.writeAttribute(STYLE_ATTR, getInputStyle());
 		out.writeAttribute(SIZE_ATTR, this.getColumns());
         
-        String theTool = theField.getTooltip();
-        if (!StringServices.isEmpty(theTool)) {
+		ResKey tooltip = theField.getTooltip();
+		if (tooltip != null) {
 			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out,
-				TagUtil.encodeXML(theValue), TagUtil.encodeXML(theField.getTooltipCaption()));
+				ResKey.text(TagUtil.encodeXML(theValue)),
+				ResKey.text(TagUtil.encodeXML(context.getResources().getString(theField.getTooltipCaption()))));
         }
         
         StringBuffer theFormatted = new StringBuffer();

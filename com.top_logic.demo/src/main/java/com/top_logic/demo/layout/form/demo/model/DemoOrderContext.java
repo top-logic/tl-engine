@@ -18,6 +18,7 @@ import java.util.TreeSet;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.filter.SetFilter;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.BeanAccessor;
@@ -237,8 +238,8 @@ public class DemoOrderContext extends FormContext {
 
 	public final StringField isbn = FormFactory.newStringField(ISBN_NAME);
 	{
-		isbn.setTooltipCaption("Testing encoding in captions: <\"&'\\>");
-		isbn.setTooltip("Testing encoding in tooltip: <\"&'\\>");
+		isbn.setTooltipCaption(ResKey.text("Testing encoding in captions: <\"&'\\>"));
+		isbn.setTooltip(ResKey.text("Testing encoding in tooltip: <\"&'\\>"));
 	}
 
 	public final ComplexField duns = createDUNSField();

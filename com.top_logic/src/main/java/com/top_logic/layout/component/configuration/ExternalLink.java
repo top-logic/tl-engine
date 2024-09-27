@@ -19,7 +19,6 @@ import com.top_logic.layout.basic.ThemeImageView;
 import com.top_logic.layout.basic.link.Link;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
 import com.top_logic.mig.html.HTMLConstants;
-import com.top_logic.util.Resources;
 
 /**
  * {@link HTMLFragment} rendering a link to an external system (e.g. http://www.top-logic.com) with
@@ -97,7 +96,7 @@ public final class ExternalLink implements HTMLFragment, Link {
 	}
 
 	private void tooltip(DisplayContext context, TagWriter out, ResKey tooltip) throws IOException {
-		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, eval(context, tooltip));
+		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip);
 	}
 
 	private String eval(DisplayContext context, ResKey resKey) {
@@ -130,8 +129,8 @@ public final class ExternalLink implements HTMLFragment, Link {
 	 * The label of the link.
 	 */
 	@Override
-	public String getLabel() {
-		return Resources.getInstance().getString(_label);
+	public ResKey getLabel() {
+		return _label;
 	}
 
 	/**
@@ -152,8 +151,8 @@ public final class ExternalLink implements HTMLFragment, Link {
 	 * {@link #setLabel(ResKey) label} is set.
 	 */
 	@Override
-	public String getTooltip() {
-		return Resources.getInstance().getString(_tooltip);
+	public ResKey getTooltip() {
+		return _tooltip;
 	}
 
 	/**
@@ -200,12 +199,12 @@ public final class ExternalLink implements HTMLFragment, Link {
 	}
 
 	@Override
-	public String getAltText() {
+	public ResKey getAltText() {
 		return getLabel();
 	}
 
 	@Override
-	public String getTooltipCaption() {
+	public ResKey getTooltipCaption() {
 		return null;
 	}
 

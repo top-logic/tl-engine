@@ -54,7 +54,6 @@ import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.VisibilityListener;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * Navigation button that displays the labels and tooltips of all tabs in a tab bar.
@@ -165,7 +164,7 @@ public class MegaMenuTabConfig
 		TabConfig tabInfo = entriesTabComponent.getParent().getConfig().getTabInfo();
 		ThemeImage tabImage = tabInfo.getImage();
 		openSelectListCommand.setImage(tabImage);
-		openSelectListCommand.setLabel(Resources.getInstance().getString(tabInfo.getLabel(), null));
+		openSelectListCommand.setLabel(tabInfo.getLabel());
 		addVisibilityListener(entriesTabComponent, selectList, openSelectListButton);
 		return openSelectListButton;
 	}

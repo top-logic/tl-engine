@@ -7,7 +7,7 @@ package com.top_logic.layout.basic.control;
 
 import java.io.IOException;
 
-import com.top_logic.basic.StringServices;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.Theme;
 import com.top_logic.layout.Control;
@@ -30,7 +30,7 @@ public class IconControl extends AbstractControlBase {
 
 	private XMLTag _src;
 
-	private String _altText = "";
+	private ResKey _altText = ResKey.text("");
 
 	private String _cssWidth;
 
@@ -38,9 +38,9 @@ public class IconControl extends AbstractControlBase {
 
 	private String _cssClass;
 
-	private String _tooltipCaption;
+	private ResKey _tooltipCaption;
 
-	private String _tooltip;
+	private ResKey _tooltip;
 
 	/**
 	 * Creates a {@link IconControl}.
@@ -147,50 +147,44 @@ public class IconControl extends AbstractControlBase {
 	/**
 	 * The alternative text of the icon when displayed on a limited device.
 	 */
-	public String getAltText() {
+	public ResKey getAltText() {
 		return _altText;
 	}
 
 	/**
 	 * @see #getAltText()
 	 */
-	public void setAltText(String altText) {
-		_altText = StringServices.nonNull(altText);
+	public void setAltText(ResKey altText) {
+		_altText = altText;
 		requestRepaint();
 	}
 
 	/**
 	 * The tool-tip to display over the icon.
-	 * 
-	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributes(DisplayContext, TagWriter,
-	 *      String, String)
 	 */
-	public String getTooltip() {
+	public ResKey getTooltip() {
 		return _tooltip;
 	}
 
 	/**
 	 * @see #getTooltip()
 	 */
-	public void setTooltip(String tooltip) {
+	public void setTooltip(ResKey tooltip) {
 		_tooltip = tooltip;
 		requestRepaint();
 	}
 
 	/**
 	 * The tool-tip caption of the tool-tip to display over the icon.
-	 * 
-	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributes(DisplayContext, TagWriter,
-	 *      String, String)
 	 */
-	public String getTooltipCaption() {
+	public ResKey getTooltipCaption() {
 		return _tooltipCaption;
 	}
 
 	/**
 	 * @see #getTooltipCaption()
 	 */
-	public void setTooltipCaption(String tooltipCaption) {
+	public void setTooltipCaption(ResKey tooltipCaption) {
 		_tooltipCaption = tooltipCaption;
 		requestRepaint();
 	}
@@ -218,7 +212,7 @@ public class IconControl extends AbstractControlBase {
 			writeControlAttributes(context, out);
 			out.writeAttribute(WIDTH_ATTR, _cssWidth);
 			out.writeAttribute(HEIGHT_ATTR, _cssHeight);
-			out.writeAttribute(ALT_ATTR, _altText);
+			out.writeAttribute(ALT_ATTR, context.getResources().getString(_altText));
 			out.writeAttribute(TITLE_ATTR, "");
 
 			if (_tooltip != null) {

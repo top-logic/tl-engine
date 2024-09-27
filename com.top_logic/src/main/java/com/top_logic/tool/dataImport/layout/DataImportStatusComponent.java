@@ -18,6 +18,7 @@ import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.tool.dataImport.AbstractDataImporter;
+import com.top_logic.util.Resources;
 
 /**
  * The TOPSFileDataImportStatusComponent displays the last result of the
@@ -64,25 +65,30 @@ public class DataImportStatusComponent extends FormComponent {
         StringField theField; String theValue;
 
         theValue = theFormatter.formatDateTime(importer.getLastImportRun());
-        if (StringServices.isEmpty(theValue)) theValue = getResString("noLastRun");
+		if (StringServices.isEmpty(theValue))
+			theValue = Resources.getInstance().getString(getResString("noLastRun"));
         theField = FormFactory.newStringField(FIELD_LAST_RUN, IMMUTABLE);
         theField.setValue(theValue);
         theContext.addMember(theField);
 
-        theValue = importer.isInActiveMode() ? getResString("currentlyRunning") : importer.getLastImportResult();
-        if (StringServices.isEmpty(theValue)) theValue = getResString("noLastResult");
+		theValue = importer.isInActiveMode() ? Resources.getInstance().getString(getResString("currentlyRunning"))
+			: importer.getLastImportResult();
+		if (StringServices.isEmpty(theValue))
+			theValue = Resources.getInstance().getString(getResString("noLastResult"));
         theField = FormFactory.newStringField(FIELD_LAST_RESULT, IMMUTABLE);
         theField.setValue(theValue);
         theContext.addMember(theField);
 
         theValue = importer.getLastImportProtocol();
-        if (StringServices.isEmpty(theValue)) theValue = getResString("noLastProtocol");
+		if (StringServices.isEmpty(theValue))
+			theValue = Resources.getInstance().getString(getResString("noLastProtocol"));
         theField = FormFactory.newStringField(FIELD_LAST_PROTOCOL, IMMUTABLE);
         theField.setValue(theValue);
         theContext.addMember(theField);
 
         theValue = theFormatter.formatDate(importer.getSystemDataTimestamp());
-        if (StringServices.isEmpty(theValue)) theValue = getResString("noSystemDataTS");
+		if (StringServices.isEmpty(theValue))
+			theValue = Resources.getInstance().getString(getResString("noSystemDataTS"));
         theField = FormFactory.newStringField(FIELD_SYSTEM_DATA_TS, IMMUTABLE);
         theField.setValue(theValue);
         theContext.addMember(theField);

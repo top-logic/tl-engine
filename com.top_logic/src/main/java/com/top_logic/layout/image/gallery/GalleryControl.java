@@ -401,8 +401,7 @@ public class GalleryControl extends AbstractControl implements GalleryModelListe
 		if (_editGalleryCommandModel != null) {
 			if (isActive) {
 				_editGalleryCommandModel.setExecutable();
-				_editGalleryCommandModel.setTooltip(
-					Resources.getInstance().getString(I18NConstants.TOOLTIP_OPEN_IMAGE_MANAGEMENT_DIALOG_BUTTON));
+				_editGalleryCommandModel.setTooltip(I18NConstants.TOOLTIP_OPEN_IMAGE_MANAGEMENT_DIALOG_BUTTON);
 			} else {
 				_editGalleryCommandModel.setNotExecutable(I18NConstants.DISABLED_OPEN_IMAGE_MANAGEMENT_DIALOG_BUTTON);
 			}

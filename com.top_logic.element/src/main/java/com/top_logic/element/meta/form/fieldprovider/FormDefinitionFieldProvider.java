@@ -38,7 +38,6 @@ import com.top_logic.mig.html.layout.VisibilityListener;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * {@link FieldProvider} for attributes with value {@link FormDefinition}.
@@ -119,8 +118,7 @@ public abstract class FormDefinitionFieldProvider extends AbstractFieldProvider 
 		ScriptingRecorder.annotateAsDontRecord(command);
 		command.setImage(Icons.OPEN_GUI_EDITOR);
 		command.setNotExecutableImage(Icons.OPEN_GUI_EDITOR_DISABLED);
-		command.setTooltip(Resources.getInstance()
-			.getString(com.top_logic.element.layout.formeditor.I18NConstants.OPEN_FORM_EDITOR_DIALOG));
+		command.setTooltip(com.top_logic.element.layout.formeditor.I18NConstants.OPEN_FORM_EDITOR_DIALOG);
 
 		if (guiType == null) {
 			command.setNotExecutable(I18NConstants.FORM_EDITOR_NO_GUI_TYPE_AVAILABLE);

@@ -14,13 +14,10 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
-import com.top_logic.basic.exception.I18NException;
-import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.DisplayValue;
+import com.top_logic.layout.DynamicText;
 import com.top_logic.layout.basic.ButtonUIModel;
 import com.top_logic.layout.basic.ConstantDisplayValue;
 import com.top_logic.layout.basic.ThemeImage;
@@ -42,7 +39,6 @@ public class DefaultButtonRenderer extends AbstractButtonRenderer<DefaultButtonR
 		config.setExecStateInTooltip(execStateInTooltip);
 		return TypedConfigUtil.createInstance(config);
 	}
-
 
 	/**
 	 * Typed configuration interface definition for {@link DefaultButtonRenderer}.
@@ -105,30 +101,31 @@ public class DefaultButtonRenderer extends AbstractButtonRenderer<DefaultButtonR
 			
 			out.endBeginTag();
 			{
-				writeLabel(out, button);
+				writeLabel(context, out, button);
 			}
 			out.endTag(BUTTON);
 		}
 		out.endTag(SPAN);
 	}
 
-	protected void writeLabel(TagWriter out, AbstractButtonControl<?> button) throws IOException {
+	protected void writeLabel(DisplayContext context, TagWriter out, AbstractButtonControl<?> button)
+			throws IOException {
         out.beginBeginTag(SPAN);
         out.writeAttribute(ID_ATTR, getLabelId(button));
         out.endBeginTag();
         
-        out.writeText(button.getLabel());
+		out.writeText(context.getResources().getString(button.getLabel()));
 
         out.endTag(SPAN);
     }
 	
     @Override
-	public void handleLabelPropertyChange(final AbstractButtonControl<?> button, String newLabel) {
+	public void handleLabelPropertyChange(final AbstractButtonControl<?> button, ResKey newLabel) {
 		if (!button.isRepaintRequested()) {
 			addUpdate(button, new ElementReplacement(getLabelId(button), new HTMLFragment() {
 				@Override
 				public void write(DisplayContext aContext, TagWriter aOut) throws IOException {
-					writeLabel(aOut, button);
+					writeLabel(aContext, aOut, button);
 				}
 			}));
 		}
@@ -153,15 +150,9 @@ public class DefaultButtonRenderer extends AbstractButtonRenderer<DefaultButtonR
 	 * Adds an update which updates the displayed tooltip
 	 */
 	private void updateTooltip(AbstractButtonControl<?> button) {
-		String tooltip = getTooltip(button);
-		try {
-			SafeHTML.getInstance().check(tooltip);
-		} catch (I18NException ex) {
-			tooltip = TagUtil.encodeXMLAttribute(tooltip);
-		}
-		final DisplayValue newTooltip = ConstantDisplayValue.valueOf(tooltip);
+		ResKey tooltip = getTooltip(button);
+		final DynamicText newTooltip = new TooltipValue(tooltip);
 		final String targetID = button.getID();
-		@SuppressWarnings("deprecation")
 		final PropertyUpdate tooltipUpdate = new PropertyUpdate(targetID, TL_TOOLTIP_ATTR, newTooltip);
 		addUpdate(button, tooltipUpdate);
 	}

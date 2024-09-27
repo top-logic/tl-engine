@@ -21,7 +21,6 @@ import com.top_logic.layout.messagebox.SimpleFormDialog;
 import com.top_logic.layout.table.component.TableComponent;
 import com.top_logic.layout.themeedit.browser.providers.I18NConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.util.Resources;
 
 /**
  * A {@link SimpleFormDialog} for creating a new Stylesheet.
@@ -52,7 +51,7 @@ public class CreateStylesheetDialog extends SimpleFormDialog {
 
 	private CommandModel createCreateStylesheetCommand() {
 		CommandModel createCommand = CommandModelFactory.commandModel(new CreateStylesheetCommand(this));
-		createCommand.setLabel(Resources.getInstance().getString(I18NConstants.CREATE_STYLESHEET));
+		createCommand.setLabel(I18NConstants.CREATE_STYLESHEET);
 
 		return createCommand;
 	}

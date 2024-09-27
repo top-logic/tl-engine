@@ -196,26 +196,26 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 	 */
 	@Override
 	@TemplateVariable("label")
-	public String getLabel() {
+	public ResKey getLabel() {
 		return this.model.getLabel();
 	}
 
 	@Override
-	public String getTooltip() {
+	public ResKey getTooltip() {
 		return this.model.getTooltip();
 	}
 
 	@Override
-	public String getTooltipCaption() {
+	public ResKey getTooltipCaption() {
 		return this.model.getTooltipCaption();
 	}
 
 	@Override
-	public String getAltText() {
+	public ResKey getAltText() {
 		return this.model.getAltText();
 	}
 
-	public void setLabel(String label) {
+	public void setLabel(ResKey label) {
 		model.setLabel(label);
 	}
 
@@ -395,15 +395,15 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 	}
 
 	private void writeDisabledTooltip(DisplayContext context, TagWriter out) throws IOException {
-		String title = getDisabledReasonTitle();
-		String tooltip = getDisabledReason();
+		ResKey title = getDisabledReasonTitle();
+		ResKey tooltip = getDisabledReason();
 		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltip(context, out, tooltip, title);
 	}
 
 	private void writeActiveTooltip(DisplayContext context, TagWriter out) throws IOException {
-		String tooltip = getTooltip();
+		ResKey tooltip = getTooltip();
 		if (!StringServices.isEmpty(tooltip)) {
-			String title = getTooltipCaption();
+			ResKey title = getTooltipCaption();
 			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltip(context, out, tooltip, title);
 		}
 	}
@@ -439,13 +439,11 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 		return img;
 	}
 
-	/**
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
 	@Override
 	public int compareTo(Object anObject) {
 		ButtonControl theButton = (ButtonControl) anObject;
-		return this.getLabel().compareTo(theButton.getLabel());
+		Resources resources = Resources.getInstance();
+		return resources.getString(this.getLabel()).compareTo(resources.getString(theButton.getLabel()));
 	}
 
 	@Override
@@ -457,14 +455,14 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 	 * Returns a text as a tooltip caption explaining why this button is disabled or
 	 * <code>null</code>..
 	 */
-	public String getDisabledReason() {
+	public ResKey getDisabledReason() {
 		ResKey theKey = this.model.getNotExecutableReasonKey();
 		if (theKey == null) {
 			Logger.warn("Command '" + this.model.getLabel() + "' has no NotExecutableReasonKey (model is: "
 				+ this.model + ")!", AbstractButtonControl.class);
 			return null;
 		}
-		return Resources.getInstance().decodeMessageFromKeyWithEncodedArguments(theKey);
+		return theKey;
 	}
 
 	/**
@@ -473,16 +471,13 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 	 * 
 	 * @return the text to render as the title in the tooltip for disabled buttons or <code>null</code>
 	 */
-	public final String getDisabledReasonTitle() {
-		Resources resources = Resources.getInstance();
+	public final ResKey getDisabledReasonTitle() {
 		ResKey encodedMessage = this.model.getNotExecutableReasonKey();
 		if (encodedMessage != null) {
-			String nonExecTitle = resources.getString(Resources.derivedKey(encodedMessage, ".title"), null);
-			if (!StringServices.isEmpty(nonExecTitle)) {
-				return nonExecTitle;
-			}
+			return Resources.derivedKey(encodedMessage, ".title").fallback(I18NConstants.NON_EXECUTABLE_DEFAULT_TITLE);
+		} else {
+			return I18NConstants.NON_EXECUTABLE_DEFAULT_TITLE;
 		}
-		return resources.getString(I18NConstants.NON_EXECUTABLE_DEFAULT_TITLE, null);
 	}
 	
 	@Override
@@ -504,7 +499,7 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 	}
 
 	@Override
-	public Bubble handleTooltipChanged(Object sender, String oldValue, String newValue) {
+	public Bubble handleTooltipChanged(Object sender, ResKey oldValue, ResKey newValue) {
 		return repaintOnEvent(sender);
 	}
 
@@ -561,7 +556,7 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 	}
 
 	@Override
-	public Bubble handleLabelChanged(Object sender, String oldLabel, String newLabel) {
+	public Bubble handleLabelChanged(Object sender, ResKey oldLabel, ResKey newLabel) {
 		/* Prevent reacting on events of foreign models. */
 		if (sender == getModel() && isVisible()) {
 			view.handleLabelPropertyChange(this, newLabel);
@@ -570,7 +565,7 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 	}
 
 	@Override
-	public Bubble handleAltTextChanged(Object sender, String oldValue, String newValue) {
+	public Bubble handleAltTextChanged(Object sender, ResKey oldValue, ResKey newValue) {
 		return repaintOnEvent(sender);
 	}
 

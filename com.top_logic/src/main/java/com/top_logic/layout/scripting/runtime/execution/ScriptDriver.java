@@ -194,8 +194,7 @@ public class ScriptDriver {
 							boolean isExpanded = !visibility.isVisible();
 							visibility.setVisible(isExpanded);
 							setImage(isExpanded ? Icons.EXPANDED_ICON : Icons.COLLAPSED_ICON);
-							setLabel(executionContext.getResources()
-								.getString(isExpanded ? I18NConstants.HIDE_DETAILS : I18NConstants.SHOW_DETAILS));
+							setLabel(isExpanded ? I18NConstants.HIDE_DETAILS : I18NConstants.SHOW_DETAILS);
 							return HandlerResult.DEFAULT_RESULT;
 						}
 					}
@@ -203,7 +202,7 @@ public class ScriptDriver {
 					CommandModel toggle = new ToggleCommand();
 					ScriptingRecorder.annotateAsDontRecord(toggle);
 					toggle.setImage(Icons.COLLAPSED_ICON);
-					toggle.setLabel(context.getResources().getString(I18NConstants.SHOW_DETAILS));
+					toggle.setLabel(I18NConstants.SHOW_DETAILS);
 
 					p(new ButtonControl(toggle, ImageLinkButtonRenderer.INSTANCE)).write(context, out);
 

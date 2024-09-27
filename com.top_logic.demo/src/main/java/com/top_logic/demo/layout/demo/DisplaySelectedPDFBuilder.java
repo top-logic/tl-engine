@@ -11,7 +11,6 @@ import java.io.IOException;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.io.binary.BinaryDataSource;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
@@ -88,7 +87,7 @@ public class DisplaySelectedPDFBuilder implements ModelBuilder {
 				String name = newPDF.getName();
 				if (!name.endsWith(".pdf")) {
 					field.setValue(oldValue);
-					throw new TopLogicException(ResKey.text(fc.getResources().getStringResource("onlyPDF")));
+					throw new TopLogicException(fc.getResources().getStringResource("onlyPDF"));
 				}
 				displayField.setValue(newPDF);
 			}

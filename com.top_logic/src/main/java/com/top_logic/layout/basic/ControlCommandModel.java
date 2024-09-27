@@ -15,7 +15,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 
 /**
  * {@link CommandModel} executing a {@link ControlCommand} on a given {@link Control}.
@@ -51,9 +50,8 @@ public class ControlCommandModel extends AbstractCommandModel {
 		this.command = aCommand;
 		this.control = aControl;
 		this.arguments = someArguments;
-		Resources resources = Resources.getInstance();
-		setLabel(resources.getString(aLabel));
-		setTooltip(resources.getString(aLabel.tooltipOptional()));
+		setLabel(aLabel);
+		setTooltip(aLabel.tooltipOptional());
 	}
 
 	/**

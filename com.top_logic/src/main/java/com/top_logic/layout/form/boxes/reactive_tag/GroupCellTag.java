@@ -217,7 +217,7 @@ public class GroupCellTag extends AbstractBodyTag implements FormContainerTag, C
 		} else {
 			HTMLFragment defaultTitle = null;
 			if (_container != null && hasLegend()) {
-				defaultTitle = wrapTitle(Fragments.text(_container.getLabel()));
+				defaultTitle = wrapTitle(Fragments.message(_container.getLabel()));
 			}
 			if (defaultTitle == null) {
 				defaultTitle = Fragments.text(HTMLConstants.NBSP);

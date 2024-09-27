@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.resources;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.ResourceView;
 
 /**
@@ -22,25 +23,16 @@ public class SimpleResourceView implements ResourceView {
     private SimpleResourceView() {
     }
 
-    /**
-     * @see com.top_logic.layout.ResourceView#getStringResource(java.lang.String)
-     */
     @Override
-	public String getStringResource(String aKey) {
-        return aKey;
+	public ResKey getStringResource(String aKey) {
+		return ResKey.text(aKey);
     }
 
-    /**
-     * @see com.top_logic.layout.ResourceView#getStringResource(java.lang.String, java.lang.String)
-     */
     @Override
-	public String getStringResource(String aKey, String aDefault) {
+	public ResKey getStringResource(String aKey, ResKey aDefault) {
         return aDefault;
     }
 
-    /**
-     * @see com.top_logic.layout.ResourceView#hasStringResource(java.lang.String)
-     */
     @Override
 	public boolean hasStringResource(String aKey) {
         return true;

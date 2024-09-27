@@ -5,6 +5,7 @@
  */
 package com.top_logic.common.webfolder.ui;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.common.folder.ui.commands.ContentDownload;
 import com.top_logic.knowledge.wrap.DocumentVersion;
 import com.top_logic.layout.Accessor;
@@ -35,7 +36,7 @@ public class VersionFieldProvider implements FieldProvider {
 		Command theExecutable = new ContentDownload(version.getDocument());
 		CommandField theField = WebFolderFieldProvider.createField(aProperty, theExecutable, null, null);
 
-		theField.setLabel(Integer.toString(version.getRevision()));
+		theField.setLabel(ResKey.text(Integer.toString(version.getRevision())));
 
 	    return theField;
 	}

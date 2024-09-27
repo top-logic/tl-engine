@@ -25,6 +25,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.listener.EventType.Bubble;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.template.TagTemplate;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
@@ -74,6 +75,7 @@ import com.top_logic.layout.table.renderer.ColumnLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.Resources;
 
 /**
  * Light-weight dialog for choosing multiple sort columns for {@link TableControl}s.
@@ -344,7 +346,7 @@ public class SortConfigDialog extends AbstractFormPageDialog {
 			int number = 1;
 			for (Iterator<?> it = configContext.getMembers(); it.hasNext();) {
 				SortConfigGroup sortConfig = (SortConfigGroup) it.next();
-				sortConfig.getColumnInput().setLabel(number + ".");
+				sortConfig.getColumnInput().setLabel(ResKey.text(number + "."));
 				number++;
 			}
 			
@@ -379,7 +381,7 @@ public class SortConfigDialog extends AbstractFormPageDialog {
 
 		@Override
 		public String getLabel(Object object) {
-			return resources.getStringResource(((NamedConstant) object).asString());
+			return Resources.getInstance().getString(resources.getStringResource(((NamedConstant) object).asString()));
 		}
 	}
 

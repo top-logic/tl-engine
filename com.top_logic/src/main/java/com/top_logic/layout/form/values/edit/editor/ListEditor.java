@@ -592,7 +592,7 @@ public class ListEditor implements Editor {
 				// Lazy access to group label resource.
 				elementGroup.setResources(new AbstractResourceView() {
 					@Override
-					protected ResKey getResource(String resourceKey, boolean optional) {
+					protected ResKey getResource(String resourceKey) {
 						if (!EditorUtils.LIST_ITEM_GROUP.equals(resourceKey)) {
 							return null;
 						}

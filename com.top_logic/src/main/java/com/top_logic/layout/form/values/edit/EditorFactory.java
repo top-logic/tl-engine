@@ -22,7 +22,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.ConfigurationError;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.ConcatenatedIterable;
@@ -964,7 +963,7 @@ public class EditorFactory implements AnnotationCustomizations {
 		}
 	
 		@Override
-		protected ResKey getResource(String resourceKey, boolean optional) {
+		protected ResKey getResource(String resourceKey) {
 			int sepIndex = resourceKey.indexOf('.');
 			String baseKey;
 			if (sepIndex >= 0) {
@@ -977,11 +976,7 @@ public class EditorFactory implements AnnotationCustomizations {
 			if (property == null) {
 				property = searchPropertyByNormalizedName(baseKey);
 				if (property == null) {
-					if (!optional) {
-						Logger.error("No such property '" + baseKey + "' in '"
-							+ _descriptor.getConfigurationInterface().getName() + "'.", PropertyBasedResources.class);
-					}
-					return optional ? null : ResKey.text("[" + resourceKey + "]");
+					return null;
 				}
 			}
 	
@@ -993,9 +988,6 @@ public class EditorFactory implements AnnotationCustomizations {
 				propertyLabel = Labels.propertyLabelKey(property);
 			}
 
-			if (!optional) {
-				return propertyLabel.fallback(ResKey.text(enhancePropertyNameFormat(property.getPropertyName())));
-			}
 			return propertyLabel;
 		}
 
@@ -1006,12 +998,6 @@ public class EditorFactory implements AnnotationCustomizations {
 				}
 			}
 			return null;
-		}
-
-		private String enhancePropertyNameFormat(String name) {
-			String nameWithoutDash = name.replace('-', ' ');
-
-			return nameWithoutDash.substring(0, 1).toUpperCase() + nameWithoutDash.substring(1);
 		}
 	}
 

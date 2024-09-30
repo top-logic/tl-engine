@@ -6,7 +6,6 @@
 package com.top_logic.layout.form;
 
 import java.util.Iterator;
-import java.util.List;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.Maybe;
@@ -146,7 +145,7 @@ public class FuzzyFormMemberNaming extends GlobalModelNamingScheme<FormMember, F
 	}
 
 	private void locateInChildren(LayoutContainer parent, String label, SearchResult<FormMember> result) {
-		for (LayoutComponent child : (List<LayoutComponent>) parent.getChildList()) {
+		for (LayoutComponent child : parent.getChildList()) {
 			locateInComponentContext(child, label, result);
 		}
 	}
@@ -157,11 +156,12 @@ public class FuzzyFormMemberNaming extends GlobalModelNamingScheme<FormMember, F
 	}
 
 	private void locateInFormContainer(FormContainer container, String label, SearchResult<FormMember> result) {
+		Resources resources = Resources.getInstance();
 		for (Iterator<? extends FormMember> it = container.getMembers(); it.hasNext();) {
 			FormMember member = it.next();
 			result.addCandidate(getCandidateLabel(member));
 
-			if (member.hasLabel() && label.equals(member.getLabel())) {
+			if (member.hasLabel() && label.equals(resources.getStringOptional(member.getLabel()))) {
 				result.add(member);
 			}
 

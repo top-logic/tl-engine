@@ -78,7 +78,7 @@ public class I18NResourceProvider extends DefaultResourceProvider
 	/** Instance of {@link I18NResourceProvider} without a resource key prefix. */
     public static final I18NResourceProvider INSTANCE = new I18NResourceProvider();
 
-	private static final ResKey defaultEmptyKey = ResKey.text("");
+	private static final ResKey defaultEmptyKey = ResKey.EMPTY_TEXT;
 
     /** The resource key prefix. */
 	private final ResPrefix _resPrefix;

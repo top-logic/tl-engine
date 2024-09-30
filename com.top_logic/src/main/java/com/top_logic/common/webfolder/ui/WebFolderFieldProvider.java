@@ -281,7 +281,7 @@ public class WebFolderFieldProvider extends FolderFieldProvider {
 	protected HiddenField createHiddenField(String aName) {
 		HiddenField theField = FormFactory.newHiddenField(aName);
 
-		theField.setLabel(ResKey.text(""));
+		theField.setLabel(ResKey.EMPTY_TEXT);
 
 		return theField;
 	}

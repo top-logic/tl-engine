@@ -1066,7 +1066,7 @@ public class LayoutUtils {
 	public static String getLabel(LayoutComponent component) {
 		ResKey labelKey = getLabelKey(component);
 		if (labelKey != null) {
-			return Resources.getInstance().getString(labelKey, null);
+			return Resources.getInstance().getStringOptional(labelKey);
 		}
 		return component.getName().localName();
 	}
@@ -1093,7 +1093,7 @@ public class LayoutUtils {
 	public static String getLabel(LayoutComponent.Config config) {
 		ResKey labelKey = getLabelKey(config);
 		if (labelKey != null) {
-			return Resources.getInstance().getString(labelKey, null);
+			return Resources.getInstance().getStringOptional(labelKey);
 		}
 		return config.getName().localName();
 	}

@@ -88,7 +88,7 @@ public class FolderFieldProvider implements FieldProvider {
 			/* Set here empty label: For a HiddenField no control is rendered. Then a
 			 * "fallback renderer" is used which is de facto the ResourceRenderer which renders the
 			 * label for an form field. */
-			hiddenField.setLabel(ResKey.text(""));
+			hiddenField.setLabel(ResKey.EMPTY_TEXT);
 			return hiddenField;
 		}
 	}

@@ -49,6 +49,13 @@ public interface I18NBundle {
 	String getString(ResKey aKey);
 
 	/**
+	 * Resolves the given key, if it is defined, <code>null</code> otherwise.
+	 */
+	default String getStringOptional(ResKey aKey) {
+		return getString(ResKey.optional(aKey));
+	}
+
+	/**
 	 * Get the string for the given key out from the {@link I18NBundle}. If there is no definition
 	 * for this key, the key will be returned in brackets.
 	 * 

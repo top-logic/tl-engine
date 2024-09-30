@@ -313,7 +313,7 @@ public class DefaultScriptingRecorder extends ScriptingRecorder {
 			commandAction = ActionFactory.gotoAction(component.getName(), command.getID(), arguments);
 		} else {
 			commandAction = ActionFactory.commandAction(component.getName(), command.getID(), arguments);
-			commandAction.setCommandLabel(Resources.getInstance().getString(command.getResourceKey(component), null));
+			commandAction.setCommandLabel(Resources.getInstance().getStringOptional(command.getResourceKey(component)));
 		}
 
 		if (recordImplementationDetails()) {

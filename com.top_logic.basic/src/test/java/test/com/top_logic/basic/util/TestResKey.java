@@ -208,8 +208,7 @@ public class TestResKey extends TestCase {
 	}
 
 	public void testNullDefault() {
-		assertResolve(null,
-			ResKey.fallback(ResKey.internalCreate("foo.bar.missing"), ResKey.text(null)));
+		assertResolve(null, ResKey.internalCreate("foo.bar.missing").optional());
 
 		_bundle.assertNoUnknown();
 	}

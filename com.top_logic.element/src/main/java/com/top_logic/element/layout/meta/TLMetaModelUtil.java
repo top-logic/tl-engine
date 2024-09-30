@@ -77,12 +77,12 @@ public class TLMetaModelUtil {
 			ResKey labelKey = i18n.getLabel();
 			String label = labelKey == null ? null
 				: labelKey.isLiteral() ? ((LiteralKey) labelKey).getTranslationWithoutFallbacks(locale)
-					: StringServices.nonEmpty(bundle.getString(labelKey, null));
+					: StringServices.nonEmpty(bundle.getStringOptional(labelKey));
 
 			ResKey descriptionKey = i18n.getDescription();
 			String description = descriptionKey == null ? null
 				: descriptionKey.isLiteral() ? ((LiteralKey) descriptionKey).getTranslationWithoutFallbacks(locale)
-					: StringServices.nonEmpty(bundle.getString(descriptionKey, null));
+					: StringServices.nonEmpty(bundle.getStringOptional(descriptionKey));
 
 			if (label == null) {
 				label = defaultTranslation(locale, labelKey, technicalName, labelHeuristic, autoTranslate);

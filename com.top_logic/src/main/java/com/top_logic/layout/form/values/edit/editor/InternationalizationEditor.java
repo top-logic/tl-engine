@@ -258,7 +258,7 @@ public class InternationalizationEditor implements Editor {
 		if (resKey == null) {
 			return;
 		}
-		String translation = context.getResources().getString(resKey, null);
+		String translation = context.getResources().getStringOptional(resKey);
 		if (StringServices.isEmpty(translation)) {
 			return;
 		}

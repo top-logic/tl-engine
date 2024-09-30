@@ -49,7 +49,7 @@ public class PartialI18NResourceProvider extends DefaultResourceProvider {
         if (StringServices.isEmpty(theKey)) {
             return "";
         }
-		String theLabel = Resources.getInstance().getString(resPrefix.key(theKey), null);
+		String theLabel = Resources.getInstance().getStringOptional(resPrefix.key(theKey));
         return theLabel == null ? theKey : theLabel;
     }
 

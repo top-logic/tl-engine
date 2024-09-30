@@ -586,7 +586,7 @@ public class Resource {
 			Resource resource = resource(object);
 			ResKey tooltip = resource.getTooltip();
 			if (tooltip != null) {
-				return Resources.getInstance().getString(tooltip, null);
+				return Resources.getInstance().getStringOptional(tooltip);
 			}
 
 			Object userObject = resource.getUserObject();

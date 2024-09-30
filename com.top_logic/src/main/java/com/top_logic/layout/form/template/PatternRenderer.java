@@ -267,7 +267,7 @@ public class PatternRenderer extends DefaultControlRenderer<FormTemplateControl>
 			ResKey alt;
 			String altKey = currentElement.getAttribute(FormTemplateConstants.ALT_IMG_ATTRIBUTE);
 			if (StringServices.isEmpty(altKey)) {
-				alt = ResKey.text("");
+				alt = ResKey.EMPTY_TEXT;
 			} else {
 				alt = getResource(template, altKey);
 			}

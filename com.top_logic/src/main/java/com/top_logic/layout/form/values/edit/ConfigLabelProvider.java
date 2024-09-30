@@ -133,7 +133,7 @@ public final class ConfigLabelProvider extends AbstractResourceProvider {
 			tooltip = objectKey(object);
 		}
 
-		return Resources.getInstance().getString(tooltip, null);
+		return Resources.getInstance().getStringOptional(tooltip);
 	}
 
 	private ResKey templateTooltip(ResourceTemplate template) {

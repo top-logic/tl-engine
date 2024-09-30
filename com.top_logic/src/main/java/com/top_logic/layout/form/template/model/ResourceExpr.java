@@ -48,7 +48,7 @@ public class ResourceExpr extends AbstractResourceTemplate {
 		Resources resources = displayContext.getResources();
 
 		ResKey key = getKey();
-		String src = resources.getString(key, null);
+		String src = resources.getStringOptional(key);
 		if (src == null) {
 			// Trigger missing key warning.
 			out.writeText(resources.getString(key));

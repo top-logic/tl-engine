@@ -763,7 +763,7 @@ public class HandlerResult extends LazyTypedAnnotatable implements ContextDescri
 			return _description.getErrorMessage();
 		}
 
-		return ResKey.text(null);
+		return ResKey.NO_TEXT;
 	}
 	
 	/**

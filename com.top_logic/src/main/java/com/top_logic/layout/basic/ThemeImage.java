@@ -1011,7 +1011,7 @@ public abstract class ThemeImage implements HTMLFragment {
 
 		@Override
 		public ThemeImage resolve() {
-			String key = Resources.getInstance().getString(_imageKey, null);
+			String key = Resources.getInstance().getStringOptional(_imageKey);
 			if (key == null || key.isEmpty()) {
 				return NoIcon.INSTANCE;
 			}

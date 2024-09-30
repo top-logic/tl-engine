@@ -60,7 +60,7 @@ public class DefaultResourceView implements ResourceView {
 
 	@Override
 	public boolean hasStringResource(String resourceKey) {
-		return Resources.getInstance().getString(getQualifiedResourceName(resourceKey), null) != null;
+		return Resources.getInstance().getStringOptional(getQualifiedResourceName(resourceKey)) != null;
 	}
 	
 	private ResKey getQualifiedResourceName(String resourceKey) {

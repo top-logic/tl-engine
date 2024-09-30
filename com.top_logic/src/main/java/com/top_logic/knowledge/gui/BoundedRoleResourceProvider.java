@@ -34,7 +34,7 @@ public class BoundedRoleResourceProvider extends WrapperResourceProvider {
 				BoundedRole role = (BoundedRole) anObject;
 				String technicalName = role.getName();
 				Resources resources = Resources.getInstance();
-				String i18nLabel = resources.getString(RESOURCE_PREFIX.key(technicalName), null);
+				String i18nLabel = resources.getStringOptional(RESOURCE_PREFIX.key(technicalName));
 				if (StringServices.isEmpty(i18nLabel)) {
 					String securityModule = role.getScope().getName();
 					if (technicalName.startsWith(securityModule)) {

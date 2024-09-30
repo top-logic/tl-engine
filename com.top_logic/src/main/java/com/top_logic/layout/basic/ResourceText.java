@@ -35,7 +35,7 @@ public class ResourceText implements DisplayValue {
 		if (this.defaultValue == null) {
 			return context.getResources().getString(this.resourceKey);
 		} else {
-			String result = context.getResources().getString(this.resourceKey, null);
+			String result = context.getResources().getStringOptional(this.resourceKey);
 			if (result != null) {
 				return result;
 			}
@@ -49,7 +49,7 @@ public class ResourceText implements DisplayValue {
 		if (this.defaultValue == null) {
 			out.append(context.getResources().getString(this.resourceKey));
 		} else {
-			String result = context.getResources().getString(this.resourceKey, null);
+			String result = context.getResources().getStringOptional(this.resourceKey);
 			if (result != null) {
 				out.append(result);
 				return;

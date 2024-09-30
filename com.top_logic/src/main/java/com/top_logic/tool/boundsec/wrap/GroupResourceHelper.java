@@ -68,7 +68,7 @@ public class GroupResourceHelper {
      */
 	public static ResKey getDescriptionResKey(Group aGroup) {
         if (aGroup != null) {
-			return ResKey.fallback(I18N_PREFIX_GROUP_DESCRIPTION.key(aGroup.getName()), ResKey.text(""));
+			return ResKey.fallback(I18N_PREFIX_GROUP_DESCRIPTION.key(aGroup.getName()), ResKey.EMPTY_TEXT);
         }
 		return I18N_PREFIX_GROUP_DESCRIPTION.key("null");
     }

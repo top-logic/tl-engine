@@ -13,13 +13,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.xml.parsers.FactoryConfigurationError;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+
 import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import javax.xml.parsers.FactoryConfigurationError;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
 
 import org.xml.sax.SAXException;
 
@@ -182,7 +183,8 @@ public class AJAXServlet extends TopLogicServlet {
 		// Send a reload action. This triggers the default action behavior of
 		// forwarding the user to the login page, if the session has timed out.
 		String redirectMessage =
-			Resources.getInstance(aRequest.getLocale()).getString(I18NConstants.SESSION_TIMED_OUT_REDIRECT_LOGIN, null);
+			Resources.getInstance(aRequest.getLocale())
+				.getStringOptional(I18NConstants.SESSION_TIMED_OUT_REDIRECT_LOGIN);
 
 		ArrayList<ClientAction> actionsBuffer = new ArrayList<>();
 		if (!StringServices.isEmpty(redirectMessage)) {

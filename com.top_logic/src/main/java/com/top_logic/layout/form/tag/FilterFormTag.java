@@ -253,7 +253,7 @@ public class FilterFormTag extends FormTag {
 	protected void writeI18NWithFallback(String keySuffix, ResKey fallbackKey) throws IOException {
 		ResPrefix componentResPrefix = getComponent().getResPrefix();
 		Resources resources = Resources.getInstance();
-		String text = resources.getString(componentResPrefix.key(keySuffix), null);
+		String text = resources.getStringOptional(componentResPrefix.key(keySuffix));
 
 		if (text == null) {
 			text = resources.getString(fallbackKey);

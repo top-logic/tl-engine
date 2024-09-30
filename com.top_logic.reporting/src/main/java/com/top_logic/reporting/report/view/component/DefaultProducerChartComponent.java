@@ -344,7 +344,7 @@ public class DefaultProducerChartComponent extends AbstractFilterChartComponent 
 		valueMap.put("VALUE_LABEL_DATE_OF_EXPORT", resources.getString(I18NConstants.DATE_LABEL));
 		valueMap.put("VALUE_LABEL_CURRENT_USER", resources.getString(I18NConstants.USER_LABEL));
 
-		valueMap.put("VALUE_TITLE", resources.getString(getResPrefix().key("export.title"), null));
+		valueMap.put("VALUE_TITLE", resources.getStringOptional(getResPrefix().key("export.title")));
         valueMap.put("VALUE_DATE_OF_EXPORT", HTMLFormatter.getInstance().getDateFormat().format(new Date()));
         valueMap.put("VALUE_CURRENT_USER", MetaLabelProvider.INSTANCE.getLabel(TLContext.getContext().getCurrentPersonWrapper()));
     }

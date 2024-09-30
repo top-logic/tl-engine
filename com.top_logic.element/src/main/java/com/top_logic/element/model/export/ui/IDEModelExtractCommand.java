@@ -168,7 +168,7 @@ public class IDEModelExtractCommand extends AbstractCommandHandler {
 						}
 
 						private String lookup(ResKey infoKey) {
-							String result = bundle.getString(infoKey, null);
+							String result = bundle.getStringOptional(infoKey);
 
 							// Remove key from dynamic resources.
 							tx.saveI18N(locale, infoKey, null);

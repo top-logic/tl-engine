@@ -30,7 +30,7 @@ public class IconControl extends AbstractControlBase {
 
 	private XMLTag _src;
 
-	private ResKey _altText = ResKey.text("");
+	private ResKey _altText = ResKey.EMPTY_TEXT;
 
 	private String _cssWidth;
 

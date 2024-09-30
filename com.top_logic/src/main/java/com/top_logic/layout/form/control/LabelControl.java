@@ -199,7 +199,7 @@ public class LabelControl extends AbstractFormMemberControl implements OptionsLi
 
 			// TODO: Remove spurious cast by pulling up "tooltip" to FormMember.
 			if (field instanceof AbstractFormMember) {
-				ResKey tooltip = ((AbstractFormMember) field).getTooltip();
+				ResKey tooltip = ResKey.optional(((AbstractFormMember) field).getTooltip());
 				if (tooltip != null) {
 					ResKey tooltipCaption = ((AbstractFormMember) field).getTooltipCaption();
 					OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip,

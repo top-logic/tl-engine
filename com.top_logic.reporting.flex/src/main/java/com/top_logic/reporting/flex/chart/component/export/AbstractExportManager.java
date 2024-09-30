@@ -159,7 +159,7 @@ public abstract class AbstractExportManager<C extends AbstractExportManager.Conf
 		valueMap.put("VALUE_LABEL_CURRENT_USER",
 			resources.getString(I18NConstants.USER_LABEL));
 
-		valueMap.put("VALUE_TITLE", resources.getString(exportTitleKey(caller), null));
+		valueMap.put("VALUE_TITLE", resources.getStringOptional(exportTitleKey(caller)));
 		valueMap.put("VALUE_DATE_OF_EXPORT", HTMLFormatter.getInstance().getDateFormat().format(new Date()));
 		valueMap.put("VALUE_CURRENT_USER", MetaLabelProvider.INSTANCE.getLabel(TLContext.getContext().getCurrentPersonWrapper()));
 	}

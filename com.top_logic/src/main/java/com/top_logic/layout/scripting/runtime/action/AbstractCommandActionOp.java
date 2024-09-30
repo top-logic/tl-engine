@@ -52,7 +52,7 @@ public abstract class AbstractCommandActionOp<C extends CommandAction> extends C
 			command = null;
 			for (CommandHandler candidate : component.getCommands()) {
 				ResKey candidateLabel = candidate.getResourceKey(component);
-				if (StringServices.equals(label, resources.getString(candidateLabel, null))) {
+				if (StringServices.equals(label, resources.getStringOptional(candidateLabel))) {
 					if (command != null) {
 						ApplicationAssertions.fail(config,
 							"Multiple comands named '" + label + "' in component '" + component.getName() + "' ()");
@@ -62,7 +62,8 @@ public abstract class AbstractCommandActionOp<C extends CommandAction> extends C
 			}
 			ApplicationAssertions.assertNotNull(config,
 				"No command named '" + label + "' in component '" + component.getName() + "', available commands are: "
-					+ component.getCommands().stream().map(c -> resources.getString(c.getResourceKey(component), null))
+					+ component.getCommands().stream()
+						.map(c -> resources.getStringOptional(c.getResourceKey(component)))
 						.filter(Objects::nonNull).collect(Collectors.joining(", ")),
 				command);
 		}

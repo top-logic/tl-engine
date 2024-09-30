@@ -83,7 +83,7 @@ public class TLPartResourceProvider extends AbstractResourceProvider {
 		if (object == null) {
 			return null;
 		}
-		return Resources.getInstance().getString(((TLModelPart) object).visit(_tooltipVisitor, none), null);
+		return Resources.getInstance().getStringOptional(((TLModelPart) object).visit(_tooltipVisitor, none));
 	}
 
 	@Override

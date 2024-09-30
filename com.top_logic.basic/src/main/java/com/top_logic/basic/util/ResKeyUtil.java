@@ -42,7 +42,7 @@ public class ResKeyUtil {
 		if (ResourcesModule.Module.INSTANCE.isActive()) {
 			/* In this case, there is no way to detect whether the translation is coming from the
 			 * fallback language. */
-			return (ResourcesModule.getInstance().getBundle(locale)).getString(resKey, null);
+			return (ResourcesModule.getInstance().getBundle(locale)).getStringOptional(resKey);
 		} else {
 			/* This may happen when during the application startup a message is written. In this
 			 * case the resources module may not be started. */

@@ -259,7 +259,7 @@ public class GroupCellControl extends ConstantControl<HTMLFragment> implements C
 			}
 		};
 
-		command.setLabel(ResKey.text(""));
+		command.setLabel(ResKey.EMPTY_TEXT);
 		class UpdateImageListener implements CollapsedListener {
 
 			@Override

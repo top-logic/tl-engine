@@ -187,7 +187,7 @@ public final class LogEntryConfiguration extends ManagedClass {
     }
 
 	private void checkKeyExistence(Resources resources, ResKey key, String language) {
-		if (resources.getString(key, null) == null) {
+		if (resources.getStringOptional(key) == null) {
 			Logger.warn("No resource key " + key + " found for language " + language, LogEntryConfiguration.class);
 		}
 	}

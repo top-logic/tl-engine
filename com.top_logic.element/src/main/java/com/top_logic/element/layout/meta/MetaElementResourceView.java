@@ -72,7 +72,7 @@ public class MetaElementResourceView implements ResourceView {
      */
     @Override
 	public boolean hasStringResource(String aKey) {
-        return Resources.getInstance().getString(this.getQualifiedResourceName(aKey), null) != null;
+		return Resources.getInstance().getStringOptional(this.getQualifiedResourceName(aKey)) != null;
     }
 
     /** 

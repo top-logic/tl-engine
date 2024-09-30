@@ -168,8 +168,8 @@ public class ListEditor implements Editor {
 			add = createMonomorphicAdd(editorFactory, valueModel, list, optionProvider, singletonOption);
 		}
 
-		bindTooltip(add, ifElse(readOnly, literal(ResKey.text(null)), literal(addTooltip(valueModel, content))));
-		bindLabel(add, ifElse(readOnly, literal(ResKey.text("")), addLabel(valueModel, content)));
+		bindTooltip(add, ifElse(readOnly, literal(ResKey.NO_TEXT), literal(addTooltip(valueModel, content))));
+		bindLabel(add, ifElse(readOnly, literal(ResKey.EMPTY_TEXT), addLabel(valueModel, content)));
 		bindVisible(add, not(or(readOnly, Fields.isImmutable(list))));
 
 		if (property.isOrdered()) {
@@ -684,8 +684,8 @@ public class ListEditor implements Editor {
 	protected Value<ResKey> staticElementLabel(ValueModel valueModel, Value<Boolean> isFirst) {
 		PropertyDescriptor property = valueModel.getProperty();
 		return ifElse(isFirst,
-			literal(ResKey.fallback(Labels.propertyLabelKey(property, "@first"), ResKey.text(""))),
-			literal(ResKey.fallback(Labels.propertyLabelKey(property, "@next"), ResKey.text(""))));
+			literal(ResKey.fallback(Labels.propertyLabelKey(property, "@first"), ResKey.EMPTY_TEXT)),
+			literal(ResKey.fallback(Labels.propertyLabelKey(property, "@next"), ResKey.EMPTY_TEXT)));
 	}
 
 	private static final class OpenSortDialog implements Command {

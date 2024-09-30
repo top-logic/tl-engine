@@ -269,7 +269,7 @@ public abstract class AbstractFormMemberControl extends AbstractControl implemen
 		FormMember member = getModel();
 		ResKey label = member.getLabel();
 		if (label != null) {
-			return ResourcesModule.getInstance().getBundle(Locale.ENGLISH).getString(label, null);
+			return ResourcesModule.getInstance().getBundle(Locale.ENGLISH).getStringOptional(label);
 		}
 
 		return null;

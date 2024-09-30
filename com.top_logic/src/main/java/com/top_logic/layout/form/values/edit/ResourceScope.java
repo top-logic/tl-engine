@@ -59,7 +59,7 @@ public final class ResourceScope implements TemplateScope {
 			return ExprFactory.literalTextDirect(TextRange.UNDEFINED, "[null]");
 		}
 		if (optional) {
-			template = resources().getString(key, null);
+			template = resources().getStringOptional(key);
 			if (template == null) {
 				return null;
 			}

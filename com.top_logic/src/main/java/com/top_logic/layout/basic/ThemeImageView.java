@@ -55,7 +55,7 @@ public class ThemeImageView extends DefaultView {
 		ResKey altTextResKey = getAltTextResKey();
 		ResKey altText;
 		if (altTextResKey == null) {
-			altText = ResKey.text("");
+			altText = ResKey.EMPTY_TEXT;
 		} else {
 			altText = altTextResKey;
 		}

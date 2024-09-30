@@ -220,7 +220,7 @@ public class DefaultButtonUIModel extends AbstractButtonUIModel implements LazyT
 			return getLabel();
 		}
 
-		return ResKey.text("");
+		return ResKey.EMPTY_TEXT;
 	}
 
 	/**

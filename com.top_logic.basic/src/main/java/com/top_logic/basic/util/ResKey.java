@@ -59,9 +59,15 @@ public abstract class ResKey {
 	/** {@link ResKey} suffix to get derived tooltip resource. */
 	public static final String TOOLTIP = ".tooltip";
 
-	static final LiteralText NO_TEXT = new LiteralText(null);
+	/**
+	 * A {@link ResKey} resolving to <code>null</code>.
+	 */
+	public static final LiteralText NO_TEXT = new LiteralText(null);
 
-	private static final LiteralText EMPTY_TEXT = new LiteralText("");
+	/**
+	 * A {@link ResKey} resolving to the empty string.
+	 */
+	public static final LiteralText EMPTY_TEXT = new LiteralText("");
 
 	/**
 	 * The {@link ResKey} that must not be resolved.
@@ -688,7 +694,7 @@ public abstract class ResKey {
 	 * @see #tooltip()
 	 */
 	public final ResKey tooltipOptional() {
-		return tooltip().fallback(text(null));
+		return tooltip().optional();
 	}
 
 	/**
@@ -1090,6 +1096,11 @@ public abstract class ResKey {
 		void appendDebugLocal(I18NBundleSPI bundle, StringBuilder buffer, Representation representation) {
 			buffer.append(getKey());
 		}
+
+		@Override
+		public ResKey optional() {
+			return fallback(NO_TEXT);
+		}
 	}
 
 	private static final class TestKey extends PlainKey {
@@ -1211,6 +1222,18 @@ public abstract class ResKey {
 		void appendDebugLocal(I18NBundleSPI bundle, StringBuilder buffer, Representation representation) {
 			_direct.appendDebugLocal(bundle, buffer, representation);
 		}
+
+		@Override
+		public ResKey optional() {
+			ResKey ultimateFallback = _fallback;
+			while (ultimateFallback instanceof FallbackKey other) {
+				ultimateFallback = other._fallback;
+			}
+			if (ultimateFallback == NO_TEXT) {
+				return this;
+			}
+			return fallback(NO_TEXT);
+		}
 	}
 
 	private static final class LegacyKey extends PlainKey {
@@ -1306,6 +1329,15 @@ public abstract class ResKey {
 			_key.appendDebugLocal(bundle, buffer, representation);
 		}
 
+		@Override
+		public ResKey optional() {
+			ResKey optionalKey = _key.optional();
+			if (optionalKey == _key) {
+				return this;
+			}
+			return deprecated(optionalKey);
+		}
+
 	}
 
 	private static final class NoKey extends DirectKey {
@@ -1392,6 +1424,11 @@ public abstract class ResKey {
 				result.append(_local);
 			}
 			return result.toString();
+		}
+
+		@Override
+		public ResKey optional() {
+			return NO_TEXT;
 		}
 	}
 
@@ -1565,6 +1602,11 @@ public abstract class ResKey {
 				buffer.append(argument);
 			}
 		}
+
+		@Override
+		public ResKey optional() {
+			return fallback(NO_TEXT);
+		}
 	}
 
 	private static abstract class AbstractLiteral extends DirectKey {
@@ -1652,6 +1694,11 @@ public abstract class ResKey {
 				buffer.append(_literalText);
 				buffer.append('"');
 			}
+		}
+
+		@Override
+		public ResKey optional() {
+			return this;
 		}
 	}
 
@@ -1785,6 +1832,11 @@ public abstract class ResKey {
 
 		private Object encode(String value) {
 			return value == null ? "null" : value.replace("\\", "\\\\").replace("\"", "\\\"");
+		}
+
+		@Override
+		public ResKey optional() {
+			return this;
 		}
 	}
 
@@ -2180,5 +2232,19 @@ public abstract class ResKey {
 	 */
 	@Deprecated
 	public abstract ResKeyN asResKeyN();
+
+	/**
+	 * Creates a {@link ResKey} that resolves to <code>null</code>, if this base key is not defined.
+	 */
+	public abstract ResKey optional();
+
+	/**
+	 * A key that resolves to <code>null</code>, if the given key is not defined.
+	 * 
+	 * @return An optional key, or <code>null</code>, if no resource key was given.
+	 */
+	public static ResKey optional(ResKey key) {
+		return key == null ? null : key.optional();
+	}
 
 }

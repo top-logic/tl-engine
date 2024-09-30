@@ -421,7 +421,7 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 		ResKey resKey = aAttributeUpdate.getLabelKey();
 		result.setLabel(resKey);
 		result.setTooltip(resKey.tooltipOptional());
-		result.setTooltipCaption(resKey.suffix(FormMember.TOOLTIP_CAPTION_SUFFIX).fallback(ResKey.text(null)));
+		result.setTooltipCaption(resKey.suffix(FormMember.TOOLTIP_CAPTION_SUFFIX).optional());
 		
 		if (AttributeOperations.isReadOnly(aAttributeUpdate.getAttribute())) {
 			/* The value for the attribute can not be updated. Therefore a constraint is not useful,

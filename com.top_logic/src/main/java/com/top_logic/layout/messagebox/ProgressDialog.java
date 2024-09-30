@@ -97,7 +97,7 @@ public abstract class ProgressDialog extends AbstractDialog implements HTMLFragm
 	 * Creates a {@link ProgressDialog}.
 	 */
 	public ProgressDialog(ResKey title, DisplayDimension width, DisplayDimension height) {
-		this(DefaultDialogModel.dialogModel(ResKey.text(""), width, height, false));
+		this(DefaultDialogModel.dialogModel(ResKey.EMPTY_TEXT, width, height, false));
 		_title = title;
 	}
 

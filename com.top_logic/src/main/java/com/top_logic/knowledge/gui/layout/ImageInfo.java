@@ -108,7 +108,7 @@ public class ImageInfo extends Adorner  {
     /** Translate alt Text on demand. */
 	protected ResKey translateAlt() {
         if (this.iAlt == null) {
-			this.iAlt = (this.alt == null) ? ResKey.text("") : this.alt;
+			this.iAlt = (this.alt == null) ? ResKey.EMPTY_TEXT : this.alt;
         }
         return this.iAlt;
     }

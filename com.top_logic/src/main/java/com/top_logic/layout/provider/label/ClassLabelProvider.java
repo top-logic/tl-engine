@@ -23,7 +23,7 @@ public class ClassLabelProvider implements LabelProvider {
 		}
 
 		Class<?> clazz = (Class<?>) object;
-		String i18nName = Resources.getInstance().getString(ResKey.forClass(clazz), null);
+		String i18nName = Resources.getInstance().getStringOptional(ResKey.forClass(clazz));
 
 		if (i18nName == null) {
 			if (clazz.isArray()) {

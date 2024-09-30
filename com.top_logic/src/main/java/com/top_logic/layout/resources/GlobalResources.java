@@ -38,7 +38,7 @@ public class GlobalResources implements ResourceView {
 
 	@Override
 	public boolean hasStringResource(String resourceKey) {
-		return Resources.getInstance().getString(key(resourceKey), null) != null;
+		return Resources.getInstance().getStringOptional(key(resourceKey)) != null;
 	}
 
 	private ResKey key(String resourceKey) {

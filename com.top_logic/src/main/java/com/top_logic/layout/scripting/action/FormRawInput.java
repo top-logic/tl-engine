@@ -16,6 +16,7 @@ import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.scripting.runtime.action.AbstractApplicationActionOp;
 import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
+import com.top_logic.util.Resources;
 
 /**
  * Setting a value of a {@link FormField} using its raw value from the UI.
@@ -54,7 +55,8 @@ public interface FormRawInput extends AbstractFormInput {
 				AbstractFormField field =
 					(AbstractFormField) ModelResolver.locateModel(context, getConfig().getField());
 				if (!field.isActive()) {
-					String label = field.hasLabel() ? "'" + field.getLabel() + "' " : "";
+					String label =
+						field.hasLabel() ? "'" + Resources.getInstance().getString(field.getLabel()) + "' " : "";
 					ApplicationAssertions.fail(getConfig(), "Field " + label + "not active, mode: "
 						+ field.getMode().getExternalName());
 				}

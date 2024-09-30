@@ -12,7 +12,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.component.model.FormDeckPaneModel;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.DeckField;
@@ -23,6 +22,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.scripting.runtime.action.AbstractApplicationActionOp;
 import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
 import com.top_logic.mig.html.layout.Card;
+import com.top_logic.util.Resources;
 
 /**
  * {@link AbstractFormAction} for changing the selection of a {@link DeckField}.
@@ -51,12 +51,12 @@ public interface CardSelection extends AbstractFormAction {
 	 * is used.
 	 */
 	@Nullable
-	ResKey getCardName();
+	String getCardName();
 
 	/**
 	 * Setter for {@link #getCardName()}
 	 */
-	void setCardName(ResKey value);
+	void setCardName(String value);
 
 	/**
 	 * Records a {@link CardSelection} for the given {@link DeckField} if possible.
@@ -75,7 +75,7 @@ public interface CardSelection extends AbstractFormAction {
 			Card card = model.getSelectableCards().get(selectedIndex);
 			Object content = card.getContent();
 			if (content instanceof FormMember && ((FormMember) content).hasLabel()) {
-				config.setCardName(((FormMember) content).getLabel());
+				config.setCardName(Resources.getInstance().getString(((FormMember) content).getLabel()));
 			}
 		}
 		ScriptingRecorder.recordAction(config);
@@ -101,14 +101,15 @@ public interface CardSelection extends AbstractFormAction {
 		@Override
 		protected Object processInternal(ActionContext context, Object argument) throws Throwable {
 			DeckField field = (DeckField) ModelResolver.locateModel(context, getConfig().getField());
-			ResKey cardName = getConfig().getCardName();
+			String cardName = getConfig().getCardName();
 			FormDeckPaneModel model = field.getModel();
 			if (cardName != null) {
 				List<Card> cards = model.getSelectableCards();
 				for (Card card : cards) {
 					Object content = card.getContent();
 					if (content instanceof FormMember && ((FormMember) content).hasLabel()
-						&& cardName.equals(((FormMember) content).getLabel())) {
+						&& cardName
+							.equals(Resources.getInstance().getStringOptional(((FormMember) content).getLabel()))) {
 						model.setSingleSelection(card);
 						return argument;
 					}

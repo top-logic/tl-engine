@@ -8,6 +8,7 @@ package com.top_logic.layout.form.control;
 import java.io.IOError;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import com.top_logic.basic.Logger;
@@ -17,6 +18,7 @@ import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.Theme;
 import com.top_logic.gui.ThemeFactory;
@@ -293,6 +295,31 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 	@Override
 	public boolean isVisible() {
 		return this.model.isVisible();
+	}
+
+	@Override
+	protected void writeControlAttributes(DisplayContext context, TagWriter out) throws IOException {
+		super.writeControlAttributes(context, out);
+
+		out.writeAttribute(TL_SCRIPTING_ID_ATTR, getScriptingId());
+	}
+
+	/**
+	 * A technical identifier for the function of this button.
+	 * 
+	 * <p>
+	 * Can be used in client-side scripting of the UI.
+	 * </p>
+	 */
+	@TemplateVariable("scriptingId")
+	public String getScriptingId() {
+		M button = getModel();
+		ResKey label = button.getLabel();
+		if (label != null) {
+			return ResourcesModule.getInstance().getBundle(Locale.ENGLISH).getString(label, null);
+		}
+
+		return null;
 	}
 
 	@Override

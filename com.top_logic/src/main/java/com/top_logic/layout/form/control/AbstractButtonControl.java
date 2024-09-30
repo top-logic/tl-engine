@@ -12,7 +12,6 @@ import java.util.Locale;
 import java.util.Map;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
@@ -429,10 +428,8 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 
 	private void writeActiveTooltip(DisplayContext context, TagWriter out) throws IOException {
 		ResKey tooltip = getTooltip();
-		if (!StringServices.isEmpty(tooltip)) {
-			ResKey title = getTooltipCaption();
-			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltip(context, out, tooltip, title);
-		}
+		ResKey title = getTooltipCaption();
+		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltip(context, out, tooltip, title);
 	}
 
 	/**

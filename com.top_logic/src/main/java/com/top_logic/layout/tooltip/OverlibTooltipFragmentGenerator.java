@@ -120,9 +120,9 @@ public class OverlibTooltipFragmentGenerator implements ToolTipTagFragmentGenera
 	public void writeTooltipAttributes(DisplayContext context, TagWriter out, ResKey tooltipHtml, ResKey captionHtml)
 			throws IOException {
 		String content = context.getResources().getString(tooltipHtml);
-		String caption = context.getResources().getString(captionHtml);
 
 		if (!StringServices.isEmpty(content)) {
+			String caption = context.getResources().getStringOptional(captionHtml);
 			new HtmlToolTip(content, caption).writeAttribute(context, out);
 		}
     }
@@ -142,8 +142,8 @@ public class OverlibTooltipFragmentGenerator implements ToolTipTagFragmentGenera
 	public void writeTooltipAttributesPlain(DisplayContext context, TagWriter out, ResKey tooltipText,
 			ResKey captionText) throws IOException {
 		String content = context.getResources().getString(tooltipText);
-		String caption = context.getResources().getString(captionText);
 		if (!StringServices.isEmpty(content)) {
+			String caption = context.getResources().getStringOptional(captionText);
 			new PlainToolTip(content, caption).writeAttribute(context, out);
 		}
 	}
@@ -210,9 +210,8 @@ public class OverlibTooltipFragmentGenerator implements ToolTipTagFragmentGenera
 			throws IOException {
 
 		String content = context.getResources().getString(tooltipHtml);
-		String caption = context.getResources().getString(captionHtml);
-
 		if (!StringServices.isEmpty(content)) {
+			String caption = context.getResources().getStringOptional(captionHtml);
 			new HtmlToolTip(content, caption).write(context, out);
 		}
 	}

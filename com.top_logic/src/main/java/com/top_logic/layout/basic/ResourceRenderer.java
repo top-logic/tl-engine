@@ -482,7 +482,7 @@ public class ResourceRenderer<C extends ResourceRenderer.Config<?>>
 	    }
 
 		String link;
-		ResKey tooltip;
+		String tooltip;
         boolean hasLink;
         boolean hasTooltip;
         String theLabel;
@@ -490,7 +490,7 @@ public class ResourceRenderer<C extends ResourceRenderer.Config<?>>
 		boolean hasCssClass;
         try {
 			link = useLink && context.get(RENDER_LINKS) ? _resourceProvider.getLink(context, value) : null;
-			tooltip = useToolTip ? ResKey.text(_resourceProvider.getTooltip(value)) : null;
+			tooltip = useToolTip ? _resourceProvider.getTooltip(value) : null;
 			cssClass = _resourceProvider.getCssClass(value);
 			hasCssClass = cssClass != null;
             hasLink    = link != null;
@@ -508,14 +508,14 @@ public class ResourceRenderer<C extends ResourceRenderer.Config<?>>
             out.writeAttribute(ONCLICK_ATTR, link);
             if (hasTooltip) {
                 // OverLib attributes are OK for ANCHOR, too
-				OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip);
+				OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, ResKey.text(tooltip));
             }
 			out.endBeginTag();
 		} 
         else if (hasTooltip) {
 			out.beginBeginTag(SPAN);
 			out.writeAttribute(CLASS_ATTR, cssClass);
-			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip);
+			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, ResKey.text(tooltip));
 			out.endBeginTag();
 		}
 		else if (hasCssClass) {

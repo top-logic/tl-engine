@@ -159,7 +159,7 @@ void inspect(DisplayContext context, TagWriter out, LayoutComponent component, B
 							w.beginBeginTag(HTMLConstants.TD);
 							w.writeAttribute(HTMLConstants.ID_ATTR, module.toString());
 							if (hasToolTip) {
-								OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(displayContext, w, tooltip.toString());
+								OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(displayContext, w, ResKey.text(tooltip.toString()));
 							}
 							w.endBeginTag();
 							w.writeText(shortName(module));

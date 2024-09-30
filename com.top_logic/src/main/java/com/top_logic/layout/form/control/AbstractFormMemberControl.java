@@ -6,9 +6,12 @@
 package com.top_logic.layout.form.control;
 
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Map;
 
 import com.top_logic.basic.listener.EventType.Bubble;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.AbstractControl;
@@ -250,6 +253,26 @@ public abstract class AbstractFormMemberControl extends AbstractControl implemen
 		if (hasContextMenu()) {
 			out.writeAttribute(TL_CONTEXT_MENU_ATTR, getID());
 		}
+
+		out.writeAttribute(TL_SCRIPTING_ID_ATTR, getScriptingId());
+	}
+
+	/**
+	 * A technical identifier for the function of this button.
+	 * 
+	 * <p>
+	 * Can be used in client-side scripting of the UI.
+	 * </p>
+	 */
+	@TemplateVariable("scriptingId")
+	public String getScriptingId() {
+		FormMember member = getModel();
+		ResKey label = member.getLabel();
+		if (label != null) {
+			return ResourcesModule.getInstance().getBundle(Locale.ENGLISH).getString(label, null);
+		}
+
+		return null;
 	}
 
 	@Override

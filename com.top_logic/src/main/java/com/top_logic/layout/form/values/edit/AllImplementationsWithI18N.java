@@ -118,7 +118,7 @@ public class AllImplementationsWithI18N extends Function0<List<? extends Class<?
 	}
 
 	private static String getTranslation(Class<?> type) {
-		return Resources.getInstance().getString(ResKey.forClass(type), null);
+		return Resources.getInstance().getStringOptional(ResKey.forClass(type));
 	}
 
 	static Stream<? extends Class<?>> allImplementationTypes(Class<?> type) {

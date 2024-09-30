@@ -147,7 +147,7 @@ public class ResourceTag extends AbstractFormTag {
 
 	protected ResKey getLabel() {
 		if (!hasResource()) {
-			return ResKey.text("");
+			return ResKey.EMPTY_TEXT;
 		}
 		ResKey label;
 		if (defaultKey != null) {
@@ -211,7 +211,7 @@ public class ResourceTag extends AbstractFormTag {
 	 * Looks up the default resource key in the global resources.
 	 */
 	protected final ResKey lookupDefaultKeyOptional(String suffix) {
-		return this.defaultKey.suffix(suffix).fallback(ResKey.text(null));
+		return this.defaultKey.suffix(suffix).optional();
 	}
 
 	/**
@@ -223,7 +223,7 @@ public class ResourceTag extends AbstractFormTag {
 	 */
 	protected final ResKey lookupKeyOptional(String suffix) {
 		if (this.key != null) {
-			return globalWithSuffix(suffix).fallback(ResKey.text(null));
+			return globalWithSuffix(suffix).optional();
 		} else {
 			return getParentFormContainer().getResources().getStringResource(localWithSuffix(suffix), null);
 		}

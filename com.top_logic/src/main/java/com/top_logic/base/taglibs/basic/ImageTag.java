@@ -322,7 +322,7 @@ public class ImageTag extends AbstractTagBase {
 		ResKey tooltipKey = _tooltip;
 		if (tooltipKey != null) {
 			tooltip = tooltipKey;
-			tooltipCaption = Resources.derivedKey(tooltipKey, ".title").fallback(ResKey.text(null));
+			tooltipCaption = Resources.derivedKey(tooltipKey, ".title").optional();
 		} else {
 			tooltip = getTooltip();
 			tooltipCaption = getTooltipCaption();

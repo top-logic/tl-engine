@@ -540,7 +540,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		if (titleKey != null) {
 			return titleKey;
 		}
-		return getResources().getStringResource(TableControl.RES_TITLE, ResKey.text(""));
+		return getResources().getStringResource(TableControl.RES_TITLE, ResKey.EMPTY_TEXT);
 	}
 
 	/**

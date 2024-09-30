@@ -282,7 +282,7 @@ public class FormTableModel extends DelegatingTableModel {
 	 * </p>
 	 */
 	private void markTechnical(FormGroup group) {
-		group.setLabel(ResKey.text(""));
+		group.setLabel(ResKey.EMPTY_TEXT);
 	}
     
     public FormContainer getFormContainer() {

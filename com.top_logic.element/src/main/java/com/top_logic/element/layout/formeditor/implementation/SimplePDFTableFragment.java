@@ -203,7 +203,7 @@ public class SimplePDFTableFragment implements HTMLFragment {
 		if (titleKey != null) {
 			return titleKey;
 		}
-		return tableConfig.getResPrefix().getStringResource(TableControl.RES_TITLE, ResKey.text(""));
+		return tableConfig.getResPrefix().getStringResource(TableControl.RES_TITLE, ResKey.EMPTY_TEXT);
 	}
 
 	/**

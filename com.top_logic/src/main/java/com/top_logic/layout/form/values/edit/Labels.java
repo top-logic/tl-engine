@@ -79,7 +79,7 @@ public class Labels {
 
 	private static String resolve(ResKey key, boolean optional) {
 		if (optional) {
-			return Resources.getInstance().getString(key, null);
+			return Resources.getInstance().getStringOptional(key);
 		} else {
 			return Resources.getInstance().getString(key);
 		}

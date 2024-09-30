@@ -297,7 +297,7 @@ public abstract class AbstractButtonField extends AbstractFormMember implements 
 			return getLabel();
 		}
 
-		return ResKey.text("");
+		return ResKey.EMPTY_TEXT;
 	}
 
 	@Override

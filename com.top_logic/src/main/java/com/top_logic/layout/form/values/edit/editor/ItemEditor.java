@@ -136,7 +136,7 @@ public class ItemEditor implements Editor {
 						FormField field = field(contents, NO_CONTENTS_FIELD);
 						field.setImmutable(true);
 						field.initializeField(Resources.getInstance().getString(I18NConstants.NO_CONTENTS));
-						field.setLabel(ResKey.text(""));
+						field.setLabel(ResKey.EMPTY_TEXT);
 					}
 				}
 

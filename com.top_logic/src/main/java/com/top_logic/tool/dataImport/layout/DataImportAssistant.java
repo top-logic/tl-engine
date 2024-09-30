@@ -223,7 +223,7 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
         if (theResult == null) return;
 
         if (theResult.hasInfos()) {
-			String theValue = resources.getString(resPrefix.key("infos"), null);
+			String theValue = resources.getStringOptional(resPrefix.key("infos"));
 			if (theValue == null)
 				theValue = resources.getString(I18NConstants.INFOS);
             theValue = theValue + "\n- " + StringServices.toString(theResult.getInfos(), "\n\n- ") + "\n\n ";
@@ -233,7 +233,7 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
         }
 
         if (theResult.hasWarnings()) {
-			String theValue = resources.getString(resPrefix.key("warnings"), null);
+			String theValue = resources.getStringOptional(resPrefix.key("warnings"));
 			if (theValue == null)
 				theValue = resources.getString(I18NConstants.WARNINGS);
             theValue = theValue + "\n- " + StringServices.toString(theResult.getWarnings(), "\n\n- ") + "\n\n ";
@@ -243,7 +243,7 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
         }
 
         if (theResult.hasErrors()) {
-			String theValue = resources.getString(resPrefix.key("errors"), null);
+			String theValue = resources.getStringOptional(resPrefix.key("errors"));
 			if (theValue == null)
 				theValue = resources.getString(I18NConstants.ERRORS);
             theValue = theValue + "\n- " + StringServices.toString(theResult.getErrors(), "\n\n- ") + "\n\n ";

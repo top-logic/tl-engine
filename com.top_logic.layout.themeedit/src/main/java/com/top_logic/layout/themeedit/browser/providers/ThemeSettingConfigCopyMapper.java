@@ -86,7 +86,7 @@ public class ThemeSettingConfigCopyMapper implements Function<Object, Configurat
 			out.write(varName.substring(0, sepIdx));
 			out.endTag(H3);
 
-			ResKey helpHtml = ResKey.internalCreate(varName).fallback(ResKey.text(null));
+			ResKey helpHtml = ResKey.internalCreate(varName).optional();
 			out.writeContent(HtmlToolTip.ensureSafeHTMLTooltip(context, helpHtml));
 		}
 
@@ -125,7 +125,7 @@ public class ThemeSettingConfigCopyMapper implements Function<Object, Configurat
 			out.endTag(CODE);
 			out.endTag(DT);
 
-			ResKey documentation = property.getDocumentation().fallback(ResKey.text(""));
+			ResKey documentation = property.getDocumentation().fallback(ResKey.EMPTY_TEXT);
 			out.beginTag(DD);
 			out.writeContent(HtmlToolTip.ensureSafeHTMLTooltip(context, documentation));
 			out.endTag(DD);

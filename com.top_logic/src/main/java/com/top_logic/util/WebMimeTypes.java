@@ -55,7 +55,7 @@ public class WebMimeTypes extends TLMimeTypes {
     		return super.getDescription(aType);
     	}
 
-		String theName = Resources.getInstance().getString(I18NConstants.MIMETYPE_NAMES.key(aType), null);
+		String theName = Resources.getInstance().getStringOptional(I18NConstants.MIMETYPE_NAMES.key(aType));
 
         if (theName == null) {
             theName = Resources.getInstance().getString(I18NConstants.UNKNOWN_TYPE_RES_KEY);

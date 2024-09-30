@@ -320,7 +320,8 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
 			String displayLanguage = Resources.getDisplayLanguage(locale);
 			ResKey theLabel = getResPrefix().key(FIELD_I18N_PREFIX).asResKey1().fill(displayLanguage);
 			fieldHelper.createStringField(FIELD_PREFIX + FIELD_I18N_PREFIX + locale.toString(),
-				Resources.getInstance(locale).getString(FastListElementLabelProvider.labelKey(aModel), null), theLabel,
+				Resources.getInstance(locale).getStringOptional(FastListElementLabelProvider.labelKey(aModel)),
+				theLabel,
 				aContext);
         }
     }
@@ -476,7 +477,7 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
 			aRow.put(COLUMN_I18N_PREFIX + localeName,
 				createStringField(FIELD_PREFIX + COLUMN_I18N_PREFIX + localeName,
 					Resources.getInstance(locale)
-						.getString(FastListElementLabelProvider.labelKey(aElement), null),
+						.getStringOptional(FastListElementLabelProvider.labelKey(aElement)),
 					aGroup));
         }
     }
@@ -802,7 +803,7 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
 				String language = supportedLanguages[j];
 				theField = formContext.getField(FIELD_PREFIX + FIELD_I18N_PREFIX + language);
                 theI18N = FormFieldHelper.getStringValue(theField);
-				if (!StringServices.equalsEmpty(Resources.getInstance(language).getString(listKey, null),
+				if (!StringServices.equalsEmpty(Resources.getInstance(language).getStringOptional(listKey),
 					theI18N)) {
 					saveI18NList.add(new Object[] { language, listKey, theI18N });
 					theFastList.tTouch();
@@ -885,7 +886,7 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
 					if (StringServices.isEmpty(theI18N)) {
 						theI18N = theName;
 					}
-					if (!StringServices.equalsEmpty(Resources.getInstance(language).getString(elementKey, null),
+					if (!StringServices.equalsEmpty(Resources.getInstance(language).getStringOptional(elementKey),
 						theI18N)) {
 						saveI18NList.add(new Object[] { language, elementKey, theI18N });
 						theElement.tTouch();

@@ -800,7 +800,7 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 */
 	public static ResKey asResKeyNotNull(Object value, SearchExpression expression) {
 		if (value == null) {
-			return ResKey.text(null);
+			return ResKey.NO_TEXT;
 		}
 		ResKey result = asResKey(value);
 		if (result == null) {

@@ -96,7 +96,7 @@ public abstract class ResPrefix implements ResourceView {
 
 	@Override
 	public boolean hasStringResource(String suffix) {
-		return Resources.getInstance().getString(key(suffix), null) != null;
+		return Resources.getInstance().getStringOptional(key(suffix)) != null;
 	}
 
 	/**

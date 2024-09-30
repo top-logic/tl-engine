@@ -316,7 +316,7 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 		M button = getModel();
 		ResKey label = button.getLabel();
 		if (label != null) {
-			return ResourcesModule.getInstance().getBundle(Locale.ENGLISH).getString(label, null);
+			return ResourcesModule.getInstance().getBundle(Locale.ENGLISH).getStringOptional(label);
 		}
 
 		return null;

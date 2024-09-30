@@ -83,7 +83,7 @@ public class TestResourceText extends BasicTestCase {
 		assertEquals("Precondition for resource text test violated.", expectedTranslation,
 			interaction.getResources().getString(I18NConstants.TEST_RESOURCE_TEXT_KEY1));
 		assertEquals("Precondition for resource text test violated.", null,
-			interaction.getResources().getString(I18NConstants.TEST_RESOURCE_TEXT_NOT_TRANSLATED_KEY, null));
+			interaction.getResources().getStringOptional(I18NConstants.TEST_RESOURCE_TEXT_NOT_TRANSLATED_KEY));
 		DisplayValue fallback = new ResourceText(I18NConstants.TEST_RESOURCE_TEXT_KEY1);
 		ResourceText resourceText = new ResourceText(I18NConstants.TEST_RESOURCE_TEXT_NOT_TRANSLATED_KEY, fallback);
 		// Test simple get.

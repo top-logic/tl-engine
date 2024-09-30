@@ -30,7 +30,7 @@ public class ThemeBasedResourceImageRenderer implements Renderer<ResKey> {
     @Override
 	public void write(DisplayContext aContext, TagWriter aOut, ResKey aValue) throws IOException {
 		ThemeImage image = ThemeImage.i18n(aValue.suffix(ThemeBasedResourceImageRenderer.IMAGE_SUFFIX));
-		ResKey theText = aValue.fallback(ResKey.text(null));
+		ResKey theText = aValue.optional();
 
 		image.writeWithPlainTooltip(aContext, aOut, theText);
     }

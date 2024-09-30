@@ -163,7 +163,7 @@ public class ButtonRenderer extends AbstractButtonRenderer<ButtonRenderer.Config
 			return lookupDisabledTooltipLabelFallback((AbstractButtonControl<?>) button, labelRendered);
 		}
 
-		String tooltip = resolve(button.getTooltip());
+		String tooltip = resolve(ResKey.optional(button.getTooltip()));
 		if (tooltip == null && !labelRendered) {
 			return TagUtil.encodeXML(resolve(button.getLabel()));
 		}
@@ -174,7 +174,7 @@ public class ButtonRenderer extends AbstractButtonRenderer<ButtonRenderer.Config
 			boolean labelRendered) {
 		String disabledReason = resolve(button.getDisabledReason());
 
-		String tooltip = resolve(button.getTooltip());
+		String tooltip = resolve(ResKey.optional(button.getTooltip()));
 		if (StringServices.isEmpty(tooltip)) {
 			if (labelRendered) {
 				return TagUtil.encodeXML(disabledReason);

@@ -7,7 +7,6 @@ package com.top_logic.layout.form.control;
 
 import java.io.IOException;
 
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
@@ -76,7 +75,7 @@ public class InfoControl extends AbstractFormMemberControl implements TooltipCha
 		ResKey tooltipCaption = null;
 		// TODO: Remove spurious cast by pulling up "tooltip" to FormMember.
 		if (field instanceof AbstractFormMember) {
-			tooltip = ((AbstractFormMember)field).getTooltip();
+			tooltip = ResKey.optional(((AbstractFormMember) field).getTooltip());
 			tooltipCaption = ((AbstractFormMember)field).getTooltipCaption();
 		}
 
@@ -84,7 +83,7 @@ public class InfoControl extends AbstractFormMemberControl implements TooltipCha
 		writeControlAttributes(context, out);
 		writeStyle(out);
 		out.endBeginTag();
-		if(! StringServices.isEmpty(tooltip)) {
+		if (tooltip != null) {
 			if (image != null) {
 				writeImage(out, context, tooltip, tooltipCaption);
 			} else {
@@ -101,6 +100,11 @@ public class InfoControl extends AbstractFormMemberControl implements TooltipCha
 
 	private void writeText(TagWriter out, DisplayContext context, ResKey tooltip, ResKey tooltipCaption)
 			throws IOException {
+		String tooltipHtml = context.getResources().getString(tooltip);
+		if (tooltipHtml == null) {
+			return;
+		}
+
 		out.beginBeginTag(SPAN);
 		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip, tooltipCaption);
 		out.endBeginTag();

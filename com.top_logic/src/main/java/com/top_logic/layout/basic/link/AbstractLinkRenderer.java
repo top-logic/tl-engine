@@ -27,10 +27,10 @@ public abstract class AbstractLinkRenderer implements LinkRenderer {
 	 *         If writing to the underlying writer fails.
 	 */
 	protected <B> void writeTooltipAttributes(DisplayContext context, TagWriter out, Link button) throws IOException {
-		ResKey tooltip = button.getTooltip();
-		ResKey label = button.getLabel();
+		ResKey tooltip = ResKey.optional(button.getTooltip());
 
 		if (tooltip == null) {
+			ResKey label = button.getLabel();
 			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(context, out, label);
 		} else {
 			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip,

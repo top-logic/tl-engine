@@ -10,6 +10,7 @@ import java.io.IOException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
@@ -68,8 +69,8 @@ public class GalleryButtonRenderer extends AbstractButtonRenderer<GalleryButtonR
 		writeStyleAttribute(out);
 		if (!button.isDisabled()) {
 			writeOnClickAttribute(context, out, button);
-			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, button.getTooltip(),
-				null);
+			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out,
+				ResKey.optional(button.getTooltip()), null);
 		} else {
 			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, button.getDisabledReason(),
 				button.getDisabledReasonTitle());

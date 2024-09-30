@@ -153,18 +153,18 @@ public class ResourceTag extends AbstractFormTag {
 		if (defaultKey != null) {
 			// There is a default. Do not mark the key resource as missing,
 			// if it does not exist.
-			label = lookupKeyOptional(null);
+			label = lookupKey(null);
 			
 			if (label == null) {
 				// There is no custom resource given. Lookup the default
 				// key. Make sure to mark the default resource as missing,
 				// if it does not exist.
-				label = lookupDefaultKeyMandatory(null);
+				label = lookupDefaultKey(null);
 			}
 		} else {
 			// There is no default. Lookup the key resource an make sure to
 			// mark it as missing, if it does not exist.
-			label = lookupKeyMandatory(null);
+			label = lookupKey(null);
 		}
 		return label;
 	}
@@ -177,20 +177,20 @@ public class ResourceTag extends AbstractFormTag {
 		if (defaultKey != null) {
 			// There is a default. Do not mark the key resource as missing,
 			// if it does not exist.
-			label = lookupKeyOptional(TOOLTIP_SUFFIX);
+			label = lookupKey(TOOLTIP_SUFFIX);
 
 			if (label == null) {
 				// There is no custom resource given. Lookup the default
 				// key. Make sure to mark the default resource as missing,
 				// if it does not exist.
-				label = lookupDefaultKeyOptional(TOOLTIP_SUFFIX);
+				label = lookupDefaultKey(TOOLTIP_SUFFIX);
 			}
 		} else {
 			// There is no default. Lookup the key resource an make sure to
 			// mark it as missing, if it does not exist.
-			label = lookupKeyOptional(TOOLTIP_SUFFIX);
+			label = lookupKey(TOOLTIP_SUFFIX);
 		}
-		return label;
+		return ResKey.optional(label);
 	}
 
 	/**
@@ -203,47 +203,21 @@ public class ResourceTag extends AbstractFormTag {
 	/**
 	 * Looks up the default resource key in the global resources.
 	 */
-	protected final ResKey lookupDefaultKeyMandatory(String suffix) {
+	protected final ResKey lookupDefaultKey(String suffix) {
 		return this.defaultKey.suffix(suffix);
 	}
 	
 	/**
-	 * Looks up the default resource key in the global resources.
-	 */
-	protected final ResKey lookupDefaultKeyOptional(String suffix) {
-		return this.defaultKey.suffix(suffix).optional();
-	}
-
-	/**
 	 * Looks up the resource key (either local or global).
-	 * 
-	 * <p>
-	 * Do not mark a missing resource as such.
-	 * </p>
 	 */
-	protected final ResKey lookupKeyOptional(String suffix) {
+	protected final ResKey lookupKey(String suffix) {
 		if (this.key != null) {
 			return globalWithSuffix(suffix).optional();
-		} else {
-			return getParentFormContainer().getResources().getStringResource(localWithSuffix(suffix), null);
-		}
-	}
-	
-	/**
-	 * Looks up the resource key (either local or global).
-	 * 
-	 * <p>
-	 * Does mark a missing resource as such.
-	 * </p>
-	 */
-	protected final ResKey lookupKeyMandatory(String suffix) {
-		if (this.key != null) {
-			return globalWithSuffix(suffix);
 		} else {
 			return getParentFormContainer().getResources().getStringResource(localWithSuffix(suffix));
 		}
 	}
-
+	
 	private ResKey globalWithSuffix(String suffix) {
 		return key.suffix(suffix);
 	}

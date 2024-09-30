@@ -11,7 +11,7 @@ import com.top_logic.layout.ResourceView;
 /**
  * Reduction of the {@link ResourceView} interface to a single method to implement.
  * 
- * @see #getResource(String, boolean)
+ * @see #getResource(String)
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -19,21 +19,21 @@ public abstract class AbstractResourceView implements ResourceView {
 
 	@Override
 	public boolean hasStringResource(String resourceKey) {
-		return getResource(resourceKey, true) != null;
+		return getResource(resourceKey) != null;
 	}
 
 	@Override
 	public ResKey getStringResource(String resourceKey, ResKey defaultValue) {
-		ResKey result = getResource(resourceKey, true);
+		ResKey result = getResource(resourceKey);
 		if (result == null) {
 			return defaultValue;
 		}
-		return result;
+		return result.fallback(defaultValue);
 	}
 
 	@Override
 	public ResKey getStringResource(String resourceKey) {
-		return getResource(resourceKey, false);
+		return getResource(resourceKey);
 	}
 
 	/**
@@ -41,12 +41,10 @@ public abstract class AbstractResourceView implements ResourceView {
 	 * 
 	 * @param resourceKey
 	 *        The key to look up.
-	 * @param optional
-	 *        Whether this is an optional resource.
 	 * @return The translation in the current user's locale. <code>null</code>, if the resource is
 	 *         optional and no translation exists. A resource that is not optional but does not
 	 *         exist returns a missing resource marker and logs the missing resource.
 	 */
-	protected abstract ResKey getResource(String resourceKey, boolean optional);
+	protected abstract ResKey getResource(String resourceKey);
 
 }

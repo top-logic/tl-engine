@@ -1,4 +1,5 @@
-<%@page import="com.top_logic.basic.col.TypedAnnotatable"
+<%@page import="com.top_logic.basic.util.ResKey"
+%><%@page import="com.top_logic.basic.col.TypedAnnotatable"
 %><%@page import="com.top_logic.basic.col.TypedAnnotatable.Property"
 %><%@page import="com.top_logic.layout.form.template.DefaultFormFieldControlProvider"
 %><%@page import="com.top_logic.util.Utils"
@@ -198,7 +199,7 @@ private static final Boolean DEFAULT_HTML = Boolean.TRUE;
 					private void drawField(FormContext context, boolean multiLine, Property<Object> propertyName, Object defaultValue,
 						DisplayContext displayContext, PageContext pageContext) throws Exception {
 						FormField field = FormFactory.newStringField(propertyName.getName());
-						field.setLabel(propertyName.getName());
+						field.setLabel(ResKey.text(propertyName.getName()));
 						field.addValueListener(new FieldListener(propertyName));
 						Object value = TLContext.getContext().get(propertyName);
 						if (value == null) value = defaultValue;
@@ -214,7 +215,7 @@ private static final Boolean DEFAULT_HTML = Boolean.TRUE;
 						private void drawBooleanField(FormContext context, Property<Object> propertyName, Boolean defaultValue,
 							DisplayContext displayContext, PageContext pageContext) throws Exception {
 							FormField field = FormFactory.newBooleanField(propertyName.getName());
-							field.setLabel(propertyName.getName());
+							field.setLabel(ResKey.text(propertyName.getName()));
 							field.addValueListener(new FieldListener(propertyName));
 							Object value = TLContext.getContext().get(propertyName);
 							if (value == null) value = defaultValue;

@@ -51,8 +51,7 @@ void inspect(DisplayContext context, TagWriter out, LayoutComponent component, B
 		inspectButton.setCssClasses("appended");
 		inspectButton.setResources(ResPrefix.NONE);
 		inspectButton.setLabel(
-			context.getResources().getString(
-		com.top_logic.layout.scripting.recorder.gui.inspector.plugin.debuginfo.I18NConstants.SHOW_DETAIL_COMMAND));
+			com.top_logic.layout.scripting.recorder.gui.inspector.plugin.debuginfo.I18NConstants.SHOW_DETAIL_COMMAND);
 		new ButtonControl(inspectButton).write(context, out);
 	}
 }

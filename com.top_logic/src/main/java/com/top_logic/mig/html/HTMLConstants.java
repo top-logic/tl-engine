@@ -1121,6 +1121,11 @@ public interface HTMLConstants {
 	public static final String TL_BROWSER_MENU_ATTR = DATA_ATTRIBUTE_PREFIX + "browser-menu";
 
 	/**
+	 * Custom attribute to help identifying fields and buttons in client-side scripts.
+	 */
+	public static final String TL_SCRIPTING_ID_ATTR = DATA_ATTRIBUTE_PREFIX + "id";
+
+	/**
 	 * Attribute value to denote an empty source reference (e.g. used in combination with
 	 * {@link #SRC_ATTR}).
 	 */

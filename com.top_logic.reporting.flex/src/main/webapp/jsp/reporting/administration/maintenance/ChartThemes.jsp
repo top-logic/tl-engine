@@ -1,4 +1,5 @@
-<%@page import="com.top_logic.layout.form.PlainKeyResources"
+<%@page import="com.top_logic.basic.util.ResKey"
+%><%@page import="com.top_logic.layout.form.PlainKeyResources"
 %><%@page import="com.top_logic.reporting.flex.chart.config.util.ChartThemeConfigurator"
 %><%@page import="com.top_logic.layout.form.model.StringField"
 %><%@page import="com.top_logic.layout.LabelProvider"
@@ -111,7 +112,7 @@ contentType="text/html; charset=UTF-8"
 					return HandlerResult.DEFAULT_RESULT;
 				}
 		});
-		result.setLabel("Übernehmen");
+		result.setLabel(ResKey.text("Übernehmen"));
 		result.setControlProvider(ButtonControlProvider.INSTANCE);
 		return result;
 	}

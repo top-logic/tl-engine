@@ -213,13 +213,13 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 			switch (visibility) {
 				case EDITABLE:
 				case MANDATORY: {
-					setDisabled(attributeContext, type, part, model, false);
+					setDisabled(attributeContext, type, part, model, domain, false);
 					break;
 				}
 				case HIDDEN:
 				case DISABLED:
 				case READ_ONLY: {
-					setDisabled(attributeContext, type, part, model, true);
+					setDisabled(attributeContext, type, part, model, domain, true);
 					break;
 				}
 				case DEFAULT:
@@ -231,9 +231,9 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 	}
 
 	private static void setDisabled(AttributeFormContext attributeContext, TLStructuredType type,
-			TLStructuredTypePart part, TLObject model, boolean disabled) {
+			TLStructuredTypePart part, TLObject model, String domain, boolean disabled) {
 		TLFormObject overlay =
-			model == null ? attributeContext.createObject(type, null) : attributeContext.editObject(model);
+			model == null ? attributeContext.createObject(type, domain) : attributeContext.editObject(model);
 		AttributeUpdate update = overlay.getUpdate(part);
 		if (update != null) {
 			update.setDisabled(disabled);

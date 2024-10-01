@@ -36,6 +36,7 @@ import com.top_logic.layout.window.WindowComponent;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.Resources;
 
 /**
  * A {@link ModelNamingScheme} for identifying buttons by their label.
@@ -261,7 +262,7 @@ public class LabeledButtonNaming
 	}
 
 	private static boolean hasSearchedLabel(CommandModel button, String searchedLabel) {
-		return StringServices.equals(button.getLabel(), searchedLabel);
+		return StringServices.equals(searchedLabel, Resources.getInstance().getStringOptional(button.getLabel()));
 	}
 
 	@Override

@@ -50,4 +50,29 @@
       <artifactId>tl-xio</artifactId>
     </dependency>
   </dependencies>
+
+  
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-maven-plugin</artifactId>
+				<version>${tl.version}</version>
+	
+				<executions>
+					<execution>
+						<id>generate-binding</id>
+						<goals>
+							<goal>generate-java</goal>
+						</goals>
+						
+						<configuration>
+							<modules>tl.bpe.bpml, tl.bpe.execution</modules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+	
 </project>

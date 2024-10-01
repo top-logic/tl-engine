@@ -9,6 +9,7 @@ import static com.top_logic.mig.html.HTMLConstants.*;
 
 import java.io.IOException;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
@@ -83,7 +84,7 @@ public class ResourceImageView extends DefaultView {
 	public void write(DisplayContext context, TagWriter out) throws IOException {
 		Resources resources = context.getResources();
 
-		String alt = resources.getString(_imageResourceKey.key(RESOURCE_SUFFIX_ALT));
+		String alt = StringServices.nonNull(resources.getStringOptional(_imageResourceKey.key(RESOURCE_SUFFIX_ALT)));
 		ResKey tooltip = _imageResourceKey.key(RESOURCE_SUFFIX_TOOLTIP);
 		
 		XMLTag tag = _image.toIcon();

@@ -7,6 +7,7 @@ package com.top_logic.layout.basic.control;
 
 import java.io.IOException;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.Theme;
@@ -212,7 +213,7 @@ public class IconControl extends AbstractControlBase {
 			writeControlAttributes(context, out);
 			out.writeAttribute(WIDTH_ATTR, _cssWidth);
 			out.writeAttribute(HEIGHT_ATTR, _cssHeight);
-			out.writeAttribute(ALT_ATTR, context.getResources().getString(_altText));
+			out.writeAttribute(ALT_ATTR, StringServices.nonNull(context.getResources().getStringOptional(_altText)));
 			out.writeAttribute(TITLE_ATTR, "");
 
 			if (_tooltip != null) {

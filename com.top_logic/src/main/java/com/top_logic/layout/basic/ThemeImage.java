@@ -455,7 +455,7 @@ public abstract class ThemeImage implements HTMLFragment {
 		icon.beginBeginTag(context, out);
 		out.writeAttribute(HTMLConstants.CLASS_ATTR, cssClass);
 		out.writeAttribute(HTMLConstants.ALT_ATTR,
-			tooltipText == null ? StringServices.EMPTY_STRING : context.getResources().getString(tooltipText));
+				StringServices.nonNull(context.getResources().getStringOptional(tooltipText)));
 		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(context, out, tooltipText);
 		out.writeAttribute(HTMLConstants.TITLE_ATTR, StringServices.EMPTY_STRING);
 		icon.endEmptyTag(context, out);

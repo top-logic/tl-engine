@@ -1125,7 +1125,7 @@ public class HTMLUtil {
 	 */
 	public static void writeImageTooltip(DisplayContext context, TagWriter out, ResKey tooltipText) throws IOException {
 		// Alternative text.
-		out.writeAttribute(ALT_ATTR, context.getResources().getString(tooltipText));
+		out.writeAttribute(ALT_ATTR, StringServices.nonNull(context.getResources().getStringOptional(tooltipText)));
 
 		// The tooltip source.
 		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(context, out, tooltipText);

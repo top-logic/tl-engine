@@ -55,7 +55,7 @@ public class BeaconRenderer implements Renderer<FastListElement> {
 		ResKey tooltip = getTooltip(aContext, index);
         	anOut.beginBeginTag(HTMLConstants.IMG);
         	anOut.writeAttribute(HTMLConstants.BORDER_ATTR, 0);
-			anOut.writeAttribute(HTMLConstants.ALT_ATTR, aContext.getResources().getString(tooltip));
+			anOut.writeAttribute(HTMLConstants.ALT_ATTR, StringServices.nonNull(aContext.getResources().getStringOptional(tooltip)));
 			anOut.writeAttribute(HTMLConstants.TITLE_ATTR, "");
 			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(aContext, anOut, tooltip);
         	anOut.writeAttribute(HTMLConstants.SRC_ATTR, aContext.getContextPath() + theLink);

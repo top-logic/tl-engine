@@ -1315,6 +1315,10 @@ public class TestLayoutProblems extends FormComponent {
 	}
 
 	long _time = -1;
+
+	/**
+	 * Model builder for a dummy infinite tree structure.
+	 */
 	public static final TreeBuilder INFINITE_TREE = new AbstractTLTreeNodeBuilder() {
 		@Override
 		public List<DefaultMutableTLTreeNode> createChildList(DefaultMutableTLTreeNode node) {

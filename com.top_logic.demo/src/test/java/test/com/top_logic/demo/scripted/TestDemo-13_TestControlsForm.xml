@@ -1029,7 +1029,7 @@
 				>
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
 						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-							label="Visibility of command1 in menu."
+							label='Sichtbarkeit des Befehls "command1" im Menü.'
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
@@ -1048,7 +1048,7 @@
 				>
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
 						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-							label="Visibility of command2 in menu."
+							label='Sichtbarkeit des Befehls "command2" im Menü.'
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
@@ -1077,7 +1077,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Visibility of command1 in menu."
+						label='Sichtbarkeit des Befehls "command1" im Menü.'
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
@@ -1105,7 +1105,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Visibility of command2 in menu."
+						label='Sichtbarkeit des Befehls "command2" im Menü.'
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
@@ -1133,7 +1133,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Visibility of command1 in menu."
+						label='Sichtbarkeit des Befehls "command1" im Menü.'
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"
@@ -1161,7 +1161,7 @@
 					user-id="root"
 				>
 					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Visibility of command2 in menu."
+						label='Sichtbarkeit des Befehls "command2" im Menü.'
 					>
 						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsFormInlineTab.layout.xml#TestControlsFormInline"

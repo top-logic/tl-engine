@@ -160,13 +160,12 @@ public class FuzzyFormMemberNaming extends GlobalModelNamingScheme<FormMember, F
 		for (Iterator<? extends FormMember> it = container.getMembers(); it.hasNext();) {
 			FormMember member = it.next();
 			String candidateLabel = getCandidateLabel(resources, member);
-			if (candidateLabel == null) {
-				continue;
-			}
-			result.addCandidate(candidateLabel);
+			if (candidateLabel != null) {
+				result.addCandidate(candidateLabel);
 
-			if (label.equals(candidateLabel)) {
-				result.add(member);
+				if (label.equals(candidateLabel)) {
+					result.add(member);
+				}
 			}
 
 			if (member instanceof FormContainer) {

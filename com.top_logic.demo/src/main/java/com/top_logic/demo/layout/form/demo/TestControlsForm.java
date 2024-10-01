@@ -1965,10 +1965,10 @@ public class TestControlsForm extends FormComponent {
 			FormFactory.newBooleanField("command1Visibility", Boolean.TRUE, !FormFactory.IMMUTABLE);
 		command1Visibility
 			.addValueListener((field, oldVal, newVal) -> command1.setVisible(Utils.isTrue((Boolean) newVal)));
-		command1Visibility.setLabel(ResKey.text("Visibility of " + command1.getLabel() + " in menu."));
+		command1Visibility.setLabel(I18NConstants.VISIBILITY_IN_MENUE__CMD.fill(command1.getLabel()));
 		BooleanField command2Visibility =
 			FormFactory.newBooleanField("command2Visibility", Boolean.TRUE, !FormFactory.IMMUTABLE);
-		command2Visibility.setLabel(ResKey.text("Visibility of " + command2.getLabel() + " in menu."));
+		command2Visibility.setLabel(I18NConstants.VISIBILITY_IN_MENUE__CMD.fill(command2.getLabel()));
 		command2Visibility
 			.addValueListener((field, oldVal, newVal) -> command2.setVisible(Utils.isTrue((Boolean) newVal)));
 

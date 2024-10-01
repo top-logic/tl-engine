@@ -10,6 +10,7 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.scripting.action.assertion.FieldLabelAssertion;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
+import com.top_logic.util.Resources;
 
 /**
  * Assertion for the {@link FormMember#getLabel() label} of a {@link FormMember}. The comparison is
@@ -25,8 +26,8 @@ public class FieldLabelAssertionOp extends FormAssertionOp<FieldLabelAssertion> 
 
 	@Override
 	protected void checkAsserts(FormMember formMember, ActionContext actionContext) {
-		Object expectedLabel = getConfig().getLabel();
-		Object actualLabel = formMember.getLabel();
+		String expectedLabel = getConfig().getLabel();
+		String actualLabel = Resources.getInstance().getStringOptional(formMember.getLabel());
 		ApplicationAssertions.assertEquals(config, "The field has a wrong label.", expectedLabel, actualLabel);
 	}
 

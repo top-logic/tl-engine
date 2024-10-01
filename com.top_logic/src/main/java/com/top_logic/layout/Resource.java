@@ -718,7 +718,7 @@ public class Resource {
 			String altText;
 			if (aValue instanceof Resource) {
 				ResKey label = ((Resource) aValue).getLabel();
-				altText = StringServices.nonNull(context.getResources().getString(label));
+				altText = StringServices.nonNull(context.getResources().getStringOptional(label));
 			} else {
 				altText = StringServices.EMPTY_STRING;
 			}

@@ -7,6 +7,7 @@ package com.top_logic.layout.form.control;
 
 import java.io.IOException;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
@@ -117,7 +118,7 @@ public class ImageLinkButtonRenderer extends AbstractButtonRenderer<ImageLinkBut
 			out.writeAttribute(TABINDEX_ATTR, button.getTabindex());
 		}
 
-		out.writeAttribute(ALT_ATTR, context.getResources().getString(button.getAltText()));
+		out.writeAttribute(ALT_ATTR, StringServices.nonNull(context.getResources().getStringOptional(button.getAltText())));
 		/*
 		 * Older versions of the Internet Explorer display the text in the "alt" attribute if the
 		 * "title" attribute is not set. As there is already a JavaScript tooltip in many cases,

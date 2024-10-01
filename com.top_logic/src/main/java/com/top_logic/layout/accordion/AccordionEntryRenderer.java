@@ -9,6 +9,7 @@ import static com.top_logic.mig.html.HTMLConstants.*;
 
 import java.io.IOException;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
@@ -132,7 +133,7 @@ public class AccordionEntryRenderer extends AbstractLinkRenderer {
 			out.append(button.isDisabled() ? FormConstants.DISABLED_CSS_CLASS : null);
 		}
 		out.endCssClasses();
-		out.writeAttribute(ALT_ATTR, context.getResources().getString(button.getAltText()));
+		out.writeAttribute(ALT_ATTR, StringServices.nonNull(context.getResources().getStringOptional(button.getAltText())));
 		out.writeAttribute(TITLE_ATTR, "");
 		icon.endEmptyTag(context, out);
 	}

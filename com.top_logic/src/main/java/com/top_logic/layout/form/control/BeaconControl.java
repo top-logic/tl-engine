@@ -150,7 +150,7 @@ public class BeaconControl extends AbstractSelectControl {
             out.writeAttribute(SRC_ATTR, isSelected ? selectedIcon : optionIcon);
 			out.writeAttribute(DATA_SELECTED_IMAGE, selectedIcon);
 			out.writeAttribute(DATA_OPTION_IMAGE, optionIcon);
-			out.writeAttribute(ALT_ATTR, context.getResources().getString(optionLabel));
+			out.writeAttribute(ALT_ATTR, StringServices.nonNull(context.getResources().getStringOptional(optionLabel)));
 			out.writeAttribute(TITLE_ATTR, "");
 			writeOnClick(out, FormConstants.BEACON_HANDLER_CLASS, this, "," + asArray);
 			if (disabled) {
@@ -204,7 +204,7 @@ public class BeaconControl extends AbstractSelectControl {
 		out.beginBeginTag(IMG);
 		ResKey optionLabel = getOptionLabel(context, selected);
 		out.writeAttribute(SRC_ATTR, contextPath + getSelectedIcon(icons, selected));
-		out.writeAttribute(ALT_ATTR, context.getResources().getString(optionLabel));
+		out.writeAttribute(ALT_ATTR, context.getResources().getStringOptional(optionLabel));
 					out.writeAttribute(TITLE_ATTR, "");
 					OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, optionLabel);
         			out.endEmptyTag();

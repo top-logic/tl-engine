@@ -281,7 +281,7 @@ public class ImageTag extends AbstractTagBase {
 		if (altKey == null) {
 			out.writeAttribute(ALT_ATTR, getAlt());
 		} else {
-			out.writeAttribute(ALT_ATTR, context.getResources().getString(altKey));
+			out.writeAttribute(ALT_ATTR, StringServices.nonNull(context.getResources().getStringOptional(altKey)));
 		}
 
 		String cssClass = getCssClass();

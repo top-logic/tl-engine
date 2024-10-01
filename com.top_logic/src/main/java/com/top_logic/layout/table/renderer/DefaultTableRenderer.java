@@ -1900,7 +1900,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		out.append(FILTER_BUTTON_CSS_CLASS);
 		out.append(filterCss);
 		out.endCssClasses();
-		out.writeAttribute(ALT_ATTR, context.getResources().getString(tooltip));
+		out.writeAttribute(ALT_ATTR, StringServices.nonNull(context.getResources().getStringOptional(tooltip)));
 		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip, null);
 		tag.endEmptyTag(context, out);
 	}
@@ -2011,7 +2011,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		out.append(FILTER_BUTTON_CSS_CLASS);
 		out.append(cssClass);
 		out.endCssClasses();
-		out.writeAttribute(ALT_ATTR, context.getResources().getString(tooltip));
+		out.writeAttribute(ALT_ATTR, context.getResources().getStringOptional(tooltip));
 		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip, null);
 		out.writeAttribute(BORDER_ATTR, 0);
 		out.writeAttribute(ONDRAGSTART_ATTR, "return false;");

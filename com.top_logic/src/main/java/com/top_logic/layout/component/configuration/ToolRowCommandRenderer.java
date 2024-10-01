@@ -9,6 +9,7 @@ import static com.top_logic.mig.html.HTMLConstants.*;
 
 import java.io.IOException;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
@@ -49,7 +50,7 @@ public class ToolRowCommandRenderer extends AbstractLinkRenderer {
 					tag.beginBeginTag(context, out);
 					out.writeAttribute(CLASS_ATTR, FormConstants.INPUT_IMAGE_CSS_CLASS);
 					writeDisabledAttribute(out, button);
-					out.writeAttribute(ALT_ATTR, context.getResources().getString(button.getAltText()));
+					out.writeAttribute(ALT_ATTR, StringServices.nonNull(context.getResources().getStringOptional(button.getAltText())));
 					out.writeAttribute(ONCLICK_ATTR, button.getOnclick());
 					tag.endEmptyTag(context, out);
 				} else {

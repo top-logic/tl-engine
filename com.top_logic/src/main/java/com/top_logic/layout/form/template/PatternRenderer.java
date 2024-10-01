@@ -274,7 +274,7 @@ public class PatternRenderer extends DefaultControlRenderer<FormTemplateControl>
 			
 			XMLTag icon = ThemeImage.icon(imageSrc).toIcon();
 			icon.beginBeginTag(context, out);
-			out.writeAttribute(ALT_ATTR, context.getResources().getString(alt));
+			out.writeAttribute(ALT_ATTR, StringServices.nonNull(context.getResources().getStringOptional(alt)));
 			icon.endBeginTag(context, out);
 			icon.endTag(context, out);
 		}

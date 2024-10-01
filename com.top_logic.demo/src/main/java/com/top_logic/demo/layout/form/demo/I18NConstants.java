@@ -135,6 +135,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey DELETED_VIEW;
 
+	/**
+	 * @en Visibility of command "{0}" in menu.
+	 */
+	public static ResKey1 VISIBILITY_IN_MENUE__CMD;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

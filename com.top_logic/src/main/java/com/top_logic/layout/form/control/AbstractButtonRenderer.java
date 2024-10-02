@@ -7,7 +7,6 @@ package com.top_logic.layout.form.control;
 
 import java.io.IOException;
 
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -127,7 +126,7 @@ public abstract class AbstractButtonRenderer<C extends AbstractButtonRenderer.Co
         if (aButtonControl.isDisabled() && execStateInTooltip) {
             return aButtonControl.getDisabledReason();
         }
-        return aButtonControl.getTooltip();
+		return ResKey.optional(aButtonControl.getTooltip());
     }
     
     /**
@@ -136,7 +135,7 @@ public abstract class AbstractButtonRenderer<C extends AbstractButtonRenderer.Co
 	protected final void writeTooltip(DisplayContext context, AbstractButtonControl<?> button, TagWriter out)
 			throws IOException {
 		ResKey tooltip = this.getTooltip(button);
-		if (!StringServices.isEmpty(tooltip)) {
+		if (tooltip != null) {
 			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip,
 				button.getTooltipCaption());
         }

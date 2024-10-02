@@ -95,7 +95,7 @@ public class FieldLabelMatcher extends AbstractFieldMatcher<FieldLabelMatcher.Co
 	}
 
 	static String label(FormMember member) {
-		return StringServices.nonNull(Resources.getInstance().getString(member.getLabel())).trim();
+		return StringServices.nonNull(Resources.getInstance().getStringOptional(member.getLabel())).trim();
 	}
 
 	/**

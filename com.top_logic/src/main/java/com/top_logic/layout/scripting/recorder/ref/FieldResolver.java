@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.top_logic.basic.CollectionUtil;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.search.SearchResult;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.form.FormContainer;
@@ -78,10 +79,14 @@ public class FieldResolver implements FieldRefVisitor {
 		Iterator<? extends FormMember> members = container.getMembers();
 		while (members.hasNext()) {
 			FormMember member = members.next();
-			result.addCandidate(getCandidateLabel(member));
 
-			if (member.hasLabel() && label.equals(member.getLabel())) {
-				result.add(member);
+			String candidateLabel = getCandidateLabel(member);
+			if (candidateLabel != null) {
+				result.addCandidate(candidateLabel);
+
+				if (label.equals(candidateLabel)) {
+					result.add(member);
+				}
 			}
 
 			if (member instanceof FormContainer) {
@@ -92,9 +97,9 @@ public class FieldResolver implements FieldRefVisitor {
 
 	private String getCandidateLabel(FormMember member) {
 		if (!member.hasLabel()) {
-			return "[No Label: " + member.getName() + "]";
+			return null;
 		}
-		return Resources.getInstance().getString(member.getLabel());
+		return StringServices.nonEmpty(Resources.getInstance().getStringOptional(member.getLabel()));
 	}
 
 	@Override

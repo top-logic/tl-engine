@@ -203,7 +203,7 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 
 	@Override
 	public ResKey getTooltip() {
-		return this.model.getTooltip();
+		return ResKey.optional(this.model.getTooltip());
 	}
 
 	@Override

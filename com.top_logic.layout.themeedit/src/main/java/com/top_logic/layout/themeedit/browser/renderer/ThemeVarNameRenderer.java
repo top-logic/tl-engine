@@ -36,7 +36,7 @@ public class ThemeVarNameRenderer implements Renderer<String> {
 
 	@Override
 	public void write(DisplayContext context, TagWriter out, String varName) throws IOException {
-		ResKey helpHtml = ResKey.internalCreate(varName);
+		String helpHtml = context.getResources().getStringOptional(ResKey.internalCreate(varName));
 
 		String shortened = KeyProvider.INSTANCE.map(varName);
 		if (shortened.equals(varName) && helpHtml == null) {
@@ -57,7 +57,7 @@ public class ThemeVarNameRenderer implements Renderer<String> {
 				@Override
 				public void writeContent(DisplayContext context, TagWriter out) throws IOException {
 					if (helpHtml != null) {
-						out.writeContent(HtmlToolTip.ensureSafeHTMLTooltip(context, helpHtml));
+						out.writeContent(HtmlToolTip.ensureSafeHTMLTooltip(helpHtml));
 					}
 				}
 			}.writeAttribute(context, out);

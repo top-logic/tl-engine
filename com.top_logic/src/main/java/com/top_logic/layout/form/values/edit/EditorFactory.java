@@ -988,7 +988,13 @@ public class EditorFactory implements AnnotationCustomizations {
 				propertyLabel = Labels.propertyLabelKey(property);
 			}
 
-			return propertyLabel;
+			return propertyLabel.fallback(ResKey.text(enhancePropertyNameFormat(property.getPropertyName())));
+		}
+
+		private String enhancePropertyNameFormat(String name) {
+			String nameWithoutDash = name.replace('-', ' ');
+
+			return nameWithoutDash.substring(0, 1).toUpperCase() + nameWithoutDash.substring(1);
 		}
 
 		private PropertyDescriptor searchPropertyByNormalizedName(String searchedName) {

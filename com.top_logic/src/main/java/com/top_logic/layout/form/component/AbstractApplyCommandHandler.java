@@ -31,6 +31,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRuleManager;
+import com.top_logic.util.Resources;
 
 /**
  * Base for {@link CommandHandler}s applying changes.
@@ -268,11 +269,12 @@ public abstract class AbstractApplyCommandHandler extends AbstractFormCommandHan
 
     	FormField invalidFieldWithoutError = null;
         boolean hasFieldError = false;
+		Resources resources = Resources.getInstance();
 		for (Iterator<? extends FormField> it = aContext.getDescendantFields(); it.hasNext();) {
 			FormField field = it.next();
       
         	if (field.hasError()) {
-				aResult.addErrorText(field.getLabel() + ": " + field.getError());
+				aResult.addErrorText(resources.getString(field.getLabel()) + ": " + field.getError());
             	hasFieldError = true;
         	} else if ((! field.isValid()) && (invalidFieldWithoutError == null)) {
         		// Ticket #873: This can regularly happen for fields that have a

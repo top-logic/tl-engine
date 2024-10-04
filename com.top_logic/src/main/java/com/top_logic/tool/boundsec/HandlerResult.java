@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.Logger;
@@ -23,6 +24,7 @@ import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.messagebox.MessageBox.MessageType;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.util.Resources;
 import com.top_logic.util.error.CommandContextDescription;
 import com.top_logic.util.error.ContextDescription;
 import com.top_logic.util.error.TopLogicException;
@@ -111,7 +113,8 @@ public class HandlerResult extends LazyTypedAnnotatable implements ContextDescri
 		List<ResKey> errors = getEncodedErrors();
 		if (!errors.isEmpty()) {
 			result.append(", errors: ");
-			result.append(errors);
+			result.append(
+				errors.stream().map(x -> Resources.getInstance().getString(x)).collect(Collectors.joining(" ")));
 		}
 		if (exception != null) {
 			result.append(", exception: [");

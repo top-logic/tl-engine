@@ -33,6 +33,7 @@ import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.resources.NestedResourceView;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
+import com.top_logic.util.Resources;
 import com.top_logic.util.Utils;
 
 /**
@@ -681,7 +682,8 @@ public abstract class AbstractFormMember extends PropertyObservableBase implemen
 	public final String toString() {
 		String nameAndType = getQualifiedName() + " : " + getClass().getSimpleName();
 		if (hasLabel()) {
-			return getLabel() + " (" + nameAndType + ")";
+			String labelString = Resources.getInstance().getString(getLabel());
+			return labelString + " (" + nameAndType + ")";
 		} else {
 			return nameAndType;
 		}

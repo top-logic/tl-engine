@@ -63,7 +63,7 @@ public class TooltipControl extends AbstractFormMemberControl implements Tooltip
 		writeControlAttributes(context, out);
         FormMember field = getModel();
         if (field instanceof AbstractFormMember && field.isVisible()) {
-			ResKey tooltip = ((AbstractFormMember) field).getTooltip();
+			ResKey tooltip = ((AbstractFormMember) field).getTooltip().optional();
 			ResKey tooltipCaption = ((AbstractFormMember) field).getTooltipCaption();
 			if (tooltip != null) {
 				OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip, tooltipCaption);

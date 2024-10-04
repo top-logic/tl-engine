@@ -165,7 +165,7 @@ public class I18NStringTagProvider implements DisplayProvider {
 					out.beginBeginTag(TD);
 					out.writeAttribute(CLASS_ATTR, I18N_STRING_TD_CSS_CLASS);
 					out.endBeginTag();
-					writeLanguage(out, res, field);
+					writeLanguage(context, out, res, field);
 					writeTranslateButton(context, out, translateButton);
 					out.endTag(TD);
 
@@ -184,7 +184,7 @@ public class I18NStringTagProvider implements DisplayProvider {
 					out.beginBeginTag(TD);
 					out.writeAttribute(CLASS_ATTR, I18N_STRING_TD_CSS_CLASS);
 					out.endBeginTag();
-					writeLanguage(out, res, field);
+					writeLanguage(context, out, res, field);
 					out.endTag(TD);
 
 					out.beginTag(TD);
@@ -211,9 +211,11 @@ public class I18NStringTagProvider implements DisplayProvider {
 			out.endTag(TABLE);
 		}
 
-		private void writeLanguage(TagWriter out, Resources res, FormField field) {
+		private void writeLanguage(DisplayContext context, TagWriter out, Resources res, FormField field) {
 			Locale language = field.get(I18NField.LANGUAGE);
-			out.writeText(InternationalizationEditor.translateLanguageName(res, language) + ":");
+			out.writeText(
+				context.getResources().getString(InternationalizationEditor.translateLanguageName(res, language))
+					+ ":");
 		}
 
 		private void writeTranslateButton(DisplayContext context, TagWriter out, HTMLFragment translateButton)

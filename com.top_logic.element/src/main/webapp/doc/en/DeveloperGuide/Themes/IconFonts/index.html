@@ -1,55 +1,72 @@
-<p>TopLogic unterstützt Symbolschriften, die für Schaltflächen-, Menü- und Objektsymbole verwendet werden können. Um Ihre eigene Symbolschriftart einzubinden, müssen Sie die folgenden Schritte ausführen. Das Modul <code class="hljs inlineCode">ext.com.fontawesome</code> bietet die kostenlose Variante der Symbolschrift "FontAwesome" (<a href="https://fontawesome.com/" target="_blank">​https://fontawesome.com/</a>). Dieses Modul dient als detailliertes Beispiel, wie Sie Ihrer Anwendung eine eigene benutzerdefinierte Symbolschrift hinzufügen können.</p>
-<h2>Fontressourcen der Anwendung zur Verfügung stellen</h2>
-<p>Legen Sie Ihre Schriftartendateien (<code class="hljs inlineCode">*.eot</code>, <code class="hljs inlineCode">*.svg</code>, <code class="hljs inlineCode">*.ttf</code>, <code class="hljs inlineCode">*.woff</code>, <code class="hljs inlineCode">*.woff2</code>) in den Webapp-Ordner der Anwendung. So ist beispielsweise die Symbolschrift "FontAwesome" in der Distribution unter <code class="hljs inlineCode">/ext.com.fontawesome/webapp/webfonts/...</code> enthalten.</p>
-<h2>Begleitendes CSS einbinden</h2>
-<p>Legen Sie die CSS-Datei (<code class="hljs inlineCode">*.css</code>) der Schriftart in den Webapp-Ordner der Anwendung. Die CSS-Datei für "FontAwesome" befindet sich als Beispiel unter <code class="hljs inlineCode">/ext.com.fontawesome/webapp/style/fontawesome/all.min.css</code>.</p>
-<p>Hinweis: Da die CSS-Datei der Schriftart auf die Fontressourcen verweist, stellen Sie sicher, dass beide Dateien (die CSS- und die Fontdateien) an einem Ort gespeichert sind, an dem die internen Verweise im CSS gültig sind. Z.B. "FontAwesome" hat die folgende Stilregel:</p>
-<pre><code>@font-face {
+<p>TopLogic supports symbol fonts that can be used for button, menu and object symbols. To integrate your own symbol font, you must carry out the following steps. The module <code class="hljs inlineCode">ext.com.fontawesome</code> offers the free version of the symbol font "FontAwesome"<a href="https://fontawesome.com/" target="_blank">(https://fontawesome.com/)</a>. This module serves as a detailed example of how you can add your own user-defined symbol font to your application.</p>
+
+<h2>Making font resources available to the application</h2>
+
+<p>Place your font files (<code class="hljs inlineCode">*.eot</code>, <code class="hljs inlineCode">*.svg</code>, <code class="hljs inlineCode">*.ttf</code>, <code class="hljs inlineCode">*.woff</code>, <code class="hljs inlineCode">*.woff2</code>) in the application's webapp folder. For example, the symbol font "FontAwesome" is included in the distribution at <code class="hljs inlineCode">/ext.com.fontawesome/webapp/webfonts/...</code>.</p>
+
+<h2>Integrate accompanying CSS</h2>
+
+<p>Place the CSS file (<code class="hljs inlineCode">*.css</code>) for the font in the application's webapp folder. The CSS file for "FontAwesome" can be found as an example at <code class="hljs inlineCode">/ext.com.fontawesome/webapp/style/fontawesome/all.min.css</code>.</p>
+
+<p>Note: As the CSS file of the font refers to the font resources, make sure that both files (the CSS and the font files) are saved in a location where the internal references in the CSS are valid. E.g. "FontAwesome" has the following style rule:</p>
+
+<pre>
+<code>@font-face {
   font-family: 'Font Awesome 5 Free';
   font-style: normal;
   font-weight: 900;
   src: url("../webfonts/fa-solid-900.eot");
 }
 </code></pre>
-<p>Daher müssen die Fontressourcen (z.B. <code class="hljs inlineCode">fa-solid-900.eot</code>) in einem Verzeichnis mit dem Namen <code class="hljs inlineCode">../webfonts</code> relativ zum Style-Ordner der Anwendung (<code class="hljs inlineCode">webapp/style</code>) vorhanden sein. Alle CSS werden zur Laufzeit in eine einzige Ressource eingebunden, die dem Client über die URL <code class="hljs inlineCode">https://your.server/your-app/style/top-logic.css</code> angeboten wird, unabhängig davon, wo die tatsächlichen CSS-Dateien, die dem Thema hinzugefügt wurden, in der Anwendung gespeichert sind. Daher müssen die Referenzen im CSS relativ zu dieser URL sein.</p>
-<h2>CSS in das Standard-Thema einfügen</h2>
-<p>Fügen Sie einen Konfigurationseintrag hinzu, der die CSS-Datei der Schriftart in das <code class="hljs inlineCode">default</code>-Thema einfügt (oder Ihr benutzerdefiniertes Design, wenn Sie die Schriftart nur in einem einzigen Design verwenden möchten):</p>
-<pre><code>&lt;application xmlns:config="http://www.top-logic.com/ns/config/6.0"&gt;
-  &lt;services&gt;
-    &lt;config service-class="com.top_logic.gui.ThemeFactory"&gt;
-      &lt;instance&gt;
-        &lt;themes&gt;
-          &lt;theme id="default"&gt;
-            &lt;styles&gt;
-              &lt;style name="/style/fontawesome/all.css"/&gt;
-            &lt;/styles&gt;
-          &lt;/theme&gt;
-        &lt;/themes&gt;
-      &lt;/instance&gt;
-    &lt;/config&gt;
-  &lt;/services&gt;
-&lt;/application&gt;
-</code></pre>
-<p>Hinweis: Die CSS-Datei wird mit einem Namen in Bezug auf den Stammordner der Webapplikationsressource referenziert.</p>
-<h2>Verwendung von CSS-Symbolreferenzen</h2>
-<p>Eine Symbolschrift kühlt Symbole mit CSS-Klassen, die zu einem Inline-HTML-Element hinzugefügt wurden. Z.B. "FontAwesome" verweist auf das Symbol "Ambulanz" mit den CSS-Klassen <code class="hljs inlineCode">&lt;i class="fas fa-ambulance"&gt;&lt;/i&gt;</code> (siehe <a href="https://fontawesome.com/icons/ambulance?style=solid" target="_blank">​https://fontawesome.com/icons/ambulance?style=solid</a>).</p>
-<p>In TopLogic können Sie in allen Konfigurationseigenschaften vom Typ <code class="hljs inlineCode">ThemeImage</code> mit dem Präfix <code class="hljs inlineCode">css:</code> mit den CSS-Klassen, die durch Ihre angehängte Symbolschrift definiert sind, auf Symbolfontsymbole verweisen. Sie können z.B. das Symbol "Krankenwagen" von "FontAwesome" mit dem Symbolbezug "css:fas fa-ambulance" referenzieren.</p>
-<h2>Beispiele</h2>
-<h3>Symbolreferenzen im Layout</h3>
-<p>Sie können eine Schaltfläche mit einer solchen Symbolschriftreferenz definieren (z.B. <code class="hljs inlineCode">/com.top_logic.demo/webapp/WEB-INF/layouts/demo/table/tree_grid.xml</code>):</p>
-<pre><code>&lt;button id="..."
+
+<p>Therefore, the font resources (e.g. <code class="hljs inlineCode">fa-solid-900.eot</code>) must exist in a directory named <code class="hljs inlineCode">../webfonts</code> relative to the style folder of the application (<code class="hljs inlineCode">webapp/style</code>). All CSS is included in a single resource at runtime, which is offered to the client via the URL <code class="hljs inlineCode">https://your.server/your-app/style/top-logic.css</code>, regardless of where the actual CSS files added to the theme are stored in the application. Therefore, the references in the CSS must be relative to this URL.</p>
+
+<h2>Inserting CSS into the default theme</h2>
+
+<p>Add a configuration entry that inserts the CSS file of the font into the default theme <code><code class="hljs inlineCode">core</code></code> (or your custom theme if you only want to use the font in a single theme).</p>
+
+<p>To do this, create a directory <code class="hljs inlineCode">src/main/webapp/WEB-INF/themes/core</code> in your project and create a file <code class="hljs inlineCode">theme.xml</code> with the following content:</p>
+
+<pre>
+<code>&lt;theme&gt;
+    &lt;styles&gt;
+        &lt;style name="/style/fontawesome/all.css"/&gt;
+    &lt;/styles&gt;
+&lt;/theme&gt;</code></pre>
+
+<p>Note: The CSS file (here the CSS of the Fontawesome icon font) is referenced with a name in relation to the root folder of the web application resource.</p>
+
+<h2>Use of CSS icon references</h2>
+
+<p>An icon font cools icons with CSS classes that have been added to an inline HTML element. E.g. "FontAwesome" refers to the "Ambulance" symbol with the CSS classes <code class="hljs inlineCode">&lt;i class="fas fa-ambulance"&gt;&lt;/i&gt;</code> (see https://fontawesome <a href="https://fontawesome.com/icons/ambulance?style=solid" target="_blank">.com/icons/ambulance?style=solid)</a>.</p>
+
+<p>In TopLogic, you can refer to symbol font symbols in all configuration properties of the type <code class="hljs inlineCode">ThemeImage</code> with the prefix <code class="hljs inlineCode">css:</code> with the CSS classes defined by your attached symbol font. For example, you can reference the "ambulance" symbol from "FontAwesome" with the symbol reference "css:fas fa-ambulance".</p>
+
+<h2>Examples</h2>
+
+<h3>Symbol references in the layout</h3>
+
+<p>You can define a button with such a symbol font reference (e.g. <code class="hljs inlineCode">/com.top_logic.demo/webapp/WEB-INF/layouts/demo/table/tree_grid.xml</code>):</p>
+
+<pre>
+<code>&lt;button id="..."
   class="..."
   image="css:fas fa-globe"
   resourceKey="..."
 /&gt;
 </code></pre>
-<h3>Symbolreferenzen im Modell</h3>
-<p>Icon-Fontreferenzen können verwendet werden, um Icons zu solchen Modellelementen zu kommentieren (z.B. <code class="hljs inlineCode">/com.top_logic.demo/webapp/WEB-INF/model/DemoTypes.model.xml</code>):</p>
-<pre><code>&lt;interface name="DemoTypes.X"&gt;
+
+<h3>Icon references in the model</h3>
+
+<p>Icon font references can be used to annotate icons for such model elements (e.g. <code class="hljs inlineCode">/com.top_logic.demo/webapp/WEB-INF/model/DemoTypes.model.xml</code>):</p>
+
+<pre>
+<code>&lt;interface name="DemoTypes.X"&gt;
   &lt;annotations&gt;
     &lt;instance-presentation icon="css:fas fa-handshake demo-blue"/&gt;
   &lt;/annotations&gt;
   ...
 &lt;/interface&gt;
 </code></pre>
-<p>Im obigen Beispiel sehen Sie, dass Sie unsere eigenen benutzerdefinierten CSS-Klassen zu denjenigen hinzufügen können, die durch Ihre Symbolschrift definiert sind, um die Anzeige des Symbols an dieser konkreten Stelle anzupassen. Im obigen Beispiel färbt die CSS-Klasse <code class="hljs inlineCode">demo-blue</code> das Symbol blau.</p>
+
+<p>In the example above, you can see that you can add our own custom CSS classes to those defined by your icon font to customize the display of the icon at that specific location. In the example above, the CSS class <code class="hljs inlineCode">demo-blue</code> colors the icon blue.</p>

@@ -469,7 +469,8 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 					sb.append(StringServices.LINE_BREAK);
 				}
 				Locale language = field.get(LANGUAGE);
-				sb.append(InternationalizationEditor.translateLanguageName(res, language) + ": " + field.getError());
+				String languageName = res.getString(InternationalizationEditor.translateLanguageName(res, language));
+				sb.append(languageName + ": " + field.getError());
 				hasError = true;
 			}
 		}

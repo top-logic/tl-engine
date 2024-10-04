@@ -112,6 +112,7 @@ public class ItemEditor implements Editor {
 		final PropertyDescriptor property = valueModel.getProperty();
 
 		final FormGroup contentContainer = embedded(group(container, CONTENT_CONTAINER_NAME));
+		contentContainer.setLabel(ResKey.NO_TEXT);
 
 		// Updates UI, whenever item value changes.
 		ConfigurationListener updateUI = new ConfigurationListener() {

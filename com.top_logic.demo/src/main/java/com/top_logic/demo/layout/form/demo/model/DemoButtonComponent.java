@@ -26,6 +26,7 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
+import com.top_logic.util.Resources;
 
 /**
  * The class {@link DemoButtonComponent} is a demo class for toggling buttons in a
@@ -106,8 +107,9 @@ public class DemoButtonComponent extends FormComponent {
 	 * visibility of the given {@link CommandModel}, the second toggles the executability.
 	 */
 	private void addToogleCommandFields(FormContainer parent, final CommandModel model, final ResKey notExecutableReason) {
+		String label = Resources.getInstance().getString(model.getLabel());
 		BooleanField visibility =
-			FormFactory.newBooleanField(parent.getName() + "_" + model.getLabel() + "_visible", Boolean.TRUE, false);
+			FormFactory.newBooleanField(parent.getName() + "_" + label + "_visible", Boolean.TRUE, false);
 		parent.addMember(visibility);
 		visibility.addValueListener(new ValueListener() {
 			@Override
@@ -117,7 +119,7 @@ public class DemoButtonComponent extends FormComponent {
 			}
 		});
 		BooleanField executability =
-			FormFactory.newBooleanField(parent.getName() + "_" + model.getLabel() + "_executable", Boolean.TRUE, false);
+			FormFactory.newBooleanField(parent.getName() + "_" + label + "_executable", Boolean.TRUE, false);
 		parent.addMember(executability);
 		executability.addValueListener(new ValueListener() {
 			@Override

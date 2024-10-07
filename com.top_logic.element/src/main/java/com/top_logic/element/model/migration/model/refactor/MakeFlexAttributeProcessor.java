@@ -84,7 +84,7 @@ public class MakeFlexAttributeProcessor extends AbstractConfiguredInstance<MakeF
 		String getAttribute();
 
 		/**
-		 * The type of objects to create flex attribtes for.
+		 * The type of objects to create flex attributes for.
 		 */
 		@Mandatory
 		@Name("types")

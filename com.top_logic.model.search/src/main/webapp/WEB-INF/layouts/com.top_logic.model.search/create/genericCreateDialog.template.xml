@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<properties extends="com.top_logic.mig.html.layout.DialogInfo, com.top_logic.element.layout.formeditor.builder.FormsTemplateParameter, com.top_logic.model.search.providers.MonomorphicCreateFormBuilderByExpression$WithInitialization, com.top_logic.element.layout.create.CreateFormBuilder$UIOptions">
+	<properties extends="com.top_logic.mig.html.layout.DialogInfo, com.top_logic.element.layout.formeditor.builder.FormsTemplateParameter, com.top_logic.model.search.providers.MonomorphicCreateFormBuilderByExpression$WithInitialization, com.top_logic.element.layout.create.CreateFormBuilder$UIOptions, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig">
 		<annotations>
 			<display-order>
 				<value>

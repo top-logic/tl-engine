@@ -179,7 +179,7 @@ public abstract class AbstractFormMember extends PropertyObservableBase implemen
 		// Check, whether the given name string is a legal name.
 		for (int cnt = name.length(), n = 0; n < cnt; n++) {
 			char testChar = name.charAt(n);
-			if (testChar == '.') {
+			if (testChar == '.' || testChar == '/') {
 				throw new IllegalArgumentException(
 					"Illegal character '" + testChar + "' inside a form member name: " + name);
 			}
@@ -682,11 +682,13 @@ public abstract class AbstractFormMember extends PropertyObservableBase implemen
 	public final String toString() {
 		String nameAndType = getQualifiedName() + " : " + getClass().getSimpleName();
 		if (hasLabel()) {
-			String labelString = Resources.getInstance().getString(getLabel());
-			return labelString + " (" + nameAndType + ")";
-		} else {
-			return nameAndType;
+			String labelString = Resources.getInstance().getStringOptional(getLabel());
+			if (labelString != null) {
+				return labelString + " (" + nameAndType + ")";
+			}
 		}
+
+		return nameAndType;
     }
 
 	@Override

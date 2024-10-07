@@ -8,6 +8,7 @@ package com.top_logic.layout.form.control;
 import java.io.IOException;
 import java.util.Map;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
@@ -156,7 +157,7 @@ public class LabelControl extends AbstractFormMemberControl implements OptionsLi
 			label = selectField.getOptionLabel(theOption);
 		} else {
 			ResKey labelKey = field.getLabel();
-			label = context.getResources().getString(labelKey);
+			label = StringServices.nonNull(context.getResources().getString(labelKey));
 			if (!label.isEmpty() && this.colon) {
 				label += COLON;
 			}

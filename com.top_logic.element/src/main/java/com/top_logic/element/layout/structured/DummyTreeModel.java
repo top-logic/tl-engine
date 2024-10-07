@@ -47,7 +47,7 @@ public class DummyTreeModel extends AbstractTreeModel<Object> {
 
 	@Override
 	public boolean childrenInitialized(Object parent) {
-		return false;
+		return true;
 	}
 
 	@Override

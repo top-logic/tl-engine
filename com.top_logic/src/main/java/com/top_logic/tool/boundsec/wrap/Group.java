@@ -96,7 +96,7 @@ public class Group extends AbstractBoundWrapper implements IGroup {
 	private static final AssociationSetQuery<KnowledgeAssociation> MEMBERS_ATTR = AssociationQuery.createOutgoingQuery(
 		"groupMembers", Group.GROUP_MEMBERS_ASSOCIATION);
 
-	private static final AssociationSetQuery<KnowledgeAssociation> GROUPS_ATTR = AssociationQuery.createIncomingQuery(
+	static final AssociationSetQuery<KnowledgeAssociation> GROUPS_ATTR = AssociationQuery.createIncomingQuery(
 		"groups", Group.GROUP_MEMBERS_ASSOCIATION);
 
 	private static volatile ItemByNameCache<String> BY_NAME_CACHE;

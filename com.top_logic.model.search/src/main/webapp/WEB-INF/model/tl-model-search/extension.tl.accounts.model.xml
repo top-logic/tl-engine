@@ -4,16 +4,6 @@
 	<module name="tl.accounts">
 		<class name="Person">
 			<attributes>
-				<reference name="groups">
-					<annotations>
-						<default-value>
-							<default-by-expression
-								in-transaction="true"
-								value="all(`tl.accounts:Group`).filter(g -> $g.get(`tl.accounts:Group#defaultGroup`))"
-							/>
-						</default-value>
-					</annotations>
-				</reference>
 				<property name="firstName">
 					<annotations>
 						<storage-algorithm>

@@ -45,7 +45,7 @@
 		
 		<!-- Update model -->
 
-		<delete-reference name="tl.accounts:Group#members"/>
+		<delete-inverse-reference name="tl.accounts:Group#members"/>
 		<delete-reference name="tl.accounts:Person#groups"/>
 		<remove-class-generalizations name="tl.accounts:Group">
 		  <generalization type="tl.model:TLObject"/>

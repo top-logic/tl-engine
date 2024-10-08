@@ -79,15 +79,15 @@
 </attributes>
 </association>
 
-<association super_class="Association" object_name="hasGroup">
+<association super_class="Association" object_name="hasGroupMembers">
 <attributes>
 	<source
 		override="true"
-		target-type="GroupMembers"
+		target-type="Group"
 	/>
 	<destination
 		override="true"
-		target-type="Group"
+		target-type="GroupMembers"
 	/>
 </attributes>
 </association>

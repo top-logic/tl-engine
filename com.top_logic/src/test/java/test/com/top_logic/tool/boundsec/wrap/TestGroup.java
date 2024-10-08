@@ -92,7 +92,7 @@ public class TestGroup extends BasicTestCase {
 		g1.addMember(g2);
 		
 		// Externally create cyclic containment relation.
-		kb.createAssociation(g1.tHandle(), g2.tHandle(), Group.GROUP_ASSOCIATION);
+		kb.createAssociation(g2.tHandle(), g1.tHandle(), Group.GROUP_MEMBERS_ASSOCIATION);
 		
 		tx.commit();
 		

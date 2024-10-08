@@ -8,6 +8,7 @@ package com.top_logic.demo.layout.demo;
 import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.io.IOException;
+import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.io.binary.BinaryDataSource;
@@ -84,7 +85,7 @@ public class DisplaySelectedPDFBuilder implements ModelBuilder {
 					displayField.setValue(newValue);
 					return;
 				}
-				BinaryDataSource newPDF = (BinaryDataSource) newValue;
+				BinaryDataSource newPDF = ((List<BinaryDataSource>) newValue).get(0);
 				String name = newPDF.getName();
 				if (!name.endsWith(".pdf")) {
 					field.setValue(oldValue);

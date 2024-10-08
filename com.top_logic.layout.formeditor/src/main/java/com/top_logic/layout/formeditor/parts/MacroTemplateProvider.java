@@ -43,7 +43,7 @@ import com.top_logic.util.model.ModelService;
 public class MacroTemplateProvider extends AbstractFormElementProvider<MacroPart> {
 
 	private static final ImageProvider IMAGE_PROVIDER =
-		ImageProvider.constantImageProvider(Icons.TOOLBOX_MACRO);
+		(any, flavor) -> Icons.TOOLBOX_MACRO;
 
 	/**
 	 * Creates a new {@link MacroTemplateProvider}.

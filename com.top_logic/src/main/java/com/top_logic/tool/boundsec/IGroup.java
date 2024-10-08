@@ -9,13 +9,14 @@ import java.util.Collection;
 
 import com.top_logic.basic.Named;
 import com.top_logic.basic.TLID;
+import com.top_logic.tool.boundsec.wrap.GroupMember;
 
 /**
  * A Group of members that are BoundObjects (normally Persons).
  * 
  * @author    <a href="mailto:kbu@top-logic.com>Karschten Busch</a>
  */
-public interface IGroup extends Named {
+public interface IGroup extends Named, GroupMember {
 
 	/**
 	 * Get the ID of this group

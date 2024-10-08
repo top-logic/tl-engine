@@ -87,16 +87,7 @@
 		<create-inverse-reference name="tl.accounts:Person#groups"
 		  inverse-reference="tl.accounts:Group#members"
 		  multiple="true"
-		>
-		  <annotations>
-		    <default-value>
-		      <default-by-expression
-		        in-transaction="true"
-		        value="all(`tl.accounts:Group`).filter(g -> $g.get(`tl.accounts:Group#defaultGroup`))"
-		      />
-		    </default-value>
-		  </annotations>
-		</create-inverse-reference>
+		/>
 		<reorder-part name="tl.accounts:Group#members"
 		  before="defaultGroup"
 		/>
@@ -106,6 +97,5 @@
 		<reorder-part name="tl.accounts:Group#members"
 		  before="defaultGroup"
 		/>
-		
 	</processors>
 </migration>

@@ -25,7 +25,6 @@ import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModelListener;
 import com.top_logic.layout.form.template.model.FormEditorElementTemplate;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.tool.boundsec.wrap.Group;
 
@@ -67,11 +66,6 @@ public class GroupsField extends FieldDefinitionTemplateProvider {
 		update.setStoreAlgorithm(GroupsStorage.INSTANCE);
 
 		return result;
-	}
-
-	@Override
-	public boolean getWholeLine(TLStructuredType modelType) {
-		return false;
 	}
 
 	private static final class AllGroups implements ListOptionModel<Group> {

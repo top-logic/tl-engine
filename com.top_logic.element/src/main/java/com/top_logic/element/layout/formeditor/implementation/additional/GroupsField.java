@@ -12,6 +12,7 @@ import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.element.layout.formeditor.definition.FieldDefinition;
 import com.top_logic.element.layout.formeditor.implementation.FieldDefinitionTemplateProvider;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdate.StoreAlgorithm;
@@ -26,7 +27,6 @@ import com.top_logic.layout.form.model.utility.OptionModelListener;
 import com.top_logic.layout.form.template.model.FormEditorElementTemplate;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.implementation.FormEditorContext;
-import com.top_logic.model.form.implementation.ProgrammaticFormDefinitionProvider;
 import com.top_logic.tool.boundsec.wrap.Group;
 
 /**
@@ -37,7 +37,7 @@ import com.top_logic.tool.boundsec.wrap.Group;
  * editable.
  * </p>
  */
-public class GroupsField extends ProgrammaticFormDefinitionProvider {
+public class GroupsField extends FieldDefinitionTemplateProvider {
 
 	/**
 	 * Creates a {@link GroupsField} from configuration.
@@ -48,7 +48,7 @@ public class GroupsField extends ProgrammaticFormDefinitionProvider {
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public GroupsField(InstantiationContext context, Config config) {
+	public GroupsField(InstantiationContext context, FieldDefinition config) {
 		super(context, config);
 	}
 
@@ -59,7 +59,7 @@ public class GroupsField extends ProgrammaticFormDefinitionProvider {
 			result = ((FormEditorElementTemplate) result).getElement();
 		}
 
-		FormMember displayingField = ((FieldDefinitionTemplateProvider) getImpl()).getMember();
+		FormMember displayingField = getMember();
 		((SelectField) displayingField).setOptionModel(AllGroups.INSTANCE);
 
 		AttributeUpdate update = AttributeFormFactory.getAttributeUpdate(displayingField);

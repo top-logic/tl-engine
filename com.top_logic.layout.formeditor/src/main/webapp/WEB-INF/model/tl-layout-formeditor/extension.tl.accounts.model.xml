@@ -26,11 +26,14 @@
 							fullQualifiedName="tl.accounts:Person#restrictedUser"
 							type="tl.core:Boolean"
 						/>
-						<field
-							attribute="groups"
-							fullQualifiedName="tl.accounts:Person#groups"
-							type="tl.accounts:Group"
-						/>
+						<code class="com.top_logic.element.layout.formeditor.implementation.additional.GroupsField">
+							<field
+								attribute="groups"
+								fullQualifiedName="tl.accounts:Person#groups"
+								type="tl.accounts:Group"
+								visibility="editable"
+							/>
+						</code>
 						<field
 							attribute="timezone"
 							fullQualifiedName="tl.accounts:Person#timezone"

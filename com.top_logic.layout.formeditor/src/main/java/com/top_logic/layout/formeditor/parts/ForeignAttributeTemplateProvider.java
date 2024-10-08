@@ -79,6 +79,13 @@ public class ForeignAttributeTemplateProvider extends AbstractFormElementProvide
 		}
 	}
 
+	/**
+	 * The provider creating the field (in the context of the referenced object).
+	 */
+	protected FieldDefinitionTemplateProvider getDelegate() {
+		return _delegate;
+	}
+
 	private TLClass resolveAttributeOwner(InstantiationContext context, ForeignAttributeDefinition config) {
 		TLClass attributeOwnerType;
 		try {

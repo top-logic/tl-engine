@@ -82,22 +82,22 @@ public class Group extends AbstractBoundWrapper implements IGroup {
 	/** The KO attribute used to store the "is default group" flag. */
 	public static final String GROUP_DEFAULT = "defaultGroup";
 
-    /** The name of the KnowledgeAssociation between a BoundObject and a Group
-     *  used to say that a person belongs to that group.*/
-    public static final String GROUP_ASSOCIATION = "hasGroup";
+	/**
+	 * The name of the KnowledgeAssociation between a {@link Group} and its contents (other
+	 * {@link Group}s or {@link Person}s).
+	 */
+	public static final String GROUP_MEMBERS_ASSOCIATION = "hasGroupMembers";
 
 	/** The name of the {@link KnowledgeAssociation} between {@link Person} and {@link Group}. */
     public static final String DEFINES_GROUP_ASSOCIATION = "definesGroup";
 
 	private static final BoundObject EMPTY_BO = new SimpleBoundObject("__empty__");
 
-	private static final AssociationSetQuery<KnowledgeAssociation> GROUPS_ATTR = AssociationQuery.createOutgoingQuery(
-		"groups",
-		Group.GROUP_ASSOCIATION);
+	private static final AssociationSetQuery<KnowledgeAssociation> MEMBERS_ATTR = AssociationQuery.createOutgoingQuery(
+		"groupMembers", Group.GROUP_MEMBERS_ASSOCIATION);
 
-	private static final AssociationSetQuery<KnowledgeAssociation> MEMBERS_ATTR = AssociationQuery.createIncomingQuery(
-		"groupMembers",
-		Group.GROUP_ASSOCIATION);
+	private static final AssociationSetQuery<KnowledgeAssociation> GROUPS_ATTR = AssociationQuery.createIncomingQuery(
+		"groups", Group.GROUP_MEMBERS_ASSOCIATION);
 
 	private static volatile ItemByNameCache<String> BY_NAME_CACHE;
 
@@ -452,9 +452,9 @@ public class Group extends AbstractBoundWrapper implements IGroup {
         	}
         }
 
-		KnowledgeObject theSource = (KnowledgeObject) anObject.tHandle();
-        KnowledgeObject      theDest   = this.tHandle();
-		theSource.getKnowledgeBase().createAssociation(theSource, theDest, Group.GROUP_ASSOCIATION);
+		KnowledgeObject memberHandle = (KnowledgeObject) anObject.tHandle();
+		KnowledgeObject groupHandle = this.tHandle();
+		groupHandle.getKnowledgeBase().createAssociation(groupHandle, memberHandle, Group.GROUP_MEMBERS_ASSOCIATION);
 
         if(!this.isRepresentativeGroup() && anObject instanceof Person){
 //        	also add the persons representative group if this is no representative group itself
@@ -535,22 +535,25 @@ public class Group extends AbstractBoundWrapper implements IGroup {
     }
 
     /**
-     * Remove a BoundObject from the Group
-     *
-     * @param anObject    the BoundObject. May be <code>null</code> (code has no effect then).
-     * @throws DataObjectException if removal of the KA fails
-     */
-	public void removeMember(TLObject anObject) {
-        if (anObject == null) {
+	 * Remove a BoundObject from the Group
+	 *
+	 * @param member
+	 *        the BoundObject. May be <code>null</code> (code has no effect then).
+	 * @throws DataObjectException
+	 *         if removal of the KA fails
+	 */
+	public void removeMember(TLObject member) {
+		if (member == null) {
             return;
         }
 
-		KBUtils.deleteAllKI(((KnowledgeObject) anObject.tHandle())
-			.getOutgoingAssociations(Group.GROUP_ASSOCIATION, this.tHandle()));
+		KnowledgeObject groupHandle = this.tHandle();
+		KnowledgeObject memberHandle = (KnowledgeObject) member.tHandle();
+		KBUtils.deleteAllKI(groupHandle.getOutgoingAssociations(Group.GROUP_MEMBERS_ASSOCIATION, memberHandle));
 
-        if(anObject instanceof Person){
+		if (member instanceof Person) {
         	//also remove the persons representative group
-        	removeMember(((Person)anObject).getRepresentativeGroup());
+			removeMember(((Person) member).getRepresentativeGroup());
         }
     }
 

@@ -8,7 +8,7 @@
 	<artifactId>tl-parent-all</artifactId>
 	<version>7.10.0-SNAPSHOT</version>
 
-	<name>${artifactId}</name>
+	<name>${project.artifactId}</name>
 	<description>Aggregator module that builds the complete TopLogic application engine.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 

@@ -35,7 +35,7 @@ public class ColumnsDefinitionTemplateProvider extends AbstractFormContainerProv
 
 	private static final boolean IS_TOOL = true;
 
-	private static final ImageProvider IMAGE_PROVIDER = ImageProvider.constantImageProvider(Icons.FORM_EDITOR__COLUMNS);
+	private static final ImageProvider IMAGE_PROVIDER = (any, flavor) -> Icons.FORM_EDITOR__COLUMNS;
 
 	private static final ResKey LABEL = I18NConstants.FORM_EDITOR__TOOL_NEW_COLUMNSLAYOUT;
 

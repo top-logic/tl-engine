@@ -53,7 +53,7 @@ import com.top_logic.util.css.CssUtil;
 public class OtherAttributesTemplateProvider extends AbstractFormElementProvider<OtherAttributes> {
 
 	private static final ImageProvider IMAGE_PROVIDER =
-		ImageProvider.constantImageProvider(Icons.OTHER_ATTRIBUTES);
+		(any, flavor) -> Icons.OTHER_ATTRIBUTES;
 
 	/**
 	 * Creates a {@link OtherAttributesTemplateProvider} from configuration.

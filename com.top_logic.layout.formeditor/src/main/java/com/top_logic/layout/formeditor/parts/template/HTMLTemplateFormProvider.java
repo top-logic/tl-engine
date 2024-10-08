@@ -69,7 +69,6 @@ import com.top_logic.layout.form.values.edit.annotation.CollapseEntries;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
-import com.top_logic.layout.formeditor.parts.ForeignObjectsTemplateProvider;
 import com.top_logic.layout.formeditor.parts.I18NConstants;
 import com.top_logic.layout.formeditor.parts.template.HTMLTemplateFormProvider.Config.TypeTemplate;
 import com.top_logic.layout.table.ConfigKey;
@@ -205,7 +204,7 @@ public class HTMLTemplateFormProvider
 	private Template _template;
 
 	/**
-	 * Creates a new {@link ForeignObjectsTemplateProvider}.
+	 * Creates a {@link HTMLTemplateFormProvider}.
 	 */
 	public HTMLTemplateFormProvider(InstantiationContext context, Config<?> config) {
 		super(context, config);

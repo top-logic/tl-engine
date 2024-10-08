@@ -20,8 +20,8 @@
 	overflow: auto;
 }
 
-.immutableSourceCodeFrame > p:first-child {
-	/* HTML as value of a field in a form does must not have enormous space between label and text. */
+.immutableSourceCodeFrame > :first-child {
+	/* HTML as value of a field in a form must not have enormous space between label and text. */
 	margin-top: 0px;
 }
 

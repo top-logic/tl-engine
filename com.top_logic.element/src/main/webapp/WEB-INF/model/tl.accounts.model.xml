@@ -164,6 +164,8 @@
 					</annotations>
 				</property>
 				<reference name="members"
+					inverse-reference="groups"
+					kind="forwards"
 					multiple="true"
 					navigate="true"
 					type="GroupMember"
@@ -177,7 +179,7 @@
 						</storage-algorithm>
 						<create-visibility value="hidden"/>
 					</annotations>
-				</reference>				
+				</reference>
 				<property name="defaultGroup"
 					type="tl.core:Boolean"
 				/>
@@ -301,8 +303,8 @@
 				</reference>
 				<reference name="groups"
 					inverse-reference="members"
-					multiple="true"
 					kind="backwards"
+					multiple="true"
 					type="Group"
 				/>
 				<property name="firstName"

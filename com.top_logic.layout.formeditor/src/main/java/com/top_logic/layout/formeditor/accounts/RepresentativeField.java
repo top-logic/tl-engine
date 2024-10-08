@@ -21,7 +21,6 @@ import com.top_logic.layout.form.model.utility.OptionModelListener;
 import com.top_logic.layout.form.template.model.FormEditorElementTemplate;
 import com.top_logic.layout.formeditor.parts.ForeignAttributeDefinition;
 import com.top_logic.layout.formeditor.parts.ForeignAttributeTemplateProvider;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.Resources;
@@ -66,11 +65,6 @@ public class RepresentativeField extends ForeignAttributeTemplateProvider {
 		displayingField.setTooltip(Resources.getInstance().getString(I18NConstants.REPRESENTATIVES.tooltip()));
 
 		return result;
-	}
-
-	@Override
-	public boolean getWholeLine(TLStructuredType modelType) {
-		return false;
 	}
 
 	private static final class AllRepresentativeGroups implements ListOptionModel<Group> {

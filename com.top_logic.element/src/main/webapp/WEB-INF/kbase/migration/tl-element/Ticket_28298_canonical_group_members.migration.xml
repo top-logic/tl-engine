@@ -4,11 +4,14 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
 	<version name="Ticket_28298_canonical_group_members"
-		module="tl"
+		module="tl-element"
 	/>
 	<dependencies>
 		<dependency name="Ticket_27906_polymorphic_format_annotations"
 			module="tl"
+		/>
+		<dependency name="Ticket_28263_add_deletion_policy_to_reference"
+			module="tl-element"
 		/>
 	</dependencies>
 	<processors>

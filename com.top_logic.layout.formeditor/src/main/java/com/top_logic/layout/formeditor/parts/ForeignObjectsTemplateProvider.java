@@ -61,7 +61,7 @@ import com.top_logic.util.css.CssUtil;
 public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<ForeignObjects> {
 
 	private static final ImageProvider IMAGE_PROVIDER =
-		ImageProvider.constantImageProvider(Icons.FORM_EDITOR__REFERENCE);
+		(any, flavor) -> Icons.FORM_EDITOR__REFERENCE;
 
 	/**
 	 * Creates a new {@link ForeignObjectsTemplateProvider}.

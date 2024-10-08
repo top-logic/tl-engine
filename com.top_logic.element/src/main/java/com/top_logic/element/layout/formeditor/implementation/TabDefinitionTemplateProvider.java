@@ -59,7 +59,7 @@ public class TabDefinitionTemplateProvider extends AbstractFormContainerProvider
 
 	@Override
 	public ImageProvider getImageProvider() {
-		return ImageProvider.constantImageProvider(null);
+		return (any, flavor) -> null;
 	}
 
 	@Override

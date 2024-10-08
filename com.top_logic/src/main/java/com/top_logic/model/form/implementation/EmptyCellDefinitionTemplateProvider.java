@@ -48,7 +48,7 @@ public class EmptyCellDefinitionTemplateProvider extends AbstractFormElementProv
 
 	@Override
 	public ImageProvider getImageProvider() {
-		return ImageProvider.constantImageProvider(Icons.FORM_EDITOR__EMPTY_CELL);
+		return (any, flavor) -> Icons.FORM_EDITOR__EMPTY_CELL;
 	}
 
 	@Override

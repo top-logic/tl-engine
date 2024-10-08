@@ -197,7 +197,7 @@ public class HTMLTemplateFormProvider
 	}
 
 	private static final ImageProvider IMAGE_PROVIDER =
-		ImageProvider.constantImageProvider(Icons.FORM_EDITOR__REFERENCE);
+		(any, flavor) -> Icons.FORM_EDITOR__REFERENCE;
 
 	private Map<TLType, Template> _templateByType = new HashMap<>();
 

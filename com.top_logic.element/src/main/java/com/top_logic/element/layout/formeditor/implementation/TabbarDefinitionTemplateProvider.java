@@ -49,7 +49,7 @@ public class TabbarDefinitionTemplateProvider extends AbstractFormElementProvide
 	static final Property<Map<String, Integer>> SELECTED_TABS =
 		TypedAnnotatable.propertyMap("selected tab indexes by field id");
 
-	private static final ImageProvider IMAGE = ImageProvider.constantImageProvider(Icons.TABBAR);
+	private static final ImageProvider IMAGE = (any, flavor) -> Icons.TABBAR;
 
 	/**
 	 * Creates a {@link TabbarDefinitionTemplateProvider} from configuration.

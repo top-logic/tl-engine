@@ -16,10 +16,10 @@
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.bpe.app.layout.FinishTaskCommand"
+					command-implementation-comment="com.top_logic.bpe.layout.execution.command.FinishTaskCommand"
 					command-label="Aufgabe abschließen"
 					command-name="finishTask"
-					component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+					component-implementation-comment="com.top_logic.bpe.layout.execution.ActiveTaskComponent"
 					component-name="com.top_logic.bpe.app/bpe/app/structure/tileTab.layout.xml#EditActiveTaskEdit"
 					user-id="root"
 				>

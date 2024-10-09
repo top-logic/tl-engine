@@ -457,16 +457,16 @@ public class ExecutionEngine {
 	 * called if the given parallel gateway is completed
 	 */
 	private void handleCompletion(ProcessExecution processExecution, ParallelGateway parallelGateway) {
-		// get all tokens showing to the gateway
-		Set<Token> tokensShowingTo =
-			GuiEngine.getInstance().getAllActiveTokensShowingTo(processExecution, parallelGateway);
+		// get all tokens pointing to the gateway
+		Set<Token> tokens =
+			GuiEngine.getInstance().getActiveTokensOf(processExecution, parallelGateway);
 
 		Set<? extends Edge> outgoing = parallelGateway.getOutgoing();
 		for (Edge edge : outgoing) {
 			Node target = edge.getTarget();
 			Token newToken = createTokenFor(processExecution, target, null);
-			newToken.setPrevious(tokensShowingTo);
-			changeActiveTokens(processExecution, tokensShowingTo, newToken);
+			newToken.setPrevious(tokens);
+			changeActiveTokens(processExecution, tokens, newToken);
 		}
 
 	}
@@ -553,8 +553,8 @@ public class ExecutionEngine {
 	private boolean checkForCompletion(ProcessExecution processExecution, ParallelGateway parallelGateway) {
 
 		// get all tokens showing to the gateway
-		Set<Token> tokensShowingTo =
-			GuiEngine.getInstance().getAllActiveTokensShowingTo(processExecution, parallelGateway);
+		Set<? extends Token> tokensShowingTo =
+			GuiEngine.getInstance().getActiveTokensOf(processExecution, parallelGateway);
 
 		int numberOfTokensNeededToComplete = parallelGateway.getIncomming().size();
 		return tokensShowingTo.size() == numberOfTokensNeededToComplete;

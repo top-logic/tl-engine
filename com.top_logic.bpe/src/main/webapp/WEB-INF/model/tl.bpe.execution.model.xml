@@ -3,7 +3,6 @@
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<module name="tl.bpe.execution">
 		<annotations>
-			<display-group value="bpe"/>
 			<package-binding
 				implementation-package="com.top_logic.bpe.execution.model.impl"
 				interface-package="com.top_logic.bpe.execution.model"

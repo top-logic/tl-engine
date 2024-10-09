@@ -46,6 +46,7 @@ import com.top_logic.element.model.diff.config.MoveGeneralization;
 import com.top_logic.element.model.diff.config.MoveStructuredTypePart;
 import com.top_logic.element.model.diff.config.RemoveAnnotation;
 import com.top_logic.element.model.diff.config.RemoveGeneralization;
+import com.top_logic.element.model.diff.config.UpdateAbstract;
 import com.top_logic.element.model.diff.config.UpdateMandatory;
 import com.top_logic.element.model.diff.config.UpdateStorageMapping;
 import com.top_logic.element.model.export.ModelConfigExtractor;
@@ -623,6 +624,14 @@ public class CreateModelPatch {
 			UpdateMandatory update = TypedConfiguration.newConfigItem(UpdateMandatory.class);
 			update.setPart(TLModelUtil.qualifiedName(left));
 			update.setMandatory(newMandatory);
+			addDiff(update);
+		}
+		boolean oldAbstract = left.isAbstract();
+		boolean newAbstract = right.isAbstract();
+		if (oldAbstract != newAbstract) {
+			UpdateAbstract update = TypedConfiguration.newConfigItem(UpdateAbstract.class);
+			update.setPart(TLModelUtil.qualifiedName(left));
+			update.setAbstract(newAbstract);
 			addDiff(update);
 		}
 	}

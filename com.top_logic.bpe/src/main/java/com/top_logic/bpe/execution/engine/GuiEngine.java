@@ -7,7 +7,9 @@ package com.top_logic.bpe.execution.engine;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.util.ResKey;
@@ -38,7 +40,6 @@ import com.top_logic.tool.boundsec.wrap.Group;
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class GuiEngine {
-
 
 	private static GuiEngine INSTANCE = new GuiEngine();
 
@@ -75,38 +76,20 @@ public class GuiEngine {
 		return res;
 	}
 
-	/**
-	 * Assumption: the token points to a {@link Task}
-	 * 
-	 * Check, if the (only) {@link Gateway}, to which the task is connected, is a manual gateway
-	 */
-	public boolean isManualStep(Token token) {
-		Node node = token.getNode();
-		Set<? extends Edge> outgoing = node.getOutgoing();
-		Edge next = outgoing.iterator().next();
-		Node target = next.getTarget();
-		if (target instanceof Gateway) {
-			return isManual((Gateway) target);
-		}
-		return true;
-	}
-
 	public Node getNextNode(Token token) {
 		return getNextNode(token.getNode());
 	}
 
 	public Node getNextNode(Node node) {
-		return CollectionUtil.getSingleValueFromCollection(node.getOutgoing()).getTarget();
+		return getSingleOutgoingEdge(node).getTarget();
 	}
 
 	public Edge getSingleOutgoingEdge(Token token) {
-		Node node = token.getNode();
-		Set<? extends Edge> outgoing = node.getOutgoing();
-		if (outgoing.size() != 1) {
-			throw new RuntimeException(
-				"Node " + node + " has not exaclty one outgoing, but " + outgoing.size() + " outgoings.");
-		}
-		return outgoing.iterator().next();
+		return getSingleOutgoingEdge(token.getNode());
+	}
+
+	public Edge getSingleOutgoingEdge(Node node) {
+		return CollectionUtil.getSingleValueFromCollection(node.getOutgoing());
 	}
 
 	/**
@@ -152,35 +135,18 @@ public class GuiEngine {
 		return true;
 	}
 
-
 	/**
 	 * Set of all outgoing {@link Edge}s whose target is a {@link Task}.
 	 */
-	public Set<? extends Edge> getTaskEdges(Gateway gateway) {
-		Set<Edge> res = new HashSet<>();
-		Set<? extends Edge> outgoing = gateway.getOutgoing();
-		for (Edge edge : outgoing) {
-			Node target = edge.getTarget();
-			if (target instanceof Task) {
-				res.add(edge);
-			}
-		}
-		return res;
+	public List<? extends Edge> getTaskEdges(Gateway gateway) {
+		return gateway.getOutgoing().stream().filter(e -> e.getTarget() instanceof Task).toList();
 	}
 
 	/**
-	 * A set with all {@link Token}s of the given {@link ProcessExecution} pointing to the given
-	 * {@link Node}
+	 * All {@link Token}s of the given {@link ProcessExecution} pointing to the given {@link Node}
 	 */
-	public Set<Token> getAllActiveTokensShowingTo(ProcessExecution processExecution, Node node) {
-		Set<? extends Token> allTokens = processExecution.getActiveTokens();
-		Set<Token> res = new HashSet<>();
-		for (Token token : allTokens) {
-			if (token.getNode() == node) {
-				res.add(token);
-			}
-		}
-		return res;
+	public Set<Token> getActiveTokensOf(ProcessExecution processExecution, Node node) {
+		return processExecution.getActiveTokens().stream().filter(t -> t.getNode() == node).collect(Collectors.toSet());
 	}
 
 	/**
@@ -189,8 +155,7 @@ public class GuiEngine {
 	 */
 	public Set<StartEvent> getStartEventsFor(Collaboration collaboration, Person person) {
 		Set<StartEvent> res = new HashSet<>();
-		TLClassifier state = collaboration.getState();
-		if (isActive(state)) {
+		if (isActive(collaboration.getState())) {
 			for (Process process : collaboration.getProcesses()) {
 				addProcessStartEvents(person, res, process);
 				addLaneStartEvents(person, res, process);

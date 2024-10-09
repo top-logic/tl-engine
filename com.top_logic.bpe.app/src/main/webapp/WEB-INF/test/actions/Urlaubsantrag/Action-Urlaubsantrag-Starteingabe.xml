@@ -73,10 +73,10 @@
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.bpe.app.layout.StartProcessExecutionHandler"
+					command-implementation-comment="com.top_logic.bpe.layout.execution.command.StartProcessExecutionHandler"
 					command-label="Prozess starten"
 					command-name="startProcessExecution"
-					component-implementation-comment="com.top_logic.bpe.app.layout.ProcessExecutionCreateComponent"
+					component-implementation-comment="com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent"
 					component-name="com.top_logic.bpe.app/bpe/app/structure/tileTab.layout.xml#createProcessExecutionNewAttributed"
 					user-id="root"
 				>

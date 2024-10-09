@@ -1229,6 +1229,7 @@ public class ModelResolver {
 				log().error(
 					"Mandatory can not be set to false in overridden attribute " + qualifiedName(classPart) + ".");
 			}
+			classPart.setAbstract(partConfig.isAbstract());
 
 			addTypePartAnnotations(classPart, true, partConfig);
 		} else {

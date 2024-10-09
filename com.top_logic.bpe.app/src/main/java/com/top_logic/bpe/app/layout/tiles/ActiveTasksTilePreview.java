@@ -7,7 +7,7 @@ package com.top_logic.bpe.app.layout.tiles;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.bpe.app.layout.ActiveTaskComponent.ActiveTasksListModelBuilder;
+import com.top_logic.bpe.app.layout.ActiveTasksListModelBuilder;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.fragments.Fragments;

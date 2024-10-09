@@ -89,10 +89,10 @@
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.bpe.app.layout.StartProcessExecutionHandler"
+			command-implementation-comment="com.top_logic.bpe.layout.execution.command.StartProcessExecutionHandler"
 			command-label="Prozess starten"
 			command-name="startProcessExecution"
-			component-implementation-comment="com.top_logic.bpe.app.layout.ProcessExecutionCreateComponent"
+			component-implementation-comment="com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent"
 			component-name="com.top_logic.bpe.app/processCockpit/startProcessRun/startProcessRun.layout.xml#createProcessExecutionNewAttributed"
 			user-id="root"
 		>
@@ -104,10 +104,10 @@
 			user-id="root"
 		/>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.bpe.app.layout.FinishTaskCommand"
+			command-implementation-comment="com.top_logic.bpe.layout.execution.command.FinishTaskCommand"
 			command-label="Aufgabe abschließen"
 			command-name="finishTask"
-			component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+			component-implementation-comment="com.top_logic.bpe.layout.execution.ActiveTaskComponent"
 			component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
 			user-id="root"
 		>
@@ -182,10 +182,10 @@
 			user-id="root"
 		/>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.bpe.app.layout.FinishTaskCommand"
+			command-implementation-comment="com.top_logic.bpe.layout.execution.command.FinishTaskCommand"
 			command-label="Aufgabe abschließen"
 			command-name="finishTask"
-			component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+			component-implementation-comment="com.top_logic.bpe.layout.execution.ActiveTaskComponent"
 			component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
 			user-id="root"
 		>
@@ -322,10 +322,10 @@
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.bpe.app.layout.FinishTaskCommand"
+			command-implementation-comment="com.top_logic.bpe.layout.execution.command.FinishTaskCommand"
 			command-label="Aufgabe abschließen"
 			command-name="finishTask"
-			component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+			component-implementation-comment="com.top_logic.bpe.layout.execution.ActiveTaskComponent"
 			component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
 			user-id="root"
 		>
@@ -340,7 +340,7 @@
 			command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 			command-label="Bearbeiten"
 			command-name="switchToAJAXEdit"
-			component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+			component-implementation-comment="com.top_logic.bpe.layout.execution.ActiveTaskComponent"
 			component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
 			user-id="root"
 		>
@@ -365,7 +365,7 @@
 			command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
 			command-label="Speichern"
 			command-name="defaultSave"
-			component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+			component-implementation-comment="com.top_logic.bpe.layout.execution.ActiveTaskComponent"
 			component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
 			user-id="root"
 		>
@@ -391,10 +391,10 @@
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.bpe.app.layout.FinishTaskCommand"
+			command-implementation-comment="com.top_logic.bpe.layout.execution.command.FinishTaskCommand"
 			command-label="Aufgabe abschließen"
 			command-name="finishTask"
-			component-implementation-comment="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+			component-implementation-comment="com.top_logic.bpe.layout.execution.ActiveTaskComponent"
 			component-name="com.top_logic.bpe.app/processCockpit/currentTasks/taskEditor.layout.xml#EditActiveTaskEdit"
 			user-id="root"
 		>

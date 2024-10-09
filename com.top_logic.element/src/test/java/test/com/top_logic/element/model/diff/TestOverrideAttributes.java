@@ -15,7 +15,7 @@ import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 
 /**
- * Tests override attributes changing "mandatory".
+ * Tests override attributes changing "mandatory" and "abstract".
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -40,6 +40,25 @@ public class TestOverrideAttributes extends AbstractModelPatchTest {
 
 		assertFalse("Attribute is not declared as 'mandatory'.", base.getPartOrFail("a").isMandatory());
 		assertTrue("Overriding attribute declares 'mandatory'.", ext.getPartOrFail("a").isMandatory());
+	}
+
+	public void testOverrideAbstract() {
+		TLModel model;
+		try (Transaction tx = kb().beginTransaction()) {
+			model = loadModel("test-override-abstract.model.xml");
+			tx.commit();
+		}
+		TLModule module = model.getModule("m0");
+		TLClass base = (TLClass) module.getType("Base");
+		TLClass ext1 = (TLClass) module.getType("Ext1");
+		TLClass ext2 = (TLClass) module.getType("Ext2");
+		assertTrue("Attribute is declared as 'abstract'.", base.getPartOrFail("a").isAbstract());
+		assertFalse("Attribute override is not declared as 'abstract'.", ext1.getPartOrFail("a").isAbstract());
+		assertFalse("Attribute override is not declared as 'abstract'.", ext2.getPartOrFail("a").isAbstract());
+
+		assertTrue("Attribute is declared as 'abstract'.", base.getPartOrFail("b").isAbstract());
+		assertTrue("Attribute override is declared as 'abstract'.", ext1.getPartOrFail("b").isAbstract());
+		assertFalse("Attribute override is not declared as 'abstract'.", ext2.getPartOrFail("b").isAbstract());
 	}
 
 	public static Test suite() {

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model>
+	<module name="m0">
+		<datatype name="D"
+			db_type="varchar"
+			kind="String"
+		>
+			<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping"
+				application-type="java.lang.String"
+			/>
+		</datatype>
+		<class name="Base">
+			<attributes>
+				<property name="a"
+					abstract="true"
+					type="D"
+				/>
+				<property name="b"
+					abstract="true"
+					type="D"
+				/>
+			</attributes>
+		</class>
+
+		<class name="Ext1">
+			<generalizations>
+				<generalization type="Base"/>
+			</generalizations>
+
+			<attributes>
+				<property name="a"
+					override="true"
+					type="D"
+				/>
+				<property name="b"
+					abstract="true"
+					override="true"
+					type="D"
+				/>
+			</attributes>
+		</class>
+
+		<class name="Ext2">
+			<generalizations>
+				<generalization type="Ext1"/>
+			</generalizations>
+			<attributes>
+				<property name="b"
+					override="true"
+					type="D"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

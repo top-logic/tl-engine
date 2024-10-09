@@ -11,7 +11,7 @@
 		securityObject="securityRoot"
 		type="tl.bpe.execution:Token"
 	>
-		<modelBuilder class="com.top_logic.bpe.app.layout.ActiveTaskComponent$ActiveTasksListModelBuilder"/>
+		<modelBuilder class="com.top_logic.bpe.app.layout.ActiveTasksListModelBuilder"/>
 		<configurationProviders>
 			<configurationProvider class="com.top_logic.bpe.app.layout.tiles.ContextTableConfiguration"/>
 			<configurationProvider class="com.top_logic.bpe.app.layout.ActivityTableConfigurator"/>

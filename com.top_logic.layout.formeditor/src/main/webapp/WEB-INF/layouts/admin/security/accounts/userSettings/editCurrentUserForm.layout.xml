@@ -166,8 +166,8 @@
 								visibility="read-only"
 							/>
 							<attribute-reference class="com.top_logic.layout.formeditor.accounts.RepresentativeField"
-								name="members"
 								item="account -> $account.get(`tl.accounts:Person#representativeGroup`)"
+								name="members"
 								type="tl.accounts:Group"
 							/>
 							<field

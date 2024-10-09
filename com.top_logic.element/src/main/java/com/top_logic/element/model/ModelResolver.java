@@ -1023,8 +1023,10 @@ public class ModelResolver {
 				return TLModelUtil.findType(owner.getModel(), typeSpec);
 			} catch (TopLogicException ex) {
 				throw new TopLogicException(I18NConstants.ERROR_UNDEFINED_ATTRIBUTE_TYPE__TYPE_ATTR_LOCATION
-					.fill(typeSpec, owner.getModule().getName() + TLModelUtil.QUALIFIED_NAME_SEPARATOR + owner
-						+ TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR + config.getName(), config.location()),
+					.fill(typeSpec,
+						owner.getModule().getName() + TLModelUtil.QUALIFIED_NAME_SEPARATOR + owner.getName()
+								+ TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR + config.getName(),
+						config.location()),
 					ex);
 			}
 		}
@@ -1032,8 +1034,9 @@ public class ModelResolver {
 		TLType type = owner.getModule().getType(typeSpec);
 		if (type == null) {
 			throw new TopLogicException(I18NConstants.ERROR_UNDEFINED_ATTRIBUTE_TYPE__TYPE_ATTR_LOCATION
-				.fill(typeSpec, owner.getModule().getName() + TLModelUtil.QUALIFIED_NAME_SEPARATOR + owner
-					+ TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR + config.getName(), config.location()));
+				.fill(typeSpec, owner.getModule().getName() + TLModelUtil.QUALIFIED_NAME_SEPARATOR + owner.getName()
+						+ TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR + config.getName(),
+					config.location()));
 		}
 		return type;
 	}
@@ -1220,6 +1223,13 @@ public class ModelResolver {
 				errorNoOverride(classPart);
 			}
 			checkOverride(partConfig, classPart);
+			if (partConfig.getMandatory()) {
+				classPart.setMandatory(true);
+			} else if (partConfig.valueSet(partConfig.descriptor().getProperty(PartConfig.MANDATORY))) {
+				log().error(
+					"Mandatory can not be set to false in overridden attribute " + qualifiedName(classPart) + ".");
+			}
+
 			addTypePartAnnotations(classPart, true, partConfig);
 		} else {
 			if (isActualOverride) {

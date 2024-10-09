@@ -15,7 +15,7 @@
 	>
 		<components>
 			<!-- component to create attributed objects -->
-			<component class="com.top_logic.bpe.app.layout.ProcessExecutionCreateComponent"
+			<component class="com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent"
 				buttonbar="true"
 				create-handler="startProcessExecution"
 				element=""
@@ -31,7 +31,7 @@
 			>
 				<commands>
 					<command id="startProcessExecution"
-						class="com.top_logic.bpe.app.layout.StartProcessExecutionHandler"
+						class="com.top_logic.bpe.layout.execution.command.StartProcessExecutionHandler"
 						group="Create"
 						image="theme:ICONS_ADD_BUTTON"
 						tokenTable="${tokenTable}"

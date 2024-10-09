@@ -7,6 +7,7 @@ package com.top_logic.bpe.app.layout;
 
 import java.util.Map;
 
+import com.top_logic.bpe.layout.execution.DisplayDescriptionAware;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;

@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.bpe.app.layout;
+package com.top_logic.bpe.layout.execution.command;
 
 import java.util.Collections;
 import java.util.Map;
@@ -15,7 +15,6 @@ import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.bpe.app.layout.FinishTaskCommand.SelectTransitionDialog;
 import com.top_logic.bpe.bpml.model.Edge;
 import com.top_logic.bpe.bpml.model.Node;
 import com.top_logic.bpe.bpml.model.Task;
@@ -23,6 +22,8 @@ import com.top_logic.bpe.execution.engine.ExecutionEngine;
 import com.top_logic.bpe.execution.engine.GuiEngine;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.Token;
+import com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent;
+import com.top_logic.bpe.layout.execution.command.FinishTaskCommand.SelectTransitionDialog;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;

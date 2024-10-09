@@ -54,10 +54,10 @@
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.bpe.app.layout.StartProcessExecutionHandler"
+			command-implementation-comment="com.top_logic.bpe.layout.execution.command.StartProcessExecutionHandler"
 			command-label="Prozess starten"
 			command-name="startProcessExecution"
-			component-implementation-comment="com.top_logic.bpe.app.layout.ProcessExecutionCreateComponent"
+			component-implementation-comment="com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent"
 			component-name="com.top_logic.bpe.app/processCockpit/startProcessRun/startProcessRun.layout.xml#createProcessExecutionNewAttributed"
 			user-id="root"
 		>
@@ -134,7 +134,7 @@
 			command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 			command-label="Bearbeiten"
 			command-name="switchToAJAXEdit"
-			component-implementation-comment="com.top_logic.bpe.app.layout.ProcessExecutionComponent"
+			component-implementation-comment="com.top_logic.bpe.layout.execution.ProcessExecutionComponent"
 			component-name="com.top_logic.bpe.app/processCockpit/myProcesses/processEditor.layout.xml#EditProcessExecutionEdit"
 			reason-key="class.com.top_logic.bpe.app.layout.I18NConstants.NOT_EXECUTABLE_NO_DISPLAY_DESCRIPTION"
 			user-id="root"
@@ -276,7 +276,7 @@
 			command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 			command-label="Bearbeiten"
 			command-name="switchToAJAXEdit"
-			component-implementation-comment="com.top_logic.bpe.app.layout.ProcessExecutionComponent"
+			component-implementation-comment="com.top_logic.bpe.layout.execution.ProcessExecutionComponent"
 			component-name="com.top_logic.bpe.app/processCockpit/myProcesses/processEditor.layout.xml#EditProcessExecutionEdit"
 			user-id="root"
 		>
@@ -286,7 +286,7 @@
 			command-implementation-comment="com.top_logic.bpe.execution.export.ExportAsPdfHandler"
 			command-label="PDF-Export..."
 			command-name="exportAsPdf"
-			component-implementation-comment="com.top_logic.bpe.app.layout.ProcessExecutionComponent"
+			component-implementation-comment="com.top_logic.bpe.layout.execution.ProcessExecutionComponent"
 			component-name="com.top_logic.bpe.app/processCockpit/myProcesses/processEditor.layout.xml#EditProcessExecutionEdit"
 			user-id="root"
 		>
@@ -296,7 +296,7 @@
 			command-implementation-comment="com.top_logic.bpe.execution.export.ExportAsPdfHandler"
 			command-label="PDF-Export..."
 			command-name="exportAsPdf"
-			component-implementation-comment="com.top_logic.bpe.app.layout.ProcessExecutionComponent"
+			component-implementation-comment="com.top_logic.bpe.layout.execution.ProcessExecutionComponent"
 			component-name="com.top_logic.bpe.app/processCockpit/myProcesses/processEditor.layout.xml#EditProcessExecutionEdit"
 			user-id="root"
 		>

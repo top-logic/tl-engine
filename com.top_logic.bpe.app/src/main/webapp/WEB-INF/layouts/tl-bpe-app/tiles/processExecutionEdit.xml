@@ -8,7 +8,7 @@
 	</params>
 
 	<include name="element/editAttributedDetail.xml"
-		componentClass="com.top_logic.bpe.app.layout.ProcessExecutionComponent"
+		componentClass="com.top_logic.bpe.layout.execution.ProcessExecutionComponent"
 		defaultFor="tl.bpe.execution:ProcessExecution"
 		deleteCommand=""
 		metaElementName="tl.bpe.execution:ProcessExecution"

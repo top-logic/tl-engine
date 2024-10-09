@@ -2,7 +2,7 @@
 %><%@page import="com.top_logic.bpe.execution.model.Token"%><%@page
 language="java" session="true"
 extends="com.top_logic.util.TopLogicJspBase"%><%@page
-import="com.top_logic.bpe.app.layout.ActiveTaskComponent"%><%@page
+import="com.top_logic.bpe.layout.execution.ActiveTaskComponent"%><%@page
 import="com.top_logic.mig.html.layout.MainLayout"
 %><%@taglib uri="layout" prefix="layout"
 %><%@taglib uri="ajaxform" prefix="form"

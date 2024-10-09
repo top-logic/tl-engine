@@ -8,7 +8,7 @@
 	</params>
 
 	<include name="element/editAttributedDetail.xml"
-		componentClass="com.top_logic.bpe.app.layout.ActiveTaskComponent"
+		componentClass="com.top_logic.bpe.layout.execution.ActiveTaskComponent"
 		defaultFor="tl.bpe.execution:Token"
 		deleteCommand=""
 		metaElementName="tl.bpe.execution:Token"
@@ -20,11 +20,11 @@
 		<subConfiguration>
 			<buttons>
 				<button id="finishTask"
-					class="com.top_logic.bpe.app.layout.FinishTaskCommand"
+					class="com.top_logic.bpe.layout.execution.command.FinishTaskCommand"
 					tokenTable="${tokenTable}"
 				>
 					<executability>
-						<rule class="com.top_logic.bpe.app.layout.ActiveTaskComponent$FinishTaskRule"/>
+						<rule class="com.top_logic.bpe.layout.execution.ActiveTaskComponent$FinishTaskRule"/>
 					</executability>
 				</button>
 			</buttons>

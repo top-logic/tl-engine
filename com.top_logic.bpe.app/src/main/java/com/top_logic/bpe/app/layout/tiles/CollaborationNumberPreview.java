@@ -12,7 +12,7 @@ import java.util.List;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
-import com.top_logic.bpe.app.layout.ActiveTaskComponent.ActiveTasksListModelBuilder;
+import com.top_logic.bpe.app.layout.ActiveTasksListModelBuilder;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.layout.basic.fragments.Tag;

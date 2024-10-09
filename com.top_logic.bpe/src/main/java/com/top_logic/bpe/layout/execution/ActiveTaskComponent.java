@@ -3,24 +3,17 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.bpe.app.layout;
+package com.top_logic.bpe.layout.execution;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import com.top_logic.basic.col.Filter;
-import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.bpml.model.Iconified;
 import com.top_logic.bpe.bpml.model.Node;
 import com.top_logic.bpe.bpml.model.Task;
 import com.top_logic.bpe.bpml.model.impl.ManualTaskBase;
-import com.top_logic.bpe.execution.engine.GuiEngine;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
 import com.top_logic.bpe.execution.model.Token;
@@ -28,8 +21,6 @@ import com.top_logic.common.webfolder.WebFolderUtils;
 import com.top_logic.element.layout.formeditor.FormEditorUtil;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.component.DefaultEditAttributedComponent;
-import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.FormMember;
@@ -46,7 +37,6 @@ import com.top_logic.model.form.implementation.FormMode;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
-import com.top_logic.util.TLContext;
 
 /**
  * {@link DefaultEditAttributedComponent} that displays the configured attributes for a given
@@ -162,69 +152,6 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 			}
 		}
 
-	}
-
-	public static class ActiveTasksListModelBuilder extends ProcessExecutionListModelBuilder {
-
-		public static class ActorFilter implements Filter<Token> {
-
-			private Person _currentPerson;
-
-			public ActorFilter() {
-				PersonManager r = PersonManager.getManager();
-				_currentPerson = TLContext.currentUser();
-			}
-
-			@Override
-			public boolean accept(Token token) {
-				return GuiEngine.getInstance().isActor(_currentPerson, token);
-			}
-
-		}
-
-		public ActiveTasksListModelBuilder(InstantiationContext context, Config config) throws ConfigurationException {
-			super(context, config);
-		}
-
-		@Override
-		public boolean supportsListElement(LayoutComponent contextComponent, Object listElement) {
-			return listElement instanceof Token && ((Token) listElement).getUserRelevant()
-				&& new ActorFilter().accept((Token) listElement);
-		}
-
-		@Override
-		public Collection<?> getModel(Object businessModel, LayoutComponent aComponent) {
-			return getActiveTokensForCurrentUser((Collaboration) businessModel);
-		}
-
-		/**
-		 * Tile is shown for collaboration, independant of existing tasks
-		 * 
-		 * @see com.top_logic.bpe.app.layout.ProcessExecutionListModelBuilder#supportsModel(java.lang.Object,
-		 *      com.top_logic.mig.html.layout.LayoutComponent)
-		 */
-		@Override
-		public boolean supportsModel(Object aModel, LayoutComponent aComponent) {
-			return aModel instanceof Collaboration;
-//			if (aModel instanceof Collaboration) {
-//				return getActiveTokensForCurrentUser((Collaboration) aModel).size() > 0;
-//			}
-//			return false;
-		}
-
-		/**
-		 * a list with the active tokens which the current user has in the given
-		 *         collaboration
-		 */
-		public static List<Token> getActiveTokensForCurrentUser(Collaboration collaboration) {
-			Set<ProcessExecution> allProcessExecutions = getAllProcessExecutions(collaboration);
-			ActorFilter filter = new ActorFilter();
-			List<Token> result = new ArrayList<>();
-			for (ProcessExecution pe : allProcessExecutions) {
-				FilterUtil.filterInto(result, filter, pe.getUserRelevantTokens());
-			}
-			return result;
-		}
 	}
 
 }

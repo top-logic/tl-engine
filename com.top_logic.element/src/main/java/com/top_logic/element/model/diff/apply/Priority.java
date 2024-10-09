@@ -147,6 +147,11 @@ enum Priority {
 	UPDATE_TYPE_PART_TYPE,
 
 	/**
+	 * Change of {@link TLStructuredTypePart#isAbstract()}.
+	 */
+	CHANGE_TYPE_PART_ABSTRACT,
+
+	/**
 	 * Change of {@link TLStructuredTypePart#isMandatory()}.
 	 */
 	CHANGE_TYPE_PART_MANDATORY,

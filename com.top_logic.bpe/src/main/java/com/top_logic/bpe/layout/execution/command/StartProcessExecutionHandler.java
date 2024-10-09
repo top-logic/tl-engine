@@ -23,7 +23,7 @@ import com.top_logic.bpe.execution.engine.GuiEngine;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent;
-import com.top_logic.bpe.layout.execution.command.FinishTaskCommand.SelectTransitionDialog;
+import com.top_logic.bpe.layout.execution.SelectTransitionDialog;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;

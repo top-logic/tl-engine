@@ -2,7 +2,7 @@
 extends="com.top_logic.util.TopLogicJspBase"%><%@page
 import="com.top_logic.element.meta.gui.DefaultCreateAttributedComponent"%><%@page
 import="com.top_logic.element.layout.formeditor.FormEditorUtil"%><%@page
-import="com.top_logic.bpe.app.layout.ProcessExecutionCreateComponent"%><%@page
+import="com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent"%><%@page
 import="com.top_logic.mig.html.layout.MainLayout"%><%@taglib
 uri="layout" prefix="layout"%><%@taglib
 uri="ajaxform" prefix="form"%><%@taglib uri="meta" prefix="meta"%><%@taglib uri="basic" prefix="basic"%><%--

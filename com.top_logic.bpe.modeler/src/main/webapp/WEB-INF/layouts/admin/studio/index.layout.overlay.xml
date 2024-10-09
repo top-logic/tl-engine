@@ -4,7 +4,7 @@
 	<components>
 		<layout-reference
 			config:position="begin"
-			resource="com.top_logic.bpe.app/tl/bpe/modeler/admin/workflowAdminView.layout.xml"
+			resource="tl-bpe-modeler/editor/workflowAdminView.layout.xml"
 		/>
 	</components>
 </arguments>

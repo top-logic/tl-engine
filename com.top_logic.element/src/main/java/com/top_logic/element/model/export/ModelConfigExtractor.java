@@ -39,6 +39,7 @@ import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModel;
@@ -322,11 +323,29 @@ public class ModelConfigExtractor implements TLModelVisitor<ModelPartConfig, Voi
 		TLModule module = model.getOwner().getModule();
 		config.setTypeSpec(typeRef(module, valueType));
 
+		boolean modelMandatory = model.isMandatory();
 		if (!override) {
-			copyIfDifferent(config::getMandatory, config::setMandatory, model.isMandatory());
+			copyIfDifferent(config::getMandatory, config::setMandatory, modelMandatory);
 			copyIfDifferent(config::isMultiple, config::setMultiple, model.isMultiple());
 			copyIfDifferent(config::isOrdered, config::setOrdered, model.isOrdered());
 			copyIfDifferent(config::isBag, config::setBag, model.isBag());
+		} else if (model instanceof TLClassPart) {
+			Boolean allOverriddenMandatory = null;
+			for (TLClassPart overridden : TLModelUtil.getOverriddenParts((TLClassPart) model)) {
+				boolean mandatory = overridden.isMandatory();
+				if (allOverriddenMandatory == null) {
+					allOverriddenMandatory = mandatory;
+				} else {
+					if (allOverriddenMandatory.booleanValue() != mandatory) {
+						// Some overridden attributes are mandatory and some not. Set local value!
+						allOverriddenMandatory = null;
+						break;
+					}
+				}
+			}
+			if (allOverriddenMandatory == null || allOverriddenMandatory.booleanValue() != modelMandatory) {
+				config.setMandatory(modelMandatory);
+			}
 		}
 		return override;
 	}

@@ -13,12 +13,13 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.bpe.bpml.model.StartEvent;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
+import com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent;
 import com.top_logic.element.meta.gui.DefaultCreateAttributedCommandHandler;
-import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -32,18 +33,18 @@ public class ExecutionProcessCreateHandler extends DefaultCreateAttributedComman
 
 	@Override
 	public Object createObject(LayoutComponent component, Object createContext, FormContainer formContainer,
-			@SuppressWarnings("rawtypes") Map someValues) {
+			Map<String, Object> arguments) {
 
-		Object newObject = super.createObject(component, createContext, formContainer, someValues);
-		StartEvent startEvent = (StartEvent) createContext;
-		ExecutionEngine.getInstance().init((ProcessExecution) newObject, startEvent);
+		StartEvent startEvent = ((ProcessExecutionCreateComponent) component).startEvent();
+		ProcessExecution newObject = createProcessModel(startEvent);
+
+		Map<String, Object> values = extractValues(formContainer, startEvent);
+		values.putAll(arguments);
+		saveMetaAttributes(values, newObject);
+
+		ExecutionEngine.getInstance().init(newObject, startEvent);
 
 		return newObject;
-	}
-
-	@Override
-	public Wrapper createNewObject(Map<String, Object> someValues, Wrapper aModel) {
-		return (Wrapper) createProcessModel((StartEvent) aModel);
 	}
 
 	/**
@@ -65,7 +66,7 @@ public class ExecutionProcessCreateHandler extends DefaultCreateAttributedComman
 	}
 
 	@Override
-	protected Map<String, Object> extractValues(FormContainer aContainer, Wrapper anAttributed) {
+	protected Map<String, Object> extractValues(FormContainer aContainer, TLObject anAttributed) {
 		Map<String, Object> res = super.extractValues(aContainer, anAttributed);
 		Iterator<? extends FormMember> members = aContainer.getMembers();
 		while (members.hasNext()) {

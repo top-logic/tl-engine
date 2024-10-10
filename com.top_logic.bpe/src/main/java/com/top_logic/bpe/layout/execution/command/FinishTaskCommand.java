@@ -6,15 +6,15 @@
 package com.top_logic.bpe.layout.execution.command;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.bpe.bpml.model.Edge;
 import com.top_logic.bpe.bpml.model.Gateway;
@@ -30,14 +30,14 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.fragments.Fragments;
-import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
 import com.top_logic.layout.form.component.EditComponent;
+import com.top_logic.layout.form.component.PostCreateAction;
+import com.top_logic.layout.form.component.WithPostCreateActions;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.messagebox.MessageBox.MessageType;
-import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
@@ -51,7 +51,7 @@ import com.top_logic.util.TLContext;
  * @author <a href="mailto:cca@top-logic.com">cca</a>
  */
 @InApp(classifiers = "workflow")
-public class FinishTaskCommand extends AbstractCommandHandler {
+public class FinishTaskCommand extends AbstractCommandHandler implements WithPostCreateActions {
 
 	/**
 	 * Command argument that selects the next edge to walk.
@@ -66,20 +66,11 @@ public class FinishTaskCommand extends AbstractCommandHandler {
 	/**
 	 * Configuration options for {@link FinishTaskCommand}.
 	 */
-	public interface Config extends AbstractCommandHandler.Config {
-
-		/**
-		 * @see #getTokenTable()
-		 */
-		String TOKEN_TABLE = "tokenTable";
-
-		/**
-		 * Context component that selects the active task.
-		 */
-		@Name(TOKEN_TABLE)
-		ComponentName getTokenTable();
-
+	public interface Config extends AbstractCommandHandler.Config, WithPostCreateActions.Config {
+		// Pure sum interface.
 	}
+
+	private final List<PostCreateAction> _actions;
 
 	/**
 	 * Creates a {@link FinishTaskCommand} from configuration.
@@ -92,10 +83,8 @@ public class FinishTaskCommand extends AbstractCommandHandler {
 	@CalledByReflection
 	public FinishTaskCommand(InstantiationContext context, Config config) {
 		super(context, config);
-	}
 
-	private Config config() {
-		return (Config) getConfig();
+		_actions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
 	}
 
 	@Override
@@ -140,13 +129,9 @@ public class FinishTaskCommand extends AbstractCommandHandler {
 				tx.commit();
 			}
 
-			new StepOutHelper(aComponent).stepOut(aContext);
-			/* Stepping out leads to a deferred display of the outer tile, so also displaying the
-			 * active task component must occur deferred. */
-			aContext.getLayoutContext().notifyInvalid(displayContext -> {
-				showActiveTask(aComponent, token.getProcessExecution(), context);
-				aComponent.getComponentByName(config().getTokenTable()).invalidate();
-			});
+			Token nextTask = nextTask(token.getProcessExecution(), edge);
+			WithPostCreateActions.processCreateActions(_actions, aComponent, nextTask);
+
 			return HandlerResult.DEFAULT_RESULT;
 		} else if (context == CANCEL) {
 			// Ignore.
@@ -156,39 +141,17 @@ public class FinishTaskCommand extends AbstractCommandHandler {
 		}
 	}
 
-	private void showActiveTask(LayoutComponent aComponent, ProcessExecution pe, Object context) {
-		Node target = target(context);
+	private Token nextTask(ProcessExecution processExecution, Edge edge) {
+		Node target = edge.getTarget();
 		if (target != null) {
-
-			Set<? extends Token> tokens = pe.getUserRelevantTokens();
 			Person person = TLContext.currentUser();
-			for (Token token : tokens) {
-				if (GuiEngine.getInstance().isActor(person, token)) {
-					if (token.getNode() == target) {
-						LayoutComponent listComponent = componentByName(aComponent, config().getTokenTable());
-						if (listComponent != null) {
-							listComponent.makeVisible();
-							((Selectable) listComponent).setSelected(token);
-						}
-						break;
+			for (Token token : processExecution.getUserRelevantTokens()) {
+				if (token.getNode() == target) {
+					if (GuiEngine.getInstance().isActor(person, token)) {
+						return token;
 					}
 				}
 			}
-		}
-	}
-
-	private LayoutComponent componentByName(LayoutComponent aComponent, ComponentName name) {
-		if (name == null) {
-			return null;
-		}
-		return aComponent.getMainLayout().getComponentByName(name);
-	}
-
-	private Node target(Object context) {
-		if (context instanceof Edge) {
-			return ((Edge) context).getTarget();
-		} else if (context instanceof Node) {
-			return (Node) context;
 		}
 		return null;
 	}

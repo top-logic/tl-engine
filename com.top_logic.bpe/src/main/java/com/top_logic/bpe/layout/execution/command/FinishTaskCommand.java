@@ -21,12 +21,10 @@ import com.top_logic.bpe.bpml.model.Gateway;
 import com.top_logic.bpe.bpml.model.Node;
 import com.top_logic.bpe.execution.engine.ExecutionEngine;
 import com.top_logic.bpe.execution.engine.GuiEngine;
-import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.bpe.layout.execution.SelectTransitionDialog;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.fragments.Fragments;
@@ -42,7 +40,6 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.TLContext;
 
 /**
  * {@link CommandHandler} to finish a task. Shows a confirm-dialog before switching to the next
@@ -129,8 +126,7 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 				tx.commit();
 			}
 
-			Token nextTask = nextTask(token.getProcessExecution(), edge);
-			WithPostCreateActions.processCreateActions(_actions, aComponent, nextTask);
+			WithPostCreateActions.processCreateActions(_actions, aComponent, token.getProcessExecution());
 
 			return HandlerResult.DEFAULT_RESULT;
 		} else if (context == CANCEL) {
@@ -139,21 +135,6 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 		} else {
 			throw new UnreachableAssertion("Invalid context: " + context);
 		}
-	}
-
-	private Token nextTask(ProcessExecution processExecution, Edge edge) {
-		Node target = edge.getTarget();
-		if (target != null) {
-			Person person = TLContext.currentUser();
-			for (Token token : processExecution.getUserRelevantTokens()) {
-				if (token.getNode() == target) {
-					if (GuiEngine.getInstance().isActor(person, token)) {
-						return token;
-					}
-				}
-			}
-		}
-		return null;
 	}
 
 	private HandlerResult storeIfNecessary(DisplayContext aContext, LayoutComponent aComponent) {

@@ -39,6 +39,7 @@ import com.top_logic.layout.form.model.HiddenField;
 import com.top_logic.layout.form.model.StringField;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.Visibility;
 import com.top_logic.tool.execution.CombinedExecutabilityRule;
@@ -247,7 +248,7 @@ public class MandatorAdminComponent extends AdminElementComponent {
         }
         
         @Override
-		protected Map<String,Object> extractValues(FormContainer formContainer, Wrapper aAnAttributed) {
+		protected Map<String, Object> extractValues(FormContainer formContainer, TLObject aAnAttributed) {
             Map<String,Object> theMap = super.extractValues(formContainer, aAnAttributed);
             
             theMap.put(NewMandatorComponent.PARENT_MANDATOR, formContainer.getField(NewMandatorComponent.PARENT_MANDATOR).getValue());

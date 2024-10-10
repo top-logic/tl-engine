@@ -296,8 +296,7 @@ public class ExecutionEngine {
 	}
 
 	private Token getActiveTokenForTask(ProcessExecution processExecution, Task task) {
-		Set<? extends Token> allTokens = processExecution.getAllTokens();
-		for (Token token : allTokens) {
+		for (Token token : processExecution.getAllTokens()) {
 			if (token.getNode() == task) {
 				if (token.getActive()) {
 					return token;
@@ -646,11 +645,11 @@ public class ExecutionEngine {
 	 */
 	private Token createTokenFor(ProcessExecution execution, Node node, Token previousToken) {
 		Token token = TlBpeExecutionFactory.getInstance().createToken();
-		token.setProcessExecution(execution);
+		execution.addAllToken(token);
 		token.setNode(node);
 
 		// handle previous token
-		Set<Token> previousTokes = new HashSet();
+		Set<Token> previousTokes = new HashSet<>();
 		if (previousToken != null) {
 			previousTokes.add(previousToken);
 		}

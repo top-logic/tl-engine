@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2022 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -154,8 +154,43 @@ public interface ProcessExecutionBase extends com.top_logic.model.TLObject {
 	 * Getter for part {@link #ALL_TOKENS_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")
-	default java.util.Set<? extends com.top_logic.bpe.execution.model.Token> getAllTokens() {
-		return (java.util.Set<? extends com.top_logic.bpe.execution.model.Token>) tValueByName(ALL_TOKENS_ATTR);
+	default java.util.List<? extends com.top_logic.bpe.execution.model.Token> getAllTokens() {
+		return (java.util.List<? extends com.top_logic.bpe.execution.model.Token>) tValueByName(ALL_TOKENS_ATTR);
+	}
+
+	/**
+	 * Live view of the {@link #ALL_TOKENS_ATTR} part.
+	 * <p>
+	 * Changes to this {@link java.util.Collection} change directly the attribute value.
+	 * The caller has to take care of the transaction handling.
+	 * </p>
+	 */
+	default java.util.List<com.top_logic.bpe.execution.model.Token> getAllTokensModifiable() {
+		com.top_logic.model.TLStructuredTypePart attribute = tType().getPart(ALL_TOKENS_ATTR);
+		@SuppressWarnings("unchecked")
+		java.util.List<com.top_logic.bpe.execution.model.Token> result = (java.util.List<com.top_logic.bpe.execution.model.Token>) com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil.getLiveCollection(this, attribute);
+		return result;
+	}
+
+	/**
+	 * Setter for part {@link #ALL_TOKENS_ATTR}.
+	 */
+	default void setAllTokens(java.util.List<com.top_logic.bpe.execution.model.Token> newValue) {
+		tUpdateByName(ALL_TOKENS_ATTR, newValue);
+	}
+
+	/**
+	 * Adds a value to the {@link #ALL_TOKENS_ATTR} reference.
+	 */
+	default void addAllToken(com.top_logic.bpe.execution.model.Token newValue) {
+		tAddByName(ALL_TOKENS_ATTR, newValue);
+	}
+
+	/**
+	 * Removes the given value from the {@link #ALL_TOKENS_ATTR} reference.
+	 */
+	default void removeAllToken(com.top_logic.bpe.execution.model.Token oldValue) {
+		tRemoveByName(ALL_TOKENS_ATTR, oldValue);
 	}
 
 	/**

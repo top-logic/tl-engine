@@ -44,8 +44,8 @@ public class ProcessExecutionFormContextModifier extends DefaultFormContextModif
 			FormContainer currentGroup) {
 		super.modify(component, aName, aMember, aMA, type, anAttributed, anUpdate, aContext, currentGroup);
 		if (ProcessExecution.COLLABORATION_ATTR.equals(aName)) {
-			StartEvent se = (StartEvent) component.getModel();
-			Collaboration collaboration = se.getProcess().getParticipant().getCollaboration();
+			StartEvent startEvent = ((ProcessExecutionCreateComponent) component).startEvent();
+			Collaboration collaboration = startEvent.getProcess().getParticipant().getCollaboration();
 			((SelectField) aMember).setImmutable(true);
 			if (anAttributed == null) {
 				((SelectField) aMember).setAsSingleSelection(collaboration);
@@ -53,8 +53,8 @@ public class ProcessExecutionFormContextModifier extends DefaultFormContextModif
 			}
 		}
 		if (ProcessExecution.PROCESS_ATTR.equals(aName)) {
-			StartEvent se = (StartEvent) component.getModel();
-			Process process = se.getProcess();
+			StartEvent startEvent = ((ProcessExecutionCreateComponent) component).startEvent();
+			Process process = startEvent.getProcess();
 			((SelectField) aMember).setImmutable(true);
 			if (anAttributed == null) {
 				((SelectField) aMember).setAsSingleSelection(process);

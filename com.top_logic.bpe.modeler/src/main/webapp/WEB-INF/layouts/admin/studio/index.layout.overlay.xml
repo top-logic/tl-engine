@@ -3,7 +3,8 @@
 <arguments xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<components>
 		<layout-reference
-			config:position="begin"
+			config:position="after"
+			config:reference="com.top_logic.element/admin/model/modelEditor/adminModel.layout.xml"
 			resource="tl-bpe-modeler/editor/workflowAdminView.layout.xml"
 		/>
 	</components>

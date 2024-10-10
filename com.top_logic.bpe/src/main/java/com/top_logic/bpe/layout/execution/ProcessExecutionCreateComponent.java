@@ -9,9 +9,15 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.bpe.bpml.model.Edge;
 import com.top_logic.bpe.bpml.model.Iconified;
 import com.top_logic.bpe.bpml.model.Lane;
@@ -21,11 +27,14 @@ import com.top_logic.bpe.bpml.model.StartEvent;
 import com.top_logic.bpe.execution.engine.ExecutionProcessCreateHandler;
 import com.top_logic.bpe.execution.engine.GuiEngine;
 import com.top_logic.bpe.execution.model.ProcessExecution;
+import com.top_logic.bpe.layout.execution.start.ModelAsStartEvent;
+import com.top_logic.bpe.layout.execution.start.StartEventSelector;
 import com.top_logic.element.layout.formeditor.FormEditorUtil;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.gui.DefaultCreateAttributedComponent;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.MetaResourceProvider;
@@ -45,8 +54,45 @@ import com.top_logic.util.TLContext;
 public class ProcessExecutionCreateComponent extends DefaultCreateAttributedComponent
 		implements DisplayDescriptionAware {
 
+	/**
+	 * Configuration options for {@link ProcessExecutionCreateComponent}.
+	 */
+	public interface Config extends DefaultCreateAttributedComponent.Config, UIOptions {
+		// Pure sum interface.
+	}
+
+	/**
+	 * Options to directly configure in the layout editor.
+	 */
+	public interface UIOptions extends ConfigurationItem {
+
+		/**
+		 * Strategy of selecting the {@link StartEvent} of the process to start.
+		 */
+		@Name("startEvent")
+		@ItemDefault
+		@ImplementationClassDefault(ModelAsStartEvent.class)
+		PolymorphicConfiguration<? extends StartEventSelector> getStartEvent();
+
+	}
+
+	private final StartEventSelector _selector;
+
+	private StartEvent _startEvent;
+
+	/**
+	 * Creates a {@link ProcessExecutionCreateComponent} from configuration.
+	 * 
+	 * @param context
+	 *        The context for instantiating sub configurations.
+	 * @param config
+	 *        The configuration.
+	 */
+	@CalledByReflection
 	public ProcessExecutionCreateComponent(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
+
+		_selector = context.getInstance(config.getStartEvent());
 	}
 
 	@Override
@@ -54,8 +100,25 @@ public class ProcessExecutionCreateComponent extends DefaultCreateAttributedComp
 		return ExecutionProcessCreateHandler.getModelType(startEvent());
 	}
 
-	private StartEvent startEvent() {
-		return (StartEvent) getModel();
+	/**
+	 * The event to start the process with.
+	 */
+	public StartEvent startEvent() {
+		return _startEvent;
+	}
+
+	@Override
+	public boolean isModelValid() {
+		return _startEvent != null && super.isModelValid();
+	}
+
+	@Override
+	public boolean validateModel(DisplayContext context) {
+		boolean result = super.validateModel(context);
+
+		_startEvent = _selector.getStartEvent(this);
+
+		return result;
 	}
 
 	@Override

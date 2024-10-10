@@ -16,6 +16,7 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.bpe.bpml.model.Edge;
 import com.top_logic.bpe.bpml.model.Node;
@@ -26,6 +27,7 @@ import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent;
 import com.top_logic.bpe.layout.execution.SelectTransitionDialog;
+import com.top_logic.bpe.layout.execution.init.ProcessInitializer;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -60,10 +62,17 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler impleme
 	 * Configuration options for {@link StartProcessExecutionHandler}.
 	 */
 	public interface Config extends AbstractCommandHandler.Config, WithPostCreateActions.Config {
-		// Pure sum interface.
+
+		/**
+		 * Optional initialization of a newly created process execution.
+		 */
+		PolymorphicConfiguration<? extends ProcessInitializer> getInitializer();
+
 	}
 
 	private final List<PostCreateAction> _actions;
+
+	private ProcessInitializer _init;
 
 	/**
 	 * Creates a {@link StartProcessExecutionHandler} from configuration.
@@ -78,6 +87,7 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler impleme
 		super(context, config);
 
 		_actions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
+		_init = context.getInstance(config.getInitializer());
 	}
 
 	@Override
@@ -86,12 +96,20 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler impleme
 		if (processExecution == null) {
 			// TODO: Remove bullshit.
 			CommandHandler handler = CommandHandlerFactory.getInstance().getHandler("createProcessExecution");
-			HandlerResult res = handler.handleCommand(aContext, aComponent, model, someArguments);
-			if (res.isSuccess()) {
-				processExecution = retrieveProcessExecution(res);
-				someArguments.put(PROCESS_EXECUTION, processExecution);
-			} else {
-				return res;
+
+			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+				HandlerResult res = handler.handleCommand(aContext, aComponent, model, someArguments);
+				if (res.isSuccess()) {
+					processExecution = retrieveProcessExecution(res);
+
+					init(aComponent, model, processExecution);
+
+					tx.commit();
+
+					someArguments.put(PROCESS_EXECUTION, processExecution);
+				} else {
+					return res;
+				}
 			}
 		}
 
@@ -128,20 +146,18 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler impleme
 			}
 		}
 
-		Token firstTask = firstTask(processExecution);
-		WithPostCreateActions.processCreateActions(_actions, aComponent, firstTask);
+		WithPostCreateActions.processCreateActions(_actions, aComponent, processExecution);
 
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	private Token firstTask(ProcessExecution processExecution) {
-		Person person = TLContext.currentUser();
-		for (Token token : processExecution.getUserRelevantTokens()) {
-			if (GuiEngine.getInstance().isActor(person, token)) {
-				return token;
-			}
+	/**
+	 * Initializes the given process model after creation and before advancing the workflow.
+	 */
+	protected void init(LayoutComponent component, Object model, ProcessExecution processExecution) {
+		if (_init != null) {
+			_init.initialize(component, model, processExecution);
 		}
-		return null;
 	}
 
 	private Token findSingleToken(ProcessExecution processExecution) {

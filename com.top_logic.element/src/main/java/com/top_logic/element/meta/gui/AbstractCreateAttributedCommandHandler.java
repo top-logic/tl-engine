@@ -35,7 +35,7 @@ import com.top_logic.model.util.TLModelUtil;
  * <p>
  * Additionally to the {@link AbstractCreateCommandHandler}, this class allows the automatic storage
  * of values from the {@link com.top_logic.knowledge.wrap.Wrapper} objects via
- * {@link #saveMetaAttributes(Map, Wrapper)}. This will only store the values defined in the
+ * {@link #saveMetaAttributes(Map, TLObject)}. This will only store the values defined in the
  * {@link com.top_logic.model.TLClass}.
  * </p>
  * 
@@ -50,17 +50,19 @@ public abstract class AbstractCreateAttributedCommandHandler extends AbstractCre
         super(context, config);
     }
 
-    /** 
-     * Create a new attributed object out of the given information.
-     * 
-     * This method didn't need to store more than the minimum information, all information will
-     * be placed in the new created object {@link #saveMetaAttributes(Map, Wrapper) later}.
-     * 
-     * @param    someValues    The meta attribute values as found in the form context.
-     * @param    aModel        The model of the calling component.
-     * @return   The new created attribute, never <code>null</code>.
-     * @see      #createNewObjectFromMap(Map, Wrapper)
-     */
+    /**
+	 * Create a new attributed object out of the given information.
+	 * 
+	 * This method didn't need to store more than the minimum information, all information will be
+	 * placed in the new created object {@link #saveMetaAttributes(Map, TLObject) later}.
+	 * 
+	 * @param someValues
+	 *        The meta attribute values as found in the form context.
+	 * @param aModel
+	 *        The model of the calling component.
+	 * @return The new created attribute, never <code>null</code>.
+	 * @see #createNewObjectFromMap(Map, Wrapper)
+	 */
     public abstract Wrapper createNewObject(Map<String, Object> someValues, Wrapper aModel);
 
     /**
@@ -123,7 +125,7 @@ public abstract class AbstractCreateAttributedCommandHandler extends AbstractCre
 	 *        The model of the calling component.
 	 * @return The new created attribute, never <code>null</code>.
 	 * @see #createNewObject(Map, Wrapper)
-	 * @see #saveMetaAttributes(Map, Wrapper)
+	 * @see #saveMetaAttributes(Map, TLObject)
 	 */
     public Wrapper createNewObjectFromMap(Map<String,Object> aMap, Wrapper aModel) {
         Wrapper theResult = this.createNewObject(aMap, aModel);
@@ -140,7 +142,7 @@ public abstract class AbstractCreateAttributedCommandHandler extends AbstractCre
      * @return   Flag, if updating has taken place (will not happen, if given context is not instance of
      *           {@link AttributeFormContext}).
      */
-    protected Map<String,Object> extractValues(FormContainer formContainer, Wrapper anAttributed) {
+	protected Map<String, Object> extractValues(FormContainer formContainer, TLObject anAttributed) {
         Map<String,Object> theMap = new HashMap<>();
 
         for (Iterator theIt = formContainer.getFields(); theIt.hasNext();) {
@@ -167,7 +169,7 @@ public abstract class AbstractCreateAttributedCommandHandler extends AbstractCre
      * @return   Flag, if updating has taken place (will not happen, if given context is not instance of
      *           {@link AttributeFormContext}).
      */
-    protected boolean saveMetaAttributes(Map<String, Object> someValues, Wrapper anAttributed) {
+	protected boolean saveMetaAttributes(Map<String, Object> someValues, TLObject anAttributed) {
         boolean hasChanged = false;
 
 		TLStructuredType type = anAttributed.tType();
@@ -181,7 +183,7 @@ public abstract class AbstractCreateAttributedCommandHandler extends AbstractCre
 				continue;
 			}
 			Object theValue = entry.getValue();
-			anAttributed.setValue(key, theValue);
+			anAttributed.tUpdateByName(key, theValue);
 			hasChanged = true;
         }
 

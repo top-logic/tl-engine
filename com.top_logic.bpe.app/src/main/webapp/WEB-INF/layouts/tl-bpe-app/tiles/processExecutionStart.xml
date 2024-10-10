@@ -20,7 +20,7 @@
 				create-handler="startProcessExecution"
 				element=""
 				model="${model}"
-				modifier="com.top_logic.bpe.app.layout.ProcessExecutionFormContextModifier"
+				modifier="com.top_logic.bpe.layout.execution.ProcessExecutionFormContextModifier"
 				name="createProcessExecutionNewAttributed"
 				newModelAction="set-parent-model"
 				page="/jsp/processExecution/StartProcess.jsp"
@@ -34,8 +34,13 @@
 						class="com.top_logic.bpe.layout.execution.command.StartProcessExecutionHandler"
 						group="Create"
 						image="theme:ICONS_ADD_BUTTON"
-						tokenTable="${tokenTable}"
-					/>
+					>
+						<postCreateActions>
+							<postCreateAction class="com.top_logic.bpe.app.layout.ShowTaskAction"
+								tokenTable="${tokenTable}"
+							/>
+						</postCreateActions>
+					</command>
 				</commands>
 			</component>
 		</components>

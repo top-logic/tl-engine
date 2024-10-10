@@ -51,7 +51,7 @@ public class ProcessExecutionCreateComponent extends DefaultCreateAttributedComp
 
 	@Override
 	public TLClass getMetaElement() {
-		return ExecutionProcessCreateHandler.getTypeForStartEvent(startEvent());
+		return ExecutionProcessCreateHandler.getModelType(startEvent());
 	}
 
 	private StartEvent startEvent() {

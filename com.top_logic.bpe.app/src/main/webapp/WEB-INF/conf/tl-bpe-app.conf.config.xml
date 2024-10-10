@@ -41,14 +41,6 @@
 			</instance>
 		</config>
 		
-		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
-			<instance>
-				<handlers>
-		            <handler id="createProcessExecution" class="com.top_logic.bpe.execution.engine.ExecutionProcessCreateHandler" /> 
-				</handlers>	
-			</instance>
-		</config>
-		
 		<config service-class="com.top_logic.base.services.InitialGroupManager">
 			<instance default-group="user">
 				<groups>
@@ -57,7 +49,6 @@
 				</groups>
 			</instance>
 		</config>
-		
 	</services>
 
 	<configs>

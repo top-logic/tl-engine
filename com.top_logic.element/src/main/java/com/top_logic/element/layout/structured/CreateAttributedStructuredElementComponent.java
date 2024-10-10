@@ -286,10 +286,10 @@ public class CreateAttributedStructuredElementComponent extends CreateAttributed
         /**
          * Extend the map of extracted values by the type of the structured element to be created.
          * 
-         * @see com.top_logic.element.meta.gui.AbstractCreateAttributedCommandHandler#extractValues(FormContainer, com.top_logic.knowledge.wrap.Wrapper)
+         * @see com.top_logic.element.meta.gui.AbstractCreateAttributedCommandHandler#extractValues(FormContainer, TLObject)
          */
         @Override
-		protected Map<String,Object> extractValues(FormContainer formContainer, Wrapper anAttributed) {
+		protected Map<String,Object> extractValues(FormContainer formContainer, TLObject anAttributed) {
             Map<String,Object> theValues = super.extractValues(formContainer, anAttributed);
 
             theValues.put(CreateAttributedStructuredElementComponent.PARAMETER_TYPE, this.getType(formContainer));

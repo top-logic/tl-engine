@@ -10,13 +10,17 @@ import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.bpe.execution.engine.GuiEngine;
+import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.Token;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link PostCreateAction} that selects the newly created process in a table.
@@ -56,7 +60,7 @@ public class ShowTaskAction extends AbstractConfiguredInstance<ShowTaskAction.Co
 
 	@Override
 	public void handleNew(LayoutComponent component, Object newModel) {
-		Token task = (Token) newModel;
+		Token task = activeTask((ProcessExecution) newModel);
 
 		DisplayContext aContext = DefaultDisplayContext.getDisplayContext();
 		new StepOutHelper(component).stepOut(aContext);
@@ -66,6 +70,16 @@ public class ShowTaskAction extends AbstractConfiguredInstance<ShowTaskAction.Co
 			 * active task component must occur deferred. */
 			aContext.getLayoutContext().notifyInvalid(displayContext -> showActiveTask(component, task));
 		}
+	}
+
+	private Token activeTask(ProcessExecution processExecution) {
+		Person person = TLContext.currentUser();
+		for (Token token : processExecution.getUserRelevantTokens()) {
+			if (GuiEngine.getInstance().isActor(person, token)) {
+				return token;
+			}
+		}
+		return null;
 	}
 
 	private void showActiveTask(LayoutComponent aComponent, Token task) {

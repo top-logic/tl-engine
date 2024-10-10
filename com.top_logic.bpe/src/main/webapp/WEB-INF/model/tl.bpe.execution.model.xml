@@ -55,15 +55,12 @@
 					type="Token"
 				/>
 				<reference name="processExecution"
+					aggregate="true"
 					inverse-reference="allTokens"
-					kind="forwards"
+					kind="backwards"
 					navigate="true"
 					type="ProcessExecution"
-				>
-					<annotations>
-						<visibility value="read-only"/>
-					</annotations>
-				</reference>
+				/>
 				<property name="finishDate"
 					type="tl.core:DateTime"
 				>
@@ -219,10 +216,12 @@
 			</annotations>
 			<attributes>
 				<reference name="allTokens"
+					composite="true"
 					inverse-reference="processExecution"
-					kind="backwards"
+					kind="forwards"
 					multiple="true"
 					navigate="true"
+					ordered="true"
 					type="Token"
 				>
 					<annotations>

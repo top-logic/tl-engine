@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2022 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -268,13 +268,6 @@ public interface TokenBase extends com.top_logic.bpe.execution.model.Named, com.
 	 */
 	default com.top_logic.bpe.execution.model.ProcessExecution getProcessExecution() {
 		return (com.top_logic.bpe.execution.model.ProcessExecution) tValueByName(PROCESS_EXECUTION_ATTR);
-	}
-
-	/**
-	 * Setter for part {@link #PROCESS_EXECUTION_ATTR}.
-	 */
-	default void setProcessExecution(com.top_logic.bpe.execution.model.ProcessExecution newValue) {
-		tUpdateByName(PROCESS_EXECUTION_ATTR, newValue);
 	}
 
 	/**

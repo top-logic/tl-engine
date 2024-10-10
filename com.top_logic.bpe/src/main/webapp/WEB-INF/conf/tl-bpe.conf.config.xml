@@ -81,10 +81,11 @@
 		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
 			<instance>
 				<handlers>
-				</handlers>
+		            <handler id="createProcessExecution" class="com.top_logic.bpe.execution.engine.ExecutionProcessCreateHandler" /> 
+				</handlers>	
 			</instance>
 		</config>
-
+		
 		<config service-class="com.top_logic.model.annotate.util.AttributeSettings">
 			<instance>
 				<attribute-settings>

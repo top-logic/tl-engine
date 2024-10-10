@@ -10,8 +10,6 @@ import java.util.Map;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.bpe.bpml.model.Participant;
-import com.top_logic.bpe.bpml.model.Process;
 import com.top_logic.bpe.bpml.model.StartEvent;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
@@ -45,19 +43,21 @@ public class ExecutionProcessCreateHandler extends DefaultCreateAttributedComman
 
 	@Override
 	public Wrapper createNewObject(Map<String, Object> someValues, Wrapper aModel) {
-		StartEvent startEvent = (StartEvent) aModel;
-		return (Wrapper) newProcessExecution(startEvent);
+		return (Wrapper) createProcessModel((StartEvent) aModel);
 	}
 
-	public static ProcessExecution newProcessExecution(StartEvent startEvent) {
-		TLClass modelType = getTypeForStartEvent(startEvent);
-		return (ProcessExecution) ModelService.getInstance().getFactory().createObject(modelType);
+	/**
+	 * Allocates an instance of the model type of the process being started.
+	 */
+	public static ProcessExecution createProcessModel(StartEvent startEvent) {
+		return (ProcessExecution) ModelService.getInstance().getFactory().createObject(getModelType(startEvent));
 	}
 
-	public static TLClass getTypeForStartEvent(StartEvent startEvent) {
-		Process process = startEvent.getProcess();
-		Participant participant = process.getParticipant();
-		TLClass modelType = (TLClass) participant.getModelType();
+	/**
+	 * The model type to allocate for a given {@link StartEvent}.
+	 */
+	public static TLClass getModelType(StartEvent startEvent) {
+		TLClass modelType = startEvent.getProcess().getParticipant().getModelType();
 		if (modelType == null) {
 			modelType = TlBpeExecutionFactory.getProcessExecutionType();
 		}

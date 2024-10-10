@@ -254,7 +254,7 @@ public class ExecutionEngine {
 		// create new ProcessExecution
 		if (flowTarget instanceof StartEvent) {
 			StartEvent startEvent = (StartEvent) flowTarget;
-			ProcessExecution execution = ExecutionProcessCreateHandler.newProcessExecution(startEvent);
+			ProcessExecution execution = ExecutionProcessCreateHandler.createProcessModel(startEvent);
 			execution.setCollaboration(processExecution.getCollaboration());
 			execution.setProcess(startEvent.getProcess());
 			TLStructuredType tType = execution.tType();

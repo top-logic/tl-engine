@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="tl-bpe/startProcess.template.xml"
+>
+	<arguments buttonbar="true">
+		<titleKey key="dynamic.70c6f982-8aee-46e1-8926-d9615165c6b2">
+			<en>New ticket</en>
+			<de>Neues Ticket</de>
+		</titleKey>
+		<startEvent class="com.top_logic.bpe.layout.execution.start.ConstantStartEvent"
+			process-name="Ticketsystem"
+			start-event-name="Start"
+		/>
+		<buttons>
+			<button id="ID_3979a0e3_1890_4600_b241_208a11acaf7b"
+				class="com.top_logic.bpe.layout.execution.command.StartProcessExecutionHandler"
+			>
+				<resourceKey key="dynamic.8bdb6e02-4873-4f3f-9094-853c39dfa8c9">
+					<en>Create ticket</en>
+					<de>Ticket anlegen</de>
+				</resourceKey>
+				<postCreateActions>
+					<setModel target="selection(com.top_logic.demo/technical/components/workflow/ticketsTable.layout.xml#Table)">
+						<input/>
+					</setModel>
+				</postCreateActions>
+				<initializer class="com.top_logic.bpe.layout.execution.init.ProcessInitializerByExpression"
+					initializer="ticket -> project -> $project.add(`test.process:Project#tickets`, $ticket)"
+				/>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

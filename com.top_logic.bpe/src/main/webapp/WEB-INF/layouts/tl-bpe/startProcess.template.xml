@@ -3,42 +3,36 @@
 <config:template
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
-	<properties extends="com.top_logic.mig.html.layout.LayoutComponentUIOptions, com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent$UIOptions, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters">
+	<properties extends="com.top_logic.mig.html.layout.LayoutComponentUIOptions, com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent$UIOptions, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.structure.ButtonbarOptions, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.layout.editor.config.ButtonTemplateParameters">
 		<annotations>
 			<display-inherited value="APPEND"/>
 		</annotations>
 	</properties>
 
-	<layout name="Layout"
-		horizontal="false"
+	<!-- component to create attributed objects -->
+	<component class="com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent"
+		buttonbar="${buttonbar}"
+		create-handler="startProcessExecution"
+		element=""
+		isSecurityMaster="${isSecurityMaster}"
+		model="${model}"
+		modifier="com.top_logic.bpe.layout.execution.ProcessExecutionFormContextModifier"
+		name="Form"
+		newModelAction="no-action"
+		page="/jsp/processExecution/StartProcess.jsp"
+		securityObject="${securityObject}"
+		structure=""
+		showMaximize="${showMaximize}"
+		showMinimize="${showMinimize}"
+		showPopOut="${showPopOut}"
+		startEvent="${startEvent}"
+		titleKey="${titleKey}"
+		toolbar="${toolbar}"
+		type="tl.bpe.execution:ProcessExecution"
 	>
-		<components>
-			<!-- component to create attributed objects -->
-			<component class="com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent"
-				buttonbar="true"
-				create-handler="startProcessExecution"
-				element=""
-				model="${model}"
-				modifier="com.top_logic.bpe.layout.execution.ProcessExecutionFormContextModifier"
-				name="Form"
-				newModelAction="no-action"
-				page="/jsp/processExecution/StartProcess.jsp"
-				resPrefix="layouts.tl-bpe-app.tiles.processExecutionStart.createProcessExecution"
-				securityProviderClass="securityRoot"
-				structure=""
-				showMaximize="${showMaximize}"
-				showMinimize="${showMinimize}"
-				showPopOut="${showPopOut}"
-				startEvent="${startEvent}"
-				titleKey="${titleKey}"
-				toolbar="${toolbar}"
-				type="tl.bpe.execution:ProcessExecution"
-			>
-				<buttons>
-					${buttons}
-					<include name="templates/editComponentCommands.xml"/>
-				</buttons>
-			</component>
-		</components>
-	</layout>
+		<buttons>
+			${buttons}
+			<include name="templates/editComponentCommands.xml"/>
+		</buttons>
+	</component>
 </config:template>

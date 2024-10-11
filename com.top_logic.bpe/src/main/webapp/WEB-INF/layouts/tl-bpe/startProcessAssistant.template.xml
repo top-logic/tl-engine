@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	assistant-for="tl-bpe/startProcess.template.xml"
+	groups="form,commons"
+>
+	<properties extends="com.top_logic.mig.html.layout.LayoutComponentUIOptions, com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent$UIOptions, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters">
+		<annotations>
+			<display-inherited value="APPEND"/>
+		</annotations>
+	</properties>
+
+	<config
+		model="${model}"
+		titleKey="${titleKey}"
+		showMaximize="${showMaximize}"
+		showMinimize="${showMinimize}"
+		showPopOut="${showPopOut}"
+		startEvent="${startEvent}"
+		toolbar="${toolbar}"
+	>
+		<buttons>
+			${buttons}
+			<button id="startProcessExecution"
+				class="com.top_logic.bpe.layout.execution.command.StartProcessExecutionHandler"
+				group="Create"
+				image="theme:ICONS_ADD_BUTTON"
+			/>
+		</buttons>
+	</config>
+</config:template>

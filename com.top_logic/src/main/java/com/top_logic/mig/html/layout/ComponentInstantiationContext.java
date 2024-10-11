@@ -7,6 +7,7 @@ package com.top_logic.mig.html.layout;
 
 import java.io.IOException;
 
+import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.config.ConfigurationException;
@@ -103,7 +104,7 @@ public class ComponentInstantiationContext extends InstantiationContextAdaptor {
 			LayoutComponent component =
 				LayoutUtils.createComponentFromXML(innerContext, getMainlayout(), referencedLayout, false, config);
 			return component;
-		} catch (ConfigurationException ex) {
+		} catch (AbortExecutionException | ConfigurationException ex) {
 			/* Do not fail when instantiation failed. Try return "null" and hope that the complete
 			 * layout does not crash. */
 			InfoService.showError(

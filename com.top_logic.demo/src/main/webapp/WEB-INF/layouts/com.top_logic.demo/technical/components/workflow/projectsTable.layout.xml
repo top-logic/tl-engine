@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="_actions,name"
+		type="test.process:Project"
+	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/workflow/createObject/dialog1.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/workflow/properties/dialog1.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.bdc4a332-6b21-4fc3-843e-cc0ca6ba967a">
+			<en>Projects</en>
+			<de>Projekte</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`test.process:Project`)"
+			supportsElement="element->$element.instanceOf(`test.process:Project`)"
+		/>
+		<configurationProviders>
+			<configurationProvider class="com.top_logic.layout.table.provider.ButtonColumnProvider"
+				columnId="_actions"
+				columnLabel="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.buttonColumn"
+				width="40px"
+			>
+				<buttons>
+					<button id="openEditDialog"
+						class="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+						dialog-name="com.top_logic.demo/technical/components/workflow/properties/dialog1.layout.xml#Dialog"
+						group="Write"
+						image="theme:ICONS_BUTTON_EDIT"
+						resourceKey="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.edit"
+						targetComponent="com.top_logic.demo/technical/components/workflow/properties/properties_Form_Form1.layout.xml#Form"
+					>
+						<executability>
+							<rule class="com.top_logic.tool.execution.InViewModeExecutable"/>
+						</executability>
+						<postCreateActions>
+							<setEditMode>
+								<target name="com.top_logic.demo/technical/components/workflow/properties/properties_Form_Form1.layout.xml#Form"/>
+							</setEditMode>
+						</postCreateActions>
+					</button>
+				</buttons>
+			</configurationProvider>
+		</configurationProviders>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="deleteRow"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

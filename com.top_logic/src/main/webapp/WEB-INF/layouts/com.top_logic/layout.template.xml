@@ -4,7 +4,7 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	groups="commons"
 >
-	<properties extends="com.top_logic.layout.editor.config.LayoutTemplateParameters">
+	<properties extends="com.top_logic.layout.editor.config.LayoutTemplateParameters, com.top_logic.layout.structure.ButtonbarOptions">
 		<annotations>
 			<display-inherited value="APPEND"/>
 		</annotations>
@@ -22,10 +22,6 @@
 			<complex-default value="com.top_logic.layout.editor.annotation.LayoutTemplatesDefault"/>
 			<layout-templates value="com.top_logic/layoutPlaceholder.template.xml,com.top_logic/layoutPlaceholder.template.xml"/>
 		</property>
-
-		<property name="buttonbar"
-			type="boolean"
-		/>
 	</properties>
 
 	<layout name="InnerLayout"

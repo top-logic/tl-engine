@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments
+		height="800px"
+		helpID="ID_01dde0b9_dda2_49b5_b448_3aca85d9b21d"
+	>
+		<title>
+			<title key="dynamic.e0d48738-0c00-466c-a944-1c87144a881f">
+				<en>Create ticket</en>
+				<de>Ticket anlegen</de>
+			</title>
+		</title>
+		<open-handler id="ID_f4c6e791_0242_4b1c_9851_7d19893d3fbb"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			image="css:bi bi-plus-lg"
+			targetComponent="com.top_logic.demo/technical/components/workflow/createTicket/startProcess.layout.xml#Form"
+		>
+			<resourceKey key="dynamic.e0d48738-0c00-466c-a944-1c87144a881f">
+				<en>Create ticket</en>
+				<de>Ticket anlegen</de>
+			</resourceKey>
+		</open-handler>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/workflow/createTicket/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

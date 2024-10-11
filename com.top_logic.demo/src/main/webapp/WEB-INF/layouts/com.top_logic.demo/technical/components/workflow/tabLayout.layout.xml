@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_fa6fc7a5_6987_4715_98f6_73d80468bc79">
+		<tabLabel key="dynamic.43fe96a3-be32-4185-b50c-2f0a8e0b43d6">
+			<en>Workflow</en>
+			<de>Workflow</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/workflow/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

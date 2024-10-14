@@ -48,10 +48,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COMPONENT_REPLACING_AFTER_DELETION_ERROR;
 
 	/**
-	 * Error message if a component deletion could not be executed because of outer component
-	 * references.
+	 * @en Component cannot be deleted because outer components reference it: {0}
 	 */
-	public static ResKey OUTER_REFERENCES_DELETION_ERROR;
+	public static ResKey1 OUTER_REFERENCES_DELETION_ERROR__LAYOUTS;
 
 	/**
 	 * Title key for the dialog to edit an existent component.

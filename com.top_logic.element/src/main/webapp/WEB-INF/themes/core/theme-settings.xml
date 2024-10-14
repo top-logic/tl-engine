@@ -61,8 +61,8 @@
 	<icon name="TREE_PROJ_WP"
 		value="/tree/proj/wp.png"
 	/>
-	<icon name="TREE_TEST_I"
-		value="/tree/test/i.png"
+	<icon name="ICON_SHIELD"
+		value="css:bi bi-shield-fill-check"
 	/>
 	<icon name="com.top_logic.element.comment.layout.Icons.EDIT"
 		value="css:bi bi-pencil-square"

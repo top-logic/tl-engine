@@ -287,6 +287,10 @@ public interface PostCreateAction {
 
 	/**
 	 * Jumps to a specified component by switching tabs, opening dialogs, selecting tiles.
+	 * 
+	 * <p>
+	 * The component receives the command result as new model.
+	 * </p>
 	 */
 	@InApp
 	class ShowComponent extends WithTransform<ShowComponent.Config> {
@@ -323,6 +327,41 @@ public interface PostCreateAction {
 			}
 			targetComponent.setModel(newModel);
 			targetComponent.makeVisible();
+		}
+	}
+
+	/**
+	 * Closes the dialog where the executed command was defined in.
+	 */
+	@InApp
+	class CloseDialog extends AbstractConfiguredInstance<CloseDialog.Config> implements PostCreateAction {
+		/**
+		 * Configuration options for {@link CloseDialog}.
+		 */
+		@TagName(Config.TAG_NAME)
+		public interface Config extends PolymorphicConfiguration<CloseDialog> {
+			/**
+			 * Short-cut tag name for configuring a {@link CloseDialog} action.
+			 */
+			String TAG_NAME = "close-dialog";
+		}
+
+		/**
+		 * Creates a {@link PostCreateAction.CloseDialog} from configuration.
+		 * 
+		 * @param context
+		 *        The context for instantiating sub configurations.
+		 * @param config
+		 *        The configuration.
+		 */
+		@CalledByReflection
+		public CloseDialog(InstantiationContext context, Config config) {
+			super(context, config);
+		}
+
+		@Override
+		public void handleNew(LayoutComponent component, Object newModel) {
+			component.closeDialog();
 		}
 	}
 

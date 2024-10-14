@@ -6,6 +6,7 @@
 package test.com.top_logic.element.boundsec.wrap;
 
 import java.util.Collection;
+import java.util.Collections;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -143,11 +144,10 @@ public class TestAbstractBoundWrapper extends BasicTestCase {
             super(ko);
         }
 
-
         /** We don't want to test object hierarchy right now */
         @Override
 		public Collection<? extends BoundObject> getSecurityChildren() {
-            return null;
+			return Collections.emptyList();
         }
 
         /** We don't want to test object hierarchy right now */

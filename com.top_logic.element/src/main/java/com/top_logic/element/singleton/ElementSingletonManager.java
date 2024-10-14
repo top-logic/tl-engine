@@ -8,6 +8,7 @@ package com.top_logic.element.singleton;
 import com.top_logic.basic.StringServices;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLObject;
 
 /**
  * @author    <a href="mailto:tsa@top-logic.com">tsa</a>
@@ -23,7 +24,7 @@ public class ElementSingletonManager {
 	 *        a singleton reference
 	 * @return NULL in case no object is registered for the given reference
 	 */
-	public static Object getSingleton(String singletonReference) {
+	public static TLObject getSingleton(String singletonReference) {
 		if (StringServices.isEmpty(singletonReference)) {
             return null;
         }

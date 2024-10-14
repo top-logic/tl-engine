@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28280_move_security_root"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_28263_add_deletion_policy_to_reference"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<make-flex-attribute
+			table="StructuredElement"
+			column="name"
+			types="SecurityStructure:Root"
+		/>
+		<move-objects
+			source-table="StructuredElement"
+			dest-table="GenericObject"
+			types="SecurityStructure:Root"
+		/>
+		<remove-annotations name="SecurityStructure:SecurityStructure.Root">
+		  <annotation class="com.top_logic.model.annotate.LegacyQualifiedNameForCompatibility"/>
+		</remove-annotations>
+		<remove-annotations name="SecurityStructure:SecurityStructure.Root">
+		  <annotation class="com.top_logic.model.annotate.InstancePresentation"/>
+		</remove-annotations>
+		<remove-annotations name="SecurityStructure:Root">
+		  <annotation class="com.top_logic.model.config.annotation.TableName"/>
+		</remove-annotations>
+		<remove-annotations name="SecurityStructure:Root">
+		  <annotation class="com.top_logic.model.config.JavaClass"/>
+		</remove-annotations>
+		<remove-class-generalizations name="SecurityStructure:Root">
+		  <generalization type="tl.element:StructuredElement"/>
+		</remove-class-generalizations>
+		<remove-class-generalizations name="SecurityStructure:SecurityStructure.Root">
+		  <generalization type="tl.element:StructuredElement"/>
+		</remove-class-generalizations>
+		<add-class-generalizations name="SecurityStructure:SecurityStructure.Root">
+		  <generalizations>
+		    <generalization type="tl.model:TLObject"/>
+		  </generalizations>
+		</add-class-generalizations>
+		<add-annotations name="SecurityStructure:SecurityStructure.Root">
+		  <annotations>
+		    <instance-presentation icon="theme:ICON_SHIELD"/>
+		  </annotations>
+		</add-annotations>
+	</processors>
+	<post-processors/>
+</migration>

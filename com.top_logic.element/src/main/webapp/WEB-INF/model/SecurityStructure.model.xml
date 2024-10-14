@@ -12,8 +12,7 @@
 			<types>
 				<interface name="SecurityStructure.Root">
 					<annotations>
-						<instance-presentation icon="theme:TREE_TEST_I"/>
-						<legacy-qualified-name qualified-name="SecurityStructure.Root"/>
+						<instance-presentation icon="theme:ICON_SHIELD"/>
 					</annotations>
 					<attributes>
 						<property name="name"
@@ -40,18 +39,10 @@
 							type="tl.accounts:Person"
 						/>
 					</attributes>
-					<generalizations>
-						<generalization type="tl.element:StructuredElement"/>
-					</generalizations>
 				</interface>
 				<class name="Root">
-					<annotations>
-						<table name="StructuredElement"/>
-						<implementation-binding class-name="com.top_logic.element.structured.wrap.AttributedStructuredElementWrapper"/>
-					</annotations>
 					<generalizations>
 						<generalization type="SecurityStructure.Root"/>
-						<generalization type="tl.element:StructuredElement"/>
 					</generalizations>
 				</class>
 			</types>

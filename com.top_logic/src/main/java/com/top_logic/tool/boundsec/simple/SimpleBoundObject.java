@@ -7,6 +7,7 @@ package com.top_logic.tool.boundsec.simple;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -89,7 +90,7 @@ public class SimpleBoundObject extends TransientObject implements BoundObject {
      */
     @Override
 	public Collection<? extends BoundObject> getSecurityChildren() {
-        return children;
+		return children == null ? Collections.emptyList() : children;
     }
 
     /** Add a new Child to the List of Children */

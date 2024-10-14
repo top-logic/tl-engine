@@ -15,6 +15,7 @@ import com.top_logic.basic.func.Function1;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.form.model.utility.DefaultTreeOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
+import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.tree.model.BusinessObjectTreeModel;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -31,20 +32,24 @@ public class RelativeComponentNames extends Function1<OptionModel<ComponentName>
 
 	private MainLayout _ml;
 
+	private LayoutComponent _contextComponent;
+
 	/**
 	 * Creates a {@link RelativeComponentNames}.
 	 *
 	 */
-	public RelativeComponentNames() {
+	public RelativeComponentNames(DeclarativeFormOptions options) {
 		_ml = MainLayout.getMainLayout(DefaultDisplayContext.getDisplayContext());
+		_contextComponent = options.get(ComponentConfigurationDialogBuilder.COMPONENT);
 	}
 
 	@Override
 	public OptionModel<ComponentName> apply(ComponentName root) {
 		if (root == null) {
-			return null;
+			return new DefaultTreeOptionModel<>(createTreeModel(_contextComponent.getName()));
+		} else {
+			return new DefaultTreeOptionModel<>(createTreeModel(root));
 		}
-		return new DefaultTreeOptionModel<>(createTreeModel(root));
 	}
 
 	private BusinessObjectTreeModel<ComponentName> createTreeModel(ComponentName root) {
@@ -57,6 +62,9 @@ public class RelativeComponentNames extends Function1<OptionModel<ComponentName>
 	private Function<ComponentName, Collection<?>> createParentByName() {
 		return name -> {
 			LayoutComponent component = _ml.getComponentByName(name);
+			if (component == null) {
+				return Collections.emptyList();
+			}
 
 			return Collections.singleton(component.getParent().getName());
 		};

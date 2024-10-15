@@ -127,15 +127,12 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 	}
 
 	public ThemeImage getIcon() {
-		Object model = getModel();
-		ThemeImage res = null;
-		if (model instanceof Iconified) {
-			res = ((Iconified) model).getIcon();
+		Token model = getToken();
+		ThemeImage icon = ((Iconified) model).getIcon();
+		if (icon == null) {
+			icon = MetaResourceProvider.INSTANCE.getImage(model, Flavor.ENLARGED);
 		}
-		if (res == null) {
-			res = MetaResourceProvider.INSTANCE.getImage(model, Flavor.ENLARGED);
-		}
-		return res;
+		return icon;
 	}
 
 	public static class FinishTaskRule implements ExecutabilityRule {

@@ -5,12 +5,14 @@
  */
 package com.top_logic.bpe.layout.execution.start;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.bpe.bpml.model.StartEvent;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
  * {@link StartEventSelector} using the component's model as {@link StartEvent}.
  */
+@InApp
 public class ModelAsStartEvent implements StartEventSelector {
 
 	/**

@@ -470,7 +470,9 @@ public abstract class EditAttributedComponent extends EditComponent implements F
         this.hasFolderFields = false;
         if (theME != null) {
 			if (this.modifier.preModify(this, theME, theAttributed)) {
-				UpdateFactory overlay = formContext.editObject(theAttributed);
+				UpdateFactory overlay = theAttributed == null ? 
+					formContext.createObject(theME, null) :
+					formContext.editObject(theAttributed);
 
 				for (TLStructuredTypePart theMA : TLModelUtil.getMetaAttributes(theME)) {
                     String          theName    = theMA.getName();

@@ -204,9 +204,8 @@ public class DisplayPDFControl extends ConstantControl<BinaryDataSource> {
 	 */
 	public static URLPathBuilder displayPdfURL(DisplayContext context, String pdfURL) {
 		URLPathBuilder builder = URLPathBuilder.newBuilder(context);
-		// Path to viewer.HTML in ext.org.mozilla.pdfjs
-		builder.addResource("html");
-		builder.addResource("pdfjs");
+		builder.addResource("webjars");
+		builder.addResource("pdf.js");
 		builder.addResource("web");
 		builder.addResource("viewer.html");
 		builder.appendParameter("file", pdfURL);

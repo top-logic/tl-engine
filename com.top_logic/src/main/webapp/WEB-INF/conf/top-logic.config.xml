@@ -549,10 +549,6 @@
 					<file resource="tl/DragAndDropFile.js" />
 					<file resource="tl/formEditor.js" />
 				</files>
-				
-				<additional-files>
-					<file resource="webjar:org.webjars.npm/pdfjs-dist:/webjars/pdfjs-dist:build/pdf.mjs" module="module" as="pdf"/>
-				</additional-files>
 			</instance>
 		</config>
 

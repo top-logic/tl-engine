@@ -6,13 +6,13 @@
 >
 	<arguments
 		model="model(com.top_logic.demo/technical/components/workflow/properties/dialog.layout.xml#Dialog)"
+		saveClosesDialog="false"
 		securityObject="securityRoot"
 	>
 		<titleKey key="dynamic.285e7151-5116-4248-a299-fae522b2cfba">
 			<en>Advance ticket</en>
 			<de>Ticket weiterschalten</de>
 		</titleKey>
-		<startEvent/>
 		<buttons>
 			<button id="finishTask"
 				class="com.top_logic.bpe.layout.execution.command.FinishTaskCommand"
@@ -26,9 +26,7 @@
 					<rule class="com.top_logic.bpe.layout.execution.ActiveTaskComponent$FinishTaskRule"/>
 				</executability>
 				<postCreateActions>
-					<with-transformed-model
-						transformation="ticket -> $ticket.get(`test.process:Ticket#activeTokens`).firstElement()"
-					>
+					<with-transformed-model transformation="ticket -> $ticket.get(`test.process:Ticket#activeTokens`).firstElement()">
 						<postCreateActions>
 							<conditional-actions condition="task -> $task == null">
 								<postCreateActions>

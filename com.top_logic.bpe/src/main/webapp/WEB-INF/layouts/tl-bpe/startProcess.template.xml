@@ -12,7 +12,6 @@
 	<!-- component to create attributed objects -->
 	<component class="com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent"
 		buttonbar="${buttonbar}"
-		create-handler="startProcessExecution"
 		element=""
 		isSecurityMaster="${isSecurityMaster}"
 		model="${model}"

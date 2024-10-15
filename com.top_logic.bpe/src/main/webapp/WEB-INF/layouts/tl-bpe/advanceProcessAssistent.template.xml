@@ -5,7 +5,7 @@
 	assistant-for="tl-bpe/advanceProcess.template.xml"
 	groups="form,commons"
 >
-	<properties extends="com.top_logic.mig.html.layout.LayoutComponentUIOptions, com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent$UIOptions, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.structure.ButtonbarOptions, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.layout.editor.config.ButtonTemplateParameters">
+	<properties extends="com.top_logic.mig.html.layout.LayoutComponentUIOptions, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.structure.ButtonbarOptions, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.layout.editor.config.ButtonTemplateParameters">
 		<annotations>
 			<display-inherited value="APPEND"/>
 		</annotations>

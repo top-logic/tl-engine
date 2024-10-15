@@ -13,14 +13,12 @@
 			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
 			image="theme:ICONS_BUTTON_EDIT"
 			resourceKey="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.editButton"
-			target="selection(self())"
-			targetComponent="com.top_logic.demo/technical/components/workflow/properties/properties_Form_Form.layout.xml#Form"
+			targetComponent="com.top_logic.demo/technical/components/workflow/properties/editTicketTaskEdit.layout.xml#TaskEdit"
 		>
-			<postCreateActions>
-				<setEditMode>
-					<target name="com.top_logic.demo/technical/components/workflow/properties/properties_Form_Form.layout.xml#Form"/>
-				</setEditMode>
-			</postCreateActions>
+			<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+				function="ticket -> $ticket.get(`test.process:Ticket#activeTokens`).firstElement()"
+				input="selection(self())"
+			/>
 		</open-handler>
 		<buttons>
 			<button id="showPrevious"
@@ -35,7 +33,7 @@
 						<target name="com.top_logic.demo/technical/components/workflow/ticketsTable.layout.xml#Table"/>
 					</channel>
 					<channel name="model">
-						<target name="com.top_logic.demo/technical/components/workflow/properties/properties_Form_Form.layout.xml#Form"/>
+						<target name="com.top_logic.demo/technical/components/workflow/properties/editTicketTaskEdit.layout.xml#TaskEdit"/>
 					</channel>
 				</target>
 				<executability>
@@ -55,7 +53,7 @@
     $rows[$index - 1];
 }]]></operation>
 				<postCreateActions>
-					<setModel target="model(com.top_logic.demo/technical/components/workflow/properties/properties_Form_Form.layout.xml#Form)">
+					<setModel target="model(com.top_logic.demo/technical/components/workflow/properties/editTicketTaskEdit.layout.xml#TaskEdit)">
 						<input/>
 					</setModel>
 					<setModel target="selection(com.top_logic.demo/technical/components/workflow/ticketsTable.layout.xml#Table)">
@@ -75,7 +73,7 @@
 						<target name="com.top_logic.demo/technical/components/workflow/ticketsTable.layout.xml#Table"/>
 					</channel>
 					<channel name="model">
-						<target name="com.top_logic.demo/technical/components/workflow/properties/properties_Form_Form.layout.xml#Form"/>
+						<target name="com.top_logic.demo/technical/components/workflow/properties/editTicketTaskEdit.layout.xml#TaskEdit"/>
 					</channel>
 				</target>
 				<executability>
@@ -95,7 +93,7 @@
     $rows[$index + 1];
 }]]></operation>
 				<postCreateActions>
-					<setModel target="model(com.top_logic.demo/technical/components/workflow/properties/properties_Form_Form.layout.xml#Form)">
+					<setModel target="model(com.top_logic.demo/technical/components/workflow/properties/editTicketTaskEdit.layout.xml#TaskEdit)">
 						<input/>
 					</setModel>
 					<setModel target="selection(com.top_logic.demo/technical/components/workflow/ticketsTable.layout.xml#Table)">
@@ -105,7 +103,7 @@
 			</button>
 		</buttons>
 		<components>
-			<layout-reference resource="com.top_logic.demo/technical/components/workflow/properties/properties_Form_Form.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/workflow/properties/innerLayout.layout.xml"/>
 		</components>
 	</arguments>
 </config:template-call>

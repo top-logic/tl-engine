@@ -13,7 +13,7 @@
 			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
 			image="theme:ICONS_BUTTON_EDIT"
 			resourceKey="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.editButton"
-			targetComponent="com.top_logic.demo/technical/components/workflow/properties/editTicketTaskEdit.layout.xml#TaskEdit"
+			targetComponent="com.top_logic.demo/technical/components/workflow/properties/advanceTicketTaskEdit.layout.xml#TaskEdit"
 		>
 			<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
 				function="ticket -> $ticket.get(`test.process:Ticket#activeTokens`).firstElement()"

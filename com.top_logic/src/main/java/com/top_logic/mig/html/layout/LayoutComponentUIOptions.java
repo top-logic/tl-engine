@@ -9,6 +9,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
@@ -20,6 +21,10 @@ import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayT
  * 
  * @see LayoutComponent.Config
  */
+@DisplayOrder({
+	LayoutComponentUIOptions.TITLE_KEY,
+	LayoutComponentUIOptions.MODEL,
+})
 public interface LayoutComponentUIOptions extends ConfigurationItem {
 
 	/** @see #getTitleKey() */

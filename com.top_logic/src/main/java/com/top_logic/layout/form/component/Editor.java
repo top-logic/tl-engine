@@ -47,9 +47,25 @@ import com.top_logic.tool.boundsec.HandlerResult;
 public interface Editor extends EditMode, CanApply {
 	
 	/**
+	 * Options available to the layout editor.
+	 */
+	interface UIOptions extends EditMode.Config {
+		/** @see #getSaveClosesDialog() */
+		String SAVE_CLOSES_DIALOG_ATTRIBUTE = "saveClosesDialog";
+
+		/**
+		 * Whether the "save" command also closes the surrounding dialog (if this component is
+		 * opened in a dialog).
+		 */
+		@Name(SAVE_CLOSES_DIALOG_ATTRIBUTE)
+		@BooleanDefault(true)
+		boolean getSaveClosesDialog();
+	}
+
+	/**
 	 * Configuration options for {@link Editor}.
 	 */
-	public interface Config extends EditMode.Config {
+	public interface Config extends UIOptions {
 
 		/** @see #getApplyCommand() */
 		String APPLY_COMMAND = "applyCommand";
@@ -68,9 +84,6 @@ public interface Editor extends EditMode, CanApply {
 
 		/** @see #getShowDiscardButton() */
 		String SHOW_DISCARD_BUTTON_ATTRIBUTE = "showDiscardButton";
-
-		/** @see #getSaveClosesDialog() */
-		String SAVE_CLOSES_DIALOG_ATTRIBUTE = "saveClosesDialog";
 
 		/**
 		 * ID of the edit {@link CommandHandler} switching the component into edit mode.
@@ -188,17 +201,9 @@ public interface Editor extends EditMode, CanApply {
 		@BooleanDefault(false)
 		boolean getShowDiscardButton();
 
-		/**
-		 * Whether the "save" command also closes the surrounding dialog (if this component is
-		 * opened in a dialog).
-		 */
-		@Name(SAVE_CLOSES_DIALOG_ATTRIBUTE)
-		@BooleanDefault(true)
-		boolean getSaveClosesDialog();
-
 		@Override
 		default void modifyIntrinsicCommands(CommandRegistry registry) {
-			EditMode.Config.super.modifyIntrinsicCommands(registry);
+			UIOptions.super.modifyIntrinsicCommands(registry);
 
 			String applyCommand = getApplyCommand();
 			String saveCommand = getSaveCommandEffective();

@@ -103,7 +103,12 @@ public class BusinessObjectTreeModel<T> implements TLTreeModel<T> {
 
 		validateIndex(object);
 
-		return _treeModel.getIndex().getNodes(object).get(0);
+		List<DefaultTreeUINode> updatedNodes = _treeModel.getIndex().getNodes(object);
+		if (CollectionUtil.isEmpty(updatedNodes)) {
+			return null;
+		}
+
+		return updatedNodes.get(0);
 	}
 
 	private void validateIndex(T object) {
@@ -167,8 +172,12 @@ public class BusinessObjectTreeModel<T> implements TLTreeModel<T> {
 
 	@Override
 	public T getParent(T object) {
-		DefaultTreeUINode parent = _treeModel.getParent(internalNode(object));
+		DefaultTreeUINode node = internalNode(object);
+		if (node == null) {
+			return null;
+		}
 
+		DefaultTreeUINode parent = _treeModel.getParent(node);
 		if (parent != null) {
 			return getBusinessObject(parent);
 		}

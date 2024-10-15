@@ -14,7 +14,6 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
@@ -102,7 +101,6 @@ public class AbstractCreateComponent extends FormComponent {
 		 *             {@link #getButtons() button}.
 		 */
 		@Deprecated
-		@Mandatory
 		@Name(CREATE_HANDLER)
 		String getCreateHandler();
 

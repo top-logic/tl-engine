@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="tl-bpe/advanceProcess.template.xml"
+>
+	<arguments
+		model="model(com.top_logic.demo/technical/components/workflow/properties/dialog.layout.xml#Dialog)"
+		securityObject="securityRoot"
+	>
+		<titleKey key="dynamic.285e7151-5116-4248-a299-fae522b2cfba">
+			<en>Advance ticket</en>
+			<de>Ticket weiterschalten</de>
+		</titleKey>
+		<startEvent/>
+		<buttons>
+			<button id="finishTask"
+				class="com.top_logic.bpe.layout.execution.command.FinishTaskCommand"
+				image="css:bi bi-play-fill"
+			>
+				<resourceKey key="dynamic.56bd4822-ec11-4d8b-93ac-79c5a88a7b2d">
+					<en>Complete task</en>
+					<de>Aufgabe abschließen</de>
+				</resourceKey>
+				<executability>
+					<rule class="com.top_logic.bpe.layout.execution.ActiveTaskComponent$FinishTaskRule"/>
+				</executability>
+				<postCreateActions>
+					<with-transformed-model
+						transformation="ticket -> $ticket.get(`test.process:Ticket#activeTokens`).firstElement()"
+					>
+						<postCreateActions>
+							<conditional-actions condition="task -> $task == null">
+								<postCreateActions>
+									<close-dialog/>
+								</postCreateActions>
+							</conditional-actions>
+							<conditional-actions condition="task -> $task != null">
+								<postCreateActions>
+									<setModel target="model(self())">
+										<input/>
+									</setModel>
+								</postCreateActions>
+							</conditional-actions>
+						</postCreateActions>
+					</with-transformed-model>
+				</postCreateActions>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

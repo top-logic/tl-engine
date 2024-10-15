@@ -15,6 +15,8 @@ import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.bpe.bpml.model.Edge;
 import com.top_logic.bpe.bpml.model.Gateway;
@@ -27,6 +29,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
 import com.top_logic.layout.form.component.EditComponent;
@@ -42,11 +45,16 @@ import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * {@link CommandHandler} to finish a task. Shows a confirm-dialog before switching to the next
- * task. In case of manual {@link Gateway}s the user can choose the next step.
+ * {@link CommandHandler} that completes a task and advances the process to the next step(s).
+ * 
+ * <p>
+ * A confirm-dialog is shown before switching to the next task. If a manual {@link Gateway} follows
+ * the completed task, the user can explicitly choose the next step.
+ * </p>
  * 
  * @author <a href="mailto:cca@top-logic.com">cca</a>
  */
+@Label("Complete task")
 @InApp(classifiers = "workflow")
 public class FinishTaskCommand extends AbstractCommandHandler implements WithPostCreateActions {
 
@@ -64,7 +72,9 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 	 * Configuration options for {@link FinishTaskCommand}.
 	 */
 	public interface Config extends AbstractCommandHandler.Config, WithPostCreateActions.Config {
-		// Pure sum interface.
+		@Override
+		@FormattedDefault("css:ICON_PLAY")
+		ThemeImage getImage();
 	}
 
 	private final List<PostCreateAction> _actions;

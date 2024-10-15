@@ -1,7 +1,0 @@
-.apt_generated
-tmp
-target
-TEST-*.xml
-test-time.txt
-jacoco.exec
-dist

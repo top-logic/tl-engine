@@ -131,7 +131,6 @@
 		<module>../ext.io.bpmn.bpmn-js</module>
 		<module>../ext.io.c9.ace</module>
 		<module>../ext.org.chartjs</module>
-		<module>../ext.org.mozilla.pdfjs</module>
 		<module>../ext.org.requirejs</module>
 
 		<!-- Test modules -->

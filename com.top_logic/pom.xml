@@ -54,8 +54,8 @@
     </dependency>
 
 	<dependency>
-	    <groupId>org.webjars.npm</groupId>
-	    <artifactId>pdfjs-dist</artifactId>
+	    <groupId>org.webjars.bowergithub.mozilla</groupId>
+		<artifactId>pdf.js</artifactId>
 	</dependency>
 
 	<dependency>

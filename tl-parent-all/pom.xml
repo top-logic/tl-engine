@@ -1095,9 +1095,9 @@
 			    <version>1.16.1</version>
 			</dependency>
 			<dependency>
-			    <groupId>org.webjars.npm</groupId>
-			    <artifactId>pdfjs-dist</artifactId>
-			    <version>4.6.82</version>
+			    <groupId>org.webjars.bowergithub.mozilla</groupId>
+			    <artifactId>pdf.js</artifactId>
+			    <version>4.2.67</version>
 			</dependency>
 			<dependency>
 			    <groupId>org.pac4j</groupId>

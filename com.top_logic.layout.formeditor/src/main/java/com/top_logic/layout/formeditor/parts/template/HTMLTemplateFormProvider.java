@@ -481,10 +481,12 @@ public class HTMLTemplateFormProvider
 				return varValue;
 			}
 
-			TLStructuredTypePart part = _model.tType().getPart(propertyName);
-			if (part != null) {
-				Object value = _model.tValue(part);
-				return value;
+			if (_model != null) {
+				TLStructuredTypePart part = _model.tType().getPart(propertyName);
+				if (part != null) {
+					Object value = _model.tValue(part);
+					return value;
+				}
 			}
 
 			return super.getPropertyValue(propertyName);

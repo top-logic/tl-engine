@@ -135,7 +135,7 @@ public class DeleteGraphPartCommand extends ControlCommand {
 	}
 
 	private DefaultLayoutData getDialogLayout() {
-		return new DefaultLayoutData(dim(500, PIXEL), 100, dim(50, PIXEL), 100, Scrolling.AUTO);
+		return new DefaultLayoutData(dim(500, PIXEL), 100, dim(150, PIXEL), 100, Scrolling.AUTO);
 	}
 
 	private DisplayValue getDialogMessage(GraphPart graphPart) {

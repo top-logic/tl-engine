@@ -41,7 +41,7 @@ public class SimpleSelectDialog<T> extends SimpleFormDialog implements ValueList
 	public static final DisplayDimension DEFAULT_WIDTH = dim(400, DisplayUnit.PIXEL);
 
 	/** Default height of the opened dialog. */
-	public static final DisplayDimension DEFAULT_HEIGHT = dim(200, DisplayUnit.PIXEL);
+	public static final DisplayDimension DEFAULT_HEIGHT = dim(300, DisplayUnit.PIXEL);
 
 	/** Command to execute when the OK button is pressed. */
 	protected final CommandModel _okButton = MessageBox.button(ButtonType.OK, new Command() {

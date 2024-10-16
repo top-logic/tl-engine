@@ -55,6 +55,12 @@ public class Icons extends IconsBase {
 	public static ThemeVar<Integer> FILTER_DIALOG_WIDTH;
 
 	/**
+	 * Filter dialog height.
+	 */
+	@DefaultValue("200")
+	public static ThemeVar<Integer> FILTER_DIALOG_HEIGHT;
+
+	/**
 	 * Height of a header row of tables with fixed columns in pixels.
 	 */
 	@DefaultValue("28px")

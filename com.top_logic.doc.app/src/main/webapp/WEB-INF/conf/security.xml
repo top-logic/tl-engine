@@ -115,7 +115,7 @@
 				<commandGroup name="Export"/>
 				<commandGroup name="Read"/>
 			</view>
-			<view name="com.top_logic/admin/model/currencies/adminCurrencies.layout.xml#adminCurrencies">
+			<view name="admin/currencies/adminCurrencies.layout.xml#adminCurrencies">
 				<commandGroup name="Read"/>
 				<commandGroup name="Write"/>
 			</view>

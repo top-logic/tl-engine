@@ -6,6 +6,6 @@
 >
 	<tabInfo label="admin.currency.tabber"/>
 	<components>
-		<include name="com.top_logic/admin/model/currencies/currencyAdmin.xml"/>
+		<layout-reference resource="com.top_logic.element/admin/base/currencies/innerLayout.layout.xml"/>
 	</components>
 </securityLayout>

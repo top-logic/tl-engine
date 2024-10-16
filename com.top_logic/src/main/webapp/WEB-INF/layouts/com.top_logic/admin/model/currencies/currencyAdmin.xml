@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8" ?>
-
-<component class="com.top_logic.layout.currency.EditCurrencyListComponent"
-	allowRenaming="true"
-	name="editCurrencyList"
-	page="/jsp/administration/currency/EditCurrencyList.jsp"
-	resPrefix="admin.currency.edit."
-	securityProviderClass="securityRoot"
-/>

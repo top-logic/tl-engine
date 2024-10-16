@@ -1890,10 +1890,11 @@
 		<config config:interface="com.top_logic.util.TLContext$Config"
 			personalConfiguration="com.top_logic.knowledge.wrap.person.TransientPersonalConfiguration"
 		/>
-			
+		
+		<!-- These two default values must remain the same as in the SortConfigDialog$Config -->
 		<config config:interface="com.top_logic.layout.table.control.SortConfigDialog$Config"
 			width="400px"
-			height="300px"
+			height="350px"
 		/>
 		
 		<config config:interface="com.top_logic.layout.form.control.DataItemControl$Config"
@@ -1988,8 +1989,9 @@
 		</config>
 		
 		<config config:interface="com.top_logic.layout.messagebox.MessageBox$GlobalConfig">
-			<width>400</width>
-			<height>150</height>
+		<!-- These two default values must remain the same as in the MessageBox$GlobalConfig -->
+			<width>500</width>
+			<height>250</height>
 			<resizable>true</resizable>
 		</config>
 		

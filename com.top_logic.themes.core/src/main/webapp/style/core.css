@@ -1363,7 +1363,8 @@ div.mboxImage {
 }
 
 div.mboxContent {
-	margin: 5px;
+	margin: var(--spacing-02) 0;
+	overflow-wrap: break-word;
 }
 
 div.mboxHeader {
@@ -1558,7 +1559,7 @@ div.lcHidden {
 .tooltipContent * {
 	color: var(--text-inverse);
 	line-height: 1.5 !important;
-		padding: 0;
+	padding: 0;
 }
 
 .tooltipContent ul {

@@ -187,22 +187,25 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 		@Override
 		public Integer visit(CreateStructuredTypePart diff, Void arg) throws RuntimeException {
-			return 30;
+			if (diff.getPart().isOverride()) {
+				return 31;
+			}
+			return 28;
 		}
 
 		@Override
 		public Integer visit(CreateClassifier diff, Void arg) throws RuntimeException {
-			return 30;
+			return 25;
 		}
 
 		@Override
 		public Integer visit(UpdateStorageMapping diff, Void arg) throws RuntimeException {
-			return 30;
+			return 33;
 		}
 
 		@Override
 		public Integer visit(UpdatePartType diff, Void arg) throws RuntimeException {
-			return 31;
+			return 35;
 		}
 
 		@Override

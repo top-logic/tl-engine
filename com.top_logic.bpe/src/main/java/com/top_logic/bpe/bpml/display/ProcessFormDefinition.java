@@ -6,6 +6,7 @@
 package com.top_logic.bpe.bpml.display;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.bpe.bpml.model.ManualTask;
 
@@ -21,8 +22,19 @@ import com.top_logic.bpe.bpml.model.ManualTask;
 public interface ProcessFormDefinition extends ConfigPart {
 
 	/**
-	 * The algorithm creating the form.
+	 * Form for this process step.
+	 * 
+	 * <p>
+	 * This form is displayed to a user who is assigned as the processor for this process step.
+	 * </p>
+	 * 
+	 * <p>
+	 * If nothing is configured here, the default form of the process model type is displayed in
+	 * this step. By setting this property, you can either define a fully-customized form or adjust
+	 * the default form or the form of another process step.
+	 * </p>
 	 */
+	@Label("Display")
 	PolymorphicConfiguration<? extends FormProvider> getFormProvider();
 
 	/**

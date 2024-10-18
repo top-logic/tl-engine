@@ -19,6 +19,8 @@ import com.top_logic.bpe.bpml.model.Node;
 import com.top_logic.bpe.bpml.model.Participant;
 import com.top_logic.bpe.bpml.model.Process;
 import com.top_logic.element.layout.formeditor.FormDefinitionTemplate;
+import com.top_logic.element.meta.form.fieldprovider.form.TemplateResolver;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.form.definition.FormDefinition;
 
 /**
@@ -26,7 +28,7 @@ import com.top_logic.model.form.definition.FormDefinition;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class ParticipantTemplateBuilder implements Function<Object, Supplier<? extends List<FormDefinitionTemplate>>> {
+public class ParticipantTemplateBuilder implements TemplateResolver {
 
 	/** Singleton {@link ParticipantTemplateBuilder} instance. */
 	public static final ParticipantTemplateBuilder INSTANCE = new ParticipantTemplateBuilder();
@@ -39,8 +41,8 @@ public class ParticipantTemplateBuilder implements Function<Object, Supplier<? e
 	}
 
 	@Override
-	public Supplier<? extends List<FormDefinitionTemplate>> apply(Object t) {
-		Participant participant = (Participant) t;
+	public Supplier<List<FormDefinitionTemplate>> getTemplates(TLObject object) {
+		Participant participant = (Participant) object;
 		return () -> {
 			List<FormDefinitionTemplate> templates = new ArrayList<>();
 			Process process = participant.getProcess();
@@ -49,8 +51,8 @@ public class ParticipantTemplateBuilder implements Function<Object, Supplier<? e
 				Set<? extends Node> nodes = lane.getNodes();
 
 				for (Node node : nodes) {
-					if (node instanceof ManualTask && process.equals(getProcess(node))) {
-						FormDefinition displayDescription = ((ManualTask) node).getDisplayDescription();
+					if (node instanceof ManualTask manualTask && process.equals(getProcess(node))) {
+						FormDefinition displayDescription = manualTask.getDisplayDescription();
 						if (displayDescription != null) {
 							FormDefinitionTemplate template = copyDisplayDescription(node, displayDescription);
 							templates.add(template);

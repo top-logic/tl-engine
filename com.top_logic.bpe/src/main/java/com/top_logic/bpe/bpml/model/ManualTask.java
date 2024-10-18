@@ -42,7 +42,7 @@ public interface ManualTask extends ManualTaskBase {
 			PolymorphicConfiguration<? extends FormProvider> formProviderConfig = formDefinition.getFormProvider();
 			if (formProviderConfig != null) {
 				FormProvider formProvider = TypedConfigUtil.createInstance(formProviderConfig);
-				FormDefinition customForm = formProvider.getFormDefinition(modelType);
+				FormDefinition customForm = formProvider.getFormDefinition(this, modelType);
 				if (customForm != null) {
 					return customForm;
 				}

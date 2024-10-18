@@ -5,8 +5,15 @@
  */
 package com.top_logic.bpe.bpml.model;
 
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.bpe.bpml.display.FormProvider;
+import com.top_logic.bpe.bpml.display.ProcessFormDefinition;
 import com.top_logic.bpe.bpml.model.impl.ManualTaskBase;
 import com.top_logic.bpe.bpml.model.visit.NodeVisitor;
+import com.top_logic.element.layout.formeditor.definition.TLFormDefinition;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.form.definition.FormDefinition;
 
 /**
  * Interface for {@link #MANUAL_TASK_TYPE} business objects.
@@ -19,5 +26,36 @@ public interface ManualTask extends ManualTaskBase {
 	@Override
 	default <R, A, E extends Throwable> R visit(NodeVisitor<R, A, E> v, A arg) throws E {
 		return v.visit(this, arg);
+	}
+
+	/**
+	 * The form to display to users working on this task.
+	 */
+	default FormDefinition getDisplayDescription() {
+		TLClass modelType = getProcess().getParticipant().getModelType();
+		if (modelType == null) {
+			return null;
+		}
+
+		ProcessFormDefinition formDefinition = getFormDefinition();
+		if (formDefinition != null) {
+			PolymorphicConfiguration<? extends FormProvider> formProviderConfig = formDefinition.getFormProvider();
+			if (formProviderConfig != null) {
+				FormProvider formProvider = TypedConfigUtil.createInstance(formProviderConfig);
+				FormDefinition customForm = formProvider.getFormDefinition(modelType);
+				if (customForm != null) {
+					return customForm;
+				}
+			}
+		}
+
+		// Use default form of model.
+		TLFormDefinition annotation = modelType.getAnnotation(TLFormDefinition.class);
+		if (annotation == null) {
+			return null;
+		}
+
+		FormDefinition defaultForm = annotation.getForm();
+		return defaultForm;
 	}
 }

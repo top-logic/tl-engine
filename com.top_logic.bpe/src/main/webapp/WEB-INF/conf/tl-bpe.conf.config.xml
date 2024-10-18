@@ -85,21 +85,6 @@
 				</handlers>	
 			</instance>
 		</config>
-		
-		<config service-class="com.top_logic.model.annotate.util.AttributeSettings">
-			<instance>
-				<attribute-settings>
-					<attribute-setting
-						config-name="FORM_DEFINITION"
-						legacy-type-code="1"
-					>
-						<field-provider impl="com.top_logic.bpe.bpml.display.DisplayDescriptionFieldProvider"/>
-						<tag-provider impl="com.top_logic.element.meta.form.tag.CustomInputTagProvider"/>
-						<export-binding impl="com.top_logic.model.io.bindings.ConfigurationAttributeValueBinding"/>
-					</attribute-setting>
-				</attribute-settings>
-			</instance>
-		</config>
 	</services>
 
 	<configs>

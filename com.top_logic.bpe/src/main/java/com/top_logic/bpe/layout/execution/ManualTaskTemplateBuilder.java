@@ -11,6 +11,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import com.top_logic.bpe.bpml.display.ProcessFormDefinition;
+import com.top_logic.bpe.bpml.display.SpecializedForm;
 import com.top_logic.bpe.bpml.model.Lane;
 import com.top_logic.bpe.bpml.model.LaneSet;
 import com.top_logic.bpe.bpml.model.ManualTask;
@@ -20,6 +22,8 @@ import com.top_logic.bpe.bpml.model.Process;
 import com.top_logic.bpe.bpml.model.TlBpeBpmlFactory;
 import com.top_logic.element.layout.formeditor.FormDefinitionTemplate;
 import com.top_logic.element.meta.AttributeOperations;
+import com.top_logic.element.meta.form.fieldprovider.form.TLFormTemplates;
+import com.top_logic.element.meta.form.fieldprovider.form.TemplateResolver;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -29,9 +33,11 @@ import com.top_logic.model.form.definition.FormDefinition;
 /**
  * {@link Function} computing the {@link FormDefinitionTemplate} for a given {@link Node}.
  * 
+ * @see TLFormTemplates
+ * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class ManualTaskTemplateBuilder implements Function<Object, Supplier<? extends List<FormDefinitionTemplate>>> {
+public class ManualTaskTemplateBuilder implements TemplateResolver {
 
 	/** Singleton {@link ManualTaskTemplateBuilder} instance. */
 	public static final ManualTaskTemplateBuilder INSTANCE = new ManualTaskTemplateBuilder();
@@ -44,8 +50,8 @@ public class ManualTaskTemplateBuilder implements Function<Object, Supplier<? ex
 	}
 
 	@Override
-	public Supplier<? extends List<FormDefinitionTemplate>> apply(Object t) {
-		Node baseNode = (Node) t;
+	public Supplier<List<FormDefinitionTemplate>> getTemplates(TLObject object) {
+		Node baseNode = (Node) object;
 		return () -> {
 			List<FormDefinitionTemplate> templates = new ArrayList<>();
 			Process process = getProcess(baseNode);
@@ -61,10 +67,11 @@ public class ManualTaskTemplateBuilder implements Function<Object, Supplier<? ex
 						for (Node node : nodes) {
 							if (node instanceof ManualTask && process.equals(getProcess(node))) {
 								if (node != baseNode) {
-									FormDefinition displayDescription = ((ManualTask) node).getDisplayDescription();
-									if (displayDescription != null) {
+									ProcessFormDefinition displayDescription = ((ManualTask) node).getFormDefinition();
+									if (displayDescription != null
+										&& displayDescription instanceof SpecializedForm.Config<?> form) {
 										FormDefinitionTemplate template =
-											copyDisplayDescription(node, displayDescription);
+											copyDisplayDescription(node, form.getForm());
 										templates.add(template);
 									}
 								}

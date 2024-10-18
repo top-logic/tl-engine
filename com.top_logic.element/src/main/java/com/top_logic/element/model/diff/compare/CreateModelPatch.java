@@ -557,6 +557,10 @@ public class CreateModelPatch {
 
 		addPartChanges(left, right);
 
+		addMoveStructuredTypePart(left, before);
+	}
+
+	private void addMoveStructuredTypePart(TLStructuredTypePart left, TLStructuredTypePart before) {
 		MoveStructuredTypePart move = TypedConfiguration.newConfigItem(MoveStructuredTypePart.class);
 		move.setPart(TLModelUtil.qualifiedName(left));
 		if (before != null) {
@@ -768,10 +772,9 @@ public class CreateModelPatch {
 		CreateStructuredTypePart result = TypedConfiguration.newConfigItem(CreateStructuredTypePart.class);
 		result.setType(TLModelUtil.qualifiedName(newOwner));
 		result.setPart((PartConfig) model.visit(_configExtractor, null));
-		if (before != null) {
-			result.setBefore(before.getName());
-		}
+
 		addDiff(result);
+		addMoveStructuredTypePart(model, before);
 	}
 
 	final void createClassifier(TLClassifier created, TLClassifier before) {

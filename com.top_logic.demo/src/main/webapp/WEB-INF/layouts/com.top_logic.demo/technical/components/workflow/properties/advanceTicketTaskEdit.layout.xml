@@ -5,6 +5,7 @@
 	template="tl-bpe/advanceProcess.template.xml"
 >
 	<arguments
+		buttonbar="true"
 		model="model(com.top_logic.demo/technical/components/workflow/properties/dialog.layout.xml#Dialog)"
 		saveClosesDialog="false"
 		securityObject="securityRoot"

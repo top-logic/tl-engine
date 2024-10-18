@@ -30,6 +30,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResPrefix CREATE_COMPOSITION_ROW;
 
+	/**
+	 * @en No model type annotation found at attribute "{0}".
+	 */
+	public static ResKey1 MISSING_TYPE_COMPUTATION__ATTRIBUTE;
+
 	static {
         initConstants(I18NConstants.class);
     }

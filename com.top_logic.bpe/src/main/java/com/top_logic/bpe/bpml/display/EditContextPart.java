@@ -9,14 +9,15 @@ import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.container.ConfigPart;
-import com.top_logic.element.meta.form.fieldprovider.ConfigurationFieldProvider.EditContext;
+import com.top_logic.element.meta.form.fieldprovider.ConfigurationFieldProvider.ConfigEditContext;
 
 /**
- * UI part that is connected to the {@link EditContext}.
+ * UI part that is connected to the {@link ConfigEditContext}.
  *
- * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
+ * @deprecated Only required for ease of migration, see {@link DisplayDescription}.
  */
 @Abstract
+@Deprecated
 public interface EditContextPart extends ConfigPart {
 
 	/**
@@ -25,10 +26,10 @@ public interface EditContextPart extends ConfigPart {
 	String CONTEXT = "context";
 
 	/**
-	 * The {@link EditContext}.
+	 * The {@link ConfigEditContext}.
 	 */
 	@Name(CONTEXT)
 	@Hidden
-	EditContext getContext();
+	ConfigEditContext getContext();
 
 }

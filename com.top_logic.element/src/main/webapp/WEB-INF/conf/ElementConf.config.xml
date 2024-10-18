@@ -431,6 +431,15 @@
 					</attribute-setting>
 
 					<attribute-setting
+						config-name="FORM_DEFINITION"
+						legacy-type-code="1"
+					>
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.FormDefinitionFieldProvider"/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.CustomInputTagProvider"/>
+						<export-binding impl="com.top_logic.model.io.bindings.ConfigurationAttributeValueBinding"/>
+					</attribute-setting>
+
+					<attribute-setting
 						config-name="ENUM"
 						legacy-type-code="1"
 					>

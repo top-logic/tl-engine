@@ -38,6 +38,9 @@
 							<en>Edit</en>
 							<de>Bearbeiten</de>
 						</resourceKey>
+						<executability>
+							<rule-by-expression decision="ticket -> !$ticket.get(`test.process:Ticket#activeTokens`).isEmpty()"/>
+						</executability>
 						<postCreateActions>
 							<showComponent>
 								<input/>

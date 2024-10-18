@@ -48,6 +48,11 @@ public class StandardForm extends AbstractConfiguredInstance<StandardForm.Config
 	public interface Config<I extends StandardForm> extends PolymorphicConfiguration<I> {
 
 		/**
+		 * The visibility to use for an attribute, if no further customization is done.
+		 */
+		FormVisibility getDefaultVisibility();
+
+		/**
 		 * Customizations for attributes displayed in the default from of the process type.
 		 */
 		@Key(AnnotationOverlay.ATTRIBUTE)
@@ -75,6 +80,10 @@ public class StandardForm extends AbstractConfiguredInstance<StandardForm.Config
 			 */
 			FormVisibility getVisibility();
 
+			/**
+			 * Option provider function for {@link AnnotationOverlay#getAttribute()} resolving all
+			 * attributes of the process model type.
+			 */
 			class AttributesOfType extends Function0<List<? extends TLStructuredTypePart>> {
 				private final EditContext _editContext;
 
@@ -103,6 +112,10 @@ public class StandardForm extends AbstractConfiguredInstance<StandardForm.Config
 				}
 			}
 
+			/**
+			 * {@link OptionMapping} for {@link AnnotationOverlay#getAttribute()} just storing the
+			 * attribute name.
+			 */
 			class AttributeName implements OptionMapping {
 				@Override
 				public Object toSelection(Object option) {
@@ -145,20 +158,23 @@ public class StandardForm extends AbstractConfiguredInstance<StandardForm.Config
 		Map<String, FormVisibility> customization =
 			getConfig().getOverlays().stream().collect(Collectors.toMap(o -> o.getAttribute(), o -> o.getVisibility()));
 		
-		updateForm(form, customization);
+		updateForm(form, getConfig().getDefaultVisibility(), customization);
 		return form;
 	}
 
-	private void updateForm(FormElement<?> form, Map<String, FormVisibility> customization) {
+	private void updateForm(FormElement<?> form, FormVisibility defaultVisibility,
+			Map<String, FormVisibility> customization) {
 		if (form instanceof ContainerDefinition<?> container) {
 			for (PolymorphicConfiguration<?> content : container.getContent()) {
-				updateForm((FormElement<?>) content, customization);
+				updateForm((FormElement<?>) content, defaultVisibility, customization);
 			}
 		}
 		if (form instanceof FieldDefinition field) {
 			FormVisibility customVisibility = customization.get(field.getAttribute());
 			if (customVisibility != null) {
 				field.setVisibility(customVisibility);
+			} else if (defaultVisibility != FormVisibility.DEFAULT) {
+				field.setVisibility(defaultVisibility);
 			}
 		}
 	}

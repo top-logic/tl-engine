@@ -11,9 +11,9 @@ import java.util.Map;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.bpe.bpml.model.Iconified;
+import com.top_logic.bpe.bpml.model.ManualTask;
 import com.top_logic.bpe.bpml.model.Node;
 import com.top_logic.bpe.bpml.model.Task;
-import com.top_logic.bpe.bpml.model.impl.ManualTaskBase;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
 import com.top_logic.bpe.execution.model.Token;
@@ -55,7 +55,7 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 	@Override
 	public FormDefinition getDisplayDescription() {
 		Node node = getToken().getNode();
-		return ((ManualTaskBase) node).getDisplayDescription();
+		return ((ManualTask) node).getDisplayDescription();
 	}
 
 	public ProcessExecution getProcessExecution() {
@@ -112,10 +112,10 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 		Token token = (Token) someObject;
 		Task node = (Task) token.getNode();
 
-		if (node instanceof ManualTaskBase) {
+		if (node instanceof ManualTask manualTask) {
 			TLObject pe = getContextModel();
 			TLClass tType = (TLClass) pe.tType();
-			FormDefinition fd = ((ManualTaskBase) node).getDisplayDescription();
+			FormDefinition fd = manualTask.getDisplayDescription();
 			FormMode formMode = create ? FormMode.CREATE : FormMode.EDIT;
 			FormEditorUtil.createEditorGroup(someContext, tType, fd, pe, formMode);
 		}

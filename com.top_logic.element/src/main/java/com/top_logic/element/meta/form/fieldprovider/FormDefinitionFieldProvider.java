@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import com.top_logic.basic.listener.EventType.Bubble;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.formeditor.ClearFormCommandModel;
 import com.top_logic.element.layout.formeditor.DiscardChangesCommandModel;
 import com.top_logic.element.layout.formeditor.FormDefinitionTemplate;
@@ -17,6 +18,8 @@ import com.top_logic.element.layout.formeditor.Icons;
 import com.top_logic.element.meta.form.AbstractFieldProvider;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
+import com.top_logic.element.meta.form.fieldprovider.form.TLFormTemplates;
+import com.top_logic.element.meta.form.fieldprovider.form.TLFormType;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.AbstractCommandModel;
@@ -35,17 +38,18 @@ import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.structure.DialogClosedListener;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.mig.html.layout.VisibilityListener;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
- * {@link FieldProvider} for attributes with value {@link FormDefinition}.
+ * {@link FieldProvider} for attributes that store a {@link FormDefinition}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public abstract class FormDefinitionFieldProvider extends AbstractFieldProvider {
+public class FormDefinitionFieldProvider extends AbstractFieldProvider {
 
 	@Override
 	public FormMember createFormField(EditContext editContext, String fieldName) {
@@ -153,7 +157,9 @@ public abstract class FormDefinitionFieldProvider extends AbstractFieldProvider 
 	 *        See {@link #getFormField(EditContext, String)}.
 	 * @return Non <code>null</code> {@link Supplier} for the {@link FormDefinitionTemplate} to use.
 	 */
-	protected abstract Supplier<? extends List<FormDefinitionTemplate>> templateProvider(EditContext editContext);
+	public Supplier<? extends List<FormDefinitionTemplate>> templateProvider(EditContext editContext) {
+		return TLFormTemplates.resolve(editContext.getAnnotation(TLFormTemplates.class), editContext.getObject());
+	}
 
 	/**
 	 * The {@link TLStructuredType} to create GUI for.
@@ -162,7 +168,13 @@ public abstract class FormDefinitionFieldProvider extends AbstractFieldProvider 
 	 *        See {@link #getFormField(EditContext, String)}.
 	 * @return May be <code>null</code>. In such case a not executable command is created.
 	 */
-	protected abstract TLStructuredType guiType(EditContext editContext);
+	public TLStructuredType guiType(EditContext editContext) {
+		TLFormType typeAnnotation = editContext.getAnnotation(TLFormType.class);
+		TLObject attributed = editContext.getObject();
+		ResKey descriptionKey = editContext.getDescriptionKey();
+
+		return TLFormType.resolve(typeAnnotation, attributed, descriptionKey);
+	}
 
 	private static class FormFieldDisabledListener implements DisabledPropertyListener, ImmutablePropertyListener {
 

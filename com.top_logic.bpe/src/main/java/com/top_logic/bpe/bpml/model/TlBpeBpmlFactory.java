@@ -52,6 +52,11 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String DISPLAY_DESCRIPTION_TYPE = "DisplayDescription";
 
 	/**
+	 * Name of the data type <code>ProcessFormDefinition</code> in module {@value #TL_BPE_BPML_STRUCTURE}.
+	 */
+	public static final String PROCESS_FORM_DEFINITION_TYPE = "ProcessFormDefinition";
+
+	/**
 	 * Lookup {@link AnnotationContainer} type.
 	 */
 	public static com.top_logic.model.TLClass getAnnotationContainerType() {
@@ -661,10 +666,10 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
-	 * Lookup {@link ManualTask#DISPLAY_DESCRIPTION_ATTR} of {@link ManualTask}.
+	 * Lookup {@link ManualTask#FORM_DEFINITION_ATTR} of {@link ManualTask}.
 	 */
-	public static com.top_logic.model.TLProperty getDisplayDescriptionManualTaskAttr() {
-		return (com.top_logic.model.TLProperty) getManualTaskType().getPart(ManualTask.DISPLAY_DESCRIPTION_ATTR);
+	public static com.top_logic.model.TLProperty getFormDefinitionManualTaskAttr() {
+		return (com.top_logic.model.TLProperty) getManualTaskType().getPart(ManualTask.FORM_DEFINITION_ATTR);
 	}
 
 	/**
@@ -945,6 +950,13 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 */
 	public static com.top_logic.model.TLPrimitive getDisplayDescriptionType() {
 		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(DISPLAY_DESCRIPTION_TYPE);
+	}
+
+	/**
+	 * Lookup {@value #PROCESS_FORM_DEFINITION_TYPE} data type.
+	 */
+	public static com.top_logic.model.TLPrimitive getProcessFormDefinitionType() {
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(PROCESS_FORM_DEFINITION_TYPE);
 	}
 
 	/**

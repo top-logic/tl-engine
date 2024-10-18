@@ -18,26 +18,26 @@ public interface ManualTaskBase extends com.top_logic.bpe.bpml.model.Task {
 	String MANUAL_TASK_TYPE = "ManualTask";
 
 	/**
-	 * Part <code>displayDescription</code> of <code>ManualTask</code>
+	 * Part <code>formDefinition</code> of <code>ManualTask</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.bpe.bpml:DisplayDescription</code> in configuration.
+	 * Declared as <code>tl.bpe.bpml:ProcessFormDefinition</code> in configuration.
 	 * </p>
 	 */
-	String DISPLAY_DESCRIPTION_ATTR = "displayDescription";
+	String FORM_DEFINITION_ATTR = "formDefinition";
 
 	/**
-	 * Getter for part {@link #DISPLAY_DESCRIPTION_ATTR}.
+	 * Getter for part {@link #FORM_DEFINITION_ATTR}.
 	 */
-	default com.top_logic.model.form.definition.FormDefinition getDisplayDescription() {
-		return (com.top_logic.model.form.definition.FormDefinition) tValueByName(DISPLAY_DESCRIPTION_ATTR);
+	default com.top_logic.bpe.bpml.display.ProcessFormDefinition getFormDefinition() {
+		return (com.top_logic.bpe.bpml.display.ProcessFormDefinition) tValueByName(FORM_DEFINITION_ATTR);
 	}
 
 	/**
-	 * Setter for part {@link #DISPLAY_DESCRIPTION_ATTR}.
+	 * Setter for part {@link #FORM_DEFINITION_ATTR}.
 	 */
-	default void setDisplayDescription(com.top_logic.model.form.definition.FormDefinition newValue) {
-		tUpdateByName(DISPLAY_DESCRIPTION_ATTR, newValue);
+	default void setFormDefinition(com.top_logic.bpe.bpml.display.ProcessFormDefinition newValue) {
+		tUpdateByName(FORM_DEFINITION_ATTR, newValue);
 	}
 
 }

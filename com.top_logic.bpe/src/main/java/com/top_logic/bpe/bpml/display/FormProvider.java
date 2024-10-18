@@ -5,6 +5,8 @@
  */
 package com.top_logic.bpe.bpml.display;
 
+import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.bpe.bpml.model.Task;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.definition.FormDefinition;
@@ -12,12 +14,17 @@ import com.top_logic.model.form.definition.FormDefinition;
 /**
  * Algorithm retrieving the form to display a {@link ProcessExecution} in some process step.
  */
+@Label("Task form definition")
 public interface FormProvider {
 
 	/**
 	 * The form to display the given {@link ProcessExecution} with.
-	 * @param modelType TODO
+	 * 
+	 * @param self
+	 *        The {@link Task} to compute the from definition for.
+	 * @param modelType
+	 *        The type of the process model.
 	 */
-	FormDefinition getFormDefinition(TLStructuredType modelType);
+	FormDefinition getFormDefinition(Task self, TLStructuredType modelType);
 
 }

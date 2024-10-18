@@ -188,7 +188,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		@Override
 		public Integer visit(CreateStructuredTypePart diff, Void arg) throws RuntimeException {
 			if (diff.getPart().isOverride()) {
-				return 31;
+				return 29;
 			}
 			return 28;
 		}
@@ -824,11 +824,6 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		
 		log().info("Adding part '" + partName + " to type '" + type + "'.");
 		addPart(type, diff.getPart());
-
-		// Apply order, since create API has no order attribute.
-		String beforeName = diff.getBefore();
-		schedule().reorderProperties(() -> movePart(type, partName, beforeName));
-		
 		return null;
 	}
 

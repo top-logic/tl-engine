@@ -17,7 +17,7 @@ import com.top_logic.model.TLStructuredTypePart;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @TagName("create-part")
-public interface CreateStructuredTypePart extends CreatePart, PartReference {
+public interface CreateStructuredTypePart extends CreatePart {
 
 	/**
 	 * Description of the {@link TLStructuredTypePart} to add to {@link #getType()}.

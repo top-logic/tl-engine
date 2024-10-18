@@ -6,15 +6,20 @@
 package com.top_logic.element.meta.form.fieldprovider;
 
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Container;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Subtypes;
 import com.top_logic.basic.config.container.ConfigPart;
+import com.top_logic.basic.config.copy.ConfigCopier;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.element.meta.form.AbstractFieldProvider;
+import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.form.ChangeStateListener;
@@ -43,21 +48,24 @@ import com.top_logic.model.internal.ConfigurationStorageMapping;
  */
 public class ConfigurationFieldProvider extends AbstractFieldProvider {
 
+	private static final Property<EditContext> EDIT_CONTEXT =
+		TypedAnnotatable.property(EditContext.class, "editContext");
+
 	/**
 	 * Context for editing {@link ConfigurationItem} values in model attributes.
 	 * 
 	 * <p>
 	 * When an editor is built for a {@link ConfigurationItem} stored in a persistent object
-	 * property, it is placed in a surrounding {@link EditContext} configuration with
+	 * property, it is placed in a surrounding {@link ConfigEditContext} configuration with
 	 * {@link #getBaseModel()} being set to the edited instance. This allows to access this context
 	 * from e.g. option providers declared for properties of the edited configuration. To use this
 	 * feature, the {@link ConfigurationItem} type edited must extend {@link ConfigPart} and declare
-	 * {@link EditContext} as its {@link Container} property type.
+	 * {@link ConfigEditContext} as its {@link Container} property type.
 	 * </p>
 	 *
 	 * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
 	 */
-	public interface EditContext extends ConfigurationItem {
+	public interface ConfigEditContext extends ConfigurationItem {
 
 		/**
 		 * @see #getBaseModel()
@@ -71,6 +79,10 @@ public class ConfigurationFieldProvider extends AbstractFieldProvider {
 
 		/**
 		 * The persistent object, in which the {@link ConfigurationItem} value is stored.
+		 * 
+		 * <p>
+		 * Kept for backwards compatibility. Can also be accessed through {@link #getEditContext()}.
+		 * </p>
 		 */
 		@Name(BASE_MODEL)
 		@InstanceFormat
@@ -93,6 +105,24 @@ public class ConfigurationFieldProvider extends AbstractFieldProvider {
 		 */
 		void setValue(ConfigurationItem value);
 
+		/**
+		 * The context of the value being edited.
+		 */
+		@InstanceFormat
+		EditContext getEditContext();
+
+		/**
+		 * @see #getEditContext()
+		 */
+		void setEditContext(EditContext value);
+
+	}
+
+	/**
+	 * Retrieves the {@link EditContext}.
+	 */
+	public static EditContext editContext(TypedAnnotatable options) {
+		return options.get(EDIT_CONTEXT);
 	}
 
 	/**
@@ -105,23 +135,23 @@ public class ConfigurationFieldProvider extends AbstractFieldProvider {
 
 		final Class<? extends ConfigurationItem> _configType;
 
-		final TLObject _baseModel;
+		final EditContext _editContext;
 
 		FormGroup _configGroup;
 
 		/**
 		 * Creates a {@link ConfigurationField}.
 		 * 
-		 * @param baseModel
-		 *        The model object that contains the edited configuration as value.
+		 * @param editContext
+		 *        The context of the value being edited.
 		 * @param name
 		 *        See {@link #getName()}.
 		 * @param configType
 		 *        The type of configuration to edit/create.
 		 */
-		public ConfigurationField(TLObject baseModel, String name, Class<? extends ConfigurationItem> configType) {
+		public ConfigurationField(EditContext editContext, String name, Class<? extends ConfigurationItem> configType) {
 			super(name, ResPrefix.NONE);
-			_baseModel = baseModel;
+			_editContext = editContext;
 			_configType = configType;
 
 			_valueField = FormFactory.newHiddenField("model");
@@ -147,15 +177,20 @@ public class ConfigurationFieldProvider extends AbstractFieldProvider {
 				}
 				_configGroup = new FormGroup("config", ResPrefix.NONE);
 				addMember(_configGroup);
-				ConfigurationItem model =
-					newValue == null ? TypedConfiguration.newConfigItem(_configType)
-						: TypedConfiguration.copy((ConfigurationItem) newValue);
+				ConfigurationItem model = TypedConfiguration.newConfigItem(_configType);
 
-				EditContext context = TypedConfiguration.newConfigItem(EditContext.class);
-				context.setBaseModel(_baseModel);
+				ConfigEditContext context = TypedConfiguration.newConfigItem(ConfigEditContext.class);
+				context.setBaseModel(_editContext.getObject());
+				context.setEditContext(_editContext);
 				context.setValue(model);
 
+				if (newValue != null) {
+					ConfigCopier.copyContent(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
+						(ConfigurationItem) newValue, model);
+				}
+
 				InitializerProvider initializers = new InitializerIndex();
+				initializers.set(EDIT_CONTEXT, _editContext);
 				new EditorFactory(initializers).initEditorGroup(_configGroup, model);
 
 				propagateValueOnChange(model);
@@ -242,7 +277,7 @@ public class ConfigurationFieldProvider extends AbstractFieldProvider {
 		ConfigurationStorageMapping storage = (ConfigurationStorageMapping) type.getStorageMapping();
 		Class<? extends ConfigurationItem> configType = storage.getApplicationType();
 
-		return new ConfigurationField(update.getObject(), fieldName, configType);
+		return new ConfigurationField(update, fieldName, configType);
 	}
 
 }

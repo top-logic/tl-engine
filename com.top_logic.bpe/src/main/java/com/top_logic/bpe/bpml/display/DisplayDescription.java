@@ -31,7 +31,7 @@ import com.top_logic.bpe.bpml.display.DisplayDescription.AttributePart.NamedPart
 import com.top_logic.bpe.bpml.model.Node;
 import com.top_logic.bpe.bpml.model.Participant;
 import com.top_logic.bpe.bpml.model.Process;
-import com.top_logic.element.meta.form.fieldprovider.ConfigurationFieldProvider.EditContext;
+import com.top_logic.element.meta.form.fieldprovider.ConfigurationFieldProvider.ConfigEditContext;
 import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
@@ -70,7 +70,7 @@ public interface DisplayDescription extends EditContextPart {
 	 */
 	@Override
 	@Container
-	EditContext getContext();
+	ConfigEditContext getContext();
 
 	/**
 	 * The UI elements to display.
@@ -117,7 +117,7 @@ public interface DisplayDescription extends EditContextPart {
 
 		@Override
 		@DerivedRef({ OWNER, DisplayDescription.CONTEXT })
-		EditContext getContext();
+		ConfigEditContext getContext();
 
 		@Name(TITLE)
 		@Mandatory
@@ -294,11 +294,11 @@ public interface DisplayDescription extends EditContextPart {
 		@Name(NAME)
 		@Mandatory
 		@Options(fun = ParticipantAttributes.class, mapping = NamedPartNames.class, args = {
-			@Ref({ OWNER, EditContextPart.CONTEXT, EditContext.BASE_MODEL }) })
+			@Ref({ OWNER, EditContextPart.CONTEXT, ConfigEditContext.BASE_MODEL }) })
 		String getName();
 
 		@Hidden
-		@Derived(fun = CalculateLabel.class, args = { @Ref({ OWNER, EditContextPart.CONTEXT, EditContext.BASE_MODEL }),
+		@Derived(fun = CalculateLabel.class, args = { @Ref({ OWNER, EditContextPart.CONTEXT, ConfigEditContext.BASE_MODEL }),
 			@Ref(NAME) })
 		String getLabel();
 

@@ -906,6 +906,7 @@
 						</form-templates>
 						<bpml-extension/>
 						<sort-order value="800.1"/>
+						<label-position value="hide-label"/>
 					</annotations>
 				</property>
 			</attributes>

@@ -57,6 +57,7 @@
 						</column-info>
 						<field-provider impl="com.top_logic.model.wysiwyg.fieldprovider.I18NStructureTextFieldProvider"/>
 						<tag-provider impl="com.top_logic.layout.wysiwyg.ui.i18n.I18NStructureTextTagProvider"/>
+						<export-binding impl="com.top_logic.model.wysiwyg.storage.I18NStructuredTextAttributeValueBinding"/>
 						<pdf-renderer impl="com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextPDFRenderer"/>
 					</attribute-setting>
 

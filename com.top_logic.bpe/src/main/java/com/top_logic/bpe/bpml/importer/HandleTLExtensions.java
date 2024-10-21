@@ -84,11 +84,12 @@ public class HandleTLExtensions implements Handler {
 		assert in.getEventType() == XMLStreamConstants.END_ELEMENT : "Not at an end tag after reading extendsion '"
 			+ localName + "': " + XMLStreamUtil.getEventName(in.getEventType());
 
+		String namespace = in.getNamespaceURI();
 		String localNameAfter = in.getLocalName();
 
-		assert BPMLExporter.TL_EXTENSIONS_NS.equals(in.getNamespaceURI())
-			&& localName.equals(localNameAfter) : "Invalid state after reading extension '" + localName + "': "
-				+ in.getNamespaceURI() + "/" + localNameAfter;
+		assert BPMLExporter.TL_EXTENSIONS_NS.equals(namespace)
+			&& localName.equals(localNameAfter) : "Invalid state after reading extension '" + localName
+				+ "', looking at tag: " + (namespace == null ? "" : (namespace + "/")) + localNameAfter;
 	}
 
 }

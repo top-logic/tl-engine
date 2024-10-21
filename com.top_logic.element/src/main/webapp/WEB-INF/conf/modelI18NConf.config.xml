@@ -19,6 +19,7 @@
 						<field-provider impl="com.top_logic.element.i18n.I18NStringFieldProvider"/>
 						<tag-provider impl="com.top_logic.element.i18n.I18NStringTagProvider"/>
 						<pdf-renderer impl="com.top_logic.element.i18n.I18NPDFRenderer"/>
+						<export-binding impl="com.top_logic.model.io.bindings.ResKeyAttributeValueBinding"/>
 					</attribute-setting>
 				</attribute-settings>
 			</instance>

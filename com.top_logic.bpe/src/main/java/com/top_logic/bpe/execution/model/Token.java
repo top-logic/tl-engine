@@ -7,16 +7,13 @@ package com.top_logic.bpe.execution.model;
 
 import static com.top_logic.model.search.expr.SearchExpressionFactory.*;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.bpe.bpml.model.Lane;
 import com.top_logic.bpe.bpml.model.ManualTask;
 import com.top_logic.bpe.bpml.model.Node;
@@ -139,17 +136,17 @@ public interface Token extends TokenBase {
 		return calculateLabelFragment(tokenInCreateRevision);
 	}
 
-	private static HTMLFragment calculateLabelFragment(Token aHistoricToken) {
-		Node node = aHistoricToken.getNode();
+	private static HTMLFragment calculateLabelFragment(Token token) {
+		Node node = token.getNode();
 		if (node instanceof Task) {
 			SearchExpression titleTemplate = ((Task) node).getTitle();
 			if (titleTemplate != null) {
-				return new ExpressionFragment(call(titleTemplate, literal(aHistoricToken)));
+				return new ExpressionFragment(call(titleTemplate, literal(token)));
 			}
 		}
-		SearchExpression titleTemplate = aHistoricToken.participant(node.getProcess()).getTaskTitle();
+		SearchExpression titleTemplate = token.participant(node.getProcess()).getTaskTitle();
 		if (titleTemplate != null) {
-			return new ExpressionFragment(call(titleTemplate, literal(aHistoricToken)));
+			return new ExpressionFragment(call(titleTemplate, literal(token)));
 		}
 
 		String name = node.getName();
@@ -158,23 +155,6 @@ public interface Token extends TokenBase {
 		}
 
 		return null;
-	}
-
-	/**
-	 * the label of the token as it was shown in the create revision of the token
-	 */
-	default String calculateLabel() {
-		HTMLFragment fragment = calculateLabelFragment();
-		if (fragment != null) {
-			TagWriter tw = new TagWriter();
-			try {
-				fragment.write(null, tw);
-			} catch (IOException ex) {
-				Logger.error("Problem claculating label", ex, this);
-			}
-			return tw.toString();
-		}
-		return "";
 	}
 
 	private Participant participant(Process process) {

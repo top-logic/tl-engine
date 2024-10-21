@@ -1855,8 +1855,7 @@ public abstract class ResKey {
 		}
 
 		@Override
-		public ResKey loadConfigItem(XMLStreamReader in, ResKey baseValue)
-				throws XMLStreamException, ConfigurationException {
+		public ResKey loadConfigItem(XMLStreamReader in, ResKey baseValue) throws XMLStreamException {
 			String key = in.getAttributeValue(null, "key");
 
 			String text = XMLStreamUtil.nextText(in).trim();

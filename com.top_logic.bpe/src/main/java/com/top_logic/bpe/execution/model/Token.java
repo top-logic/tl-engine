@@ -7,14 +7,17 @@ package com.top_logic.bpe.execution.model;
 
 import static com.top_logic.model.search.expr.SearchExpressionFactory.*;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.bpe.bpml.model.Lane;
 import com.top_logic.bpe.bpml.model.ManualTask;
 import com.top_logic.bpe.bpml.model.Node;
@@ -165,6 +168,23 @@ public interface Token extends TokenBase {
 		}
 
 		return null;
+	}
+
+	/**
+	 * the label of the token as it was shown in the create revision of the token
+	 */
+	default String calculateLabel() {
+		HTMLFragment fragment = calculateLabelFragment();
+		if (fragment != null) {
+			TagWriter out = new TagWriter();
+			try {
+				fragment.write(null, out);
+			} catch (IOException ex) {
+				Logger.error("Problem claculating label.", ex, Token.class);
+			}
+			return out.toString();
+		}
+		return "";
 	}
 
 	private Participant participant(Process process) {

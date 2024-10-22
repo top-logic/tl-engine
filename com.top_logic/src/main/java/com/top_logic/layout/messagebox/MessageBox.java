@@ -62,12 +62,16 @@ public class MessageBox extends MessageBoxShortcuts {
 
 		/**
 		 * Default width of a message box.
+		 * 
+		 * @implNote Default value must remain the same as in top-logic.config.xml.
 		 */
 		@IntDefault(500)
 		int getWidth();
 
 		/**
 		 * Default height of a message box.
+		 * 
+		 * @implNote Default value must remain the same as in top-logic.config.xml.
 		 */
 		@IntDefault(250)
 		int getHeight();

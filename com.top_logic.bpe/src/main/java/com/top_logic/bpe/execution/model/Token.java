@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
@@ -28,9 +29,8 @@ import com.top_logic.bpe.bpml.model.Task;
 import com.top_logic.bpe.execution.engine.ExecutionEngine;
 import com.top_logic.bpe.execution.model.impl.TokenBase;
 import com.top_logic.contact.business.PersonContact;
-import com.top_logic.knowledge.service.Revision;
-import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.ExpressionFragment;
@@ -135,9 +135,7 @@ public interface Token extends TokenBase {
 	 * Computes the label for this {@link Token}.
 	 */
 	default HTMLFragment calculateLabelFragment() {
-		Revision createRevision = WrapperHistoryUtils.getCreateRevision(this);
-		Token tokenInCreateRevision = WrapperHistoryUtils.getWrapper(createRevision, this);
-		return calculateLabelFragment(tokenInCreateRevision);
+		return calculateLabelFragment(this);
 	}
 
 	private static HTMLFragment calculateLabelFragment(Token token) {
@@ -173,12 +171,13 @@ public interface Token extends TokenBase {
 	/**
 	 * the label of the token as it was shown in the create revision of the token
 	 */
+	@CalledByReflection
 	default String calculateLabel() {
 		HTMLFragment fragment = calculateLabelFragment();
 		if (fragment != null) {
 			TagWriter out = new TagWriter();
 			try {
-				fragment.write(null, out);
+				fragment.write(DefaultDisplayContext.getDisplayContext(), out);
 			} catch (IOException ex) {
 				Logger.error("Problem claculating label.", ex, Token.class);
 			}

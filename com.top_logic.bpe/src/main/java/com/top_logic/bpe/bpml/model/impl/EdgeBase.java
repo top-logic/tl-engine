@@ -18,6 +18,15 @@ public interface EdgeBase extends com.top_logic.bpe.bpml.model.Named, com.top_lo
 	String EDGE_TYPE = "Edge";
 
 	/**
+	 * Part <code>label</code> of <code>Edge</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model.i18n:I18NString</code> in configuration.
+	 * </p>
+	 */
+	String LABEL_ATTR = "label";
+
+	/**
 	 * Part <code>process</code> of <code>Edge</code>
 	 * 
 	 * <p>
@@ -43,6 +52,29 @@ public interface EdgeBase extends com.top_logic.bpe.bpml.model.Named, com.top_lo
 	 * </p>
 	 */
 	String TARGET_ATTR = "target";
+
+	/**
+	 * Part <code>tooltip</code> of <code>Edge</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model.i18n:I18NHtml</code> in configuration.
+	 * </p>
+	 */
+	String TOOLTIP_ATTR = "tooltip";
+
+	/**
+	 * Getter for part {@link #LABEL_ATTR}.
+	 */
+	default com.top_logic.basic.util.ResKey getLabel() {
+		return (com.top_logic.basic.util.ResKey) tValueByName(LABEL_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #LABEL_ATTR}.
+	 */
+	default void setLabel(com.top_logic.basic.util.ResKey newValue) {
+		tUpdateByName(LABEL_ATTR, newValue);
+	}
 
 	/**
 	 * Getter for part {@link #PROCESS_ATTR}.
@@ -77,6 +109,20 @@ public interface EdgeBase extends com.top_logic.bpe.bpml.model.Named, com.top_lo
 	 */
 	default void setTarget(com.top_logic.bpe.bpml.model.Node newValue) {
 		tUpdateByName(TARGET_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #TOOLTIP_ATTR}.
+	 */
+	default com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText getTooltip() {
+		return (com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText) tValueByName(TOOLTIP_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #TOOLTIP_ATTR}.
+	 */
+	default void setTooltip(com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText newValue) {
+		tUpdateByName(TOOLTIP_ATTR, newValue);
 	}
 
 }

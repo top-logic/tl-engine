@@ -152,17 +152,22 @@ public class DatabaseLayoutCacheEntry {
 
 			themes:
 			for (Theme theme : themesToCache) {
-				TLLayout newLayout = createLayout(theme, layoutKey, templateName, arguments);
+				try {
+					TLLayout newLayout = createLayout(theme, layoutKey, templateName, arguments);
 
-				for (TLLayout cachedLayout : cachedLayouts) {
-					if (LayoutUtils.hasSameLayoutConfig(layoutKey, cachedLayout, newLayout)) {
-						put(theme, person, layoutKey, cachedLayout);
-						continue themes;
+					for (TLLayout cachedLayout : cachedLayouts) {
+						if (LayoutUtils.hasSameLayoutConfig(layoutKey, cachedLayout, newLayout)) {
+							put(theme, person, layoutKey, cachedLayout);
+							continue themes;
+						}
 					}
-				}
 
-				put(theme, person, layoutKey, newLayout);
-				cachedLayouts.add(newLayout);
+					put(theme, person, layoutKey, newLayout);
+					cachedLayouts.add(newLayout);
+				} catch (RuntimeException ex) {
+					Logger.error("Cannot parse layout '" + layoutKey + "': " + ex.getMessage(), ex,
+						DatabaseLayoutCache.class);
+				}
 			}
 		}
 	}

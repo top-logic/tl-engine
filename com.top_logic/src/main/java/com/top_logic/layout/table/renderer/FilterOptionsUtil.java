@@ -165,7 +165,9 @@ public class FilterOptionsUtil {
 			DisplayDimension width =
 				DisplayDimension.dim(ThemeFactory.getTheme().getValue(com.top_logic.layout.Icons.FILTER_DIALOG_WIDTH),
 					DisplayUnit.PIXEL);
-			DisplayDimension height = DisplayDimension.dim(110, DisplayUnit.PIXEL);
+			DisplayDimension height =
+				DisplayDimension.dim(ThemeFactory.getTheme().getValue(com.top_logic.layout.Icons.FILTER_DIALOG_HEIGHT),
+					DisplayUnit.PIXEL);
 			return new FilterOptionsDialog(I18NConstants.FILTER_OPTIONS_TITLE, width, height, viewModel).open(context);
 		}
 

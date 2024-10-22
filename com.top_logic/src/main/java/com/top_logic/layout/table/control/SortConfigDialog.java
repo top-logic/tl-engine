@@ -99,6 +99,8 @@ public class SortConfigDialog extends AbstractFormPageDialog {
 
 		/**
 		 * The width of the dialog to sort columns.
+		 * 
+		 * @implNote Default value must remain the same as in top-logic.config.xml.
 		 */
 		@Name(DIALOG_WIDTH)
 		@FormattedDefault("400px")
@@ -106,9 +108,11 @@ public class SortConfigDialog extends AbstractFormPageDialog {
 
 		/**
 		 * The height of the dialog to sort columns.
+		 * 
+		 * @implNote Default value must remain the same as in top-logic.config.xml.
 		 */
 		@Name(DIALOG_HEIGHT)
-		@FormattedDefault("300px")
+		@FormattedDefault("350px")
 		DisplayDimension getHeight();
 
 	}

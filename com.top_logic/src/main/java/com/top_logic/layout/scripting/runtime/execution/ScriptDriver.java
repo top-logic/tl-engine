@@ -226,7 +226,7 @@ public class ScriptDriver {
 		CommandModel okButton = MessageBox.button(ButtonType.OK);
 		ScriptingRecorder.annotateAsDontRecord(okButton);
 		return MessageBox.confirm(
-			windowScope(), DefaultLayoutData.scrollingLayout(400, 200), true, title, message,
+			windowScope(), DefaultLayoutData.scrollingLayout(600, 400), true, title, message,
 			okButton);
 	}
 

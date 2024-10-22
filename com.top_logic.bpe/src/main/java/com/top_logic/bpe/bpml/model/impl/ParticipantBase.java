@@ -72,13 +72,13 @@ public interface ParticipantBase extends com.top_logic.bpe.bpml.model.Named, com
 	String PROCESS_ATTR = "process";
 
 	/**
-	 * Part <code>taskTitle</code> of <code>Participant</code>
+	 * Part <code>taskLabel</code> of <code>Participant</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.model.search:Template</code> in configuration.
+	 * Declared as <code>tl.model.search:Expr</code> in configuration.
 	 * </p>
 	 */
-	String TASK_TITLE_ATTR = "taskTitle";
+	String TASK_LABEL_ATTR = "taskLabel";
 
 	/**
 	 * Getter for part {@link #COLLABORATION_ATTR}.
@@ -158,17 +158,17 @@ public interface ParticipantBase extends com.top_logic.bpe.bpml.model.Named, com
 	}
 
 	/**
-	 * Getter for part {@link #TASK_TITLE_ATTR}.
+	 * Getter for part {@link #TASK_LABEL_ATTR}.
 	 */
-	default com.top_logic.model.search.expr.SearchExpression getTaskTitle() {
-		return (com.top_logic.model.search.expr.SearchExpression) tValueByName(TASK_TITLE_ATTR);
+	default com.top_logic.model.search.expr.SearchExpression getTaskLabel() {
+		return (com.top_logic.model.search.expr.SearchExpression) tValueByName(TASK_LABEL_ATTR);
 	}
 
 	/**
-	 * Setter for part {@link #TASK_TITLE_ATTR}.
+	 * Setter for part {@link #TASK_LABEL_ATTR}.
 	 */
-	default void setTaskTitle(com.top_logic.model.search.expr.SearchExpression newValue) {
-		tUpdateByName(TASK_TITLE_ATTR, newValue);
+	default void setTaskLabel(com.top_logic.model.search.expr.SearchExpression newValue) {
+		tUpdateByName(TASK_LABEL_ATTR, newValue);
 	}
 
 }

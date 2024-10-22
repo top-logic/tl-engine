@@ -23,6 +23,9 @@
 				<en>Create ticket</en>
 				<de>Ticket anlegen</de>
 			</resourceKey>
+			<executability>
+				<rule-by-expression decision="model -> $model != null"/>
+			</executability>
 		</open-handler>
 		<components>
 			<layout-reference resource="com.top_logic.demo/technical/components/workflow/createTicket/innerLayout.layout.xml"/>

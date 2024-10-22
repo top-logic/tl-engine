@@ -79,7 +79,7 @@
 			</generalizations>
 			<attributes>
 				<property name="description"
-					type="tl.model.wysiwyg:Html"
+					type="tl.model.i18n:I18NHtml"
 				>
 					<annotations>
 						<bpml-extension/>
@@ -355,7 +355,7 @@
 					</annotations>
 				</property>
 				<property name="myTasksTitle"
-					type="tl.core:String"
+					type="tl.model.i18n:I18NString"
 				>
 					<annotations>
 						<bpml-extension/>
@@ -363,7 +363,7 @@
 					</annotations>
 				</property>
 				<property name="myTasksDescription"
-					type="tl.model.wysiwyg:Html"
+					type="tl.model.i18n:I18NHtml"
 				>
 					<annotations>
 						<bpml-extension/>
@@ -379,7 +379,7 @@
 					</annotations>
 				</property>
 				<property name="myProcessesTitle"
-					type="tl.core:String"
+					type="tl.model.i18n:I18NString"
 				>
 					<annotations>
 						<bpml-extension/>
@@ -387,7 +387,7 @@
 					</annotations>
 				</property>
 				<property name="myProcessesDescription"
-					type="tl.model.wysiwyg:Html"
+					type="tl.model.i18n:I18NHtml"
 				>
 					<annotations>
 						<bpml-extension/>
@@ -455,6 +455,22 @@
 				<generalization type="Annotated"/>
 			</generalizations>
 			<attributes>
+				<property name="label"
+					type="tl.model.i18n:I18NString"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="500.5"/>
+					</annotations>
+				</property>
+				<property name="tooltip"
+					type="tl.model.i18n:I18NHtml"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="500.7"/>
+					</annotations>
+				</property>
 				<reference name="process"
 					aggregate="true"
 					inverse-reference="edges"
@@ -847,8 +863,16 @@
 				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.TaskImpl"/>
 			</annotations>
 			<attributes>
-				<property name="title"
-					type="tl.model.search:Template"
+				<property name="label"
+					type="tl.model.i18n:I18NString"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="500.5"/>
+					</annotations>
+				</property>
+				<property name="labelFunction"
+					type="tl.model.search:Expr"
 				>
 					<annotations>
 						<bpml-extension/>
@@ -1055,8 +1079,8 @@
 						<sort-order value="3.0"/>
 					</annotations>
 				</reference>
-				<property name="taskTitle"
-					type="tl.model.search:Template"
+				<property name="taskLabel"
+					type="tl.model.search:Expr"
 				>
 					<annotations>
 						<bpml-extension/>

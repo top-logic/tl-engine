@@ -358,6 +358,13 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
+	 * Lookup {@link Edge#LABEL_ATTR} of {@link Edge}.
+	 */
+	public static com.top_logic.model.TLProperty getLabelEdgeAttr() {
+		return (com.top_logic.model.TLProperty) getEdgeType().getPart(Edge.LABEL_ATTR);
+	}
+
+	/**
 	 * Lookup {@link Edge#PROCESS_ATTR} of {@link Edge}.
 	 */
 	public static com.top_logic.model.TLReference getProcessEdgeAttr() {
@@ -376,6 +383,13 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 */
 	public static com.top_logic.model.TLReference getTargetEdgeAttr() {
 		return (com.top_logic.model.TLReference) getEdgeType().getPart(Edge.TARGET_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Edge#TOOLTIP_ATTR} of {@link Edge}.
+	 */
+	public static com.top_logic.model.TLProperty getTooltipEdgeAttr() {
+		return (com.top_logic.model.TLProperty) getEdgeType().getPart(Edge.TOOLTIP_ATTR);
 	}
 
 	/**
@@ -638,10 +652,17 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
-	 * Lookup {@link Task#TITLE_ATTR} of {@link Task}.
+	 * Lookup {@link Task#LABEL_ATTR} of {@link Task}.
 	 */
-	public static com.top_logic.model.TLProperty getTitleTaskAttr() {
-		return (com.top_logic.model.TLProperty) getTaskType().getPart(Task.TITLE_ATTR);
+	public static com.top_logic.model.TLProperty getLabelTaskAttr() {
+		return (com.top_logic.model.TLProperty) getTaskType().getPart(Task.LABEL_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Task#LABEL_FUNCTION_ATTR} of {@link Task}.
+	 */
+	public static com.top_logic.model.TLProperty getLabelFunctionTaskAttr() {
+		return (com.top_logic.model.TLProperty) getTaskType().getPart(Task.LABEL_FUNCTION_ATTR);
 	}
 
 	/**
@@ -799,10 +820,10 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
-	 * Lookup {@link Participant#TASK_TITLE_ATTR} of {@link Participant}.
+	 * Lookup {@link Participant#TASK_LABEL_ATTR} of {@link Participant}.
 	 */
-	public static com.top_logic.model.TLProperty getTaskTitleParticipantAttr() {
-		return (com.top_logic.model.TLProperty) getParticipantType().getPart(Participant.TASK_TITLE_ATTR);
+	public static com.top_logic.model.TLProperty getTaskLabelParticipantAttr() {
+		return (com.top_logic.model.TLProperty) getParticipantType().getPart(Participant.TASK_LABEL_ATTR);
 	}
 
 	/**

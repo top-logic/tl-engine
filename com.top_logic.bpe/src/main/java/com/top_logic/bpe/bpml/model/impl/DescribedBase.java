@@ -21,7 +21,7 @@ public interface DescribedBase extends com.top_logic.model.TLObject {
 	 * Part <code>description</code> of <code>Described</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.model.wysiwyg:Html</code> in configuration.
+	 * Declared as <code>tl.model.i18n:I18NHtml</code> in configuration.
 	 * </p>
 	 */
 	String DESCRIPTION_ATTR = "description";
@@ -29,14 +29,14 @@ public interface DescribedBase extends com.top_logic.model.TLObject {
 	/**
 	 * Getter for part {@link #DESCRIPTION_ATTR}.
 	 */
-	default com.top_logic.layout.wysiwyg.ui.StructuredText getDescription() {
-		return (com.top_logic.layout.wysiwyg.ui.StructuredText) tValueByName(DESCRIPTION_ATTR);
+	default com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText getDescription() {
+		return (com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText) tValueByName(DESCRIPTION_ATTR);
 	}
 
 	/**
 	 * Setter for part {@link #DESCRIPTION_ATTR}.
 	 */
-	default void setDescription(com.top_logic.layout.wysiwyg.ui.StructuredText newValue) {
+	default void setDescription(com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText newValue) {
 		tUpdateByName(DESCRIPTION_ATTR, newValue);
 	}
 

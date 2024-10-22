@@ -5,7 +5,6 @@
  */
 package com.top_logic.bpe.layout.execution;
 
-import com.top_logic.bpe.bpml.model.Node;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.element.layout.meta.ConfiguredAttributedTooltipProvider;
 import com.top_logic.layout.Flavor;
@@ -18,23 +17,20 @@ public class TokenResourceProvider extends ConfiguredAttributedTooltipProvider {
 
 	@Override
 	public String getLabel(Object anObject) {
+		if (anObject == null) {
+			return null;
+		}
+
 		Token token = (Token) anObject;
-		if (token == null) {
-			return null;
-		}
-		Node node = token.getNode();
-		if (node == null) {
-			return null;
-		}
-		return node.getName();
+		return token.getName();
 	}
 
 	@Override
 	public ThemeImage getImage(Object object, Flavor flavor) {
-		Token token = (Token) object;
-		if (token == null) {
+		if (object == null) {
 			return null;
 		}
+		Token token = (Token) object;
 		return token.getIcon();
 	}
 }

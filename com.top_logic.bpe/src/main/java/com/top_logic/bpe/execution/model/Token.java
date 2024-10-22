@@ -14,6 +14,7 @@ import java.util.Set;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.bpe.bpml.model.Lane;
 import com.top_logic.bpe.bpml.model.ManualTask;
 import com.top_logic.bpe.bpml.model.Node;
@@ -139,14 +140,23 @@ public interface Token extends TokenBase {
 	private static HTMLFragment calculateLabelFragment(Token token) {
 		Node node = token.getNode();
 		if (node instanceof Task) {
-			SearchExpression titleTemplate = ((Task) node).getTitle();
-			if (titleTemplate != null) {
-				return new ExpressionFragment(call(titleTemplate, literal(token)));
+			SearchExpression labelFunction = ((Task) node).getLabelFunction();
+			if (labelFunction != null) {
+				return new ExpressionFragment(
+					call(labelFunction, literal(token.getProcessExecution()), literal(token.getNode()),
+						literal(token)));
+			}
+
+			ResKey label = ((Task) node).getLabel();
+			if (label != null) {
+				return Fragments.message(label);
 			}
 		}
-		SearchExpression titleTemplate = token.participant(node.getProcess()).getTaskTitle();
+		SearchExpression titleTemplate = token.participant(node.getProcess()).getTaskLabel();
 		if (titleTemplate != null) {
-			return new ExpressionFragment(call(titleTemplate, literal(token)));
+			return new ExpressionFragment(
+				call(titleTemplate, literal(token.getProcessExecution()), literal(token.getNode()),
+					literal(token)));
 		}
 
 		String name = node.getName();

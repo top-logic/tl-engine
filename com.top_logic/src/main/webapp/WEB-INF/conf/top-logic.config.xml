@@ -1135,9 +1135,6 @@
 						expand="false"
 						image="theme:ICONS_COLLAPSE_ALL"
 					/>
-		            <handler id="RemoveCurrencyCommand" class="com.top_logic.layout.currency.EditCurrencyListComponent$RemoveCurrencyCommand"
-		            	group="Write" 
-		            />
 		            <handler class="com.top_logic.layout.progress.AJAXProgressComponent$WriteFinishedProgressCommand" />
 		            <handler class="com.top_logic.layout.table.tree.UpdateTreeTableCommandHandler"
 		            	clique="refresh" 
@@ -1309,8 +1306,6 @@
 						clique="create"/>
 					<handler id="DeleteList" class="com.top_logic.layout.admin.component.EditListComponent$DeleteListCommandHandler"
 						clique="delete"/>
-					<handler id="applyCurrencyList" class="com.top_logic.layout.currency.EditCurrencyListComponent$ApplyCurrencyCommand"
-						clique="apply" group="System"/>
 					
 					<handler id="EnterMaintenanceWindow" class="com.top_logic.layout.admin.component.MaintenanceWindowComponent$EnterMaintenanceWindowCommandHandler"
 						resourceKey="main.admin.maintenanceWindow.enterDialog.EnterMaintenanceWindow"

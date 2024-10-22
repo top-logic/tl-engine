@@ -214,7 +214,8 @@ public class MediaQueryControl extends LayoutControlAdapter {
 	 *        The actual content view.
 	 */
 	public MediaQueryControl(HTMLFragment view) {
-		this(view, SIZE_RANGE_CSS_PREFIX, DEFAULT_MAX_COLUMNS, "null");
+		this(view, SIZE_RANGE_CSS_PREFIX, DEFAULT_MAX_COLUMNS,
+			com.top_logic.layout.structure.Icons.FORM_BREAKPOINTS.get());
 	}
 
 	/**
@@ -234,7 +235,11 @@ public class MediaQueryControl extends LayoutControlAdapter {
 		super(view);
 		_cssPrefix = cssPrefix;
 		_maxColumns = maxColumns;
-		_sizesConst = sizesConst;
+		if (sizesConst.equals("null")) {
+			_sizesConst = com.top_logic.layout.structure.Icons.FORM_BREAKPOINTS.get();
+		} else {
+			_sizesConst = sizesConst;
+		}
 	}
 
 	/**

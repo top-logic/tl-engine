@@ -85,6 +85,9 @@
 	<size name="com.top_logic.layout.structure.Icons.DIALOG_VERTICAL_BORDER_WIDTH"
 		value="10px"
 	/>
+	<string name="com.top_logic.layout.structure.Icons.FORM_BREAKPOINTS"
+		value="[530, 1030, 1550, 2090, 2600]"
+	/>
 	<string name="spacing-01"
 		value=".25rem"
 	/>

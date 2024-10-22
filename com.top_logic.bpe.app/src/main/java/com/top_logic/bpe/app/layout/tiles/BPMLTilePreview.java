@@ -16,6 +16,7 @@ import com.top_logic.layout.Flavor;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.provider.MetaResourceProvider;
+import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText;
 import com.top_logic.mig.html.layout.tiles.component.ComponentTile;
 import com.top_logic.mig.html.layout.tiles.component.LabelBasedPreview;
 
@@ -82,9 +83,9 @@ public class BPMLTilePreview<C extends LabelBasedPreview.Config<?>> extends Labe
 	 */
 	protected HTMLFragment specificDescriptionContent(Object model) {
 		if (model instanceof Described) {
-			String html = ((Described) model).getDescription().getSourceCode();
-			if (!html.isEmpty()) {
-				return Fragments.htmlSource(html);
+			I18NStructuredText html = ((Described) model).getDescription();
+			if (html != null) {
+				return Fragments.htmlSource(html.localizeSourceCode());
 			}
 		}
 		return null;

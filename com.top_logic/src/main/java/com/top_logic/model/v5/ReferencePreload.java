@@ -140,6 +140,10 @@ public class ReferencePreload implements PreloadOperation {
 	private HashSet<ObjectKey> getReferencedKeys(Collection<? extends KnowledgeItem> items, MOReference reference) {
 		HashSet<ObjectKey> referencedKeys = CollectionUtil.newSet(items.size());
 		for (KnowledgeItem item : items) {
+			if (!item.tTable().isSubtypeOf(reference.getOwner())) {
+				continue;
+			}
+
 			ObjectKey referencedKey = item.getReferencedKey(reference);
 			if (referencedKey == null) {
 				// currently no reference set, nothing to load

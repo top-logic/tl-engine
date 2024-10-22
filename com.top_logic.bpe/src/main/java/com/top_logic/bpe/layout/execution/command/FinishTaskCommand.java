@@ -8,6 +8,7 @@ package com.top_logic.bpe.layout.execution.command;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.NamedConstant;
@@ -42,6 +43,7 @@ import com.top_logic.layout.messagebox.MessageBox.MessageType;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandlerUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -96,7 +98,7 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 
 	@Override
 	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model, Map<String, Object> someArguments) {
-		Token token = (Token) aComponent.getModel();
+		Token token = (Token) model;
 
 		HandlerResult store = storeIfNecessary(aContext, aComponent);
 		if (!store.isSuccess()) {
@@ -145,6 +147,23 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 		} else {
 			throw new UnreachableAssertion("Invalid context: " + context);
 		}
+	}
+
+	@Override
+	public ResKey getResourceKey(LayoutComponent component) {
+		Object model = CommandHandlerUtil.getTargetModel(this, component, Collections.emptyMap());
+		if (model instanceof Token task) {
+			Set<? extends Edge> edges = task.getNode().getOutgoing();
+			if (edges.size() == 1) {
+				Edge edge = edges.iterator().next();
+				ResKey edgeLabel = edge.getLabel();
+				if (edgeLabel != null) {
+					return edgeLabel;
+				}
+			}
+		}
+
+		return super.getResourceKey(component);
 	}
 
 	private HandlerResult storeIfNecessary(DisplayContext aContext, LayoutComponent aComponent) {

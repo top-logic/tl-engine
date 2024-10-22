@@ -136,8 +136,8 @@ public interface TokenBase extends com.top_logic.bpe.execution.model.Named, com.
 	 * Getter for part {@link #DESCRIPTION_ATTR}.
 	 */
 	@Override
-	default com.top_logic.layout.wysiwyg.ui.StructuredText getDescription() {
-		return (com.top_logic.layout.wysiwyg.ui.StructuredText) tValueByName(DESCRIPTION_ATTR);
+	default com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText getDescription() {
+		return (com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText) tValueByName(DESCRIPTION_ATTR);
 	}
 
 	/**

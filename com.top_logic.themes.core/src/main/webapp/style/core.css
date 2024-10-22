@@ -2736,6 +2736,7 @@ div.ssiContentArea {
 	color: var(--text-on-color);
 	background: var(--button-primary);
 	box-shadow: inset 0px 0px 0px 2px var(--button-primary);
+	width: inherit;
 }
 
 .activeGalleryManagementButton:hover,

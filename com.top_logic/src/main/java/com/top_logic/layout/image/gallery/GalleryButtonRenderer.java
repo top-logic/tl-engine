@@ -83,7 +83,7 @@ public class GalleryButtonRenderer extends AbstractButtonRenderer<GalleryButtonR
 
 	private void writeStyleAttribute(TagWriter out) throws IOException {
 		out.beginAttribute(STYLE_ATTR);
-		out.append("width: ");
+		out.append("max-width: ");
 		out.append(String.valueOf(getConfig().getButtonWidth()));
 		out.endAttribute();
 	}

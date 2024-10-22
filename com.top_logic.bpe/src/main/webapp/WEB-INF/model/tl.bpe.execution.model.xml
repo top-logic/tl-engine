@@ -172,7 +172,7 @@
 				</property>
 				<property name="description"
 					override="true"
-					type="tl.model.wysiwyg:Html"
+					type="tl.model.i18n:I18NHtml"
 				>
 					<annotations>
 						<delete-protected/>

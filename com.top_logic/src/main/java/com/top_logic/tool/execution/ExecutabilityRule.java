@@ -16,4 +16,11 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 @Options(fun = AllInAppImplementations.class)
 public interface ExecutabilityRule extends ExecutabilityRuleSPI {
 
+	/**
+	 * Creates a combined {@link ExecutabilityRule} of this and the given one.
+	 */
+	default ExecutabilityRule combine(ExecutabilityRule other) {
+		return CombinedExecutabilityRule.combine(this, other);
+	}
+
 }

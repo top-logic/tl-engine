@@ -43,6 +43,7 @@ import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.func.IFunction0;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ModelSpec;
@@ -57,6 +58,7 @@ import com.top_logic.layout.channel.linking.ref.ComponentRef;
 import com.top_logic.layout.channel.linking.ref.ComponentRelation;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.model.FieldMode;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.annotation.CollapseEntries;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
@@ -66,6 +68,7 @@ import com.top_logic.layout.form.values.edit.initializer.UUIDInitializer;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandHandlerFactory.Config.CliqueConfig;
+import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutabilityRule;
@@ -301,8 +304,16 @@ public interface CommandHandler
 		String CONFIRM_MESSAGE = "confirmMessage";
 
 		/**
-		 * Whether the user is asked for confirmation before the command is actually executed.
+		 * @see #getConfirmation()
 		 */
+		String CONFIRMATION = "confirmation";
+
+		/**
+		 * Whether the user is asked for confirmation before the command is actually executed.
+		 * 
+		 * @deprecated Configure {@link #getConfirmation()}
+		 */
+		@Deprecated
 		@Name(CONFIRM_PROPERTY)
 		boolean getConfirm();
 
@@ -319,10 +330,24 @@ public interface CommandHandler
 		 * The message is only displayed, if {@link #getConfirm()} is set. If no value is set, but
 		 * {@link #getConfirm()} is checked, a generic confirmation message is displayed.
 		 * </p>
+		 * 
+		 * @deprecated Configure {@link #getConfirmation()}
 		 */
+		@Deprecated
 		@Name(CONFIRM_MESSAGE)
 		@DynamicMode(fun = VisibleIf.class, args = @Ref(CONFIRM_PROPERTY))
-		ResKey getConfirmMessage();
+		ResKey1 getConfirmMessage();
+
+		/**
+		 * The algorithm to compute a confirm message before a command is executed.
+		 * 
+		 * <p>
+		 * If the computed confirm message is <code>null</code>, no confirmation is displayed.
+		 * </p>
+		 */
+		@Name(CONFIRMATION)
+		@Options(fun = AllInAppImplementations.class)
+		PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
 
 		/**
 		 * Dynamic field mode that displays a field only if a referenced checkbox is checked.
@@ -453,8 +478,7 @@ public interface CommandHandler
 		Config.GROUP_PROPERTY,
 		Config.TARGET,
 		Config.EXECUTABILITY_PROPERTY,
-		Config.CONFIRM_PROPERTY,
-		Config.CONFIRM_MESSAGE
+		Config.CONFIRMATION,
 	})
 	public interface Config
 			extends ConfigBase<CommandHandler>, ExecutabilityConfig, TargetConfig, ConfirmConfig, CommandDefaults {

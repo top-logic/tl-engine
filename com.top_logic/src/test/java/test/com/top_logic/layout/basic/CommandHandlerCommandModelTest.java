@@ -53,11 +53,6 @@ public abstract class CommandHandlerCommandModelTest<T extends CommandModel> ext
 			return null;
 		}
 
-		@Override
-		public boolean needsConfirm() {
-			return true;
-		}
-
 		public static AbstractCommandHandler newInstance(String commandId, ExecutabilityRule executabilityRule) {
 			TestingCommand result = newInstance(TestingCommand.class, commandId);
 			result.setRule(executabilityRule);

@@ -518,7 +518,7 @@
 				>
 					<annotations>
 						<bpml-extension/>
-						<sort-order value="1000"/>
+						<sort-order value="1000.0"/>
 					</annotations>
 				</property>
 			</attributes>
@@ -539,6 +539,22 @@
 						<bpml-extension/>
 					</annotations>
 				</property>
+				<property name="operation"
+					type="tl.model.search:Expr"
+				>
+					<annotations>
+						<bpml-extension/>
+					</annotations>
+				</property>
+				<reference name="formType"
+					kind="forwards"
+					navigate="true"
+					type="tl.model:TLClass"
+				>
+					<annotations>
+						<bpml-extension/>
+					</annotations>
+				</reference>
 			</attributes>
 		</class>
 		<class name="Lane">
@@ -897,6 +913,24 @@
 						<visibility value="hidden"/>
 					</annotations>
 				</reference>
+				<reference name="tokenType"
+					kind="forwards"
+					type="tl.model:TLClass"
+				>
+					<annotations>
+						<bpml-extension/>
+						<options>
+							<options-by-expression>
+								<function><![CDATA[task -> ($task
+    .get(`tl.bpe.bpml:Task#process`)
+    .get(`tl.bpe.bpml:Process#participant`)
+    .get(`tl.bpe.bpml:Participant#tokenType`) 
+    || `tl.bpe.execution:Token`)
+    .recursion(t -> $t.get(`tl.model:TLClass#specializations`))]]></function>
+							</options-by-expression>
+						</options>
+					</annotations>
+				</reference>
 			</attributes>
 		</class>
 		<class name="BusinessRuleTask">
@@ -939,6 +973,16 @@
 						<bpml-extension/>
 						<sort-order value="800.1"/>
 						<label-position value="hide-label"/>
+					</annotations>
+				</property>
+				<property name="canEdit"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<bpml-extension/>
+						<default-value>
+							<boolean value="true"/>
+						</default-value>
 					</annotations>
 				</property>
 			</attributes>
@@ -1092,7 +1136,7 @@
 				>
 					<annotations>
 						<bpml-extension/>
-						<sort-order value="501.0"/>
+						<sort-order value="4000.0"/>
 					</annotations>
 				</property>
 				<reference name="collaboration"
@@ -1109,7 +1153,7 @@
 					type="tl.model.search:Expr"
 				>
 					<annotations>
-						<sort-order value="500.0"/>
+						<sort-order value="5000.0"/>
 					</annotations>
 				</property>
 				<property name="displayDescription"
@@ -1140,6 +1184,35 @@
 						<sort-order value="801.0"/>
 					</annotations>
 				</property>
+				<reference name="tokenType"
+					kind="forwards"
+					navigate="true"
+					type="tl.model:TLClass"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="4.0"/>
+						<options>
+							<options-by-expression function="`tl.bpe.execution:Token`.recursion(t -> $t.get(`tl.model:TLClass#specializations`))"/>
+						</options>
+					</annotations>
+				</reference>
+				<property name="defaultOperation"
+					type="tl.model.search:Expr"
+				>
+					<annotations>
+						<bpml-extension/>
+					</annotations>
+				</property>
+				<reference name="edgeFormType"
+					kind="forwards"
+					navigate="true"
+					type="tl.model:TLClass"
+				>
+					<annotations>
+						<bpml-extension/>
+					</annotations>
+				</reference>
 			</attributes>
 		</class>
 		<class name="Process">

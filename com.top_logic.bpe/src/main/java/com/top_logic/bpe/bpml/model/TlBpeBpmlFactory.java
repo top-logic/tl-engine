@@ -393,6 +393,13 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
+	 * Lookup {@link Edge#WEIGHT_ATTR} of {@link Edge}.
+	 */
+	public static com.top_logic.model.TLProperty getWeightEdgeAttr() {
+		return (com.top_logic.model.TLProperty) getEdgeType().getPart(Edge.WEIGHT_ATTR);
+	}
+
+	/**
 	 * Lookup {@link SequenceFlow} type.
 	 */
 	public static com.top_logic.model.TLClass getSequenceFlowType() {

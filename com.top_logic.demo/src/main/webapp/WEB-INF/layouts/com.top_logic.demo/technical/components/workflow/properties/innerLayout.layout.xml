@@ -9,6 +9,9 @@
 			<layout-reference resource="com.top_logic.demo/technical/components/workflow/properties/advanceTicketTaskEdit.layout.xml">
 				<layoutInfo/>
 			</layout-reference>
+			<layout-reference resource="com.top_logic.demo/technical/components/workflow/properties/historyTable.layout.xml">
+				<layoutInfo size="300px"/>
+			</layout-reference>
 		</components>
 	</arguments>
 </config:template-call>

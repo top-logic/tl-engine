@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="startDate,node,finishBy"
+		model="model(com.top_logic.demo/technical/components/workflow/properties/advanceTicketTaskEdit.layout.xml#TaskEdit)"
+		type="tl.bpe.execution:Token"
+	>
+		<name key="dynamic.63436bc8-b264-4fb4-ae47-ca057ecdc2bb">
+			<en>History</en>
+			<de>Verlauf</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			supportsElement="element->$element.instanceOf(`tl.bpe.execution:Token`)"
+		>
+			<elements><![CDATA[model->$model
+    .get(`tl.bpe.execution:Token#processExecution`)
+    .get(`tl.bpe.execution:ProcessExecution#allTokens`)]]></elements>
+		</modelBuilder>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

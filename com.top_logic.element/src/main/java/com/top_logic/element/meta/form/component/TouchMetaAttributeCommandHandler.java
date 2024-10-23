@@ -45,19 +45,9 @@ public class TouchMetaAttributeCommandHandler extends AJAXCommandHandler {
         super(context, config);
     }
 
-    
-
-    
-
-
     @Override
 	public String[] getAttributeNames() {
         return PARAMETERS;
-    }
-
-    @Override
-	public boolean needsConfirm() {
-        return true;
     }
 
     @Override

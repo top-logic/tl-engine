@@ -37,6 +37,7 @@ import com.top_logic.model.form.implementation.FormMode;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.tool.execution.ExecutableState.CommandVisibility;
 
 /**
  * {@link DefaultEditAttributedComponent} that displays the configured attributes for a given
@@ -52,6 +53,11 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 		super(context, config);
 	}
 	
+	@Override
+	protected ExecutabilityRule getIntrinsicEditExecutability() {
+		return super.getIntrinsicEditExecutability().combine(CanEditTask.INSTANCE);
+	}
+
 	@Override
 	public FormDefinition getDisplayDescription() {
 		Node node = getToken().getNode();
@@ -149,6 +155,35 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 			}
 		}
 
+	}
+
+	private static class CanEditTask implements ExecutabilityRule {
+	
+		/**
+		 * Singleton {@link CanEditTask} instance.
+		 */
+		public static final CanEditTask INSTANCE = new CanEditTask();
+	
+		private CanEditTask() {
+			// Singleton constructor.
+		}
+	
+		private static final ExecutableState CANNOT_EDIT =
+			new ExecutableState(CommandVisibility.HIDDEN, I18NConstants.CANNOT_EDIT_TASK);
+	
+		@Override
+		public ExecutableState isExecutable(LayoutComponent aComponent, Object model,
+				Map<String, Object> someValues) {
+			if (model instanceof Token token) {
+				if (token.getNode() instanceof ManualTask task) {
+					if (!task.getCanEdit()) {
+						return CANNOT_EDIT;
+					}
+				}
+			}
+			return ExecutableState.EXECUTABLE;
+		}
+	
 	}
 
 }

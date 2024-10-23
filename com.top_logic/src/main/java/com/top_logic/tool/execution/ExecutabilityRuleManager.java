@@ -316,12 +316,23 @@ public final class ExecutabilityRuleManager extends ManagedClass {
 	 * @return An {@link ExecutabilityRule} for the given configuration with resolved references.
 	 */
 	public static ExecutabilityRule resolveRules(InstantiationContext context, ExecutabilityConfig config) {
-		return getInstance().resolve(context, config);
+		return resolveRules(context, config.getExecutability());
 	}
 
-	private ExecutabilityRule resolve(InstantiationContext context, ExecutabilityConfig config) {
+	/**
+	 * Resolves the given configuration to an {@link ExecutabilityRule}.
+	 * 
+	 * @return An {@link ExecutabilityRule} for the given configuration with resolved references.
+	 */
+	public static ExecutabilityRule resolveRules(InstantiationContext context,
+			List<PolymorphicConfiguration<? extends ExecutabilityRule>> executability) {
+		return getInstance().resolve(context, executability);
+	}
+
+	private ExecutabilityRule resolve(InstantiationContext context,
+			List<PolymorphicConfiguration<? extends ExecutabilityRule>> executability) {
 		List<ExecutabilityRule> rules = new ArrayList<>();
-		resolveComposite(rules, context, config);
+		resolveComposite(rules, context, executability);
 		return CombinedExecutabilityRule.combine(rules);
 	}
 
@@ -341,9 +352,13 @@ public final class ExecutabilityRuleManager extends ManagedClass {
 	}
 
 	private void resolveComposite(List<ExecutabilityRule> result, InstantiationContext context, ExecutabilityConfig config) {
-		List<PolymorphicConfiguration<? extends ExecutabilityRule>> ruleConfigs = config.getExecutability();
-		for (PolymorphicConfiguration<? extends ExecutabilityRule> ruleConfig : ruleConfigs) {
-			resolve(result, context, ruleConfig);
+		resolveComposite(result, context, config.getExecutability());
+	}
+
+	private void resolveComposite(List<ExecutabilityRule> result, InstantiationContext context,
+			List<PolymorphicConfiguration<? extends ExecutabilityRule>> executability) {
+		for (PolymorphicConfiguration<? extends ExecutabilityRule> config : executability) {
+			resolve(result, context, config);
 		}
 	}
 

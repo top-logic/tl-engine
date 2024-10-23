@@ -63,6 +63,15 @@ public interface EdgeBase extends com.top_logic.bpe.bpml.model.Named, com.top_lo
 	String TOOLTIP_ATTR = "tooltip";
 
 	/**
+	 * Part <code>weight</code> of <code>Edge</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Double</code> in configuration.
+	 * </p>
+	 */
+	String WEIGHT_ATTR = "weight";
+
+	/**
 	 * Getter for part {@link #LABEL_ATTR}.
 	 */
 	default com.top_logic.basic.util.ResKey getLabel() {
@@ -123,6 +132,20 @@ public interface EdgeBase extends com.top_logic.bpe.bpml.model.Named, com.top_lo
 	 */
 	default void setTooltip(com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText newValue) {
 		tUpdateByName(TOOLTIP_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #WEIGHT_ATTR}.
+	 */
+	default Double getWeight() {
+		return (Double) tValueByName(WEIGHT_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #WEIGHT_ATTR}.
+	 */
+	default void setWeight(Double newValue) {
+		tUpdateByName(WEIGHT_ATTR, newValue);
 	}
 
 }

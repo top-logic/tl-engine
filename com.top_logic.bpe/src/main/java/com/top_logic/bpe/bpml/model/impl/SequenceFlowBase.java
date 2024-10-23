@@ -18,6 +18,24 @@ public interface SequenceFlowBase extends com.top_logic.bpe.bpml.model.Edge {
 	String SEQUENCE_FLOW_TYPE = "SequenceFlow";
 
 	/**
+	 * Part <code>formType</code> of <code>SequenceFlow</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model:TLClass</code> in configuration.
+	 * </p>
+	 */
+	String FORM_TYPE_ATTR = "formType";
+
+	/**
+	 * Part <code>operation</code> of <code>SequenceFlow</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model.search:Expr</code> in configuration.
+	 * </p>
+	 */
+	String OPERATION_ATTR = "operation";
+
+	/**
 	 * Part <code>rule</code> of <code>SequenceFlow</code>
 	 * 
 	 * <p>
@@ -25,6 +43,34 @@ public interface SequenceFlowBase extends com.top_logic.bpe.bpml.model.Edge {
 	 * </p>
 	 */
 	String RULE_ATTR = "rule";
+
+	/**
+	 * Getter for part {@link #FORM_TYPE_ATTR}.
+	 */
+	default com.top_logic.model.TLClass getFormType() {
+		return (com.top_logic.model.TLClass) tValueByName(FORM_TYPE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #FORM_TYPE_ATTR}.
+	 */
+	default void setFormType(com.top_logic.model.TLClass newValue) {
+		tUpdateByName(FORM_TYPE_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #OPERATION_ATTR}.
+	 */
+	default com.top_logic.model.search.expr.SearchExpression getOperation() {
+		return (com.top_logic.model.search.expr.SearchExpression) tValueByName(OPERATION_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #OPERATION_ATTR}.
+	 */
+	default void setOperation(com.top_logic.model.search.expr.SearchExpression newValue) {
+		tUpdateByName(OPERATION_ATTR, newValue);
+	}
 
 	/**
 	 * Getter for part {@link #RULE_ATTR}.

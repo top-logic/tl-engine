@@ -50,12 +50,6 @@ public class TouchAllMetaAttributesCommandHandler extends AJAXCommandHandler {
 		super(context, config);
     }
 
-
-    @Override
-	public boolean needsConfirm() {
-        return true;
-    }
-
     @Override
 	@Deprecated
 	public ExecutabilityRule createExecutabilityRule() {

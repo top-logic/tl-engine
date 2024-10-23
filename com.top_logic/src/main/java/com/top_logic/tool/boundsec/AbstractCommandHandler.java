@@ -27,6 +27,7 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.Revision;
@@ -47,6 +48,7 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.conditional.PreconditionCommandHandler;
+import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.AlwaysExecutable;
 import com.top_logic.tool.execution.ExecutabilityRule;
@@ -97,9 +99,6 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 
 	private String _clique;
 
-    /** Flag, if this command needs special confirmation by user. */
-    private boolean confirm;
-
     private String commandID;
 
 	private ThemeImage _image;
@@ -134,6 +133,8 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 	private final SecurityObjectProvider _securityObjectProvider;
 
 	private final ChannelLinking _target;
+
+	private final CommandConfirmation _confirmation;
     
 	/**
 	 * Creates a {@link AbstractCommandHandler} from typed configuration.
@@ -149,7 +150,7 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 		this.commandID = id(config);
 		this.commandGroup = group(context, config);
 		_clique = config.getClique();
-		this.confirm = confirm(config);
+		_confirmation = confirmation(context, config);
 		_image = config.getImage();
 		_disabledImage = getImage(config.getDisabledImage(), _image);
 		_resourceKey = resourceKey(config);
@@ -161,6 +162,28 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 
 		assert _rule != null : "No executablity rule in handler '" + getID() + "'.";
 		assert _checkScopeProvider != null : "No check scope provider in handler '" + getID() + "'.";
+	}
+
+	private CommandConfirmation confirmation(InstantiationContext context, Config config) {
+		var confirmation = context.getInstance(config.getConfirmation());
+		if (confirmation != null) {
+			return confirmation;
+		} else if (config.getConfirm()) {
+			// Backwards compatibility.
+			return new CommandConfirmation() {
+				@Override
+				public ResKey getConfirmation(LayoutComponent component, ResKey commandLabel, Object model, Map<String, Object> arguments) {
+					ResKey1 customKey = config.getConfirmMessage();
+					if (customKey != null) {
+						return customKey.fill(model);
+					}
+
+					return getDefaultConfirmKey(component, arguments, model);
+				}
+			};
+		} else {
+			return null;
+		}
 	}
 
 	@Override
@@ -234,26 +257,15 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 		return _clique;
 	}
 
-	/**
-	 * Whether the configured or default confirmation message is shown.
-	 */
-	protected boolean needsConfirm() {
-        return this.confirm;
-    }
-    
     @Override
     public ResKey getConfirmKey(LayoutComponent component, Map<String, Object> arguments) {
-		if (!needsConfirm()) {
-			return null;
+		if (_confirmation != null) {
+			ResKey commandLabel = getResourceKey(component);
+			Object targetModel = CommandHandlerUtil.getTargetModel(this, component, arguments);
+			return _confirmation.getConfirmation(component, commandLabel, targetModel, arguments);
 		}
-    	Object targetModel = arguments == null ? null : CommandHandlerUtil.getTargetModel(this, component, arguments);
-    	
-    	ResKey customKey = getConfig().getConfirmMessage();
-    	if (customKey != null) {
-			return ResKey.message(customKey, targetModel);
-    	}
-    	
-		return getDefaultConfirmKey(component, arguments, targetModel);
+
+		return null;
 	}
 
 	/**
@@ -269,7 +281,10 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 	 *        The model on which this handler operates.
 	 * 
 	 * @return The internationalized text to display in the confirmation dialog.
+	 * 
+	 * @deprecated Instead of overwriting, configure {@link Config#getConfirmation()} instead.
 	 */
+	@Deprecated
 	protected ResKey getDefaultConfirmKey(LayoutComponent component, Map<String, Object> arguments,
 			Object targetModel) {
 		ResKey commandKey = getResourceKey(component);
@@ -374,7 +389,6 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 	public String toString() {
         return (this.getClass().getName() + " [" +
                 "command: '" + this.getID() +
-                "', confirm: " + this.confirm +
                 ", group: " + this.commandGroup +
                 ']');
     }

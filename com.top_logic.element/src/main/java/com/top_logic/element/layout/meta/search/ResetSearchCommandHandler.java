@@ -68,11 +68,6 @@ public class ResetSearchCommandHandler extends AJAXCommandHandler {
     }
 
     @Override
-	public boolean needsConfirm() {
-        return true;
-    }
-
-    @Override
 	@Deprecated
 	public ResKey getDefaultI18NKey() {
 		return I18NConstants.RESET_SEARCH;

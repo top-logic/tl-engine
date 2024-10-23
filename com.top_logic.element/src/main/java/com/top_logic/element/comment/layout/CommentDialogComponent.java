@@ -218,11 +218,6 @@ public class CommentDialogComponent extends FormComponent {
         }
 
         @Override
-        public boolean needsConfirm() {
-            return false;
-        }
-
-        @Override
 		@Deprecated
         public ResKey getDefaultI18NKey() {
 			return (I18NConstants.SAVE);
@@ -266,11 +261,6 @@ public class CommentDialogComponent extends FormComponent {
 				AbstractApplyCommandHandler.fillHandlerResultWithErrors(theContext, theResult);
                 return theResult;
             }
-        }
-
-        @Override
-        public boolean needsConfirm() {
-            return false;
         }
 
         @Override

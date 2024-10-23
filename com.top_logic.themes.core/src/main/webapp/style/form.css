@@ -2578,7 +2578,7 @@ a.input-image.tristate.tBoolean {
 }
 
 .ddwttContainer.active {
-	display: inline-flex;
+	display: flex;
 	flex-wrap: wrap;
 }
 

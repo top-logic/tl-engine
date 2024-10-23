@@ -45,6 +45,15 @@ public interface TaskBase extends com.top_logic.bpe.bpml.model.Node, com.top_log
 	String LABEL_FUNCTION_ATTR = "labelFunction";
 
 	/**
+	 * Part <code>tokenType</code> of <code>Task</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model:TLClass</code> in configuration.
+	 * </p>
+	 */
+	String TOKEN_TYPE_ATTR = "tokenType";
+
+	/**
 	 * Getter for part {@link #BOUNDARY_EVENTS_ATTR}.
 	 */
 	@SuppressWarnings("unchecked")
@@ -78,6 +87,20 @@ public interface TaskBase extends com.top_logic.bpe.bpml.model.Node, com.top_log
 	 */
 	default void setLabelFunction(com.top_logic.model.search.expr.SearchExpression newValue) {
 		tUpdateByName(LABEL_FUNCTION_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #TOKEN_TYPE_ATTR}.
+	 */
+	default com.top_logic.model.TLClass getTokenType() {
+		return (com.top_logic.model.TLClass) tValueByName(TOKEN_TYPE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #TOKEN_TYPE_ATTR}.
+	 */
+	default void setTokenType(com.top_logic.model.TLClass newValue) {
+		tUpdateByName(TOKEN_TYPE_ATTR, newValue);
 	}
 
 }

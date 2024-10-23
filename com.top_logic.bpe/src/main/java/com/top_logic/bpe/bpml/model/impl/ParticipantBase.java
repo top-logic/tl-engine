@@ -27,6 +27,15 @@ public interface ParticipantBase extends com.top_logic.bpe.bpml.model.Named, com
 	String COLLABORATION_ATTR = "collaboration";
 
 	/**
+	 * Part <code>defaultOperation</code> of <code>Participant</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model.search:Expr</code> in configuration.
+	 * </p>
+	 */
+	String DEFAULT_OPERATION_ATTR = "defaultOperation";
+
+	/**
 	 * Part <code>displayDescription</code> of <code>Participant</code>
 	 * 
 	 * <p>
@@ -43,6 +52,15 @@ public interface ParticipantBase extends com.top_logic.bpe.bpml.model.Named, com
 	 * </p>
 	 */
 	String DYNAMIC_NAME_ATTR = "dynamicName";
+
+	/**
+	 * Part <code>edgeFormType</code> of <code>Participant</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model:TLClass</code> in configuration.
+	 * </p>
+	 */
+	String EDGE_FORM_TYPE_ATTR = "edgeFormType";
 
 	/**
 	 * Part <code>exportDescription</code> of <code>Participant</code>
@@ -81,10 +99,33 @@ public interface ParticipantBase extends com.top_logic.bpe.bpml.model.Named, com
 	String TASK_LABEL_ATTR = "taskLabel";
 
 	/**
+	 * Part <code>tokenType</code> of <code>Participant</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model:TLClass</code> in configuration.
+	 * </p>
+	 */
+	String TOKEN_TYPE_ATTR = "tokenType";
+
+	/**
 	 * Getter for part {@link #COLLABORATION_ATTR}.
 	 */
 	default com.top_logic.bpe.bpml.model.Collaboration getCollaboration() {
 		return (com.top_logic.bpe.bpml.model.Collaboration) tValueByName(COLLABORATION_ATTR);
+	}
+
+	/**
+	 * Getter for part {@link #DEFAULT_OPERATION_ATTR}.
+	 */
+	default com.top_logic.model.search.expr.SearchExpression getDefaultOperation() {
+		return (com.top_logic.model.search.expr.SearchExpression) tValueByName(DEFAULT_OPERATION_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #DEFAULT_OPERATION_ATTR}.
+	 */
+	default void setDefaultOperation(com.top_logic.model.search.expr.SearchExpression newValue) {
+		tUpdateByName(DEFAULT_OPERATION_ATTR, newValue);
 	}
 
 	/**
@@ -113,6 +154,20 @@ public interface ParticipantBase extends com.top_logic.bpe.bpml.model.Named, com
 	 */
 	default void setDynamicName(com.top_logic.model.search.expr.SearchExpression newValue) {
 		tUpdateByName(DYNAMIC_NAME_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #EDGE_FORM_TYPE_ATTR}.
+	 */
+	default com.top_logic.model.TLClass getEdgeFormType() {
+		return (com.top_logic.model.TLClass) tValueByName(EDGE_FORM_TYPE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #EDGE_FORM_TYPE_ATTR}.
+	 */
+	default void setEdgeFormType(com.top_logic.model.TLClass newValue) {
+		tUpdateByName(EDGE_FORM_TYPE_ATTR, newValue);
 	}
 
 	/**
@@ -169,6 +224,20 @@ public interface ParticipantBase extends com.top_logic.bpe.bpml.model.Named, com
 	 */
 	default void setTaskLabel(com.top_logic.model.search.expr.SearchExpression newValue) {
 		tUpdateByName(TASK_LABEL_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #TOKEN_TYPE_ATTR}.
+	 */
+	default com.top_logic.model.TLClass getTokenType() {
+		return (com.top_logic.model.TLClass) tValueByName(TOKEN_TYPE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #TOKEN_TYPE_ATTR}.
+	 */
+	default void setTokenType(com.top_logic.model.TLClass newValue) {
+		tUpdateByName(TOKEN_TYPE_ATTR, newValue);
 	}
 
 }

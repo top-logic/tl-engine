@@ -156,8 +156,7 @@ public interface Token extends TokenBase {
 		SearchExpression titleTemplate = token.participant(node.getProcess()).getTaskLabel();
 		if (titleTemplate != null) {
 			return new ExpressionFragment(
-				call(titleTemplate, literal(token.getProcessExecution()), literal(token.getNode()),
-					literal(token)));
+				call(titleTemplate, literal(token.getProcessExecution()), literal(token)));
 		}
 
 		String name = node.getName();

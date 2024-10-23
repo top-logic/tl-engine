@@ -18,6 +18,15 @@ public interface ManualTaskBase extends com.top_logic.bpe.bpml.model.Task {
 	String MANUAL_TASK_TYPE = "ManualTask";
 
 	/**
+	 * Part <code>canEdit</code> of <code>ManualTask</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Boolean</code> in configuration.
+	 * </p>
+	 */
+	String CAN_EDIT_ATTR = "canEdit";
+
+	/**
 	 * Part <code>formDefinition</code> of <code>ManualTask</code>
 	 * 
 	 * <p>
@@ -25,6 +34,20 @@ public interface ManualTaskBase extends com.top_logic.bpe.bpml.model.Task {
 	 * </p>
 	 */
 	String FORM_DEFINITION_ATTR = "formDefinition";
+
+	/**
+	 * Getter for part {@link #CAN_EDIT_ATTR}.
+	 */
+	default boolean getCanEdit() {
+		return (Boolean) tValueByName(CAN_EDIT_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #CAN_EDIT_ATTR}.
+	 */
+	default void setCanEdit(boolean newValue) {
+		tUpdateByName(CAN_EDIT_ATTR, newValue);
+	}
 
 	/**
 	 * Getter for part {@link #FORM_DEFINITION_ATTR}.

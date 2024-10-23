@@ -26,6 +26,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 NO_DISPLAY_DESCRIPTION__WF;
 
+	/**
+	 * @en The current task is flagged as non-editable.
+	 */
+	public static ResKey CANNOT_EDIT_TASK;
+
     static {
         initConstants(I18NConstants.class);
     }

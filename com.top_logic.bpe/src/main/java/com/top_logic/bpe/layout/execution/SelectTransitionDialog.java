@@ -5,9 +5,13 @@
  */
 package com.top_logic.bpe.layout.execution;
 
+import java.text.Collator;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import org.w3c.dom.Document;
@@ -16,6 +20,7 @@ import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.DOMUtil;
+import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.bpe.bpml.model.DefaultGateway;
 import com.top_logic.bpe.bpml.model.Edge;
 import com.top_logic.bpe.bpml.model.EndEvent;
@@ -28,12 +33,14 @@ import com.top_logic.bpe.execution.engine.GuiEngine;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.bpe.layout.execution.command.FinishTaskCommand;
 import com.top_logic.bpe.layout.execution.command.I18NConstants;
+import com.top_logic.layout.AbstractResourceProvider;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
-import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.Flavor;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.CheckException;
 import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
@@ -49,87 +56,12 @@ import com.top_logic.layout.messagebox.SimpleFormDialog;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
+import com.top_logic.util.TLContext;
 
 /**
- * Dialog for asking the next process step.
+ * Dialog for asking the user to decide about the next process step.
  */
 public class SelectTransitionDialog extends SimpleFormDialog {
-
-	public abstract class DisplayType {
-
-		void setLabelProvider(SelectField field, Token token) {
-			// do nothing by default
-		}
-
-		void setLabel(SelectField field, Token token) {
-			// do nothing by default
-		};
-
-	}
-
-	public class DecisionSelection extends FlowSelection {
-
-		private Gateway _gateway;
-
-		public DecisionSelection(Gateway gateway) {
-			_gateway = gateway;
-		}
-
-		@Override
-		public void setLabel(SelectField field, Token token) {
-			field.setLabel(_gateway.getName());
-		}
-
-	}
-
-	public class FlowSelection extends DisplayType {
-
-		@Override
-		public void setLabelProvider(SelectField field, Token token) {
-			field.setOptionLabelProvider(new LabelProvider() {
-
-				@Override
-				public String getLabel(Object object) {
-					String result;
-					Object[] edges = (Object[]) object;
-					Edge lastEdge = (Edge) edges[edges.length - 1];
-					String name = lastEdge.getName();
-					if (!StringServices.isEmpty(name)) {
-						result = name;
-					} else {
-						Node target = lastEdge.getTarget();
-						name = target.getName();
-						if (!StringServices.isEmpty(name)) {
-							result = name;
-						} else if (target instanceof EndEvent) {
-							ResKey key;
-							EventDefinition definition = ((EndEvent) target).getDefinition();
-							boolean terminate = (definition instanceof TerminateEventDefinition);
-							if (terminate) {
-								key = I18NConstants.EDGE_OPTION_LABEL_ABORT;
-							} else {
-								key = I18NConstants.EDGE_OPTION_LABEL_CANCEL;
-							}
-							result = Resources.getInstance().getString(key);
-						} else {
-							result = Resources.getInstance().getString(I18NConstants.EDGE_OPTION_NO_NAME);
-						}
-					}
-
-					for (Object edge : edges) {
-						// mark impossible transitions
-						if (GuiEngine.getInstance().checkError((Edge) edge, token) != null) {
-							result = "! " + result;
-							break;
-						}
-					}
-
-					return result;
-				}
-			});
-		}
-
-	}
 
 	static final Document TEMPLATE = DOMUtil.parseThreadSafe(
 		"<div"
@@ -162,8 +94,6 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 
 	private HandlerResult _suspended;
 
-	private DisplayType _displayType;
-
 	/**
 	 * Creates a {@link SelectTransitionDialog}.
 	 */
@@ -171,28 +101,7 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 		super(I18NConstants.SELECT_TRANSITION_DIALOG, DisplayDimension.dim(550, DisplayUnit.PIXEL),
 			DisplayDimension.dim(320, DisplayUnit.PIXEL));
 		_token = token;
-		_displayType = findDisplayType(token);
 		_suspended = suspended;
-	}
-
-	private DisplayType findDisplayType(Token token) {
-		Node node = token.getNode();
-		Set<? extends Edge> outgoing = node.getOutgoing();
-		if (outgoing.size() == 1) {
-			Node target = outgoing.iterator().next().getTarget();
-			if (target instanceof Gateway) {
-				if (!StringServices.isEmpty(target.getName())) {
-					Set<? extends Edge> outgoing2 = target.getOutgoing();
-					for (Edge edge : outgoing2) {
-						if (StringServices.isEmpty(edge.getName())) {
-							return new FlowSelection();
-						}
-					}
-					return new DecisionSelection((Gateway) target);
-				}
-			}
-		}
-		return new FlowSelection();
 	}
 
 	@Override
@@ -228,13 +137,13 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 			@Override
 			public HandlerResult executeCommand(DisplayContext aContext) {
 				FormContext formContext = getFormContext();
-				Object[] selection =
-					(Object[]) ((SelectField) formContext.getField(INPUT_FIELD)).getSingleSelection();
+				Decision selection =
+					(Decision) ((SelectField) formContext.getField(INPUT_FIELD)).getSingleSelection();
 				if (!formContext.checkAll()) {
 					return AbstractApplyCommandHandler.createErrorResult(formContext);
 				}
 				Command continuation = _suspended
-					.resumeContinuation(Collections.singletonMap(FinishTaskCommand.CONTEXT, selection[selection.length - 1]));
+					.resumeContinuation(Collections.singletonMap(FinishTaskCommand.CONTEXT, selection.getLastEdge()));
 
 				HandlerResult result = continuation.executeCommand(aContext);
 				if (!result.isSuccess()) {
@@ -245,45 +154,170 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 		};
 	}
 
-	@Override
-	protected void fillFormContext(FormContext aContext) {
-		Set<Edge[]> edges = getNextEdges(_token);
-		SelectField field = FormFactory.newSelectField(SimpleFormDialog.INPUT_FIELD, edges);
-		field.addConstraint(new Constraint() {
+	static class Decision {
 
-			@Override
-			public boolean check(Object value) throws CheckException {
-				Object first = CollectionUtil.getFirst(value);
-				checkPotentialEdge(first);
-				if (first instanceof Object[]) {
-					for (Object potEdge : (Object[]) first) {
-						checkPotentialEdge(potEdge);
+		private final List<Edge> _edges;
+
+		private final ResKey _label;
+
+		private String _tooltip;
+
+		private final ResKey _disabledReason;
+
+		Decision(Token token, Edge... edges) {
+			_edges = Arrays.asList(edges);
+
+			ResKey label;
+			String tooltip;
+			Edge lastEdge = getLastEdge();
+			ResKey edgeLabel = lastEdge.getLabel();
+			if (edgeLabel != null) {
+				label = edgeLabel;
+				tooltip = lastEdge.getTooltip().localizeSourceCode();
+			} else {
+				tooltip = null;
+				final String lastEdgeName = lastEdge.getName();
+				if (!StringServices.isEmpty(lastEdgeName)) {
+					label = ResKey.text(lastEdgeName);
+				} else {
+					Node target = lastEdge.getTarget();
+					String targetName = target.getName();
+					if (!StringServices.isEmpty(targetName)) {
+						label = ResKey.text(targetName);
+					} else if (target instanceof EndEvent) {
+						ResKey key;
+						EventDefinition definition = ((EndEvent) target).getDefinition();
+						boolean terminate = (definition instanceof TerminateEventDefinition);
+						if (terminate) {
+							key = I18NConstants.EDGE_OPTION_LABEL_ABORT;
+						} else {
+							key = I18NConstants.EDGE_OPTION_LABEL_CANCEL;
+						}
+						label = key;
+					} else {
+						label = I18NConstants.EDGE_OPTION_NO_NAME;
 					}
 				}
-				return true;
 			}
 
-			@SuppressWarnings("synthetic-access")
-			private void checkPotentialEdge(Object first) throws CheckException {
-				if (!(first instanceof Edge)) {
-					return;
+			ResKey disabledReason = null;
+			for (Edge edge : edges) {
+				// mark impossible transitions
+				disabledReason = GuiEngine.getInstance().checkError(edge, token);
+				if (disabledReason != null) {
+					label = I18NConstants.IMPOSSIBLE_EDGE.fill(label);
+
+					tooltip = TagUtil.encodeXML(Resources.getInstance().getString(disabledReason));
+					break;
 				}
-				Edge edge = (Edge) first;
-				ResKey error = GuiEngine.getInstance().checkError(edge, _token);
+			}
+
+			_label = label;
+			_tooltip = tooltip;
+			_disabledReason = disabledReason;
+		}
+
+		public List<Edge> getEdges() {
+			return _edges;
+		}
+
+		public Edge getLastEdge() {
+			return _edges.get(_edges.size() - 1);
+		}
+
+		public ResKey getDisabledReason() {
+			return _disabledReason;
+		}
+	}
+
+	static class DecisionComparator implements Comparator<Decision> {
+		private final Resources _resources;
+
+		private final Collator _collator;
+
+		/**
+		 * Creates a {@link SelectTransitionDialog.DecisionComparator}.
+		 */
+		public DecisionComparator(Locale locale) {
+			_resources = Resources.getInstance(locale);
+			_collator = Collator.getInstance(locale);
+		}
+
+		@Override
+		public int compare(Decision self, Decision other) {
+			Double weight = self.getLastEdge().getWeight();
+			Double otherWeight = other.getLastEdge().getWeight();
+
+			if (weight != null) {
+				if (otherWeight != null) {
+					return Double.compare(weight.doubleValue(), otherWeight.doubleValue());
+				} else {
+					// Edge with weight to the top.
+					return -1;
+				}
+			} else {
+				if (otherWeight == null) {
+					// Both without weight.
+					String label = _resources.getString(self._label);
+					String otherLabel = _resources.getString(other._label);
+					return _collator.compare(label, otherLabel);
+				} else {
+					// Edge with weight to the top.
+					return 1;
+				}
+			}
+		}
+	}
+
+	static class DecisionResources extends AbstractResourceProvider {
+		/**
+		 * Singleton {@link DecisionResources} instance.
+		 */
+		public static final DecisionResources INSTANCE = new DecisionResources();
+
+		private DecisionResources() {
+			// Singleton constructor.
+		}
+
+		@Override
+		public String getLabel(Object object) {
+			return Resources.getInstance().getString(((Decision) object)._label);
+		}
+
+		@Override
+		public String getTooltip(Object object) {
+			return ((Decision) object)._tooltip;
+		}
+
+		@Override
+		public ThemeImage getImage(Object object, Flavor aFlavor) {
+			return null;
+		}
+	}
+
+	@Override
+	protected void fillFormContext(FormContext aContext) {
+		List<Decision> edges = getNextEdges(_token);
+		SelectField field = FormFactory.newSelectField(SimpleFormDialog.INPUT_FIELD, edges);
+		field.addConstraint(new Constraint() {
+			@Override
+			public boolean check(Object value) throws CheckException {
+				Decision decision = (Decision) CollectionUtil.getSingleValueFrom(value);
+				ResKey error = decision.getDisabledReason();
 				if (error != null) {
 					throw new CheckException(Resources.getInstance().getString(error));
 				}
+				return true;
 			}
 		});
-		_displayType.setLabelProvider(field, _token);
-		_displayType.setLabel(field, _token);
+		field.setOptionLabelProvider(DecisionResources.INSTANCE);
 		field.setMandatory(true);
 		setInitialSelection(field, edges);
 		aContext.addMember(field);
 	}
 
-	private Set<Edge[]> getNextEdges(Token token) {
-		Set<Edge[]> res = new HashSet<>();
+	private List<Decision> getNextEdges(Token token) {
+		List<Decision> res = new ArrayList<>();
 		Node node = token.getNode();
 		Set<? extends Edge> outgoing = node.getOutgoing();
 		for (Edge edge : outgoing) {
@@ -292,30 +326,30 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 				Gateway gateway = (Gateway) target;
 				if (GuiEngine.getInstance().isManual(gateway)) {
 					for (Edge gatewayOutgoing : gateway.getOutgoing()) {
-						res.add(new Edge[] { edge, gatewayOutgoing });
+						res.add(new Decision(token, edge, gatewayOutgoing));
 					}
-
 				} else {
-					res.add(new Edge[] { edge });
+					res.add(new Decision(token, edge));
 				}
 			} else if (target instanceof Task) {
-				res.add(new Edge[] { edge });
+				res.add(new Decision(token, edge));
 			}
 		}
+		res.sort(new DecisionComparator(TLContext.getLocale()));
 		return res;
 	}
 
-	private void setInitialSelection(SelectField field, Set<Edge[]> options) {
+	private void setInitialSelection(SelectField field, List<Decision> options) {
 		if (options.size() == 1) {
 			field.setAsSingleSelection(options.iterator().next());
 			return;
 		}
-		Edge[] singlePossibleEdge = null;
+		Decision singlePossibleEdge = null;
 		boolean multiplePossibleEdges = false;
-		Edge[] defaultEdge = null;
+		Decision defaultEdge = null;
 		optionsLoop:
-		for (Edge[] option : options) {
-			for (Edge edge : option) {
+		for (Decision option : options) {
+			for (Edge edge : option.getEdges()) {
 				ResKey error = GuiEngine.getInstance().checkError(edge, _token);
 				if (error != null) {
 					// Select only possible edges
@@ -341,8 +375,8 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 		}
 	}
 
-	private boolean isDefaultEdge(Edge[] option) {
-		Edge lastEdge = option[option.length - 1];
+	private boolean isDefaultEdge(Decision option) {
+		Edge lastEdge = option.getLastEdge();
 		Node edgeSource = lastEdge.getSource();
 		return edgeSource instanceof DefaultGateway
 			&& lastEdge.equals(((DefaultGateway) edgeSource).getDefaultFlow());

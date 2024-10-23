@@ -513,6 +513,14 @@
 						</storage-algorithm>
 					</annotations>
 				</reference>
+				<property name="weight"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="1000"/>
+					</annotations>
+				</property>
 			</attributes>
 		</interface>
 		<class name="SequenceFlow">

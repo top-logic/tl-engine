@@ -51,7 +51,7 @@ public class Icons extends IconsBase {
 	 * Responsive breakpoints for adjusting form layouts from multiple columns to fewer based on
 	 * form width.
 	 */
-	@DefaultValue("[640, 1160, 1740, 2285, 2830]")
+	@DefaultValue("[740, 1050, 1550, 2100, 2600]")
 	public static ThemeVar<String> FORM_BREAKPOINTS;
 
 	/**

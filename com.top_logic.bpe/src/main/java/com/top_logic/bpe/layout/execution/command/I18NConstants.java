@@ -6,6 +6,7 @@
 package com.top_logic.bpe.layout.execution.command;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
 
@@ -37,6 +38,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en (Continue)
 	 */
 	public static ResKey EDGE_OPTION_NO_NAME;
+
+	/**
+	 * @en ! {0}
+	 */
+	public static ResKey1 IMPOSSIBLE_EDGE;
 
     static {
         initConstants(I18NConstants.class);

@@ -20,6 +20,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.CombinedExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRule;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.tool.execution.HistoricDataDisableHistoricRule;
 import com.top_logic.tool.execution.InViewModeExecutable;
 import com.top_logic.tool.execution.MultiSelectionHidden;
@@ -85,10 +86,37 @@ public class SwitchEditCommandHandler extends AJAXCommandHandler {
     }
     
     @Override
+	protected ExecutabilityRule intrinsicExecutability() {
+		return super.intrinsicExecutability().combine(ExecutabilityOfComponent.INSTANCE);
+	}
+
+	@Override
 	@Deprecated
 	public ExecutabilityRule createExecutabilityRule() {
 		// For legacy subclasses that do not use configuration.
 		return EXEC_RULE;
     }
 
+	private static class ExecutabilityOfComponent implements ExecutabilityRule {
+
+		/**
+		 * Singleton {@link ExecutabilityOfComponent} instance.
+		 */
+		public static final ExecutabilityOfComponent INSTANCE = new ExecutabilityOfComponent();
+
+		private ExecutabilityOfComponent() {
+			// Singleton constructor.
+		}
+
+		@Override
+		public final ExecutableState isExecutable(LayoutComponent aComponent, Object model,
+				Map<String, Object> someValues) {
+			if (aComponent instanceof EditComponent editor) {
+				return editor.getEditExecutability().isExecutable(aComponent, model, someValues);
+			}
+
+			return ExecutableState.EXECUTABLE;
+		}
+
+	}
 }

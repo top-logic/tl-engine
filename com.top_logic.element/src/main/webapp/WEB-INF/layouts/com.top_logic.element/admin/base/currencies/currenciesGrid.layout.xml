@@ -5,7 +5,7 @@
 	template="com.top_logic.element/grid.template.xml"
 >
 	<arguments
-		defaultColumns="name,factor,format,baseUnit,sortOrder"
+		defaultColumns="name,factor,baseUnit"
 		type="tl.units:Currency"
 	>
 		<name key="dynamic.5e82477f-7498-49f3-ae81-8dce14fd6ec4">

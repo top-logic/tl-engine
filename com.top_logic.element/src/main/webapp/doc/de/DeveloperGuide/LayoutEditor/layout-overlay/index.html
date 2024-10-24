@@ -1,0 +1,28 @@
+<p>Manchmal ist es nicht ausreichend, nur die Haupt-Layout XML Datei zu verwenden, um das Layout einer spezifischen Anwendung oder Sicht zu bestimmen. Dies kann beispielsweise der Fall sein, wenn eine Anwendung eine angepasste Darstellung oder zusätzliche Komponenten benötigt, die nur für diese Anwendung oder ein spezifisches Modul relevant sind.</p>
+
+<p> </p>
+
+<h2>Funktionsweise von Layout Overlay</h2>
+
+<p>In einer <code class="hljs inlineCode">*.layout.overlay.xml</code> -Datei spielt die Parent-Child-Beziehung keine Rolle. Stattdesssen werden in dieser Datei Komponenten der anzupassenden Sicht über ihren lokalen Namen referenziert. Der Inhalt dieser Datei stellt eine inkrementelle Konfiguration dar, die Änderungen oder Ergänzungen zu bestehenden Komponenten beschreibt.</p>
+
+<p> </p>
+
+<h2>Anwendungsfall: Anpassung der modellbasierten Suche</h2>
+
+<p>Ein Beispiel ist die modellbasierte Suche, die im Modul Element definiert wird. Möchte man in einem zusätzlichen Modul, beispielsweise einem Demo-Modul, eine abweichende Version dieser Suche implementierten, etwa durch das Hinzufügen einer Komponente mit spezifischen Informationen, kann eine <code class="hljs inlineCode">*.layout.overlay.xml</code> -Datei erstellt werden.</p>
+
+<p>Angenommen, man möchte im Demo-Modul die modellbasierte Suche verändern, indem zusätzliche Spalten definiert und der Title-Key einer Komponente geändert werden. Dies könnte in einer Datei wie <code class="hljs inlineCode">com.top_logic.element/search/searchinput.layout.overlay.xml</code> so aussehen:</p>
+
+<pre>
+<code class="language-xml">&lt;components&gt;
+   &lt;component name="SearchAttributedSearchInput" columns="columns(com.top_logic.reporting/search/searchResult.layout.xml#SearchAttributedSearchResultTable)"
+   /&gt;
+   &lt;securityLayout name="searchInput"
+      titleKey="pos.search.input.tabber"
+   /&gt;
+&lt;/components&gt;</code></pre>
+
+<p> </p>
+
+<p> </p>

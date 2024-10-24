@@ -98,7 +98,10 @@ public class LabelVisitor implements TLModelVisitor<String, Void> {
 		return Resources.getInstance().getString(getModuleResourceKey(model), model.getName());
 	}
 
-	private ResKey getModuleResourceKey(TLModule module) {
+	/**
+	 * Label resource for a {@link TLModule}
+	 */
+	public static ResKey getModuleResourceKey(TLModule module) {
 		TLI18NKey annotation = module.getAnnotation(TLI18NKey.class);
 		if (annotation != null) {
 			return annotation.getValue();

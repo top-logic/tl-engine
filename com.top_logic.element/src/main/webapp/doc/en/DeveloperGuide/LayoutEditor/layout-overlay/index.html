@@ -1,0 +1,26 @@
+<p>Sometimes it is not sufficient to use only the main layout XML file to determine the layout of a specific application or view. This can be the case, for example, if an application requires a customized display or additional components that are only relevant for this application or a specific module.</p>
+
+<p> </p>
+
+<h2>How layout overlay works</h2>
+
+<p>In a <code class="hljs inlineCode">*.layout.overlay.xml</code> file, the parent-child relationship does not play a role. Instead, components of the view to be customized are referenced in this file via their local name. The content of this file represents an incremental configuration that describes changes or additions to existing components.</p>
+
+<h2>Use case: Adaptation of the model-based searchUse case: Adaptation of the model-based search</h2>
+
+<p>One example is the model-based search, which is defined in the Element module. If you want to implement a different version of this search in an additional module, such as a demo module, for example by adding a component with specific information, a <code class="hljs inlineCode">*.layout.overlay.xml</code> file can be created.</p>
+
+<p>Suppose you want to change the model-based search in the demo module by defining additional columns and changing the title key of a component. This could look like this in a file such as <code class="hljs inlineCode">com.top_logic.element/search/searchinput.layout.overlay.xml</code>:</p>
+
+<pre>
+<code class="language-xml">&lt;components&gt;
+   &lt;component name="SearchAttributedSearchInput" columns="columns(com.top_logic.reporting/search/searchResult.layout.xml#SearchAttributedSearchResultTable)"
+   /&gt;
+   &lt;securityLayout name="searchInput"
+      titleKey="pos.search.input.tabber"
+   /&gt;
+&lt;/components&gt;</code></pre>
+
+<p> </p>
+
+<p> </p>

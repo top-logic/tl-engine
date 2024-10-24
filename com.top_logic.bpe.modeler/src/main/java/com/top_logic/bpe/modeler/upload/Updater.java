@@ -151,13 +151,15 @@ public class Updater {
 		}
 
 		TLObject replacement;
-		if (candidate.tType() == update.tType()) {
+		if (candidate != null && candidate.tType() == update.tType()) {
 			replacement = candidate;
 		} else {
-			if (!_updateExtensions) {
-				copyExtensions(update, candidate);
+			if (candidate != null) {
+				if (!_updateExtensions) {
+					copyExtensions(update, candidate);
+				}
+				_outdated.add(candidate);
 			}
-			_outdated.add(candidate);
 			replacement = update;
 		}
 		_replacements.put(update, replacement);
@@ -174,7 +176,7 @@ public class Updater {
 			}
 
 			Object candidateValue;
-			if (hasAttribute(candidate, attribute)) {
+			if (candidate != null && hasAttribute(candidate, attribute)) {
 				candidateValue = candidate.tValue(attribute);
 			} else {
 				candidateValue = updateValue;

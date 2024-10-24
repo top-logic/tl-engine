@@ -203,7 +203,7 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 			ResKey disabledReason = null;
 			for (Edge edge : edges) {
 				// mark impossible transitions
-				disabledReason = GuiEngine.getInstance().checkError(edge, token);
+				disabledReason = GuiEngine.getInstance().checkError(token, edge);
 				if (disabledReason != null) {
 					label = I18NConstants.IMPOSSIBLE_EDGE.fill(label);
 
@@ -322,9 +322,8 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 		Set<? extends Edge> outgoing = node.getOutgoing();
 		for (Edge edge : outgoing) {
 			Node target = edge.getTarget();
-			if (target instanceof Gateway) {
-				Gateway gateway = (Gateway) target;
-				if (GuiEngine.getInstance().isManual(gateway)) {
+			if (target instanceof Gateway gateway) {
+				if (GuiEngine.getInstance().needsDecision(gateway)) {
 					for (Edge gatewayOutgoing : gateway.getOutgoing()) {
 						res.add(new Decision(token, edge, gatewayOutgoing));
 					}
@@ -350,7 +349,7 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 		optionsLoop:
 		for (Decision option : options) {
 			for (Edge edge : option.getEdges()) {
-				ResKey error = GuiEngine.getInstance().checkError(edge, _token);
+				ResKey error = GuiEngine.getInstance().checkError(_token, edge);
 				if (error != null) {
 					// Select only possible edges
 					continue optionsLoop;

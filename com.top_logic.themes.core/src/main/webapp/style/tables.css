@@ -1318,6 +1318,12 @@ div.dirtyHandlingDialog .changes {
 	padding: 0 !important;
 }
 
+.px-1 img {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+}
+
 .lFixedLeft {
 	padding-right: var(--spacing-01);
 }

@@ -15,7 +15,10 @@ ShowSecurityComponent component = (ShowSecurityComponent) MainLayout.getComponen
 				<form:resource key="pageMessage"/>
 			</p>
 
-			<form:columns count="4">
+			<form:columns 
+				count="4"
+				keep="true"
+			>
 				<form:descriptionCell labelAbove="true">
 					<form:description>
 						<form:label name="<%=ShowSecurityComponent.FIELD_PERSONS%>"/>

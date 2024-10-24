@@ -6,26 +6,21 @@
 package com.top_logic.bpe.execution.engine;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.bpml.model.Edge;
-import com.top_logic.bpe.bpml.model.EndEvent;
 import com.top_logic.bpe.bpml.model.ExclusiveGateway;
-import com.top_logic.bpe.bpml.model.Gateway;
 import com.top_logic.bpe.bpml.model.Lane;
 import com.top_logic.bpe.bpml.model.LaneSet;
 import com.top_logic.bpe.bpml.model.Node;
 import com.top_logic.bpe.bpml.model.ParallelGateway;
-import com.top_logic.bpe.bpml.model.Process;
 import com.top_logic.bpe.bpml.model.SequenceFlow;
 import com.top_logic.bpe.bpml.model.StartEvent;
-import com.top_logic.bpe.bpml.model.Task;
 import com.top_logic.bpe.bpml.model.impl.LaneSetBase;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.Token;
@@ -76,20 +71,16 @@ public class GuiEngine {
 		return res;
 	}
 
-	public Node getNextNode(Token token) {
+	public static Node getNextNode(Token token) {
 		return getNextNode(token.getNode());
 	}
 
-	public Node getNextNode(Node node) {
-		return getSingleOutgoingEdge(node).getTarget();
+	public static Node getNextNode(Node node) {
+		return ExecutionEngine.getSingleOutgoingEdge(node).getTarget();
 	}
 
-	public Edge getSingleOutgoingEdge(Token token) {
-		return getSingleOutgoingEdge(token.getNode());
-	}
-
-	public Edge getSingleOutgoingEdge(Node node) {
-		return CollectionUtil.getSingleValueFromCollection(node.getOutgoing());
+	public static Edge getSingleOutgoingEdge(Token token) {
+		return ExecutionEngine.getSingleOutgoingEdge(token.getNode());
 	}
 
 	/**
@@ -98,7 +89,7 @@ public class GuiEngine {
 	 * @return Either <code>null</code> meaning, navigation is possible, or a {@link ResKey}
 	 *         representing the error why the edge can not be navigated.
 	 */
-	public ResKey checkError(Edge edge, Token token) {
+	public ResKey checkError(Token token, Edge edge) {
 		if (edge instanceof SequenceFlow) {
 			SequenceFlow flow = (SequenceFlow) edge;
 			SearchExpression rule = flow.getRule();
@@ -122,78 +113,53 @@ public class GuiEngine {
 		return null;
 	}
 
-	public boolean isManual(Node node) {
+	/**
+	 * Whether the given target node of an {@link Edge} represents a decision that must be made by a
+	 * user finishing a manual task.
+	 */
+	public boolean needsDecision(Node node) {
 		if (node instanceof ParallelGateway) {
 			return false;
 		}
-		if (node instanceof ExclusiveGateway) {
-			return !((ExclusiveGateway) node).getAutomatic();
+		if (node instanceof ExclusiveGateway exclusive) {
+			return !exclusive.getAutomatic();
 		}
-		if (node instanceof EndEvent) {
-			return false;
-		}
-		return true;
-	}
-
-	/**
-	 * Set of all outgoing {@link Edge}s whose target is a {@link Task}.
-	 */
-	public List<? extends Edge> getTaskEdges(Gateway gateway) {
-		return gateway.getOutgoing().stream().filter(e -> e.getTarget() instanceof Task).toList();
-	}
-
-	/**
-	 * All {@link Token}s of the given {@link ProcessExecution} pointing to the given {@link Node}
-	 */
-	public Set<Token> getActiveTokensOf(ProcessExecution processExecution, Node node) {
-		return processExecution.getActiveTokens().stream().filter(t -> t.getNode() == node).collect(Collectors.toSet());
+		return false;
 	}
 
 	/**
 	 * a set with the {@link StartEvent}s which may be executed by the given person,
 	 *         depending on the state of the given collaboration
 	 */
-	public Set<StartEvent> getStartEventsFor(Collaboration collaboration, Person person) {
-		Set<StartEvent> res = new HashSet<>();
-		if (isActive(collaboration.getState())) {
-			for (Process process : collaboration.getProcesses()) {
-				addProcessStartEvents(person, res, process);
-				addLaneStartEvents(person, res, process);
-			}
+	public Collection<StartEvent> getStartEventsFor(Collaboration collaboration, Person person) {
+		if (!isActive(collaboration.getState())) {
+			return Collections.emptySet();
 		}
-		return res;
 
+		return collaboration.getProcesses().stream().flatMap(process -> 
+			Stream.concat(
+				isActor(person, process) ? startEvents(process.getNodes()) : Stream.empty(),
+				laneSetStartEvents(process, person))).toList();
 	}
 
 	private boolean isActive(TLClassifier state) {
 		return "Released".equals(state.getName());
 	}
 
-	private void addProcessStartEvents(Person person, Collection<StartEvent> res, Process process) {
-		if (isActor(person, process)) {
-			addStartEvents(res, process.getNodes());
-		}
-	}
-
-	private void addLaneStartEvents(Person person, Collection<StartEvent> res, LaneSet lanes) {
-		for (Lane lane : lanes.getLanes()) {
-			addDirectLaneStartEvents(person, res, lane);
-			addLaneStartEvents(person, res, lane);
-		}
-	}
-
-	private void addDirectLaneStartEvents(Person person, Collection<StartEvent> res, Lane lane) {
-		if (isActor(person, lane)) {
-			addStartEvents(res, lane.getNodes());
-		}
+	private Stream<StartEvent> laneSetStartEvents(LaneSet laneSet, Person person) {
+		return laneSet.getLanes()
+			.stream()
+			.flatMap(lane -> Stream.concat(
+				isActor(person, lane) ? startEvents(lane.getNodes()) : Stream.empty(),
+				laneSetStartEvents(lane, person)));
 	}
 
 	private boolean isActor(Person person, LaneSet lane) {
 		return isActor(person, lane, null);
 	}
 
-	private void addStartEvents(Collection<StartEvent> res, Set<? extends Node> nodes) {
-		res.addAll(ExecutionEngine.getInstance().getManualStartEvents(nodes));
+	private Stream<StartEvent> startEvents(Set<? extends Node> nodes) {
+		return ExecutionEngine.filterManual(ExecutionEngine.filterStartEvents(nodes.stream()));
 	}
 
 	/**

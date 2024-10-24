@@ -9,12 +9,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.col.Filter;
-import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.bpe.bpml.model.BoundaryEvent;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.bpml.model.Edge;
@@ -41,7 +41,6 @@ import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.wrap.list.FastListElement;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -53,34 +52,11 @@ import com.top_logic.util.TLContext;
  */
 public class ExecutionEngine {
 
-	private static final Filter MANUAL_START_EVENT_FILTER = new Filter() {
-
-		@Override
-		public boolean accept(Object anObject) {
-			if (anObject instanceof StartEvent) {
-				EventDefinition definition = ((StartEvent) anObject).getDefinition();
-				return definition == null;
-			}
-			return false;
-		}
-
-	};
-
-	private static final Filter TIMER_START_EVENT_FILTER = new Filter() {
-
-		@Override
-		public boolean accept(Object anObject) {
-			if (anObject instanceof StartEvent) {
-				EventDefinition definition = ((StartEvent) anObject).getDefinition();
-				return definition instanceof TimerEventDefinition;
-			}
-			return false;
-		}
-
-	};
-
 	private static ExecutionEngine INSTANCE = new ExecutionEngine();
 
+	/**
+	 * The singleton {@link ExecutionEngine} instance.
+	 */
 	public static ExecutionEngine getInstance() {
 		return INSTANCE;
 	}
@@ -95,7 +71,6 @@ public class ExecutionEngine {
 	 *
 	 */
 	public void updateAll() {
-
 		int emergencyStop = 0;
 
 		Set<ProcessExecution> newExecutions = new HashSet<>();
@@ -113,7 +88,6 @@ public class ExecutionEngine {
 			}
 
 		} while (!newExecutions.isEmpty());
-
 	}
 
 	/**
@@ -126,48 +100,48 @@ public class ExecutionEngine {
 	}
 
 	/**
-	 * updates the given {@link ProcessExecution}, i.e. calculates new tokens if needed until
-	 * nothing more has to be done
+	 * Performs all automatic actions that are due to execution.
 	 */
 	public void update(ProcessExecution execution) {
+		int step = 0;
 
-		int emergencyStop = 0;
-		boolean allTokensFinished = false;
-		while (!allTokensFinished) {
-			emergencyStop++;
-			if (emergencyStop > 1000) {
-				throw new RuntimeException("More than 1000 cycles. Can not complete update for " + execution);
+		boolean changed;
+		do {
+			step++;
+			if (step > 1000) {
+				throw new RuntimeException(
+					"More than 1000 steps performed. Cannot complete update for " + execution + ".");
 			}
-			allTokensFinished = true;
 
-			// make copy of the set of active tokens because it may change during execution
-			Set<? extends Token> activeTokens = new HashSet(execution.getActiveTokens());
-			activeTokens.removeAll(execution.getUserRelevantTokens());
+			Set<? extends Token> userRelevant = execution.getUserRelevantTokens();
+			List<? extends Token> automaticTokens =
+				execution.getActiveTokens().stream().filter(t -> !userRelevant.contains(t)).toList();
 
-			if (activeTokens.size() > 0) {
-				for (Token token : activeTokens) {
-					boolean anyChange = doExecute(token, execution);
-					if (anyChange) {
-						// break after first change because during execution some tokens may have
-						// become not active
+			changed = false;
+			for (Token token : automaticTokens) {
+				boolean anyChange = doExecute(execution, token);
+				if (anyChange) {
+					Logger.info("Completed " + token.getNode() + " for " + execution + ".", ExecutionEngine.class);
 
-						Logger.info("Change for token " + token + " and node " + token.getNode(),
-							ExecutionEngine.class);
-
-						allTokensFinished = false;
-						break;
-					}
+					// Break after first change because some tokens may become inactive during
+					// execution.
+					changed = true;
+					break;
 				}
 			}
-
-		}
+		} while (changed);
 	}
 
 	/**
-	 * executes toe given token, i.e. checks if anything can be performed for the token and performs
-	 * it
+	 * Executes the given {@link Token} of the given {@link ProcessExecution}.
+	 * 
+	 * <p>
+	 * Checks whether anything can be performed for the token and performs it.
+	 * </p>
+	 * 
+	 * @return Whether the given {@link Token} was consumed.
 	 */
-	private boolean doExecute(Token token, ProcessExecution processExecution) {
+	private boolean doExecute(ProcessExecution processExecution, Token token) {
 		Node node = token.getNode();
 		if (node instanceof ParallelGateway) {
 			ParallelGateway parallelGateway = (ParallelGateway) node;
@@ -176,12 +150,11 @@ public class ExecutionEngine {
 				return true;
 			}
 		}
-		else if (node instanceof ExclusiveGateway) {
-			ExclusiveGateway exclusiveGateway = (ExclusiveGateway) node;
+		else if (node instanceof ExclusiveGateway exclusiveGateway) {
 
 			Node nextNode = calculateNextNode(exclusiveGateway, processExecution);
 			if (nextNode != null) {
-				moveActiveTokenTo(token, nextNode);
+				createActiveToken(token.getProcessExecution(), nextNode, token);
 				return true;
 			}
 		}
@@ -189,9 +162,9 @@ public class ExecutionEngine {
 			StartEvent startEvent = (StartEvent) node;
 			EventDefinition definition = startEvent.getDefinition();
 			if (definition instanceof TimerEventDefinition) {
-				return handleTimerEvent(token, processExecution, startEvent, (TimerEventDefinition) definition);
+				return handleTimerEvent(processExecution, startEvent, (TimerEventDefinition) definition, token);
 			} else {
-				handleStartEvent(token, processExecution, (StartEvent) node);
+				handleStartEvent(processExecution, (StartEvent) node, token);
 				return true;
 			}
 		}
@@ -204,33 +177,33 @@ public class ExecutionEngine {
 
 			// has the holder of the BoundaryEvent an active token?
 			Task task = event.getAttachedTo();
-			if (hasActiveToken(processExecution, task)) {
+			if (isActive(processExecution, task)) {
 				EventDefinition definition = event.getDefinition();
 				if (definition instanceof TimerEventDefinition) {
-					return handleBoundaryTimerEvent(token, processExecution, event, (TimerEventDefinition) definition);
+					return handleBoundaryTimerEvent(processExecution, event, (TimerEventDefinition) definition, token);
 				}
 			}
 			else {
 				// the task of the BoundaryEvent is not active any more
 				// cancel the Boundary event
-				changeActiveTokens(processExecution, token, null);
+				advance(processExecution, token, null);
 			}
 
 		}
 		else if (node instanceof SendTask) {
-			executeSendTask(token, processExecution, (SendTask) node);
+			executeSendTask(processExecution, (SendTask) node, token);
 			return true;
 		}
 		else if (node instanceof ServiceTask) {
-			executeServiceTask(token, processExecution, (ServiceTask) node);
+			executeServiceTask(processExecution, (ServiceTask) node, token);
 			return true;
 		}
 		else if (node instanceof IntermediateThrowEvent) {
 			IntermediateThrowEvent event = (IntermediateThrowEvent) node;
 			EventDefinition definition = event.getDefinition();
 			if (definition instanceof MessageEventDefinition) {
-				handleMessageEvent(token, processExecution, (IntermediateThrowEvent) node,
-					(MessageEventDefinition) definition);
+				handleMessageEvent(processExecution, (IntermediateThrowEvent) node, (MessageEventDefinition) definition,
+					token);
 			}
 
 			return true;
@@ -244,8 +217,8 @@ public class ExecutionEngine {
 		return false;
 	}
 
-	private void handleMessageEvent(Token token, ProcessExecution processExecution, IntermediateThrowEvent event,
-			MessageEventDefinition definition) {
+	private void handleMessageEvent(ProcessExecution processExecution, IntermediateThrowEvent event, MessageEventDefinition definition,
+			Token previousToken) {
 
 		// find the Flow
 		MessageFlow flow = getFlowForSource(processExecution, event);
@@ -270,24 +243,24 @@ public class ExecutionEngine {
 		}
 
 		// move the original token
-		createTokensForOutgoings(token, processExecution, event);
+		createNextTokens(processExecution, event, previousToken);
 	}
 
-
-
 	private MessageFlow getFlowForSource(ProcessExecution processExecution, FlowSource source) {
-		Set<? extends MessageFlow> messageFlows = processExecution.getCollaboration().getMessageFlows();
-		for (MessageFlow flow : messageFlows) {
-			if (source == flow.getSource()) {
+		for (MessageFlow flow : processExecution.getCollaboration().getMessageFlows()) {
+			if (flow.getSource() == source) {
 				return flow;
 			}
 		}
 		return null;
 	}
 
-	private boolean hasActiveToken(ProcessExecution processExecution, Task task) {
-		Set<? extends Token> activeTokens = processExecution.getActiveTokens();
-		for (Token token : activeTokens) {
+	/**
+	 * Whether there is an active {@link Token} pointing to the given {@link Task} in the given
+	 * {@link ProcessExecution}.
+	 */
+	private boolean isActive(ProcessExecution processExecution, Task task) {
+		for (Token token : processExecution.getActiveTokens()) {
 			if (token.getNode() == task) {
 				return true;
 			}
@@ -306,42 +279,41 @@ public class ExecutionEngine {
 		return null;
 	}
 
-	private boolean handleBoundaryTimerEvent(Token token, ProcessExecution processExecution, BoundaryEvent event,
-			TimerEventDefinition definition) {
+	private boolean handleBoundaryTimerEvent(ProcessExecution processExecution, BoundaryEvent event,
+			TimerEventDefinition definition, Token previousToken) {
 		boolean timerReached =
-			handleTimerEvent(token, processExecution, event, definition);
+			handleTimerEvent(processExecution, event, definition, previousToken);
 		if (timerReached) {
 			if (event.getCancelActivity()) {
 				Task task = event.getAttachedTo();
 				Token taskToken = getActiveTokenForTask(processExecution, task);
-				changeActiveTokens(processExecution, taskToken, null);
+				advance(processExecution, taskToken, null);
 			}
 		}
 		return timerReached;
 	}
 
-	private void executeSendTask(Token token, ProcessExecution processExecution, SendTask sendTask) {
-
-		BPMailer mailer = new BPMailer(token, processExecution, sendTask);
+	private void executeSendTask(ProcessExecution processExecution, SendTask sendTask, Token previousToken) {
+		BPMailer mailer = new BPMailer(previousToken, processExecution, sendTask);
 		mailer.sendMail();
 
-		createTokensForOutgoings(token, processExecution, sendTask);
+		createNextTokens(processExecution, sendTask, previousToken);
 	}
 
-	private void executeServiceTask(Token token, ProcessExecution processExecution, ServiceTask serviceTask) {
+	private void executeServiceTask(ProcessExecution processExecution, ServiceTask serviceTask, Token previousToken) {
 		SearchExpression action = serviceTask.getAction();
 
 		if (action != null) {
 			calculate(action, processExecution);
 		}
 
-		createTokensForOutgoings(token, processExecution, serviceTask);
+		createNextTokens(processExecution, serviceTask, previousToken);
 	}
 
-	private boolean handleTimerEvent(Token token, ProcessExecution processExecution,
-			Event node, TimerEventDefinition definition) {
+	private boolean handleTimerEvent(ProcessExecution processExecution, Event event,
+			TimerEventDefinition definition, Token previousToken) {
 		// check if the timeout is reached
-		Date created = token.tCreationDate();
+		Date created = previousToken.tCreationDate();
 		if (created != null) {
 			// token must be existing, i.e. do not do this during creation of token
 
@@ -350,41 +322,40 @@ public class ExecutionEngine {
 			Date now = new Date();
 			if (now.getTime() - created.getTime() > delayInMillis) {
 				// timeout reached
-				createTokensForOutgoings(token, processExecution, node);
+				createNextTokens(processExecution, event, previousToken);
 				return true;
 			}
 		}
 		return false;
 	}
 
-	private void handleStartEvent(Token token, ProcessExecution processExecution, StartEvent startEvent) {
-		createTokensForOutgoings(token, processExecution, startEvent);
+	private void handleStartEvent(ProcessExecution processExecution, StartEvent startEvent, Token previousToken) {
+		createNextTokens(processExecution, startEvent, previousToken);
 	}
 
-	private void createTokensForOutgoings(Token token, ProcessExecution processExecution, Node node) {
-		for (Edge edge : node.getOutgoing()) {
-			Node target = edge.getTarget();
-			Token newToken = createTokenFor(processExecution, target, token);
-			changeActiveTokens(processExecution, token, newToken);
+	private void createNextTokens(ProcessExecution processExecution, Node current, Token previousToken) {
+		for (Edge edge : current.getOutgoing()) {
+			Node next = edge.getTarget();
+			Token newToken = createFollowupToken(processExecution, next, previousToken);
 
-			// may be there are boundary events
-			activateBoundaryEvents(token, processExecution, target);
-
+			activate(processExecution, newToken);
+			activateBoundaryEvents(processExecution, next, previousToken);
 		}
 
-		// beware: if there are no outgoings, the token has to be removed from the active tokens
-		changeActiveTokens(processExecution, token, null);
+		if (previousToken != null) {
+			complete(processExecution, previousToken);
+		}
 	}
 
 	/**
 	 * activates all {@link BoundaryEvent} attached to target token is the parent token of the
 	 * tokens which are placed on the {@link BoundaryEvent}s
 	 */
-	private void activateBoundaryEvents(Token token, ProcessExecution processExecution, Node target) {
-		Set<? extends Node> additionalNodes = getAdditionalNodes(target);
-		for (Node additional : additionalNodes) {
-			Token newToken = createTokenFor(processExecution, additional, token);
-			changeActiveTokens(processExecution, token, newToken);
+	private void activateBoundaryEvents(ProcessExecution processExecution, Node target, Token previousToken) {
+		for (Node boundaryEvent : boundaryEvents(target)) {
+			Token newToken = createFollowupToken(processExecution, boundaryEvent, previousToken);
+
+			activate(processExecution, newToken);
 		}
 	}
 
@@ -392,11 +363,12 @@ public class ExecutionEngine {
 	 * a set with all nodes for which also a token must be created if a token on the given
 	 *         node is set
 	 */
-	private Set<? extends Node> getAdditionalNodes(Node node) {
-		if (node instanceof Task) {
-			return ((Task) node).getBoundaryEvents();
+	private Set<? extends BoundaryEvent> boundaryEvents(Node node) {
+		if (node instanceof Task task) {
+			return task.getBoundaryEvents();
+		} else {
+			return Collections.emptySet();
 		}
-		return Collections.emptySet();
 	}
 
 	/**
@@ -448,89 +420,81 @@ public class ExecutionEngine {
 	 * @return result of evaluation
 	 */
 	public Object calculate(SearchExpression rule, Object... contextObjects) {
-		QueryExecutor function = QueryExecutor.compile(rule);
-		return function.execute((Object[]) contextObjects);
+		return QueryExecutor.compile(rule).execute(contextObjects);
 	}
 
 	/**
 	 * called if the given parallel gateway is completed
 	 */
 	private void handleCompletion(ProcessExecution processExecution, ParallelGateway parallelGateway) {
-		// get all tokens pointing to the gateway
-		Set<Token> tokens =
-			GuiEngine.getInstance().getActiveTokensOf(processExecution, parallelGateway);
+		Set<Token> current = activeTokensIn(processExecution, parallelGateway);
 
 		Set<? extends Edge> outgoing = parallelGateway.getOutgoing();
 		for (Edge edge : outgoing) {
 			Node target = edge.getTarget();
-			Token newToken = createTokenFor(processExecution, target, null);
-			newToken.setPrevious(tokens);
-			changeActiveTokens(processExecution, tokens, newToken);
-		}
+			Token next = createToken(processExecution, target);
+			next.setPrevious(current);
 
+			advanceAll(processExecution, current, next);
+		}
 	}
 
 	/**
 	 * executes the token for the given {@link Edge}
 	 */
-	public void execute(Token token, Edge edge) {
-//		if (edge instanceof SequenceFlow) {
-//			SequenceFlow flow = (SequenceFlow) edge;
-//			SearchExpression rule = flow.getRule();
-//			if (rule != null) {
-//				Object calculate = calculate(rule, token.getProcessExecution());
-//				int i = 0;
-//				i++;
-//			}
-//		}
+	public void execute(Token previousToken, Edge edge, Object additional) {
+		ProcessExecution processExecution = previousToken.getProcessExecution();
 
 		Node target = edge.getTarget();
-		if (target instanceof Task) {
-			moveActiveTokenTo(token, target);
-		} else if (target instanceof ParallelGateway) {
-			moveActiveTokenTo(token, target);
-		} else if (target instanceof ExclusiveGateway) {
-			moveActiveTokenTo(token, target);
-		} else if (target instanceof EndEvent) {
-			moveActiveTokenTo(token, target);
-		} else if (target instanceof IntermediateThrowEvent) {
-			moveActiveTokenTo(token, target);
+
+		if (target instanceof Task
+			|| target instanceof ParallelGateway
+			|| target instanceof ExclusiveGateway
+			|| target instanceof EndEvent
+			|| target instanceof IntermediateThrowEvent
+		) {
+			Token nextToken = createActiveToken(processExecution, target, previousToken);
+
+			if (edge instanceof SequenceFlow flow) {
+				SearchExpression operation = flow.getOperation();
+				if (operation != null) {
+					QueryExecutor.compile(operation).execute(processExecution, previousToken, nextToken, additional);
+				}
+			}
+
+			update(processExecution);
 		} else {
-			String msg = "can not execute token for target " + target;
-			Logger.error(msg, ExecutionEngine.class);
-			throw new RuntimeException(msg);
+			throw new RuntimeException(
+				"Cannot execute edge with target " + target + " on " + processExecution);
 		}
-		update(token.getProcessExecution());
 	}
 
 
 
 	/**
-	 * creates a new active token for target, sets the given token as previous for the new token and
-	 * deactivates the given token
+	 * Creates a new active token for the given node as follow-up for the given previous token and
+	 * deactivates the previous token.
+	 * 
+	 * <p>
+	 * Additionally, tokesn for potential boundary events are also created.
+	 * </p>
+	 * 
+	 * @return The newly created token for the given node.
 	 */
-	private void moveActiveTokenTo(Token token, Node target) {
-		ProcessExecution execution = token.getProcessExecution();
-		createActiveTokenFor(token, target, execution);
-	}
+	private Token createActiveToken(ProcessExecution execution, Node node, Token previousToken) {
+		Token nextToken = createFollowupToken(execution, node, previousToken);
+		advance(execution, previousToken, nextToken);
 
-	private void createActiveTokenFor(Token token, Node target, ProcessExecution execution) {
-		Token newToken = createTokenFor(execution, target, token);
-		changeActiveTokens(execution, token, newToken);
-
-		if (target instanceof Task) {
-			// start all timer BoundaryEvents
-			Task task = (Task) target;
-			Set<? extends BoundaryEvent> boundaryEvents = task.getBoundaryEvents();
-			for (BoundaryEvent event : boundaryEvents) {
-				EventDefinition definition = event.getDefinition();
-				if (definition instanceof TimerEventDefinition) {
-					Token eventToken = createTokenFor(execution, event, token);
-					changeActiveTokens(execution, token, eventToken);
-				}
+		// Start all boundary timer events.
+		for (BoundaryEvent event : boundaryEvents(node)) {
+			EventDefinition definition = event.getDefinition();
+			if (definition instanceof TimerEventDefinition) {
+				Token eventToken = createFollowupToken(execution, event, previousToken);
+				activate(execution, eventToken);
 			}
 		}
 
+		return nextToken;
 	}
 
 	private void handleEndEvent(ProcessExecution processExecution) {
@@ -543,8 +507,6 @@ public class ExecutionEngine {
 		processExecution.setActiveTokens(new HashSet<>());
 	}
 
-
-
 	/**
 	 * a {@link ParallelGateway} is completed if it has as many active tokens showing to it as it
 	 * has incoming edges
@@ -552,68 +514,46 @@ public class ExecutionEngine {
 	private boolean checkForCompletion(ProcessExecution processExecution, ParallelGateway parallelGateway) {
 
 		// get all tokens showing to the gateway
-		Set<? extends Token> tokensShowingTo =
-			GuiEngine.getInstance().getActiveTokensOf(processExecution, parallelGateway);
+		Set<? extends Token> tokensPointingTo = activeTokensIn(processExecution, parallelGateway);
 
 		int numberOfTokensNeededToComplete = parallelGateway.getIncomming().size();
-		return tokensShowingTo.size() == numberOfTokensNeededToComplete;
-	}
-
-
-	/**
-	 * removes / adds the given token from the set of active tokens of the {@link ProcessExecution}
-	 */
-	private void changeActiveTokens(ProcessExecution processExecution, Token toRemove, Token toAdd) {
-		HashSet<Token> activeTokens = new HashSet<>(processExecution.getActiveTokens());
-		activeTokens.remove(toRemove);
-		if (toRemove != null) {
-			toRemove.setFinishDate(new Date());
-			PersonManager r = PersonManager.getManager();
-			toRemove.setFinishBy(TLContext.currentUser());
-		}
-		if (toAdd != null) {
-			activeTokens.add(toAdd);
-		}
-		processExecution.setActiveTokens(activeTokens);
+		return tokensPointingTo.size() == numberOfTokensNeededToComplete;
 	}
 
 	/**
 	 * removes / adds the given token from the set of active tokens of the {@link ProcessExecution}
 	 */
-	private void changeActiveTokens(ProcessExecution processExecution, Set<Token> toRemove, Token toAdd) {
-		HashSet<Token> activeTokens = new HashSet<>(processExecution.getActiveTokens());
-		activeTokens.removeAll(toRemove);
-		Date now = new Date();
-		for (Token token : toRemove) {
-			token.setFinishDate(now);
+	private void advanceAll(ProcessExecution processExecution, Set<Token> from, Token to) {
+		for (Token token : from) {
+			complete(processExecution, token);
 		}
-		if (toAdd != null) {
-			activeTokens.add(toAdd);
+		if (to != null) {
+			activate(processExecution, to);
 		}
-		processExecution.setActiveTokens(activeTokens);
 	}
 
 	/**
-	 * does the gateway have more than one outgoing edges
+	 * removes / adds the given token from the set of active tokens of the {@link ProcessExecution}
 	 */
-	private boolean isOutgoing(ParallelGateway parallelGateway) {
-		return parallelGateway.getOutgoing().size() > 1;
-	}
-
-	private void handleOutgoing(Token token, ParallelGateway gateway) {
-		Collection<? extends Edge> taskEdges = GuiEngine.getInstance().getTaskEdges(gateway);
-
-		ProcessExecution execution = token.getProcessExecution();
-
-		// create new token
-		for (Edge edge : taskEdges) {
-			Task task = (Task) edge.getTarget();
-			Token newToken = createTokenFor(execution, task, token);
-			changeActiveTokens(execution, token, newToken);
+	private void advance(ProcessExecution processExecution, Token from, Token to) {
+		if (from != null) {
+			complete(processExecution, from);
 		}
-
+		if (to != null) {
+			activate(processExecution, to);
+		}
 	}
 
+	private void complete(ProcessExecution processExecution, Token token) {
+		token.setFinishDate(new Date());
+		token.setFinishBy(TLContext.currentUser());
+
+		processExecution.removeActiveToken(token);
+	}
+
+	private void activate(ProcessExecution processExecution, Token token) {
+		processExecution.addActiveToken(token);
+	}
 
 	/**
 	 * inits the new created {@link ProcessExecution}
@@ -623,16 +563,13 @@ public class ExecutionEngine {
 	 * provided. This is not covered here.
 	 */
 	public void init(ProcessExecution execution, StartEvent startEvent) {
-
 		// set token on start event
-		createActiveTokenFor(null, startEvent, execution);
+		createActiveToken(execution, startEvent, null);
 
 		// start also all timer events of the process of the start event
 		Process process = startEvent.getProcess();
-		Set<StartEvent> timerStartEvents = getTimerStartEvents(process);
-
-		for (StartEvent timerStartEvent : timerStartEvents) {
-			createActiveTokenFor(null, timerStartEvent, execution);
+		for (StartEvent timerStartEvent : getTimerStartEvents(process)) {
+			createActiveToken(execution, timerStartEvent, null);
 		}
 
 		update(execution);
@@ -643,74 +580,86 @@ public class ExecutionEngine {
 	 * given token is set as a previous token for the new one
 	 * @return the new token
 	 */
-	private Token createTokenFor(ProcessExecution execution, Node node, Token previousToken) {
-		Token token = TlBpeExecutionFactory.getInstance().createToken();
-		execution.addAllToken(token);
-		token.setNode(node);
+	private Token createFollowupToken(ProcessExecution execution, Node node, Token previousToken) {
+		Token token = createToken(execution, node);
+		token.setPrevious(asSet(previousToken));
+		return token;
+	}
 
-		// handle previous token
-		Set<Token> previousTokes = new HashSet<>();
-		if (previousToken != null) {
-			previousTokes.add(previousToken);
-		}
-		token.setPrevious(previousTokes);
+	private Token createToken(ProcessExecution execution, Node node) {
+		Token token = TlBpeExecutionFactory.getInstance().createToken();
+		token.setNode(node);
+		execution.addAllToken(token);
 
 		return token;
 	}
 
-	private Task getTask(StartEvent startEvent) {
-		Set<? extends Edge> outgoing = startEvent.getOutgoing();
-		for (Edge edge : outgoing) {
-			Node target = edge.getTarget();
-			if (target instanceof Task) {
-				return (Task) target;
-			}
-		}
-		throw new RuntimeException("No Task found for start event");
+	private static <T> Set<T> asSet(T singleton) {
+		return singleton == null ? Collections.emptySet() : Collections.singleton(singleton);
 	}
 
-	private Set<StartEvent> getStartEvents(Collaboration collaboration) {
-		Set<StartEvent> events = new HashSet<>();
-		Set<? extends Process> processes = collaboration.getProcesses();
-		for (Process process : processes) {
-			Set<StartEvent> startEvents = CollectionUtil.copyOnly(StartEvent.class, process.getNodes());
-			events.addAll(startEvents);
-		}
-		if (events.isEmpty()) {
-			throw new RuntimeException("No StartEvent found in collaboration " + collaboration.getName());
-		}
-		return events;
-	}
-
-	private Set<StartEvent> getStartEvents(Process process) {
-		Set<StartEvent> startEvents = CollectionUtil.copyOnly(StartEvent.class, process.getNodes());
-		return startEvents;
-	}
-
-	private Set<StartEvent> getTimerStartEvents(Process process) {
-		Set<StartEvent> startEvents = getStartEvents(process);
-		return getTimerStartEvents(startEvents);
-	}
-
-
-	public Set<StartEvent> getManualStartEvents(Collaboration collaboration) {
-		Set<StartEvent> startEvents = getStartEvents(collaboration);
-		return getManualStartEvents(startEvents);
+	private List<StartEvent> getTimerStartEvents(Process process) {
+		return getStartEvents(process)
+			.filter(start -> start.getDefinition() instanceof TimerEventDefinition)
+			.toList();
 	}
 
 	/**
-	 * @param nodes
-	 *        set of {@link Node}
-	 * @return all nodes from the given ones which are manual start events
+	 * All start events that can be triggered manually in the given {@link Collaboration}.
 	 */
-	@SuppressWarnings("unchecked")
-	public Set<StartEvent> getManualStartEvents(Set<? extends Node> nodes) {
-		return FilterUtil.filterSet(MANUAL_START_EVENT_FILTER, nodes);
+	public List<StartEvent> getManualStartEvents(Collaboration collaboration) {
+		return filterManual(
+			collaboration.getProcesses().stream()
+			.flatMap(ExecutionEngine::getStartEvents)
+		).toList();
 	}
 
-	@SuppressWarnings("unchecked")
-	private Set<StartEvent> getTimerStartEvents(Set<? extends Node> nodes) {
-		return FilterUtil.filterSet(TIMER_START_EVENT_FILTER, nodes);
+	/**
+	 * All active {@link Token}s of the given {@link ProcessExecution} in the given state..
+	 */
+	private static Set<Token> activeTokensIn(ProcessExecution processExecution, Node state) {
+		return processExecution.getActiveTokens().stream().filter(t -> t.getNode() == state)
+			.collect(Collectors.toSet());
+	}
+
+	/**
+	 * The one and only outgoing {@link Edge} from the given {@link Node}, or <code>null</code> if
+	 * there is none.
+	 *
+	 * @throws IllegalStateException
+	 *         If there are multiple outgoing edges.
+	 */
+	public static Edge getSingleOutgoingEdge(Node node) {
+		Set<? extends Edge> edges = node.getOutgoing();
+		switch (edges.size()) {
+			case 0:
+				return null;
+			case 1:
+				return edges.iterator().next();
+			default:
+				throw new IllegalStateException(
+					"Node " + node + " must only have a single outgoing edge, found: " + edges);
+		}
+	}
+
+	/**
+	 * The given stream filtered for {@link StartEvent}s that can be triggered manually.
+	 */
+	public static Stream<StartEvent> filterManual(Stream<StartEvent> startEvents) {
+		return startEvents.filter(start -> start.getDefinition() == null);
+	}
+
+	private static Stream<StartEvent> getStartEvents(Process process) {
+		return filterStartEvents(process.getNodes().stream());
+	}
+
+	/**
+	 * The given stream filtered for {@link StartEvent}s.
+	 */
+	public static Stream<StartEvent> filterStartEvents(Stream<? extends Node> nodes) {
+		return nodes
+			.filter(n -> n instanceof StartEvent)
+			.map(n -> ((StartEvent) n));
 	}
 
 }

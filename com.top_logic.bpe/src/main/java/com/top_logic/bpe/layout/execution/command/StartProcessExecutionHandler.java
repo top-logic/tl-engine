@@ -121,7 +121,7 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler impleme
 				HandlerResult suspended = HandlerResult.suspended();
 				Node node = GuiEngine.getInstance().getNextNode(token);
 
-				if (GuiEngine.getInstance().isManual(node)) {
+				if (GuiEngine.getInstance().needsDecision(node)) {
 					new SelectTransitionDialog(token, suspended).open(aContext);
 				} else {
 					Edge edge = GuiEngine.getInstance().getSingleOutgoingEdge(token);
@@ -133,11 +133,11 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler impleme
 				}
 				return suspended;
 			} else {
-				if (context instanceof Edge) {
+				if (context instanceof Edge edge) {
 					// Advance process to next step(s).
 					KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 					try (Transaction tx = kb.beginTransaction()) {
-						ExecutionEngine.getInstance().execute(token, (Edge) context);
+						ExecutionEngine.getInstance().execute(token, edge, null);
 						tx.commit();
 					} catch (Exception ex) {
 						throw new RuntimeException("Can not complete task for token '" + token + "'.", ex);

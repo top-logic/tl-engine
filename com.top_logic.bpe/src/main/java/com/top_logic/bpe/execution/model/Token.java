@@ -193,4 +193,11 @@ public interface Token extends TokenBase {
 		}
 	}
 
+	/**
+	 * String representation in log messages.
+	 */
+	default String debugString() {
+		return getProcessExecution() + " in state " + getNode();
+	}
+
 }

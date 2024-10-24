@@ -101,14 +101,14 @@ public class SelectFieldUtils {
 	 */
 	public static List<?> getOptionAndSelectionOuterJoinOrdered(SelectField field) {
 		Comparator comparator = field.getOptionComparator();
-		List<?> options = field.getOptions();
+		Iterable<?> options = field.getOptionModel();
 		List<?> selection = field.getSelection();
 		return joinOrdered(comparator, options, selection);
 	}
 
-	public static <T> List<T> joinOrdered(Comparator<? super T> comparator, Collection<? extends T> options,
+	public static <T> List<T> joinOrdered(Comparator<? super T> comparator, Iterable<? extends T> options,
 			Collection<? extends T> selection) {
-		List<T> union = join(options, selection);
+		List<T> union = join(CollectionUtil.toList(options), selection);
 		Collections.sort(union, comparator);
 
 		return union;

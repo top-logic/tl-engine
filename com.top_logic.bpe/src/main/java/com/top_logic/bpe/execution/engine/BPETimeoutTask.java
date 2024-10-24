@@ -25,10 +25,7 @@ public class BPETimeoutTask extends TaskImpl {
 
 	@Override
 	public void run() {
-//		Logger.info("task run", this);
-
 		TLContext.inSystemContext(this.getClass(), new InContext() {
-
 			@Override
 			public void inContext() {
 				KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();

@@ -12,7 +12,6 @@ import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.NamedConstant;
-import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -26,10 +25,8 @@ import com.top_logic.bpe.execution.engine.ExecutionEngine;
 import com.top_logic.bpe.execution.engine.GuiEngine;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.bpe.layout.execution.SelectTransitionDialog;
-import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
@@ -106,47 +103,45 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 		}
 
 		Object context = someArguments.get(CONTEXT);
+		if (context == CANCEL) {
+			// Ignore.
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
 		if (context == null) {
+			// Confirm/decide about how to progress.
 			GuiEngine engine = GuiEngine.getInstance();
-			Node nextNode = engine.getNextNode(token);
-			if (engine.isManual(nextNode)) {
-				HandlerResult suspended = HandlerResult.suspended();
-				new SelectTransitionDialog(token, suspended).open(aContext);
-				return suspended;
+			Edge outgoing = engine.getSingleOutgoingEdge(token);
+			Node next = outgoing.getTarget();
+			if (engine.needsDecision(next)) {
+				return confirmFinish(aContext, token);
 			} else {
-				Edge edge = engine.getSingleOutgoingEdge(token);
-				ResKey error = engine.checkError(edge, token);
+				ResKey error = engine.checkError(token, outgoing);
 				if (error != null) {
 					return MessageBox.newBuilder(MessageType.CONFIRM)
 						.message(Fragments.message(error))
 						.buttons(MessageBox.button(ButtonType.OK))
 						.confirm(aContext.getWindowScope());
-				} else {
-					HandlerResult suspended = HandlerResult.suspended();
-					Command continuation = suspended.resumeContinuation(Collections.singletonMap(CONTEXT, edge));
-					MessageBox.newBuilder(MessageType.CONFIRM)
-						.message(Fragments.message(I18NConstants.CONFIRM_FINISH_TASK))
-						.buttons(MessageBox.button(ButtonType.YES, continuation), MessageBox.button(ButtonType.NO))
-						.confirm(aContext.getWindowScope());
-					return suspended;
 				}
+				return confirmFinish(aContext, token);
 			}
-		} else if (context instanceof Edge edge) {
-			KnowledgeBase kb = token.tKnowledgeBase();
-			try (Transaction tx = kb.beginTransaction()) {
-				ExecutionEngine.getInstance().execute(token, edge);
-				tx.commit();
-			}
-
-			WithPostCreateActions.processCreateActions(_actions, aComponent, token.getProcessExecution());
-
-			return HandlerResult.DEFAULT_RESULT;
-		} else if (context == CANCEL) {
-			// Ignore.
-			return HandlerResult.DEFAULT_RESULT;
-		} else {
-			throw new UnreachableAssertion("Invalid context: " + context);
 		}
+
+		// Decision is already made.
+		Edge edge = (Edge) context;
+		try (Transaction tx = token.tKnowledgeBase().beginTransaction()) {
+			ExecutionEngine.getInstance().execute(token, edge, null);
+			tx.commit();
+		}
+
+		WithPostCreateActions.processCreateActions(_actions, aComponent, token.getProcessExecution());
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	private HandlerResult confirmFinish(DisplayContext context, Token token) {
+		HandlerResult suspended = HandlerResult.suspended();
+		new SelectTransitionDialog(token, suspended).open(context);
+		return suspended;
 	}
 
 	@Override

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/grid.template.xml"
+>
+	<arguments
+		defaultColumns="name,factor,baseUnit"
+		type="tl.units:Currency"
+	>
+		<name key="dynamic.5e82477f-7498-49f3-ae81-8dce14fd6ec4">
+			<en>Currencies</en>
+			<de>Währungen</de>
+		</name>
+		<modelBuilder class="com.top_logic.element.layout.TypeInstanceListModelBuilder"
+			meta-elements="tl.units:Currency"
+		/>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+			<button id="createRow"
+				class="com.top_logic.element.layout.grid.GridCreateHandler"
+				image="theme:ICON_PLUS"
+				type="tl.units:Currency"
+			>
+				<resourceKey key="dynamic.2a1d87bc-792f-47dd-92d3-f4d525de60e7">
+					<en>Create new currency</en>
+					<de>Neue Währung erstellen</de>
+				</resourceKey>
+				<checkScopeProvider/>
+			</button>
+			<button id="deleteRow"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

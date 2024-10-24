@@ -9,6 +9,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.AbstractResourceProvider;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Flavor;
+import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.model.TLModelPart;
@@ -17,7 +18,6 @@ import com.top_logic.model.visit.ImageVisitor;
 import com.top_logic.model.visit.LabelVisitor;
 import com.top_logic.model.visit.LinkVisitor;
 import com.top_logic.model.visit.TooltipVisitor;
-import com.top_logic.model.visit.TypeVisitor;
 import com.top_logic.util.Resources;
 
 /**
@@ -36,8 +36,6 @@ public class TLPartResourceProvider extends AbstractResourceProvider {
 
 	private final TLModelVisitor<String, Void> _labelVisitor;
 
-	private final TLModelVisitor<String, Void> _typeVisitor;
-
 	private final TLModelVisitor<ResKey, Void> _tooltipVisitor;
 
 	private final TLModelVisitor<ThemeImage, Flavor> _imageVisitor;
@@ -48,9 +46,10 @@ public class TLPartResourceProvider extends AbstractResourceProvider {
 	 * Creates a new {@link TLPartResourceProvider}.
 	 */
 	protected TLPartResourceProvider() {
+		LabelProvider plainLabels = obj -> obj == null ? null : ((TLModelPart) obj).visit(LabelVisitor.INSTANCE, none);
+
 		_labelVisitor = createLabelVisitor();
-		_typeVisitor = new TypeVisitor(this);
-		_tooltipVisitor = new TooltipVisitor(this);
+		_tooltipVisitor = new TooltipVisitor(plainLabels);
 		_imageVisitor = new ImageVisitor(this);
 		_linkVisitor = new LinkVisitor(this);
 	}
@@ -75,7 +74,7 @@ public class TLPartResourceProvider extends AbstractResourceProvider {
 		if (object == null) {
 			return null;
 		}
-		return ((TLModelPart) object).visit(_typeVisitor, none);
+		return ((TLModelPart) object).tType().getName();
 	}
 
 	@Override

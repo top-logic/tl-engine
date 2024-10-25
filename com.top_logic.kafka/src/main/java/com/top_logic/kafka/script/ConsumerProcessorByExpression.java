@@ -21,6 +21,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.kafka.services.consumer.ConsumerProcessor;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -48,6 +49,7 @@ import com.top_logic.model.search.ui.TLScriptPropertyEditor;
  * 
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
+@Label("TL-Script message processor")
 public class ConsumerProcessorByExpression extends AbstractConfiguredInstance<ConsumerProcessorByExpression.Config>
 		implements ConsumerProcessor<String, String> {
 

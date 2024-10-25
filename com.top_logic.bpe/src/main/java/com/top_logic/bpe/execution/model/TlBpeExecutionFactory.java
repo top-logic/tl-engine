@@ -22,17 +22,100 @@ public class TlBpeExecutionFactory extends com.top_logic.element.meta.kbbased.Ab
 	public static final String TL_BPE_EXECUTION_STRUCTURE = "tl.bpe.execution";
 
 	/**
-	 * Lookup {@link Named} type.
+	 * Name of the enumeration <code>ExecutionState</code> in module {@value #TL_BPE_EXECUTION_STRUCTURE}.
 	 */
-	public static com.top_logic.model.TLClass getNamedType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_EXECUTION_STRUCTURE).getType(Named.NAMED_TYPE);
+	public static final String EXECUTION_STATE_ENUM = "ExecutionState";
+
+	/**
+	 * Name of the classifier <code>ABORTED</code> in enumeration {@value #EXECUTION_STATE_ENUM}.
+	 */
+	public static final String ABORTED_EXECUTION_STATE_CLASSIFIER = "ABORTED";
+
+	/**
+	 * Name of the classifier <code>FINISHED</code> in enumeration {@value #EXECUTION_STATE_ENUM}.
+	 */
+	public static final String FINISHED_EXECUTION_STATE_CLASSIFIER = "FINISHED";
+
+	/**
+	 * Name of the classifier <code>RUNNING</code> in enumeration {@value #EXECUTION_STATE_ENUM}.
+	 */
+	public static final String RUNNING_EXECUTION_STATE_CLASSIFIER = "RUNNING";
+
+	/**
+	 * Lookup {@link ProcessExecution} type.
+	 */
+	public static com.top_logic.model.TLClass getProcessExecutionType() {
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_EXECUTION_STRUCTURE).getType(ProcessExecution.PROCESS_EXECUTION_TYPE);
 	}
 
 	/**
-	 * Lookup {@link Named#NAME_ATTR} of {@link Named}.
+	 * Lookup {@link ProcessExecution#ACTIVE_TOKENS_ATTR} of {@link ProcessExecution}.
 	 */
-	public static com.top_logic.model.TLProperty getNameNamedAttr() {
-		return (com.top_logic.model.TLProperty) getNamedType().getPart(Named.NAME_ATTR);
+	public static com.top_logic.model.TLReference getActiveTokensProcessExecutionAttr() {
+		return (com.top_logic.model.TLReference) getProcessExecutionType().getPart(ProcessExecution.ACTIVE_TOKENS_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ProcessExecution#ALL_TOKENS_ATTR} of {@link ProcessExecution}.
+	 */
+	public static com.top_logic.model.TLReference getAllTokensProcessExecutionAttr() {
+		return (com.top_logic.model.TLReference) getProcessExecutionType().getPart(ProcessExecution.ALL_TOKENS_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ProcessExecution#COLLABORATION_ATTR} of {@link ProcessExecution}.
+	 */
+	public static com.top_logic.model.TLReference getCollaborationProcessExecutionAttr() {
+		return (com.top_logic.model.TLReference) getProcessExecutionType().getPart(ProcessExecution.COLLABORATION_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ProcessExecution#CREATED_BY_ATTR} of {@link ProcessExecution}.
+	 */
+	public static com.top_logic.model.TLReference getCreatedByProcessExecutionAttr() {
+		return (com.top_logic.model.TLReference) getProcessExecutionType().getPart(ProcessExecution.CREATED_BY_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ProcessExecution#CREATED_BY_CONTACT_ATTR} of {@link ProcessExecution}.
+	 */
+	public static com.top_logic.model.TLReference getCreatedByContactProcessExecutionAttr() {
+		return (com.top_logic.model.TLReference) getProcessExecutionType().getPart(ProcessExecution.CREATED_BY_CONTACT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ProcessExecution#DURATION_IN_MINUTES_ATTR} of {@link ProcessExecution}.
+	 */
+	public static com.top_logic.model.TLProperty getDurationInMinutesProcessExecutionAttr() {
+		return (com.top_logic.model.TLProperty) getProcessExecutionType().getPart(ProcessExecution.DURATION_IN_MINUTES_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ProcessExecution#EXECUTION_NUMBER_ATTR} of {@link ProcessExecution}.
+	 */
+	public static com.top_logic.model.TLProperty getExecutionNumberProcessExecutionAttr() {
+		return (com.top_logic.model.TLProperty) getProcessExecutionType().getPart(ProcessExecution.EXECUTION_NUMBER_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ProcessExecution#EXECUTION_STATE_ATTR} of {@link ProcessExecution}.
+	 */
+	public static com.top_logic.model.TLReference getExecutionStateProcessExecutionAttr() {
+		return (com.top_logic.model.TLReference) getProcessExecutionType().getPart(ProcessExecution.EXECUTION_STATE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ProcessExecution#PROCESS_ATTR} of {@link ProcessExecution}.
+	 */
+	public static com.top_logic.model.TLReference getProcessProcessExecutionAttr() {
+		return (com.top_logic.model.TLReference) getProcessExecutionType().getPart(ProcessExecution.PROCESS_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ProcessExecution#USER_RELEVANT_TOKENS_ATTR} of {@link ProcessExecution}.
+	 */
+	public static com.top_logic.model.TLReference getUserRelevantTokensProcessExecutionAttr() {
+		return (com.top_logic.model.TLReference) getProcessExecutionType().getPart(ProcessExecution.USER_RELEVANT_TOKENS_ATTR);
 	}
 
 	/**
@@ -148,102 +231,32 @@ public class TlBpeExecutionFactory extends com.top_logic.element.meta.kbbased.Ab
 	}
 
 	/**
-	 * Lookup {@link ProcessExecution} type.
+	 * Lookup {@value #EXECUTION_STATE_ENUM} enumeration.
 	 */
-	public static com.top_logic.model.TLClass getProcessExecutionType() {
-		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_EXECUTION_STRUCTURE).getType(ProcessExecution.PROCESS_EXECUTION_TYPE);
+	public static com.top_logic.model.TLEnumeration getExecutionStateEnum() {
+		return (com.top_logic.model.TLEnumeration) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_EXECUTION_STRUCTURE).getType(EXECUTION_STATE_ENUM);
 	}
 
 	/**
-	 * Lookup {@link ProcessExecution#ACTIVE_TOKENS_ATTR} of {@link ProcessExecution}.
+	 * Lookup classifier {@value #ABORTED_EXECUTION_STATE_CLASSIFIER} of enumeration {@value #EXECUTION_STATE_ENUM}.
 	 */
-	public static com.top_logic.model.TLReference getActiveTokensProcessExecutionAttr() {
-		return (com.top_logic.model.TLReference) getProcessExecutionType().getPart(ProcessExecution.ACTIVE_TOKENS_ATTR);
+	public static com.top_logic.model.TLClassifier getABORTEDExecutionStateClassifier() {
+		return getExecutionStateEnum().getClassifier(ABORTED_EXECUTION_STATE_CLASSIFIER);
 	}
 
 	/**
-	 * Lookup {@link ProcessExecution#ALL_TOKENS_ATTR} of {@link ProcessExecution}.
+	 * Lookup classifier {@value #FINISHED_EXECUTION_STATE_CLASSIFIER} of enumeration {@value #EXECUTION_STATE_ENUM}.
 	 */
-	public static com.top_logic.model.TLReference getAllTokensProcessExecutionAttr() {
-		return (com.top_logic.model.TLReference) getProcessExecutionType().getPart(ProcessExecution.ALL_TOKENS_ATTR);
+	public static com.top_logic.model.TLClassifier getFINISHEDExecutionStateClassifier() {
+		return getExecutionStateEnum().getClassifier(FINISHED_EXECUTION_STATE_CLASSIFIER);
 	}
 
 	/**
-	 * Lookup {@link ProcessExecution#COLLABORATION_ATTR} of {@link ProcessExecution}.
+	 * Lookup classifier {@value #RUNNING_EXECUTION_STATE_CLASSIFIER} of enumeration {@value #EXECUTION_STATE_ENUM}.
 	 */
-	public static com.top_logic.model.TLReference getCollaborationProcessExecutionAttr() {
-		return (com.top_logic.model.TLReference) getProcessExecutionType().getPart(ProcessExecution.COLLABORATION_ATTR);
+	public static com.top_logic.model.TLClassifier getRUNNINGExecutionStateClassifier() {
+		return getExecutionStateEnum().getClassifier(RUNNING_EXECUTION_STATE_CLASSIFIER);
 	}
-
-	/**
-	 * Lookup {@link ProcessExecution#CREATED_BY_ATTR} of {@link ProcessExecution}.
-	 */
-	public static com.top_logic.model.TLReference getCreatedByProcessExecutionAttr() {
-		return (com.top_logic.model.TLReference) getProcessExecutionType().getPart(ProcessExecution.CREATED_BY_ATTR);
-	}
-
-	/**
-	 * Lookup {@link ProcessExecution#CREATED_BY_CONTACT_ATTR} of {@link ProcessExecution}.
-	 */
-	public static com.top_logic.model.TLReference getCreatedByContactProcessExecutionAttr() {
-		return (com.top_logic.model.TLReference) getProcessExecutionType().getPart(ProcessExecution.CREATED_BY_CONTACT_ATTR);
-	}
-
-	/**
-	 * Lookup {@link ProcessExecution#DURATION_IN_MINUTES_ATTR} of {@link ProcessExecution}.
-	 */
-	public static com.top_logic.model.TLProperty getDurationInMinutesProcessExecutionAttr() {
-		return (com.top_logic.model.TLProperty) getProcessExecutionType().getPart(ProcessExecution.DURATION_IN_MINUTES_ATTR);
-	}
-
-	/**
-	 * Lookup {@link ProcessExecution#EXECUTION_NUMBER_ATTR} of {@link ProcessExecution}.
-	 */
-	public static com.top_logic.model.TLProperty getExecutionNumberProcessExecutionAttr() {
-		return (com.top_logic.model.TLProperty) getProcessExecutionType().getPart(ProcessExecution.EXECUTION_NUMBER_ATTR);
-	}
-
-	/**
-	 * Lookup {@link ProcessExecution#EXECUTION_STATE_ATTR} of {@link ProcessExecution}.
-	 */
-	public static com.top_logic.model.TLReference getExecutionStateProcessExecutionAttr() {
-		return (com.top_logic.model.TLReference) getProcessExecutionType().getPart(ProcessExecution.EXECUTION_STATE_ATTR);
-	}
-
-	/**
-	 * Lookup {@link ProcessExecution#PROCESS_ATTR} of {@link ProcessExecution}.
-	 */
-	public static com.top_logic.model.TLReference getProcessProcessExecutionAttr() {
-		return (com.top_logic.model.TLReference) getProcessExecutionType().getPart(ProcessExecution.PROCESS_ATTR);
-	}
-
-	/**
-	 * Lookup {@link ProcessExecution#USER_RELEVANT_TOKENS_ATTR} of {@link ProcessExecution}.
-	 */
-	public static com.top_logic.model.TLReference getUserRelevantTokensProcessExecutionAttr() {
-		return (com.top_logic.model.TLReference) getProcessExecutionType().getPart(ProcessExecution.USER_RELEVANT_TOKENS_ATTR);
-	}
-
-	/**
-	 * Name of type <code>Named</code> in structure {@link #TL_BPE_EXECUTION_STRUCTURE}.
-	 * 
-	 * @deprecated Use {@link Named#NAMED_TYPE}.
-	 */
-	@Deprecated
-	public static final String NAMED_NODE = Named.NAMED_TYPE;
-
-	/**
-	 * Name of type <code>Token</code> in structure {@link #TL_BPE_EXECUTION_STRUCTURE}.
-	 * 
-	 * @deprecated Use {@link Token#TOKEN_TYPE}.
-	 */
-	@Deprecated
-	public static final String TOKEN_NODE = Token.TOKEN_TYPE;
-
-	/**
-	 * Storage table name of {@link #TOKEN_NODE} objects.
-	 */
-	public static final String KO_NAME_TOKEN = "BPExecution";
 
 	/**
 	 * Name of type <code>ProcessExecution</code> in structure {@link #TL_BPE_EXECUTION_STRUCTURE}.
@@ -258,20 +271,19 @@ public class TlBpeExecutionFactory extends com.top_logic.element.meta.kbbased.Ab
 	 */
 	public static final String KO_NAME_PROCESS_EXECUTION = "BPExecution";
 
+	/**
+	 * Name of type <code>Token</code> in structure {@link #TL_BPE_EXECUTION_STRUCTURE}.
+	 * 
+	 * @deprecated Use {@link Token#TOKEN_TYPE}.
+	 */
+	@Deprecated
+	public static final String TOKEN_NODE = Token.TOKEN_TYPE;
 
 	/**
-	 * Create an instance of {@link Token} type.
+	 * Storage table name of {@link #TOKEN_NODE} objects.
 	 */
-	public final Token createToken(com.top_logic.model.TLObject context) {
-		return (Token) createObject(getTokenType(), context);
-	}
+	public static final String KO_NAME_TOKEN = "BPExecution";
 
-	/**
-	 * Create an instance of {@link Token} type.
-	 */
-	public final Token createToken() {
-		return createToken(null);
-	}
 
 	/**
 	 * Create an instance of {@link ProcessExecution} type.
@@ -285,6 +297,20 @@ public class TlBpeExecutionFactory extends com.top_logic.element.meta.kbbased.Ab
 	 */
 	public final ProcessExecution createProcessExecution() {
 		return createProcessExecution(null);
+	}
+
+	/**
+	 * Create an instance of {@link Token} type.
+	 */
+	public final Token createToken(com.top_logic.model.TLObject context) {
+		return (Token) createObject(getTokenType(), context);
+	}
+
+	/**
+	 * Create an instance of {@link Token} type.
+	 */
+	public final Token createToken() {
+		return createToken(null);
 	}
 
 	/**

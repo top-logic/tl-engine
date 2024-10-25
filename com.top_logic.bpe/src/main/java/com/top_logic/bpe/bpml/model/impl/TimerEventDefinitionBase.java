@@ -21,28 +21,10 @@ public interface TimerEventDefinitionBase extends com.top_logic.bpe.bpml.model.E
 	 * Part <code>delayInMillis</code> of <code>TimerEventDefinition</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.core:Long</code> in configuration.
+	 * Declared as <code>tl.core:Duration</code> in configuration.
 	 * </p>
 	 */
 	String DELAY_IN_MILLIS_ATTR = "delayInMillis";
-
-	/**
-	 * Part <code>delayInUnit</code> of <code>TimerEventDefinition</code>
-	 * 
-	 * <p>
-	 * Declared as <code>tl.core:Integer</code> in configuration.
-	 * </p>
-	 */
-	String DELAY_IN_UNIT_ATTR = "delayInUnit";
-
-	/**
-	 * Part <code>timeUnit</code> of <code>TimerEventDefinition</code>
-	 * 
-	 * <p>
-	 * Declared as <code>tl.bpe.bpml:BPTimeGranularity</code> in configuration.
-	 * </p>
-	 */
-	String TIME_UNIT_ATTR = "timeUnit";
 
 	/**
 	 * Getter for part {@link #DELAY_IN_MILLIS_ATTR}.
@@ -52,31 +34,10 @@ public interface TimerEventDefinitionBase extends com.top_logic.bpe.bpml.model.E
 	}
 
 	/**
-	 * Getter for part {@link #DELAY_IN_UNIT_ATTR}.
+	 * Setter for part {@link #DELAY_IN_MILLIS_ATTR}.
 	 */
-	default Integer getDelayInUnit() {
-		return (Integer) tValueByName(DELAY_IN_UNIT_ATTR);
-	}
-
-	/**
-	 * Setter for part {@link #DELAY_IN_UNIT_ATTR}.
-	 */
-	default void setDelayInUnit(Integer newValue) {
-		tUpdateByName(DELAY_IN_UNIT_ATTR, newValue);
-	}
-
-	/**
-	 * Getter for part {@link #TIME_UNIT_ATTR}.
-	 */
-	default com.top_logic.bpe.execution.engine.BPTimeGranularity getTimeUnit() {
-		return (com.top_logic.bpe.execution.engine.BPTimeGranularity) tValueByName(TIME_UNIT_ATTR);
-	}
-
-	/**
-	 * Setter for part {@link #TIME_UNIT_ATTR}.
-	 */
-	default void setTimeUnit(com.top_logic.bpe.execution.engine.BPTimeGranularity newValue) {
-		tUpdateByName(TIME_UNIT_ATTR, newValue);
+	default void setDelayInMillis(Long newValue) {
+		tUpdateByName(DELAY_IN_MILLIS_ATTR, newValue);
 	}
 
 }

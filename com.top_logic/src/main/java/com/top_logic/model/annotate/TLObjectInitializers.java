@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.model.annotate.AnnotationInheritance.Policy;
 import com.top_logic.model.config.TLTypeAnnotation;
 import com.top_logic.model.initializer.TLObjectInitializer;
 
@@ -26,6 +27,8 @@ import com.top_logic.model.initializer.TLObjectInitializer;
 @InApp
 @TagName("object-initializers")
 @TargetType({ TLTypeKind.REF })
+// All initializes of all super classes must be considered.
+@AnnotationInheritance(Policy.REDEFINE)
 public interface TLObjectInitializers extends TLTypeAnnotation {
 
 	/**

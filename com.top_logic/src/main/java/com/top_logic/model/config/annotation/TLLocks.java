@@ -14,6 +14,8 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.annotate.AnnotationInheritance;
+import com.top_logic.model.annotate.AnnotationInheritance.Policy;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
 import com.top_logic.model.config.TLTypeAnnotation;
@@ -25,6 +27,7 @@ import com.top_logic.model.config.TLTypeAnnotation;
  */
 @TagName("locks")
 @TargetType(value = { TLTypeKind.REF, TLTypeKind.COMPOSITION })
+@AnnotationInheritance(Policy.REDEFINE)
 @InApp
 public interface TLLocks extends TLTypeAnnotation {
 

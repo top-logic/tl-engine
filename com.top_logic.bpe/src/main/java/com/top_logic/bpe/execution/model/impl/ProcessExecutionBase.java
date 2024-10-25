@@ -84,7 +84,7 @@ public interface ProcessExecutionBase extends com.top_logic.model.TLObject {
 	 * Part <code>executionState</code> of <code>ProcessExecution</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl5.enum:bpe.execution.state</code> in configuration.
+	 * Declared as <code>tl.bpe.execution:ExecutionState</code> in configuration.
 	 * </p>
 	 */
 	String EXECUTION_STATE_ATTR = "executionState";

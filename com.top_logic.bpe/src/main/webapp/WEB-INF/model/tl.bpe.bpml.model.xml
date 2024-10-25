@@ -100,7 +100,7 @@
 					type="Event"
 				>
 					<annotations>
-						<visibility value="read-only"/>
+						<visibility value="hidden"/>
 					</annotations>
 				</reference>
 			</attributes>
@@ -197,35 +197,10 @@
 			</annotations>
 			<attributes>
 				<property name="delayInMillis"
-					type="tl.core:Long"
+					type="tl.core:Duration"
 				>
 					<annotations>
 						<bpml-extension/>
-						<storage-algorithm>
-							<derived-storage>
-								<expression-evaluation>
-									<method-call method="com.top_logic.bpe.bpml.model.impl.TimerEventDefinitionImpl#calculateDelayInMillis()"/>
-								</expression-evaluation>
-							</derived-storage>
-						</storage-algorithm>
-						<visibility value="hidden"/>
-					</annotations>
-				</property>
-				<property name="delayInUnit"
-					type="tl.core:Integer"
-				>
-					<annotations>
-						<bpml-extension/>
-						<value-range min="1.0"/>
-						<sort-order value="11.0"/>
-					</annotations>
-				</property>
-				<property name="timeUnit"
-					type="BPTimeGranularity"
-				>
-					<annotations>
-						<bpml-extension/>
-						<sort-order value="12.0"/>
 					</annotations>
 				</property>
 			</attributes>
@@ -455,7 +430,7 @@
 				<generalization type="Annotated"/>
 			</generalizations>
 			<attributes>
-				<property name="label"
+				<property name="title"
 					type="tl.model.i18n:I18NString"
 				>
 					<annotations>
@@ -885,9 +860,10 @@
 			<annotations>
 				<table name="BPNode"/>
 				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.TaskImpl"/>
+				<id-column value="label"/>
 			</annotations>
 			<attributes>
-				<property name="label"
+				<property name="title"
 					type="tl.model.i18n:I18NString"
 				>
 					<annotations>
@@ -895,7 +871,7 @@
 						<sort-order value="500.5"/>
 					</annotations>
 				</property>
-				<property name="labelFunction"
+				<property name="titleFunction"
 					type="tl.model.search:Expr"
 				>
 					<annotations>
@@ -918,7 +894,6 @@
 					type="tl.model:TLClass"
 				>
 					<annotations>
-						<bpml-extension/>
 						<options>
 							<options-by-expression>
 								<function><![CDATA[task -> ($task
@@ -929,8 +904,18 @@
     .recursion(t -> $t.get(`tl.model:TLClass#specializations`))]]></function>
 							</options-by-expression>
 						</options>
+						<bpml-extension/>
 					</annotations>
 				</reference>
+				<property name="label"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="t -> $t.get(`tl.bpe.bpml:Task#title`).localize() || $t.get(`tl.bpe.bpml:Task#name`)"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 		<class name="BusinessRuleTask">
@@ -979,10 +964,10 @@
 					type="tl.core:Boolean"
 				>
 					<annotations>
-						<bpml-extension/>
 						<default-value>
 							<boolean value="true"/>
 						</default-value>
+						<bpml-extension/>
 					</annotations>
 				</property>
 			</attributes>
@@ -1131,7 +1116,7 @@
 						<sort-order value="3.0"/>
 					</annotations>
 				</reference>
-				<property name="taskLabel"
+				<property name="taskTitle"
 					type="tl.model.search:Expr"
 				>
 					<annotations>
@@ -1190,11 +1175,11 @@
 					type="tl.model:TLClass"
 				>
 					<annotations>
-						<bpml-extension/>
 						<sort-order value="4.0"/>
 						<options>
 							<options-by-expression function="`tl.bpe.execution:Token`.recursion(t -> $t.get(`tl.model:TLClass#specializations`))"/>
 						</options>
+						<bpml-extension/>
 					</annotations>
 				</reference>
 				<property name="defaultOperation"

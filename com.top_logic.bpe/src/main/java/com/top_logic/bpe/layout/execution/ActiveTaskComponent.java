@@ -116,8 +116,8 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 		}
 
 		Token token = (Token) someObject;
-		Task node = (Task) token.getNode();
 
+		Node node = token.getNode();
 		if (node instanceof ManualTask manualTask) {
 			TLObject pe = getContextModel();
 			TLClass tType = (TLClass) pe.tType();

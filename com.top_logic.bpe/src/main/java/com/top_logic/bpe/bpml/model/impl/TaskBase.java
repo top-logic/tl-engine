@@ -27,22 +27,22 @@ public interface TaskBase extends com.top_logic.bpe.bpml.model.Node, com.top_log
 	String BOUNDARY_EVENTS_ATTR = "boundaryEvents";
 
 	/**
-	 * Part <code>label</code> of <code>Task</code>
+	 * Part <code>title</code> of <code>Task</code>
 	 * 
 	 * <p>
 	 * Declared as <code>tl.model.i18n:I18NString</code> in configuration.
 	 * </p>
 	 */
-	String LABEL_ATTR = "label";
+	String TITLE_ATTR = "title";
 
 	/**
-	 * Part <code>labelFunction</code> of <code>Task</code>
+	 * Part <code>titleFunction</code> of <code>Task</code>
 	 * 
 	 * <p>
 	 * Declared as <code>tl.model.search:Expr</code> in configuration.
 	 * </p>
 	 */
-	String LABEL_FUNCTION_ATTR = "labelFunction";
+	String TITLE_FUNCTION_ATTR = "titleFunction";
 
 	/**
 	 * Part <code>tokenType</code> of <code>Task</code>
@@ -62,31 +62,31 @@ public interface TaskBase extends com.top_logic.bpe.bpml.model.Node, com.top_log
 	}
 
 	/**
-	 * Getter for part {@link #LABEL_ATTR}.
+	 * Getter for part {@link #TITLE_ATTR}.
 	 */
-	default com.top_logic.basic.util.ResKey getLabel() {
-		return (com.top_logic.basic.util.ResKey) tValueByName(LABEL_ATTR);
+	default com.top_logic.basic.util.ResKey getTitle() {
+		return (com.top_logic.basic.util.ResKey) tValueByName(TITLE_ATTR);
 	}
 
 	/**
-	 * Setter for part {@link #LABEL_ATTR}.
+	 * Setter for part {@link #TITLE_ATTR}.
 	 */
-	default void setLabel(com.top_logic.basic.util.ResKey newValue) {
-		tUpdateByName(LABEL_ATTR, newValue);
+	default void setTitle(com.top_logic.basic.util.ResKey newValue) {
+		tUpdateByName(TITLE_ATTR, newValue);
 	}
 
 	/**
-	 * Getter for part {@link #LABEL_FUNCTION_ATTR}.
+	 * Getter for part {@link #TITLE_FUNCTION_ATTR}.
 	 */
-	default com.top_logic.model.search.expr.SearchExpression getLabelFunction() {
-		return (com.top_logic.model.search.expr.SearchExpression) tValueByName(LABEL_FUNCTION_ATTR);
+	default com.top_logic.model.search.expr.SearchExpression getTitleFunction() {
+		return (com.top_logic.model.search.expr.SearchExpression) tValueByName(TITLE_FUNCTION_ATTR);
 	}
 
 	/**
-	 * Setter for part {@link #LABEL_FUNCTION_ATTR}.
+	 * Setter for part {@link #TITLE_FUNCTION_ATTR}.
 	 */
-	default void setLabelFunction(com.top_logic.model.search.expr.SearchExpression newValue) {
-		tUpdateByName(LABEL_FUNCTION_ATTR, newValue);
+	default void setTitleFunction(com.top_logic.model.search.expr.SearchExpression newValue) {
+		tUpdateByName(TITLE_FUNCTION_ATTR, newValue);
 	}
 
 	/**

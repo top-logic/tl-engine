@@ -141,19 +141,19 @@ public interface Token extends TokenBase {
 	private static HTMLFragment calculateLabelFragment(Token token) {
 		Node node = token.getNode();
 		if (node instanceof Task) {
-			SearchExpression labelFunction = ((Task) node).getLabelFunction();
+			SearchExpression labelFunction = ((Task) node).getTitleFunction();
 			if (labelFunction != null) {
 				return new ExpressionFragment(
 					call(labelFunction, literal(token.getProcessExecution()), literal(token.getNode()),
 						literal(token)));
 			}
 
-			ResKey label = ((Task) node).getLabel();
+			ResKey label = ((Task) node).getTitle();
 			if (label != null) {
 				return Fragments.message(label);
 			}
 		}
-		SearchExpression titleTemplate = token.participant(node.getProcess()).getTaskLabel();
+		SearchExpression titleTemplate = token.participant(node.getProcess()).getTaskTitle();
 		if (titleTemplate != null) {
 			return new ExpressionFragment(
 				call(titleTemplate, literal(token.getProcessExecution()), literal(token)));

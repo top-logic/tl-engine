@@ -35,9 +35,6 @@
 					<declaration file="/WEB-INF/model/tl.bpe.bpml.model.xml"/>
 					<declaration file="/WEB-INF/model/tl.bpe.execution.model.xml"/>
 				</declarations>
-				<classifications>
-					<classification name="bpe.execution.state" mode="use" />
-				</classifications>
 			</instance>
 		</config>
 
@@ -69,15 +66,6 @@
 			</instance>
 		</config>
 
-        <config service-class="com.top_logic.layout.provider.LabelProviderService">
-            <instance>
-                <resource-providers>
-	    	        <provider kind="MODEL" type="tl.bpe.execution:Token" implementation="com.top_logic.bpe.layout.execution.TokenResourceProvider" />
-    	    	    <provider kind="MODEL" type="tl.bpe.execution:ProcessExecution" implementation="com.top_logic.bpe.layout.execution.ProcessExecutionResourceProvider" />
-                </resource-providers>
-            </instance>
-        </config>		
-		
 		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
 			<instance>
 				<handlers>

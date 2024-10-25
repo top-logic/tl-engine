@@ -12,6 +12,8 @@ import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.knowledge.wrap.Wrapper;
+import com.top_logic.model.annotate.AnnotationInheritance;
+import com.top_logic.model.annotate.AnnotationInheritance.Policy;
 
 /**
  * {@link TLTypeAnnotation} defining the implementation and interface class of the annotated type.
@@ -19,6 +21,7 @@ import com.top_logic.knowledge.wrap.Wrapper;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @TagName("implementation-binding")
+@AnnotationInheritance(Policy.REDEFINE)
 public interface JavaClass extends TLTypeAnnotation {
 
 	/** @see #getClassName() */

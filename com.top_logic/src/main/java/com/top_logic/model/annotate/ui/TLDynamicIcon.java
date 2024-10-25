@@ -13,6 +13,8 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.provider.icon.IconProvider;
+import com.top_logic.model.annotate.AnnotationInheritance;
+import com.top_logic.model.annotate.AnnotationInheritance.Policy;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
 import com.top_logic.model.config.TLTypeAnnotation;
@@ -22,9 +24,11 @@ import com.top_logic.model.config.TLTypeAnnotation;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-@InApp
 @TagName("dynamic-icon")
 @TargetType(value = { TLTypeKind.REF, TLTypeKind.COMPOSITION })
+// Search is done explicitly
+@AnnotationInheritance(Policy.REDEFINE)
+@InApp
 public interface TLDynamicIcon extends TLTypeAnnotation {
 
 	/**

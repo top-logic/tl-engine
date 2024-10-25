@@ -33,11 +33,15 @@ import com.top_logic.bpe.execution.engine.GuiEngine;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.bpe.layout.execution.command.FinishTaskCommand;
 import com.top_logic.bpe.layout.execution.command.I18NConstants;
+import com.top_logic.element.layout.formeditor.FormEditorUtil;
+import com.top_logic.element.layout.formeditor.builder.TypedForm;
+import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.layout.AbstractResourceProvider;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.Flavor;
+import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ThemeImage;
@@ -46,6 +50,7 @@ import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
+import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.template.FormPatternConstants;
 import com.top_logic.layout.form.template.FormTemplate;
@@ -54,6 +59,11 @@ import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.messagebox.SimpleFormDialog;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.form.implementation.FormEditorContext;
+import com.top_logic.model.form.implementation.FormMode;
+import com.top_logic.model.impl.TransientModelFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
@@ -68,31 +78,35 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 			+ " xmlns='" + HTMLConstants.XHTML_NS + "'"
 			+ " xmlns:t='" + FormTemplateConstants.TEMPLATE_NS + "'"
 			+ " xmlns:p='" + FormPatternConstants.PATTERN_NS + "'"
-			+ ">"
+		+ ">"
 			+ "<div class='mboxImage'>"
-			+ "<t:img key='icon' alt=''/>"
+				+ "<t:img key='icon' alt=''/>"
 			+ "</div>"
-			+ "<div>"
+
 			+ "<table>"
-			+ "<tr><td>"
-			+ "<p><t:text key='message'/></p>"
-			+ "<p>"
-			+ "<p:field name='" + SimpleFormDialog.INPUT_FIELD + "' style='label' />"
-			+ "</p><p>"
-			+ "<p:field name='" + SimpleFormDialog.INPUT_FIELD + "' />"
-			+ HTMLConstants.NBSP
-			+ "<p:field name='" + SimpleFormDialog.INPUT_FIELD + "' style='"
-			+ FormTemplateConstants.STYLE_ERROR_VALUE
-			+ "' />"
-			+ "</p>"
-			+ "</td></tr>"
+				+ "<tr><td>"
+					+ "<p><t:text key='message'/></p>"
+					+ "<p>"
+					+ "<p:field name='" + SimpleFormDialog.INPUT_FIELD + "' style='label' />"
+					+ "</p><p>"
+					+ "<p:field name='" + SimpleFormDialog.INPUT_FIELD + "' />"
+					+ HTMLConstants.NBSP
+					+ "<p:field name='" + SimpleFormDialog.INPUT_FIELD + "' style='"
+					+ FormTemplateConstants.STYLE_ERROR_VALUE
+					+ "' />"
+					+ "</p>"
+				+ "</td></tr>"
 			+ "</table>"
-			+ "</div>"
-			+ "</div>");
+
+			+ "<p:field name='custom'/>"
+
+		+ "</div>");
 
 	private Token _token;
 
 	private HandlerResult _suspended;
+
+	private TLObject _formModel;
 
 	/**
 	 * Creates a {@link SelectTransitionDialog}.
@@ -170,7 +184,7 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 			ResKey label;
 			String tooltip;
 			Edge lastEdge = getLastEdge();
-			ResKey edgeLabel = lastEdge.getLabel();
+			ResKey edgeLabel = lastEdge.getTitle();
 			if (edgeLabel != null) {
 				label = edgeLabel;
 				tooltip = lastEdge.getTooltip().localizeSourceCode();
@@ -296,6 +310,13 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 	}
 
 	@Override
+	protected FormContext createFormContext() {
+		AttributeFormContext result = new AttributeFormContext(getResourcePrefix());
+		createHeaderMembers(result);
+		return result;
+	}
+
+	@Override
 	protected void fillFormContext(FormContext aContext) {
 		List<Decision> edges = getNextEdges(_token);
 		SelectField field = FormFactory.newSelectField(SimpleFormDialog.INPUT_FIELD, edges);
@@ -314,6 +335,28 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 		field.setMandatory(true);
 		setInitialSelection(field, edges);
 		aContext.addMember(field);
+
+		FormGroup custom = new FormGroup("custom", ResPrefix.NONE);
+		aContext.addMember(custom);
+
+		TLClass formType = _token.getNode().getProcess().getParticipant().getEdgeFormType();
+		if (formType != null) {
+			_formModel = TransientModelFactory.createTransientObject(formType);
+			TypedForm typeForm = TypedForm.lookup(formType);
+
+			FormEditorContext context = new FormEditorContext.Builder()
+				.formMode(FormMode.CREATE)
+				.formType(typeForm.getFormType())
+				.concreteType(typeForm.getDisplayedType())
+				.model(_formModel)
+				.formContext(aContext)
+				.contentGroup(custom)
+				.build();
+
+			FormEditorUtil.createAttributes(context, typeForm.getFormDefinition());
+		} else {
+			_formModel = null;
+		}
 	}
 
 	private List<Decision> getNextEdges(Token token) {

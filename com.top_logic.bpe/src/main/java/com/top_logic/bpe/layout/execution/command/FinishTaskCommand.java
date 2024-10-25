@@ -151,7 +151,7 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 			Set<? extends Edge> edges = task.getNode().getOutgoing();
 			if (edges.size() == 1) {
 				Edge edge = edges.iterator().next();
-				ResKey edgeLabel = edge.getLabel();
+				ResKey edgeLabel = edge.getTitle();
 				if (edgeLabel != null) {
 					return edgeLabel;
 				}

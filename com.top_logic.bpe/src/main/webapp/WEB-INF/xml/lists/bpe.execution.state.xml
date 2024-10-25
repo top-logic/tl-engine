@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<list name="bpe.execution.state" type="Classification" multiselect="false" useNameAsId="true">
-	<elements>
-		<element name="bpe.execution.state.running" default="true" />
-		<element name="bpe.execution.state.finished" />
-		<element name="bpe.execution.state.aborted" />
-	</elements>
-</list>

@@ -11,6 +11,7 @@ import static com.top_logic.basic.config.misc.TypedConfigUtil.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -154,7 +155,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	 * The priority of a patch element is higher, if the returned number is smaller.
 	 * </p>
 	 */
-	static final class DiffPriority implements DiffVisitor<Integer, Void, RuntimeException> {
+	static final class DiffPriority implements DiffVisitor<Priority, Void, RuntimeException>, Comparator<DiffElement> {
 
 		/**
 		 * Singleton {@link ApplyModelPatch.DiffPriority} instance.
@@ -166,123 +167,133 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		}
 
 		@Override
-		public Integer visit(CreateModule diff, Void arg) throws RuntimeException {
-			return 10;
+		public Priority visit(CreateModule diff, Void arg) throws RuntimeException {
+			return Priority.CREATE_MODULE;
 		}
 
 		@Override
-		public Integer visit(CreateSingleton diff, Void arg) throws RuntimeException {
-			return 100;
+		public Priority visit(CreateSingleton diff, Void arg) throws RuntimeException {
+			return Priority.CREATE_SINGLETONS;
 		}
 
 		@Override
-		public Integer visit(CreateRole diff, Void arg) throws RuntimeException {
-			return 110;
+		public Priority visit(CreateRole diff, Void arg) throws RuntimeException {
+			return Priority.CREATE_ROLE;
 		}
 
 		@Override
-		public Integer visit(CreateType diff, Void arg) throws RuntimeException {
-			return 20;
+		public Priority visit(CreateType diff, Void arg) throws RuntimeException {
+			return Priority.CREATE_TYPE;
 		}
 
 		@Override
-		public Integer visit(CreateStructuredTypePart diff, Void arg) throws RuntimeException {
-			return 30;
+		public Priority visit(CreateStructuredTypePart diff, Void arg) throws RuntimeException {
+			if (diff.getPart().isOverride()) {
+				return Priority.CREATE_TYPE_PART_OVERRIDE;
+			}
+			return Priority.CREATE_TYPE_PART;
 		}
 
 		@Override
-		public Integer visit(CreateClassifier diff, Void arg) throws RuntimeException {
-			return 30;
+		public Priority visit(CreateClassifier diff, Void arg) throws RuntimeException {
+			return Priority.CREATE_TYPE_PART;
 		}
 
 		@Override
-		public Integer visit(UpdateStorageMapping diff, Void arg) throws RuntimeException {
-			return 30;
+		public Priority visit(UpdateStorageMapping diff, Void arg) throws RuntimeException {
+			return Priority.UPDATE_STORAGE_MAPPING;
 		}
 
 		@Override
-		public Integer visit(UpdatePartType diff, Void arg) throws RuntimeException {
-			return 31;
+		public Priority visit(UpdatePartType diff, Void arg) throws RuntimeException {
+			return Priority.UPDATE_TYPE_PART;
 		}
 
 		@Override
-		public Integer visit(Delete diff, Void arg) throws RuntimeException {
+		public Priority visit(Delete diff, Void arg) throws RuntimeException {
 			if (diff.getName().indexOf('#') > 0) {
 				// A part (type part or singleton).
-				return 2;
+				return Priority.DELETE_TYPE_PART;
 			}
 			if (diff.getName().indexOf(':') > 0) {
 				// A type.
-				return 4;
+				return Priority.DELETE_TYPE;
 			}
 			// A module.
-			return 6;
+			return Priority.DELETE_MODULE;
 		}
 
 		@Override
-		public Integer visit(DeleteRole diff, Void arg) throws RuntimeException {
-			return 5;
+		public Priority visit(DeleteRole diff, Void arg) throws RuntimeException {
+			return Priority.DELETE_ROLE;
 		}
 
 		@Override
-		public Integer visit(AddAnnotations diff, Void arg) throws RuntimeException {
-			return 40;
+		public Priority visit(AddAnnotations diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_ANNOTATIONS;
 		}
 
 		@Override
-		public Integer visit(SetAnnotations diff, Void arg) throws RuntimeException {
-			return 40;
+		public Priority visit(SetAnnotations diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_ANNOTATIONS;
 		}
 
 		@Override
-		public Integer visit(RemoveAnnotation diff, Void arg) throws RuntimeException {
-			return 1;
+		public Priority visit(RemoveAnnotation diff, Void arg) throws RuntimeException {
+			return Priority.REMOVE_ANNOTATION;
 		}
 
 		@Override
-		public Integer visit(AddGeneralization diff, Void arg) throws RuntimeException {
-			return 25;
+		public Priority visit(AddGeneralization diff, Void arg) throws RuntimeException {
+			return Priority.CREATE_OR_MOVE_GENERALISATION;
 		}
 
 		@Override
-		public Integer visit(RemoveGeneralization diff, Void arg) throws RuntimeException {
-			// Must occur before removing types, because removing types removes specializations.
-			return 3;
+		public Priority visit(RemoveGeneralization diff, Void arg) throws RuntimeException {
+			return Priority.REMOVE_GENERALISATION;
 		}
 
 		@Override
-		public Integer visit(MoveGeneralization diff, Void arg) throws RuntimeException {
-			return 25;
+		public Priority visit(MoveGeneralization diff, Void arg) throws RuntimeException {
+			return Priority.CREATE_OR_MOVE_GENERALISATION;
 		}
 
 		@Override
-		public Integer visit(MakeAbstract diff, Void arg) throws RuntimeException {
-			return 27;
+		public Priority visit(MakeAbstract diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_TYPE_ABSTRACT;
 		}
 
 		@Override
-		public Integer visit(MakeConcrete diff, Void arg) throws RuntimeException {
-			return 27;
+		public Priority visit(MakeConcrete diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_TYPE_ABSTRACT;
 		}
 
 		@Override
-		public Integer visit(UpdateMandatory diff, Void arg) throws RuntimeException {
-			return 40;
+		public Priority visit(UpdateMandatory diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_TYPE_PART_MANDATORY;
 		}
 
 		@Override
-		public Integer visit(MoveClassifier diff, Void arg) throws RuntimeException {
-			return 30;
+		public Priority visit(MoveClassifier diff, Void arg) throws RuntimeException {
+			return Priority.MOVE_TYPE_PART;
 		}
 
 		@Override
-		public Integer visit(MoveStructuredTypePart diff, Void arg) throws RuntimeException {
-			return 30;
+		public Priority visit(MoveStructuredTypePart diff, Void arg) throws RuntimeException {
+			return Priority.MOVE_TYPE_PART;
 		}
 
 		@Override
-		public Integer visit(RenamePart diff, Void arg) throws RuntimeException {
-			return 30;
+		public Priority visit(RenamePart diff, Void arg) throws RuntimeException {
+			return Priority.MOVE_TYPE_PART;
+		}
+
+		/**
+		 * Compares {@link DiffElement} by their {@link Priority}.
+		 */
+		@Override
+		public int compare(DiffElement o1, DiffElement o2) {
+			return o1.visit(this, null).compareTo(o2.visit(this, null));
 		}
 	}
 
@@ -352,12 +363,8 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 	 */
 	public static <E extends DiffElement> List<E> sortByPriority(Collection<E> patch) {
 		List<E> elements = new ArrayList<>(patch);
-		Collections.sort(elements, ApplyModelPatch::compareByPriority);
+		Collections.sort(elements, DiffPriority.INSTANCE);
 		return elements;
-	}
-
-	private static int compareByPriority(DiffElement d1, DiffElement d2) {
-		return Integer.compare(d1.visit(DiffPriority.INSTANCE, null), d2.visit(DiffPriority.INSTANCE, null));
 	}
 
 	@Override
@@ -821,11 +828,6 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		
 		log().info("Adding part '" + partName + " to type '" + type + "'.");
 		addPart(type, diff.getPart());
-
-		// Apply order, since create API has no order attribute.
-		String beforeName = diff.getBefore();
-		schedule().reorderProperties(() -> movePart(type, partName, beforeName));
-		
 		return null;
 	}
 

@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
 
 import com.top_logic.base.services.InitialGroupManager;
 import com.top_logic.basic.BufferingProtocol;
@@ -367,10 +366,7 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 
 			List<DiffElement> patch = patchCreator.getPatch();
 			if (!patch.isEmpty()) {
-				Logger.info(
-					"Restoring missing model baseline, diff to existing model follows:\n"
-						+ patch.stream().map(Object::toString).collect(Collectors.joining("\n")),
-					DynamicModelService.class);
+				Logger.info("Restoring missing model baseline.", DynamicModelService.class);
 
 				MigrationProcessors processors = TypedConfiguration.newConfigItem(MigrationProcessors.class);
 				ApplyModelPatch.applyPatch(new BufferingProtocol(), ModelCopy.copy(getModel()), null, patch,
@@ -417,7 +413,7 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 
 		List<DiffElement> patch = patchCreator.getPatch();
 		if (!patch.isEmpty()) {
-			Logger.info("Started incremental model upgrade: " + patch, DynamicModelService.class);
+			Logger.info("Started incremental model upgrade.", DynamicModelService.class);
 
 			MigrationProcessors processors = TypedConfiguration.newConfigItem(MigrationProcessors.class);
 			ApplyModelPatch.applyPatch(log, getModel(), getFactory(), patch, processors.getProcessors());

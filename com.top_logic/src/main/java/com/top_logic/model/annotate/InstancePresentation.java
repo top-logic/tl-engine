@@ -10,6 +10,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.model.annotate.AnnotationInheritance.Policy;
 import com.top_logic.model.config.TLTypeAnnotation;
 
 /**
@@ -19,6 +20,8 @@ import com.top_logic.model.config.TLTypeAnnotation;
  */
 @TagName(InstancePresentation.TAG_NAME)
 @TargetType(value = { TLTypeKind.REF, TLTypeKind.COMPOSITION, TLTypeKind.ENUMERATION })
+//Search is done explicitly
+@AnnotationInheritance(Policy.REDEFINE)
 @InApp
 @DisplayOrder({
 	InstancePresentation.ICON,

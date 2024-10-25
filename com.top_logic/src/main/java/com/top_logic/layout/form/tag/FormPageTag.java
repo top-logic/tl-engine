@@ -19,6 +19,7 @@ import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.Renderer;
@@ -37,6 +38,7 @@ import com.top_logic.layout.form.component.EditComponent;
 import com.top_logic.layout.form.control.BooleanChoiceControl;
 import com.top_logic.layout.form.control.CheckboxControl;
 import com.top_logic.layout.form.control.ChoiceControl;
+import com.top_logic.layout.form.control.DropDownControl;
 import com.top_logic.layout.form.control.IconSelectControl;
 import com.top_logic.layout.form.control.SelectControl;
 import com.top_logic.layout.form.control.SelectOptionControl;
@@ -638,10 +640,10 @@ public class FormPageTag extends PageAreaTag implements FormTagProperties {
 				DefaultDisplayContext.getDisplayContext().getResources().getString(I18NConstants.INPUT_VALUE__ATTRIBUTE.fill(member.getLabel()));
 			((WithPlaceHolder) input).setPlaceHolder(placeHolder);
 			return concat(input, nbsp(), error);
-		} else if (input instanceof SelectControl) {
+		} else if (input instanceof SelectControl || input instanceof DropDownControl) {
 			String emptyLabel =
 				DefaultDisplayContext.getDisplayContext().getResources().getString(I18NConstants.SELECT_VALUE__ATTRIBUTE.fill(member.getLabel()));
-			((SelectField) ((SelectControl) input).getModel()).setEmptyLabel(emptyLabel);
+			((SelectField) ((Control) input).getModel()).setEmptyLabel(emptyLabel);
 			return concat(input, nbsp(), error);
 		} else if (input instanceof ValueDisplayControl) {
 			// Only a value should be displayed, no label.

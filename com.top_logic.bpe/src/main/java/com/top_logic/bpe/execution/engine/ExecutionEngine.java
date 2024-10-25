@@ -5,6 +5,7 @@
  */
 package com.top_logic.bpe.execution.engine;
 
+import java.io.StringReader;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.bpe.bpml.model.BoundaryEvent;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.bpml.model.Edge;
@@ -39,12 +41,14 @@ import com.top_logic.bpe.bpml.model.TimerEventDefinition;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
 import com.top_logic.bpe.execution.model.Token;
-import com.top_logic.element.meta.MetaElementUtil;
-import com.top_logic.knowledge.wrap.list.FastListElement;
-import com.top_logic.model.TLClass;
+import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.parser.ParseException;
+import com.top_logic.model.search.expr.parser.SearchExpressionParser;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.TLContext;
 
 /**
@@ -53,6 +57,7 @@ import com.top_logic.util.TLContext;
 public class ExecutionEngine {
 
 	private static ExecutionEngine INSTANCE = new ExecutionEngine();
+	private QueryExecutor _activeExecutions;
 
 	/**
 	 * The singleton {@link ExecutionEngine} instance.
@@ -62,41 +67,36 @@ public class ExecutionEngine {
 	}
 
 	private ExecutionEngine() {
-
+		try {
+			Expr expr = new SearchExpressionParser(
+				new StringReader(
+					"""
+					all(`tl.bpe.execution:ProcessExecution`)
+						.filter(e -> $e.get(`tl.bpe.execution:ProcessExecution#executionState`) == `tl.bpe.execution:ExecutionState#RUNNING`)
+					""")).expr();
+			_activeExecutions = QueryExecutor.compile(expr);
+		} catch (ParseException ex) {
+			throw new UnreachableAssertion(ex);
+		}
 	}
 
 	/**
-	 * updates all existing {@link ProcessExecution} do this until no new executions appear during
+	 * Updates all existing {@link ProcessExecution} do this until no new executions appear during
 	 * the update
-	 *
 	 */
 	public void updateAll() {
-		int emergencyStop = 0;
-
-		Set<ProcessExecution> newExecutions = new HashSet<>();
-		do {
-			Collection<ProcessExecution> allExecutions = getAllExecutions();
-			for (ProcessExecution execution : allExecutions) {
-				update(execution);
-			}
-			newExecutions = new HashSet<>(getAllExecutions());
-			newExecutions.removeAll(allExecutions);
-
-			emergencyStop++;
-			if (emergencyStop > 1000) {
-				throw new RuntimeException("More than 1000 cycles. Can not complete update for executions");
-			}
-
-		} while (!newExecutions.isEmpty());
+		for (ProcessExecution execution : getAllExecutions()) {
+			update(execution);
+		}
 	}
 
 	/**
-	 * a set with all instances of {@link ProcessExecution} and all instances of all
-	 *         subtypes
+	 * All active {@link ProcessExecution}s.
 	 */
 	public Collection<ProcessExecution> getAllExecutions() {
-		TLClass processExecutionType = TlBpeExecutionFactory.getProcessExecutionType();
-		return MetaElementUtil.getAllInstancesOf(processExecutionType, ProcessExecution.class);
+		@SuppressWarnings("unchecked")
+		Collection<ProcessExecution> allExecutions = (Collection<ProcessExecution>) _activeExecutions.execute();
+		return allExecutions;
 	}
 
 	/**
@@ -500,7 +500,8 @@ public class ExecutionEngine {
 	private void handleEndEvent(ProcessExecution processExecution) {
 		// create token on end event to store the date the process execution stopped
 		removeAllActiveTokens(processExecution);
-		processExecution.setExecutionState(FastListElement.getElementByName("bpe.execution.state.finished"));
+		processExecution.setExecutionState(
+			(TLClassifier) TLModelUtil.resolveQualifiedName("tl.bpe.execution:ExecutionState#FINISHED"));
 	}
 
 	private void removeAllActiveTokens(ProcessExecution processExecution) {

@@ -10,6 +10,9 @@ import java.util.List;
 
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Reference;
+import com.top_logic.model.annotate.AnnotationInheritance;
+import com.top_logic.model.annotate.AnnotationInheritance.Policy;
+import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.impl.generated.TLClassBase;
 import com.top_logic.model.util.TLModelUtil;
 
@@ -100,6 +103,25 @@ public interface TLClass extends TLClassBase {
 	 */
 	default List<? extends TLClassPart> getAllClassParts() {
 		return TLModelUtil.calcAllPartsUncached(this);
+	}
+
+	@Override
+	default <T extends TLAnnotation> T getAnnotation(Class<T> annotationInterface) {
+		T direct = TLClassBase.super.getAnnotation(annotationInterface);
+		if (direct != null) {
+			return direct;
+		}
+
+		if (AnnotationInheritance.Policy.getInheritancePolicy(annotationInterface) == Policy.INHERIT) {
+			for (TLClass generalization : getGeneralizations()) {
+				T inherited = generalization.getAnnotationLocal(annotationInterface);
+				if (inherited != null) {
+					return inherited;
+				}
+			}
+		}
+
+		return null;
 	}
 
 	@Override

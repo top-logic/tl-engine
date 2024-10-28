@@ -440,12 +440,13 @@ public class ExecutionEngine {
 	}
 
 	/**
-	 * executes the token for the given {@link Edge}
+	 * Walks the given path to the new task pointed to.
 	 */
-	public void execute(Token previousToken, Edge edge, Object additional) {
+	public void execute(Token previousToken, List<Edge> path, Object additional) {
 		ProcessExecution processExecution = previousToken.getProcessExecution();
 
-		Node target = edge.getTarget();
+		Edge lastEdge = path.get(path.size() - 1);
+		Node target = lastEdge.getTarget();
 
 		if (target instanceof Task
 			|| target instanceof ParallelGateway
@@ -455,10 +456,13 @@ public class ExecutionEngine {
 		) {
 			Token nextToken = createActiveToken(processExecution, target, previousToken);
 
-			if (edge instanceof SequenceFlow flow) {
-				SearchExpression operation = flow.getOperation();
-				if (operation != null) {
-					QueryExecutor.compile(operation).execute(processExecution, previousToken, nextToken, additional);
+			for (Edge edge : path) {
+				if (edge instanceof SequenceFlow flow) {
+					SearchExpression operation = flow.getOperation();
+					if (operation != null) {
+						QueryExecutor.compile(operation).execute(processExecution, previousToken, nextToken,
+							additional);
+					}
 				}
 			}
 

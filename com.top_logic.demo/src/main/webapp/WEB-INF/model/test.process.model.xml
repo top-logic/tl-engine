@@ -61,5 +61,26 @@
 				/>
 			</attributes>
 		</class>
+		<interface name="TicketChangeProperties">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="comment"
+					type="tl.model.wysiwyg:Html"
+				/>
+			</attributes>
+		</interface>
+		<class name="TicketChange">
+			<generalizations>
+				<generalization type="tl.bpe.execution:Token"/>
+				<generalization type="TicketChangeProperties"/>
+			</generalizations>
+		</class>
+		<class name="TicketChangeUI">
+			<generalizations>
+				<generalization type="TicketChangeProperties"/>
+			</generalizations>
+		</class>
 	</module>
 </model>

@@ -6,7 +6,6 @@
 package com.top_logic.layout.processor;
 
 import com.top_logic.basic.config.ConfigurationItem;
-import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.layout.editor.DynamicComponentDefinition;
 import com.top_logic.mig.html.layout.ComponentName;
 
@@ -33,13 +32,6 @@ public interface LayoutModelConstants {
 	static final String CVS_ID_PREFIX = "$Id:";
 
 	static final String CVS_REVISION_PREFIX = "$Revision:";
-
-	/**
-	 * Namespace for layout annotations created by this processor.
-	 */
-	static final String ANNOTATION_NS = ConfigurationReader.ANNOTATION_NS;
-
-	static final String DEFINITION_FILE_ANNOTATION_ATTR = ConfigurationReader.DEFINITION_FILE_ANNOTATION_ATTR;
 
 	static final String DEFINITION_VERSION_ANNOTATION_ATTR = "version";
 

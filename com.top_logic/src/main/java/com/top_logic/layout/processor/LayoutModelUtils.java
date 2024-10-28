@@ -126,7 +126,7 @@ public class LayoutModelUtils {
 	}
 
 	private static void annotateSource(Element element, String definitionPath) {
-		element.setAttributeNS(ANNOTATION_NS, DEFINITION_FILE_ANNOTATION_ATTR, definitionPath);
+		element.setAttributeNS(ConfigurationReader.ANNOTATION_NS, ConfigurationReader.DEFINITION_FILE_ANNOTATION_ATTR, definitionPath);
 	}
 
 	static void enhanceDefinitionFiles(Element parent, Iterable<? extends Node> children) {
@@ -190,16 +190,16 @@ public class LayoutModelUtils {
 	}
 
 	private static String getDirectSourceAnnotation(Element element) {
-		return element.getAttributeNS(ANNOTATION_NS, DEFINITION_FILE_ANNOTATION_ATTR);
+		return element.getAttributeNS(ConfigurationReader.ANNOTATION_NS, ConfigurationReader.DEFINITION_FILE_ANNOTATION_ATTR);
 	}
 
 	/**
 	 * Splits the concatenated definition files read from an
-	 * {@link LayoutModelConstants#DEFINITION_FILE_ANNOTATION_ATTR} into the separate definition
+	 * {@link ConfigurationReader#DEFINITION_FILE_ANNOTATION_ATTR} into the separate definition
 	 * files.
 	 * 
 	 * @param definitionFiles
-	 *        A value read from the {@link LayoutModelConstants#DEFINITION_FILE_ANNOTATION_ATTR}
+	 *        A value read from the {@link ConfigurationReader#DEFINITION_FILE_ANNOTATION_ATTR}
 	 *        attribute. May be <code>null</code> or empty which leads to an empty result.
 	 */
 	public static String[] getDefinitionFiles(String definitionFiles) {
@@ -211,7 +211,7 @@ public class LayoutModelUtils {
 
 	public static void setVersionAnnotation(Document layoutDocument, String version) {
 		Element documentElement = layoutDocument.getDocumentElement();
-		documentElement.setAttributeNS(ANNOTATION_NS, DEFINITION_VERSION_ANNOTATION_ATTR, version.trim());
+		documentElement.setAttributeNS(ConfigurationReader.ANNOTATION_NS, DEFINITION_VERSION_ANNOTATION_ATTR, version.trim());
 	}
 
 	public static RuntimeException errorSetup(ModuleException ex) {
@@ -267,13 +267,13 @@ public class LayoutModelUtils {
 
 		// In case of failure, no document element might be produced.
 		if (documentElement != null) {
-			documentElement.setAttributeNS(ANNOTATION_NS, INLINED_ANNOTATION_ATTR, INLINED_ANNOTATION_VALUE);
+			documentElement.setAttributeNS(ConfigurationReader.ANNOTATION_NS, INLINED_ANNOTATION_ATTR, INLINED_ANNOTATION_VALUE);
 		}
 	}
 
 	public static boolean isInlined(Document document) {
 		return INLINED_ANNOTATION_VALUE.equals(
-			document.getDocumentElement().getAttributeNS(ANNOTATION_NS, INLINED_ANNOTATION_ATTR));
+			document.getDocumentElement().getAttributeNS(ConfigurationReader.ANNOTATION_NS, INLINED_ANNOTATION_ATTR));
 	}
 
 }

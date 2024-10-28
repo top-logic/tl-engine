@@ -18,6 +18,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.col.MapBuilder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.basic.xml.TagUtil;
@@ -136,7 +137,8 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 			@Override
 			public HandlerResult executeCommand(DisplayContext aContext) {
 				Command continuation =
-					_suspended.resumeContinuation(Collections.singletonMap(FinishTaskCommand.CONTEXT, FinishTaskCommand.CANCEL));
+					_suspended.resumeContinuation(
+						Collections.singletonMap(FinishTaskCommand.CONTEXT, FinishTaskCommand.CANCEL));
 
 				continuation.executeCommand(aContext);
 				return getDiscardClosure().executeCommand(aContext);
@@ -156,8 +158,11 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 				if (!formContext.checkAll()) {
 					return AbstractApplyCommandHandler.createErrorResult(formContext);
 				}
-				Command continuation = _suspended
-					.resumeContinuation(Collections.singletonMap(FinishTaskCommand.CONTEXT, selection.getLastEdge()));
+				Command continuation = _suspended.resumeContinuation(
+					new MapBuilder<String, Object>()
+						.put(FinishTaskCommand.CONTEXT, selection)
+						.put(FinishTaskCommand.ADDITIONAL, _formModel)
+						.toMap());
 
 				HandlerResult result = continuation.executeCommand(aContext);
 				if (!result.isSuccess()) {
@@ -168,9 +173,12 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 		};
 	}
 
-	static class Decision {
+	/**
+	 * Decision about the path to walk.
+	 */
+	public static class Decision {
 
-		private final List<Edge> _edges;
+		private final List<Edge> _path;
 
 		private final ResKey _label;
 
@@ -178,8 +186,8 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 
 		private final ResKey _disabledReason;
 
-		Decision(Token token, Edge... edges) {
-			_edges = Arrays.asList(edges);
+		Decision(Token token, Edge... path) {
+			_path = Arrays.asList(path);
 
 			ResKey label;
 			String tooltip;
@@ -215,7 +223,7 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 			}
 
 			ResKey disabledReason = null;
-			for (Edge edge : edges) {
+			for (Edge edge : path) {
 				// mark impossible transitions
 				disabledReason = GuiEngine.getInstance().checkError(token, edge);
 				if (disabledReason != null) {
@@ -231,14 +239,24 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 			_disabledReason = disabledReason;
 		}
 
-		public List<Edge> getEdges() {
-			return _edges;
+		/**
+		 * The {@link Edge} to walk.
+		 */
+		public List<Edge> getPath() {
+			return _path;
 		}
 
+		/**
+		 * The {@link Edge} pointing to the new target {@link Node} for which a new {@link Token} is
+		 * created.
+		 */
 		public Edge getLastEdge() {
-			return _edges.get(_edges.size() - 1);
+			return _path.get(_path.size() - 1);
 		}
 
+		/**
+		 * If the {@link #getPath()} cannot be walked, the reason that prevent this decision.
+		 */
 		public ResKey getDisabledReason() {
 			return _disabledReason;
 		}
@@ -391,7 +409,7 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 		Decision defaultEdge = null;
 		optionsLoop:
 		for (Decision option : options) {
-			for (Edge edge : option.getEdges()) {
+			for (Edge edge : option.getPath()) {
 				ResKey error = GuiEngine.getInstance().checkError(_token, edge);
 				if (error != null) {
 					// Select only possible edges

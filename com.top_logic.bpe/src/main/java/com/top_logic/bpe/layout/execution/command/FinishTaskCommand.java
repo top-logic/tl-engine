@@ -25,6 +25,7 @@ import com.top_logic.bpe.execution.engine.ExecutionEngine;
 import com.top_logic.bpe.execution.engine.GuiEngine;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.bpe.layout.execution.SelectTransitionDialog;
+import com.top_logic.bpe.layout.execution.SelectTransitionDialog.Decision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
@@ -61,6 +62,12 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 	 * Command argument that selects the next edge to walk.
 	 */
 	public static final String CONTEXT = "nextTask";
+
+	/**
+	 * Command argument passed by the transition dialog containing a form model with additional
+	 * data.
+	 */
+	public static final String ADDITIONAL = "additional";
 
 	/**
 	 * Special value for {@link #CONTEXT} that skipps this command.
@@ -111,7 +118,7 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 		if (context == null) {
 			// Confirm/decide about how to progress.
 			GuiEngine engine = GuiEngine.getInstance();
-			Edge outgoing = engine.getSingleOutgoingEdge(token);
+			Edge outgoing = GuiEngine.getSingleOutgoingEdge(token);
 			Node next = outgoing.getTarget();
 			if (engine.needsDecision(next)) {
 				return confirmFinish(aContext, token);
@@ -128,9 +135,10 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 		}
 
 		// Decision is already made.
-		Edge edge = (Edge) context;
+		Decision decision = (Decision) context;
 		try (Transaction tx = token.tKnowledgeBase().beginTransaction()) {
-			ExecutionEngine.getInstance().execute(token, edge, null);
+			Object additional = someArguments.get(ADDITIONAL);
+			ExecutionEngine.getInstance().execute(token, decision.getPath(), additional);
 			tx.commit();
 		}
 

@@ -122,9 +122,10 @@ public class DeleteComponentCommand extends ConfirmCommandHandler {
 	private static String componentName(LayoutComponent component) {
 		String scope = LayoutTemplateUtils.getNonNullNameScope(component);
 		String name = scope + "#" + component.getName().localName();
-		ResKey titleKey = component.getTitleKey();
-		String title = StringServices.nonEmpty(Resources.getInstance().getString(titleKey, null));
-		return title == null ? name : title + " (" + name + ")";
+
+		ResKey labelKey = LayoutUtils.getLabelKey(component);
+		String label = StringServices.nonEmpty(Resources.getInstance().getString(labelKey, null));
+		return label == null ? name : label + " (" + name + ")";
 	}
 
 	private void recordDeletion(LayoutComponent component, Identifiers newIdentifiers) {

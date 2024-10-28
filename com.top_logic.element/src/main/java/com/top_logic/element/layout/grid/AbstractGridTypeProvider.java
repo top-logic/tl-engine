@@ -5,13 +5,13 @@
  */
 package com.top_logic.element.layout.grid;
 
+import com.top_logic.knowledge.gui.AbstractTLItemResourceProvider;
 import com.top_logic.layout.AbstractResourceProvider;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.mig.html.DefaultResourceProvider;
-import com.top_logic.model.resources.TLTypeResourceProvider;
 
 /**
  * {@link ResourceProvider} that provides the type image for a grid row.
@@ -22,7 +22,7 @@ public abstract class AbstractGridTypeProvider extends AbstractResourceProvider 
 
 	@Override
 	public String getLabel(Object object) {
-		return TLTypeResourceProvider.getMetaElementLabel(GridComponent.getMetaElement(toModel(object)));
+		return AbstractTLItemResourceProvider.getMetaElementLabel(GridComponent.getMetaElement(toModel(object)));
 	}
 
 	@Override

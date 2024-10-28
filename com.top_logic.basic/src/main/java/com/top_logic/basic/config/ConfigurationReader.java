@@ -1632,6 +1632,9 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 
 		private void checkNoAttributes(PropertyDescriptor property, XMLStreamReader reader) {
 			for (int n = 0, cnt = reader.getAttributeCount(); n < cnt; n++) {
+				if (ANNOTATION_NS.equals(reader.getAttributeNamespace(n))) {
+					continue;
+				}
 				String attributeName = reader.getAttributeLocalName(n);
 				context.error("No attribute '" + attributeName + "' expected for plain property '"
 					+ property.getPropertyName() + "' " + atLocation(reader) + ".");

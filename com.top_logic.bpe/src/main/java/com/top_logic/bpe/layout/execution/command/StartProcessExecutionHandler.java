@@ -137,7 +137,7 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler impleme
 					// Advance process to next step(s).
 					KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 					try (Transaction tx = kb.beginTransaction()) {
-						ExecutionEngine.getInstance().execute(token, edge, null);
+						ExecutionEngine.getInstance().execute(token, Collections.singletonList(edge), null);
 						tx.commit();
 					} catch (Exception ex) {
 						throw new RuntimeException("Can not complete task for token '" + token + "'.", ex);

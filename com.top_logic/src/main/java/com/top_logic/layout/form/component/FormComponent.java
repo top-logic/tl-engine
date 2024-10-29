@@ -674,8 +674,12 @@ public class FormComponent extends BuilderComponent implements FormHandler, Form
 	 *        the new context which will be returned by {@link #getFormContext()}.
 	 */
 	protected void setupFormContext(FormContext newFormContext) {
+		// Note: This should have been done by the builder, since building the form context
+		// may require access to the component. To allow this, the linking should be established
+		// right after constructing the form context.
 		FormComponent.initFormContext(this, this, newFormContext);
-    	newFormContext.setFieldsToDefaultValues();
+
+		newFormContext.setFieldsToDefaultValues();
 	}
     
     /**

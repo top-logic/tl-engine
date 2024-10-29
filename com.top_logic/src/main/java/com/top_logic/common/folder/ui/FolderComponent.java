@@ -245,7 +245,6 @@ public abstract class FolderComponent extends BuilderComponent implements FormHa
 		if (_formContext == null) {
 			FormContext newFormContext = createFormContext();
 			if (newFormContext != null) {
-				FormComponent.initFormContext(this, this, newFormContext);
 				_formContext = newFormContext;
 			}
 		}
@@ -295,6 +294,7 @@ public abstract class FolderComponent extends BuilderComponent implements FormHa
 			return null;
 		}
 		FormContext newFormContext = new FormContext(this);
+		FormComponent.initFormContext(this, this, newFormContext);
 
 		ExecutableState canAddToClipboard = getClipability(folder);
 		ExecutableState canCreate;

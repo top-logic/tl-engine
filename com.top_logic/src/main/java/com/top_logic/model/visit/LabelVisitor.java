@@ -6,6 +6,7 @@
 package com.top_logic.model.visit;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.gui.AbstractTLItemResourceProvider;
 import com.top_logic.knowledge.gui.layout.FastListElementResourceProvider;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.model.TLAssociation;
@@ -22,7 +23,6 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.annotate.TLI18NKey;
 import com.top_logic.model.resources.TLPartResourceProvider;
 import com.top_logic.model.resources.TLTypePartResourceProvider;
-import com.top_logic.model.resources.TLTypeResourceProvider;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.util.Resources;
 
@@ -55,17 +55,17 @@ public class LabelVisitor implements TLModelVisitor<String, Void> {
 
 	@Override
 	public String visitPrimitive(TLPrimitive model, Void arg) {
-		return TLTypeResourceProvider.getMetaElementLabel(model);
+		return AbstractTLItemResourceProvider.getMetaElementLabel(model);
 	}
 
 	@Override
 	public String visitClass(TLClass model, Void arg) {
-		return TLTypeResourceProvider.getMetaElementLabel(model);
+		return AbstractTLItemResourceProvider.getMetaElementLabel(model);
 	}
 
 	@Override
 	public String visitAssociation(TLAssociation model, Void arg) {
-		return TLTypeResourceProvider.getMetaElementLabel(model);
+		return AbstractTLItemResourceProvider.getMetaElementLabel(model);
 	}
 
 	@Override

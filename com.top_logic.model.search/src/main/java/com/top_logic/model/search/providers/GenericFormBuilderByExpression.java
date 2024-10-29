@@ -19,6 +19,8 @@ import com.top_logic.element.layout.formeditor.builder.TypedForm;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.layout.form.FormContainer;
+import com.top_logic.layout.form.FormHandler;
+import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.values.edit.FormBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -108,6 +110,7 @@ public class GenericFormBuilderByExpression extends ConfiguredDynamicFormBuilder
 	@Override
 	public Object getModel(Object businessModel, LayoutComponent component) {
 		AttributeFormContext formContext = new AttributeFormContext(component.getResPrefix());
+		FormComponent.initFormContext(component, (FormHandler) component, formContext);
 
 		fillFormContext(component, formContext, businessModel);
 

@@ -28,6 +28,8 @@ import com.top_logic.element.structured.StructuredElement;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.FormHandler;
+import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.control.ValueDisplayControl.ValueDisplay;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
@@ -150,6 +152,7 @@ public class CreateFormBuilder extends ConfiguredDynamicFormBuilder {
 	@Override
 	public Object getModel(Object businessModel, LayoutComponent component) {
 		AttributeFormContext formContext = new AttributeFormContext(component.getResPrefix());
+		FormComponent.initFormContext(component, (FormHandler) component, formContext);
 
 		FormField typeField = createTypeField(businessModel);
 		typeField.addValueListener((FormField field, Object oldValue, Object newValue) -> onTypeChange(field, oldValue,

@@ -445,6 +445,7 @@ public abstract class EditAttributedComponent extends EditComponent implements F
 	 */
     public FormContext createFormContext(boolean newMode, Wrapper theAttributed) {
 		AttributeFormContext theContext = new AttributeFormContext(this.getResPrefix());
+		initFormContext(this, this, theContext);
 
         if (!newMode) {
             this.addAttributedConstraints(theAttributed, theContext);

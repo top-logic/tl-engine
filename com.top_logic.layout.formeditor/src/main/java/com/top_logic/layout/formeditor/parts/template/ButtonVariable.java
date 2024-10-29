@@ -8,15 +8,21 @@ package com.top_logic.layout.formeditor.parts.template;
 import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.CommandModelFactory;
 import com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil;
 import com.top_logic.layout.form.control.ButtonControl;
+import com.top_logic.layout.form.control.IButtonRenderer;
+import com.top_logic.layout.form.control.ImageButtonRenderer;
+import com.top_logic.layout.form.control.LinkButtonRenderer;
 import com.top_logic.layout.form.values.edit.InAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.renderers.ButtonComponentButtonRenderer;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.tool.boundsec.CommandHandler;
@@ -31,14 +37,31 @@ public class ButtonVariable extends AbstractVariableDefinition<ButtonVariable.Co
 
 	private CommandHandler _command;
 
+	private ButtonStyle _style;
+
 	/**
 	 * Configuration options for {@link ButtonVariable}.
 	 */
+	@DisplayOrder({
+		Config.BUTTON_STYLE,
+		Config.BUTTON
+	})
 	public interface Config extends VariableDefinition.Config<ButtonVariable> {
+		/**
+		 * @see #getButtonStyle()
+		 */
+		String BUTTON_STYLE = "buttonStyle";
+
 		/**
 		 * @see #getButton()
 		 */
 		String BUTTON = "button";
+
+		/**
+		 * Style of the button.
+		 */
+		@Name(BUTTON_STYLE)
+		ButtonStyle getButtonStyle();
 
 		/**
 		 * Command to embed into the template.
@@ -61,6 +84,7 @@ public class ButtonVariable extends AbstractVariableDefinition<ButtonVariable.Co
 		super(context, config);
 
 		_command = CommandHandlerFactory.getInstance().getCommand(context, config.getButton());
+		_style = config.getButtonStyle();
 	}
 
 	/**
@@ -74,7 +98,19 @@ public class ButtonVariable extends AbstractVariableDefinition<ButtonVariable.Co
 	public Object eval(LayoutComponent component, FormEditorContext editorContext, Object model) {
 		Map<String, Object> args = ContextMenuUtil.createArguments(model);
 		CommandModel commandModel = CommandModelFactory.commandModel(_command, component, args);
-		return new ButtonControl(commandModel);
+		return new ButtonControl(commandModel, renderer());
+	}
+
+	private IButtonRenderer renderer() {
+		switch (_style) {
+			case BUTTON:
+				return ButtonComponentButtonRenderer.INSTANCE;
+			case LINK:
+				return LinkButtonRenderer.INSTANCE;
+			case ICON:
+				return ImageButtonRenderer.INSTANCE;
+		}
+		throw new UnreachableAssertion("No such button style: " + _style);
 	}
 
 }

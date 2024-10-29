@@ -51,7 +51,7 @@ public class TooltipVisitor extends DefaultTLModelVisitor<ResKey, Void> {
 
 			TagUtil.encodeXML(TLModelUtil.qualifiedName(type)),
 
-			TLModelNamingConvention.getTypeLabelKey(type).tooltipOptional()
+			TLModelNamingConvention.getTypeLabelKey(type).tooltip().fallback(ResKey.text(""))
 		);
 	}
 
@@ -61,7 +61,7 @@ public class TooltipVisitor extends DefaultTLModelVisitor<ResKey, Void> {
 
 	@Override
 	public ResKey visitClassifier(TLClassifier classifier, Void arg) {
-		return FastListElementLabelProvider.labelKey(classifier).tooltipOptional();
+		return FastListElementLabelProvider.labelKey(classifier).tooltip().fallback(ResKey.text(""));
 	}
 
 	@Override
@@ -71,7 +71,7 @@ public class TooltipVisitor extends DefaultTLModelVisitor<ResKey, Void> {
 			TagUtil.encodeXML(label(part)),
 			TagUtil.encodeXML(label(part.getType())),
 			TagUtil.encodeXML(TLModelUtil.qualifiedName(part)),
-			TLModelI18N.getI18NKey(part).tooltipOptional());
+			TLModelI18N.getI18NKey(part).tooltip().fallback(ResKey.text("")));
 	}
 
 	@Override
@@ -80,6 +80,6 @@ public class TooltipVisitor extends DefaultTLModelVisitor<ResKey, Void> {
 			TagUtil.encodeXML(label(module.tType())),
 			TagUtil.encodeXML(label(module)),
 			TagUtil.encodeXML(module.getName()),
-			LabelVisitor.getModuleResourceKey(module).tooltipOptional());
+			LabelVisitor.getModuleResourceKey(module).tooltip().fallback(ResKey.text("")));
 	}
 }

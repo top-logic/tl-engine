@@ -16,8 +16,10 @@ import com.top_logic.element.meta.form.MetaControlProvider;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.FormContainer;
+import com.top_logic.layout.form.FormHandler;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.boxes.reactive_tag.DescriptionCellControl;
+import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.tag.FormTag;
 import com.top_logic.layout.form.template.AbstractFormFieldControlProvider;
@@ -87,6 +89,7 @@ public class PropertiesEditor implements ModelBuilder {
 			return null;
 		}
 		AttributeFormContext formContext = new AttributeFormContext(aComponent.getResPrefix());
+		FormComponent.initFormContext(aComponent, (FormHandler) aComponent, formContext);
 
 		// Note: What follows is a mega-hack to simulate a JSP generically displaying all members of
 		// the given model with default settings.

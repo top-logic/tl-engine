@@ -1462,13 +1462,10 @@ public abstract class ResKey {
 		private static Object localizeArgument(I18NBundleSPI bundle, Object argument) {
 			Object localized;
 			if (argument == null) {
-				localized = "";
+				localized = argument;
 			} else if (argument instanceof ResKey) {
 				ResKey keyArgument = (ResKey) argument;
 				localized = keyArgument.resolve(bundle, keyArgument, true);
-				if (localized == null) {
-					localized = "";
-				}
 			} else if (argument instanceof Enum<?>) {
 				ResKey keyArgument = forEnum((Enum<?>) argument);
 				localized = keyArgument.resolve(bundle, keyArgument, true);

@@ -72,12 +72,12 @@ td.tblRight {
 	text-align: right;
 }
 
-td.tblRight .px-1,
-td.tblRight .px-1 > * {
+td.tblRight .tl-table__cell-container,
+td.tblRight .tl-table__cell-container > * {
 /* 	justify-content: safe flex-end; */
 }
 
-table td.tblRight .px-1 span.lFlexible > input {
+table td.tblRight .tl-table__cell-container span.lFlexible > input {
 	text-align: right;
 }
 
@@ -768,7 +768,7 @@ tr.tblFilterIndirectMatch .cButton a {
 	color: var(--icon-disabled);
 }
 
-.tblFilterIndirectMatch.tl-table__row:not(.tblSelected):hover .px-1 {
+.tblFilterIndirectMatch.tl-table__row:not(.tblSelected):hover .tl-table__cell-container {
 	color: var(--text-on-color-disabled);
 }
 
@@ -1305,7 +1305,7 @@ div.dirtyHandlingDialog .changes {
   	overflow: auto;
 }
 
-.px-1 {
+.tl-table__cell-container {
 	padding: 0 var(--spacing-01) !important;
     display: inline-flex;
     align-items: center;
@@ -1313,12 +1313,12 @@ div.dirtyHandlingDialog .changes {
     vertical-align: middle;
 }
 
-.px-1:has(input) {
+.tl-table__cell-container:has(input) {
     width: 100%;
 	padding: 0 !important;
 }
 
-.px-1 img {
+.tl-table__cell-container img {
     max-height: 100%;
     max-width: 100%;
     object-fit: contain;
@@ -1328,27 +1328,27 @@ div.dirtyHandlingDialog .changes {
 	padding-right: var(--spacing-01);
 }
 
-/* Needs to be changed when px-1 padding changes. Otherwise the table row jumps when selection changed. */
-.px-1:has(input) .lFixedLeft {
+/* Needs to be changed when tl-table__cell-container padding changes. Otherwise the table row jumps when selection changed. */
+.tl-table__cell-container:has(input) .lFixedLeft {
 	padding-left: var(--spacing-01);
 	padding-right: 0;
 }
 
-th .px-1 {
+th .tl-table__cell-container {
 	width: 100%;
 }
 
-th:last-child .px-1 {
+th:last-child .tl-table__cell-container {
 	padding-right: 16px !important;
 }
 
-.px-1 .tl-radio-checkbox-container {
+.tl-table__cell-container .tl-radio-checkbox-container {
 	display: flex;
 	justify-content: center;
 	flex-grow: 1;
 }
 
-.px-1 .cPopupSelect.cannot-edit {
+.tl-table__cell-container .cPopupSelect.cannot-edit {
 	flex-wrap: nowrap;
 }
 

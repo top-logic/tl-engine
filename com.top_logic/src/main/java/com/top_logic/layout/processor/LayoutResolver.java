@@ -206,8 +206,8 @@ public class LayoutResolver extends Operation {
 	}
 
 	private String location(Node node) {
-		return node.getOwnerDocument().getDocumentElement().getAttributeNS(ANNOTATION_NS,
-			DEFINITION_FILE_ANNOTATION_ATTR);
+		return node.getOwnerDocument().getDocumentElement().getAttributeNS(ConfigurationReader.ANNOTATION_NS,
+			ConfigurationReader.DEFINITION_FILE_ANNOTATION_ATTR);
 	}
 
 	private BinaryData getData(String referencedFileName) {

@@ -12,6 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -19,6 +20,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.tuple.Pair;
 
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.Log;
@@ -365,6 +368,9 @@ public class Ticket27517UpdatePersonTable extends AbstractConfiguredInstance<Tic
 			updateTimeZones(log, connection, persons);
 			updateContacts(log, connection, persons);
 
+			// Auto-cleanup of potentially inconsistent data.
+			persons = makeLoginsUnique(log, persons);
+
 			Map<String, PersonRow> currentPersonByName = currentPersonByName(log, persons);
 			updatePersonsFromUser(log, connection, currentPersonByName);
 
@@ -378,6 +384,91 @@ public class Ticket27517UpdatePersonTable extends AbstractConfiguredInstance<Tic
 		} catch (SQLException ex) {
 			log.error("Failure migrating persons: " + ex.getMessage(), ex);
 		}
+	}
+
+	private List<PersonRow> makeLoginsUnique(Log log, List<PersonRow> persons) {
+		List<PersonRow> sorted = new ArrayList<>(persons);
+		Comparator<PersonRow> comparator = Comparator.comparing(row -> row.getName());
+		comparator = comparator.thenComparingLong(row -> row.getBranch());
+		comparator = comparator.thenComparingLong(row -> row.getRevMin()).reversed();
+		sorted.sort(comparator);
+
+		Set<String> allLogins = new HashSet<>();
+		List<PersonRow> result = new ArrayList<>();
+		Map<Pair<Long, Long>, String> clashes = new HashMap<>();
+
+		String login = null;
+		long branch = 0;
+		long id = 0;
+		long revMin = 0, revMax = 0;
+		for (var row : sorted) {
+			String currentLogin = row.getName();
+			allLogins.add(currentLogin);
+
+			if (branch == row.getBranch() && currentLogin.equals(login)) {
+				if (intersects(revMin, revMax, row.getRevMin(), row.getRevMax())) {
+					// There is a clash of user names.
+					if (row.getIdentifier() == id) {
+						// There are two overlapping rows for the same identifier.
+						if (row.getRevMin() <= revMin - 1) {
+							// Make rows non-overlapping.
+							row.setRevMax(revMin - 1);
+							result.add(row);
+						} else {
+							// Drop duplicate.
+							log.info("Dropping duplicate row: " + row, Log.WARN);
+						}
+					} else {
+						// There is another user-object with a clashing identifier. Remember for
+						// consistently renaming later on.
+						clashes.putIfAbsent(Pair.of(row.getBranch(), row.getIdentifier()), row.getName());
+						result.add(row);
+					}
+				}
+			} else {
+				result.add(row);
+			}
+
+			login = row.getName();
+			id = row.getIdentifier();
+			branch = row.getBranch();
+			revMin = row.getRevMin();
+			revMax = row.getRevMax();
+		}
+
+		if (!clashes.isEmpty()) {
+			for (var entry : clashes.entrySet()) {
+				String oldName = entry.getValue();
+				int suffix = 2;
+				while (allLogins.contains(oldName + "-" + suffix)) {
+					id++;
+				}
+				String newName = oldName + "-" + suffix;
+				allLogins.add(newName);
+				entry.setValue(newName);
+
+				log.info(
+					"Renaming duplicate user '" + oldName + ":" + entry.getKey().getRight() + "' to '" + newName + "'.",
+					Log.WARN);
+			}
+
+			for (var row : result) {
+				String newName = clashes.get(Pair.of(row.getBranch(), row.getIdentifier()));
+				if (newName != null) {
+					row.setName(newName);
+				}
+			}
+		}
+
+		return result;
+	}
+
+	private static boolean intersects(long revMin, long revMax, long revMin2, long revMax2) {
+		return within(revMin, revMax, revMin2) || within(revMin, revMax, revMax2);
+	}
+
+	private static boolean within(long revMin, long revMax, long rev) {
+		return rev >= revMin && rev <= revMax;
 	}
 
 	private Util util(MigrationContext context) {

@@ -372,15 +372,21 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 						+ patch.stream().map(Object::toString).collect(Collectors.joining("\n")),
 					DynamicModelService.class);
 
-				MigrationProcessors processors = TypedConfiguration.newConfigItem(MigrationProcessors.class);
-				ApplyModelPatch.applyPatch(new BufferingProtocol(), ModelCopy.copy(getModel()), null, patch,
-					processors.getProcessors());
-				new ConstraintChecker().check(log(), processors);
+				try {
+					MigrationProcessors processors = TypedConfiguration.newConfigItem(MigrationProcessors.class);
+					ApplyModelPatch.applyPatch(new BufferingProtocol(), ModelCopy.copy(getModel()), null, patch,
+						processors.getProcessors());
+					new ConstraintChecker().check(log(), processors);
 
-				Logger.info(
-					"The following migration would adjust the existing model to the current configuration:\n"
-						+ processors,
-					DynamicModelService.class);
+					Logger.info(
+						"The following migration would adjust the existing model to the current configuration:\n"
+							+ processors,
+						DynamicModelService.class);
+				} catch (RuntimeException ex) {
+					Logger.error(
+						"Failed to create migration making persistent model match configuration: \n" + patch, ex,
+						DynamicModelService.class);
+				}
 			}
 		}
 

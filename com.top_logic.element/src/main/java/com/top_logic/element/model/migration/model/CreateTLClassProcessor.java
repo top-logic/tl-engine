@@ -29,6 +29,7 @@ import com.top_logic.model.config.TLTypeAnnotation;
 import com.top_logic.model.impl.generated.TlModelFactory;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedTypeName;
+import com.top_logic.model.migration.data.Type;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -148,6 +149,13 @@ public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLC
 	private void internalDoMigration(MigrationContext context, Log log, PooledConnection connection, Document tlModel)
 			throws Exception {
 		QualifiedTypeName className = getConfig().getName();
+
+		Type existing = _util.getTLTypeOrNull(connection, className);
+		if (existing != null) {
+			log.info("Type already exists: " + className.getName(), Log.WARN);
+			return;
+		}
+
 		_util.createTLClass(connection, className,
 			getConfig().isAbstract(), getConfig().isFinal(),
 			getConfig());

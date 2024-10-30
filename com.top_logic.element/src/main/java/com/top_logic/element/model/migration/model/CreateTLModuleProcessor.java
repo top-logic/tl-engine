@@ -21,6 +21,8 @@ import com.top_logic.model.TLModule;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.config.TLModuleAnnotation;
 import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.Module;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link MigrationProcessor} creating {@link TLModule}.
@@ -67,6 +69,12 @@ public class CreateTLModuleProcessor extends AbstractConfiguredInstance<CreateTL
 	}
 
 	private void internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
+		Module existing = _util.getTLModule(connection, TLContext.TRUNK_ID, getConfig().getName());
+		if (existing != null) {
+			log.info("Module already exists: " + getConfig().getName());
+			return;
+		}
+
 		_util.createTLModule(connection, getConfig().getName(), getConfig());
 		if (tlModel != null) {
 			MigrationUtils.createModule(log, tlModel, getConfig().getName(), getConfig());

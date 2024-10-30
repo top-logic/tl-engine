@@ -7,7 +7,9 @@ package com.top_logic.element.model.migration;
 
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -101,6 +103,33 @@ public class Ticket26554MakeWebFolderReferencesCompositions implements Migration
 					setLiteral(folderEndIds, DBType.LONG))),
 			Long.class);
 
+		// Look up reference names - to be able to give a useful message just in case something goes
+		// wrong.
+		List<String> refs = new ArrayList<>();
+		try (ResultSet res = processor.queryResultSet(
+			selectDistinct(
+				columns(
+					columnDef(column("m", "NAME")),
+					columnDef(column("t", "NAME")),
+					columnDef(column("r", "NAME")),
+					columnDef(column("r", "IDENTIFIER"))),
+				leftJoin(
+					leftJoin(
+						table("META_ATTRIBUTE", "r"),
+						table("META_ELEMENT", "t"),
+						eqSQL(column("r", "OWNER_ID"), column("t", "IDENTIFIER"))),
+
+					table("TL_MODULE", "m"),
+					eqSQL(column("t", "MODULE_ID"), column("m", "IDENTIFIER"))),
+				inSet(
+					column("r", "IDENTIFIER"),
+					setLiteral(folderRefIds, DBType.LONG))))) {
+			while (res.next()) {
+				refs.add(
+					res.getString(1) + ":" + res.getString(2) + "#" + res.getString(3) + "(" + res.getLong(4) + ")");
+			}
+		}
+
 		int cntUpdate = processor.execute(
 			update(
 				table("META_ATTRIBUTE"),
@@ -108,7 +137,7 @@ public class Ticket26554MakeWebFolderReferencesCompositions implements Migration
 					setLiteral(folderEndIds, DBType.LONG)),
 				columnNames("COMPOSITE"),
 				expressions(literalBooleanValue(true))));
-		log.info("Updated '" + cntUpdate + "' folder references (IDs: " + folderRefIds + ").");
+		log.info("Updated '" + cntUpdate + "' folder references: " + refs);
 
 		MetaObject genericAssociationBase = types.getMetaObject("hasWrapperAttValueBaseAssociation");
 		MOClass hasStructureChild = (MOClass) types.getMetaObject("hasStructureChild");

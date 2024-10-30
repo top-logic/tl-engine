@@ -304,14 +304,6 @@ public final class MOPrimitive extends AbstractMetaObject implements DBMetaObjec
     	return Kind.primitive;
     }
     
-    /** 
-     * Reasonable toString() method for debugging.
-     */
-    @Override
-	public String toString() {
-        return "MOPrimitive<" + getName() + ">";
-    }
-
     @Override
 	public DBType getDefaultSQLType()  {
 		return _defaultSQLType;

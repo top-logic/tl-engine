@@ -92,36 +92,6 @@ public class MOClassImpl extends MOStructureImpl implements MOClass {
     	return Kind.item;
     }
 
-	/**
-	 * Returns a string representation for the class this object represents.
-	 */
-	@Override
-	public String toString() {
-		List<MOAttribute> declared = getDeclaredAttributes();
-
-		StringBuffer buffer = new StringBuffer();
-		MOClass superClass = getSuperclass();
-
-		buffer.append(getName());
-		if (superClass != null) {
-			buffer.append(" extends ");
-			buffer.append(superClass.getName());
-		}
-		buffer.append('{');
-		for (int n = 0, cnt = declared.size(); n < cnt; n++) {
-			if (n > 0) {
-				buffer.append(", ");
-			}
-			MOAttribute attribute = declared.get(n);
-			buffer.append(attribute.getName());
-			buffer.append(": ");
-			buffer.append(attribute.getMetaObject().getName());
-		}
-		buffer.append('}');
-		
-		return buffer.toString();
-	}
-
     /**
      * Adds the usual semantics of "abstract" here.
      * 

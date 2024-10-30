@@ -80,7 +80,7 @@ public class Ticket26554MakeWebFolderReferencesCompositions implements Migration
 			Long.class);
 
 		List<Long> folderEndIds = processor.queryValues(
-			select(
+			selectDistinct(
 				columns(columnDef("IDENTIFIER")),
 				table("META_ATTRIBUTE"),
 				and(
@@ -132,6 +132,8 @@ public class Ticket26554MakeWebFolderReferencesCompositions implements Migration
 			SQLExpression condition = inSet(column("META_ATTRIBUTE_ID"),
 				setLiteral(folderRefIds, DBType.LONG));
 			SQLTable sourceTable = table(((MOClass) existingType).getDBMapping().getDBName());
+
+			log.info("Moving folder links from '" + existingType + "' to '" + hasStructureChild + "'.");
 
 			int cntMove = processor.execute(
 				insert(

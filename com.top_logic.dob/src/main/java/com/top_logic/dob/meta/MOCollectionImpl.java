@@ -127,12 +127,7 @@ public class MOCollectionImpl extends AbstractMetaObject implements MOCollection
 
     @Override
 	public String toString () {
-        StringBuffer buf = new StringBuffer ();
-        buf.append ("\n{ MOCollection : \n").append (" - kind         : "
-                    + getName () + "\n");
-
-        buf.append ("}\n");
-        return buf.toString ();
+		return rawType + "<" + elementType + ">";
     }
     
     @Override

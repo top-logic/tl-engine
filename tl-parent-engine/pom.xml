@@ -6,7 +6,7 @@
 
 	<parent>
 		<groupId>com.top-logic</groupId>
-		<version>7.9.0</version>
+		<version>0.0.8-easyplanning-SNAPSHOT</version>
 		<artifactId>tl-parent-all</artifactId>
 		
 		<relativePath>../tl-parent-all</relativePath>

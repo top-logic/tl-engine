@@ -175,8 +175,8 @@ public class TLModelImpl extends AbstractTLModelPart implements TLModel {
 			 * must be filled later on with a correct end. */
 			TLReference reference = end.getReference();
 			if (reference != null) {
-				throw new IllegalArgumentException("Association end '" + end + "' already implemented by '"
-					+ reference.getOwner() + "' in attribute '" + reference.getName() + "'.");
+				throw new IllegalArgumentException(
+					"Association end '" + end + "' already implemented by '" + reference + "'.");
 			}
 		}
 		TLReference result = new TLReferenceImpl((TLModelImpl) tlClass.getModel(), name);

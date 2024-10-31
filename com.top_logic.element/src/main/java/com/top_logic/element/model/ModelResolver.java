@@ -573,9 +573,8 @@ public class ModelResolver {
 			addReference(type, referenceConfig, sourceEnd);
 		} catch (IllegalArgumentException ex) {
 			log().error(
-				"In back reference '" + referenceConfig.getName()
-						+ "', association end could not be implemented by reference in type '"
-						+ TLModelUtil.qualifiedName(type) + "' in '" + referenceConfig.location() + "'.",
+				"Cannot install back reference '" + TLModelUtil.qualifiedName(type) + "#" + referenceConfig.getName()
+					+ "' to association end at " + referenceConfig.location() + ".",
 				ex);
 			return;
 		}

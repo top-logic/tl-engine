@@ -16,6 +16,7 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
 import com.top_logic.knowledge.service.migration.MigrationPostProcessor;
+import com.top_logic.model.impl.generated.TlModelFactory;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
 /**
@@ -34,6 +35,10 @@ public class MoveRolesFromSingletonsToModules implements MigrationPostProcessor 
 			if (links.hasNext()) {
 				KnowledgeAssociation link = links.next();
 				KnowledgeObject singleton = link.getSourceObject();
+				if (TlModelFactory.KO_NAME_TL_MODULE.equals(singleton.tTable().getName())) {
+					log.info("Role '" + role + "' already assigned to module '" + singleton + "'.");
+					continue;
+				}
 				
 				Iterator<KnowledgeItem> singletonLinks =
 					kb.getObjectsByAttribute(PersistentModuleSingletons.OBJECT_NAME,

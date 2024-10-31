@@ -107,7 +107,7 @@ public class TestRemoveDuplicatesProcessor extends AbstractDBKnowledgeBaseCluste
 			pool.releaseWriteConnection(connection);
 		}
 		
-		String message = log.getInfos().stream().filter(info -> info.startsWith("Deleted ")).findFirst()
+		String message = log.getInfos().stream().filter(info -> info.contains("assignments and adjusted")).findFirst()
 			.orElseGet(() -> "No migration log message.");
 
 		assertContains("adjusted 1 ", message);

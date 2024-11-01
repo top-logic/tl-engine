@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -135,4 +137,47 @@ public class ExcelWriter extends AbstractCellStreamWriter {
 			exportHelper.addValue(workbook, currentTable, currentRowIndex, currentColumnIndex, cellvalue, sheetMap);
 		}
 	}
+
+	/**
+	 * Increments the column index.
+	 */
+	public void newColumn() {
+		currentColumnIndex++;
+	}
+
+	/**
+	 * Resolves the {@link Cell} for the given row and column.
+	 * 
+	 * @see POIExportHelper#resolveCell(Workbook, String, int, int)
+	 */
+	public Cell resolveCell(int row, int col) {
+		return exportHelper.resolveCell(workbook, currentTable, row, col);
+	}
+
+	/**
+	 * Writes an {@link ExcelValue} to the {@link CellPosition} described by table, row and col.
+	 */
+	public void writeAt(Object cellvalue, String table, int row, int col) {
+		String sheet = table == null ? currentTable : table;
+		if (cellvalue instanceof ExcelValue) {
+			CellPosition position = new CellPosition(sheet, row, col);
+			_valueSetter.setValue(position, (ExcelValue) cellvalue);
+		} else {
+			exportHelper.addValue(workbook, sheet, row, col, cellvalue, sheetMap);
+		}
+	}
+
+	/**
+	 * Writes the given value and applies the given {@link CellStyle}.
+	 */
+	public void write(Object cellvalue, CellStyle style) throws IOException {
+		internalWrite(cellvalue);
+
+		if (style != null) {
+			Cell cell = resolveCell(currentRowIndex, currentColumnIndex);
+			cell.setCellStyle(style);
+		}
+		newColumn();
+	}
+
 }

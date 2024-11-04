@@ -21,6 +21,9 @@ import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLClassifierAnnotation;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedPartName;
+import com.top_logic.model.migration.data.Type;
+import com.top_logic.model.migration.data.TypePart;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link MigrationProcessor} creating a new {@link TLClassifier}.
@@ -78,6 +81,19 @@ public class CreateTLClassifierProcessor extends AbstractConfiguredInstance<Crea
 
 	private void internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedPartName classifierName = getConfig().getName();
+
+		Type ownerType = _util.getTLTypeOrNull(connection, TLContext.TRUNK_ID, classifierName.getModuleName(),
+			classifierName.getTypeName());
+		if (ownerType == null) {
+			log.info("Enumeration of classifier '" + classifierName.getName() + "' does not exist.", Log.WARN);
+			return;
+		}
+
+		TypePart part = _util.getTLTypePart(connection, ownerType, classifierName.getPartName());
+		if (part != null) {
+			log.info("Classifier '" + classifierName.getName() + "' already exists.", Log.WARN);
+			return;
+		}
 		_util.createTLClassifier(connection, classifierName, getConfig());
 		if (tlModel != null) {
 			MigrationUtils.createClassifier(log, tlModel, classifierName, getConfig());

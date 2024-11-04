@@ -8,7 +8,6 @@ package com.top_logic.element.model;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -18,7 +17,6 @@ import com.top_logic.basic.col.Provider;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.element.model.ModelCopy.Async.AsyncConsumer;
 import com.top_logic.model.TLAssociation;
-import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLClassifier;
@@ -39,9 +37,9 @@ import com.top_logic.model.impl.util.TLCharacteristicsCopier;
  */
 public class ModelCopy {
 
-	private final Map<TLType, TLType> _typeMapping = new HashMap<>();
+	private final Map<TLModelPart, TLModelPart> _mapping = new HashMap<>();
 
-	private Map<TLType, Consumer<TLType>> _typeContinuations = new HashMap<>();
+	private Map<TLModelPart, Consumer<TLModelPart>> _continuations = new HashMap<>();
 
 	private Set<TLClass> _completed = new HashSet<>();
 
@@ -67,9 +65,9 @@ public class ModelCopy {
 			TLModule targetModule = target.addModule(target, sourceModule.getName());
 			copy(sourceModule, targetModule);
 		}
-		if (!_typeContinuations.isEmpty()) {
+		if (!_continuations.isEmpty()) {
 			throw new IllegalArgumentException(
-				"References to undefined types in source model: " + _typeContinuations.keySet());
+				"References to undefined types in source model: " + _continuations.keySet());
 		}
 	}
 
@@ -108,33 +106,38 @@ public class ModelCopy {
 
 	private void copy(TLAssociation source, TLAssociation target) {
 		copyAnnotations(source, target);
+		appendParts(target, source.getLocalParts().iterator()).await(() -> enter(source, target));
+	}
 
-		Async async = Async.SYNC;
-		for (TLStructuredTypePart sourcePart : source.getLocalParts()) {
-			switch (sourcePart.getModelKind()) {
-				case PROPERTY: {
-					async = async.join(map(sourcePart.getType(), t -> {
-						TLStructuredTypePart targetProperty =
-							target.getModel().addAssociationProperty(target, sourcePart.getName(), t);
-						copy(sourcePart, targetProperty);
-					}));
-					break;
-				}
-				case END: {
-					async = async.join(map(sourcePart.getType(), t -> {
-						TLStructuredTypePart targetProperty =
-							target.getModel().addAssociationEnd(target, sourcePart.getName(), t);
-						copy(sourcePart, targetProperty);
-					}));
-					break;
-				}
-				default:
-					throw new UnreachableAssertion("No such part expected: " + sourcePart);
-			}
-
+	private Async appendParts(TLAssociation target, Iterator<? extends TLStructuredTypePart> sourceParts) {
+		if (!sourceParts.hasNext()) {
+			return Async.SYNC;
 		}
 
-		async.await(() -> enter(source, target));
+		TLStructuredTypePart sourcePart = sourceParts.next();
+		Async async;
+		switch (sourcePart.getModelKind()) {
+			case PROPERTY: {
+				async = map(sourcePart.getType(), targetPartType -> {
+					TLStructuredTypePart targetProperty =
+						target.getModel().addAssociationProperty(target, sourcePart.getName(), targetPartType);
+					copy(sourcePart, targetProperty);
+				});
+				break;
+			}
+			case END: {
+				async = map(sourcePart.getType(), targetPartType -> {
+					TLStructuredTypePart targetProperty =
+						target.getModel().addAssociationEnd(target, sourcePart.getName(), targetPartType);
+					copy(sourcePart, targetProperty);
+				});
+				break;
+			}
+			default:
+				throw new UnreachableAssertion("No such part expected: " + sourcePart);
+		}
+
+		return async.await(() -> appendParts(target, sourceParts));
 	}
 
 	private void copy(TLEnumeration source, TLEnumeration target) {
@@ -212,21 +215,21 @@ public class ModelCopy {
 		}
 
 		TLStructuredTypePart sourcePart = sourceParts.next();
-		Async step;
+		Async async;
 		switch (sourcePart.getModelKind()) {
 			case PROPERTY: {
-				step = map(sourcePart.getType(), t -> {
+				async = map(sourcePart.getType(), targetPartType -> {
 					TLStructuredTypePart targetProperty =
-						target.getModel().addClassProperty(target, sourcePart.getName(), t);
+						target.getModel().addClassProperty(target, sourcePart.getName(), targetPartType);
 					copy(sourcePart, targetProperty);
 				});
 				break;
 			}
 			case REFERENCE: {
 				TLReference sourceReference = (TLReference) sourcePart;
-				step = map(sourceReference.getEnd(), t -> {
+				async = map(sourceReference.getEnd(), targetEnd -> {
 					TLReference targetReference =
-						target.getModel().addReference(target, sourcePart.getName(), t);
+						target.getModel().addReference(target, sourcePart.getName(), targetEnd);
 					copy(sourceReference, targetReference);
 				});
 				break;
@@ -234,7 +237,7 @@ public class ModelCopy {
 			default:
 				throw new UnreachableAssertion("No such part expected: " + sourcePart);
 		}
-		return step.await(() -> appendParts(target, sourceParts));
+		return async.await(() -> appendParts(target, sourceParts));
 	}
 
 	private Async appendGeneralizations(TLClass target, Iterator<TLClass> sourceGeneralizations) {
@@ -242,23 +245,19 @@ public class ModelCopy {
 			return Async.SYNC;
 		}
 
-		Async step = map(sourceGeneralizations.next(), t -> {
-			target.getGeneralizations().add((TLClass) t);
+		Async async = map(sourceGeneralizations.next(), targetGeneralization -> {
+			target.getGeneralizations().add(targetGeneralization);
 		});
 
-		return step.await(() -> appendGeneralizations(target, sourceGeneralizations));
+		return async.await(() -> appendGeneralizations(target, sourceGeneralizations));
 	}
 
 	private void copy(TLStructuredTypePart source, TLStructuredTypePart target) {
 		copyAnnotations(source, target);
 
 		TLCharacteristicsCopier.copyCharacteristics(source, target);
-	}
 
-	private void copy(TLReference source, TLReference target) {
-		copyAnnotations(source, target);
-
-		TLCharacteristicsCopier.copyCharacteristics(source, target);
+		enter(source, target);
 	}
 
 	private void copyAnnotations(TLModelPart source, TLModelPart target) {
@@ -267,24 +266,16 @@ public class ModelCopy {
 		}
 	}
 
-	private Async map(TLAssociationEnd sourceEnd, Consumer<TLAssociationEnd> continuation) {
-		TLAssociation source = sourceEnd.getOwner();
-		return map(source, target -> {
-			List<? extends TLStructuredTypePart> targetEnds = ((TLAssociation) target).getLocalParts();
-			int sourceIndex = source.getLocalParts().indexOf(sourceEnd);
-			TLAssociationEnd targetEnd = (TLAssociationEnd) targetEnds.get(sourceIndex);
+	private <T extends TLModelPart> Async map(T type, Consumer<T> continuation) {
+		@SuppressWarnings("unchecked")
+		T result = (T) _mapping.get(type);
 
-			continuation.accept(targetEnd);
-		});
-	}
-
-	private Async map(TLType type, Consumer<TLType> continuation) {
-		TLType result = _typeMapping.get(type);
 		if (result == null) {
-			AsyncConsumer<TLType> async = Async.whenAccepted(continuation);
-			Consumer<TLType> clash = _typeContinuations.put(type, async);
+			@SuppressWarnings("unchecked")
+			AsyncConsumer<TLModelPart> async = (AsyncConsumer<TLModelPart>) Async.whenAccepted(continuation);
+			Consumer<TLModelPart> clash = _continuations.put(type, async);
 			if (clash != null) {
-				_typeContinuations.put(type, clash.andThen(async));
+				_continuations.put(type, clash.andThen(async));
 			}
 
 			return async;
@@ -294,9 +285,9 @@ public class ModelCopy {
 		}
 	}
 
-	private void enter(TLType source, TLType target) {
-		_typeMapping.put(source, target);
-		Consumer<TLType> continuation = _typeContinuations.remove(source);
+	private <T extends TLModelPart> void enter(T source, T target) {
+		_mapping.put(source, target);
+		Consumer<TLModelPart> continuation = _continuations.remove(source);
 		if (continuation != null) {
 			continuation.accept(target);
 		}

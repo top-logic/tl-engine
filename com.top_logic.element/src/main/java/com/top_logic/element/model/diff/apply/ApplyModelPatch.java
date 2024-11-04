@@ -61,7 +61,10 @@ import com.top_logic.element.model.diff.config.RemoveAnnotation;
 import com.top_logic.element.model.diff.config.RemoveGeneralization;
 import com.top_logic.element.model.diff.config.RenamePart;
 import com.top_logic.element.model.diff.config.SetAnnotations;
+import com.top_logic.element.model.diff.config.UpdateBag;
 import com.top_logic.element.model.diff.config.UpdateMandatory;
+import com.top_logic.element.model.diff.config.UpdateMultiplicity;
+import com.top_logic.element.model.diff.config.UpdateOrdered;
 import com.top_logic.element.model.diff.config.UpdatePartType;
 import com.top_logic.element.model.diff.config.UpdateStorageMapping;
 import com.top_logic.element.model.diff.config.visit.DiffVisitor;
@@ -102,6 +105,7 @@ import com.top_logic.element.model.migration.model.UpdateTLDataTypeProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLPropertyProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLReferenceProcessor;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
+import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
@@ -211,16 +215,38 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 		@Override
 		public Priority visit(Delete diff, Void arg) throws RuntimeException {
-			if (diff.getName().indexOf('#') > 0) {
-				// A part (type part or singleton).
+			ModelKind kind = diff.getKind();
+			if (kind == null) {
 				return Priority.DELETE_TYPE_PART;
 			}
-			if (diff.getName().indexOf(':') > 0) {
-				// A type.
-				return Priority.DELETE_TYPE;
+
+			switch (kind) {
+				case REFERENCE:
+					if (diff.getBackwards()) {
+						return Priority.DELETE_BACKWARDS_REF;
+					} else {
+						return Priority.DELETE_REF;
+					}
+
+				case END:
+				case CLASSIFIER:
+				case PROPERTY:
+					return Priority.DELETE_TYPE_PART;
+
+				case ASSOCIATION:
+				case CLASS:
+				case DATATYPE:
+				case ENUMERATION:
+					return Priority.DELETE_TYPE;
+
+				case MODULE:
+					return Priority.DELETE_MODULE;
+
+				case MODEL:
+					throw new UnreachableAssertion("Cannot delete the whole model.");
 			}
-			// A module.
-			return Priority.DELETE_MODULE;
+
+			throw new UnreachableAssertion("No such kind: " + diff.getKind());
 		}
 
 		@Override
@@ -271,6 +297,21 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		@Override
 		public Priority visit(UpdateMandatory diff, Void arg) throws RuntimeException {
 			return Priority.CHANGE_TYPE_PART_MANDATORY;
+		}
+
+		@Override
+		public Priority visit(UpdateMultiplicity diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_TYPE_PART_MULTIPLE;
+		}
+
+		@Override
+		public Priority visit(UpdateOrdered diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_TYPE_PART_ORDERED;
+		}
+
+		@Override
+		public Priority visit(UpdateBag diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_TYPE_PART_BAG;
 		}
 
 		@Override
@@ -1144,33 +1185,59 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		}
 
 		if (createProcessors()) {
-			if (part instanceof TLModule) {
-				DeleteTLModuleProcessor.Config config = newConfigItem(DeleteTLModuleProcessor.Config.class);
-				config.setName(diff.getName());
-				addProcessor(config);
-			} else if (part instanceof TLClass) {
-				DeleteTLClassProcessor.Config config = newConfigItem(DeleteTLClassProcessor.Config.class);
-				config.setName(qTypeName(diff.getName()));
-				addProcessor(config);
-			} else if (part instanceof TLEnumeration) {
-				DeleteTLEnumerationProcessor.Config config = newConfigItem(DeleteTLEnumerationProcessor.Config.class);
-				config.setName(qTypeName(diff.getName()));
-				addProcessor(config);
-			} else if (part instanceof TLPrimitive) {
-				DeleteTLDatatypeProcessor.Config config = newConfigItem(DeleteTLDatatypeProcessor.Config.class);
-				config.setName(qTypeName(diff.getName()));
-				addProcessor(config);
-			} else if (part instanceof TLProperty) {
-				DeleteTLPropertyProcessor.Config config = newConfigItem(DeleteTLPropertyProcessor.Config.class);
-				config.setName(qTypePartName(diff.getName()));
-				addProcessor(config);
-			} else if (part instanceof TLReference) {
-				DeleteTLReferenceProcessor.Config config = newConfigItem(DeleteTLReferenceProcessor.Config.class);
-				config.setName(qTypePartName(diff.getName()));
-				addProcessor(config);
-			} else {
-				log().info(
-					"No deletion supported for '" + diff.getName() + "' of type '" + part.getClass().getName() + "'.");
+			switch (diff.getKind()) {
+				case MODULE: {
+					DeleteTLModuleProcessor.Config config = newConfigItem(DeleteTLModuleProcessor.Config.class);
+					config.setName(diff.getName());
+					addProcessor(config);
+					break;
+				}
+				case CLASS: {
+					DeleteTLClassProcessor.Config config = newConfigItem(DeleteTLClassProcessor.Config.class);
+					config.setName(qTypeName(diff.getName()));
+					addProcessor(config);
+					break;
+				}
+				case ENUMERATION: {
+					DeleteTLEnumerationProcessor.Config config =
+						newConfigItem(DeleteTLEnumerationProcessor.Config.class);
+					config.setName(qTypeName(diff.getName()));
+					addProcessor(config);
+					break;
+				}
+				case DATATYPE: {
+					DeleteTLDatatypeProcessor.Config config = newConfigItem(DeleteTLDatatypeProcessor.Config.class);
+					config.setName(qTypeName(diff.getName()));
+					addProcessor(config);
+					break;
+				}
+				case CLASSIFIER:
+				case PROPERTY: {
+					DeleteTLPropertyProcessor.Config config = newConfigItem(DeleteTLPropertyProcessor.Config.class);
+					config.setName(qTypePartName(diff.getName()));
+					addProcessor(config);
+					break;
+				}
+				case REFERENCE: {
+					DeleteTLReferenceProcessor.Config config;
+					if (diff.getBackwards()) {
+						config = newConfigItem(DeleteTLReferenceProcessor.InverseConfig.class);
+					} else {
+						config = newConfigItem(DeleteTLReferenceProcessor.Config.class);
+					}
+					config.setName(qTypePartName(diff.getName()));
+					addProcessor(config);
+					break;
+				}
+				case ASSOCIATION:
+				case END:
+				case MODEL:
+					log().info(
+						"No deletion supported for '" + diff.getName() + "' of type '" + part.getClass().getName()
+							+ "'.");
+					break;
+				default:
+					break;
 			}
 		}
 		return null;
@@ -1238,6 +1305,162 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			} else {
 				throw new UnsupportedOperationException("No update for '" + diff.getPart() + "' of type '"
 						+ part.getClass().getName() + "' possible.");
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(UpdateMultiplicity diff, Void arg) throws RuntimeException {
+		TLStructuredTypePart part;
+		try {
+			part = (TLStructuredTypePart) resolveQName(diff.getPart());
+		} catch (TopLogicException ex) {
+			log().info(
+				"Merge conflict: Updating multiple state of '" + diff.getPart() + "' to '" + diff.isMultiple()
+					+ "', but part does not exist.",
+				Log.WARN);
+			return null;
+		}
+		log().info("Updating multiple state of '" + diff.getPart() + "' to '" + diff.isMultiple() + "'.");
+		if (part.isMultiple() == diff.isMultiple()) {
+			log().info("Attribute '" + diff.getPart() + "' multiplicity is already set to '" + diff.isMultiple()
+				+ "', ignoring.");
+			return null;
+		}
+
+		if (!diff.isMultiple()) {
+			log().info("Setting multiple attribute '" + diff.getPart()
+				+ "' to non-multiple may lead to data inconsistencies. Additional migration operations may be required.",
+				Log.WARN);
+		}
+
+		part.setMultiple(diff.isMultiple());
+
+		if (createProcessors()) {
+			if (part instanceof TLProperty) {
+				UpdateTLPropertyProcessor.Config config = newConfigItem(UpdateTLPropertyProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setMultiple(diff.isMultiple());
+				addProcessor(config);
+			} else if (part instanceof TLReference) {
+				UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setMultiple(diff.isMultiple());
+				addProcessor(config);
+			} else if (part instanceof TLAssociationEnd) {
+				UpdateTLAssociationEndProcessor.Config config =
+					newConfigItem(UpdateTLAssociationEndProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setMultiple(diff.isMultiple());
+				addProcessor(config);
+			} else {
+				throw new UnsupportedOperationException("No update for '" + diff.getPart() + "' of type '"
+					+ part.getClass().getName() + "' possible.");
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(UpdateOrdered diff, Void arg) throws RuntimeException {
+		TLStructuredTypePart part;
+		try {
+			part = (TLStructuredTypePart) resolveQName(diff.getPart());
+		} catch (TopLogicException ex) {
+			log().info(
+				"Merge conflict: Updating ordered state of '" + diff.getPart() + "' to '" + diff.isOrdered()
+					+ "', but part does not exist.",
+				Log.WARN);
+			return null;
+		}
+		log().info("Updating ordered state of '" + diff.getPart() + "' to '" + diff.isOrdered() + "'.");
+		if (part.isOrdered() == diff.isOrdered()) {
+			log().info("Attribute '" + diff.getPart() + "' ordered state is already set to '" + diff.isOrdered()
+				+ "', ignoring.");
+			return null;
+		}
+
+		if (diff.isOrdered()) {
+			log().info("Setting unordered attribute '" + diff.getPart()
+				+ "' to ordered may lead to data inconsistencies. Additional migration operations may be required.",
+				Log.WARN);
+		}
+
+		part.setOrdered(diff.isOrdered());
+
+		if (createProcessors()) {
+			if (part instanceof TLProperty) {
+				UpdateTLPropertyProcessor.Config config = newConfigItem(UpdateTLPropertyProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setOrdered(diff.isOrdered());
+				addProcessor(config);
+			} else if (part instanceof TLReference) {
+				UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setOrdered(diff.isOrdered());
+				addProcessor(config);
+			} else if (part instanceof TLAssociationEnd) {
+				UpdateTLAssociationEndProcessor.Config config =
+					newConfigItem(UpdateTLAssociationEndProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setOrdered(diff.isOrdered());
+				addProcessor(config);
+			} else {
+				throw new UnsupportedOperationException("No update for '" + diff.getPart() + "' of type '"
+					+ part.getClass().getName() + "' possible.");
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(UpdateBag diff, Void arg) throws RuntimeException {
+		TLStructuredTypePart part;
+		try {
+			part = (TLStructuredTypePart) resolveQName(diff.getPart());
+		} catch (TopLogicException ex) {
+			log().info(
+				"Merge conflict: Updating bag state of '" + diff.getPart() + "' to '" + diff.isBag()
+					+ "', but part does not exist.",
+				Log.WARN);
+			return null;
+		}
+		log().info("Updating bag state of '" + diff.getPart() + "' to '" + diff.isBag() + "'.");
+		if (part.isBag() == diff.isBag()) {
+			log().info("Attribute '" + diff.getPart() + "' bag state is already set to '" + diff.isBag()
+				+ "', ignoring.");
+			return null;
+		}
+
+		if (!diff.isBag()) {
+			log().info("Setting bag attribute '" + diff.getPart()
+				+ "' to unique may lead to data inconsistencies. Additional migration operations may be required.",
+				Log.WARN);
+		}
+
+		part.setBag(diff.isBag());
+
+		if (createProcessors()) {
+			if (part instanceof TLProperty) {
+				UpdateTLPropertyProcessor.Config config = newConfigItem(UpdateTLPropertyProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setBag(diff.isBag());
+				addProcessor(config);
+			} else if (part instanceof TLReference) {
+				UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setBag(diff.isBag());
+				addProcessor(config);
+			} else if (part instanceof TLAssociationEnd) {
+				UpdateTLAssociationEndProcessor.Config config =
+					newConfigItem(UpdateTLAssociationEndProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setBag(diff.isBag());
+				addProcessor(config);
+			} else {
+				throw new UnsupportedOperationException("No update for '" + diff.getPart() + "' of type '"
+					+ part.getClass().getName() + "' possible.");
 			}
 		}
 		return null;

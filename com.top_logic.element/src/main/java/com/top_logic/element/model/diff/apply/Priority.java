@@ -30,6 +30,23 @@ enum Priority {
 	REMOVE_ANNOTATION,
 
 	/**
+	 * Deletion of backwards references.
+	 * 
+	 * <p>
+	 * Note: This must happen before deleting of forwards references to include the deletion in a
+	 * generated patch. The deletion of the forwards reference automatically deletes existing
+	 * backwards references. Therefore, deleting a backwards reference after a forwards references
+	 * is not possible.
+	 * </p>
+	 */
+	DELETE_BACKWARDS_REF,
+
+	/**
+	 * Deletion of references.
+	 */
+	DELETE_REF,
+
+	/**
 	 * Deletion of {@link TLTypePart}.
 	 * 
 	 * @see #CREATE_TYPE_PART
@@ -130,6 +147,21 @@ enum Priority {
 	 * Change of {@link TLStructuredTypePart#isMandatory()}.
 	 */
 	CHANGE_TYPE_PART_MANDATORY,
+
+	/**
+	 * Change of {@link TLStructuredTypePart#isMultiple()}.
+	 */
+	CHANGE_TYPE_PART_MULTIPLE,
+
+	/**
+	 * Change of {@link TLStructuredTypePart#isOrdered()}.
+	 */
+	CHANGE_TYPE_PART_ORDERED,
+
+	/**
+	 * Change of {@link TLStructuredTypePart#isBag()}.
+	 */
+	CHANGE_TYPE_PART_BAG,
 
 	/**
 	 * Change of annotations. Either complete override or add of a new {@link TLAnnotation}.

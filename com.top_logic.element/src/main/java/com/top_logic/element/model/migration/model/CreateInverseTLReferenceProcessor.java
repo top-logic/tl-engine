@@ -20,6 +20,9 @@ import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedPartName;
+import com.top_logic.model.migration.data.Type;
+import com.top_logic.model.migration.data.TypePart;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link MigrationProcessor} to create an inverse {@link TLReference}.
@@ -80,20 +83,35 @@ public class CreateInverseTLReferenceProcessor
 
 	private void internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedPartName reference = getConfig().getName();
-		QualifiedPartName inverseReference = getConfig().getInverseReference();
+		QualifiedPartName forwardsReference = getConfig().getInverseReference();
+
+		Type ownerType = _util.getTLTypeOrNull(connection, TLContext.TRUNK_ID, reference.getModuleName(),
+			reference.getTypeName());
+		if (ownerType == null) {
+			log.info("Type of inverse reference to create does not exist: " + reference.getName(), Log.WARN);
+			return;
+		}
+
+		TypePart part = _util.getTLTypePart(connection, ownerType, reference.getPartName());
+		if (part != null) {
+			log.info("Attribute with same name already exists: " + reference.getName(), Log.WARN);
+			return;
+		}
+
 		_util.createInverseTLReference(log, connection, reference,
-			inverseReference, getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
+			forwardsReference, getConfig().isMandatory(), getConfig().isComposite(), getConfig().isAggregate(),
 			getConfig().isMultiple(), getConfig().isBag(), getConfig().isOrdered(), getConfig().canNavigate(), getConfig());
 		
 		if (tlModel != null) {
-			MigrationUtils.createBackReference(log, tlModel, reference, inverseReference, nullIfUnset(Config.MANDATORY),
+			MigrationUtils.createBackReference(log, tlModel, reference, forwardsReference,
+				nullIfUnset(Config.MANDATORY),
 				nullIfUnset(Config.COMPOSITE), nullIfUnset(Config.AGGREGATE), nullIfUnset(Config.MULTIPLE),
 				nullIfUnset(Config.BAG), nullIfUnset(Config.ORDERED), nullIfUnset(Config.ABSTRACT),
 				nullIfUnset(Config.NAVIGATE), nullIfUnset(Config.HISTORY_TYPE), getConfig(),
 				null);
 		}
 		log.info("Created inverse reference " + _util.qualifiedName(reference) + " for reference "
-			+ _util.qualifiedName(inverseReference));
+			+ _util.qualifiedName(forwardsReference));
 	}
 
 }

@@ -102,10 +102,8 @@ public class ReorderTLTypePart extends AbstractConfiguredInstance<ReorderTLTypeP
 		QualifiedPartName partToReorder = getConfig().getName();
 		QualifiedTypeName owner = partToReorder.getOwner();
 
-		Type type;
-		try {
-			type = _util.getTLTypeOrFail(connection, owner);
-		} catch (MigrationException ex) {
+		Type type = _util.getTLTypeOrNull(connection, owner);
+		if (type == null) {
 			log.info("No type with name '" + _util.qualifiedName(owner) + "' as owner of '"
 					+ _util.qualifiedName(partToReorder) + "' available at" + getConfig().location(),
 				Log.WARN);

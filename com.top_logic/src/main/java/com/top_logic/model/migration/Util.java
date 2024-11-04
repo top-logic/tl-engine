@@ -3050,6 +3050,13 @@ public class Util {
 			throw new MigrationException(
 				"No enumeration with name '" + enumName + "' found in module " + toString(module));
 		}
+		
+		TypePart existing = getTLClassifier(con, enumeration, classifierName);
+		if (existing != null) {
+			throw new MigrationException(
+				"Classifier '" + toString(existing) + "' already exists.");
+		}
+		
 		List<OrderValue> orders = getOrders(con, branch, enumeration.getID(), FastListElement.ORDER_DB_NAME,
 			PersistentTypePart.NAME_ATTR, TlModelFactory.KO_NAME_TL_CLASSIFIER, FastListElement.OWNER_ATTRIBUTE);
 		int sortOrder;
@@ -3764,10 +3771,25 @@ public class Util {
 			throw new MigrationException("Type '" + toString(type) + "' has parts: " + toString(tlTypeParts));
 		}
 		toDelete.addAll(tlTypeParts);
+
 		toDelete.addAll(getGeneralizations(connection, type));
 		toDelete.addAll(getSpecializations(connection, type));
-	
+
 		deleteModelParts(connection, toDelete);
+
+		// Delete associations of forwards references.
+		for (TypePart part : tlTypeParts) {
+			if (part instanceof Reference ref) {
+				Type association = getTLTypeOrNull(connection, ref.getOwner().getModule(),
+					TLStructuredTypeColumns.syntheticAssociationName(ref.getOwner().getTypeName(), ref.getPartName()));
+				if (association != null) {
+					deleteTLType(connection, association, false);
+				}
+			}
+		}
+
+		// Not necessary: Delete references of ends. The migration must have produced an explicit
+		// delete of potentially existing reverse references pointing to deleted classes.
 	}
 
 	/**

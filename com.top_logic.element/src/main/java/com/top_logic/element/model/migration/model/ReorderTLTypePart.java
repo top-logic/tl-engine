@@ -115,7 +115,7 @@ public class ReorderTLTypePart extends AbstractConfiguredInstance<ReorderTLTypeP
 		boolean updateModelBaseline;
 		String before = getConfig().getBefore();
 		if (FastList.OBJECT_NAME.equals(type.getTable())) {
-			_util.reorderTLClassifier(connection, type, partToReorder.getName(), before);
+			_util.reorderTLClassifier(connection, type, partToReorder.getPartName(), before);
 			updateModelBaseline =
 				tlModel == null ? false : MigrationUtils.reorderClassifier(log, tlModel, partToReorder, before);
 		} else {

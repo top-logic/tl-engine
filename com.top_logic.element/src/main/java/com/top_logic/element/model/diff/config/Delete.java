@@ -6,7 +6,9 @@
 package com.top_logic.element.model.diff.config;
 
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLNamedPart;
 
@@ -26,5 +28,20 @@ public interface Delete extends DiffElement {
 
 	/** @see #getName() */
 	void setName(String value);
+
+	@Nullable
+	ModelKind getKind();
+
+	/**
+	 * @see #getKind()
+	 */
+	void setKind(ModelKind modelKind);
+
+	boolean getBackwards();
+
+	/**
+	 * @see #getBackwards()
+	 */
+	void setBackwards(boolean backwards);
 
 }

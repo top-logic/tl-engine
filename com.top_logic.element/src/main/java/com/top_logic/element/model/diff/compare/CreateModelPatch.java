@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.diff.CollectionDiff;
 import com.top_logic.basic.col.diff.SetDiff;
 import com.top_logic.basic.col.diff.op.Create;
@@ -46,7 +45,11 @@ import com.top_logic.element.model.diff.config.MoveGeneralization;
 import com.top_logic.element.model.diff.config.MoveStructuredTypePart;
 import com.top_logic.element.model.diff.config.RemoveAnnotation;
 import com.top_logic.element.model.diff.config.RemoveGeneralization;
+import com.top_logic.element.model.diff.config.UpdateBag;
 import com.top_logic.element.model.diff.config.UpdateMandatory;
+import com.top_logic.element.model.diff.config.UpdateMultiplicity;
+import com.top_logic.element.model.diff.config.UpdateOrdered;
+import com.top_logic.element.model.diff.config.UpdatePartType;
 import com.top_logic.element.model.diff.config.UpdateStorageMapping;
 import com.top_logic.element.model.export.ModelConfigExtractor;
 import com.top_logic.model.ModelKind;
@@ -285,30 +288,6 @@ public class CreateModelPatch {
 		}
 	};
 
-	private TLTypeVisitor<Boolean, TLType> _isCompatible = new TLTypeVisitor<>() {
-
-		@Override
-		public Boolean visitPrimitive(TLPrimitive model, TLType arg) {
-			return isCompatiblePrimitive(model, (TLPrimitive) arg);
-		}
-
-		@Override
-		public Boolean visitEnumeration(TLEnumeration model, TLType arg) {
-			return true;
-		}
-
-		@Override
-		public Boolean visitClass(TLClass model, TLType arg) {
-			return true;
-		}
-
-		@Override
-		public Boolean visitAssociation(TLAssociation model, TLType arg) {
-			throw new UnreachableAssertion("Associations are not used as value types.");
-		}
-
-	};
-
 	/**
 	 * Analyzed differences in the given models and adds {@link DiffElement} to the current patch
 	 * transforming the left model to the right model.
@@ -393,6 +372,7 @@ public class CreateModelPatch {
 	private void addDelete(TLModule module, SingletonConfig singletonConfig) {
 		Delete delete = TypedConfiguration.newConfigItem(Delete.class);
 		delete.setName(module.getName() + TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR + singletonConfig.getName());
+		delete.setKind(null);
 		addDiff(delete);
 	}
 
@@ -620,6 +600,34 @@ public class CreateModelPatch {
 	}
 	private void addPartChanges(TLStructuredTypePart left, TLStructuredTypePart right) {
 		processAnnotationChanges(left, right);
+		
+		if (!isEquivalent(left.getType(), right.getType())) {
+			UpdatePartType typeUpdate = TypedConfiguration.newConfigItem(UpdatePartType.class);
+			typeUpdate.setPart(TLModelUtil.qualifiedName(left));
+			typeUpdate.setTypeSpec(TLModelUtil.qualifiedName(right.getType()));
+			addDiff(typeUpdate);
+		}
+		
+		if (left.isMultiple() != right.isMultiple()) {
+			UpdateMultiplicity update = TypedConfiguration.newConfigItem(UpdateMultiplicity.class);
+			update.setPart(TLModelUtil.qualifiedName(left));
+			update.setMultiple(right.isMultiple());
+			addDiff(update);
+		}
+		
+		if (left.isOrdered() != right.isOrdered()) {
+			UpdateOrdered update = TypedConfiguration.newConfigItem(UpdateOrdered.class);
+			update.setPart(TLModelUtil.qualifiedName(left));
+			update.setOrdered(right.isOrdered());
+			addDiff(update);
+		}
+		
+		if (left.isBag() != right.isBag()) {
+			UpdateBag update = TypedConfiguration.newConfigItem(UpdateBag.class);
+			update.setPart(TLModelUtil.qualifiedName(left));
+			update.setBag(right.isBag());
+			addDiff(update);
+		}
 
 		boolean oldMandatory = left.isMandatory();
 		boolean newMandatory = right.isMandatory();
@@ -631,14 +639,15 @@ public class CreateModelPatch {
 		}
 	}
 
+	private boolean isEquivalent(TLType left, TLType right) {
+		return isCorrespondingModule(left.getModule(), right.getModule()) &&
+			left.getName().equals(right.getName());
+	}
+
 	private boolean isCompatiblePart(TLStructuredTypePart left, TLStructuredTypePart right) {
 		return
 			isCompatibleValueType(left.getType(), right.getType()) &&
-				(!isProperty(left)
-				|| isCompatibleProperty((TLProperty) left, (TLProperty) right))
-			&&
-				(!isReference(left)
-				|| isCompatibleReference((TLReference) left, (TLReference) right));
+				left.isDerived() == right.isDerived();
 	}
 
 	private boolean isProperty(TLStructuredTypePart part) {
@@ -650,27 +659,11 @@ public class CreateModelPatch {
 	}
 
 	private boolean isCompatibleValueType(TLType left, TLType right) {
-		return left.getModelKind() == right.getModelKind() &&
-			isCorrespondingModule(left.getModule(), right.getModule()) &&
-			left.getName().equals(right.getName()) &&
-			left.visitType(_isCompatible, right);
+		return left.getModelKind() == right.getModelKind();
 	}
 
 	private boolean isCorrespondingModule(TLModule left, TLModule right) {
 		return left.getName().equals(right.getName());
-	}
-
-	private boolean isCompatibleProperty(TLProperty left, TLProperty right) {
-		return left.isDerived() == right.isDerived() &&
-			left.isMultiple() == right.isMultiple() &&
-			left.isOrdered() == right.isOrdered();
-	}
-
-	private boolean isCompatibleReference(TLReference left, TLReference right) {
-		return left.isDerived() == right.isDerived() &&
-			left.isMultiple() == right.isMultiple() &&
-			left.isOrdered() == right.isOrdered() &&
-			left.isBag() == right.isBag();
 	}
 
 	private PolymorphicConfiguration<?> storageConfig(TLStructuredTypePart left) {
@@ -788,6 +781,10 @@ public class CreateModelPatch {
 	final void delete(TLNamedPart deleted) {
 		Delete result = TypedConfiguration.newConfigItem(Delete.class);
 		result.setName(TLModelUtil.qualifiedName(deleted));
+		result.setKind(deleted.getModelKind());
+		if (deleted instanceof TLReference ref) {
+			result.setBackwards(ref.isBackwards());
+		}
 		addDiff(result);
 	}
 

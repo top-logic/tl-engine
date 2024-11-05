@@ -61,7 +61,15 @@ public abstract class AbstractTLType extends AbstractTLModelPart implements TLTy
 	
 	@Override
 	public void setName(String value) {
-		this.name = value;
+		TLModule owner = module;
+		if (owner != null) {
+			// Give the type index a chance to update.
+			owner.getTypes().remove(this);
+			this.name = value;
+			owner.getTypes().add(this);
+		} else {
+			this.name = value;
+		}
 	}
 	
 	protected static <T extends TLTypePart> Map<String, T> initAllParts(List<? extends T> ...references) {

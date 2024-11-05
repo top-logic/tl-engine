@@ -170,9 +170,9 @@ public class TLModelImpl extends AbstractTLModelPart implements TLModel {
 	public TLReference addReference(TLClass tlClass, String name, TLAssociationEnd end) {
 		TLClassPart part = (TLClassPart) tlClass.getPart(name);
 		if (end != null) {
-			/* TLModelImpl hierarchy is used in ModelReader which analyses a stream. Therefore it
-			 * may be that the end is not present at reference creation time. The reference must
-			 * later be filled with a correct end. */
+			/* TLModelImpl hierarchy is used in ModelReader which analyzes a stream. Therefore it is
+			 * possible that the end is not yet present at reference creation time. The reference
+			 * must be filled later on with a correct end. */
 			TLReference reference = end.getReference();
 			if (reference != null) {
 				throw new IllegalArgumentException("Association end '" + end + "' already implemented by '"

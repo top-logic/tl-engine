@@ -17,7 +17,7 @@ import com.top_logic.model.TLStructuredTypePart;
 public interface UpdateOrdered extends PartUpdate {
 
 	/**
-	 * The new {@link TLStructuredTypePart#isOrdered()} state.
+	 * The new {@link TLStructuredTypePart#isOrdered() ordered} state.
 	 */
 	boolean isOrdered();
 

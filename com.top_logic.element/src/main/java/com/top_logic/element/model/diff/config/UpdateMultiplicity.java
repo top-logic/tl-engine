@@ -17,7 +17,7 @@ import com.top_logic.model.TLStructuredTypePart;
 public interface UpdateMultiplicity extends PartUpdate {
 
 	/**
-	 * The new {@link TLStructuredTypePart#isMultiple()} state.
+	 * The new {@link TLStructuredTypePart#isMultiple() multiple} state.
 	 */
 	boolean isMultiple();
 

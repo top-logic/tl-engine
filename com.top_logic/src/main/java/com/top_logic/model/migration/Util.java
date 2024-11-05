@@ -2973,7 +2973,7 @@ public class Util {
 		classifiers.add(beforeIndex, movedClassifier);
 
 		// Insert in new order.
-		for (int i = classifiers.size() - 1; i >= 0; i--) {
+		for (int i = classifiers.size() - 1; i >= beforeIndex; i--) {
 			TypePart otherClassifier = classifiers.get(i);
 			updateTLClassifierSortOrder(con, otherClassifier, i);
 		}

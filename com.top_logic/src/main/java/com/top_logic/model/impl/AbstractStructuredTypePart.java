@@ -55,6 +55,20 @@ public abstract class AbstractStructuredTypePart<O extends TLStructuredType> ext
 	}
 	
 	@Override
+	public void setName(String value) {
+		O owner = getOwner();
+		if (owner != null) {
+			List<TLStructuredTypePart> localParts = (List<TLStructuredTypePart>) owner.getLocalParts();
+			int index = localParts.indexOf(this);
+			TLStructuredTypePart self = localParts.remove(index);
+			super.setName(value);
+			localParts.add(index, self);
+		} else {
+			super.setName(value);
+		}
+	}
+
+	@Override
 	public boolean isMandatory() {
 		return this.mandatory;
 	}

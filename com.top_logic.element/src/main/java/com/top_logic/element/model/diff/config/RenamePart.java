@@ -19,15 +19,24 @@ import com.top_logic.model.TLNamedPart;
 public interface RenamePart extends Update {
 
 	/**
-	 * The {@link TLNamedPart} to rename.
+	 * The qualified name of the {@link TLNamedPart} to rename.
 	 */
 	@Mandatory
 	String getPart();
 
 	/**
-	 * The new name of the {@link #getPart() part}.
+	 * @see #getPart()
+	 */
+	void setPart(String value);
+
+	/**
+	 * The new local name of the {@link #getPart() part} after rename.
 	 */
 	@Mandatory
 	String getNewName();
 
+	/**
+	 * @see #getNewName()
+	 */
+	void setNewName(String value);
 }

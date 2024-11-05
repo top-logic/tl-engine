@@ -16,7 +16,8 @@ import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
 /**
- * Priority of {@link DiffElement}s.
+ * Priority of {@link DiffElement}s defining the order in which elements of a model patch are
+ * applied.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -30,6 +31,34 @@ enum Priority {
 	REMOVE_ANNOTATION,
 
 	/**
+	 * Removal of a {@link TLClass#getGeneralizations() generalization}.
+	 * 
+	 * @implNote Must occur before removing types, because removing types removes specializations.
+	 * 
+	 * @see #CREATE_OR_MOVE_GENERALISATION
+	 */
+	REMOVE_GENERALISATION,
+
+	/**
+	 * Renames a part.
+	 * 
+	 * <p>
+	 * A rename might be used to allow re-creation of a part with the same name. Therefore, a rename
+	 * must happen before a create.
+	 * </p>
+	 */
+	RENAME,
+
+	/**
+	 * Deletion of a {@link BoundedRole}.
+	 * 
+	 * @implNote Must occur before removing {@link TLModule}s.
+	 * 
+	 * @see #CREATE_ROLE
+	 */
+	DELETE_ROLE,
+
+	/**
 	 * Deletion of backwards references.
 	 * 
 	 * <p>
@@ -38,11 +67,17 @@ enum Priority {
 	 * backwards references. Therefore, deleting a backwards reference after a forwards references
 	 * is not possible.
 	 * </p>
+	 * 
+	 * <p>
+	 * Note: Deleting inverse references must happen before creating references, because changing
+	 * the type on a reference causes the inverse reference to be moved to the new target type. This
+	 * is only possible, if the old reverse reference has been deleted before.
+	 * </p>
 	 */
 	DELETE_BACKWARDS_REF,
 
 	/**
-	 * Deletion of references.
+	 * Deletion of forwards references.
 	 */
 	DELETE_REF,
 
@@ -53,38 +88,6 @@ enum Priority {
 	 * @see #CREATE_TYPE_PART_OVERRIDE
 	 */
 	DELETE_TYPE_PART,
-
-	/**
-	 * Removal of a {@link TLClass#getGeneralizations() generalization}.
-	 * 
-	 * @implNote Must occur before removing types, because removing types removes specializations.
-	 * 
-	 * @see #CREATE_OR_MOVE_GENERALISATION
-	 */
-	REMOVE_GENERALISATION,
-
-	/**
-	 * Deletion of a {@link TLType}
-	 * 
-	 * @see #CREATE_TYPE
-	 */
-	DELETE_TYPE,
-
-	/**
-	 * Deletion of a {@link BoundedRole}.
-	 * 
-	 * @implNote Must occur before removing {@link TLModule}e.
-	 * 
-	 * @see #CREATE_ROLE
-	 */
-	DELETE_ROLE,
-
-	/**
-	 * Deletion of a {@link TLModule}.
-	 * 
-	 * @see #CREATE_MODULE
-	 */
-	DELETE_MODULE,
 
 	/**
 	 * Creation of a {@link TLModule}.
@@ -141,7 +144,7 @@ enum Priority {
 	/**
 	 * Update of an {@link TLTypePart}.
 	 */
-	UPDATE_TYPE_PART,
+	UPDATE_TYPE_PART_TYPE,
 
 	/**
 	 * Change of {@link TLStructuredTypePart#isMandatory()}.
@@ -169,6 +172,20 @@ enum Priority {
 	 * @see #REMOVE_ANNOTATION
 	 */
 	CHANGE_ANNOTATIONS,
+
+	/**
+	 * Deletion of a {@link TLType}
+	 * 
+	 * @see #CREATE_TYPE
+	 */
+	DELETE_TYPE,
+
+	/**
+	 * Deletion of a {@link TLModule}.
+	 * 
+	 * @see #CREATE_MODULE
+	 */
+	DELETE_MODULE,
 
 	/**
 	 * Creation of a {@link TLModuleSingleton}.

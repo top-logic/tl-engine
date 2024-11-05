@@ -210,7 +210,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 		@Override
 		public Priority visit(UpdatePartType diff, Void arg) throws RuntimeException {
-			return Priority.UPDATE_TYPE_PART;
+			return Priority.UPDATE_TYPE_PART_TYPE;
 		}
 
 		@Override
@@ -326,7 +326,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 		@Override
 		public Priority visit(RenamePart diff, Void arg) throws RuntimeException {
-			return Priority.MOVE_TYPE_PART;
+			return Priority.RENAME;
 		}
 
 		/**
@@ -1147,13 +1147,36 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 	@Override
 	public Void visit(Delete diff, Void arg) throws RuntimeException {
+		if (deleteDirectly(diff)) {
+			processDelete(diff);
+		} else {
+			schedule().cleanup(() -> processDelete(diff));
+		}
+		return null;
+	}
+
+	private boolean deleteDirectly(Delete diff) {
+		if (diff.getKind() == null) {
+			return true;
+		}
+		switch (diff.getKind()) {
+			case PROPERTY:
+			case REFERENCE:
+				return true;
+			default:
+				return false;
+		}
+
+	}
+
+	private void processDelete(Delete diff) {
 		TLObject part;
 		try {
 			part = resolveQName(diff.getName());
 		} catch (TopLogicException ex) {
 			log().info(
 				"Merge conflict: Deleting '" + diff.getName() + "' but it does not exist.", Log.INFO);
-			return null;
+			return;
 		}
 		
 		if (part instanceof TLClass) {
@@ -1162,7 +1185,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 				try (CloseableIterator<TLObject> it = directInstances(type)) {
 					if (it.hasNext()) {
 						log().info("Merge conflict deleting '" + type + "': Instances exist.");
-						return null;
+						return;
 					}
 				}
 			}
@@ -1240,11 +1263,15 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 					break;
 			}
 		}
-		return null;
 	}
 
 	@Override
 	public Void visit(DeleteRole diff, Void arg) throws RuntimeException {
+		schedule().cleanup(() -> processDelete(diff));
+		return null;
+	}
+
+	private void processDelete(DeleteRole diff) {
 		TLModule module;
 		try {
 			module = TLModelUtil.findModule(diff.getModule());
@@ -1253,7 +1280,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 				"Merge conflict: Deleting role '" + diff.getRole() + "' in module '" + diff.getModule()
 						+ "': " + ex.getMessage(),
 				Log.INFO);
-			return null;
+			return;
 		}
 
 		BoundedRole role = BoundedRole.getDefinedRole(module, diff.getRole());
@@ -1262,12 +1289,12 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 				"Merge conflict: Deleting role '" + diff.getRole() + "' in module '" + diff.getModule()
 					+ "', but role does not exist.",
 				Log.INFO);
-			return null;
+			return;
 		}
 
 		log().info("Deleting role '" + diff.getRole() + "' in module '" + diff.getModule() + "'.");
 		role.tDelete();
-		return null;
+		return;
 	}
 
 	@Override

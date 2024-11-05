@@ -427,7 +427,7 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 				ApplyModelPatch.applyPatch(log, getModel(), getFactory(), patch, processors.getProcessors());
 				new ConstraintChecker().check(log(), processors);
 			} catch (RuntimeException ex) {
-				Logger.error("Failed to apply model path: " + ex.getMessage() + "\n" + patch, ex,
+				Logger.error("Failed to apply model patch: " + ex.getMessage() + "\n" + patch, ex,
 					DynamicModelService.class);
 				throw ex;
 			}

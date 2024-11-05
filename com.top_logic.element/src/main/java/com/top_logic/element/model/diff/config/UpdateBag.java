@@ -17,7 +17,7 @@ import com.top_logic.model.TLStructuredTypePart;
 public interface UpdateBag extends PartUpdate {
 
 	/**
-	 * The new {@link TLStructuredTypePart#isOrdered()} state.
+	 * The new {@link TLStructuredTypePart#isOrdered() bag} state.
 	 */
 	boolean isBag();
 

@@ -421,9 +421,16 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 		if (!patch.isEmpty()) {
 			Logger.info("Started incremental model upgrade.", DynamicModelService.class);
 
-			MigrationProcessors processors = TypedConfiguration.newConfigItem(MigrationProcessors.class);
-			ApplyModelPatch.applyPatch(log, getModel(), getFactory(), patch, processors.getProcessors());
-			new ConstraintChecker().check(log(), processors);
+			MigrationProcessors processors;
+			try {
+				processors = TypedConfiguration.newConfigItem(MigrationProcessors.class);
+				ApplyModelPatch.applyPatch(log, getModel(), getFactory(), patch, processors.getProcessors());
+				new ConstraintChecker().check(log(), processors);
+			} catch (RuntimeException ex) {
+				Logger.error("Failed to apply model path: " + ex.getMessage() + "\n" + patch, ex,
+					DynamicModelService.class);
+				throw ex;
+			}
 
 			storeModelConfig(connection);
 

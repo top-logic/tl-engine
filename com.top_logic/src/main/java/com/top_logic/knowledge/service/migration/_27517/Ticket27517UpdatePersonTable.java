@@ -406,6 +406,9 @@ public class Ticket27517UpdatePersonTable extends AbstractConfiguredInstance<Tic
 			allLogins.add(currentLogin);
 
 			if (branch == row.getBranch() && currentLogin.equals(login)) {
+				// The current row referes to the same user as the last row seen. This is only OK,
+				// if this row represents a change to the user object (in this case, life spans of
+				// this row and the last row do not intersect).
 				if (intersects(revMin, revMax, row.getRevMin(), row.getRevMax())) {
 					// There is a clash of user names.
 					if (row.getIdentifier() == id) {
@@ -419,11 +422,13 @@ public class Ticket27517UpdatePersonTable extends AbstractConfiguredInstance<Tic
 							log.info("Dropping duplicate row: " + row, Log.WARN);
 						}
 					} else {
-						// There is another user-object with a clashing identifier. Remember for
-						// consistently renaming later on.
+						// There is another user-object with a clashing identifier. Remember its
+						// identifier for consistently renaming that user later on.
 						clashes.putIfAbsent(Pair.of(row.getBranch(), row.getIdentifier()), row.getName());
 						result.add(row);
 					}
+				} else {
+					result.add(row);
 				}
 			} else {
 				result.add(row);

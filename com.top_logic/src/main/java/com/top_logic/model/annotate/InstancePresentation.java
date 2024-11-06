@@ -20,7 +20,7 @@ import com.top_logic.model.config.TLTypeAnnotation;
  */
 @TagName(InstancePresentation.TAG_NAME)
 @TargetType(value = { TLTypeKind.REF, TLTypeKind.COMPOSITION, TLTypeKind.ENUMERATION })
-//Search is done explicitly
+// Generalizations are considered explicitly by code using this annotation.
 @AnnotationInheritance(Policy.REDEFINE)
 @InApp
 @DisplayOrder({

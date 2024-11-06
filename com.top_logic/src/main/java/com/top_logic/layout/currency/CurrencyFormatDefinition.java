@@ -19,7 +19,7 @@ import com.top_logic.basic.format.FormatConfig;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 
 /**
- * Definition of decimal formats displaying an additional {@link Currency}.
+ * Definition of a decimal format that displays an additional {@link Currency}.
  */
 @Label("Currency format")
 public class CurrencyFormatDefinition extends DecimalFormatDefinition<CurrencyFormatDefinition.Config> {

@@ -22,6 +22,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.knowledge.gui.layout.upload.FileNameConstraint;
 import com.top_logic.knowledge.gui.layout.upload.FileNameStrategy;
@@ -69,6 +70,7 @@ import com.top_logic.tool.boundsec.CommandHandler;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Value format")
 public class FormFactory {
 
 	/**

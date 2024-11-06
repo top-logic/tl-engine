@@ -15,13 +15,14 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 
 /**
- * {@link FormatDefinition} creating a predefined date-time {@link DateFormat}.
+ * {@link FormatDefinition} creating an official {@link DateFormat date format} that adjusts to the
+ * user's locale.
  * 
  * @since Ticket #12026
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-@Label("Predefined date format")
+@Label("Internationalized date format")
 public class DateFormatDefinition extends AbstractDateFormatDefinition<DateFormatDefinition.Config> {
 
 	/**

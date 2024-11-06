@@ -22,13 +22,13 @@ import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.format.configured.FormatterService;
 
 /**
- * {@link PatternBasedFormatDefinition} creating {@link DecimalFormat}s.
+ * {@link PatternBasedFormatDefinition} of a {@link DecimalFormat} specified by a format.
  * 
  * @since 5.7.4
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-@Label("Decimal format")
+@Label("Custom decimal format")
 public class DecimalFormatDefinition<C extends DecimalFormatDefinition.Config<?>>
 		extends PatternBasedFormatDefinition<C> {
 

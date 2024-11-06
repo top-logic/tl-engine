@@ -74,10 +74,11 @@ public class DurationFieldProvider extends AbstractFieldProvider {
 	public FormMember createFormField(EditContext editContext, String fieldName) {
 		boolean isMandatory = editContext.isMandatory();
 		boolean isDisabled = editContext.isDisabled();
+		
 		ComplexField field =
-			FormFactory.newTimeField(fieldName, null, FormFactory.IGNORE_WHITE_SPACE, isMandatory, isDisabled, null);
+			FormFactory.newComplexField(fieldName, DurationFormat.INSTANCE, FormFactory.IGNORE_WHITE_SPACE, isMandatory,
+				isDisabled, null);
 
-		field.setFormatAndParser(DurationFormat.INSTANCE);
 		return field;
 	}
 

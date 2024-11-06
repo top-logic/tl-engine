@@ -399,7 +399,7 @@ public class TestConfigurationReader extends AbstractTypedConfigurationTestCase 
 			assertNull(item);
 			fail("Configuration model is invalid, must fail.");
 		} catch (ConfigurationException ex) {
-			assertContains("Has getter with to multiple parameters", ex.getMessage());
+			assertContains("Has getter with multiple parameters", ex.getMessage());
 		}
 	}
 	

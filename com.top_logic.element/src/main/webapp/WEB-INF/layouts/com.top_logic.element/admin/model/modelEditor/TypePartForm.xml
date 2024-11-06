@@ -39,6 +39,63 @@
 				</annotations>
 			</type>
 
+			<type name="com.top_logic.basic.format.DateFormatDefinition">
+				<annotations>
+					<annotation config:interface="com.top_logic.model.annotate.TargetType"
+						value="DATE"
+					/>
+				</annotations>
+			</type>
+			<type name="com.top_logic.basic.format.DateTimeFormatDefinition">
+				<annotations>
+					<annotation config:interface="com.top_logic.model.annotate.TargetType"
+						value="DATE"
+					/>
+				</annotations>
+			</type>
+			<type name="com.top_logic.basic.format.TimeFormatDefinition">
+				<annotations>
+					<annotation config:interface="com.top_logic.model.annotate.TargetType"
+						value="DATE"
+					/>
+				</annotations>
+			</type>
+			<type name="com.top_logic.basic.format.SimpleDateFormatDefinition">
+				<annotations>
+					<annotation config:interface="com.top_logic.model.annotate.TargetType"
+						value="DATE"
+					/>
+				</annotations>
+			</type>
+			<type name="com.top_logic.basic.format.NumberFormatDefinition">
+				<annotations>
+					<annotation config:interface="com.top_logic.model.annotate.TargetType"
+						value="FLOAT,INT"
+					/>
+				</annotations>
+			</type>
+			<type name="com.top_logic.basic.format.DecimalFormatDefinition">
+				<annotations>
+					<annotation config:interface="com.top_logic.model.annotate.TargetType"
+						value="FLOAT,INT"
+					/>
+				</annotations>
+			</type>
+			<type name="com.top_logic.layout.currency.CurrencyFormatDefinition">
+				<annotations>
+					<annotation config:interface="com.top_logic.model.annotate.TargetType"
+						value="FLOAT"
+					/>
+				</annotations>
+			</type>
+			<type name="com.top_logic.basic.format.PercentFormatDefinition">
+				<annotations>
+					<annotation config:interface="com.top_logic.model.annotate.TargetType"
+						value="FLOAT,INT"
+					/>
+				</annotations>
+			</type>
+
 			<property name="com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder$PartModel#annotations">
 				<annotations>
 					<annotation config:interface="com.top_logic.layout.form.values.edit.annotation.Options"
@@ -59,6 +116,30 @@
 							<ref>
 								<steps>
 									<step value="override"/>
+								</steps>
+							</ref>
+						</args>
+					</annotation>
+				</annotations>
+			</property>
+
+			<property name="com.top_logic.model.annotate.ui.Format#definition">
+				<annotations>
+					<annotation config:interface="com.top_logic.layout.form.values.edit.annotation.Options"
+						fun="com.top_logic.model.annotate.ui.Format$FormatOptions"
+						mapping="com.top_logic.layout.form.values.ImplOptionMapping"
+					>
+						<args>
+							<ref>
+								<steps>
+									<step value="annotated"/>
+									<step type="com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder$PartModel" value="resolved-type"/>
+								</steps>
+							</ref>
+							<ref>
+								<steps>
+									<step value="annotated"/>
+									<step type="com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder$PartModel" value="type-kind"/>
 								</steps>
 							</ref>
 						</args>

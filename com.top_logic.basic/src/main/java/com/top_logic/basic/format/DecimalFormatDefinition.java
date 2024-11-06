@@ -13,6 +13,7 @@ import java.text.NumberFormat;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
@@ -28,6 +29,7 @@ import com.top_logic.basic.format.configured.FormatterService;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@InApp
 @Label("Custom decimal format")
 public class DecimalFormatDefinition<C extends DecimalFormatDefinition.Config<?>>
 		extends PatternBasedFormatDefinition<C> {

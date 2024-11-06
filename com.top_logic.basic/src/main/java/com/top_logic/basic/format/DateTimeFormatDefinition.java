@@ -8,6 +8,7 @@ package com.top_logic.basic.format;
 import java.text.DateFormat;
 import java.util.Locale;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
@@ -22,6 +23,7 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@InApp
 @Label("Internationalized date with time format")
 public class DateTimeFormatDefinition extends AbstractDateFormatDefinition<DateTimeFormatDefinition.Config> {
 

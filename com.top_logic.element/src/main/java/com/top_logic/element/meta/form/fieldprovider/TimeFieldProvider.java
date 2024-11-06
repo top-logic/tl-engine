@@ -42,8 +42,7 @@ public class TimeFieldProvider extends AbstractFieldProvider {
 	private void setConfiguredFormat(ComplexField field, EditContext editContext) {
 		Format format;
 		try {
-			format = DisplayAnnotations
-				.getConfiguredDateFormat(editContext.getAnnotation(com.top_logic.model.annotate.ui.Format.class));
+			format = DisplayAnnotations.getConfiguredFormat(editContext);
 		} catch (ConfigurationException ex) {
 			Logger.error("Invalid attribute definition for '" + editContext + "'.", ex, TimeFieldProvider.class);
 			format = null;

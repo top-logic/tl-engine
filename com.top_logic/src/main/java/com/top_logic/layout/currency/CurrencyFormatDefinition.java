@@ -9,6 +9,7 @@ import java.text.DecimalFormat;
 import java.util.Currency;
 import java.util.Locale;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
@@ -21,6 +22,7 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 /**
  * Definition of a decimal format that displays an additional {@link Currency}.
  */
+@InApp
 @Label("Currency format")
 public class CurrencyFormatDefinition extends DecimalFormatDefinition<CurrencyFormatDefinition.Config> {
 

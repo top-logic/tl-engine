@@ -386,7 +386,7 @@
 						</export-binding>
 						<tag-provider>
 							<impl class="com.top_logic.element.meta.form.tag.StringTagProvider" 
-								columns="10"
+								columns="20"
 							/>
 						</tag-provider>
 						<annotation config:interface="com.top_logic.model.annotate.ui.TLCssClass" value="num"/>

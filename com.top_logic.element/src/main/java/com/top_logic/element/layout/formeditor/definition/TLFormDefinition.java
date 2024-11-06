@@ -34,7 +34,7 @@ import com.top_logic.model.util.TLModelPartRef.BuildRef;
  */
 @TagName("form-definition")
 @TargetType(value = { TLTypeKind.REF, TLTypeKind.COMPOSITION })
-//Search is done explicitly
+// Generalizations are considered explicitly by code using this annotation.
 @AnnotationInheritance(Policy.REDEFINE)
 @InApp
 public interface TLFormDefinition extends TLTypeAnnotation, FormContextDefinition {

@@ -26,7 +26,7 @@ import com.top_logic.model.config.TLTypeAnnotation;
  */
 @TagName("dynamic-icon")
 @TargetType(value = { TLTypeKind.REF, TLTypeKind.COMPOSITION })
-// Search is done explicitly
+// Generalizations are considered explicitly by code using this annotation.
 @AnnotationInheritance(Policy.REDEFINE)
 @InApp
 public interface TLDynamicIcon extends TLTypeAnnotation {

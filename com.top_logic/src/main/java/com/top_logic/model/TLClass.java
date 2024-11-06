@@ -114,7 +114,7 @@ public interface TLClass extends TLClassBase {
 
 		if (AnnotationInheritance.Policy.getInheritancePolicy(annotationInterface) == Policy.INHERIT) {
 			for (TLClass generalization : getGeneralizations()) {
-				T inherited = generalization.getAnnotationLocal(annotationInterface);
+				T inherited = generalization.getAnnotation(annotationInterface);
 				if (inherited != null) {
 					return inherited;
 				}

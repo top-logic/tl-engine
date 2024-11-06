@@ -131,6 +131,10 @@ public abstract class AddMOAttributeProcessor
 			
 			Set<MOClass> forUpdate = getTablesForUpdate(allTypes);
 			for (MOClass tableForUpdate : forUpdate) {
+				if (tableForUpdate.isAbstract()) {
+					log.info("Skipping abstract table '" + tableForUpdate.getName() + "'.");
+					continue;
+				}
 				log.info("Adding attribute '" + attributeName + "' to table '" + tableForUpdate.getName() + "'.");
 				updateDatabaseTable(context, log, connection, tableForUpdate);
 			}

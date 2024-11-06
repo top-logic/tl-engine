@@ -22,6 +22,7 @@ import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.MOClass;
+import com.top_logic.dob.meta.MOIndex;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.dob.schema.config.AttributeConfig;
@@ -99,7 +100,11 @@ public class AddMOReferenceProcessor extends AddMOAttributeProcessor {
 	}
 
 	private void createIndex(Log log, SQLProcessor processor, MOClass table, String tableName, MOReference reference) {
-		DBIndex index = (DBIndex) reference.getIndex().resolve(table);
+		MOIndex moIndex = reference.getIndex();
+		if (moIndex == null) {
+			return;
+		}
+		DBIndex index = (DBIndex) moIndex.resolve(table);
 		String[] indexColumns = SchemaSetup.getIndexStrategy(table).createIndexColumns(table, index)
 			.stream()
 			.map(DBAttribute::getDBName)

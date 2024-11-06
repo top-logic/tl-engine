@@ -133,13 +133,19 @@
 							<ref>
 								<steps>
 									<step value="annotated"/>
-									<step type="com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder$PartModel" value="resolved-type"/>
+									<step
+										type="com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder$PartModel"
+										value="resolved-type"
+									/>
 								</steps>
 							</ref>
 							<ref>
 								<steps>
 									<step value="annotated"/>
-									<step type="com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder$PartModel" value="type-kind"/>
+									<step
+										type="com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder$PartModel"
+										value="type-kind"
+									/>
 								</steps>
 							</ref>
 						</args>

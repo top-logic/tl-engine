@@ -10,7 +10,7 @@
 		<dependency name="Ticket_27906_polymorphic_format_annotations"
 			module="tl"
 		/>
-		<dependency name="Ticket_28263_add_deletion_policy_to_reference"
+		<dependency name="Ticket_28280_move_security_root"
 			module="tl-element"
 		/>
 	</dependencies>

@@ -1113,6 +1113,20 @@
 						</css-class>
 					</annotations>
 				</property>
+				<property name="duration"
+					type="tl.core:Duration"
+				/>
+				<property name="durationShort"
+					type="tl.core:Duration"
+				>
+					<annotations>
+						<format>
+							<definition class="com.top_logic.layout.form.format.CustomDurationFormat"
+								pattern="mm:ss"
+							/>
+						</format>
+					</annotations>
+				</property>
 			</attributes>
 		</interface>
 		<class name="A">

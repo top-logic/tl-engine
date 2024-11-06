@@ -5,25 +5,20 @@
  */
 package com.top_logic.element.meta.form.fieldprovider;
 
-import java.text.FieldPosition;
 import java.text.Format;
-import java.text.ParsePosition;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
-import com.top_logic.basic.config.ConfigurationValueProvider;
-import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.element.meta.form.AbstractFieldProvider;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.format.DurationFormat;
 import com.top_logic.layout.form.model.ComplexField;
-import com.top_logic.layout.form.model.DescriptiveParsePosition;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
-import com.top_logic.util.Resources;
 
 /**
  * {@link FieldProvider} for {@link TLStructuredTypePart}s of type {@link TypeSpec#LONG_TYPE} with a
@@ -31,65 +26,30 @@ import com.top_logic.util.Resources;
  */
 public class DurationFieldProvider extends AbstractFieldProvider {
 
-	/**
-	 * Adapter of {@link MillisFormat} to {@link Format}.
-	 */
-	private static final class DurationFormat extends Format {
-		/**
-		 * Singleton {@link DurationFormat} instance.
-		 */
-		public static final DurationFormat INSTANCE = new DurationFormat();
-
-		private DurationFormat() {
-			// Singleton constructor.
-		}
-
-		@Override
-		public StringBuffer format(Object obj, StringBuffer toAppendTo, FieldPosition pos) {
-			toAppendTo.append(format().getSpecification(obj));
-			return toAppendTo;
-		}
-
-		@SuppressWarnings("unchecked")
-		private ConfigurationValueProvider<Object> format() {
-			return (ConfigurationValueProvider<Object>) (ConfigurationValueProvider<?>) MillisFormat.INSTANCE;
-		}
-
-		@Override
-		public Object parseObject(String source, ParsePosition pos) {
-			int index = pos.getIndex();
-			try {
-				Object result = format().getValue(null, source.substring(index));
-				pos.setIndex(source.length());
-				return result;
-			} catch (ConfigurationException ex) {
-				pos.setErrorIndex(index);
-				if (pos instanceof DescriptiveParsePosition description) {
-					description.setErrorDescription(Resources.getInstance().getString(ex.getErrorKey()));
-				}
-				return null;
-			}
-		}
-	}
-
 	@Override
 	public FormMember createFormField(EditContext editContext, String fieldName) {
 		boolean isMandatory = editContext.isMandatory();
 		boolean isDisabled = editContext.isDisabled();
 		
-		Format format;
-		try {
-			format = DisplayAnnotations.getConfiguredFormat(editContext);
-		} catch (ConfigurationException ex) {
-			Logger.error("Invalid attribute definition for '" + editContext + "'.", ex, DateFieldProvider.class);
-			format = DurationFormat.INSTANCE;
-		}
+		Format format = lookupFormat(editContext);
 
 		ComplexField field =
 			FormFactory.newComplexField(fieldName, format, FormFactory.IGNORE_WHITE_SPACE, isMandatory,
 				isDisabled, null);
 
 		return field;
+	}
+
+	private Format lookupFormat(EditContext editContext) {
+		try {
+			Format format = DisplayAnnotations.getConfiguredFormat(editContext);
+			if (format != null) {
+				return format;
+			}
+		} catch (ConfigurationException ex) {
+			Logger.error("Invalid attribute definition for '" + editContext + "'.", ex, DateFieldProvider.class);
+		}
+		return DurationFormat.INSTANCE;
 	}
 
 }

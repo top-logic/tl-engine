@@ -313,8 +313,14 @@ public class DisplayAnnotations {
 
 	/**
 	 * Returns the {@link Format} annotation for the given {@link TLTypePart}, or null none given.
+	 * 
+	 * <p>
+	 * Note: Most probably, you want to use {@link #getConfiguredFormat(AnnotationLookup)}.
+	 * </p>
+	 * 
+	 * @see #getConfiguredFormat(AnnotationLookup)
 	 */
-	public static Format getFormat(AnnotationLookup modelPart) {
+	public static Format getFormatAnnotation(AnnotationLookup modelPart) {
 		return TLAnnotations.getAnnotation(modelPart, Format.class);
 	}
 
@@ -331,11 +337,11 @@ public class DisplayAnnotations {
 	 *         iff configured format is a global format but not a {@link NumberFormat} or format is
 	 *         not a global format and is invalid as pattern for a {@link DecimalFormat}.
 	 * 
-	 * @see #getConfiguredNumberFormat(TLTypePart)
+	 * @see #getConfiguredFormat(AnnotationLookup)
 	 */
 	public static String getFormatPattern(AnnotationLookup modelPart)
 			throws ConfigurationException {
-		Format formatAnnotation = getFormat(modelPart);
+		Format formatAnnotation = getFormatAnnotation(modelPart);
 		if (formatAnnotation == null) {
 			return null;
 		}
@@ -367,9 +373,9 @@ public class DisplayAnnotations {
 	 *         iff configured format is a global format but not a {@link DateFormat} or format is
 	 *         not a global format and is invalid as pattern for a {@link SimpleDateFormat}.
 	 */
-	public static java.text.Format getConfiguredDateFormat(AnnotationLookup modelPart)
+	public static java.text.Format getConfiguredFormat(AnnotationLookup modelPart)
 			throws ConfigurationException {
-		return getConfiguredDateFormat(getFormat(modelPart));
+		return toFormat(getFormatAnnotation(modelPart));
 	}
 
 	/**
@@ -380,6 +386,11 @@ public class DisplayAnnotations {
 	 * {@link String} that can be used as pattern for a {@link SimpleDateFormat}.
 	 * </p>
 	 * 
+	 * <p>
+	 * Note: Best use through
+	 * {@link DisplayAnnotations}{@link #getConfiguredFormat(AnnotationLookup)}
+	 * </p>
+	 * 
 	 * @param formatAnnotation
 	 *        The format configuration, or <code>null</code>.
 	 * 
@@ -388,73 +399,22 @@ public class DisplayAnnotations {
 	 * @throws ConfigurationException
 	 *         iff configured format is a global format but not a {@link DateFormat} or format is
 	 *         not a global format and is invalid as pattern for a {@link SimpleDateFormat}.
+	 * 
+	 * @see #getConfiguredFormat(AnnotationLookup)
 	 */
-	public static java.text.Format getConfiguredDateFormat(Format formatAnnotation) throws ConfigurationException {
+	public static java.text.Format toFormat(Format formatAnnotation) throws ConfigurationException {
 		if (formatAnnotation == null) {
 			return null;
 		}
 
 		PolymorphicConfiguration<? extends FormatFactory> definition = formatAnnotation.getDefinition();
-		if (definition != null) {
-			return makeFormat(definition);
+		if (definition == null) {
+			return null;
 		}
 
-		return null;
-	}
-
-	private static java.text.Format makeFormat(PolymorphicConfiguration<? extends FormatFactory> definition) {
 		FormatFactory factory = TypedConfigUtil.createInstance(definition);
 		return factory.newFormat(FormatterService.getInstance().getConfig(), ThreadContext.getTimeZone(),
 			ThreadContext.getLocale());
-	}
-
-	/**
-	 * Returns a {@link NumberFormat} representing the configured {@link Format} of the given model
-	 * part.
-	 * 
-	 * <p>
-	 * The configured format can either be the id of a global configured {@link NumberFormat} or a
-	 * {@link String} that can be used as pattern for a {@link DecimalFormat}.
-	 * </p>
-	 * 
-	 * @param typePart
-	 *        The {@link TLTypePart} to get configured {@link NumberFormat} from.
-	 * 
-	 * @return <code>null</code> iff given model part has not configured format.
-	 * 
-	 * @throws ConfigurationException
-	 *         iff configured format is a global format but not a {@link NumberFormat} or format is
-	 *         not a global format and is invalid as pattern for a {@link DecimalFormat}.
-	 */
-	public static java.text.Format getConfiguredNumberFormat(TLTypePart typePart) throws ConfigurationException {
-		return getConfiguredNumberFormat(getFormat(typePart));
-	}
-
-	/**
-	 * The {@link NumberFormat} representing the annotated {@link Format}.
-	 * 
-	 * <p>
-	 * The configured format can either be the id of a global configured {@link NumberFormat} or a
-	 * {@link String} that can be used as pattern for a {@link DecimalFormat}.
-	 * </p>
-	 * 
-	 * @return <code>null</code> iff there is no format configuration.
-	 * 
-	 * @throws ConfigurationException
-	 *         iff configured format is a global format but not a {@link NumberFormat} or format is
-	 *         not a global format and is invalid as pattern for a {@link DecimalFormat}.
-	 */
-	public static java.text.Format getConfiguredNumberFormat(Format formatAnnotation) throws ConfigurationException {
-		if (formatAnnotation == null) {
-			return null;
-		}
-
-		PolymorphicConfiguration<? extends FormatFactory> definition = formatAnnotation.getDefinition();
-		if (definition != null) {
-			return makeFormat(definition);
-		}
-
-		return null;
 	}
 
 	/**
@@ -468,18 +428,7 @@ public class DisplayAnnotations {
 	 *        The {@link TLModelPart} to get {@link NumberFormat} from.
 	 */
 	public static java.text.Format getFloatFormat(AnnotationLookup modelPart) throws ConfigurationException {
-		return getFloatFormat(getFormat(modelPart));
-	}
-
-	/**
-	 * The float format for the given format configuration.
-	 * 
-	 * <p>
-	 * If there is none the {@link Formatter#getDoubleFormat() default float format} is returned.
-	 * </p>
-	 */
-	public static java.text.Format getFloatFormat(Format formatAnnotation) throws ConfigurationException {
-		java.text.Format configuredFormat = getConfiguredNumberFormat(formatAnnotation);
+		java.text.Format configuredFormat = getConfiguredFormat(modelPart);
 		if (configuredFormat != null) {
 			return configuredFormat;
 		}
@@ -522,7 +471,7 @@ public class DisplayAnnotations {
 	 *        The {@link TLModelPart} to get {@link DateFormat} from.
 	 */
 	public static java.text.Format getDateFormat(AnnotationLookup typePart) throws ConfigurationException {
-		java.text.Format configuredFormat = getConfiguredDateFormat(typePart);
+		java.text.Format configuredFormat = getConfiguredFormat(typePart);
 		if (configuredFormat != null) {
 			return configuredFormat;
 		}
@@ -564,19 +513,7 @@ public class DisplayAnnotations {
 	 *        The {@link TLModelPart} to get {@link NumberFormat} from.
 	 */
 	public static java.text.Format getLongFormat(AnnotationLookup modelPart) throws ConfigurationException {
-		return getLongFormat(getFormat(modelPart));
-	}
-
-	/**
-	 * The long format specified by the given annotation.
-	 * 
-	 * <p>
-	 * If there is no annotation given, the {@link Formatter#getLongFormat() default long format} is
-	 * returned.
-	 * </p>
-	 */
-	public static java.text.Format getLongFormat(Format formatAnnotation) throws ConfigurationException {
-		java.text.Format configuredFormat = getConfiguredNumberFormat(formatAnnotation);
+		java.text.Format configuredFormat = getConfiguredFormat(modelPart);
 		if (configuredFormat != null) {
 			return configuredFormat;
 		}

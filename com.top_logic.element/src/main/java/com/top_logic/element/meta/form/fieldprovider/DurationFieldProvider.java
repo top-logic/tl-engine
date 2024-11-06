@@ -9,6 +9,7 @@ import java.text.FieldPosition;
 import java.text.Format;
 import java.text.ParsePosition;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.format.MillisFormat;
@@ -21,6 +22,7 @@ import com.top_logic.layout.form.model.ComplexField;
 import com.top_logic.layout.form.model.DescriptiveParsePosition;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.util.Resources;
 
 /**
@@ -75,8 +77,16 @@ public class DurationFieldProvider extends AbstractFieldProvider {
 		boolean isMandatory = editContext.isMandatory();
 		boolean isDisabled = editContext.isDisabled();
 		
+		Format format;
+		try {
+			format = DisplayAnnotations.getConfiguredFormat(editContext);
+		} catch (ConfigurationException ex) {
+			Logger.error("Invalid attribute definition for '" + editContext + "'.", ex, DateFieldProvider.class);
+			format = DurationFormat.INSTANCE;
+		}
+
 		ComplexField field =
-			FormFactory.newComplexField(fieldName, DurationFormat.INSTANCE, FormFactory.IGNORE_WHITE_SPACE, isMandatory,
+			FormFactory.newComplexField(fieldName, format, FormFactory.IGNORE_WHITE_SPACE, isMandatory,
 				isDisabled, null);
 
 		return field;

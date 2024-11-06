@@ -49,8 +49,7 @@ public class FloatFieldProvider extends AbstractFieldProvider {
 
 		Format format;
 		try {
-			format = DisplayAnnotations
-				.getFloatFormat(editContext.getAnnotation(com.top_logic.model.annotate.ui.Format.class));
+			format = DisplayAnnotations.getFloatFormat(editContext);
 		} catch (ConfigurationException ex) {
 			Logger.error("Invalid attribute definition for '" + editContext.toString() + "'.", ex,
 				FloatFieldProvider.class);

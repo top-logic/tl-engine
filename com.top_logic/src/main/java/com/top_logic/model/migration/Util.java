@@ -2829,12 +2829,12 @@ public class Util {
 			throw new MigrationException("Can not move part before itself: " + part);
 		}
 		List<TypePart> parts = getTLStructuredTypeParts(con, structuredType);
-		int partIndex = findPart(parts, part, structuredType);
+		int partIndex = findPartIndex(parts, part, structuredType);
 		int beforeIndex;
 		if (before == null) {
 			beforeIndex = parts.size();
 		} else {
-			beforeIndex = findPart(parts, before, structuredType);
+			beforeIndex = findPartIndex(parts, before, structuredType);
 		}
 		if (partIndex == beforeIndex - 1) {
 			// Already at correct position.
@@ -2862,7 +2862,7 @@ public class Util {
 
 	}
 
-	private int findPart(List<? extends TypePart> parts, String part, Type owner) throws MigrationException {
+	private int findPartIndex(List<? extends TypePart> parts, String part, Type owner) throws MigrationException {
 		for (int i = 0; i < parts.size(); i++) {
 			if (part.equals(parts.get(i).getPartName())) {
 				return i;
@@ -2937,37 +2937,46 @@ public class Util {
 		if (classifier.equals(before)) {
 			throw new MigrationException("Can not move classifier before itself: " + classifier);
 		}
-		List<TypePart> tlClassifiers = getTLClassifiers(con, enumType);
-		int classifierIndex = findPart(tlClassifiers, classifier, enumType);
+		List<TypePart> classifiers = getTLClassifiers(con, enumType);
+		int currentIndex = findPartIndex(classifiers, classifier, enumType);
 		int beforeIndex;
 		if (before == null) {
-			beforeIndex = tlClassifiers.size();
+			beforeIndex = classifiers.size();
 		} else {
-			beforeIndex = findPart(tlClassifiers, before, enumType);
+			beforeIndex = findPartIndex(classifiers, before, enumType);
 		}
-		if (classifierIndex == beforeIndex - 1) {
+		if (currentIndex == beforeIndex - 1) {
 			// Already at correct position.
 			return;
 		}
-		TypePart movedClassifier = tlClassifiers.get(classifierIndex);
-		// First move classifier away to avoid duplicate-key constraint.
-		updateTLClassifierSortOrder(con, movedClassifier, tlClassifiers.size());
-		int targetOrder;
-		if (classifierIndex < beforeIndex) {
-			targetOrder = beforeIndex == tlClassifiers.size() ? beforeIndex : tlClassifiers.get(beforeIndex).getOrder() - 1;
-			for (int i = classifierIndex + 1; i < beforeIndex; i++) {
-				TypePart tlClassifier = tlClassifiers.get(i);
-				updateTLClassifierSortOrder(con, tlClassifier, tlClassifier.getOrder() - 1);
-			}
-		} else {
-			assert beforeIndex < classifierIndex;
-			targetOrder = tlClassifiers.get(beforeIndex).getOrder();
-			for (int i = beforeIndex; i < classifierIndex; i++) {
-				TypePart tlClassifier = tlClassifiers.get(i);
-				updateTLClassifierSortOrder(con, tlClassifier, tlClassifier.getOrder() + 1);
-			}
+		TypePart movedClassifier = classifiers.get(currentIndex);
+
+		// Note: The following code must not assume that the order values of classifiers are
+		// normalized (starting with zero and ascending without gaps).
+
+		// Remove moved classifier from classifier list.
+		classifiers.remove(currentIndex);
+		if (currentIndex < beforeIndex) {
+			beforeIndex--;
 		}
-		updateTLClassifierSortOrder(con, movedClassifier, targetOrder);
+
+		// Move moved classifier away to avoid duplicate-key constraint violation during update.
+		updateTLClassifierSortOrder(con, movedClassifier, Integer.MAX_VALUE);
+
+		// Compact remaining classifiers (normalizing their indices).
+		for (int i = 0; i < classifiers.size() - 1; i++) {
+			TypePart otherClassifier = classifiers.get(i);
+			updateTLClassifierSortOrder(con, otherClassifier, i);
+		}
+
+		// Re-add moved classifier.
+		classifiers.add(beforeIndex, movedClassifier);
+
+		// Insert in new order.
+		for (int i = classifiers.size() - 1; i >= beforeIndex; i--) {
+			TypePart otherClassifier = classifiers.get(i);
+			updateTLClassifierSortOrder(con, otherClassifier, i);
+		}
 	}
 
 	private void updateTypeGeneralizationSortOrder(PooledConnection con, TypeGeneralization part, int newSortOrder)

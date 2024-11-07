@@ -20,6 +20,8 @@ import com.top_logic.layout.provider.PartNamesOptionProvider;
 import com.top_logic.layout.table.provider.ColumnOptionLabelProvider;
 import com.top_logic.layout.table.provider.ColumnOptionMapping;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.annotate.AnnotationInheritance;
+import com.top_logic.model.annotate.AnnotationInheritance.Policy;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.annotate.TLTypeKind;
@@ -44,6 +46,7 @@ import com.top_logic.model.config.TLTypeAnnotation;
 @TagName("main-properties")
 @TargetType(value = { TLTypeKind.REF, TLTypeKind.COMPOSITION })
 @InApp(classifiers = { InAppClassifierConstants.FORM_RELEVANT })
+@AnnotationInheritance(Policy.INHERIT)
 public interface MainProperties extends TLAttributeAnnotation, TLTypeAnnotation {
 
 	/** Property name of {@link #getProperties()}. */

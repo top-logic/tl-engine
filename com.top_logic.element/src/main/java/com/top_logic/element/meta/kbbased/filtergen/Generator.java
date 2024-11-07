@@ -19,10 +19,10 @@ import com.top_logic.model.TLStructuredTypePart;
 public interface Generator {
     
     /**
-	 * Generates a list of value options for the attribute being edited.
+	 * Generates a list of options to select from for the attribute being edited.
 	 * 
 	 * @param editContext
-	 *        The current editing context.
+	 *        The current editing context (the abstraction for the attribute being edited).
 	 * @return The available options.
 	 * 
 	 * @see AttributeUpdate#getAttribute()

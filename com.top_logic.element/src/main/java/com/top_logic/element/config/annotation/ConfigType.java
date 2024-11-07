@@ -7,6 +7,8 @@ package com.top_logic.element.config.annotation;
 
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.element.meta.AttributeSettings;
+import com.top_logic.model.annotate.AnnotationInheritance;
+import com.top_logic.model.annotate.AnnotationInheritance.Policy;
 import com.top_logic.model.annotate.DefaultStrategy;
 import com.top_logic.model.annotate.DefaultStrategy.Strategy;
 import com.top_logic.model.annotate.StringAnnotation;
@@ -22,6 +24,7 @@ import com.top_logic.model.config.TLTypeAnnotation;
  */
 @TagName("config-type")
 @DefaultStrategy(Strategy.NONE)
+@AnnotationInheritance(Policy.REDEFINE)
 public interface ConfigType extends StringAnnotation, TLAttributeAnnotation, TLTypeAnnotation {
 
 	/**

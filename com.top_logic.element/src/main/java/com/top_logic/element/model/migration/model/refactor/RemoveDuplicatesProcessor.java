@@ -112,6 +112,11 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 		@NonNullable
 		@StringDefault(DBKnowledgeAssociation.REFERENCE_DEST_NAME)
 		String getTargetEnd();
+
+		/**
+		 * Whether the same value must be assigned only once regardless of its owner.
+		 */
+		boolean getGloballyUnique();
 	}
 
 	/**
@@ -134,7 +139,9 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 		String destTableName = getConfig().getDestTable();
 		QualifiedPartName referenceName = getConfig().getReference();
 
-		log.info("Removing duplicate assignments in '" + associationTableName + "'.");
+		log.info(
+			"Removing duplicate assignments" + (referenceName == null ? "" : " of '" + referenceName.getName() + "'")
+				+ " in '" + associationTableName + "'.");
 
 		MORepository repository = context.getPersistentRepository();
 		MOStructure associationTable = (MOStructure) repository.getMetaObject(associationTableName);
@@ -170,8 +177,10 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 						literal(DBType.STRING, destTableName)));
 			}
 
-			MOReference valuetEnd = (MOReference) associationTable.getAttribute(getConfig().getTargetEnd());
-			MOReference ownerEnd = valuetEnd == dstEnd ? srcEnd : dstEnd;
+			MOReference valueEnd = (MOReference) associationTable.getAttribute(getConfig().getTargetEnd());
+			MOReference ownerEnd = valueEnd == dstEnd ? srcEnd : dstEnd;
+
+			boolean globallyUnique = getConfig().getGloballyUnique();
 
 			List<SQLColumnDefinition> columnDefs = columns(
 				util.branchColumnDef(),
@@ -179,7 +188,7 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 				columnDef(BasicTypes.REV_MIN_DB_NAME),
 				columnDef(BasicTypes.REV_MAX_DB_NAME),
 				columnDef(ownerEnd.getColumn(ReferencePart.name).getDBName()),
-				columnDef(valuetEnd.getColumn(ReferencePart.name).getDBName()));
+				columnDef(valueEnd.getColumn(ReferencePart.name).getDBName()));
 
 			CompiledStatement links = query(
 				select(
@@ -188,7 +197,8 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 					condition,
 					Util.listWithoutNull(
 						util.branchOrderOrNull(),
-						order(false, column(ownerEnd.getColumn(ReferencePart.name).getDBName())),
+						globallyUnique ? null
+							: order(false, column(ownerEnd.getColumn(ReferencePart.name).getDBName())),
 						order(false, column(BasicTypes.REV_MIN_DB_NAME))))
 				).toSql(connection.getSQLDialect());
 
@@ -210,7 +220,7 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 					long revMin = resultSet.getLong(3);
 					long revMax = resultSet.getLong(4);
 
-					if (currentBranch != branch || currentOwner != owner) {
+					if (currentBranch != branch || (!globallyUnique && currentOwner != owner)) {
 						values.clear();
 
 						currentBranch = branch;
@@ -229,11 +239,19 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 								// delete.
 								resultSet.deleteRow();
 								deleted++;
+
+								log.info("Deleted assignment of value " + value + " to owner " + owner
+									+ " in time range [" + revMin + ", " + revMax + "].");
 							} else {
 								// Update revMin of link.
-								resultSet.updateLong(3, oldRevMax + 1);
+								long newRevMin = oldRevMax + 1;
+								resultSet.updateLong(3, newRevMin);
 								resultSet.updateRow();
 								updated++;
+
+								log.info("Updated assignment of value " + value + " to owner " + owner
+									+ " from time range [" + revMin + ", " + revMax + "] to [" + newRevMin + ", "
+									+ revMax + "].");
 							}
 						}
 					}

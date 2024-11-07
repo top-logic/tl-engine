@@ -21,6 +21,9 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedPartName;
 import com.top_logic.model.migration.data.QualifiedTypeName;
+import com.top_logic.model.migration.data.Type;
+import com.top_logic.model.migration.data.TypePart;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link MigrationProcessor} creates a new {@link TLReference}.
@@ -80,6 +83,19 @@ public class CreateTLReferenceProcessor extends AbstractEndAspectProcessor<Creat
 
 	private void internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedPartName partName = getConfig().getName();
+
+		Type ownerType =
+			_util.getTLTypeOrNull(connection, TLContext.TRUNK_ID, partName.getModuleName(), partName.getTypeName());
+		if (ownerType == null) {
+			log.info("Type of part does not exist: " + partName.getName(), Log.WARN);
+			return;
+		}
+		TypePart part = _util.getTLTypePart(connection, ownerType, partName.getPartName());
+		if (part != null) {
+			log.info("Part already exists: " + partName.getName(), Log.WARN);
+			return;
+		}
+
 		QualifiedTypeName targetType = getConfig().getType();
 		_util.createTLReference(log,
 			connection, partName, targetType,

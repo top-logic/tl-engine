@@ -10,12 +10,9 @@ import java.util.List;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.element.layout.formeditor.implementation.additional.I18NConstants;
-import com.top_logic.element.meta.AttributeUpdate;
-import com.top_logic.element.meta.form.AttributeFormFactory;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.FormMember;
-import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModelListener;
 import com.top_logic.layout.form.template.model.FormEditorElementTemplate;
@@ -56,13 +53,10 @@ public class RepresentativeField extends ForeignAttributeTemplateProvider {
 		}
 
 		FormMember displayingField = getDelegate().getMember();
-		((SelectField) displayingField).setOptionModel(AllRepresentativeGroups.INSTANCE);
-
-		AttributeUpdate update = AttributeFormFactory.getAttributeUpdate(displayingField);
-		update.setDisabled(false);
-		
-		displayingField.setLabel(Resources.getInstance().getString(I18NConstants.REPRESENTATIVES));
-		displayingField.setTooltip(Resources.getInstance().getString(I18NConstants.REPRESENTATIVES.tooltip()));
+		if (displayingField != null) {
+			displayingField.setLabel(Resources.getInstance().getString(I18NConstants.REPRESENTATIVES));
+			displayingField.setTooltip(Resources.getInstance().getString(I18NConstants.REPRESENTATIVES.tooltip()));
+		}
 
 		return result;
 	}

@@ -28,6 +28,7 @@ import com.top_logic.element.meta.form.CustomEditContext;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
 import com.top_logic.element.meta.form.FieldProviderAnnotation;
+import com.top_logic.knowledge.service.Revision;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.form.FormMember;
@@ -380,7 +381,8 @@ public class DynamicColumnProviderByExpression
 	private String id(Object columnModel) {
 		if (columnModel instanceof TLObject) {
 			ObjectKey id = ((TLObject) columnModel).tId();
-			return id.getBranchContext() + "-" + id.getObjectName();
+			long rev = id.getHistoryContext();
+			return id.getBranchContext() + "-" + id.getObjectName() + (rev == Revision.CURRENT_REV ? "" : "-" + rev);
 		} else {
 			return columnModel.toString();
 		}

@@ -313,6 +313,11 @@
 				<property name="lastName"
 					type="tl.core:String"
 				/>
+				<reference name="deputyFor"
+					kind="forwards"
+					navigate="true"
+					type="GroupMember"
+				/>
 			</attributes>
 		</class>
 		<class name="Role">

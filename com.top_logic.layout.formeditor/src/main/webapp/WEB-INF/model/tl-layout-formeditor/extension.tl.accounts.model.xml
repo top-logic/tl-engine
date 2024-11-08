@@ -33,9 +33,14 @@
 							visibility="editable"
 						/>
 						<attribute-reference class="com.top_logic.layout.formeditor.accounts.RepresentativeField"
-							name="members"
 							item="account -> $account.get(`tl.accounts:Person#representativeGroup`)"
+							name="members"
 							type="tl.accounts:Group"
+						/>
+						<field
+							attribute="deputyFor"
+							fullQualifiedName="tl.accounts:Person#deputyFor"
+							type="tl.accounts:GroupMember"
 						/>
 						<field
 							attribute="timezone"

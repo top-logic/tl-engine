@@ -2269,7 +2269,7 @@ public class Util {
 			Collection<Class<? extends TLAnnotation>> toRemove) throws ConfigurationException {
 		AnnotatedConfig newAnnotations;
 		if (persistentAnnotations.isEmpty()) {
-			newAnnotations = TypedConfiguration.newConfigItem(AnnotatedConfig.class);
+			newAnnotations = TypedConfiguration.newConfigItem(AnnotationConfigs.class);
 		} else {
 			newAnnotations = (AnnotatedConfig) TypedConfiguration.fromString(persistentAnnotations);
 			for (Class<? extends TLAnnotation> annotationType : toRemove) {

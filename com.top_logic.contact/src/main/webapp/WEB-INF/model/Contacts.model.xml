@@ -242,16 +242,6 @@
 						<delete-protected/>
 					</annotations>
 				</property>
-				<property name="position"
-					type="tl.core:String"
-				>
-					<annotations>
-						<multi-line value="false"/>
-						<size-constraint upper-bound="40"/>
-						<sort-order value="140.0"/>
-						<delete-protected/>
-					</annotations>
-				</property>
 				<property name="phone_mobile"
 					type="tl.core:String"
 				>
@@ -292,18 +282,6 @@
 							<config-reference name="CompanyContact"/>
 						</constraint>
 						<sort-order value="240.0"/>
-						<delete-protected/>
-					</annotations>
-				</reference>
-				<reference name="boss"
-					kind="forwards"
-					type="PersonContact"
-				>
-					<annotations>
-						<constraint>
-							<config-reference name="PersonContact"/>
-						</constraint>
-						<sort-order value="250.0"/>
 						<delete-protected/>
 					</annotations>
 				</reference>

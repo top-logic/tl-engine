@@ -13,6 +13,9 @@
 		<dependency name="Ticket_27236_Create_Revision_Model"
 			module="tl-element"
 		/>
+		<dependency name="Ticket_26970_Update_stored_table_definition"
+			module="tl-contact"
+		/>
 		<dependency name="Ticket_26959_drop_api_generalization"
 			module="tl-model-search"
 		/>

@@ -21,13 +21,13 @@ import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.component.WithCloseDialog;
-import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.component.AbstractFormCommandHandler;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.TransactionHandler;
 import com.top_logic.layout.form.component.WithPostCreateActions;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tool.boundsec.CommandHandler;
@@ -244,8 +244,12 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 			fc.store();
 		}
 
-		FormContainer parameterObjectGroup = (FormContainer) fc.getMembers().next();
-		TLFormObject parameterObject = fc.getOverlay(parameterObjectGroup);
+		TLFormObject parameterObject;
+		if (model != null) {
+			parameterObject = fc.getAttributeUpdateContainer().getOverlay((TLObject) model, null);
+		} else {
+			parameterObject = fc.getAttributeUpdateContainer().getAllOverlays().iterator().next();
+		}
 
 		return _operation.execute(parameterObject, model, parameterObject.getEditedObject());
 	}

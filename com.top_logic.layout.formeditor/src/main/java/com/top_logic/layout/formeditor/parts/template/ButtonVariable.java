@@ -11,6 +11,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.basic.CommandModel;
@@ -68,6 +69,7 @@ public class ButtonVariable extends AbstractVariableDefinition<ButtonVariable.Co
 		 */
 		@Options(fun = InAppImplementations.class)
 		@Name(BUTTON)
+		@Mandatory
 		ConfigBase<? extends CommandHandler> getButton();
 	}
 

@@ -63,7 +63,9 @@ public abstract class AbstractTLType extends AbstractTLModelPart implements TLTy
 	public void setName(String value) {
 		TLModule owner = module;
 		if (owner != null) {
-			// Give the type index a chance to update.
+			// Note: The owner of this type keeps an index of all of its parts by name. When simply
+			// changing the name, this index gets corrupted. Since changing a type name is only
+			// possible, if the type is not owned, the type is temporarily removed from its owner.
 			owner.getTypes().remove(this);
 			this.name = value;
 			owner.getTypes().add(this);

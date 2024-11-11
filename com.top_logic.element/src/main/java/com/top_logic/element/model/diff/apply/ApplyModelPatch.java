@@ -105,7 +105,6 @@ import com.top_logic.element.model.migration.model.UpdateTLDataTypeProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLPropertyProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLReferenceProcessor;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
-import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
@@ -215,12 +214,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 		@Override
 		public Priority visit(Delete diff, Void arg) throws RuntimeException {
-			ModelKind kind = diff.getKind();
-			if (kind == null) {
-				return Priority.DELETE_TYPE_PART;
-			}
-
-			switch (kind) {
+			switch (diff.getKind()) {
 				case REFERENCE:
 					if (diff.getBackwards()) {
 						return Priority.DELETE_BACKWARDS_REF;
@@ -231,6 +225,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 				case END:
 				case CLASSIFIER:
 				case PROPERTY:
+				case OBJECT:
 					return Priority.DELETE_TYPE_PART;
 
 				case ASSOCIATION:

@@ -65,7 +65,7 @@
 			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
 			type="List"
 		>
-			<acceptable-classifiers value="customTransaction, commons"/>
+			<acceptable-classifiers value="customTransaction, form, commons"/>
 		</property>
 	</properties>
 

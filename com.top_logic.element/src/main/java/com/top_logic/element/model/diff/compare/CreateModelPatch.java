@@ -183,6 +183,11 @@ public class CreateModelPatch {
 		}
 	};
 
+	/**
+	 * {@link TLTypeVisitor} that is responsible for deciding whether two types of the same
+	 * {@link ModelKind} are considered compatible in a sense that an attribute of the visited type
+	 * can be incrementally changed to an attribute of the argument type.
+	 */
 	private final TLTypeVisitor<Boolean, TLType> _typeCompatibility = new TLTypeVisitor<>() {
 		@Override
 		public Boolean visitPrimitive(TLPrimitive left, TLType arg) {

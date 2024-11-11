@@ -123,7 +123,7 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-kafka-sync</artifactId>
+      <artifactId>tl-kafka</artifactId>
     </dependency>
   </dependencies>
   

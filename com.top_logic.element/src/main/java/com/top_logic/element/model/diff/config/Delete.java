@@ -6,7 +6,6 @@
 package com.top_logic.element.model.diff.config;
 
 import com.top_logic.basic.config.annotation.Mandatory;
-import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLModelPart;
@@ -38,7 +37,6 @@ public interface Delete extends DiffElement {
 	 * during migration but have no dedicated {@link TLModelPart model type}.
 	 * </p>
 	 */
-	@Nullable
 	ModelKind getKind();
 
 	/**

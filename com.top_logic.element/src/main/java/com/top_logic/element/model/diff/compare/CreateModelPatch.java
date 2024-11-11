@@ -404,7 +404,7 @@ public class CreateModelPatch {
 	private void addDelete(TLModule module, SingletonConfig singletonConfig) {
 		Delete delete = TypedConfiguration.newConfigItem(Delete.class);
 		delete.setName(module.getName() + TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR + singletonConfig.getName());
-		delete.setKind(null);
+		delete.setKind(ModelKind.OBJECT);
 		addDiff(delete);
 	}
 

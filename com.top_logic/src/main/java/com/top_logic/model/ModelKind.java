@@ -64,4 +64,14 @@ public enum ModelKind {
 	 */
 	CLASSIFIER,
 
+	/**
+	 * Any other object, e.g. a singleton defined in module context.
+	 * 
+	 * @implNote Note: This kind is never used in {@link TLModelPart#getModelKind()}, because a
+	 *           singleton object is only a {@link TLObject} but not a {@link TLModelPart}. This
+	 *           classification is only relevant during migration, see
+	 *           <code>com.top_logic.element.model.diff.config.Delete</code>.
+	 */
+	OBJECT,
+
 }

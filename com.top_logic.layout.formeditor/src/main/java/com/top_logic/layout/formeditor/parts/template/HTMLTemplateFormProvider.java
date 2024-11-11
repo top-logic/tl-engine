@@ -257,7 +257,7 @@ public class HTMLTemplateFormProvider
 	private HTMLTemplateFragment displayTemplate(FormEditorContext form) {
 		TLObjectFragment objectFragment = new TLObjectFragment(form, _template, form.getModel());
 
-		return contentBox(htmlTemplate((displayContext, out) -> objectFragment.write(displayContext, out)));
+		return htmlTemplate((displayContext, out) -> objectFragment.write(displayContext, out));
 	}
 
 	private static class Template {

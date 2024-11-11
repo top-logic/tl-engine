@@ -42,7 +42,7 @@ import com.top_logic.model.form.EditContextBase;
  * <ul>
  * <li>An {@link AttributeFormContext} is created.</li>
  * 
- * <li>For each attribute of the edited object:</li>
+ * <li>For each attribute of the edited object:
  * <ul>
  * <li>A {@link FieldProvider} is determined from the attribute's configuration, see
  * {@link FieldProviderAnnotation}.</li>
@@ -62,11 +62,12 @@ import com.top_logic.model.form.EditContextBase;
  * <li>The attribute's control is rendered to the UI, interacts with the browser and updates the
  * form field's value based on user input.</li>
  * </ul>
+ * </li>
  * 
  * <li>The user requests to save the form values.</li>
  * 
  * <li>The input is checked for consistency by calling {@link FormContext#checkAll()}. This in turn
- * performs the following steps for all edited fields:</li>
+ * performs the following steps for all edited fields:
  * <ul>
  * <li>The {@link FormField}'s input is checked for syntactical errors.</li>
  * <li>Potential dependencies that are attached to {@link FormField}s are checked.</li>
@@ -78,11 +79,12 @@ import com.top_logic.model.form.EditContextBase;
  * <li>The {@link UpdateCheck} {@link AttributeUpdate#setUpdateCheck(UpdateCheck) registered} for
  * the {@link EditContext} is {@link UpdateCheck#checkUpdate(AttributeUpdate) tested}.</li>
  * </ul>
+ * </li>
  * 
- * <li>A transaction is started in the persistency layer.</l>
+ * <li>A transaction is started in the persistency layer.</li>
  * <li>The new values from {@link AttributeUpdate#isChanged() changed} {@link EditContext}s are
  * stored back to the persistency layer by a call to {@link FormContext#store()}. This in turn
- * performs the following steps on each field:</li>
+ * performs the following steps on each field:
  * <ul>
  * <li>All {@link FormContextStoreAlgorithm}s
  * {@link FormContext#addStoreAlgorithm(FormContextStoreAlgorithm) registered} in the context are
@@ -99,10 +101,12 @@ import com.top_logic.model.form.EditContextBase;
  * with the {@link EditContext#getCorrectValues() updated value} from the {@link EditContext}. This
  * method is finally responsible to perform an operation on the persistent object, e.g. setting a
  * value on the underlying {@link KnowledgeObject}, see
- * {@link KnowledgeObject#setAttributeValue(String, Object)}. </l>
+ * {@link KnowledgeObject#setAttributeValue(String, Object)}.</li>
  * <li>All deletions (objects marked for deletion during the edit operation, e.g. removed composite
  * values) are performed: {@link Modification#execute()}.</li>
  * </ul>
+ * </li>
+ * 
  * <li>The transaction in the persistency layer is committed.</li>
  * <li>The UI is updated.</li>
  * </ul>

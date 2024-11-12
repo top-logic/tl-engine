@@ -434,7 +434,7 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 
 	@Override
 	public ImageProvider getImageProvider() {
-		return ImageProvider.constantImageProvider(Icons.FORM_EDITOR__TABLE);
+		return (any, flavor) -> Icons.FORM_EDITOR__TABLE;
 	}
 
 	@Override

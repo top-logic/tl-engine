@@ -450,12 +450,13 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	}
 
 	/**
-	 * Set the correct values according to the update type.
+	 * Set the value to edit.
 	 * 
 	 * @param formValue
 	 *        The value from the form that was editing the value.
 	 * 
-	 * @see #setValues(Object, Object) for setting correct value in case type
+	 * @see #getEditedValue()
+	 * @see #setValues(Object, Object) for setting the value in case of type
 	 *      {@link UpdateType#TYPE_SEARCH_RANGE}
 	 */
 	public final void setValue(Object formValue) {
@@ -485,7 +486,7 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	}
 
 	/**
-	 * Sets the search range values.
+	 * Sets a search range value.
 	 * 
 	 * @param fromValue
 	 *        The start of the search range for type {@link UpdateType#TYPE_SEARCH_RANGE}.
@@ -629,9 +630,17 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	}
 
 	/**
-	 * Forces this update to persist its value.
+	 * Writes back the edited value to the persistent storage.
+	 * 
+	 * <p>
+	 * The process of storing the edited value to the persistency layer can be customized by setting
+	 * a {@link StoreAlgorithm}, see {@link #setStoreAlgorithm(StoreAlgorithm)}.
+	 * </p>
 	 * 
 	 * @return An action that deletes objects that are marked for deletion.
+	 * 
+	 * @see #setStoreAlgorithm(StoreAlgorithm)
+	 * @see StoreAlgorithm#store(AttributeUpdate)
 	 */
 	@FrameworkInternal
 	public Modification store() {
@@ -840,6 +849,9 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	 *        The {@link FormField} to get value form. It is expected that the field has a value
 	 *        ({@link FormField#hasValue()}).
 	 * @return The value that can be used as value for this {@link AttributeUpdate}.
+	 * 
+	 * @see AttributeFormFactory#toFieldValue(com.top_logic.element.meta.form.EditContext,
+	 *      FormField, Object)
 	 */
 	@FrameworkInternal
 	public final Object fieldToAttributeValue(FormField field) {

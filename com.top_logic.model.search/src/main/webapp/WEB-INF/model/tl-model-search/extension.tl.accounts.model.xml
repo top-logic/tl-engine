@@ -2,18 +2,41 @@
 
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<module name="tl.accounts">
-		<class name="Person">
+		<class name="Group">
 			<attributes>
-				<reference name="groups">
+				<reference name="members">
 					<annotations>
-						<default-value>
-							<default-by-expression
-								in-transaction="true"
-								value="all(`tl.accounts:Group`).filter(g -> $g.get(`tl.accounts:Group#defaultGroup`))"
-							/>
-						</default-value>
+						<options>
+							<options-by-expression>
+								<function><![CDATA[g -> all(`tl.accounts:Group`)
+    // Not the group itself
+    .filter(x -> $x != $g)
+    // No representative groups
+    .filter(x -> $x.referers(`tl.accounts:Person#representativeGroup`) == null)
+    // Combined with
+    .union(
+        // All accounts
+        all(`tl.accounts:Person`)
+        // but not the account whose representative group is being edited.
+        .filter(a -> $g != $a.get(`tl.accounts:Person#representativeGroup`)))]]></function>
+							</options-by-expression>
+						</options>
+						<constraints>
+							<constraint class="com.top_logic.model.util.NoAttributeCycle">
+								<additional-observed-references>
+									<additional-observed-reference name="representativeGroup"
+										definition="tl.accounts:Person"
+									/>
+								</additional-observed-references>
+							</constraint>
+						</constraints>
 					</annotations>
 				</reference>
+			</attributes>		
+		</class>
+	
+		<class name="Person">
+			<attributes>
 				<property name="firstName">
 					<annotations>
 						<storage-algorithm>
@@ -46,6 +69,34 @@
 						</constraints>
 					</annotations>
 				</property>
+				<reference name="representativeGroup">
+					<annotations>
+						<constraints>
+							<constraint class="com.top_logic.model.util.NoAttributeCycle">
+								<additional-observed-references>
+									<additional-observed-reference name="members"
+										definition="tl.accounts:Group"
+									/>
+								</additional-observed-references>
+							</constraint>
+						</constraints>
+					</annotations>
+				</reference>
+				<reference name="deputyFor">
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[account -> $account
+    .referers(`tl.accounts:Group#members`)
+    .filter(group -> $group.referers(`tl.accounts:Person#representativeGroup`) != null)
+    .map(group -> $group
+        .referers(`tl.accounts:Person#representativeGroup`)
+        .singleElement() 
+        || $group)]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</reference>
 			</attributes>
 		</class>
 	</module>

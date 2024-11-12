@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28298_update_account"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_28298_canonical_group_members"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<delete-property name="Contacts:Contact.Person#position"/>
+		<delete-reference name="Contacts:Contact.Person#boss"/>
+	</processors>
+</migration>

@@ -98,9 +98,14 @@
 				</property>
 			</attributes>
 		</class>
-		<class name="Group">
+		<interface name="GroupMember">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+		</interface>
+		<class name="Group">
+			<generalizations>
+				<generalization type="GroupMember"/>
 			</generalizations>
 			<annotations>
 				<table name="Group"/>
@@ -160,11 +165,21 @@
 				</property>
 				<reference name="members"
 					inverse-reference="groups"
-					kind="backwards"
+					kind="forwards"
 					multiple="true"
 					navigate="true"
-					type="Person"
-				/>
+					type="GroupMember"
+				>
+					<annotations>
+						<storage-algorithm>
+							<set-storage
+								monomorphic-table="true"
+								table="hasGroupMembers"
+							/>
+						</storage-algorithm>
+						<create-visibility value="hidden"/>
+					</annotations>
+				</reference>
 				<property name="defaultGroup"
 					type="tl.core:Boolean"
 				/>
@@ -173,6 +188,7 @@
 		<class name="Person">
 			<generalizations>
 				<generalization type="tl.core:Author"/>
+				<generalization type="GroupMember"/>
 			</generalizations>
 			<annotations>
 				<implementation-binding class-name="com.top_logic.knowledge.wrap.person.Person"/>
@@ -287,26 +303,20 @@
 				</reference>
 				<reference name="groups"
 					inverse-reference="members"
-					kind="forwards"
+					kind="backwards"
 					multiple="true"
-					navigate="true"
 					type="Group"
-				>
-					<annotations>
-						<storage-algorithm>
-							<set-storage
-								monomorphic-table="true"
-								table="hasGroup"
-							/>
-						</storage-algorithm>
-						<create-visibility value="hidden"/>
-					</annotations>
-				</reference>
+				/>
 				<property name="firstName"
 					type="tl.core:String"
 				/>
 				<property name="lastName"
 					type="tl.core:String"
+				/>
+				<reference name="deputyFor"
+					kind="forwards"
+					navigate="true"
+					type="GroupMember"
 				/>
 			</attributes>
 		</class>

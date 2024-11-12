@@ -67,13 +67,16 @@ public interface StorageImplementation extends StorageDetail, Unimplementable {
 	}
 
 	/**
-	 * Update the attribute value taking the correct update from the container.
+	 * Updates the attribute value of the persistent object with the edited value from the form.
 	 * 
 	 * @param update
 	 *        The value to set.
 	 * 
 	 * @throws AttributeException
 	 *         if the update fails
+	 * 
+	 * @see AttributeUpdate#getEditedValue()
+	 * @see StorageImplementation#setAttributeValue(TLObject, TLStructuredTypePart, Object)
 	 */
 	public void update(AttributeUpdate update) throws AttributeException;
 

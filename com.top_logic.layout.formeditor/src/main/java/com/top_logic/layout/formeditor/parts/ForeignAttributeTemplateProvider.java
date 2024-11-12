@@ -46,8 +46,7 @@ public class ForeignAttributeTemplateProvider extends AbstractFormElementProvide
 
 	private static final String NO_BASE_OBJECT_CSS = "foreignAttributeNoBaseObjectMessage";
 
-	private static final ImageProvider IMAGE_PROVIDER =
-		ImageProvider.constantImageProvider(Icons.FORM_EDITOR__REFERENCE);
+	private static final ImageProvider IMAGE_PROVIDER = (any, flavor) -> Icons.FORM_EDITOR__REFERENCE;
 
 	private final FieldDefinitionTemplateProvider _delegate;
 
@@ -78,6 +77,13 @@ public class ForeignAttributeTemplateProvider extends AbstractFormElementProvide
 			_foreignObjectQuery = null;
 			_attributeOwnerType = null;
 		}
+	}
+
+	/**
+	 * The provider creating the field (in the context of the referenced object).
+	 */
+	protected FieldDefinitionTemplateProvider getDelegate() {
+		return _delegate;
 	}
 
 	private TLClass resolveAttributeOwner(InstantiationContext context, ForeignAttributeDefinition config) {

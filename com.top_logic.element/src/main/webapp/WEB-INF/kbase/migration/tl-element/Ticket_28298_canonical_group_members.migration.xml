@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28298_canonical_group_members"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_28280_move_security_root"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.migration.processors.AddApplicationTypesProcessor">
+			<schema>
+				<association super_class="Association" object_name="hasGroupMembers">
+				<attributes>
+					<source
+						override="true"
+						target-type="Group"
+					/>
+					<destination
+						override="true"
+						target-type="GroupMembers"
+					/>
+				</attributes>
+				</association>
+			</schema>
+		</processor>
+		<copy-table-data
+			source-table="hasGroup"
+			dest-table="hasGroupMembers"
+		/>
+		<invert-link-table
+			table="hasGroupMembers"
+		/>
+		<delete-table>
+			<table object_name="hasGroup"/>
+		</delete-table>
+		
+		
+		<!-- Update model -->
+
+		<delete-inverse-reference name="tl.accounts:Group#members"/>
+		<delete-reference name="tl.accounts:Person#groups"/>
+		<remove-class-generalizations name="tl.accounts:Group">
+		  <generalization type="tl.model:TLObject"/>
+		</remove-class-generalizations>
+		<create-class name="tl.accounts:GroupMember"
+		  abstract="true"
+		  without-primary-generalization="true"
+		/>
+		<add-class-generalizations name="tl.accounts:Group">
+		  <generalizations>
+		    <generalization type="tl.accounts:GroupMember"/>
+		  </generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.accounts:Person">
+		  <generalizations>
+		    <generalization type="tl.accounts:GroupMember"/>
+		  </generalizations>
+		</add-class-generalizations>
+		<add-class-generalizations name="tl.accounts:GroupMember">
+		  <generalizations>
+		    <generalization type="tl.model:TLObject"/>
+		  </generalizations>
+		</add-class-generalizations>
+		<create-reference name="tl.accounts:Group#members"
+		  multiple="true"
+		  navigate="true"
+		  type="tl.accounts:GroupMember"
+		>
+		  <annotations>
+		    <storage-algorithm>
+		      <set-storage
+		        monomorphic-table="true"
+		        table="hasGroupMembers"
+		      />
+		    </storage-algorithm>
+		    <create-visibility value="hidden"/>
+		  </annotations>
+		</create-reference>
+		<create-inverse-reference name="tl.accounts:Person#groups"
+		  inverse-reference="tl.accounts:Group#members"
+		  multiple="true"
+		/>
+		<reorder-part name="tl.accounts:Group#members"
+		  before="defaultGroup"
+		/>
+		<reorder-part name="tl.accounts:Person#groups"
+		  before="firstName"
+		/>
+		<reorder-part name="tl.accounts:Group#members"
+		  before="defaultGroup"
+		/>
+	</processors>
+</migration>

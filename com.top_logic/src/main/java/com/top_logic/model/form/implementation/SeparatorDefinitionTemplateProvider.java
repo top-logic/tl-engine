@@ -54,7 +54,7 @@ public class SeparatorDefinitionTemplateProvider extends AbstractFormElementProv
 
 	@Override
 	public ImageProvider getImageProvider() {
-		return ImageProvider.constantImageProvider(Icons.FORM_EDITOR__SEPARATOR);
+		return (any, flavor) -> Icons.FORM_EDITOR__SEPARATOR;
 	}
 
 	@Override

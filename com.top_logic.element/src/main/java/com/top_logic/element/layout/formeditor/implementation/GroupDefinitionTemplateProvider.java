@@ -41,7 +41,7 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 	static final DisplayDimension HEIGHT = dim(600, DisplayUnit.PIXEL);
 
 	private static final ImageProvider IMAGE_PROVIDER =
-		ImageProvider.constantImageProvider(Icons.FORM_EDITOR__GROUP);
+		(any, flavor) -> Icons.FORM_EDITOR__GROUP;
 
 	private static final String CSS_GROUP =
 		ReactiveFormCSS.RF_COLUMNS_LAYOUT + " " + ReactiveFormCSS.RF_INNER_TARGET;

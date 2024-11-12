@@ -51,6 +51,7 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.Group;
+import com.top_logic.tool.boundsec.wrap.GroupMember;
 import com.top_logic.util.Country;
 import com.top_logic.util.Utils;
 
@@ -61,7 +62,7 @@ import com.top_logic.util.Utils;
  * @author <a href="mailto:tsa@top-logic.com">Theo Sattler</a>
  */
 @Label("account")
-public class Person extends AbstractBoundWrapper implements Author {
+public class Person extends AbstractBoundWrapper implements Author, GroupMember {
 
     /**
      * Type of KO as defined by KBMeta.xml

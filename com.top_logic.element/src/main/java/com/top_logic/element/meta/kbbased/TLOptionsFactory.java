@@ -16,6 +16,13 @@ import com.top_logic.element.meta.kbbased.filtergen.Generator;
  * {@link AnnotationsBasedCacheValueFactory} creating a {@link Generator} from the {@link TLOptions}
  * annotation.
  * 
+ * <p>
+ * This factory is used for defining the derived attribute <code>options</code> in the
+ * persistency-layer of model attributes.
+ * </p>
+ * 
+ * @see "com.top_logic.element.meta.AttributeOperations.getOptions(TLStructuredTypePart)"
+ * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class TLOptionsFactory extends AnnotationsBasedCacheValueFactory {

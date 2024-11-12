@@ -655,7 +655,7 @@ public class KBDataProducerTask extends StateHandlingTask<KBDataProducerTask.Con
 	}
 
 	private ProducerRecord<String, TLSyncRecord<ChangeSet>> createProducerRecord(TLSyncRecord<ChangeSet> value) {
-		String topic = _producer.getConfig().getTopic();
+		String topic = _producer.getTopic();
 		return new ProducerRecord<>(topic, value);
 	}
 

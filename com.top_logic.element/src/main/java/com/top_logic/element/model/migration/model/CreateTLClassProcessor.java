@@ -9,9 +9,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Hidden;
@@ -37,15 +35,15 @@ import com.top_logic.model.util.TLModelUtil;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class CreateTLClassProcessor extends AbstractConfiguredInstance<CreateTLClassProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class CreateTLClassProcessor extends TLModelBaseLineMigrationProcessor<CreateTLClassProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link CreateTLClassProcessor}.
 	 */
 	@TagName("create-class")
 	public interface Config
-			extends PolymorphicConfiguration<CreateTLClassProcessor>, AnnotatedConfig<TLTypeAnnotation> {
+			extends TLModelBaseLineMigrationProcessor.Config<CreateTLClassProcessor>,
+			AnnotatedConfig<TLTypeAnnotation> {
 
 		/** Name for {@link #isAbstract()}. */
 		String ABSTRACT = ClassConfig.ABSTRACT;

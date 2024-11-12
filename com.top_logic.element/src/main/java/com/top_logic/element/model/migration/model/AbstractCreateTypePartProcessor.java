@@ -5,9 +5,7 @@
  */
 package com.top_logic.element.model.migration.model;
 
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.element.config.PartConfig;
@@ -23,7 +21,7 @@ import com.top_logic.model.migration.data.QualifiedPartName;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public abstract class AbstractCreateTypePartProcessor<C extends AbstractCreateTypePartProcessor.Config<?>>
-		extends AbstractConfiguredInstance<C> implements TLModelBaseLineMigrationProcessor {
+		extends TLModelBaseLineMigrationProcessor<C> {
 
 	/**
 	 * Typed configuration interface definition for {@link AbstractCreateTypePartProcessor}.
@@ -31,7 +29,7 @@ public abstract class AbstractCreateTypePartProcessor<C extends AbstractCreateTy
 	 * @author <a href="mailto:dbu@top-logic.com">dbu</a>
 	 */
 	public interface Config<I extends AbstractCreateTypePartProcessor<?>>
-			extends PolymorphicConfiguration<I>, AnnotatedConfig<TLAttributeAnnotation> {
+			extends TLModelBaseLineMigrationProcessor.Config<I>, AnnotatedConfig<TLAttributeAnnotation> {
 
 		/** Name for {@link #isOrdered()}. */
 		String ORDERED = PartConfig.ORDERED_PROPERTY;

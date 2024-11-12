@@ -17,9 +17,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.UnreachableAssertion;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.db.sql.CompiledStatement;
@@ -43,14 +41,13 @@ import com.top_logic.model.migration.data.TypePart;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class MarkTLTypePartOverride extends AbstractConfiguredInstance<MarkTLTypePartOverride.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class MarkTLTypePartOverride extends TLModelBaseLineMigrationProcessor<MarkTLTypePartOverride.Config> {
 
 	/**
 	 * Configuration options of {@link MarkTLTypePartOverride}.
 	 */
 	@TagName("mark-override")
-	public interface Config extends PolymorphicConfiguration<MarkTLTypePartOverride> {
+	public interface Config extends TLModelBaseLineMigrationProcessor.Config<MarkTLTypePartOverride> {
 
 		/**
 		 * Qualified name of the overriding part.

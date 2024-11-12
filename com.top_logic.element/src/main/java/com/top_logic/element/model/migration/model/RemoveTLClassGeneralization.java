@@ -11,9 +11,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -33,14 +31,13 @@ import com.top_logic.model.migration.data.QualifiedTypeName;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class RemoveTLClassGeneralization extends AbstractConfiguredInstance<RemoveTLClassGeneralization.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class RemoveTLClassGeneralization extends TLModelBaseLineMigrationProcessor<RemoveTLClassGeneralization.Config> {
 
 	/**
 	 * Configuration options of {@link RemoveTLClassGeneralization}.
 	 */
 	@TagName("remove-class-generalizations")
-	public interface Config extends PolymorphicConfiguration<RemoveTLClassGeneralization> {
+	public interface Config extends TLModelBaseLineMigrationProcessor.Config<RemoveTLClassGeneralization> {
 
 		/**
 		 * Qualified name of the {@link TLClass} to remove generalizations from.

@@ -11,9 +11,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
@@ -33,14 +31,13 @@ import com.top_logic.model.migration.data.Type;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class ReorderTLTypePart extends AbstractConfiguredInstance<ReorderTLTypePart.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class ReorderTLTypePart extends TLModelBaseLineMigrationProcessor<ReorderTLTypePart.Config> {
 
 	/**
 	 * Configuration options of {@link ReorderTLTypePart}.
 	 */
 	@TagName("reorder-part")
-	public interface Config extends PolymorphicConfiguration<ReorderTLTypePart> {
+	public interface Config extends TLModelBaseLineMigrationProcessor.Config<ReorderTLTypePart> {
 
 		/**
 		 * Qualified name of the {@link TLTypePart} to reorder.

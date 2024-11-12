@@ -9,7 +9,6 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -34,14 +33,13 @@ import com.top_logic.model.migration.data.Type;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class CreateTLDatatypeProcessor extends AbstractConfiguredInstance<CreateTLDatatypeProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class CreateTLDatatypeProcessor extends TLModelBaseLineMigrationProcessor<CreateTLDatatypeProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link CreateTLDatatypeProcessor}.
 	 */
 	@TagName("create-datatype")
-	public interface Config extends PolymorphicConfiguration<CreateTLDatatypeProcessor>,
+	public interface Config extends TLModelBaseLineMigrationProcessor.Config<CreateTLDatatypeProcessor>,
 			AnnotatedConfig<TLTypeAnnotation>, DBColumnType {
 
 		/**

@@ -67,7 +67,7 @@ public class KafkaSend extends GenericMethod {
 		String message = asString(arguments[1]);
 		String key = asString(arguments[2]);
 		List<Header> headers = asHeaders(arguments[3]);
-		String topic = asString(arguments[4]);
+		String topic = asString(arguments[4], producer.getTopic());
 		long timeout = asLong(arguments[5], DEFAULT_TIMEOUT);
 		ProducerRecord<String, String> record = new ProducerRecord<>(topic, null, key, message, headers);
 		send(producer, timeout, record);

@@ -598,7 +598,7 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	 */
 	@Name(LOG_WRITER)
 	@Mandatory
-	PolymorphicConfiguration<KafkaLogWriter<V>> getLogWriter();
+	PolymorphicConfiguration<KafkaLogWriter<? extends V>> getLogWriter();
 
 	/**
 	 * The Kafka {@link Properties} to be used for {@link KafkaCommonClient} instantiation. A new,

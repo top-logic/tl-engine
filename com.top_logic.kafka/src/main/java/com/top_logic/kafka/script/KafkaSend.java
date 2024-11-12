@@ -62,19 +62,19 @@ public class KafkaSend extends GenericMethod {
 			throw new TopLogicException(I18NConstants.ERROR_KAFKA_SERVICE_NOT_STARTED);
 		}
 		String producerName = asString(arguments[0]);
-		TLKafkaProducer<String, String> producer = getProducer(producerName);
+		TLKafkaProducer<Object, Object> producer = getProducer(producerName);
 
-		String message = asString(arguments[1]);
-		String key = asString(arguments[2]);
+		Object message = arguments[1];
+		Object key = arguments[2];
 		List<Header> headers = asHeaders(arguments[3]);
 		String topic = asString(arguments[4], producer.getTopic());
 		long timeout = asLong(arguments[5], DEFAULT_TIMEOUT);
-		ProducerRecord<String, String> record = new ProducerRecord<>(topic, null, key, message, headers);
+		ProducerRecord<Object, Object> record = new ProducerRecord<>(topic, null, key, message, headers);
 		send(producer, timeout, record);
 		return null;
 	}
 
-	private void send(TLKafkaProducer<String, String> producer, long timeout, ProducerRecord<String, String> record) {
+	private void send(TLKafkaProducer<Object, Object> producer, long timeout, ProducerRecord<Object, Object> record) {
 		try {
 			producer.send(record).get(timeout, TimeUnit.MILLISECONDS);
 		} catch (InterruptedException | ExecutionException | TimeoutException exception) {
@@ -86,9 +86,9 @@ public class KafkaSend extends GenericMethod {
 	}
 
 	@SuppressWarnings("unchecked")
-	private TLKafkaProducer<String, String> getProducer(String producerName) {
+	private TLKafkaProducer<Object, Object> getProducer(String producerName) {
 		/* That cast is unsafe, but unavoidable. */
-		return (TLKafkaProducer<String, String>) KafkaProducerService.getInstance().getProducer(producerName);
+		return (TLKafkaProducer<Object, Object>) KafkaProducerService.getInstance().getProducer(producerName);
 	}
 
 	private List<Header> asHeaders(Object untypedHeaders) {

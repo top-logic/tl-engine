@@ -6,7 +6,6 @@
 package com.top_logic.kafka.script;
 
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
-import static com.top_logic.basic.util.Utils.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -16,6 +15,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.Headers;
 
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
@@ -23,11 +24,14 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
+import com.top_logic.basic.config.constraint.algorithm.ValueConstraint;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.kafka.services.consumer.ConsumerProcessor;
-import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.layout.form.component.Editor;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.editor.PlainEditor;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -51,6 +55,7 @@ import com.top_logic.model.search.ui.TLScriptPropertyEditor;
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
 @Label("TL-Script message processor")
+@InApp
 public class ConsumerProcessorByExpression extends AbstractConfiguredInstance<ConsumerProcessorByExpression.Config>
 		implements ConsumerProcessor<String, String> {
 
@@ -92,6 +97,17 @@ public class ConsumerProcessorByExpression extends AbstractConfiguredInstance<Co
 		Expr getProcessor();
 
 		/**
+		 * Whether to execute the {@link #getProcessor()} in a transaction context.
+		 * 
+		 * <p>
+		 * To create or modify persistent objects in the {@link #getProcessor()}, a transaction
+		 * context is necessary.
+		 * </p>
+		 */
+		@BooleanDefault(true)
+		boolean getTransaction();
+
+		/**
 		 * Syntax check of {@link Config#getProcessor()} with implicitly defined parameters.
 		 */
 		class SyntaxCheck extends ValueConstraint<Expr> {
@@ -124,10 +140,13 @@ public class ConsumerProcessorByExpression extends AbstractConfiguredInstance<Co
 
 	private final QueryExecutor _processor;
 
+	private final boolean _transaction;
+
 	/** {@link TypedConfiguration} constructor for {@link ConsumerProcessorByExpression}. */
 	public ConsumerProcessorByExpression(InstantiationContext context, Config config) {
 		super(context, config);
 		_processor = QueryExecutor.compile(prefixWithParameters(config.getProcessor()));
+		_transaction = config.getTransaction();
 	}
 
 	private static Define prefixWithParameters(Expr scriptBody) {
@@ -140,11 +159,15 @@ public class ConsumerProcessorByExpression extends AbstractConfiguredInstance<Co
 	@Override
 	public void process(ConsumerRecords<String, String> records) {
 		for (ConsumerRecord<String, String> record : records) {
-			try (Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-				boolean doCommit = processMessage(record);
-				if (doCommit) {
-					transaction.commit();
+			if (_transaction) {
+				try (Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+					boolean doCommit = processMessage(record);
+					if (doCommit) {
+						transaction.commit();
+					}
 				}
+			} else {
+				processMessage(record);
 			}
 		}
 	}

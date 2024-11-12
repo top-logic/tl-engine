@@ -249,6 +249,10 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 		if (parameterObject == null) {
 			// Try to fetch edited model.
 			parameterObject = fc.getAttributeUpdateContainer().getOverlay((TLObject) model, null);
+			if (parameterObject == null) {
+				// Use just the first one.
+				parameterObject = fc.getAttributeUpdateContainer().getAllOverlays().iterator().next();
+			}
 		}
 
 		return _operation.execute(parameterObject, model, parameterObject.getEditedObject());

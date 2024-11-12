@@ -21,8 +21,4 @@ public enum ButtonStyle {
 	 */
 	BUTTON,
 
-	/**
-	 * Button is rendered as link.
-	 */
-	LINK
 }

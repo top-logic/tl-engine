@@ -64,6 +64,11 @@ public class UpdateTLDataTypeProcessor extends TLModelBaseLineMigrationProcessor
 		QualifiedTypeName getNewName();
 
 		/**
+		 * @see #getNewName()
+		 */
+		void setNewName(QualifiedTypeName value);
+
+		/**
 		 * See {@link DatatypeConfig#getKind()}.
 		 */
 		@Name(DatatypeConfig.KIND)

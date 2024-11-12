@@ -210,6 +210,11 @@ public class Binary extends GenericMethod {
 			return _contentType.toString();
 		}
 
+		@Override
+		public String toString() {
+			return "Binary data: " + getName();
+		}
+
 	}
 
 	/**

@@ -20,7 +20,6 @@ import com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.IButtonRenderer;
 import com.top_logic.layout.form.control.ImageButtonRenderer;
-import com.top_logic.layout.form.control.LinkButtonRenderer;
 import com.top_logic.layout.form.values.edit.InAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.renderers.ButtonComponentButtonRenderer;
@@ -107,8 +106,6 @@ public class ButtonVariable extends AbstractVariableDefinition<ButtonVariable.Co
 		switch (_style) {
 			case BUTTON:
 				return ButtonComponentButtonRenderer.INSTANCE;
-			case LINK:
-				return LinkButtonRenderer.INSTANCE;
 			case ICON:
 				return ImageButtonRenderer.INSTANCE;
 		}

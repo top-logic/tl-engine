@@ -150,19 +150,14 @@ public class ConsumerProcessorByExpression extends AbstractConfiguredInstance<Co
 	}
 
 	private boolean processMessage(ConsumerRecord<String, String> message) {
-		Object result = processMessageSafe(message);
-		if (result instanceof Boolean) {
-			return (boolean) result;
-		}
-		throw new RuntimeException("Script did neither return 'true' nor 'false' but: " + debug(result));
-	}
-
-	private Object processMessageSafe(ConsumerRecord<String, String> message) {
 		try {
-			return _processor.execute(message.value(), message.key(), toList(message.headers()), message.topic());
-		} catch (RuntimeException | Error exception) {
-			throw new RuntimeException("Script failed to process the message.", exception);
+			_processor.execute(message.value(), message.key(), toList(message.headers()), message.topic());
+		} catch (RuntimeException | Error ex) {
+			Logger.error("Consumer of topic '" + message.topic() + "' failed to process message '" + message + "': "
+				+ ex.getMessage(), ex);
+			return false;
 		}
+		return true;
 	}
 
 	private List<List<String>> toList(Headers headers) {

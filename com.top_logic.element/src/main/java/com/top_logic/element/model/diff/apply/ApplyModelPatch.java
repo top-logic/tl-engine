@@ -135,7 +135,6 @@ import com.top_logic.model.config.EnumConfig;
 import com.top_logic.model.config.EnumConfig.ClassifierConfig;
 import com.top_logic.model.config.TypeConfig;
 import com.top_logic.model.factory.TLFactory;
-import com.top_logic.model.impl.generated.TlModelFactory;
 import com.top_logic.model.migration.data.QualifiedPartName;
 import com.top_logic.model.migration.data.QualifiedTypeName;
 import com.top_logic.model.util.TLModelUtil;
@@ -730,7 +729,7 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 		List<ExtendsConfig> generalizations = type.getGeneralizations();
 		if (generalizations.isEmpty()) {
-			newClass.setPrimaryGeneralization(qTypeName(TlModelFactory.TL_MODEL_STRUCTURE, TLObject.TL_OBJECT_TYPE));
+			newClass.setWithoutPrimaryGeneralization(true);
 		} else {
 			/* Generalizations are created later. */
 			newClass.setWithoutPrimaryGeneralization(true);

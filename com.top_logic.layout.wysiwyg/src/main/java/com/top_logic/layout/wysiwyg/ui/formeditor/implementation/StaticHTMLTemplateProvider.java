@@ -26,7 +26,7 @@ import com.top_logic.model.form.implementation.FormEditorContext;
 public class StaticHTMLTemplateProvider extends AbstractFormElementProvider<StaticHTML> {
 
 	private static final ImageProvider IMAGE_PROVIDER =
-		ImageProvider.constantImageProvider(Icons.STATIC_HTML_CONTENT);
+		(any, flavor) -> Icons.STATIC_HTML_CONTENT;
 
 	/**
 	 * Creates a new {@link StaticHTMLTemplateProvider}.

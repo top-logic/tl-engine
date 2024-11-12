@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28298_update_account"
+		module="tl-model-search"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_28298_update_account"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_27999_Multiple_composition_tables"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_27604_Upgrade_GridCreateHandlerByExpression_createType"
+			module="tl-model-search"
+		/>
+	</dependencies>
+	<processors>
+		<add-annotations name="tl.accounts:Group#members">
+			<annotations>
+				<options>
+					<options-by-expression>
+						<function><![CDATA[g -> all(`tl.accounts:Group`)
+    // Not the group itself
+    .filter(x -> $x != $g)
+    // No representative groups
+    .filter(x -> $x.referers(`tl.accounts:Person#representativeGroup`) == null)
+    // Combined with
+    .union(
+        // All accounts
+        all(`tl.accounts:Person`)
+        // but not the account whose representative group is being edited.
+        .filter(a -> $g != $a.get(`tl.accounts:Person#representativeGroup`)))]]></function>
+					</options-by-expression>
+				</options>
+				<constraints>
+					<constraint class="com.top_logic.model.util.NoAttributeCycle">
+						<additional-observed-references>
+							<additional-observed-reference name="representativeGroup"
+								definition="tl.accounts:Person"
+							/>
+						</additional-observed-references>
+					</constraint>
+				</constraints>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.accounts:Person#representativeGroup">
+			<annotations>
+				<constraints>
+					<constraint class="com.top_logic.model.util.NoAttributeCycle">
+						<additional-observed-references>
+							<additional-observed-reference name="members"
+								definition="tl.accounts:Group"
+							/>
+						</additional-observed-references>
+					</constraint>
+				</constraints>
+			</annotations>
+		</add-annotations>
+		<create-reference name="tl.accounts:Person#deputyFor"
+			navigate="true"
+			type="tl.accounts:GroupMember"
+		>
+			<annotations>
+				<storage-algorithm>
+					<query>
+						<expr><![CDATA[account -> $account
+    .referers(`tl.accounts:Group#members`)
+    .filter(group -> $group.referers(`tl.accounts:Person#representativeGroup`) != null)
+    .map(group -> $group
+        .referers(`tl.accounts:Person#representativeGroup`)
+        .singleElement() 
+        || $group)]]></expr>
+					</query>
+				</storage-algorithm>
+			</annotations>
+		</create-reference>
+		<reorder-part name="tl.accounts:Person#deputyFor"/>
+	</processors>
+</migration>

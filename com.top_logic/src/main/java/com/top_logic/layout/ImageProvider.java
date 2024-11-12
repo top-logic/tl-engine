@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout;
 
+import com.top_logic.layout.basic.IconsBase;
 import com.top_logic.layout.basic.ThemeImage;
 
 /**
@@ -27,6 +28,11 @@ public interface ImageProvider {
 
 	/**
 	 * Creates a {@link ImageProvider} returning a constant {@link ThemeImage}.
+	 * 
+	 * <p>
+	 * Note: Do not use this utility from a static block accessing an icons constants class (see
+	 * {@link IconsBase}). Otherwise, the icon constant may be accessed before initialized.
+	 * </p>
 	 * 
 	 * @param icon
 	 *        The only {@link ThemeImage} which should be provided by the {@link ImageProvider}.

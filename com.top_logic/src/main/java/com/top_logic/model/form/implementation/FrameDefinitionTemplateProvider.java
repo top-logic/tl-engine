@@ -64,7 +64,7 @@ public class FrameDefinitionTemplateProvider extends AbstractFormContainerProvid
 
 	@Override
 	public ImageProvider getImageProvider() {
-		return ImageProvider.constantImageProvider(Icons.FORM_EDITOR__FRAME);
+		return (any, flavor) -> Icons.FORM_EDITOR__FRAME;
 	}
 
 	@Override

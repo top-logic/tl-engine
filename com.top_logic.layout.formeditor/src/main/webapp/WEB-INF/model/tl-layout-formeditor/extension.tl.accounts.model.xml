@@ -26,10 +26,21 @@
 							fullQualifiedName="tl.accounts:Person#restrictedUser"
 							type="tl.core:Boolean"
 						/>
-						<field
+						<field class="com.top_logic.element.layout.formeditor.implementation.additional.GroupsField"
 							attribute="groups"
 							fullQualifiedName="tl.accounts:Person#groups"
 							type="tl.accounts:Group"
+							visibility="editable"
+						/>
+						<attribute-reference class="com.top_logic.layout.formeditor.accounts.RepresentativeField"
+							item="account -> $account.get(`tl.accounts:Person#representativeGroup`)"
+							name="members"
+							type="tl.accounts:Group"
+						/>
+						<field
+							attribute="deputyFor"
+							fullQualifiedName="tl.accounts:Person#deputyFor"
+							type="tl.accounts:GroupMember"
 						/>
 						<field
 							attribute="timezone"

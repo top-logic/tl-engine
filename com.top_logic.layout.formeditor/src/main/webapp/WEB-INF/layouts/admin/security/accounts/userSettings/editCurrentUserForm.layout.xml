@@ -165,6 +165,11 @@
 								type="tl.accounts:Group"
 								visibility="read-only"
 							/>
+							<attribute-reference class="com.top_logic.layout.formeditor.accounts.RepresentativeField"
+								item="account -> $account.get(`tl.accounts:Person#representativeGroup`)"
+								name="members"
+								type="tl.accounts:Group"
+							/>
 							<field
 								attribute="timezone"
 								fullQualifiedName="tl.accounts:Person#timezone"

@@ -13,6 +13,9 @@
 		<dependency name="Ticket_26554_Make_WebFolder_references_compositions"
 			module="tl-element"
 		/>
+		<dependency name="Ticket_26398_remove_table_interfaces"
+			module="tl-contact"
+		/>
 		<dependency name="Ticket_25732_Fix_search_operations_in_model_baseline"
 			module="tl-model-search"
 		/>

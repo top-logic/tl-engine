@@ -63,30 +63,14 @@
 								fullQualifiedName="Contacts:Contact.Person#fax"
 								type="tl.core:String"
 							/>
-							<label key="dynamic.10c2421b-b394-4ddc-bad2-d07e2c18b5a3">
-								<en>Contact details</en>
-								<de>Kontaktdaten</de>
-							</label>
-						</group>
-						<group>
-							<field
-								attribute="position"
-								fullQualifiedName="Contacts:Contact.Person#position"
-								type="tl.core:String"
-							/>
-							<field
-								attribute="boss"
-								fullQualifiedName="Contacts:Contact.Person#boss"
-								type="Contacts:PersonContact"
-							/>
 							<field
 								attribute="company"
 								fullQualifiedName="Contacts:Contact.Person#company"
 								type="Contacts:Contact.Company"
 							/>
-							<label key="dynamic.ac4eddd9-e1ec-4e8e-87e8-0e0ef7186334">
-								<en>Organization</en>
-								<de>Organisation</de>
+							<label key="dynamic.10c2421b-b394-4ddc-bad2-d07e2c18b5a3">
+								<en>Contact details</en>
+								<de>Kontaktdaten</de>
 							</label>
 						</group>
 						<group>

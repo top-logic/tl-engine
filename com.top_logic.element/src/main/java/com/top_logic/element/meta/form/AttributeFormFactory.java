@@ -178,6 +178,8 @@ public abstract class AttributeFormFactory {
 
 	/**
 	 * Converts the given model value to a value suitable for editing in the given field.
+	 * 
+	 * @see AttributeUpdate#fieldToAttributeValue(FormField)
 	 */
 	public static Object toFieldValue(EditContext context, FormField field, Object modelValue) {
 		if (context.isMultiple()) {

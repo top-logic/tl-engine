@@ -2950,33 +2950,25 @@ public class Util {
 			return;
 		}
 		TypePart movedClassifier = classifiers.get(currentIndex);
-
-		// Note: The following code must not assume that the order values of classifiers are
-		// normalized (starting with zero and ascending without gaps).
-
-		// Remove moved classifier from classifier list.
-		classifiers.remove(currentIndex);
-		if (currentIndex < beforeIndex) {
-			beforeIndex--;
-		}
-
-		// Move moved classifier away to avoid duplicate-key constraint violation during update.
+		// First move classifier away to avoid duplicate-key constraint.
 		updateTLClassifierSortOrder(con, movedClassifier, Integer.MAX_VALUE);
-
-		// Compact remaining classifiers (normalizing their indices).
-		for (int i = 0; i < classifiers.size() - 1; i++) {
-			TypePart otherClassifier = classifiers.get(i);
-			updateTLClassifierSortOrder(con, otherClassifier, i);
+		int targetOrder;
+		if (currentIndex < beforeIndex) {
+			targetOrder =
+				beforeIndex == classifiers.size() ? beforeIndex : classifiers.get(beforeIndex).getOrder() - 1;
+			for (int i = currentIndex + 1; i < beforeIndex; i++) {
+				TypePart tlClassifier = classifiers.get(i);
+				updateTLClassifierSortOrder(con, tlClassifier, tlClassifier.getOrder() - 1);
+			}
+		} else {
+			assert beforeIndex < currentIndex;
+			targetOrder = classifiers.get(beforeIndex).getOrder();
+			for (int i = currentIndex - 1; i >= beforeIndex; i--) {
+				TypePart tlClassifier = classifiers.get(i);
+				updateTLClassifierSortOrder(con, tlClassifier, tlClassifier.getOrder() + 1);
+			}
 		}
-
-		// Re-add moved classifier.
-		classifiers.add(beforeIndex, movedClassifier);
-
-		// Insert in new order.
-		for (int i = classifiers.size() - 1; i >= beforeIndex; i--) {
-			TypePart otherClassifier = classifiers.get(i);
-			updateTLClassifierSortOrder(con, otherClassifier, i);
-		}
+		updateTLClassifierSortOrder(con, movedClassifier, targetOrder);
 	}
 
 	private void updateTypeGeneralizationSortOrder(PooledConnection con, TypeGeneralization part, int newSortOrder)

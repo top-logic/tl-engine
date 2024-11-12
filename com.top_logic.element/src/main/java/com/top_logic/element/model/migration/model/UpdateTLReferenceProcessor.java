@@ -9,9 +9,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.TagName;
@@ -36,16 +34,14 @@ import com.top_logic.model.migration.data.TypePart;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<UpdateTLReferenceProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class UpdateTLReferenceProcessor extends TLModelBaseLineMigrationProcessor<UpdateTLReferenceProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link UpdateTLReferenceProcessor}.
 	 */
 	@TagName("update-reference")
-	public interface Config extends PolymorphicConfiguration<UpdateTLReferenceProcessor>,
-			UpdateTLAssociationEndProcessor.UpdateEndAspectConfig,
-			TLModelBaseLineMigrationProcessor.SkipModelBaselineApaption {
+	public interface Config extends TLModelBaseLineMigrationProcessor.Config<UpdateTLReferenceProcessor>,
+			UpdateTLAssociationEndProcessor.UpdateEndAspectConfig {
 
 		/**
 		 * Qualified name of the target type.
@@ -159,7 +155,7 @@ public class UpdateTLReferenceProcessor extends AbstractConfiguredInstance<Updat
 				getConfig().isComposite(), getConfig().isAggregate(), getConfig().isMultiple(),
 				getConfig().isBag(),
 				getConfig().isOrdered(), getConfig().canNavigate(), getConfig().getHistoryType(), getConfig(), newEnd);
-			if (tlModel == null || getConfig().isSkipModelBaselineChange()) {
+			if (tlModel == null) {
 				updateModelBaseline = false;
 			} else {
 				MigrationUtils.updateReference(log, tlModel,

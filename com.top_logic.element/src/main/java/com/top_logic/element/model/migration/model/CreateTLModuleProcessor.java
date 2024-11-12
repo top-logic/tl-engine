@@ -9,10 +9,8 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.knowledge.service.migration.MigrationContext;
@@ -29,14 +27,14 @@ import com.top_logic.util.TLContext;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class CreateTLModuleProcessor extends AbstractConfiguredInstance<CreateTLModuleProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class CreateTLModuleProcessor extends TLModelBaseLineMigrationProcessor<CreateTLModuleProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link CreateTLModuleProcessor}.
 	 */
 	@TagName("create-module")
-	public interface Config extends PolymorphicConfiguration<CreateTLModuleProcessor>, NamedConfigMandatory,
+	public interface Config
+			extends TLModelBaseLineMigrationProcessor.Config<CreateTLModuleProcessor>, NamedConfigMandatory,
 			AnnotatedConfig<TLModuleAnnotation> {
 		// Sum interface
 	}

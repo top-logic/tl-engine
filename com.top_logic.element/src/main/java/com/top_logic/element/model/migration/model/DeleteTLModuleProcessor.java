@@ -22,10 +22,8 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.LongID;
 import com.top_logic.basic.TLID;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.sql.DBHelper;
@@ -50,15 +48,14 @@ import com.top_logic.util.TLContext;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTLModuleProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class DeleteTLModuleProcessor extends TLModelBaseLineMigrationProcessor<DeleteTLModuleProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link DeleteTLModuleProcessor}.
 	 */
 	@TagName("delete-module")
-	public interface Config extends PolymorphicConfiguration<DeleteTLModuleProcessor>, NamedConfigMandatory,
-			TLModelBaseLineMigrationProcessor.SkipModelBaselineApaption {
+	public interface Config
+			extends TLModelBaseLineMigrationProcessor.Config<DeleteTLModuleProcessor>, NamedConfigMandatory {
 
 		/**
 		 * Whether it is a failure if the module is not empty.
@@ -116,7 +113,7 @@ public class DeleteTLModuleProcessor extends AbstractConfiguredInstance<DeleteTL
 
 		deleteElements(log, connection, byTypeAndBranch);
 
-		if (tlModel == null || getConfig().isSkipModelBaselineChange()) {
+		if (tlModel == null) {
 			return false;
 		}
 		return MigrationUtils.deleteModule(log, tlModel, moduleName);

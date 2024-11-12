@@ -9,9 +9,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
@@ -32,15 +30,16 @@ import com.top_logic.model.migration.data.Type;
  * 
  * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
  */
-public class UpdateTLAssociationProcessor extends AbstractConfiguredInstance<UpdateTLAssociationProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class UpdateTLAssociationProcessor
+		extends TLModelBaseLineMigrationProcessor<UpdateTLAssociationProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link UpdateTLAssociationProcessor}.
 	 */
 	@TagName("update-association")
 	public interface Config
-			extends PolymorphicConfiguration<UpdateTLAssociationProcessor>, AnnotatedConfig<TLTypeAnnotation> {
+			extends TLModelBaseLineMigrationProcessor.Config<UpdateTLAssociationProcessor>,
+			AnnotatedConfig<TLTypeAnnotation> {
 
 		/**
 		 * Qualified name of the {@link TLAssociation} to update.

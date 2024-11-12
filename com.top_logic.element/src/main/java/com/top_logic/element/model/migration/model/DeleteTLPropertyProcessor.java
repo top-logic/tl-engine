@@ -15,10 +15,8 @@ import org.w3c.dom.Document;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.UnreachableAssertion;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
@@ -40,14 +38,13 @@ import com.top_logic.model.migration.data.TypePart;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class DeleteTLPropertyProcessor extends AbstractConfiguredInstance<DeleteTLPropertyProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class DeleteTLPropertyProcessor extends TLModelBaseLineMigrationProcessor<DeleteTLPropertyProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link DeleteTLPropertyProcessor}.
 	 */
 	@TagName("delete-property")
-	public interface Config extends PolymorphicConfiguration<DeleteTLPropertyProcessor> {
+	public interface Config extends TLModelBaseLineMigrationProcessor.Config<DeleteTLPropertyProcessor> {
 
 		/**
 		 * Qualified name of the {@link TLProperty} to delete.

@@ -9,9 +9,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
@@ -28,15 +26,16 @@ import com.top_logic.model.migration.data.QualifiedTypeName;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class CreateTLEnumerationProcessor extends AbstractConfiguredInstance<CreateTLEnumerationProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class CreateTLEnumerationProcessor
+		extends TLModelBaseLineMigrationProcessor<CreateTLEnumerationProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link CreateTLEnumerationProcessor}.
 	 */
 	@TagName("create-enumeration")
 	public interface Config
-			extends PolymorphicConfiguration<CreateTLEnumerationProcessor>, AnnotatedConfig<TLTypeAnnotation> {
+			extends TLModelBaseLineMigrationProcessor.Config<CreateTLEnumerationProcessor>,
+			AnnotatedConfig<TLTypeAnnotation> {
 
 		/**
 		 * Qualified name of the new {@link TLEnumeration}.

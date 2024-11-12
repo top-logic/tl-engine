@@ -11,10 +11,8 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -37,8 +35,7 @@ import com.top_logic.model.util.TLModelUtil;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class AddTLClassGeneralization extends AbstractConfiguredInstance<AddTLClassGeneralization.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class AddTLClassGeneralization extends TLModelBaseLineMigrationProcessor<AddTLClassGeneralization.Config> {
 
 	private static final String QUALIFIED_TL_OBJECT_NAME =
 		TLModelUtil.qualifiedName(TlModelFactory.TL_MODEL_STRUCTURE, TLObjectBase.TL_OBJECT_TYPE);
@@ -47,8 +44,7 @@ public class AddTLClassGeneralization extends AbstractConfiguredInstance<AddTLCl
 	 * Configuration options of {@link AddTLClassGeneralization}.
 	 */
 	@TagName("add-class-generalizations")
-	public interface Config extends PolymorphicConfiguration<AddTLClassGeneralization>,
-			TLModelBaseLineMigrationProcessor.SkipModelBaselineApaption {
+	public interface Config extends TLModelBaseLineMigrationProcessor.Config<AddTLClassGeneralization> {
 
 		/**
 		 * Qualified name of the {@link TLClass} to add generalizations for.
@@ -122,7 +118,7 @@ public class AddTLClassGeneralization extends AbstractConfiguredInstance<AddTLCl
 		for (Generalization generalization : getConfig().getGeneralizations()) {
 			QualifiedTypeName typeName = generalization.getType();
 			_util.addGeneralisation(connection, specialisation, typeName);
-			if (tlModel == null || getConfig().isSkipModelBaselineChange()) {
+			if (tlModel == null) {
 				// skip model baseline change
 			} else if (QUALIFIED_TL_OBJECT_NAME.equals(
 				typeName.getName()) && !TlModelFactory.TL_MODEL_STRUCTURE.equals(specialisation.getModuleName())) {

@@ -14,9 +14,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Hidden;
@@ -55,8 +53,7 @@ import com.top_logic.model.util.TLModelUtil;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class ChangeAttributeTargetType extends AbstractConfiguredInstance<ChangeAttributeTargetType.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class ChangeAttributeTargetType extends TLModelBaseLineMigrationProcessor<ChangeAttributeTargetType.Config> {
 
 	/**
 	 * Configuration of a {@link ChangeAttributeTargetType}.
@@ -64,7 +61,7 @@ public class ChangeAttributeTargetType extends AbstractConfiguredInstance<Change
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
 	@TagName("change-part-type")
-	public interface Config extends PolymorphicConfiguration<ChangeAttributeTargetType> {
+	public interface Config extends TLModelBaseLineMigrationProcessor.Config<ChangeAttributeTargetType> {
 
 		/**
 		 * Qualified name of the source type.

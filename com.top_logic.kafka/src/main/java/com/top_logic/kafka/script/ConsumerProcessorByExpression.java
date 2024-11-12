@@ -33,6 +33,7 @@ import com.top_logic.layout.form.values.edit.editor.PlainEditor;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ModelReferenceChecker;
 import com.top_logic.model.search.ui.TLScriptPropertyEditor;
 
 /**
@@ -57,7 +58,7 @@ public class ConsumerProcessorByExpression extends AbstractConfiguredInstance<Co
 	public interface Config extends PolymorphicConfiguration<ConsumerProcessorByExpression> {
 
 		/**
-		 * The TL-Script that will be called for each received message.
+		 * The TL-Script that is called for each received message.
 		 * <p>
 		 * The script implicitly declares the the following parameters:
 		 * <ol>
@@ -71,24 +72,53 @@ public class ConsumerProcessorByExpression extends AbstractConfiguredInstance<Co
 		 * </ol>
 		 * </p>
 		 * <p>
-		 * As the parameters are declared implicitly, they must not be declared explicitly.
-		 * </p>
-		 * <p>
-		 * The script is executed within a {@link KnowledgeBase} transaction. To commit the changes,
-		 * the script has to return <code>true</code>. To rollback the transaction, the script has
-		 * to return <code>false</code>. Any other return value, including <code>null</code> will
-		 * cause an exception to be thrown, the transaction to be rolled back and the message to be
-		 * processed again.
+		 * The parameters are declared implicitly and can be directly used with
+		 * <code>$message</code> without declaring a function.
 		 * </p>
 		 * 
-		 * @implNote Note that {@link PlainEditor} instead of the default {@link Editor} for
-		 *           {@link Expr} ({@link TLScriptPropertyEditor}) is used here to avoid checking
-		 *           the expression for validity: When executing the query it is enhanced by adding
-		 *           the defined parameters. These parameters are not available at input time.
+		 * <p>
+		 * The message is automatically acknowledged, if the script does not throw an error. The
+		 * result of the script is ignored.
+		 * </p>
+		 * 
+		 * @implNote Note that {@link PlainEditor} instead of the default
+		 *           {@link TLScriptPropertyEditor}) is used to avoid the default checking for
+		 *           validity, since the expression has implicit parameters declared, see
+		 *           {@link SyntaxCheck}.
 		 */
 		@Mandatory
 		@PropertyEditor(PlainEditor.class)
+		@Constraint(value = SyntaxCheck.class)
 		Expr getProcessor();
+
+		/**
+		 * Syntax check of {@link Config#getProcessor()} with implicitly defined parameters.
+		 */
+		class SyntaxCheck extends ValueConstraint<Expr> {
+
+			/**
+			 * Creates a {@link SyntaxCheck}.
+			 */
+			public SyntaxCheck() {
+				super(Expr.class);
+			}
+
+			@Override
+			protected void checkValue(PropertyModel<Expr> propertyModel) {
+				Expr expr = propertyModel.getValue();
+				if (expr == null) {
+					return;
+				}
+
+				Define testExpr = prefixWithParameters(expr);
+
+				try {
+					ModelReferenceChecker.checkModelElements(testExpr);
+				} catch (I18NRuntimeException ex) {
+					propertyModel.setProblemDescription(ex.getErrorKey());
+				}
+			}
+		}
 
 	}
 
@@ -100,7 +130,7 @@ public class ConsumerProcessorByExpression extends AbstractConfiguredInstance<Co
 		_processor = QueryExecutor.compile(prefixWithParameters(config.getProcessor()));
 	}
 
-	private Define prefixWithParameters(Expr scriptBody) {
+	private static Define prefixWithParameters(Expr scriptBody) {
 		Define withTopic = Define.create("topic", scriptBody);
 		Define withHeaders = Define.create("headers", withTopic);
 		Define withKey = Define.create("key", withHeaders);

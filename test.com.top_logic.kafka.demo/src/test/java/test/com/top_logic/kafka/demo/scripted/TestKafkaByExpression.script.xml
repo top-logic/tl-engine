@@ -53,10 +53,11 @@
 						>
 							<arguments/>
 						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
 							user-id="root"
 						>
-							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 									tab-path="Administration > Development > Service Editor > Modul Konfiguration"
 								/>
@@ -68,14 +69,7 @@
 									<labeled-member label="Produzenten"/>
 									<named-member name="add"/>
 								</path>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-								<values>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
-										value="com.top_logic.kafka.services.producer.StringTLKafkaProducer"
-									/>
-								</values>
-							</value>
+							</model-name>
 						</action>
 						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 							user-id="root"
@@ -293,23 +287,17 @@
 								value="%KAFKA_PRODUCER_SERVER%"
 							/>
 						</action>
-						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
 							user-id="root"
 						>
-							<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 								<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 								<path>
 									<labeled-member label="Nachrichten Prozessoren"/>
 									<named-member name="add"/>
 								</path>
-							</field>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-								<values>
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
-										value="com.top_logic.kafka.script.ConsumerProcessorByExpression"
-									/>
-								</values>
-							</value>
+							</model-name>
 						</action>
 						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
 							user-id="root"

@@ -102,6 +102,7 @@ import com.top_logic.element.model.migration.model.UpdateTLAnnotations;
 import com.top_logic.element.model.migration.model.UpdateTLAssociationEndProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLClassProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLDataTypeProcessor;
+import com.top_logic.element.model.migration.model.UpdateTLEnumerationProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLPropertyProcessor;
 import com.top_logic.element.model.migration.model.UpdateTLReferenceProcessor;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
@@ -1763,24 +1764,45 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		part.setName(diff.getNewName());
 
 		if (createProcessors()) {
-			QualifiedPartName oldName = qTypePartName(diff.getPart());
-			QualifiedPartName newName =
-				qTypePartName(qTypeName(oldName.getModuleName(), oldName.getTypeName()), diff.getNewName());
 			if (part instanceof TLProperty) {
 				UpdateTLPropertyProcessor.Config config = newConfigItem(UpdateTLPropertyProcessor.Config.class);
+				QualifiedPartName oldName = qTypePartName(diff.getPart());
 				config.setName(oldName);
-				config.setNewName(newName);
+				config.setNewName(renameAttribute(oldName, diff));
 				addProcessor(config);
 			} else if (part instanceof TLReference) {
 				UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
+				QualifiedPartName oldName = qTypePartName(diff.getPart());
 				config.setName(oldName);
-				config.setNewName(newName);
+				config.setNewName(renameAttribute(oldName, diff));
 				addProcessor(config);
 			} else if (part instanceof TLAssociationEnd) {
 				UpdateTLAssociationEndProcessor.Config config =
 					newConfigItem(UpdateTLAssociationEndProcessor.Config.class);
+				QualifiedPartName oldName = qTypePartName(diff.getPart());
 				config.setName(oldName);
-				config.setNewName(newName);
+				config.setNewName(renameAttribute(oldName, diff));
+				addProcessor(config);
+			} else if (part instanceof TLPrimitive) {
+				UpdateTLDataTypeProcessor.Config config =
+					newConfigItem(UpdateTLDataTypeProcessor.Config.class);
+				QualifiedTypeName oldName = qTypeName(diff.getPart());
+				config.setName(oldName);
+				config.setNewName(renameType(oldName, diff));
+				addProcessor(config);
+			} else if (part instanceof TLClass) {
+				UpdateTLClassProcessor.Config config =
+					newConfigItem(UpdateTLClassProcessor.Config.class);
+				QualifiedTypeName oldName = qTypeName(diff.getPart());
+				config.setName(oldName);
+				config.setNewName(renameType(oldName, diff));
+				addProcessor(config);
+			} else if (part instanceof TLEnumeration) {
+				UpdateTLEnumerationProcessor.Config config =
+					newConfigItem(UpdateTLEnumerationProcessor.Config.class);
+				QualifiedTypeName oldName = qTypeName(diff.getPart());
+				config.setName(oldName);
+				config.setNewName(renameType(oldName, diff));
 				addProcessor(config);
 			} else {
 				throw new UnsupportedOperationException("No rename for '" + diff.getPart() + "' of type '"
@@ -1789,6 +1811,18 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		}
 
 		return null;
+	}
+
+	private QualifiedPartName renameAttribute(QualifiedPartName oldName, RenamePart diff) {
+		QualifiedPartName newName =
+			qTypePartName(qTypeName(oldName.getModuleName(), oldName.getTypeName()), diff.getNewName());
+		return newName;
+	}
+
+	private QualifiedTypeName renameType(QualifiedTypeName oldName, RenamePart diff) {
+		QualifiedTypeName newName =
+			qTypeName(oldName.getModuleName(), diff.getNewName());
+		return newName;
 	}
 
 	@Override

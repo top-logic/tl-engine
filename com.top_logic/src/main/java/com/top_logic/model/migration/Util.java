@@ -3553,6 +3553,68 @@ public class Util {
 	}
 
 	/**
+	 * Updates the given {@link TLEnumeration}.
+	 */
+	public void updateTLEnumeration(PooledConnection con, Type type, Module newModule, String newName,
+			AnnotatedConfig<TLTypeAnnotation> annotations) throws SQLException {
+		updateTLEnumeration(con, type, newModule, newName, toString(annotations));
+	}
+
+	/**
+	 * Updates the given {@link TLEnumeration}.
+	 */
+	public void updateTLEnumeration(PooledConnection con, Type type, Module newModule, String newName,
+			String annotations) throws SQLException {
+		List<Parameter> parameterDefs = new ArrayList<>();
+		List<String> columns = new ArrayList<>();
+		List<SQLExpression> parameters = new ArrayList<>();
+		List<Object> arguments = new ArrayList<>();
+
+		parameterDefs.add(branchParamDef());
+		parameterDefs.add(parameterDef(DBType.ID, "identifier"));
+		arguments.add(type.getBranch());
+		arguments.add(type.getID());
+		if (newModule != null) {
+			columns.add(refType(ApplicationObjectUtil.META_ELEMENT_SCOPE_REF));
+			parameters.add(literalString(newModule.getTable()));
+
+			parameterDefs.add(parameterDef(DBType.ID, "moduleID"));
+			columns.add(refID(ApplicationObjectUtil.META_ELEMENT_SCOPE_REF));
+			parameters.add(parameter(DBType.ID, "moduleID"));
+			columns.add(refID(TLClass.MODULE_ATTR));
+			parameters.add(parameter(DBType.ID, "moduleID"));
+			arguments.add(newModule.getID());
+		}
+		if (newName != null) {
+			parameterDefs.add(parameterDef(DBType.STRING, "name"));
+			columns.add(SQLH.mangleDBName(PersistentType.NAME_ATTR));
+			parameters.add(parameter(DBType.STRING, "name"));
+			arguments.add(newName);
+		}
+		if (annotations != null) {
+			parameterDefs.add(parameterDef(DBType.STRING, "annotations"));
+			columns.add(SQLH.mangleDBName(PersistentModelPart.ANNOTATIONS_MO_ATTRIBUTE));
+			parameters.add(parameter(DBType.STRING, "annotations"));
+			arguments.add(annotations);
+		}
+		if (columns.isEmpty()) {
+			return;
+		}
+		CompiledStatement sql = query(parameterDefs,
+			update(
+				table(SQLH.mangleDBName(TlModelFactory.KO_NAME_TL_ENUMERATION)),
+				and(
+					eqBranch(),
+					eqSQL(
+						column(BasicTypes.IDENTIFIER_DB_NAME),
+						parameter(DBType.ID, "identifier"))),
+				columns,
+				parameters)).toSql(con.getSQLDialect());
+
+		sql.executeUpdate(con, arguments.toArray());
+	}
+
+	/**
 	 * Updates the given {@link TLPrimitive}.
 	 */
 	public void updateTLDataType(PooledConnection con, Type type, Module newModule, String newName, Kind kind,

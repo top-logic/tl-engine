@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Log;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.col.factory.CollectionFactory;
@@ -922,9 +923,14 @@ public class ModelResolver {
 					if (moduleName == null) {
 						moduleName = getModule().getName();
 					}
-					TLClass superType = (TLClass)
-					lookupType(getScope(), superScopeRef, moduleName, superTypeName);
-					if (superType != null && !superTypes.contains(superType)) {
+					TLClass superType = (TLClass) lookupType(getScope(), superScopeRef, moduleName, superTypeName);
+					if (superType == null) {
+						Logger.error(
+							"Generalization '" + moduleName + ":" + superTypeName + "' not found for type '" + type + "'.",
+							ModelResolver.class);
+						continue;
+					}
+					if (!superTypes.contains(superType)) {
 						superTypes.add(superType);
 					}
 				}
@@ -1045,6 +1051,8 @@ public class ModelResolver {
 	 * Instantiates the given {@link ModuleConfig} in the current {@link #getModel()}.
 	 */
 	public TLModule createModule(ModuleConfig moduleConf) {
+		autoExtendTLObject(moduleConf);
+
 		String moduleName = moduleConf.getName();
 		TLModule module = TLModelUtil.makeModule(_model, moduleName);
 
@@ -1058,9 +1066,15 @@ public class ModelResolver {
 				scheduleSingletonCreation(module, singleton);
 			}
 		}
-		DynamicModelService.addTLObjectExtension(moduleConf);
 		
 		return module;
+	}
+
+	/**
+	 * Add {@link TLObject} extensions to all classes without generalizations.
+	 */
+	protected void autoExtendTLObject(ModuleConfig moduleConf) {
+		DynamicModelService.addTLObjectExtension(moduleConf);
 	}
 
 	private void scheduleRoleCreation(TLModule module) {

@@ -244,11 +244,11 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 			fc.store();
 		}
 
-		TLFormObject parameterObject;
-		if (model != null) {
+		// Try to fetch create.
+		TLFormObject parameterObject = fc.getAttributeUpdateContainer().getOverlay(null, null);
+		if (parameterObject == null) {
+			// Try to fetch edited model.
 			parameterObject = fc.getAttributeUpdateContainer().getOverlay((TLObject) model, null);
-		} else {
-			parameterObject = fc.getAttributeUpdateContainer().getAllOverlays().iterator().next();
 		}
 
 		return _operation.execute(parameterObject, model, parameterObject.getEditedObject());

@@ -354,6 +354,8 @@ public class TLKafkaProducer<K, V> extends ProducerProxy<K, V>
 	 */
 	private final Config<K, V> _config;
 
+	private final String _topic;
+
 	/**
 	 * Create a {@link TLKafkaProducer}.
 	 * 
@@ -365,7 +367,15 @@ public class TLKafkaProducer<K, V> extends ProducerProxy<K, V>
 	public TLKafkaProducer(InstantiationContext context, Config<K, V> config) {
 		super(context.getInstance(config.getLogWriter()));
         _config = config;
+		_topic = config.getTopic();
 		_producer = requireNonNull(newKafkaProducer(context, config));
+	}
+
+	/**
+	 * The default topic to send to.
+	 */
+	public String getTopic() {
+		return _topic;
 	}
 
 	/**

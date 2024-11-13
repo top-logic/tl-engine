@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-core-internal</artifactId>
-		<version>7.10.0-SNAPSHOT</version>
+		<version>0.0.9-easyplanning-SNAPSHOT</version>
 		<relativePath>../tl-parent-core/internal</relativePath>
 	</parent>
 

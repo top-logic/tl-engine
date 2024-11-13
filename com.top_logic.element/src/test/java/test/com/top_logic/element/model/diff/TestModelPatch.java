@@ -15,6 +15,7 @@ import junit.framework.Test;
 import test.com.top_logic.KBTestUtils;
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.BasicTestCase;
+import test.com.top_logic.basic.TestUtils;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.ErrorIgnoringProtocol;
@@ -303,7 +304,10 @@ public class TestModelPatch extends BasicTestCase {
 	}
 
 	public static Test suite() {
-		return KBSetup.getSingleKBTest(TestModelPatch.class);
+		// Note: Since the test resets KB caches to observe the changes after a SQL-based migration,
+		// the test must be executed separately. Otherwise, caches of other services would also
+		// become inconsistent.
+		return TestUtils.doNotMerge(KBSetup.getSingleKBTest(TestModelPatch.class));
 	}
 
 }

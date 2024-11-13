@@ -92,13 +92,19 @@ public class GenericSerializer extends AbstractConfiguredInstance<GenericSeriali
 		
 		if (data instanceof List || data instanceof Map) {
 			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-			JSON.write(new OutputStreamWriter(buffer, _encoding), data);
+			try (OutputStreamWriter out = new OutputStreamWriter(buffer, _encoding)) {
+				JSON.write(out, data);
+			}
 			return buffer.toByteArray();
 		}
 		
 		if (data instanceof HTMLFragment xml) {
 			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-			xml.write(null, new TagWriter(new OutputStreamWriter(buffer, _encoding)));
+			try (OutputStreamWriter out = new OutputStreamWriter(buffer, _encoding)) {
+				try (TagWriter tagOut = new TagWriter(out)) {
+					xml.write(null, tagOut);
+				}
+			}
 			return buffer.toByteArray();
 		}
 

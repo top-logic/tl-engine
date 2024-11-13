@@ -73,7 +73,9 @@ public class JSONSerializer extends AbstractConfiguredInstance<JSONSerializer.Co
 
 	private byte[] trySerialize(Object data) throws IOException {
 		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-		JSON.write(new OutputStreamWriter(buffer, _encoding), data);
+		try (OutputStreamWriter out = new OutputStreamWriter(buffer, _encoding)) {
+			JSON.write(out, data);
+		}
 		return buffer.toByteArray();
 	}
 

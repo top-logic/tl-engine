@@ -1,101 +1,133 @@
 <h2>Syntax</h2>
 
 <pre>
-	<code>kafkaSend($producer, $message, $key, $headers, $topic, $timeout)</code>
+<code>kafkaSend(
+    producer: "producer-id", 
+    message: $message, 
+    key: $key, 
+    headers: $headers,
+    topic: "my-topic", 
+    timeout: 3000,
+    partition: 0
+)</code>
 </pre>
 
 <h2>Description</h2>
 
-<p>Sends a message to an Apache Kafka Server. The message is passed to the producer, which sends it according to its configuration.</p>
+<p>Sends a message via an Apache Kafka server. The message is passed to the named producer, which sends it according to its configuration.</p>
 
-<p>The producer has to be configured in the "Kafka producer service" and it has to be of type "String kafka producer". The service editor is in the view "Administration &gt; Development &gt; Service Editor".</p>
-
-<h2>Parameter</h2>
+<h2>Parameters</h2>
 
 <table class="tlDocTable">
 	<thead>
 		<tr>
-			<th>Name</th>
+			<th>Message name</th>
 			<th>Type</th>
-			<th>Description</th>
+			<th>Type Description</th>
 			<th>Mandatory</th>
 			<th>Default</th>
 		</tr>
 	</thead>
 	<tbody>
 		<tr>
-			<td>producer</td>
-			<td>String</td>
-			<td>The name of Kafka producer</td>
+			<td><code class="hljs inlineCode">producer</code></td>
+			<td>Character string</td>
+			<td>Name of the Kafka producer</td>
+			<td>Yes</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">message</code></td>
+			<td>any value</td>
+			<td>The message to be sent. The value must be able to be processed by the producer's serializer.</td>
 			<td>yes</td>
 			<td>-</td>
 		</tr>
 		<tr>
-			<td>message</td>
-			<td>String</td>
-			<td>The message that should be sent.</td>
-			<td>yes</td>
-			<td>-</td>
-		</tr>
-		<tr>
-			<td>key</td>
-			<td>String</td>
-			<td>The key for the message. See the documentation of Apache Kafka for details.</td>
+			<td><code class="hljs inlineCode">key</code></td>
+			<td>any value</td>
+			<td>The key for the message. The value must be able to be processed by the producer's serializer. See the Apache Kafka documentation for details.</td>
 			<td>no</td>
 			<td>-</td>
 		</tr>
 		<tr>
-			<td>headers</td>
-			<td>List of lists</td>
+			<td><code class="hljs inlineCode">headers</code></td>
+			<td>Dictionary, list</td>
 			<td>
-			<p>A list of headers. Each header is a list of two strings. The first one is the header key, the second the header value. The latter is optional. Multiple headers can have the same key. It is therefore not an unambiguous mapping of keys to values.</p>
+			<p>A set of key/value pairs. If only a list (no dictionary) is passed, the values of the list are used as header keys, each of which has no value.</p>
 			</td>
 			<td>no</td>
 			<td>-</td>
 		</tr>
 		<tr>
-			<td>topic</td>
-			<td>String</td>
-			<td>The topic on the Kafka server to which the message should be sent.</td>
+			<td><code class="hljs inlineCode">topic</code></td>
+			<td>Character string</td>
+			<td>The topic on the Kafka server to which the message is to be sent.</td>
 			<td>no</td>
-			<td>The topic of the producer</td>
+			<td>The default topic of the producer</td>
 		</tr>
 		<tr>
-			<td>timeout</td>
-			<td>Integer number</td>
-			<td>The time in milliseconds before sending the message is treated as failed.</td>
+			<td><code class="hljs inlineCode">timeout</code></td>
+			<td>Integer</td>
+			<td>Time in milliseconds before sending is considered to have failed.</td>
 			<td>no</td>
 			<td>10 seconds</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">partition</code></td>
+			<td>Integer</td>
+			<td>Partition of the topic from which the message is to be processed, see Apache Kafka documentation.</td>
+			<td>no</td>
+			<td>-</td>
 		</tr>
 	</tbody>
 </table>
 
 <h2>Return value</h2>
 
-<p>null - The communication with Apache Kafka is asynchronous. Therefore, there is no direct response.</p>
+<p>There is no return value. Communication using Apache Kafka is asynchronous.</p>
 
-<h2>Example</h2>
+<h2>Examples</h2>
 
-<h3>Simple call</h3>
+<h3>Sending a string message to the default topic of the producer</h3>
 
 <pre>
-	<code>kafkaSend("your-producer", "Hello World");</code>
+<code>kafkaSend(producer: "your-producer", message: "Hello World");</code>
 </pre>
 
-<h3>Complex call</h3>
+<h3>Sending a JSON message to a special topic</h3>
 
-<pre><code>kafkaSend(
-	"your-producer",
-	"Hello World! How are you?",
-	"your-key-for-your-first-message",
-	[
-		["header-key-1", "header-value-1"],
-		["header-key-2-without-value"],
-		["header-key-3", "header-value-3"]
-	],
-	"your-topic"
+<p>For sending JSON messages, the "generic serializer" must be configured at the producer.</p>
+
+<pre>
+<code>kafkaSend(
+    producer: "your-producer", 
+    topic: "your-topic"	
+
+    message: {
+        "question": "Hello World! How are you?",
+        "priority": 42
+    },
+    key: {
+        "channel": "irrelevant questions",
+        "some-key": "some-value"
+    }
+    headers: {
+        "key-1": "value-1",
+        "key-2": "value-2",
+        "key-3": "value-3"
+    },
+
+    timeout: 10000,
+    partition: 0
 )</code></pre>
+
+<h2>Configuration of the producer</h2>
+
+<p>Producers are defined in the application configuration. They can be viewed and edited in the Service Editor under "Kafka Producer Service". The Service Editor is located in the "Administration &gt; Development &gt; Service Editor" view.</p>
+
+<p>The message content (<code class="hljs inlineCode">message</code>) and the key (<code class="hljs inlineCode">key</code>) must be able to be processed by the serializers for content and key stored in the producer. To send JSON-formatted messages, it is advisable to use the generic serializer.</p>
 
 <h2>Receiving messages</h2>
 
-<p>To receive messages from an Apache Kafka Server, a "Consumer dispatcher" with a "Consumer processor" has to be configured in the "Kafka consumer service". For in-app configuration there is the "Consumer processor by expression". It is configured with a TL-Script that is called when a message is being received. For more documentation on that topic see the "Consumer processor by expression".</p>
+<p>To receive messages from an Apache Kafka server, a "receiver" with a "message processor" must be configured in the "Kafka Receiver Service". The "TL script message processor" is available for the in-app configuration. This is configured with a TL script that is called as soon as a message is received.</p>

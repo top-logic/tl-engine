@@ -8,7 +8,11 @@ package com.top_logic.kafka.script;
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -19,11 +23,13 @@ import org.apache.kafka.common.header.internals.RecordHeader;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.kafka.serialization.GenericSerializer;
 import com.top_logic.kafka.services.producer.KafkaProducerService;
 import com.top_logic.kafka.services.producer.TLKafkaProducer;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
+import com.top_logic.model.search.expr.IsEmpty;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
@@ -69,8 +75,9 @@ public class KafkaSend extends GenericMethod {
 		List<Header> headers = asHeaders(arguments[3]);
 		String topic = asString(arguments[4], producer.getTopic());
 		long timeout = asLong(arguments[5], DEFAULT_TIMEOUT);
-		ProducerRecord<Object, Object> record = new ProducerRecord<>(topic, null, key, message, headers);
-		send(producer, timeout, record);
+		Integer partition = arguments[6] == null ? null : Integer.valueOf(asInt(arguments[6]));
+
+		send(producer, timeout, new ProducerRecord<>(topic, partition, key, message, headers));
 		return null;
 	}
 
@@ -93,26 +100,55 @@ public class KafkaSend extends GenericMethod {
 
 	private List<Header> asHeaders(Object untypedHeaders) {
 		List<Header> result = list();
-		for (Object headerEntries : asCollection(untypedHeaders)) {
-			result.add(asHeader(asList(headerEntries)));
+		for (Object untypedHeader : asCollection(untypedHeaders)) {
+			RecordHeader header = asHeader(untypedHeader);
+			if (header != null) {
+				result.add(header);
+			}
 		}
 		return result;
 	}
 
-	private RecordHeader asHeader(List<?> keyValuePair) {
-		if (keyValuePair.isEmpty()) {
-			throw new TopLogicException(I18NConstants.ERROR_HEADER_IS_EMPTY);
+	private RecordHeader asHeader(Object untypedHeader) {
+		Object key;
+		Object value = null;
+		if (untypedHeader instanceof Collection<?> collection) {
+			// A key-value pair.
+			if (collection.isEmpty()) {
+				return null;
+			}
+
+			Iterator<?> it = collection.iterator();
+			key = it.next();
+
+			if (it.hasNext()) {
+				// There is a value.
+				value = it.next();
+			}
+			if (it.hasNext()) {
+				// There is more than one value.
+				ArrayList<Object> list = new ArrayList<>();
+				list.add(value);
+				while (it.hasNext()) {
+					list.add(it.next());
+				}
+
+				value = list;
+			}
+		} else if (untypedHeader instanceof Map.Entry<?, ?> entry) {
+			// A "canonical" key-value pair.
+			key = entry.getKey();
+			value = entry.getValue();
+		} else {
+			// Only a key.
+			key = untypedHeader;
 		}
-		if (keyValuePair.size() > 2) {
-			throw new TopLogicException(I18NConstants.ERROR_HEADER_HAS_TOO_MANY_ENTRIES__HEADER.fill(keyValuePair));
+
+		if (IsEmpty.compute(key)) {
+			return null;
 		}
-		String key = asString(keyValuePair.get(0));
-		if (key.isEmpty()) {
-			throw new TopLogicException(I18NConstants.ERROR_HEADER_KEY_IS_EMPTY);
-		}
-		/* Some headers might not need a value, for example flag like headers. */
-		String value = keyValuePair.size() > 1 ? asString(keyValuePair.get(1)) : "";
-		return new RecordHeader(key, value.getBytes(StandardCharsets.UTF_8));
+
+		return new RecordHeader(asString(key), GenericSerializer.doSerialize(value, StandardCharsets.UTF_8));
 	}
 
 	@Override
@@ -131,6 +167,7 @@ public class KafkaSend extends GenericMethod {
 			.optional("headers")
 			.optional("topic")
 			.optional("timeout")
+			.optional("partition")
 			.build();
 
 		/** Creates a {@link Builder}. */

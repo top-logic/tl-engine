@@ -76,14 +76,22 @@ public class GenericSerializer extends AbstractConfiguredInstance<GenericSeriali
 
 	@Override
 	public byte[] serialize(String topic, Object data) {
+		return doSerialize(data, _encoding);
+	}
+
+	/**
+	 * Converts values to byte arrays, either directly (binary data), through JSON encoding (lists
+	 * and maps), or by converting to string.
+	 */
+	public static byte[] doSerialize(Object data, Charset encoding) {
 		try {
-			return trySerialize(data);
+			return trySerialize(data, encoding);
 		} catch (IOException ex) {
 			throw new SerializationException(ex);
 		}
 	}
 
-	private byte[] trySerialize(Object data) throws IOException {
+	private static byte[] trySerialize(Object data, Charset encoding) throws IOException {
 		if (data instanceof BinaryDataSource binary) {
 			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 			binary.deliverTo(buffer);
@@ -92,7 +100,7 @@ public class GenericSerializer extends AbstractConfiguredInstance<GenericSeriali
 		
 		if (data instanceof List || data instanceof Map) {
 			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-			try (OutputStreamWriter out = new OutputStreamWriter(buffer, _encoding)) {
+			try (OutputStreamWriter out = new OutputStreamWriter(buffer, encoding)) {
 				JSON.write(out, data);
 			}
 			return buffer.toByteArray();
@@ -100,7 +108,7 @@ public class GenericSerializer extends AbstractConfiguredInstance<GenericSeriali
 		
 		if (data instanceof HTMLFragment xml) {
 			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-			try (OutputStreamWriter out = new OutputStreamWriter(buffer, _encoding)) {
+			try (OutputStreamWriter out = new OutputStreamWriter(buffer, encoding)) {
 				try (TagWriter tagOut = new TagWriter(out)) {
 					xml.write(null, tagOut);
 				}
@@ -113,7 +121,7 @@ public class GenericSerializer extends AbstractConfiguredInstance<GenericSeriali
 		}
 		
 		String string = data.toString();
-		return string.getBytes(_encoding);
+		return string.getBytes(encoding);
 	}
 
 }

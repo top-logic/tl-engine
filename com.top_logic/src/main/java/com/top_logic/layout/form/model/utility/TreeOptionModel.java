@@ -5,7 +5,12 @@
  */
 package com.top_logic.layout.form.model.utility;
 
+import java.util.Iterator;
+
+import com.top_logic.basic.CollectionUtil;
+import com.top_logic.basic.col.DescendantDFSIterator;
 import com.top_logic.basic.col.Filter;
+import com.top_logic.basic.col.FilterIterator;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.tree.model.TLTreeModel;
 
@@ -39,5 +44,29 @@ public interface TreeOptionModel<N> extends OptionModel<N> {
 	 * @see #showRootNode()
 	 */
 	void setShowRoot(boolean showRoot);
+
+	@Override
+	default int getOptionCount() {
+		if (!getBaseModel().isFinite()) {
+			return INFINITE;
+		}
+		return CollectionUtil.size(iterator());
+	}
+
+	/**
+	 * Iterator over all options of an option tree.
+	 * 
+	 * <p>
+	 * Thereby the iterator retrieves the elements in depth-first order.
+	 * </p>
+	 * 
+	 * @return an iterator over all options
+	 */
+	@Override
+	default Iterator<N> iterator() {
+		TLTreeModel<N> tree = getBaseModel();
+		return new FilterIterator<>(new DescendantDFSIterator<>(tree, tree.getRoot(), showRootNode()),
+			getSelectableOptionsFilter());
+	}
 
 }

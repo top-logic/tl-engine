@@ -166,13 +166,14 @@ public class TreeOptionsByExpression extends AbstractConfiguredInstance<TreeOpti
 
 	@Override
 	public OptionModel<?> generate(EditContext editContext) {
-		return new DefaultTreeOptionModel<>(createTreeModel(editContext.getObject()), createSelectionFilter(editContext));
+		return new DefaultTreeOptionModel<>(createTreeModel(editContext.getOverlay()),
+			createSelectionFilter(editContext));
 	}
 
 	private Filter<? super Object> createSelectionFilter(EditContext editContext) {
 		List<Filter<Object>> filters = new ArrayList<>();
 
-		addConfiguredSelectionFilter(filters, editContext.getObject());
+		addConfiguredSelectionFilter(filters, editContext.getOverlay());
 		addInstanceFilter(filters, editContext);
 		addAttributeConstraintFilter(filters, editContext);
 

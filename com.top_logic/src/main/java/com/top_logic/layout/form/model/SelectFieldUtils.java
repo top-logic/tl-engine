@@ -252,15 +252,16 @@ public class SelectFieldUtils {
 				return noOptionLabel;
 			}
 
+			boolean hasOptions = getOptionModel(self).iterator().hasNext();
 			Resources res = Resources.getInstance();
 			if (isMandatory) {
-				return res.getString(getOptions(self).size() == 0 ?
-					I18NConstants.MANDATORY_EMPTY_SINGLE_SELECTION_LABEL_WITH_NO_OPTIONS :
-					I18NConstants.MANDATORY_EMPTY_SINGLE_SELECTION_LABEL);
+				return res.getString(
+					hasOptions ? I18NConstants.MANDATORY_EMPTY_SINGLE_SELECTION_LABEL
+						: I18NConstants.MANDATORY_EMPTY_SINGLE_SELECTION_LABEL_WITH_NO_OPTIONS);
 			} else {
-				return res.getString(getOptions(self).size() == 0 ?
-					I18NConstants.EMPTY_SINGLE_SELECTION_LABEL_WITH_NO_OPTIONS :
-					I18NConstants.EMPTY_SINGLE_SELECTION_LABEL);
+				return res
+					.getString(hasOptions ? I18NConstants.EMPTY_SINGLE_SELECTION_LABEL
+						: I18NConstants.EMPTY_SINGLE_SELECTION_LABEL_WITH_NO_OPTIONS);
 			}
 		}
 	}

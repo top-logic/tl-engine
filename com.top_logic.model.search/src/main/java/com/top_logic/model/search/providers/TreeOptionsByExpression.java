@@ -20,23 +20,21 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.kbbased.filtergen.AttributedValueFilter;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
-import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.layout.form.model.utility.DefaultTreeOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.form.model.utility.TreeOptionModel;
 import com.top_logic.layout.tree.model.BusinessObjectTreeModel;
-import com.top_logic.model.TLModel;
+import com.top_logic.layout.tree.model.TLTreeModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.expr.trace.ScriptTracer;
+import com.top_logic.model.search.providers.OptionsByExpression.ScriptObservingOptions;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.util.model.ModelService;
 
 /**
  * {@link Generator} that can be configured dynamically using {@link Expr search expressions} for
@@ -59,7 +57,9 @@ public class TreeOptionsByExpression extends AbstractConfiguredInstance<TreeOpti
 		Config.ROOT_NODE,
 		Config.CHILDREN,
 		Config.PARENTS,
-		Config.SELECTION_FILTER
+		Config.SELECTION_FILTER,
+		Config.SHOW_ROOT,
+		Config.FINITE,
 	})
 	public interface Config<I extends TreeOptionsByExpression> extends PolymorphicConfiguration<I> {
 
@@ -82,6 +82,16 @@ public class TreeOptionsByExpression extends AbstractConfiguredInstance<TreeOpti
 		 * Configuration property label for {@link #getSelectionFilter()}
 		 */
 		String SELECTION_FILTER = "selection-filter";
+
+		/**
+		 * @see #getShowRoot()
+		 */
+		String SHOW_ROOT = "showRoot";
+
+		/**
+		 * @see #getFinite()
+		 */
+		String FINITE = "finite";
 
 		/**
 		 * Function resolving the root node of this tree.
@@ -133,15 +143,33 @@ public class TreeOptionsByExpression extends AbstractConfiguredInstance<TreeOpti
 		@Name(SELECTION_FILTER)
 		Expr getSelectionFilter();
 
+		/**
+		 * Whether to show the root node.
+		 */
+		@Name(SHOW_ROOT)
+		@BooleanDefault(true)
+		boolean getShowRoot();
+
+		/**
+		 * Whether to created tree model will be finite.
+		 */
+		@Name(FINITE)
+		@BooleanDefault(false)
+		boolean getFinite();
+
 	}
 
-	QueryExecutor _root;
+	ScriptTracer _root;
 
-	QueryExecutor _children;
+	ScriptTracer _children;
 
-	QueryExecutor _parents;
+	ScriptTracer _parents;
 
-	QueryExecutor _selectionFilter;
+	ScriptTracer _selectionFilter;
+
+	private final boolean _showRoot;
+
+	private final boolean _finite;
 
 	/**
 	 * Creates a {@link TreeOptionsByExpression} from configuration.
@@ -155,63 +183,110 @@ public class TreeOptionsByExpression extends AbstractConfiguredInstance<TreeOpti
 	public TreeOptionsByExpression(InstantiationContext context, Config<?> config) {
 		super(context, config);
 
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		TLModel model = ModelService.getApplicationModel();
-
-		_root = QueryExecutor.compile(kb, model, config.getRoot());
-		_children = QueryExecutor.compile(kb, model, config.getChildren());
-		_parents = QueryExecutor.compile(kb, model, config.getParents());
-		_selectionFilter = QueryExecutor.compileOptional(config.getSelectionFilter());
+		_root = ScriptTracer.compile(config.getRoot());
+		_children = ScriptTracer.compile(config.getChildren());
+		_parents = ScriptTracer.compile(config.getParents());
+		_selectionFilter = ScriptTracer.compileOptional(config.getSelectionFilter());
+		_showRoot = config.getShowRoot();
+		_finite = config.getFinite();
 	}
 
 	@Override
 	public OptionModel<?> generate(EditContext editContext) {
-		return new DefaultTreeOptionModel<>(createTreeModel(editContext.getOverlay()),
-			createSelectionFilter(editContext));
+		return new ScriptOptionTree(editContext);
 	}
 
-	private Filter<? super Object> createSelectionFilter(EditContext editContext) {
-		List<Filter<Object>> filters = new ArrayList<>();
+	private class ScriptOptionTree extends ScriptObservingOptions implements TreeOptionModel<Object> {
 
-		addConfiguredSelectionFilter(filters, editContext.getOverlay());
-		addInstanceFilter(filters, editContext);
-		addAttributeConstraintFilter(filters, editContext);
+		private Filter<Object> _optionsFilter;
 
-		return FilterFactory.and(filters);
-	}
+		private BusinessObjectTreeModel<Object> _treeModel;
 
-	private void addConfiguredSelectionFilter(List<Filter<Object>> filters, TLObject currentObject) {
-		if (_selectionFilter != null) {
-			filters.add(node -> SearchExpression.asBoolean(_selectionFilter.execute(node, currentObject)));
+		/**
+		 * Creates a {@link ScriptOptionTree}.
+		 */
+		public ScriptOptionTree(EditContext editContext) {
+			super(editContext.getOverlay());
+			_optionsFilter = createSelectionFilter(editContext);
+		}
+
+		@Override
+		public TLTreeModel<Object> getBaseModel() {
+			if (_treeModel == null) {
+				_treeModel = createTreeModel(getObject());
+			}
+			return _treeModel;
+		}
+
+		@Override
+		public Filter<? super Object> getSelectableOptionsFilter() {
+			return _optionsFilter;
+		}
+
+		@Override
+		public void setSelectableOptionsFilter(Filter<? super Object> selectableOptionsFilter) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean showRootNode() {
+			return _showRoot;
+		}
+
+		@Override
+		public void setShowRoot(boolean showRoot) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		protected void reset() {
+			_treeModel = null;
+		}
+
+		private Filter<? super Object> createSelectionFilter(EditContext editContext) {
+			List<Filter<Object>> filters = new ArrayList<>();
+
+			addConfiguredSelectionFilter(filters, editContext.getOverlay());
+			addInstanceFilter(filters, editContext);
+			addAttributeConstraintFilter(filters, editContext);
+
+			return FilterFactory.and(filters);
+		}
+
+		private void addConfiguredSelectionFilter(List<Filter<Object>> filters, TLObject currentObject) {
+			if (_selectionFilter != null) {
+				filters.add(node -> SearchExpression.asBoolean(_selectionFilter.execute(this, node, currentObject)));
+			}
+		}
+
+		private void addInstanceFilter(List<Filter<Object>> filters, EditContext context) {
+			filters.add(node -> TLModelUtil.isCompatibleInstance(context.getValueType(), node));
+		}
+
+		@SuppressWarnings("deprecation")
+		private void addAttributeConstraintFilter(List<Filter<Object>> filters, EditContext context) {
+			AttributedValueFilter filter = context.getFilter();
+
+			if (filter != null) {
+				filters.add(node -> filter.accept(node, context));
+			}
+		}
+
+		private BusinessObjectTreeModel<Object> createTreeModel(TLObject currentObject) {
+			Function<Object, Collection<?>> childrenByNode = createChildrenByNode(currentObject);
+			Function<Object, Collection<?>> parentsByNode = createParentsByNode(currentObject);
+
+			return new BusinessObjectTreeModel<>(
+				_root.execute(this, currentObject), childrenByNode, parentsByNode, _finite);
+		}
+
+		private Function<Object, Collection<?>> createParentsByNode(TLObject currentObject) {
+			return node -> SearchExpression.asCollection(_parents.execute(this, node, currentObject));
+		}
+
+		private Function<Object, Collection<?>> createChildrenByNode(TLObject currentObject) {
+			return node -> SearchExpression.asCollection(_children.execute(this, node, currentObject));
 		}
 	}
-
-	private void addInstanceFilter(List<Filter<Object>> filters, EditContext context) {
-		filters.add(node -> TLModelUtil.isCompatibleInstance(context.getValueType(), node));
-	}
-
-	@SuppressWarnings("deprecation")
-	private void addAttributeConstraintFilter(List<Filter<Object>> filters, EditContext context) {
-		AttributedValueFilter filter = context.getFilter();
-
-		if (filter != null) {
-			filters.add(node -> filter.accept(node, context));
-		}
-	}
-
-	private BusinessObjectTreeModel<Object> createTreeModel(TLObject currentObject) {
-		Function<Object, Collection<?>> childrenByNode = createChildrenByNode(currentObject);
-		Function<Object, Collection<?>> parentsByNode = createParentsByNode(currentObject);
 		
-		return new BusinessObjectTreeModel<>(_root.execute(currentObject), childrenByNode, parentsByNode);
-	}
-
-	private Function<Object, Collection<?>> createParentsByNode(TLObject currentObject) {
-		return node -> SearchExpression.asCollection(_parents.execute(node, currentObject));
-	}
-
-	private Function<Object, Collection<?>> createChildrenByNode(TLObject currentObject) {
-		return node -> SearchExpression.asCollection(_children.execute(node, currentObject));
-	}
-
 }

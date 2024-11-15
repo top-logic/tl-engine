@@ -103,8 +103,9 @@ public class UpdateTLEnumerationProcessor
 				Log.WARN);
 			return false;
 		}
-		Module newModule;
+
 		QualifiedTypeName newName = getConfig().getNewName();
+		Module newModule;
 		if (newName == null || typeName.getModuleName().equals(newName.getModuleName())) {
 			newModule = null;
 		} else {
@@ -116,6 +117,16 @@ public class UpdateTLEnumerationProcessor
 		} else {
 			localName = newName.getTypeName();
 		}
+
+		if (newName != null) {
+			Type clash = _util.getTLTypeOrNull(connection, newName);
+			if (clash != null) {
+				log.error("Another type with the name '" + newName.getName() + "' already exists. Cannot rename '"
+					+ typeName.getName() + "'.");
+				return false;
+			}
+		}
+
 		_util.updateTLEnumeration(connection, type, newModule, localName, getConfig());
 		if (tlModel != null) {
 			MigrationUtils.updateEnum(log, tlModel, typeName, newName, getConfig());

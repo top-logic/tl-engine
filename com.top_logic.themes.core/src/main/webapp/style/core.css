@@ -1562,7 +1562,7 @@ div.lcHidden {
 	padding: 0;
 }
 
-.tooltipContent ul {
+.tooltipContent :is(ol, ul) {
 	padding-left: 0.75rem;
 }
 

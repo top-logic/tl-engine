@@ -13,9 +13,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
@@ -40,15 +38,13 @@ import com.top_logic.model.migration.data.Type;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class DeleteTLClassProcessor extends AbstractConfiguredInstance<DeleteTLClassProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class DeleteTLClassProcessor extends TLModelBaseLineMigrationProcessor<DeleteTLClassProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link DeleteTLClassProcessor}.
 	 */
 	@TagName("delete-class")
-	public interface Config extends PolymorphicConfiguration<DeleteTLClassProcessor>,
-			TLModelBaseLineMigrationProcessor.SkipModelBaselineApaption {
+	public interface Config extends TLModelBaseLineMigrationProcessor.Config<DeleteTLClassProcessor> {
 
 		/**
 		 * Qualified name of the {@link TLClass} to delete.
@@ -128,7 +124,7 @@ public class DeleteTLClassProcessor extends AbstractConfiguredInstance<DeleteTLC
 			log.info("Deleted " + deletedRows + " instances of type '" + _util.toString(type) + "' from table "
 				+ getConfig().getTypeTable() + ".");
 		}
-		if (tlModel == null || getConfig().isSkipModelBaselineChange()) {
+		if (tlModel == null) {
 			return false;
 		}
 		if (type.getKind() == Type.Kind.ASSOCIATION) {

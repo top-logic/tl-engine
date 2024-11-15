@@ -5,22 +5,33 @@
  */
 package test.com.top_logic.element.model.diff;
 
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import junit.framework.Test;
 
+import test.com.top_logic.KBTestUtils;
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.BasicTestCase;
+import test.com.top_logic.basic.TestUtils;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.ErrorIgnoringProtocol;
 import com.top_logic.basic.Log;
+import com.top_logic.basic.Protocol;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.equal.ConfigEquality;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
+import com.top_logic.basic.sql.ConnectionPool;
+import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.element.config.DefinitionReader;
 import com.top_logic.element.config.ModelConfig;
+import com.top_logic.element.config.ModuleConfig;
 import com.top_logic.element.config.annotation.ConfigType;
 import com.top_logic.element.model.DefaultModelFactory;
 import com.top_logic.element.model.ModelCopy;
@@ -31,12 +42,18 @@ import com.top_logic.element.model.diff.compare.CreateModelPatch;
 import com.top_logic.element.model.diff.config.AddAnnotations;
 import com.top_logic.element.model.diff.config.DiffElement;
 import com.top_logic.element.model.export.ModelConfigExtractor;
+import com.top_logic.element.model.migration.model.TLModelBaseLineMigrationProcessor;
+import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.migration.MigrationConfig;
+import com.top_logic.knowledge.service.migration.MigrationContext;
+import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.IdentityMapping;
 import com.top_logic.model.config.ModelPartConfig;
@@ -53,24 +70,64 @@ import com.top_logic.model.util.TLModelUtil;
 @SuppressWarnings("javadoc")
 public class TestModelPatch extends BasicTestCase {
 
-	public void testPatch() {
+	public void testPatch() throws SQLException {
+		doTestMigrate("test1-left.model.xml", "test1-right.model.xml");
+	}
+
+	private void doTestMigrate(String leftResource, String rightResource) throws SQLException {
+		TLModel left = setupModel(leftResource);
+
+		TLModel base = loadModelTransient(leftResource);
+		TLModel right = loadModelTransient(rightResource);
+
+		// Compute patch.
+		List<DiffElement> diff = createPatch(base, right);
+
+		// Compute migration while applying patch to transient model.
+		List<MigrationProcessor> processors = applyPatch(base, new DefaultModelFactory(), diff);
+
+		// Check that patch removes all differences between transient models.
+		assertEmpty(createPatch(base, right));
+		assertEqualsConfig(right, base);
+
+		// Perform migration at database level.
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		ConnectionPool connectionPool = KBUtils.getConnectionPool(kb);
+		PooledConnection connection = connectionPool.borrowWriteConnection();
+		try {
+			Log log = new AssertProtocol();
+			MigrationContext context = new MigrationContext(log, connection);
+
+			for (MigrationProcessor processor : processors) {
+				processor.doMigration(context, log, connection);
+
+				connection.commit();
+			}
+		} finally {
+			connectionPool.releaseWriteConnection(connection);
+		}
+
+		KBTestUtils.clearCache(kb);
+		left = reload(kb, left);
+
+		// Check that migration removes all differences between persistent and target model.
+		assertEmpty(createPatch(left, right));
+		assertEqualsConfig(right, left);
+	}
+
+	private <T extends TLObject> T reload(KnowledgeBase kb, T left) {
+		left = kb.resolveObjectKey(new DefaultObjectKey(left.tId().getBranchContext(),
+			left.tId().getHistoryContext(), left.tId().getObjectType(), left.tId().getObjectName())).getWrapper();
+		return left;
+	}
+
+	private TLModel setupModel(String configResource) {
 		TLModel left;
 		try (Transaction tx = kb().beginTransaction()) {
-			left = loadModel("test1-left.model.xml");
+			left = loadModel(configResource);
 			tx.commit();
 		}
-
-		TLModel right = loadModelTransient("test1-right.model.xml");
-
-		try (Transaction tx = kb().beginTransaction()) {
-			List<DiffElement> patch = createPatch(left, right);
-			applyPatch(left, new DefaultModelFactory(), patch);
-			tx.commit();
-		}
-
-		assertEmpty(createPatch(left, right));
-
-		assertEqualsConfig(right, left);
+		return left;
 	}
 
 	public void testPatchTransient() {
@@ -118,7 +175,7 @@ public class TestModelPatch extends BasicTestCase {
 		TLModelImpl result = new TLModelImpl();
 
 		ModelConfig config = (ModelConfig) model.visit(new ModelConfigExtractor(), null);
-		ModelResolver modelResolver = new ModelResolver(new ErrorIgnoringProtocol(), result, null);
+		ModelResolver modelResolver = new TestingModelResolver(new ErrorIgnoringProtocol(), result, null);
 		modelResolver.createModel(config);
 		modelResolver.complete();
 
@@ -147,7 +204,7 @@ public class TestModelPatch extends BasicTestCase {
 		}
 	}
 
-	private void applyPatch(TLModel left, TLFactory factory, List<DiffElement> patch) {
+	private List<MigrationProcessor> applyPatch(TLModel left, TLFactory factory, List<DiffElement> patch) {
 		AssertProtocol log = new AssertProtocol() {
 			@Override
 			public void localInfo(String message, int verbosityLevel) {
@@ -159,7 +216,24 @@ public class TestModelPatch extends BasicTestCase {
 				super.localInfo(message, verbosityLevel);
 			}
 		};
-		ApplyModelPatch.applyPatch(log, left, factory, patch);
+
+		ArrayList<PolymorphicConfiguration<? extends MigrationProcessor>> processors = new ArrayList<>();
+		ApplyModelPatch.applyPatch(log, left, factory, patch, processors);
+
+		MigrationConfig migration = TypedConfiguration.newConfigItem(MigrationConfig.class);
+		migration.setProcessors(processors);
+
+		System.out.println(migration);
+
+		// Skip baseline, since this does not exist for models dynamically created during test.
+		for (PolymorphicConfiguration<? extends MigrationProcessor> config : processors) {
+			if (config instanceof TLModelBaseLineMigrationProcessor.Config<?> skip) {
+				skip.setSkipModelBaselineChange(true);
+			}
+		}
+
+		return TypedConfiguration.getInstanceList(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
+			processors);
 	}
 
 	private List<DiffElement> createPatch(TLModel left, TLModel right) {
@@ -181,7 +255,7 @@ public class TestModelPatch extends BasicTestCase {
 		ModelConfig config =
 			DefinitionReader.readElementConfig(new ClassRelativeBinaryContent(TestModelPatch.class, name));
 		AssertProtocol log = new AssertProtocol();
-		ModelResolver modelResolver = new ModelResolver(log, model, factory);
+		ModelResolver modelResolver = new TestingModelResolver(log, model, factory);
 		modelResolver.createModel(config);
 		modelResolver.complete();
 		return model;
@@ -214,8 +288,26 @@ public class TestModelPatch extends BasicTestCase {
 		TLModelUtil.addDatatype(m1, "c1", IdentityMapping.INSTANCE);
 		return model;
 	}
+
+	private final class TestingModelResolver extends ModelResolver {
+		/** 
+		 * Creates a {@link TestingModelResolver}.
+		 */
+		private TestingModelResolver(Protocol log, TLModel model, TLFactory factory) {
+			super(log, model, factory);
+		}
+	
+		@Override
+		protected void autoExtendTLObject(ModuleConfig moduleConf) {
+			// Don't do it, there is no type tl.model:TLObject in the test models.
+		}
+	}
+
 	public static Test suite() {
-		return KBSetup.getSingleKBTest(TestModelPatch.class);
+		// Note: Since the test resets KB caches to observe the changes after a SQL-based migration,
+		// the test must be executed separately. Otherwise, caches of other services would also
+		// become inconsistent.
+		return TestUtils.doNotMerge(KBSetup.getSingleKBTest(TestModelPatch.class));
 	}
 
 }

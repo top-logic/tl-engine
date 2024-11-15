@@ -61,7 +61,17 @@ public abstract class AbstractTLType extends AbstractTLModelPart implements TLTy
 	
 	@Override
 	public void setName(String value) {
-		this.name = value;
+		TLModule owner = module;
+		if (owner != null) {
+			// Note: The owner of this type keeps an index of all of its parts by name. When simply
+			// changing the name, this index gets corrupted. Since changing a type name is only
+			// possible, if the type is not owned, the type is temporarily removed from its owner.
+			owner.getTypes().remove(this);
+			this.name = value;
+			owner.getTypes().add(this);
+		} else {
+			this.name = value;
+		}
 	}
 	
 	protected static <T extends TLTypePart> Map<String, T> initAllParts(List<? extends T> ...references) {

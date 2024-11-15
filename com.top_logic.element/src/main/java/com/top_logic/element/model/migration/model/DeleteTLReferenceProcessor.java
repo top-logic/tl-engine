@@ -13,9 +13,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -45,15 +43,13 @@ import com.top_logic.model.migration.data.Type;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class DeleteTLReferenceProcessor extends AbstractConfiguredInstance<DeleteTLReferenceProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class DeleteTLReferenceProcessor extends TLModelBaseLineMigrationProcessor<DeleteTLReferenceProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link DeleteTLReferenceProcessor}.
 	 */
 	@TagName("delete-reference")
-	public interface Config extends PolymorphicConfiguration<DeleteTLReferenceProcessor>,
-			TLModelBaseLineMigrationProcessor.SkipModelBaselineApaption {
+	public interface Config extends TLModelBaseLineMigrationProcessor.Config<DeleteTLReferenceProcessor> {
 
 		/**
 		 * Qualified name of the {@link TLReference} to delete.
@@ -141,7 +137,7 @@ public class DeleteTLReferenceProcessor extends AbstractConfiguredInstance<Delet
 		}
 		_util.deleteModelPart(connection, typePart);
 		boolean updateModelBaseline;
-		if (tlModel == null || getConfig().isSkipModelBaselineChange()) {
+		if (tlModel == null) {
 			updateModelBaseline = false;
 		} else {
 			updateModelBaseline = MigrationUtils.deleteTypePart(log, tlModel, partToDelete);

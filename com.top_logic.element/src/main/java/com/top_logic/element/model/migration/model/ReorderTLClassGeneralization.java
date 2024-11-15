@@ -11,9 +11,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
@@ -32,14 +30,14 @@ import com.top_logic.model.migration.data.Type;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class ReorderTLClassGeneralization extends AbstractConfiguredInstance<ReorderTLClassGeneralization.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class ReorderTLClassGeneralization
+		extends TLModelBaseLineMigrationProcessor<ReorderTLClassGeneralization.Config> {
 
 	/**
 	 * Configuration options of {@link ReorderTLClassGeneralization}.
 	 */
 	@TagName("reorder-generalization")
-	public interface Config extends PolymorphicConfiguration<ReorderTLClassGeneralization> {
+	public interface Config extends TLModelBaseLineMigrationProcessor.Config<ReorderTLClassGeneralization> {
 
 		/**
 		 * Qualified name of the specialization {@link TLType}.

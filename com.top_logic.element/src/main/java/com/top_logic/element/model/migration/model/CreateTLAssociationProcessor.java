@@ -9,9 +9,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
@@ -29,15 +27,16 @@ import com.top_logic.model.migration.data.QualifiedTypeName;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class CreateTLAssociationProcessor extends AbstractConfiguredInstance<CreateTLAssociationProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class CreateTLAssociationProcessor
+		extends TLModelBaseLineMigrationProcessor<CreateTLAssociationProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link CreateTLAssociationProcessor}.
 	 */
 	@TagName("create-association")
 	public interface Config
-			extends PolymorphicConfiguration<CreateTLAssociationProcessor>, AnnotatedConfig<TLTypeAnnotation> {
+			extends TLModelBaseLineMigrationProcessor.Config<CreateTLAssociationProcessor>,
+			AnnotatedConfig<TLTypeAnnotation> {
 
 		/**
 		 * Qualified name of the {@link TLAssociation} to create.

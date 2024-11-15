@@ -55,6 +55,23 @@ public abstract class AbstractStructuredTypePart<O extends TLStructuredType> ext
 	}
 	
 	@Override
+	public void setName(String value) {
+		O owner = getOwner();
+		if (owner != null) {
+			List<TLStructuredTypePart> localParts = (List<TLStructuredTypePart>) owner.getLocalParts();
+			int index = localParts.indexOf(this);
+			// Note: The owner of this part keeps an index of all of its parts by name. When simply
+			// changing the name, this index gets corrupted. Since changing a part name is only
+			// possible, if the part is not owned, the part is temporarily removed from its owner.
+			TLStructuredTypePart self = localParts.remove(index);
+			super.setName(value);
+			localParts.add(index, self);
+		} else {
+			super.setName(value);
+		}
+	}
+
+	@Override
 	public boolean isMandatory() {
 		return this.mandatory;
 	}

@@ -9,9 +9,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.knowledge.service.migration.MigrationContext;
@@ -30,15 +28,15 @@ import com.top_logic.util.TLContext;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class CreateTLClassifierProcessor extends AbstractConfiguredInstance<CreateTLClassifierProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class CreateTLClassifierProcessor extends TLModelBaseLineMigrationProcessor<CreateTLClassifierProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link CreateTLClassifierProcessor}.
 	 */
 	@TagName("create-classifier")
 	public interface Config
-			extends PolymorphicConfiguration<CreateTLClassifierProcessor>, AnnotatedConfig<TLClassifierAnnotation> {
+			extends TLModelBaseLineMigrationProcessor.Config<CreateTLClassifierProcessor>,
+			AnnotatedConfig<TLClassifierAnnotation> {
 
 		/**
 		 * Qualified name of the new {@link TLClassifier}.

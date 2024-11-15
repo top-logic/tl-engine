@@ -1534,6 +1534,37 @@ public class MigrationUtils {
 	}
 
 	/**
+	 * Updated the {@link TLEnumeration} with the given name.
+	 */
+	public static void updateEnum(Log log, Document tlModel, QualifiedTypeName typeName, QualifiedTypeName newName,
+			AnnotatedConfig<TLTypeAnnotation> annotations) throws MigrationException {
+		Element module = getTLModuleOrFail(tlModel, typeName.getModuleName());
+		Element type = getTLEnumeration(log, module, typeName.getName());
+		if (type == null) {
+			throw new MigrationException("No such enum '" + typeName + "'.");
+		}
+
+		if (!annotations.getAnnotations().isEmpty()) {
+			updateModelPartAnnotations(log, type, getModelPartAnnotations(log, type), Util.toString(annotations));
+		}
+		if (newName == null) {
+			return;
+		}
+		String newModuleName = newName.getModuleName();
+		String oldModuleName = typeName.getModuleName();
+		if (!newModuleName.equals(oldModuleName)) {
+			Element newModule = getTLModuleOrFail(tlModel, newModuleName);
+			appendTypeToModule(log, newModule, type);
+		}
+		String newTypeName = newName.getTypeName();
+		String oldTypeName = typeName.getTypeName();
+		if (!newTypeName.equals(oldTypeName)) {
+			type.setAttribute(ObjectTypeConfig.NAME, newTypeName);
+		}
+		updateTypeReferences(log, tlModel, oldModuleName, oldTypeName, newModuleName, newTypeName);
+	}
+
+	/**
 	 * Changes all existing references from <code>sourceType</code> to <code>targetType</code>.
 	 */
 	public static void updateTypeReferences(Log log, Document tlModel, QualifiedTypeName sourceType,

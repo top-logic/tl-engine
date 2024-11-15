@@ -9,9 +9,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -35,14 +33,15 @@ import com.top_logic.model.migration.data.TypePart;
  * 
  * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
  */
-public class UpdateTLAssociationEndProcessor extends AbstractConfiguredInstance<UpdateTLAssociationEndProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class UpdateTLAssociationEndProcessor
+		extends TLModelBaseLineMigrationProcessor<UpdateTLAssociationEndProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link UpdateTLAssociationEndProcessor}.
 	 */
 	@TagName("update-association-end")
-	public interface Config extends PolymorphicConfiguration<UpdateTLAssociationEndProcessor>, UpdateEndAspectConfig {
+	public interface Config
+			extends TLModelBaseLineMigrationProcessor.Config<UpdateTLAssociationEndProcessor>, UpdateEndAspectConfig {
 
 		// sum interface
 

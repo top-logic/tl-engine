@@ -53,6 +53,8 @@
 
 				<reference name="val" type="Vals"/>
 				<reference name="valNew" type="ValsNew"/>
+				
+				<reference name="valIncompatible" type="Incompatible"/>
 			</attributes>
 		</class>
 

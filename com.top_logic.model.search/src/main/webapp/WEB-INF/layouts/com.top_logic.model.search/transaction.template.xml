@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<properties extends="com.top_logic.mig.html.layout.DialogInfo, com.top_logic.model.search.providers.MonomorphicCreateFormBuilderByExpression$UIOptions, com.top_logic.element.layout.formeditor.builder.FormsTemplateParameter, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig">
+	<properties extends="com.top_logic.mig.html.layout.DialogInfo, com.top_logic.model.search.providers.MonomorphicCreateFormBuilderByExpression$UIOptions, com.top_logic.element.layout.formeditor.builder.FormsTemplateParameter, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.layout.editor.config.ButtonTemplateParameters">
 		<property name="open-handler"
 			type="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
 		>
@@ -13,6 +13,13 @@
 		>
 			<item-default/>
 			<non-nullable/>
+		</property>
+		<property name="buttons"
+			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
+			instance-type="com.top_logic.tool.boundsec.CommandHandler"
+			type="List"
+		>
+			<acceptable-classifiers value="customTransaction, form, commons"/>
 		</property>
 		<property name="transactionHandler"
 			type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
@@ -66,6 +73,7 @@
 			</modelBuilder>
 			<buttons>
 				<button>${transactionHandler}</button>
+				${buttons}
 				<reference command-id="configureCreateFormDefinitionCommand"/>
 				<reference command-id="deleteEditFormDefinitionCommand"/>
 			</buttons>

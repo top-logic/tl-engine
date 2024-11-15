@@ -12,29 +12,39 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.component.WithCloseDialog;
-import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.component.AbstractFormCommandHandler;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.TransactionHandler;
 import com.top_logic.layout.form.component.WithPostCreateActions;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * {@link CommandHandler} executing a custom transaction with form input.
+ * {@link CommandHandler} executing a custom operation on a form.
+ * 
+ * <p>
+ * The most common use case of this handler is to store updates to an object or create a new object
+ * with values entered in a form. However, this handler can also be configured to just modify values
+ * currently displayed in a form.
+ * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
+@Label("Custom transaction")
 @InApp(classifiers = { "customTransaction" })
 public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 		implements WithPostCreateActions, TransactionHandler {
@@ -46,9 +56,35 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 	public interface UIOptions extends WithPostCreateActions.Config, WithCloseDialog {
 
 		/**
+		 * @see #getCheckForm()
+		 */
+		String CHECK_FORM = "check-form";
+
+		/**
+		 * @see #getAutoApply()
+		 */
+		String AUTO_APPLY = "auto-apply";
+
+		/**
+		 * @see #isInTransaction()
+		 */
+		String TRANSACTION = "transaction";
+
+		/**
 		 * @see #getOperation()
 		 */
 		String OPERATION = "operation";
+
+		/**
+		 * Whether to check the form for errors before attempting to execute the operation.
+		 * 
+		 * <p>
+		 * This should be activated, whenever auto-apply of the form is enabled.
+		 * </p>
+		 */
+		@Name(CHECK_FORM)
+		@BooleanDefault(true)
+		boolean getCheckForm();
 
 		/**
 		 * Whether to automatically apply the user inputs in the form fields to the edited model
@@ -65,10 +101,24 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 		 * underlying model to the {@link #getOperation()}.
 		 * </p>
 		 */
+		@Name(AUTO_APPLY)
 		boolean getAutoApply();
 
 		/**
-		 * The operation to execute in a transaction context.
+		 * Whether to perform the operation in a transaction.
+		 * 
+		 * <p>
+		 * Note: Creating, modifying, or deleting persistent objects require a transaction.
+		 * Modification of transient objects or pure service operations do not require a transaction
+		 * context.
+		 * </p>
+		 */
+		@Name(TRANSACTION)
+		@BooleanDefault(true)
+		boolean isInTransaction();
+
+		/**
+		 * The operation to execute.
 		 * 
 		 * <p>
 		 * Expected is a function taking three arguments. The first argument is the transient form
@@ -83,6 +133,13 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 		 * {@link #getPostCreateActions() post create actions}. For example, this allows to select
 		 * an object that was created within the transaction.
 		 * </p>
+		 * 
+		 * <p>
+		 * When operating on a persistent object, a transaction must be performed, when this
+		 * operation modifies the model (by e.g. storing value entered in the form). Another use
+		 * case is to modify the form values being displayed e.g. to provide some custom defaults
+		 * for another transaction on the same form.
+		 * </p>
 		 */
 		@Name(OPERATION)
 		@Mandatory
@@ -93,6 +150,25 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 	/**
 	 * Configuration options for {@link TransactionHandlerByExpression}.
 	 */
+	@DisplayOrder({
+		Config.RESOURCE_KEY_PROPERTY_NAME,
+		Config.IMAGE_PROPERTY,
+		Config.DISABLED_IMAGE_PROPERTY,
+		Config.CLIQUE_PROPERTY,
+		Config.GROUP_PROPERTY,
+		Config.TARGET,
+		Config.EXECUTABILITY_PROPERTY,
+		Config.CHECK_FORM,
+		Config.IGNORE_WARNINGS_PROPERTY,
+		Config.AUTO_APPLY,
+		Config.TRANSACTION,
+		Config.OPERATION,
+		Config.POST_CREATE_ACTIONS,
+		Config.CLOSE_DIALOG,
+		Config.CONFIRM_PROPERTY,
+		Config.CONFIRM_MESSAGE,
+		Config.SECURITY_OBJECT,
+	})
 	public interface Config extends AbstractFormCommandHandler.Config, UIOptions {
 		// Pure sum interface.
 	}
@@ -122,18 +198,31 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 			Map<String, Object> arguments) {
 
 		Object result;
-		try (Transaction tx = beginTransaction(model)) {
+		if (config().isInTransaction()) {
+			try (Transaction tx = beginTransaction(model)) {
+				result = performTransaction(component, formContext, model);
+				commit(tx, model);
+			}
+		} else {
 			result = performTransaction(component, formContext, model);
-			commit(tx, model);
 		}
 
 		WithPostCreateActions.processCreateActions(_postCreateActions, component, result);
 
-		if (((Config) getConfig()).getCloseDialog()) {
+		if (config().getCloseDialog()) {
 			component.closeDialog();
 		}
 
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	@Override
+	protected boolean ignoreFormContext() {
+		return !config().getCheckForm();
+	}
+
+	private Config config() {
+		return (Config) getConfig();
 	}
 
 	/**
@@ -151,12 +240,20 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 	protected Object performTransaction(LayoutComponent component, FormContext formContext, Object model) {
 		AttributeFormContext fc = (AttributeFormContext) formContext;
 
-		if (((Config) getConfig()).getAutoApply()) {
+		if (config().getAutoApply()) {
 			fc.store();
 		}
 
-		FormContainer parameterObjectGroup = (FormContainer) fc.getMembers().next();
-		TLFormObject parameterObject = fc.getOverlay(parameterObjectGroup);
+		// Try to fetch create.
+		TLFormObject parameterObject = fc.getAttributeUpdateContainer().getOverlay(null, null);
+		if (parameterObject == null) {
+			// Try to fetch edited model.
+			parameterObject = fc.getAttributeUpdateContainer().getOverlay((TLObject) model, null);
+			if (parameterObject == null) {
+				// Use just the first one.
+				parameterObject = fc.getAttributeUpdateContainer().getAllOverlays().iterator().next();
+			}
+		}
 
 		return _operation.execute(parameterObject, model, parameterObject.getEditedObject());
 	}

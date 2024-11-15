@@ -9,6 +9,22 @@
 			comment="Demodaten anlegen"
 		>
 			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path=""
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Strukturen > Typendemo > DemoTypes-Baum"
+						/>
+					</selection-model-name>
+				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
 					command-label="Neu..."
@@ -956,8 +972,11 @@
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="TreeReferenceOptions_A1"
+							<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+								path="TreeReferenceOptions_A1"
+								singleton="ROOT"
+								singleton-label="ROOT"
+								structure="DemoTypes"
 							/>
 						</values>
 					</value>
@@ -1018,8 +1037,11 @@
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="TreeReferenceOptions_B3"
+							<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+								path="TreeReferenceOptions_A2 > TreeReferenceOptions_B3"
+								singleton="ROOT"
+								singleton-label="ROOT"
+								structure="DemoTypes"
 							/>
 						</values>
 					</value>
@@ -1133,8 +1155,11 @@
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="TreeReferenceOptions_C1"
+							<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+								path="TreeReferenceOptions_A1 > TreeReferenceOptions_B1 > TreeReferenceOptions_C1"
+								singleton="ROOT"
+								singleton-label="ROOT"
+								structure="DemoTypes"
 							/>
 						</values>
 					</value>
@@ -1195,8 +1220,11 @@
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="TreeReferenceOptions_B4"
+							<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+								path="TreeReferenceOptions_A2 > TreeReferenceOptions_B4"
+								singleton="ROOT"
+								singleton-label="ROOT"
+								structure="DemoTypes"
 							/>
 						</values>
 					</value>

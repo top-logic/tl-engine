@@ -31,7 +31,7 @@ public class BusinessObjectTreeModel<T> implements TLTreeModel<T> {
 	Function<T, Collection<?>> _parents;
 
 	/**
-	 * Creates a {@link TLTreeModel} for business objects.
+	 * Creates a finite {@link TLTreeModel} for business objects.
 	 * 
 	 * @param root
 	 *        Business object of the root node.
@@ -41,11 +41,29 @@ public class BusinessObjectTreeModel<T> implements TLTreeModel<T> {
 	 *        Parent objects of a given business object.
 	 */
 	public BusinessObjectTreeModel(T root, Function<T, Collection<?>> childrenByObject, Function<T, Collection<?>> parentByObject) {
-		_treeModel = new DefaultIndexedTreeModel(createTreeBuilder(childrenByObject), root);
+		this(root, childrenByObject, parentByObject, true);
+	}
+
+	/**
+	 * Creates a {@link TLTreeModel} for business objects.
+	 * 
+	 * @param root
+	 *        Business object of the root node.
+	 * @param childrenByObject
+	 *        Children objects of a given business object.
+	 * @param parentByObject
+	 *        Parent objects of a given business object.
+	 * @param finite
+	 *        Whether the created tree model is of limited depth.
+	 */
+	public BusinessObjectTreeModel(T root, Function<T, Collection<?>> childrenByObject,
+			Function<T, Collection<?>> parentByObject, boolean finite) {
+		_treeModel = new DefaultIndexedTreeModel(createTreeBuilder(childrenByObject, finite), root);
 		_parents = parentByObject;
 	}
 
-	private TreeBuilder<DefaultTreeUINode> createTreeBuilder(Function<T, Collection<?>> childrenByObject) {
+	private TreeBuilder<DefaultTreeUINode> createTreeBuilder(Function<T, Collection<?>> childrenByObject,
+			boolean finite) {
 		return new TreeBuilder<>() {
 
 			@Override
@@ -67,7 +85,7 @@ public class BusinessObjectTreeModel<T> implements TLTreeModel<T> {
 
 			@Override
 			public boolean isFinite() {
-				return true;
+				return finite;
 			}
 
 		};

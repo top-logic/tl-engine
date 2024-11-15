@@ -349,6 +349,10 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 	@SuppressWarnings("unchecked")
 	private boolean hasFixedOptionsOnly() {
 		TreeUIModel<Object> model = optionTree.getTreeModel();
+		if (!model.isFinite()) {
+			return false;
+		}
+
 		List<?> treeLevelObjects;
 		if (model.isRootVisible()) {
 			treeLevelObjects = Collections.singletonList(model.getRoot());

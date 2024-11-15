@@ -491,6 +491,8 @@ public class AttributedSearchComponent extends FormComponent {
     public FormContext createFormContext(StoredQuery aQuery, boolean skipAttributes) {
 		initResultColumns();
         AttributeFormContext theContext = new AttributeFormContext(this.getResPrefix());
+		FormComponent.initFormContext(this, this, theContext);
+
         List theValues  = this.addAttributesFromMetaElement(theContext, this.getSearchMetaElement(), aQuery);
         this.addMoreConstraints(theContext, aQuery, theValues);
 

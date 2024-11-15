@@ -29,6 +29,7 @@ import com.top_logic.basic.config.annotation.DerivedRef;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayInherited;
@@ -179,6 +180,7 @@ public class HTMLTemplateFormProvider
 		@ControlProvider(CodeEditorControl.CPHtml.class)
 		@ItemDisplay(ItemDisplayType.VALUE)
 		@Format(HTMLTagFormat.class)
+		@Mandatory
 		HTMLTemplate getTemplate();
 
 		/**
@@ -254,7 +256,7 @@ public class HTMLTemplateFormProvider
 	private HTMLTemplateFragment displayTemplate(FormEditorContext form) {
 		TLObjectFragment objectFragment = new TLObjectFragment(form, _template, form.getModel());
 
-		return contentBox(htmlTemplate((displayContext, out) -> objectFragment.write(displayContext, out)));
+		return htmlTemplate((displayContext, out) -> objectFragment.write(displayContext, out));
 	}
 
 	private static class Template {
@@ -480,10 +482,12 @@ public class HTMLTemplateFormProvider
 				return varValue;
 			}
 
-			TLStructuredTypePart part = _model.tType().getPart(propertyName);
-			if (part != null) {
-				Object value = _model.tValue(part);
-				return value;
+			if (_model != null) {
+				TLStructuredTypePart part = _model.tType().getPart(propertyName);
+				if (part != null) {
+					Object value = _model.tValue(part);
+					return value;
+				}
 			}
 
 			return super.getPropertyValue(propertyName);

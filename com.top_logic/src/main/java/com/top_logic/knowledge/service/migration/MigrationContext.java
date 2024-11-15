@@ -5,6 +5,12 @@
  */
 package com.top_logic.knowledge.service.migration;
 
+import static com.top_logic.basic.db.sql.SQLFactory.*;
+
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.w3c.dom.Document;
 
 import com.top_logic.basic.ConfigurationError;
@@ -16,10 +22,15 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.format.PrimitiveBooleanFormat;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
+import com.top_logic.basic.db.sql.CompiledStatement;
+import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.basic.sql.SQLH;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.dob.MOFactory;
+import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MORepository;
+import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.knowledge.objects.meta.DefaultMOFactory;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -29,6 +40,7 @@ import com.top_logic.knowledge.service.KnowledgeBaseFactoryConfig;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.DBKnowledgeTypeFactory;
 import com.top_logic.knowledge.service.db2.KBSchemaUtil;
+import com.top_logic.knowledge.service.db2.RevisionXref;
 import com.top_logic.model.migration.Util;
 
 /**
@@ -51,6 +63,8 @@ public class MigrationContext extends TypedAnnotationContainer {
 	private final Util _util;
 
 	private MORepository _schemaRepository;
+
+	private final Set<MOStructure> _xrefInvalidates = new HashSet<>();
 
 	/**
 	 * Creates a {@link MigrationContext}.
@@ -140,6 +154,63 @@ public class MigrationContext extends TypedAnnotationContainer {
 	 */
 	public Util getSQLUtils() {
 		return _util;
+	}
+
+	/**
+	 * Requests rebuilding the {@link RevisionXref} table.
+	 * 
+	 * <p>
+	 * The rebuild is deferred until the end of the migration or until
+	 * {@link #revalidateXRef(Log, PooledConnection)} is called. This speeds up migration
+	 * dramatically, because rebuilding the {@link RevisionXref} table is a time-consuming process.
+	 * </p>
+	 *
+	 * @param table
+	 *        The table that was modified. {@link RevisionXref} entries for this table must be
+	 *        rebuilt.
+	 */
+	public void invalidateXRef(MOStructure table) {
+		_xrefInvalidates.add(table);
+	}
+
+	/**
+	 * Re-builds the {@link RevisionXref} table for those tables that have been
+	 * {@link #invalidateXRef(MOStructure) invalidated}.
+	 */
+	public void revalidateXRef(Log log, PooledConnection connection) throws SQLException {
+		for (MOStructure table : _xrefInvalidates) {
+			CompiledStatement removeXref = query(
+				delete(table(SQLH.mangleDBName(RevisionXref.REVISION_XREF_TYPE_NAME)),
+					eqSQL(
+						column(SQLH.mangleDBName(RevisionXref.XREF_TYPE_ATTRIBUTE)),
+						literal(DBType.STRING, table.getName()))))
+							.toSql(connection.getSQLDialect());
+			int removed = removeXref.executeUpdate(connection);
+			log.info("Cleared " + removed + " rows for table '" + table.getName() + "' from '"
+				+ RevisionXref.REVISION_XREF_TYPE_NAME + ".");
+		}
+
+		for (MOStructure table : _xrefInvalidates) {
+			CompiledStatement fillXref = query(
+				insert(
+					table(SQLH.mangleDBName(RevisionXref.REVISION_XREF_TYPE_NAME)),
+					columnNames(
+						SQLH.mangleDBName(RevisionXref.XREF_REV_ATTRIBUTE),
+						SQLH.mangleDBName(RevisionXref.XREF_BRANCH_ATTRIBUTE),
+						SQLH.mangleDBName(RevisionXref.XREF_TYPE_ATTRIBUTE)),
+					selectDistinct(
+						columns(
+							columnDef(BasicTypes.REV_MIN_DB_NAME),
+							getSQLUtils().branchColumnDef(),
+							columnDef(literal(DBType.STRING, table.getName()))),
+						table(table.getDBMapping().getDBName())))).toSql(connection.getSQLDialect());
+
+			int readded = fillXref.executeUpdate(connection);
+			log.info("Re-added " + readded + " rows for table '" + table.getName() + "' to '"
+				+ RevisionXref.REVISION_XREF_TYPE_NAME + ".");
+		}
+
+		_xrefInvalidates.clear();
 	}
 
 }

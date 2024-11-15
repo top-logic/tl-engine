@@ -35,6 +35,14 @@ import com.top_logic.util.model.ModelService;
 public class ScriptTracer {
 
 	/**
+	 * Creates a {@link ScriptTracer} for the given expression, or <code>null</code> if no
+	 * expression is given.
+	 */
+	public static ScriptTracer compileOptional(Expr expr) {
+		return expr == null ? null : compile(expr);
+	}
+
+	/**
 	 * Creates a {@link ScriptTracer} for the given expression.
 	 */
 	public static ScriptTracer compile(Expr expr) {

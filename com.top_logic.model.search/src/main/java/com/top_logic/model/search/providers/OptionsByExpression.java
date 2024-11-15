@@ -85,7 +85,7 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 
 	@Override
 	public OptionModel<?> generate(EditContext editContext) {
-		return new ScriptObservingOptions(editContext.getOverlay(), editContext.getValueType());
+		return new ScriptObservingOptionList(editContext.getOverlay(), editContext.getValueType());
 	}
 
 	@Override
@@ -93,14 +93,8 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 		return _config;
 	}
 
-	private final class ScriptObservingOptions extends AbstractOptionModel<Object>
-			implements ListOptionModel<Object>, Sink<Pointer>, ValueListener {
-	
-		private final TLObject _object;
-
+	private class ScriptObservingOptionList extends ScriptObservingOptions implements ListOptionModel<Object> {
 		private List<?> _list;
-
-		private List<FormField> _observed = new ArrayList<>();
 
 		private Function<Object, Object> _normalizer;
 
@@ -112,8 +106,8 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 		 * @param valueType
 		 *        The type of option values.
 		 */
-		private ScriptObservingOptions(TLObject object, TLType valueType) {
-			_object = object;
+		private ScriptObservingOptionList(TLObject object, TLType valueType) {
+			super(object);
 
 			if (valueType.getModelKind() == ModelKind.DATATYPE) {
 				StorageMapping<?> storageMapping = ((TLPrimitive) valueType).getStorageMapping();
@@ -126,7 +120,7 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 				_normalizer = x -> storageMapping.getBusinessObject(storageMapping.getStorageObject(x));
 			}
 		}
-	
+
 		@Override
 		public List<?> getBaseModel() {
 			if (_list == null) {
@@ -136,11 +130,44 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 		}
 	
 		private List<?> createOptions() {
-			List<?> list = SearchExpression.asList(_function.execute(this, _object));
+			List<?> list = SearchExpression.asList(_function.execute(this, getObject()));
 			if (_normalizer != null) {
 				return list.stream().map(_normalizer).collect(Collectors.toList());
 			}
 			return list;
+		}
+
+		@Override
+		protected void reset() {
+			_list = null;
+		}
+	}
+
+	/**
+	 * Base class for {@link OptionModel}s that observe {@link TLObject}s for change.
+	 */
+	abstract static class ScriptObservingOptions extends AbstractOptionModel<Object>
+			implements Sink<Pointer>, ValueListener {
+
+		private final TLObject _object;
+
+		private List<FormField> _observed = new ArrayList<>();
+
+		/**
+		 * Creates a {@link ScriptObservingOptions}.
+		 * 
+		 * @param object
+		 *        The base object that owns the attribute for which options are generated.
+		 */
+		public ScriptObservingOptions(TLObject object) {
+			_object = object;
+		}
+
+		/**
+		 * The base object that is the context for generating options.
+		 */
+		public TLObject getObject() {
+			return _object;
 		}
 
 		@Override
@@ -168,9 +195,14 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 		public void valueChanged(FormField field, Object oldValue, Object newValue) {
 			// Invalidate.
 			detach();
-			_list = null;
+			reset();
 			notifyChanged();
 		}
+
+		/**
+		 * Resets the generated options.
+		 */
+		protected abstract void reset();
 
 		private void detach() {
 			for (FormField observed : _observed) {

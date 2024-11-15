@@ -423,8 +423,11 @@
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="TestReferenceListModelBuilder-A0-C0"
+							<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+								path="TestReferenceListModelBuilder > A0 > TestReferenceListModelBuilder-A0-C0"
+								singleton="ROOT"
+								singleton-label="ROOT"
+								structure="DemoTypes"
 							/>
 						</values>
 					</value>
@@ -469,8 +472,11 @@
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="TestReferenceListModelBuilder-A1-C2"
+							<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+								path="TestReferenceListModelBuilder > A1 > TestReferenceListModelBuilder-A1-C2"
+								singleton="ROOT"
+								singleton-label="ROOT"
+								structure="DemoTypes"
 							/>
 						</values>
 					</value>
@@ -515,11 +521,17 @@
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 						<values>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="TestReferenceListModelBuilder-A2-C4"
+							<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+								path="TestReferenceListModelBuilder > A2 > TestReferenceListModelBuilder-A2-C4"
+								singleton="ROOT"
+								singleton-label="ROOT"
+								structure="DemoTypes"
 							/>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="TestReferenceListModelBuilder-A2-C5"
+							<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+								path="TestReferenceListModelBuilder > A2 > TestReferenceListModelBuilder-A2-C5"
+								singleton="ROOT"
+								singleton-label="ROOT"
+								structure="DemoTypes"
 							/>
 						</values>
 					</value>

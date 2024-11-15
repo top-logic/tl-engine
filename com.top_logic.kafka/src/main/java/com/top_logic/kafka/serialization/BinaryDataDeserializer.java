@@ -12,6 +12,7 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 
@@ -27,8 +28,14 @@ public class BinaryDataDeserializer extends AbstractConfiguredInstance<BinaryDat
 	 * Configuration options for {@link BinaryDataDeserializer}.
 	 */
 	public interface Config<I extends BinaryDataDeserializer> extends PolymorphicConfiguration<I> {
-		// Pure marker interface.
+		/**
+		 * The content type to assume for the received message data.
+		 */
+		@StringDefault(BinaryData.CONTENT_TYPE_OCTET_STREAM)
+		String getContentType();
 	}
+
+	private final String _contentType;
 
 	/**
 	 * Creates a {@link BinaryDataDeserializer} from configuration.
@@ -41,11 +48,13 @@ public class BinaryDataDeserializer extends AbstractConfiguredInstance<BinaryDat
 	@CalledByReflection
 	public BinaryDataDeserializer(InstantiationContext context, Config<?> config) {
 		super(context, config);
+
+		_contentType = config.getContentType();
 	}
 
 	@Override
 	public BinaryData deserialize(String topic, byte[] data) {
-		return BinaryDataFactory.createBinaryData(data);
+		return BinaryDataFactory.createBinaryData(data, _contentType);
 	}
 
 }

@@ -223,7 +223,7 @@ public class DataMigration {
 				log.info("Done with pre-migration: " + versionName);
 				connection.commit();
 			} catch (SQLException ex) {
-				log.error("Failed to commit results. ", ex);
+				log.error("Failed to commit preprocessor result of '" + versionName + "'. ", ex);
 			}
 		}
 
@@ -242,8 +242,15 @@ public class DataMigration {
 				log.info("Done with SQL Migration: " + versionName);
 				connection.commit();
 			} catch (SQLException ex) {
-				log.error("Failed to commit results. ", ex);
+				log.error("Failed to commit processor result of '" + versionName + "'. ", ex);
 			}
+		}
+
+		try {
+			context.revalidateXRef(log, connection);
+			connection.commit();
+		} catch (SQLException ex) {
+			log.error("Failed to commit xref update. ", ex);
 		}
 	}
 

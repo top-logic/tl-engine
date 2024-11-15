@@ -92,7 +92,7 @@ public class CopyTableDataProcessor extends AbstractConfiguredInstance<CopyTable
 			int cnt = sql.executeUpdate(connection);
 			log.info("Copied " + cnt + " rows from table '" + sourceTableName + "' to '" + destTableName + "'.");
 
-			MoveObjectsProcessor.updateXref(context, log, connection, destTable);
+			context.invalidateXRef(destTable);
 		} catch (SQLException ex) {
 			log.error("Failed to copy table '" + sourceTableName + "' to '" + destTableName + "': " + ex.getMessage(),
 				ex);

@@ -9,9 +9,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
@@ -34,8 +32,7 @@ import com.top_logic.model.migration.data.TypePart;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<UpdateTLPropertyProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class UpdateTLPropertyProcessor extends TLModelBaseLineMigrationProcessor<UpdateTLPropertyProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link UpdateTLPropertyProcessor}.
@@ -44,7 +41,7 @@ public class UpdateTLPropertyProcessor extends AbstractConfiguredInstance<Update
 	 */
 	@TagName("update-property")
 	public interface Config
-			extends PolymorphicConfiguration<UpdateTLPropertyProcessor>, UpdateTypePartConfig {
+			extends TLModelBaseLineMigrationProcessor.Config<UpdateTLPropertyProcessor>, UpdateTypePartConfig {
 
 		/**
 		 * See {@link PartConfig#getTypeSpec()}.

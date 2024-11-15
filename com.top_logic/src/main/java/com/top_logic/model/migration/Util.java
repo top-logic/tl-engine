@@ -2950,33 +2950,25 @@ public class Util {
 			return;
 		}
 		TypePart movedClassifier = classifiers.get(currentIndex);
-
-		// Note: The following code must not assume that the order values of classifiers are
-		// normalized (starting with zero and ascending without gaps).
-
-		// Remove moved classifier from classifier list.
-		classifiers.remove(currentIndex);
-		if (currentIndex < beforeIndex) {
-			beforeIndex--;
-		}
-
-		// Move moved classifier away to avoid duplicate-key constraint violation during update.
+		// First move classifier away to avoid duplicate-key constraint.
 		updateTLClassifierSortOrder(con, movedClassifier, Integer.MAX_VALUE);
-
-		// Compact remaining classifiers (normalizing their indices).
-		for (int i = 0; i < classifiers.size() - 1; i++) {
-			TypePart otherClassifier = classifiers.get(i);
-			updateTLClassifierSortOrder(con, otherClassifier, i);
+		int targetOrder;
+		if (currentIndex < beforeIndex) {
+			targetOrder =
+				beforeIndex == classifiers.size() ? beforeIndex : classifiers.get(beforeIndex).getOrder() - 1;
+			for (int i = currentIndex + 1; i < beforeIndex; i++) {
+				TypePart tlClassifier = classifiers.get(i);
+				updateTLClassifierSortOrder(con, tlClassifier, tlClassifier.getOrder() - 1);
+			}
+		} else {
+			assert beforeIndex < currentIndex;
+			targetOrder = classifiers.get(beforeIndex).getOrder();
+			for (int i = currentIndex - 1; i >= beforeIndex; i--) {
+				TypePart tlClassifier = classifiers.get(i);
+				updateTLClassifierSortOrder(con, tlClassifier, tlClassifier.getOrder() + 1);
+			}
 		}
-
-		// Re-add moved classifier.
-		classifiers.add(beforeIndex, movedClassifier);
-
-		// Insert in new order.
-		for (int i = classifiers.size() - 1; i >= beforeIndex; i--) {
-			TypePart otherClassifier = classifiers.get(i);
-			updateTLClassifierSortOrder(con, otherClassifier, i);
-		}
+		updateTLClassifierSortOrder(con, movedClassifier, targetOrder);
 	}
 
 	private void updateTypeGeneralizationSortOrder(PooledConnection con, TypeGeneralization part, int newSortOrder)
@@ -3556,6 +3548,68 @@ public class Util {
 					parameter(DBType.ID, "identifier"))),
 			columns,
 			parameters)).toSql(con.getSQLDialect());
+
+		sql.executeUpdate(con, arguments.toArray());
+	}
+
+	/**
+	 * Updates the given {@link TLEnumeration}.
+	 */
+	public void updateTLEnumeration(PooledConnection con, Type type, Module newModule, String newName,
+			AnnotatedConfig<TLTypeAnnotation> annotations) throws SQLException {
+		updateTLEnumeration(con, type, newModule, newName, toString(annotations));
+	}
+
+	/**
+	 * Updates the given {@link TLEnumeration}.
+	 */
+	public void updateTLEnumeration(PooledConnection con, Type type, Module newModule, String newName,
+			String annotations) throws SQLException {
+		List<Parameter> parameterDefs = new ArrayList<>();
+		List<String> columns = new ArrayList<>();
+		List<SQLExpression> parameters = new ArrayList<>();
+		List<Object> arguments = new ArrayList<>();
+
+		parameterDefs.add(branchParamDef());
+		parameterDefs.add(parameterDef(DBType.ID, "identifier"));
+		arguments.add(type.getBranch());
+		arguments.add(type.getID());
+		if (newModule != null) {
+			columns.add(refType(ApplicationObjectUtil.META_ELEMENT_SCOPE_REF));
+			parameters.add(literalString(newModule.getTable()));
+
+			parameterDefs.add(parameterDef(DBType.ID, "moduleID"));
+			columns.add(refID(ApplicationObjectUtil.META_ELEMENT_SCOPE_REF));
+			parameters.add(parameter(DBType.ID, "moduleID"));
+			columns.add(refID(TLClass.MODULE_ATTR));
+			parameters.add(parameter(DBType.ID, "moduleID"));
+			arguments.add(newModule.getID());
+		}
+		if (newName != null) {
+			parameterDefs.add(parameterDef(DBType.STRING, "name"));
+			columns.add(SQLH.mangleDBName(PersistentType.NAME_ATTR));
+			parameters.add(parameter(DBType.STRING, "name"));
+			arguments.add(newName);
+		}
+		if (annotations != null) {
+			parameterDefs.add(parameterDef(DBType.STRING, "annotations"));
+			columns.add(SQLH.mangleDBName(PersistentModelPart.ANNOTATIONS_MO_ATTRIBUTE));
+			parameters.add(parameter(DBType.STRING, "annotations"));
+			arguments.add(annotations);
+		}
+		if (columns.isEmpty()) {
+			return;
+		}
+		CompiledStatement sql = query(parameterDefs,
+			update(
+				table(SQLH.mangleDBName(TlModelFactory.KO_NAME_TL_ENUMERATION)),
+				and(
+					eqBranch(),
+					eqSQL(
+						column(BasicTypes.IDENTIFIER_DB_NAME),
+						parameter(DBType.ID, "identifier"))),
+				columns,
+				parameters)).toSql(con.getSQLDialect());
 
 		sql.executeUpdate(con, arguments.toArray());
 	}

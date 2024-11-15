@@ -55,6 +55,8 @@
 
 				<reference name="val" type="Vals"/>
 				<reference name="valDel" type="ValsDel"/>
+				
+				<reference name="valIncompatible" type="Incompatible"/>
 			</attributes>
 		</class>
 

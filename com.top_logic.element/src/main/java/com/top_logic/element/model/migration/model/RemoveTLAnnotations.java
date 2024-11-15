@@ -13,10 +13,8 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -40,14 +38,13 @@ import com.top_logic.model.util.TLModelUtil;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class RemoveTLAnnotations extends AbstractConfiguredInstance<RemoveTLAnnotations.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class RemoveTLAnnotations extends TLModelBaseLineMigrationProcessor<RemoveTLAnnotations.Config> {
 
 	/**
 	 * Configuration options of {@link RemoveTLAnnotations}.
 	 */
 	@TagName("remove-annotations")
-	public interface Config extends PolymorphicConfiguration<RemoveTLAnnotations> {
+	public interface Config extends TLModelBaseLineMigrationProcessor.Config<RemoveTLAnnotations> {
 
 		/**
 		 * Qualified name of the {@link TLModelPart} to remove annotations from.

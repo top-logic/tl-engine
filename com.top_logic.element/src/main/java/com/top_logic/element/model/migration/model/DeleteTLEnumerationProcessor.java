@@ -11,10 +11,8 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
@@ -33,13 +31,12 @@ import com.top_logic.model.migration.data.Type;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
-public class DeleteTLEnumerationProcessor extends AbstractConfiguredInstance<DeleteTLEnumerationProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class DeleteTLEnumerationProcessor
+		extends TLModelBaseLineMigrationProcessor<DeleteTLEnumerationProcessor.Config> {
 
 	/** {@link ConfigurationItem} for the {@link DeleteTLEnumerationProcessor}. */
 	@TagName("delete-enumeration")
-	public interface Config extends PolymorphicConfiguration<DeleteTLEnumerationProcessor>,
-			TLModelBaseLineMigrationProcessor.SkipModelBaselineApaption {
+	public interface Config extends TLModelBaseLineMigrationProcessor.Config<DeleteTLEnumerationProcessor> {
 
 		/** Qualified name of the {@link TLEnumeration} to delete. */
 		@Mandatory
@@ -73,7 +70,7 @@ public class DeleteTLEnumerationProcessor extends AbstractConfiguredInstance<Del
 		_util.deleteTLType(connection, type, getConfig().isFailOnExistingClassifiers());
 		log.info("Deleted TLEnumeration '" + _util.toString(type) + "'.");
 
-		if (tlModel == null || getConfig().isSkipModelBaselineChange()) {
+		if (tlModel == null) {
 			return false;
 		}
 		return MigrationUtils.deleteType(log, tlModel, classToDelete);

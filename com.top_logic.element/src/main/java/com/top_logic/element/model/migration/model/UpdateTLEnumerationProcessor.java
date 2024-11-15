@@ -1,6 +1,6 @@
 /*
- * SPDX-FileCopyrightText: 2023 (c) Business Operation Systems GmbH <info@top-logic.com>
- *
+ * SPDX-FileCopyrightText: 2020 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
 package com.top_logic.element.model.migration.model;
@@ -15,10 +15,9 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
-import com.top_logic.model.TLAssociation;
+import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.config.TLTypeAnnotation;
-import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.MigrationException;
 import com.top_logic.model.migration.data.Module;
@@ -26,38 +25,51 @@ import com.top_logic.model.migration.data.QualifiedTypeName;
 import com.top_logic.model.migration.data.Type;
 
 /**
- * {@link MigrationProcessor} updating a {@link TLAssociation}.
+ * {@link MigrationProcessor} updating a {@link TLEnumeration}.
  * 
- * @author <a href="mailto:sven.foerster@top-logic.com">Sven Förster</a>
+ * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class UpdateTLAssociationProcessor
-		extends TLModelBaseLineMigrationProcessor<UpdateTLAssociationProcessor.Config> {
+public class UpdateTLEnumerationProcessor
+		extends TLModelBaseLineMigrationProcessor<UpdateTLEnumerationProcessor.Config> {
 
 	/**
-	 * Configuration options of {@link UpdateTLAssociationProcessor}.
+	 * Configuration options of {@link UpdateTLEnumerationProcessor}.
+	 * 
+	 * @see CreateTLClassifierProcessor.Config
 	 */
-	@TagName("update-association")
+	@TagName("update-enum")
 	public interface Config
-			extends TLModelBaseLineMigrationProcessor.Config<UpdateTLAssociationProcessor>,
+			extends TLModelBaseLineMigrationProcessor.Config<UpdateTLEnumerationProcessor>,
 			AnnotatedConfig<TLTypeAnnotation> {
 
 		/**
-		 * Qualified name of the {@link TLAssociation} to update.
+		 * Qualified name of the {@link TLEnumeration} to update.
 		 */
 		QualifiedTypeName getName();
 
 		/**
-		 * New name of the association including the new module.
+		 * Setter for {@link #getName()}.
+		 */
+		void setName(QualifiedTypeName value);
+
+		/**
+		 * New name of the {@link TLEnumeration} including the new module (in case of a move
+		 * operation).
 		 */
 		@Nullable
 		QualifiedTypeName getNewName();
+
+		/**
+		 * Setter for {@link #getNewName()}.
+		 */
+		void setNewName(QualifiedTypeName value);
 
 	}
 
 	private Util _util;
 
 	/**
-	 * Creates a {@link UpdateTLAssociationProcessor} from configuration.
+	 * Creates a {@link UpdateTLEnumerationProcessor} from configuration.
 	 * 
 	 * @param context
 	 *        The context for instantiating sub configurations.
@@ -65,7 +77,7 @@ public class UpdateTLAssociationProcessor
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public UpdateTLAssociationProcessor(InstantiationContext context, Config config) {
+	public UpdateTLEnumerationProcessor(InstantiationContext context, Config config) {
 		super(context, config);
 	}
 
@@ -75,50 +87,52 @@ public class UpdateTLAssociationProcessor
 			_util = context.getSQLUtils();
 			return internalDoMigration(log, connection, tlModel);
 		} catch (Exception ex) {
-			log.error("Update association migration failed at " + getConfig().location(), ex);
+			log.error("Update enum migration failed at " + getConfig().location(), ex);
 			return false;
 		}
 	}
 
 	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
 		QualifiedTypeName typeName = getConfig().getName();
-		Type association;
+		Type type;
 		try {
-			association = _util.getTLTypeOrFail(connection, typeName);
+			type = _util.getTLTypeOrFail(connection, typeName);
 		} catch (MigrationException ex) {
 			log.info(
-				"Unable to find association to update " + _util.qualifiedName(typeName) + " at "
-					+ getConfig().location(),
+				"Unable to find enum to update " + _util.qualifiedName(typeName) + " at " + getConfig().location(),
 				Log.WARN);
 			return false;
 		}
-		Module newModule;
+
 		QualifiedTypeName newName = getConfig().getNewName();
+		Module newModule;
 		if (newName == null || typeName.getModuleName().equals(newName.getModuleName())) {
 			newModule = null;
 		} else {
 			newModule = _util.getTLModuleOrFail(connection, newName.getModuleName());
 		}
-		String newAssociationName;
+		String localName;
 		if (newName == null || typeName.getTypeName().equals(newName.getTypeName())) {
-			newAssociationName = null;
+			localName = null;
 		} else {
-			newAssociationName = newName.getTypeName();
+			localName = newName.getTypeName();
 		}
 
-		_util.updateTLStructuredType(connection, association, newModule, newAssociationName, null,
-			null, (String) null);
-		log.info("Updated association " + _util.toString(association));
-
-		boolean updateModelBaseline;
-		if (tlModel == null || TLStructuredTypeColumns.isSyntheticAssociationName(typeName.getTypeName())) {
-			/* Internal TLAssociation which is not defined in the model baseline. */
-			updateModelBaseline = false;
-		} else {
-			MigrationUtils.updateAssociation(log, tlModel, typeName, newName, getConfig());
-			updateModelBaseline = true;
+		if (newName != null) {
+			Type clash = _util.getTLTypeOrNull(connection, newName);
+			if (clash != null) {
+				log.error("Another type with the name '" + newName.getName() + "' already exists. Cannot rename '"
+					+ typeName.getName() + "'.");
+				return false;
+			}
 		}
-		return updateModelBaseline;
+
+		_util.updateTLEnumeration(connection, type, newModule, localName, getConfig());
+		if (tlModel != null) {
+			MigrationUtils.updateEnum(log, tlModel, typeName, newName, getConfig());
+		}
+		log.info("Updated enum " + _util.qualifiedName(typeName));
+		return true;
 	}
 
 }

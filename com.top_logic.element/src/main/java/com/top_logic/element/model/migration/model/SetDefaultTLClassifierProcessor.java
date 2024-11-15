@@ -9,9 +9,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
@@ -28,14 +26,14 @@ import com.top_logic.model.migration.data.QualifiedTypeName;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class SetDefaultTLClassifierProcessor extends AbstractConfiguredInstance<SetDefaultTLClassifierProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class SetDefaultTLClassifierProcessor
+		extends TLModelBaseLineMigrationProcessor<SetDefaultTLClassifierProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link SetDefaultTLClassifierProcessor}.
 	 */
 	@TagName("set-default-classifier")
-	public interface Config extends PolymorphicConfiguration<SetDefaultTLClassifierProcessor> {
+	public interface Config extends TLModelBaseLineMigrationProcessor.Config<SetDefaultTLClassifierProcessor> {
 
 		/**
 		 * Qualified name of the {@link TLEnumeration} to update.

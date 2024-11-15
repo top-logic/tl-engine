@@ -11,9 +11,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
@@ -32,15 +30,13 @@ import com.top_logic.model.migration.data.Type;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class DeleteTLDatatypeProcessor extends AbstractConfiguredInstance<DeleteTLDatatypeProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class DeleteTLDatatypeProcessor extends TLModelBaseLineMigrationProcessor<DeleteTLDatatypeProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link DeleteTLDatatypeProcessor}.
 	 */
 	@TagName("delete-datatype")
-	public interface Config extends PolymorphicConfiguration<DeleteTLDatatypeProcessor>,
-			TLModelBaseLineMigrationProcessor.SkipModelBaselineApaption {
+	public interface Config extends TLModelBaseLineMigrationProcessor.Config<DeleteTLDatatypeProcessor> {
 
 		/**
 		 * Qualified name of the {@link TLPrimitive} to delete.
@@ -93,7 +89,7 @@ public class DeleteTLDatatypeProcessor extends AbstractConfiguredInstance<Delete
 		_util.deleteTLType(connection, type, false);
 		log.info("Deleted type " + _util.toString(type) + ".");
 
-		if (tlModel == null || getConfig().isSkipModelBaselineChange()) {
+		if (tlModel == null) {
 			return false;
 		}
 		return MigrationUtils.deleteType(log, tlModel, datatypeToDelete);

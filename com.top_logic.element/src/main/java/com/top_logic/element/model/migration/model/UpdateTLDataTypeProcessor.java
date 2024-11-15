@@ -9,7 +9,6 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -37,8 +36,7 @@ import com.top_logic.model.migration.data.Type;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class UpdateTLDataTypeProcessor extends AbstractConfiguredInstance<UpdateTLDataTypeProcessor.Config>
-		implements TLModelBaseLineMigrationProcessor {
+public class UpdateTLDataTypeProcessor extends TLModelBaseLineMigrationProcessor<UpdateTLDataTypeProcessor.Config> {
 
 	/**
 	 * Configuration options of {@link UpdateTLDataTypeProcessor}.
@@ -46,7 +44,7 @@ public class UpdateTLDataTypeProcessor extends AbstractConfiguredInstance<Update
 	 * @see com.top_logic.element.model.migration.model.CreateTLDatatypeProcessor.Config
 	 */
 	@TagName("update-datatype")
-	public interface Config extends PolymorphicConfiguration<UpdateTLDataTypeProcessor>,
+	public interface Config extends TLModelBaseLineMigrationProcessor.Config<UpdateTLDataTypeProcessor>,
 			AnnotatedConfig<TLTypeAnnotation> {
 
 		/**
@@ -64,6 +62,11 @@ public class UpdateTLDataTypeProcessor extends AbstractConfiguredInstance<Update
 		 */
 		@Nullable
 		QualifiedTypeName getNewName();
+
+		/**
+		 * @see #getNewName()
+		 */
+		void setNewName(QualifiedTypeName value);
 
 		/**
 		 * See {@link DatatypeConfig#getKind()}.

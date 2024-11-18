@@ -250,7 +250,7 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 					}
 
 					if (total > 0) {
-						MoveObjectsProcessor.updateXref(context, log, connection, i18nTable);
+						context.invalidateXRef(i18nTable);
 					}
 				}
 			}

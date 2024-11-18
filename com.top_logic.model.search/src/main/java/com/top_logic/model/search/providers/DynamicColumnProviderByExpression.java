@@ -28,6 +28,7 @@ import com.top_logic.element.meta.form.CustomEditContext;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
 import com.top_logic.element.meta.form.FieldProviderAnnotation;
+import com.top_logic.knowledge.service.Revision;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.form.FormMember;
@@ -308,12 +309,13 @@ public class DynamicColumnProviderByExpression
 		DisplayMode displayMode = getConfig().getColumnVisibility();
 
 		List<String> dynamicColumnNames = new ArrayList<>();
+		int id = 1;
 		String idPrefix = getConfig().getIdPrefix();
 		for (Object columnModel : columns) {
 			if (columnModel == null) {
 				continue;
 			}
-			String columnName = idPrefix + "-" + id(columnModel);
+			String columnName = idPrefix + "-" + id(columnModel, id++);
 			ColumnConfiguration column = table.declareColumn(columnName);
 
 			dynamicColumnNames.add(columnName);
@@ -377,12 +379,13 @@ public class DynamicColumnProviderByExpression
 		}
 	}
 
-	private String id(Object columnModel) {
-		if (columnModel instanceof TLObject) {
-			ObjectKey id = ((TLObject) columnModel).tId();
-			return id.getBranchContext() + "-" + id.getObjectName();
+	private String id(Object columnModel, int localId) {
+		if (columnModel instanceof TLObject obj && !obj.tTransient()) {
+			ObjectKey id = obj.tId();
+			long rev = id.getHistoryContext();
+			return id.getBranchContext() + "-" + id.getObjectName() + (rev == Revision.CURRENT_REV ? "" : "-" + rev);
 		} else {
-			return columnModel.toString();
+			return Integer.toString(localId);
 		}
 	}
 

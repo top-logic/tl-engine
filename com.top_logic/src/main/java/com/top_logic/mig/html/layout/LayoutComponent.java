@@ -3070,7 +3070,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
         if (hasCommands()) {
             return commandsById.values();
         }
-        return null;
+		return Collections.emptyList();
     }
 
 	/**

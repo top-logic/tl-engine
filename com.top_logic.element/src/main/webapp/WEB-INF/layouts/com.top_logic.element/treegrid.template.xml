@@ -196,9 +196,7 @@
 				</executability>
 			</button>
 		</buttons>
-		<goto-targets>
-			${goto-targets}
-		</goto-targets>
+		<goto-targets>${goto-targets}</goto-targets>
 		<tables>
 			<table
 				configurationProviders="${configurationProviders}"

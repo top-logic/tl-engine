@@ -32,6 +32,7 @@ import com.top_logic.layout.structure.LayoutControlFactory;
 import com.top_logic.layout.structure.LayoutData;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.tool.boundsec.CloseModalDialogCommandHandler;
+import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -118,13 +119,10 @@ public class DialogComponent extends AbstractDialogModel {
 				return false;
 			}
 			
-			Collection commands = component.getCommands();
-			if (commands != null) {
-				Object closeHandler = FilterUtil.findFirst(IS_CLOSE_DIALOG_HANDLER, commands);
-				if (closeHandler != null) {
-					this.closeHandler = (CloseModalDialogCommandHandler) closeHandler;
-					this.targetComponent = component;
-				}
+			CommandHandler handler = FilterUtil.findFirst(IS_CLOSE_DIALOG_HANDLER, component.getCommands());
+			if (handler != null) {
+				this.closeHandler = (CloseModalDialogCommandHandler) handler;
+				this.targetComponent = component;
 			}
 			return true;
 		}

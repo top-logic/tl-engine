@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.table.CellClassProvider;
 import com.top_logic.layout.table.TableRenderer.Cell;
+import com.top_logic.layout.tree.model.TLTreeNode;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -132,6 +133,11 @@ public class CellClassProviderByExpression extends AbstractConfiguredInstance<Ce
 	public String getCellClass(Cell cell) {
 		Object value = cell.getValue();
 		Object row = cell.getRowObject();
+		if (row instanceof TLTreeNode<?> node) {
+			// This establishes consistency with tree grids, where the row object is just the
+			// business object of the node.
+			row = node.getBusinessObject();
+		}
 		Object componentModel = _component == null ? null : _component.getModel();
 		Object result = _cssClasses.execute(value, row, componentModel);
 		return toCssClass(result);

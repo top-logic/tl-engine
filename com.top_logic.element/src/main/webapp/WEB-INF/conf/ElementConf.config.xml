@@ -390,6 +390,7 @@
 							/>
 						</tag-provider>
 						<annotation config:interface="com.top_logic.model.annotate.ui.TLCssClass" value="num"/>
+						<format definition="com.top_logic.layout.form.format.DurationFormat$Factory"/>
 					</attribute-setting>
 
 					<attribute-setting config-name="FLOAT">

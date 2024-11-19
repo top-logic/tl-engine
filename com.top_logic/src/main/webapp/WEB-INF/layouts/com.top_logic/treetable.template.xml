@@ -144,8 +144,6 @@
 			${buttons}
 			<include name="templates/editComponentCommands.xml"/>
 		</buttons>
-		<goto-targets>
-			${goto-targets}
-		</goto-targets>
+		<goto-targets>${goto-targets}</goto-targets>
 	</tree-table>
 </config:template>

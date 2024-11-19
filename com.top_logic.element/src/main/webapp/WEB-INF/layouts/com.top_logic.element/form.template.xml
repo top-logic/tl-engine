@@ -85,9 +85,7 @@
 		titleKey="${name}"
 		toolbar="${toolbar}"
 	>
-		<goto-targets>
-			${goto-targets}
-		</goto-targets>
+		<goto-targets>${goto-targets}</goto-targets>
 		<modelBuilder class="com.top_logic.element.layout.formeditor.builder.EditFormBuilder"
 			showNoModel="${showNoModel}"
 			type="${type}"

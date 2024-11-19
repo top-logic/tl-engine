@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.table.provider;
 
+import java.text.Format;
 import java.util.Comparator;
 
 import com.top_logic.basic.Logger;
@@ -328,7 +329,14 @@ public class PrimitiveColumn extends ColumnInfo {
 			case DATE:
 			case FLOAT:
 			case INT:
-				// No special Renderer
+				try {
+					Format format = DisplayAnnotations.getConfiguredFormat(getTypeContext());
+					if (format != null) {
+						column.setLabelProvider(new FormatLabelProvider(format));
+					}
+				} catch (ConfigurationException ex) {
+					Logger.error("Cannot instantiate format.", ex, PrimitiveColumn.class);
+				}
 				break;
 		}
 	}

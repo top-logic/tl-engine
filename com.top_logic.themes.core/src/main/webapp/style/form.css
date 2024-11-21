@@ -205,8 +205,8 @@ div.fptIconBar > span.fptIconOverlay {
 }
 
 .rf_label {
-	margin: var(--spacing-02) 0;
 	white-space: nowrap;
+	margin: var(--spacing-02) 0;
 }
 
 .rf_label .cLabel label.disabled,
@@ -330,7 +330,7 @@ span.can-edit {
 }
 
 .frmBody {
-	padding: 0 var(--spacing-03);
+	margin: var(--spacing-02) var(--spacing-03) 0 var(--spacing-03);
 }
 
 div.frmBody > div.dropPane {
@@ -402,22 +402,26 @@ div.rf_buttons {
 }
 
 .rf_columnsLayout.keep {
-	display: table;
-	width: 100%;
+	margin-top: var(--spacing-02);
+	overflow: auto;
+	flex-wrap: nowrap;
 }
 
-div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
-	display: table-cell;
-	padding-right: 5px;
-	padding-left: var(--RF_HORIZONTAL_GAP_COLUMNS);
+.rf_columnsLayout.keep .rf_inputCell:not(.rf_labelAbove) {
+	display: flex !important;
+	align-items: center;
 }
 
-.rf_columnsLayout.keep > * > * {
-    display: table-cell;
-    vertical-align: middle;
+.rf_columnsLayout.keep .rf_inputCell.rf_labelAbove {
+	display: flex !important;
+	flex-direction: column;
 }
 
-.keep, .rf_cell {
+.rf_columnsLayout.keep .rf_inputCell:not(.rf_labelAbove) .rf_cell {
+	min-width: var(--RF_FIRST_COLUMN_WIDTH);
+}
+
+.rf_cell {
 	width: 100%;
 }
 
@@ -432,7 +436,7 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
 }
 
 .rf_columnsLayout > .rf_groupCell {
-  	margin-left: calc(var(--RF_HORIZONTAL_GAP_COLUMNS) - 2px); /* 2px for the border */
+  	margin-left: calc(var(--RF_HORIZONTAL_GAP_COLUMNS));
 }
 
 .dflSize0 .rf_cellSmall,
@@ -468,64 +472,69 @@ div.cMediaQuery .rf_columnsLayout.keep > .rf_inputCell {
   	overflow: hidden;
 }
 
-.rf_columnsLayout > .rf_line,
-.cMediaQuery.dflSize0 .rf_columnsLayout > *:not(.rf_line),
-.cMediaQuery:is(.dflSize0, .dflSize1, .dflSize2, .dflSize3, .dflSize4, .dflSize5) .rf_cell .rf_columnsLayout > *:not(.rf_line),
-.cMediaQuery:is(.dflSize1, .dflSize2, .dflSize3, .dflSize4, .dflSize5) .rf_columnsLayout.cols1 > *:not(.rf_line) {
+.rf_columnsLayout:not(.keep) > .rf_line,
+.cMediaQuery.dflSize0 .rf_columnsLayout:not(.keep) > *:not(.rf_line),
+.cMediaQuery:is(.dflSize0, .dflSize1, .dflSize2, .dflSize3, .dflSize4, .dflSize5) .rf_cell .rf_columnsLayout:not(.keep) > *:not(.rf_line),
+.cMediaQuery:is(.dflSize1, .dflSize2, .dflSize3, .dflSize4, .dflSize5) .rf_columnsLayout.cols1:not(.keep) > *:not(.rf_line) {
 	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS));
   	width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS));
   	box-sizing: border-box;
  }	
 
-.cMediaQuery.dflSize1 .rf_columnsLayout > *:not(.rf_line),
-.cMediaQuery.dflSize2 .rf_columnsLayout > *:not(.rf_line),
-.cMediaQuery:is(.dflSize3, .dflSize4, .dflSize5) .rf_columnsLayout.cols2 > *:not(.rf_line) { 
+.cMediaQuery.dflSize1 .rf_columnsLayout:not(.keep) > *:not(.rf_line),
+.cMediaQuery.dflSize2 .rf_columnsLayout:not(.keep) > *:not(.rf_line),
+.cMediaQuery:is(.dflSize3, .dflSize4, .dflSize5) .rf_columnsLayout.cols2:not(.keep) > *:not(.rf_line) { 
   	min-width: calc(50% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
  	width: calc(50% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
   	box-sizing: border-box;
 }
 
-.cMediaQuery.dflSize3 .rf_columnsLayout > *:not(.rf_line),
-.cMediaQuery:is(.dflSize4, .dflSize5) .rf_columnsLayout.cols3 > *:not(.rf_line) { 
+.cMediaQuery.dflSize3 .rf_columnsLayout:not(.keep) > *:not(.rf_line),
+.cMediaQuery:is(.dflSize4, .dflSize5) .rf_columnsLayout.cols3:not(.keep) > *:not(.rf_line) { 
   	min-width: calc(33.3% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
  	width: calc(33.3% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
   	box-sizing: border-box;
 }
 
-.cMediaQuery.dflSize4 .rf_columnsLayout > *:not(.rf_line),
-.cMediaQuery:is(.dflSize5) .rf_columnsLayout.cols4 > *:not(.rf_line) { 
+.cMediaQuery.dflSize4 .rf_columnsLayout:not(.keep) > *:not(.rf_line),
+.cMediaQuery:is(.dflSize5) .rf_columnsLayout.cols4:not(.keep) > *:not(.rf_line) { 
   	min-width: calc(25% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
  	width: calc(25% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
   	box-sizing: border-box;
 }
 
-.cMediaQuery.dflSize5 .rf_columnsLayout > *:not(.rf_line),
-.cMediaQuery .rf_columnsLayout.cols5 > *:not(.rf_line) { 
+.cMediaQuery.dflSize5 .rf_columnsLayout:not(.keep) > *:not(.rf_line),
+.cMediaQuery:is(.dflSize5) .rf_columnsLayout.cols5:not(.keep) > *:not(.rf_line) { 
   	min-width: calc(20% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
  	width: calc(20% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
   	box-sizing: border-box;
 }
 
 /* content of a group */
-.dflSize0 .rf_content {
+.dflSize0 .rf_content,
+.keep.cols1 {
 	/* avoid creating more columns than possible, use cols classes manually in those cases */
 	grid-template-columns: repeat(1, 1fr); 
 }
 
 .dflSize1 .rf_content,
-.dflSize2 .rf_content {
+.dflSize2 .rf_content,
+.keep.cols2 {
 	grid-template-columns: repeat(2, 1fr); 
 }
 
-.dflSize3 .rf_content {
+.dflSize3 .rf_content,
+.keep.cols3 {
 	grid-template-columns: repeat(3, 1fr); 
 }
 
-.dflSize4 .rf_content {
+.dflSize4 .rf_content,
+.keep.cols4 {
 	grid-template-columns: repeat(4, 1fr);   
 }
   
-.dflSize5 .rf_content {	
+.dflSize5 .rf_content,
+.keep.cols5 {	
 	grid-template-columns: repeat(5, 1fr); 
 } 
 
@@ -612,46 +621,6 @@ div.dfListAdd {
   	box-sizing: border-box;
 }
 
-/* filter */
-.fltContent .rf_columnsLayout > .rf_line,
-.fltContent .rf_columnsLayout.cols1 > *:not(body),
-.cMediaQuery.dflSize0 .fltContent .rf_columnsLayout > *:not(body),
-.cMediaQuery.dflSize1 .fltContent .rf_columnsLayout > *:not(body),
-.dflSize2 .fltContent .rf_columnsLayout .rf_columnsLayout > *:not(body),
-.dflSize3 .fltContent .rf_columnsLayout .rf_columnsLayout > *:not(body),
-.dflSize4 .fltContent .rf_columnsLayout .rf_columnsLayout > *:not(body),
-.dflSize5 .fltContent .rf_columnsLayout .rf_columnsLayout > *:not(body) {
-	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_FILTER));
-  	width: calc(100% - var(--RF_HORIZONTAL_GAP_FILTER));
-  	box-sizing: border-box;
- }
- 
-.cMediaQuery.dflSize2 .fltContent .rf_columnsLayout:not(.cols1) > *:not(.rf_line),
-.layoutControl .fltContent .rf_columnsLayout.cols2 > *:not(.rf_line),
-.cMediaQuery.dflSize1 .fltContent .rf_columnsLayout.cols2 > *:not(.rf_line) { 
-  	min-width: calc(50% - var(--RF_HORIZONTAL_GAP_FILTER)); 
- 	width: calc(50% - var(--RF_HORIZONTAL_GAP_FILTER)); 
-  	box-sizing: border-box;
-}
- 
-.cMediaQuery.dflSize3 .fltContent .rf_columnsLayout:not(.cols1):not(.cols2) > *:not(.rf_line) { 
-  	min-width: calc(33.3% - var(--RF_HORIZONTAL_GAP_FILTER)); 
- 	width: calc(33.3% - var(--RF_HORIZONTAL_GAP_FILTER)); 
-  	box-sizing: border-box;
-}
-
-.cMediaQuery .fltContent .rf_columnsLayout.cols4 > *:not(.rf_line) { 
-  	min-width: calc(25% - var(--RF_HORIZONTAL_GAP_FILTER)); 
- 	width: calc(25% - var(--RF_HORIZONTAL_GAP_FILTER)); 
-  	box-sizing: border-box;
-}
-
-.cMediaQuery .fltContent .rf_columnsLayout.cols5 > *:not(.rf_line) { 
-  	min-width: calc(20% - var(--RF_HORIZONTAL_GAP_FILTER)); 
- 	width: calc(20% - var(--RF_HORIZONTAL_GAP_FILTER)); 
-  	box-sizing: border-box;
-}
-
 /* 2 columns in dialogs */
 .dlgDialog .layoutControl.dflColumns.dflColumns0 .rf_content {
 	grid-template-columns: repeat(1, 1fr); 
@@ -712,34 +681,32 @@ div.dfListAdd {
 .rf_spanCol3 { grid-col-end: span 3; }
 .rf_spanCol4 { grid-col-end: span 4; }
 
-.rf_inputCell:not(.keepInline):not(.rf_noLabel) {
+.cMediaQuery.dflSize0 .rf_columnsLayout.keep .rf_inputCell:not(.keepInline):not(.rf_noLabel),
+.keep .rf_labelAbove.rf_inputCell:not(.keepInline),
+.rf_columnsLayout.keep .rf_inputCell .rf_inputCell:not(.rf_noLabel),
+.rf_inputCell:not(.rf_noLabel) {
 	display: grid;
 	grid-template-columns: minmax(var(--RF_FIRST_COLUMN_WIDTH), max-content) minmax(0, 1fr);
-	grid-gap: .5rem .5rem;
+	grid-gap: var(--spacing-02) var(--spacing-02);
 }
 
 .rf_inputCell > div:nth-child(1) {
-	grid-row:1; 
-	grid-column:1; 
+	grid-row: 1;
+	grid-column: 1;
 }
 
-.rf_inputCell > div:nth-child(2) {
-	grid-row:1; 
-	grid-column:2; 
-}
-
-                                        .rf_labelAbove.rf_inputCell:not(.keepInline)                  > div:nth-child(2),
+.rf_labelAbove.rf_inputCell:not(.keepInline) > div:nth-child(2),
 .cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),
 .cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),
 .cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),
-.rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel)                                               > div:nth-child(2) {
-	grid-row:2; 
-	grid-column:1; 
+.rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2) {
+	grid-row: 2;
+	grid-column: 1;
 }
 
                                         .rf_labelAbove.rf_inputCell:not(.keepInline),
 .cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel),
-.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline):not(.rf_noLabel),
+.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1):not(.keep) > .rf_inputCell:not(.keepInline):not(.rf_noLabel),
 .cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline):not(.rf_noLabel),
 .rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel) {
 	display: grid;
@@ -1541,6 +1508,12 @@ div.cal_zoom_inAnimation {
 	display: inline-flex;
 	flex-wrap: wrap;
 	width: 100%;
+}
+
+.cCheckList {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-02);
 }
 
 .tl-separator {
@@ -2605,7 +2578,7 @@ a.input-image.tristate.tBoolean {
 }
 
 .ddwttContainer.active {
-	display: inline-flex;
+	display: flex;
 	flex-wrap: wrap;
 }
 

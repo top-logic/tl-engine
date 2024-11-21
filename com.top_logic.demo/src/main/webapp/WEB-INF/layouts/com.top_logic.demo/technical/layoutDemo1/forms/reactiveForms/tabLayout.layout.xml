@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_63e758e8_4389_4086_be0f_f8e9812b6666">
+		<tabLabel key="dynamic.2cb02a28-a274-4f52-be98-a319e8b3d635">
+			<de>Reaktive Formulare</de>
+			<en>Reactive Forms</en>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/layoutDemo1/forms/reactiveForms/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

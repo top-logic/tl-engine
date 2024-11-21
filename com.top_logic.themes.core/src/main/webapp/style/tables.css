@@ -935,7 +935,7 @@ table .cDecoratedCell > .lFlexible > :first-child:not(a) {
 	flex-grow: 2;
 }
 
-table td span.cDecoratedCell {
+table:not(.i18nStringTable) td span.cDecoratedCell {
 	gap: var(--spacing-01);
 }
 

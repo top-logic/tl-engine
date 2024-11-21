@@ -48,6 +48,13 @@ public class Icons extends IconsBase {
 	public static ThemeVar<Integer> WINDOWLAYOUT_LEFT_SPACER_WIDTH;
 
 	/**
+	 * Responsive breakpoints for adjusting form layouts from multiple columns to fewer based on
+	 * form width.
+	 */
+	@DefaultValue("[740, 1050, 1550, 2100, 2600]")
+	public static ThemeVar<String> FORM_BREAKPOINTS;
+
+	/**
 	 * Default {@link LayoutControl} provider for tabbars.
 	 */
 	public static ThemeVar<LayoutControlProvider> TAB_COMPONENT_DEFAULT_CONTROL_PROVIDER;

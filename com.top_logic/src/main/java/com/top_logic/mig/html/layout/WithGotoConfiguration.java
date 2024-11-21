@@ -12,6 +12,12 @@ import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.layout.editor.AllComponents;
+import com.top_logic.layout.editor.ComponentNameMapping;
+import com.top_logic.layout.form.template.SelectionControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLType;
 import com.top_logic.model.config.TypeRefMandatory;
 
@@ -33,6 +39,7 @@ public interface WithGotoConfiguration extends ConfigurationItem {
 	 * </p>
 	 */
 	@Key(GotoTarget.TYPE_SPEC)
+	@DisplayMinimized
 	Map<String, GotoTarget> getGotoTargets();
 
 	/**
@@ -58,6 +65,8 @@ public interface WithGotoConfiguration extends ConfigurationItem {
 		 */
 		@Mandatory
 		@Name(COMPONENT)
+		@Options(fun = AllComponents.class, mapping = ComponentNameMapping.class)
+		@ControlProvider(SelectionControlProvider.class)
 		ComponentName getComponent();
 	}
 

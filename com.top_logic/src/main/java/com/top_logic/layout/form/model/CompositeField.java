@@ -37,6 +37,16 @@ public abstract class CompositeField extends FormGroup implements FormField {
 	}
 
 	@Override
+	public boolean isLocallyImmutable() {
+		return getProxy().isLocallyImmutable();
+	}
+
+	@Override
+	public void setImmutable(boolean immutable) {
+		getProxy().setImmutable(immutable);
+	}
+
+	@Override
 	public boolean isMandatory() {
 		return getProxy().isMandatory();
 	}

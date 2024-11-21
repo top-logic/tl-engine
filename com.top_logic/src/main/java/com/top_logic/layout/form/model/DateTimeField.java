@@ -450,7 +450,6 @@ public class DateTimeField extends CompositeField {
 	 */
 	public DateTimeField(String name, Date date, boolean immutable) {
 		super(name, I18NConstants.DATE_TIME_FIELD);
-		setImmutable(immutable);
 		DateTimeFieldProxy dateField = createDateField(date, immutable);
 		FormField dayField = createDayField(date, immutable);
 		ComplexField timeField = createTimeField(date, immutable);
@@ -465,6 +464,9 @@ public class DateTimeField extends CompositeField {
 		setControlProvider(DateTimeControl.CP.INSTANCE);
 		addErrorWarningsUpdater(dateField, dayField, timeField);
 		addListeners(dayField, timeField);
+
+		// Note: Must be done last, since it de-facto sets the state on an inner field.
+		setImmutable(immutable);
 	}
 
 	private void addListeners(final FormField dayField, final FormField timeField) {

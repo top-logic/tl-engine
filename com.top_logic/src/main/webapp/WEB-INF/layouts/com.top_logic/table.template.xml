@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<properties extends="com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.layout.structure.ToolbarOptions, com.top_logic.layout.component.InAppSelectable$InAppSelectableConfig, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster">
+	<properties extends="com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.layout.structure.ToolbarOptions, com.top_logic.layout.component.InAppSelectable$InAppSelectableConfig, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.mig.html.layout.WithGotoConfiguration">
 		<annotations>
 			<display-order>
 				<value>
@@ -30,6 +30,7 @@
 					<property name="dropTargets"/>
 					<property name="buttons"/>
 					<property name="onSelectionChange"/>
+					<property name="goto-targets"/>
 				</value>
 			</display-order>
 		</annotations>
@@ -135,5 +136,6 @@
 			${buttons}
 			<include name="templates/editComponentCommands.xml"/>
 		</buttons>
+		<goto-targets>${goto-targets}</goto-targets>
 	</tableView>
 </config:template>

@@ -29,7 +29,7 @@ import com.top_logic.util.TLContextManager;
  */
 public class Label extends GenericMethod {
 
-	/** Creates an {@link Label}. */
+	/** Creates a {@link Label}. */
 	Label(String name, SearchExpression[] arguments) {
 		super(name, arguments);
 	}

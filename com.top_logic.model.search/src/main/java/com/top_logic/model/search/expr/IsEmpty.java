@@ -42,7 +42,7 @@ public class IsEmpty extends UnaryOperation implements BooleanExpression {
 	/**
 	 * Computes the result based on concrete values.
 	 */
-	public final Object compute(Object value) {
+	public static final boolean compute(Object value) {
 		if (value == null) {
 			return true;
 		}

@@ -63,11 +63,11 @@ public abstract class ProducerProxy<K, V> implements Producer<K, V>, KafkaHeader
 
 	private Instant _lastSendTimestamp;
 
-	private final KafkaLogWriter<V> _logWriter;
+	private final KafkaLogWriter<? super V> _logWriter;
 
 	/** Creates a {@link ProducerProxy}. */
-	public ProducerProxy(KafkaLogWriter<V> logWriter) {
-		_logWriter = requireNonNull(logWriter);
+	public ProducerProxy(KafkaLogWriter<? super V> kafkaLogWriter) {
+		_logWriter = requireNonNull(kafkaLogWriter);
 	}
 
 	/**

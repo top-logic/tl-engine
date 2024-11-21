@@ -10,7 +10,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.col.factory.CollectionFactory;
+import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Key;
@@ -53,7 +56,6 @@ public class KafkaProducerService extends ConfiguredManagedClass<KafkaProducerSe
 	 */
 	public KafkaProducerService(InstantiationContext context, Config config) {
 		super(context, config);
-		_producers = getInstanceMap(context, config);
     }
 
 	/**
@@ -83,12 +85,25 @@ public class KafkaProducerService extends ConfiguredManagedClass<KafkaProducerSe
 	/**
 	 * @param producerName
 	 *        the name of the producer to lookup
-	 * @return the {@link StringTLKafkaProducer} registered with this service under the given name
-	 *         or {@code null} if none was found
+	 * @return the {@link TLKafkaProducer} registered with this service under the given name or
+	 *         {@code null} if none was found
 	 */
 	public final TLKafkaProducer<?, ?> getProducer(final String producerName) {
 		return _producers.get(producerName);
     }
+
+	@Override
+	protected void startUp() {
+		super.startUp();
+
+		try {
+			InstantiationContext context = new DefaultInstantiationContext(KafkaProducerService.class);
+			_producers = getInstanceMap(context, getConfig());
+			context.checkErrors();
+		} catch (ConfigurationException ex) {
+			throw new ConfigurationError(ex);
+		}
+	}
 
 	@Override
 	protected void shutDown() {

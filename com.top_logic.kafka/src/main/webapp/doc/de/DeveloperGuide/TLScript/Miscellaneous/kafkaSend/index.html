@@ -1,0 +1,133 @@
+<h2>Syntax</h2>
+
+<pre>
+<code>kafkaSend(
+    producer: "producer-id", 
+    message: $message, 
+    key: $key, 
+    headers: $headers,
+    topic: "my-topic", 
+    timeout: 3000,
+    partition: 0
+)</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Sendet eine Nachricht über einen Apache Kafka Server. Die Nachricht wird dem benannten Produzenten übergeben, der sie entsprechend seiner Konfiguration verschickt.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td><code class="hljs inlineCode">producer</code></td>
+			<td>Zeichenkette</td>
+			<td>Name des Kafka Produzenten</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">message</code></td>
+			<td>beliebiger Wert</td>
+			<td>Die Nachricht die geschickt werden soll. Der Wert muss durch den Serialisierer des Produzenten verarbeitet werden können.</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">key</code></td>
+			<td>beliebiger Wert</td>
+			<td>Der Key für die Nachricht. Der Wert muss durch den Serialisierer des Produzenten verarbeitet werden können. Siehe die Dokumentation von Apache Kafka für Details.</td>
+			<td>nein</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">headers</code></td>
+			<td>Wörterbuch, Liste</td>
+			<td>
+			<p>Eine Menge von Schlüssel-/Wertpaaren. Wird nur eine Liste (kein Wörterbuch) übergeben, so werden die Werte der Liste als Header-Schlüssel verwendet, die jeweils keinen Wert haben.</p>
+			</td>
+			<td>nein</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">topic</code></td>
+			<td>Zeichenkette</td>
+			<td>Das Topic auf dem Kafka Server, in das die Nachricht gesendet werden soll.</td>
+			<td>nein</td>
+			<td>Das Standard-Topic des Produzenten</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">timeout</code></td>
+			<td>Ganzzahl</td>
+			<td>Zeit in Millisekunden, bevor das Senden als gescheitert angesehen wird.</td>
+			<td>nein</td>
+			<td>10 Sekunden</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">partition</code></td>
+			<td>Ganzzahl</td>
+			<td>Partition des Topic, von der die Nachricht verarbeitet werden soll, siehe Apache Kafka Dokumentation.</td>
+			<td>nein</td>
+			<td>-</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p>Es gibt keinen Rückgabewert. Die Kommunikation mittels Apache Kafka ist asynchron.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Senden einer Text-Nachricht an das Standardtopic des Produzenten</h3>
+
+<pre>
+<code>kafkaSend(producer: "your-producer", message: "Hello World");</code>
+</pre>
+
+<h3>Senden einer JSON-Nachricht an ein spezielles Topic</h3>
+
+<p>Es ist zu beachten, dass für das Versenden von JSON-Nachrichten der "generische Serialisierer" an dem Produzenten konfiguriert werden muss.</p>
+
+<pre>
+<code>kafkaSend(
+    producer: "your-producer", 
+    topic: "your-topic"	
+
+    message: {
+        "question": "Hello World! How are you?",
+        "priority": 42
+    },
+    key: {
+        "channel": "irrelevant questions",
+        "some-key": "some-value"
+    }
+    headers: {
+        "key-1": "value-1",
+        "key-2": "value-2",
+        "key-3": "value-3"
+    },
+
+    timeout: 10000,
+    partition: 0
+)</code></pre>
+
+<h2>Konfiguration des Produzenten</h2>
+
+<p>Produzenten werden in der Anwendungskonfiguration definiert. Sie können im Service-Editor unter "Kafka Produzenten-Service" eingesehen und bearbeitet werden. Der Service Editor befindet sich in der Sicht "Administration &gt; Development &gt; Service Editor".</p>
+
+<p>Der Nachrichteninhalt (<code class="hljs inlineCode">message</code>) und der Schlüssel (<code class="hljs inlineCode">key</code>) müssen von den im Produzenten hinterlegten Serialisierern für Inhalt und Schlüssel verarbeitet werden können. Um JSON-formattierte Nachrichten zu versenden, bietet es sich an, den generischen Serialisierer zu verwenden.</p>
+
+<h2>Empfang von Nachrichten</h2>
+
+<p>Zum Empfangen von Nachrichten von einem Apache Kafka Server muss im "Kafka Empfänger Service" ein "Empfänger" mit einem "Nachrichtenprozessor" konfiguriert werden. Für die In-App-Konfiguration gibt es den "TL-Script Nachrichtenprozessor". Diesem wird ein TL-Script konfiguriert, dass aufgerufen wird sobald eine Nachricht empfangen wird.</p>

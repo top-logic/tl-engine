@@ -111,7 +111,7 @@ public class ConsumerDispatcher<K, V> extends Thread
 	
 	private Instant _lastRunEndTimestamp;
 
-	private final KafkaLogWriter<V> _logWriter;
+	private final KafkaLogWriter<? super V> _logWriter;
 
 	private ExponentialBackoff _exponentialBackoff;
 

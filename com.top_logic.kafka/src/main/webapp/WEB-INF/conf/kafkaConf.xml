@@ -4,6 +4,8 @@
 
 <root>
 	<alias>
+		<entry name="%KAFKA_ENABLED%" value="${env:kafka_enabled:true}" />
+		
 		<entry name="%KAFKA_PORT%" value="${env:kafka_port:9092}" />
 		<entry name="%KAFKA_SERVER%" value="${env:kafka_bootstrap_servers:localhost:%KAFKA_PORT%}" />
 		

@@ -121,6 +121,10 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-service-jms-ibmmq</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-kafka</artifactId>
+    </dependency>
   </dependencies>
   
 	<build>

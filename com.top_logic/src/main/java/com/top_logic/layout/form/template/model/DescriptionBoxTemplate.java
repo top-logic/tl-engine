@@ -35,7 +35,7 @@ public class DescriptionBoxTemplate implements Template {
 	private LabelPosition _labelPosition;
 
 	/** Width of the first column for created {@link FormMember}s. */
-	public static final String FIRST_COLUMN_WIDTH = "10em";
+	public static final String FIRST_COLUMN_WIDTH = "140px";
 
 	private LabelPlacement _labelPlacement;
 

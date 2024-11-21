@@ -9,9 +9,14 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.Arrays;
 
 import javax.lang.model.type.TypeKind;
 
+import com.top_logic.basic.config.AbstractConfigurationValueProvider;
+import com.top_logic.basic.config.CommaSeparatedEnum;
+import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.model.TLType;
 
 /**
@@ -32,6 +37,7 @@ public @interface TargetType {
 	 * the annotated annotation.
 	 * </p>
 	 */
+	@Format(CommaSeparatedKinds.class)
 	TLTypeKind[] value();
 
 	/**
@@ -39,5 +45,33 @@ public @interface TargetType {
 	 * annotation is compatible with.
 	 */
 	String[] name() default {};
+
+	/**
+	 * Format for {@link TargetType#value()}.
+	 */
+	class CommaSeparatedKinds extends AbstractConfigurationValueProvider<TLTypeKind[]> {
+
+		private CommaSeparatedEnum<TLTypeKind> _inner;
+
+		/**
+		 * Creates a {@link CommaSeparatedKinds}.
+		 */
+		public CommaSeparatedKinds() {
+			super(TLTypeKind[].class);
+
+			_inner = new CommaSeparatedEnum<>(TLTypeKind.class);
+		}
+
+		@Override
+		protected TLTypeKind[] getValueNonEmpty(String propertyName, CharSequence propertyValue)
+				throws ConfigurationException {
+			return _inner.getValueNonEmpty(propertyName, propertyValue).toArray(new TLTypeKind[0]);
+		}
+
+		@Override
+		protected String getSpecificationNonNull(TLTypeKind[] configValue) {
+			return _inner.getSpecificationNonNull(Arrays.asList(configValue));
+		}
+	}
 
 }

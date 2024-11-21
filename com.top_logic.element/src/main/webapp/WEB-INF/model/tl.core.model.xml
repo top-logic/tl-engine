@@ -215,6 +215,18 @@
 						</format>
 					</annotations>
 				</datatype>
+
+				<datatype name="Duration" db_type="bigint" db_size="20" kind="Integer">
+					<storage-mapping 
+						class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
+						application-type="java.lang.Long"
+					/>
+					
+					<annotations>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="DURATION"/>
+						<annotation config:interface="com.top_logic.model.annotate.TLSearchRange" value="true"/>
+					</annotations>
+				</datatype>
 			
 				<datatype name="Binary" db_type="blob" kind="Binary">
 					<storage-mapping 

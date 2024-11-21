@@ -9,6 +9,7 @@ import java.text.Format;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 
 /**
@@ -18,6 +19,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Custom format definition")
 public abstract class PatternBasedFormatDefinition<C extends PatternBasedFormatDefinition.Config<?>>
 		extends FormatDefinition<C> {
 

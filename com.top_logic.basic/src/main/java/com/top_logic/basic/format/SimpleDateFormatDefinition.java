@@ -11,6 +11,7 @@ import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
@@ -19,13 +20,15 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.time.TimeZones;
 
 /**
- * {@link FormatDefinition} creating a {@link SimpleDateFormat}.
+ * {@link PatternBasedFormatDefinition} creating a {@link SimpleDateFormat date, date and time, or
+ * time format} defined by a pattern.
  * 
  * @since 5.7.4
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-@Label("Date format")
+@InApp
+@Label("Custom date format")
 public class SimpleDateFormatDefinition extends PatternBasedFormatDefinition<SimpleDateFormatDefinition.Config> {
 
 	/**

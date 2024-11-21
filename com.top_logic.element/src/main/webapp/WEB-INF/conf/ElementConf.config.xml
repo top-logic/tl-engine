@@ -377,6 +377,22 @@
 						<annotation config:interface="com.top_logic.model.annotate.ui.TLCssClass" value="num"/>
 					</attribute-setting>
 
+					<attribute-setting config-name="DURATION" legacy-type-code="4">
+						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.DurationFieldProvider"/>
+						<export-binding>
+							<impl class="com.top_logic.model.io.bindings.PrimitiveAttributeValueBinding"
+								format="com.top_logic.basic.config.format.LongWrapperFormat"
+							/>
+						</export-binding>
+						<tag-provider>
+							<impl class="com.top_logic.element.meta.form.tag.StringTagProvider" 
+								columns="20"
+							/>
+						</tag-provider>
+						<annotation config:interface="com.top_logic.model.annotate.ui.TLCssClass" value="num"/>
+						<format definition="com.top_logic.layout.form.format.DurationFormat$Factory"/>
+					</attribute-setting>
+
 					<attribute-setting config-name="FLOAT">
 						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.FloatFieldProvider"/>
 						<export-binding>

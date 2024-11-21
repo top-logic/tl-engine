@@ -14,42 +14,42 @@ import com.top_logic.element.meta.form.AbstractFieldProvider;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.format.DurationFormat;
 import com.top_logic.layout.form.model.ComplexField;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
 
 /**
- * {@link FieldProvider} for {@link TLStructuredTypePart}s of type {@link TypeSpec#TIME_TYPE}.
- * 
- * @see DateTimeFieldProvider
- * 
- * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+ * {@link FieldProvider} for {@link TLStructuredTypePart}s of type {@link TypeSpec#LONG_TYPE} with a
+ * time duration format.
  */
-public class TimeFieldProvider extends AbstractFieldProvider {
+public class DurationFieldProvider extends AbstractFieldProvider {
 
 	@Override
 	public FormMember createFormField(EditContext editContext, String fieldName) {
-
 		boolean isMandatory = editContext.isMandatory();
 		boolean isDisabled = editContext.isDisabled();
+		
+		Format format = lookupFormat(editContext);
+
 		ComplexField field =
-			FormFactory.newTimeField(fieldName, null, FormFactory.IGNORE_WHITE_SPACE, isMandatory, isDisabled, null);
-		setConfiguredFormat(field, editContext);
+			FormFactory.newComplexField(fieldName, format, FormFactory.IGNORE_WHITE_SPACE, isMandatory,
+				isDisabled, null);
+
 		return field;
 	}
 
-	private void setConfiguredFormat(ComplexField field, EditContext editContext) {
-		Format format;
+	private Format lookupFormat(EditContext editContext) {
 		try {
-			format = DisplayAnnotations.getConfiguredFormat(editContext);
+			Format format = DisplayAnnotations.getConfiguredFormat(editContext);
+			if (format != null) {
+				return format;
+			}
 		} catch (ConfigurationException ex) {
-			Logger.error("Invalid attribute definition for '" + editContext + "'.", ex, TimeFieldProvider.class);
-			format = null;
+			Logger.error("Invalid attribute definition for '" + editContext + "'.", ex, DateFieldProvider.class);
 		}
-		if (format != null) {
-			field.setFormatAndParser(format);
-		}
+		return DurationFormat.INSTANCE;
 	}
 
 }

@@ -25,7 +25,10 @@ public class CommaSeparatedEnum<T extends Enum<T>> extends ListConfigValueProvid
 
 	protected final Class<T> _enumType;
 
-	protected CommaSeparatedEnum(Class<T> enumType) {
+	/**
+	 * Creates a {@link CommaSeparatedEnum}.
+	 */
+	public CommaSeparatedEnum(Class<T> enumType) {
 		this._enumType = enumType;
 
 	}

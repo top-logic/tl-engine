@@ -19,13 +19,14 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 
 /**
- * {@link FormatDefinition} creating predefined {@link NumberFormat}.
+ * {@link FormatDefinition} creating an official {@link NumberFormat} that adjusts to the user's
+ * locale.
  * 
  * @since 5.7.4
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-@Label("Predefined number format")
+@Label("Internationalized number format")
 public class NumberFormatDefinition extends FormatDefinition<NumberFormatDefinition.Config> {
 
 	/**

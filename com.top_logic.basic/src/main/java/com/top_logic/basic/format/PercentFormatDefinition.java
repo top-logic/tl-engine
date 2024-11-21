@@ -12,6 +12,7 @@ import java.text.ParsePosition;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -20,6 +21,7 @@ import com.top_logic.basic.config.annotation.Label;
 /**
  * {@link FormatDefinition} that wraps a number format with a value adjustment (division by 100.0).
  */
+@InApp
 @Label("Percentage format")
 public class PercentFormatDefinition extends FormatDefinition<PercentFormatDefinition.Config<?>> {
 

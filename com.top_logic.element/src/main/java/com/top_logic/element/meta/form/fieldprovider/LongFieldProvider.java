@@ -54,8 +54,7 @@ public class LongFieldProvider extends AbstractFieldProvider {
 
 		Format format;
 		try {
-			format = DisplayAnnotations
-				.getLongFormat(editContext.getAnnotation(com.top_logic.model.annotate.ui.Format.class));
+			format = DisplayAnnotations.getLongFormat(editContext);
 		} catch (ConfigurationException ex) {
 			Logger.error("Invalid attribute definition for '" + editContext.toString() + "'.", ex,
 				LongFieldProvider.class);

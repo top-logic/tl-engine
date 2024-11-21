@@ -1386,8 +1386,12 @@ th:last-child .tl-table__cell-container {
 	margin: 0px;
 }
 
+.tl-table,
 .tl-table--fixed {
 	table-layout: fixed;
+}
+
+.tl-table--fixed {
 	width: min-content;
 }
 

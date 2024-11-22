@@ -300,7 +300,14 @@ public class InternationalizationEditor implements Editor {
 		}
 		ConfigKey key = ConfigKey.derived(ConfigKey.field(container), "derivedResourcesDisplayed");
 		boolean initiallyVisible;
-		Boolean personalizedVal = PersonalConfiguration.getPersonalConfiguration().getBoolean(key.get());
+		Boolean personalizedVal;
+		/* Start if statement for debugging */
+		if (key.get() != null) {
+			personalizedVal = PersonalConfiguration.getPersonalConfiguration().getBoolean(key.get());
+		} else {
+			personalizedVal = null;
+		}
+		/* End if statement for debugging */
 		if (personalizedVal != null) {
 			initiallyVisible = personalizedVal.booleanValue();
 		} else {

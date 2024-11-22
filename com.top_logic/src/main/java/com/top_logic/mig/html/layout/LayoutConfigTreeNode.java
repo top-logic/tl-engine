@@ -8,7 +8,6 @@ package com.top_logic.mig.html.layout;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -144,17 +143,11 @@ public class LayoutConfigTreeNode extends AbstractTLTreeNode<LayoutConfigTreeNod
 	public Set<BoundCommandGroup> getCommandGroups() {
 		Set<BoundCommandGroup> groups = _commandGroups;
 		if (groups == null) {
-			groups = findCommandGroups();
+			groups = new CommandGroupExtractor().visit(getConfig()).getResult();
 			_commandGroups = groups;
 		}
 		return groups;
 
-	}
-
-	private Set<BoundCommandGroup> findCommandGroups() {
-		Set<BoundCommandGroup> out = new HashSet<>();
-		LayoutUtils.addCommandGroups(out, getConfig());
-		return Collections.unmodifiableSet(out);
 	}
 
 	/**

@@ -55,6 +55,7 @@ public class TLTypeResourceProvider extends WrapperResourceProvider {
 			quote(type),
 			quote(TLModelUtil.type(object)),
 			quote(type.getModule()),
-			quote(type.getName()));
+			quote(type.getName()),
+			"");
     }
 }

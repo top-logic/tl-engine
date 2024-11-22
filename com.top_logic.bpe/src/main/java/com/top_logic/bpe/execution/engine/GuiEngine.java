@@ -5,13 +5,20 @@
  */
 package com.top_logic.bpe.execution.engine;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.bpe.bpml.display.RuleCondition;
+import com.top_logic.bpe.bpml.display.RuleType;
+import com.top_logic.bpe.bpml.display.SequenceFlowRule;
+import com.top_logic.bpe.bpml.display.StandardRule;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.bpml.model.Edge;
 import com.top_logic.bpe.bpml.model.ExclusiveGateway;
@@ -89,28 +96,54 @@ public class GuiEngine {
 	 * @return Either <code>null</code> meaning, navigation is possible, or a {@link ResKey}
 	 *         representing the error why the edge can not be navigated.
 	 */
-	public ResKey checkError(Token token, Edge edge) {
+	public List<ResKey> checkErrors(Token token, Edge edge) {
+		List<ResKey> errors = new ArrayList<>();
 		if (edge instanceof SequenceFlow) {
 			SequenceFlow flow = (SequenceFlow) edge;
-			SearchExpression rule = flow.getRule();
+			SequenceFlowRule rule = flow.getRule();
 			if (rule != null) {
-				Object error = ExecutionEngine.getInstance().calculate(rule, token.getProcessExecution());
-				if (error instanceof Boolean) {
-					if (((Boolean) error).booleanValue()) {
-						return null;
-					} else {
-						return I18NConstants.SELECTION_NOT_ALLOWED;
-					}
-				}
-				if (error instanceof ResKey) {
-					return (ResKey) error;
-				}
-				if (error instanceof String && !((String) error).isEmpty()) {
-					return ResKey.text((String) error);
-				}
+				// Collect all failing conditions
+				rule.getRuleConditions().stream()
+					.map(config -> (RuleCondition) new StandardRule(null, (StandardRule.Config<?>) config))
+					.filter(condition -> condition.getRuleType() == RuleType.DEFAULT)
+					.filter(condition -> !condition.getCondition(token.getProcessExecution()))
+					.map(RuleCondition::getMessage)
+					.forEach(errors::add);
 			}
 		}
-		return null;
+		return errors;
+	}
+
+	/**
+	 * Checks whether the given {@link Edge} has a active Warnings.
+	 * 
+	 * @return Either <code>null</code> meaning, no warnings are present, or a list of
+	 *         {@link ResKey} representing all warnings.
+	 */
+	public List<ResKey> checkWarnings(Token token, Edge edge) {
+		List<ResKey> warnings = new ArrayList<>();
+
+		if (edge instanceof SequenceFlow) {
+			SequenceFlow flow = (SequenceFlow) edge;
+			SequenceFlowRule rule = flow.getRule();
+
+			if (rule != null) {
+				warnings = rule.getRuleConditions().stream()
+					.map(config -> (RuleCondition) new StandardRule(null, (StandardRule.Config<?>) config)) // Instantiate
+																											// each
+																											// RuleCondition
+					.filter(condition -> condition.getRuleType() == RuleType.WARNING) // Only
+																						// WARNING
+																						// rules
+					.filter(condition -> !condition.getCondition(token.getProcessExecution())) // Only
+																								// false
+																								// (active)
+																								// warnings
+					.map(RuleCondition::getMessage) // Get the message for each failing condition
+					.collect(Collectors.toList()); // Collect all messages into a list
+			}
+		}
+		return warnings;
 	}
 
 	/**

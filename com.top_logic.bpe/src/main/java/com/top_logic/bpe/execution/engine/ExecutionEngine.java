@@ -17,6 +17,10 @@ import java.util.stream.Stream;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.bpe.bpml.display.RuleCondition;
+import com.top_logic.bpe.bpml.display.RuleType;
+import com.top_logic.bpe.bpml.display.SequenceFlowRule;
+import com.top_logic.bpe.bpml.display.StandardRule;
 import com.top_logic.bpe.bpml.model.BoundaryEvent;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.bpml.model.Edge;
@@ -383,13 +387,21 @@ public class ExecutionEngine {
 			}
 			if (edge instanceof SequenceFlow) {
 				SequenceFlow sf = (SequenceFlow) edge;
-				SearchExpression rule = sf.getRule();
-				if (rule != null) {
-					boolean result = calculateBoolean(rule, processExecution);
-					if (result) {
-						return edge.getTarget();
-					}
+				SequenceFlowRule rule = sf.getRule();
+				Boolean allConditionsTrue = rule.getRuleConditions().stream()
+					.map(config -> (RuleCondition) new StandardRule(null, (StandardRule.Config<?>) config)) // Cast
+																											// to
+																											// RuleCondition
+					.filter(condition -> condition.getRuleType() != RuleType.WARNING) // Ignore
+																						// warnings
+					.allMatch(condition -> condition.getCondition(processExecution)); // Check all
+																						// non-warning
+																						// conditions
+				// If all conditions are true, return the target
+				if (allConditionsTrue) {
+					return edge.getTarget();
 				}
+
 			}
 		}
 		if (defaultFlow != null) {

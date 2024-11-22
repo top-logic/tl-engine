@@ -31,6 +31,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey CANNOT_EDIT_TASK;
 
+
     static {
         initConstants(I18NConstants.class);
     }

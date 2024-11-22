@@ -57,6 +57,11 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String PROCESS_FORM_DEFINITION_TYPE = "ProcessFormDefinition";
 
 	/**
+	 * Name of the data type <code>SequenceFlowRule</code> in module {@value #TL_BPE_BPML_STRUCTURE}.
+	 */
+	public static final String SEQUENCE_FLOW_RULE_TYPE = "SequenceFlowRule";
+
+	/**
 	 * Lookup {@link AnnotationContainer} type.
 	 */
 	public static com.top_logic.model.TLClass getAnnotationContainerType() {
@@ -659,6 +664,13 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
+	 * Lookup {@link Task#LABEL_ATTR} of {@link Task}.
+	 */
+	public static com.top_logic.model.TLProperty getLabelTaskAttr() {
+		return (com.top_logic.model.TLProperty) getTaskType().getPart(Task.LABEL_ATTR);
+	}
+
+	/**
 	 * Lookup {@link Task#TITLE_ATTR} of {@link Task}.
 	 */
 	public static com.top_logic.model.TLProperty getTitleTaskAttr() {
@@ -1020,6 +1032,13 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 */
 	public static com.top_logic.model.TLPrimitive getProcessFormDefinitionType() {
 		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(PROCESS_FORM_DEFINITION_TYPE);
+	}
+
+	/**
+	 * Lookup {@value #SEQUENCE_FLOW_RULE_TYPE} data type.
+	 */
+	public static com.top_logic.model.TLPrimitive getSequenceFlowRuleType() {
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(SEQUENCE_FLOW_RULE_TYPE);
 	}
 
 	/**

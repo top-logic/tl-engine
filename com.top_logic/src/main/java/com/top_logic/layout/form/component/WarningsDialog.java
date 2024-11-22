@@ -9,6 +9,7 @@ import static com.top_logic.mig.html.HTMLConstants.*;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
@@ -203,6 +204,102 @@ public class WarningsDialog {
 			title, message,
 			MessageBox.button(ButtonType.YES, onConfirm),
 			MessageBox.button(ButtonType.CANCEL, expandWarnings));
+	}
+
+	/**
+	 * Opens the WarningsDialog without using FormContext, taking a list of ResKey warnings instead.
+	 *
+	 * @param scope
+	 *        The window to open the dialog in.
+	 * @param resourceBaseKey
+	 *        The base resource key for customizing the dialog.
+	 * @param warnings
+	 *        List of ResKey warning keys to display.
+	 * @param onConfirm
+	 *        The action to perform after user confirmation.
+	 * @param onCancel
+	 *        The action to perform if the user cancels.
+	 * @return The technical result of opening the dialog.
+	 */
+	public static HandlerResult openWarningsDialogWithoutFormContext(WindowScope scope, ResKey resourceBaseKey,
+			List<ResKey> warnings, Command onConfirm, Command onCancel) {
+
+		DisplayValue title =
+			new ResourceText(Resources.derivedKey(resourceBaseKey, CONFIRM_TITLE_SUFFIX), DEFAULT_TITLE);
+
+		MessageArea message = new MessageArea(MessageType.INFO.getTypeImage()) {
+			@Override
+			protected void writeMessage(DisplayContext context, TagWriter out) throws IOException {
+				Resources resources = Resources.getInstance();
+
+				out.beginTag("h2");
+				out.writeText(getResource(resources, Resources.derivedKey(resourceBaseKey, CONFIRM_HEADING_SUFFIX),
+					I18NConstants.WARNING_CONFIRM_HEADING));
+				out.endTag("h2");
+
+				out.writeText(getResource(resources, Resources.derivedKey(resourceBaseKey, CONFIRM_MESSAGE_SUFFIX),
+					I18NConstants.WARNING_CONFIRM_MESSAGE));
+
+				out.beginTag(UL);
+				for (ResKey warning : warnings) {
+					out.beginTag(LI);
+					String warningMessage = Resources.getInstance().getString(warning);
+					writeWarning(out, warningMessage);
+					out.endTag(LI);
+				}
+				out.endTag(UL);
+
+				out.beginTag(PARAGRAPH);
+				out.writeText(getResource(resources, Resources.derivedKey(resourceBaseKey, CONFIRM_ACTION_SUFFIX),
+					I18NConstants.WARNING_CONFIRM_ACTION));
+				out.endTag(PARAGRAPH);
+			}
+
+			private void writeWarning(TagWriter out, String warning) throws IOException {
+				int lineBreakIndex = warning.indexOf('\n');
+				if (lineBreakIndex < 0) {
+					out.writeText(warning);
+				} else {
+					out.writeText(warning.substring(0, lineBreakIndex));
+					while (lineBreakIndex != -1) {
+						HTMLUtil.writeBr(out);
+						int newLineStart = lineBreakIndex + 1;
+						lineBreakIndex = warning.indexOf('\n', newLineStart);
+						out.writeText(warning.substring(newLineStart,
+							(lineBreakIndex != -1) ? lineBreakIndex : warning.length()));
+					}
+				}
+			}
+
+			private String getResource(Resources resources, ResKey key, ResKey defaultKey) {
+				return resources.getStringWithDefaultKey(key, defaultKey);
+			}
+		};
+
+		Command expandWarnings = new ShowWarningsWithoutFormContext(warnings, onCancel);
+
+		return MessageBox.confirm(scope, LAYOUT, true,
+			title, message,
+			MessageBox.button(ButtonType.YES, onConfirm),
+			MessageBox.button(ButtonType.CANCEL, expandWarnings));
+	}
+
+	// Inner class to handle warnings directly from the list of ResKey
+	public static final class ShowWarningsWithoutFormContext implements Command {
+		private final List<ResKey> warnings;
+
+		private final Command continuation;
+
+		public ShowWarningsWithoutFormContext(List<ResKey> warnings, Command continuation) {
+			this.warnings = warnings;
+			this.continuation = continuation;
+		}
+
+		@Override
+		public HandlerResult executeCommand(DisplayContext context) {
+			// Implement any additional logic for displaying ResKey-based warnings if needed.
+			return continuation.executeCommand(context);
+		}
 	}
 
 }

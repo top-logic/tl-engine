@@ -18,6 +18,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.bpe.bpml.model.Edge;
 import com.top_logic.bpe.bpml.model.Gateway;
 import com.top_logic.bpe.bpml.model.Node;
@@ -28,11 +29,13 @@ import com.top_logic.bpe.layout.execution.SelectTransitionDialog;
 import com.top_logic.bpe.layout.execution.SelectTransitionDialog.Decision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
 import com.top_logic.layout.form.component.EditComponent;
 import com.top_logic.layout.form.component.PostCreateAction;
+import com.top_logic.layout.form.component.WarningsDialog;
 import com.top_logic.layout.form.component.WithPostCreateActions;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.messagebox.MessageBox;
@@ -115,22 +118,47 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
+		// Handle initial execution without context
 		if (context == null) {
 			// Confirm/decide about how to progress.
 			GuiEngine engine = GuiEngine.getInstance();
 			Edge outgoing = GuiEngine.getSingleOutgoingEdge(token);
 			Node next = outgoing.getTarget();
+
+			List<ResKey> warnings = engine.checkWarnings(token, outgoing);
 			if (engine.needsDecision(next)) {
-				return confirmFinish(aContext, token);
+				boolean warningsAcknowledged = Utils.isTrue((Boolean) someArguments.get("warningsAcknowledged"));
+				// Show warnings dialog if needed and not already acknowledged
+				if (!warnings.isEmpty() && !warningsAcknowledged) {
+					// Create suspended state for warning acknowledgment
+					HandlerResult suspended = HandlerResult.suspended();
+					Command acknowledge = new Command() {
+						@Override
+						public HandlerResult executeCommand(DisplayContext anInnerContext) {
+							return suspended.resumeContinuation(Collections.singletonMap("warningsAcknowledged", true))
+								.executeCommand(anInnerContext);
+						}
+					};
+
+					// Show warnings dialog, before showing SelectTransitionDialog
+					WarningsDialog.openWarningsDialogWithoutFormContext(aContext.getWindowScope(),
+						ResKey.legacy("workflow"),
+						warnings, acknowledge, Command.DO_NOTHING);
+
+					return suspended;
+				}
+				// no warnings or warnings are already acknowledged
+				return confirmFinish(aContext, token, warnings);
 			} else {
-				ResKey error = engine.checkError(token, outgoing);
-				if (error != null) {
+				// Check for errors when no decision is needed
+				List<ResKey> errors = engine.checkErrors(token, outgoing);
+				if (!errors.isEmpty()) {
 					return MessageBox.newBuilder(MessageType.CONFIRM)
-						.message(Fragments.message(error))
+						.message(Fragments.messageList(errors))
 						.buttons(MessageBox.button(ButtonType.OK))
 						.confirm(aContext.getWindowScope());
 				}
-				return confirmFinish(aContext, token);
+				return confirmFinish(aContext, token, warnings);
 			}
 		}
 
@@ -146,7 +174,7 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	private HandlerResult confirmFinish(DisplayContext context, Token token) {
+	private HandlerResult confirmFinish(DisplayContext context, Token token, List<ResKey> warnings) {
 		HandlerResult suspended = HandlerResult.suspended();
 		new SelectTransitionDialog(token, suspended).open(context);
 		return suspended;

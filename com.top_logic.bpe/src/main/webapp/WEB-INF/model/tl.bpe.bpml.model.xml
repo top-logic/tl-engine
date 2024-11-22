@@ -48,6 +48,21 @@
 			</annotations>
 			<configuration-storage config-interface="com.top_logic.bpe.bpml.display.ProcessFormDefinition"/>
 		</datatype>
+		<datatype name="SequenceFlowRule"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="CONFIGURATION"/>
+				<export-binding>
+					<store-config
+						root-tag="sequence-flow"
+						root-type="com.top_logic.bpe.bpml.display.SequenceFlowRule"
+					/>
+				</export-binding>
+			</annotations>
+			<configuration-storage config-interface="com.top_logic.bpe.bpml.display.SequenceFlowRule"/>
+		</datatype>
 		<enum name="ApprovalState">
 			<annotations>
 				<system-enum/>
@@ -508,7 +523,7 @@
 			</annotations>
 			<attributes>
 				<property name="rule"
-					type="tl.model.search:Expr"
+					type="tl.bpe.bpml:SequenceFlowRule"
 				>
 					<annotations>
 						<bpml-extension/>

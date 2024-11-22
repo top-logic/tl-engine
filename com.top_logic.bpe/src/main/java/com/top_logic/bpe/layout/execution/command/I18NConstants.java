@@ -44,6 +44,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 IMPOSSIBLE_EDGE;
 
+	/**
+	 * @en There are multiple errors associated with this selection.
+	 */
+	public static ResKey MULTIPLE_ERRORS_MESSAGE;
+
     static {
         initConstants(I18NConstants.class);
     }

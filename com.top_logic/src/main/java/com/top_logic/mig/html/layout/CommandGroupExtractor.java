@@ -23,7 +23,6 @@ import com.top_logic.layout.window.OpenWindowCommand;
 import com.top_logic.layout.window.WindowTemplate;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.CheckerProxyHandler;
-import com.top_logic.tool.boundsec.CheckerProxyHandler.Config;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
@@ -86,28 +85,33 @@ public class CommandGroupExtractor {
 		return this;
 	}
 
+	/**
+	 * The set of extracted {@link BoundCommandGroup}s.
+	 */
+	public Set<BoundCommandGroup> getResult() {
+		return _result;
+	}
+
 	private void extract(ConfigurationItem config) {
 		if (config == null) {
 			return;
 		}
 
 		if (config instanceof CommandHandler.Config handlerConfig) {
-			addGroup(handlerConfig);
+			addHandlerConfigGroup(handlerConfig);
 			return;
-		} else if (config instanceof CommandReferenceConfig handlerConfig) {
-			String handlerId = handlerConfig.getCommandId();
-			addGroup(registeredHandler(handlerId));
+		} else if (config instanceof CommandReferenceConfig ref) {
+			addHandlerIdGroup(ref.getCommandId());
 			return;
-		} else if (config instanceof CheckerProxyHandler.Config handlerConfig) {
-			Config checkerConfig = handlerConfig;
-			ComponentName checkerName = checkerConfig.getName();
+		} else if (config instanceof CheckerProxyHandler.Config proxy) {
+			ComponentName checkerName = proxy.getName();
 			if (checkerName != null && !checkerName.equals(_layoutConfig.getName())) {
 				/* The given layout component is not used for security checking, but the component
 				 * with the checker name. Therefore the command group of the command is not relevant
 				 * for the given component. */
 				return;
 			}
-			extract(checkerConfig.getCommand());
+			extract(proxy.getCommand());
 			return;
 		}
 
@@ -120,21 +124,21 @@ public class CommandGroupExtractor {
 				case ARRAY: {
 					Object value = config.value(property);
 					if (value != null) {
-						extract(property.getConfigurationAccess(), Arrays.asList((Object[]) value));
+						extractAll(property.getConfigurationAccess(), Arrays.asList((Object[]) value));
 					}
 					break;
 				}
 				case LIST: {
 					Object value = config.value(property);
 					if (value != null) {
-						extract(property.getConfigurationAccess(), (Collection<?>) value);
+						extractAll(property.getConfigurationAccess(), (Collection<?>) value);
 					}
 					break;
 				}
 				case MAP: {
 					Object value = config.value(property);
 					if (value != null) {
-						extract(property.getConfigurationAccess(), ((Map<?, ?>) value).values());
+						extractAll(property.getConfigurationAccess(), ((Map<?, ?>) value).values());
 					}
 					break;
 				}
@@ -151,17 +155,10 @@ public class CommandGroupExtractor {
 		}
 	}
 
-	private void extract(ConfigurationAccess configurationAccess, Collection<?> configs) {
+	private void extractAll(ConfigurationAccess configurationAccess, Collection<?> configs) {
 		for (Object entry : configs) {
 			extract(configurationAccess.getConfig(entry));
 		}
-	}
-
-	/**
-	 * The set of extracted {@link BoundCommandGroup}s.
-	 */
-	public Set<BoundCommandGroup> getResult() {
-		return _result;
 	}
 
 	private void addAdditional(LayoutComponent.Config config) {
@@ -173,34 +170,41 @@ public class CommandGroupExtractor {
 	private void addIntrinsic(LayoutComponent.Config config) {
 		SimpleCommandRegistry registry = new SimpleCommandRegistry();
 		config.modifyIntrinsicCommands(registry);
-		addIntrinsicGroups(registry.getButtons());
-		addIntrinsicGroups(registry.getCommands());
+		addHandlerIdGroups(registry.getButtons());
+		addHandlerIdGroups(registry.getCommands());
 	}
 
-	private void addGroup(CommandHandler.Config handler) {
+	private void addHandlerConfigGroup(CommandHandler.Config handler) {
 		CommandGroupReference group = handler.getGroup();
 		if (group == null) {
-			_result.add(SimpleBoundCommandGroup.READ);
+			addGroup(SimpleBoundCommandGroup.READ);
 		} else {
 			BoundCommandGroup resolvedGroup = group.resolve();
 			if (resolvedGroup != null) {
-				_result.add(resolvedGroup);
+				addGroup(resolvedGroup);
 			}
 		}
 	}
 
-	private void addGroup(CommandHandler handler) {
-		if (handler != null) {
-			_result.add(handler.getCommandGroup());
+	private void addHandlerIdGroups(List<String> commandIds) {
+		for (String commandId : commandIds) {
+			addHandlerIdGroup(commandId);
 		}
 	}
 
-	private void addIntrinsicGroups(List<String> commandIds) {
-		commandIds.forEach(commandId -> addGroup(registeredHandler(commandId)));
+	private void addHandlerIdGroup(String commandId) {
+		CommandHandler handler = CommandHandlerFactory.getInstance().getHandler(commandId);
+		addHandlerGroup(handler);
 	}
 
-	private CommandHandler registeredHandler(String commandId) {
-		return CommandHandlerFactory.getInstance().getHandler(commandId);
+	private void addHandlerGroup(CommandHandler handler) {
+		if (handler != null) {
+			addGroup(handler.getCommandGroup());
+		}
+	}
+
+	private void addGroup(BoundCommandGroup group) {
+		_result.add(group);
 	}
 
 }

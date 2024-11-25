@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.NoProtocol;
 import com.top_logic.basic.config.ConfigurationAccess;
 import com.top_logic.basic.config.ConfigurationDescriptor;
@@ -38,18 +39,18 @@ public class CommandGroupExtractor {
 
 	private final Set<BoundCommandGroup> _result = new HashSet<>();
 
-	private static final Set<PropertyDescriptor> EXCLUDED;
+	private static final Set<NamedConstant> EXCLUDED;
 
 	private LayoutComponent.Config _layoutConfig;
 
 	static {
-		HashSet<PropertyDescriptor> excluded = new HashSet<>();
+		Set<NamedConstant> excluded = new HashSet<>();
 		ConfigurationDescriptor subComponents = TypedConfiguration.getConfigurationDescriptor(SubComponentConfig.class);
-		excluded.add(subComponents.getProperty(SubComponentConfig.COMPONENTS));
+		excluded.add(subComponents.getProperty(SubComponentConfig.COMPONENTS).identifier());
 
 		ConfigurationDescriptor component = TypedConfiguration.getConfigurationDescriptor(LayoutComponent.Config.class);
-		excluded.add(component.getProperty(LayoutComponent.XML_TAG_WINDOWS_NAME));
-		excluded.add(component.getProperty(LayoutComponent.XML_TAG_DIALOGS_NAME));
+		excluded.add(component.getProperty(LayoutComponent.XML_TAG_WINDOWS_NAME).identifier());
+		excluded.add(component.getProperty(LayoutComponent.XML_TAG_DIALOGS_NAME).identifier());
 
 		EXCLUDED = excluded;
 	}
@@ -116,7 +117,7 @@ public class CommandGroupExtractor {
 		}
 
 		for (PropertyDescriptor property : config.descriptor().getProperties()) {
-			if (EXCLUDED.contains(property)) {
+			if (EXCLUDED.contains(property.identifier())) {
 				continue;
 			}
 

@@ -49,9 +49,6 @@
 	<size name="com.top_logic.layout.Icons.BUTTON_COMP_HEIGHT"
 		value="40px"
 	/>
-	<int name="SIDEBAR_LAYOUT_TOP_BORDER"
-		value="0"
-	/>
 	<int name="MAIN_LAYOUT_SIDE_BORDER"
 		value="0"
 	/>

@@ -48,7 +48,7 @@ div.scrDerived i {
 
 div.scrDerived:hover i,
 div.scrDerived.treeSelected i {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 div.scrDerived a.selectableNode {

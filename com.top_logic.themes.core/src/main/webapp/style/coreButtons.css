@@ -581,7 +581,7 @@ with hard coded popup window dimension
 }
 
 .tlDropdownContent a:hover:not(.cmdButtonDisabled) .cmdImg {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 	text-decoration: none;
 }
 
@@ -623,7 +623,7 @@ cButton.cImageButton,
 	align-self: center;
 	height: 1rem;
 	min-width: 1rem;
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .cOpenCalendar a,
@@ -634,11 +634,11 @@ a.fChoose,
 .cButton.cImageButton a,
 .cButton.dfRemove a,
 .cButton.fToggle a {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .cButton.fToggle a {
-	color: var(--highlight-fg, var(--icon-primary));
+	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
 }
 
 .cOpenCalendar a:hover,
@@ -652,11 +652,11 @@ a.fChoose:hover,
 .tl-table__cell-container .cmdLink:hover,
 .dfListAdd .cButton a:hover,
 .cButton.dfRemove a:hover {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .cButton.fToggle a:hover {
-	color: var(--highlight-fg, var(--icon-primary));
+	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
 }
 
 .cButton.dfRemove {
@@ -710,7 +710,7 @@ a.fChoose:hover,
 }
 
 .breadCrumbRight .Right span a {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 	height: .1rem;
 	width: .1rem;
 }

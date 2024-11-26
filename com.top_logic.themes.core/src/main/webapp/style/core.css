@@ -346,6 +346,8 @@ a.cmdLink:visited {
 	height: var(--POPUP_TITLE_HEIGHT);
 	padding-left: 2px;
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 .pdlgToolbar {
@@ -362,11 +364,11 @@ a.cmdLink:visited {
 }
 
 .pdlgToolbar a {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .pdlgToolbar a:hover {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .pdlgTitle {
@@ -383,6 +385,8 @@ a.cmdLink:visited {
 	height: var(--POPUP_TITLE_HEIGHT);
 	padding-left: 2px;
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 .menuTitleContents {
@@ -456,7 +460,7 @@ hr {
 .sidebarFilterContainer .fToggle,
 .sidebarFilterContainer .fToggle:focus,
 .sidebarFilterContainer .fToggle:hover {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .sidebarFilterContainer .fltSubContent {
@@ -666,12 +670,16 @@ div.fltList {
     display: flex;
     align-items: center;
     gap: var(--spacing-01);
-    background: var(--layer-accent);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
     padding: 0 var(--spacing-03);
 }
 
 .sidebarFilterEntry.collapsibleFilterEntry {
-	background: var(--layer-accent);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 .sidebarFilterEntry.collapsibleFilterEntry:hover {
@@ -753,7 +761,7 @@ div.fltList {
 }
 
 .popupMenu a:hover .menuEntryCell .menuEntryImage {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .popupMenu a:focus {
@@ -907,6 +915,8 @@ div.dlgMaximized .input-image.dlgRestore {
 	cursor: move;
 	height: var(--DIALOG_TITLE_HEIGHT);
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 	padding: 0 var(--spacing-01);
 	box-sizing: border-box;
 }
@@ -942,12 +952,12 @@ div.dlgMaximized .input-image.dlgRestore {
 
 .dlgToolbar a,
 .dlgToolbar a:hover {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 	box-shadow: none;
 }
 
 .dlgToolbar a:focus {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .dlgBorderNE.dlgResizeNE {
@@ -1137,7 +1147,7 @@ div.selectbox li.selected a,
 div.selectbox .treeNode.treeSelected, 
 div.selectbox .treeNode.treeSelected a,
 div.selectbox .treeNode.treeSelected span {
-	color: var(--text-primary);
+	color: inherit;
 	cursor: default;
 	text-decoration: none;
 }
@@ -1290,7 +1300,7 @@ td.rightList {
 .tl-mega-menu__option:hover .tl-mega-menu__option-icon,
 .tl-mega-menu__option:focus .tl-mega-menu__option-icon,
 .tl-mega-menu__option--selected .tl-mega-menu__option-icon {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .tl-mega-menu__option-text-container {
@@ -2061,6 +2071,20 @@ h5.card-title a:focus {
 	padding: 0 var(--spacing-02);
 }
 
+.breadcrumb a,
+.breadcrumb a:hover,
+.breadcrumb a:active,
+.breadcrumb a:focus,
+.breadcrumb a:visited,
+.treeBody a,
+.treeBody a:hover,
+.treeBody a:active,
+.treeBody a:focus,
+.treeBody a:visited
+{
+	color: inherit;
+}
+
 .tl-table__title-label .breadcrumb {
 	gap: 0;
 	padding: 0;
@@ -2085,48 +2109,29 @@ h5.card-title a:focus {
 	align-items: center;
 }
 
-.breadcrumb .treeNode .selectableNode .breadcrumbNodeText {
-	color: var(--text-secondary);
-}
-
-.breadcrumb .treeSelected .selectableNode .breadcrumbNodeText {
-	color: var(--text-primary);
-}
-
 .breadcrumb .treeSelected .selectableNode .breadcrumbNodeIcon {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .breadcrumb .treeNode:not(.treeSelected) .selectableNode:hover .breadcrumbNodeText,
 .breadcrumb .treeNode:not(.treeSelected) .selectableNode:hover .breadcrumbNodeIcon {
-	color: var(--link-primary-hover);
 	text-decoration: underline;
 }
 
 .breadcrumb .treeNode:not(.treeSelected) .selectableNode:active .breadcrumbNodeText {
-    color: var(--text-primary);
 	text-decoration: underline;
 }
 
 .breadcrumb .treeNode:not(.treeSelected) .selectableNode:active .breadcrumbNodeIcon {
-    color: var(--icon-primary);
+    color: var(--button-fg, var(--icon-primary));
 }
 
 .breadcrumb .treeNode:not(.treeSelected) .selectableNode:focus {
-    color: var(--link-primary-hover);
 	outline-offset: -1px;
 }
 
 .breadcrumb .treeSelected .selectableNode:focus {
     text-decoration: none;
-}
-
-.breadcrumb .treeNode:not(.treeSelected) .selectableNode:focus .breadcrumbNodeText {
-    color: var(--text-secondary);
-}
-
-.breadcrumb .treeNode:not(.treeSelected) .selectableNode:focus .breadcrumbNodeIcon {
-    color: var(--icon-secondary);
 }
 
 .breadcrumb .treeSelected .selectableNode:focus {
@@ -2136,22 +2141,6 @@ h5.card-title a:focus {
 
 .breadcrumbNodeSeparator {
 	padding: 0 var(--spacing-02);
-}
-
-.breadcrumbNodeSeparator i {
-	color: var(--icon-secondary);
-}
-
-.breadcrumbNodeSeparator .fMenu i {
-	color: var(--icon-secondary);
-}
-
-.breadcrumbNodeSeparator .fMenu:hover i {
-	color: var(--icon-primary);
-}
-
-.breadcrumbNodeSeparator .fMenu:focus i {
-	color: var(--icon-secondary);
 }
 
 .breadcrumbNodeSeparator .fMenu:focus {
@@ -2198,20 +2187,13 @@ h5.card-title a:focus {
 	padding-right: var(--spacing-02);
 }
 
-.breadcrumbMenuVisible .breadcrumbNodeText {
-	color: var(--text-secondary);
-}
-
 .breadcrumbMenuVisible .breadcrumbMenuNode:hover {
 	background: var(--layer-hover);
-}
-
-.breadcrumbMenuVisible .breadcrumbMenuNode:hover .breadcrumbNodeText {
 	color: var(--text-primary);
 }
 
 .breadcrumbMenuVisible .breadcrumbMenuNode:hover .breadcrumbNodeIcon {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 /* Needs to be on active state because focus does not work on this div element. */
@@ -2265,7 +2247,6 @@ h5.card-title a:focus {
 }
 
 .tcrLink {
-	color: var(--text-secondary);
 	overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -2297,7 +2278,7 @@ h5.card-title a:focus {
 
 .treeNode.treeSelected .treeNodeIcon > i,
 .treeNode:hover .treeNodeIcon > i {
-	color: var(--highlight, var(--icon-primary));
+	color: var(--highlight, var(--button-fg, var(--icon-primary)));
 }
 
 .treeNode .fToggle,
@@ -2308,7 +2289,7 @@ h5.card-title a:focus {
 .treeNode.treeSelected .fToggle.tcrToggle,
 .tcrNode .treeNode:hover .treeNode .fToggle,
 .tcrNode .treeNode:hover .fToggle.tcrToggle {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .tcrNoSelect {
@@ -2320,28 +2301,18 @@ h5.card-title a:focus {
 	color: var(--icon-disabled);
 }
 
-.treeSelected .tcrLink {
-	color: var(--text-primary);
-}
-
 .tcrNode .treeNode:hover {
 	color: var(--text-primary);
 	background: var(--layer-hover);
 }
 
-.tcrNode .treeNode:hover .tcrLink {
-	color: var(--text-primary);
-}
-
 .tcrNode .treeNode.treeSelected {
+	color: var(--text-primary);
 	background: var(--layer-selected);
 }
 
-.tcrNode .treeNode.treeSelected .tcrLink {
-	color: var(--text-primary);
-}
-
 .tcrNode .treeNode.treeSelected:hover {
+	color: var(--text-primary);
 	background: var(--layer-selected-hover);
 }
 
@@ -2387,6 +2358,8 @@ div.treeNode.treeSelected.dndInsertInto {
 	align-items: center;
 	justify-content: space-between;
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 	gap: var(--spacing-02);
 	height: inherit;
 	overflow: hidden;
@@ -2405,7 +2378,7 @@ div.treeNode.treeSelected.dndInsertInto {
     font-size: var(--heading-compact-02-font-size);
     line-height: var(--heading-compact-02-line-height);
     letter-spacing: var(--heading-compact-02-letter-spacing);
-	color: var(--text-primary);
+	color: var(--text-inverse);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -2431,20 +2404,20 @@ div.treeNode.treeSelected.dndInsertInto {
 .cCollapsibleToolbar a:hover,
 .cToolbar a:hover,
 .tl-table__title-toolbar a:hover {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 	text-decoration: none;
 }
 
 .cCollapsibleToolbar a:focus,
 .cToolbar a:focus,
 .tl-table__title-toolbar a:focus {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .cCollapsibleToolbar a,
 .cToolbar a,
 .tl-table__title-toolbar a {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 /* for when the toolbar is collapsed */

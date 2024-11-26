@@ -1384,6 +1384,9 @@ th:last-child .tl-table__cell-container {
 	border-collapse: separate !important;
 	border-spacing: 0px;
 	margin: 0px;
+
+	border-left:  1px solid var(--border-subtle);
+	border-right: 1px solid var(--border-subtle);	
 }
 
 .tl-table,

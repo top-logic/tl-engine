@@ -5,7 +5,9 @@
 	data-id="{dataId}"
 >
 	<tl:if test="hasLegend || collapsible || hasMenu">
-		<div class="rf_header">
+		<div class="rf_header"
+			onclick="{onclick}"
+		>
 			<tl:if test="hasLegend">
 				{title}
 			</tl:if>

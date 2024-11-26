@@ -199,19 +199,14 @@ div.fptIconBar > span.fptIconOverlay {
 	display: flex;
 }
 
-.rf_label .cLabel label {
-	color: var(--text-secondary);
+.rf_label label {
+	font-weight: bold;
 	white-space: nowrap;
 }
 
 .rf_label {
 	white-space: nowrap;
 	margin: var(--spacing-02) 0;
-}
-
-.rf_label .cLabel label.disabled,
-label.disabled  {
-	color: var(--text-disabled);
 }
 
 .mandatory.can-edit label:after {

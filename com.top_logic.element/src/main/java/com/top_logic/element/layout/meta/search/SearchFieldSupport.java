@@ -64,7 +64,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
-import com.top_logic.model.resources.TLTypeResourceProvider;
+import com.top_logic.model.resources.TLPartResourceProvider;
 import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
@@ -193,7 +193,7 @@ public class SearchFieldSupport {
             SelectField theField = FormFactory.newSelectField(META_ELEMENT, aList, false, Collections.singletonList(aMetaElement), false);
 
             theField.setMandatory(true);
-            theField.setOptionLabelProvider(new TLTypeResourceProvider());
+			theField.setOptionLabelProvider(TLPartResourceProvider.INSTANCE);
             theField.addValueListener(ChangeMetaElementListener.INSTANCE);
 			SelectFieldUtils.setCustomOrderComparator(theField);
 

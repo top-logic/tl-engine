@@ -671,6 +671,12 @@ a.fChoose:hover,
 	color: var(--support-danger) !important;
 }
 
+.sblLogo {
+	box-sizing: border-box;
+	padding-left: var(--spacing-02);
+	padding-right: var(--spacing-02);
+}
+
 /* Icon Styles for design mode hamburger buttons */
 .tlAdditionalRightContent .cButton.cImageButton,
 .tlAdditionalRightContent .cButton.cImageButton.cmdButtonDisabled, 

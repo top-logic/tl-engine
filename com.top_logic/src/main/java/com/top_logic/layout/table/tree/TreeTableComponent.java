@@ -601,16 +601,17 @@ public class TreeTableComponent extends BoundComponent
 
 	private List<AbstractTreeTableNode<?>> findNodes(Object nodeObject) {
 		TLTreeModel<AbstractTreeTableNode<?>> treeModel = getTreeModel();
-
+		TreeModelBuilder<Object> modelBuilder = getTreeModelBuilder();
 		if (treeModel instanceof IndexedTLTreeModel<?>) {
 			return ((IndexedTLTreeModel) treeModel).getIndex().getNodes(nodeObject);
+		} else if (modelBuilder != null) {
+			AbstractTreeTableNode<?> node =
+				TLTreeModelUtil.findNode(treeModel, createPath(modelBuilder, nodeObject), false);
+			return Collections.singletonList(node);
 		} else {
-			TreeModelBuilder<Object> modelBuilder = getTreeModelBuilder();
-
-			if (modelBuilder != null) {
-				AbstractTreeTableNode<?> node = TLTreeModelUtil.findNode(treeModel, createPath(modelBuilder, nodeObject), false);
-
-				return Collections.singletonList(node);
+			Maybe<AbstractTreeTableNode<?>> node = findNodeOfBusinessObject(nodeObject);
+			if (node.hasValue()) {
+				return Collections.singletonList(node.get());
 			} else {
 				return Collections.emptyList();
 			}

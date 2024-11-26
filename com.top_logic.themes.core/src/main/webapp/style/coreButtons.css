@@ -671,7 +671,8 @@ a.fChoose:hover,
 	color: var(--support-danger) !important;
 }
 
-.sblLogo {
+.sblLogo,
+.licenseView {
 	box-sizing: border-box;
 	padding-left: var(--spacing-02);
 	padding-right: var(--spacing-02);

@@ -7,5 +7,6 @@
 	state="enabled"
 >
 	<styles>
+		<style name="/style/coreSidebar.css"/>
 	</styles>
 </theme>

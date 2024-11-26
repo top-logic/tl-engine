@@ -18,6 +18,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey GROUP_NOT_COLLAPSIBLE;
 
+	/**
+	 * @en Expand or collapse.
+	 */
+	public static ResKey TOGGLE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

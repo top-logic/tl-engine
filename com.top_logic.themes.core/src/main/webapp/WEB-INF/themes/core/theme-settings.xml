@@ -92,7 +92,7 @@
 		value="true"
 	/>
 	<int name="com.top_logic.layout.layoutRenderer.Icons.LAYOUT_ADJUSTMENT_GRABBER_COLLAPSED_SIZE"
-		value="16"
+		value="1"
 	/>
 	<int name="com.top_logic.layout.layoutRenderer.Icons.LAYOUT_ADJUSTMENT_GRABBER_EXPANDED_SIZE"
 		value="16"

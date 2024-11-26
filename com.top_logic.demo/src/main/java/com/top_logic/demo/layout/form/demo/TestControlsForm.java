@@ -2438,7 +2438,8 @@ public class TestControlsForm extends FormComponent {
 			@Override
 			public void valueChanged(FormField field, Object oldValue, Object newValue) {
 				if (isPictureOrNull(newValue)) {
-					pictureField.setValue(newValue);
+					Collection<?> collection = (Collection<?>) newValue;
+					pictureField.setValue(collection.isEmpty() ? null : collection.iterator().next());
 				}
 			}
 
@@ -2449,10 +2450,10 @@ public class TestControlsForm extends FormComponent {
 	}
 
 	boolean isPictureOrNull(Object value) {
-		if (value == null) {
-			return true;
-		}
-		return ImageDataUtil.isSupportedImageFilename(((BinaryDataSource) value).getName());
+		Collection<?> collection = (Collection<?>) value;
+
+		return collection.isEmpty() || ImageDataUtil
+			.isSupportedImageFilename(((BinaryDataSource) collection.iterator().next()).getName());
 	}
 
 	private void addButtonControls(FormGroup context) {

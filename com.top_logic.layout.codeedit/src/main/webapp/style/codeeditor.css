@@ -21,6 +21,7 @@
 }
 
 .ace-eclipse .ace_gutter-active-line {
+	color: var(--layer-accent-text);
 	background: var(--layer-accent);
 }
 

@@ -105,7 +105,7 @@
 }
 
 .tlTabBar .activeTab .tabIcon i {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .tlTabBar .tab .tabIcon i {
@@ -122,7 +122,7 @@
 }
 
 .tab:hover .tabIcon i {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .tlTabBar .activeTab:focus, 
@@ -598,7 +598,7 @@ a.accEntry.accSelected .accIcon i,
 div.accSelected a.accEntry .accIcon i,
 div.accNode.tlPopupOpen a.accEntry .accIcon i,
 a.accEntry.accContainer.accSelected .accIcon i {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .mcMinimized div.accNode {

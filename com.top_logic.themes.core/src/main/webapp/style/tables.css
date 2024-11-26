@@ -87,11 +87,11 @@ table td div.tblRight span.cError {
 }
 
 a.tl-table__title {
-	color: var(--text-primary);
+	color: var(--layer-accent-text);
 }
 
 a.tl-table__title:visited {
-	color: var(--text-primary);
+	color: var(--layer-accent-text);
 }
 
 .tl-table__title {
@@ -99,8 +99,11 @@ a.tl-table__title:visited {
 	justify-content: space-between;
     align-items: center;
     gap: var(--spacing-02);
-	background: var(--layer-accent);
-	color: var(--text-primary);
+
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
+
 	font-family: var(--font-family);
 	font-weight: bold;
     font-size: var(--heading-compact-02-font-size);
@@ -116,8 +119,10 @@ a.tl-table__title:visited {
 }
 
 th.tblTitleRight {
-	background: var(--layer-accent);
-	color: var(--text-primary);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
+
 	font-family: var(--font-family);
 	font-weight: bold;
 	font-size: var(--heading-03-font-size);
@@ -180,7 +185,7 @@ th.tblCounterNoBorder {
 }
 
 .tl-table__footer-pager i {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .tl-table__footer-pager-item {
@@ -403,7 +408,6 @@ td.tblTD100 {
     white-space:    nowrap;
 	padding:        2px;
 	border-color:   var(--layer-accent);
-	color:          var(--text-primary);
 	width:          100%;
 	border-width:   0px;
 }
@@ -415,8 +419,9 @@ tr.treeSelected td.tl-table__cell--selected {
 td.tblTDselectWrap {
 	padding:          2px;
 	border-color:     var(--layer-accent);
-	color:            var(--text-primary);
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 	border-width:     0px;
 }
 
@@ -426,8 +431,9 @@ td.tblTDselectStrong {
     white-space:      nowrap;
 	padding:          2px;
 	border-color:     var(--layer-accent);
-	color:            var(--text-primary);
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 	border-width:     0px;
 }
 
@@ -436,8 +442,9 @@ td.tblTDselect100 {
     white-space:      nowrap;
 	padding:          2px;
 	border-color:     var(--layer-accent);
-	color:            var(--text-primary);
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 	width:            100%;
 	border-width:     0px;
 }
@@ -473,7 +480,8 @@ table.regTable {
 
 th.regTitle {
 	background-color: var(--layer-accent);
-	color:            var(--text-primary);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 	font-size:        13px;
 	font-weight:      normal;
 	padding:          2px;
@@ -620,7 +628,7 @@ td.fltButton {
 }
 
 .tl-table__header-cell-content .fltButton.tl-table__filter-sort-icons {
-	color: var(--highlight-fg, var(--icon-primary));
+	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
 	align-self: center;
 }
 
@@ -629,7 +637,7 @@ td.fltButton {
 }
 
 .tl-table__header-cell-content .fltButton:not(.activeFilter):not(.tl-table__filter-sort-icons):hover {
-	color: var(--highlight-fg, var(--icon-primary));
+	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
 }
 
 .tl-table__header-cell-content .fltButton.activeFilter {
@@ -945,7 +953,7 @@ table:not(.i18nStringTable) td span.cDecoratedCell {
 
 .tl-table__row:not(.tblSelected):hover .treeType > i, 
 td.tl-table__cell--selected .treeType > i {
-	color: var(--highlight-fg, var(--icon-primary));
+	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
 }
 
 table.i18nStringTable td span.cDecoratedCell .lFlexible {
@@ -1416,7 +1424,7 @@ th:last-child .tl-table__cell-container {
 	left: 0;
 	display: flex;
 	justify-content: center;
-	background: var(--layer-accent);
+	background: var(--layer);
 	color: var(--text-primary);
 	font-family: var(--font-family);
 	font-size: var(--body-01-font-size);
@@ -1597,7 +1605,7 @@ th:last-child .tl-table__cell-resizer {
 
 .tl-table-overlay__scroller-icon {
 	font-size: 25px;
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .tl-flex--fill {
@@ -1681,7 +1689,7 @@ td.tl-table__cell--selected {
 }
 
 .tl-table__row:not(.tblSelected):hover .fToggle a {
-	color: var(--highlight-fg, var(--icon-primary));
+	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
 }
 
 .tl-table__cell--selectable .fToggle a {

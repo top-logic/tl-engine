@@ -2115,13 +2115,19 @@
 		value="#d6e3f7"
 	/>
 	<color name="layer-accent"
-		value="#e1e2e5"
+		value="#6A6A6A"
 	/>
 	<color name="layer-accent-hover"
-		value="#d3d5d9"
+		value="#525252"
 	/>
 	<color name="layer-accent-active"
-		value="#a7abb2"
+		value="#3b3b3b"
+	/>
+	<color name="layer-accent-text"
+		expr="%text-inverse%"
+	/>
+	<color name="layer-accent-icon"
+		expr="%icon-on-color%"
 	/>
 	<color name="border-subtle"
 		value="#c4c7cc"

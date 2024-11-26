@@ -552,7 +552,8 @@ public class TreeTableComponent extends BoundComponent
 	}
 
 	private void updateNodeObject(Object nodeObject) {
-		if (getTreeModelBuilder().supportsNode(this, nodeObject)) {
+		TreeModelBuilder<Object> treeModelBuilder = getTreeModelBuilder();
+		if (treeModelBuilder != null && treeModelBuilder.supportsNode(this, nodeObject)) {
 			Maybe<AbstractTreeTableNode<?>> node = findNodeOfBusinessObject(nodeObject);
 			if (node.hasValue()) {
 				AbstractTreeTableNode<?> tableNode = node.get();
@@ -572,7 +573,12 @@ public class TreeTableComponent extends BoundComponent
 	}
 
 	private Collection<? extends Object> getParentObjects(Object nodeObject) {
-		return getTreeModelBuilder().getParents(this, nodeObject);
+		TreeModelBuilder<Object> treeModelBuilder = getTreeModelBuilder();
+		if (treeModelBuilder != null) {
+			return treeModelBuilder.getParents(this, nodeObject);
+		} else {
+			return Collections.emptySet();
+		}
 	}
 
 	private void updateOldParents(AbstractTreeTableNode<?> node) {
@@ -619,10 +625,13 @@ public class TreeTableComponent extends BoundComponent
 
 	private void updateChildrenInternal(AbstractTreeTableNode<?> node) {
 		if (node != null) {
-			unregisterSelectionListener();
-			TLTreeModelUtil.updateChildren((AbstractTreeTableNode) node,
-				getTreeModelBuilder().getChildIterator(this, node.getBusinessObject()));
-			registerSelectionListener();
+			TreeModelBuilder<Object> treeModelBuilder = getTreeModelBuilder();
+			if (treeModelBuilder != null) {
+				unregisterSelectionListener();
+				TLTreeModelUtil.updateChildren((AbstractTreeTableNode) node,
+					treeModelBuilder.getChildIterator(this, node.getBusinessObject()));
+				registerSelectionListener();
+			}
 		}
 	}
 

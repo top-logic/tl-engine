@@ -2080,7 +2080,12 @@ h5.card-title a:focus {
 .treeBody a:hover,
 .treeBody a:active,
 .treeBody a:focus,
-.treeBody a:visited
+.treeBody a:visited,
+.cButton a,
+.cButton a:hover,
+.cButton a:active,
+.cButton a:focus,
+.cButton a:visited
 {
 	color: inherit;
 }

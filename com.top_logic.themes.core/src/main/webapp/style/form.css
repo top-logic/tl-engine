@@ -554,10 +554,6 @@ div.rf_buttons {
 	white-space: nowrap;
 }
 
-.dfEntryTitle.colored a {
-	color: var(--text-primary);
-}
-
 .dfEntryTitle label {
 	margin-right: var(--spacing-02);
 }

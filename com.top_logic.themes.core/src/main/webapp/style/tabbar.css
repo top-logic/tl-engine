@@ -451,21 +451,10 @@ div.mcMinimized .accText {
     border-radius: 0;
 }
 
-.licenseView {
+.licenseContent {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	background: var(--support-danger);
-	border-radius: var(--corner-radius);
-}
-
-/* Is needed for the sidebar theme */
-.licenseView .licenseContent {
-	font-weight: bold;
-	color: var(--text-on-color);
-}
-
-.licenseContent {
 	font-weight: bold;
 	color: var(--support-danger);
 }

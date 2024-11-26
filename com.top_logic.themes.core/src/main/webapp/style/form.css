@@ -190,7 +190,7 @@ div.fptIconBar > span.fptIconOverlay {
 	top: 0px !important;
     right: 5px !important;
     border-radius: 30px;
-    color: var(--icon-primary);
+    color: var(--button-fg, var(--icon-primary));
     background: var(--layer);
     padding: 4px;
 }
@@ -317,7 +317,7 @@ span.can-edit {
 }
 
 .frmGroupExpand a {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .frmGroupExpand a:hover {
@@ -348,20 +348,26 @@ table.fhrTable {
 td.fhrLeft {
 	height: 2.5rem;
 	padding-right: var(--spacing-02);
-	background: var(--layer-accent);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 td.fhrMiddle {
 	vertical-align: middle;
 	height: 2.5rem;
 	width: 100%;
-	background: var(--layer-accent);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 td.fhrRight {
 	height: 2.5rem;
 	padding-right: var(--spacing-02);
-	background: var(--layer-accent);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 /* ================================= */
@@ -541,7 +547,9 @@ div.rf_buttons {
 	align-items: center;
 	gap: var(--spacing-03);
 	height: 2.5rem;
-	background: var(--layer-accent);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 	padding: 0 var(--spacing-03);
 	white-space: nowrap;
 }
@@ -555,7 +563,9 @@ div.rf_buttons {
 }
 
 .dfEntryTitle.colored:hover {
-	background: var(--layer-accent-hover);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 .dfEntryTitle.colored .lFixedRight,
@@ -588,7 +598,7 @@ div.dfListAdd {
     align-items: center;
     justify-content: center;
     align-self: center;
-    color: var(--icon-primary);
+    color: var(--button-fg, var(--icon-primary));
     height: 1rem;
     width: 1rem;
 }
@@ -780,7 +790,7 @@ div.dfListAdd {
     align-items: center;
     gap: var(--spacing-02);
     color: var(--highlight-fg, inherit);
-    background: var(--highlight-bg, var(--layer-accent));
+    background: var(--highlight-bg, var(--layer));
     padding: var(--spacing-02) var(--spacing-03);
     white-space: nowrap;
     height: 2.5rem;
@@ -789,7 +799,7 @@ div.dfListAdd {
 }
 
 .rf_groupCell .rf_header:hover {
-	background: var(--highlight-bg--hover, var(--layer-accent-hover));
+	background: var(--highlight-bg--hover, var(--layer-hover));
 }
 
 .rf_groupCell .rf_header a:hover {
@@ -1010,7 +1020,9 @@ div.dfListAdd {
 
 .cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .rf_dropTarget.rf_parent {
 	border: 1px dashed #7695C3;
-	background: var(--layer-accent);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 /* do not mark locked areas */
@@ -1224,7 +1236,7 @@ div.cal_view {
 }
 
 .cal_titlebar a {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .cal_titlebar a:hover {
@@ -1531,7 +1543,7 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
 .cIntegerInput.num .lFixedRight {
 	display: inline-flex;
 	align-items: stretch;
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 	background-color: var(--field);
 }
 
@@ -1546,7 +1558,7 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: var(--icon-primary);
+    color: var(--button-fg, var(--icon-primary));
     height: 2rem;
     width: 2rem;
 }
@@ -2354,6 +2366,8 @@ div.imageContainer {
 
 .cIconChooser .fptBodyContent .displayedIcons {
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 .cIconChooser .fptBodyContent .displayedIcons.selected {
@@ -2366,7 +2380,7 @@ div.imageContainer {
 
 .cIconChooser i {
     font-size: 1rem;
-    color: var(--icon-primary);
+    color: var(--button-fg, var(--icon-primary));
 }
 
 .cIconChooser div.header {
@@ -2402,6 +2416,8 @@ div.imageContainer {
 	border: 1px solid var(--border-strong);
 	border-radius: var(--corner-radius);
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 .cIconChooser .input-image:hover {
@@ -2555,7 +2571,7 @@ a.input-image.tristate .bi-info-square {
 }
 
 a.input-image.tristate.tBoolean {
-	color: var(--icon-primary)
+	color: var(--button-fg, var(--icon-primary))
 }
 
 /* ============================================= */
@@ -2637,7 +2653,7 @@ span.disabled .ddwttDropBtn {
 }
 
 .ddwttDropBtnActive .ddwttChevron i {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 /* DropDown */
@@ -2773,7 +2789,7 @@ img.ddwttItemIcon {
 }
 
 .ddwttTagX i {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 /* Tooltip */

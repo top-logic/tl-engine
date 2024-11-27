@@ -19,6 +19,7 @@ import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.form.control.I18NConstants;
 import com.top_logic.layout.form.control.Icons;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.form.FormEditorCSS;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.Columns;
 import com.top_logic.model.form.definition.ColumnsDefinition;
@@ -40,7 +41,7 @@ public class ColumnsDefinitionTemplateProvider extends AbstractFormContainerProv
 	private static final ResKey LABEL = I18NConstants.FORM_EDITOR__TOOL_NEW_COLUMNSLAYOUT;
 
 	private static final String CSS_COLUMNS =
-		ReactiveFormCSS.RF_COLUMNS_LAYOUT + " " + ReactiveFormCSS.RF_INNER_TARGET;
+		ReactiveFormCSS.RF_COLUMNS_LAYOUT + " " + FormEditorCSS.FE_CONTAINER;
 
 	/**
 	 * Create a new {@link ColumnsDefinitionTemplateProvider} for a given {@link ColumnsDefinition}
@@ -73,10 +74,10 @@ public class ColumnsDefinitionTemplateProvider extends AbstractFormContainerProv
 	@Override
 	public HTMLTemplateFragment decorateContainer(HTMLTemplateFragment content, FormEditorContext context) {
 		HTMLTemplateFragment container =
-			div(getIdAttribute(), css(ReactiveFormCSS.RF_CONTAINER + " " + ReactiveFormCSS.RF_DROP_TARGET),
+			div(getIdAttribute(), css(ReactiveFormCSS.RF_CONTAINER + " " + FormEditorCSS.FE_DROP_TARGET),
 				content);
 		HTMLTemplateFragment elementWrapper =
-			div(attr("id", "columns-" + getID()), css(ReactiveFormCSS.RF_WRAPPER), container);
+			div(attr("id", "columns-" + getID()), css(FormEditorCSS.FE_WRAPPER), container);
 
 		return contentBox(elementWrapper);
 	}

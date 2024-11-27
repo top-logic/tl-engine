@@ -80,7 +80,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
-import com.top_logic.model.form.ReactiveFormCSS;
+import com.top_logic.model.form.FormEditorCSS;
 import com.top_logic.model.form.definition.FormContextDefinition;
 import com.top_logic.model.form.definition.FormElement;
 import com.top_logic.model.form.implementation.AbstractFormElementProvider;
@@ -563,7 +563,7 @@ public class HTMLTemplateFormProvider
 
 		/* Lock content of the preview fieldset box. It must not be possible to drop elements in the
 		 * box. */
-		return Templates.fieldsetBox(legend, contentTemplate, ConfigKey.none()).setCssClass(ReactiveFormCSS.RF_LOCKED);
+		return Templates.fieldsetBox(legend, contentTemplate, ConfigKey.none()).setCssClass(FormEditorCSS.FE_LOCKED);
 	}
 
 }

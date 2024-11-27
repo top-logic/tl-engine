@@ -20,6 +20,7 @@ import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.control.I18NConstants;
 import com.top_logic.layout.form.control.Icons;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.form.FormEditorCSS;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.FrameDefinition;
 import com.top_logic.util.css.CssUtil;
@@ -79,9 +80,9 @@ public class FrameDefinitionTemplateProvider extends AbstractFormContainerProvid
 		if (getID() != null) {
 			HTMLTemplateFragment element = content;
 			HTMLTemplateFragment container =
-				div(getIdAttribute(), css(ReactiveFormCSS.RF_CONTAINER + " " + ReactiveFormCSS.RF_DROP_TARGET),
+				div(getIdAttribute(), css(ReactiveFormCSS.RF_CONTAINER + " " + FormEditorCSS.FE_DROP_TARGET),
 					element);
-			return contentBox(div(attr("id", "columns-" + getID()), css(ReactiveFormCSS.RF_WRAPPER), container),
+			return contentBox(div(attr("id", "columns-" + getID()), css(FormEditorCSS.FE_WRAPPER), container),
 				wholeLine);
 		} else {			
 			return contentBox(content, wholeLine);
@@ -92,7 +93,7 @@ public class FrameDefinitionTemplateProvider extends AbstractFormContainerProvid
 	public void addCssClassForContent(List<HTMLTemplateFragment> buffer) {
 		String cssFrame = "rf_frame";
 		String cssClass = "";
-		String cssInnerTarget = ReactiveFormCSS.RF_INNER_TARGET;
+		String cssInnerTarget = FormEditorCSS.FE_CONTAINER;
 		String cssShowBorder = "showBorder";
 		String cssWholeLine = ReactiveFormCSS.RF_LINE + " " + FormConstants.OVERFLOW_AUTO_CLASS;
 		String cssColumns = ReactiveFormCSS.RF_COLUMNS_LAYOUT;

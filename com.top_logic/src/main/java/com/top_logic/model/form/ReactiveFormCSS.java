@@ -17,20 +17,11 @@ public interface ReactiveFormCSS {
 	/** Content is organised in columns. */
 	String RF_COLUMNS_LAYOUT = "rf_columnsLayout";
 
-	/** Marker CSS class to find inner drop target. */
-	String RF_INNER_TARGET = "rf_innerTarget";
-
 	/** Container for forms. */
 	String RF_CONTAINER = "rf_container";
 
-	/** CSS class for elements in which an object can be dropped. */
-	String RF_DROP_TARGET = "rf_dropTarget";
-
 	/** CSS class to indicate that the form must not have a line break. */
 	String CSS_CLASS_KEEP = "keep";
-
-	/** Wrapper for forms. */
-	String RF_WRAPPER = "rf_wrapper";
 
 	/** CSS class for form cells. */
 	String RF_CELL = "rf_cell";
@@ -75,11 +66,5 @@ public interface ReactiveFormCSS {
 	 * @see GroupCellControl#hasMenu()
 	 */
 	String RF_MENU = "rf_menu";
-
-	/**
-	 * CSS class for the form editor to mark an part at the GUI as "locked", i.e. it is not possible
-	 * to drag an form element into or out from the area.
-	 */
-	String RF_LOCKED = "rf_locked";
 }
 

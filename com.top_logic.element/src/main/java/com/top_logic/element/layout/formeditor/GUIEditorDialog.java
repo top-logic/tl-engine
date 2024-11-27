@@ -37,6 +37,7 @@ import com.top_logic.layout.toolbar.ToolBarGroup;
 import com.top_logic.mig.html.layout.Layout.LayoutResizeMode;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.form.FormEditorCSS;
 import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -119,11 +120,11 @@ public class GUIEditorDialog extends AbstractFormDialogBase {
 	}
 
 	private HTMLFragment editorView() {
-		return createFormDisplay("rf_editor", DisplayFormEditorBuilder.EDITOR_FORM_CONTEXT);
+		return createFormDisplay(FormEditorCSS.FE_EDITOR, DisplayFormEditorBuilder.EDITOR_FORM_CONTEXT);
 	}
 
 	private HTMLFragment attributesView() {
-		return createFormDisplay("rf_dropTarget", DisplayFormEditorBuilder.ATTRIBUTE_FORM_CONTEXT);
+		return createFormDisplay(FormEditorCSS.FE_DROP_TARGET, DisplayFormEditorBuilder.ATTRIBUTE_FORM_CONTEXT);
 	}
 
 	private HTMLFragment createFormDisplay(String cssClass, String member) {

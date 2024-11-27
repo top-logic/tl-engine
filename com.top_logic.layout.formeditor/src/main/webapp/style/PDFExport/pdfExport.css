@@ -30,11 +30,11 @@ td.tl-table__cell {
 
 .rf_groupCell,
 .rf_groupCell.collapsed,
-.rf_groupCell .rf_header {
+.rf_groupCell > .rf_header {
     border-radius: 0px;
 }
 
-.rf_groupCell .rf_header {
+.rf_groupCell > .rf_header {
     padding-left: 8px;
     padding-top: 4px;
 }

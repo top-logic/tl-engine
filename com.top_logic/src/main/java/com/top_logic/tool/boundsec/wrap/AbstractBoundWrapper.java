@@ -77,7 +77,10 @@ public abstract class AbstractBoundWrapper extends AbstractWrapper implements Bo
 	public BoundObject getSecurityParent() {
 		BoundHelper boundHelper = BoundHelper.getInstance();
 		if (boundHelper.useDefaultObject()) {
-			return boundHelper.getDefaultObject();
+			BoundObject securityRoot = boundHelper.getDefaultObject();
+			if (securityRoot != this) {
+				return securityRoot;
+			}
         }
 
         return null;

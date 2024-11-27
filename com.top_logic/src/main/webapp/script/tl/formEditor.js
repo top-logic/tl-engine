@@ -527,7 +527,7 @@ FormEditor.init = function(controlId, putElementBackText) {
 			className = node.className;
 		}
 		
-		if(className.indexOf("rf_frameBorder") >= 0 || className.indexOf("fe_wrapper") >= 0) {
+		if(className.indexOf("fe_wrapper") >= 0) {
 			result = node;
 		} else {
 			if(node.parentNode) { 

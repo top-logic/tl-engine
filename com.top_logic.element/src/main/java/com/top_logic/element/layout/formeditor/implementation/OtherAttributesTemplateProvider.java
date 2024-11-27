@@ -35,6 +35,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.AnnotationContainer;
+import com.top_logic.model.form.FormEditorCSS;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.FormVisibility;
 import com.top_logic.model.form.definition.LabelPlacement;
@@ -76,7 +77,7 @@ public class OtherAttributesTemplateProvider extends AbstractFormElementProvider
 		if (formMode == FormMode.DESIGN) {
 			HTMLTemplateFragment result =
 				GroupDefinitionTemplateProvider.wrapFieldSet(config, getID(), Templates.empty(), ConfigKey.none())
-					.setCssClass(CssUtil.joinCssClasses(ReactiveFormCSS.RF_LOCKED, config.getCssClass()));
+					.setCssClass(CssUtil.joinCssClasses(FormEditorCSS.FE_LOCKED, config.getCssClass()));
 			return result;
 		} else {
 			List<HTMLTemplateFragment> otherAttributeTemplates = new ArrayList<>();

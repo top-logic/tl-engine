@@ -107,7 +107,7 @@ FormEditor.init = function(controlId, putElementBackText) {
 		window.draggedDisplay = event.target.style.display;
 		event.dataTransfer.setData("Text", event.target.id);
 	
-		event.target.className += " rf_dragged";
+		event.target.className += " fe_dragged";
 		
 		// change opacity if it is not a tool
 		var isTool = event.target.getAttribute("data-tool");		
@@ -134,10 +134,10 @@ FormEditor.init = function(controlId, putElementBackText) {
 		event.preventDefault();
 		
 		// get information of the position of the element
-		if(event.target.className.indexOf("rf_dragged") >= 0) {
+		if(event.target.className.indexOf("fe_dragged") >= 0) {
 			var dragged = getDragged();
 		  	var siblingID = dragged.nextSibling ? dragged.nextSibling.getAttribute("data-id") : "";
-		  	var parent = findDropTarget(event.target); // findDrop , "rf_innerTarget"
+		  	var parent = findDropTarget(event.target); // findDrop , "fe_container"
 		  	var parentID = "";
 		  	if(parent) {
 		  		var parentControl = findcFormEditorElement(parent);		  	
@@ -148,7 +148,7 @@ FormEditor.init = function(controlId, putElementBackText) {
 		  	moveMember(controlId, event.target, siblingID, parentID);
 		}
 
-		removeClass("rf_parent");
+		removeClass("fe_parent");
 	  	highlightEditor(false);
 		triggerEvent("removeDropArea");
 	}
@@ -164,7 +164,7 @@ FormEditor.init = function(controlId, putElementBackText) {
 	function moveMember(controlId, node, siblingID, parentID) {
 		// restore default
 		node.style.opacity = '1';
-		node.className = (node.className.replace(/ rf_dragged/gi, ""));
+		node.className = (node.className.replace(/ fe_dragged/gi, ""));
 	  	lastTarget = null;
 	  	window.displayedInForm = null;
 	  	displayedInForm = null;
@@ -198,7 +198,7 @@ FormEditor.init = function(controlId, putElementBackText) {
 				
 				if(isDropTarget(event.target)) {
 					if(!isDescendant(dragged, event.target)) {
-						if(!findCssClassUp(event.target, "rf_locked")) {
+						if(!findCssClassUp(event.target, "fe_locked")) {
 							// append to an empty dropTarget
 							var dropTarget = findInnerTarget(event.target);
 							dropTarget.appendChild(dragged);
@@ -220,7 +220,7 @@ FormEditor.init = function(controlId, putElementBackText) {
 						if(lastTarget != dragElement.id || insertBefore != insertBeforeNew) {
 							var parent = dragElement.parentNode;
 
-							if(parent && !findCssClassUp(parent, "rf_locked")) {			
+							if(parent && !findCssClassUp(parent, "fe_locked")) {			
 								// check if the dragged is parent of the element which should be its parent
 								if(!isDescendant(dragged, parent)) {
 									var sibling = insertBeforeNew ? dragElement : dragElement.nextSibling;								
@@ -259,13 +259,13 @@ FormEditor.init = function(controlId, putElementBackText) {
 			// Background
 			var dropArea = document.createElement("div");
 			dropArea.id = controlId + "-dropArea";
-			dropArea.classList.add("rf_dropArea");
+			dropArea.classList.add("fe_dropArea");
 			dropArea.addEventListener("drop", drop);
 			control.appendChild(dropArea);
 			
 			// Text
 			var dropText = document.createElement("div");
-			dropText.classList.add("rf_dropText");
+			dropText.classList.add("fe_dropText");
 			dropText.innerHTML = text; 
 			dropArea.appendChild(dropText);	
 		}
@@ -277,7 +277,7 @@ FormEditor.init = function(controlId, putElementBackText) {
 			triggerEvent("showDropArea");
 			var dropTarget = findDropTarget(event.target);
 			if(dropTarget) {
-				dropTarget.classList.add("rf_parent");
+				dropTarget.classList.add("fe_parent");
 				window.dropTarget = dropTarget.id ? dropTarget.id : dropTarget.parentNode.id;
 			}
 		} 
@@ -290,7 +290,7 @@ FormEditor.init = function(controlId, putElementBackText) {
 			dropTargetID = dropTarget.id ? dropTarget.id : dropTarget.parentNode.id;
 			
 			if(window.dropTarget != dropTargetID) {
-				removeClass("rf_parent");
+				removeClass("fe_parent");
 				window.dropTarget = null;
 			}
 		} 
@@ -399,7 +399,7 @@ FormEditor.init = function(controlId, putElementBackText) {
 			className = node.className;
 			if(className.indexOf("cFormEditorElement") >= 0) {
 				return false;
-			} else if(className.indexOf("dropTarget") >= 0 || className.indexOf("rf_innerTarget") >= 0) {
+			} else if(className.indexOf("dropTarget") >= 0 || className.indexOf("fe_container") >= 0) {
 				return true;
 			} else {
 				return isDropTarget(node.parentNode);
@@ -440,7 +440,7 @@ FormEditor.init = function(controlId, putElementBackText) {
 			className = node.className;
 		}
 		
-		if(className.indexOf("rf_dropTarget") >= 0) {
+		if(className.indexOf("fe_dropTarget") >= 0) {
 			result = node;
 		} else {
 			if(node.parentNode) { 
@@ -454,7 +454,7 @@ FormEditor.init = function(controlId, putElementBackText) {
 	}
 	
 	function findInnerTarget(node) {
-		var result = findCssClass(node, "rf_innerTarget");
+		var result = findCssClass(node, "fe_container");
 		if(result == null) {
 			result = findDropTarget(node);
 		}
@@ -510,7 +510,7 @@ FormEditor.init = function(controlId, putElementBackText) {
 
 	/* Check if the a given node is inside of the editor */
 	function inEditor(node) {
-		var editors = document.getElementsByClassName("rf_editor");
+		var editors = document.getElementsByClassName("fe_editor");
 		var result = false;
 		for(var i=0; i < editors.length; i++) {
 			result = (result || editors[i].contains(node));
@@ -527,7 +527,7 @@ FormEditor.init = function(controlId, putElementBackText) {
 			className = node.className;
 		}
 		
-		if(className.indexOf("rf_frameBorder") >= 0 || className.indexOf("rf_wrapper") >= 0) {
+		if(className.indexOf("rf_frameBorder") >= 0 || className.indexOf("fe_wrapper") >= 0) {
 			result = node;
 		} else {
 			if(node.parentNode) { 
@@ -563,11 +563,11 @@ FormEditor.init = function(controlId, putElementBackText) {
 			}
 			
 			if(highlight) {
-				if(className.indexOf(" rf_highlighted") < 0) {
-					node.className = className + " rf_highlighted";
+				if(className.indexOf(" fe_highlighted") < 0) {
+					node.className = className + " fe_highlighted";
 				}
 			} else {
-				node.className = (className.replace(/ rf_highlighted/gi, ""));
+				node.className = (className.replace(/ fe_highlighted/gi, ""));
 			}
 		}
 	}

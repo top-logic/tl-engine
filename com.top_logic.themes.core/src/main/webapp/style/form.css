@@ -863,27 +863,27 @@ div.dfListAdd {
 	display: none; 
 }
 
-.cFormEditorPreview .rf_dropTarget { 
+.cFormEditorPreview .fe_dropTarget { 
 	height: calc(100% - 2 * var(--spacing-03));
 }
 
-.rf_editor, .cFormEditorPreview.rf_dropTarget { 
+.fe_editor, .cFormEditorPreview.fe_dropTarget { 
 	height: 100%;
 }
 
-.rf_dropTarget { 
+.fe_dropTarget { 
 	min-height: 24px;
 }
 
-.rf_dropTarget > .cFormEditorDisplay,
-.rf_dropTarget > .cFormEditorToolbar { 
+.fe_dropTarget > .cFormEditorDisplay,
+.fe_dropTarget > .cFormEditorToolbar { 
 	padding: 10px;
 	height: calc(100% - 20px);
 }
 
-.cFormEditorPreview.rf_highlighted [data-type = 'columns'] .rf_groupCell,
-.cFormEditorPreview.rf_highlighted .rf_dragElement .rf_inputCell,
-.cFormEditorPreview.rf_highlighted .rf_dragElement .rf_table {
+.cFormEditorPreview.fe_highlighted [data-type = 'columns'] .rf_groupCell,
+.cFormEditorPreview.fe_highlighted .rf_dragElement .rf_inputCell,
+.cFormEditorPreview.fe_highlighted .rf_dragElement .rf_table {
 	background: rgba(255,255,255,0.6);
 	border-radius: 0px
 }
@@ -954,12 +954,12 @@ div.dfListAdd {
 	background-color: var(--BUTTON_COLOR_HOVER);
 }
 
-.cFormEditorDisplay.edit .rf_wrapper:not(.hover):hover > .rf_container {
+.cFormEditorDisplay.edit .fe_wrapper:not(.hover):hover > .rf_container {
 	margin-left: 20px;
 	min-width: calc(100% - 20px);
 }
 
-.rf_editor > .cFormEditorPreview:not(.rf_highlighted) > .cFormEditorDisplay.edit .rf_wrapper:not(.hover):hover {
+.fe_editor > .cFormEditorPreview:not(.fe_highlighted) > .cFormEditorDisplay.edit .fe_wrapper:not(.hover):hover {
 	background-image: var(--FORM_EDITOR_BUTTON_MOVE);
 	background-repeat: no-repeat;
 	background-position: left center; 
@@ -969,18 +969,18 @@ div.dfListAdd {
 	border: 1px solid #DFE6F0;
 }
 
-.cFormEditorPreview.rf_highlighted .rf_inputCell,  
-.cFormEditorPreview.rf_highlighted .rf_dragElement .rf_table {
+.cFormEditorPreview.fe_highlighted .rf_inputCell,  
+.cFormEditorPreview.fe_highlighted .rf_dragElement .rf_table {
 	border: 1px dotted grey;
 }
 
 /* disable default drag and drop for images because icons and labels can be splitted in this case */
-.rf_dropTarget img {
+.fe_dropTarget img {
 	user-drag: none; 
 	-webkit-user-drag: none;
 }
 
-.rf_dropTarget img, .cFormEditorDisplay.edit {
+.fe_dropTarget img, .cFormEditorDisplay.edit {
 	user-select: none;
 	-moz-user-select: none;
 	-webkit-user-select: none;
@@ -999,7 +999,7 @@ div.dfListAdd {
 	cursor: grab;
 }
 
-.cFormEditorDisplay .rf_dragElement.rf_dragged {
+.cFormEditorDisplay .rf_dragElement.fe_dragged {
 	cursor: move;
 	cursor: grabbing;
 }
@@ -1008,13 +1008,13 @@ div.dfListAdd {
 	cursor: pointer;
 }
 
-.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .rf_content,
-.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .rf_container {
+.cFormEditorPreview.fe_highlighted .cFormEditorElement:not(.fe_dragged) .rf_content,
+.cFormEditorPreview.fe_highlighted .cFormEditorElement:not(.fe_dragged) .rf_container {
 	border: 1px dashed #7695C3;
 	background: var(--layer);
 }
 
-.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .rf_dropTarget.rf_parent {
+.cFormEditorPreview.fe_highlighted .cFormEditorElement:not(.fe_dragged) .fe_dropTarget.fe_parent {
 	border: 1px dashed #7695C3;
 	background-color: var(--layer-accent);
 	color: var(--layer-accent-text);
@@ -1022,29 +1022,29 @@ div.dfListAdd {
 }
 
 /* do not mark locked areas */
-.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .locked .rf_content,
-.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .locked .rf_container,
-.cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .locked .rf_dropTarget.rf_parent,
-.rf_highlighted .rf_dragged .locked .rf_container,
-.rf_dropArea .locked,
-.cFormEditorPreview.rf_highlighted .locked .rf_inputCell,  
-.cFormEditorPreview.rf_highlighted .locked .rf_dragElement .rf_table {
+.cFormEditorPreview.fe_highlighted .cFormEditorElement:not(.fe_dragged) .locked .rf_content,
+.cFormEditorPreview.fe_highlighted .cFormEditorElement:not(.fe_dragged) .locked .rf_container,
+.cFormEditorPreview.fe_highlighted .cFormEditorElement:not(.fe_dragged) .locked .fe_dropTarget.fe_parent,
+.fe_highlighted .fe_dragged .locked .rf_container,
+.fe_dropArea .locked,
+.cFormEditorPreview.fe_highlighted .locked .rf_inputCell,  
+.cFormEditorPreview.fe_highlighted .locked .rf_dragElement .rf_table {
 	border: inherit;
 	background: var(--background);
 }
 
-.rf_highlighted .rf_dragged .rf_container/*,
+.fe_highlighted .fe_dragged .rf_container/*,
 .cFormEditorDisplay.edit .rf_container:hover*/ {
 	border: 1px solid #DFE6F0;
 	border-radius: var(--GROUP_RADIUS);
 }
 
-.rf_editor .cFormEditorPreview.rf_highlighted .cFormEditorElement.rf_dragged .rf_content {
+.fe_editor .cFormEditorPreview.fe_highlighted .cFormEditorElement.fe_dragged .rf_content {
 	border: 0px;
 	background: var(--background);
 }
 
-.rf_dropArea {
+.fe_dropArea {
 	border: 1px dashed #7695C3;
 	box-sizing: border-box;
 	height: 100%;
@@ -1055,7 +1055,7 @@ div.dfListAdd {
 	background: rgba(250, 252, 254, .5);
 }
 
-.rf_dropText {
+.fe_dropText {
 	position: absolute;
 	left: 50%;
 	top: 50%;

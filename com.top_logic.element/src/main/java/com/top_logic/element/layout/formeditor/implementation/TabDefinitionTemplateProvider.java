@@ -16,6 +16,7 @@ import com.top_logic.element.layout.formeditor.definition.TabbarDefinition.TabDe
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.form.FormEditorCSS;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.implementation.AbstractFormContainerProvider;
 import com.top_logic.model.form.implementation.ColumnsDefinitionTemplateProvider;
@@ -70,7 +71,7 @@ public class TabDefinitionTemplateProvider extends AbstractFormContainerProvider
 	@Override
 	public HTMLTemplateFragment decorateContainer(HTMLTemplateFragment content, FormEditorContext context) {
 		HTMLTemplateFragment container = div(getIdAttribute(),
-			css(ReactiveFormCSS.RF_CONTAINER + " " + ReactiveFormCSS.RF_DROP_TARGET), content);
+			css(ReactiveFormCSS.RF_CONTAINER + " " + FormEditorCSS.FE_DROP_TARGET), content);
 		return contentBox(container);
 	}
 

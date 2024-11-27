@@ -26,6 +26,7 @@ import com.top_logic.layout.form.control.Icons;
 import com.top_logic.layout.form.template.model.FieldSetBoxTemplate;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.form.FormEditorCSS;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.Columns;
 import com.top_logic.model.form.implementation.AbstractFormContainerProvider;
@@ -44,7 +45,7 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 		(any, flavor) -> Icons.FORM_EDITOR__GROUP;
 
 	private static final String CSS_GROUP =
-		ReactiveFormCSS.RF_COLUMNS_LAYOUT + " " + ReactiveFormCSS.RF_INNER_TARGET;
+		ReactiveFormCSS.RF_COLUMNS_LAYOUT + " " + FormEditorCSS.FE_CONTAINER;
 
 	/**
 	 * Creates a {@link GroupDefinitionTemplateProvider} from configuration.

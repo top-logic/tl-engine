@@ -24,7 +24,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.model.TLStructuredType;
-import com.top_logic.model.form.ReactiveFormCSS;
+import com.top_logic.model.form.FormEditorCSS;
 import com.top_logic.model.form.definition.Columns;
 import com.top_logic.model.form.definition.ContainerDefinition;
 import com.top_logic.model.form.definition.FormDefinition;
@@ -108,7 +108,7 @@ public class FormEditorEditorControl extends FormEditorDisplayControl {
 	@Override
 	protected void writeControlClassesContent(Appendable out) throws IOException {
 		super.writeControlClassesContent(out);
-		out.append(ReactiveFormCSS.RF_INNER_TARGET);
+		out.append(FormEditorCSS.FE_CONTAINER);
 
 		switch (_maxCols) {
 			case DEFAULT:

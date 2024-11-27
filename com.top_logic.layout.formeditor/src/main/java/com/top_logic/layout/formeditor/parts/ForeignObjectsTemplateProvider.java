@@ -44,6 +44,7 @@ import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.form.FormEditorCSS;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormDefinitionTemplateProvider;
@@ -241,13 +242,13 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 		HTMLTemplateFragment finalTemplate;
 		if (noSeparateGroup) {
 			finalTemplate =
-				div(css(CssUtil.joinCssClasses(ReactiveFormCSS.RF_LOCKED, ReactiveFormCSS.RF_WRAPPER)),
+				div(css(CssUtil.joinCssClasses(FormEditorCSS.FE_LOCKED, FormEditorCSS.FE_WRAPPER)),
 				div(css(ReactiveFormCSS.RF_CONTAINER), contentTemplate));
 		} else {
 			FieldSetBoxTemplate boxTemplate = Templates.fieldsetBox(legend, contentTemplate, ConfigKey.none());
 			/* Lock content of the preview fieldset box. It must not be possible to drop elements in
 			 * the box. */
-			boxTemplate.setCssClass(ReactiveFormCSS.RF_LOCKED);
+			boxTemplate.setCssClass(FormEditorCSS.FE_LOCKED);
 			addButtons(boxTemplate, null, true);
 			finalTemplate = boxTemplate;
 		}

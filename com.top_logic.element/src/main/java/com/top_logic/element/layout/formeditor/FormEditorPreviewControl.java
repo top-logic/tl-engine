@@ -29,6 +29,7 @@ import com.top_logic.layout.structure.DialogClosedListener;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.form.FormEditorCSS;
 import com.top_logic.model.form.definition.ContainerDefinition;
 import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.model.form.definition.FormElement;
@@ -45,8 +46,6 @@ import com.top_logic.tool.boundsec.HandlerResult;
 public class FormEditorPreviewControl extends FormEditorAbstractControl {
 
 	private FormEditorEditorControl _preview;
-	
-	private static final String TARGET_CSS = "rf_dropTarget";
 	
 	private static final String CSS = "cFormEditorPreview";
 
@@ -90,7 +89,7 @@ public class FormEditorPreviewControl extends FormEditorAbstractControl {
 	@Override
 	protected void writeControlClassesContent(Appendable out) throws IOException {
 		super.writeControlClassesContent(out);
-		out.append(TARGET_CSS);
+		out.append(FormEditorCSS.FE_DROP_TARGET);
 	}
 
 	@Override

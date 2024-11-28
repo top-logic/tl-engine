@@ -200,7 +200,7 @@
 		value="/images/Slider.gif"
 	/>
 	<icon name="com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU"
-		value="css:bi bi-three-dots-vertical"
+		value="css:bi bi-list"
 	/>
 	<icon name="com.top_logic.mig.html.layout.tiles.component.Icons.BURGER_COMMANDS_ICONS"
 		expr="%com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU%"
@@ -702,7 +702,7 @@
 		expr="%ICON_PLUS%"
 	/>
 	<icon name="ICON_PLUS"
-		value="css:bi bi-plus-lg"
+		value="css:bi bi-file-earmark-plus"
 	/>
 	<icon name="ICONS_ADD_BUTTON_DISABLED"
 		expr="%ICONS_ADD_BUTTON%"

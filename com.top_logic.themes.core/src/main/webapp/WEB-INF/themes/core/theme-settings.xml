@@ -1237,7 +1237,10 @@
 	/>
 	<!-- Form spacings -->
 	<dim name="RF_FIRST_COLUMN_WIDTH"
-		value="10em"
+		expr="%com.top_logic.layout.structure.Icons.FORM_LABEL_WIDTH%px"
+	/>
+	<dim name="RF_LABEL_PADDING"
+		expr="%com.top_logic.layout.structure.Icons.FORM_LABEL_PADDING%px"
 	/>
 	<dim name="RF_HORIZONTAL_GAP_CELLS"
 		value="4rem"
@@ -1245,11 +1248,8 @@
 	<dim name="RF_VERTICAL_GAP_CELLS"
 		value="1rem"
 	/>
-	<dim name="RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY"
-		value="90px"
-	/>
 	<dim name="com.top_logic.layout.form.boxes.reactive_tag.Icons.RF_HORIZONTAL_GAP_COLUMNS"
-		value="4rem"
+		expr="%com.top_logic.layout.structure.Icons.FORM_COLUMN_GAP%px"
 	/>
 	<dim name="RF_HORIZONTAL_GAP_FILTER"
 		expr="%spacing-06%"

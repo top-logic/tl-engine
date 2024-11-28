@@ -467,7 +467,7 @@ div.rf_buttons {
 }
 
 .rf_columnsLayout .rf_line.dfList {
-	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY));
+	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS));
 	/* width: calc(100% - 25px); */
   	box-sizing: border-box;
   	overflow: hidden;
@@ -609,11 +609,11 @@ div.dfListAdd {
 }
 
 .dfListContent > .rf_columnsLayout {
-	margin-left: calc(-1*var(--RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY));
+	margin-left: calc(-1*var(RF_HORIZONTAL_GAP_COLUMNS));
 }
 
 .dfListContent > .rf_columnsLayout > *:not(body) {
-	margin-left: var(--RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY);
+	margin-left: var(RF_HORIZONTAL_GAP_COLUMNS);
 }
 
 .cMediaQuery.dflSize0 .dfListContent .rf_columnsLayout > .dfListEntry,
@@ -693,7 +693,7 @@ div.dfListAdd {
 .rf_inputCell:not(.rf_noLabel) {
 	display: grid;
 	grid-template-columns: minmax(var(--RF_FIRST_COLUMN_WIDTH), max-content) minmax(0, 1fr);
-	grid-gap: var(--spacing-02) var(--spacing-02);
+	grid-gap: var(--RF_LABEL_PADDING) var(--spacing-02);
 }
 
 .rf_inputCell > div:nth-child(1) {

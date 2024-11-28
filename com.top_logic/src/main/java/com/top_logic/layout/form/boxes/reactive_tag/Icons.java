@@ -17,13 +17,16 @@ import com.top_logic.layout.basic.ThemeImage;
  *
  * @see ThemeImage
  */
-@SuppressWarnings("javadoc")
 public class Icons extends IconsBase {
 
 	/**
-	 * Horizontal gap between columns.
+	 * Horizontal gap between columns in a form.
+	 * 
+	 * <p>
+	 * This value must not be modified, because the canonical value is taken from
+	 * {@link com.top_logic.layout.structure.Icons#FORM_COLUMN_GAP}.
+	 * </p>
 	 */
-	@DefaultValue("60px")
 	public static ThemeVar<String> RF_HORIZONTAL_GAP_COLUMNS;
 
 	/**

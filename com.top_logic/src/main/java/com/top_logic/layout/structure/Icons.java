@@ -48,11 +48,44 @@ public class Icons extends IconsBase {
 	public static ThemeVar<Integer> WINDOWLAYOUT_LEFT_SPACER_WIDTH;
 
 	/**
-	 * Responsive breakpoints for adjusting form layouts from multiple columns to fewer based on
-	 * form width.
+	 * Average padding in pixels around the cells of a form.
+	 * 
+	 * <p>
+	 * This includes the paddings of the form and group cells containing form elements. The value is
+	 * an estimate that is used in the form break point computation.
+	 * </p>
 	 */
-	@DefaultValue("[740, 1050, 1550, 2100, 2600]")
-	public static ThemeVar<String> FORM_BREAKPOINTS;
+	@DefaultValue("64")
+	public static ThemeVar<Integer> FORM_PADDING;
+
+	/**
+	 * Spacing in pixels between columns of a form.
+	 */
+	@DefaultValue("64")
+	public static ThemeVar<Integer> FORM_COLUMN_GAP;
+
+	/**
+	 * Width in pixels reserved for the label in a label-content-cell.
+	 */
+	@DefaultValue("140")
+	public static ThemeVar<Integer> FORM_LABEL_WIDTH;
+
+	/**
+	 * Minimum width in pixels to reserve for the input field in a form cell.
+	 * 
+	 * <p>
+	 * When there is not enough space for the input field, the number of columns is reduced or the
+	 * label is wrapped above the input field.
+	 * </p>
+	 */
+	@DefaultValue("250")
+	public static ThemeVar<Integer> FORM_INPUT_MIN_WIDTH;
+
+	/**
+	 * Padding in pixels between label and input field in a form cell with label before input.
+	 */
+	@DefaultValue("8")
+	public static ThemeVar<Integer> FORM_LABEL_PADDING;
 
 	/**
 	 * Default {@link LayoutControl} provider for tabbars.

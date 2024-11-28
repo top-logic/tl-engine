@@ -440,6 +440,13 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
+	 * Lookup {@link Lane#TITLE_ATTR} of {@link Lane}.
+	 */
+	public static com.top_logic.model.TLProperty getTitleLaneAttr() {
+		return (com.top_logic.model.TLProperty) getLaneType().getPart(Lane.TITLE_ATTR);
+	}
+
+	/**
 	 * Lookup {@link MessageFlow} type.
 	 */
 	public static com.top_logic.model.TLClass getMessageFlowType() {
@@ -584,6 +591,13 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 */
 	public static com.top_logic.model.TLClass getStartEventType() {
 		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(StartEvent.START_EVENT_TYPE);
+	}
+
+	/**
+	 * Lookup {@link StartEvent#TITLE_ATTR} of {@link StartEvent}.
+	 */
+	public static com.top_logic.model.TLProperty getTitleStartEventAttr() {
+		return (com.top_logic.model.TLProperty) getStartEventType().getPart(StartEvent.TITLE_ATTR);
 	}
 
 	/**

@@ -17,4 +17,27 @@ public interface StartEventBase extends com.top_logic.bpe.bpml.model.Event, com.
 	 */
 	String START_EVENT_TYPE = "StartEvent";
 
+	/**
+	 * Part <code>title</code> of <code>StartEvent</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model.i18n:I18NString</code> in configuration.
+	 * </p>
+	 */
+	String TITLE_ATTR = "title";
+
+	/**
+	 * Getter for part {@link #TITLE_ATTR}.
+	 */
+	default com.top_logic.basic.util.ResKey getTitle() {
+		return (com.top_logic.basic.util.ResKey) tValueByName(TITLE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #TITLE_ATTR}.
+	 */
+	default void setTitle(com.top_logic.basic.util.ResKey newValue) {
+		tUpdateByName(TITLE_ATTR, newValue);
+	}
+
 }

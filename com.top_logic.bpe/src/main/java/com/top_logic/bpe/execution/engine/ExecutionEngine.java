@@ -45,6 +45,7 @@ import com.top_logic.bpe.bpml.model.TimerEventDefinition;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
 import com.top_logic.bpe.execution.model.Token;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -604,7 +605,14 @@ public class ExecutionEngine {
 	}
 
 	private Token createToken(ProcessExecution execution, Node node) {
-		Token token = TlBpeExecutionFactory.getInstance().createToken();
+		// use the Token Type mentioned in the ParticipantBase otherwise use the default Type
+		TLClass tokenType = execution.getProcess().getParticipant().getTokenType();
+		if (tokenType == null) {
+			tokenType = TlBpeExecutionFactory.getTokenType();
+		}
+		TlBpeExecutionFactory factory = TlBpeExecutionFactory.getInstance();
+		Token token = (Token) factory.createObject(tokenType, null);
+
 		token.setNode(node);
 		execution.addAllToken(token);
 

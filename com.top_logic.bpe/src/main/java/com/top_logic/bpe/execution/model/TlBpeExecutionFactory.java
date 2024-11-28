@@ -133,6 +133,13 @@ public class TlBpeExecutionFactory extends com.top_logic.element.meta.kbbased.Ab
 	}
 
 	/**
+	 * Lookup {@link Token#ACTOR_ATTR} of {@link Token}.
+	 */
+	public static com.top_logic.model.TLProperty getActorTokenAttr() {
+		return (com.top_logic.model.TLProperty) getTokenType().getPart(Token.ACTOR_ATTR);
+	}
+
+	/**
 	 * Lookup {@link Token#DESCRIPTION_ATTR} of {@link Token}.
 	 */
 	public static com.top_logic.model.TLProperty getDescriptionTokenAttr() {

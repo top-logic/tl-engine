@@ -578,6 +578,14 @@
 						<visibility value="hidden"/>
 					</annotations>
 				</reference>
+				<property name="title"
+					type="tl.model.i18n:I18NString"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="500.5"/>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 		<class name="MessageFlow">
@@ -785,6 +793,16 @@
 				<generalization type="Iconified"/>
 				<generalization type="Described"/>
 			</generalizations>
+			<attributes>
+				<property name="title"
+						type="tl.model.i18n:I18NString"
+					>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="500.5"/>
+					</annotations>
+				</property>
+			</attributes>
 			<annotations>
 				<table name="BPNode"/>
 				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.StartEventImpl"/>

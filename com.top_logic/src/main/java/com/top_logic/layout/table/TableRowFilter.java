@@ -145,7 +145,6 @@ public class TableRowFilter implements Filter<Object> {
 			filterCountState, value);
 	}
 
-	@SuppressWarnings("unchecked")
 	private Pair<BitSet, BitSet> getActiveFilterResultMasks(Object value, Map<ColumnFilterHolder, Object> filterCountState) {
 		BitSet filterMatchMask = new BitSet(activeFilters.size());
 		BitSet filterApplicabilityMask = new BitSet(activeFilters.size());
@@ -170,7 +169,6 @@ public class TableRowFilter implements Filter<Object> {
 		return new Pair<>(filterMatchMask, filterApplicabilityMask);
 	}
 
-	@SuppressWarnings("unchecked")
 	private void getApplicableVisibleFilters(Object value, Map<ColumnFilterHolder, Object> filterCountState) {
 		for (ColumnFilterHolder columnFilterHolder : visibleFilters) {
 			CellExistenceTester cellExistenceTester = columnFilterHolder.getCellExistenceTester();
@@ -194,24 +192,30 @@ public class TableRowFilter implements Filter<Object> {
 		countVisibleFilterMatches(filterResult);
 	}
 
-	@SuppressWarnings("unchecked")
 	private void countActiveFilterMatches(FilterResult filterResult) {
-		Map<ColumnFilterHolder, Object> filterCountState = filterResult.getFilterCountState();
 		for (int i = 0; i < activeFilters.size(); i++) {
 			if (filterResult.isFilterApplicable(i)) {
 				if (filterResult.doOtherFiltersAllow(i)) {
-					ColumnFilterHolder columnFilterHolder = activeFilters.get(i);
-					Object cellValue = columnFilterHolder.getFilterValueMapping().map(filterResult.getEvaluatedRow());
-					if (isCountableValue(filterCountState, columnFilterHolder, cellValue)) {
-						countFilterMatch(columnFilterHolder, filterResult.getEvaluatedRow(), cellValue);
-					}
+					countFilterHolder(filterResult, activeFilters.get(i));
 				}
 			}
 		}
 	}
 
-	private boolean isCountableValue(Map<ColumnFilterHolder, Object> filterCountState,
+	private void countFilterHolder(FilterResult filterResult, ColumnFilterHolder columnFilterHolder) {
+		CellExistenceTester cellExistenceTester = columnFilterHolder.getCellExistenceTester();
+		Object evaluatedRow = filterResult.getEvaluatedRow();
+		if (cellExistenceTester.isCellExistent(evaluatedRow, columnFilterHolder.getFilterPosition())) {
+			Object cellValue = columnFilterHolder.getFilterValueMapping().map(evaluatedRow);
+			if (isCountableValue(filterResult, columnFilterHolder, cellValue)) {
+				columnFilterHolder.getFilter().count(cellValue);
+			}
+		}
+	}
+
+	private boolean isCountableValue(FilterResult filterResult,
 			ColumnFilterHolder columnFilterHolder, Object cellValue) {
+		Map<ColumnFilterHolder, Object> filterCountState = filterResult.getFilterCountState();
 		Object singleCountState = filterCountState.get(columnFilterHolder);
 		if (!filterCountState.containsKey(columnFilterHolder) || (singleCountState == FilterResult.NO_COUNT)) {
 			return false;
@@ -222,24 +226,11 @@ public class TableRowFilter implements Filter<Object> {
 		return true;
 	}
 
-	@SuppressWarnings("unchecked")
 	private void countVisibleFilterMatches(FilterResult filterResult) {
 		if (filterResult.doAllFilterAccept()) {
-			Map<ColumnFilterHolder, Object> filterCountState = filterResult.getFilterCountState();
 			for (ColumnFilterHolder columnFilterHolder : visibleFilters) {
-				Object cellValue = columnFilterHolder.getFilterValueMapping().map(filterResult.getEvaluatedRow());
-				if (isCountableValue(filterCountState, columnFilterHolder, cellValue)) {
-					countFilterMatch(columnFilterHolder, filterResult.getEvaluatedRow(), cellValue);
-				}
+				countFilterHolder(filterResult, columnFilterHolder);
 			}
-		}
-	}
-
-	private void countFilterMatch(ColumnFilterHolder columnFilterHolder, Object rowValue, Object cellValue) {
-		TableFilter filter = columnFilterHolder.getFilter();
-		CellExistenceTester cellExistenceTester = columnFilterHolder.getCellExistenceTester();
-		if (cellExistenceTester.isCellExistent(rowValue, columnFilterHolder.getFilterPosition())) {
-			filter.count(cellValue);
 		}
 	}
 

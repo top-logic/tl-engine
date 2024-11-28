@@ -140,8 +140,11 @@ public interface TLObject extends IdentifiedObject, TableTyped, TLObjectBase {
 			TLStructuredTypePart part = type.getPart(partName);
 			if (part != null) {
 				return tValue(part);
+			} else {
+				return null; /* TODO: nachfragen wie ich das richtig lösen kann wegen InCurrency */
 			}
 		}
+
 
 		// Legacy support to be able to retrieve undefined attributes such as `tType`.
 		return tGetData(partName);

@@ -27,6 +27,15 @@ public interface TokenBase extends com.top_logic.bpe.bpml.model.Iconified, com.t
 	String ACTIVE_ATTR = "active";
 
 	/**
+	 * Part <code>actor</code> of <code>Token</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:String</code> in configuration.
+	 * </p>
+	 */
+	String ACTOR_ATTR = "actor";
+
+	/**
 	 * Part <code>durationInMinutes</code> of <code>Token</code>
 	 * 
 	 * <p>
@@ -139,6 +148,13 @@ public interface TokenBase extends com.top_logic.bpe.bpml.model.Iconified, com.t
 	 */
 	default boolean getActive() {
 		return (Boolean) tValueByName(ACTIVE_ATTR);
+	}
+
+	/**
+	 * Getter for part {@link #ACTOR_ATTR}.
+	 */
+	default String getActor() {
+		return (String) tValueByName(ACTOR_ATTR);
 	}
 
 	/**

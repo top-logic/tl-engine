@@ -482,7 +482,12 @@ div.rf_buttons {
   	box-sizing: border-box;
  }	
 
-.cMediaQuery.dflSize1 .rf_columnsLayout:not(.keep) > *:not(.rf_line),
+.cMediaQuery.dflSize1 .rf_columnsLayout:not(.keep) > *:not(.rf_line) { 
+  	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+ 	width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+  	box-sizing: border-box;
+}
+
 .cMediaQuery.dflSize2 .rf_columnsLayout:not(.keep) > *:not(.rf_line),
 .cMediaQuery:is(.dflSize3, .dflSize4, .dflSize5) .rf_columnsLayout.cols2:not(.keep) > *:not(.rf_line) { 
   	min-width: calc(50% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
@@ -513,12 +518,12 @@ div.rf_buttons {
 
 /* content of a group */
 .dflSize0 .rf_content,
+.dflSize1 .rf_content,
 .keep.cols1 {
 	/* avoid creating more columns than possible, use cols classes manually in those cases */
 	grid-template-columns: repeat(1, 1fr); 
 }
 
-.dflSize1 .rf_content,
 .dflSize2 .rf_content,
 .keep.cols2 {
 	grid-template-columns: repeat(2, 1fr); 
@@ -698,8 +703,6 @@ div.dfListAdd {
 
 .rf_labelAbove.rf_inputCell:not(.keepInline) > div:nth-child(2),
 .cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),
-.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),
-.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),
 .rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2) {
 	grid-row: 2;
 	grid-column: 1;
@@ -707,8 +710,6 @@ div.dfListAdd {
 
                                         .rf_labelAbove.rf_inputCell:not(.keepInline),
 .cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel),
-.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1):not(.keep) > .rf_inputCell:not(.keepInline):not(.rf_noLabel),
-.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline):not(.rf_noLabel),
 .rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel) {
 	display: grid;
 	grid-template-columns: minmax(0px, 1fr);

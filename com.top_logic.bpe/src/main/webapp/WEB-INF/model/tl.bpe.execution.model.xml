@@ -344,6 +344,25 @@
 						</storage-algorithm>
 					</annotations>
 				</property>
+				<property name="actor"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[token -> 
+{ 
+     lane = $token
+         .get(`tl.bpe.execution:Token#node`)
+         .get(`tl.bpe.bpml:Node#lane`);
+     $lane.get(`tl.bpe.bpml:Lane#title`).isEmpty() 
+         ? $lane.get(`tl.bpe.bpml:Lane#name`)
+         : $lane.get(`tl.bpe.bpml:Lane#title`).localize()
+}]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 	</module>

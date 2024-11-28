@@ -61,10 +61,17 @@ public interface ReactiveFormCSS {
 	String RF_NO_LABEL = "rf_noLabel";
 
 	/**
+	 * CSS class to mark a {@link #RF_INPUT_CELL} that it consists of a label and content area.
+	 */
+	String RF_WITH_LABEL = "rf_withLabel";
+
+	/**
 	 * CSS class for the element of a {@link GroupCellControl} that contains the menu.
 	 * 
 	 * @see GroupCellControl#hasMenu()
 	 */
 	String RF_MENU = "rf_menu";
+
+	public String CELL_SMALL_CSS = "rf_cellSmall";
 }
 

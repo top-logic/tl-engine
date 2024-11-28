@@ -2349,7 +2349,7 @@
 	<tag>
 		<name>descriptionContainer</name>
 		<tag-class>com.top_logic.layout.form.boxes.reactive_tag.DescriptionContainerTag</tag-class>
-		<description>Contains descriptionCells which belong together.</description>
+		<description>Deprecated: Produces no output anymore</description>
 		<attribute>
 			<name>cssClass</name>
 			<required>false</required>

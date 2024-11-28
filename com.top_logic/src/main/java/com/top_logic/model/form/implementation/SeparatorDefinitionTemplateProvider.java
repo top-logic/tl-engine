@@ -14,7 +14,6 @@ import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
-import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.control.I18NConstants;
 import com.top_logic.layout.form.control.Icons;
 import com.top_logic.model.TLStructuredType;
@@ -68,7 +67,7 @@ public class SeparatorDefinitionTemplateProvider extends AbstractFormElementProv
 		String visibleCss = visible ? " visible" : "";
 
 		return contentBox(
-			div(css("rf_hr " + ReactiveFormCSS.RF_LINE + " " + FormConstants.OVERFLOW_AUTO_CLASS + visibleCss)));
+			div(css("rf_hr " + ReactiveFormCSS.RF_INPUT_CELL + " " + ReactiveFormCSS.RF_LINE + visibleCss)));
 	}
 
 	@Override

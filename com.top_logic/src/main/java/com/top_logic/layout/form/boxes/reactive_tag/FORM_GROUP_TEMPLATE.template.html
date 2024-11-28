@@ -1,5 +1,5 @@
 <div id="{id}"
-	class="is-control {canInspectClass} rf_groupCell {collapsed ? 'collapsed'} {cssClass} {wholeLine ? 'rf_line tl-overflow--auto'} {rows > 1 ? 'rf_spanRow' + rows} {!hasBorder ? 'noBorder'} {!hasLegend ? 'noLegend'}"
+	class="is-control {canInspectClass} rf_groupCell rf_inputCell rf_noLabel {collapsed ? 'collapsed'} {cssClass} {wholeLine ? 'rf_line'} {rows > 1 ? 'rf_spanRow' + rows} {!hasBorder ? 'noBorder'} {!hasLegend ? 'noLegend'}"
 	style="{width ? 'width: ' + width + '; '}{style}"
 	draggable="{draggable}"
 	data-id="{dataId}"
@@ -21,7 +21,7 @@
 	</tl:if>
 
 	<tl:if test="!collapsed">
-		<div class="rf_content fe_dropTarget {columns > 0 ? 'cols' + columns}">
+		<div class="rf_content fe_dropTarget rf_columnsLayout {columns > 0 ? 'cols' + columns}">
 			{content}
 		</div>
 	</tl:if>

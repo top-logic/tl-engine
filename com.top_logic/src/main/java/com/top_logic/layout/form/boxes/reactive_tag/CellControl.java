@@ -11,7 +11,6 @@ import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ConstantControl;
-import com.top_logic.layout.form.FormConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.util.css.CssUtil;
@@ -22,10 +21,6 @@ import com.top_logic.util.css.CssUtil;
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
 public class CellControl extends ConstantControl<HTMLFragment> {
-
-	private static final String WHOLE_LINE_CSS = ReactiveFormCSS.RF_LINE;
-
-	private static final String CELL_SMALL_CSS = "rf_cellSmall";
 
 	private String _cssClass;
 
@@ -119,12 +114,12 @@ public class CellControl extends ConstantControl<HTMLFragment> {
 	protected void writeControlClassesContent(Appendable out) throws IOException {
 		super.writeControlClassesContent(out);
 		HTMLUtil.appendCSSClass(out, _cssClass);
+		HTMLUtil.appendCSSClass(out, ReactiveFormCSS.RF_INPUT_CELL);
 		if (_wholeLine) {
-			HTMLUtil.appendCSSClass(out, WHOLE_LINE_CSS);
-			HTMLUtil.appendCSSClass(out, FormConstants.OVERFLOW_AUTO_CLASS);
+			HTMLUtil.appendCSSClass(out, ReactiveFormCSS.RF_LINE);
 		}
 		if (_width != null) {
-			HTMLUtil.appendCSSClass(out, CELL_SMALL_CSS);
+			HTMLUtil.appendCSSClass(out, ReactiveFormCSS.CELL_SMALL_CSS);
 		}
 	}
 }

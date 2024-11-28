@@ -156,7 +156,7 @@ public class FormEditorPreviewControl extends FormEditorAbstractControl {
 		}
 		List<PolymorphicConfiguration<? extends FormElementTemplateProvider>> content = parent.getContent();
 		int id = content.size();
-		if (sibling != null) {
+		if (sibling != null && sibling != parent) {
 			id = content.indexOf(sibling);
 		}
 		content.add(id, element);

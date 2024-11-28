@@ -20,7 +20,6 @@ import com.top_logic.layout.CompositeControl;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DefaultControlRenderer;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.control.TextInputControl;
@@ -38,12 +37,6 @@ import com.top_logic.util.Resources;
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
 public class I18NStringTagProvider implements DisplayProvider {
-
-	/** CSS class for I18N String fields table tag. */
-	public static final String I18N_STRING_TABLE_CSS_CLASS = "i18nStringTable tl-table";
-
-	/** CSS class for I18N String fields TD tag. */
-	public static final String I18N_STRING_TD_CSS_CLASS = "i18nStringTD";
 
 	@Override
 	public Control createDisplay(EditContext editContext, FormMember member) {
@@ -117,6 +110,16 @@ public class I18NStringTagProvider implements DisplayProvider {
 	 */
 	public static class I18NStringControlRenderer extends DefaultControlRenderer<CompositeControl> {
 
+		private static final String TL_I18N_ROWS = "tl-i18n-rows";
+
+		private static final String TL_I18N_ROW = "tl-i18n-row";
+
+		private static final String TL_I18N_LANG = "tl-i18n-lang";
+
+		private static final String TL_I18N_INPUT = "tl-i18n-input";
+
+		private static final String TL_I18N_TRANSLATE = "tl-i18n-translate";
+
 		/** Instance of this class drawing language labels in same line as the fields. */
 		public static final I18NStringControlRenderer INSTANCE = new I18NStringControlRenderer(false);
 
@@ -145,8 +148,8 @@ public class I18NStringTagProvider implements DisplayProvider {
 				throws IOException {
 			Resources res = Resources.getInstance();
 			List<? extends HTMLFragment> controls = control.getChildren();
-			out.beginBeginTag(TABLE);
-			out.writeAttribute(CLASS_ATTR, I18N_STRING_TABLE_CSS_CLASS);
+			out.beginBeginTag(DIV);
+			out.writeAttribute(CLASS_ATTR, TL_I18N_ROWS);
 			out.endBeginTag();
 
 			boolean noTanslation = !TranslationService.isActive();
@@ -159,56 +162,37 @@ public class I18NStringTagProvider implements DisplayProvider {
 				// There is no translate button for the field containing the source that is translated.
 				HTMLFragment translateButton = noTanslation || isSourceField(field) ? null : controls.get(i++);
 
-				if (_languagesAboveField) {
-					out.beginTag(TR);
-
-					out.beginBeginTag(TD);
-					out.writeAttribute(CLASS_ATTR, I18N_STRING_TD_CSS_CLASS);
-					out.endBeginTag();
-					writeLanguage(out, res, field);
-					writeTranslateButton(context, out, translateButton);
-					out.endTag(TD);
-
-					out.endTag(TR);
-					out.beginTag(TR);
-
-					out.beginTag(TD);
-					fieldControl.write(context, out);
-					errorControl.write(context, out);
-					out.endTag(TD);
-
-					out.endTag(TR);
-				} else {
-					out.beginTag(TR);
-
-					out.beginBeginTag(TD);
-					out.writeAttribute(CLASS_ATTR, I18N_STRING_TD_CSS_CLASS);
-					out.endBeginTag();
-					writeLanguage(out, res, field);
-					out.endTag(TD);
-
-					out.beginTag(TD);
-					if (field.isActive()) {
-						out.beginTag(SPAN, CLASS_ATTR, "cDecoratedCell");
-						out.beginTag(SPAN, CLASS_ATTR, FormConstants.FLEXIBLE_CSS_CLASS);
-						fieldControl.write(context, out);
+				out.beginBeginTag(DIV);
+				out.writeAttribute(CLASS_ATTR, TL_I18N_ROW);
+				out.endBeginTag();
+				{
+					{
+						out.beginBeginTag(SPAN);
+						out.writeAttribute(CLASS_ATTR, TL_I18N_LANG);
+						out.endBeginTag();
+						{
+							writeLanguage(out, res, field);
+						}
 						out.endTag(SPAN);
-						out.beginTag(SPAN, CLASS_ATTR, FormConstants.FIXED_RIGHT_CSS_CLASS);
-						writeTranslateButton(context, out, translateButton);
-						errorControl.write(context, out);
-						out.endTag(SPAN);
-						out.endTag(SPAN);
-					} else {
-						fieldControl.write(context, out);
-						errorControl.write(context, out);
 					}
-					out.endTag(TD);
 
-					out.endTag(TR);
+					if (field.isActive()) {
+						out.beginTag(SPAN, CLASS_ATTR, TL_I18N_INPUT);
+						errorControl.write(context, out);
+						fieldControl.write(context, out);
+						out.endTag(SPAN);
+
+						writeTranslateButton(context, out, translateButton);
+					} else {
+						out.beginTag(SPAN, CLASS_ATTR, TL_I18N_INPUT);
+						errorControl.write(context, out);
+						fieldControl.write(context, out);
+						out.endTag(SPAN);
+					}
 				}
-
+				out.endTag(DIV);
 			}
-			out.endTag(TABLE);
+			out.endTag(DIV);
 		}
 
 		private void writeLanguage(TagWriter out, Resources res, FormField field) {
@@ -219,7 +203,9 @@ public class I18NStringTagProvider implements DisplayProvider {
 		private void writeTranslateButton(DisplayContext context, TagWriter out, HTMLFragment translateButton)
 				throws IOException {
 			if (translateButton != null) {
+				out.beginTag(SPAN, CLASS_ATTR, TL_I18N_TRANSLATE);
 				translateButton.write(context, out);
+				out.endTag(SPAN);
 			}
 		}
 

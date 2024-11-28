@@ -154,6 +154,16 @@ i[class*=" overlay-"] span::before {
 	margin-left: -1em;
 }
 
+.cMinimizable.mcMinimized::after {
+    content: '';
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    width: 1px;
+    bottom: 0px;
+    background-color: var(--resize-bar);
+}
+
 .layoutVerticalAdjustmentGrabber {
     cursor: ns-resize;
     background: var(--background);

@@ -14,7 +14,6 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.basic.ConstantControl;
 import com.top_logic.layout.basic.ResourceRenderer;
-import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.provider.ImageResourceProvider;
 import com.top_logic.model.form.ReactiveFormCSS;
 
@@ -33,8 +32,6 @@ public class FormEditorElementControl extends ConstantControl<HTMLFragment> {
 	private final String HIDDEN_CSS = "hidden";
 
 	private final String DRAG_ELEMENT_CSS = "rf_dragElement";
-
-	private final String WHOLE_LINE_CSS = ReactiveFormCSS.RF_LINE;
 
 	private ImageProvider _imageProvider;
 
@@ -114,9 +111,9 @@ public class FormEditorElementControl extends ConstantControl<HTMLFragment> {
 		if (isDraggable()) {
 			out.append(DRAG_ELEMENT_CSS);
 		}
+		out.append(ReactiveFormCSS.RF_INPUT_CELL);
 		if (getRenderWholeLine()) {
-			out.append(WHOLE_LINE_CSS);
-			out.append(FormConstants.OVERFLOW_AUTO_CLASS);
+			out.append(ReactiveFormCSS.RF_LINE);
 		}
 	}
 

@@ -243,7 +243,7 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 		if (noSeparateGroup) {
 			finalTemplate =
 				div(css(CssUtil.joinCssClasses(FormEditorCSS.FE_LOCKED, FormEditorCSS.FE_WRAPPER)),
-				div(css(ReactiveFormCSS.RF_CONTAINER), contentTemplate));
+					div(css(ReactiveFormCSS.RF_CONTAINER), contentTemplate));
 		} else {
 			FieldSetBoxTemplate boxTemplate = Templates.fieldsetBox(legend, contentTemplate, ConfigKey.none());
 			/* Lock content of the preview fieldset box. It must not be possible to drop elements in

@@ -9,7 +9,6 @@ import java.io.IOException;
 
 import jakarta.servlet.jsp.JspException;
 
-import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.boxes.tag.BoxTag;
 import com.top_logic.layout.form.tag.AbstractTag;
 import com.top_logic.model.form.ReactiveFormCSS;
@@ -41,9 +40,9 @@ public class SeparatorTag extends AbstractTag {
 
 	private String getCssClass() {
 		if (_visible) {
-			return "rf_hr " + ReactiveFormCSS.RF_LINE + " " + FormConstants.OVERFLOW_AUTO_CLASS + " visible";
+			return "rf_hr " + ReactiveFormCSS.RF_INPUT_CELL + " " + ReactiveFormCSS.RF_LINE + " visible";
 		} else {
-			return "rf_hr " + ReactiveFormCSS.RF_LINE + " " + FormConstants.OVERFLOW_AUTO_CLASS;
+			return "rf_hr " + ReactiveFormCSS.RF_INPUT_CELL + " " + ReactiveFormCSS.RF_LINE;
 		}
 	}
 

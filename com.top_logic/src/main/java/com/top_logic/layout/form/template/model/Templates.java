@@ -23,7 +23,6 @@ import com.top_logic.html.template.expr.LiteralText;
 import com.top_logic.html.template.expr.StringLiteral;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.basic.ThemeImage;
-import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.boxes.layout.BoxLayout;
 import com.top_logic.layout.form.boxes.layout.HorizontalLayout;
@@ -691,12 +690,10 @@ public class Templates {
 	 * @return A {@link HTMLTemplateFragment} that renders the given content.
 	 */
 	public static HTMLTemplateFragment contentBox(HTMLTemplateFragment content, boolean wholeLine) {
-		TagTemplate contentFragment = div(css("rf_keepInline"), content);
-
 		if (wholeLine) {
-			return div(css(ReactiveFormCSS.RF_LINE + " " + FormConstants.OVERFLOW_AUTO_CLASS), contentFragment);
+			return div(css(ReactiveFormCSS.RF_INPUT_CELL + " " + ReactiveFormCSS.RF_LINE), content);
 		} else {
-			return contentFragment;
+			return div(css(ReactiveFormCSS.RF_INPUT_CELL), content);
 		}
 	}
 

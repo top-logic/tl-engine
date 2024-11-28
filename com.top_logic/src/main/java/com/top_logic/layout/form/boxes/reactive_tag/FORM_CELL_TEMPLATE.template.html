@@ -1,7 +1,7 @@
 <tl:choose>
 <tl:when test="visible">
 	<div id="{id}" 
-		class="is-control {canInspectClass} {keepInline ? 'keepInline'} {wholeLine ? 'rf_line tl-overflow--auto'} {cellClasses} {!hasLabel ? 'rf_noLabel'}" 
+		class="is-control {canInspectClass} {keepInline ? 'keepInline'} {wholeLine ? 'rf_line'} {cellClasses} {hasLabel ? 'rf_withLabel' : 'rf_noLabel'}" 
 		style="{cellWidth ? 'width: ' + cellWidth + '; '}{cellStyle}"
 	>
 		

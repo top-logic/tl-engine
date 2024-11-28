@@ -73,13 +73,10 @@ public class ColumnsDefinitionTemplateProvider extends AbstractFormContainerProv
 
 	@Override
 	public HTMLTemplateFragment decorateContainer(HTMLTemplateFragment content, FormEditorContext context) {
-		HTMLTemplateFragment container =
-			div(getIdAttribute(), css(ReactiveFormCSS.RF_CONTAINER + " " + FormEditorCSS.FE_DROP_TARGET),
-				content);
-		HTMLTemplateFragment elementWrapper =
-			div(attr("id", "columns-" + getID()), css(FormEditorCSS.FE_WRAPPER), container);
-
-		return contentBox(elementWrapper);
+		return contentBox(
+			div(attr("id", "columns-" + getID()), css(FormEditorCSS.FE_WRAPPER),
+				div(getIdAttribute(), css(ReactiveFormCSS.RF_CONTAINER + " " + FormEditorCSS.FE_DROP_TARGET),
+					content)));
 	}
 
 	@Override

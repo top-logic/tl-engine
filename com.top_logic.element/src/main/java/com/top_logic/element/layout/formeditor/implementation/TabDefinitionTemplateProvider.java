@@ -70,9 +70,9 @@ public class TabDefinitionTemplateProvider extends AbstractFormContainerProvider
 
 	@Override
 	public HTMLTemplateFragment decorateContainer(HTMLTemplateFragment content, FormEditorContext context) {
-		HTMLTemplateFragment container = div(getIdAttribute(),
-			css(ReactiveFormCSS.RF_CONTAINER + " " + FormEditorCSS.FE_DROP_TARGET), content);
-		return contentBox(container);
+		return contentBox(
+			div(getIdAttribute(), css(ReactiveFormCSS.RF_CONTAINER + " " + FormEditorCSS.FE_DROP_TARGET),
+				content));
 	}
 
 	@Override

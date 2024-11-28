@@ -731,6 +731,25 @@ div.dfListAdd {
 	margin-top: 0px;
 }
 
+.tl-i18n-row {
+	display: flex;
+	gap: var(--spacing-02);
+	margin: var(--spacing-02) 0;
+}
+
+.tl-i18n-lang {
+	min-width: 10ex;
+}
+
+.tl-i18n-input {
+	flex-grow: 1;
+	display: flex;
+}
+
+.tl-i18n-input > .cTextInput {
+	flex-grow: 1;
+}
+
 .rf_content table.schedulingAlgorithm {
 	width: calc(100% - 60px);
 }

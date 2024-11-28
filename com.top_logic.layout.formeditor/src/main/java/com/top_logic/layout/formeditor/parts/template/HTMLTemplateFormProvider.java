@@ -462,12 +462,13 @@ public class HTMLTemplateFormProvider
 		@Override
 		public void renderProperty(DisplayContext context, TagWriter out, String propertyName) throws IOException {
 			Object varValue = _args.get(propertyName);
-			if (varValue != null) {
+			// if (varValue != null) { /* Hotfix zur Lösung der Fehlermeldung wenn Attribut leer ist
+			// */
 				render(context, out, varValue);
 				return;
-			}
+				// }
 
-			super.renderProperty(context, out, propertyName);
+				// super.renderProperty(context, out, propertyName);
 		}
 
 		private void render(DisplayContext context, TagWriter out, Object value) throws IOException {

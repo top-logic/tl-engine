@@ -94,9 +94,6 @@
 	<icon name="ICON_PIGGY_BANK_DEMO_FUCHSIA"
 		value="css:fas fa-piggy-bank tl-accent-1"
 	/>
-	<icon name="ICON_PLUS"
-		value="css:bi bi-plus-lg"
-	/>
 	<icon name="ICON_PROJECT_DIAGRAM"
 		value="css:fas fa-project-diagram"
 	/>

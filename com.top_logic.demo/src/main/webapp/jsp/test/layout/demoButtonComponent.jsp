@@ -4,8 +4,6 @@
 %><layout:html>
 	<layout:head/>
 	<layout:body>
-		
-
 		<form:form>
 			<form:group name="toggleCommands">
 				<form:forEach member="command">

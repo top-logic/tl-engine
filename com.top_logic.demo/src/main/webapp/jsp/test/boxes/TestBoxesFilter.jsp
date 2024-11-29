@@ -7,8 +7,6 @@
 %><layout:html>
 	<layout:head/>
 	<layout:body>
-		
-
 		<form:filterForm>
 			Testing cells within a `filterForm` tag.
 			

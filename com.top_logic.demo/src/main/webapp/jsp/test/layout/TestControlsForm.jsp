@@ -1,4 +1,5 @@
-<%@page import="com.top_logic.layout.structure.OrientationAware.Orientation"
+<%@page import="com.top_logic.model.annotate.LabelPosition"
+%><%@page import="com.top_logic.layout.structure.OrientationAware.Orientation"
 %><%@page trimDirectiveWhitespaces="true"
 %><%@page import="com.top_logic.layout.renderers.ButtonComponentButtonRenderer"
 %><%@page import="com.top_logic.layout.form.control.ImageLinkButtonRenderer"
@@ -655,7 +656,7 @@
 						</form:description>
 					</form:descriptionCell>
 				</form:group>
-				
+
 				<form:group name="selectionControlGroup"
 					firstColumnWidth="27em"
 				>
@@ -1102,7 +1103,7 @@
 
 				<form:ifExists name="folderField">
 					<form:descriptionCell
-						labelAbove="true"
+						labelPosition="<%=LabelPosition.ABOVE%>"
 						wholeLine="true"
 					>
 						<form:description>
@@ -1113,7 +1114,7 @@
 				</form:ifExists>
 
 				<form:descriptionCell
-					labelAbove="true"
+					labelPosition="<%=LabelPosition.ABOVE%>"
 					wholeLine="true"
 				>
 					<form:description>
@@ -1122,7 +1123,7 @@
 					<form:tablelist name="tableListField"/>
 				</form:descriptionCell>
 
-				<form:descriptionCell labelAbove="true">
+				<form:descriptionCell labelPosition="<%=LabelPosition.ABOVE%>">
 					<form:description>
 						<form:label name="displayImageControl"/>
 						Upload of images is expected:

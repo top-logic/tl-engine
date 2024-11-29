@@ -4,6 +4,7 @@
 %><%@page import="com.top_logic.element.layout.meta.search.AttributedSearchComponent"
 %><%@page import="com.top_logic.element.layout.meta.search.SearchFieldSupport"
 %><%@page import="com.top_logic.element.layout.meta.search.SearchFilterSupport"
+%><%@page import="com.top_logic.model.annotate.LabelPosition"
 %><%@taglib uri="layout" prefix="layout"
 %><%@taglib uri="ajaxform" prefix="form"
 %><%@taglib uri="basic" prefix="basic"
@@ -13,9 +14,7 @@
 AttributedSearchComponent theComp = (AttributedSearchComponent) MainLayout.getComponent(pageContext);
 boolean                   useRel  = theComp.getRelevantAndNegate();
 %><layout:html>
-	<layout:head>
-		
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<form:form>
 			<form:columns count="3">
@@ -43,7 +42,7 @@ boolean                   useRel  = theComp.getRelevantAndNegate();
 					<meta:group object="<%=theComp.getSearchMetaElement() %>">
 						<form:groupCell
 							columns="2"
-							labelAbove="true"
+							labelPosition="<%=LabelPosition.ABOVE%>"
 							titleKeySuffix="basic"
 						>
 							<%
@@ -85,7 +84,7 @@ boolean                   useRel  = theComp.getRelevantAndNegate();
 								columns="2"
 								exclude="<%= theComp.getExcludeSet() %>"
 								firstColumnWidth="17em"
-								labelAbove="true"
+								labelPosition="<%=LabelPosition.ABOVE%>"
 								legend="additional"
 								splitControls="true"
 							/>

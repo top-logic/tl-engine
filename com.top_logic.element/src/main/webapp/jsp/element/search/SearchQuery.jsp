@@ -9,9 +9,7 @@
 <%
 AttributedSearchComponent theComp = (AttributedSearchComponent) MainLayout.getComponent(pageContext);
 %><layout:html>
-	<layout:head>
-		
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<form:form>
 			<util:if condition="<%= theComp.isMultiMetaElementSearch() %>">

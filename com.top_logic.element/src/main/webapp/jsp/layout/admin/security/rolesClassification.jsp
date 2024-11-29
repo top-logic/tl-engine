@@ -6,9 +6,7 @@
 %><%@taglib uri="layout" prefix="layout"
 %><%@taglib uri="ajaxform" prefix="form"
 %><layout:html>
-	<layout:head>
-		
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<%
 		AttributeClassifierRolesComponent theComponent = (AttributeClassifierRolesComponent) MainLayout.getComponent(pageContext);

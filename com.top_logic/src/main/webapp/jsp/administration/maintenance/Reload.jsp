@@ -93,7 +93,9 @@
 					This page allows you to reload different modules in TopLogic.
 				</p>
 				<form method="POST">
-					<table class="tl-standard-table" summary="List of Things you can reload">
+					<table class="tl-standard-table"
+						summary="List of Things you can reload"
+					>
 						<tr>
 							<th>
 								TopLogic Modules
@@ -109,12 +111,16 @@
 							%>
 							<tr>
 								<td>
-								<div class="cChoice-option" style="gap: var(--spacing-02)">
-									<input name="chk_<%=theName %>"
-										type="checkbox"
-									/>
-									<span><%=theName %></span>
-								</div>
+									<div class="cChoice-option"
+										style="gap: var(--spacing-02)"
+									>
+										<input name="chk_<%=theName %>"
+											type="checkbox"
+										/>
+										<span>
+											<%=theName %>
+										</span>
+									</div>
 								</td>
 								<td>
 									<%=theDesc %>
@@ -124,11 +130,16 @@
 						}
 						%>
 					</table>
-						<div class="cmdButtons">
-							<button class="tlButton cButton cmdButton" name="RELOAD" type="submit">
-							 	<h4 class="tlButtonLabel">Reload</h4>
-							</button>
-						</div>
+					<div class="cmdButtons">
+						<button class="tlButton cButton cmdButton"
+							name="RELOAD"
+							type="submit"
+						>
+							<h4 class="tlButtonLabel">
+								Reload
+							</h4>
+						</button>
+					</div>
 				</form>
 				<%
 			}

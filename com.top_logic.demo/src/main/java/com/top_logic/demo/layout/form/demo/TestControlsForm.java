@@ -273,7 +273,6 @@ import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.model.annotate.LabelPosition;
-import com.top_logic.model.form.definition.LabelPlacement;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
@@ -2584,8 +2583,7 @@ public class TestControlsForm extends FormComponent {
 			Templates.descriptionBox(
 				Templates.fragment(Templates.labelWithColon(), Templates.error()),
 				Templates.self(MemberStyle.DIRECT),
-				LabelPosition.DEFAULT,
-				LabelPlacement.DEFAULT),
+				LabelPosition.DEFAULT),
 			DefaultFormFieldControlProvider.INSTANCE);
 
 		StringField fallbackField = FormFactory.newStringField("fallback");

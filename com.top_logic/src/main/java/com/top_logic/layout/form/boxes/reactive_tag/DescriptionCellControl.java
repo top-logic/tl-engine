@@ -32,7 +32,6 @@ import com.top_logic.layout.form.template.FormTemplateConstants;
 import com.top_logic.mig.html.layout.VisibilityListener;
 import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.form.ReactiveFormCSS;
-import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
  * Control to write a tag creating a description/content cell. Its visibility is controlled by a
@@ -59,7 +58,7 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 		}
 	
 		Control inputControl = cp.createControl(member, inputStyle);
-		LabelPosition labelPosition = controlLabelFirst(inputControl);
+		LabelPosition labelPosition = labelPositonForInput(inputControl);
 		boolean wholeLine = controlWholeLine(inputControl);
 	
 		LabelControl labelControl = (LabelControl) labelControl(member, colon, labelPosition);
@@ -90,7 +89,7 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 		switch (labelPosition) {
 			case AFTER_VALUE:
 				return cp.createControl(member, FormTemplateConstants.STYLE_LABEL_VALUE);
-			case DEFAULT:
+			case DEFAULT, ABOVE, INLINE:
 				return cp.createControl(member,
 					colon ? FormTemplateConstants.STYLE_LABEL_WITH_COLON_VALUE
 						: FormTemplateConstants.STYLE_LABEL_VALUE);
@@ -127,8 +126,6 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	private String _labelClass;
 
 	private HTMLFragment _description;
-
-	private LabelPlacement _labelPlacement = LabelPlacement.DEFAULT;
 
 	/**
 	 * Creates a {@link DescriptionCellControl}.
@@ -189,7 +186,7 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	 */
 	@TemplateVariable("labelFirst")
 	public boolean isLabelFirst() {
-		return _labelPosition == LabelPosition.DEFAULT;
+		return _labelPosition != LabelPosition.AFTER_VALUE;
 	}
 
 	/**
@@ -200,19 +197,12 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	}
 
 	/**
-	 * Sets the definition where the the label has to be rendered.
-	 */
-	public void setLabelPlacement(LabelPlacement labelPlacement) {
-		_labelPlacement = labelPlacement;
-	}
-
-	/**
 	 * Whether the label should be rendered strictly before the input element, even if the label
 	 * would otherwise wrap to a separate line due to limited space.
 	 */
 	@TemplateVariable("keepInline")
 	public boolean getKeepInline() {
-		return _labelPlacement == LabelPlacement.INLINE;
+		return _labelPosition == LabelPosition.INLINE;
 	}
 
 	/**
@@ -221,7 +211,7 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	@TemplateVariable("cellClasses")
 	public String getCellClasses() {
 		String css = ReactiveFormCSS.RF_INPUT_CELL;
-		String labelCSS = _labelPlacement.cssClass();
+		String labelCSS = _labelPosition.cssClass();
 		if (labelCSS != null) {
 			css = css + " " + labelCSS;
 		}
@@ -329,12 +319,12 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	 * @return If the HTMLFragment is not a {@link CheckboxControl} and not a
 	 *         {@link IconSelectControl}.
 	 */
-	protected static LabelPosition controlLabelFirst(HTMLFragment control) {
+	protected static LabelPosition labelPositonForInput(HTMLFragment control) {
 		if (control instanceof CheckboxControl) {
 			return LabelPosition.AFTER_VALUE;
 		}
 		if (control instanceof IconSelectControl) {
-			return LabelPosition.AFTER_VALUE;
+			return LabelPosition.INLINE;
 		}
 		return LabelPosition.DEFAULT;
 	}

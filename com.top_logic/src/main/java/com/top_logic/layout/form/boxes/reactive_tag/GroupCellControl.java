@@ -34,6 +34,7 @@ import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.ImageButtonRenderer;
 import com.top_logic.layout.form.control.PopupMenuButtonControl;
 import com.top_logic.layout.toolbar.DefaultToolBar;
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -160,13 +161,8 @@ public class GroupCellControl extends ConstantControl<HTMLFragment> implements C
 	}
 
 	@Override
-	public boolean getLabelAbove() {
-		return _settings.getLabelAbove();
-	}
-
-	@Override
-	public boolean getLabelInline() {
-		return _settings.getLabelInline();
+	public LabelPosition getLabelPosition() {
+		return _settings.getLabelPosition();
 	}
 
 	@Override

@@ -11,8 +11,6 @@
 %><layout:html>
 	<layout:head/>
 	<layout:body>
-		
-
 		<form:form>
 			<form:cell>
 				This page is to test the reactive behavior of forms. The boxes above each form includes the actual number of columns given by the MediaQueryControl and the number of columns the respective elements should be embedded. So e.g. 1 column means the element is rendered over 100% of the parent element and 3 columns means for 33.3%.

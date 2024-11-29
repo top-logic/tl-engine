@@ -18,9 +18,7 @@ AttributedSearchComponent theComp = (AttributedSearchComponent) MainLayout.getCo
 DefaultTableRenderer theRenderer  = DefaultTableRenderer.newInstance();
 boolean useRel                    = theComp.getRelevantAndNegate();
 %><layout:html>
-	<layout:head>
-		
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<form:form>
 			<table width="100%">

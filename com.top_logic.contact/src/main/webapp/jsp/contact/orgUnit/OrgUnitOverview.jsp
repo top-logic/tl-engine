@@ -7,10 +7,9 @@
 %><%@taglib uri="meta"     prefix="meta"
 %><%@taglib uri="ajaxform" prefix="form"
 %><%String theColumns = PersonContact.NAME_ATTRIBUTE + ' ' + PersonContact.EMAIL + ' ' +
-PersonContact.PHONE + ' ' + PersonContact.PHONE_MOBILE;%><layout:html>
-	<layout:head>
-		
-	</layout:head>
+PersonContact.PHONE + ' ' + PersonContact.PHONE_MOBILE;
+%><layout:html>
+	<layout:head/>
 	<layout:body>
 		<meta:formPage titleAttribute="<%= OrgUnitAllConstants.ATTRIBUTE_NAME %>">
 			<meta:group>

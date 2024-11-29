@@ -23,6 +23,7 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutConstants;
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.tool.boundsec.assistent.AssistentComponent;
 import com.top_logic.util.Resources;
 
@@ -76,7 +77,7 @@ public class FormTag extends AbstractTag implements FormContainerTag, FormTagPro
      */
 	private boolean selectFirst = SELECT_FIRST_DEFAULT;
 
-	private Boolean labelAbove;
+	private LabelPosition _labelPosition;
 
 	@Override
 	@CalledFromJSP
@@ -529,18 +530,28 @@ public class FormTag extends AbstractTag implements FormContainerTag, FormTagPro
 	 * 
 	 * @param labelAbove
 	 *        If <code>true</code> label is rendered above, else it will be rendered before.
+	 * @deprecated Use {@link #setLabelPosition(LabelPosition)}
 	 */
+	@Deprecated
+	@CalledFromJSP
 	public void setLabelAbove(Boolean labelAbove) {
-		this.labelAbove = labelAbove;
+		_labelPosition =
+			labelAbove == null ? null : labelAbove.booleanValue() ? LabelPosition.ABOVE : LabelPosition.DEFAULT;
 	}
 
 	/**
-	 * Returns whether the label is rendered above the content.
-	 * 
-	 * @return If <code>true</code> label is rendered above, else it will be rendered before.
+	 * The default {@link LabelPosition} for this form.
 	 */
-	public Boolean getLabelAbove() {
-		return this.labelAbove;
+	@CalledFromJSP
+	public void setLabelPosition(LabelPosition labelPosition) {
+		_labelPosition = labelPosition;
+	}
+
+	/**
+	 * The default {@link LabelPosition} for the whole form, or <code>null</code>, if not set.
+	 */
+	public LabelPosition getLabelPosition() {
+		return _labelPosition;
 	}
 
 	@Override

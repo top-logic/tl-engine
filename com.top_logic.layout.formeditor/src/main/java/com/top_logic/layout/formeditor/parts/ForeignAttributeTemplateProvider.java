@@ -203,14 +203,13 @@ public class ForeignAttributeTemplateProvider extends AbstractFormElementProvide
 
 	private HTMLTemplateFragment attributeLabelForPosition(TLStructuredTypePart part, LabelPosition labelPosition) {
 		switch (labelPosition) {
-			case DEFAULT:
-				return text(MetaLabelProvider.INSTANCE.getLabel(part) + ':');
 			case AFTER_VALUE:
 				return text(MetaLabelProvider.INSTANCE.getLabel(part));
 			case HIDE_LABEL:
 				return null;
+			default:
+				return text(MetaLabelProvider.INSTANCE.getLabel(part) + ':');
 		}
-		throw LabelPosition.noSuchPosition(labelPosition);
 	}
 
 }

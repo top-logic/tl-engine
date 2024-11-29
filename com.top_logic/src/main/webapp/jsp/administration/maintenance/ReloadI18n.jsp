@@ -101,7 +101,9 @@
 								%>
 								<tr>
 									<td>
-										<div class="cChoice-option" style="gap: var(--spacing-02)">
+										<div class="cChoice-option"
+											style="gap: var(--spacing-02)"
+										>
 											<input name="chk_<%=theName %>"
 												checked="checked"
 												type="hidden"
@@ -116,8 +118,13 @@
 						%>
 					</table>
 					<p>
-						<button class="tlButton cButton cmdButton" name="RELOAD" type="submit">
-						 	<h4 class="tlButtonLabel">Reload</h4>
+						<button class="tlButton cButton cmdButton"
+							name="RELOAD"
+							type="submit"
+						>
+							<h4 class="tlButtonLabel">
+								Reload
+							</h4>
 						</button>
 					</p>
 				</form>

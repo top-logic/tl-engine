@@ -10,6 +10,7 @@ import java.io.IOException;
 import jakarta.servlet.jsp.JspException;
 import jakarta.servlet.jsp.tagext.Tag;
 
+import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.tag.AbstractFormMemberControlTag;
 import com.top_logic.layout.form.tag.AbstractTag;
@@ -18,7 +19,6 @@ import com.top_logic.layout.form.tag.FormTag;
 import com.top_logic.layout.form.tag.LabelTag;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.model.annotate.LabelPosition;
-import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
  * {@link AbstractTag} for creating a label/description cell for a single {@link FormMember}.
@@ -38,11 +38,7 @@ public class InputCellTag extends AbstractFormMemberControlTag {
 
 	private boolean _errorAsText = false;
 	
-	private boolean _labelFirst = true;
-
-	private Boolean _labelAbove;
-
-	private Boolean _keepInline;
+	private LabelPosition _labelPosition;
 
 	private boolean _colon = Icons.COLON.get();
 
@@ -116,13 +112,21 @@ public class InputCellTag extends AbstractFormMemberControlTag {
 	}
 
 	/**
+	 * Position of the label.
+	 */
+	@CalledFromJSP
+	public void setLabelPosition(LabelPosition labelPosition) {
+		_labelPosition = labelPosition;
+	}
+
+	/**
 	 * Sets whether the label is rendered above the input.
 	 * 
 	 * @param labelAbove
 	 *        Label above the input.
 	 */
 	public void setLabelAbove(boolean labelAbove) {
-		_labelAbove = labelAbove;
+		_labelPosition = labelAbove ? LabelPosition.ABOVE : LabelPosition.INLINE;
 	}
 
 	/**
@@ -132,9 +136,8 @@ public class InputCellTag extends AbstractFormMemberControlTag {
 	 *        Whether the label is rendered first.
 	 */
 	public void setLabelFirst(boolean labelFirst) {
-		_labelFirst = labelFirst;
 		if (!labelFirst) {
-			_keepInline = true;
+			_labelPosition = LabelPosition.AFTER_VALUE;
 		}
 	}
 
@@ -157,15 +160,6 @@ public class InputCellTag extends AbstractFormMemberControlTag {
 	}
 
 	/**
-	 * Returns whether the label is rendered before the input or behind it.
-	 * 
-	 * @return Whether the label is rendered first.
-	 */
-	public boolean getLabelFirst() {
-		return _labelFirst;
-	}
-
-	/**
 	 * Returns if there is rendered a colon after the label.
 	 * 
 	 * @return True if there is rendered a colon.
@@ -184,30 +178,28 @@ public class InputCellTag extends AbstractFormMemberControlTag {
 		}
 	}
 
-	private boolean getLabelAbove() {
-		Boolean labelAbove = null;
+	private LabelPosition getLabelPosition() {
+		if (_labelPosition != null) {
+			return _labelPosition;
+		}
 
 		GroupCellTag groupCellParent = getGroupCellParent();
-		if (_labelAbove != null) {
-			labelAbove = _labelAbove;
-		} else {
-			if (groupCellParent != null) {
-				labelAbove = groupCellParent.getLabelAbove();
-			}
-
-			if (labelAbove == null) {
-				FormTag formParent = getFormParent();
-				if (formParent != null) {
-					labelAbove = formParent.getLabelAbove();
-				}
-
-				if (labelAbove == null) {
-					labelAbove = Icons.LABEL_ABOVE.get();
-				}
+		if (groupCellParent != null) {
+			LabelPosition result = groupCellParent.getLabelPosition();
+			if (result != null) {
+				return result;
 			}
 		}
 
-		return labelAbove.booleanValue();
+		FormTag formParent = getFormParent();
+		if (formParent != null) {
+			LabelPosition result = formParent.getLabelPosition();
+			if (result != null) {
+				return result;
+			}
+		}
+
+		return Icons.LABEL_ABOVE.get() ? LabelPosition.ABOVE : LabelPosition.DEFAULT;
 	}
 
 	private String getFirstColumnWidth() {
@@ -294,13 +286,7 @@ public class InputCellTag extends AbstractFormMemberControlTag {
 		DescriptionCellControl result = DescriptionCellControl.createInputBox(member, _controlProvider, displayStyle, _colon, _errorAsText);
 		result.setCellClass(_cssClass);
 		result.setLabelWidth(getFirstColumnWidth());
-		if (getLabelAbove()) {
-			result.setLabelPlacement(LabelPlacement.ABOVE);
-		}
-		if (_keepInline != null) {
-			result.setLabelPlacement(LabelPlacement.INLINE);
-		}
-		result.setLabelPosition(getLabelFirst() ? LabelPosition.DEFAULT : LabelPosition.AFTER_VALUE);
+		result.setLabelPosition(getLabelPosition());
 		result.setCellStyle(_cssStyle);
 		result.setCellWidth(_width);
 

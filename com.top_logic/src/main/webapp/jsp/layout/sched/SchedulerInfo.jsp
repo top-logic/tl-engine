@@ -1,4 +1,5 @@
-<%@page import="com.top_logic.layout.ResPrefix"%><%@page
+<%@page import="com.top_logic.model.annotate.LabelPosition"
+%><%@page import="com.top_logic.layout.ResPrefix"%><%@page
 import="java.text.DateFormat"%><%@page import="java.util.Date"%><%@page
 language="java" extends="com.top_logic.util.TopLogicJspBase"%><%@page
 import="java.util.Arrays"%><%@page
@@ -42,13 +43,13 @@ if (theStatus != null) {
 			<form:columns count="2">
 				<form:descriptionContainer>
 					<form:groupCell columns="1">
-						<form:descriptionCell labelAbove="true">
+						<form:descriptionCell labelPosition="<%=LabelPosition.ABOVE%>">
 							<form:description>
 								<%=res.getString(resPrefix.key("threadName"))%>:
 							</form:description>
 							<%=sched.getName()%>
 						</form:descriptionCell>
-						<form:descriptionCell labelAbove="true">
+						<form:descriptionCell labelPosition="<%=LabelPosition.ABOVE%>">
 							<form:description>
 								<%=res.getString(resPrefix.key("maxTasktime"))%>:
 							</form:description>

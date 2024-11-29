@@ -36,6 +36,7 @@
 					</attribute-setting>
 
 					<attribute-setting config-name="I18N_HTML" legacy-type-code="1">
+						<label-position value="above-value"/>
 						<column-info>
 							<excelRenderer class="com.top_logic.layout.wysiwyg.ui.I18NStructuredTextExcelRenderer"/>
 							<renderer class="com.top_logic.layout.form.control.ConfiguredFirstLineRenderer">

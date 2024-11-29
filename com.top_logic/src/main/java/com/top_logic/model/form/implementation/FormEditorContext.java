@@ -52,7 +52,7 @@ public class FormEditorContext {
 
 	private TLStructuredType _concreteType;
 
-	private LabelPosition _labelPosition;
+	private LabelPosition _labelPosition = LabelPosition.DEFAULT;
 
 	/**
 	 * The mode how the in-app form is displayed.
@@ -169,7 +169,7 @@ public class FormEditorContext {
 	 */
 	public <T> T withLabelPosition(LabelPosition labelPosition, Function<FormEditorContext, T> action) {
 		LabelPosition oldPlacement = _labelPosition;
-		_labelPosition = labelPosition;
+		_labelPosition = LabelPosition.nonNull(labelPosition);
 		try {
 			return action.apply(this);
 		} finally {
@@ -210,7 +210,7 @@ public class FormEditorContext {
 
 		private TLStructuredType _concreteType;
 
-		private LabelPosition _labelPosition = null;
+		private LabelPosition _labelPosition = LabelPosition.DEFAULT;
 
 		/**
 		 * Empty context builder.

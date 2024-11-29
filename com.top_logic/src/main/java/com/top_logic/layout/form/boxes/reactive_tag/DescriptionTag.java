@@ -13,6 +13,7 @@ import com.top_logic.layout.form.boxes.tag.BoxTag;
 import com.top_logic.layout.form.boxes.tag.JSPLayoutedControls;
 import com.top_logic.layout.form.control.LabelControl;
 import com.top_logic.layout.form.tag.ControlBodyTag;
+import com.top_logic.model.annotate.LabelPosition;
 
 /**
  * {@link BoxTag} creating the description part of a {@link DescriptionCellTag} for reactive forms.
@@ -73,11 +74,7 @@ public class DescriptionTag extends AbstractBoxTag implements ControlBodyTag {
 	}
 
 	private boolean getColon() {
-		if (getDescriptionCellParent() != null) {
-			return getDescriptionCellParent().getColon();
-		} else {
-			return true;
-		}
+		return getDescriptionCellParent().getLabelPosition() != LabelPosition.AFTER_VALUE;
 	}
 
 	private DescriptionCellTag getDescriptionCellParent() {

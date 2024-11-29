@@ -104,7 +104,9 @@ long startTime = System.currentTimeMillis();
 				</p>
 				<br/>
 				<p>
-					<b>Please select the tests to run:</b>
+					<b>
+						Please select the tests to run:
+					</b>
 				</p>
 				<form method="POST">
 					<table>
@@ -139,34 +141,45 @@ long startTime = System.currentTimeMillis();
 								boolean checked, initial = (request.getParameter("OK") == null);
 								Iterator it = tests.getDescriptionMap().entrySet().iterator();
 								%>
-								<div class="cChoice cChoice-vertical" style="gap: var(--spacing-03);">
-								<%
-								while (it.hasNext()) {
-									Map.Entry theEntry = (Map.Entry)it.next();
-									String theName = (String)theEntry.getKey();
-									String theDescription = (String)theEntry.getValue();
-									checked = (initial || request.getParameter(theName) != null);
-									%>
+								<div class="cChoice cChoice-vertical"
+									style="gap: var(--spacing-03);"
+								>
+									<%
+									while (it.hasNext()) {
+										Map.Entry theEntry = (Map.Entry)it.next();
+										String theName = (String)theEntry.getKey();
+										String theDescription = (String)theEntry.getValue();
+										checked = (initial || request.getParameter(theName) != null);
+										%>
 										<div style="display: flex; flex-direction: column; gap: var(--spacing-02);">
-											<div class="cChoice-option" style="gap: var(--spacing-02)">
+											<div class="cChoice-option"
+												style="gap: var(--spacing-02)"
+											>
 												<input name="<%=theName%>"
 													checked="<%=checked ? "checked" : "" %>"
 													type="checkbox"
 													value="<%=theName%>"
 												/>
-												<b><%=theName%></b>
+												<b>
+													<%=theName%>
+												</b>
 											</div>
 											<span>
 												<%=theDescription%>
 											</span>
 										</div>
-									<%
-								}
-								%>
+										<%
+									}
+									%>
 								</div>
 								<p>
-									<button class="tlButton cButton cmdButton" name="SUBMIT" type="submit">
-										<h4 class="tlButtonLabel">Run Tests</h4>
+									<button class="tlButton cButton cmdButton"
+										name="SUBMIT"
+										type="submit"
+									>
+										<h4 class="tlButtonLabel">
+											Run Tests
+										</h4>
 									</button>
 								</p>
 							</td>

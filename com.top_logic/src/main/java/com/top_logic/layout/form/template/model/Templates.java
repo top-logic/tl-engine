@@ -36,7 +36,6 @@ import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.form.ReactiveFormCSS;
-import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
  * Factory for {@link HTMLTemplateFragment}s.
@@ -726,25 +725,7 @@ public class Templates {
 	 */
 	public static HTMLTemplateFragment descriptionBox(HTMLTemplateFragment label, HTMLTemplateFragment content,
 			LabelPosition labelPosition) {
-		return descriptionBox(label, content, labelPosition, LabelPlacement.DEFAULT);
-	}
-
-	/**
-	 * Creates a {@link HTMLTemplateFragment} that consists of a label and content area.
-	 * 
-	 * @param label
-	 *        The label content.
-	 * @param content
-	 *        The main content.
-	 * @param labelPosition
-	 *        The position of the given label content.
-	 * @param labelPlacement
-	 *        Whether the label is rendered above the value.
-	 * @return A {@link HTMLTemplateFragment} that renders label and content.
-	 */
-	public static HTMLTemplateFragment descriptionBox(HTMLTemplateFragment label, HTMLTemplateFragment content,
-			LabelPosition labelPosition, LabelPlacement labelPlacement) {
-		return new DescriptionBoxTemplate(label, content, labelPosition, labelPlacement);
+		return new DescriptionBoxTemplate(label, content, labelPosition);
 	}
 
 	/**
@@ -756,7 +737,7 @@ public class Templates {
 	 * @return A {@link HTMLTemplateFragment} that renders all aspects of a primitive field.
 	 */
 	public static HTMLTemplateFragment fieldBox(String name) {
-		return fieldBox(name, LabelPlacement.DEFAULT);
+		return fieldBox(name, LabelPosition.DEFAULT);
 	}
 
 	/**
@@ -765,13 +746,12 @@ public class Templates {
 	 * 
 	 * @param name
 	 *        The field name.
-	 * @param labelPlacement
+	 * @param labelPosition
 	 *        Whether the label is rendered above the value.
 	 * @return A {@link HTMLTemplateFragment} that renders all aspects of a primitive field.
 	 */
-	public static HTMLTemplateFragment fieldBox(String name, LabelPlacement labelPlacement) {
-		LabelPosition labelPosition = LabelPosition.DEFAULT;
-		return member(name, descriptionBox(fragment(labelWithColon(), error()), self(), labelPosition, labelPlacement));
+	public static HTMLTemplateFragment fieldBox(String name, LabelPosition labelPosition) {
+		return member(name, descriptionBox(fragment(labelWithColon(), error()), self(), labelPosition));
 	}
 
 	/**
@@ -783,8 +763,7 @@ public class Templates {
 	 * @return A {@link HTMLTemplateFragment} that renders all aspects of a primitive field.
 	 */
 	public static HTMLTemplateFragment fieldBoxInputFirst(String name) {
-		LabelPosition labelPosition = LabelPosition.AFTER_VALUE;
-		return member(name, descriptionBox(fragment(label(), error()), self(), labelPosition, LabelPlacement.INLINE));
+		return member(name, descriptionBox(fragment(label(), error()), self(), LabelPosition.AFTER_VALUE));
 	}
 
 	/**
@@ -796,9 +775,8 @@ public class Templates {
 	 * @return A {@link HTMLTemplateFragment} that renders all aspects of a primitive field.
 	 */
 	public static HTMLTemplateFragment fieldBoxNoLabel(String name) {
-		LabelPosition labelPosition = LabelPosition.HIDE_LABEL;
 		return member(name,
-			descriptionBox(Templates.empty(), fragment(self(), error()), labelPosition, LabelPlacement.DEFAULT));
+			descriptionBox(Templates.empty(), fragment(self(), error()), LabelPosition.HIDE_LABEL));
 	}
 
 	/**

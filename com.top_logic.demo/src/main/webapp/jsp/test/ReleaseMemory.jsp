@@ -1,13 +1,11 @@
 <%@page import="java.util.ArrayList"
 %><%@page language="java" session="true" extends="com.top_logic.util.TopLogicJspBase"
 %>
-
 <html>
 	<head>
 		<title>
 			ReleaseMemory
 		</title>
-		
 	</head>
 	<body>
 		<%

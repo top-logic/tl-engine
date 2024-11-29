@@ -6,6 +6,7 @@
 package com.top_logic.model.form;
 
 import com.top_logic.layout.form.boxes.reactive_tag.GroupCellControl;
+import com.top_logic.model.annotate.LabelPosition;
 
 /**
  * Collection of CSS classes used in reactive forms.
@@ -54,6 +55,7 @@ public interface ReactiveFormCSS {
 	 * CSS class to mark that the label should be displayed on the same line as the value.
 	 * 
 	 * @see #RF_LABEL_ABOVE
+	 * @see LabelPosition#INLINE
 	 */
 	String RF_LABEL_INLINE = "rf_labelInline";
 
@@ -61,6 +63,7 @@ public interface ReactiveFormCSS {
 	 * CSS class to mark that the label should be displayed above the value.
 	 * 
 	 * @see #RF_LABEL_INLINE
+	 * @see LabelPosition#ABOVE
 	 */
 	String RF_LABEL_ABOVE = "rf_labelAbove";
 

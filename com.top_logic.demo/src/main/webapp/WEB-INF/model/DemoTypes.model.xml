@@ -313,7 +313,11 @@
 				/>
 				<property name="offset"
 					type="DemoVec"
-				/>
+				>
+					<annotations>
+						<label-position value="above-value"/>
+					</annotations>
+				</property>
 				<property name="timeUnit"
 					type="DemoTime"
 				/>

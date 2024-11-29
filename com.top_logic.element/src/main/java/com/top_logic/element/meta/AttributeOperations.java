@@ -1332,7 +1332,8 @@ public class AttributeOperations {
 	 * @param context
 	 *        Context in which the attribute is edited.
 	 * 
-	 * @return The {@link LabelPosition position} where the label is rendered.
+	 * @return The {@link LabelPosition position} where the label is rendered, or <code>null</code>
+	 *         if not specified.
 	 */
 	public static LabelPosition labelPosition(TLStructuredTypePart attribute, EditContext context) {
 		if (context != null) {
@@ -1368,6 +1369,6 @@ public class AttributeOperations {
 			return LabelPosition.HIDE_LABEL;
 		}
 
-		return LabelPosition.DEFAULT;
+		return null;
 	}
 }

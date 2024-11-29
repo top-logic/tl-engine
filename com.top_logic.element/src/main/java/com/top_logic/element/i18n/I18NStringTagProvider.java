@@ -29,6 +29,7 @@ import com.top_logic.layout.form.values.edit.editor.I18NTranslationUtil;
 import com.top_logic.layout.form.values.edit.editor.InternationalizationEditor;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.ui.MultiLine;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.util.Resources;
 
 /**
@@ -149,7 +150,7 @@ public class I18NStringTagProvider implements DisplayProvider {
 			Resources res = Resources.getInstance();
 			List<? extends HTMLFragment> controls = control.getChildren();
 			out.beginBeginTag(DIV);
-			out.writeAttribute(CLASS_ATTR, TL_I18N_ROWS);
+			out.writeAttribute(CLASS_ATTR, ReactiveFormCSS.RF_COLUMNS_LAYOUT + " cols1");
 			out.endBeginTag();
 
 			boolean noTanslation = !TranslationService.isActive();
@@ -163,29 +164,28 @@ public class I18NStringTagProvider implements DisplayProvider {
 				HTMLFragment translateButton = noTanslation || isSourceField(field) ? null : controls.get(i++);
 
 				out.beginBeginTag(DIV);
-				out.writeAttribute(CLASS_ATTR, TL_I18N_ROW);
+				out.writeAttribute(CLASS_ATTR, ReactiveFormCSS.RF_INPUT_CELL
+					+ (_languagesAboveField ? (" " + ReactiveFormCSS.RF_LABEL_ABOVE) : ""));
 				out.endBeginTag();
 				{
 					{
 						out.beginBeginTag(SPAN);
-						out.writeAttribute(CLASS_ATTR, TL_I18N_LANG);
+						out.writeAttribute(CLASS_ATTR, ReactiveFormCSS.RF_LABEL);
 						out.endBeginTag();
 						{
 							writeLanguage(out, res, field);
+							errorControl.write(context, out);
 						}
 						out.endTag(SPAN);
 					}
 
 					if (field.isActive()) {
-						out.beginTag(SPAN, CLASS_ATTR, TL_I18N_INPUT);
-						errorControl.write(context, out);
+						out.beginTag(SPAN, CLASS_ATTR, ReactiveFormCSS.RF_CELL);
 						fieldControl.write(context, out);
-						out.endTag(SPAN);
-
 						writeTranslateButton(context, out, translateButton);
+						out.endTag(SPAN);
 					} else {
-						out.beginTag(SPAN, CLASS_ATTR, TL_I18N_INPUT);
-						errorControl.write(context, out);
+						out.beginTag(SPAN, CLASS_ATTR, ReactiveFormCSS.RF_CELL);
 						fieldControl.write(context, out);
 						out.endTag(SPAN);
 					}

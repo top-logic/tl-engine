@@ -9,6 +9,7 @@ import com.top_logic.layout.basic.TemplateVariable;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.template.WithProperties;
+import com.top_logic.model.annotate.LabelPosition;
 
 /**
  * Settings for the {@link GroupCellControl}.
@@ -41,20 +42,12 @@ public interface GroupSettings extends WithProperties {
 	boolean isWholeLine();
 
 	/**
-	 * Whether the label of all inner elements are rendered above their input.
+	 * Customization for the {@link LabelPosition} of the whole group, or <code>null</code> if not
+	 * set.
 	 * 
-	 * @see #getLabelInline()
+	 * @return Custom label position, or <code>null</code> if not set.
 	 */
-	@TemplateVariable("labelAbove")
-	boolean getLabelAbove();
-
-	/**
-	 * Whether the label of all inner elements are rendered in the same line as their input.
-	 * 
-	 * @see #getLabelAbove()
-	 */
-	@TemplateVariable("labelInline")
-	boolean getLabelInline();
+	LabelPosition getLabelPosition();
 
 	/**
 	 * Whether a border should be drawn around the group cell. The default value is provided by the

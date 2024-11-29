@@ -379,6 +379,12 @@
          -->
     </attribute>
 	<attribute>
+		<name>labelPosition</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+		<description>Where to place the label.</description>
+	</attribute>
+	<attribute>
 		<name>labelAbove</name>
 		<required>false</required>
 		<rtexprvalue>true</rtexprvalue>
@@ -678,6 +684,12 @@
         <required>false</required>
         <rtexprvalue>true</rtexprvalue>
     </attribute>
+	<attribute>
+		<name>labelPosition</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+		<description>Where to place the label.</description>
+	</attribute>
      <attribute>
         <name>labelAbove</name>
         <required>false</required>
@@ -737,6 +749,12 @@
         <required>false</required>
         <rtexprvalue>true</rtexprvalue>
     </attribute>
+	<attribute>
+		<name>labelPosition</name>
+		<required>false</required>
+		<rtexprvalue>true</rtexprvalue>
+		<description>Where to place the label.</description>
+	</attribute>
     <attribute>
         <name>labelAbove</name>
         <required>false</required>
@@ -1048,6 +1066,12 @@
 			<name>firstColumnWidth</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>
+		</attribute>
+		<attribute>
+			<name>labelPosition</name>
+			<required>false</required>
+			<rtexprvalue>true</rtexprvalue>
+			<description>Where to place the label.</description>
 		</attribute>
 		<attribute>
 			<name>labelFirst</name>

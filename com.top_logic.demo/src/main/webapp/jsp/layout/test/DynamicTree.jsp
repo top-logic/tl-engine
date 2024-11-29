@@ -3,9 +3,7 @@
 %><%@taglib uri="ajaxform" prefix="form"
 %><%@taglib uri="basic" prefix="basic"
 %><layout:html>
-	<layout:head>
-		
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<form:form>
 			<basic:fieldset>

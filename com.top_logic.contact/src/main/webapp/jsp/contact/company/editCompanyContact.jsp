@@ -1,4 +1,5 @@
-<%@page import="com.top_logic.contact.business.AddressHolder"
+<%@page import="com.top_logic.model.annotate.LabelPosition"
+%><%@page import="com.top_logic.contact.business.AddressHolder"
 %><%@page import="com.top_logic.contact.layout.company.EditCompanyContactComponent"
 %><%@page language="java" contentType="text/html;charset=ISO-8859-1" extends="com.top_logic.util.TopLogicJspBase"
 %><%@page import="com.top_logic.mig.html.layout.MainLayout"
@@ -10,23 +11,21 @@
 %><%@taglib uri="meta"     prefix="meta"
 %><%@taglib uri="ajaxform" prefix="form"
 %><layout:html>
-	<layout:head>
-		
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<meta:formPage titleAttribute="<%=CompanyContact.NAME_ATTRIBUTE %>">
 			<meta:group>
 				<form:groupCell titleKeySuffix="basicAttributes">
 					<form:descriptionContainer>
 						<meta:inputCell name="<%=CompanyContact.ATT_SUPPLIER%>"
-							labelFirst="false"
+							labelPosition="<%=LabelPosition.AFTER_VALUE%>"
 						/>
 						<meta:inputCell name="<%=CompanyContact.FKEY_ATTRIBUTE%>"/>
 					</form:descriptionContainer>
 
 					<form:descriptionContainer>
 						<meta:inputCell name="<%=CompanyContact.ATT_CLIENT%>"
-							labelFirst="false"
+							labelPosition="<%=LabelPosition.AFTER_VALUE%>"
 						/>
 						<meta:inputCell name="<%=CompanyContact.FKEY2_ATTRIBUTE%>"/>
 					</form:descriptionContainer>

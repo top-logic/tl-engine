@@ -718,6 +718,10 @@ div.dfListAdd {
 	margin-bottom: 0;
 }
 
+.rf_inputCell.rf_labelAfter label {
+	padding-left: var(--spacing-02);
+}
+
 .rf_inputCell .ace_editor div,
 .rf_inputCell .ace_editor {
 	line-height: 24px;

@@ -168,4 +168,11 @@ public enum LabelPosition implements ExternallyNamed {
 		}
 
 	}
+
+	/**
+	 * Converts <code>null</code> to {@link LabelPosition#DEFAULT}.
+	 */
+	public static LabelPosition nonNull(LabelPosition labelPositionOrNull) {
+		return labelPositionOrNull == null ? LabelPosition.DEFAULT : labelPositionOrNull;
+	}
 }

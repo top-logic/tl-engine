@@ -240,14 +240,11 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 	}
 
 	static HTMLTemplateFragment createFieldTemplate(FormEditorContext context, FormMember member,
-			TLStructuredTypePart part, AttributeUpdate update, LabelPosition contextLabelPosition) {
+			TLStructuredTypePart part, AttributeUpdate update, LabelPosition defaultLabelPosition) {
 		String memberName = member.getName();
-		LabelPosition labelPosition = AttributeOperations.labelPosition(part, update);
+		LabelPosition labelPosition = AttributeOperations.labelPositionOrNull(part, update);
 		if (labelPosition == null) {
-			labelPosition = contextLabelPosition;
-		}
-		if (labelPosition == null) {
-			labelPosition = LabelPosition.DEFAULT;
+			labelPosition = defaultLabelPosition;
 		}
 		switch (labelPosition) {
 			case AFTER_VALUE:

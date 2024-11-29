@@ -196,13 +196,21 @@ public class TableRowFilter implements Filter<Object> {
 		for (int i = 0; i < activeFilters.size(); i++) {
 			if (filterResult.isFilterApplicable(i)) {
 				if (filterResult.doOtherFiltersAllow(i)) {
-					countFilterHolder(filterResult, activeFilters.get(i));
+					countFilterMatch(filterResult, activeFilters.get(i));
 				}
 			}
 		}
 	}
 
-	private void countFilterHolder(FilterResult filterResult, ColumnFilterHolder columnFilterHolder) {
+	private void countVisibleFilterMatches(FilterResult filterResult) {
+		if (filterResult.doAllFilterAccept()) {
+			for (ColumnFilterHolder columnFilterHolder : visibleFilters) {
+				countFilterMatch(filterResult, columnFilterHolder);
+			}
+		}
+	}
+
+	private void countFilterMatch(FilterResult filterResult, ColumnFilterHolder columnFilterHolder) {
 		CellExistenceTester cellExistenceTester = columnFilterHolder.getCellExistenceTester();
 		Object evaluatedRow = filterResult.getEvaluatedRow();
 		if (cellExistenceTester.isCellExistent(evaluatedRow, columnFilterHolder.getFilterPosition())) {
@@ -224,14 +232,6 @@ public class TableRowFilter implements Filter<Object> {
 			return Utils.equals(singleCountState, cellValue);
 		}
 		return true;
-	}
-
-	private void countVisibleFilterMatches(FilterResult filterResult) {
-		if (filterResult.doAllFilterAccept()) {
-			for (ColumnFilterHolder columnFilterHolder : visibleFilters) {
-				countFilterHolder(filterResult, columnFilterHolder);
-			}
-		}
 	}
 
 	/**

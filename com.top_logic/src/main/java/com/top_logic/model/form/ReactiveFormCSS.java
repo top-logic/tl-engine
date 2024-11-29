@@ -60,6 +60,13 @@ public interface ReactiveFormCSS {
 	String RF_LABEL_INLINE = "rf_labelInline";
 
 	/**
+	 * CSS class to mark a form cell in which the label is rendered after the value.
+	 * 
+	 * @see LabelPosition#AFTER_VALUE
+	 */
+	String RF_LABEL_AFTER = "rf_labelAfter";
+
+	/**
 	 * CSS class to mark that the label should be displayed above the value.
 	 * 
 	 * @see #RF_LABEL_INLINE

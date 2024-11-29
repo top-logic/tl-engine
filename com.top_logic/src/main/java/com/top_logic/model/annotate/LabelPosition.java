@@ -105,6 +105,8 @@ public enum LabelPosition implements ExternallyNamed {
 				return ReactiveFormCSS.RF_LABEL_ABOVE;
 			case INLINE:
 				return ReactiveFormCSS.RF_LABEL_INLINE;
+			case AFTER_VALUE:
+				return ReactiveFormCSS.RF_LABEL_AFTER;
 			default:
 				return null;
 		}

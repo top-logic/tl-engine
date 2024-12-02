@@ -179,6 +179,7 @@ public class IconReplacer extends DescendingRewriter {
 		{ "bi bi-x-lg", "fa-solid fa-xmark" },
 		{ "bi bi-x-octagon-fill", "fa-solid fa-triangle-exclamation" },
 		{ "bi bi-x-square-fill", "fa-solid fa-square-xmark" },
+		{ "bi bi-chevron-expand", "fa-solid fa-angles-down" },
 	};
 
 	private Pattern _pattern;

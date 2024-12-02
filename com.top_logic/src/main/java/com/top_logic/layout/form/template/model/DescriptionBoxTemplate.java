@@ -15,7 +15,6 @@ import com.top_logic.layout.form.boxes.reactive_tag.DescriptionCellControl;
 import com.top_logic.layout.form.template.model.internal.TemplateRenderer;
 import com.top_logic.layout.template.WithProperties;
 import com.top_logic.model.annotate.LabelPosition;
-import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
  * {@link HTMLTemplateFragment} creating a label and content box.
@@ -37,8 +36,6 @@ public class DescriptionBoxTemplate implements Template {
 	/** Width of the first column for created {@link FormMember}s. */
 	public static final String FIRST_COLUMN_WIDTH = "140px";
 
-	private LabelPlacement _labelPlacement;
-
 	/**
 	 * Creates a {@link DescriptionBoxTemplate}.
 	 * 
@@ -48,15 +45,11 @@ public class DescriptionBoxTemplate implements Template {
 	 *        See {@link #getContent()}.
 	 * @param labelPosition
 	 *        See {@link #getLabelPosition()}.
-	 * @param labelPlacement
-	 *        Where the label is placed.
 	 */
-	DescriptionBoxTemplate(HTMLTemplateFragment label, HTMLTemplateFragment content, LabelPosition labelPosition,
-			LabelPlacement labelPlacement) {
+	DescriptionBoxTemplate(HTMLTemplateFragment label, HTMLTemplateFragment content, LabelPosition labelPosition) {
 		_label = label;
 		_content = content;
 		_labelPosition = labelPosition;
-		_labelPlacement = labelPlacement;
 	}
 
 	/**
@@ -103,7 +96,6 @@ public class DescriptionBoxTemplate implements Template {
 			descriptionCell.setWholeLine(renderWholeLine.booleanValue());
 		}
 		descriptionCell.setLabelPosition(getLabelPosition());
-		descriptionCell.setLabelPlacement(_labelPlacement);
 
 		TemplateRenderer.renderControl(displayContext, out, descriptionCell);
 	}

@@ -3,9 +3,7 @@
 %><%@taglib uri="ajaxform" prefix="form"
 %><%@page import="com.top_logic.demo.chart.flex.ChartSelector"
 %><layout:html>
-	<layout:head>
-		
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<form:form>
 			<form:select name="<%=ChartSelector.CHARTS_FIELD%>"

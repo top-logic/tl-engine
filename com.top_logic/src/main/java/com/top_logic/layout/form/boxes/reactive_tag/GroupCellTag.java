@@ -33,7 +33,7 @@ import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutConstants;
 import com.top_logic.mig.html.layout.MainLayout;
-import com.top_logic.model.form.definition.LabelPlacement;
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.util.css.CssUtil;
 
 /**
@@ -311,18 +311,27 @@ public class GroupCellTag extends AbstractBodyTag implements FormContainerTag, C
 	 * 
 	 * @param labelAbove
 	 *        If <code>true</code> label is rendered above, else it will be rendered before.
+	 * @deprecated Use {@link #setLabelPosition(LabelPosition)}
 	 */
+	@Deprecated
+	@CalledFromJSP
 	public void setLabelAbove(boolean labelAbove) {
-		settings().setLabelPlacement(labelAbove ? LabelPlacement.ABOVE : LabelPlacement.INLINE);
+		settings().setLabelPosition(labelAbove ? LabelPosition.ABOVE : LabelPosition.INLINE);
 	}
 
 	/**
-	 * Returns whether the label is rendered above the content.
-	 * 
-	 * @return If <code>true</code> label is rendered above, else it will be rendered before.
+	 * The {@link LabelPosition} default for the whole group.
 	 */
-	public boolean getLabelAbove() {
-		return settings().getLabelAbove();
+	@CalledFromJSP
+	public void setLabelPosition(LabelPosition value) {
+		settings().setLabelPosition(value);
+	}
+
+	/**
+	 * Default {@link LabelPosition} for the whole group, or <code>null</code> if not set.
+	 */
+	public LabelPosition getLabelPosition() {
+		return settings().getLabelPosition();
 	}
 
 	/**

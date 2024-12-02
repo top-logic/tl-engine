@@ -34,9 +34,6 @@
 	<size name="com.top_logic.layout.form.treetable.component.Icons.FROZEN_TREE_TABLE_TITLE_HEIGHT"
 		expr="%com.top_logic.layout.form.treetable.component.Icons.FROZEN_TABLE_TITLE_HEIGHT%"
 	/>
-	<int name="com.top_logic.layout.layoutRenderer.Icons.LAYOUT_ADJUSTMENT_GRABBER_COLLAPSED_SIZE"
-		value="16"
-	/>
 	<int name="com.top_logic.layout.layoutRenderer.Icons.LAYOUT_ADJUSTMENT_GRABBER_EXPANDED_SIZE"
 		value="16"
 	/>
@@ -53,7 +50,7 @@
 		value="40px"
 	/>
 	<int name="MAIN_LAYOUT_SIDE_BORDER"
-		value="16"
+		value="0"
 	/>
 	<int name="MAIN_NAVIGATION_BAR_HEIGHT"
 		value="32"
@@ -73,6 +70,15 @@
 	<int name="com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT"
 		value="40"
 	/>
+	<int name="com.top_logic.layout.structure.Icons.FORM_COLUMN_GAP"
+		value="32"
+	/>
+	<int name="com.top_logic.layout.structure.Icons.FORM_PADDING"
+		value="16"
+	/>
+	<int name="com.top_logic.layout.structure.Icons.FORM_INPUT_MIN_WIDTH"
+		value="200"
+	/>
 	<size name="tabbar-height"
 		value="32px"
 	/>
@@ -90,9 +96,6 @@
 	/>
 	<size name="com.top_logic.layout.structure.Icons.DIALOG_VERTICAL_BORDER_WIDTH"
 		value="10px"
-	/>
-	<string name="com.top_logic.layout.structure.Icons.FORM_BREAKPOINTS"
-		value="[700, 1000, 1500, 2000, 2500]"
 	/>
 	<string name="spacing-01"
 		value=".25rem"

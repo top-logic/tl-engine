@@ -127,8 +127,13 @@ private String quote(String string) {
 						<tr>
 							<td>
 								<p>
-									<button class="tlButton cButton cmdButton" name="SUBMIT" type="submit">
-										<h4 class="tlButtonLabel"><%=RUN_BUTTON%></h4>
+									<button class="tlButton cButton cmdButton"
+										name="SUBMIT"
+										type="submit"
+									>
+										<h4 class="tlButtonLabel">
+											<%=RUN_BUTTON%>
+										</h4>
 									</button>
 								</p>
 							</td>

@@ -38,7 +38,7 @@ public class FileUtil {
 	 */
 	public static void handleFile(String arg, FileHandler tool) throws Exception {
 		for (String fileName : arg.split(File.pathSeparator)) {
-			tool.handleFile(fileName);
+			tool.handleFile(new File(fileName).getCanonicalPath());
 		}
 	}
 

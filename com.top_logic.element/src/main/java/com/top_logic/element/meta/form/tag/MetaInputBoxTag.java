@@ -10,6 +10,7 @@ import jakarta.servlet.jsp.PageContext;
 import jakarta.servlet.jsp.tagext.BodyTag;
 import jakarta.servlet.jsp.tagext.Tag;
 
+import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.knowledge.wrap.Wrapper;
@@ -19,6 +20,7 @@ import com.top_logic.layout.form.boxes.reactive_tag.GroupCellTag;
 import com.top_logic.layout.form.tag.FormTag;
 import com.top_logic.layout.form.tag.util.BooleanAttribute;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.LabelPosition;
 
 /**
  * Short-cut for rendering <code>meta:label</code> and <code>meta:attribute</code> within a
@@ -38,7 +40,7 @@ public class MetaInputBoxTag extends GroupedMetaInputTag {
 
 	private boolean _colon = com.top_logic.layout.form.boxes.reactive_tag.Icons.COLON.get();
 
-	private Boolean _labelAbove;
+	private LabelPosition _labelPosition;
 
 	private BooleanAttribute _wholeLine = new BooleanAttribute();
 
@@ -131,28 +133,20 @@ public class MetaInputBoxTag extends GroupedMetaInputTag {
 
 	/**
 	 * @see DescriptionCellTag#setLabelAbove(boolean)
+	 * @deprecated Use {@link #setLabelPosition(LabelPosition)}
 	 */
+	@Deprecated
+	@CalledFromJSP
 	public void setLabelAbove(boolean labelAbove) {
-		_labelAbove = labelAbove;
+		_labelPosition = labelAbove ? LabelPosition.ABOVE : LabelPosition.INLINE;
 	}
 
-	private boolean getLabelAbove() {
-		Boolean labelAbove = null;
-
-		GroupCellTag groupCellParent = getGroupCellParent();
-		if (_labelAbove != null) {
-			labelAbove = _labelAbove;
-		} else {
-			if (groupCellParent != null) {
-				labelAbove = groupCellParent.getLabelAbove();
-			}
-
-			if (labelAbove == null) {
-				labelAbove = com.top_logic.layout.form.boxes.reactive_tag.Icons.LABEL_ABOVE.get();
-			}
-		}
-
-		return labelAbove.booleanValue();
+	/**
+	 * The {@link LabelPosition}.
+	 */
+	@CalledFromJSP
+	public void setLabelPosition(LabelPosition labelPosition) {
+		_labelPosition = labelPosition;
 	}
 
 	/**
@@ -226,9 +220,7 @@ public class MetaInputBoxTag extends GroupedMetaInputTag {
 		} else {
 			_cell.setWholeLine(AttributeOperations.renderWholeLine(getMetaAttribute(), getAttributeUpdate()));
 		}
-		if (_labelAbove != null) {
-			_cell.setLabelAbove(_labelAbove);
-		}
+		_cell.setLabelPosition(_labelPosition);
 		_cell.setFirstColumnWidth(getFirstColumnWidth());
 		_cell.setFirstColumnWidth(getFirstColumnWidth());
 		if (_inputSize != -1) {

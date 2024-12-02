@@ -230,7 +230,7 @@
 				<generalization type="DemoTypes.All"/>
 			</generalizations>
 			<annotations>
-				<instance-presentation icon="css:bi bi-alarm-fill"/>
+				<instance-presentation icon="css:fa-solid fa-stopwatch"/>
 				<main-properties properties="name,boolean,string,float,date"/>
 				<legacy-qualified-name qualified-name="DemoTypes.A"/>
 				<dynamic-icon>
@@ -313,7 +313,11 @@
 				/>
 				<property name="offset"
 					type="DemoVec"
-				/>
+				>
+					<annotations>
+						<label-position value="above-value"/>
+					</annotations>
+				</property>
 				<property name="timeUnit"
 					type="DemoTime"
 				/>

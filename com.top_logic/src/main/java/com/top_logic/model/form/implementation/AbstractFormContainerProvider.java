@@ -13,8 +13,8 @@ import java.util.List;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.html.template.HTMLTemplateFragment;
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.form.definition.ContainerDefinition;
-import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
  * {@link FormElementTemplateProvider} which contains other {@link FormElementTemplateProvider}s within.
@@ -71,11 +71,11 @@ public abstract class AbstractFormContainerProvider<T extends ContainerDefinitio
 
 		addCssClassForContent(formFieldTemplates);
 
-		LabelPlacement labelPlacement = getConfig().getLabelPlacement();
+		LabelPosition labelPlacement = getConfig().getLabelPlacement();
 		for (FormElementTemplateProvider content : getContent()) {
 			if (content.isVisible(context)) {
 				HTMLTemplateFragment innerTemplate =
-					context.withLabelPlacement(labelPlacement, content::createTemplate);
+					context.withLabelPosition(labelPlacement, content::createTemplate);
 				formFieldTemplates.add(innerTemplate);
 			}
 		}

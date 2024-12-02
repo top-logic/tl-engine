@@ -116,7 +116,7 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 		template.setDataId(id);
 		template.setHasBorder(config.getShowBorder());
 		template.setHasLegend(config.getShowTitle());
-		template.setLabelPlacement(config.getLabelPlacement());
+		template.setLabelPosition(config.getLabelPlacement());
 		template.setPreventCollapse(!config.getCollapsibleValue());
 		if (config.getStyle() != null) {
 			template.setStyle(config.getStyle());

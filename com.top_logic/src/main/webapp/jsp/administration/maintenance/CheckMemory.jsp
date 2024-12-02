@@ -39,8 +39,7 @@ Format theFormat = HTMLFormatter.getInstance().getDoubleFormat();
 		<basic:access>
 			<table style="width: 100%; border: 0px;">
 				<tr>
-					<td	colspan="2"
-					>
+					<td colspan="2">
 						<h3>
 							Memory MXBean
 						</h3>

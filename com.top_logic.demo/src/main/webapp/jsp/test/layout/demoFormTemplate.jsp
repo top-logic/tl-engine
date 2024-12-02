@@ -12,8 +12,6 @@ DemoFormTemplate theComponent = (DemoFormTemplate) MainLayout.getComponent(pageC
 %><layout:html>
 	<layout:head/>
 	<layout:body>
-		
-
 		<form:form>
 			<form:groupCell titleKeySuffix="info.legend">
 				<form:cell wholeLine="true">

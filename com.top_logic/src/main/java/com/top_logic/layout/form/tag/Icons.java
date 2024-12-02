@@ -59,7 +59,7 @@ public class Icons extends IconsBase {
 
 	public static ThemeImage DELETE_BUTTON_DISABLED;
 
-	@DefaultValue("css:bi bi-arrow-down")
+	@DefaultValue("css:fa-solid fa-arrow-down")
 	public static ThemeImage DOWN;
 
 	public static ThemeImage OPEN_CHOOSER;

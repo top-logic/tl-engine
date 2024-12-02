@@ -17,7 +17,7 @@ import com.top_logic.layout.DisplayDimension;
 @SuppressWarnings("javadoc")
 public class Icons extends IconsBase {
 
-	@DefaultValue("css:bi bi-bookmark-fill")
+	@DefaultValue("css:fa-solid fa-bookmark")
 	public static ThemeImage ADD_BOOKMARK;
 
 	public static ThemeImage BUTTON_REFRESH;

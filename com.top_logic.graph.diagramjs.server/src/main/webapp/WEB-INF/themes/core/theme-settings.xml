@@ -2,6 +2,6 @@
 
 <settings>
 	<icon name="ICON_SYNC"
-		value="css:bi bi-arrow-repeat"
+		value="css:fa-solid fa-arrows-rotate"
 	/>
 </settings>

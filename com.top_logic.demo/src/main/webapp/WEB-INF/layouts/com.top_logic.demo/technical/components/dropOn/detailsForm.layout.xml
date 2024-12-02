@@ -13,7 +13,7 @@
 			<button id="ID_0f2576fe_c33b_4279_ad95_3e862b94acc9"
 				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
 				clique="moveLeft"
-				image="css:bi bi-arrow-left"
+				image="css:fa-solid fa-arrow-left"
 				operation="null"
 				transaction="false"
 			>

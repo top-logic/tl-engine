@@ -18,13 +18,13 @@ import com.top_logic.layout.basic.ThemeImage;
 @SuppressWarnings("javadoc")
 public class Icons extends IconsBase {
 
-	@DefaultValue("css:bi bi-question-circle-fill yellow")
+	@DefaultValue("css:fa-solid fa-circle-question yellow")
 	public static ThemeImage STEP_ACTUAL;
 
-	@DefaultValue("css:bi bi-check-circle-fill green")
+	@DefaultValue("css:fa-solid fa-circle-check green")
 	public static ThemeImage STEP_FINISHED;
 
-	@DefaultValue("css:bi bi-question-circle-fill")
+	@DefaultValue("css:fa-solid fa-circle-question")
 	public static ThemeImage STEP_OPEN;
 
 	@DefaultValue("/spacer/right.png")

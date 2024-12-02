@@ -2,6 +2,6 @@
 
 <settings>
 	<icon name="ICONS_LARGE_CHART_SELECT60"
-		value="css: bi bi-pie-chart-fill"
+		value="css: fa-solid fa-chart-pie"
 	/>
 </settings>

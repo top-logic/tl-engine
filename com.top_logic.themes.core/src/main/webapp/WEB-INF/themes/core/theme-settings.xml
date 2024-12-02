@@ -1543,7 +1543,7 @@
 		expr="%ICONS_BUTTON_NEW_ELEMENT%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.CHEVRON_EXPAND"
-		value="css:fa-solid fa-angles-down"
+		value="css:fa-solid fa-chevron-down"
 	/>
 	<icon name="com.top_logic.layout.admin.component.Icons.TL_SERVICE_RUNNING"
 		expr="%ICONS_BUTTON_START%"

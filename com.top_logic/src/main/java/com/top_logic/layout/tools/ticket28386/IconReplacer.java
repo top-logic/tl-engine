@@ -205,7 +205,7 @@ public class IconReplacer extends DescendingRewriter {
 			}
 			pattern.append(Pattern.quote(replacement[0]));
 		}
-		pattern.append(")\\b(?!X-)");
+		pattern.append(")\\b(?!-)");
 
 		_pattern = Pattern.compile(pattern.toString());
 	}

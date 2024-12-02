@@ -10,6 +10,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -211,7 +212,12 @@ public class IconReplacer extends DescendingRewriter {
 
 	@Override
 	protected void handleFile(File file) throws IOException {
-		String contents = StreamUtilities.readAllFromStream(new FileInputStream(file));
+		Charset charSet = StandardCharsets.UTF_8;
+		if (file.getName().endsWith(".java") || file.getName().endsWith(".jsp")) {
+			charSet = StandardCharsets.ISO_8859_1;
+		}
+
+		String contents = StreamUtilities.readAllFromStream(new FileInputStream(file), charSet);
 
 		Matcher matcher = _pattern.matcher(contents);
 		if (matcher.find()) {
@@ -224,7 +230,7 @@ public class IconReplacer extends DescendingRewriter {
 
 			System.out.println("Updating: " + file.getAbsolutePath());
 			try (FileOutputStream out = new FileOutputStream(file)) {
-				try (OutputStreamWriter w = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {
+				try (OutputStreamWriter w = new OutputStreamWriter(out, charSet)) {
 					w.write(result.toString());
 				}
 			}

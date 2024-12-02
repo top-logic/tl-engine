@@ -696,10 +696,10 @@
 		expr="%ICONS_GEAR%"
 	/>
 	<icon name="ICONS_ADD_BUTTON"
-		expr="%ICON_PLUS%"
+		value="css:fa-solid fa-file-circle-plus"
 	/>
 	<icon name="ICON_PLUS"
-		value="css:fa-solid fa-file-circle-plus"
+		value="css:fa-solid fa-circle-plus"
 	/>
 	<icon name="ICONS_ADD_BUTTON_DISABLED"
 		expr="%ICONS_ADD_BUTTON%"

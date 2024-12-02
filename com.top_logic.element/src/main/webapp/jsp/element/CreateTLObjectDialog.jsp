@@ -5,9 +5,7 @@
 %><%@taglib uri="layout" prefix="layout"
 %><%@taglib uri="meta" prefix="meta"
 %><layout:html>
-	<layout:head>
-		
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<meta:formPage
 			subtitleField="<%=CreateAttributedStructuredElementComponent.PARAMETER_TYPE %>"

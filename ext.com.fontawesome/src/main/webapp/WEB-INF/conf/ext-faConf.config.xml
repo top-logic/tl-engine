@@ -7,11 +7,11 @@
 	<configs>
 		<config config:interface="com.top_logic.layout.form.control.IconInputControl$Config">
 			<resources>
-				<resource name="fa" resource="/webfonts/fontAwesomeMetadata.json">
+				<resource name="fa" resource="/style/fontawesome/metadata/icons.json">
 					<icon-mappings>
-						<icon-mapping style="brands" encoded-icon="css:fab fa-${name}" />
-						<icon-mapping style="solid" encoded-icon="css:fas fa-${name}" />
-						<icon-mapping style="regular" encoded-icon="css:far fa-${name}" />						
+						<icon-mapping style="brands" encoded-icon="css:fa-brands fa-${name}" />
+						<icon-mapping style="solid" encoded-icon="css:fa-solid fa-${name}" />
+						<icon-mapping style="regular" encoded-icon="css:fa-regular fa-${name}" />						
 					</icon-mappings>
 				</resource>
 			</resources>

@@ -2,8 +2,7 @@
 %><%@taglib uri="layout" prefix="layout"
 %><%@taglib uri="ajaxform" prefix="form"
 %><layout:html>
-	<layout:head>
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<form:formPage
 			actionImage="theme:ICONS_QUOTE48"

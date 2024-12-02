@@ -34,10 +34,10 @@ public class Icons extends IconsBase {
 
 	public static ThemeImage TAB_BAR_COMMANDS_MENU;
 
-	@DefaultValue("css:css:bi bi-chevron-left")
+	@DefaultValue("css:css:fa-solid fa-chevron-left")
 	public static ThemeImage TAB_LEFT_SCROLL_BUTTON;
 
-	@DefaultValue("css:bi bi-chevron-right")
+	@DefaultValue("css:fa-solid fa-chevron-right")
 	public static ThemeImage TAB_RIGHT_SCROLL_BUTTON;
 
 }

@@ -200,10 +200,13 @@ private static class RecalcSchedulerThread extends Thread {
 								<td>
 									<p>
 										<button class="tlButton cButton cmdButton"
-									            name="<%=doSimulate ? "SIMULATE" : "SUBMIT"%>"
-									            type="submit">
-									        <span class="tlButtonLabel"><%= REFRESH_BUTTON %></span>
-									    </button>
+											name="<%=doSimulate ? "SIMULATE" : "SUBMIT"%>"
+											type="submit"
+										>
+											<span class="tlButtonLabel">
+												<%= REFRESH_BUTTON %>
+											</span>
+										</button>
 									</p>
 								</td>
 							</tr>
@@ -214,9 +217,13 @@ private static class RecalcSchedulerThread extends Thread {
 				if (RESTART_LINK != null) {
 					%>
 					<p>
-						<button class="tlButton cButton cmdButton" onclick="self.location.href = '<%=component.getComponentURL(pageContext).getURL()%>';">
-					        <h4 class="tlButtonLabel"><%= RESTART_LINK %></h4>
-					    </button>
+						<button class="tlButton cButton cmdButton"
+							onclick="self.location.href = '<%=component.getComponentURL(pageContext).getURL()%>';"
+						>
+							<h4 class="tlButtonLabel">
+								<%= RESTART_LINK %>
+							</h4>
+						</button>
 					</p>
 					<%
 				}
@@ -271,19 +278,29 @@ private static class RecalcSchedulerThread extends Thread {
 								<p>
 									<%
 									if (RUN_BUTTON != null) {
-								        %>
-								        <button class="tlButton cButton cmdButton" name="SUBMIT" type="submit">
-								            <h4 class="tlButtonLabel"><%= RUN_BUTTON %></h4>
-								        </button>
-								        <%
-								    }
-								    if (SIMULATE_BUTTON != null) {
-								        %>
-								        <button class="tlButton cButton cmdButton" name="SIMULATE" type="submit">
-								            <h4 class="tlButtonLabel"><%= SIMULATE_BUTTON %></h4>
-								        </button>
-								        <%
-								    }
+										%>
+										<button class="tlButton cButton cmdButton"
+											name="SUBMIT"
+											type="submit"
+										>
+											<h4 class="tlButtonLabel">
+												<%= RUN_BUTTON %>
+											</h4>
+										</button>
+										<%
+									}
+									if (SIMULATE_BUTTON != null) {
+										%>
+										<button class="tlButton cButton cmdButton"
+											name="SIMULATE"
+											type="submit"
+										>
+											<h4 class="tlButtonLabel">
+												<%= SIMULATE_BUTTON %>
+											</h4>
+										</button>
+										<%
+									}
 									%>
 								</p>
 							</td>

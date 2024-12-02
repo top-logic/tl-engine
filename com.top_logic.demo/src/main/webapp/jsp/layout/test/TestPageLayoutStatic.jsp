@@ -7,7 +7,7 @@
 %><%@taglib uri="ajaxform" prefix="form"
 %><layout:html>
 	<layout:head/>
-	
+
 	<layout:body>
 		<form:page pageRenderer="<%= StaticPageRenderer.INSTANCE %>">
 			<form:title>

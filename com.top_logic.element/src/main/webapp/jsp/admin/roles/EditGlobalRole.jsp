@@ -6,8 +6,7 @@
 %><%@taglib uri="ajaxform"   prefix="form"
 %><%@page import="com.top_logic.tool.boundsec.gui.EditRoleComponent"
 %><layout:html>
-	<layout:head>
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<form:form>
 			<%

@@ -46,7 +46,6 @@ import com.top_logic.model.annotate.TLCreateVisibility;
 import com.top_logic.model.annotate.TLVisibility;
 import com.top_logic.model.annotate.Visibility;
 import com.top_logic.model.form.definition.FormVisibility;
-import com.top_logic.model.form.definition.LabelPlacement;
 import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormMode;
@@ -164,7 +163,7 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 				if (member != null) {
 					HTMLTemplateFragment result =
 						createFieldTemplate(context, member, part, AttributeFormFactory.getAttributeUpdate(member),
-							context.getLabelPlacement());
+							context.getLabelPosition());
 					_member = member;
 					return result;
 				}
@@ -241,12 +240,13 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 	}
 
 	static HTMLTemplateFragment createFieldTemplate(FormEditorContext context, FormMember member,
-			TLStructuredTypePart part, AttributeUpdate update, LabelPlacement labelPlacement) {
+			TLStructuredTypePart part, AttributeUpdate update, LabelPosition defaultLabelPosition) {
 		String memberName = member.getName();
-		LabelPosition labelPosition = AttributeOperations.labelPosition(part, update);
+		LabelPosition labelPosition = AttributeOperations.labelPositionOrNull(part, update);
+		if (labelPosition == null) {
+			labelPosition = defaultLabelPosition;
+		}
 		switch (labelPosition) {
-			case DEFAULT:
-				return fieldBox(memberName, labelPlacement);
 			case AFTER_VALUE:
 				return fieldBoxInputFirst(memberName);
 			case HIDE_LABEL:
@@ -255,8 +255,9 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 				} else {
 					return fieldBoxNoLabel(memberName);
 				}
+			default:
+				return fieldBox(memberName, labelPosition);
 		}
-		throw LabelPosition.noSuchPosition(labelPosition);
 	}
 
 	private static FormMember createFormMember(AttributeFormContext formContext, FormContainer contentGroup,

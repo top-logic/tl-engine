@@ -190,7 +190,7 @@ div.fptIconBar > span.fptIconOverlay {
 	top: 0px !important;
     right: 5px !important;
     border-radius: 30px;
-    color: var(--icon-primary);
+    color: var(--button-fg, var(--icon-primary));
     background: var(--layer);
     padding: 4px;
 }
@@ -199,19 +199,14 @@ div.fptIconBar > span.fptIconOverlay {
 	display: flex;
 }
 
-.rf_label .cLabel label {
-	color: var(--text-secondary);
+.rf_label label {
+	font-weight: bold;
 	white-space: nowrap;
 }
 
 .rf_label {
 	white-space: nowrap;
 	margin: var(--spacing-02) 0;
-}
-
-.rf_label .cLabel label.disabled,
-label.disabled  {
-	color: var(--text-disabled);
 }
 
 .mandatory.can-edit label:after {
@@ -322,7 +317,7 @@ span.can-edit {
 }
 
 .frmGroupExpand a {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .frmGroupExpand a:hover {
@@ -353,20 +348,26 @@ table.fhrTable {
 td.fhrLeft {
 	height: 2.5rem;
 	padding-right: var(--spacing-02);
-	background: var(--layer-accent);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 td.fhrMiddle {
 	vertical-align: middle;
 	height: 2.5rem;
 	width: 100%;
-	background: var(--layer-accent);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 td.fhrRight {
 	height: 2.5rem;
 	padding-right: var(--spacing-02);
-	background: var(--layer-accent);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 /* ================================= */
@@ -466,7 +467,7 @@ div.rf_buttons {
 }
 
 .rf_columnsLayout .rf_line.dfList {
-	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY));
+	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS));
 	/* width: calc(100% - 25px); */
   	box-sizing: border-box;
   	overflow: hidden;
@@ -481,7 +482,12 @@ div.rf_buttons {
   	box-sizing: border-box;
  }	
 
-.cMediaQuery.dflSize1 .rf_columnsLayout:not(.keep) > *:not(.rf_line),
+.cMediaQuery.dflSize1 .rf_columnsLayout:not(.keep) > *:not(.rf_line) { 
+  	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+ 	width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+  	box-sizing: border-box;
+}
+
 .cMediaQuery.dflSize2 .rf_columnsLayout:not(.keep) > *:not(.rf_line),
 .cMediaQuery:is(.dflSize3, .dflSize4, .dflSize5) .rf_columnsLayout.cols2:not(.keep) > *:not(.rf_line) { 
   	min-width: calc(50% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
@@ -512,12 +518,12 @@ div.rf_buttons {
 
 /* content of a group */
 .dflSize0 .rf_content,
+.dflSize1 .rf_content,
 .keep.cols1 {
 	/* avoid creating more columns than possible, use cols classes manually in those cases */
 	grid-template-columns: repeat(1, 1fr); 
 }
 
-.dflSize1 .rf_content,
 .dflSize2 .rf_content,
 .keep.cols2 {
 	grid-template-columns: repeat(2, 1fr); 
@@ -546,13 +552,11 @@ div.rf_buttons {
 	align-items: center;
 	gap: var(--spacing-03);
 	height: 2.5rem;
-	background: var(--layer-accent);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 	padding: 0 var(--spacing-03);
 	white-space: nowrap;
-}
-
-.dfEntryTitle.colored a {
-	color: var(--text-primary);
 }
 
 .dfEntryTitle label {
@@ -560,7 +564,9 @@ div.rf_buttons {
 }
 
 .dfEntryTitle.colored:hover {
-	background: var(--layer-accent-hover);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 .dfEntryTitle.colored .lFixedRight,
@@ -593,7 +599,7 @@ div.dfListAdd {
     align-items: center;
     justify-content: center;
     align-self: center;
-    color: var(--icon-primary);
+    color: var(--button-fg, var(--icon-primary));
     height: 1rem;
     width: 1rem;
 }
@@ -603,11 +609,11 @@ div.dfListAdd {
 }
 
 .dfListContent > .rf_columnsLayout {
-	margin-left: calc(-1*var(--RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY));
+	margin-left: calc(-1*var(RF_HORIZONTAL_GAP_COLUMNS));
 }
 
 .dfListContent > .rf_columnsLayout > *:not(body) {
-	margin-left: var(--RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY);
+	margin-left: var(RF_HORIZONTAL_GAP_COLUMNS);
 }
 
 .cMediaQuery.dflSize0 .dfListContent .rf_columnsLayout > .dfListEntry,
@@ -687,7 +693,7 @@ div.dfListAdd {
 .rf_inputCell:not(.rf_noLabel) {
 	display: grid;
 	grid-template-columns: minmax(var(--RF_FIRST_COLUMN_WIDTH), max-content) minmax(0, 1fr);
-	grid-gap: var(--spacing-02) var(--spacing-02);
+	grid-gap: var(--RF_LABEL_PADDING) var(--spacing-02);
 }
 
 .rf_inputCell > div:nth-child(1) {
@@ -697,8 +703,6 @@ div.dfListAdd {
 
 .rf_labelAbove.rf_inputCell:not(.keepInline) > div:nth-child(2),
 .cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),
-.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),
-.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),
 .rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2) {
 	grid-row: 2;
 	grid-column: 1;
@@ -706,14 +710,16 @@ div.dfListAdd {
 
                                         .rf_labelAbove.rf_inputCell:not(.keepInline),
 .cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel),
-.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1):not(.keep) > .rf_inputCell:not(.keepInline):not(.rf_noLabel),
-.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline):not(.rf_noLabel),
 .rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel) {
 	display: grid;
 	grid-template-columns: minmax(0px, 1fr);
 	grid-template-rows: 24px 1fr;
 	line-height: 24px;
 	margin-bottom: 0;
+}
+
+.rf_inputCell.rf_labelAfter label {
+	padding-left: var(--spacing-02);
 }
 
 .rf_inputCell .ace_editor div,
@@ -727,6 +733,25 @@ div.dfListAdd {
 
 .i18nStringTable p {
 	margin-top: 0px;
+}
+
+.tl-i18n-row {
+	display: flex;
+	gap: var(--spacing-02);
+	margin: var(--spacing-02) 0;
+}
+
+.tl-i18n-lang {
+	min-width: 10ex;
+}
+
+.tl-i18n-input {
+	flex-grow: 1;
+	display: flex;
+}
+
+.tl-i18n-input > .cTextInput {
+	flex-grow: 1;
 }
 
 .rf_content table.schedulingAlgorithm {
@@ -785,7 +810,7 @@ div.dfListAdd {
     align-items: center;
     gap: var(--spacing-02);
     color: var(--highlight-fg, inherit);
-    background: var(--highlight-bg, var(--layer-accent));
+    background: var(--highlight-bg, var(--layer));
     padding: var(--spacing-02) var(--spacing-03);
     white-space: nowrap;
     height: 2.5rem;
@@ -794,7 +819,7 @@ div.dfListAdd {
 }
 
 .rf_groupCell .rf_header:hover {
-	background: var(--highlight-bg--hover, var(--layer-accent-hover));
+	background: var(--highlight-bg--hover, var(--layer-hover));
 }
 
 .rf_groupCell .rf_header a:hover {
@@ -1015,7 +1040,9 @@ div.dfListAdd {
 
 .cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .rf_dropTarget.rf_parent {
 	border: 1px dashed #7695C3;
-	background: var(--layer-accent);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 /* do not mark locked areas */
@@ -1229,7 +1256,7 @@ div.cal_view {
 }
 
 .cal_titlebar a {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .cal_titlebar a:hover {
@@ -1536,7 +1563,7 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
 .cIntegerInput.num .lFixedRight {
 	display: inline-flex;
 	align-items: stretch;
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 	background-color: var(--field);
 }
 
@@ -1551,7 +1578,7 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: var(--icon-primary);
+    color: var(--button-fg, var(--icon-primary));
     height: 2rem;
     width: 2rem;
 }
@@ -2359,6 +2386,8 @@ div.imageContainer {
 
 .cIconChooser .fptBodyContent .displayedIcons {
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 .cIconChooser .fptBodyContent .displayedIcons.selected {
@@ -2371,7 +2400,7 @@ div.imageContainer {
 
 .cIconChooser i {
     font-size: 1rem;
-    color: var(--icon-primary);
+    color: var(--button-fg, var(--icon-primary));
 }
 
 .cIconChooser div.header {
@@ -2407,6 +2436,8 @@ div.imageContainer {
 	border: 1px solid var(--border-strong);
 	border-radius: var(--corner-radius);
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 .cIconChooser .input-image:hover {
@@ -2560,7 +2591,7 @@ a.input-image.tristate .bi-info-square {
 }
 
 a.input-image.tristate.tBoolean {
-	color: var(--icon-primary)
+	color: var(--button-fg, var(--icon-primary))
 }
 
 /* ============================================= */
@@ -2642,7 +2673,7 @@ span.disabled .ddwttDropBtn {
 }
 
 .ddwttDropBtnActive .ddwttChevron i {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 /* DropDown */
@@ -2778,7 +2809,7 @@ img.ddwttItemIcon {
 }
 
 .ddwttTagX i {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 /* Tooltip */

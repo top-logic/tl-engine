@@ -252,6 +252,9 @@ public class IconReplacer extends DescendingRewriter {
 			|| (file.getName().endsWith(".java") && !file.getName().equals("IconReplacer.java"));
 	}
 
+	/**
+	 * Main entry point for the tool.
+	 */
 	public static void main(String[] args) throws Exception {
 		new IconReplacer().runMain(args);
 	}

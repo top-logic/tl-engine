@@ -62,7 +62,7 @@
 		value="css:fa-solid fa-shield"
 	/>
 	<icon name="com.top_logic.element.comment.layout.Icons.EDIT"
-		value="css:fa-solid fa-square-pen"
+		value="css:fa-solid fa-arrow-up-right-from-square"
 	/>
 	<icon name="com.top_logic.element.comment.layout.Icons.EDIT_DISABLED"
 		expr="%com.top_logic.element.comment.layout.Icons.EDIT%"

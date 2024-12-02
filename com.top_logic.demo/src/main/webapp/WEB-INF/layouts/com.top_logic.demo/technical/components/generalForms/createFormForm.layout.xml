@@ -19,7 +19,7 @@
 			<button id="ID_a0deba42_92d6_439d_83bd_3e3c8fbce00e"
 				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
 				form-apply="false"
-				image="css:bi bi-plus-circle"
+				image="css:fa-solid fa-circle-plus"
 				operation="input -> new(`DemoTypes:A`, transient: true)"
 				transaction="false"
 			>

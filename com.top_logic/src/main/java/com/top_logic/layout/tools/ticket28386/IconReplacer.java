@@ -231,6 +231,15 @@ public class IconReplacer extends DescendingRewriter {
 	}
 
 	@Override
+	protected boolean shouldDescend(File dir) {
+		if (dir.getName().equals("target") && dir.isDirectory()) {
+			return false;
+		}
+
+		return super.shouldDescend(dir);
+	}
+
+	@Override
 	protected boolean matches(File file) {
 		return file.getName().endsWith(".xml") || file.getName().endsWith(".css") || file.getName().endsWith(".jsp")
 			|| (file.getName().endsWith(".java") && !file.getName().equals("IconReplacer.java"));

@@ -22,7 +22,7 @@ public abstract class DescendingRewriter extends Rewriter {
 		if (file.getName().startsWith(".")) {
 			return;
 		}
-		if (file.isDirectory()) {
+		if (file.isDirectory() && shouldDescend(file)) {
 			File[] contents = file.listFiles();
 			if (contents != null) {
 				for (File content : contents) {
@@ -34,6 +34,16 @@ public abstract class DescendingRewriter extends Rewriter {
 				handleFile(file);
 			}
 		}
+	}
+
+	/**
+	 * Whether to descend into the given directory.
+	 * 
+	 * @param dir
+	 *        The directory that is checked.
+	 */
+	protected boolean shouldDescend(File dir) {
+		return true;
 	}
 
 	/**

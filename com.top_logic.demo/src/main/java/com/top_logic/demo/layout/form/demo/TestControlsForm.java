@@ -2805,14 +2805,14 @@ public class TestControlsForm extends FormComponent {
 		FormGroup mkRow() {
 			FormGroup row = new FormGroup("row-" + _ids.createNewID(), PlainKeyResources.INSTANCE);
 			CommandField addRow = new ADD_ROW("addRow");
-			addRow.setLabel("+");
+			addRow.setLabel("Add row");
 			row.addMember(addRow);
 			FormArray values = new FormArray("values", ResPrefix.NONE);
 			row.addMember(values);
 			FormMember value = mkValue();
 			values.addMember(value);
 			CommandField addValue = new ADD_VALUE("addValue");
-			addValue.setLabel("+");
+			addValue.setLabel("Add value");
 			row.addMember(addValue);
 			return row;
 		}
@@ -2831,7 +2831,7 @@ public class TestControlsForm extends FormComponent {
 			group.addMember(valueInput);
 
 			CommandField removeValue = new REMOVE_VALUE("removeValue");
-			removeValue.setLabel("-");
+			removeValue.setLabel("Remove value");
 			group.addMember(removeValue);
 			return group;
 		}

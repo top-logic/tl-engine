@@ -111,14 +111,6 @@ public class I18NStringTagProvider implements DisplayProvider {
 	 */
 	public static class I18NStringControlRenderer extends DefaultControlRenderer<CompositeControl> {
 
-		private static final String TL_I18N_ROWS = "tl-i18n-rows";
-
-		private static final String TL_I18N_ROW = "tl-i18n-row";
-
-		private static final String TL_I18N_LANG = "tl-i18n-lang";
-
-		private static final String TL_I18N_INPUT = "tl-i18n-input";
-
 		private static final String TL_I18N_TRANSLATE = "tl-i18n-translate";
 
 		/** Instance of this class drawing language labels in same line as the fields. */
@@ -174,6 +166,7 @@ public class I18NStringTagProvider implements DisplayProvider {
 						out.endBeginTag();
 						{
 							writeLanguage(out, res, field);
+							writeTranslateButton(context, out, translateButton);
 							errorControl.write(context, out);
 						}
 						out.endTag(SPAN);
@@ -182,7 +175,6 @@ public class I18NStringTagProvider implements DisplayProvider {
 					if (field.isActive()) {
 						out.beginTag(SPAN, CLASS_ATTR, ReactiveFormCSS.RF_CELL);
 						fieldControl.write(context, out);
-						writeTranslateButton(context, out, translateButton);
 						out.endTag(SPAN);
 					} else {
 						out.beginTag(SPAN, CLASS_ATTR, ReactiveFormCSS.RF_CELL);
@@ -197,7 +189,9 @@ public class I18NStringTagProvider implements DisplayProvider {
 
 		private void writeLanguage(TagWriter out, Resources res, FormField field) {
 			Locale language = field.get(I18NField.LANGUAGE);
+			out.beginTag(LABEL);
 			out.writeText(InternationalizationEditor.translateLanguageName(res, language) + ":");
+			out.endTag(LABEL);
 		}
 
 		private void writeTranslateButton(DisplayContext context, TagWriter out, HTMLFragment translateButton)

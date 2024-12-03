@@ -3346,13 +3346,18 @@ services.form = {
 		itemLabelCl: "ddwttItemLabel",
 		mutObserver: null,
 
-		buttonDrop: function(button) {
+		buttonDrop: function(event, button) {
+			// Prevent other event handlers registered in the background of the drop-down to also fire.
+			if (event != null) {
+				event.stopPropagation();
+			}
+
 			const ddBoxOriginal = button.nextElementSibling;
 			let ddBox = this.getDDBox();
 			
 			const onGlobalChange = function() {
 				if (ddBox.contains(document.activeElement)) {
-					services.form.DropDownControl.buttonDrop(button);
+					services.form.DropDownControl.buttonDrop(null, button);
 				}
 			};
 
@@ -3426,7 +3431,7 @@ services.form = {
 			const callback = (mutationList) => {
 				mutationList.forEach((mutation) => {
 					if (mutation.type === "attributes") {
-						this.buttonDrop(button);
+						this.buttonDrop(null, button);
 					}
 				});
 			};
@@ -3595,7 +3600,7 @@ services.form = {
 						}
 					}
 					if (button.parentElement.classList.contains(this.activeCl)) {
-						this.buttonDrop(button);
+						this.buttonDrop(null, button);
 					}
 				}
 			}, 150);
@@ -3608,7 +3613,7 @@ services.form = {
 				button = this.getButton(ddBox);
 			} else {
 				if (multi) {
-					this.buttonDrop(button);
+					this.buttonDrop(null, button);
 					ddBox = this.getDDBox();
 					button = this.getButton(ddBox);
 				} else {
@@ -3701,7 +3706,7 @@ services.form = {
 						tempActive = activeItem;
 						
 					if (sourceBtn && !multi) {
-						this.buttonDrop(button);
+						this.buttonDrop(null, button);
 						ddList = this.getDDBox().querySelector("." + this.listCl);
 						activeItem = this.getActiveItem(button, ddList);
 					}
@@ -3710,7 +3715,7 @@ services.form = {
 						itemH = activeItem.getBoundingClientRect().height;
 						
 					if (sourceBtn && !multi) {
-						this.buttonDrop(button);
+						this.buttonDrop(null, button);
 						ddList = tempList;
 						activeItem = tempActive;
 					}
@@ -3791,14 +3796,14 @@ services.form = {
 					if (sourceBtn && !multi) {
 						return;
 					}
-					this.buttonDrop(button);
+					this.buttonDrop(null, button);
 					event.stopImmediatePropagation();
 					return;
 					
 				// [TAB] was pressed
 				case "Tab":
 					if (multi || !sourceBtn) {
-						this.buttonDrop(button);
+						this.buttonDrop(null, button);
 					}
 					return;
 
@@ -3820,7 +3825,7 @@ services.form = {
 			}
 
 			if (sourceBtn && !multi) {
-				this.buttonDrop(button);
+				this.buttonDrop(null, button);
 			}
 
 			let search = this.getDDBox().querySelector(":scope > ." + this.searchCl);
@@ -3868,7 +3873,7 @@ services.form = {
 			let ctrlID = ddBox.dataset.ctrlid;
 			
 			if (button.parentElement.classList.contains(this.activeCl)) {
-				this.buttonDrop(button);
+				this.buttonDrop(null, button);
 			}
 	
 			services.ajax.execute("dispatchControlCommand", {

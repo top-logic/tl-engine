@@ -144,7 +144,7 @@ public class GroupCellControl extends ConstantControl<HTMLFragment> implements C
 	}
 
 	/**
-	 * Script that toggles the expand/collapsed state of the group when the group header is clicked.
+	 * Script that prevents the toggle click, if the header receives a double click.
 	 */
 	@TemplateVariable("ondblclick")
 	public void writeOndDlClick(TagWriter out) throws IOException {

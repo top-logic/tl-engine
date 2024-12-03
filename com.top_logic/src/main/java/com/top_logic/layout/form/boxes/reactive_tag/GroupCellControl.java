@@ -128,7 +128,27 @@ public class GroupCellControl extends ConstantControl<HTMLFragment> implements C
 	 */
 	@TemplateVariable("onclick")
 	public void writeOnClick(TagWriter out) throws IOException {
-		TOGGLE.writeInvokeExpression(out, this);
+		out.write("const self = this;");
+		out.write("self.toggeling = true;");
+		out.write("setTimeout(function() {");
+		{
+			out.write("if (self.toggeling) {");
+			{
+				out.write("self.toggeling = false;");
+				TOGGLE.writeInvokeExpression(out, this);
+			}
+			out.write("}");
+		}
+		out.write("}, 250);");
+		out.write("return false;");
+	}
+
+	/**
+	 * Script that toggles the expand/collapsed state of the group when the group header is clicked.
+	 */
+	@TemplateVariable("ondblclick")
+	public void writeOndDlClick(TagWriter out) throws IOException {
+		out.write("this.toggeling = false;");
 	}
 
 	/**

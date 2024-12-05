@@ -281,7 +281,16 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 	public void tUpdate(TLStructuredTypePart part, Object value) {
 		AttributeUpdate update = getUpdate(part);
 		if (update == null) {
-			update = newCreateUpdate(part);
+			TLObject object = getEditedObject();
+			if (object == null) {
+
+				update = newCreateUpdate(part);
+
+			} else {
+				update = newEditUpdateDefault(part, false);
+			}
+			update.setDisabled(false);// set Flag _disabled to false in order to be able to save
+										// hidden attributes.
 		}
 
 		update.setValue(value);

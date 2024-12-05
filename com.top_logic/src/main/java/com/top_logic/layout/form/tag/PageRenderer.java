@@ -10,10 +10,12 @@ import static com.top_logic.mig.html.HTMLUtil.*;
 
 import java.io.IOException;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.Theme;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.component.SaveScrollPosition;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.mig.html.HTMLUtil;
@@ -184,11 +186,14 @@ public abstract class PageRenderer {
 	 * @see #writeSubtitleContent(DisplayContext, TagWriter, PageControl)
 	 */
 	public final void writeSubTitle(DisplayContext context, TagWriter out, PageControl pageControl) throws IOException {
-		beginSubTitle(out);
-		{
-			writeSubtitleContent(context, out, pageControl);
+		HTMLFragment subtitleContent = pageControl.getSubtitleContent();
+		if (subtitleContent != Fragments.empty()) {
+			beginSubTitle(out);
+			{
+				writeSubtitleContent(context, out, pageControl);
+			}
+			endSubTitle(out);
 		}
-		endSubTitle(out);
 	}
 
 	/**

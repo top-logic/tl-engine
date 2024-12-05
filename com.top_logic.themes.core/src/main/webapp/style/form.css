@@ -1672,12 +1672,23 @@ span.cIconSelect .input-image.cannot-edit i {
     letter-spacing: var(--body-02-letter-spacing);
 }
 
-.cDateInput input {
-    width: 7rem;
+.cIntegerInput.num input,
+.cPopupSelect input,
+.cDateInput input,
+.cTimeInput input {
+	padding-right: var(--spacing-01);
+}
+	
+.cDatetime .cTimeInput input {
+	padding: 0 var(--spacing-01);
 }
 
-.cTimeInput input {
-    width: 4.5rem;
+.cDateInput input {
+    width: 7em;
+}
+
+.cDatetime .cTimeInput input {
+    width: 3.5em !important;
 }
 
 .cTextInput.mandatory input,
@@ -1926,115 +1937,9 @@ span.disabled > span.lFlexible > select.tl-select:not( [multiple="multiple"] ) {
 	background-image: linear-gradient(45deg, transparent 49%, var(--icon-primary) 50%), linear-gradient(135deg, var(--icon-primary) 49%, transparent 50%);
 }
 
-.cPopupSelect .lFlexible, 
-.cPopupSelect .is-popup:not([size]), 
-.cIntegerInput .lFlexible, 
-.cIntegerInput .is-input:not([size]), 
-.cExpandableTextInput .lFlexible, 
-.cExpandableTextInput .is-input:not([size]), 
-.cTextInput:not(.searchIrrelevant) .is-input:not([size]), 
-.cBlockTextInput .lFlexible, 
-.cBlockTextInput .is-input:not([size]), 
-.dfList .dfListEntry .cTextInput:not(.searchIrrelevant) textarea.is-input {
-	box-sizing: border-box;
-	width: 100%;
-}
-
 .cExpandableTextInput .lFlexible,
 .cBlockTextInput .lFlexible {
 	display: inline-flex
-}
-
-/* 		Radio Buttons styles	*/
-/* Resets browser's default radio style. */
-input[type="radio"] {
-	-webkit-appearance: none;
-	appearance: none;
-	margin: 0;
-	padding: 0;
-	cursor: pointer;
-}
-
-input[type="radio"] {
-	align-self: center;
-	display: inline-grid;
-	place-content: center;
-	position: relative;
-	min-height: 1rem;
-	min-width: 1rem;
-	border-radius: 50%;
-	border: 1px solid var(--icon-primary);
-}
-
-input[type="radio"]::before {
- 	content: '';
- 	position: absolute;
- 	top: 50%;
- 	left: 50%;
- 	min-height: 0.5rem;
- 	min-width: 0.5rem;
- 	border-radius: 50%;
- 	background-color: var(--background);
-	transform: scale(0);
-}
-
-input[type="radio"]:checked::before {
- 	background-color: var(--icon-primary);
-	transform: scale(1) translate(-50%, -50%);
-}
-
-input[type="radio"]:focus {
-	box-shadow: inset 0 0 0 1px var(--focus);
-}
-
-/* 		Check Box styles	*/
-/* Resets browser's default checkbox styling. */
-input[type="checkbox"] {
-	-webkit-appearance: none;
-	appearance: none;
-	margin: 0;
-	padding: 0;
-	cursor: pointer;
-}
-
-input[type="checkbox"] {
-    display: inline-grid;
-    place-content: center;
-    position: relative;
-    height: 1rem;
-    width: 1rem;
-    border-radius: 1px;
-    border: 1px solid var(--icon-primary);
-}
-
-input[type="checkbox"]::before {
-    content: '';
-    position: absolute;
-    transform: translateY(-50%);
-    height: 100%;
-    width: 100%;
-    border-radius: 1px;
-    background-color: var(--background);
-    transform: scaleX(0);
-}
-
-input[type="checkbox"]:checked::before {
-	content: '\f633';
-	font-family: "bootstrap-icons";
-	font-size: .8rem;
-	display: inline-grid;
-    place-content: center;
-	color: var(--background);
-	background-color: var(--icon-primary);
-	transform: scaleX(1);
-}
-
-input[type="checkbox"]:checked:focus::before {
-	box-shadow: inset 0px 0px 0px .8px var(--focus),inset 0px 0px 0px 1.3px var(--focus-inset);
-}
-
-input[type="checkbox"]:focus {
-	box-shadow: inset 0px 0px 0px .8px var(--focus),inset 0px 0px 0px 1.3px var(--focus-inset);
 }
 
 /*
@@ -2042,12 +1947,19 @@ input[type="checkbox"]:focus {
 ****	ChoiceControl, bbc-option styles	****
 ****										****
 */
-.cBooleanChoice, .cChoice, 
-.ddwttContainer.cannot-edit {
+.cBooleanChoice,.cChoice {
     display: inline-flex;
     flex-wrap: wrap;
 	column-gap: var(--spacing-02);
 	row-gap: var(--spacing-02);
+}
+
+.tl-table__cell-container :is(.cBooleanChoice,.cChoice) {
+    flex-wrap: nowrap;
+}
+
+.gotoLink {
+	text-wrap: nowrap;
 }
 
 .cChoice-icon {
@@ -2143,6 +2055,7 @@ a img.type-image {
     vertical-align: middle;
 }
 
+.treeType,
 span.type-image,
 a img.type-image {
 	padding-right: var(--spacing-01);
@@ -2302,77 +2215,28 @@ div.imageContainer {
 /* ==================================== */
 /* ======    Icon Chooser css     ===== */
 /* ==================================== */
-.cIconChooser div.header .searchTextField input.is-input {
-    margin-top: 10px;
-    margin-left: 10px;
-    margin-bottom: 10px;
-	width: calc(96% - 67px);
-	padding-left: 23px;
+.cIconChooser > .header > .expertTextField input.is-input,
+.cIconChooser > .header > .searchTextField input.is-input {
 	height: 22px;
 }
 
-.cIconChooser div.header .expertTextField input.is-input {
-    margin-top: 10px;
-    margin-left: 10px;
-    margin-bottom: 10px;
-	width: calc(96% - 67px);
-	height: 22px;
-}
-
-.cIconChooser div.header a {
+.cIconChooser > .header a {
 	border: 0px;
 }
 
-.cIconChooser div.header .inputfield {
-	position: absolute;
-	top: 0px;
-	left: 0px;
-	width: 100%;
-}
-
-.cIconChooser div.header .resetButton,
-.cIconChooser div.header .okButton {
-	position: absolute;
-	bottom: 5px;
-	right: 35px;
-}
-
-.cIconChooser div.header .toggleExpertButton {
-	position: absolute;
-	bottom: 5px;
-	right: 5px;
-}
-
-.cIconChooser .searchTextField .search {
-	position: absolute;
-	top: 12px;
-	left: 12px;
+.cIconChooser > .header > .searchTextField .search {
 	color: var(--icon-secondary);
 }
 
 .cIconChooser .fptBodyContent .displayedIcons {
-	position: relative;
-	display: inline-block;
-    margin-bottom: 5px;
-    margin-right: 5px;
-	width: 30px;
-	height: 30px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 2rem;
+	width: 2rem;
+    margin-bottom: var(--spacing-01);
+    margin-right: var(--spacing-01);
 	border: 1px solid var(--border-subtle);
-}
-
-.cIconChooser a,
-.cIconChooser .input-image {
-	display: table-cell;
-	text-align: center;	
-	vertical-align: middle;
-}
-
-.cIconChooser div.header .toggleExpertButton a,
-.cIconChooser div.header .resetButton a,
-.cIconChooser div.header .okButton a,
-.cIconChooser .fptBodyContent .displayedIcons a {
-	width: 30px;
-	height: 30px;
 }
 
 .cIconChooser .fptBodyContent input {
@@ -2385,17 +2249,17 @@ div.imageContainer {
 }
 
 .cIconChooser .fptBodyContent .displayedIcons {
-	background-color: var(--layer-accent);
-	color: var(--layer-accent-text);
-	--button-fg: var(--layer-accent-icon);
+	background-color: var(--layer);
+	color: var(--layer-text);
+	--button-fg: var(--layer-icon);
 }
 
 .cIconChooser .fptBodyContent .displayedIcons.selected {
-	background-color: var(--layer-accent-selected);
+	background-color: var(--layer-selected);
 }
 
 .cIconChooser .fptBodyContent .displayedIcons:hover {
-	background-color: var(--layer-accent-hover);
+	background-color: var(--layer-hover);
 }
 
 .cIconChooser i {
@@ -2403,12 +2267,30 @@ div.imageContainer {
     color: var(--button-fg, var(--icon-primary));
 }
 
-.cIconChooser div.header {
+.cIconChooser > .header {
 	position: absolute;
 	left: 0px; 
 	top: 0px; 
 	height: 42px;
 	width: 100%;
+	
+	box-sizing: border-box;
+	padding: var(--spacing-02);
+	display: flex;
+	gap: var(--spacing-02);
+	align-items: center;
+	justify-content: center;
+}
+
+.cIconChooser > .header > .searchTextField {
+	flex-grow: 1;
+	position: relative;
+}
+
+.cIconChooser > .header > .searchTextField i {
+	position: absolute;
+	right: 2px;
+	top: 2px;
 }
 
 .cIconChooser div.fptBody {
@@ -2430,18 +2312,21 @@ div.imageContainer {
 }
 
 .cIconChooser .input-image {
-	height: 1.5rem;
-	width: 1.5rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 2rem;
+	width: 2rem;
 	padding: 0;
 	border: 1px solid var(--border-strong);
 	border-radius: var(--corner-radius);
-	background-color: var(--layer-accent);
-	color: var(--layer-accent-text);
-	--button-fg: var(--layer-accent-icon);
+	background-color: var(--layer);
+	color: var(--layer-text);
+	--button-fg: var(--layer-icon);
 }
 
 .cIconChooser .input-image:hover {
-	background-color: var(--layer-accent-hover);
+	background-color: var(--layer-hover);
 }
 
 .cIconChooser .input-image.disabled,
@@ -2450,11 +2335,8 @@ div.imageContainer {
 	background-color: none;
 }
 
-.cIconChooser, 
-.cIconChooser img {
-	display: inline-block;
-	min-height: 20px;
-	min-width: 20px;
+.cIconChooser {
+	display: flex;
 }
 
 .cIconChooser input.is-action {
@@ -2608,8 +2490,15 @@ a.input-image.tristate.tBoolean {
 	overflow: hidden;
 }
 
+.ddwttContainer.cannot-edit {
+    display: inline-flex;
+    flex-wrap: wrap;
+	column-gap: var(--spacing-02);
+	row-gap: var(--spacing-02);
+}
+
 .ddwttContainer.active {
-	display: flex;
+	display: inline-flex;
 	flex-wrap: wrap;
 }
 

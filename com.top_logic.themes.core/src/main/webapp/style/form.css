@@ -473,6 +473,7 @@ div.rf_buttons {
   	overflow: hidden;
 }
 
+.rf_columnsLayout.cols1 > .rf_inputCell,
 .rf_columnsLayout:not(.keep) > .rf_line,
 .cMediaQuery.dflSize0 .rf_columnsLayout:not(.keep) > *:not(.rf_line),
 .cMediaQuery:is(.dflSize0, .dflSize1, .dflSize2, .dflSize3, .dflSize4, .dflSize5) .rf_cell .rf_columnsLayout:not(.keep) > *:not(.rf_line),

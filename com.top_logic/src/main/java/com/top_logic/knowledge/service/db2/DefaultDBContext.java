@@ -1055,6 +1055,8 @@ class DefaultDBContext extends DBContext {
 	}
 
 	private void addChangeEvents(ChangeSet changeSet, Collection<DBKnowledgeItem> items) {
+		FlexAttributeFetch.INSTANCE.prepareKnowledgeItems(changeSet.getRevision() - 1, items);
+
 		for (DBKnowledgeItem changedItem : items) {
 			ItemChange change = changedItem.getChange();
 			if (change == null) {

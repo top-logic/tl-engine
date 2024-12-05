@@ -14,6 +14,8 @@ import com.top_logic.bpe.bpml.model.StartEvent;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
 import com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent;
+import com.top_logic.element.meta.form.AttributeFormContext;
+import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.gui.DefaultCreateAttributedCommandHandler;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormMember;
@@ -36,13 +38,15 @@ public class ExecutionProcessCreateHandler extends DefaultCreateAttributedComman
 			Map<String, Object> arguments) {
 
 		StartEvent startEvent = ((ProcessExecutionCreateComponent) component).startEvent();
-		ProcessExecution newObject = createProcessModel(startEvent);
 
-		Map<String, Object> values = extractValues(formContainer, startEvent);
-		values.putAll(arguments);
-		saveMetaAttributes(values, newObject);
+		// use store instead of extractValues
+		AttributeFormContext formContext = (AttributeFormContext) formContainer.getFormContext();
+		formContext.store();
 
-		ExecutionEngine.getInstance().init(newObject, startEvent);
+		TLFormObject creation = formContext.getAttributeUpdateContainer().getOverlay(null, null);
+		TLObject newObject = creation.getEditedObject();
+
+		ExecutionEngine.getInstance().init((ProcessExecution) newObject, startEvent);
 
 		return newObject;
 	}

@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
@@ -325,12 +326,11 @@ public abstract class AbstractSelectorComponent extends FormComponent
 	}
 
 	@Override
-	protected boolean receiveModelCreatedEvent(Object aModel, Object changedBy) {
-		if (aModel != null && supportsInternalModel(aModel)) {
-			invalidate();
-			return true;
-		} else {
-			return false;
+	protected void handleTLObjectCreations(Stream<? extends TLObject> created) {
+		if (!isInvalid()) {
+			if (created.filter(obj -> supportsInternalModel(obj)).findFirst().isPresent()) {
+				invalidate();
+			}
 		}
 	}
 

@@ -5,7 +5,7 @@
 		value="/mimetypes/tl/StoredQuery.png"
 	/>
 	<icon name="tl-model-search.command.updateSearchConsole"
-		value="css:fa-solid fa-circle-down"
+		value="css:fa-solid fa-database"
 	/>
 	<icon name="tl-model-search.command.executeSearchConsole"
 		value="css:fa-solid fa-play"

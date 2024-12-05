@@ -63,6 +63,7 @@
 						config-name="CODE"
 						legacy-type-code="1"
 					>
+						<label-position value="above-value"/>
 						<field-provider>
 							<impl class="com.top_logic.model.search.code.CodeEditorFieldProvider"/>
 						</field-provider>
@@ -91,6 +92,7 @@
 						config-name="JSON"
 						legacy-type-code="1"
 					>
+						<label-position value="above-value"/>
 						<code-editor-language value="ace/mode/json"/>
 						<tag-provider>
 							<impl class="com.top_logic.element.meta.form.tag.CustomInputTagProvider"
@@ -155,6 +157,7 @@
 						config-name="TEMPLATE"
 						legacy-type-code="1"
 					>
+						<label-position value="above-value"/>
 						<field-provider>
 							<impl class="com.top_logic.element.meta.form.fieldprovider.format.FormattedFieldProvider">
 								<configuration-format impl="com.top_logic.model.search.persistency.attribute.tempate.TemplateStorageMapping"/>
@@ -179,6 +182,7 @@
 						config-name="REPORT"
 						legacy-type-code="1"
 					>
+						<label-position value="above-value"/>
 						<field-provider>
 							<impl class="com.top_logic.element.meta.form.fieldprovider.format.FormattedFieldProvider">
 								<configuration-format impl="com.top_logic.model.search.persistency.attribute.tempate.TemplateStorageMapping"/>
@@ -203,6 +207,7 @@
 						config-name="MACRO"
 						legacy-type-code="1"
 					>
+						<label-position value="above-value"/>
 						<field-provider impl="com.top_logic.model.search.persistency.attribute.macro.ui.HiddenFieldProvider"/>
 						<tag-provider impl="com.top_logic.model.search.persistency.attribute.macro.ui.MacroTagProvider"/>
 						<pdf-renderer impl="com.top_logic.model.search.persistency.attribute.macro.ui.MacroPDFRenderer"/>

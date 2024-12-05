@@ -287,7 +287,7 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 		 * Height of the upload dialog.
 		 */
 		protected DisplayDimension getUploadHeight() {
-			return DisplayDimension.dim(500, DisplayUnit.PIXEL);
+			return DisplayDimension.dim(400, DisplayUnit.PIXEL);
 		}
 	
 		/**

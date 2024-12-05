@@ -72,41 +72,26 @@ div.fptPage {
     left: 0px;
     bottom: 0px;
     right: 0px;
+    
+    display: flex;
+    flex-direction: column;
 }
 
 div.fptBody {
-    position: absolute;
-    left: 0px;
-    right: 0px;
-    top: 78px;
-    bottom: 0px;
 	margin-top: var(--spacing-02);
 }
 
 div.fptBodyContent {
-	position: absolute;
-	left: 0px;
-	right: 0px;
-	top: 0px;
-	bottom: 0px;
 	padding: 0 var(--spacing-03);
 }
 
 div.fptTitle {
-    position: absolute;
-    left: 0px;
-    right: 0px;
-    height: 53px;
+	margin-top: var(--spacing-03);
     background-color: transparent;
 }
 
 div.fptTitleContent, 
 div.fptSubtitleContent {
-    position: absolute;
-    left: 0px;
-    right: 50px;
-    top: 0px;
-    bottom: 0px;
     white-space: nowrap;
     color: var(--text-primary);
 }
@@ -129,7 +114,8 @@ div.fptSubtitleContent {
 div.fptTitleContent {
 	display: flex;
 	align-items: center;
-	padding: 0 var(--spacing-03);
+	padding-left: var(--spacing-03);
+	padding-right: var(--spacing-06);
 }
 
 div.fptTitleContent .tlTranslatedI18nField, 
@@ -149,12 +135,8 @@ div.fptTitle select.is-input {
 }
 
 div.fptSubtitle {
-    position: absolute;
-    top: 53px;
-    left: 0px;
-    right: 0px;
-    height: 25px;
     overflow: hidden;
+	margin-top: var(--spacing-03);
 }
 
 div.fptSubtitleContent {
@@ -171,7 +153,7 @@ div.fptIconBar > span,
 .fptIcon, 
 .fptIconWithOverlay {
     position: absolute;
-    top: 10px;
+    top: 12px;
     right: 20px;
 }
 
@@ -187,7 +169,7 @@ div.fptIconBar > span.fptIconOverlay {
 
 .fptIconOverlay {
     position: absolute;
-	top: 0px !important;
+	top: 4px !important;
     right: 5px !important;
     border-radius: 30px;
     color: var(--button-fg, var(--icon-primary));

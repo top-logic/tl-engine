@@ -218,8 +218,7 @@
 
 				<datatype name="Duration" db_type="bigint" db_size="20" kind="Integer">
 					<storage-mapping 
-						class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping" 
-						application-type="java.lang.Long"
+						class="com.top_logic.element.meta.kbbased.storage.mappings.LongMapping" 
 					/>
 					
 					<annotations>

@@ -34,7 +34,7 @@ public class Icons extends IconsBase {
 
 	public static ThemeImage TAB_BAR_COMMANDS_MENU;
 
-	@DefaultValue("css:css:fa-solid fa-chevron-left")
+	@DefaultValue("css:fa-solid fa-chevron-left")
 	public static ThemeImage TAB_LEFT_SCROLL_BUTTON;
 
 	@DefaultValue("css:fa-solid fa-chevron-right")

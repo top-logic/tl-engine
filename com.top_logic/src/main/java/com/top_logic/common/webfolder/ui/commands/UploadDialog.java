@@ -23,6 +23,7 @@ import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.control.IconControl;
+import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
@@ -34,8 +35,9 @@ import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.messagebox.AbstractFormPageDialog;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.SimpleFormDialog;
-import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.Resources;
 
 /**
  * Upload dialog providing the {@link DataField} for identifying the file to be uploaded.
@@ -193,16 +195,25 @@ public abstract class UploadDialog extends AbstractFormPageDialog {
 	protected abstract UploadCommand createUploadCommand(UploadDialog dialog);
 
 	@Override
+	protected HTMLFragment createSubtitleContent() {
+		return Fragments.empty();
+	}
+
+	@Override
 	protected HTMLFragment createBodyContent() {
 		return div(FormConstants.FORM_BODY_CSS_CLASS,
-			div(
-				input(SimpleFormDialog.INPUT_FIELD),
-				text(HTMLConstants.NBSP),
-				errorIcon(SimpleFormDialog.INPUT_FIELD)),
-			div(
-				div(
-					label(DocumentVersion.DESCRIPTION),
-					div(
+			div(ReactiveFormCSS.RF_COLUMNS_LAYOUT + " cols1",
+				div(ReactiveFormCSS.RF_INPUT_CELL,
+					div(ReactiveFormCSS.RF_LABEL,
+						label(SimpleFormDialog.INPUT_FIELD),
+						errorIcon(SimpleFormDialog.INPUT_FIELD)),
+					div(ReactiveFormCSS.RF_CELL,
+						input(SimpleFormDialog.INPUT_FIELD))),
+				div(ReactiveFormCSS.RF_INPUT_CELL + " " + ReactiveFormCSS.RF_LABEL_ABOVE,
+					div(ReactiveFormCSS.RF_LABEL,
+						label(DocumentVersion.DESCRIPTION),
+						errorIcon(DocumentVersion.DESCRIPTION)),
+					div(ReactiveFormCSS.RF_CELL,
 						input(DocumentVersion.DESCRIPTION)))));
 	}
 
@@ -221,7 +232,8 @@ public abstract class UploadDialog extends AbstractFormPageDialog {
 
 		DataField dataField = FormFactory.newDataField(SimpleFormDialog.INPUT_FIELD, FormFactory.MULTIPLE,
 			new SimpleFileNameStrategy(blackList, whiteList));
-		dataField.setLabel("");
+		dataField.setLabel(Resources.getInstance().getString(I18NConstants.UPLOAD_DIALOG_FILES));
+		dataField.setTooltip(Resources.getInstance().getString(I18NConstants.UPLOAD_DIALOG_FILES.tooltip()));
 		dataField.setDownload(false);
 		dataField.setMaxUploadSize(_maxUploadSize);
 		context.addMember(dataField);

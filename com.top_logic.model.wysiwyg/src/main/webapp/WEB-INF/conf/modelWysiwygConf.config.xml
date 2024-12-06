@@ -46,7 +46,7 @@
 								<tooltipRenderer class="com.top_logic.layout.wysiwyg.ui.i18n.I18NHTMLRenderer"/>
 							</renderer>
 							<editControlProvider class="com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextPopupControl$CP"
-								dialogHeight="750"
+								dialogHeight="800"
 							>
 								<labelProvider class="com.top_logic.layout.form.control.FirstLineLabelProvider">
 									<fullTextProvider class="com.top_logic.layout.wysiwyg.ui.i18n.I18NHTMLTextExtractor"/>

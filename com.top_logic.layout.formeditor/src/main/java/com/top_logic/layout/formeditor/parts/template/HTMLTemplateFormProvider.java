@@ -377,10 +377,14 @@ public class HTMLTemplateFormProvider
 			for (String varName : _fragment.getVariables()) {
 				VariableDefinition<?> varDef = _vars.get(varName);
 				if (varDef == null) {
-					TLStructuredTypePart part = _model.tType().getPart(varName);
-					if (part != null) {
-						Object value = _model.tValue(part);
-						_args.put(varName, value);
+					if (_model == null) {
+						_args.put(varName, null);
+					} else {
+						TLStructuredTypePart part = _model.tType().getPart(varName);
+						if (part != null) {
+							Object value = _model.tValue(part);
+							_args.put(varName, value);
+						}
 					}
 				} else {
 					LayoutComponent component = FormComponent.componentForMember(_form.getFormContext());

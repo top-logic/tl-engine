@@ -17,33 +17,46 @@ import com.top_logic.layout.table.filter.CellExistenceTester;
 public class ColumnFilterHolder {
 	
 	private String filterPosition;
-	private Mapping filterValueMapping;
+	private Mapping<? super Object, ? super Object> filterValueMapping;
 	private TableFilter filter;
-
 	private CellExistenceTester cellExistenceTester;
 	
 	/**
 	 * Create a new {@link ColumnFilterHolder}.
 	 */
-	public ColumnFilterHolder(String filterPosition, TableFilter filter, Mapping filterValueMapping, CellExistenceTester cellExistenceTester) {
+	public ColumnFilterHolder(String filterPosition, TableFilter filter,
+			Mapping<? super Object, ? super Object> filterValueMapping,
+			CellExistenceTester cellExistenceTester) {
 		this.filterPosition = filterPosition;
 		this.filter = filter;
 		this.filterValueMapping = filterValueMapping;
 		this.cellExistenceTester = cellExistenceTester;
 	}
 
+	/**
+	 * @return column name, or global filter id, {@link #getFilter()} belongs to.
+	 */
 	public String getFilterPosition() {
 		return filterPosition;
 	}
 
+	/**
+	 * @return {@link TableFilter} of {@link #getFilterPosition()}.
+	 */
 	public TableFilter getFilter() {
 		return filter;
 	}
 
-	public Mapping getFilterValueMapping() {
+	/**
+	 * @return {@link Mapping Cell value mapping} of {@link #getFilterPosition()}.
+	 */
+	public Mapping<? super Object, ? super Object> getFilterValueMapping() {
 		return filterValueMapping;
 	}
 
+	/**
+	 * @return {@link CellExistenceTester} of {@link #getFilterPosition()}.
+	 */
 	public CellExistenceTester getCellExistenceTester() {
 		return cellExistenceTester;
 	}

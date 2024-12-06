@@ -77,9 +77,9 @@ public class I18NStringTextPopupControl extends PopupEditControl {
 	@Override
 	protected LayoutData getDialogLayout(FormField editField) {
 		if (editField instanceof I18NStringField && ((I18NStringField) editField).isMultiline()) {
-			return new DefaultLayoutData(dim(720, PIXEL), 100, dim(300, PIXEL), 100, Scrolling.AUTO);
+			return new DefaultLayoutData(dim(600, PIXEL), 100, dim(420, PIXEL), 100, Scrolling.AUTO);
 		}
-		return new DefaultLayoutData(dim(400, PIXEL), 100, dim(150, PIXEL), 100, Scrolling.AUTO);
+		return new DefaultLayoutData(dim(600, PIXEL), 100, dim(220, PIXEL), 100, Scrolling.AUTO);
 	}
 
 	/**

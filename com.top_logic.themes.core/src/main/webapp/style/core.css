@@ -1219,7 +1219,7 @@ td.rightList {
 	color: var(--button-secondary);
 	background: transparent;
 	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
-	height: 2.3rem; /* 36.8px height */
+	height: 2rem;
 	padding: var(--spacing-02) var(--spacing-03);
 	border-radius: .25rem;
 	border: none;

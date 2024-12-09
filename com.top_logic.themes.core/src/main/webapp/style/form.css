@@ -194,7 +194,6 @@ div.fptIconBar > span.fptIconOverlay {
 
 .rf_label {
 	white-space: nowrap;
-	margin: var(--spacing-02) 0;
 }
 
 .mandatory.can-edit label:after {
@@ -390,6 +389,19 @@ div.rf_buttons {
     margin-top: var(--spacing-03);
 }
 
+.rf_cell .rf_inputCell:first-child {
+    margin-top: 0;
+}
+
+.rf_cell .rf_inputCell:last-child {
+    margin-bottom: 0;
+}
+
+.rf_cell .rf_columnsLayout {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
 .rf_columnsLayout.keep {
 	margin-top: var(--spacing-02);
 	overflow: auto;
@@ -441,7 +453,7 @@ div.rf_buttons {
 /* even empty cells have a height */
 .rf_cell {
 	min-height: 1.5rem;
-	margin: var(--spacing-02) 0;
+	margin-bottom: var(--spacing-02);
 	box-sizing: border-box;
 	overflow-wrap: break-word;
 }
@@ -691,15 +703,13 @@ div.dfListAdd {
 }
 
 .rf_labelAbove.rf_inputCell:not(.keepInline) > div:nth-child(2),
-.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),
-.rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2) {
+.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2) {
 	grid-row: 2;
 	grid-column: 1;
 }
 
                                         .rf_labelAbove.rf_inputCell:not(.keepInline),
-.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel),
-.rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel) {
+.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel) {
 	display: grid;
 	grid-template-columns: minmax(0px, 1fr);
 	grid-template-rows: 24px 1fr;
@@ -718,6 +728,10 @@ div.dfListAdd {
 
 .rf_invisible {
 	display: none;	
+}
+
+.rf_cell p.wikiText:first-child {
+	margin-top: 0;
 }
 
 .i18nStringTable p {
@@ -818,6 +832,10 @@ div.dfListAdd {
 	margin-bottom: 0px;
 	text-overflow: ellipsis;
 	overflow: hidden;
+}
+
+.rf_inputCell {
+	margin: var(--spacing-02) 0;
 }
 
 .rf_inputCell label {
@@ -1588,7 +1606,8 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
 .lFixedRight .fChoose.disabled,
 .lFixedRight span.disabled,
 .lFixedRight span span.disabled,
-span.cIconSelect .input-image.cannot-edit i {
+span.cIconSelect .input-image.cannot-edit i,
+input.is-checkbox[disabled] {
 	color: var(--icon-disabled);
 }
 
@@ -1726,8 +1745,6 @@ span.cIconSelect .input-image.cannot-edit i {
 .error-annotation button.ColorChooser,
 .error.active input.tristate,
 .error-annotation.active input.tristate,
-.error.active input.is-checkbox,
-.error-annotation.active input.is-checkbox,
 .error.active input.is-radio,
 .error-annotation.active input.is-radio,
 .error.active.cBeacon, /* AND selector --> .error AND .cBeacon */
@@ -1758,8 +1775,6 @@ span.cIconSelect .input-image.cannot-edit i {
 .warning-annotation button.ColorChooser,
 .warning.active input.tristate,
 .warning-annotation.active input.tristate,
-.warning.active input.is-checkbox,
-.warning-annotation.active input.is-checkbox,
 .warning.active input.is-radio,
 .warning-annotation.active input.is-radio,
 .warning.active.cBeacon,
@@ -1809,16 +1824,6 @@ input.tristate:focus,
 .warning.active input.tristate:focus,
 .error-annotation.active input.tristate:focus,
 .warning-annotation.active input.tristate:focus,
-input.is-checkbox:focus,
-.error.active input.is-checkbox:focus,
-.warning.active input.is-checkbox:focus,
-.error-annotation.active input.is-checkbox:focus,
-.warning-annotation.active input.is-checkbox:focus,
-input.is-radio:focus,
-.error.active input.is-radio:focus,
-.warning.active input.is-radio:focus,
-.error-annotation.active input.is-radio:focus,
-.warning-annotation.active input.is-radio:focus,
 .cBeacon:focus,
 .error.active.cBeacon:focus,
 .warning.active.cBeacon:focus,
@@ -1918,6 +1923,21 @@ span.disabled > span.lFlexible > select.tl-select:not( [multiple="multiple"] ) {
 	display: inline-flex
 }
 
+input[type="checkbox"] {
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+input[type="checkbox"]::before {
+	font-family: 'Font Awesome 6 Free';
+	content: "\f0c8";
+}
+
+input[type="checkbox"]:checked::before {
+	content: "\f14a";
+	font-weight: 900;
+}
+
 /*
 ****										****
 ****	ChoiceControl, bbc-option styles	****
@@ -1956,8 +1976,8 @@ span.bcc-option {
 }
 
 .cChoice-option {
-    display: flex;
     align-items: center;
+    text-wrap: nowrap;
 }
 
 .cChoice-option label {
@@ -1973,48 +1993,6 @@ span.bcc-option {
 	cursor: default;
 }
 
-.cChoice-horizontal.disabled, .cChoice-vertical.disabled {
-	color: var(--text-disabled);
-}
-
-.cChoice-horizontal.cannot-edit > .cChoice-option::after {
-	content: ";";
-}
-
-.cChoice-horizontal.cannot-edit > .cChoice-option:last-child::after {
-	content: "";
-}
-
-.cChoice-horizontal.disabled input[type="radio"], 
-.cChoice-vertical.disabled input[type="radio"],
-.cBooleanChoice.disabled input[type="radio"] {
-	border: 1px solid  var(--icon-disabled);
-}
-
-.cChoice-horizontal.disabled input[type="radio"]:checked::before,
-.cChoice-vertical.disabled input[type="radio"]:checked::before,
-.cBooleanChoice.disabled input[type="radio"]:checked::before {
-	background-color: var(--icon-disabled);
-}
-
-.cChoice-horizontal.disabled, .cChoice-vertical.disabled,
-.cBooleanChoice.disabled {
-	color: var(--text-disabled);
-}
-
-.cChoice-horizontal.disabled input[type="checkbox"], 
-.cChoice-vertical.disabled input[type="checkbox"],
-.cCheckbox.cannot-edit input[type="checkbox"] {
-	border: 1px solid  var(--icon-disabled);
-	cursor: default;
-}
-
-.cChoice-horizontal.disabled input[type="checkbox"]:checked::before,
-.cChoice-vertical.disabled input[type="checkbox"]:checked::before {
-	background-color: var(--icon-disabled);
-	cursor: default;
-}
-
 img.cChoice-icon {
 	height: 1em;
 	object-fit: contain;
@@ -2024,7 +2002,7 @@ img.cChoice-icon {
 img.type-image {
 	height: 1em;
 	object-fit: contain;
-	align-self: center;
+	
 }
 
 a img.type-image {
@@ -2033,7 +2011,7 @@ a img.type-image {
 
 .treeType,
 span.type-image,
-a img.type-image {
+img.type-image {
 	padding-right: var(--spacing-01);
 }
 
@@ -2047,12 +2025,14 @@ a img.type-image {
 .tBoolean > .type-image,
 .is-radio,
 .is-checkbox,
+a.tristate, 
 input.tristate {
 	margin-left: var(--spacing-01);
 	margin-right: var(--spacing-01);
 }
 
 .rf_firstColumn .tBoolean > .type-image,
+.rf_firstColumn .tBoolean.input-image,
 .rf_firstColumn .is-radio,
 .rf_firstColumn .is-checkbox,
 .rf_firstColumn input.tristate {
@@ -2306,8 +2286,8 @@ div.imageContainer {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	height: 2rem;
-	width: 2rem;
+	height: 1.5rem;
+	width: 1.5rem;
 	padding: 0;
 	border: 1px solid var(--border-strong);
 	border-radius: var(--corner-radius);
@@ -2641,7 +2621,6 @@ span.disabled .ddwttDropBtn {
 }
 
 .ddwttImmutableItem {
-	display: inline-flex;
 	text-align: left;
 }
 

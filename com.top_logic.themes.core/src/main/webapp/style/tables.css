@@ -1311,10 +1311,6 @@ th .tl-table__cell-container {
 	width: 100%;
 }
 
-th:last-child .tl-table__cell-container {
-	padding-right: 16px !important;
-}
-
 .tl-table__cell-container .cPopupSelect.cannot-edit {
 	flex-wrap: nowrap;
 }
@@ -1409,6 +1405,7 @@ th:last-child .tl-table__cell-container {
 
 th:last-child .tl-table__cell-resizer {
 	right: 0;
+	width: 8px;
 }
 
 .tl-table__cell {

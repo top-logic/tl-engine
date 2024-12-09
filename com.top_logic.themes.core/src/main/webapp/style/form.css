@@ -751,13 +751,6 @@ div.dfListAdd {
 	width: auto;
 }
 
-.rf_firstColumn .is-radio,
-.rf_firstColumn .is-checkbox,
-.rf_firstColumn input.tristate {
-	margin-left: 0px;
-	margin-right: 5px;
-}
-
 .rf_inputCell .rightAlign {
 	text-align: right;
 	padding-right: 5px;
@@ -2049,6 +2042,21 @@ a img.type-image {
 	display: inline-flex;
 	align-items: center;
 	vertical-align: middle;
+}
+
+.tBoolean > .type-image,
+.is-radio,
+.is-checkbox,
+input.tristate {
+	margin-left: var(--spacing-01);
+	margin-right: var(--spacing-01);
+}
+
+.rf_firstColumn .tBoolean > .type-image,
+.rf_firstColumn .is-radio,
+.rf_firstColumn .is-checkbox,
+.rf_firstColumn input.tristate {
+	margin-left: 0px;
 }
 
 .fltSubContent .cSelectOption,

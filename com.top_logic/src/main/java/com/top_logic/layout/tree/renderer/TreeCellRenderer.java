@@ -366,7 +366,10 @@ public class TreeCellRenderer extends RowTypeCellRenderer {
 		out.beginTag(SPAN);
 		writeIndent(out, indent);
 		if (isLeaf(node)) {
-			Icons.TREE_LEAF.write(context, out);
+			out.beginBeginTag(SPAN);
+			out.writeAttribute(CLASS_ATTR, "cButton fToggle");
+			out.endBeginTag();
+			out.endTag(SPAN);
 		} else {
 			String colName = cell.getColumnName();
 			Toggle toggle = new Toggle(node, colName, cell.getView().getTableData());

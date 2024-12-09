@@ -1514,12 +1514,6 @@ div.cal_zoom_inAnimation {
 	width: 100%;
 }
 
-.cPopupSelect.cannot-edit {
-	display: inline-flex;
-	flex-wrap: wrap;
-	width: 100%;
-}
-
 .cCheckList {
     display: flex;
     align-items: center;

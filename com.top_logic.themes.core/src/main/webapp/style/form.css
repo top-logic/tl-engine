@@ -703,15 +703,13 @@ div.dfListAdd {
 }
 
 .rf_labelAbove.rf_inputCell:not(.keepInline) > div:nth-child(2),
-.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),
-.rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2) {
+.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2) {
 	grid-row: 2;
 	grid-column: 1;
 }
 
                                         .rf_labelAbove.rf_inputCell:not(.keepInline),
-.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel),
-.rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel) {
+.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel) {
 	display: grid;
 	grid-template-columns: minmax(0px, 1fr);
 	grid-template-rows: 24px 1fr;

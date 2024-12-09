@@ -28,6 +28,17 @@
     text-overflow: ellipsis;
     white-space: initial;
     overflow: hidden;
+	flex-grow: 2;
+	display: flex;
+	line-height: 2rem;
+}
+
+.dfTitleLabel {
+	display: flex;
+}
+
+.dfTitleContent {
+	flex-grow: 1;
 }
 
 .rf_header > .rf_menu, 
@@ -40,11 +51,6 @@
 .dfContent {
 	overflow: hidden;
 	align-self: center;
-}
-
-.dfItemTitle {
-	display: flex;
-	flex-grow: 2;
 }
 
 .mboxContent .dfContent .dfToolbar {
@@ -72,41 +78,26 @@ div.fptPage {
     left: 0px;
     bottom: 0px;
     right: 0px;
+    
+    display: flex;
+    flex-direction: column;
 }
 
 div.fptBody {
-    position: absolute;
-    left: 0px;
-    right: 0px;
-    top: 78px;
-    bottom: 0px;
 	margin-top: var(--spacing-02);
 }
 
 div.fptBodyContent {
-	position: absolute;
-	left: 0px;
-	right: 0px;
-	top: 0px;
-	bottom: 0px;
 	padding: 0 var(--spacing-03);
 }
 
 div.fptTitle {
-    position: absolute;
-    left: 0px;
-    right: 0px;
-    height: 53px;
+	margin-top: var(--spacing-03);
     background-color: transparent;
 }
 
 div.fptTitleContent, 
 div.fptSubtitleContent {
-    position: absolute;
-    left: 0px;
-    right: 50px;
-    top: 0px;
-    bottom: 0px;
     white-space: nowrap;
     color: var(--text-primary);
 }
@@ -129,7 +120,8 @@ div.fptSubtitleContent {
 div.fptTitleContent {
 	display: flex;
 	align-items: center;
-	padding: 0 var(--spacing-03);
+	padding-left: var(--spacing-03);
+	padding-right: var(--spacing-06);
 }
 
 div.fptTitleContent .tlTranslatedI18nField, 
@@ -149,12 +141,8 @@ div.fptTitle select.is-input {
 }
 
 div.fptSubtitle {
-    position: absolute;
-    top: 53px;
-    left: 0px;
-    right: 0px;
-    height: 25px;
     overflow: hidden;
+	margin-top: var(--spacing-03);
 }
 
 div.fptSubtitleContent {
@@ -171,7 +159,7 @@ div.fptIconBar > span,
 .fptIcon, 
 .fptIconWithOverlay {
     position: absolute;
-    top: 10px;
+    top: 12px;
     right: 20px;
 }
 
@@ -187,10 +175,10 @@ div.fptIconBar > span.fptIconOverlay {
 
 .fptIconOverlay {
     position: absolute;
-	top: 0px !important;
+	top: 4px !important;
     right: 5px !important;
     border-radius: 30px;
-    color: var(--icon-primary);
+    color: var(--button-fg, var(--icon-primary));
     background: var(--layer);
     padding: 4px;
 }
@@ -199,19 +187,14 @@ div.fptIconBar > span.fptIconOverlay {
 	display: flex;
 }
 
-.rf_label .cLabel label {
-	color: var(--text-secondary);
+.rf_label label {
+	font-weight: bold;
 	white-space: nowrap;
 }
 
 .rf_label {
 	white-space: nowrap;
 	margin: var(--spacing-02) 0;
-}
-
-.rf_label .cLabel label.disabled,
-label.disabled  {
-	color: var(--text-disabled);
 }
 
 .mandatory.can-edit label:after {
@@ -322,7 +305,7 @@ span.can-edit {
 }
 
 .frmGroupExpand a {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .frmGroupExpand a:hover {
@@ -353,20 +336,26 @@ table.fhrTable {
 td.fhrLeft {
 	height: 2.5rem;
 	padding-right: var(--spacing-02);
-	background: var(--layer-accent);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 td.fhrMiddle {
 	vertical-align: middle;
 	height: 2.5rem;
 	width: 100%;
-	background: var(--layer-accent);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 td.fhrRight {
 	height: 2.5rem;
 	padding-right: var(--spacing-02);
-	background: var(--layer-accent);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 /* ================================= */
@@ -466,12 +455,13 @@ div.rf_buttons {
 }
 
 .rf_columnsLayout .rf_line.dfList {
-	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY));
+	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS));
 	/* width: calc(100% - 25px); */
   	box-sizing: border-box;
   	overflow: hidden;
 }
 
+.rf_columnsLayout.cols1 > .rf_inputCell,
 .rf_columnsLayout:not(.keep) > .rf_line,
 .cMediaQuery.dflSize0 .rf_columnsLayout:not(.keep) > *:not(.rf_line),
 .cMediaQuery:is(.dflSize0, .dflSize1, .dflSize2, .dflSize3, .dflSize4, .dflSize5) .rf_cell .rf_columnsLayout:not(.keep) > *:not(.rf_line),
@@ -481,7 +471,12 @@ div.rf_buttons {
   	box-sizing: border-box;
  }	
 
-.cMediaQuery.dflSize1 .rf_columnsLayout:not(.keep) > *:not(.rf_line),
+.cMediaQuery.dflSize1 .rf_columnsLayout:not(.keep) > *:not(.rf_line) { 
+  	min-width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+ 	width: calc(100% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
+  	box-sizing: border-box;
+}
+
 .cMediaQuery.dflSize2 .rf_columnsLayout:not(.keep) > *:not(.rf_line),
 .cMediaQuery:is(.dflSize3, .dflSize4, .dflSize5) .rf_columnsLayout.cols2:not(.keep) > *:not(.rf_line) { 
   	min-width: calc(50% - var(--RF_HORIZONTAL_GAP_COLUMNS)); 
@@ -512,12 +507,12 @@ div.rf_buttons {
 
 /* content of a group */
 .dflSize0 .rf_content,
+.dflSize1 .rf_content,
 .keep.cols1 {
 	/* avoid creating more columns than possible, use cols classes manually in those cases */
 	grid-template-columns: repeat(1, 1fr); 
 }
 
-.dflSize1 .rf_content,
 .dflSize2 .rf_content,
 .keep.cols2 {
 	grid-template-columns: repeat(2, 1fr); 
@@ -546,13 +541,11 @@ div.rf_buttons {
 	align-items: center;
 	gap: var(--spacing-03);
 	height: 2.5rem;
-	background: var(--layer-accent);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 	padding: 0 var(--spacing-03);
 	white-space: nowrap;
-}
-
-.dfEntryTitle.colored a {
-	color: var(--text-primary);
 }
 
 .dfEntryTitle label {
@@ -560,7 +553,9 @@ div.rf_buttons {
 }
 
 .dfEntryTitle.colored:hover {
-	background: var(--layer-accent-hover);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 .dfEntryTitle.colored .lFixedRight,
@@ -593,7 +588,7 @@ div.dfListAdd {
     align-items: center;
     justify-content: center;
     align-self: center;
-    color: var(--icon-primary);
+    color: var(--button-fg, var(--icon-primary));
     height: 1rem;
     width: 1rem;
 }
@@ -603,11 +598,11 @@ div.dfListAdd {
 }
 
 .dfListContent > .rf_columnsLayout {
-	margin-left: calc(-1*var(--RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY));
+	margin-left: calc(-1*var(RF_HORIZONTAL_GAP_COLUMNS));
 }
 
 .dfListContent > .rf_columnsLayout > *:not(body) {
-	margin-left: var(--RF_HORIZONTAL_GAP_COLUMNS_LIST_ENTRY);
+	margin-left: var(RF_HORIZONTAL_GAP_COLUMNS);
 }
 
 .cMediaQuery.dflSize0 .dfListContent .rf_columnsLayout > .dfListEntry,
@@ -687,7 +682,7 @@ div.dfListAdd {
 .rf_inputCell:not(.rf_noLabel) {
 	display: grid;
 	grid-template-columns: minmax(var(--RF_FIRST_COLUMN_WIDTH), max-content) minmax(0, 1fr);
-	grid-gap: var(--spacing-02) var(--spacing-02);
+	grid-gap: var(--RF_LABEL_PADDING) var(--spacing-02);
 }
 
 .rf_inputCell > div:nth-child(1) {
@@ -697,8 +692,6 @@ div.dfListAdd {
 
 .rf_labelAbove.rf_inputCell:not(.keepInline) > div:nth-child(2),
 .cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),
-.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1) > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),
-.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2),
 .rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2) {
 	grid-row: 2;
 	grid-column: 1;
@@ -706,14 +699,16 @@ div.dfListAdd {
 
                                         .rf_labelAbove.rf_inputCell:not(.keepInline),
 .cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel),
-.cMediaQuery.dflSize1 .rf_columnsLayout:not(.cols1):not(.keep) > .rf_inputCell:not(.keepInline):not(.rf_noLabel),
-.cMediaQuery.dflSize1 .rf_content                   > .rf_inputCell:not(.keepInline):not(.rf_noLabel),
 .rf_line.rf_inputCell:not(.keepInline):not(.rf_noLabel) {
 	display: grid;
 	grid-template-columns: minmax(0px, 1fr);
 	grid-template-rows: 24px 1fr;
 	line-height: 24px;
 	margin-bottom: 0;
+}
+
+.rf_inputCell.rf_labelAfter label {
+	padding-left: var(--spacing-02);
 }
 
 .rf_inputCell .ace_editor div,
@@ -729,19 +724,31 @@ div.dfListAdd {
 	margin-top: 0px;
 }
 
+.tl-i18n-row {
+	display: flex;
+	gap: var(--spacing-02);
+	margin: var(--spacing-02) 0;
+}
+
+.tl-i18n-lang {
+	min-width: 10ex;
+}
+
+.tl-i18n-input {
+	flex-grow: 1;
+	display: flex;
+}
+
+.tl-i18n-input > .cTextInput {
+	flex-grow: 1;
+}
+
 .rf_content table.schedulingAlgorithm {
 	width: calc(100% - 60px);
 }
 
 *:not(.sizeSet) > .rf_cell .cIntegerInput > .cTextInput:not(.searchIrrelevant) .is-input {
 	width: auto;
-}
-
-.rf_firstColumn .is-radio,
-.rf_firstColumn .is-checkbox,
-.rf_firstColumn input.tristate {
-	margin-left: 0px;
-	margin-right: 5px;
 }
 
 .rf_inputCell .rightAlign {
@@ -785,7 +792,7 @@ div.dfListAdd {
     align-items: center;
     gap: var(--spacing-02);
     color: var(--highlight-fg, inherit);
-    background: var(--highlight-bg, var(--layer-accent));
+    background: var(--highlight-bg, var(--layer));
     padding: var(--spacing-02) var(--spacing-03);
     white-space: nowrap;
     height: 2.5rem;
@@ -794,7 +801,7 @@ div.dfListAdd {
 }
 
 .rf_groupCell .rf_header:hover {
-	background: var(--highlight-bg--hover, var(--layer-accent-hover));
+	background: var(--highlight-bg--hover, var(--layer-hover));
 }
 
 .rf_groupCell .rf_header a:hover {
@@ -1015,7 +1022,9 @@ div.dfListAdd {
 
 .cFormEditorPreview.rf_highlighted .cFormEditorElement:not(.rf_dragged) .rf_dropTarget.rf_parent {
 	border: 1px dashed #7695C3;
-	background: var(--layer-accent);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 /* do not mark locked areas */
@@ -1229,7 +1238,7 @@ div.cal_view {
 }
 
 .cal_titlebar a {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .cal_titlebar a:hover {
@@ -1504,12 +1513,6 @@ div.cal_zoom_inAnimation {
 	width: 100%;
 }
 
-.cPopupSelect.cannot-edit {
-	display: inline-flex;
-	flex-wrap: wrap;
-	width: 100%;
-}
-
 .cCheckList {
     display: flex;
     align-items: center;
@@ -1536,7 +1539,7 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
 .cIntegerInput.num .lFixedRight {
 	display: inline-flex;
 	align-items: stretch;
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 	background-color: var(--field);
 }
 
@@ -1551,7 +1554,7 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: var(--icon-primary);
+    color: var(--button-fg, var(--icon-primary));
     height: 2rem;
     width: 2rem;
 }
@@ -1645,12 +1648,23 @@ span.cIconSelect .input-image.cannot-edit i {
     letter-spacing: var(--body-02-letter-spacing);
 }
 
-.cDateInput input {
-    width: 7rem;
+.cIntegerInput.num input,
+.cPopupSelect input,
+.cDateInput input,
+.cTimeInput input {
+	padding-right: var(--spacing-01);
+}
+	
+.cDatetime .cTimeInput input {
+	padding: 0 var(--spacing-01);
 }
 
-.cTimeInput input {
-    width: 4.5rem;
+.cDateInput input {
+    width: 7em;
+}
+
+.cDatetime .cTimeInput input {
+    width: 3.5em !important;
 }
 
 .cTextInput.mandatory input,
@@ -1899,115 +1913,9 @@ span.disabled > span.lFlexible > select.tl-select:not( [multiple="multiple"] ) {
 	background-image: linear-gradient(45deg, transparent 49%, var(--icon-primary) 50%), linear-gradient(135deg, var(--icon-primary) 49%, transparent 50%);
 }
 
-.cPopupSelect .lFlexible, 
-.cPopupSelect .is-popup:not([size]), 
-.cIntegerInput .lFlexible, 
-.cIntegerInput .is-input:not([size]), 
-.cExpandableTextInput .lFlexible, 
-.cExpandableTextInput .is-input:not([size]), 
-.cTextInput:not(.searchIrrelevant) .is-input:not([size]), 
-.cBlockTextInput .lFlexible, 
-.cBlockTextInput .is-input:not([size]), 
-.dfList .dfListEntry .cTextInput:not(.searchIrrelevant) textarea.is-input {
-	box-sizing: border-box;
-	width: 100%;
-}
-
 .cExpandableTextInput .lFlexible,
 .cBlockTextInput .lFlexible {
 	display: inline-flex
-}
-
-/* 		Radio Buttons styles	*/
-/* Resets browser's default radio style. */
-input[type="radio"] {
-	-webkit-appearance: none;
-	appearance: none;
-	margin: 0;
-	padding: 0;
-	cursor: pointer;
-}
-
-input[type="radio"] {
-	align-self: center;
-	display: inline-grid;
-	place-content: center;
-	position: relative;
-	min-height: 1rem;
-	min-width: 1rem;
-	border-radius: 50%;
-	border: 1px solid var(--icon-primary);
-}
-
-input[type="radio"]::before {
- 	content: '';
- 	position: absolute;
- 	top: 50%;
- 	left: 50%;
- 	min-height: 0.5rem;
- 	min-width: 0.5rem;
- 	border-radius: 50%;
- 	background-color: var(--background);
-	transform: scale(0);
-}
-
-input[type="radio"]:checked::before {
- 	background-color: var(--icon-primary);
-	transform: scale(1) translate(-50%, -50%);
-}
-
-input[type="radio"]:focus {
-	box-shadow: inset 0 0 0 1px var(--focus);
-}
-
-/* 		Check Box styles	*/
-/* Resets browser's default checkbox styling. */
-input[type="checkbox"] {
-	-webkit-appearance: none;
-	appearance: none;
-	margin: 0;
-	padding: 0;
-	cursor: pointer;
-}
-
-input[type="checkbox"] {
-    display: inline-grid;
-    place-content: center;
-    position: relative;
-    height: 1rem;
-    width: 1rem;
-    border-radius: 1px;
-    border: 1px solid var(--icon-primary);
-}
-
-input[type="checkbox"]::before {
-    content: '';
-    position: absolute;
-    transform: translateY(-50%);
-    height: 100%;
-    width: 100%;
-    border-radius: 1px;
-    background-color: var(--background);
-    transform: scaleX(0);
-}
-
-input[type="checkbox"]:checked::before {
-	content: '\f633';
-	font-family: "bootstrap-icons";
-	font-size: .8rem;
-	display: inline-grid;
-    place-content: center;
-	color: var(--background);
-	background-color: var(--icon-primary);
-	transform: scaleX(1);
-}
-
-input[type="checkbox"]:checked:focus::before {
-	box-shadow: inset 0px 0px 0px .8px var(--focus),inset 0px 0px 0px 1.3px var(--focus-inset);
-}
-
-input[type="checkbox"]:focus {
-	box-shadow: inset 0px 0px 0px .8px var(--focus),inset 0px 0px 0px 1.3px var(--focus-inset);
 }
 
 /*
@@ -2015,12 +1923,19 @@ input[type="checkbox"]:focus {
 ****	ChoiceControl, bbc-option styles	****
 ****										****
 */
-.cBooleanChoice, .cChoice, 
-.ddwttContainer.cannot-edit {
+.cBooleanChoice,.cChoice {
     display: inline-flex;
     flex-wrap: wrap;
 	column-gap: var(--spacing-02);
 	row-gap: var(--spacing-02);
+}
+
+.tl-table__cell-container :is(.cBooleanChoice,.cChoice) {
+    flex-wrap: nowrap;
+}
+
+.gotoLink {
+	text-wrap: nowrap;
 }
 
 .cChoice-icon {
@@ -2116,6 +2031,7 @@ a img.type-image {
     vertical-align: middle;
 }
 
+.treeType,
 span.type-image,
 a img.type-image {
 	padding-right: var(--spacing-01);
@@ -2126,6 +2042,21 @@ a img.type-image {
 	display: inline-flex;
 	align-items: center;
 	vertical-align: middle;
+}
+
+.tBoolean > .type-image,
+.is-radio,
+.is-checkbox,
+input.tristate {
+	margin-left: var(--spacing-01);
+	margin-right: var(--spacing-01);
+}
+
+.rf_firstColumn .tBoolean > .type-image,
+.rf_firstColumn .is-radio,
+.rf_firstColumn .is-checkbox,
+.rf_firstColumn input.tristate {
+	margin-left: 0px;
 }
 
 .fltSubContent .cSelectOption,
@@ -2275,77 +2206,28 @@ div.imageContainer {
 /* ==================================== */
 /* ======    Icon Chooser css     ===== */
 /* ==================================== */
-.cIconChooser div.header .searchTextField input.is-input {
-    margin-top: 10px;
-    margin-left: 10px;
-    margin-bottom: 10px;
-	width: calc(96% - 67px);
-	padding-left: 23px;
+.cIconChooser > .header > .expertTextField input.is-input,
+.cIconChooser > .header > .searchTextField input.is-input {
 	height: 22px;
 }
 
-.cIconChooser div.header .expertTextField input.is-input {
-    margin-top: 10px;
-    margin-left: 10px;
-    margin-bottom: 10px;
-	width: calc(96% - 67px);
-	height: 22px;
-}
-
-.cIconChooser div.header a {
+.cIconChooser > .header a {
 	border: 0px;
 }
 
-.cIconChooser div.header .inputfield {
-	position: absolute;
-	top: 0px;
-	left: 0px;
-	width: 100%;
-}
-
-.cIconChooser div.header .resetButton,
-.cIconChooser div.header .okButton {
-	position: absolute;
-	bottom: 5px;
-	right: 35px;
-}
-
-.cIconChooser div.header .toggleExpertButton {
-	position: absolute;
-	bottom: 5px;
-	right: 5px;
-}
-
-.cIconChooser .searchTextField .search {
-	position: absolute;
-	top: 12px;
-	left: 12px;
+.cIconChooser > .header > .searchTextField .search {
 	color: var(--icon-secondary);
 }
 
 .cIconChooser .fptBodyContent .displayedIcons {
-	position: relative;
-	display: inline-block;
-    margin-bottom: 5px;
-    margin-right: 5px;
-	width: 30px;
-	height: 30px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 2rem;
+	width: 2rem;
+    margin-bottom: var(--spacing-01);
+    margin-right: var(--spacing-01);
 	border: 1px solid var(--border-subtle);
-}
-
-.cIconChooser a,
-.cIconChooser .input-image {
-	display: table-cell;
-	text-align: center;	
-	vertical-align: middle;
-}
-
-.cIconChooser div.header .toggleExpertButton a,
-.cIconChooser div.header .resetButton a,
-.cIconChooser div.header .okButton a,
-.cIconChooser .fptBodyContent .displayedIcons a {
-	width: 30px;
-	height: 30px;
 }
 
 .cIconChooser .fptBodyContent input {
@@ -2358,28 +2240,48 @@ div.imageContainer {
 }
 
 .cIconChooser .fptBodyContent .displayedIcons {
-	background-color: var(--layer-accent);
+	background-color: var(--layer);
+	color: var(--layer-text);
+	--button-fg: var(--layer-icon);
 }
 
 .cIconChooser .fptBodyContent .displayedIcons.selected {
-	background-color: var(--layer-accent-selected);
+	background-color: var(--layer-selected);
 }
 
 .cIconChooser .fptBodyContent .displayedIcons:hover {
-	background-color: var(--layer-accent-hover);
+	background-color: var(--layer-hover);
 }
 
 .cIconChooser i {
     font-size: 1rem;
-    color: var(--icon-primary);
+    color: var(--button-fg, var(--icon-primary));
 }
 
-.cIconChooser div.header {
+.cIconChooser > .header {
 	position: absolute;
 	left: 0px; 
 	top: 0px; 
 	height: 42px;
 	width: 100%;
+	
+	box-sizing: border-box;
+	padding: var(--spacing-02);
+	display: flex;
+	gap: var(--spacing-02);
+	align-items: center;
+	justify-content: center;
+}
+
+.cIconChooser > .header > .searchTextField {
+	flex-grow: 1;
+	position: relative;
+}
+
+.cIconChooser > .header > .searchTextField i {
+	position: absolute;
+	right: 2px;
+	top: 2px;
 }
 
 .cIconChooser div.fptBody {
@@ -2401,16 +2303,21 @@ div.imageContainer {
 }
 
 .cIconChooser .input-image {
-	height: 1.5rem;
-	width: 1.5rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 2rem;
+	width: 2rem;
 	padding: 0;
 	border: 1px solid var(--border-strong);
 	border-radius: var(--corner-radius);
-	background-color: var(--layer-accent);
+	background-color: var(--layer);
+	color: var(--layer-text);
+	--button-fg: var(--layer-icon);
 }
 
 .cIconChooser .input-image:hover {
-	background-color: var(--layer-accent-hover);
+	background-color: var(--layer-hover);
 }
 
 .cIconChooser .input-image.disabled,
@@ -2419,11 +2326,8 @@ div.imageContainer {
 	background-color: none;
 }
 
-.cIconChooser, 
-.cIconChooser img {
-	display: inline-block;
-	min-height: 20px;
-	min-width: 20px;
+.cIconChooser {
+	display: flex;
 }
 
 .cIconChooser input.is-action {
@@ -2560,7 +2464,7 @@ a.input-image.tristate .bi-info-square {
 }
 
 a.input-image.tristate.tBoolean {
-	color: var(--icon-primary)
+	color: var(--button-fg, var(--icon-primary))
 }
 
 /* ============================================= */
@@ -2577,8 +2481,15 @@ a.input-image.tristate.tBoolean {
 	overflow: hidden;
 }
 
+.ddwttContainer.cannot-edit {
+    display: inline-flex;
+    flex-wrap: wrap;
+	column-gap: var(--spacing-02);
+	row-gap: var(--spacing-02);
+}
+
 .ddwttContainer.active {
-	display: flex;
+	display: inline-flex;
 	flex-wrap: wrap;
 }
 
@@ -2642,7 +2553,7 @@ span.disabled .ddwttDropBtn {
 }
 
 .ddwttDropBtnActive .ddwttChevron i {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 /* DropDown */
@@ -2778,7 +2689,7 @@ img.ddwttItemIcon {
 }
 
 .ddwttTagX i {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 /* Tooltip */

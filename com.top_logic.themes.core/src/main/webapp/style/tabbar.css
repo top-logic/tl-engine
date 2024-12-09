@@ -105,7 +105,7 @@
 }
 
 .tlTabBar .activeTab .tabIcon i {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .tlTabBar .tab .tabIcon i {
@@ -122,7 +122,7 @@
 }
 
 .tab:hover .tabIcon i {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .tlTabBar .activeTab:focus, 
@@ -393,7 +393,7 @@ div.mcToggle {
 	right: 0;
 	top: 50%;
 	z-index: 1;
-	transform: translateX(100%) translateY(-50%);
+	transform: translateX(1.5rem) translateY(-50%);
 	border-radius: 4px 0 0 4px;
 	background: var(--MC_MINIMIZE_ICON);
 	background-size: contain;
@@ -451,21 +451,10 @@ div.mcMinimized .accText {
     border-radius: 0;
 }
 
-.licenseView {
+.licenseContent {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	background: var(--support-danger);
-	border-radius: var(--corner-radius);
-}
-
-/* Is needed for the sidebar theme */
-.licenseView .licenseContent {
-	font-weight: bold;
-	color: var(--text-on-color);
-}
-
-.licenseContent {
 	font-weight: bold;
 	color: var(--support-danger);
 }
@@ -598,7 +587,7 @@ a.accEntry.accSelected .accIcon i,
 div.accSelected a.accEntry .accIcon i,
 div.accNode.tlPopupOpen a.accEntry .accIcon i,
 a.accEntry.accContainer.accSelected .accIcon i {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .mcMinimized div.accNode {

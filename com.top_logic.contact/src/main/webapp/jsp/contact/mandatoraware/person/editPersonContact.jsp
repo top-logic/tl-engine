@@ -18,20 +18,18 @@
 %><%@taglib uri="ajaxform" prefix="form"
 %><%@taglib uri="meta"     prefix="meta"
 %><layout:html>
-	<layout:head>
-		
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<form:form>
 			<%
 			FormComponent theComponent = (FormComponent) MainLayout.getComponent(pageContext);
-					Wrapper    theModel     = (Wrapper) theComponent.getModel();
-					Person        thePerson   = ((PersonContact) theModel).getPerson();
-					Set           theSet      = new HashSet();
-					Accessor      theAccessor = WrapperAccessor.INSTANCE;
-					
-					theSet.add(COSPersonContact.PHONE_PRIVATE);
-					theSet.add(COSPersonContact.TITLE);
+			Wrapper    theModel     = (Wrapper) theComponent.getModel();
+			Person        thePerson   = ((PersonContact) theModel).getPerson();
+			Set           theSet      = new HashSet();
+			Accessor      theAccessor = WrapperAccessor.INSTANCE;
+			
+			theSet.add(COSPersonContact.PHONE_PRIVATE);
+			theSet.add(COSPersonContact.TITLE);
 			%>
 			<meta:group object="<%=theModel %>">
 				<basic:fieldset titleKeySuffix="basicAttributes">

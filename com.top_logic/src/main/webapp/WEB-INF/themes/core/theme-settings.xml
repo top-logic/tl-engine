@@ -312,25 +312,25 @@
 		expr="%mime.image/png%"
 	/>
 	<icon name="mime.image/png"
-		value="css:bi bi-image"
+		value="css:fa-solid fa-image"
 	/>
 	<icon name="mime.tl.accounts.Group"
-		value="css:bi bi-people-fill"
+		value="css:fa-solid fa-user-group"
 	/>
 	<icon name="mime.tl.accounts.Group.large"
 		expr="%mime.tl.accounts.Group%"
 	/>
 	<icon name="MIMETYPES_GROUP_16"
-		value="css:bi bi-people-fill"
+		value="css:fa-solid fa-user-group"
 	/>
 	<icon name="MIMETYPES_LARGE_GROUP_60"
-		value="css:bi bi-people-fill"
+		value="css:fa-solid fa-user-group"
 	/>
 	<icon name="mime.tl.accounts.Person"
-		value="css:bi bi-person-fill"
+		value="css:fa-solid fa-user"
 	/>
 	<icon name="mime.tl.accounts.Person.large"
-		value="css:bi bi-person-fill"
+		value="css:fa-solid fa-user"
 	/>
 	<icon name="mime.ClassificationMetaAttribute"
 		expr="%mime.tl.folder.Document%"
@@ -339,43 +339,43 @@
 		expr="%mime.tl.folder.Document%"
 	/>
 	<icon name="mime.Link"
-		value="css:bi bi-box-arrow-up-right"
+		value="css:fa-solid fa-up-right-from-square"
 	/>
 	<icon name="mime.Project"
-		value="css:bi bi-hdd-network-fill"
+		value="css:fa-solid fa-network-wired"
 	/>
 	<icon name="mime.Project.large"
-		value="css:bi bi-hdd-rack-fill"
+		value="css:fa-solid fa-server"
 	/>
 	<icon name="mime.RoleRule"
-		value="css:bi bi-person-badge-fill"
+		value="css:fa-solid fa-id-badge"
 	/>
 	<icon name="mime.SearchExpressionTable"
-		value="css:bi bi-search"
+		value="css:fa-solid fa-magnifying-glass"
 	/>
 	<icon name="mime.WebFolderMetaAttribute"
 		expr="%mime.tl.folder.Document%"
 	/>
 	<icon name="mime.application/zip.large"
-		value="css:bi bi-file-zip-fill"
+		value="css:fa-solid fa-file-zipper"
 	/>
 	<icon name="mime.text/plain.large"
-		value="css:bi bi-file-earmark-text-fill"
+		value="css:fa-solid fa-file-lines"
 	/>
 	<icon name="mime.tl.accounts.Role"
-		value="css:bi bi-person-fill-gear"
+		value="css:fa-solid fa-user-gear"
 	/>
 	<icon name="mime.tl.folder.Document"
-		value="css:bi bi-file-earmark-fill"
+		value="css:fa-solid fa-file"
 	/>
 	<icon name="mime.tl.folder.DocumentVersion"
 		expr="%mime.tl.folder.Document%"
 	/>
 	<icon name="mime.application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.large"
-		value="css:bi bi-file-spreadsheet-fill"
+		value="css:fa-solid fa-table"
 	/>
 	<icon name="mime.Clipboard"
-		value="css:bi bi-clipboard-fill"
+		value="css:fa-solid fa-clipboard"
 	/>
 	<icon name="mime.Clipboard.large"
 		expr="%mime.Clipboard%"

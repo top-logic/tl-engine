@@ -5,22 +5,22 @@
 		value="true"
 	/>
 	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_QUESTION"
-		value="css:bi bi-info-square"
+		value="css:fa-solid fa-circle-info"
 	/>
 	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_INFORMATION"
-		value="css:bi bi-info-circle-fill"
+		value="css:fa-solid fa-circle-info"
 	/>
 	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_WARNING"
-		value="css:bi bi-exclamation-triangle-fill"
+		value="css:fa-solid fa-triangle-exclamation"
 	/>
 	<icon name="com.top_logic.demo.layout.form.demo.Icons.DIALOG_ERROR"
-		value="css:bi bi-x-octagon-fill"
+		value="css:fa-solid fa-triangle-exclamation"
 	/>
 	<icon name="layouts.demo.tlHome"
-		value="css:bi bi-house-fill"
+		value="css:fa-solid fa-house"
 	/>
 	<icon name="model.DemoTypes.A"
-		value="css:bi bi-alarm-fill"
+		value="css:fa-solid fa-stopwatch"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER"
 		value="css:fas fa-filter"

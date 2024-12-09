@@ -2,7 +2,6 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="true"
 	template="com.top_logic/dialog.template.xml"
 >
 	<arguments helpID="ID_a4b41b92_d08f_41c7_b6e1_aa9e2716f3dc">
@@ -14,11 +13,20 @@
 		</title>
 		<open-handler id="ID_9ccc49df_5358_4efe_9482_765ec05e144f"
 			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			image="css:fa-solid fa-arrow-up-right-from-square"
+			targetComponent="com.top_logic.demo/technical/components/transientObjects/transientDetails/gotoDetailsForm.layout.xml#Form"
 		>
 			<resourceKey key="dynamic.bbfbbddf-10c1-46cf-b874-9a7d38535394">
 				<en>Transient details</en>
 				<de>Transiente Details</de>
 			</resourceKey>
+			<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+				function="target -> $target.size() == 1 ? $target.singleElement() : null"
+				input="selection(self())"
+			/>
+			<executability>
+				<rule-by-expression decision="target -> $target != null"/>
+			</executability>
 		</open-handler>
 		<components>
 			<layout-reference resource="com.top_logic.demo/technical/components/transientObjects/transientDetails/innerLayout.layout.xml"/>

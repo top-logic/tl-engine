@@ -5,19 +5,45 @@
  */
 package com.top_logic.model.form.definition;
 
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.form.ReactiveFormCSS;
 
 /**
  * Decision about where to place labels in forms.
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
+ * 
+ * @deprecated Use {@link LabelPosition}
  */
+@Deprecated
 public enum LabelPlacement {
-	/** No special configuration for this form. */
+	/**
+	 * The label is rendered in a column before the input and wrapped into a separate line, if there
+	 * is not enough space.
+	 * 
+	 * @deprecated Use {@link LabelPosition#DEFAULT}
+	 */
+	@Deprecated
 	DEFAULT,
-	/** Label is above its input */
+
+	/**
+	 * Label is rendered above its input
+	 * 
+	 * @deprecated Use {@link LabelPosition#ABOVE}
+	 */
+	@Deprecated
 	ABOVE,
-	/** Label is in the same line as its input */
+
+	/**
+	 * There is only a label cell that also displays the input.
+	 * 
+	 * <p>
+	 * This is useful for very short input elements such as checkboxes.
+	 * </p>
+	 * 
+	 * @deprecated Use {@link LabelPosition#INLINE}
+	 */
+	@Deprecated
 	INLINE;
 
 	/**

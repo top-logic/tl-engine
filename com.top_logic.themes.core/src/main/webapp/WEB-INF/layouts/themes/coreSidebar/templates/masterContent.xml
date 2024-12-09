@@ -8,22 +8,10 @@
 	<layout name="sblOuterContainer"
 		resizable="false"
 	>
-		<layout name="leftLayoutBorder"
-			resizable="false"
-		>
-			<layoutInfo size="%SIDEBAR_LAYOUT_TOP_BORDER%"/>
-		</layout>
-
 		<layout name="sblMain"
 			horizontal="true"
 			resizable="false"
 		>
-			<layout name="topLayoutBorder"
-				resizable="false"
-			>
-				<layoutInfo size="%SIDEBAR_LAYOUT_LEFT_SIDE_BORDER%"/>
-			</layout>
-
 			<layout name="sblInnerMain"
 				horizontal="true"
 				resizable="%SIDEBAR_RESIZABLE%"

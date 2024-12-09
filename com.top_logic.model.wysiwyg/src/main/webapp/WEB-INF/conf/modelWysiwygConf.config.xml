@@ -36,6 +36,7 @@
 					</attribute-setting>
 
 					<attribute-setting config-name="I18N_HTML" legacy-type-code="1">
+						<label-position value="above-value"/>
 						<column-info>
 							<excelRenderer class="com.top_logic.layout.wysiwyg.ui.I18NStructuredTextExcelRenderer"/>
 							<renderer class="com.top_logic.layout.form.control.ConfiguredFirstLineRenderer">
@@ -45,7 +46,7 @@
 								<tooltipRenderer class="com.top_logic.layout.wysiwyg.ui.i18n.I18NHTMLRenderer"/>
 							</renderer>
 							<editControlProvider class="com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextPopupControl$CP"
-								dialogHeight="750"
+								dialogHeight="800"
 							>
 								<labelProvider class="com.top_logic.layout.form.control.FirstLineLabelProvider">
 									<fullTextProvider class="com.top_logic.layout.wysiwyg.ui.i18n.I18NHTMLTextExtractor"/>

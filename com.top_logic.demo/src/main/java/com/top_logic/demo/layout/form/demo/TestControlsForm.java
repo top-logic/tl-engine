@@ -273,7 +273,6 @@ import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.model.annotate.LabelPosition;
-import com.top_logic.model.form.definition.LabelPlacement;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
@@ -2438,7 +2437,9 @@ public class TestControlsForm extends FormComponent {
 			@Override
 			public void valueChanged(FormField field, Object oldValue, Object newValue) {
 				if (isPictureOrNull(newValue)) {
-					pictureField.setValue(newValue);
+					Collection<?> collection = (Collection<?>) newValue;
+					pictureField
+						.setValue(collection == null || collection.isEmpty() ? null : collection.iterator().next());
 				}
 			}
 
@@ -2449,10 +2450,10 @@ public class TestControlsForm extends FormComponent {
 	}
 
 	boolean isPictureOrNull(Object value) {
-		if (value == null) {
-			return true;
-		}
-		return ImageDataUtil.isSupportedImageFilename(((BinaryDataSource) value).getName());
+		Collection<?> collection = (Collection<?>) value;
+
+		return collection == null || collection.isEmpty() || ImageDataUtil
+			.isSupportedImageFilename(((BinaryDataSource) collection.iterator().next()).getName());
 	}
 
 	private void addButtonControls(FormGroup context) {
@@ -2582,8 +2583,7 @@ public class TestControlsForm extends FormComponent {
 			Templates.descriptionBox(
 				Templates.fragment(Templates.labelWithColon(), Templates.error()),
 				Templates.self(MemberStyle.DIRECT),
-				LabelPosition.DEFAULT,
-				LabelPlacement.DEFAULT),
+				LabelPosition.DEFAULT),
 			DefaultFormFieldControlProvider.INSTANCE);
 
 		StringField fallbackField = FormFactory.newStringField("fallback");
@@ -2805,14 +2805,14 @@ public class TestControlsForm extends FormComponent {
 		FormGroup mkRow() {
 			FormGroup row = new FormGroup("row-" + _ids.createNewID(), PlainKeyResources.INSTANCE);
 			CommandField addRow = new ADD_ROW("addRow");
-			addRow.setLabel("+");
+			addRow.setLabel("Add row");
 			row.addMember(addRow);
 			FormArray values = new FormArray("values", ResPrefix.NONE);
 			row.addMember(values);
 			FormMember value = mkValue();
 			values.addMember(value);
 			CommandField addValue = new ADD_VALUE("addValue");
-			addValue.setLabel("+");
+			addValue.setLabel("Add value");
 			row.addMember(addValue);
 			return row;
 		}
@@ -2831,7 +2831,7 @@ public class TestControlsForm extends FormComponent {
 			group.addMember(valueInput);
 
 			CommandField removeValue = new REMOVE_VALUE("removeValue");
-			removeValue.setLabel("-");
+			removeValue.setLabel("Remove value");
 			group.addMember(removeValue);
 			return group;
 		}

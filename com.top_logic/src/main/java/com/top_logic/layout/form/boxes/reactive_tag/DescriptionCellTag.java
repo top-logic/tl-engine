@@ -14,6 +14,7 @@ import jakarta.servlet.jsp.JspException;
 import jakarta.servlet.jsp.tagext.Tag;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.StringServices;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.form.FormContainer;
@@ -29,7 +30,6 @@ import com.top_logic.layout.form.tag.FormGroupTag;
 import com.top_logic.layout.form.tag.FormTag;
 import com.top_logic.layout.form.tag.FormTagUtil;
 import com.top_logic.model.annotate.LabelPosition;
-import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
  * Tag creating a description/content cell for reactive forms.
@@ -50,13 +50,7 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 
 	private String _firstColumnWidth;
 
-	private Boolean _labelAbove;
-
-	private boolean _keepInline;
-
 	private boolean _wholeLine;
-
-	private boolean _labelFirst;
 
 	private boolean _splitControls;
 
@@ -82,10 +76,9 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 		_firstColumnStyle = null;
 		_description = null;
 		_splitControls = false;
-		_labelFirst = true;
 		_wholeLine = false;
-		_keepInline = false;
-		_labelAbove = null;
+		_labelPosition = null;
+		_labelPosition = null;
 		_firstColumnWidth = null;
 		_width = null;
 		_style = null;
@@ -166,38 +159,36 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 	 * 
 	 * @param labelAbove
 	 *        Label is rendered above.
+	 * @deprecated Use {@link #setLabelPosition(LabelPosition)}
 	 */
+	@Deprecated
+	@CalledFromJSP
 	public void setLabelAbove(boolean labelAbove) {
-		_labelAbove = labelAbove;
-		if (!labelAbove) {
-			_keepInline = true;
-		}
+		_labelPosition = labelAbove ? LabelPosition.ABOVE : LabelPosition.INLINE;
 	}
 
-	private boolean getLabelAbove() {
-		Boolean labelAbove = null;
+	LabelPosition getLabelPosition() {
+		if (_labelPosition != null) {
+			return _labelPosition;
+		}
 
 		GroupCellTag groupCellParent = getGroupCellParent();
-		if (_labelAbove != null) {
-			labelAbove = _labelAbove;
-		} else {
-			if (groupCellParent != null) {
-				labelAbove = groupCellParent.getLabelAbove();
-			}
-
-			if (labelAbove == null) {
-				FormTag formParent = getFormParent();
-				if (formParent != null) {
-					labelAbove = formParent.getLabelAbove();
-				}
-			}
-
-			if (labelAbove == null) {
-				labelAbove = Icons.LABEL_ABOVE.get();
+		if (groupCellParent != null) {
+			LabelPosition result = groupCellParent.getLabelPosition();
+			if (result != null) {
+				return result;
 			}
 		}
 
-		return labelAbove.booleanValue();
+		FormTag formParent = getFormParent();
+		if (formParent != null) {
+			LabelPosition result = formParent.getLabelPosition();
+			if (result != null) {
+				return result;
+			}
+		}
+
+		return Icons.LABEL_ABOVE.get() ? LabelPosition.ABOVE : LabelPosition.DEFAULT;
 	}
 
 	/**
@@ -215,52 +206,31 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 	 * 
 	 * @param labelFirst
 	 *        If <code>false</code> the input is rendered before the label.
-	 * @see #getLabelFirst()
+	 * @deprecated Use {@link #setLabelPosition(LabelPosition)}
 	 */
+	@Deprecated
+	@CalledFromJSP
 	public void setLabelFirst(boolean labelFirst) {
-		_labelFirst = labelFirst;
+		if (!labelFirst) {
+			_labelPosition = LabelPosition.AFTER_VALUE;
+		}
 	}
 
 	/**
 	 * Determines the position of the label.
 	 */
+	@CalledFromJSP
 	public void setLabelPosition(LabelPosition labelPosition) {
 		_labelPosition = labelPosition;
-	}
-
-	/**
-	 * Returns whether the label is rendered before the input or behind it.
-	 * 
-	 * @see DescriptionCellTag#setLabelFirst(boolean)
-	 */
-	public boolean getLabelFirst() {
-		if (_splitControls) {
-			return true;
-		}
-		if (_labelPosition != null) {
-			switch (_labelPosition) {
-				case DEFAULT:
-					return true;
-				case AFTER_VALUE:
-				case HIDE_LABEL:
-					return false;
-			}
-		}
-		return _labelFirst;
 	}
 
 	/**
 	 * Sets whether label and input are always rendered in one line.
 	 */
 	public void setKeepInline(boolean keepInline) {
-		_keepInline = keepInline;
-	}
-
-	/**
-	 * Returns whether label and input are always rendered in one line.
-	 */
-	public boolean getKeepInline() {
-		return _keepInline || (!_labelFirst && _splitControls);
+		if (keepInline) {
+			_labelPosition = LabelPosition.INLINE;
+		}
 	}
 
 	/**
@@ -315,16 +285,6 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 	@Override
 	protected String getTagName() {
 		return DESCRIPTION_CELL_TAG;
-	}
-
-	/**
-	 * Returns if a colon is rendered after the label. It is rendered if the label is rendered first
-	 * and the theme says it is rendered.
-	 * 
-	 * @return Whether a colon is rendered or not.
-	 */
-	public boolean getColon() {
-		return (getLabelFirst() && Icons.COLON.get());
 	}
 
 	private GroupCellTag getGroupCellParent() {
@@ -412,7 +372,8 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 
 	@Override
 	public int doEndTag() throws JspException {
-		boolean descriptionFirst = getLabelFirst();
+		LabelPosition labelPosition = getLabelPosition();
+		boolean descriptionFirst = labelPosition != LabelPosition.AFTER_VALUE;
 
 		boolean errorIsRendered = false;
 		if (_description != null) {
@@ -424,7 +385,6 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 			}
 		}
 
-		LabelPosition labelFirst = null;
 		boolean forceWholeLine = false;
 		List<HTMLFragment> filteredControls = new ArrayList<>();
 		List<HTMLFragment> controls = _contents.getControls();
@@ -441,37 +401,6 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 					// error is already rendered in description
 					filteredControls.add(controls.get(i));
 					contentPatternNew += FormGroupTag.PLACEHOLDER;
-					LabelPosition controlLabelFirst = DescriptionCellControl.controlLabelFirst(controls.get(i));
-					if (labelFirst == null) {
-						labelFirst = controlLabelFirst;
-					} else {
-						switch (labelFirst) {
-							case AFTER_VALUE:
-								switch (controlLabelFirst) {
-									case AFTER_VALUE:
-									case HIDE_LABEL:
-										break;
-									case DEFAULT:
-										labelFirst = LabelPosition.DEFAULT;
-										break;
-								}
-								break;
-							case DEFAULT:
-								break;
-							case HIDE_LABEL:
-								switch (controlLabelFirst) {
-									case AFTER_VALUE:
-										labelFirst = LabelPosition.AFTER_VALUE;
-										break;
-									case DEFAULT:
-										labelFirst = LabelPosition.DEFAULT;
-										break;
-									case HIDE_LABEL:
-										break;
-								}
-								break;
-						}
-					}
 					forceWholeLine = forceWholeLine || DescriptionCellControl.controlWholeLine(controls.get(i));
 				}
 			}
@@ -524,18 +453,8 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 		descriptionCellControl.setCellClass(_cssClass);
 		descriptionCellControl.setCellStyle(_style);
 		descriptionCellControl.setCellWidth(_width);
-		if (getLabelAbove()) {
-			descriptionCellControl.setLabelPlacement(LabelPlacement.ABOVE);
-		}
-		if (getKeepInline()) {
-			descriptionCellControl.setLabelPlacement(LabelPlacement.INLINE);
-		}
+		descriptionCellControl.setLabelPosition(labelPosition);
 		descriptionCellControl.setWholeLine(_wholeLine || forceWholeLine);
-		if (_labelPosition != null) {
-			descriptionCellControl.setLabelPosition(_labelPosition);
-		} else {
-			descriptionCellControl.setLabelPosition(labelFirst != null ? labelFirst : LabelPosition.DEFAULT);
-		}
 		descriptionCellControl.setDescription(finalDescription);
 		descriptionCellControl.setLabelWidth(getFirstColumnWidth());
 		descriptionCellControl.setLabelStyle(_firstColumnStyle);

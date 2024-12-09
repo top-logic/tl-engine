@@ -1410,14 +1410,23 @@ public class AttributeOperations {
 	 * @param context
 	 *        Context in which the attribute is edited.
 	 * 
-	 * @return The {@link LabelPosition position} where the label is rendered.
+	 * @return The {@link LabelPosition position} where the label is rendered, or <code>null</code>
+	 *         if not specified.
 	 */
 	public static LabelPosition labelPosition(TLStructuredTypePart attribute, EditContext context) {
-		if (context != null) {
-			return labelPosition(attribute, context.getAnnotation(LabelPositionAnnotation.class));
-		}
+		return LabelPosition.nonNull(labelPositionOrNull(attribute, context));
+	}
 
-		return labelPosition(attribute);
+	/**
+	 * The annotated {@link LabelPosition} for the given attribute in the given context or
+	 * <code>null</code>.
+	 */
+	public static LabelPosition labelPositionOrNull(TLStructuredTypePart attribute, EditContext context) {
+		if (context != null) {
+			return labelPositionOrNull(attribute, context.getAnnotation(LabelPositionAnnotation.class));
+		} else {
+			return labelPositionOrNull(attribute);
+		}
 	}
 
 	/**
@@ -1429,10 +1438,18 @@ public class AttributeOperations {
 	 * @return The {@link LabelPosition position} where the label is rendered.
 	 */
 	public static LabelPosition labelPosition(TLStructuredTypePart attribute) {
-		return labelPosition(attribute, attribute.getAnnotation(LabelPositionAnnotation.class));
+		return LabelPosition.nonNull(labelPositionOrNull(attribute));
 	}
 
-	private static LabelPosition labelPosition(TLStructuredTypePart attribute, LabelPositionAnnotation annotation) {
+	/**
+	 * The {@link LabelPosition} annotated to the given attribute or <code>null</code>.
+	 */
+	public static LabelPosition labelPositionOrNull(TLStructuredTypePart attribute) {
+		return labelPositionOrNull(attribute, attribute.getAnnotation(LabelPositionAnnotation.class));
+	}
+
+	private static LabelPosition labelPositionOrNull(TLStructuredTypePart attribute,
+			LabelPositionAnnotation annotation) {
 		if (annotation != null) {
 			return annotation.getValue();
 		}
@@ -1446,6 +1463,6 @@ public class AttributeOperations {
 			return LabelPosition.HIDE_LABEL;
 		}
 
-		return LabelPosition.DEFAULT;
+		return null;
 	}
 }

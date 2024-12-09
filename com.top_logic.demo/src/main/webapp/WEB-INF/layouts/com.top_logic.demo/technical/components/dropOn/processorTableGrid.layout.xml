@@ -51,7 +51,7 @@
 				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
 				clique="moveRight"
 				group="System"
-				image="css:bi bi-arrow-right"
+				image="css:fa-solid fa-arrow-right"
 				operation="null"
 				transaction="false"
 			>

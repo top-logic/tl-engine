@@ -1,10 +1,10 @@
-<%@page import="com.top_logic.layout.scripting.template.gui.saveas.SaveScriptAsFormBuilder"
-%><%@page language="java" extends="com.top_logic.util.TopLogicJspBase"
+<%@page language="java" extends="com.top_logic.util.TopLogicJspBase"
+%><%@page import="com.top_logic.layout.scripting.template.gui.saveas.SaveScriptAsFormBuilder"
+%><%@page import="com.top_logic.model.annotate.LabelPosition"
 %><%@taglib uri="layout" prefix="layout"
 %><%@taglib uri="ajaxform" prefix="form"
 %><layout:html>
 	<layout:head>
-		
 		<style type="text/css">
 			div {
 				margin-bottom: 0px !important;
@@ -14,7 +14,7 @@
 	<layout:body>
 		<form:form displayWithoutModel="true">
 			<form:inputCell name="<%= SaveScriptAsFormBuilder.FIELD_FILE_NAME %>"
-				labelAbove="false"
+				labelPosition="<%=LabelPosition.INLINE%>"
 			/>
 		</form:form>
 	</layout:body>

@@ -2,7 +2,7 @@
 
 <settings>
 	<icon name="MIMETYPES_COMPANY_CONTACT_16"
-		value="css:bi bi-buildings-fill"
+		value="css:fa-solid fa-industry"
 	/>
 	<icon name="MIMETYPES_LARGE_COMPANY_CONTACT_60"
 		expr="%MIMETYPES_COMPANY_CONTACT_16%"
@@ -14,10 +14,10 @@
 		value="css:fas fa-sitemap"
 	/>
 	<icon name="IMAGE_BUTTONS_PERSONAL_SETTINGS22"
-		value="css:bi bi-person-fill-gear"
+		value="css:fa-solid fa-user-gear"
 	/>
 	<icon name="MIMETYPES_LARGE_PERSON_CONTACT_60"
-		value="css:bi bi-person-fill"
+		value="css:fa-solid fa-user"
 	/>
 	<icon name="MIMETYPES_PERSON_CONTACT_16"
 		expr="%MIMETYPES_LARGE_PERSON_CONTACT_60%"

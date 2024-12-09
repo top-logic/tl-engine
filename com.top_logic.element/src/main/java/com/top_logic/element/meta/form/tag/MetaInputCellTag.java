@@ -7,7 +7,9 @@ package com.top_logic.element.meta.form.tag;
 
 import jakarta.servlet.jsp.tagext.Tag;
 
+import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.layout.form.boxes.reactive_tag.InputCellTag;
+import com.top_logic.model.annotate.LabelPosition;
 
 /**
  * Creates an {@link InputCellTag} for MetaAttributes.
@@ -28,9 +30,7 @@ public class MetaInputCellTag extends AbstractMetaTag {
 
 	private String _firstColumnWidth;
 
-	private Boolean _labelFirst;
-
-	private Boolean _labelAbove;
+	private LabelPosition _labelPosition;
 
 	@Override
 	protected Tag createImplementation() {
@@ -55,11 +55,8 @@ public class MetaInputCellTag extends AbstractMetaTag {
 		if (_firstColumnWidth != null) {
 			tag.setFirstColumnWidth(_firstColumnWidth);
 		}
-		if (_labelFirst != null) {
-			tag.setLabelFirst(_labelFirst);
-		}
-		if (_labelAbove != null) {
-			tag.setLabelAbove(_labelAbove);
+		if (_labelPosition != null) {
+			tag.setLabelPosition(_labelPosition);
 		}
 
 		return tag;
@@ -68,6 +65,8 @@ public class MetaInputCellTag extends AbstractMetaTag {
 	@Override
 	protected void teardown() {
 		super.teardown();
+
+		_labelPosition = null;
 	}
 
 	/**
@@ -113,16 +112,32 @@ public class MetaInputCellTag extends AbstractMetaTag {
 	}
 
 	/**
-	 * @see InputCellTag#setLabelFirst(boolean)
+	 * Position of the label.
 	 */
-	public void setLabelFirst(boolean labelFirst) {
-		_labelFirst = labelFirst;
+	@CalledFromJSP
+	public void setLabelPosition(LabelPosition labelPosition) {
+		_labelPosition = labelPosition;
 	}
 
 	/**
-	 * @see InputCellTag#setLabelAbove(boolean)
+	 * @see #setLabelPosition(LabelPosition)
+	 * @deprecated Use {@link #setLabelPosition(LabelPosition)}
 	 */
+	@Deprecated
+	@CalledFromJSP
+	public void setLabelFirst(boolean labelFirst) {
+		if (!labelFirst) {
+			_labelPosition = LabelPosition.AFTER_VALUE;
+		}
+	}
+
+	/**
+	 * @see #setLabelPosition(LabelPosition)
+	 * @deprecated Use {@link #setLabelPosition(LabelPosition)}
+	 */
+	@Deprecated
+	@CalledFromJSP
 	public void setLabelAbove(boolean labelAbove) {
-		_labelAbove = labelAbove;
+		_labelPosition = labelAbove ? LabelPosition.ABOVE : LabelPosition.INLINE;
 	}
 }

@@ -79,6 +79,19 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey MSG_FOLDER_NOT_EMPTY;
 	
+	/**
+	 * @en Files
+	 * @tooltip Select files to upload.
+	 */
+	public static ResKey UPLOAD_DIALOG_FILES;
+
+	/**
+	 * @en File
+	 * @tooltip Select new version of file. The file selected must have the same name as the file to
+	 *          update.
+	 */
+	public static ResKey UPDATE_DIALOG_FILE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

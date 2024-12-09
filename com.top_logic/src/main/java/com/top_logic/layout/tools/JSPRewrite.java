@@ -5,7 +5,7 @@
  */
 package com.top_logic.layout.tools;
 
-import static com.top_logic.basic.xml.DOMUtil.*;
+import static com.top_logic.basic.core.xml.DOMUtil.*;
 import static com.top_logic.mig.html.HTMLConstants.*;
 
 import java.io.ByteArrayOutputStream;
@@ -47,7 +47,7 @@ import com.top_logic.mig.html.HTMLConstants;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class JSPRewrite extends Rewriter {
+public class JSPRewrite extends DescendingRewriter {
 
 	private boolean _dump = false;
 
@@ -63,30 +63,12 @@ public class JSPRewrite extends Rewriter {
 	}
 
 	@Override
-	public void handleFile(String fileName) throws Exception {
-		descend(new File(fileName));
+	protected boolean matches(File file) {
+		return file.getName().endsWith(".jsp") || file.getName().endsWith(".inc") || file.getName().endsWith(".jspf");
 	}
 
-	private void descend(File file) throws Exception {
-		String name = file.getName();
-		if (name.startsWith(".")) {
-			return;
-		}
-		if (file.isDirectory()) {
-			File[] contents = file.listFiles();
-			if (contents != null) {
-				for (File content : contents) {
-					descend(content);
-				}
-			}
-		} else {
-			if (name.endsWith(".jsp") || name.endsWith(".inc") || name.endsWith(".jspf")) {
-				handleJSP(file);
-			}
-		}
-	}
-
-	private void handleJSP(File jsp) {
+	@Override
+	protected void handleFile(File jsp) {
 		try {
 			String contents = FileUtilities.readFileToString(jsp);
 			String target = processContents(contents);

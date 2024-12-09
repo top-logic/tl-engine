@@ -31,7 +31,6 @@ import com.top_logic.mig.html.layout.tag.LayoutHtml;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
-import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
  * {@link ModelBuilder} creating a {@link FormContext} with all fields for a {@link TLObject}.
@@ -69,7 +68,6 @@ public class PropertiesEditor implements ModelBuilder {
 			DescriptionCellControl cell =
 				DescriptionCellControl.createInputBox(member, _inputCP, FormTemplateConstants.STYLE_DIRECT_VALUE, true,
 					false);
-			cell.setLabelPlacement(LabelPlacement.ABOVE);
 			return cell;
 		}
 	}

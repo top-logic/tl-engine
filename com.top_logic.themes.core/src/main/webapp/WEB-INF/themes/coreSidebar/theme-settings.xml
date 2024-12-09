@@ -31,11 +31,8 @@
 	<dim name="SIDEBAR_WIDTH_MINIMIZED"
 		value="40px"
 	/>
-	<int name="SIDEBAR_LAYOUT_LEFT_SIDE_BORDER"
-		value="16"
-	/>
-	<int name="SIDEBAR_LAYOUT_TOP_BORDER"
-		value="16"
+	<int name="MAIN_LAYOUT_SIDE_BORDER"
+		value="8"
 	/>
 	<icon name="com.top_logic.layout.Icons.APP_LOGO"
 		value="/images/appLogo.svg"

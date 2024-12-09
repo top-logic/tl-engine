@@ -105,8 +105,12 @@ void inspect(DisplayContext context, TagWriter out, LayoutComponent component, B
 			<h4>
 				Finished
 			</h4>
-			<button class="tlButton cButton cmdButton" onclick="self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';">
-				<h4 class="tlButtonLabel">Reload</h4>
+			<button class="tlButton cButton cmdButton"
+				onclick="self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';"
+			>
+				<h4 class="tlButtonLabel">
+					Reload
+				</h4>
 			</button>
 			<%
 			
@@ -178,8 +182,13 @@ void inspect(DisplayContext context, TagWriter out, LayoutComponent component, B
 				</table>
 				<div class="cmdButtons">
 					<p>
-						<button class="tlButton cButton cmdButton" name="RELOAD" type="submit">
-							<h4 class="tlButtonLabel">Reload selected modules and their dependents</h4>
+						<button class="tlButton cButton cmdButton"
+							name="RELOAD"
+							type="submit"
+						>
+							<h4 class="tlButtonLabel">
+								Reload selected modules and their dependents
+							</h4>
 						</button>
 					</p>
 				</div>

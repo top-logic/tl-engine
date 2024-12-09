@@ -7,9 +7,7 @@
 Page to create a new attributed element, cooperates with DefaultCreateAttributedComponent.
 --%>
 <layout:html>
-	<layout:head>
-		
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<meta:formPage
 			titleAttribute="<%=AbstractWrapper.NAME_ATTRIBUTE %>"

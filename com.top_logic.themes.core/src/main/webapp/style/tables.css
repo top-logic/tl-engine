@@ -87,11 +87,11 @@ table td div.tblRight span.cError {
 }
 
 a.tl-table__title {
-	color: var(--text-primary);
+	color: var(--layer-accent-text);
 }
 
 a.tl-table__title:visited {
-	color: var(--text-primary);
+	color: var(--layer-accent-text);
 }
 
 .tl-table__title {
@@ -99,8 +99,11 @@ a.tl-table__title:visited {
 	justify-content: space-between;
     align-items: center;
     gap: var(--spacing-02);
-	background: var(--layer-accent);
-	color: var(--text-primary);
+
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
+
 	font-family: var(--font-family);
 	font-weight: bold;
     font-size: var(--heading-compact-02-font-size);
@@ -116,8 +119,10 @@ a.tl-table__title:visited {
 }
 
 th.tblTitleRight {
-	background: var(--layer-accent);
-	color: var(--text-primary);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
+
 	font-family: var(--font-family);
 	font-weight: bold;
 	font-size: var(--heading-03-font-size);
@@ -180,7 +185,7 @@ th.tblCounterNoBorder {
 }
 
 .tl-table__footer-pager i {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .tl-table__footer-pager-item {
@@ -403,7 +408,6 @@ td.tblTD100 {
     white-space:    nowrap;
 	padding:        2px;
 	border-color:   var(--layer-accent);
-	color:          var(--text-primary);
 	width:          100%;
 	border-width:   0px;
 }
@@ -415,8 +419,9 @@ tr.treeSelected td.tl-table__cell--selected {
 td.tblTDselectWrap {
 	padding:          2px;
 	border-color:     var(--layer-accent);
-	color:            var(--text-primary);
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 	border-width:     0px;
 }
 
@@ -426,8 +431,9 @@ td.tblTDselectStrong {
     white-space:      nowrap;
 	padding:          2px;
 	border-color:     var(--layer-accent);
-	color:            var(--text-primary);
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 	border-width:     0px;
 }
 
@@ -436,8 +442,9 @@ td.tblTDselect100 {
     white-space:      nowrap;
 	padding:          2px;
 	border-color:     var(--layer-accent);
-	color:            var(--text-primary);
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 	width:            100%;
 	border-width:     0px;
 }
@@ -473,7 +480,8 @@ table.regTable {
 
 th.regTitle {
 	background-color: var(--layer-accent);
-	color:            var(--text-primary);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 	font-size:        13px;
 	font-weight:      normal;
 	padding:          2px;
@@ -602,25 +610,12 @@ select.tbl {	/* Tables can be written as selects, using this style */
  	width: 80%;
 }
 
-.fltButtons {
-	height: var(--TABLE_FILTER_BUTTON_BAR_HEIGHT);
-	display: flex;
-	justify-content: space-around;
-    align-items: center;
-}
-
-td.fltButton {
-	width:17px;
-	text-align: center;
-	position: relative;
-}
-
-.fltButtons .cButton {
-	padding: 0 var(--spacing-01);
+.fltButton {
+	padding-left: var(--spacing-01);
 }
 
 .tl-table__header-cell-content .fltButton.tl-table__filter-sort-icons {
-	color: var(--highlight-fg, var(--icon-primary));
+	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
 	align-self: center;
 }
 
@@ -629,7 +624,7 @@ td.fltButton {
 }
 
 .tl-table__header-cell-content .fltButton:not(.activeFilter):not(.tl-table__filter-sort-icons):hover {
-	color: var(--highlight-fg, var(--icon-primary));
+	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
 }
 
 .tl-table__header-cell-content .fltButton.activeFilter {
@@ -915,6 +910,7 @@ table td span.cTimeInput,
 table td span.cTextPopup,
 table td span.cExpandableTextInput,
 table td span.cTextInput,
+table td span.cIconChooser,
 table td .cDataItem,
 table td span.downloadControl {
 	display: flex;
@@ -935,7 +931,7 @@ table .cDecoratedCell > .lFlexible > :first-child:not(a) {
 	flex-grow: 2;
 }
 
-table:not(.i18nStringTable) td span.cDecoratedCell {
+table td span.cDecoratedCell {
 	gap: var(--spacing-01);
 }
 
@@ -945,16 +941,7 @@ table:not(.i18nStringTable) td span.cDecoratedCell {
 
 .tl-table__row:not(.tblSelected):hover .treeType > i, 
 td.tl-table__cell--selected .treeType > i {
-	color: var(--highlight-fg, var(--icon-primary));
-}
-
-table.i18nStringTable td span.cDecoratedCell .lFlexible {
-	padding-left: 0px;
-	padding-right: 0px;
-}
-
-table.i18nStringTable td {
-	padding-bottom: var(--spacing-02);
+	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
 }
 
 table td span.cTextPopup span.content {
@@ -964,7 +951,6 @@ table td span.cTextPopup span.content {
 
 table td .cDataItem span.lFlexible span.content,
 table td span.downloadControl span.content {
-	width: 100%;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
@@ -1028,25 +1014,18 @@ table td a.cDownload {
 	text-overflow: ellipsis;
 }
 
-table.tl-table td span.lFlexible,
-table.tl-table td span.lFlexibleCustom {
-	display: inline-flex;
+/* :is(table.tl-table.tl-table--fixed,.rf_cell) */
+:is(.lFlexible,.lFlexibleCustom,.ddwttContainer),
+:is(.lFlexible,.lFlexibleCustom) :is(textarea,input:is(.is-input,.is-popup)) {
+	box-sizing: border-box;
+	width: 100%;
 	overflow: hidden;
-	width: 100%;
-}
-
-table td span.lFlexible > select {
-	width: 100%;
 }
 
 /* Use default width for select fields in title of
  frozen tables (e.g. needed for gallery edit dialog). */
 .tl-table__title span.lFlexible select {
 	width: auto;
-}
-
-table td .cDatetime .lFlexible {
-	width: fit-content !important;
 }
 
 /* 
@@ -1067,10 +1046,6 @@ table td .ddwttDropBtn {
 
 table.tl-table td .cDateTime .lFixedRight .cDateInput .lFlexible {
 	width: fit-content !important;
-}
-
-table td span.lFlexible > input:not([type="image"]) {
-	width: 100%;
 }
 
 /* Use default width for input fields in title of
@@ -1305,17 +1280,21 @@ div.dirtyHandlingDialog .changes {
   	overflow: auto;
 }
 
-.tl-table__cell-container {
-	padding: 0 var(--spacing-01) !important;
-    display: inline-flex;
-    align-items: center;
-    box-sizing: border-box;
-    vertical-align: middle;
+table {
+	--table-row-height: 15px;
 }
 
-.tl-table__cell-container:has(input) {
-    width: 100%;
-	padding: 0 !important;
+.tl-table__cell {
+    height:var(--table-row-height);
+}
+
+.tl-table__cell-container {
+	overflow:hidden;
+	white-space:nowrap;
+	padding: 0 var(--spacing-01) !important;
+    box-sizing: border-box;
+    height:var(--table-row-height);
+    line-height:var(--table-row-height);
 }
 
 .tl-table__cell-container img {
@@ -1328,24 +1307,12 @@ div.dirtyHandlingDialog .changes {
 	padding-right: var(--spacing-01);
 }
 
-/* Needs to be changed when tl-table__cell-container padding changes. Otherwise the table row jumps when selection changed. */
-.tl-table__cell-container:has(input) .lFixedLeft {
-	padding-left: var(--spacing-01);
-	padding-right: 0;
-}
-
 th .tl-table__cell-container {
 	width: 100%;
 }
 
 th:last-child .tl-table__cell-container {
 	padding-right: 16px !important;
-}
-
-.tl-table__cell-container .tl-radio-checkbox-container {
-	display: flex;
-	justify-content: center;
-	flex-grow: 1;
 }
 
 .tl-table__cell-container .cPopupSelect.cannot-edit {
@@ -1384,9 +1351,11 @@ th:last-child .tl-table__cell-container {
 	border-collapse: separate !important;
 	border-spacing: 0px;
 	margin: 0px;
+
+	border-left:  1px solid var(--border-subtle);
+	border-right: 1px solid var(--border-subtle);	
 }
 
-.tl-table,
 .tl-table--fixed {
 	table-layout: fixed;
 }
@@ -1413,7 +1382,7 @@ th:last-child .tl-table__cell-container {
 	left: 0;
 	display: flex;
 	justify-content: center;
-	background: var(--layer-accent);
+	background: var(--layer);
 	color: var(--text-primary);
 	font-family: var(--font-family);
 	font-size: var(--body-01-font-size);
@@ -1594,7 +1563,7 @@ th:last-child .tl-table__cell-resizer {
 
 .tl-table-overlay__scroller-icon {
 	font-size: 25px;
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .tl-flex--fill {
@@ -1630,11 +1599,6 @@ td.treeTableTdFirst {
     background-color:var(--layer);
     border: var(--TABLE_COLUMN_BORDER_WIDTH) solid var(--border-subtle);
     overflow: hidden;
-}
-
-td.treeTableTdFirst span {
-    white-space:  nowrap;
-    vertical-align: middle;
 }
 
 tr.treeSelected td.treeTableTdFirst {
@@ -1678,15 +1642,11 @@ td.tl-table__cell--selected {
 }
 
 .tl-table__row:not(.tblSelected):hover .fToggle a {
-	color: var(--highlight-fg, var(--icon-primary));
+	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
 }
 
 .tl-table__cell--selectable .fToggle a {
 	color: var(--highlight-fg, var(--icon-secondary));
-}
-
-.i18nStringTable.tl-table {
-	border: none;
 }
 
 .adjustableColumn {

@@ -208,9 +208,13 @@ private static final int HISTORY_LENGTH = 256;
 				if (RESTART_LINK != null) {
 					%>
 					<p>
-					    <button class="tlButton cButton cmdButton" onclick="self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';">
-					        <h4 class="tlButtonLabel"><%= RESTART_LINK %></h4>
-					    </button>
+						<button class="tlButton cButton cmdButton"
+							onclick="self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';"
+						>
+							<h4 class="tlButtonLabel">
+								<%= RESTART_LINK %>
+							</h4>
+						</button>
 					</p>
 					<%
 				}
@@ -248,10 +252,13 @@ private static final int HISTORY_LENGTH = 256;
 								<td>
 									<p>
 										<button class="tlButton cButton cmdButton"
-									            name="<%=doSimulate ? "SIMULATE" : "SUBMIT"%>"
-									            type="submit">
-									        <span class="tlButtonLabel"><%= REFRESH_BUTTON %></span>
-									    </button>
+											name="<%=doSimulate ? "SIMULATE" : "SUBMIT"%>"
+											type="submit"
+										>
+											<span class="tlButtonLabel">
+												<%= REFRESH_BUTTON %>
+											</span>
+										</button>
 									</p>
 								</td>
 							</tr>
@@ -292,29 +299,44 @@ private static final int HISTORY_LENGTH = 256;
 								</div>
 
 								<div class="cmdButtons">
-								    <%
-								    if (QUERY_BUTTON != null) {
-								        %>
-								        <button class="tlButton cButton cmdButton" name="QUERY" type="submit">
-								            <h4 class="tlButtonLabel"><%= QUERY_BUTTON %></h4>
-								        </button>
-								        <%
-								    }
-								    if (RUN_BUTTON != null) {
-								        %>
-								        <button class="tlButton cButton cmdButton" name="SUBMIT" type="submit">
-								            <h4 class="tlButtonLabel"><%= RUN_BUTTON %></h4>
-								        </button>
-								        <%
-								    }
-								    if (SIMULATE_BUTTON != null) {
-								        %>
-								        <button class="tlButton cButton cmdButton" name="SIMULATE" type="submit">
-								            <h4 class="tlButtonLabel"><%= SIMULATE_BUTTON %></h4>
-								        </button>
-								        <%
-								    }
-								    %>
+									<%
+									if (QUERY_BUTTON != null) {
+										%>
+										<button class="tlButton cButton cmdButton"
+											name="QUERY"
+											type="submit"
+										>
+											<h4 class="tlButtonLabel">
+												<%= QUERY_BUTTON %>
+											</h4>
+										</button>
+										<%
+									}
+									if (RUN_BUTTON != null) {
+										%>
+										<button class="tlButton cButton cmdButton"
+											name="SUBMIT"
+											type="submit"
+										>
+											<h4 class="tlButtonLabel">
+												<%= RUN_BUTTON %>
+											</h4>
+										</button>
+										<%
+									}
+									if (SIMULATE_BUTTON != null) {
+										%>
+										<button class="tlButton cButton cmdButton"
+											name="SIMULATE"
+											type="submit"
+										>
+											<h4 class="tlButtonLabel">
+												<%= SIMULATE_BUTTON %>
+											</h4>
+										</button>
+										<%
+									}
+									%>
 								</div>
 								<%
 								if (HISTORY_LENGTH > 0) {
@@ -344,8 +366,13 @@ private static final int HISTORY_LENGTH = 256;
 										if (CLEAR_BUTTON != null) {
 											%>
 											<div class="cmdButtons">
-												<button class="tlButton cButton cmdButton" name="CLEAR" type="submit">
-													<h4 class="tlButtonLabel"><%= CLEAR_BUTTON %></h4>
+												<button class="tlButton cButton cmdButton"
+													name="CLEAR"
+													type="submit"
+												>
+													<h4 class="tlButtonLabel">
+														<%= CLEAR_BUTTON %>
+													</h4>
 												</button>
 											</div>
 											<%

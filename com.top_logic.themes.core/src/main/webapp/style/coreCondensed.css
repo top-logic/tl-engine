@@ -43,10 +43,6 @@
     width: 1.5rem;
 }
 
-.input-image i {
-	font-size: var(--body-01-font-size);
-}
-
 .cmdButtons .cButton, .cButton.cmdButton, .cButton.cmdButtonDisabled, .cDefaultButton button, .cDefaultButton button:disabled, .tlButtonScrollContainer .tlDropdownButton, .sxButtons .tlButton, .cButton.bcPopup, .cButton.cLinkButton.cmdLink, .cButton.cLinkButton.cmdLinkDisabled, .fltSubContent .cMenuButton.menuEntryEnabled, .fltSubContent .cMenuButton.menuEntryDisabled {
     height: 1.5rem;
 }

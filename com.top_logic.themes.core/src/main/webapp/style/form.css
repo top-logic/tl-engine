@@ -1588,7 +1588,8 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
 .lFixedRight .fChoose.disabled,
 .lFixedRight span.disabled,
 .lFixedRight span span.disabled,
-span.cIconSelect .input-image.cannot-edit i {
+span.cIconSelect .input-image.cannot-edit i,
+input.is-checkbox[disabled] {
 	color: var(--icon-disabled);
 }
 
@@ -1726,8 +1727,6 @@ span.cIconSelect .input-image.cannot-edit i {
 .error-annotation button.ColorChooser,
 .error.active input.tristate,
 .error-annotation.active input.tristate,
-.error.active input.is-checkbox,
-.error-annotation.active input.is-checkbox,
 .error.active input.is-radio,
 .error-annotation.active input.is-radio,
 .error.active.cBeacon, /* AND selector --> .error AND .cBeacon */
@@ -1758,8 +1757,6 @@ span.cIconSelect .input-image.cannot-edit i {
 .warning-annotation button.ColorChooser,
 .warning.active input.tristate,
 .warning-annotation.active input.tristate,
-.warning.active input.is-checkbox,
-.warning-annotation.active input.is-checkbox,
 .warning.active input.is-radio,
 .warning-annotation.active input.is-radio,
 .warning.active.cBeacon,
@@ -1809,16 +1806,6 @@ input.tristate:focus,
 .warning.active input.tristate:focus,
 .error-annotation.active input.tristate:focus,
 .warning-annotation.active input.tristate:focus,
-input.is-checkbox:focus,
-.error.active input.is-checkbox:focus,
-.warning.active input.is-checkbox:focus,
-.error-annotation.active input.is-checkbox:focus,
-.warning-annotation.active input.is-checkbox:focus,
-input.is-radio:focus,
-.error.active input.is-radio:focus,
-.warning.active input.is-radio:focus,
-.error-annotation.active input.is-radio:focus,
-.warning-annotation.active input.is-radio:focus,
 .cBeacon:focus,
 .error.active.cBeacon:focus,
 .warning.active.cBeacon:focus,
@@ -1918,6 +1905,21 @@ span.disabled > span.lFlexible > select.tl-select:not( [multiple="multiple"] ) {
 	display: inline-flex
 }
 
+input[type="checkbox"] {
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+input[type="checkbox"]::before {
+	font-family: 'Font Awesome 6 Free';
+	content: "\f0c8";
+}
+
+input[type="checkbox"]:checked::before {
+	content: "\f14a";
+	font-weight: 900;
+}
+
 /*
 ****										****
 ****	ChoiceControl, bbc-option styles	****
@@ -1973,48 +1975,6 @@ span.bcc-option {
 	cursor: default;
 }
 
-.cChoice-horizontal.disabled, .cChoice-vertical.disabled {
-	color: var(--text-disabled);
-}
-
-.cChoice-horizontal.cannot-edit > .cChoice-option::after {
-	content: ";";
-}
-
-.cChoice-horizontal.cannot-edit > .cChoice-option:last-child::after {
-	content: "";
-}
-
-.cChoice-horizontal.disabled input[type="radio"], 
-.cChoice-vertical.disabled input[type="radio"],
-.cBooleanChoice.disabled input[type="radio"] {
-	border: 1px solid  var(--icon-disabled);
-}
-
-.cChoice-horizontal.disabled input[type="radio"]:checked::before,
-.cChoice-vertical.disabled input[type="radio"]:checked::before,
-.cBooleanChoice.disabled input[type="radio"]:checked::before {
-	background-color: var(--icon-disabled);
-}
-
-.cChoice-horizontal.disabled, .cChoice-vertical.disabled,
-.cBooleanChoice.disabled {
-	color: var(--text-disabled);
-}
-
-.cChoice-horizontal.disabled input[type="checkbox"], 
-.cChoice-vertical.disabled input[type="checkbox"],
-.cCheckbox.cannot-edit input[type="checkbox"] {
-	border: 1px solid  var(--icon-disabled);
-	cursor: default;
-}
-
-.cChoice-horizontal.disabled input[type="checkbox"]:checked::before,
-.cChoice-vertical.disabled input[type="checkbox"]:checked::before {
-	background-color: var(--icon-disabled);
-	cursor: default;
-}
-
 img.cChoice-icon {
 	height: 1em;
 	object-fit: contain;
@@ -2047,12 +2007,14 @@ a img.type-image {
 .tBoolean > .type-image,
 .is-radio,
 .is-checkbox,
+a.tristate, 
 input.tristate {
 	margin-left: var(--spacing-01);
 	margin-right: var(--spacing-01);
 }
 
 .rf_firstColumn .tBoolean > .type-image,
+.rf_firstColumn .tBoolean.input-image,
 .rf_firstColumn .is-radio,
 .rf_firstColumn .is-checkbox,
 .rf_firstColumn input.tristate {

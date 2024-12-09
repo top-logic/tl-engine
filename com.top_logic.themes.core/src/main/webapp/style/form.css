@@ -2268,8 +2268,8 @@ div.imageContainer {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	height: 2rem;
-	width: 2rem;
+	height: 1.5rem;
+	width: 1.5rem;
 	padding: 0;
 	border: 1px solid var(--border-strong);
 	border-radius: var(--corner-radius);

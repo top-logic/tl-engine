@@ -194,7 +194,6 @@ div.fptIconBar > span.fptIconOverlay {
 
 .rf_label {
 	white-space: nowrap;
-	margin: var(--spacing-02) 0;
 }
 
 .mandatory.can-edit label:after {
@@ -390,6 +389,19 @@ div.rf_buttons {
     margin-top: var(--spacing-03);
 }
 
+.rf_cell .rf_inputCell:first-child {
+    margin-top: 0;
+}
+
+.rf_cell .rf_inputCell:last-child {
+    margin-bottom: 0;
+}
+
+.rf_cell .rf_columnsLayout {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
 .rf_columnsLayout.keep {
 	margin-top: var(--spacing-02);
 	overflow: auto;
@@ -441,7 +453,7 @@ div.rf_buttons {
 /* even empty cells have a height */
 .rf_cell {
 	min-height: 1.5rem;
-	margin: var(--spacing-02) 0;
+	margin-bottom: var(--spacing-02);
 	box-sizing: border-box;
 	overflow-wrap: break-word;
 }
@@ -720,6 +732,10 @@ div.dfListAdd {
 	display: none;	
 }
 
+.rf_cell p.wikiText:first-child {
+	margin-top: 0;
+}
+
 .i18nStringTable p {
 	margin-top: 0px;
 }
@@ -818,6 +834,10 @@ div.dfListAdd {
 	margin-bottom: 0px;
 	text-overflow: ellipsis;
 	overflow: hidden;
+}
+
+.rf_inputCell {
+	margin: var(--spacing-02) 0;
 }
 
 .rf_inputCell label {

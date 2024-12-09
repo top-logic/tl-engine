@@ -3416,6 +3416,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	/**
 	 * @deprecated testing only
 	 */
+	@Deprecated
 	public Object switchThreadContext(Object o1) {
 		return currentInteraction().set(_localDBContext, (DBContext) o1);
 	}
@@ -4854,6 +4855,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	 */
 	@Override
 	@SuppressWarnings("deprecation")
+	@Deprecated
     public CommitContext getCommitContext(boolean create) {
     	if (create) {
     		return internalCreateDBContext();

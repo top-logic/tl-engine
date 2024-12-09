@@ -1958,8 +1958,8 @@ span.bcc-option {
 }
 
 .cChoice-option {
-    display: flex;
     align-items: center;
+    text-wrap: nowrap;
 }
 
 .cChoice-option label {
@@ -1984,7 +1984,7 @@ img.cChoice-icon {
 img.type-image {
 	height: 1em;
 	object-fit: contain;
-	align-self: center;
+	
 }
 
 a img.type-image {
@@ -1993,7 +1993,7 @@ a img.type-image {
 
 .treeType,
 span.type-image,
-a img.type-image {
+img.type-image {
 	padding-right: var(--spacing-01);
 }
 
@@ -2603,7 +2603,6 @@ span.disabled .ddwttDropBtn {
 }
 
 .ddwttImmutableItem {
-	display: inline-flex;
 	text-align: left;
 }
 

@@ -257,7 +257,7 @@ public class CreateTLObjectProcessor extends AbstractConfiguredInstance<CreateTL
 		if (branchParam != null) {
 			values.add(branchParam);
 		}
-		arguments.add(literalLong(branch));
+		arguments.add(branch);
 		
 		parameterDefs.add(parameterDef(DBType.ID, "identifier"));
 		columns.add(BasicTypes.IDENTIFIER_DB_NAME);

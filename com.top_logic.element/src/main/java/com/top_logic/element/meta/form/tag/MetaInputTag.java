@@ -336,15 +336,4 @@ public class MetaInputTag extends AbstractMetaTag implements AnnotationLookup {
 		_localAnnotations = _localAnnotations.with(BooleanDisplay.display(value));
 	}
 
-	/**
-	 * @deprecated Use {@link #setReferenceDisplay(ReferencePresentation)},
-	 *             {@link #setClassificationDisplay(ClassificationPresentation)}, or
-	 *             {@link #setBooleanDisplay(BooleanPresentation)}.
-	 */
-	public void setRadioHorizontal(boolean value) {
-		setReferenceDisplay(value ? ReferencePresentation.RADIO_INLINE : ReferencePresentation.POP_UP);
-		setClassificationDisplay(
-			value ? ClassificationPresentation.RADIO_INLINE : ClassificationPresentation.DROP_DOWN);
-	}
-
 }

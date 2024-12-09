@@ -25,6 +25,7 @@ import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
  * 
  * @author <a href="mailto:Jan.Stolzenburg@top-logic.com">Jan Stolzenburg</a>
  */
+@Deprecated
 public class FormMemberNamingScheme extends AbstractModelNamingScheme<FormMember, FormMemberBasedName> {
 
 	/**

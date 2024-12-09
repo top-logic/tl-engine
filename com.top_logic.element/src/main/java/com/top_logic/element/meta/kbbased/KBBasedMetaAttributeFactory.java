@@ -15,12 +15,10 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.WrapperFactory;
-import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLAssociationProperty;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassProperty;
-import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.impl.util.TLStructuredTypeColumns;
@@ -32,38 +30,6 @@ import com.top_logic.model.impl.util.TLStructuredTypeColumns;
  */
 @ServiceDependencies({ PersistencyLayer.Module.class })
 public class KBBasedMetaAttributeFactory extends MetaAttributeFactory {
-
-	/**
-	 * Marker value for {@link TLReference}s.
-	 * 
-	 * @see KBBasedMetaAttribute#IMPLEMENTATION_NAME
-	 * @deprecated Use {@link TLStructuredTypeColumns#REFERENCE_IMPL} instead
-	 */
-	public static final String REFERENCE_IMPL = TLStructuredTypeColumns.REFERENCE_IMPL;
-
-	/**
-	 * Marker value for {@link TLProperty} instances of a {@link TLClass}.
-	 * 
-	 * @see KBBasedMetaAttribute#IMPLEMENTATION_NAME
-	 * @deprecated Use {@link TLStructuredTypeColumns#CLASS_PROPERTY_IMPL} instead
-	 */
-	public static final String CLASS_PROPERTY_IMPL = TLStructuredTypeColumns.CLASS_PROPERTY_IMPL;
-
-	/**
-	 * Marker value for {@link TLProperty} instances of a {@link TLAssociation}.
-	 * 
-	 * @see KBBasedMetaAttribute#IMPLEMENTATION_NAME
-	 * @deprecated Use {@link TLStructuredTypeColumns#ASSOCIATION_PROPERTY_IMPL} instead
-	 */
-	public static final String ASSOCIATION_PROPERTY_IMPL = TLStructuredTypeColumns.ASSOCIATION_PROPERTY_IMPL;
-
-	/**
-	 * Marker value for {@link TLAssociationEnd}s.
-	 * 
-	 * @see KBBasedMetaAttribute#IMPLEMENTATION_NAME
-	 * @deprecated Use {@link TLStructuredTypeColumns#ASSOCIATION_END_IMPL} instead
-	 */
-	public static final String ASSOCIATION_END_IMPL = TLStructuredTypeColumns.ASSOCIATION_END_IMPL;
 
 	/**
 	 * Creates a {@link KBBasedMetaAttributeFactory} from configuration.

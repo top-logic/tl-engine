@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.element.core.TLElementComparator;
 import com.top_logic.element.model.DefaultModelFactory;
@@ -173,13 +172,6 @@ public abstract class StructuredElementFactory extends DefaultModelFactory {
 	public PreloadOperation getComparePreload() {
 		return NoPreload.INSTANCE;
 	}
-
-	/**
-	 * @deprecated Use {@link DynamicModelService#getAllFactories()}.
-	 */
-    public static Iterable<StructuredElementFactory> getFactories() {
-		return FilterUtil.filterIterable(StructuredElementFactory.class, DynamicModelService.getAllFactories());
-    }
 
     /**
      * @param    anElement    The element to find the siblings for.

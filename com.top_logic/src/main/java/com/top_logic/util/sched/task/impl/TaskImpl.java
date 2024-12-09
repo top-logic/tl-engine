@@ -474,6 +474,7 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 	 * @deprecated Use normal {@link Task} and {@link SchedulingAlgorithm} instantiation via
 	 *             {@link TypedConfiguration} instead.
 	 */
+	@Deprecated
 	protected SchedulingAlgorithm createLegacySchedule(
 			int daytype, Date date, int daymask, int hour, int minute, long interval, int stopHour, int stopMinute) {
 		/* The bitmask is necessary as there is at least one other bit that is used as an

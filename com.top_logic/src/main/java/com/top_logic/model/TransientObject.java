@@ -70,6 +70,7 @@ public abstract class TransientObject extends AbstractTLObject {
 	 * @deprecated Use {@link #tId()} instead
 	 */
 	@Override
+	@Deprecated
 	public ObjectKey getObjectKey() {
 		return tId();
 	}

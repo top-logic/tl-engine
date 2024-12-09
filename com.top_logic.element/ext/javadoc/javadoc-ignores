@@ -997,7 +997,6 @@ com.top_logic.element.meta.form.tag.MetaInputBoxTag.java: Invalid camel case wor
 com.top_logic.element.meta.form.tag.MetaInputCellTag.java: Invalid camel case word 'MetaAttributes', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.meta.form.tag.MetaInputTag.java: Invalid camel case word 'MetaAttributes', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.meta.form.tag.MetaInputTag.java: Invalid camel case word 'onChange', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.element.meta.form.tag.MetaInputTag.java: Missing documentation: com.top_logic.element.meta.form.tag.MetaInputTag.setRadioHorizontal
 com.top_logic.element.meta.form.tag.ShowGroupAttributesTag.java: Invalid camel case word 'MetaAttributes', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.meta.form.tag.ShowGroupAttributesTag.java: Invalid camel case word 'descriptionCell', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.element.meta.form.tag.ShowGroupAttributesTag.java: Invalid camel case word 'legendName', this may only be used within JavaDoc links or HTML code tags.

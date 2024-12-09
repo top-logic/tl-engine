@@ -25,7 +25,6 @@ import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.Wrapper;
-import com.top_logic.knowledge.wrap.exceptions.InvalidWrapperException;
 import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
@@ -174,27 +173,9 @@ public class StaticKnowledgeObject extends StaticKnowledgeItem implements Knowle
 		return ((theVal != null) ? new Date(theVal.longValue()) : null);
 	}
 
-	/**
-	 * TODO #2829: Delete TL 6 deprecation
-	 * 
-	 * @deprecated Use {@link #tHandle()} or one of the other short-cuts for accessing underlying
-	 *             data, e.g. {@link #tGetData(String)}.
-	 * @deprecated Use {@link #tHandle()} instead
-	 */
-	@Override
-	public final KnowledgeObject getWrappedObject() {
-		return tHandle();
-	}
-
 	@Override
 	public KnowledgeObject tHandle() {
 		return (KnowledgeObject) super.tHandle();
-	}
-
-	private void checkInvalid() throws InvalidWrapperException {
-		if (!tValid()) {
-			throw new InvalidWrapperException("Wrapper without KnowledgeBase " + this);
-		}
 	}
 
 	@Override

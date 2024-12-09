@@ -28,6 +28,17 @@
     text-overflow: ellipsis;
     white-space: initial;
     overflow: hidden;
+	flex-grow: 2;
+	display: flex;
+	line-height: 2rem;
+}
+
+.dfTitleLabel {
+	display: flex;
+}
+
+.dfTitleContent {
+	flex-grow: 1;
 }
 
 .rf_header > .rf_menu, 
@@ -40,11 +51,6 @@
 .dfContent {
 	overflow: hidden;
 	align-self: center;
-}
-
-.dfItemTitle {
-	display: flex;
-	flex-grow: 2;
 }
 
 .mboxContent .dfContent .dfToolbar {

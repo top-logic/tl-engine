@@ -50,7 +50,7 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 	 * CSS class rendered for an input cell.
 	 */
 	protected static String inputCellCSS(FormEditorContext context) {
-		String labelCSS = context.getLabelPosition().cssClass();
+		String labelCSS = context.getLabelPosition().cssClass(context.isInEditMode());
 		String rfInputCell = ReactiveFormCSS.RF_INPUT_CELL;
 		if (labelCSS != null) {
 			rfInputCell = rfInputCell + " " + labelCSS;

@@ -89,7 +89,7 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 		switch (labelPosition) {
 			case AFTER_VALUE:
 				return cp.createControl(member, FormTemplateConstants.STYLE_LABEL_VALUE);
-			case DEFAULT, ABOVE, INLINE:
+			case DEFAULT, ABOVE, ABOVE_INPUT, INLINE:
 				return cp.createControl(member,
 					colon ? FormTemplateConstants.STYLE_LABEL_WITH_COLON_VALUE
 						: FormTemplateConstants.STYLE_LABEL_VALUE);
@@ -127,18 +127,22 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 
 	private HTMLFragment _description;
 
+	private FormMember _member;
+
 	/**
 	 * Creates a {@link DescriptionCellControl}.
 	 * 
-	 * @param visibility
+	 * @param member
 	 *        The {@link VisibilityModel} to use. If <code>null</code> it will use an
 	 *        {@link AlwaysVisible}.
 	 * @param model
 	 *        The content to display.
 	 */
-	public DescriptionCellControl(VisibilityModel visibility, HTMLFragment model) {
-		if (visibility != null) {
-			setVisibilityModel(visibility);
+	public DescriptionCellControl(FormMember member, HTMLFragment model) {
+		_member = member;
+
+		if (member != null) {
+			setVisibilityModel(member);
 		} else {
 			setVisibilityModel(AlwaysVisible.INSTANCE);
 		}
@@ -211,7 +215,7 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	@TemplateVariable("cellClasses")
 	public String getCellClasses() {
 		String css = ReactiveFormCSS.RF_INPUT_CELL;
-		String labelCSS = _labelPosition.cssClass();
+		String labelCSS = _labelPosition.cssClass(isEditMode());
 		if (labelCSS != null) {
 			css = css + " " + labelCSS;
 		}
@@ -219,6 +223,10 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 			css = css + " " + _cellClass;
 		}
 		return css;
+	}
+
+	private boolean isEditMode() {
+		return _member != null && !_member.isImmutable();
 	}
 
 	/**

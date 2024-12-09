@@ -1270,34 +1270,34 @@
 		expr="%com.top_logic.layout.form.control.Icons.MANDATORY_NULL%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_TRUE"
-		expr="%com.top_logic.layout.Icons.OK_BUTTON%"
+		expr="css:fa-solid fa-square-check"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_TRUE_DISABLED"
-		expr="%com.top_logic.layout.Icons.OK_BUTTON%"
+		expr="%com.top_logic.layout.form.control.Icons.TRISTATE_TRUE%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_FALSE"
-		expr="%com.top_logic.layout.provider.Icons.FALSE_DISABLED%"
+		expr="css:fa-regular fa-square-minus"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.TRISTATE_FALSE_DISABLED"
-		expr="%com.top_logic.layout.provider.Icons.FALSE_DISABLED%"
+		expr="%com.top_logic.layout.form.control.Icons.TRISTATE_FALSE%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_TRUE"
-		expr="%com.top_logic.layout.Icons.OK_BUTTON%"
+		expr="%com.top_logic.layout.form.control.Icons.TRISTATE_TRUE%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_TRUE_DISABLED"
-		expr="%com.top_logic.layout.Icons.OK_BUTTON%"
+		expr="%com.top_logic.layout.form.control.Icons.TRISTATE_TRUE%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.TRUE_DISABLED"
-		expr="%com.top_logic.layout.Icons.OK_BUTTON%"
+		expr="%com.top_logic.layout.form.control.Icons.TRISTATE_TRUE%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_FALSE"
-		expr="%com.top_logic.layout.provider.Icons.FALSE_DISABLED%"
+		expr="%com.top_logic.layout.form.control.Icons.TRISTATE_FALSE%"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.MANDATORY_FALSE_DISABLED"
-		expr="%com.top_logic.layout.provider.Icons.FALSE_DISABLED%"
+		expr="%com.top_logic.layout.form.control.Icons.TRISTATE_FALSE%"
 	/>
 	<icon name="com.top_logic.layout.provider.Icons.FALSE_DISABLED"
-		value="css: fa-solid fa-square-minus"
+		value="css:fa-regular fa-square-minus"
 	/>
 	<icon name="com.top_logic.layout.form.control.Icons.TRANSPARENT_BACKGROUND"
 		value="/colorchooser/transparentBackground.png"
@@ -1507,7 +1507,7 @@
 		value="css:fa-solid fa-trash"
 	/>
 	<icon name="ICONS_REMOVE_CHECKBOX"
-		value="css:fa-solid fa-square"
+		value="css:fa-regular fa-square"
 	/>
 	<icon name="ICONS_REMOVE_CHECKBOX_DISABLED"
 		expr="%ICONS_REMOVE_CHECKBOX%"

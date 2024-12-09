@@ -63,6 +63,17 @@ public class ItemEditor implements Editor {
 	public static final String ITEM_TITLE_CSS_CLASS = "dfItemTitle";
 
 	/**
+	 * CSS class for the label part of a {@link #ITEM_TITLE_CSS_CLASS}.
+	 */
+	private static final String ITEM_TITLE_LABEL = "dfTitleLabel";
+
+	/**
+	 * CSS class for the content part after the {@link #ITEM_TITLE_LABEL} of a
+	 * {@link #ITEM_TITLE_CSS_CLASS}.
+	 */
+	private static final String ITEM_TITLE_CONTENT = "dfTitleContent";
+
+	/**
 	 * CSS class for the item fieldset content (in non-compact mode).
 	 */
 	public static final String ITEM_CONTENT_CSS_CLASS = "dfItemContent";
@@ -258,12 +269,15 @@ public class ItemEditor implements Editor {
 			String parent = "..";
 			if (singleOption) {
 				legend = fragment(
-					span(css(ITEM_TITLE_CSS_CLASS), label(parent), htmlTemplate(errorBlock)),
-					span(css(TOOLBAR_CSS_CLASS), member(OPTIONS_NAME)));
+					span(css(ITEM_TITLE_CSS_CLASS),
+						span(css(ITEM_TITLE_LABEL), label(parent), htmlTemplate(errorBlock)),
+						span(css(ITEM_TITLE_CONTENT)),
+						span(css(TOOLBAR_CSS_CLASS), member(OPTIONS_NAME))));
 			} else {
-				legend = fragment(span(css(ITEM_TITLE_CSS_CLASS), labelWithColon(parent), htmlTemplate(errorBlock),
-					member(OPTIONS_NAME)));
-
+				legend = fragment(
+					span(css(ITEM_TITLE_CSS_CLASS),
+						span(css(ITEM_TITLE_LABEL), labelWithColon(parent), htmlTemplate(errorBlock)),
+						span(css(ITEM_TITLE_CONTENT), member(OPTIONS_NAME))));
 			}
 			template = div(css(ITEM_CSS_CLASS),
 				fieldsetBox(

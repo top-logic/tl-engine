@@ -47,6 +47,13 @@ public enum LabelPosition implements ExternallyNamed {
 	ABOVE("above-value"),
 
 	/**
+	 * Places the label in a separate line above the input element in edit mode but use default
+	 * placement before the value in view mode.
+	 */
+	@Label("Above input")
+	ABOVE_INPUT("above-input"),
+
+	/**
 	 * The label is rendered strictly before the input, even if causes scrolling due to space
 	 * constraints.
 	 */
@@ -99,10 +106,12 @@ public enum LabelPosition implements ExternallyNamed {
 	 * @return CSS class, or <code>null</code>, if this {@link LabelPosition} is not expressed by a
 	 *         CSS class.
 	 */
-	public String cssClass() {
+	public String cssClass(boolean inEditMode) {
 		switch (this) {
 			case ABOVE:
 				return ReactiveFormCSS.RF_LABEL_ABOVE;
+			case ABOVE_INPUT:
+				return inEditMode ? ReactiveFormCSS.RF_LABEL_ABOVE : null;
 			case INLINE:
 				return ReactiveFormCSS.RF_LABEL_INLINE;
 			case AFTER_VALUE:

@@ -282,7 +282,7 @@ a:not(.disabled):active {
 
 a:not(.disabled):focus {
     color: var(--highlight, var(--link-primary-hover));
-	outline: 1px solid var(--focus);
+	outline: 2px solid var(--focus);
 	outline-offset: 2px;
 }
 

@@ -103,6 +103,7 @@
 		>
 			<inject>
 				<dialogInfo
+					closeHandlerName="cancelCreate"
 					defaultI18n="element.meta.metaElementTree.newEnumeration"
 					height="530"
 					openerClique="createMenu"
@@ -119,6 +120,7 @@
 		>
 			<inject>
 				<dialogInfo
+					closeHandlerName="cancelCreate"
 					defaultI18n="element.meta.metaElementTree.newType"
 					height="530"
 					openerClique="createMenu"
@@ -135,6 +137,7 @@
 		>
 			<inject>
 				<dialogInfo
+					closeHandlerName="cancelCreate"
 					defaultI18n="element.meta.metaElementTree.newModule"
 					height="530"
 					openerClique="createMenu"

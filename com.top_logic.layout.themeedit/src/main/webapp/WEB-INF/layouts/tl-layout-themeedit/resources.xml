@@ -90,6 +90,7 @@
 
 			<dialogs>
 				<layout name="${namePrefix}ResourceUploadDialog"
+					buttonbar="true"
 					titleKey="${resPrefix}.resources.uploadDialog.title"
 				>
 					<dialogInfo
@@ -100,7 +101,6 @@
 						width="400"
 					/>
 					<form name="${namePrefix}ResourceUploadForm"
-						buttonbar="true"
 						model="model(dialogParent())"
 						resetInvisible="true"
 						securityProviderClass="securityRoot"

@@ -43,10 +43,11 @@
 		/>
 	</params>
 
-	<layout name="${namePrefix}SearchResultChartDetails">
+	<layout name="${namePrefix}SearchResultChartDetails"
+		buttonbar="true"
+	>
 		<components>
 			<component class="${componentClass}"
-				buttonbar="true"
 				metaElement="${metaElement}"
 				metaElementBuilder="${builderClass}"
 				model="selection(${masters})"

@@ -6,6 +6,7 @@
 	<layout-reference resource="admin/security/accounts/userSettings/dialog.layout.xml"/>
 	<layout-reference resource="admin/security/accounts/defaultFor/dialog.layout.xml"/>
 	<securityLayout name="globalDialogDemoTypesTop"
+		buttonbar="true"
 		securityDomain="DemoTypes"
 		titleKey="demo.globalDialogs.DemoTypes.show.tabber"
 	>
@@ -19,7 +20,6 @@
 
 		<components>
 			<include name="com.top_logic.demo/structure/demoTypes/detail/editStructureDetail.xml"
-				buttonbar="true"
 				defaultFor="DemoTypes:DemoTypes.A,DemoTypes:DemoTypes.B,DemoTypes:DemoTypes.C.All,DemoTypes:DemoTypes.L"
 				master=""
 				namePrefix="globalDialog"

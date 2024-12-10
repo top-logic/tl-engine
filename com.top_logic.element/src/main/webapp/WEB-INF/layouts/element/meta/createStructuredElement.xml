@@ -25,11 +25,12 @@
 		/>
 	</params>
 
-	<layout name="${namePrefix}newElementLayoutDialog">
+	<layout name="${namePrefix}newElementLayoutDialog"
+		buttonbar="true"
+	>
 		<components>
 			<!-- component to edit structured elements -->
 			<component class="${detailComponent}"
-				buttonbar="true"
 				commandGroups="${createCommandGroups}"
 				model="${model}"
 				name="${namePrefix}newElementDialog"

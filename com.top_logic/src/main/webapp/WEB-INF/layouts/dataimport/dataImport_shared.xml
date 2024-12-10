@@ -54,10 +54,11 @@
 		/>
 	</params>
 
-	<layout name="${namePrefix}DataImport">
+	<layout name="${namePrefix}DataImport"
+		buttonbar="true"
+	>
 		<components>
 			<component class="${statusComponentClass}"
-				buttonbar="true"
 				importerClass="${importerClass}"
 				name="${namePrefix}DataImportStatus"
 				page="${statusJSP}"
@@ -65,7 +66,9 @@
 				securityProviderClass="${securityProvderClass}"
 			>
 				<dialogs>
-					<layout name="${namePrefix}DataImportDialog">
+					<layout name="${namePrefix}DataImportDialog"
+						buttonbar="true"
+					>
 						<dialogInfo
 							closableUsingX="${closeableUsingX}"
 							height="700"
@@ -76,7 +79,6 @@
 
 						<components>
 							<component class="${assistantClass}"
-								buttonbar="true"
 								importerClass="${importerClass}"
 								name="${namePrefix}DataImportAssistant"
 								resPrefix="layout.dataimport.assistant."

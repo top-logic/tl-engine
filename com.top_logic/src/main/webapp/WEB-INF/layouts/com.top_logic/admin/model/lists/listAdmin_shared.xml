@@ -97,7 +97,9 @@
 					</table>
 				</tables>
 				<dialogs>
-					<layout name="${namePrefix}newListDialog">
+					<layout name="${namePrefix}newListDialog"
+						buttonbar="true"
+					>
 						<dialogInfo
 							defaultI18n="${resPrefix}.edit.displayDialog_newListDialog"
 							executability="InViewMode"
@@ -109,7 +111,6 @@
 
 						<components>
 							<component class="com.top_logic.layout.admin.component.EditListComponent$NewListComponent"
-								buttonbar="true"
 								listtype="${createType}"
 								model="selection(${master})"
 								name="${namePrefix}newListComponent"

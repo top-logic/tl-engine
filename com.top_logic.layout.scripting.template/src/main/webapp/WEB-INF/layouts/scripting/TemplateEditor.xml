@@ -19,6 +19,7 @@
 	</params>
 
 	<layout name="${namePrefix}Layout"
+		buttonbar="true"
 		dontRecord="true"
 		titleKey="tl.scripting.recorder.templates.templateEdit.title"
 	>
@@ -47,7 +48,6 @@
 			</layoutControl>
 
 			<form name="${namePrefix}Form"
-				buttonbar="true"
 				dontRecord="true"
 				page="/jsp/layout/scripting/TemplateEditContent.jsp"
 				resPrefix="tl.scripting.recorder.templates.templateEdit."

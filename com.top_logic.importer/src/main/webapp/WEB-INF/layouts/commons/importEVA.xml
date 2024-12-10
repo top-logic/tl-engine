@@ -53,11 +53,11 @@
 		/>
 	</params>
 	<layout name="${componentName}"
+		buttonbar="true"
 		titleKey="${titleKey}"
 	>
 		<components>
 			<assistent name="${namePrefix}GenericImport"
-				buttonbar="true"
 				isSecurityMaster="true"
 				model="selection(${masterComponent})"
 				resPrefix="${resPrefix}"

@@ -25,6 +25,7 @@
 			</buttons>
 			<dialogs>
 				<securityLayout name="enterMaintenanceWindowDialog"
+					buttonbar="true"
 					securityDomain=""
 					titleKey="main.admin.maintenanceWindow.enterDialog.tabber"
 				>
@@ -39,7 +40,6 @@
 
 					<components>
 						<component class="com.top_logic.layout.admin.component.MaintenanceWindowComponent$EnterMaintenanceWindowDialog"
-							buttonbar="true"
 							name="enterMaintenanceWindow"
 							page="/jsp/layout/admin/EnterMaintenanceWindowDialog.jsp"
 							resPrefix="main.admin.maintenanceWindow.enterDialog."
@@ -48,6 +48,7 @@
 					</components>
 				</securityLayout>
 				<securityLayout name="exitMaintenanceWindowDialog"
+					buttonbar="true"
 					securityDomain=""
 					titleKey="main.admin.maintenanceWindow.exitDialog.tabber"
 				>
@@ -62,7 +63,6 @@
 
 					<components>
 						<component class="com.top_logic.mig.html.layout.SimpleBoundComponent"
-							buttonbar="true"
 							content-message="main.admin.maintenanceWindow.exitDialog.content"
 							name="exitMaintenanceWindow"
 							resPrefix="main.admin.maintenanceWindow.exitDialog."

@@ -67,7 +67,9 @@
 					</table>
 				</tables>
 				<dialogs>
-					<layout name="${namePrefix}DialogLogEntriesSelection">
+					<layout name="${namePrefix}DialogLogEntriesSelection"
+						buttonbar="true"
+					>
 						<dialogInfo
 							defaultI18n="layouts.admin.logEntries.openConfigureDialog"
 							height="580"
@@ -79,7 +81,6 @@
 
 						<components>
 							<component class="com.top_logic.event.layout.ConfigureLogEntriesComponent"
-								buttonbar="true"
 								name="${namePrefix}DialogLogEntries"
 								page="/jsp/layout/event/configureEntries.jsp"
 								resPrefix="logentry.conf."

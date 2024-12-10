@@ -39,11 +39,12 @@
 		</param>
 	</params>
 
-	<layout>
+	<layout
+		buttonbar="true"
+	>
 		<components>
 			<!-- component to edit structured elements -->
 			<component class="${class}"
-				buttonbar="true"
 				commandGroups="${editCommandGroups}"
 				defaultFor="${defaultFor}"
 				model="selection(${master})"

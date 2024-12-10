@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<layout name="createMandator">
+<layout name="createMandator"
+	buttonbar="true"
+>
 	<components>
 		<!-- component to edit structured elements -->
 		<component class="com.top_logic.element.layout.structured.MandatorAdminComponent$NewMandatorComponent"
-			buttonbar="true"
 			model="null()"
 			name="newMandator"
 			page="/jsp/element/mandator/NewMandator.jsp"

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <securityLayout name="ChartDetailsTableDialog"
+	buttonbar="true"
 	titleKey="chart.details.table.layout.tabber"
 >
 	<dialogInfo
@@ -13,7 +14,6 @@
 
 	<components>
 		<component class="com.top_logic.reporting.flex.chart.component.DetailsTableDialog"
-			buttonbar="true"
 			metaElement=""
 			modelBuilder="com.top_logic.element.layout.meta.search.AttributedSearchResultComponent$AttributedSearchResultBuilder"
 			name="ChartDetailsTable"

@@ -79,7 +79,9 @@
 					<tableRenderer class="${rendererClass}"/>
 				</table>
 				<dialogs>
-					<layout name="${namePrefix}QuoteCommentDialog">
+					<layout name="${namePrefix}QuoteCommentDialog"
+						buttonbar="true"
+					>
 						<dialogInfo
 							createOpenerButtons="false"
 							height="${dialogHeight}"
@@ -96,7 +98,6 @@
 
 						<components>
 							<component class="${createComponentClass}"
-								buttonbar="true"
 								model="selection(${namePrefix}CommentTable)"
 								name="new${namePrefix}QuoteComment"
 								page="/jsp/comments/QuoteComment.jsp"
@@ -104,7 +105,9 @@
 							/>
 						</components>
 					</layout>
-					<layout name="${namePrefix}EditCommentDialog">
+					<layout name="${namePrefix}EditCommentDialog"
+						buttonbar="true"
+					>
 						<dialogInfo
 							createOpenerButtons="false"
 							height="${dialogHeight}"
@@ -121,7 +124,6 @@
 
 						<components>
 							<component class="${createComponentClass}"
-								buttonbar="true"
 								editComment="true"
 								model="selection(${namePrefix}CommentTable)"
 								name="edit${namePrefix}EditComment"
@@ -130,7 +132,9 @@
 							/>
 						</components>
 					</layout>
-					<layout name="${namePrefix}NewCommentDialog">
+					<layout name="${namePrefix}NewCommentDialog"
+						buttonbar="true"
+					>
 						<dialogInfo
 							executability="${createExecutability}"
 							height="${dialogHeight}"
@@ -142,7 +146,6 @@
 
 						<components>
 							<component class="${createComponentClass}"
-								buttonbar="true"
 								name="new${namePrefix}EditComment"
 								page="/jsp/comments/NewComment.jsp"
 								resPrefix="element.comments.new.dialog."

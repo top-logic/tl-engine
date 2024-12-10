@@ -74,6 +74,7 @@
 	</params>
 
 	<securityLayout name="${namePrefix}CreateAttributedDialog"
+		buttonbar="true"
 		horizontal="false"
 		securityDomain="${securityDomain}"
 		titleKey="${resPrefix}.dialog.tabber"
@@ -95,7 +96,6 @@
 		<components>
 			<!-- component to create attributed objects -->
 			<component class="${detailComponent}"
-				buttonbar="true"
 				commandGroups="${createCommandGroups}"
 				create-handler="${create-handler}"
 				element="${element}"

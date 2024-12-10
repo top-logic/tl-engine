@@ -124,7 +124,9 @@
 		${exportManager}
 		${options}
 		<dialogs>
-			<layout name="${namePrefix}ChartDialog">
+			<layout name="${namePrefix}ChartDialog"
+				buttonbar="true"
+			>
 				<dialogInfo
 					createOpenerButtons="false"
 					defaultI18n="${dialogDefaultI18n}"
@@ -137,7 +139,6 @@
 
 				<components>
 					<component class="${tableComponent}"
-						buttonbar="true"
 						modelBuilder="com.top_logic.reporting.flex.chart.component.builder.ConfiguredChartListModelBuilder"
 						name="${namePrefix}ChartDetail"
 						objectType="${objectType}"

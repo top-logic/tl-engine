@@ -12,7 +12,6 @@
 		<layout>
 			<components>
 				<component class="com.top_logic.knowledge.gui.layout.person.PersonGroupComponent"
-					buttonbar="true"
 					model="selection(GroupsPersonTable)"
 					name="AdminPersonGroup2"
 					page="/jsp/layout/persons/EditPersonGroups.jsp"

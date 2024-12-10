@@ -111,7 +111,9 @@
 				securityProviderClass="${editSecurityProvider}"
 			>
 				<dialogs>
-					<layout name="addCompanyContactDialog">
+					<layout name="addCompanyContactDialog"
+						buttonbar="true"
+					>
 						<dialogInfo
 							executability="InViewMode"
 							height="${createDialogHeight}"
@@ -123,7 +125,6 @@
 
 						<components>
 							<component class="${createComponentClass}"
-								buttonbar="true"
 								commandGroups="${createCommandGroups}"
 								model="null()"
 								name="addCompanyContact"

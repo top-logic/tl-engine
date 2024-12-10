@@ -56,12 +56,13 @@
 		/>
 	</params>
 
-	<layout>
+	<layout
+		buttonbar="true"
+	>
 		<components>
 			<!-- component to edit structured elements -->
 			<component class="${componentClass}"
 				applyCommand="${applyCommand}"
-				buttonbar="true"
 				commandGroups="${editCommandGroups}"
 				defaultFor="${defaultFor}"
 				deleteCommand="${deleteCommand}"

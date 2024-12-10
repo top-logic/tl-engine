@@ -9,7 +9,7 @@
 			value="700"
 		/>
 		<param name="dialogHeight"
-			value="300"
+			value="400"
 		/>
 		<param name="dialogOpenerCommandGroup"
 			value="Read"
@@ -40,7 +40,9 @@
 		/>
 	</params>
 
-	<layout name="${namePrefix}Dialog">
+	<layout name="${namePrefix}Dialog"
+		buttonbar="true"
+	>
 		<dialogInfo
 			defaultI18n="${dialogDefaultI18N}"
 			height="${dialogHeight}"
@@ -62,7 +64,6 @@
 
 		<components>
 			<component class="${class}"
-				buttonbar="true"
 				exportHandlers="${exportHandlers}"
 				name="${namePrefix}Component"
 				page="${page}"

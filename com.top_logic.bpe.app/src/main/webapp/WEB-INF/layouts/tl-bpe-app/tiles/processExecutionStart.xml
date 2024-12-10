@@ -11,12 +11,12 @@
 	</params>
 
 	<layout name="createProcessExecutionLayout"
+		buttonbar="true"
 		horizontal="false"
 	>
 		<components>
 			<!-- component to create attributed objects -->
 			<component class="com.top_logic.bpe.app.layout.ProcessExecutionCreateComponent"
-				buttonbar="true"
 				create-handler="startProcessExecution"
 				element=""
 				model="${model}"

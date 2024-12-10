@@ -4,6 +4,7 @@
 	titleKey="tool.export.progress.dialog.tabber"
 >
 	<dialogInfo
+		closeHandlerName="cancelProgress"
 		createOpenerButtons="false"
 		executability="Always"
 		height="270"
@@ -15,7 +16,6 @@
 	<components>
 		<component class="com.top_logic.tool.export.progress.ExportProgressComponent"
 			buttonbar="true"
-			closeHandlerName="cancelProgress"
 			name="ProgressExportView"
 			page="/jsp/layout/misc/refreshProgress.jsp"
 			resPrefix="tool.export.progress."

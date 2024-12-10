@@ -60,7 +60,9 @@
 								securityProviderClass="${securityProvider}"
 							>
 								<dialogs>
-									<layout name="${namePrefix}NewStoredReportDialog">
+									<layout name="${namePrefix}NewStoredReportDialog"
+										buttonbar="true"
+									>
 										<dialogInfo
 											defaultI18n="reporting.chart.displayDialog_NewStoredReportDialog"
 											executability="NullModelDisabled"
@@ -74,7 +76,6 @@
 
 										<components>
 											<component class="com.top_logic.reporting.layout.flexreporting.component.PublishableNewStoredReportComponent"
-												buttonbar="true"
 												name="${namePrefix}NewStoredReport"
 												page="/jsp/flexibleReporting/PublishableNewStoredReport.jsp"
 												resPrefix="reporting.chart.create."

@@ -13,7 +13,6 @@
 		<layout>
 			<components>
 				<component class="com.top_logic.element.layout.security.ExportingEditRolesProfileComponent"
-					buttonbar="true"
 					columnProvider="com.top_logic.tool.boundsec.gui.profile.RolesProfileColumnProvider"
 					model="selection(editCheckerRolesTable)"
 					name="EditCheckerRole2"

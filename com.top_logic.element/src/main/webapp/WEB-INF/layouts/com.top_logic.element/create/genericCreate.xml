@@ -14,6 +14,9 @@
 			value="com.top_logic.element.layout.create.StructureChildTypeOptions"
 		/>
 
+		<param name="buttonbar"
+			value="true"
+		/>
 		<param name="createHandler"
 			value=""
 		/>
@@ -59,10 +62,6 @@
 		<param name="defaultAction"
 			optional="true"
 		/>
-		<param name="cancelAction"
-			optional="true"
-		/>
-
 		<!-- DEPRECATED: This should be configured as post-create action in the create command handler. -->
 		<param name="z_legacy_newModelAction"
 			value="no-action"
@@ -74,9 +73,10 @@
 		/>
 	</params>
 
-	<layout name="${dialogName}">
+	<layout name="${dialogName}"
+		buttonbar="${buttonbar}"
+	>
 		<component class="com.top_logic.layout.form.component.AbstractCreateComponent"
-			buttonbar="true"
 			commandGroups="${createCommandGroups}"
 			commands="${commands}"
 			create-handler="${createHandler}"
@@ -93,7 +93,6 @@
 		>
 			<buttons>${buttons}</buttons>
 			<defaultAction>${defaultAction}</defaultAction>
-			<cancelAction>${cancelAction}</cancelAction>
 		</component>
 	</layout>
 </template>

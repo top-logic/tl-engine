@@ -24,6 +24,7 @@
 
 		<dialogs>
 			<layout name="${namePrefix}instantiation"
+				buttonbar="true"
 				dontRecord="true"
 				titleKey="tl.scripting.recorder.instantiation.parameters.title"
 			>
@@ -39,7 +40,6 @@
 
 				<components>
 					<component class="com.top_logic.layout.scripting.template.gui.templates.TemplateParameterComponent"
-						buttonbar="true"
 						dontRecord="true"
 						model="selection(${namePrefix}templates)"
 						name="${namePrefix}parameters"

@@ -39,6 +39,7 @@
 
 			<dialogs>
 				<layout name="${namePrefix}CreateThemeDialog"
+					buttonbar="true"
 					titleKey="${resPrefix}.themes.create.title"
 				>
 					<dialogInfo
@@ -50,7 +51,6 @@
 
 					<components>
 						<form name="${namePrefix}CreateTheme"
-							buttonbar="true"
 							resetInvisible="true"
 							securityProviderClass="securityRoot"
 						>

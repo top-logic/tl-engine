@@ -284,7 +284,9 @@
 					showMaximize="true"
 				>
 					<dialogs>
-						<layout name="failedTaskResultsDialog">
+						<layout name="failedTaskResultsDialog"
+							buttonbar="true"
+						>
 							<dialogInfo
 								height="80%"
 								image="theme:com.top_logic.layout.table.control.Icons.OPEN_SELECTOR"
@@ -294,7 +296,6 @@
 
 							<components>
 								<component class="com.top_logic.util.sched.layout.table.results.failed.FailedTaskResultTreeComponent"
-									buttonbar="true"
 									model="provider(com.top_logic.util.sched.Scheduler#getSchedulerInstance)"
 									name="failedTaskResultsTable"
 									resPrefix="admin.sys.scheduler.failed."

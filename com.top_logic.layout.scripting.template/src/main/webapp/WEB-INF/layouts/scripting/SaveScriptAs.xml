@@ -6,6 +6,7 @@
 	</params>
 
 	<component class="com.top_logic.mig.html.layout.Layout"
+		buttonbar="true"
 		dontRecord="true"
 		name="${namePrefix}Container"
 		resizable="false"
@@ -37,7 +38,6 @@
 				</treeBuilder>
 			</component>
 			<form class="com.top_logic.layout.form.component.SelectableFormComponent"
-				buttonbar="true"
 				dontRecord="true"
 				model="selection(${namePrefix}FolderSelector)"
 				name="${namePrefix}FileNameInput"

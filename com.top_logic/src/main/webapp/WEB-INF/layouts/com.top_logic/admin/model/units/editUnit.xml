@@ -41,7 +41,9 @@
 			securityProviderClass="master"
 		>
 			<dialogs>
-				<layout name="newUnitDialog">
+				<layout name="newUnitDialog"
+					buttonbar="true"
+				>
 					<dialogInfo
 						executability="InViewMode"
 						height="390"
@@ -53,7 +55,6 @@
 
 					<components>
 						<component class="com.top_logic.layout.unit.NewUnitComponent"
-							buttonbar="true"
 							name="NewUnit"
 							page="/jsp/unit/NewUnit.jsp"
 							resPrefix="admin.unit.edit.new."

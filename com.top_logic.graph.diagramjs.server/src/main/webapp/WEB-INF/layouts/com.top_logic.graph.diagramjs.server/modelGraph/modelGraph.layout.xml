@@ -62,6 +62,7 @@
 
 					<inject>
 						<dialogInfo
+							closeHandlerName="cancelCreate"
 							createOpenerButtons="false"
 							defaultI18n="element.meta.metaElementTree.newType"
 							executability="Always"

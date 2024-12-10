@@ -21,7 +21,9 @@
 					securityProviderClass="securityRoot"
 				>
 					<dialogs>
-						<layout name="newRoleDialog">
+						<layout name="newRoleDialog"
+							buttonbar="true"
+						>
 							<dialogInfo
 								executability="InViewMode"
 								height="380"
@@ -32,7 +34,6 @@
 
 							<components>
 								<component class="com.top_logic.tool.boundsec.gui.EditRoleComponent$NewRoleComponent"
-									buttonbar="true"
 									name="NewRole"
 									page="/jsp/layout/admin/roles/NewRole.jsp"
 									resPrefix="admin.role.edit.new."

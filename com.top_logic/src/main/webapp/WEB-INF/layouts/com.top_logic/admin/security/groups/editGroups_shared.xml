@@ -50,7 +50,9 @@
 						securityProviderClass="${securityProviderClass}"
 					>
 						<dialogs>
-							<layout name="${namePrefix}NewGroupDialog">
+							<layout name="${namePrefix}NewGroupDialog"
+								buttonbar="true"
+							>
 								<dialogInfo
 									executability="InViewMode"
 									height="430"
@@ -61,7 +63,6 @@
 
 								<components>
 									<component class="${newComponent}"
-										buttonbar="true"
 										name="${namePrefix}NewGroup"
 										page="${newJSP}"
 										resPrefix="admin.group.edit.new."

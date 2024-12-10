@@ -6,6 +6,7 @@
 	</params>
 
 	<component class="com.top_logic.mig.html.layout.Layout"
+		buttonbar="true"
 		name="${namePrefix}Dialog"
 	>
 		<dialogInfo
@@ -19,7 +20,6 @@
 
 		<components>
 			<component class="com.top_logic.layout.scripting.template.gui.selector.ScriptSelectorComponent"
-				buttonbar="true"
 				columns="name, _type, _date, _size"
 				model="provider(com.top_logic.layout.scripting.template.gui.selector.ScriptSelectorBuilder)"
 				name="${namePrefix}Table"

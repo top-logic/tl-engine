@@ -17,12 +17,12 @@
 	</params>
 
 	<securityLayout name="${namePrefix}showFullSupplierHistory"
+		buttonbar="true"
 		horizontal="false"
 		titleKey="${resPrefix}tabber"
 	>
 		<components>
 			<component class="${componentClass}"
-				buttonbar="true"
 				isSecurityMaster="true"
 				model="selection(${master})"
 				name="${namePrefix}showFullSupplierHistoryDialog"

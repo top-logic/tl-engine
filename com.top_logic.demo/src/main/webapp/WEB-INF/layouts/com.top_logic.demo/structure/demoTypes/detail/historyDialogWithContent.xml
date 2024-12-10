@@ -17,7 +17,6 @@
 						<components>
 							<!-- component to edit structured elements -->
 							<component class="com.top_logic.element.layout.structured.AdminElementComponent"
-								buttonbar="true"
 								model="selection(${namePrefix}HistroyTable)"
 								name="Historic${namePrefix}Edit"
 								page="/jsp/element/EditStructuredElement.jsp"

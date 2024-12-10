@@ -84,7 +84,9 @@
 		</property>
 	</properties>
 
-	<layout name="Dialog">
+	<layout name="Dialog"
+		buttonbar="true"
+	>
 		<dialogInfo
 			closableUsingX="${closableUsingX}"
 			createOpenerButtons="${createOpenerButtons}"

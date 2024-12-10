@@ -32,7 +32,9 @@
 		<configOptions>
 			${configOptions}
 			<dialogs>
-				<layout name="${namePrefix}SaveDialog">
+				<layout name="${namePrefix}SaveDialog"
+					buttonbar="true"
+				>
 					<dialogInfo
 						defaultI18n="reporting.flex.chart.displayDialog_NewStoredReportDialog"
 						disabledImage="theme:ICONS_BUTTON_SAVE_DISABLED"
@@ -48,7 +50,6 @@
 
 					<components>
 						<component class="com.top_logic.reporting.flex.search.NewStoredConfigChartReportComponent"
-							buttonbar="true"
 							name="${namePrefix}CreateReport"
 							page="/jsp/model/search/SaveSearchAs.jsp"
 							resPrefix="reporting.flex.chart.create."

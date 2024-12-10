@@ -122,7 +122,9 @@
 						<componentControlProvider class="${chartComponentControlProvider}"/>
 
 						<dialogs>
-							<layout name="${namePrefix}GanttExportDialog">
+							<layout name="${namePrefix}GanttExportDialog"
+								buttonbar="true"
+							>
 								<dialogInfo
 									closableUsingX="true"
 									createOpenerButtons="false"
@@ -136,7 +138,6 @@
 
 								<components>
 									<component class="${exportDialog}"
-										buttonbar="true"
 										name="${namePrefix}GanttExportDialogComp"
 										page="${exportJSP}"
 										resPrefix="reporting.chart.gantt.export."

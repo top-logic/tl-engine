@@ -19,11 +19,11 @@
 		<param name="resPrefix"/>
 	</params>
 
-	<layout name="${namePrefix}Dialog">
+	<layout name="${namePrefix}Dialog"
+		buttonbar="true"
+	>
 		<components>
 			<form name="${namePrefix}Form"
-				buttonbar="true"
-				closeHandlerName="cancelCreate"
 				model="${ownerModel}"
 				resPrefix="${resPrefix}"
 				resetInvisible="true"
@@ -35,9 +35,6 @@
 					typePartFormBuilder="${typePartFormBuilder}"
 				/>
 
-				<cancelAction config:interface="com.top_logic.tool.boundsec.CommandHandlerReference$Config"
-					command-id="cancelCreate"
-				/>
 				<buttons>
 					<button id="createPart"
 						class="com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler"

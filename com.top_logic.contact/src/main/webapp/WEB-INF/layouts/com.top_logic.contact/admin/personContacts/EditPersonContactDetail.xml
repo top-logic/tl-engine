@@ -56,7 +56,9 @@
 				securityProviderClass="${editSecurityProvider}"
 			>
 				<dialogs>
-					<layout name="addPersonContactDialog">
+					<layout name="addPersonContactDialog"
+						buttonbar="true"
+					>
 						<dialogInfo
 							executability="InViewMode"
 							height="${createDialogHeight}"
@@ -67,7 +69,6 @@
 
 						<components>
 							<component class="${createComponentClass}"
-								buttonbar="true"
 								commandGroups="${createCommandGroups}"
 								model="null()"
 								name="addPersonContact"

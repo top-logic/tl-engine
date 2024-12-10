@@ -8,11 +8,13 @@ package test.com.top_logic.util;
 import java.lang.ref.WeakReference;
 
 import junit.framework.Test;
+
 import test.com.top_logic.TLTestSetup;
 import test.com.top_logic.basic.BasicTestCase;
 
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DummyDisplayContext;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.DefaultValidationQueue;
 import com.top_logic.util.ToBeValidated;
 
@@ -21,6 +23,7 @@ import com.top_logic.util.ToBeValidated;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@SuppressWarnings("javadoc")
 public class TestDefaultValidationQueue extends BasicTestCase {
 	
 	private class TestedValidation implements ToBeValidated {
@@ -116,6 +119,19 @@ public class TestDefaultValidationQueue extends BasicTestCase {
 		o = null;
 		Runtime.getRuntime().gc();
 		assertNull(reference.get());
+	}
+
+	public void testFail() {
+		_validationQueue.notifyInvalid(new Endless());
+		HandlerResult result = _validationQueue.runValidation(_context);
+		assertFalse(result.isSuccess());
+	}
+
+	private class Endless implements ToBeValidated {
+		@Override
+		public void validate(DisplayContext context) {
+			_validationQueue.notifyInvalid(new Endless());
+		}
 	}
 
 	public static Test suite() {

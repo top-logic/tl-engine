@@ -5,11 +5,12 @@
  */
 package com.top_logic.util;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Queue;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.FrameworkInternal;
-import com.top_logic.basic.col.ArrayQueue;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.Action;
@@ -27,7 +28,13 @@ import com.top_logic.util.error.TopLogicException;
 public class DefaultValidationQueue implements ValidationQueue, ActionQueue<Action> {
 
 	/** Queue containing elements to validate */
-	private Queue<ToBeValidated> _invalidQueue = new ArrayQueue<>();
+	private List<ToBeValidated> _invalidQueue = new ArrayList<>();
+
+	/**
+	 * Temporary buffer used during validation. Storing this buffer avoids allocation for each
+	 * validation.
+	 */
+	private List<ToBeValidated> _buffer = new ArrayList<>();
 
 	/** Queue of send {@link Action}s */
 	private ConsolidatingQueue _actionQueue = new ConsolidatingQueue();
@@ -49,7 +56,7 @@ public class DefaultValidationQueue implements ValidationQueue, ActionQueue<Acti
 
 	@Override
 	public void notifyInvalid(ToBeValidated o) {
-		_invalidQueue.offer(o);
+		_invalidQueue.add(o);
 	}
 
 	@Override
@@ -106,28 +113,33 @@ public class DefaultValidationQueue implements ValidationQueue, ActionQueue<Acti
 
 	private HandlerResult actualValidation(DisplayContext context) {
 		assert _actionQueue.isEmpty() : "There are still some actions to process.";
-		ToBeValidated nextInvalid = _invalidQueue.poll();
+
 		int passes = 0;
-		while (nextInvalid != null) {
+		while (!_invalidQueue.isEmpty()) {
+			passes++;
 			if (passes > 1024) {
+				String msg = "Unable to process all invalids (More than 1024): " + _invalidQueue;
+
 				_actionQueue.clear();
 				_invalidQueue.clear();
-				String msg = "Unable to process all invalids (More than 1024)";
 				notifyException(msg, new RuntimeException(msg));
 				break;
 			}
-			passes++;
-			if (passes > 1014) {
-				Logger.warn("Excessive model validation: " + nextInvalid, DefaultValidationQueue.class);
-			}
+
+			List<ToBeValidated> batch = _invalidQueue;
+			_invalidQueue = _buffer;
 			try {
-				nextInvalid.validate(context);
-			} catch (RuntimeException ex) {
-				notifyException("Exception during validating " + nextInvalid, ex);
+				for (ToBeValidated nextInvalid : batch) {
+					try {
+						nextInvalid.validate(context);
+					} catch (RuntimeException ex) {
+						notifyException("Exception during validating " + nextInvalid, ex);
+					}
+				}
+			} finally {
+				batch.clear();
+				_buffer = batch;
 			}
-			
-			// poll after dispatching as some actions may made some component invalid
-			nextInvalid = _invalidQueue.poll();
 		}
 		return result();
 	}

@@ -234,23 +234,6 @@
 						<visibility value="read-only"/>
 					</annotations>
 				</reference>
-				<reference name="dynamicActors"
-					kind="forwards"
-					multiple="true"
-					type="tl.accounts:Person"
-				>
-					<annotations>
-						<search-range value="false"/>
-						<delete-protected/>
-						<storage-algorithm>
-							<derived-storage>
-								<expression-evaluation>
-									<method-call method="com.top_logic.bpe.execution.model.impl.TokenImpl#calculateDynamicActors()"/>
-								</expression-evaluation>
-							</derived-storage>
-						</storage-algorithm>
-					</annotations>
-				</reference>
 				<property name="startDate"
 					type="tl.core:DateTime"
 				>

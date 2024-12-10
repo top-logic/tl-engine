@@ -471,6 +471,14 @@ public class ExecutionEngine {
 
 			for (Edge edge : path) {
 				if (edge instanceof SequenceFlow flow) {
+					// First do general operation
+					SearchExpression defaultOperation =
+						processExecution.getProcess().getParticipant().getDefaultOperation();
+					if (defaultOperation != null) {
+						QueryExecutor.compile(defaultOperation).execute(processExecution, previousToken, nextToken,
+							additional);
+					}
+					// Then handle any edge-specific operations
 					SearchExpression operation = flow.getOperation();
 					if (operation != null) {
 						QueryExecutor.compile(operation).execute(processExecution, previousToken, nextToken,

@@ -384,9 +384,8 @@ public class AbstractCreateComponent extends FormComponent {
         @Override
 		public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model, Map<String, Object> someArguments) {
             HandlerResult theResult  = new HandlerResult();
-            FormComponent theComp    = (FormComponent) aComponent;
 
-            this.performCloseDialog(theComp, theResult);
+			this.performCloseDialog(aComponent, theResult);
 
             return theResult;
         }

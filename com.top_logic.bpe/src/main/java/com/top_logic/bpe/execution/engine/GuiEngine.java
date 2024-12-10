@@ -240,20 +240,22 @@ public class GuiEngine {
 		return isMember(calculate, person);
 	}
 
-	private boolean isMember(Object result, Person person) {
+	private boolean isMember(Object actor, Person accountToCheck) {
 		Person resultPerson = null;
-		if (result instanceof PersonContact) {
-			resultPerson = ((PersonContact) result).getPerson();
+		if (actor instanceof PersonContact) {
+			resultPerson = ((PersonContact) actor).getPerson();
 		}
-		if (result instanceof Person) {
-			resultPerson = (Person) result;
+		else if (actor instanceof Person) {
+			resultPerson = (Person) actor;
 		}
+
 		if (resultPerson != null) {
 			Person currentResultPerson = WrapperHistoryUtils.getCurrent(resultPerson);
-			return currentResultPerson == person;
+			return currentResultPerson == accountToCheck
+				|| currentResultPerson.getRepresentativeGroup().containsPerson(accountToCheck);
 		}
-		if (result instanceof Group) {
-			return ((Group) result).containsPerson(person);
+		if (actor instanceof Group) {
+			return ((Group) actor).containsPerson(accountToCheck);
 		}
 		return false;
 	}

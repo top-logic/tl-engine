@@ -8,10 +8,7 @@ package com.top_logic.bpe.execution.model;
 import static com.top_logic.model.search.expr.SearchExpressionFactory.*;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
@@ -19,17 +16,13 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
-import com.top_logic.bpe.bpml.model.Lane;
 import com.top_logic.bpe.bpml.model.ManualTask;
 import com.top_logic.bpe.bpml.model.Node;
 import com.top_logic.bpe.bpml.model.Participant;
 import com.top_logic.bpe.bpml.model.Process;
 import com.top_logic.bpe.bpml.model.SubProcess;
 import com.top_logic.bpe.bpml.model.Task;
-import com.top_logic.bpe.execution.engine.ExecutionEngine;
 import com.top_logic.bpe.execution.model.impl.TokenBase;
-import com.top_logic.contact.business.PersonContact;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -75,61 +68,6 @@ public interface Token extends TokenBase {
 		return duration / 1000 / 60;
 	}
 
-	/**
-	 * This method is called by the security system when a token is created.
-	 * 
-	 * @return a collection with the persons which may act as actor for this token
-	 */
-	default Collection<Person> calculateDynamicActors() {
-		Node node = getNode();
-		if (node == null) {
-			return null;
-		}
-
-		Lane lane = node.getLane();
-		if (lane == null) {
-			return null;
-		}
-
-		SearchExpression personRule = lane.getActorRule();
-		if (personRule == null) {
-			return null;
-		}
-
-		ProcessExecution pe = getProcessExecution();
-		if (pe == null) {
-			return null;
-		}
-		Object calculate = ExecutionEngine.getInstance().calculate(personRule, pe);
-		Set<Person> res = asPersonCollection(calculate);
-		if (res.isEmpty()) {
-			return null;
-		}
-		return res;
-	}
-
-	private Set<Person> asPersonCollection(Object obj) {
-		Set<Person> res = new HashSet<>();
-		if (obj instanceof Collection) {
-			for (Object inner : (Collection<?>) obj) {
-				addPersonIfPossible(res, inner);
-			}
-		} else {
-			addPersonIfPossible(res, obj);
-		}
-		return res;
-	}
-
-	private void addPersonIfPossible(Set<Person> res, Object inner) {
-		if (inner instanceof PersonContact) {
-			Person person = ((PersonContact) inner).getPerson();
-			if (person != null) {
-				res.add(person);
-			}
-		} else if (inner instanceof Person) {
-			res.add((Person) inner);
-		}
-	}
 
 	/**
 	 * Computes the label for this {@link Token}.

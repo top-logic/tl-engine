@@ -347,7 +347,13 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		@Name(ATT_USE_CHANGE_HANDLING)
 		Boolean getUseChangeHandling();
 
-		@Name(ATT_CLOSE_HANDLER_NAME)
+		/**
+		 * No longer in use.
+		 * 
+		 * @deprecated Use {@link DialogInfo#getCloseHandlerName()} instead.
+		 */
+		@Deprecated
+		@Name("closeHandlerName")
 		String getCloseHandlerName();
 
 		@Name(ATT_DONT_RECORD)
@@ -684,13 +690,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
     
     public static final String XML_TAG_COMPONENT_CONTROLPROVIDER_NAME = "componentControlProvider";
 
-	/**
-	 * XML attribute defining the name of the close command if this component is
-	 * opened as dialog.
-	 */
-    private static final String ATT_CLOSE_HANDLER_NAME = "closeHandlerName";
-
-    /** XML definition for body css class */
+	/** XML definition for body css class */
     public static final String ATT_BODY_CLASS = "bodyClass";
 
 	private static final String ATT_USE_CHANGE_HANDLING = "useChangeHandling";
@@ -948,7 +948,31 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	public void createSubComponents(InstantiationContext context) {
 		List<Config> dialogConfigs = getConfig().getDialogs();
 		if (!dialogConfigs.isEmpty()) {
-			_dialogs = TypedConfiguration.getInstanceList(context, dialogConfigs);
+			_dialogs = new ArrayList<>();
+			for (PolymorphicConfiguration<? extends LayoutComponent> config : dialogConfigs) {
+				LayoutComponent dialog = context.getInstance(config);
+				if (dialog != null) {
+					DialogInfo dialogInfo = dialog.getConfig().getDialogInfo();
+					PolymorphicConfiguration<? extends CommandHandler> closeHandler = dialogInfo.getCloseHandler();
+					if (closeHandler != null) {
+						CommandHandler command = CommandHandlerFactory.getInstance().getCommand(context, closeHandler);
+						dialog.registerButtonCommand(command);
+					} else {
+						String closeHandlerName = dialogInfo.getCloseHandlerName();
+						if (closeHandlerName != null) {
+							CommandHandler command = CommandHandlerFactory.getInstance().getHandler(closeHandlerName);
+							if (command != null) {
+								Logger.error("No such command '" + closeHandlerName + "' in '" + getLocation() + "'.",
+									LayoutComponent.class);
+								dialog.registerButtonCommand(command);
+							}
+						}
+					}
+
+					_dialogs.add(dialog);
+				}
+			}
+
 			initDialogParents();
 
 			for (LayoutComponent child : _dialogs) {
@@ -3182,24 +3206,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 * @see Config#modifyIntrinsicCommands(CommandRegistry)
 	 */
     protected void registerAdditionalNonConfigurableCommands() {
-		if (this.openedAsDialog()) {
-            registerDialogCloseCommand();
-        }
-    }
-
-	/**
-	 * Register #getDialogCloseCommand via {@link #registerButtonCommand(CommandHandler)}.
-	 * 
-	 * You may wish to override this to register the command not as Button, but as simple command
-	 */
-    protected void registerDialogCloseCommand() {
-		String closeHandlerName = _config.getCloseHandlerName();
-		if (closeHandlerName.isEmpty()) {
-			closeHandlerName = getDefaultCloseDialogHandlerName();
-		}
-		if (!StringServices.isEmpty(closeHandlerName)) {
-			this.registerCommandHandler(closeHandlerName, getButtonBar() != null);
-		}
+		// Hook for subclasses.
     }
 
 	/**

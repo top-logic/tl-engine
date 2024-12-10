@@ -40,7 +40,6 @@ import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.mig.html.layout.SubComponentConfig;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.BoundCommand;
-import com.top_logic.tool.boundsec.ChangeCheckDialogCloser;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -250,15 +249,6 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 	private void initByComponentMode(FormContext formContext) {
 		formContext.setImmutable(!this.isInEditMode());
 	}
-    
-    @Override
-    protected void registerDialogCloseCommand() {
-    	// This command handler is responsible for handling the change management  
-    	// when closing the dialog in edit mode via the "X" button of the dialog.
-    	this.registerCommandHandler(ChangeCheckDialogCloser.HANDLER_NAME, false);
-
-		super.registerDialogCloseCommand();
-    }
     
     @Override
     protected String getDefaultCloseDialogHandlerName() {

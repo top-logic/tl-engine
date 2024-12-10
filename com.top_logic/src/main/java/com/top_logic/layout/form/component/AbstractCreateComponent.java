@@ -263,15 +263,6 @@ public class AbstractCreateComponent extends FormComponent {
 		return getCancelHandler();
     }
 
-	@Override
-	protected void registerDialogCloseCommand() {
-		if (getCancelCommand() != null) {
-			registerCommandHandler(getCancelCommand(), getButtonBar() != null);
-			return;
-		}
-		super.registerDialogCloseCommand();
-	}
-
 	/** @deprecated Use {@link #getCancelCommand()} instead. */
 	@Deprecated
 	protected final String getCancelHandler() {

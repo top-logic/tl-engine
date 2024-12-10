@@ -14,13 +14,17 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayInherited;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.component.title.ConstantTitle;
 import com.top_logic.layout.component.title.TitleProvider;
+import com.top_logic.tool.boundsec.ChangeCheckDialogCloser;
+import com.top_logic.tool.boundsec.CloseModalDialogCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
 
 /**
@@ -128,6 +132,30 @@ public interface DialogInfo extends AbstractWindowInfo {
 	@ImplementationClassDefault(OpenModalDialogCommandHandler.class)
 	PolymorphicConfiguration<? extends OpenModalDialogCommandHandler> getOpenHandler();
 
+	/**
+	 * The ID of the application-global {@link CommandHandler} executed when the dialog is closed.
+	 * 
+	 * <p>
+	 * This option is a short-cut for using {@link #getCloseHandler()}.
+	 * </p>
+	 * 
+	 * @see CommandHandlerFactory#getHandler(String)
+	 */
+	@Name("closeHandlerName")
+	@Nullable
+	@StringDefault(ChangeCheckDialogCloser.HANDLER_NAME)
+	String getCloseHandlerName();
+
+	/**
+	 * The command that is executed, when the dialog is closed.
+	 * 
+	 * <p>
+	 * A setting takes precedence over {@link #getCloseHandlerName()}.
+	 * </p>
+	 */
+	@NullDefault
+	@ImplementationClassDefault(CloseModalDialogCommandHandler.class)
+	PolymorphicConfiguration<? extends CommandHandler> getCloseHandler();
 
 	/**
 	 * A {@link TitleProvider} creating the title to display in the title bar of the represented

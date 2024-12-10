@@ -439,10 +439,8 @@ public class Group extends AbstractBoundWrapper implements IGroup {
         	return;
         }
         
-        if (anObject instanceof Group) {
-        	// Prevent creation of recursive containment.
-        	Group innerGroup = (Group) anObject;
-        	
+		if (anObject instanceof Group innerGroup) {
+			// Check that no membership cycle is created.
         	HashSet<Group> descendantsOrSelf = new HashSet<>();
 			innerGroup.addMembersRecursive(OneWayListSink.INSTANCE, descendantsOrSelf);
 			
@@ -456,9 +454,17 @@ public class Group extends AbstractBoundWrapper implements IGroup {
 		KnowledgeObject groupHandle = this.tHandle();
 		groupHandle.getKnowledgeBase().createAssociation(groupHandle, memberHandle, Group.GROUP_MEMBERS_ASSOCIATION);
 
-        if(!this.isRepresentativeGroup() && anObject instanceof Person){
-//        	also add the persons representative group if this is no representative group itself
-        	addMember(((Person)anObject).getRepresentativeGroup());
+		if (!this.isRepresentativeGroup() && anObject instanceof Person account) {
+			// Also add the person's representative group (if this is group not a representative
+			// group itself)
+			Group representativeGroup = account.getRepresentativeGroup();
+
+			// Note: The representative group may be null, if the added account is newly created,
+			// since the representative groups are allocated only during commit by the
+			// PersonGroupsInitializer.
+			if (representativeGroup != null) {
+				addMember(representativeGroup);
+			}
         }
     }
 

@@ -1973,6 +1973,9 @@
 	<color name="background-inverse"
 		value="#393C40"
 	/>
+	<dim name="input-height"
+		value="2rem"
+	/>
 	<color name="text-primary"
 		value="#101113"
 	/>
@@ -2568,4 +2571,9 @@
 	<string name="sb-size"
 		value="8px"
 	/>
+	
+	<string name="form-line-height"
+		value="2rem"
+	/>
+	
 </settings>

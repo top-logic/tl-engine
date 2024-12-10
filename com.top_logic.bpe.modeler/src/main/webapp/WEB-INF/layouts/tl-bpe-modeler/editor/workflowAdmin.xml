@@ -77,7 +77,9 @@
 			</buttons>
 
 			<dialogs>
-				<layout name="${namePrefix}New">
+				<layout name="${namePrefix}New"
+					buttonbar="true"
+				>
 					<dialogInfo
 						height="280"
 						image="theme:ICON_PLUS"
@@ -87,7 +89,6 @@
 					/>
 
 					<form name="${namePrefix}NewForm"
-						buttonbar="true"
 						resetInvisible="true"
 					>
 						<modelBuilder class="com.top_logic.layout.form.declarative.DefaultDeclarativeFormBuilder"
@@ -108,7 +109,9 @@
 						</buttons>
 					</form>
 				</layout>
-				<layout name="${namePrefix}Upload">
+				<layout name="${namePrefix}Upload"
+					buttonbar="true"
+				>
 					<dialogInfo
 						height="250"
 						image="theme:ICON_FILE_IMPORT"
@@ -118,7 +121,6 @@
 					/>
 
 					<form name="${namePrefix}UploadForm"
-						buttonbar="true"
 						resetInvisible="true"
 					>
 						<modelBuilder class="com.top_logic.layout.form.declarative.DefaultDeclarativeFormBuilder"
@@ -138,7 +140,9 @@
 						</buttons>
 					</form>
 				</layout>
-				<layout name="${namePrefix}Update">
+				<layout name="${namePrefix}Update"
+					buttonbar="true"
+				>
 					<dialogInfo
 						height="300"
 						width="400"
@@ -157,7 +161,6 @@
 					</dialogInfo>
 
 					<form name="${namePrefix}UpdateForm"
-						buttonbar="true"
 						resetInvisible="true"
 					>
 						<modelBuilder class="com.top_logic.layout.form.declarative.DefaultDeclarativeFormBuilder"
@@ -174,7 +177,9 @@
 						</buttons>
 					</form>
 				</layout>
-				<layout name="${namePrefix}Copy">
+				<layout name="${namePrefix}Copy"
+					buttonbar="true"
+				>
 					<dialogInfo
 						height="350"
 						image="theme:ICON_CODE_BRANCH"
@@ -184,7 +189,6 @@
 					/>
 
 					<form name="${namePrefix}CopyForm"
-						buttonbar="true"
 						model="selection(${namePrefix}Table)"
 						securityProviderClass="securityRoot"
 					>

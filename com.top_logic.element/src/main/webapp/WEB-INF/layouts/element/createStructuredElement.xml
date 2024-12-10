@@ -40,12 +40,12 @@
 	</params>
 
 	<layout name="${dialogName}"
+		buttonbar="true"
 		resPrefix="${newResPrefix}layout."
 	>
 		<components>
 			<!-- component to edit structured elements -->
 			<component class="${detailComponent}"
-				buttonbar="true"
 				commandGroups="${createCommandGroups}"
 				model="${model}"
 				name="${detailComponentName}"

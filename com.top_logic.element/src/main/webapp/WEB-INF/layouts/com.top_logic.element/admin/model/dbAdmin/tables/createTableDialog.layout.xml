@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<layout name="Dialog">
+<layout name="Dialog"
+	buttonbar="true"
+>
 	<dialogInfo
 		image="theme:ICON_PLUS"
 		openHandlerName="createTable"
@@ -19,9 +21,7 @@
 		</executability>
 	</dialogInfo>
 
-	<form name="Form"
-		buttonbar="true"
-	>
+	<form name="Form">
 		<titleKey>
 			<de>Neue Tabelle</de>
 			<en>New Table</en>

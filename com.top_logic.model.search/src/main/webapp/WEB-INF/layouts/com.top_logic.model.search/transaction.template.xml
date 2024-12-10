@@ -45,7 +45,9 @@
 		</property>
 	</properties>
 
-	<layout name="Dialog">
+	<layout name="Dialog"
+		buttonbar="true"
+	>
 		<dialogInfo
 			closableUsingX="${closableUsingX}"
 			createOpenerButtons="${createOpenerButtons}"
@@ -59,7 +61,6 @@
 		/>
 
 		<form name="Form"
-			buttonbar="true"
 			resetInvisible="true"
 			securityObject="${securityObject}"
 			securityProviderClass="${securityProviderClass}"

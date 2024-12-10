@@ -91,7 +91,9 @@
 		toolbar="${toolbar}"
 	>
 		<dialogs>
-			<layout name="${namePrefix}ChartDialog">
+			<layout name="${namePrefix}ChartDialog"
+				buttonbar="true"
+			>
 				<dialogInfo
 					createOpenerButtons="false"
 					defaultI18n="reporting.matrix.chart.openChartDetails"
@@ -104,7 +106,6 @@
 
 				<components>
 					<component class="${detailTable}"
-						buttonbar="true"
 						modelBuilder="${detailBuilder}"
 						name="${namePrefix}ChartDetail"
 						objectType="${objectType}"

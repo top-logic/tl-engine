@@ -1219,7 +1219,7 @@ td.rightList {
 	color: var(--button-secondary);
 	background: transparent;
 	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
-	height: 2rem;
+	height: var(--form-line-height);
 	padding: var(--spacing-02) var(--spacing-03);
 	border-radius: .25rem;
 	border: none;
@@ -2252,7 +2252,7 @@ h5.card-title a:focus {
     display: flex;
     align-items: center;
     gap: var(--spacing-02);
-    height: 2rem;
+    height: var(--form-line-height);
     padding: 0 var(--spacing-02);
     position: relative;
 }
@@ -2706,7 +2706,7 @@ div.ssiContentArea {
 	align-items: center;
 	flex-shrink: 0;
 	gap: var(--spacing-02);
-	height: 2rem; /* 32px height */
+	height: var(--form-line-height);
 	padding: 0 var(--spacing-03);
 	border-radius: var(--corner-radius);
 	font-family: var(--font-family);

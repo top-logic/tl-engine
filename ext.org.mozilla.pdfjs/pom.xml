@@ -9,7 +9,7 @@
   </parent>
   <artifactId>ext-org-mozilla-pdfjs</artifactId>
   
-  <description>PDF.js version 2.0.943 - a general-purpose, web standards-based platform for parsing and rendering PDFs.</description>
+  <description>PDF.js version 4.9.155 - a general-purpose, web standards-based platform for parsing and rendering PDFs.</description>
   <url>https://mozilla.github.io/pdf.js/</url>
   
   <licenses>

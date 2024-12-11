@@ -37,6 +37,10 @@
 					create="true"
 				/>
 
+				<cancelAction config:interface="com.top_logic.tool.boundsec.CommandHandlerReference$Config"
+					command-id="cancelCreate"
+				/>
+
 				<buttons>
 					<button id="createEnumeration"
 						class="com.top_logic.element.layout.meta.TLEnumerationCreateHandler"

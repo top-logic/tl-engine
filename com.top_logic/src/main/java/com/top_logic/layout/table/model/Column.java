@@ -14,6 +14,7 @@ import java.util.List;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.layout.ResourceView;
 import com.top_logic.layout.table.CellRenderer;
 import com.top_logic.layout.table.TableData;
@@ -497,7 +498,7 @@ public class Column {
 
 		// By default use the label also as tooltip to make the column label readable, if the colum
 		// width is to small.
-		return getLabel(tableConfiguration);
+		return TagUtil.encodeXML(getLabel(tableConfiguration));
 	}
 
 }

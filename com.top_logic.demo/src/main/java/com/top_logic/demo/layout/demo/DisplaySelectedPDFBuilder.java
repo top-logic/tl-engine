@@ -8,6 +8,7 @@ package com.top_logic.demo.layout.demo;
 import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.io.IOException;
+import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.io.binary.BinaryDataSource;
@@ -80,17 +81,27 @@ public class DisplaySelectedPDFBuilder implements ModelBuilder {
 			
 			@Override
 			public void valueChanged(FormField field, Object oldValue, Object newValue) {
-				if (newValue == null) {
-					displayField.setValue(newValue);
-					return;
+				BinaryDataSource newPDF = null;
+
+				if (newValue instanceof List<?> list && !list.isEmpty()) {
+					Object firstElement = list.get(0);
+					if (firstElement instanceof BinaryDataSource) {
+						newPDF = (BinaryDataSource) firstElement;
+					}
+				} else if (newValue instanceof BinaryDataSource) {
+					newPDF = (BinaryDataSource) newValue;
 				}
-				BinaryDataSource newPDF = (BinaryDataSource) newValue;
-				String name = newPDF.getName();
-				if (!name.endsWith(".pdf")) {
-					field.setValue(oldValue);
-					throw new TopLogicException(ResKey.text(fc.getResources().getStringResource("onlyPDF")));
+				
+				if (newPDF != null && !newPDF.getName().endsWith(".pdf")) {
+					rejectInvalidInput(fc, field, oldValue);
 				}
+
 				displayField.setValue(newPDF);
+			}
+
+			private void rejectInvalidInput(FormContext fc, FormField field, Object oldValue) {
+				field.setValue(oldValue);
+				throw new TopLogicException(ResKey.text(fc.getResources().getStringResource("onlyPDF")));
 			}
 		});
 		fc.addMember(displayField);

@@ -350,7 +350,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		/**
 		 * No longer in use.
 		 * 
-		 * @deprecated Use {@link DialogInfo#getCloseHandlerName()} instead.
+		 * @deprecated Use {@link DialogInfo#getCloseHandler()} instead.
 		 */
 		@Deprecated
 		@Name("closeHandlerName")
@@ -957,16 +957,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 					if (closeHandler != null) {
 						CommandHandler command = CommandHandlerFactory.getInstance().getCommand(context, closeHandler);
 						dialog.registerButtonCommand(command);
-					} else {
-						String closeHandlerName = dialogInfo.getCloseHandlerName();
-						if (closeHandlerName != null) {
-							CommandHandler command = CommandHandlerFactory.getInstance().getHandler(closeHandlerName);
-							if (command != null) {
-								Logger.error("No such command '" + closeHandlerName + "' in '" + getLocation() + "'.",
-									LayoutComponent.class);
-								dialog.registerButtonCommand(command);
-							}
-						}
 					}
 
 					_dialogs.add(dialog);

@@ -27,4 +27,9 @@ public interface CommandReferenceConfig extends ConfigurationItem {
 	@Name(COMMAND_ID)
 	String getCommandId();
 
+	/**
+	 * @see #getCommandId()
+	 */
+	void setCommandId(String value);
+
 }

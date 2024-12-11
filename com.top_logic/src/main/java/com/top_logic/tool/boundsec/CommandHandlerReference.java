@@ -6,8 +6,11 @@
 package com.top_logic.tool.boundsec;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.AbstractConfigurationValueProvider;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
@@ -73,6 +76,39 @@ public class CommandHandlerReference extends CommandHandlerProxy {
 	@Override
 	protected CommandHandler impl() {
 		return _impl;
+	}
+
+	/**
+	 * Format for specifying {@link CommandHandler}s in a short-cut form by a reference to the
+	 * {@link CommandHandlerFactory}.
+	 */
+	public static class ReferenceFormat
+			extends AbstractConfigurationValueProvider<PolymorphicConfiguration<? extends CommandHandler>> {
+
+		/**
+		 * Creates a {@link ReferenceFormat}.
+		 */
+		public ReferenceFormat() {
+			super(PolymorphicConfiguration.class);
+		}
+
+		@Override
+		protected PolymorphicConfiguration<? extends CommandHandler> getValueNonEmpty(String propertyName,
+				CharSequence propertyValue) throws ConfigurationException {
+			Config result = TypedConfiguration.newConfigItem(Config.class);
+			result.setCommandId(propertyValue.toString());
+			return result;
+		}
+
+		@Override
+		public boolean isLegalValue(Object value) {
+			return (value instanceof Config);
+		}
+
+		@Override
+		protected String getSpecificationNonNull(PolymorphicConfiguration<? extends CommandHandler> configValue) {
+			return ((Config) configValue).getCommandId();
+		}
 	}
 
 }

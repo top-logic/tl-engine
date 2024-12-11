@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.AbortExecutionException;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
@@ -39,10 +40,12 @@ import com.top_logic.basic.db.sql.SQLColumnDefinition;
 import com.top_logic.basic.db.sql.SQLFactory;
 import com.top_logic.basic.db.sql.SQLSelect;
 import com.top_logic.basic.i18n.log.I18NLog;
+import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.element.model.jdbcBinding.api.ColumnParser;
 import com.top_logic.element.model.jdbcBinding.api.ImportRow;
 import com.top_logic.element.model.jdbcBinding.api.KeyColumnNormalizer;
@@ -75,6 +78,7 @@ import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelPartRef.ModuleRefValueProvider;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.Resources;
 
 /**
  * {@link AbstractCommandHandler} importing a model from an existing database.
@@ -150,6 +154,7 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 
 		@Override
 		protected void run(I18NLog log) throws AbortExecutionException {
+			log = logToGuiAndLogger(log);
 			JdbcDataImporterProgressHandle progressHandle = new JdbcDataImporterProgressHandle(this, log);
 			logInfo(progressHandle, "Import started.");
 			progressHandle.incrementProgress();
@@ -159,6 +164,40 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 			});
 			logInfo(progressHandle, "Import finished.");
 		}
+
+		private I18NLog logToGuiAndLogger(I18NLog log) {
+			return (level, messageKey, exception) -> {
+				log.log(level, messageKey, exception);
+				wrapLog(level, messageKey, exception);
+			};
+		}
+
+		private void wrapLog(Level level, ResKey messageKey, Throwable exception) {
+			String message = Resources.getInstance(ResourcesModule.getLogLocale()).getString(messageKey);
+			switch (level) {
+				case FATAL: {
+					Logger.fatal(message, exception, JdbcDataImporter.class);
+					return;
+				}
+				case ERROR: {
+					Logger.error(message, exception, JdbcDataImporter.class);
+					return;
+				}
+				case WARN: {
+					Logger.warn(message, exception, JdbcDataImporter.class);
+					return;
+				}
+				case INFO: {
+					Logger.info(message, exception, JdbcDataImporter.class);
+					return;
+				}
+				case DEBUG: {
+					Logger.debug(message, exception, JdbcDataImporter.class);
+					return;
+				}
+			}
+		}
+
 	}
 
 	/**

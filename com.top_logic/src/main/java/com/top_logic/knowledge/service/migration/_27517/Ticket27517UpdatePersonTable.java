@@ -446,7 +446,7 @@ public class Ticket27517UpdatePersonTable extends AbstractConfiguredInstance<Tic
 				String oldName = entry.getValue();
 				int suffix = 2;
 				while (allLogins.contains(oldName + "-" + suffix)) {
-					id++;
+					suffix++;
 				}
 				String newName = oldName + "-" + suffix;
 				allLogins.add(newName);

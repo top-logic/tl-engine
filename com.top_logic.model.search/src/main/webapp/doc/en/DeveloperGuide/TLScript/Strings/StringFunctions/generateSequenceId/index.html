@@ -1,0 +1,58 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>generateSequenceId(context:$contextForGeneratingId, numberHandlerName: $nameOfNumberHandlerToUse)</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Returns a context to the specified NumberHandler and receives a generated sequence ID.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Standard</th>
+		</tr>
+		<tr>
+			<td>Context</td>
+			<td>Specialized object</td>
+			<td>The context that is transferred to the NumberHandler.</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>numberHandlerName</td>
+			<td>Character string</td>
+			<td>The name of the NumberHandler that will generate the sequence ID using the context.</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+	</thead>
+</table>
+
+<h2> </h2>
+
+<h2>Return value</h2>
+
+<p><strong>Type:</strong> String</p>
+
+<p>The generated sequence ID in the format defined by the NumberHandler.</p>
+
+<h2>Examples</h2>
+
+<pre>
+	<code>generateSequenceId($context, "myCustomSequenceId")
+</code>
+</pre>
+
+<p><strong>Output:</strong> CustomSequenceId-001</p>
+
+<p> </p>
+
+<p> </p>

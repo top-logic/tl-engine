@@ -39,6 +39,7 @@
 
 .dfTitleContent {
 	flex-grow: 1;
+	display: flex;
 }
 
 .rf_header > .rf_menu, 
@@ -56,6 +57,9 @@
 .mboxContent .dfContent .dfToolbar {
 	display: flex;
 	gap: var(--spacing-01);
+	
+	/* prevent outline of focused button being cliped. 	*/
+	margin-right: 2px;
 }
 
 .fieldSetBoxContainer {
@@ -65,11 +69,7 @@
 }
 
 .collapsed .dfToolbar {
-	display: none;
-}
-
-.dfListCommands .cOnExpandedControl {
-	padding: 0;
+	visibility: hidden;
 }
 
 div.fptPage {
@@ -185,15 +185,6 @@ div.fptIconBar > span.fptIconOverlay {
 
 .rf_header .cLabel {
 	display: flex;
-}
-
-.rf_label label {
-	font-weight: bold;
-	white-space: nowrap;
-}
-
-.rf_label {
-	white-space: nowrap;
 }
 
 .mandatory.can-edit label:after {
@@ -369,9 +360,21 @@ td.fhrRight {
 	grid-auto-rows: max-content;
 	grid: auto / auto-flow / max-content;
 	gap: var(--RF_VERTICAL_GAP_CELLS) var(--RF_HORIZONTAL_GAP_CELLS);
-	padding: var(--spacing-03);
-	line-height: 1.5rem;
+	line-height: var(--form-line-height);
 	border-radius: 0 0 3px 3px;
+}
+
+.cOnExpandedControl {
+	padding-left: var(--spacing-03);
+}
+
+.dfListCommands .cOnExpandedControl {
+	padding-left: 0;
+}
+
+.dfListEntry > .cOnExpandedControl.expanded,
+.rf_content {
+	padding: var(--spacing-03);
 }
 
 .rf_content .rf_header {
@@ -386,19 +389,13 @@ div.rf_buttons {
 
 .rf_columnsLayout {
     margin-left: calc(-1*var(--RF_HORIZONTAL_GAP_COLUMNS));
-    margin-top: var(--spacing-03);
 }
 
-.rf_cell .rf_inputCell:first-child {
+.rf_inputCell:first-child {
     margin-top: 0;
 }
 
-.rf_cell .rf_inputCell:last-child {
-    margin-bottom: 0;
-}
-
-.rf_cell .rf_columnsLayout {
-    margin-top: 0;
+.rf_inputCell:last-child {
     margin-bottom: 0;
 }
 
@@ -447,13 +444,12 @@ div.rf_buttons {
 
 .rf_columnsLayout .inputCell,
 .rf_inputCell {
-    line-height: 1.5rem;
+    line-height: var(--form-line-height);
 }
 
 /* even empty cells have a height */
 .rf_cell {
-	min-height: 1.5rem;
-	margin-bottom: var(--spacing-02);
+	min-height: var(--form-line-height);
 	box-sizing: border-box;
 	overflow-wrap: break-word;
 }
@@ -558,6 +554,7 @@ div.rf_buttons {
 	--button-fg: var(--layer-accent-icon);
 	padding: 0 var(--spacing-03);
 	white-space: nowrap;
+	margin-bottom: 1px;
 }
 
 .dfEntryTitle label {
@@ -605,10 +602,6 @@ div.dfListAdd {
     width: 1rem;
 }
 
-.cOnExpandedControl {
-	padding: 0 0 0 var(--spacing-03);
-}
-
 .dfListContent > .rf_columnsLayout {
 	margin-left: calc(-1*var(RF_HORIZONTAL_GAP_COLUMNS));
 }
@@ -650,10 +643,6 @@ div.dfListAdd {
   	box-sizing: border-box;
 }
 
-*:not(.rf_content) > .rf_columnsLayout:not(.keep) {
-	margin-bottom: var(--spacing-03);
-}
-
 .rf_content .pre {
 	white-space: pre-wrap;
 }
@@ -688,33 +677,64 @@ div.dfListAdd {
 .rf_spanCol3 { grid-col-end: span 3; }
 .rf_spanCol4 { grid-col-end: span 4; }
 
-.cMediaQuery.dflSize0 .rf_columnsLayout.keep .rf_inputCell:not(.keepInline):not(.rf_noLabel),
-.keep .rf_labelAbove.rf_inputCell:not(.keepInline),
-.rf_columnsLayout.keep .rf_inputCell .rf_inputCell:not(.rf_noLabel),
-.rf_inputCell:not(.rf_noLabel) {
+/* input cell layout with label before input. */
+.rf_inputCell {
 	display: grid;
 	grid-template-columns: minmax(var(--RF_FIRST_COLUMN_WIDTH), max-content) minmax(0, 1fr);
 	grid-gap: var(--RF_LABEL_PADDING) var(--spacing-02);
 }
 
+/* In an input cell without label, there is no restriction to the label column (there is only one column). */
+.rf_inputCell.rf_noLabel {
+	grid-template-columns: minmax(0, 1fr);
+}
+
+/* label is always first row first column. */
 .rf_inputCell > div:nth-child(1) {
 	grid-row: 1;
 	grid-column: 1;
 }
 
-.rf_labelAbove.rf_inputCell:not(.keepInline) > div:nth-child(2),
-.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel) > div:nth-child(2) {
+/* input wraps to second line, if cell is flagged with "label above", or thre is not enough space. */
+.rf_inputCell.rf_labelAbove > div:nth-child(2),
+.cMediaQuery.dflSize0 .rf_inputCell > div:nth-child(2) {
 	grid-row: 2;
 	grid-column: 1;
 }
 
-                                        .rf_labelAbove.rf_inputCell:not(.keepInline),
-.cMediaQuery.dflSize0                                 .rf_inputCell:not(.keepInline):not(.rf_noLabel) {
-	display: grid;
+/* There is only a single column, if the label is rendered above, or there is not enough space. */
+.rf_inputCell.rf_labelAbove,
+.cMediaQuery.dflSize0 .rf_inputCell {
+	grid-template-rows: var(--form-label-height) 1fr;
 	grid-template-columns: minmax(0px, 1fr);
-	grid-template-rows: 24px 1fr;
-	line-height: 24px;
+}
+
+/* If there is only content without label, there is no limit to the first row (normally the label row). */
+.rf_inputCell.rf_noLabel,
+.cMediaQuery.dflSize0 .rf_inputCell.rf_noLabel {
+	grid-template-rows: 1fr;
+}
+
+.rf_label {
+	white-space: nowrap;
+}
+
+/* The line height of the label is reduced, if the label is rendered above, or there is not enough space. */
+.rf_inputCell.rf_labelAbove > .rf_label,
+.cMediaQuery.dflSize0 .rf_inputCell > .rf_label{
+	line-height: var(--form-label-height);
+}
+
+/* if label and input should be rendered into the label column, there is only a single cell with less height. */
+.rf_inputCell.rf_labelAfter {
+	grid-template-rows: var(--form-label-height) 1fr;
+	grid-template-columns: minmax(0px, 1fr);
 	margin-bottom: 0;
+}
+
+.rf_label label {
+	font-weight: bold;
+	white-space: nowrap;
 }
 
 .rf_inputCell.rf_labelAfter label {
@@ -835,7 +855,7 @@ div.dfListAdd {
 }
 
 .rf_inputCell {
-	margin: var(--spacing-02) 0;
+	margin-top: var(--spacing-02);
 }
 
 .rf_inputCell label {
@@ -2036,7 +2056,8 @@ input.tristate {
 .rf_firstColumn .is-radio,
 .rf_firstColumn .is-checkbox,
 .rf_firstColumn input.tristate {
-	margin-left: 0px;
+	/* Minimum margin that prevents the outline of a focused element to be cliped. */
+	margin-left: 2px;
 }
 
 .fltSubContent .cSelectOption,

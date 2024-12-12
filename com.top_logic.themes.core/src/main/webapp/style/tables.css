@@ -1014,8 +1014,7 @@ table td a.cDownload {
 	text-overflow: ellipsis;
 }
 
-/* :is(table.tl-table.tl-table--fixed,.rf_cell) */
-:is(.lFlexible,.lFlexibleCustom,.ddwttContainer),
+:is(.tl-table__cell,.rf_cell) :is(.lFlexible,.lFlexibleCustom,.ddwttContainer),
 :is(.lFlexible,.lFlexibleCustom) :is(textarea,input:is(.is-input,.is-popup)) {
 	box-sizing: border-box;
 	width: 100%;

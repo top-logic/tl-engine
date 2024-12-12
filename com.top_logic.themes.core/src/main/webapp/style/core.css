@@ -2644,53 +2644,36 @@ div.ssiContentArea {
 
 /* ===== com.top_logic.layout.form.decorator.ChangeInfo ===== */
 
-.changeInfoNoChange {
-	display: flex;
+.changeInfo {
+	display: inline-flex;
 	align-items: center;
 }
 
-.changeInfoCreated {
-	display: flex;
-	align-items: center;
+.changeInfo.created {
 	color: green;
 }
 
-.changeInfoRemoved {
-	display: flex;
-	align-items: center;
+.changeInfo.removed {
 	color: red;
 }
 
-.changeInfoChanged {
-	display: flex;
-	align-items: center;
+.changeInfo.changed {
 	color: blue;
 }
 
-.changeInfoDeepChanged {
-	display: flex;
-	align-items: center;
+.changeInfo.deepChanged {
 	color: darkblue;
 }
 
-.changeInfoCreated img,
-.changeInfoRemoved img,
-.changeInfoChanged img, 
-.changeInfoDeepChanged img {
+.changeInfo img {
 	vertical-align: text-bottom;
 }
 
-.changeInfoCreated.form img,
-.changeInfoRemoved.form img,
-.changeInfoChanged.form img, 
-.changeInfoDeepChanged.form img {
+.changeInfo.form img {
 	padding-right: 5px;
 }
 
-.changeInfoCreated.table img,
-.changeInfoRemoved.table img,
-.changeInfoChanged.table img, 
-.changeInfoDeepChanged.table img {
+.changeInfo.table img {
 	padding-right: 0px;
 }
 

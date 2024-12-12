@@ -26,7 +26,7 @@ public enum ChangeInfo {
 
 		@Override
 		String getCSSClass() {
-			return "changeInfoNoChange";
+			return "changeInfo noChange";
 		}
 
 		@Override
@@ -53,7 +53,7 @@ public enum ChangeInfo {
 
 		@Override
 		String getCSSClass() {
-			return "changeInfoCreated";
+			return "changeInfo created";
 		}
 
 		@Override
@@ -80,7 +80,7 @@ public enum ChangeInfo {
 
 		@Override
 		String getCSSClass() {
-			return "changeInfoRemoved";
+			return "changeInfo removed";
 		}
 
 		@Override
@@ -109,7 +109,7 @@ public enum ChangeInfo {
 
 		@Override
 		String getCSSClass() {
-			return "changeInfoChanged";
+			return "changeInfo changed";
 		}
 
 		@Override
@@ -138,7 +138,7 @@ public enum ChangeInfo {
 
 		@Override
 		String getCSSClass() {
-			return "changeInfoDeepChanged";
+			return "changeInfo deepChanged";
 		}
 
 		@Override

@@ -278,6 +278,9 @@ public class DBSchemaGenerator {
 			case REFERENCE: {
 				throw new UnreachableAssertion("The type of an attribute is never of model-kind 'reference'. " + tlAttribute);
 			}
+			case OBJECT: {
+				throw new UnreachableAssertion("The type of an attribute is never of model-kind 'object'. " + tlAttribute);
+			}
 		}
 		throw new UnreachableAssertion("The case statement above has to cover everything.");
 	}
@@ -365,7 +368,8 @@ public class DBSchemaGenerator {
 			case MODEL:
 			case MODULE:
 			case PROPERTY:
-			case REFERENCE: {
+			case REFERENCE:
+			case OBJECT: {
 				throw new UnreachableAssertion("The owner of a TLReference is always of kind CLASS or ASSOCIATION:" + tlReference);
 			}
 		}

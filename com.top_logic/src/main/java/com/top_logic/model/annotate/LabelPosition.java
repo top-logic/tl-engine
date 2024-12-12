@@ -14,12 +14,14 @@ import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.format.I18NConstants;
+import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
 import com.top_logic.model.form.ReactiveFormCSS;
 
 /**
  * Possible positions of a label of a value in a form.
  * 
  * @see LabelPositionAnnotation
+ * @see LabelPositioning
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

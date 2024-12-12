@@ -44,6 +44,7 @@ import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
+import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.messagebox.MessageBox;
@@ -51,6 +52,7 @@ import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.messagebox.ProgressDialog;
 import com.top_logic.layout.messagebox.SimpleFormDialog;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
@@ -230,6 +232,7 @@ public class XMLImportCommand extends AbstractCommandHandler {
 			@ControlProvider(ConfigXMLEditor.CP.class)
 			@ItemDisplay(ItemDisplayType.VALUE)
 			@RenderWholeLine
+			@LabelPositioning(LabelPosition.ABOVE)
 			@ItemDefault(DispatchingImporter.Config.class)
 			@NonNullable
 			@DefaultContainer

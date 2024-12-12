@@ -567,6 +567,7 @@
 					</attribute-setting>
 
 					<attribute-setting config-name="GALLERY">
+						<label-position value="above-value"/>
 						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.GalleryFieldProvider"/>
 						<search-relevant value="false"/>
 						<fulltext-relevant value="false"/>
@@ -593,6 +594,7 @@
 						config-name="WEBFOLDER"
 						legacy-type-code="17"
 					>
+						<label-position value="hide-label"/>
 						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.FolderFieldProvider"/>
 						<tag-provider impl="com.top_logic.element.meta.form.tag.CustomInputTagProvider"/>
 						<search-relevant value="false"/>

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.ConfigurationError;
@@ -82,6 +83,7 @@ import com.top_logic.layout.form.values.edit.annotation.CssClass;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
+import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.form.values.edit.annotation.UseBuilder;
@@ -99,6 +101,7 @@ import com.top_logic.layout.form.values.edit.initializer.InitializerProvider;
 import com.top_logic.layout.form.values.edit.initializer.InitializerUtil;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.resources.AbstractResourceView;
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.Columns;
 import com.top_logic.util.error.TopLogicException;
@@ -113,6 +116,12 @@ public class EditorFactory implements AnnotationCustomizations {
 	private static final Property<Object> MODEL = TypedAnnotatable.property(Object.class, "model");
 
 	private static final Property<ValueModel> VALUE_MODEL = TypedAnnotatable.property(ValueModel.class, "valueModel");
+
+	/**
+	 * Property to assign a {@link LabelPosition} to a {@link FormMember}.
+	 */
+	private static final Property<LabelPosition> LABEL_POSITION =
+		TypedAnnotatable.property(LabelPosition.class, "labelPosition");
 
 	/**
 	 * CSS class to mark content written by the declarative form definitions.
@@ -462,7 +471,7 @@ public class EditorFactory implements AnnotationCustomizations {
 		FormMember member;
 		if (annotatedEditor != null) {
 			member = createMember(annotatedEditor, container, setting);
-			applyRenderWholeLine(member, property, false);
+			applyAnnotations(member, property, false);
 		} else {
 			annotatedEditor = annotatedEditor(property.getType());
 			if (annotatedEditor != null) {
@@ -504,7 +513,7 @@ public class EditorFactory implements AnnotationCustomizations {
 						throw new UnreachableAssertion("No such property kind: " + property.kind());
 				}
 			}
-			applyRenderWholeLine(member, property, true);
+			applyAnnotations(member, property, true);
 		}
 
 		member.set(VALUE_MODEL, setting);
@@ -527,22 +536,26 @@ public class EditorFactory implements AnnotationCustomizations {
 		return null;
 	}
 
-	private void applyRenderWholeLine(FormMember field, PropertyDescriptor property, boolean considerValueType) {
-		RenderWholeLine propertyAnnotation = getAnnotation(property, RenderWholeLine.class);
+	private void applyAnnotations(FormMember field, PropertyDescriptor property, boolean considerValueType) {
+		applyAnnotation(field, property, considerValueType, RenderWholeLine.class, AbstractMember.RENDER_WHOLE_LINE,
+			a -> a.value());
+		applyAnnotation(field, property, considerValueType, LabelPositioning.class, LABEL_POSITION,
+			a -> a.value());
+	}
+
+	private <T extends Annotation, V> void applyAnnotation(FormMember field, PropertyDescriptor property, boolean considerValueType,
+			Class<T> annotationType, Property<V> fieldProperty, Function<T, V> accessor) {
+		T propertyAnnotation = getAnnotation(property, annotationType);
 		if (propertyAnnotation != null) {
-			field.set(AbstractMember.RENDER_WHOLE_LINE, propertyAnnotation.value());
-			return;
-		}
-		if (!considerValueType) {
-			return;
-		}
-		ConfigurationDescriptor valueDescriptor = property.getValueDescriptor();
-		if (valueDescriptor == null) {
-			return;
-		}
-		RenderWholeLine descriptorAnnotation = getAnnotation(valueDescriptor, RenderWholeLine.class);
-		if (descriptorAnnotation != null) {
-			field.set(AbstractMember.RENDER_WHOLE_LINE, descriptorAnnotation.value());
+			field.set(fieldProperty, accessor.apply(propertyAnnotation));
+		} else if (considerValueType) {
+			ConfigurationDescriptor valueDescriptor = property.getValueDescriptor();
+			if (valueDescriptor != null) {
+				T descriptorAnnotation = getAnnotation(valueDescriptor, annotationType);
+				if (descriptorAnnotation != null) {
+					field.set(fieldProperty, accessor.apply(descriptorAnnotation));
+				}
+			}
 		}
 	}
 
@@ -924,11 +937,21 @@ public class EditorFactory implements AnnotationCustomizations {
 			if (displayAsBox(property)) {
 				template = contentBox(div(member(member.getName())));
 			} else {
-				Class<?> type = property.getType();
-				if (type == Boolean.class || type == boolean.class || member instanceof BooleanField) {
+				LabelPosition labelPosition = member.get(LABEL_POSITION);
+				if (labelPosition == null) {
+					// Use reasonable default.
+					Class<?> type = property.getType();
+					if (type == Boolean.class || type == boolean.class || member instanceof BooleanField) {
+						labelPosition = LabelPosition.AFTER_VALUE;
+					} else {
+						labelPosition = LabelPosition.DEFAULT;
+					}
+				}
+
+				if (labelPosition == LabelPosition.AFTER_VALUE) {
 					template = fieldBoxInputFirst(member.getName());
 				} else {
-					template = fieldBox(member.getName());
+					template = fieldBox(member.getName(), labelPosition);
 				}
 			}
 		}

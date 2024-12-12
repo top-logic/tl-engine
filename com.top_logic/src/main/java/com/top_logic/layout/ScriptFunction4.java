@@ -15,7 +15,9 @@ import com.top_logic.basic.func.IFunction4;
 import com.top_logic.layout.form.values.edit.annotation.CssClass;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
+import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
+import com.top_logic.model.annotate.LabelPosition;
 
 /**
  * Configuration of an {@link IFunction4} that executes a TL-Script function.
@@ -32,6 +34,7 @@ import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 @ItemDisplay(ItemDisplayType.VALUE)
 @CssClass("tlscript")
 @RenderWholeLine
+@LabelPositioning(LabelPosition.ABOVE)
 @Label("Script function")
 public interface ScriptFunction4<R, A1, A2, A3, A4> extends PolymorphicConfiguration<IFunction4<R, A1, A2, A3, A4>> {
 

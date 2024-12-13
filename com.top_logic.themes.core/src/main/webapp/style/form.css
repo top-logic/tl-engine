@@ -547,7 +547,7 @@ div.rf_buttons {
     grid-column: 1;
 	display: flex;
 	align-items: center;
-	gap: var(--spacing-03);
+	gap: var(--spacing-02);
 	height: 2.5rem;
 	background-color: var(--layer-accent);
 	color: var(--layer-accent-text);

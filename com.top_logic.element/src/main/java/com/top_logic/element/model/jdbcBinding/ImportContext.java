@@ -380,6 +380,11 @@ public class ImportContext {
 		return _referrers.getOrDefault(type, emptyList());
 	}
 
+	/** Displays a debug message in the log. */
+	public void logDebug(String message) {
+		_progressHandle.getLog().log(Level.DEBUG, toLogMessage(message));
+	}
+
 	/** Displays an info message in the log. */
 	public void logInfo(String message) {
 		_progressHandle.getLog().info(toLogMessage(message));

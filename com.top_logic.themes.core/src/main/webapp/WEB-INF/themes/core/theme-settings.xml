@@ -17,10 +17,7 @@
 		value="mainTabBar"
 	/>
 	<int name="MAIN_NAVIGATION_BAR_HEIGHT"
-		value="42"
-	/>
-	<string name="MAIN_NAVIGATION_BREADCRUMB_HEADER_HEIGHT"
-		expr="%MAIN_NAVIGATION_BAR_HEIGHT%px"
+		value="32"
 	/>
 	<int name="MAINTAINANCE_BAR_HEIGHT"
 		expr="%MAIN_NAVIGATION_BAR_HEIGHT%"
@@ -32,10 +29,10 @@
 		expr="%com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT%"
 	/>
 	<int name="com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT"
-		value="56"
+		value="48"
 	/>
-	<size name="tabbar-height"
-		value="40px"
+	<string name="tabbar-height"
+		expr="calc(%com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT%px - 2 * var(--spacing-02))"
 	/>
 	<int name="com.top_logic.layout.form.control.Icons.TAB_COMPONENT_DEFAULT_TAB_HEIGHT"
 		value="40"
@@ -2581,6 +2578,10 @@
 	
 	<string name="form-line-height"
 		value="2rem"
+	/>
+	
+	<size name="breadcrumb-height"
+		expr="%MAIN_NAVIGATION_BAR_HEIGHT%px"
 	/>
 	
 </settings>

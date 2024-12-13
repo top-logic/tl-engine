@@ -2043,7 +2043,6 @@ h5.card-title > a:hover {
 */
 .Header {
 	display: flex;
-	height: var(--MAIN_NAVIGATION_BREADCRUMB_HEADER_HEIGHT);
 	overflow: hidden;
 }
 
@@ -2052,7 +2051,7 @@ h5.card-title > a:hover {
     align-self: flex-start;
     background: var(--layer);
     width: 100%;
-    padding: var(--spacing-02) 0;
+    line-height: var(--breadcrumb-height);
 }
 
 .BreadCrumbOuter .Left {

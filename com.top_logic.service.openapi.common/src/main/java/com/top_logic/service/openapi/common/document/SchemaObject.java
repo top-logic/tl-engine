@@ -12,8 +12,10 @@ import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.codeedit.control.CodeEditorControl;
 import com.top_logic.layout.codeedit.control.EditorControlConfig;
 import com.top_logic.layout.codeedit.editor.DefaultCodeEditor;
+import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
+import com.top_logic.model.annotate.LabelPosition;
 
 /**
  * A named <i>OpenAPI</i> schema.
@@ -36,6 +38,7 @@ public interface SchemaObject extends NamedConfigMandatory {
 	@EditorControlConfig(language = CodeEditorControl.MODE_JSON, prettyPrinting = true)
 	@PropertyEditor(DefaultCodeEditor.class)
 	@RenderWholeLine
+	@LabelPositioning(LabelPosition.ABOVE)
 	@Mandatory
 	String getSchema();
 

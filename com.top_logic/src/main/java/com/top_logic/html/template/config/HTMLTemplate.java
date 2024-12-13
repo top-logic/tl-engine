@@ -17,14 +17,17 @@ import com.top_logic.html.template.HTMLTemplateUtils;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.template.WithProperties;
+import com.top_logic.model.annotate.LabelPosition;
 
 /**
  * {@link HTMLTemplateFragment} that remembers its source code with all formatting.
  */
 @Label("HTML Template")
 @RenderWholeLine
+@LabelPositioning(LabelPosition.ABOVE)
 @Format(HTMLTemplateFragmentFormat.class)
 @ControlProvider(MultiLineText.class)
 public class HTMLTemplate implements HTMLTemplateFragment {

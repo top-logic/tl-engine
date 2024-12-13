@@ -32,11 +32,13 @@ import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.CssClass;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
+import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.search.expr.CompareKind;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.ExprFormat;
@@ -594,6 +596,7 @@ import com.top_logic.model.search.ui.TLScriptPropertyEditor;
 @CssClass("tlscript")
 @Label("Expression")
 @RenderWholeLine
+@LabelPositioning(LabelPosition.ABOVE)
 public interface Expr extends ConfigurationItem {
 
 	/**

@@ -16,8 +16,10 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
+import com.top_logic.layout.form.values.edit.annotation.LabelPositioning;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.template.WithProperties;
+import com.top_logic.model.annotate.LabelPosition;
 
 /**
  * Template for rendering an arbitrary object to HTML.
@@ -27,6 +29,7 @@ import com.top_logic.layout.template.WithProperties;
  */
 @Label("HTML Template")
 @RenderWholeLine
+@LabelPositioning(LabelPosition.ABOVE)
 @Format(HTMLTemplateFragmentFormat.class)
 @ControlProvider(MultiLineText.class)
 public interface HTMLTemplateFragment extends Renderer<WithProperties> {

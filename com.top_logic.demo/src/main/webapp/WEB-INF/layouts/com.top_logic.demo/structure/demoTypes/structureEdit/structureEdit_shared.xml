@@ -9,9 +9,7 @@
 		/>
 	</params>
 
-	<layout
-		buttonbar="true"
-	>
+	<layout buttonbar="true">
 		<components>
 			<component class="com.top_logic.demo.table.DemoStructuredEditComponent"
 				columns="default, boolean, booleanMandatory, checklist, checklistSingle, checklistMulti, collection, date, document, list, long, stringSet, string, structure, typedSetOrdered, typedSetUnordered, typedWrapper, typedWrapperFiltered, typedWrapperGenerated, untypedWrapper, float"

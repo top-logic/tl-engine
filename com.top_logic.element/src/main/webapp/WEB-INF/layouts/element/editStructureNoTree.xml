@@ -39,9 +39,7 @@
 		</param>
 	</params>
 
-	<layout
-		buttonbar="true"
-	>
+	<layout buttonbar="true">
 		<components>
 			<!-- component to edit structured elements -->
 			<component class="${class}"

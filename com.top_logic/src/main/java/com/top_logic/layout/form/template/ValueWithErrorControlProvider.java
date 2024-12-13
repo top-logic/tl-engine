@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.layout.Control;
+import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.control.BlockControl;
@@ -76,6 +77,8 @@ public class ValueWithErrorControlProvider extends AbstractConfiguredInstance<Va
 	/** Default for {@link Config#getErrorFirst()}. */
 	private static final boolean ERROR_FIRST_DEFAULT = false;
 
+	private static final CharSequence CSS_CLASS = "cDecoratedCell " + FormConstants.FLEXIBLE_CSS_CLASS;
+
 	/**
 	 * Creates an {@link ValueWithErrorControlProvider} with the given {@link ControlProvider} as
 	 * implementation.
@@ -123,6 +126,7 @@ public class ValueWithErrorControlProvider extends AbstractConfiguredInstance<Va
 		Control innerControl = config.getInnerControlProvider().createControl(model, style);
 		if (model instanceof FormMember && !FormTemplateConstants.STYLE_ERROR_VALUE.equals(style)) {
 			BlockControl block = new BlockControl();
+			block.setCssClass(CSS_CLASS);
 			ErrorControl errorControl = new ErrorControl((FormMember) model, true);
 			if (config.getErrorFirst()) {
 				block.addChild(errorControl);

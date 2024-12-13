@@ -382,6 +382,7 @@ public class DataItemControl extends AbstractFormFieldControl implements Content
 	protected void writeControlClassesContent(Appendable out) throws IOException {
 		super.writeControlClassesContent(out);
 		out.append(DATA_ITEM_CSS_CLASS);
+		out.append(showUpload() ? "upload" : "download");
 	}
 
 	/**

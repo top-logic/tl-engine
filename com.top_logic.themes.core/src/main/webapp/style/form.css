@@ -2356,10 +2356,9 @@ div.imageContainer {
 }
 
 .cDataItem label {
-	display: inline-block;
 	cursor: pointer;
 	color: var(--text-on-color);
-	padding-left: var(--spacing-02);
+	padding: var(--spacing-02) var(--spacing-03);
 	border-radius: var(--corner-radius);
 	background: var(--button-primary);
 	box-shadow: inset 0px 0px 0px 1px var(--button-primary);
@@ -2368,11 +2367,6 @@ div.imageContainer {
 
 .cDataItem label .cmdImg {
 	padding-right: var(--spacing-02);
-}
-
-.cDataItem label .cmdLabel {
-	padding-right: var(--spacing-03);
-	white-space: nowrap;
 }
 
 .cDataItem label:hover {

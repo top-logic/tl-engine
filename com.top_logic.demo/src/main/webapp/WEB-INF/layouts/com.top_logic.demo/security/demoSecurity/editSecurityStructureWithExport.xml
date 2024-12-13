@@ -54,9 +54,7 @@
 								structure="${structure}"
 							>
 								<editDialogs>
-									<layout
-										buttonbar="true"
-									>
+									<layout buttonbar="true">
 										<dialogInfo
 											defaultI18n="demo.securityExample.DialogA"
 											openerCommandGroup="Write"
@@ -71,9 +69,7 @@
 										</components>
 									</layout>
 
-									<layout
-										buttonbar="true"
-									>
+									<layout buttonbar="true">
 										<dialogInfo createOpenerButtons="false"/>
 
 										<components>

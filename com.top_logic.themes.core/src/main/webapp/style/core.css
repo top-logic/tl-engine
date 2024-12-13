@@ -1832,6 +1832,8 @@ span.ltcCounting input {
 	display: grid;
 	align-items: center;
 	justify-items: center;
+	padding: var(--spacing-05);
+	box-sizing: border-box;
 }
 
 .tileRow {

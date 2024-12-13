@@ -873,9 +873,12 @@ div.tblSeperatorLine {
 /* ============================================================== */
 
 table td span.cError {
-	position: absolute;
-	top: 0px;
-	right: 2px;	
+	padding-left: var(--spacing-02);	
+}
+
+/* Hide error display completely, if there is no error. */
+table td span.cError.no-error {
+	display: none;
 }
 
 table td span.cError i {
@@ -920,8 +923,8 @@ table td span.downloadControl {
 	height: 100%;
 }
 
-table td span.cDecoratedCell .lFlexible, 
-table td span.cDecoratedCell .lFixedLeft {
+table td span.cDecoratedCell :is(.lFlexible,.lFixedLeft) 
+table td span.cDecoratedCell :is(.lFlexible,.lFixedLeft) > .cTooltip {
 	height: inherit;
 	display: inline-flex;
 	align-items: center;

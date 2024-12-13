@@ -152,8 +152,26 @@ public class ErrorControl extends AbstractControl implements CSSClassListener, R
 		// from reorganizing after the error state of a field changes.
 		boolean   needsIcon   = isActive || hasError || hasWarnings;
 		
+		String cssClass = this.getCssClass(hasError, hasWarnings);
+
 		out.beginBeginTag(SPAN);
-		writeControlAttributes(context, out);
+
+		// Inlined variant of writeControlAttributes()
+		{
+			writeIdAttribute(out);
+
+			// Inlined variant of writeControlClasses()
+			{
+				out.beginCssClasses();
+				writeControlClassesContent(out);
+
+				// Additionally also write CSS class to control tag to allow hiding the complete
+				// display if there is no error.
+				out.append(cssClass);
+
+				out.endCssClasses();
+			}
+		}
 
 		if (!needsIcon) {
 		    out.writeAttribute(STYLE_ATTR, "display: none;");
@@ -166,7 +184,7 @@ public class ErrorControl extends AbstractControl implements CSSClassListener, R
 				XMLTag icon = this.getDisplayIcon(hasError, hasWarnings).toIcon();
 				icon.beginBeginTag(context, out);
 
-				out.writeAttribute(CLASS_ATTR, this.getCssClass(hasError, hasWarnings));
+				out.writeAttribute(CLASS_ATTR, cssClass);
 
 				// TODO: Enable theme to report image dimensions.
 				out.writeAttribute(WIDTH_ATTR, 8);
@@ -185,7 +203,7 @@ public class ErrorControl extends AbstractControl implements CSSClassListener, R
 				// Provide an initial value, if the corresponding field has an error.
 				if (hasError || hasWarnings) {
 					out.beginBeginTag(SPAN);
-					out.writeAttribute(CLASS_ATTR, this.getCssClass(hasError, hasWarnings));
+					out.writeAttribute(CLASS_ATTR, cssClass);
 					out.endBeginTag();
 					{
 						writeProblems(out, reportedFields);

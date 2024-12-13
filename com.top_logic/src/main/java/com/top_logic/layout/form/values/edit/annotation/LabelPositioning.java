@@ -21,15 +21,13 @@ import com.top_logic.model.annotate.LabelPositionAnnotation;
  * {@link Annotation} for {@link PropertyDescriptor}s to annotate a {@link LabelPosition}.
  * 
  * @see LabelPositionAnnotation Corresponding annotation for {@link TLTypePart} and {@link TLType}.
- * 
- * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @Retention(RUNTIME)
 @TagName("label-position")
 public @interface LabelPositioning {
 
 	/**
-	 * Whether this {@link Annotation} is enabled.
+	 * The positon where to place the label relative to the value.
 	 */
 	LabelPosition value();
 

@@ -6,7 +6,9 @@
 .tlTabbarContainer {
 	display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
+    box-sizing: border-box;
+    padding-top: var(--spacing-02);
 }
 
 .tlTabBar {
@@ -67,7 +69,7 @@
 	height: var(--tabbar-height);
 	width: auto;
 	background: transparent;
-	padding: var(--spacing-02) var(--spacing-03);
+	padding: var(--spacing-01) var(--spacing-03);
 	border-top: none;
 	border-right: none;
 	border-left: none;

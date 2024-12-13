@@ -18,6 +18,8 @@ import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.element.model.jdbcBinding.api.RowReader;
 import com.top_logic.element.model.jdbcBinding.api.RowWriter;
 import com.top_logic.element.model.jdbcBinding.api.TypeSelector;
+import com.top_logic.model.annotate.AnnotationInheritance;
+import com.top_logic.model.annotate.AnnotationInheritance.Policy;
 import com.top_logic.model.config.TLTypeAnnotation;
 
 /**
@@ -39,6 +41,7 @@ import com.top_logic.model.config.TLTypeAnnotation;
 })
 @InApp
 @TagName("table-binding")
+@AnnotationInheritance(Policy.REDEFINE)
 public interface TLTableBinding extends TLTypeAnnotation, NamedConfigMandatory {
 
 	/**

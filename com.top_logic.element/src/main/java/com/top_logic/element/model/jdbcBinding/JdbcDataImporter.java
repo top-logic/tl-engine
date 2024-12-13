@@ -6,9 +6,9 @@
 package com.top_logic.element.model.jdbcBinding;
 
 import static com.top_logic.basic.db.sql.SQLFactory.*;
+import static com.top_logic.basic.util.Utils.*;
 import static com.top_logic.model.util.TLModelUtil.*;
 import static java.util.Collections.*;
-import static java.util.Objects.*;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -429,6 +429,8 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 											TLObject dest = destIndex.get(destId);
 											if (dest == null) {
 												logErrorLinkTableUnknownTargetId(reference, sourceId, destId);
+											} else if (((Collection<?>) source.tValue(reference)).contains(dest)) {
+												logWarnDuplicateCollectionReferenceEntry(source, reference, dest);
 											} else {
 												source.tAdd(reference, dest);
 											}
@@ -797,6 +799,13 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		logError("Reference " + qualifiedName(reference) + ": This is a single value reference."
 			+ " But object '" + label(source) + "' references two objects: '" + label(oldTarget) + "' and: '"
 			+ label(newTarget));
+	}
+
+	private void logWarnDuplicateCollectionReferenceEntry(TLObject source, TLReference reference, TLObject target) {
+		logWarn("Duplicate entry in collection-valued reference. Source: " + source
+			+ ". Reference: " + reference.getName()
+			+ ". Duplicate entry: " + target
+			+ ". Existing entries: " + source.tValue(reference));
 	}
 
 	private String label(Object object) {

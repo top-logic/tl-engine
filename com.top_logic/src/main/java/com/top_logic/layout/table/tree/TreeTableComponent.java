@@ -120,6 +120,7 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.util.Utils;
 import com.top_logic.util.model.ModelService;
 
@@ -328,7 +329,7 @@ public class TreeTableComponent extends BoundComponent
 		if (table != null) {
 			_tableConfigProvider = TableConfigurationFactory.toProvider(context, table);
 		}
-		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_onSelectionChange = CommandHandlerFactory.getInstance().getCommand(context, config.getOnSelectionChange());
 	}
 
 	@Override

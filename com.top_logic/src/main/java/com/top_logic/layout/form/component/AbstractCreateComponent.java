@@ -16,6 +16,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -113,12 +114,14 @@ public class AbstractCreateComponent extends FormComponent {
 		 * @deprecated Use {@link #getCancelAction()} instead.
 		 */
 		@Deprecated
+		@Nullable
 		@StringDefault(CancelHandler.COMMAND_ID)
 		String getCancelHandler();
 
 		@Override
 		default void modifyIntrinsicCommands(CommandRegistry registry) {
 			registry.registerButton(getCreateHandler());
+			registry.registerButton(getCancelHandler());
 			FormComponent.Config.super.modifyIntrinsicCommands(registry);
 		}
 

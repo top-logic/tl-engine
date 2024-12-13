@@ -67,7 +67,7 @@ public class Icons extends IconsBase {
 	/**
 	 * Width in pixels reserved for the label in a label-content-cell.
 	 */
-	@DefaultValue("140")
+	@DefaultValue("175")
 	public static ThemeVar<Integer> FORM_LABEL_WIDTH;
 
 	/**

@@ -55,13 +55,14 @@ public class CompositeTileControl extends AbstractTileControl<Supplier<List<Comp
 	}
 
 	@Override
+	protected String getTypeCssClass() {
+		return "tileContainer";
+	}
+
+	@Override
 	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
 		out.beginBeginTag(DIV);
 		writeControlAttributes(context, out);
-		out.endBeginTag();
-
-		out.beginBeginTag(DIV);
-		out.writeAttribute(CLASS_ATTR, "tileContainer");
 		out.endBeginTag();
 
 		out.beginBeginTag(DIV);
@@ -85,8 +86,6 @@ public class CompositeTileControl extends AbstractTileControl<Supplier<List<Comp
 			out.writeText(context.getResources().getString(_noCardsKey));
 			out.endTag(DIV);
 		}
-
-		out.endTag(DIV);
 
 		out.endTag(DIV);
 

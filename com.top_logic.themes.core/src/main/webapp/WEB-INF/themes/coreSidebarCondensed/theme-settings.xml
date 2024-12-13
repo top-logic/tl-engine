@@ -53,10 +53,7 @@
 		value="0"
 	/>
 	<int name="MAIN_NAVIGATION_BAR_HEIGHT"
-		value="32"
-	/>
-	<string name="MAIN_NAVIGATION_BREADCRUMB_HEADER_HEIGHT"
-		expr="%MAIN_NAVIGATION_BAR_HEIGHT%px"
+		value="24"
 	/>
 	<int name="MAINTAINANCE_BAR_HEIGHT"
 		expr="%MAIN_NAVIGATION_BAR_HEIGHT%"
@@ -64,11 +61,8 @@
 	<int name="TOOL_ROW_HEIGHT"
 		value="72"
 	/>
-	<int name="MAIN_TAB_BAR_HEIGHT"
-		expr="%com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT%"
-	/>
 	<int name="com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT"
-		value="40"
+		value="28"
 	/>
 	<int name="com.top_logic.layout.structure.Icons.FORM_COLUMN_GAP"
 		value="32"
@@ -78,9 +72,6 @@
 	/>
 	<int name="com.top_logic.layout.structure.Icons.FORM_INPUT_MIN_WIDTH"
 		value="200"
-	/>
-	<size name="tabbar-height"
-		value="32px"
 	/>
 	<size name="com.top_logic.layout.structure.Icons.COLLAPSIBLE_IMAGE_WIDTH"
 		value="28px"
@@ -98,7 +89,7 @@
 		value="10px"
 	/>
 	<string name="spacing-01"
-		value=".25rem"
+		value="0rem"
 	/>
 	<string name="spacing-02"
 		value=".25rem"

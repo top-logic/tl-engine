@@ -380,4 +380,12 @@
 	<icon name="mime.Clipboard.large"
 		expr="%mime.Clipboard%"
 	/>
+	
+	<size name="com.top_logic.layout.image.gallery.Icons.GALLERY_HEIGHT"
+		value="200px"
+	/>
+	<size name="com.top_logic.layout.image.gallery.Icons.GALLERY_WIDTH"
+		value="100%"
+	/>
+	
 </settings>

@@ -994,7 +994,6 @@
 				>
 					<annotations>
 						<code-editor-language value="ace/mode/xml"/>
-						<render-whole-line/>
 					</annotations>
 				</property>
 				<property name="json"

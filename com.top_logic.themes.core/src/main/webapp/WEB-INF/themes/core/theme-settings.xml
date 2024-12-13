@@ -17,10 +17,7 @@
 		value="mainTabBar"
 	/>
 	<int name="MAIN_NAVIGATION_BAR_HEIGHT"
-		value="42"
-	/>
-	<string name="MAIN_NAVIGATION_BREADCRUMB_HEADER_HEIGHT"
-		expr="%MAIN_NAVIGATION_BAR_HEIGHT%px"
+		value="32"
 	/>
 	<int name="MAINTAINANCE_BAR_HEIGHT"
 		expr="%MAIN_NAVIGATION_BAR_HEIGHT%"
@@ -32,10 +29,10 @@
 		expr="%com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT%"
 	/>
 	<int name="com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT"
-		value="56"
+		value="48"
 	/>
-	<size name="tabbar-height"
-		value="40px"
+	<string name="tabbar-height"
+		expr="calc(%com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT%px - 2 * var(--spacing-02))"
 	/>
 	<int name="com.top_logic.layout.form.control.Icons.TAB_COMPONENT_DEFAULT_TAB_HEIGHT"
 		value="40"
@@ -1233,17 +1230,20 @@
 		value="264"
 	/>
 	<!-- Form spacings -->
+	<int name="com.top_logic.layout.structure.Icons.FORM_LABEL_WIDTH"
+		value="175"
+	/>
 	<dim name="RF_FIRST_COLUMN_WIDTH"
 		expr="%com.top_logic.layout.structure.Icons.FORM_LABEL_WIDTH%px"
 	/>
 	<dim name="RF_LABEL_PADDING"
-		expr="%com.top_logic.layout.structure.Icons.FORM_LABEL_PADDING%px"
+		expr="0px"
 	/>
 	<dim name="RF_HORIZONTAL_GAP_CELLS"
 		value="4rem"
 	/>
 	<dim name="RF_VERTICAL_GAP_CELLS"
-		value="1rem"
+		value="0px"
 	/>
 	<dim name="com.top_logic.layout.form.boxes.reactive_tag.Icons.RF_HORIZONTAL_GAP_COLUMNS"
 		expr="%com.top_logic.layout.structure.Icons.FORM_COLUMN_GAP%px"
@@ -2572,8 +2572,16 @@
 		value="8px"
 	/>
 	
+	<string name="form-label-height"
+		value="24px"
+	/>
+	
 	<string name="form-line-height"
 		value="2rem"
+	/>
+	
+	<size name="breadcrumb-height"
+		expr="%MAIN_NAVIGATION_BAR_HEIGHT%px"
 	/>
 	
 </settings>

@@ -873,9 +873,12 @@ div.tblSeperatorLine {
 /* ============================================================== */
 
 table td span.cError {
-	position: absolute;
-	top: 0px;
-	right: 2px;	
+	padding-left: var(--spacing-02);	
+}
+
+/* Hide error display completely, if there is no error. */
+table td span.cError.no-error {
+	display: none;
 }
 
 table td span.cError i {
@@ -911,7 +914,7 @@ table td span.cTextPopup,
 table td span.cExpandableTextInput,
 table td span.cTextInput,
 table td span.cIconChooser,
-table td .cDataItem,
+table td span.cDataItem.download,
 table td span.downloadControl {
 	display: flex;
 	flex-wrap: nowrap;
@@ -920,8 +923,8 @@ table td span.downloadControl {
 	height: 100%;
 }
 
-table td span.cDecoratedCell .lFlexible, 
-table td span.cDecoratedCell .lFixedLeft {
+table td span.cDecoratedCell :is(.lFlexible,.lFixedLeft) 
+table td span.cDecoratedCell :is(.lFlexible,.lFixedLeft) > .cTooltip {
 	height: inherit;
 	display: inline-flex;
 	align-items: center;
@@ -1014,8 +1017,7 @@ table td a.cDownload {
 	text-overflow: ellipsis;
 }
 
-/* :is(table.tl-table.tl-table--fixed,.rf_cell) */
-:is(.lFlexible,.lFlexibleCustom,.ddwttContainer),
+:is(.tl-table__cell,.rf_cell) :is(.lFlexible,.lFlexibleCustom,.ddwttContainer),
 :is(.lFlexible,.lFlexibleCustom) :is(textarea,input:is(.is-input,.is-popup)) {
 	box-sizing: border-box;
 	width: 100%;

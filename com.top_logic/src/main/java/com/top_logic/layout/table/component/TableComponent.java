@@ -110,6 +110,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
@@ -423,7 +424,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 			_configuredProvider = TableConfigurationFactory.toProvider(context, table);
 		}
 		_selectionModel = createSelectionModel(config);
-		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_onSelectionChange = CommandHandlerFactory.getInstance().getCommand(context, config.getOnSelectionChange());
 	}
 
 	@Override

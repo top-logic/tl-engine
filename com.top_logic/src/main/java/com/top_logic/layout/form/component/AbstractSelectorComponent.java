@@ -64,6 +64,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelPartRefsFormat;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.util.Resources;
 
 /**
@@ -216,7 +217,7 @@ public abstract class AbstractSelectorComponent extends FormComponent
 	@CalledByReflection
 	public AbstractSelectorComponent(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
-		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_onSelectionChange = CommandHandlerFactory.getInstance().getCommand(context, config.getOnSelectionChange());
 		_selectionUpdateOnModelChange = context.getInstance(config.getSelectionOnModelChange());
 	}
 

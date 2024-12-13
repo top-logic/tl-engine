@@ -933,8 +933,9 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		}
 		_initiallyMinimized = atts.isInitiallyMinimized();
 		doResetScrollPosition(false);
-		_defaultCommand = context.getInstance(atts.getDefaultAction());
-		_cancelCommand = context.getInstance(atts.getCancelAction());
+
+		_defaultCommand = CommandHandlerFactory.getInstance().getCommand(context, atts.getDefaultAction());
+		_cancelCommand = CommandHandlerFactory.getInstance().getCommand(context, atts.getCancelAction());
     }
 
 	@Override

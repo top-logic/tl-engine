@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.form.control;
 
+import java.io.IOException;
 import java.util.Collections;
 
 import com.top_logic.layout.Control;
@@ -28,6 +29,8 @@ public class BlockControl extends AbstractCompositeControl<BlockControl> {
 	 * The visibility of this composite control. 
 	 */
 	private boolean visible = true;
+
+	private CharSequence _cssClass;
 	
 	public BlockControl() {
 		super(Collections.<String, ControlCommand>emptyMap());
@@ -46,6 +49,20 @@ public class BlockControl extends AbstractCompositeControl<BlockControl> {
 		}
 	}
 
+	/**
+	 * Additional CSS classes to add to the control tag.
+	 */
+	public CharSequence getCssClass() {
+		return _cssClass;
+	}
+
+	/**
+	 * @see #getCssClass()
+	 */
+	public void setCssClass(CharSequence cssClass) {
+		_cssClass = cssClass;
+	}
+
 	@Override
 	public Object getModel() {
 		return null;
@@ -59,6 +76,13 @@ public class BlockControl extends AbstractCompositeControl<BlockControl> {
 	@Override
 	protected String getTypeCssClass() {
 		return "tl-block-control";
+	}
+
+	@Override
+	protected void writeControlClassesContent(Appendable out) throws IOException {
+		super.writeControlClassesContent(out);
+
+		out.append(_cssClass);
 	}
 
 }

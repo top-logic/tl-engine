@@ -210,6 +210,7 @@ import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.CommandHandlerUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
@@ -546,7 +547,7 @@ public class GridComponent extends EditComponent implements
 		_selectionModel = initSelectionModel(config);
 		_componentTableConfigProvider = config.getComponentTableConfigProvider();
 		_addTechnicalColumn = config.getAddTechnicalColumn();
-		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_onSelectionChange = CommandHandlerFactory.getInstance().getCommand(context, config.getOnSelectionChange());
 	}
 
 	@Override

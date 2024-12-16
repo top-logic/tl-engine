@@ -321,7 +321,7 @@ public class TableButtons {
 
 		FilterListeningCommand commandModel = new FilterListeningCommand(theResetCommand, executability);
 		commandModel.attachTable(table);
-
+		commandModel.setCssClasses("fltReset");
 		initButton(commandModel, table, Icons.REMOVE_FILTER, Icons.REMOVE_FILTER_DISABLED, REMOVE_FILTER_TOOLTIP);
 		return commandModel;
 	}

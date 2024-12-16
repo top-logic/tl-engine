@@ -396,7 +396,6 @@ div.mcToggle {
 	top: 50%;
 	z-index: 1;
 	transform: translateX(1.5rem) translateY(-50%);
-	border-radius: 4px 0 0 4px;
 	background: var(--MC_MINIMIZE_ICON);
 	background-size: contain;
 	box-shadow: var(--shadow-menu);

@@ -423,6 +423,7 @@ public interface CommandHandler
 	@Abstract
 	@TitleProperty(name = ConfigBase.UI_TITLE)
 	@CollapseEntries
+	@Format(CommandHandlerReference.ReferenceFormat.class)
 	public interface ConfigBase<T extends CommandHandler> extends PolymorphicConfiguration<T> {
 
 		/**
@@ -863,7 +864,7 @@ public CommandScriptWriter getCommandScriptWriter(LayoutComponent component);
 	 * the component this handler is registered on.
 	 */
 	default boolean operatesOn(String channelName) {
-		PolymorphicConfiguration<? extends CommandHandler> config = getConfig();
+		ConfigBase<? extends CommandHandler> config = getConfig();
 		if (!(config instanceof AbstractCommandHandler.Config)) {
 			return false;
 		}

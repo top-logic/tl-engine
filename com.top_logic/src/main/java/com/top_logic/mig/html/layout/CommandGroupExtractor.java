@@ -17,7 +17,6 @@ import com.top_logic.basic.NoProtocol;
 import com.top_logic.basic.config.ConfigurationAccess;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.window.OpenWindowCommand;
@@ -26,6 +25,7 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.CheckerProxyHandler;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.CommandReferenceConfig;
 import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
@@ -72,7 +72,7 @@ public class CommandGroupExtractor {
 			// Ignore error, because it is also reported during instantiation of the component.
 			LayoutComponent.Config dialog = LayoutUtils.resolveComponentReference(NoProtocol.INSTANCE, dialogRef);
 			if (dialog != null) {
-				PolymorphicConfiguration<? extends CommandHandler> openHandler =
+				ConfigBase<? extends CommandHandler> openHandler =
 					OpenModalDialogCommandHandler.createDialogOpenHandler(NoProtocol.INSTANCE, config, dialog);
 				if (openHandler != null) {
 					extract(openHandler);

@@ -433,7 +433,7 @@ public class OpenModalDialogCommandHandler extends AbstractCommandHandler implem
 		return new OpenExecutabilityRule(this);
 	}
 
-	public static PolymorphicConfiguration<? extends CommandHandler> createDialogOpenHandler(Log log,
+	public static ConfigBase<? extends CommandHandler> createDialogOpenHandler(Log log,
 			LayoutComponent.Config dialogParent, LayoutComponent.Config dialog) {
 		DialogInfo dialogInfo = dialog.getDialogInfo();
 		if (dialogInfo == null) {
@@ -442,7 +442,7 @@ public class OpenModalDialogCommandHandler extends AbstractCommandHandler implem
 			return null;
 		}
 		ComponentName dialogName = dialog.getName();
-		PolymorphicConfiguration<? extends CommandHandler> openHandlerConfig =
+		ConfigBase<? extends CommandHandler> openHandlerConfig =
 			OpenModalDialogCommandHandler.createOpenHandler(dialogInfo, dialogName);
 		if (openHandlerConfig == null) {
 			String openHandlerName = dialogInfo.getOpenHandlerName();
@@ -595,9 +595,9 @@ public class OpenModalDialogCommandHandler extends AbstractCommandHandler implem
 		return update(config, Config.DIALOG_NAME_PROPERTY, value);
 	}
 
-	public static PolymorphicConfiguration<? extends CommandHandler> createOpenHandler(DialogInfo dialogInfo,
+	public static ConfigBase<? extends CommandHandler> createOpenHandler(DialogInfo dialogInfo,
 			ComponentName dialogName) {
-		PolymorphicConfiguration<? extends CommandHandler> openHandlerConfig = dialogInfo.getOpenHandler();
+		ConfigBase<? extends CommandHandler> openHandlerConfig = dialogInfo.getOpenHandler();
 		if (openHandlerConfig instanceof OpenModalDialogCommandHandler.Config) {
 			OpenModalDialogCommandHandler.Config openModalHandlerConfig =
 				(OpenModalDialogCommandHandler.Config) openHandlerConfig;

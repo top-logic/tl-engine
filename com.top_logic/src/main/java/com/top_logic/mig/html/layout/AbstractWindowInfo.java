@@ -5,7 +5,6 @@
  */
 package com.top_logic.mig.html.layout;
 
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
@@ -24,6 +23,7 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.window.WindowInfo;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
 import com.top_logic.tool.boundsec.CommandHandler.ExecutabilityConfig;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
@@ -92,12 +92,12 @@ public interface AbstractWindowInfo
 	@Name(OPEN_HANDLER)
 	@Abstract
 	@Options(fun = AllInAppImplementations.class)
-	PolymorphicConfiguration<? extends CommandHandler> getOpenHandler();
+	ConfigBase<? extends CommandHandler> getOpenHandler();
 
 	/**
 	 * @see #getOpenHandler()
 	 */
-	void setOpenHandler(PolymorphicConfiguration<? extends CommandHandler> value);
+	void setOpenHandler(ConfigBase<? extends CommandHandler> value);
 
 	/**
 	 * Command group for the open command.

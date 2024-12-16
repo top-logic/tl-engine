@@ -31,8 +31,8 @@ public class CommandHandlerReference extends CommandHandlerProxy {
 	/**
 	 * Configuration of an referenced {@link CommandHandler}.
 	 * 
-	 * @see AbstractCommandHandler#getInstance(InstantiationContext, PolymorphicConfiguration) To
-	 *      resolve the {@link CommandHandler}.
+	 * @see AbstractCommandHandler#getInstance(InstantiationContext, ConfigBase) To resolve the
+	 *      {@link CommandHandler}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
@@ -83,7 +83,7 @@ public class CommandHandlerReference extends CommandHandlerProxy {
 	 * {@link CommandHandlerFactory}.
 	 */
 	public static class ReferenceFormat
-			extends AbstractConfigurationValueProvider<PolymorphicConfiguration<? extends CommandHandler>> {
+			extends AbstractConfigurationValueProvider<ConfigBase<? extends CommandHandler>> {
 
 		/**
 		 * Creates a {@link ReferenceFormat}.
@@ -93,7 +93,7 @@ public class CommandHandlerReference extends CommandHandlerProxy {
 		}
 
 		@Override
-		protected PolymorphicConfiguration<? extends CommandHandler> getValueNonEmpty(String propertyName,
+		protected ConfigBase<? extends CommandHandler> getValueNonEmpty(String propertyName,
 				CharSequence propertyValue) throws ConfigurationException {
 			Config result = TypedConfiguration.newConfigItem(Config.class);
 			result.setCommandId(propertyValue.toString());
@@ -106,7 +106,7 @@ public class CommandHandlerReference extends CommandHandlerProxy {
 		}
 
 		@Override
-		protected String getSpecificationNonNull(PolymorphicConfiguration<? extends CommandHandler> configValue) {
+		protected String getSpecificationNonNull(ConfigBase<? extends CommandHandler> configValue) {
 			return ((Config) configValue).getCommandId();
 		}
 	}

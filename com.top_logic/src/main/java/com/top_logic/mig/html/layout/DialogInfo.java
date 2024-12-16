@@ -8,7 +8,6 @@ package com.top_logic.mig.html.layout;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
-import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
@@ -24,7 +23,7 @@ import com.top_logic.layout.component.title.ConstantTitle;
 import com.top_logic.layout.component.title.TitleProvider;
 import com.top_logic.tool.boundsec.ChangeCheckDialogCloser;
 import com.top_logic.tool.boundsec.CommandHandler;
-import com.top_logic.tool.boundsec.CommandHandlerReference;
+import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
 import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
 
 /**
@@ -130,16 +129,15 @@ public interface DialogInfo extends AbstractWindowInfo {
 	@Override
 	@NullDefault
 	@ImplementationClassDefault(OpenModalDialogCommandHandler.class)
-	PolymorphicConfiguration<? extends OpenModalDialogCommandHandler> getOpenHandler();
+	ConfigBase<? extends OpenModalDialogCommandHandler> getOpenHandler();
 
 	/**
 	 * The command that is executed, when the dialog is closed.
 	 */
 	@Name("closeHandler")
 	@ImplementationClassDefault(ChangeCheckDialogCloser.class)
-	@Format(CommandHandlerReference.ReferenceFormat.class)
 	@FormattedDefault(ChangeCheckDialogCloser.HANDLER_NAME)
-	PolymorphicConfiguration<? extends CommandHandler> getCloseHandler();
+	ConfigBase<? extends CommandHandler> getCloseHandler();
 
 	/**
 	 * A {@link TitleProvider} creating the title to display in the title bar of the represented

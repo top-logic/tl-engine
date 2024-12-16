@@ -9,7 +9,6 @@ import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
@@ -75,7 +74,7 @@ public final class CheckerProxyHandler extends CommandHandlerProxy {
 		/**
 		 * Setter for {@link #getCommand()}.
 		 */
-		void setCommand(PolymorphicConfiguration<? extends CommandHandler> command);
+		void setCommand(ConfigBase<? extends CommandHandler> command);
 
 	}
 

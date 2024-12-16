@@ -610,8 +610,21 @@ select.tbl {	/* Tables can be written as selects, using this style */
  	width: 80%;
 }
 
-.fltButton {
-	padding-left: var(--spacing-01);
+.fltButtons {
+	height: var(--TABLE_FILTER_BUTTON_BAR_HEIGHT);
+	display: flex;
+	justify-content: space-around;
+    align-items: center;
+}
+
+td.fltButton {
+	width:17px;
+	text-align: center;
+	position: relative;
+}
+
+.fltButtons .cButton {
+	padding: 0 var(--spacing-01);
 }
 
 .tl-table__header-cell-content .fltButton.tl-table__filter-sort-icons {

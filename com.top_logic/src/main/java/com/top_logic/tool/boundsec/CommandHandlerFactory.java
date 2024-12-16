@@ -27,7 +27,6 @@ import com.top_logic.basic.config.DefaultConfigConstructorScheme;
 import com.top_logic.basic.config.DefaultConfigConstructorScheme.Factory;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Derived;
@@ -45,6 +44,7 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.tool.boundsec.CommandHandler.CommandDefaults;
+import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
 import com.top_logic.tool.boundsec.CommandHandler.Display;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.execution.ExecutabilityRuleManager;
@@ -740,7 +740,7 @@ public final class CommandHandlerFactory extends ManagedClass {
 	 * </p>
 	 */
 	public CommandHandler getCommand(InstantiationContext context,
-			PolymorphicConfiguration<? extends CommandHandler> config) {
+			ConfigBase<? extends CommandHandler> config) {
 		CommandHandler commandHandler;
 		if (config instanceof CommandHandlerReference.Config) {
 			String handlerId = ((CommandHandlerReference.Config) config).getCommandId();
@@ -766,7 +766,7 @@ public final class CommandHandlerFactory extends ManagedClass {
 	 * @return The instantiated {@link CommandHandler}.
 	 */
 	private CommandHandler createCommand(InstantiationContext context,
-			PolymorphicConfiguration<? extends CommandHandler> handlerConfig) {
+			ConfigBase<? extends CommandHandler> handlerConfig) {
 		if (handlerConfig instanceof CommandHandler.Config) {
 			CommandHandler.Config commandConfig = (CommandHandler.Config) handlerConfig;
 			try {

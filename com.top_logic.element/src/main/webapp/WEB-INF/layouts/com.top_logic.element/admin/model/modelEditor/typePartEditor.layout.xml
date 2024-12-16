@@ -91,7 +91,6 @@
 				>
 					<inject>
 						<dialogInfo
-							closeHandler="cancelCreate"
 							defaultI18n="element.meta.attribute.property.create.dialog"
 							executability="Always"
 							height="430"

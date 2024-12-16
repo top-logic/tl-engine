@@ -42,6 +42,7 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.BoundCommand;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -108,6 +109,10 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 		@Name("deleteCommand")
 		@Nullable
 		String getDeleteCommand();
+
+		@Override
+		@FormattedDefault(CancelCommand.COMMAND_ID)
+		ConfigBase<? extends CommandHandler> getCancelCommand();
 
 		/**
 		 * Whether to keep the edit mode even if the component becomes invisible.
@@ -249,11 +254,6 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 	private void initByComponentMode(FormContext formContext) {
 		formContext.setImmutable(!this.isInEditMode());
 	}
-    
-    @Override
-    protected String getDefaultCloseDialogHandlerName() {
-    	return CloseDialogInViewCommandHandler.COMMAND_ID;
-    }
 
 	/**
 	 * Hook called before the actual mode change happens.
@@ -332,18 +332,6 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 		this.removeFormContext();
 		this.invalidate();
 	}
-
-    /**
-     * Returns the cancel command. 
-     */
-    @Override
-	public final CommandHandler getCancelCommand() {
-		CommandHandler configuredCommand = super.getCancelCommand();
-		if (configuredCommand != null) {
-			return configuredCommand;
-		}
-		return Editor.super.getCancelCommandHandler();
-    }
 
 	private Config config() {
 		return (Config) getConfig();

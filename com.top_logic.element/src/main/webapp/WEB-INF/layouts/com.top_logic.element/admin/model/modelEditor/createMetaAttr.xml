@@ -24,7 +24,7 @@
 	>
 		<components>
 			<form name="${namePrefix}Form"
-				cancelAction="cancelCreate"
+				cancelCommand="cancelCreate"
 				model="${ownerModel}"
 				resPrefix="${resPrefix}"
 				resetInvisible="true"

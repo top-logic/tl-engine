@@ -908,8 +908,15 @@
 								image="theme:ICONS_BUTTON_EDIT"
 								disabledImage="theme:ICONS_BUTTON_EDIT_DISABLED"
 							/>
-							
+							<clique name="create"
+								image="theme:ICONS_ADD_BUTTON"
+								disabledImage="theme:ICONS_ADD_BUTTON_DISABLED"
+							/>
 							<clique name="save"
+								image="theme:ICONS_BUTTON_OK"
+								disabledImage="theme:ICONS_BUTTON_OK_DISABLED"
+							/>
+							<clique name="finish"
 								image="theme:ICONS_BUTTON_OK"
 								disabledImage="theme:ICONS_BUTTON_OK_DISABLED"
 							/>
@@ -917,15 +924,9 @@
 								image="theme:ICONS_BUTTON_SAVE"
 								disabledImage="theme:ICONS_BUTTON_SAVE_DISABLED"
 							/>
-							<clique name="cancel"
-								image="theme:ICONS_CANCEL_BUTTON"
-								disabledImage="theme:ICONS_CANCEL_BUTTON_DISABLED"
+							<clique name="default"
 							/>
-							<clique name="close"
-								image="theme:ICONS_BUTTON_CLOSE"
-								disabledImage="theme:ICONS_BUTTON_CLOSE_DISABLED"
-							/>
-							
+
 							<clique name="backward"
 								image="theme:ICONS_BUTTON_BACKWARD"
 								disabledImage="theme:ICONS_BUTTON_BACKWARD_DISABLED"
@@ -934,18 +935,13 @@
 								image="theme:ICONS_BUTTON_FORWARD"
 								disabledImage="theme:ICONS_BUTTON_FORWARD_DISABLED"
 							/>
-							<clique name="finish"
-								image="theme:ICONS_BUTTON_OK"
-								disabledImage="theme:ICONS_BUTTON_OK_DISABLED"
+							
+							<clique name="cancel"
+								image="theme:ICONS_CANCEL_BUTTON"
+								disabledImage="theme:ICONS_CANCEL_BUTTON_DISABLED"
 							/>
 						</cliques>
 					</group>
-					<clique name="create" display="commands"
-						image="theme:ICONS_ADD_BUTTON"
-						disabledImage="theme:ICONS_ADD_BUTTON_DISABLED"
-					/>
-					
-					<clique name="default" display="commands"/>
 					
 					<group name="state-handling" display="toolbar">
 						<cliques>
@@ -1233,12 +1229,12 @@
 					
 					<handler id="simpleDialog" class="com.top_logic.tool.boundsec.SimpleOpenDialog"/>
 					<handler id="closeModalDialog" class="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
-						clique="close"/>
+						clique="cancel"/>
 					<handler id="closeDialogInView" class="com.top_logic.layout.form.component.EditComponent$CloseDialogInViewCommandHandler"
-						clique="close"
+						clique="internal"
 					/> 
 					<handler id="closeWithChangeCheck" class="com.top_logic.tool.boundsec.ChangeCheckDialogCloser"
-						clique="close"/>
+						clique="internal"/>
 
 					<handler id="switchAssistentForward" class="com.top_logic.tool.boundsec.assistent.commandhandler.ForwardAssistentCommandHandler"
 						clique="forward"/>

@@ -62,7 +62,7 @@
 		<param name="defaultAction"
 			optional="true"
 		/>
-		<param name="cancelAction"
+		<param name="cancelCommand"
 			optional="true"
 		/>
 
@@ -81,7 +81,7 @@
 		buttonbar="${buttonbar}"
 	>
 		<component class="com.top_logic.layout.form.component.AbstractCreateComponent"
-			cancelAction="${cancelAction}"
+			cancelCommand="${cancelCommand}"
 			commandGroups="${createCommandGroups}"
 			commands="${commands}"
 			create-handler="${createHandler}"

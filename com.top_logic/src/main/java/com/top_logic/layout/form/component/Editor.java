@@ -21,7 +21,6 @@ import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandHandlerCommand;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.check.CanApply;
-import com.top_logic.layout.form.component.EditComponent.CancelCommand;
 import com.top_logic.layout.form.component.EditComponent.DiscardCommand;
 import com.top_logic.layout.form.component.edit.EditMode;
 import com.top_logic.mig.html.layout.CommandDispatcher;
@@ -59,9 +58,6 @@ public interface Editor extends EditMode, CanApply {
 
 		/** @see #getEditCommand() */
 		String EDIT_COMMAND = "editCommand";
-
-		/** @see #getCancelCommand() */
-		String CANCEL_COMMAND = "cancelCommand";
 
 		/** @see #getDiscardCommand() */
 		String DISCARD_COMMAND = "discardCommand";
@@ -142,20 +138,6 @@ public interface Editor extends EditMode, CanApply {
 		}
 
 		/**
-		 * ID of the cancel {@link CommandHandler}.
-		 * 
-		 * <p>
-		 * The cancel command drops transient changes and switches back to view mode.
-		 * </p>
-		 * 
-		 * @see #getDiscardCommand()
-		 */
-		@Name(CANCEL_COMMAND)
-		@Nullable
-		@StringDefault(CancelCommand.COMMAND_ID)
-		String getCancelCommand();
-
-		/**
 		 * ID of the discard {@link CommandHandler}.
 		 * 
 		 * <p>
@@ -168,8 +150,6 @@ public interface Editor extends EditMode, CanApply {
 		 * registered command that is looked up from the {@link CommandHandlerFactory} when
 		 * required, e.g. when resetting changes upon tab switch.
 		 * </p>
-		 * 
-		 * @see #getCancelCommand()
 		 */
 		@Name(DISCARD_COMMAND)
 		@Nullable
@@ -209,11 +189,6 @@ public interface Editor extends EditMode, CanApply {
 
 			if (saveCommand != null) {
 				registry.registerButton(saveCommand);
-			}
-
-			String cancelCommand = getCancelCommand();
-			if (cancelCommand != null) {
-				registry.registerButton(cancelCommand);
 			}
 
 			String discardCommand = getDiscardCommand();
@@ -280,13 +255,6 @@ public interface Editor extends EditMode, CanApply {
 	 */
 	default HandlerResult edit(DisplayContext context) {
 		return CommandDispatcher.getInstance().dispatchCommand(getEditCommandHandler(), context, self());
-	}
-
-	/**
-	 * Returns the cancel command.
-	 */
-	default CommandHandler getCancelCommandHandler() {
-		return getCommandById(((Config) getConfig()).getCancelCommand());
 	}
 
 	/**

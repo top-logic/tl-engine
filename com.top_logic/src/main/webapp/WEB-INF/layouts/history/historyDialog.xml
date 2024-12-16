@@ -37,6 +37,7 @@
 		titleKey="${resPrefix}title"
 	>
 		<dialogInfo
+			closeHandler="closeModalDialog"
 			defaultI18n="${defaultI18n}"
 			height="700"
 			width="850"

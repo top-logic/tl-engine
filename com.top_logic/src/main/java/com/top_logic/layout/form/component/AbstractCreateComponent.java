@@ -16,10 +16,8 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
-import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ModelSpec;
@@ -31,6 +29,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CloseModalDialogCommandHandler;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
@@ -107,21 +106,13 @@ public class AbstractCreateComponent extends FormComponent {
 		@Name(CREATE_HANDLER)
 		String getCreateHandler();
 
-		/**
-		 * The {@link com.top_logic.tool.boundsec.CommandHandler.Config#getId()} of the
-		 * {@link CommandHandler} that aborts the create operation.
-		 * 
-		 * @deprecated Use {@link #getCancelAction()} instead.
-		 */
-		@Deprecated
-		@Nullable
-		@StringDefault(CancelHandler.COMMAND_ID)
-		String getCancelHandler();
+		@Override
+		@FormattedDefault(CancelHandler.COMMAND_ID)
+		ConfigBase<? extends CommandHandler> getCancelCommand();
 
 		@Override
 		default void modifyIntrinsicCommands(CommandRegistry registry) {
 			registry.registerButton(getCreateHandler());
-			registry.registerButton(getCancelHandler());
 			FormComponent.Config.super.modifyIntrinsicCommands(registry);
 		}
 
@@ -245,31 +236,6 @@ public class AbstractCreateComponent extends FormComponent {
 			return configuredCommand;
 		}
 		return getCommandById(getCreateHandler());
-    }
-    
-    @Override
-	public CommandHandler getCancelCommand() {
-		CommandHandler configuredCommand = super.getCancelCommand();
-		if (configuredCommand != null) {
-			return configuredCommand;
-		}
-		return getCommandById(getCancelHandler());
-    }
-    
-	/**
-	 * @deprecated Configure a {@link Config#getCancelAction() cancel command} instead. It will be
-	 *             registered as dialog close command, too.
-	 */
-	@Deprecated
-    @Override
-	protected String getDefaultCloseDialogHandlerName() {
-		return getCancelHandler();
-    }
-
-	/** @deprecated Use {@link #getCancelCommand()} instead. */
-	@Deprecated
-	protected final String getCancelHandler() {
-		return ((Config) getConfig()).getCancelHandler();
     }
 
     /**

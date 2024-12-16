@@ -154,7 +154,6 @@ import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.CloseModalDialogCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
@@ -242,8 +241,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		/** Property name of {@link #getDefaultAction()}. */
 		String DEFAULT_ACTION = "defaultAction";
 
-		/** Property name of {@link #getCancelAction()}. */
-		String CANCEL_ACTION = "cancelAction";
+		/** Property name of {@link #getCancelCommand()}. */
+		String CANCEL_COMMAND = "cancelCommand";
 
 		String COMMANDS_NAME = "commands";
 
@@ -481,7 +480,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		 *           conflict with legacy properties in subclasses. A migration to delete or rename
 		 *           them would be too much effort.
 		 * 
-		 * @see #getCancelAction()
+		 * @see #getCancelCommand()
 		 * @see DialogModel#getDefaultCommand()
 		 */
 		@Name(DEFAULT_ACTION)
@@ -493,15 +492,11 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		 * It will be registered as a {@link #getCommands() command} of this component.
 		 * </p>
 		 * 
-		 * @implNote The name is not the normative <code>getCancelCommand</code> as that would
-		 *           conflict with legacy properties in subclasses. A migration to delete or rename
-		 *           them would be too much effort.
-		 * 
 		 * @see #getDefaultAction()
 		 * @see DialogModel#getCloseAction()
 		 */
-		@Name(CANCEL_ACTION)
-		CommandHandler.ConfigBase<? extends CommandHandler> getCancelAction();
+		@Name(CANCEL_COMMAND)
+		CommandHandler.ConfigBase<? extends CommandHandler> getCancelCommand();
 
 		@Name(COMMANDS_NAME)
 		@EntryTag("command")
@@ -936,7 +931,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		doResetScrollPosition(false);
 
 		_defaultCommand = CommandHandlerFactory.getInstance().getCommand(context, atts.getDefaultAction());
-		_cancelCommand = CommandHandlerFactory.getInstance().getCommand(context, atts.getCancelAction());
+		_cancelCommand = CommandHandlerFactory.getInstance().getCommand(context, atts.getCancelCommand());
     }
 
 	@Override
@@ -980,13 +975,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 	private static final LayoutComponent.GlobalConfig getGlobalConfig() {
 		return ApplicationConfig.getInstance().getConfig(LayoutComponent.GlobalConfig.class);
-	}
-
-	/**
-	 * the {@link CommandHandler#getID()} of the handler used to close this component
-	 */
-	protected String getDefaultCloseDialogHandlerName() {
-		return CloseModalDialogCommandHandler.HANDLER_NAME;
 	}
 
 	/**
@@ -2652,7 +2640,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 			registerCommand(getConfiguredDefaultCommand());
 		}
 		if (getConfiguredCancelCommand() != null) {
-			registerCommand(getConfiguredCancelCommand());
+			registerButtonCommand(getConfiguredCancelCommand());
 		}
 		List<CommandHandler.ConfigBase<? extends CommandHandler>> commandConfigs = _config.getCommands();
 		if (!commandConfigs.isEmpty()) {
@@ -3106,7 +3094,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	}
 
 	/**
-	 * See: {@link Config#getCancelAction()}
+	 * See: {@link Config#getCancelCommand()}
 	 * <p>
 	 * Classes overriding this method have to take care themselves of registering it as command or
 	 * button.
@@ -3473,13 +3461,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 			_buttonsByCliqueLazy = new HashMap<>();
         }
         
-		String clique = command.getClique();
-		List<CommandHandler> commands = _buttonsByCliqueLazy.get(clique);
-		if (commands == null) {
-			commands = new ArrayList<>();
-			_buttonsByCliqueLazy.put(clique, commands);
-		}
-		commands.add(command);
+		_buttonsByCliqueLazy.computeIfAbsent(command.getClique(), c -> new ArrayList<>()).add(command);
 
         return newlyAdded;
     }

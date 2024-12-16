@@ -694,8 +694,9 @@ a.fChoose:hover,
 
 .tlAdditionalRightContent .cButton.cImageButton,
 .tlAdditionalRightContent .cButton.cImageButton.cmdButtonDisabled {
-	height: 1.25rem;
-	width: 1.25rem;
+	height: var(--tabbar-height);
+	width: var(--tabbar-height);
+	box-sizing: border-box;
 }
 
 .sblLogo .cButton.cImageButton, 

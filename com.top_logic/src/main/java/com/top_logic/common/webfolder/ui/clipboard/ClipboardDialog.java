@@ -28,7 +28,6 @@ import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.knowledge.wrap.WrapperAccessor;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.IdentityAccessor;
 import com.top_logic.layout.SimpleAccessor;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
@@ -287,9 +286,7 @@ public class ClipboardDialog extends AbstractFormPageDialog {
 		{
 			ColumnConfiguration column = tableConfiguration.declareColumn(TLNamed.NAME_ATTRIBUTE);
 			column.setFieldProvider(null);
-			column.setAccessor(IdentityAccessor.INSTANCE);
 			column.setFilterProvider(LabelFilterProvider.INSTANCE);
-			column.setComparator(new ClipboardComparator());
 		}
 		
 		List<? extends TLObject> content = this.getContent();

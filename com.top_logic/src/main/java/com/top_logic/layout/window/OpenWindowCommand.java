@@ -9,7 +9,6 @@ import java.util.Map;
 
 import com.top_logic.base.services.simpleajax.AJAXCommandHandler;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
@@ -109,7 +108,7 @@ public class OpenWindowCommand extends AJAXCommandHandler {
 	 * @param template
 	 *        The {@link WindowTemplate} to create opener for.
 	 */
-	public static PolymorphicConfiguration<? extends CommandHandler> createWindowOpenHandler(
+	public static ConfigBase<? extends CommandHandler> createWindowOpenHandler(
 			WindowTemplate.Config template) {
 		return createWindowOpenHandler(template.getWindowInfo(), template.getTemplate());
 	}
@@ -122,7 +121,7 @@ public class OpenWindowCommand extends AJAXCommandHandler {
 	 * @param windowTemplateName
 	 *        The name of the window template to instantiate.
 	 */
-	public static PolymorphicConfiguration<? extends CommandHandler> createWindowOpenHandler(WindowInfo windowInfo,
+	public static ConfigBase<? extends CommandHandler> createWindowOpenHandler(WindowInfo windowInfo,
 			String windowTemplateName) {
 		OpenWindowCommand.Config customConfig = windowInfo.getOpenHandler();
 		if (customConfig != null) {

@@ -9,6 +9,9 @@
 			value="com.top_logic.element.layout.create.StructureChildTypeOptions"
 		/>
 
+		<param name="buttonbar"
+			value="true"
+		/>
 		<!-- Inherited from "com.top_logic.element/create/genericCreate.xml" -->
 		<param name="namePrefix"
 			optional="true"
@@ -47,6 +50,7 @@
 	</params>
 
 	<include name="com.top_logic.element/create/genericCreate.xml"
+		buttonbar="${buttonbar}"
 		createCommandGroups="${createCommandGroups}"
 		createHandler="${createHandler}"
 		detailComponentName="${detailComponentName}"

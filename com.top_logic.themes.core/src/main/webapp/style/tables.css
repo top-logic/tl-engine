@@ -929,10 +929,10 @@ table td span.cTextInput,
 table td span.cIconChooser,
 table td span.cDataItem.download,
 table td span.downloadControl {
-	display: inline-flex;
+	display: flex;
 	flex-wrap: nowrap;
 	align-items: center;
-	min-width: 100%;
+	width: 100%;
 	height: 100%;
 }
 

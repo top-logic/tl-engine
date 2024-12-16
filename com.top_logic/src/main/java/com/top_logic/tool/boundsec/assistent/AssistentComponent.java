@@ -23,6 +23,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;
@@ -42,6 +43,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutList;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.assistent.commandhandler.BackwardAssistentCommandHandler;
 import com.top_logic.tool.boundsec.assistent.commandhandler.CancelAssistentCommandHandler;
@@ -78,9 +80,9 @@ public class AssistentComponent extends LayoutList implements Selectable {
 		@StringDefault(BACKWARD_COMMAND_KEY)
 		String getBackCommand();
 
-		@Name(XML_ATTR_CANCEL_COMMAND_NAME)
-		@StringDefault(CANCEL_COMMAND_KEY)
-		String getCancelCommand();
+		@Override
+		@FormattedDefault(CancelAssistentCommandHandler.COMMAND)
+		ConfigBase<? extends CommandHandler> getCancelCommand();
 
 		@Name(XML_ATTR_SHOW_COMMAND_NAME)
 		@StringDefault(SHOW_COMMAND_KEY)
@@ -109,12 +111,10 @@ public class AssistentComponent extends LayoutList implements Selectable {
 	private static final String XML_ATTR_CONTROLLER_CLASS = "controller";
     private static final String XML_ATTR_FORWARD_COMMAND_NAME = "forwardCommand";
     private static final String XML_ATTR_BACK_COMMAND_NAME = "backCommand";
-    private static final String XML_ATTR_CANCEL_COMMAND_NAME = "cancelCommand";
     private static final String XML_ATTR_SHOW_COMMAND_NAME = "showCommand";
         
     private CommandHandler forwardHandler;
     private CommandHandler backwardHandler;
-    private CommandHandler cancelHandler;
     private CommandHandler showHandler;
 
     /** the steps as stepInfos */
@@ -139,9 +139,6 @@ public class AssistentComponent extends LayoutList implements Selectable {
     public static final String BACKWARD_COMMAND_KEY = BackwardAssistentCommandHandler.COMMAND;
 
     /** key for CommandHandlerFactory */
-    private static final String CANCEL_COMMAND_KEY  = CancelAssistentCommandHandler.COMMAND;
-
-    /** key for CommandHandlerFactory */
     public static final String FINISH_COMMAND_KEY  = FinishAssistentCommandHandler.COMMAND;
 
     /** key for CommandHandlerFactory */
@@ -151,14 +148,12 @@ public class AssistentComponent extends LayoutList implements Selectable {
 
     private String forwardCommandName;
     private String backCommandName;
-    private String cancelCommandName;
     private String showCommandName;
     
 	public AssistentComponent(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
 		this.forwardCommandName = config.getForwardCommand();
 		this.backCommandName = config.getBackCommand();
-		this.cancelCommandName = config.getCancelCommand();
 		this.showCommandName = config.getShowCommand();
 		initAssistent(context, config);
     }
@@ -300,7 +295,6 @@ public class AssistentComponent extends LayoutList implements Selectable {
         List<CommandHolder> commands = this.controller.getAdditionalCommands(currentStepName);
 
         /* create all the buttons */
-        reinitButton(canc, this.getCancelHandler());
         reinitButton(prev, this.getBackHandler());
         if (this.controller.isLastStep(currentStepName)) {
         	reinitButton(next, this.getShowHandler());        	
@@ -340,15 +334,13 @@ public class AssistentComponent extends LayoutList implements Selectable {
 
     @Override
 	public CommandHandler getCancelCommand() {
-		CommandHandler configuredCommand = super.getCancelCommand();
-		if (configuredCommand != null) {
-			return configuredCommand;
-		}
 		ComponentName theStep = AssistentStepInfo.getName(getCurrentStepInfo());
         if (this.controller.isLastStep(theStep) ) {
 			return this.getCommandChain(this.controller.getAdditionaleCommandForNext(theStep), this.getShowHandler());
+		} else {
+			return this.getCommandChain(this.controller.getAdditionaleCommandForNext(theStep),
+				super.getCancelCommand());
         }
-		return this.getCommandChain(this.controller.getAdditionaleCommandForCancel(theStep), this.getCancelHandler());
     }
     
     @Override
@@ -481,15 +473,6 @@ public class AssistentComponent extends LayoutList implements Selectable {
             this.forwardHandler = theFac.getHandler(forwardCommandName);
         }
         return this.forwardHandler;
-    }
-
-    protected synchronized CommandHandler getCancelHandler() {
-        
-        if(this.cancelHandler == null) {
-            CommandHandlerFactory theFac = CommandHandlerFactory.getInstance();
-            this.cancelHandler = theFac.getHandler(cancelCommandName);
-        }
-        return this.cancelHandler;
     }
 
     protected synchronized CommandHandler getShowHandler() {

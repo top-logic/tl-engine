@@ -27,7 +27,7 @@
 	>
 		<components>
 			<form name="${formName}"
-				cancelAction="cancelCreate"
+				cancelCommand="cancelCreate"
 				model="${ownerModel}"
 				resPrefix="element.meta.createModule.Form."
 				resetInvisible="true"

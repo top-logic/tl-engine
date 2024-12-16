@@ -44,6 +44,7 @@
 		buttonbar="true"
 	>
 		<dialogInfo
+			closeHandler="closeModalDialog"
 			defaultI18n="${dialogDefaultI18N}"
 			height="${dialogHeight}"
 			openHandlerClass="${dialogOpenHandlerClass}"

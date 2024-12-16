@@ -648,11 +648,11 @@ td.fltButton {
 	color: var(--support-danger);
 }
 
-i.bi-funnel-fill.tablefilter {
+.fltReset a:not(.disabled) {
 	color: var(--icon-interactive);
 }
 
-a:not(.disabled) i.bi-funnel-fill.tablefilter:hover {
+.fltReset:hover a:not(.disabled) {
 	color: var(--support-danger);
 }
 

@@ -702,12 +702,12 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 	 * </p>
 	 */
 	public static List<CommandHandler> getInstanceList(InstantiationContext context,
-			List<? extends PolymorphicConfiguration<? extends CommandHandler>> configs) {
+			List<? extends ConfigBase<? extends CommandHandler>> configs) {
 		if (configs == null) {
 			return new ArrayList<>();
 		}
 		List<CommandHandler> handlers = new ArrayList<>(configs.size());
-		for (PolymorphicConfiguration<? extends CommandHandler> config : configs) {
+		for (ConfigBase<? extends CommandHandler> config : configs) {
 			handlers.add(getInstance(context, config));
 		}
 		return handlers;
@@ -721,10 +721,10 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 	 * instead of the reference handler.
 	 * </p>
 	 * 
-	 * @see CommandHandlerFactory#getCommand(InstantiationContext, PolymorphicConfiguration)
+	 * @see CommandHandlerFactory#getCommand(InstantiationContext, ConfigBase)
 	 */
 	public static CommandHandler getInstance(InstantiationContext context,
-			PolymorphicConfiguration<? extends CommandHandler> config) {
+			ConfigBase<? extends CommandHandler> config) {
 		return CommandHandlerFactory.getInstance().getCommand(context, config);
 	}
 

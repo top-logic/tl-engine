@@ -156,6 +156,7 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.CloseModalDialogCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.CommandHandlerUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -954,7 +955,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 				LayoutComponent dialog = context.getInstance(config);
 				if (dialog != null) {
 					DialogInfo dialogInfo = dialog.getConfig().getDialogInfo();
-					PolymorphicConfiguration<? extends CommandHandler> closeHandler = dialogInfo.getCloseHandler();
+					ConfigBase<? extends CommandHandler> closeHandler = dialogInfo.getCloseHandler();
 					if (closeHandler != null) {
 						CommandHandler command = CommandHandlerFactory.getInstance().getCommand(context, closeHandler);
 						dialog.registerButtonCommand(command);
@@ -2574,7 +2575,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	}
 
 	private void registerWindowOpener(InstantiationContext context, WindowTemplate.Config aSepWin) {
-		PolymorphicConfiguration<? extends CommandHandler> config = OpenWindowCommand.createWindowOpenHandler(aSepWin);
+		ConfigBase<? extends CommandHandler> config = OpenWindowCommand.createWindowOpenHandler(aSepWin);
 		CommandHandler handler = CommandHandlerFactory.getInstance().getCommand(context, config);
 		registerCommandHandler(handler, aSepWin.getWindowInfo().getCreateOpenerButtons());
     }
@@ -3250,7 +3251,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 			if (dialog == null) {
 				continue;
 			}
-			PolymorphicConfiguration<? extends CommandHandler> openhandler =
+			ConfigBase<? extends CommandHandler> openhandler =
 				OpenModalDialogCommandHandler.createDialogOpenHandler(context, config, dialog);
 			if (openhandler == null) {
 				continue;

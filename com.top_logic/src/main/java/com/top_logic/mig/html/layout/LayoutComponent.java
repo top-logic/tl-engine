@@ -347,15 +347,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		@Name(ATT_USE_CHANGE_HANDLING)
 		Boolean getUseChangeHandling();
 
-		/**
-		 * No longer in use.
-		 * 
-		 * @deprecated Use {@link DialogInfo#getCloseHandler()} instead.
-		 */
-		@Deprecated
-		@Name("closeHandlerName")
-		String getCloseHandlerName();
-
 		@Name(ATT_DONT_RECORD)
 		@BooleanDefault(DEFAULT_FOR_DONT_RECORD)
 		boolean getDontRecord();

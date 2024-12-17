@@ -24,7 +24,11 @@
 				master=""
 				namePrefix="globalDialog"
 				structure="DemoTypes"
-			/>
+			>
+				<buttons>
+					<reference command-id="closeDialogInView"/>
+				</buttons>
+			</include>
 		</components>
 	</securityLayout>
 	<securityLayout name="globalDialogDemoPlainTop"

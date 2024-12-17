@@ -827,6 +827,7 @@
 					<definition id="IDEOnly" executability="com.top_logic.tool.execution.IDEOnly"/>
 					<definition id="DebugOnly" executability="com.top_logic.layout.debug.DebugOnlyExecutability"/>
 					<definition id="InViewMode" executability="com.top_logic.tool.execution.InViewModeExecutable"/>
+					<definition id="InDialog" executability="com.top_logic.tool.execution.InDialogExecutable"/>
 					<definition id="MultiSelectionHidden" executability="com.top_logic.tool.execution.MultiSelectionHidden"/>
 					<definition id="InEditMode" executability="com.top_logic.tool.execution.InEditModeExecutable"/>
 					<definition id="Always" executability="com.top_logic.tool.execution.AlwaysExecutable"/>
@@ -1230,9 +1231,16 @@
 					<handler id="simpleDialog" class="com.top_logic.tool.boundsec.SimpleOpenDialog"/>
 					<handler id="closeModalDialog" class="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
 						clique="cancel"/>
-					<handler id="closeDialogInView" class="com.top_logic.layout.form.component.EditComponent$CloseDialogInViewCommandHandler"
-						clique="internal"
-					/> 
+					<handler id="closeDialogInView" class="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
+						clique="cancel"
+					>
+						<executability>
+							<reference rule-id="InDialog"/>
+							<reference rule-id="InViewMode"/>
+						</executability>
+					</handler> 
+					
+					<!-- Handler that is defined by default as close handler on a dialog. -->
 					<handler id="closeWithChangeCheck" class="com.top_logic.tool.boundsec.ChangeCheckDialogCloser"
 						clique="internal"/>
 

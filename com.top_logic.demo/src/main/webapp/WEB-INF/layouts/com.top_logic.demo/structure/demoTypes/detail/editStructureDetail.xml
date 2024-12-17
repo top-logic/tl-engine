@@ -18,6 +18,9 @@
 		<param name="buttonbar"
 			value="false"
 		/>
+		<param name="buttons">
+			<!-- Empty by default. -->
+		</param>
 	</params>
 
 	<include name="element/editStructureDetail.xml"
@@ -80,6 +83,7 @@
 				/>
 				<reference command-id="addToClipboard"/>
 				<reference command-id="showBookmarkLink"/>
+				${buttons}
 			</buttons>
 
 			<tables>

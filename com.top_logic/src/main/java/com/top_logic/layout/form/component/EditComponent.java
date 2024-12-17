@@ -26,7 +26,6 @@ import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
@@ -50,7 +49,6 @@ import com.top_logic.tool.execution.CombinedExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.tool.execution.InEditModeExecutable;
-import com.top_logic.tool.execution.InViewModeExecutable;
 import com.top_logic.util.error.TopLogicException;
 
 
@@ -615,53 +613,6 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 		@Deprecated
 		public ResKey getDefaultI18NKey() {
 			return I18NConstants.DISCARD;
-        }
-    }
-
-    /**
-     * Close command handler which is visible only in view mode. 
-     * 
-     * This one may be used, when the edit component is displayed in a dialog.
-     */
-    public static class CloseDialogInViewCommandHandler extends AbstractCommandHandler {
-
-        public static final String COMMAND_ID = "closeDialogInView";
-
-		/**
-		 * Configuration options for {@link EditComponent.CloseDialogInViewCommandHandler}.
-		 */
-		public interface Config extends AbstractCommandHandler.Config {
-			@Override
-			@FormattedDefault(TARGET_NULL)
-			ModelSpec getTarget();
-
-			@Override
-			@FormattedDefault(SimpleBoundCommandGroup.SYSTEM_NAME)
-			CommandGroupReference getGroup();
-		}
-
-        /** 
-         * Creates a {@link CloseDialogInViewCommandHandler}.
-         */
-        public CloseDialogInViewCommandHandler(InstantiationContext context, Config config) {
-            super(context, config);
-        }
-
-        @Override
-		public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model, Map<String, Object> someArguments) {
-            LayoutComponent theParent = aComponent.getDialogParent();
-            
-            if (theParent != null) {
-                aComponent.closeDialog();
-            }
-
-            return HandlerResult.DEFAULT_RESULT;
-        }
-
-        @Override
-		@Deprecated
-        public ExecutabilityRule createExecutabilityRule() {
-            return InViewModeExecutable.INSTANCE;
         }
     }
 }

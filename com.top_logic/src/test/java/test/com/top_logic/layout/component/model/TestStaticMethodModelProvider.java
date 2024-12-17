@@ -14,6 +14,7 @@ import junit.framework.TestCase;
 import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.config.ApplicationConfig;
@@ -27,6 +28,7 @@ import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.layout.component.model.StaticMethodModelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.SimpleComponent;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
 
 /**
  * Test case for {@link StaticMethodModelProvider}.
@@ -67,8 +69,9 @@ public class TestStaticMethodModelProvider extends TestCase {
 	}
 
 	public static Test suite() {
-		return ModuleLicenceTestSetup.setupModule(ServiceTestSetup.createSetup(TestStaticMethodModelProvider.class,
-			ApplicationConfig.Module.INSTANCE));
+		return KBSetup.getSingleKBTest(
+			ModuleLicenceTestSetup.setupModule(ServiceTestSetup.createSetup(TestStaticMethodModelProvider.class,
+				ApplicationConfig.Module.INSTANCE, CommandHandlerFactory.Module.INSTANCE)));
 	}
 
 }

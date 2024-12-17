@@ -37,6 +37,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.mig.html.layout.SimpleComponent;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
 
 /**
  * Tests for {@link LayoutUtils}.
@@ -339,7 +340,8 @@ public class TestLayoutUtils extends BasicTestCase {
      */
     public static Test suite() {
 		return KBSetup.getSingleKBTest(
-			ServiceTestSetup.createSetup(TestLayoutUtils.class, RequestLockFactory.Module.INSTANCE));
+			ServiceTestSetup.createSetup(TestLayoutUtils.class, RequestLockFactory.Module.INSTANCE,
+				CommandHandlerFactory.Module.INSTANCE));
     }
 
     /**

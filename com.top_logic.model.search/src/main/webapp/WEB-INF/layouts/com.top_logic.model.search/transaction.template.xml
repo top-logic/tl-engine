@@ -2,6 +2,37 @@
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<properties extends="com.top_logic.mig.html.layout.DialogInfo, com.top_logic.model.search.providers.MonomorphicCreateFormBuilderByExpression$UIOptions, com.top_logic.element.layout.formeditor.builder.FormsTemplateParameter, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.layout.editor.config.ButtonTemplateParameters">
+		<annotations>
+			<display-inherited value="APPEND"/>
+
+			<display-order>
+				<value>
+					<property name="title"/>
+					
+					<property name="width"/>
+					<property name="height"/>
+					
+					<property name="helpID"/>
+					
+					<property name="resizable"/>
+					<property name="openMaximized"/>
+					<property name="closableUsingX"/>
+					<property name="createOpenerButtons"/>
+					
+					<property name="open-handler"/>
+					
+					<property name="formType"/>
+					<property name="initialization"/>
+					<property name="forms"/>
+					
+					<property name="transactionHandler"/>
+					
+					<property name="securityObject"/>
+					<property name="buttons"/>
+				</value>
+			</display-order>
+		</annotations>
+
 		<property name="open-handler"
 			type="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
 		>
@@ -50,6 +81,7 @@
 	>
 		<dialogInfo
 			closableUsingX="${closableUsingX}"
+			closeHandler="${closeHandler}"
 			createOpenerButtons="${createOpenerButtons}"
 			height="${height}"
 			helpID="${helpID}"

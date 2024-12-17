@@ -8,6 +8,7 @@ package com.top_logic.mig.html.layout;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
@@ -21,6 +22,9 @@ import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.component.title.ConstantTitle;
 import com.top_logic.layout.component.title.TitleProvider;
+import com.top_logic.layout.form.values.edit.InAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.tool.boundsec.ChangeCheckDialogCloser;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
@@ -41,7 +45,7 @@ import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
 	DialogInfo.OPEN_MAXIMIZED,
 	DialogInfo.CLOSABLE,
 	DialogInfo.CREATE_OPENER_BUTTONS,
-	DialogInfo.OPEN_HANDLER
+	DialogInfo.OPEN_HANDLER,
 })
 public interface DialogInfo extends AbstractWindowInfo {
 
@@ -62,6 +66,9 @@ public interface DialogInfo extends AbstractWindowInfo {
 
 	/** @see #getTitle() */
 	String TITLE = "title";
+
+	/** @see #getCloseHandler() */
+	String CLOSE_HANDLER = "closeHandler";
 
 	/**
 	 * Name of the component in the dialog that is responsible for answering security question about
@@ -134,9 +141,12 @@ public interface DialogInfo extends AbstractWindowInfo {
 	/**
 	 * The command that is executed, when the dialog is closed.
 	 */
-	@Name("closeHandler")
+	@Name(CLOSE_HANDLER)
+	@Options(fun = InAppImplementations.class)
 	@ImplementationClassDefault(ChangeCheckDialogCloser.class)
 	@FormattedDefault(ChangeCheckDialogCloser.HANDLER_NAME)
+	@DisplayMinimized
+	@Hidden
 	ConfigBase<? extends CommandHandler> getCloseHandler();
 
 	/**

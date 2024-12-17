@@ -5,6 +5,7 @@
 	template="com.top_logic/dialog.template.xml"
 >
 	<arguments
+		buttonbar="true"
 		height="300px"
 		helpID="ID_71d2eb55_e4c2_4bec_a426_b15881c2fb8e"
 		width="400px"

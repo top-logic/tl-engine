@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<template xmlns:config="http://www.top-logic.com/ns/config/6.0">
+<template>
 	<params>
 		<param name="namePrefix"/>
 		<param name="ownerModel"/>

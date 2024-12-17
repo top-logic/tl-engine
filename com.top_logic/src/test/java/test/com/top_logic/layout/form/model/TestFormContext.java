@@ -6,10 +6,9 @@
 package test.com.top_logic.layout.form.model;
 
 import junit.framework.Test;
-import junit.framework.TestSuite;
 
-import test.com.top_logic.TLTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.layout.ResPrefix;
@@ -21,6 +20,7 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.IntField;
 import com.top_logic.layout.form.model.StringField;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.SecurityObjectProviderManager;
 
 /**
@@ -80,9 +80,9 @@ public class TestFormContext extends TestFormGroup {
 	}
 	
 	public static Test suite() {
-		Test test = new TestSuite(TestFormContext.class);
-		test = ServiceTestSetup.createSetup(test, SecurityObjectProviderManager.Module.INSTANCE);
-		return TLTestSetup.createTLTestSetup(test);
+		return KBSetup.getSingleKBTest(
+			ServiceTestSetup.createSetup(TestFormContext.class, SecurityObjectProviderManager.Module.INSTANCE,
+				CommandHandlerFactory.Module.INSTANCE));
 	}
 	
 }

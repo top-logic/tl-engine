@@ -7,9 +7,10 @@ package test.com.top_logic.layout.basic.component;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
-import junit.framework.TestSuite;
+
 import test.com.top_logic.ComponentTestUtils;
-import test.com.top_logic.TLTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.KBSetup;
 import test.com.top_logic.layout.DummyUpdateListener;
 
 import com.top_logic.layout.DefaultUpdateQueue;
@@ -18,6 +19,7 @@ import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.layout.basic.component.AJAXControlSupport;
 import com.top_logic.layout.basic.component.AJAXSupport;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
 
 /**
  * The class {@link TestAJAXControlSupport} tests the {@link AJAXControlSupport}.
@@ -126,8 +128,8 @@ public class TestAJAXControlSupport extends TestCase {
 	 * the suite of Tests to execute
 	 */
 	static public Test suite() {
-		Test suite = new TestSuite(TestAJAXControlSupport.class);
-		return TLTestSetup.createTLTestSetup(suite);
+		return KBSetup.getSingleKBTest(
+			ServiceTestSetup.createSetup(TestAJAXControlSupport.class, CommandHandlerFactory.Module.INSTANCE));
 	}
 
 }

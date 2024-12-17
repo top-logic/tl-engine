@@ -14,6 +14,8 @@ import com.top_logic.layout.progress.AbstractProgressComponent;
 import com.top_logic.layout.progress.DefaultProgressInfo;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
 import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
 import com.top_logic.tool.export.progress.ExportDownloadComponent.DownloadData;
 
@@ -28,6 +30,10 @@ public class ExportProgressComponent extends AbstractProgressComponent {
 		@Name(XML_DOWNLOAD_COMPONENT)
 		@FormattedDefault("export/gridExportDialog.layout.xml#GridExportDownload")
 		ComponentName getDownloadComp();
+
+		@Override
+		@FormattedDefault("cancelProgress")
+		ConfigBase<? extends CommandHandler> getCancelCommand();
 	}
 
 	public static final String XML_DOWNLOAD_COMPONENT = "downloadComp";

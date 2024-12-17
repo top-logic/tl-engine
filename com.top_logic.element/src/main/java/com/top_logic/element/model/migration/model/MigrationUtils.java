@@ -1910,7 +1910,14 @@ public class MigrationUtils {
 			setTargetType(part, newTypeSpec);
 		}
 		if (mandatory != null) {
-			part.setAttribute(PartConfig.MANDATORY, Boolean.toString(mandatory.booleanValue()));
+			String overrideAttribute = part.getAttribute(PartConfig.OVERRIDE);
+			if (!mandatory.booleanValue() && Boolean.toString(true).equals(overrideAttribute)) {
+				// part is declared as override. Override and mandatory false is not allowed.
+				// Remove potential mandatory flag
+				part.removeAttribute(PartConfig.MANDATORY);
+			} else {
+				part.setAttribute(PartConfig.MANDATORY, Boolean.toString(mandatory.booleanValue()));
+			}
 		}
 		if (multiple != null) {
 			part.setAttribute(PartConfig.MULTIPLE_PROPERTY, Boolean.toString(multiple.booleanValue()));

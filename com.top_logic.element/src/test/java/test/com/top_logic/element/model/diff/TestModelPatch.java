@@ -6,7 +6,6 @@
 package test.com.top_logic.element.model.diff;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -14,40 +13,30 @@ import junit.framework.Test;
 
 import test.com.top_logic.KBTestUtils;
 import test.com.top_logic.basic.AssertProtocol;
-import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.TestUtils;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.ErrorIgnoringProtocol;
 import com.top_logic.basic.Log;
-import com.top_logic.basic.Protocol;
-import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.equal.ConfigEquality;
-import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.identifier.DefaultObjectKey;
-import com.top_logic.element.config.DefinitionReader;
 import com.top_logic.element.config.ModelConfig;
-import com.top_logic.element.config.ModuleConfig;
 import com.top_logic.element.config.annotation.ConfigType;
 import com.top_logic.element.model.DefaultModelFactory;
 import com.top_logic.element.model.ModelCopy;
 import com.top_logic.element.model.ModelResolver;
-import com.top_logic.element.model.PersistentTLModel;
 import com.top_logic.element.model.diff.apply.ApplyModelPatch;
 import com.top_logic.element.model.diff.compare.CreateModelPatch;
 import com.top_logic.element.model.diff.config.AddAnnotations;
 import com.top_logic.element.model.diff.config.DiffElement;
 import com.top_logic.element.model.export.ModelConfigExtractor;
-import com.top_logic.element.model.migration.model.TLModelBaseLineMigrationProcessor;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.knowledge.service.migration.MigrationConfig;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.model.TLModel;
@@ -57,9 +46,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.IdentityMapping;
 import com.top_logic.model.config.ModelPartConfig;
-import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.impl.TLModelImpl;
-import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -68,7 +55,7 @@ import com.top_logic.model.util.TLModelUtil;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @SuppressWarnings("javadoc")
-public class TestModelPatch extends BasicTestCase {
+public class TestModelPatch extends AbstractModelPatchTest {
 
 	public void testPatch() throws SQLException {
 		doTestMigrate("test1-left.model.xml", "test1-right.model.xml");
@@ -146,8 +133,7 @@ public class TestModelPatch extends BasicTestCase {
 		TLModel left = loadModelTransient(leftFixture);
 		TLModel right = loadModelTransient(rightFixture);
 
-		List<DiffElement> patch = createPatch(left, right);
-		applyPatch(left, new DefaultModelFactory(), patch);
+		applyDiff(left, right);
 
 		assertEmpty(createPatch(left, right));
 		assertEqualsConfig(right, left);
@@ -204,67 +190,6 @@ public class TestModelPatch extends BasicTestCase {
 		}
 	}
 
-	private List<MigrationProcessor> applyPatch(TLModel left, TLFactory factory, List<DiffElement> patch) {
-		AssertProtocol log = new AssertProtocol() {
-			@Override
-			public void localInfo(String message, int verbosityLevel) {
-				if (verbosityLevel < Log.INFO && message.contains("conflict")) {
-					// Note: Delete-delete conflicts are normal, since deleting a type deletes all
-					// parts using that type.
-					fail(message);
-				}
-				super.localInfo(message, verbosityLevel);
-			}
-		};
-
-		ArrayList<PolymorphicConfiguration<? extends MigrationProcessor>> processors = new ArrayList<>();
-		ApplyModelPatch.applyPatch(log, left, factory, patch, processors);
-
-		MigrationConfig migration = TypedConfiguration.newConfigItem(MigrationConfig.class);
-		migration.setProcessors(processors);
-
-		System.out.println(migration);
-
-		// Skip baseline, since this does not exist for models dynamically created during test.
-		for (PolymorphicConfiguration<? extends MigrationProcessor> config : processors) {
-			if (config instanceof TLModelBaseLineMigrationProcessor.Config<?> skip) {
-				skip.setSkipModelBaselineChange(true);
-			}
-		}
-
-		return TypedConfiguration.getInstanceList(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
-			processors);
-	}
-
-	private List<DiffElement> createPatch(TLModel left, TLModel right) {
-		CreateModelPatch patchCreator = new CreateModelPatch();
-		patchCreator.addPatch(left, right);
-		List<DiffElement> patch = patchCreator.getPatch();
-		return patch;
-	}
-
-	private TLModel loadModel(String name) {
-		return loadModel(PersistentTLModel.newInstance(kb()), new DefaultModelFactory(), name);
-	}
-
-	private TLModel loadModelTransient(String name) {
-		return loadModel(new TLModelImpl(), TransientObjectFactory.INSTANCE, name);
-	}
-
-	private TLModel loadModel(TLModel model, TLFactory factory, String name) {
-		ModelConfig config =
-			DefinitionReader.readElementConfig(new ClassRelativeBinaryContent(TestModelPatch.class, name));
-		AssertProtocol log = new AssertProtocol();
-		ModelResolver modelResolver = new TestingModelResolver(log, model, factory);
-		modelResolver.createModel(config);
-		modelResolver.complete();
-		return model;
-	}
-
-	private KnowledgeBase kb() {
-		return PersistencyLayer.getKnowledgeBase();
-	}
-
 	public void testAnnotationUpdate() {
 		TLModelImpl leftModel = annotationUpdateModel();
 		
@@ -287,20 +212,6 @@ public class TestModelPatch extends BasicTestCase {
 		TLModule m1 = TLModelUtil.addModule(model, "m1");
 		TLModelUtil.addDatatype(m1, "c1", IdentityMapping.INSTANCE);
 		return model;
-	}
-
-	private final class TestingModelResolver extends ModelResolver {
-		/** 
-		 * Creates a {@link TestingModelResolver}.
-		 */
-		private TestingModelResolver(Protocol log, TLModel model, TLFactory factory) {
-			super(log, model, factory);
-		}
-	
-		@Override
-		protected void autoExtendTLObject(ModuleConfig moduleConf) {
-			// Don't do it, there is no type tl.model:TLObject in the test models.
-		}
 	}
 
 	public static Test suite() {

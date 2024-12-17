@@ -10,11 +10,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 
 import junit.framework.Test;
-import junit.framework.TestSuite;
 
-import test.com.top_logic.TLTestSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.DefaultInstantiationContext;
@@ -31,6 +30,7 @@ import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.FormState;
 import com.top_logic.layout.form.model.StringField;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.SecurityObjectProviderManager;
 import com.top_logic.util.TLContext;
 
@@ -326,13 +326,8 @@ public class TestFormGroup extends AbstractFormContainerTest {
 	}
 
 	public static Test suite () {
-		Test test = new TestSuite(TestFormGroup.class);
-		test = ServiceTestSetup.createSetup(test, SecurityObjectProviderManager.Module.INSTANCE);
-		return TLTestSetup.createTLTestSetup(test);
+		return KBSetup.getSingleKBTest(
+			ServiceTestSetup.createSetup(TestFormGroup.class, SecurityObjectProviderManager.Module.INSTANCE,
+				CommandHandlerFactory.Module.INSTANCE));
     }
-
-	public static void main(String[] args) {
-		junit.textui.TestRunner.run(TestFormGroup.class);
-	}
-
 }

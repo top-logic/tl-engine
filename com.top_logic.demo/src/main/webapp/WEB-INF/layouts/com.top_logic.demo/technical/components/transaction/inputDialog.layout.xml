@@ -6,8 +6,8 @@
 >
 	<arguments
 		formType="tl.demo.forms:DuplicateObjectInput"
-		height="300px"
-		width="400px"
+		height="390px"
+		width="500px"
 	>
 		<title class="com.top_logic.layout.component.title.ModelTitle"
 			model="model(com.top_logic.demo/technical/components/transaction/inputDialog.layout.xml#Form)"
@@ -66,5 +66,11 @@
  $result;
 }]]></operation>
 		</transactionHandler>
+		<buttons>
+			<button id="closeDialog"
+				class="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
+				resourceKey="base.edit.cancel"
+			/>
+		</buttons>
 	</arguments>
 </config:template-call>

@@ -49,5 +49,11 @@
     .get(`test.history:VersionSelectForm#version`)
     .get(`test.history:Report#version`)]]></operation>
 		</transactionHandler>
+		<buttons>
+			<button id="closeDialog"
+				class="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
+				resourceKey="base.edit.cancel"
+			/>
+		</buttons>
 	</arguments>
 </config:template-call>

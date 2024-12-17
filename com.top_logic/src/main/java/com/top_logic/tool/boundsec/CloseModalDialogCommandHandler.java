@@ -7,7 +7,11 @@ package com.top_logic.tool.boundsec;
 
 import java.util.Map;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.structure.I18NConstants;
@@ -16,10 +20,12 @@ import com.top_logic.tool.execution.AlwaysExecutable;
 import com.top_logic.tool.execution.ExecutabilityRule;
 
 /**
- * Default command to close a Dialog.
- *  
- * @author    <a href="mailto:skr@top-logic.com">Sylwester Kras</a>
+ * Closes the currently open dialog.
+ * 
+ * @author <a href="mailto:skr@top-logic.com">Sylwester Kras</a>
  */
+@InApp
+@Label("Close dialog")
 public class CloseModalDialogCommandHandler extends AbstractSystemCommand {
 
     /** name of handler as registered in factory */
@@ -27,6 +33,21 @@ public class CloseModalDialogCommandHandler extends AbstractSystemCommand {
     
     /** the js command name */
     private static final String COMMAND = "closeDialog";
+
+	/**
+	 * Configuration options for {@link CloseModalDialogCommandHandler}.
+	 */
+	public interface Config extends AbstractSystemCommand.Config {
+
+		@Override
+		@ClassDefault(CloseModalDialogCommandHandler.class)
+		Class<? extends CommandHandler> getImplementationClass();
+
+		@Override
+		@StringDefault("cancel")
+		String getClique();
+
+	}
 
 	/**
 	 * Creates a new {@link CloseModalDialogCommandHandler}.

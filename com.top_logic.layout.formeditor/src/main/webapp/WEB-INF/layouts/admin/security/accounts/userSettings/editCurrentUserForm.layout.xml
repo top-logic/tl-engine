@@ -60,6 +60,7 @@
 					<rule class="com.top_logic.knowledge.wrap.person.NoStartPageAutomatismExecutability"/>
 				</executability>
 			</button>
+			<reference command-id="closeDialogInView"/>
 		</buttons>
 		<dialogs>
 			<layout-reference resource="admin/security/accounts/userSettings/changePassword/dialog.layout.xml"/>

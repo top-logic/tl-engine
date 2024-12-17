@@ -7,6 +7,7 @@ package com.top_logic.tool.boundsec;
 
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.layout.basic.check.CheckScopeProvider;
 import com.top_logic.layout.basic.check.CheckScopeProviderAdapter;
 import com.top_logic.layout.basic.check.ChildrenCheckScopeProvider;
@@ -21,6 +22,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Label("Close dialog with change check")
 public class ChangeCheckDialogCloser extends CloseModalDialogCommandHandler {
     
     /** name of handler as registered in factory */

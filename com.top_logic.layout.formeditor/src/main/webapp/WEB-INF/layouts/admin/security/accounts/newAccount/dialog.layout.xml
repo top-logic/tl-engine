@@ -180,5 +180,11 @@
     $contact;
 }]]></operation>
 		</transactionHandler>
+		<buttons>
+			<button id="closeDialog"
+				class="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
+				resourceKey="base.edit.cancel"
+			/>
+		</buttons>
 	</arguments>
 </config:template-call>

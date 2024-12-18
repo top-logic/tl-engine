@@ -850,8 +850,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 	private boolean _resetScrollPosition;
 
-	private boolean _resolved;
-
 	private Map<TLType, LayoutComponent> _gotoTargets;
 
 	private final Map<ModelSpec, ChannelLinking> _channelLinkingByConfig = new HashMap<>();
@@ -861,6 +859,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	private Set<TLStructuredType> _observedTypes = Set.of();
 
 	private Set<TLObject> _observedObjects = Set.of();
+
+	private List<? extends CommandModel> _buttons;
 
 	/**
 	 * When <code>true</code> this will result in some extra comments written to the HTML-header.
@@ -1044,6 +1044,16 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		if (_parent == newParent) {
             return;
         }
+
+		if (!definesButtonBar()) {
+			// Buttons are potentially registered in a foreign button bar of an ancestor component.
+			if (newParent != null) {
+				if (_buttonBar != null) {
+					_buttonBar.removeButtons(_buttons);
+					_buttonBar = null;
+				}
+			}
+		}
 
 		LayoutComponent oldParent = _parent;
 		if (oldParent != null) {
@@ -2560,32 +2570,20 @@ public abstract class LayoutComponent extends ModelEventAdapter
     }
 
 	/**
-	 * At this time all components have been loaded and the mainLayout may be available.
+	 * Initializations after all components have been loaded and the {@link MainLayout} is
+	 * available.
 	 *
-	 * Your components can override this method. After call to super it is guaranteed, that your
-	 * parent and MainLayout are set properly.
-	 *
-	 * Use it to make a very late lowlevel postinitialization. To set and init your model use
-	 * {@link LayoutComponent#becomingVisible()}.
-	 *
-	 * This method is called only once for each component.
-	 * 
 	 * @param context
 	 *        {@link InstantiationContext} to instantiate additional confiurations.
+	 * 
+	 * @see #componentsResolved(InstantiationContext)
 	 */
 	protected final void resolveComponent(InstantiationContext context) {
-		if (_resolved) {
-			if (Logger.isDebugEnabled(LayoutComponent.class)) {
-				Logger.debug("Component " + this + " already resolved.", LayoutComponent.class);
-			}
-			return;
-		}
 		try {
 			componentsResolved(context);
 		} catch (Throwable ex) {
 			Logger.error("Error resolving component " + getName() + ": " + ex.getMessage(), ex, LayoutComponent.class);
 		}
-		_resolved = true;
 	}
 
 	/**
@@ -2613,13 +2611,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 				LayoutComponent theDialog = dialogs.get(i);
 				theDialog.resolveComponent(context);
             }
-        }
-
-		if (definesButtonBar()) {
-			_buttonBar = new ButtonBar();
-		} else {
-			LayoutComponent parent = getParent();
-			_buttonBar = parent == null ? null : parent.getButtonBar();
         }
 
 		CommandHandlerFactory factory = CommandHandlerFactory.getInstance();
@@ -2660,8 +2651,19 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		});
 
         this.registerAdditionalNonConfigurableCommands(); 
-        registerButtons();
         
+		if (definesButtonBar()) {
+			_buttonBar = new ButtonBar();
+		} else {
+			LayoutComponent parent = getParent();
+			_buttonBar = parent == null ? null : parent.getButtonBar();
+		}
+
+		_buttons = createButtonCommandModels();
+		if (_buttonBar != null) {
+			_buttonBar.addButtons(_buttons);
+		}
+
 		loadExpansionState();
 
 		List<PolymorphicConfiguration<ComponentResolver>> resolvers = _config.getComponentResolvers();
@@ -3333,20 +3335,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		JSFileCompiler.getInstance().writeJavascriptRef(out, contextPath);
 		if (saveScrollPosition) {
 			HTMLUtil.writeJavascriptRef(out, contextPath, SaveScrollPosition.SCRIPT_SAVE_SCROLL_POSITION);
-		}
-	}
-
-    /**
-     * Register current button components to the given button component.
-     *
-     * Override this method in your subclasses for special behavior,
-     * e.g. adding buttons and not replacing buttons.
-     */
-	private final void registerButtons() {
-		ButtonBar buttonComponent = getButtonBar();
-		if (buttonComponent != null) {
-			List<? extends CommandModel> buttons = createButtonCommandModels();
-			buttonComponent.addButtons(buttons);
 		}
 	}
 

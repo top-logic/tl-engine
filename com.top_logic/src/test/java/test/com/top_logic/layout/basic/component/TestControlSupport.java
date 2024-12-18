@@ -30,6 +30,7 @@ import com.top_logic.layout.basic.component.ControlSupport;
 import com.top_logic.mig.html.layout.LayoutComponentScope;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.mig.html.layout.SimpleComponent;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -108,7 +109,8 @@ public class TestControlSupport extends BasicTestCase {
 	 */
 	static public Test suite() {
 		Test plainTest = new TestSuite(TestControlSupport.class);
-		Test serviceSetup = ServiceTestSetup.createSetup(plainTest, RequestLockFactory.Module.INSTANCE);
+		Test serviceSetup = ServiceTestSetup.createSetup(plainTest, RequestLockFactory.Module.INSTANCE,
+			CommandHandlerFactory.Module.INSTANCE);
 		return KBSetup.getSingleKBTest(serviceSetup);
 	}
 

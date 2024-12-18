@@ -6,12 +6,15 @@
 		<param name="componentName"
 			value="DemoOrderForm"
 		/>
+		<param name="buttonbar"
+			value="true"
+		/>
 	</params>
 
 	<layout>
 		<components>
 			<component class="com.top_logic.demo.layout.form.demo.DemoOrderForm"
-				buttonbar="true"
+				buttonbar="${buttonbar}"
 				model="provider(com.top_logic.layout.component.model.SelfModelProvider)"
 				name="${componentName}"
 				page="/jsp/test/layout/DemoOrderForm.jsp"

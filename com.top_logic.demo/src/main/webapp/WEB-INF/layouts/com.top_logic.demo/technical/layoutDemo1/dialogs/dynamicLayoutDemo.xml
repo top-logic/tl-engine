@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<layout name="dynamicLayoutDemo">
+<layout name="dynamicLayoutDemo"
+	buttonbar="true"
+>
 	<components>
 		<component class="com.top_logic.demo.layout.dynamic.demo.DynamicLayoutSelectComponent"
 			name="layoutSelectDemo"

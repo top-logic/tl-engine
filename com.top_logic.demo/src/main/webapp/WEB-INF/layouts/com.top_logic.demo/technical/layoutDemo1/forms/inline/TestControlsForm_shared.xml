@@ -6,6 +6,9 @@
 		<param name="componentName"
 			value="TestControlsForm"
 		/>
+		<param name="buttonbar"
+			value="true"
+		/>
 		<param name="conf">
 			<!-- No additional configuration -->
 		</param>
@@ -14,7 +17,7 @@
 	<layout>
 		<components>
 			<component class="com.top_logic.demo.layout.form.demo.TestControlsForm"
-				buttonbar="true"
+				buttonbar="${buttonbar}"
 				name="${componentName}"
 				page="/jsp/test/layout/TestControlsForm.jsp"
 				resPrefix="layouts.layoutdemo.TestControlsForm_shared.main."

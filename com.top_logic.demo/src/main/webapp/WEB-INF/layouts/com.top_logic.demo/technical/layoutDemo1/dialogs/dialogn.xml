@@ -6,11 +6,11 @@
 	</params>
 
 	<layout name="dialog${n}"
+		buttonbar="true"
 		resPrefix="layouts.layoutdemo.dialog.dialogn.dialog${n}."
 	>
 		<components>
 			<component class="com.top_logic.demo.layout.demo.dialog.DemoDialog"
-				buttonbar="true"
 				name="infoDialog${n}"
 				page="/jsp/test/layout/dialog/DemoDialogContent.jsp"
 				resPrefix="layouts.layoutdemo.dialog.dialogn.infoDialog."

@@ -42,6 +42,7 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLMimeTypes;
+import com.top_logic.util.css.CssUtil;
 
 /**
  * {@link LayoutControlProvider} that renders a {@link FormMember} of a {@link FormHandler} by
@@ -420,8 +421,12 @@ public class DirectFormDisplay {
 		if (formMember == null) {
 			return noModelView(noModelKey);
 		}
+		String formMemberCss = formMember.getCssClasses();
+		String cssClassConfig = getConfig().getCssClass();
+		
+		String cssClasses = CssUtil.joinCssClasses(cssClassConfig, formMemberCss != null ? formMemberCss : "");
 		ControlProvider controlProvider = getConfig().getControlProvider();
-		return div(getConfig().getCssClass(),
+		return div(cssClasses,
 			controlProvider.createControl(formMember));
 	}
 

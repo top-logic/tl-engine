@@ -315,6 +315,7 @@
 				/>
 				<reference name="deputyFor"
 					kind="forwards"
+					multiple="true"
 					navigate="true"
 					type="GroupMember"
 				/>

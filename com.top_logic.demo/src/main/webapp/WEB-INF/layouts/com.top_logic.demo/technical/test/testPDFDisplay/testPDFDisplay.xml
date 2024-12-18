@@ -2,6 +2,7 @@
 
 <form name="TestPDFDisplayContent"
 	resPrefix="layoutdemo.test.testPDFDisplay"
+	bodyClass="tl-fullscreen-pdf-container"
 >
 	<modelBuilder class="com.top_logic.demo.layout.demo.DisplaySelectedPDFBuilder"/>
 </form>

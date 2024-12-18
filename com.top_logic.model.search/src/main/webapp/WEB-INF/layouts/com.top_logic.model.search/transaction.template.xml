@@ -8,25 +8,25 @@
 			<display-order>
 				<value>
 					<property name="title"/>
-					
+
 					<property name="width"/>
 					<property name="height"/>
-					
+
 					<property name="helpID"/>
-					
+
 					<property name="resizable"/>
 					<property name="openMaximized"/>
 					<property name="closableUsingX"/>
 					<property name="createOpenerButtons"/>
-					
+
 					<property name="open-handler"/>
-					
+
 					<property name="formType"/>
 					<property name="initialization"/>
 					<property name="forms"/>
-					
+
 					<property name="transactionHandler"/>
-					
+
 					<property name="securityObject"/>
 					<property name="buttons"/>
 				</value>

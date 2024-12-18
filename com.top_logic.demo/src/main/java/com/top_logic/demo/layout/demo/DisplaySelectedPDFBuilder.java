@@ -25,7 +25,6 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.HiddenField;
 import com.top_logic.layout.form.template.ControlProvider;
-import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.error.TopLogicException;
@@ -50,11 +49,13 @@ public class DisplaySelectedPDFBuilder implements ModelBuilder {
 	@Override
 	public Object getModel(Object businessModel, LayoutComponent aComponent) {
 		FormContext context = new FormContext(aComponent);
+		String bodyClass = aComponent.getConfig().getBodyClass();
+		context.addCssClass(bodyClass);
 		FormField uploadField = addUploadField(context);
 		FormField displayField = addDisplayField(context, uploadField);
-		template(context, div(
+		template(context,
 			div(fieldBox(uploadField.getName()),
-				div(member(displayField.getName())))));
+				member(displayField.getName())));
 		return context;
 	}
 
@@ -68,11 +69,7 @@ public class DisplaySelectedPDFBuilder implements ModelBuilder {
 
 					@Override
 					public void write(DisplayContext context, TagWriter out) throws IOException {
-						out.beginBeginTag(HTMLConstants.DIV);
-						out.writeAttribute(HTMLConstants.STYLE_ATTR, "position:relative; height:600px;");
-						out.endBeginTag();
 						DisplayPDFControl.CONTROL_PROVIDER.createControl(model, style).write(context, out);
-						out.endTag(HTMLConstants.DIV);
 					}
 				});
 			}

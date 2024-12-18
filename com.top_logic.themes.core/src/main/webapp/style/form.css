@@ -306,6 +306,15 @@ span.can-edit {
 	margin: var(--spacing-02) var(--spacing-03) 0 var(--spacing-03);
 }
 
+.tl-fullscreen-pdf-container {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+	padding: var(--spacing-02) var(--spacing-03) 0 var(--spacing-03);
+    margin: 0;
+}
+
 div.frmBody > div.dropPane {
 	display: none;
 }

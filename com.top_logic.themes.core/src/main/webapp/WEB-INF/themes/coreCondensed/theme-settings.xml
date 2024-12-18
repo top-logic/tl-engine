@@ -83,7 +83,7 @@
 		value="10px"
 	/>
 	<string name="spacing-01"
-		value=".25rem"
+		value=".125rem"
 	/>
 	<string name="spacing-02"
 		value=".25rem"

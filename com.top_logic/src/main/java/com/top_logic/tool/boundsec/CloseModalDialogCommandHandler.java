@@ -11,6 +11,7 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
@@ -46,6 +47,13 @@ public class CloseModalDialogCommandHandler extends AbstractSystemCommand {
 		@Override
 		@StringDefault("cancel")
 		String getClique();
+
+		/**
+		 * @see com.top_logic.layout.structure.I18NConstants#CLOSE_DIALOG
+		 */
+		@Override
+		@FormattedDefault("class.com.top_logic.layout.structure.I18NConstants.CLOSE_DIALOG")
+		ResKey getResourceKey();
 
 	}
 

@@ -77,7 +77,7 @@
 			postCreateActions="${postCreateActions}"
 			resourceKey="${label}"
 		/>
-		
+
 		<buttons>
 			<button id="closeDialog"
 				class="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"

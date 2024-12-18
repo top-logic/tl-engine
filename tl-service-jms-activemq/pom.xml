@@ -17,7 +17,12 @@
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-service-jms</artifactId>
 		</dependency>
-
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-codec-http</artifactId>
+			<version>4.1.115.Final</version>
+		</dependency>
+		
 		<!-- ActiveMQ -->
 		<!-- https://mvnrepository.com/artifact/org.apache.activemq/apache-artemis -->
 		<dependency>

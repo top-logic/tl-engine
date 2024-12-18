@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<tabbar name="dialog2">
+<tabbar name="dialog2"
+	buttonbar="true"
+>
 	<components>
 		<include name="com.top_logic.demo/technical/layoutDemo1/forms/frame/DemoOrderForm_shared.xml"
+			buttonbar="false"
 			componentName="DemoOrderFormInDialog"
 		>
 			<inject>
@@ -10,6 +13,7 @@
 			</inject>
 		</include>
 		<include name="com.top_logic.demo/technical/layoutDemo1/forms/inline/TestControlsForm_shared.xml"
+			buttonbar="false"
 			componentName="dialogInfo2a"
 		>
 			<inject>
@@ -20,7 +24,6 @@
 			<tabInfo label="layouts.layoutdemo.dialog.dialog2.demoDialogTab2.tab"/>
 			<components>
 				<component class="com.top_logic.mig.html.layout.SimpleComponent"
-					buttonbar="true"
 					content="42"
 					name="dialogInfo2b"
 					resPrefix="layouts.layoutdemo.dialog.dialog2.dialogInfo2b."

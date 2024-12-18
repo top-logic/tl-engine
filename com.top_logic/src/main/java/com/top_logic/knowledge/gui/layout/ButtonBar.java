@@ -91,6 +91,16 @@ public class ButtonBar extends PropertyObservableBase implements ButtonBarModel 
 		fireButtonsChanged();
     }
 
+	/**
+	 * Removes all given buttons from this bar.
+	 */
+	public void removeButtons(List<? extends CommandModel> buttons) {
+		if (_buttons != null) {
+			_buttons.removeAll(buttons);
+		}
+		fireButtonsChanged();
+	}
+
 	private void fireButtonsChanged() {
 		notifyListeners(ModelChangeListener.MODEL_CHANGED, this, null, _buttons);
 	}

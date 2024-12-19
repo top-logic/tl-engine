@@ -862,6 +862,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 	private List<? extends CommandModel> _buttons;
 
+	private boolean _resolved;
+
 	/**
 	 * When <code>true</code> this will result in some extra comments written to the HTML-header.
 	 * 
@@ -1047,7 +1049,9 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 		if (!definesButtonBar()) {
 			// Buttons are potentially registered in a foreign button bar of an ancestor component.
-			if (newParent != null) {
+			if (newParent == null) {
+				// Component is detached from parent, but local buttons are still registered in an
+				// outside scope.
 				if (_buttonBar != null) {
 					_buttonBar.removeButtons(_buttons);
 					_buttonBar = null;
@@ -2580,7 +2584,11 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 */
 	protected final void resolveComponent(InstantiationContext context) {
 		try {
-			componentsResolved(context);
+			if (!_resolved) {
+				componentsResolved(context);
+				_resolved = true;
+			}
+			updateComponent(context);
 		} catch (Throwable ex) {
 			Logger.error("Error resolving component " + getName() + ": " + ex.getMessage(), ex, LayoutComponent.class);
 		}
@@ -2604,14 +2612,9 @@ public abstract class LayoutComponent extends ModelEventAdapter
         this.initWindows(context);
 
         /* delegate to dialogs */
-		List<? extends LayoutComponent> dialogs = getDialogs();
-		if (!dialogs.isEmpty()) {
-			final int count = dialogs.size();
-            for (int i=0; i<count; i++) {
-				LayoutComponent theDialog = dialogs.get(i);
-				theDialog.resolveComponent(context);
-            }
-        }
+		for (LayoutComponent theDialog : getDialogs()) {
+			theDialog.resolveComponent(context);
+		}
 
 		CommandHandlerFactory factory = CommandHandlerFactory.getInstance();
 		/* Register only the _configured_ default command, as it is guaranteed to be constant. If
@@ -2652,17 +2655,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
         this.registerAdditionalNonConfigurableCommands(); 
         
-		if (definesButtonBar()) {
-			_buttonBar = new ButtonBar();
-		} else {
-			LayoutComponent parent = getParent();
-			_buttonBar = parent == null ? null : parent.getButtonBar();
-		}
-
 		_buttons = createButtonCommandModels();
-		if (_buttonBar != null) {
-			_buttonBar.addButtons(_buttons);
-		}
 
 		loadExpansionState();
 
@@ -2670,6 +2663,26 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		for (int index = 0, size = resolvers.size(); index < size; index++) {
 			PolymorphicConfiguration<ComponentResolver> config = resolvers.get(index);
 			context.getInstance(config).resolveComponent(context, this);
+		}
+	}
+
+	/**
+	 * Called during layout editing, if this component has changed it's parent.
+	 */
+	protected void updateComponent(InstantiationContext context) {
+		for (LayoutComponent theDialog : getDialogs()) {
+			theDialog.updateComponent(context);
+		}
+
+		if (definesButtonBar()) {
+			_buttonBar = new ButtonBar();
+		} else {
+			LayoutComponent parent = getParent();
+			_buttonBar = parent == null ? null : parent.getButtonBar();
+		}
+
+		if (_buttonBar != null) {
+			_buttonBar.addButtons(_buttons);
 		}
 
 		_gotoTargets = LayoutUtils.resolveGotoTargets(context, getMainLayout(), getConfig().getGotoTargets().values());

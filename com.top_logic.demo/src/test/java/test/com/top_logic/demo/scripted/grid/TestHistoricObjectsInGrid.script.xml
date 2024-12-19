@@ -293,7 +293,7 @@
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
-			comment="Crete view"
+			comment="Create view"
 		>
 			<actions>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"

@@ -2670,10 +2670,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 * Called during layout editing, if this component has changed it's parent.
 	 */
 	protected void updateComponent(InstantiationContext context) {
-		for (LayoutComponent theDialog : getDialogs()) {
-			theDialog.updateComponent(context);
-		}
-
 		if (definesButtonBar()) {
 			_buttonBar = new ButtonBar();
 		} else {
@@ -2686,6 +2682,10 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		}
 
 		_gotoTargets = LayoutUtils.resolveGotoTargets(context, getMainLayout(), getConfig().getGotoTargets().values());
+
+		for (LayoutComponent dialog : getDialogs()) {
+			dialog.updateComponent(context);
+		}
 	}
 
 	/**

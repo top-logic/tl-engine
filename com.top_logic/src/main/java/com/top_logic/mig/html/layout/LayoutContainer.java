@@ -278,12 +278,18 @@ public abstract class LayoutContainer extends AJAXComponent {
 	protected void componentsResolved(InstantiationContext context) {
     	super.componentsResolved(context);
 
-		List<LayoutComponent> childList = getChildList();
-		for (int n = 0, cnt = childList.size(); n < cnt; n++) {
-			LayoutComponent child = childList.get(n);
-
+		for (LayoutComponent child : getChildList()) {
 			child.resolveComponent(context);
     	}
+	}
+
+	@Override
+	protected void updateComponent(InstantiationContext context) {
+		super.updateComponent(context);
+
+		for (LayoutComponent child : getChildList()) {
+			child.updateComponent(context);
+		}
 	}
 
     /** 

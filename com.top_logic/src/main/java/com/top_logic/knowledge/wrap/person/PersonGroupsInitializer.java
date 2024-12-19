@@ -31,19 +31,16 @@ public class PersonGroupsInitializer implements TLObjectInitializer {
 
 	@Override
 	public void initializeObject(TLObject object) {
-		Person newPerson = (Person) object;
+		Person account = (Person) object;
 
-		Set<Group> eagerlyAssignedGroups = newPerson.getGroups();
+		Set<Group> eagerlyAssignedGroups = account.getGroups();
 
-		Group representativeGroup = Group.createGroup(newPerson.getName());
-		representativeGroup.setIsSystem(true);
-		representativeGroup.bind(newPerson);
+		Group representativeGroup = Group.createRepresentativeGroup(account);
 
 		Group defaultGroup = InitialGroupManager.getInstance().getDefaultGroup();
 		if (defaultGroup != null) {
-			defaultGroup.addMember(newPerson);
+			defaultGroup.addMember(account);
 		}
-
 		// Fix group assignments. If the new account was already added to some groups, the
 		// representative group must also be assigned (which could not be done before this
 		// initializer is run).

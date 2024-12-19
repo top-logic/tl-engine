@@ -18,13 +18,7 @@
 							</options-by-expression>
 						</options>
 						<constraints>
-							<constraint class="com.top_logic.model.util.NoAttributeCycle">
-								<additional-observed-references>
-									<additional-observed-reference name="representativeGroup"
-										definition="tl.accounts:Person"
-									/>
-								</additional-observed-references>
-							</constraint>
+							<constraint class="com.top_logic.model.util.NoAttributeCycle"/>
 						</constraints>
 					</annotations>
 				</reference>
@@ -37,12 +31,26 @@
 					<annotations>
 						<options>
 							<options-by-expression>
-								<function><![CDATA[// All accounts
-g -> all(`tl.accounts:Person`)
-    // Excluding the one that is the owner of this representative group.
-    .filter(p -> !$g
-        .referers(`tl.accounts:Person#representativeGroup`)
-        .containsElement($p))]]></function>
+								<function><![CDATA[g -> {
+    // Function retrieving the authorization as integer index.
+    getAuth = p -> $p.get(`tl.accounts:Person#contact`)
+        .get(`Contacts:PersonContact#signatureAuthorization`)
+        .get(`tl.model:TLClassifier#index`)
+        || -1;
+
+    // The user whose group is edited.
+    user = $g.referers(`tl.accounts:Person#representativeGroup`).singleElement();
+    
+    // The signing authorization of the user whose group is edited.
+    auth = $getAuth($user);
+    
+    // All accounts
+    all(`tl.accounts:Person`)
+        // Excluding the one that is the owner of this representative group.
+        .filter(p -> $p != $user)
+        // Excluding all with lower signing authorization
+        .filter(p -> $getAuth($p) >= $auth)
+}]]></function>
 							</options-by-expression>
 						</options>
 					</annotations>
@@ -84,19 +92,6 @@ g -> all(`tl.accounts:Person`)
 						</constraints>
 					</annotations>
 				</property>
-				<reference name="representativeGroup">
-					<annotations>
-						<constraints>
-							<constraint class="com.top_logic.model.util.NoAttributeCycle">
-								<additional-observed-references>
-									<additional-observed-reference name="members"
-										definition="tl.accounts:Group"
-									/>
-								</additional-observed-references>
-							</constraint>
-						</constraints>
-					</annotations>
-				</reference>
 				<reference name="deputyFor">
 					<annotations>
 						<storage-algorithm>

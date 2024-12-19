@@ -18,13 +18,7 @@
 							</options-by-expression>
 						</options>
 						<constraints>
-							<constraint class="com.top_logic.model.util.NoAttributeCycle">
-								<additional-observed-references>
-									<additional-observed-reference name="representativeGroup"
-										definition="tl.accounts:Person"
-									/>
-								</additional-observed-references>
-							</constraint>
+							<constraint class="com.top_logic.model.util.NoAttributeCycle"/>
 						</constraints>
 					</annotations>
 				</reference>
@@ -84,19 +78,6 @@ g -> all(`tl.accounts:Person`)
 						</constraints>
 					</annotations>
 				</property>
-				<reference name="representativeGroup">
-					<annotations>
-						<constraints>
-							<constraint class="com.top_logic.model.util.NoAttributeCycle">
-								<additional-observed-references>
-									<additional-observed-reference name="members"
-										definition="tl.accounts:Group"
-									/>
-								</additional-observed-references>
-							</constraint>
-						</constraints>
-					</annotations>
-				</reference>
 				<reference name="deputyFor">
 					<annotations>
 						<storage-algorithm>

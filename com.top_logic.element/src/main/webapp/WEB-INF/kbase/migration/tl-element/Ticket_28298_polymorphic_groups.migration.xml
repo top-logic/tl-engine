@@ -15,6 +15,20 @@
 		/>
 	</dependencies>
 	<processors>
+		<remove-annotations name="tl.accounts:Group#members">
+			<annotation class="com.top_logic.model.annotate.TLConstraints"/>
+		</remove-annotations>
+		<remove-annotations name="tl.accounts:Person#representativeGroup">
+			<annotation class="com.top_logic.model.annotate.TLConstraints"/>
+		</remove-annotations>
+		<add-annotations name="tl.accounts:Group#members">
+			<annotations>
+				<constraints>
+					<constraint class="com.top_logic.model.util.NoAttributeCycle"/>
+				</constraints>
+			</annotations>
+		</add-annotations>
+
 		<create-class name="tl.accounts:RepresentativeGroup"
 			abstract="false"
 			final="false"
@@ -63,11 +77,11 @@
 			table="Group"
 			target-type="tl.accounts:Group"
 		/>
-		
+
 		<change-referenced-objects-type
 			association-table="definesGroup"
-			table="Group"
 			source-type="tl.accounts:Group"
+			table="Group"
 			target-type="tl.accounts:RepresentativeGroup"
 		/>
 	</processors>

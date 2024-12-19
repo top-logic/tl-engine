@@ -79,6 +79,7 @@ import com.top_logic.model.impl.generated.TLObjectBase;
 import com.top_logic.model.impl.generated.TlModelFactory;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.model.CompatibilityService;
 import com.top_logic.util.model.ModelService;
 
@@ -284,6 +285,16 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 	@Override
 	public TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues) {
 		return getFactory(type.getModule()).createObject(type, context, initialValues);
+	}
+
+	@Override
+	public Group createGroup() {
+		return (Group) createObject((TLClass) TLModelUtil.findType("tl.accounts:Group"));
+	}
+
+	@Override
+	public Group createRepresentativeGroup() {
+		return (Group) createObject((TLClass) TLModelUtil.findType("tl.accounts:RepresentativeGroup"));
 	}
 
 	/**

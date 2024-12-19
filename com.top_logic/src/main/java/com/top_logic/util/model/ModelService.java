@@ -47,6 +47,7 @@ import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
@@ -57,6 +58,8 @@ import com.top_logic.knowledge.service.event.CommitChecker;
 import com.top_logic.knowledge.service.event.CommitVetoException;
 import com.top_logic.knowledge.service.event.Modification;
 import com.top_logic.knowledge.service.event.ModificationListener;
+import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.values.edit.AllQualifiedTLTypeNames;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLClass;
@@ -85,6 +88,7 @@ import com.top_logic.model.initializer.TLObjectInitializer;
 import com.top_logic.model.internal.PersistentQuery;
 import com.top_logic.model.internal.PersistentType;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.list.ListInitializationUtil;
 import com.top_logic.util.model.check.AttributeChecker;
@@ -643,6 +647,33 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 	 */
 	public <T extends TLModelPart> List<T> filterModel(Collection<? extends T> modelParts) {
 		return getConfig().getModelFilter().filterModel(modelParts);
+	}
+
+	/**
+	 * Creates a group instance.
+	 * 
+	 * <p>
+	 * This method is a workaround for creating object in <code>tl-core</code> code that require a
+	 * model type in <code>tl-element</code>.
+	 * </p>
+	 */
+	public Group createGroup() {
+		KnowledgeObject item = PersistencyLayer.getKnowledgeBase().createKnowledgeObject(Group.OBJECT_NAME);
+		return (Group) WrapperFactory.getWrapper(item);
+	}
+
+	/**
+	 * Creates a group for storing representatives for an account.
+	 * 
+	 * <p>
+	 * This method is a workaround for creating object in <code>tl-core</code> code that require a
+	 * model type in <code>tl-element</code>.
+	 * </p>
+	 * 
+	 * @see Person#getRepresentativeGroup()
+	 */
+	public Group createRepresentativeGroup() {
+		return createGroup();
 	}
 
 }

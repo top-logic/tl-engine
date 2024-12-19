@@ -29,17 +29,14 @@ public class PersonGroupsInitializer implements TLObjectInitializer {
 
 	@Override
 	public void initializeObject(TLObject object) {
-		Person newPerson = (Person) object;
+		Person account = (Person) object;
 
-		Group representativeGroup = Group.createGroup(newPerson.getName());
-		representativeGroup.setIsSystem(true);
-		representativeGroup.bind(newPerson);
+		Group.createRepresentativeGroup(account);
 
 		Group defaultGroup = InitialGroupManager.getInstance().getDefaultGroup();
 		if (defaultGroup != null) {
-			defaultGroup.addMember(newPerson);
+			defaultGroup.addMember(account);
 		}
-
 	}
 
 }

@@ -185,6 +185,17 @@
 				/>
 			</attributes>
 		</class>
+		<class name="RepresentativeGroup">
+			<generalizations>
+				<generalization type="Group"/>
+			</generalizations>
+			<attributes>
+				<reference name="members"
+					override="true"
+					type="Person"
+				/>
+			</attributes>
+		</class>
 		<class name="Person">
 			<generalizations>
 				<generalization type="tl.core:Author"/>

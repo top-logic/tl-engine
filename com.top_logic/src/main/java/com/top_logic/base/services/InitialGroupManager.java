@@ -129,7 +129,7 @@ public class InitialGroupManager extends KBBasedManagedClass<InitialGroupManager
 				return existingGroup;
 			}
 
-			Group newGroup = Group.createGroup(groupName, kb());
+			Group newGroup = Group.createGroup(groupName);
 			if (Utils.equals(defaultGroup, groupName)) {
 				newGroup.setDefaultGroup(true);
 			}

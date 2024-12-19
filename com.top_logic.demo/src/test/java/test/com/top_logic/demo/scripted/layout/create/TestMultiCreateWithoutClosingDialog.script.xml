@@ -42,20 +42,6 @@
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="F"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Name"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Anlageformular"
-						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 						value="First of three"
 					/>
 				</action>
@@ -95,20 +81,6 @@
 					user-id="root"
 				>
 					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Name"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Anlageformular"
-						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="S"
-					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
@@ -173,20 +145,6 @@
 					user-id="root"
 				>
 					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Name"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Anlageformular"
-						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="T"
-					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
@@ -414,20 +372,6 @@
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="W"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-					user-id="root"
-				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Name"
-					>
-						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Anlageformular"
-						/>
-					</field>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 						value="WithMultipleCopies"
 					/>
 				</action>
@@ -539,10 +483,17 @@
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
 				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Dialog schließen"
-					>
-						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+						<path>
+							<named-member name="modelBox0"/>
+							<named-member name="modelContent0"/>
+							<labeled-member label="Transaktion"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Dialog schließen"/>
+						</path>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
 						value="false"
@@ -557,8 +508,8 @@
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
-					command-label="Schließen"
-					command-name="closeModalDialog"
+					command-label="Abbrechen"
+					command-name="closeDialog"
 					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
 					component-name="com.top_logic.demo/technical/components/transaction/inputDialog.layout.xml#Form"
 					user-id="root"
@@ -659,8 +610,8 @@
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
-					command-label="Schließen"
-					command-name="closeModalDialog"
+					command-label="Abbrechen"
+					command-name="closeDialog"
 					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
 					component-name="com.top_logic.demo/technical/components/transaction/inputDialog.layout.xml#Form"
 					user-id="root"
@@ -775,10 +726,17 @@
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
 				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Dialog schließen"
-					>
-						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+						<path>
+							<named-member name="modelBox0"/>
+							<named-member name="modelContent0"/>
+							<labeled-member label="Transaktion"/>
+							<named-member name="outerContainer"/>
+							<named-member name="contentContainer"/>
+							<named-member name="content"/>
+							<labeled-member label="Dialog schließen"/>
+						</path>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
 						value="true"
@@ -793,8 +751,8 @@
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
-					command-label="Schließen"
-					command-name="closeModalDialog"
+					command-label="Abbrechen"
+					command-name="closeDialog"
 					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
 					component-name="com.top_logic.demo/technical/components/transaction/inputDialog.layout.xml#Form"
 					user-id="root"

@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.top_logic.base.services.InitialGroupManager;
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.ConfigurationError;
@@ -89,7 +88,6 @@ import com.top_logic.util.model.ModelService;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @ServiceDependencies({
-	InitialGroupManager.Module.class,
 	CompatibilityService.Module.class,
 	WrapperMetaAttributeUtil.Module.class,
 })

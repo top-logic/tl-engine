@@ -17,7 +17,7 @@ import com.top_logic.model.instance.importer.XMLInstanceImporter;
 /**
  * Import description of a single new object to create.
  * 
- * @see XMLInstanceImporter#importInstances(List)
+ * @see XMLInstanceImporter#importInstances(ObjectsConf)
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

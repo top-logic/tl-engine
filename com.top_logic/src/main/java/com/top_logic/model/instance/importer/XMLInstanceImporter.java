@@ -25,6 +25,7 @@ import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.XmlDateTimeFormat;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.sql.DBType;
@@ -48,6 +49,7 @@ import com.top_logic.model.instance.importer.schema.InstanceRefConf;
 import com.top_logic.model.instance.importer.schema.ModelRefConf;
 import com.top_logic.model.instance.importer.schema.ObjectConf;
 import com.top_logic.model.instance.importer.schema.ObjectsConf;
+import com.top_logic.model.instance.importer.schema.ObjectsConf.ResolverDef;
 import com.top_logic.model.instance.importer.schema.RefConf;
 import com.top_logic.model.instance.importer.schema.RefVisitor;
 import com.top_logic.model.util.TLModelUtil;
@@ -151,7 +153,7 @@ public class XMLInstanceImporter implements RefVisitor<TLObject, Void> {
 	}
 
 	/**
-	 * All objects that have been imported in the call to {@link #importInstances(List)}.
+	 * All objects that have been imported in the call to {@link #importInstances(ObjectsConf)}.
 	 * 
 	 * @see #getObject(String)
 	 */
@@ -178,10 +180,23 @@ public class XMLInstanceImporter implements RefVisitor<TLObject, Void> {
 	/**
 	 * Starts the import of the given import description.
 	 * 
-	 * @param configs
-	 *        The description of the objects to import, see {@link ObjectsConf#getObjects()}.
+	 * @param objects
+	 *        The description of the objects to import.
 	 */
-	public void importInstances(List<ObjectConf> configs) throws ConfigurationException {
+	public void importInstances(ObjectsConf objects) {
+		for (ResolverDef def : objects.getResolvers().values()) {
+			InstanceResolver resolver = TypedConfigUtil.createInstance(def.getImpl());
+			addResolver(def.getType().qualifiedName(), resolver);
+		}
+
+		List<ObjectConf> configs = objects.getObjects();
+		importInstances(configs);
+	}
+
+	/**
+	 * Instantiates all given confiurations.
+	 */
+	public void importInstances(List<ObjectConf> configs) {
 		for (ObjectConf config : configs) {
 			TLClass type = (TLClass) TLModelUtil.findType(_model, config.getType());
 			TLObject obj = _factory.createObject(type);
@@ -450,11 +465,24 @@ public class XMLInstanceImporter implements RefVisitor<TLObject, Void> {
 	 * 
 	 * @param source
 	 *        The XML definition to read.
-	 * @return Descriptions of objects to import. See {@link #importInstances(List)}.
+	 * @return Descriptions of objects to import. See {@link #importInstances(ObjectsConf)}.
 	 * 
-	 * @see #importInstances(List)
+	 * @see #importInstances(ObjectsConf)
 	 */
 	public static List<ObjectConf> loadConfigs(Content source) throws ConfigurationException {
+		return loadConfig(source).getObjects();
+	}
+
+	/**
+	 * Utility to read an import definition from the given XML contents.
+	 * 
+	 * @param source
+	 *        The XML definition to read.
+	 * @return Descriptions of objects to import. See {@link #importInstances(ObjectsConf)}.
+	 * 
+	 * @see #importInstances(ObjectsConf)
+	 */
+	public static ObjectsConf loadConfig(Content source) throws ConfigurationException {
 		ConfigurationReader reader = new ConfigurationReader(
 			new DefaultInstantiationContext(XMLInstanceImporter.class),
 			Collections.singletonMap(
@@ -462,7 +490,7 @@ public class XMLInstanceImporter implements RefVisitor<TLObject, Void> {
 				TypedConfiguration.getConfigurationDescriptor(ObjectsConf.class)));
 		reader.setSource(source);
 		ObjectsConf config = (ObjectsConf) reader.read();
-		return config.getObjects();
+		return config;
 	}
 
 }

@@ -11,6 +11,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.model.access.StorageMapping;
 
 /**
  * Configuration specifying an attribute value of an {@link ObjectConf object import declaration}.
@@ -33,7 +34,12 @@ public interface AttributeValueConf extends ConfigurationItem {
 	void setName(String value);
 
 	/**
-	 * Textual value of a primitive attribute.
+	 * Textual representation of a primitive attribute's value.
+	 * 
+	 * <p>
+	 * The value must be a serialized variant of the value stored in the database compatible with
+	 * {@link StorageMapping#getBusinessObject(Object)} of the attribute's type.
+	 * </p>
 	 * 
 	 * <p>
 	 * For a reference attribute, {@link #getReferences()} must be set instead.

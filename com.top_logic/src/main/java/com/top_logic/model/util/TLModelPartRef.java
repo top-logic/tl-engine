@@ -22,12 +22,14 @@ import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
 import com.top_logic.model.config.AbstractModelPartMapping;
 import com.top_logic.model.config.TypeRef;
 import com.top_logic.model.resources.TLPartScopedResourceProvider;
+import com.top_logic.util.model.ModelService;
 
 /**
  * Textual reference to a {@link TLModelPart} that can be safely used in configurations.
@@ -84,28 +86,56 @@ public class TLModelPartRef {
 	 * Resolves a referenced type.
 	 */
 	public TLModelPart resolve() {
-		return TLModelUtil.resolveModelPart(qualifiedName());
+		return resolve(ModelService.getApplicationModel());
+	}
+
+	/**
+	 * Resolves a referenced type.
+	 */
+	public TLModelPart resolve(TLModel model) {
+		return TLModelUtil.resolveModelPart(model, qualifiedName());
 	}
 
 	/**
 	 * Resolves a referenced type.
 	 */
 	public TLType resolveType() {
-		return TLModelUtil.findType(qualifiedName());
+		return resolveType(ModelService.getApplicationModel());
+	}
+
+	/**
+	 * Resolves a referenced type in the given model.
+	 */
+	public TLType resolveType(TLModel model) {
+		return TLModelUtil.findType(model, qualifiedName());
 	}
 
 	/**
 	 * Resolves a referenced type.
 	 */
 	public TLTypePart resolvePart() {
-		return TLModelUtil.findPart(qualifiedName());
+		return resolvePart(ModelService.getApplicationModel());
+	}
+
+	/**
+	 * Resolves a referenced type in the given model.
+	 */
+	public TLTypePart resolvePart(TLModel model) {
+		return TLModelUtil.findPart(model, qualifiedName());
 	}
 
 	/**
 	 * Resolves the referenced type to a {@link TLClass}.
 	 */
 	public TLClass resolveClass() throws ConfigurationException {
-		TLType result = resolveType();
+		return resolveClass(ModelService.getApplicationModel());
+	}
+
+	/**
+	 * Resolves the referenced type to a {@link TLClass} in the given model.
+	 */
+	public TLClass resolveClass(TLModel model) throws ConfigurationException {
+		TLType result = resolveType(model);
 		if (result instanceof TLClass) {
 			return (TLClass) result;
 		} else {

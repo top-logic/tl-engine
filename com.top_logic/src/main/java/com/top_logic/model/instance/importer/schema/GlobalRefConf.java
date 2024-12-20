@@ -38,8 +38,8 @@ public interface GlobalRefConf extends RefConf {
 	 * Identifier of the object being referenced.
 	 * 
 	 * <p>
-	 * The syntax of the identifier may vary from {@link #getKind() type} to {@link #getKind()
-	 * type}.
+	 * The syntax of the identifier depends on the {@link InstanceResolver} used to create this ID
+	 * and may vary from {@link #getKind() type} to {@link #getKind() type}.
 	 * </p>
 	 * 
 	 * @see InstanceResolver#resolve(String, String)

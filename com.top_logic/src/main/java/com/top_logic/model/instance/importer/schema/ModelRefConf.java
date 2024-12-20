@@ -40,4 +40,9 @@ public interface ModelRefConf extends RefConf {
 	@Mandatory
 	String getName();
 
+	/**
+	 * @see #getName()
+	 */
+	void setName(String value);
+
 }

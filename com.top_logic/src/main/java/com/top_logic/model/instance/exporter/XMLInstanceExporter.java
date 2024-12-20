@@ -1,0 +1,356 @@
+/*
+ * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * 
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.model.instance.exporter;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.commons.codec.binary.Base64;
+
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.TLID;
+import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.basic.config.InstanceAccess;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.XmlDateTimeFormat;
+import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.sql.DBType;
+import com.top_logic.model.ModelKind;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLModelPart;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLPrimitive;
+import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.TLType;
+import com.top_logic.model.instance.importer.resolver.InstanceResolver;
+import com.top_logic.model.instance.importer.schema.AttributeValueConf;
+import com.top_logic.model.instance.importer.schema.GlobalRefConf;
+import com.top_logic.model.instance.importer.schema.InstanceRefConf;
+import com.top_logic.model.instance.importer.schema.ModelRefConf;
+import com.top_logic.model.instance.importer.schema.ObjectConf;
+import com.top_logic.model.instance.importer.schema.ObjectsConf;
+import com.top_logic.model.instance.importer.schema.ObjectsConf.ResolverDef;
+import com.top_logic.model.instance.importer.schema.RefConf;
+import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.model.util.TLModelUtil;
+
+/**
+ * Algorithm for exporting objects to configurations for re-importing later on.
+ */
+public class XMLInstanceExporter {
+
+	private ObjectsConf _objects = TypedConfiguration.newConfigItem(ObjectsConf.class);
+
+	private int _nextId = 1;
+
+	private Map<TLObject, Integer> _exportIds = new HashMap<>();
+
+	private Map<TLType, String> _typeNames = new HashMap<>();
+
+	private Set<TLObject> _queue = new LinkedHashSet<>();
+
+	private Map<TLStructuredType, InstanceResolver> _resolvers;
+
+	private Map<TLModelPart, Boolean> _excludedParts = new HashMap<>();
+
+	/**
+	 * Creates a {@link XMLInstanceExporter}.
+	 */
+	public XMLInstanceExporter() {
+		super();
+	}
+
+	/**
+	 * Adds an {@link InstanceResolver} for creating stable references to existing objects not part
+	 * of the export.
+	 */
+	public void addResolver(TLStructuredType type, InstanceResolver resolver) {
+		@SuppressWarnings("unchecked")
+		PolymorphicConfiguration<? extends InstanceResolver> config =
+			(PolymorphicConfiguration<? extends InstanceResolver>) InstanceAccess.INSTANCE.getConfig(resolver);
+
+		ResolverDef def = TypedConfiguration.newConfigItem(ResolverDef.class);
+		def.setType(TLModelPartRef.ref(type));
+		def.setImpl(config);
+		_objects.getResolvers().put(def.getType(), def);
+		_resolvers.put(type, resolver);
+
+		_excludedParts.put(type, Boolean.FALSE);
+	}
+
+	/**
+	 * Adds a type part to exclude from export.
+	 */
+	public void addExclude(TLModelPart part) {
+		_excludedParts.put(part, Boolean.TRUE);
+	}
+
+	/**
+	 * Adds the given object to the export.
+	 */
+	public void export(TLObject obj) {
+		if (obj == null) {
+			return;
+		}
+		Integer existing = _exportIds.get(obj);
+		if (existing != null) {
+			// Already part of the export.
+			return;
+		}
+
+		Integer id = nextId();
+		_exportIds.put(obj, id);
+		export(obj, id);
+	}
+
+	/**
+	 * The exported configuration.
+	 */
+	public ObjectsConf getExportConfig() {
+		processQueue();
+
+		return _objects;
+	}
+
+	private void processQueue() {
+		while (!_queue.isEmpty()) {
+			List<TLObject> batch = new ArrayList<>(_queue);
+			_queue.clear();
+			for (TLObject next : batch) {
+				Integer id = _exportIds.get(next);
+				export(next, id);
+			}
+		}
+	}
+
+	private void export(TLObject obj, Integer id) {
+		ObjectConf conf = TypedConfiguration.newConfigItem(ObjectConf.class);
+		conf.setId(id.toString());
+		conf.setType(typeName(obj));
+		_objects.getObjects().add(conf);
+
+		exportAttributes(conf.getAttributes(), obj);
+	}
+
+	private void exportAttributes(List<AttributeValueConf> attributes, TLObject obj) {
+		for (TLStructuredTypePart part : obj.tType().getAllParts()) {
+			if (exclude(part)) {
+				continue;
+			}
+
+			try {
+				exportAttribute(attributes, obj, part);
+			} catch (Exception ex) {
+				Logger.error("Failed to export attribute '" + part + "'.", ex, XMLInstanceExporter.class);
+			}
+		}
+	}
+
+	private boolean exclude(TLModelPart part) {
+		Boolean exclude = _excludedParts.get(part);
+		if (exclude == null) {
+			exclude = Boolean.valueOf(computeExclude(part));
+			_excludedParts.put(part, exclude);
+		}
+		return exclude.booleanValue();
+	}
+
+	/**
+	 * Whether to exclude the given {@link TLStructuredTypePart} from export.
+	 * 
+	 * @param part
+	 *        The part in question.
+	 */
+	protected boolean computeExclude(TLModelPart part) {
+		if (part instanceof TLStructuredTypePart attribute) {
+			if (attribute.isDerived()) {
+				return true;
+			}
+
+			return exclude(attribute.getType());
+		} else {
+			return false;
+		}
+	}
+
+	private void exportAttribute(List<AttributeValueConf> attributes, TLObject obj, TLStructuredTypePart part)
+			throws IOException {
+		AttributeValueConf valueConf = TypedConfiguration.newConfigItem(AttributeValueConf.class);
+		valueConf.setName(part.getName());
+
+		Object value = obj.tValue(part);
+
+		if (part.getModelKind() == ModelKind.REFERENCE) {
+			List<RefConf> references = valueConf.getReferences();
+			exportRef(references, value);
+		} else {
+			valueConf.setValue(serialize((TLPrimitive) part.getType(), value));
+		}
+
+		attributes.add(valueConf);
+	}
+
+	private void exportRef(List<RefConf> references, Object value) {
+		if (value instanceof Collection<?> collection) {
+			for (Object entry : collection) {
+				exportRefEntry(references, entry);
+			}
+		} else {
+			exportRefEntry(references, value);
+		}
+	}
+
+	private void exportRefEntry(List<RefConf> references, Object value) {
+		if (value == null) {
+			return;
+		}
+
+		if (value instanceof TLModelPart modelPart) {
+			ModelRefConf ref = TypedConfiguration.newConfigItem(ModelRefConf.class);
+			ref.setName(typeName(modelPart));
+			references.add(ref);
+		} else {
+			Integer existing = _exportIds.get(value);
+			if (existing != null) {
+				InstanceRefConf ref = TypedConfiguration.newConfigItem(InstanceRefConf.class);
+				ref.setId(existing.toString());
+				references.add(ref);
+			} else {
+				TLObject target = (TLObject) value;
+				if (exclude(target.tType())) {
+					return;
+				}
+
+				InstanceResolver resolver = resolver(target.tType());
+				if (resolver != null) {
+					GlobalRefConf ref = TypedConfiguration.newConfigItem(GlobalRefConf.class);
+					ref.setKind(typeName(target));
+					ref.setId(resolver.buildId(target));
+					references.add(ref);
+				} else {
+					_queue.add(target);
+
+					Integer newId = nextId();
+					_exportIds.put(target, newId);
+					InstanceRefConf ref = TypedConfiguration.newConfigItem(InstanceRefConf.class);
+					ref.setId(newId.toString());
+					references.add(ref);
+				}
+			}
+		}
+	}
+
+	private Integer nextId() {
+		return Integer.valueOf(_nextId++);
+	}
+
+	private InstanceResolver resolver(TLStructuredType type) {
+		InstanceResolver result = _resolvers.get(type);
+		if (result != null || _resolvers.containsKey(type)) {
+			return result;
+		}
+
+		result = computeResolver(type);
+		if (result == null) {
+			result = findInheritedResolver(type);
+		}
+
+		// Remember for the rest of the import.
+		_resolvers.put(type, result);
+
+		return result;
+	}
+
+	/**
+	 * Hook for subclasses dynamically looking up {@link InstanceResolver}s for types.
+	 * 
+	 * @param type
+	 *        The type of instances that should be exported by reference.
+	 */
+	protected InstanceResolver computeResolver(TLStructuredType type) {
+		return null;
+	}
+
+	private InstanceResolver findInheritedResolver(TLStructuredType type) {
+		if (type instanceof TLClass classType) {
+			for (TLClass generalization : classType.getGeneralizations()) {
+				InstanceResolver result = resolver(generalization);
+				if (result != null) {
+					return result;
+				}
+			}
+		}
+		return null;
+	}
+
+	private String typeName(TLObject obj) {
+		return _typeNames.computeIfAbsent(obj.tType(), TLModelUtil::qualifiedName);
+	}
+
+	private String serialize(TLPrimitive type, Object value) throws IOException {
+		if (value == null) {
+			return "";
+		}
+		return serializeStorageValue(type.getDBType(), type.getStorageMapping().getStorageObject(value));
+	}
+
+	private String serializeStorageValue(DBType dbType, Object value) throws IOException {
+		switch (dbType) {
+			case BLOB: {
+				return Base64.encodeBase64String(binary(value));
+			}
+			case BOOLEAN:
+				return Boolean.toString(((Boolean) value).booleanValue());
+			case DATE:
+			case TIME:
+			case DATETIME:
+				return XmlDateTimeFormat.INSTANCE.format(value);
+			case DECIMAL:
+			case DOUBLE:
+				return Double.toString(((Number) value).doubleValue());
+			case FLOAT:
+				return Float.toString(((Number) value).floatValue());
+			case BYTE:
+				return Byte.toString(((Number) value).byteValue());
+			case SHORT:
+				return Short.toString(((Number) value).shortValue());
+			case INT:
+				return Integer.toString(((Number) value).intValue());
+			case LONG:
+				return Long.toString(((Number) value).longValue());
+			case CLOB:
+			case STRING:
+			case CHAR:
+				return value.toString();
+			case ID:
+				return ((TLID) value).toExternalForm();
+		}
+
+		throw new UnreachableAssertion("Unsupported DB type: " + dbType);
+	}
+
+	private byte[] binary(Object value) throws IOException {
+		if (value instanceof BinaryDataSource data) {
+			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+			data.deliverTo(buffer);
+			return buffer.toByteArray();
+		}
+		if (value instanceof byte[] data) {
+			return data;
+		}
+		throw new IllegalArgumentException("Not expected for binary data: " + value.getClass());
+	}
+
+}

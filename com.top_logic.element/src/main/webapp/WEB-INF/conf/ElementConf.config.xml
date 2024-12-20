@@ -201,6 +201,11 @@
 				</bundles>
 			</instance>
 		</config>
+		
+		<config service-class="com.top_logic.base.services.InitialGroupManager">
+			<instance class="com.top_logic.element.util.model.ElementGroupManager">
+			</instance>
+		</config>
 
 		<config service-class="com.top_logic.tool.boundsec.BoundHelper">
 			<instance class="com.top_logic.element.boundsec.ElementBoundHelper" />

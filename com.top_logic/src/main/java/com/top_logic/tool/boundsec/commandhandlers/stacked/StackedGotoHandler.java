@@ -26,7 +26,6 @@ import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.DialogComponent;
 import com.top_logic.mig.html.layout.DialogSupport;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.mig.html.layout.LayoutContainer;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
 import com.top_logic.util.TLContext;
@@ -85,10 +84,10 @@ public class StackedGotoHandler extends GotoHandler {
 
 	@Override
 	public LayoutComponent gotoLayout(LayoutComponent contextComponent, Object targetObject, ComponentName targetComponentName) {
-		if (contextComponent instanceof LayoutContainer) {
-			/* No useful goto back to a LayoutContainer possible. Therefore no recording. Such can
-			 * e.g. occur by executing a "stable bookmark". In such case the context component is
-			 * the MainLayout. */
+		if (contextComponent instanceof MainLayout) {
+			/* No useful goto back to the MainLayout possible. Therefore no recording. Such can e.g.
+			 * occur by executing a "stable bookmark". In such case the context component is the
+			 * MainLayout. */
 			clearStack(contextComponent);
 			return super.gotoLayout(contextComponent, targetObject, targetComponentName);
 		}

@@ -44,6 +44,10 @@ public abstract class CompositeField extends FormGroup implements FormField {
 	@Override
 	public void setImmutable(boolean immutable) {
 		getProxy().setImmutable(immutable);
+
+		/* "isImmutable" checks the stored display mode, therefore it must be updated. Moreover the
+		 * call "updateDisplayMode" fires potential events. */
+		updateDisplayMode();
 	}
 
 	@Override

@@ -34,6 +34,7 @@
 
 					<property name="buttons"/>
 					<property name="onSelectionChange"/>
+					<property name="selectionOnModelChange"/>
 				</value>
 			</display-order>
 		</annotations>
@@ -81,6 +82,7 @@
 		securityObject="${securityObject}"
 		securityProviderClass="${securityProviderClass}"
 		selection="${selection}"
+		selectionOnModelChange="${selectionOnModelChange}"
 		showMaximize="${showMaximize}"
 		showMinimize="${showMinimize}"
 		showPopOut="${showPopOut}"

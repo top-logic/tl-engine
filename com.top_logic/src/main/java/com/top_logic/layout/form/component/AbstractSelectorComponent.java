@@ -27,8 +27,10 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.func.Function1;
+import com.top_logic.basic.func.IFunction2;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.ScriptFunction2;
 import com.top_logic.layout.VetoException;
 import com.top_logic.layout.basic.DirtyHandling;
 import com.top_logic.layout.basic.check.ChangeHandler;
@@ -95,6 +97,9 @@ public abstract class AbstractSelectorComponent extends FormComponent
 		 */
 		String TYPES = "types";
 
+		/** @see #getSelectionOnModelChange() */
+		String SELECTION_ON_MODEL_CHANGE = "selectionOnModelChange";
+
 		/**
 		 * Option how to display the selection.
 		 */
@@ -146,6 +151,21 @@ public abstract class AbstractSelectorComponent extends FormComponent
 		@Name(MULTIPLE)
 		boolean isMultiple();
 
+		/**
+		 * Computes the new selection of the component when the model of the component changes.
+		 * 
+		 * <p>
+		 * The function is called with the new model and the current selection.
+		 * </p>
+		 * 
+		 * <p>
+		 * When nothing is set, then the selection remains untouched on model change, i.e. it is
+		 * tried to reuse the current selection if possible.
+		 * </p>
+		 */
+		@Name(SELECTION_ON_MODEL_CHANGE)
+		ScriptFunction2<Object, Object, Object> getSelectionOnModelChange();
+
 	}
 
 	/**
@@ -188,6 +208,10 @@ public abstract class AbstractSelectorComponent extends FormComponent
 
 	private CommandHandler _onSelectionChange;
 
+	private boolean _modelChange;
+
+	private IFunction2<Object, Object, Object> _selectionOnModelChange;
+
 	/**
 	 * Creates a {@link AbstractSelectorComponent} from configuration.
 	 * 
@@ -200,6 +224,7 @@ public abstract class AbstractSelectorComponent extends FormComponent
 	public AbstractSelectorComponent(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
 		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_selectionOnModelChange = context.getInstance(config.getSelectionOnModelChange());
 	}
 
 	@Override
@@ -388,9 +413,23 @@ public abstract class AbstractSelectorComponent extends FormComponent
 	public boolean validateModel(DisplayContext context) {
 		boolean result = super.validateModel(context);
 
+		if (_modelChange) {
+			_modelChange = false;
+			if (_selectionOnModelChange != null) {
+				Object currentSelection = getSelected();
+				Object newSelection = _selectionOnModelChange.apply(getModel(), currentSelection);
+				setSelected(newSelection);
+			}
+		}
 		updateDefaultSelection();
 
 		return result;
+	}
+
+	@Override
+	protected void afterModelSet(Object oldModel, Object newModel) {
+		super.afterModelSet(oldModel, newModel);
+		_modelChange = true;
 	}
 
 	@Override

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model>
+	<module name="m0">
+		<datatype name="D"
+			db_type="varchar"
+			kind="String"
+		>
+			<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping"
+				application-type="java.lang.String"
+			/>
+		</datatype>
+
+		<class name="A">
+			<attributes>
+				<property name="a"
+					abstract="true"
+					type="D"
+				/>
+			</attributes>
+		</class>
+
+		<class name="B">
+			<attributes>
+				<property name="a"
+					override="true"
+					type="D"
+				/>
+			</attributes>
+			<generalizations>
+				<generalization type="A"/>
+			</generalizations>
+		</class>
+	</module>
+</model>

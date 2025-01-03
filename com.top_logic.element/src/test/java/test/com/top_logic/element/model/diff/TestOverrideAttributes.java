@@ -61,6 +61,29 @@ public class TestOverrideAttributes extends AbstractModelPatchTest {
 		assertFalse("Attribute override is not declared as 'abstract'.", ext2.getPartOrFail("b").isAbstract());
 	}
 
+	public void testMakeAttributeAbstract() {
+		TLModel model;
+		try (Transaction tx = kb().beginTransaction()) {
+			model = loadModel("test-make-abstract-left.model.xml");
+			tx.commit();
+		}
+		TLClass baseA = (TLClass) model.getModule("m0").getType("A");
+		TLClass baseB = (TLClass) model.getModule("m0").getType("B");
+		assertFalse(baseA.getPartOrFail("a").isAbstract());
+		assertFalse(baseB.getPartOrFail("a").isAbstract());
+
+		TLModel newModel = loadModelTransient("test-make-abstract-right.model.xml");
+		try (Transaction tx = kb().beginTransaction()) {
+			applyDiff(model, newModel);
+			tx.commit();
+		}
+
+		TLClass incrementedA = (TLClass) model.getModule("m0").getType("A");
+		TLClass incrementedB = (TLClass) model.getModule("m0").getType("B");
+		assertTrue(incrementedA.getPartOrFail("a").isAbstract());
+		assertFalse(incrementedB.getPartOrFail("a").isAbstract());
+	}
+
 	public static Test suite() {
 		return KBSetup.getSingleKBTest(TestOverrideAttributes.class);
 	}

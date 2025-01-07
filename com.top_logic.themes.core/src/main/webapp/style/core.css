@@ -1931,13 +1931,13 @@ span.ltcCounting input {
 	position: relative;
 }
 
-.previewBoxOuter:not(.galleryPreview) .previewBoxInner {
+.previewBoxOuter .previewBoxInner {
     display: inline-flex;
     justify-content: center;
     align-items: center;
     height: 50%;
     width: 50%;
-}
+} 
 
 span.card-img-top {
     height: 100%;
@@ -1967,19 +1967,11 @@ span.card-img-top {
 	font-size: 8rem;
 }
 
-.previewBoxOuter.galleryPreview .previewBoxInner {
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    width: 100%;
-}
-
+.previewBoxOuter.galleryPreview .previewBoxInner,
+.previewBoxOuter.tablePreview .previewBoxInner,
+.previewBoxOuter.documentPreview .previewBoxInner,
 .previewBoxOuter.galleryPreview .previewBoxInner .cImageDisplay {
-	display: inline-flex;
-	justify-content: center;
-	align-items: center;
-	height: 100%;
+    height: 100%;
     width: 100%;
 }
 

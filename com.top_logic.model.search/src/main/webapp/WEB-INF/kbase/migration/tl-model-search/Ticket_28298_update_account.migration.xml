@@ -63,6 +63,7 @@
 			</annotations>
 		</add-annotations>
 		<create-reference name="tl.accounts:Person#deputyFor"
+		    multiple="true"
 			navigate="true"
 			type="tl.accounts:GroupMember"
 		>

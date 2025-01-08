@@ -26,6 +26,7 @@ import org.apache.kafka.common.Metric;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.Uuid;
 import org.apache.kafka.common.errors.ProducerFencedException;
 
 import com.top_logic.basic.Logger;
@@ -339,6 +340,11 @@ public abstract class ProducerProxy<K, V> implements Producer<K, V>, KafkaHeader
 	 */
 	public Instant getLastSendTimestamp() {
 		return _lastSendTimestamp;
+	}
+
+	@Override
+	public Uuid clientInstanceId(Duration timeout) {
+		return getImpl().clientInstanceId(timeout);
 	}
 
 	/** A name for this producer, suitable for log messages. */

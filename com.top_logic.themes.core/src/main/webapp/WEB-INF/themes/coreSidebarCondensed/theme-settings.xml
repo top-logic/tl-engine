@@ -62,7 +62,7 @@
 		value="72"
 	/>
 	<int name="com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT"
-		value="28"
+		value="32"
 	/>
 	<int name="com.top_logic.layout.structure.Icons.FORM_COLUMN_GAP"
 		value="32"

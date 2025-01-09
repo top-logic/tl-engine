@@ -293,18 +293,6 @@ public class TransientTLObjectImpl extends TransientObject {
 	}
 
 	@Override
-	public Object tSetData(String property, Object value) {
-		Object oldValue = tGetData(property);
-		tUpdateByName(property, value);
-		return oldValue;
-	}
-
-	@Override
-	public Object tGetData(String property) {
-		return tValueByName(property);
-	}
-
-	@Override
 	public Object tValueByName(String partName) {
 		return tValue(tType().getPartOrFail(partName));
 	}

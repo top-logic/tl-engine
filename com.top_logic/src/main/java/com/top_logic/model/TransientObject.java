@@ -53,7 +53,17 @@ public abstract class TransientObject extends AbstractTLObject {
 
 	@Override
 	public void tUpdate(TLStructuredTypePart part, Object value) {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("Transient object can not be updated.");
+	}
+
+	@Override
+	public Object tGetData(String property) {
+		return null;
+	}
+
+	@Override
+	public Object tSetData(String property, Object value) {
+		throw new UnsupportedOperationException("Transient object can not be updated.");
 	}
 
 	/**

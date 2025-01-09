@@ -1033,6 +1033,10 @@ table td a.cDownload {
 	overflow: hidden;
 }
 
+.tl-table__cell :is(.lFlexible,.lFlexibleCustom) {
+	height: var(--table-row-height);
+}
+
 /* Use default width for select fields in title of
  frozen tables (e.g. needed for gallery edit dialog). */
 .tl-table__title span.lFlexible select {

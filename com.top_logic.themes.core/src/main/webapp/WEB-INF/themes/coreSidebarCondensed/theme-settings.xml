@@ -38,7 +38,7 @@
 		value="16"
 	/>
 	<int name="com.top_logic.layout.Icons.FILTER_DIALOG_WIDTH"
-		value="360"
+		value="380"
 	/>
 	<int name="QUICK_SEARCH_MAX_RESULTS"
 		value="40"

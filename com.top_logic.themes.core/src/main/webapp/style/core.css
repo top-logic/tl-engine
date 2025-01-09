@@ -448,7 +448,7 @@ div.fltHeader {
 .fltCommandContent {
 	text-align: center;
 	box-sizing: border-box;
-	padding: var(--spacing-03) var(--spacing-01) var(--spacing-02) var(--spacing-01);
+	padding: var(--spacing-03) var(--spacing-03) var(--spacing-02) var(--spacing-03);
 }
 
 .fltMenu {

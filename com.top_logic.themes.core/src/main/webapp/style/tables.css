@@ -623,10 +623,6 @@ td.fltButton {
 	position: relative;
 }
 
-.fltButtons .cButton {
-	padding: 0 var(--spacing-01);
-}
-
 .tl-table__header-cell-content .fltButton.tl-table__filter-sort-icons {
 	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
 	align-self: center;

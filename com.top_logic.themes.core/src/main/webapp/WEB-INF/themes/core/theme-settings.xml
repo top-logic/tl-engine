@@ -95,7 +95,7 @@
 		value="16"
 	/>
 	<int name="com.top_logic.layout.Icons.FILTER_DIALOG_WIDTH"
-		value="360"
+		value="460"
 	/>
 	<string name="MC_MINIMIZE_ICON"
 		value="url(/icons/minimizeNormal.svg)"

@@ -32,12 +32,14 @@ import com.top_logic.knowledge.service.Revision;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.layout.form.values.edit.initializer.UUIDInitializer;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.table.filter.AllCellsExist;
 import com.top_logic.layout.table.model.AbstractFieldProvider;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.ColumnConfiguration.DisplayMode;
+import com.top_logic.layout.table.model.ColumnContainer;
 import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.layout.table.model.TableConfigurationProvider;
 import com.top_logic.layout.table.provider.ColumnInfo;
@@ -76,6 +78,7 @@ public class DynamicColumnProviderByExpression
 		Config.COLUMN_VISIBILITY,
 		Config.ACCESSOR,
 		Config.UPDATER,
+		Config.GROUP_LABEL,
 		Config.ANNOTATIONS,
 	})
 	public interface Config<I extends DynamicColumnProviderByExpression>
@@ -115,6 +118,11 @@ public class DynamicColumnProviderByExpression
 		 * @see #getUpdater()
 		 */
 		String UPDATER = "updater";
+
+		/**
+		 * @see #getGroupLabel()
+		 */
+		String GROUP_LABEL = "group-label";
 
 		/**
 		 * Common technical prefix that is added to each technical column name of all columns
@@ -264,6 +272,17 @@ public class DynamicColumnProviderByExpression
 		@Name(COLUMN_VISIBILITY)
 		DisplayMode getColumnVisibility();
 
+		/**
+		 * Label of the group column.
+		 * 
+		 * <p>
+		 * When a group label is set, all dynamic columns are sorted into a group with this name.
+		 * </p>
+		 */
+		@Name(GROUP_LABEL)
+		@DisplayMinimized
+		ResKey getGroupLabel();
+
 	}
 
 	private static final Property<Object> COLUMN_MODEL = TypedAnnotatable.property(Object.class, "columnModel");
@@ -308,15 +327,27 @@ public class DynamicColumnProviderByExpression
 
 		DisplayMode displayMode = getConfig().getColumnVisibility();
 
+		ColumnContainer<ColumnConfiguration> columnGroup = null;
+
 		List<String> dynamicColumnNames = new ArrayList<>();
 		int id = 1;
-		String idPrefix = getConfig().getIdPrefix();
 		for (Object columnModel : columns) {
 			if (columnModel == null) {
 				continue;
 			}
-			String columnName = idPrefix + "-" + id(columnModel, id++);
-			ColumnConfiguration column = table.declareColumn(columnName);
+
+			if (id == 1 && withColumnGroup()) {
+				columnGroup = createColumnGroup(table);
+			}
+
+			String columnName = columnName(id(columnModel, id++));
+
+			ColumnConfiguration column;
+			if (columnGroup != null) {
+				column = columnGroup.declareColumn(columnName);
+			} else {
+				column = table.declareColumn(columnName);
+			}
 
 			dynamicColumnNames.add(columnName);
 
@@ -377,6 +408,20 @@ public class DynamicColumnProviderByExpression
 			dynamicColumnNames.removeAll(table.getDefaultColumns());
 			table.setDefaultColumns(CollectionUtil.concat(table.getDefaultColumns(), dynamicColumnNames));
 		}
+	}
+
+	private boolean withColumnGroup() {
+		return getConfig().getGroupLabel() != null;
+	}
+
+	private ColumnConfiguration createColumnGroup(TableConfiguration table) {
+		ColumnConfiguration groupColumn = table.declareColumn(columnName("group"));
+		groupColumn.setColumnLabelKey(getConfig().getGroupLabel());
+		return groupColumn;
+	}
+
+	private String columnName(String suffix) {
+		return getConfig().getIdPrefix() + "-" + suffix;
 	}
 
 	private String id(Object columnModel, int localId) {

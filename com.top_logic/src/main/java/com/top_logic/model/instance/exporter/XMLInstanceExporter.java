@@ -33,7 +33,6 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.TLType;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
 import com.top_logic.model.instance.importer.schema.AttributeValueConf;
 import com.top_logic.model.instance.importer.schema.GlobalRefConf;
@@ -57,11 +56,11 @@ public class XMLInstanceExporter {
 
 	private Map<TLObject, Integer> _exportIds = new HashMap<>();
 
-	private Map<TLType, String> _typeNames = new HashMap<>();
+	private Map<TLModelPart, String> _modelNames = new HashMap<>();
 
 	private Set<TLObject> _queue = new LinkedHashSet<>();
 
-	private Map<TLStructuredType, InstanceResolver> _resolvers;
+	private Map<TLStructuredType, InstanceResolver> _resolvers = new HashMap<>();
 
 	private Map<TLModelPart, Boolean> _excludedParts = new HashMap<>();
 
@@ -138,7 +137,7 @@ public class XMLInstanceExporter {
 	private void export(TLObject obj, Integer id) {
 		ObjectConf conf = TypedConfiguration.newConfigItem(ObjectConf.class);
 		conf.setId(id.toString());
-		conf.setType(typeName(obj));
+		conf.setType(typeName(obj.tType()));
 		_objects.getObjects().add(conf);
 
 		exportAttributes(conf.getAttributes(), obj);
@@ -236,7 +235,7 @@ public class XMLInstanceExporter {
 				InstanceResolver resolver = resolver(target.tType());
 				if (resolver != null) {
 					GlobalRefConf ref = TypedConfiguration.newConfigItem(GlobalRefConf.class);
-					ref.setKind(typeName(target));
+					ref.setKind(typeName(target.tType()));
 					ref.setId(resolver.buildId(target));
 					references.add(ref);
 				} else {
@@ -295,8 +294,8 @@ public class XMLInstanceExporter {
 		return null;
 	}
 
-	private String typeName(TLObject obj) {
-		return _typeNames.computeIfAbsent(obj.tType(), TLModelUtil::qualifiedName);
+	private String typeName(TLModelPart part) {
+		return _modelNames.computeIfAbsent(part, TLModelUtil::qualifiedName);
 	}
 
 	private String serialize(TLPrimitive type, Object value) throws IOException {

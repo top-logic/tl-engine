@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28298_add_group_member_options"
+		module="tl-model-search"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_28298_polymorphic_groups"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_27999_Multiple_composition_tables"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_28298_update_account"
+			module="tl-model-search"
+		/>
+	</dependencies>
+	<processors>
+		<remove-annotations name="tl.accounts:Group#members">
+			<annotation class="com.top_logic.element.config.annotation.TLOptions"/>
+		</remove-annotations>
+		<add-annotations name="tl.accounts:Group#members">
+			<annotations>
+				<options>
+					<options-by-expression>
+						<function><![CDATA[g -> all(`tl.accounts:Group`)
+    // Not the group itself
+    .filter(x -> $x != $g)
+    // No representative groups
+    .filter(x -> !$x.instanceOf(`tl.accounts:RepresentativeGroup`))
+    // Combined with all accounts
+    .union(all(`tl.accounts:Person`))]]></function>
+					</options-by-expression>
+				</options>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.accounts:RepresentativeGroup#members">
+			<annotations>
+				<options>
+					<options-by-expression>
+						<function><![CDATA[// All accounts
+g -> all(`tl.accounts:Person`)
+    // Excluding the one that is the owner of this representative group.
+    .filter(p -> !$g
+        .referers(`tl.accounts:Person#representativeGroup`)
+        .containsElement($p))]]></function>
+					</options-by-expression>
+				</options>
+			</annotations>
+		</add-annotations>
+	</processors>
+</migration>

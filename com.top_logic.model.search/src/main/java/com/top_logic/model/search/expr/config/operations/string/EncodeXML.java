@@ -36,7 +36,7 @@ public class EncodeXML extends GenericMethod {
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new GenerateSequenceId(getName(), arguments);
+		return new EncodeXML(getName(), arguments);
 	}
 
 	@Override
@@ -66,7 +66,7 @@ public class EncodeXML extends GenericMethod {
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<EncodeXML> {
 
-		/** Description of parameters for a {@link GenerateSequenceId}. */
+		/** Description of parameters for a {@link EncodeXML}. */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("input")
 			.build();

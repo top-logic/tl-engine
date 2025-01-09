@@ -38,8 +38,8 @@ import com.top_logic.knowledge.util.ItemByNameCache;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.WrapperNameComparator;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundObject;
@@ -61,20 +61,39 @@ public class Group extends AbstractBoundWrapper implements IGroup {
 	/** Full qualified name of the {@link TLType} of a {@link Group}. */
 	public static final String GROUP_TYPE = "tl.accounts:Group";
 
+	/** Full qualified name of the {@link TLType} of a representative {@link Group}. */
+	public static final String REPRESENTATIVE_GROUP_TYPE = "tl.accounts:RepresentativeGroup";
+
 	/**
 	 * Resolves {@link #GROUP_TYPE}.
 	 * 
 	 * @implNote Casts result of {@link TLModelUtil#resolveQualifiedName(String)} to
-	 *           {@link TLStructuredType}. Potential {@link ConfigurationException} are wrapped into
+	 *           {@link TLClass}. Potential {@link ConfigurationException} are wrapped into
 	 *           {@link ConfigurationError}.
 	 * 
-	 * @return The {@link TLStructuredType} representing the {@link Group}s.
+	 * @return The {@link TLClass} of {@link Group} objects.
 	 * 
 	 * @throws ConfigurationError
 	 *         iff {@link #GROUP_TYPE} could not be resolved.
 	 */
-	public static TLStructuredType getGroupType() throws ConfigurationError {
-		return (TLStructuredType) TLModelUtil.resolveQualifiedName(GROUP_TYPE);
+	public static TLClass getGroupType() throws ConfigurationError {
+		return (TLClass) TLModelUtil.resolveQualifiedName(GROUP_TYPE);
+	}
+
+	/**
+	 * Resolves {@link #REPRESENTATIVE_GROUP_TYPE}.
+	 * 
+	 * @implNote Casts result of {@link TLModelUtil#resolveQualifiedName(String)} to
+	 *           {@link TLClass}. Potential {@link ConfigurationException} are wrapped into
+	 *           {@link ConfigurationError}.
+	 * 
+	 * @return The {@link TLClass} of representative {@link Group} objects.
+	 * 
+	 * @throws ConfigurationError
+	 *         iff {@link #GROUP_TYPE} could not be resolved.
+	 */
+	public static TLClass getRepresentativeGroupType() throws ConfigurationError {
+		return (TLClass) TLModelUtil.resolveQualifiedName(REPRESENTATIVE_GROUP_TYPE);
 	}
 
     /** The KO attribute used to store the system Group flag. */

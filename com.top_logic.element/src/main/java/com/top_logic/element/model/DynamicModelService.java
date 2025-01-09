@@ -287,12 +287,12 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 
 	@Override
 	public Group createGroup() {
-		return (Group) createObject((TLClass) TLModelUtil.findType("tl.accounts:Group"));
+		return (Group) createObject(Group.getGroupType());
 	}
 
 	@Override
 	public Group createRepresentativeGroup() {
-		return (Group) createObject((TLClass) TLModelUtil.findType("tl.accounts:RepresentativeGroup"));
+		return (Group) createObject(Group.getRepresentativeGroupType());
 	}
 
 	/**

@@ -46,7 +46,7 @@ public class EncodeXML extends GenericMethod {
 
 	/**
 	 * Evaluates the XML encoding operation on the provided arguments. Converts the first argument
-	 * to a string and applies XML encoding using TagUtil.
+	 * to a string and applies XML encoding using {@link TagUtil}.
 	 *
 	 * @param arguments
 	 *        The array of arguments to evaluate, where arguments[0] is the string to encode
@@ -54,7 +54,6 @@ public class EncodeXML extends GenericMethod {
 	 *        The evaluation context
 	 * @return The XML-encoded string, with special characters (like < > & etc.) converted to their
 	 *         XML entities
-	 * @see TagUtil#encodeXML
 	 */
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {

@@ -29,10 +29,10 @@
 		expr="%com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT%"
 	/>
 	<int name="com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT"
-		value="48"
+		value="40"
 	/>
 	<string name="tabbar-height"
-		expr="calc(%com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT%px - 2 * var(--spacing-02))"
+		expr="calc(%com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT%px - var(--spacing-02) - var(--spacing-01))"
 	/>
 	<int name="com.top_logic.layout.form.control.Icons.TAB_COMPONENT_DEFAULT_TAB_HEIGHT"
 		value="40"

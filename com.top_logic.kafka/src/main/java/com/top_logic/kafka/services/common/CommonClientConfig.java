@@ -251,6 +251,9 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	/** @see #getMetricReporters() */
 	String METRIC_REPORTER_CLASSES_CONFIG = CommonClientConfigs.METRIC_REPORTER_CLASSES_CONFIG;
 
+	/** @see #getEnableMetricsPush() */
+	String ENABLE_METRICS_PUSH_CONFIG = CommonClientConfigs.ENABLE_METRICS_PUSH_CONFIG;
+
 	/** @see #getMetadataMaxAgeMS() */
 	String METADATA_MAX_AGE_CONFIG = CommonClientConfigs.METADATA_MAX_AGE_CONFIG;
 
@@ -323,6 +326,14 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	@Name(METRIC_REPORTER_CLASSES_CONFIG)
 	@KafkaClientProperty
 	String getMetricReporters();
+
+	/**
+	 * @see CommonClientConfigs#ENABLE_METRICS_PUSH_DOC
+	 */
+	@Name(ENABLE_METRICS_PUSH_CONFIG)
+	@BooleanDefault(false)
+	@KafkaClientProperty
+	boolean getEnableMetricsPush();
 
 	/**
 	 * @see CommonClientConfigs#METRICS_NUM_SAMPLES_DOC

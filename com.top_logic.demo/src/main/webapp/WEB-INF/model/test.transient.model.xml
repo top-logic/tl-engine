@@ -174,10 +174,39 @@
 			<attributes>
 				<property name="von"
 					type="tl.core:Date"
-				/>
+				>
+					<annotations>
+						<value-listeners>
+							<script>
+								<operation><![CDATA[setting -> newValue -> oldValue -> 
+  if ($newValue != null && $oldValue != null, {
+    currentUntil = $setting.get(`test.transient:SettingsForm#bis`);
+    if ($currentUntil != null, {
+      newUntilMillis = $currentUntil.toMillis() - $oldValue.toMillis() + $newValue.toMillis();
+      $setting.set(`test.transient:SettingsForm#bis`, $newUntilMillis.toDate());
+      info(#("Value of attribute ''{0}'' was adjusted to retain the currently set time period."@en, "Der Wert des Attributes ''{0}'' wurde angepasst um den gegenwärtig eingestellten Zeitraum beizubehalten."@de).fill(`test.transient:SettingsForm#bis`.label()));
+    })
+  })]]></operation>
+							</script>
+						</value-listeners>
+					</annotations>
+				</property>
 				<property name="bis"
 					type="tl.core:Date"
-				/>
+				>
+					<annotations>
+						<constraints>
+							<constraint-by-expression>
+								<check><![CDATA[value -> object -> if ($value == null, null, {
+  from = $object.get(`test.transient:SettingsForm#von`);
+  if ($from == null, null,
+    if ($from.isDateGreater($value), #("''{0}'' must not be less then ''{1}''"@en, "''{0}'' darf nicht kleiner sein als ''{1}''"@de).fill(`test.transient:SettingsForm#bis`, `test.transient:SettingsForm#von`), null)
+  )
+})]]></check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</property>
 				<property name="divisor"
 					type="tl.core:Integer"
 				/>

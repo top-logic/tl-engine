@@ -469,16 +469,17 @@ public class ExecutionEngine {
 		) {
 			Token nextToken = createActiveToken(processExecution, target, previousToken);
 
+			// Execute default operation once
+				SearchExpression defaultOperation =
+					processExecution.getProcess().getParticipant().getDefaultOperation();
+				if (defaultOperation != null) {
+					QueryExecutor.compile(defaultOperation).execute(processExecution, previousToken, nextToken,
+						additional);
+				}
+
 			for (Edge edge : path) {
 				if (edge instanceof SequenceFlow flow) {
-					// First do general operation
-					SearchExpression defaultOperation =
-						processExecution.getProcess().getParticipant().getDefaultOperation();
-					if (defaultOperation != null) {
-						QueryExecutor.compile(defaultOperation).execute(processExecution, previousToken, nextToken,
-							additional);
-					}
-					// Then handle any edge-specific operations
+					// Handle any edge-specific operations
 					SearchExpression operation = flow.getOperation();
 					if (operation != null) {
 						QueryExecutor.compile(operation).execute(processExecution, previousToken, nextToken,

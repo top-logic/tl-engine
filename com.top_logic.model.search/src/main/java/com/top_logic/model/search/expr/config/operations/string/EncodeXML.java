@@ -59,7 +59,7 @@ public class EncodeXML extends GenericMethod {
 	 */
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		return TagUtil.encodeXML(asString(arguments[0]));
+		return TagUtil.encodeXMLAttribute(asString(arguments[0]));
 	}
 
 	/**

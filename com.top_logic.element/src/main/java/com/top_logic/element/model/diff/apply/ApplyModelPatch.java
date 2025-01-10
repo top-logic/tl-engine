@@ -61,6 +61,7 @@ import com.top_logic.element.model.diff.config.RemoveAnnotation;
 import com.top_logic.element.model.diff.config.RemoveGeneralization;
 import com.top_logic.element.model.diff.config.RenamePart;
 import com.top_logic.element.model.diff.config.SetAnnotations;
+import com.top_logic.element.model.diff.config.UpdateAbstract;
 import com.top_logic.element.model.diff.config.UpdateBag;
 import com.top_logic.element.model.diff.config.UpdateMandatory;
 import com.top_logic.element.model.diff.config.UpdateMultiplicity;
@@ -302,6 +303,11 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		@Override
 		public Priority visit(UpdateOrdered diff, Void arg) throws RuntimeException {
 			return Priority.CHANGE_TYPE_PART_ORDERED;
+		}
+
+		@Override
+		public Priority visit(UpdateAbstract diff, Void arg) throws RuntimeException {
+			return Priority.CHANGE_TYPE_PART_ABSTRACT;
 		}
 
 		@Override
@@ -1483,6 +1489,46 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 			} else {
 				throw new UnsupportedOperationException("No update for '" + diff.getPart() + "' of type '"
 					+ part.getClass().getName() + "' possible.");
+			}
+		}
+		return null;
+	}
+
+	@Override
+	public Void visit(UpdateAbstract diff, Void arg) throws RuntimeException {
+		TLStructuredTypePart part;
+		try {
+			part = (TLStructuredTypePart) resolveQName(diff.getPart());
+		} catch (TopLogicException ex) {
+			log().info(
+				"Merge conflict: Updating abstract state of '" + diff.getPart() + "' to '" + diff.isAbstract()
+						+ "', but part does not exist.",
+				Log.WARN);
+			return null;
+		}
+		log().info("Updating abstract state of '" + diff.getPart() + "' to '" + diff.isAbstract() + "'.");
+		part.setAbstract(diff.isAbstract());
+
+		if (createProcessors()) {
+			if (part instanceof TLProperty) {
+				UpdateTLPropertyProcessor.Config config = newConfigItem(UpdateTLPropertyProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setAbstract(diff.isAbstract());
+				addProcessor(config);
+			} else if (part instanceof TLReference) {
+				UpdateTLReferenceProcessor.Config config = newConfigItem(UpdateTLReferenceProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setAbstract(diff.isAbstract());
+				addProcessor(config);
+			} else if (part instanceof TLAssociationEnd) {
+				UpdateTLAssociationEndProcessor.Config config =
+					newConfigItem(UpdateTLAssociationEndProcessor.Config.class);
+				config.setName(qTypePartName(diff.getPart()));
+				config.setAbstract(diff.isAbstract());
+				addProcessor(config);
+			} else {
+				throw new UnsupportedOperationException("No update for '" + diff.getPart() + "' of type '"
+						+ part.getClass().getName() + "' possible.");
 			}
 		}
 		return null;

@@ -850,19 +850,23 @@ public class AttributeOperations {
 			// Attribute already processed
 			return allListeners;
 		}
-		for (TLClassPart overridden : overriddenParts) {
-			allListeners =
-				addValueListenerConfigs(allListeners, processedParts, TLModelUtil.getOverriddenParts(overridden), overridden);
+
+		TLValueListeners annotation = attribute.getAnnotation(TLValueListeners.class);
+		if (annotation == null || !annotation.isIgnoreInherited()) {
+			/* Sort all inherited listeners before the local listeners. */
+			for (TLClassPart overridden : overriddenParts) {
+				allListeners = addValueListenerConfigs(allListeners, processedParts,
+					TLModelUtil.getOverriddenParts(overridden), overridden);
+			}
 		}
-		List<PolymorphicConfiguration<? extends ValueListener>> localAnnotatedValueListeners =
-			localAnnotatedValueListeners(attribute);
-		if (localAnnotatedValueListeners.isEmpty()) {
+		if (annotation == null) {
+			// No locally annotated listeners
 			return allListeners;
 		}
 		if (allListeners.isEmpty()) {
 			allListeners = new ArrayList<>();
 		}
-		allListeners.addAll(localAnnotatedValueListeners);
+		allListeners.addAll(annotation.getListeners());
 		return allListeners;
 	}
 

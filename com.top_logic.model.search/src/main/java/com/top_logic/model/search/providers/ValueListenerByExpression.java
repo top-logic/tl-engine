@@ -39,7 +39,7 @@ public class ValueListenerByExpression extends AbstractConfiguredInstance<ValueL
 		 * changes.
 		 * 
 		 * <p>
-		 * The operation gets four arguments: the object, the old field value, the new field value,
+		 * The operation gets four arguments: the object, the new field value, the old field value,
 		 * and the annotated attribute.
 		 * </p>
 		 */
@@ -67,7 +67,7 @@ public class ValueListenerByExpression extends AbstractConfiguredInstance<ValueL
 	public void valueChanged(FormField field, Object oldValue, Object newValue) {
 		AttributeUpdate update = AttributeFormFactory.getAttributeUpdate(field);
 		TLFormObject overlay = update.getOverlay();
-		_operation.execute(overlay, oldValue, newValue, update.getAttribute());
+		_operation.execute(overlay, newValue, oldValue, update.getAttribute());
 	}
 
 }

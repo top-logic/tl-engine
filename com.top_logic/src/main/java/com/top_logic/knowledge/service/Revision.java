@@ -10,12 +10,11 @@ import java.util.Set;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.dob.identifier.ObjectKey;
-import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.compare.AbstractAuthorAccessor;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.TransientObject;
 import com.top_logic.model.core.Author;
 import com.top_logic.model.core.TlCoreFactory;
 import com.top_logic.model.core.generated.RevisionBase;
@@ -276,26 +275,10 @@ public interface Revision extends RevisionBase, Comparable<Revision> {
 	 * @see Revision#INITIAL
 	 * @see Revision#CURRENT
 	 */
-	abstract class TransientRevision implements Revision {
-		@Override
-		public KnowledgeItem tHandle() {
-			throw new UnsupportedOperationException();
-		}
+	abstract class TransientRevision extends TransientObject implements Revision {
 
-		@Override
-		public boolean tValid() {
-			return true;
-		}
+		// No implementation here
 
-		@Override
-		public Object tSetData(String property, Object value) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public ObjectKey tId() {
-			return null;
-		}
 	}
 
 }

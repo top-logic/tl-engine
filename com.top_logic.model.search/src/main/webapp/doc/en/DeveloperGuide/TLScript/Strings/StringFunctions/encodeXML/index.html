@@ -1,0 +1,51 @@
+<h1>Syntax</h1>
+
+<pre>
+	<code>encodeXML(input: $stringToEncode)</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Converts special XML characters in a string into their corresponding XML entities to ensure safe use in XML content.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Standard</th>
+		</tr>
+		<tr>
+			<td>Input</td>
+			<td>String</td>
+			<td>The character string to be encoded, which may contain special XML characters.</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+	</thead>
+</table>
+
+<h2>Return value</h2>
+
+<p><strong>Type:</strong> String</p>
+
+<p>The XML-encoded string in which all special XML characters have been replaced by their corresponding entities.</p>
+
+<h2>Examples</h2>
+
+<pre>
+	<code>encodeXML("&lt;text&gt;test&lt;/text&gt;")
+</code>
+</pre>
+
+<p><strong>Output:</strong> &amp;lt;text&amp;gt;test&amp;lt;/text&amp;gt;</p>
+
+<p> </p>
+
+<p> </p>
+
+<p></p>

@@ -1,0 +1,51 @@
+<h1>​Syntax</h1>
+
+<pre>
+	<code>encodeXML(input: $stringToEncode)</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Wandelt spezielle XML-Zeichen in einem String in ihre entsprechenden XML-Entitäten um, um eine sichere Verwendung in XML-Inhalten zu gewährleisten.</p>
+
+<h2>Paramter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Bezeichnung</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Standard</th>
+		</tr>
+		<tr>
+			<td>input</td>
+			<td>String</td>
+			<td>Die zu kodierende Zeichenkette, die spezielle XML-Zeichen enthalten kann.</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+	</thead>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> String</p>
+
+<p>Der XML-kodierte String, in dem alle speziellen XML-Zeichen durch ihre entsprechenden Entitäten ersetzt wurden.</p>
+
+<h2>Beispiele</h2>
+
+<pre>
+	<code>encodeXML("&lt;text&gt;test&lt;/text&gt;")
+</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> &amp;lt;text&amp;gt;test&amp;lt;/text&amp;gt;</p>
+
+<p> </p>
+
+<p> </p>
+
+<p>​</p>

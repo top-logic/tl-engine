@@ -15,7 +15,9 @@ import com.nimbusds.oauth2.sdk.TokenIntrospectionSuccessResponse;
 import com.nimbusds.oauth2.sdk.auth.ClientSecretPost;
 import com.nimbusds.oauth2.sdk.auth.Secret;
 import com.nimbusds.oauth2.sdk.id.ClientID;
+import com.nimbusds.oauth2.sdk.id.Subject;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.service.openapi.common.authentication.oauth.ClientSecret;
 import com.top_logic.service.openapi.common.authentication.oauth.ServerCredentials;
@@ -62,7 +64,14 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 		if (!_inUserContext) {
 			return null;
 		}
-		return introspectionResponse.getUsername();
+		String username = introspectionResponse.getUsername();
+		if (StringServices.isEmpty(username)) {
+			Subject subject = introspectionResponse.getSubject();
+			if (subject != null) {
+				username = subject.getValue();
+			}
+		}
+		return username;
 	}
 	@Override
 	protected ClientSecretPost getClientAuth() {

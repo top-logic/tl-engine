@@ -6,6 +6,7 @@
 package com.top_logic.element.layout.grid;
 
 import static com.top_logic.basic.shared.collection.CollectionUtilShared.*;
+import static com.top_logic.mig.html.HTMLConstants.*;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -115,6 +116,7 @@ import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.NoSelectionModel;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.ChangeStateListener;
+import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
@@ -3929,9 +3931,20 @@ public class GridComponent extends EditComponent implements
 		@Override
 		public void write(DisplayContext context, TagWriter out, Object value) throws IOException {
 			if (value instanceof FormMember) {
-				this.controlProvider.createControl(value).write(context, out);
-				if (value instanceof FormField) {
-					new ErrorControl((FormField) value, true).write(context, out);
+				if (value instanceof FormField field) {
+					out.beginBeginTag(DIV);
+					out.beginCssClasses();
+					out.append("cDecoratedCell");
+					out.append(FormConstants.FLEXIBLE_CSS_CLASS);
+					out.endCssClasses();
+					out.endBeginTag();
+					{
+						this.controlProvider.createControl(value).write(context, out);
+						new ErrorControl(field, true).write(context, out);
+					}
+					out.endTag(DIV);
+				} else {
+					this.controlProvider.createControl(value).write(context, out);
 				}
 			} else {
 				this.defaultRenderer.write(context, out, value);

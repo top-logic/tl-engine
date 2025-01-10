@@ -60,8 +60,13 @@
 							type="hidden"
 							value="true"
 						/>
-						<button class="tlButton cButton cmdButton" name="startIndexButton" type="submit">
-							<h4 class="tlButtonLabel">Start Index</h4>
+						<button class="tlButton cButton cmdButton"
+							name="startIndexButton"
+							type="submit"
+						>
+							<h4 class="tlButtonLabel">
+								Start Index
+							</h4>
 						</button>
 					</form>
 					<form method="post">
@@ -69,10 +74,15 @@
 							type="hidden"
 							value="true"
 						/>
-						<button class="tlButton cButton cmdButton" name="stopIndexButton" type="submit">
-							<h4 class="tlButtonLabel">Stop Index</h4>
+						<button class="tlButton cButton cmdButton"
+							name="stopIndexButton"
+							type="submit"
+						>
+							<h4 class="tlButtonLabel">
+								Stop Index
+							</h4>
 						</button>
-					</form>				
+					</form>
 				</div>
 				<h2>
 					Rebuilding Search Index
@@ -86,8 +96,13 @@
 						value="true"
 					/>
 					<p>
-						<button class="tlButton cButton cmdButton" name="rebuildIndexButton" type="submit">
-							<h4 class="tlButtonLabel">Start rebuilding the index</h4>
+						<button class="tlButton cButton cmdButton"
+							name="rebuildIndexButton"
+							type="submit"
+						>
+							<h4 class="tlButtonLabel">
+								Start rebuilding the index
+							</h4>
 						</button>
 					</p>
 					(WARNING: this may take hours!)
@@ -142,8 +157,13 @@
 						</tr>
 					</table>
 					<p>
-						<button class="tlButton cButton cmdButton" name="startIndexing" type="submit">
-							<h4 class="tlButtonLabel">Start re-indexing</h4>
+						<button class="tlButton cButton cmdButton"
+							name="startIndexing"
+							type="submit"
+						>
+							<h4 class="tlButtonLabel">
+								Start re-indexing
+							</h4>
 						</button>
 					</p>
 					(WARNING: this may take hours!)

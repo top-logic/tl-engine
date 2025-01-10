@@ -9,9 +9,7 @@ Page to create a new element.
 cooperates with com.top_logic.element.layout.structured.StructuredElementCreateComponent.
 --%>
 <layout:html>
-	<layout:head>
-		
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<form:formPage
 			subtitleField="<%=StructuredElementCreateComponent.ELEMENT_TYPE %>"

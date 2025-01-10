@@ -2,6 +2,6 @@
 
 <settings>
 	<icon name="com.top_logic.layout.formeditor.parts.Icons.TOOLBOX_MACRO"
-		value="css:bi bi-terminal-fill"
+		value="css:fa-solid fa-terminal"
 	/>
 </settings>

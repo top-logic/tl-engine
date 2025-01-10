@@ -17,8 +17,7 @@ FormContext           theContext    = theComponent.getFormContext();
 Object                theModel      = theComponent.getModel();
 %><%@page import="com.top_logic.knowledge.wrap.AbstractWrapper"
 %><layout:html>
-	<layout:head>
-	</layout:head>
+	<layout:head/>
 	<layout:body>
 		<form:form>
 			<p>

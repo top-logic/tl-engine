@@ -132,7 +132,10 @@
       background-size: 96px 160px; } }
 
 .fotorama__thumb {
-  background-color: var(--layer-accent); }
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
+}
 
 @media print {
   .fotorama__arr, .fotorama__fullscreen-icon, .fotorama__video-play, .fotorama__video-close, .fotorama__thumb-border {

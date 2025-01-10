@@ -17,10 +17,10 @@ import com.top_logic.layout.basic.ThemeImage;
 @SuppressWarnings("javadoc")
 public class Icons extends IconsBase {
 
-	@DefaultValue("css:bi bi-plus-lg")
+	@DefaultValue("css:fa-solid fa-plus")
 	public static ThemeImage ADD_BUTTON;
 
-	@DefaultValue("css:bi bi-plus-lg")
+	@DefaultValue("css:fa-solid fa-plus")
 	public static ThemeImage ADD_BUTTON_DISABLED;
 
 }

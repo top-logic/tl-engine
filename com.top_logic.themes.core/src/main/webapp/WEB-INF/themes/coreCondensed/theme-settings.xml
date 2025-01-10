@@ -28,14 +28,11 @@
 	<size name="com.top_logic.layout.form.treetable.component.Icons.FROZEN_TREE_TABLE_TITLE_HEIGHT"
 		expr="%com.top_logic.layout.form.treetable.component.Icons.FROZEN_TABLE_TITLE_HEIGHT%"
 	/>
-	<int name="com.top_logic.layout.layoutRenderer.Icons.LAYOUT_ADJUSTMENT_GRABBER_COLLAPSED_SIZE"
-		value="16"
-	/>
 	<int name="com.top_logic.layout.layoutRenderer.Icons.LAYOUT_ADJUSTMENT_GRABBER_EXPANDED_SIZE"
 		value="16"
 	/>
 	<int name="com.top_logic.layout.Icons.FILTER_DIALOG_WIDTH"
-		value="360"
+		value="380"
 	/>
 	<int name="QUICK_SEARCH_MAX_RESULTS"
 		value="40"
@@ -47,13 +44,10 @@
 		value="40px"
 	/>
 	<int name="MAIN_LAYOUT_SIDE_BORDER"
-		value="16"
+		value="0"
 	/>
 	<int name="MAIN_NAVIGATION_BAR_HEIGHT"
-		value="32"
-	/>
-	<string name="MAIN_NAVIGATION_BREADCRUMB_HEADER_HEIGHT"
-		expr="%MAIN_NAVIGATION_BAR_HEIGHT%px"
+		value="24"
 	/>
 	<int name="MAINTAINANCE_BAR_HEIGHT"
 		expr="%MAIN_NAVIGATION_BAR_HEIGHT%"
@@ -61,14 +55,17 @@
 	<int name="TOOL_ROW_HEIGHT"
 		value="72"
 	/>
-	<int name="MAIN_TAB_BAR_HEIGHT"
-		expr="%com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT%"
-	/>
 	<int name="com.top_logic.layout.renderers.Icons.TABBAR_HEIGHT"
-		value="40"
+		value="32"
 	/>
-	<size name="tabbar-height"
-		value="32px"
+	<int name="com.top_logic.layout.structure.Icons.FORM_COLUMN_GAP"
+		value="32"
+	/>
+	<int name="com.top_logic.layout.structure.Icons.FORM_PADDING"
+		value="16"
+	/>
+	<int name="com.top_logic.layout.structure.Icons.FORM_INPUT_MIN_WIDTH"
+		value="200"
 	/>
 	<size name="com.top_logic.layout.structure.Icons.COLLAPSIBLE_IMAGE_WIDTH"
 		value="28px"
@@ -85,11 +82,8 @@
 	<size name="com.top_logic.layout.structure.Icons.DIALOG_VERTICAL_BORDER_WIDTH"
 		value="10px"
 	/>
-	<string name="com.top_logic.layout.structure.Icons.FORM_BREAKPOINTS"
-		value="[700, 1000, 1500, 2000, 2500]"
-	/>
 	<string name="spacing-01"
-		value=".25rem"
+		value=".125rem"
 	/>
 	<string name="spacing-02"
 		value=".25rem"
@@ -109,4 +103,11 @@
 	<string name="spacing-07"
 		value="3rem"
 	/>
+	<string name="form-line-height"
+		value="1.5rem"
+	/>
+	<int name="BREADCRUMB_HEIGHT_PX"
+		value="24"
+	/>
+	
 </settings>

@@ -15,7 +15,6 @@ import java.util.Map;
 import com.top_logic.base.services.simpleajax.ElementReplacement;
 import com.top_logic.base.services.simpleajax.JSFunctionCall;
 import com.top_logic.basic.CollectionUtil;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.IDBuilder;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.util.ResKey;
@@ -199,7 +198,7 @@ public class DropDownControl extends AbstractSelectControl {
 
 	private void addButtonEvents(TagWriter out) throws IOException {
 		out.beginAttribute(ONCLICK_ATTR);
-		addJSFunction(out, "buttonDrop", "this");
+		addJSFunction(out, "buttonDrop", "event", "this");
 		out.endAttribute();
 		out.beginAttribute(ONKEYDOWN_ATTR);
 		addJSFunction(out, "keyPressed", "event, " + isMultiple());
@@ -421,7 +420,7 @@ public class DropDownControl extends AbstractSelectControl {
 		xButton.endEmptyTag(context, out);
 	}
 
-	private void addJSFunction(TagWriter out, String function, String custom) throws IOException {
+	private void addJSFunction(TagWriter out, String function, String... args) throws IOException {
 		String jsClass = DROPDOWN_CONTROL_CLASS;
 		out.append("return ");
 		out.append(jsClass);
@@ -429,11 +428,21 @@ public class DropDownControl extends AbstractSelectControl {
 		out.append(function);
 		out.append("(");
 
-		if (custom != null) {
-			out.append(custom);
+		boolean first = true;
+		if (args != null) {
+			for (String custom : args) {
+				if (first) {
+					first = false;
+				} else {
+					out.append(", ");
+				}
+				out.append(custom);
+			}
 		}
 		if (showWait(this)) {
-			if (!StringServices.isEmpty(custom)) {
+			if (first) {
+				first = false;
+			} else {
 				out.append(", ");
 			}
 			out.append("true);");

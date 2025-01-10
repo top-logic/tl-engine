@@ -14,11 +14,9 @@
 						<storage-algorithm>
 							<implementation class="com.top_logic.model.wysiwyg.storage.StructuredTextAttributeStorage" />
 						</storage-algorithm>
-						<render-whole-line />
 					</annotations>
 				</datatype>
 			</types>
 		</module>
-
 	</modules>
 </model>

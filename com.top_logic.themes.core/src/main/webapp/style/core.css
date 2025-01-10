@@ -154,6 +154,16 @@ i[class*=" overlay-"] span::before {
 	margin-left: -1em;
 }
 
+.cMinimizable.mcMinimized::after {
+    content: '';
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    width: 1px;
+    bottom: 0px;
+    background-color: var(--resize-bar);
+}
+
 .layoutVerticalAdjustmentGrabber {
     cursor: ns-resize;
     background: var(--background);
@@ -272,7 +282,7 @@ a:not(.disabled):active {
 
 a:not(.disabled):focus {
     color: var(--highlight, var(--link-primary-hover));
-	outline: 1px solid var(--focus);
+	outline: 2px solid var(--focus);
 	outline-offset: 2px;
 }
 
@@ -346,6 +356,8 @@ a.cmdLink:visited {
 	height: var(--POPUP_TITLE_HEIGHT);
 	padding-left: 2px;
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 .pdlgToolbar {
@@ -362,11 +374,11 @@ a.cmdLink:visited {
 }
 
 .pdlgToolbar a {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .pdlgToolbar a:hover {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .pdlgTitle {
@@ -383,6 +395,8 @@ a.cmdLink:visited {
 	height: var(--POPUP_TITLE_HEIGHT);
 	padding-left: 2px;
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 .menuTitleContents {
@@ -434,7 +448,7 @@ div.fltHeader {
 .fltCommandContent {
 	text-align: center;
 	box-sizing: border-box;
-	padding: var(--spacing-03) var(--spacing-01) var(--spacing-02) var(--spacing-01);
+	padding: var(--spacing-03) var(--spacing-03) var(--spacing-02) var(--spacing-03);
 }
 
 .fltMenu {
@@ -456,7 +470,7 @@ hr {
 .sidebarFilterContainer .fToggle,
 .sidebarFilterContainer .fToggle:focus,
 .sidebarFilterContainer .fToggle:hover {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .sidebarFilterContainer .fltSubContent {
@@ -666,12 +680,16 @@ div.fltList {
     display: flex;
     align-items: center;
     gap: var(--spacing-01);
-    background: var(--layer-accent);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
     padding: 0 var(--spacing-03);
 }
 
 .sidebarFilterEntry.collapsibleFilterEntry {
-	background: var(--layer-accent);
+	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 }
 
 .sidebarFilterEntry.collapsibleFilterEntry:hover {
@@ -753,7 +771,7 @@ div.fltList {
 }
 
 .popupMenu a:hover .menuEntryCell .menuEntryImage {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .popupMenu a:focus {
@@ -907,6 +925,8 @@ div.dlgMaximized .input-image.dlgRestore {
 	cursor: move;
 	height: var(--DIALOG_TITLE_HEIGHT);
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 	padding: 0 var(--spacing-01);
 	box-sizing: border-box;
 }
@@ -942,12 +962,12 @@ div.dlgMaximized .input-image.dlgRestore {
 
 .dlgToolbar a,
 .dlgToolbar a:hover {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 	box-shadow: none;
 }
 
 .dlgToolbar a:focus {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .dlgBorderNE.dlgResizeNE {
@@ -1137,7 +1157,7 @@ div.selectbox li.selected a,
 div.selectbox .treeNode.treeSelected, 
 div.selectbox .treeNode.treeSelected a,
 div.selectbox .treeNode.treeSelected span {
-	color: var(--text-primary);
+	color: inherit;
 	cursor: default;
 	text-decoration: none;
 }
@@ -1199,7 +1219,7 @@ td.rightList {
 	color: var(--button-secondary);
 	background: transparent;
 	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
-	height: 2.3rem; /* 36.8px height */
+	height: var(--form-line-height);
 	padding: var(--spacing-02) var(--spacing-03);
 	border-radius: .25rem;
 	border: none;
@@ -1290,7 +1310,7 @@ td.rightList {
 .tl-mega-menu__option:hover .tl-mega-menu__option-icon,
 .tl-mega-menu__option:focus .tl-mega-menu__option-icon,
 .tl-mega-menu__option--selected .tl-mega-menu__option-icon {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .tl-mega-menu__option-text-container {
@@ -1805,10 +1825,23 @@ span.ltcCounting input {
 ****	Tiles Styles	****
 ****					****
 */
+.tileContainer {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	display: grid;
+	align-items: center;
+	justify-items: center;
+	padding: var(--spacing-05);
+	box-sizing: border-box;
+}
+
 .tileRow {
 	display: flex;
 	flex-wrap: wrap;
 	gap: var(--spacing-03);
+	justify-content: space-evenly;
+	width: 100%;
 }
 
 .tileContainer .tileNoCards {
@@ -1830,15 +1863,20 @@ span.ltcCounting input {
 	background: var(--layer);
 	border: 1px solid var(--border-subtle);
 	margin: var(--spacing-02) 0;
-	padding-bottom: var(--spacing-03);
 	min-width: 0px;
 	background-clip: border-box;
 	border-radius: var(--corner-radius);
-	height: 20rem;
 	width: 16rem;
 	overflow: hidden;
 	cursor: pointer;
 	position: relative;
+	border: var(--link-primary) 3px solid;
+	border-radius: 10px;
+	box-shadow: 0px 0px 5px 5px white;
+}
+
+.card:hover {
+	box-shadow: 0px 0px 3px 3px var(--link-primary);
 }
 
 .card:active {
@@ -1854,10 +1892,6 @@ span.ltcCounting input {
 	background-color: var(--layer-active);
 }
 
-.card:hover {
-	box-shadow: var(--shadow-menu);
-}
-
 .card .cButton {
 	position: absolute;
 	right: var(--spacing-03);
@@ -1869,7 +1903,7 @@ span.ltcCounting input {
     justify-content: center;
     align-items: center;
     width: 100%;
-    height: 80%;
+    min-height: 15rem;
     overflow: hidden;
     background: var(--background);
 }
@@ -1938,31 +1972,17 @@ span.card-img-top {
 h5.card-title {
 	order: 2;
 	flex-shrink: 0;
-	padding: var(--spacing-02) var(--spacing-03) 0 var(--spacing-03);
+	padding: var(--spacing-02) var(--spacing-03);
 	background: var(--layer);
 	margin: 0;
 	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
+	text-align: center;
+	line-height: 1.4rem;
+	font-size: 1.2rem;
 }
 
-h5.card-title a {
-	color: var(--text-primary);
-	font-family: var(--font-family);
-	font-weight: bold;
-	font-size: var(--heading-03-font-size);
-	line-height: var(--heading-03-line-height);
-	letter-spacing: var(--heading-03-letter-spacing);
-}
-
-h5.card-title a:hover {
-	color: var(--text-primary);
+h5.card-title > a:hover {
 	text-decoration: none;
-}
-
-h5.card-title a:focus {
-	color: var(--text-primary);
-	box-shadow: none;
 }
 
 .card-text {
@@ -1973,11 +1993,7 @@ h5.card-title a:focus {
 	line-height: var(--body-01-line-height);
 	letter-spacing: var(--body-01-letter-spacing);
 	background: var(--layer);
-	padding: 0 var(--spacing-03);
-	margin: 0;
-	overflow: hidden;
-	text-wrap: nowrap;
-	text-overflow: ellipsis;
+	padding: 0 var(--spacing-03) var(--spacing-02) var(--spacing-03);
 }
 
 .card-text > *,
@@ -2027,7 +2043,6 @@ h5.card-title a:focus {
 */
 .Header {
 	display: flex;
-	height: var(--MAIN_NAVIGATION_BREADCRUMB_HEADER_HEIGHT);
 	overflow: hidden;
 }
 
@@ -2036,7 +2051,7 @@ h5.card-title a:focus {
     align-self: flex-start;
     background: var(--layer);
     width: 100%;
-    padding: var(--spacing-02) 0;
+    line-height: var(--breadcrumb-height);
 }
 
 .BreadCrumbOuter .Left {
@@ -2059,6 +2074,25 @@ h5.card-title a:focus {
 .breadcrumb {
 	display: flex;
 	padding: 0 var(--spacing-02);
+}
+
+.breadcrumb a,
+.breadcrumb a:hover,
+.breadcrumb a:active,
+.breadcrumb a:focus,
+.breadcrumb a:visited,
+.treeBody a,
+.treeBody a:hover,
+.treeBody a:active,
+.treeBody a:focus,
+.treeBody a:visited,
+.cButton a,
+.cButton a:hover,
+.cButton a:active,
+.cButton a:focus,
+.cButton a:visited
+{
+	color: inherit;
 }
 
 .tl-table__title-label .breadcrumb {
@@ -2085,48 +2119,29 @@ h5.card-title a:focus {
 	align-items: center;
 }
 
-.breadcrumb .treeNode .selectableNode .breadcrumbNodeText {
-	color: var(--text-secondary);
-}
-
-.breadcrumb .treeSelected .selectableNode .breadcrumbNodeText {
-	color: var(--text-primary);
-}
-
 .breadcrumb .treeSelected .selectableNode .breadcrumbNodeIcon {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .breadcrumb .treeNode:not(.treeSelected) .selectableNode:hover .breadcrumbNodeText,
 .breadcrumb .treeNode:not(.treeSelected) .selectableNode:hover .breadcrumbNodeIcon {
-	color: var(--link-primary-hover);
 	text-decoration: underline;
 }
 
 .breadcrumb .treeNode:not(.treeSelected) .selectableNode:active .breadcrumbNodeText {
-    color: var(--text-primary);
 	text-decoration: underline;
 }
 
 .breadcrumb .treeNode:not(.treeSelected) .selectableNode:active .breadcrumbNodeIcon {
-    color: var(--icon-primary);
+    color: var(--button-fg, var(--icon-primary));
 }
 
 .breadcrumb .treeNode:not(.treeSelected) .selectableNode:focus {
-    color: var(--link-primary-hover);
 	outline-offset: -1px;
 }
 
 .breadcrumb .treeSelected .selectableNode:focus {
     text-decoration: none;
-}
-
-.breadcrumb .treeNode:not(.treeSelected) .selectableNode:focus .breadcrumbNodeText {
-    color: var(--text-secondary);
-}
-
-.breadcrumb .treeNode:not(.treeSelected) .selectableNode:focus .breadcrumbNodeIcon {
-    color: var(--icon-secondary);
 }
 
 .breadcrumb .treeSelected .selectableNode:focus {
@@ -2136,22 +2151,6 @@ h5.card-title a:focus {
 
 .breadcrumbNodeSeparator {
 	padding: 0 var(--spacing-02);
-}
-
-.breadcrumbNodeSeparator i {
-	color: var(--icon-secondary);
-}
-
-.breadcrumbNodeSeparator .fMenu i {
-	color: var(--icon-secondary);
-}
-
-.breadcrumbNodeSeparator .fMenu:hover i {
-	color: var(--icon-primary);
-}
-
-.breadcrumbNodeSeparator .fMenu:focus i {
-	color: var(--icon-secondary);
 }
 
 .breadcrumbNodeSeparator .fMenu:focus {
@@ -2198,20 +2197,13 @@ h5.card-title a:focus {
 	padding-right: var(--spacing-02);
 }
 
-.breadcrumbMenuVisible .breadcrumbNodeText {
-	color: var(--text-secondary);
-}
-
 .breadcrumbMenuVisible .breadcrumbMenuNode:hover {
 	background: var(--layer-hover);
-}
-
-.breadcrumbMenuVisible .breadcrumbMenuNode:hover .breadcrumbNodeText {
 	color: var(--text-primary);
 }
 
 .breadcrumbMenuVisible .breadcrumbMenuNode:hover .breadcrumbNodeIcon {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 /* Needs to be on active state because focus does not work on this div element. */
@@ -2255,7 +2247,7 @@ h5.card-title a:focus {
     display: flex;
     align-items: center;
     gap: var(--spacing-02);
-    height: 2rem;
+    height: var(--form-line-height);
     padding: 0 var(--spacing-02);
     position: relative;
 }
@@ -2265,7 +2257,6 @@ h5.card-title a:focus {
 }
 
 .tcrLink {
-	color: var(--text-secondary);
 	overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -2297,7 +2288,7 @@ h5.card-title a:focus {
 
 .treeNode.treeSelected .treeNodeIcon > i,
 .treeNode:hover .treeNodeIcon > i {
-	color: var(--highlight, var(--icon-primary));
+	color: var(--highlight, var(--button-fg, var(--icon-primary)));
 }
 
 .treeNode .fToggle,
@@ -2308,7 +2299,7 @@ h5.card-title a:focus {
 .treeNode.treeSelected .fToggle.tcrToggle,
 .tcrNode .treeNode:hover .treeNode .fToggle,
 .tcrNode .treeNode:hover .fToggle.tcrToggle {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .tcrNoSelect {
@@ -2320,28 +2311,18 @@ h5.card-title a:focus {
 	color: var(--icon-disabled);
 }
 
-.treeSelected .tcrLink {
-	color: var(--text-primary);
-}
-
 .tcrNode .treeNode:hover {
 	color: var(--text-primary);
 	background: var(--layer-hover);
 }
 
-.tcrNode .treeNode:hover .tcrLink {
-	color: var(--text-primary);
-}
-
 .tcrNode .treeNode.treeSelected {
+	color: var(--text-primary);
 	background: var(--layer-selected);
 }
 
-.tcrNode .treeNode.treeSelected .tcrLink {
-	color: var(--text-primary);
-}
-
 .tcrNode .treeNode.treeSelected:hover {
+	color: var(--text-primary);
 	background: var(--layer-selected-hover);
 }
 
@@ -2387,12 +2368,13 @@ div.treeNode.treeSelected.dndInsertInto {
 	align-items: center;
 	justify-content: space-between;
 	background-color: var(--layer-accent);
+	color: var(--layer-accent-text);
+	--button-fg: var(--layer-accent-icon);
 	gap: var(--spacing-02);
 	height: inherit;
 	overflow: hidden;
 	padding: var(--spacing-02) var(--spacing-03);
 	box-sizing: border-box;
-	border-bottom: 2px solid var(--border-subtle);
 }
 
 .cCollapsibleToolbar {
@@ -2405,7 +2387,7 @@ div.treeNode.treeSelected.dndInsertInto {
     font-size: var(--heading-compact-02-font-size);
     line-height: var(--heading-compact-02-line-height);
     letter-spacing: var(--heading-compact-02-letter-spacing);
-	color: var(--text-primary);
+	color: var(--text-inverse);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -2431,20 +2413,20 @@ div.treeNode.treeSelected.dndInsertInto {
 .cCollapsibleToolbar a:hover,
 .cToolbar a:hover,
 .tl-table__title-toolbar a:hover {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 	text-decoration: none;
 }
 
 .cCollapsibleToolbar a:focus,
 .cToolbar a:focus,
 .tl-table__title-toolbar a:focus {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 .cCollapsibleToolbar a,
 .cToolbar a,
 .tl-table__title-toolbar a {
-	color: var(--icon-primary);
+	color: var(--button-fg, var(--icon-primary));
 }
 
 /* for when the toolbar is collapsed */
@@ -2663,53 +2645,36 @@ div.ssiContentArea {
 
 /* ===== com.top_logic.layout.form.decorator.ChangeInfo ===== */
 
-.changeInfoNoChange {
-	display: flex;
+.changeInfo {
+	display: inline-flex;
 	align-items: center;
 }
 
-.changeInfoCreated {
-	display: flex;
-	align-items: center;
+.changeInfo.created {
 	color: green;
 }
 
-.changeInfoRemoved {
-	display: flex;
-	align-items: center;
+.changeInfo.removed {
 	color: red;
 }
 
-.changeInfoChanged {
-	display: flex;
-	align-items: center;
+.changeInfo.changed {
 	color: blue;
 }
 
-.changeInfoDeepChanged {
-	display: flex;
-	align-items: center;
+.changeInfo.deepChanged {
 	color: darkblue;
 }
 
-.changeInfoCreated img,
-.changeInfoRemoved img,
-.changeInfoChanged img, 
-.changeInfoDeepChanged img {
+.changeInfo img {
 	vertical-align: text-bottom;
 }
 
-.changeInfoCreated.form img,
-.changeInfoRemoved.form img,
-.changeInfoChanged.form img, 
-.changeInfoDeepChanged.form img {
+.changeInfo.form img {
 	padding-right: 5px;
 }
 
-.changeInfoCreated.table img,
-.changeInfoRemoved.table img,
-.changeInfoChanged.table img, 
-.changeInfoDeepChanged.table img {
+.changeInfo.table img {
 	padding-right: 0px;
 }
 
@@ -2719,7 +2684,7 @@ div.ssiContentArea {
 	align-items: center;
 	flex-shrink: 0;
 	gap: var(--spacing-02);
-	height: 2rem; /* 32px height */
+	height: var(--form-line-height);
 	padding: 0 var(--spacing-03);
 	border-radius: var(--corner-radius);
 	font-family: var(--font-family);

@@ -8,28 +8,25 @@
 		value="680"
 	/>
 	<icon name="ICONS_BUTTON_CANCEL"
-		value="css:bi bi-arrow-counterclockwise"
+		value="css:fa-solid fa-arrow-rotate-left"
 	/>
 	<icon name="ICONS_BUTTON_EXPERT"
-		value="css:bi bi-gear-fill"
+		value="css:fa-solid fa-gear"
 	/>
 	<icon name="ICONS_BUTTON_SEARCH"
-		value="css:bi bi-search"
+		value="css:fa-solid fa-magnifying-glass"
 	/>
 	<icon name="ICONS_COMMENT60"
 		value="/icons/Comment60.png"
 	/>
 	<icon name="GRID_CREATE_IMAGE"
-		value="css:bi bi-file-earmark-plus-fill"
+		value="css:fa-solid fa-file-circle-plus"
 	/>
 	<icon name="GRID_CREATE_IMAGE_DISABLED"
 		expr="%GRID_CREATE_IMAGE%"
 	/>
 	<icon name="ICONS_QUOTE48"
 		value="/icons/quote48.png"
-	/>
-	<icon name="ICON_PLUS"
-		value="css:bi bi-plus-lg"
 	/>
 	<icon name="MIMETYPES_MANDATOR"
 		value="/mimetypes/mandator.png"
@@ -62,22 +59,22 @@
 		value="/tree/proj/wp.png"
 	/>
 	<icon name="ICON_SHIELD"
-		value="css:bi bi-shield-fill-check"
+		value="css:fa-solid fa-shield"
 	/>
 	<icon name="com.top_logic.element.comment.layout.Icons.EDIT"
-		value="css:bi bi-pencil-square"
+		value="css:fa-solid fa-arrow-up-right-from-square"
 	/>
 	<icon name="com.top_logic.element.comment.layout.Icons.EDIT_DISABLED"
 		expr="%com.top_logic.element.comment.layout.Icons.EDIT%"
 	/>
 	<icon name="com.top_logic.element.comment.layout.Icons.QUOTE"
-		value="css:bi bi-chat-left-quote-fill"
+		value="css:fa-solid fa-message"
 	/>
 	<icon name="com.top_logic.element.comment.layout.Icons.QUOTE_DISABLED"
 		expr="%com.top_logic.element.comment.layout.Icons.QUOTE%"
 	/>
 	<icon name="com.top_logic.element.layout.formeditor.Icons.DELETE_FORM"
-		value="css:bi bi-trash3"
+		value="css:fa-solid fa-trash"
 	/>
 	<icon name="com.top_logic.element.layout.formeditor.Icons.DELETE_FORM_DISABLED"
 		expr="%com.top_logic.element.layout.formeditor.Icons.DELETE_FORM%"
@@ -89,16 +86,16 @@
 		value="colored:tl-icon form"
 	/>
 	<icon name="com.top_logic.element.layout.formeditor.Icons.DISCARD_CHANGES"
-		expr="css:bi bi-arrow-counterclockwise"
+		expr="css:fa-solid fa-arrow-rotate-left"
 	/>
 	<icon name="com.top_logic.element.layout.formeditor.Icons.DISCARD_CHANGES_DISABLED"
 		expr="%com.top_logic.element.layout.formeditor.Icons.DISCARD_CHANGES%"
 	/>
 	<icon name="com.top_logic.element.layout.formeditor.implementation.Icons.OTHER_ATTRIBUTES"
-		value="css:bi bi-three-dots-vertical"
+		expr="%com.top_logic.layout.toolbar.Icons.BUTTON_BURGER_MENU%"
 	/>
 	<icon name="CONFIGURE_TABS_ICON"
-		value="css:bi bi-window-split"
+		value="css:fa-solid fa-book-open"
 	/>
 	<icon name="com.top_logic.element.layout.formeditor.implementation.Icons.TABBAR"
 		expr="%CONFIGURE_TABS_ICON%"
@@ -110,7 +107,7 @@
 		expr="%com.top_logic.element.comment.layout.Icons.EDIT%"
 	/>
 	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_ICON"
-		value="css:bi bi-floppy2-fill"
+		value="css:fa-solid fa-floppy-disk"
 	/>
 	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_ICON_DISABLED"
 		expr="%com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_ICON%"
@@ -176,33 +173,33 @@
 		value="colored:tl-icon form-border-reset"
 	/>
 	<icon name="ICONS_BUTTON_MODEL_IMPORT"
-		value="css:bi bi-file-arrow-up-fill"
+		value="css:fa-solid fa-file-arrow-up"
 	/>
 	<icon name="com.top_logic.element.util.dbadmin.Icons.TABLE_TEMPLATE"
 		value="css:fas fa-stamp"
 	/>
 	<icon name="mime.com.top_logic.dob.schema.config.AlternativeConfig"
-		value="css:bi bi-bullseye"
+		value="css:fa-solid fa-bullseye"
 	/>
 	<icon name="mime.com.top_logic.dob.schema.config.MetaObjectConfig"
-		value="css:bi bi-table"
+		value="css:fa-solid fa-table-list"
 	/>
 	<icon name="mime.com.top_logic.dob.schema.config.AssociationConfig"
-		value="css:bi bi-arrows"
+		value="css:fa-solid fa-arrows-left-right"
 	/>
 	<icon name="mime.com.top_logic.dob.schema.config.PrimitiveAttributeConfig"
-		value="css:bi bi-stop-circle-fill"
+		value="css:fa-solid fa-circle-stop"
 	/>
 	<icon name="mime.com.top_logic.knowledge.KIReferenceConfig"
-		value="css:bi bi-link-45deg"
+		value="css:fa-solid fa-link"
 	/>
 	<icon name="mime.com.top_logic.knowledge.service.db2.DestinationReference"
-		value="css:bi bi-chevron-right"
+		value="css:fa-solid fa-chevron-right"
 	/>
 	<icon name="mime.com.top_logic.knowledge.service.db2.SourceReference"
-		value="css:bi bi-chevron-left"
+		value="css:fa-solid fa-chevron-left"
 	/>
 	<icon name="NEW_REFERENCE"
-		value="css:bi bi-link-45deg"
+		value="css:fa-solid fa-link"
 	/>
 </settings>

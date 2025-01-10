@@ -57,6 +57,11 @@ public class TooltipControl extends AbstractFormMemberControl implements Tooltip
 		requestRepaint();
 	}
 
+	@Override
+	protected String getTypeCssClass() {
+		return "cTooltip";
+	}
+
     @Override
 	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
         out.beginBeginTag(SPAN);

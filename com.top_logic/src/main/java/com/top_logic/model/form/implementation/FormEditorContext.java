@@ -5,7 +5,6 @@
  */
 package com.top_logic.model.form.implementation;
 
-import java.util.Objects;
 import java.util.function.Function;
 
 import com.top_logic.basic.config.ConfigurationItem;
@@ -15,8 +14,8 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.form.definition.FormDefinition;
-import com.top_logic.model.form.definition.LabelPlacement;
 
 /**
  * Context information passed to the template generation of {@link FormElementTemplateProvider}.
@@ -53,7 +52,7 @@ public class FormEditorContext {
 
 	private TLStructuredType _concreteType;
 
-	private LabelPlacement _labelPlacement;
+	private LabelPosition _labelPosition = LabelPosition.DEFAULT;
 
 	/**
 	 * The mode how the in-app form is displayed.
@@ -152,34 +151,29 @@ public class FormEditorContext {
 	}
 
 	/**
-	 * The {@link LabelPlacement} determining the line where the label must be rendered.
+	 * The {@link LabelPosition} determining the line where the label must be rendered.
 	 */
-	public LabelPlacement getLabelPlacement() {
-		return _labelPlacement;
+	public LabelPosition getLabelPosition() {
+		return _labelPosition;
 	}
 
 	/**
-	 * Executes the given {@link Function} with the given <code>labelPlacement</code> as
-	 * {@link #getLabelPlacement()}.
+	 * Executes the given {@link Function} with the given {@link LabelPosition} set.
 	 * 
-	 * @implNote When the given {@link LabelPlacement} is {@link LabelPlacement#DEFAULT}, the action
-	 *           is executed without changing the {@link #getLabelPlacement() label placement}.
+	 * @implNote When the given {@link LabelPosition} is {@link LabelPosition#DEFAULT}, the action
+	 *           is executed without changing the {@link #getLabelPosition() label placement}.
 	 * 
 	 * @param action
 	 *        The {@link Function} that should be able to access the given label placement in
-	 *        {@link #getLabelPlacement()}.
+	 *        {@link #getLabelPosition()}.
 	 */
-	public <T> T withLabelPlacement(LabelPlacement labelPlacement, Function<FormEditorContext, T> action) {
-		if (labelPlacement == LabelPlacement.DEFAULT) {
+	public <T> T withLabelPosition(LabelPosition labelPosition, Function<FormEditorContext, T> action) {
+		LabelPosition oldPlacement = _labelPosition;
+		_labelPosition = LabelPosition.nonNull(labelPosition);
+		try {
 			return action.apply(this);
-		} else {
-			LabelPlacement oldPlacement = _labelPlacement;
-			_labelPlacement = Objects.requireNonNull(labelPlacement);
-			try {
-				return action.apply(this);
-			} finally {
-				_labelPlacement = oldPlacement;
-			}
+		} finally {
+			_labelPosition = oldPlacement;
 		}
 	}
 
@@ -216,7 +210,7 @@ public class FormEditorContext {
 
 		private TLStructuredType _concreteType;
 
-		private LabelPlacement _labelPlacement = LabelPlacement.DEFAULT;
+		private LabelPosition _labelPosition = LabelPosition.DEFAULT;
 
 		/**
 		 * Empty context builder.
@@ -242,7 +236,7 @@ public class FormEditorContext {
 			this._domain = context._domain;
 			this._isLocked = context._isLocked;
 			this._concreteType = context._concreteType;
-			this._labelPlacement = context._labelPlacement;
+			this._labelPosition = context._labelPosition;
 		}
 
 		/**
@@ -363,10 +357,10 @@ public class FormEditorContext {
 		}
 
 		/**
-		 * @see FormEditorContext#getLabelPlacement()
+		 * @see FormEditorContext#getLabelPosition()
 		 */
-		public Builder labelPlacement(LabelPlacement labelPlacement) {
-			_labelPlacement = Objects.requireNonNull(labelPlacement);
+		public Builder labelPosition(LabelPosition labelPlacement) {
+			_labelPosition = labelPlacement;
 
 			return this;
 		}
@@ -390,7 +384,7 @@ public class FormEditorContext {
 			context._isLocked = this._isLocked;
 			context._domain = this._domain;
 			context._concreteType = this._concreteType;
-			context._labelPlacement = this._labelPlacement;
+			context._labelPosition = this._labelPosition;
 
 			return context;
 		}

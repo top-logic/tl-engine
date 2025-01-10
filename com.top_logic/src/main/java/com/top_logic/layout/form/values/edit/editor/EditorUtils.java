@@ -9,6 +9,7 @@ import static com.top_logic.layout.form.template.model.Templates.*;
 import static com.top_logic.layout.form.values.Fields.*;
 import static com.top_logic.layout.form.values.Values.*;
 
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.text.Format;
 import java.util.Collection;
@@ -32,10 +33,16 @@ import com.top_logic.basic.config.format.BuiltInFormats;
 import com.top_logic.basic.config.format.ClassFormat;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.html.template.HTMLTemplateFragment;
+import com.top_logic.layout.Control;
+import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.AbstractControlBase;
+import com.top_logic.layout.basic.AbstractVisibleControl;
 import com.top_logic.layout.basic.AttachListener;
 import com.top_logic.layout.basic.Command;
+import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.basic.TemplateVariable;
 import com.top_logic.layout.form.CheckException;
 import com.top_logic.layout.form.CollapsedListener;
 import com.top_logic.layout.form.Collapsible;
@@ -52,13 +59,15 @@ import com.top_logic.layout.form.model.BooleanField;
 import com.top_logic.layout.form.model.CommandField;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.template.model.MemberStyle;
+import com.top_logic.layout.form.template.model.internal.TemplateRenderer;
 import com.top_logic.layout.form.values.Value;
 import com.top_logic.layout.form.values.edit.EditorFactory;
-import com.top_logic.layout.form.values.edit.Icons;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.ValueModel;
 import com.top_logic.layout.table.ConfigKey;
+import com.top_logic.layout.template.WithProperties;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
@@ -435,17 +444,119 @@ public class EditorUtils {
 	 */
 	public static HTMLTemplateFragment titleWithCollapseAndRemove(HTMLTemplateFragment iconTemplate,
 			HTMLTemplateFragment titleContent, CharSequence additionalCSS) {
-		String cssClass = "dfEntryTitle";
-		if (!StringServices.isEmpty(additionalCSS)) {
-			cssClass += " " + additionalCSS;
-		}
-		return div(css(cssClass),
-			span(css(FormConstants.FLEXIBLE_CSS_CLASS), titleContent),
-			span(css(FormConstants.FIXED_RIGHT_CSS_CLASS),
-				member(LIST_REMOVE)),
-			span(css("dfListCollapseIcon"), iconTemplate));
+
+		return new HTMLTemplateFragment() {
+			@Override
+			public void write(DisplayContext context, TagWriter out, WithProperties properties) throws IOException {
+				new ListEntryControl(properties, iconTemplate, titleContent, additionalCSS).write(context, out);
+			}
+		};
 	}
 	
+	/**
+	 * Title area of a list entry.
+	 */
+	public static class ListEntryControl extends AbstractVisibleControl {
+
+		private static final ControlCommand TOGGLE = new ControlCommand("toggle") {
+
+			@Override
+			public ResKey getI18NKey() {
+				return com.top_logic.layout.form.boxes.reactive_tag.I18NConstants.TOGGLE;
+			}
+
+			@Override
+			protected HandlerResult execute(DisplayContext commandContext, Control control,
+					Map<String, Object> arguments) {
+				((ListEntryControl) control).toggle();
+				return HandlerResult.DEFAULT_RESULT;
+			}
+		};
+
+		private static final Map<String, ControlCommand> COMMANDS = createCommandMap(TOGGLE);
+
+		private final WithProperties _properties;
+
+		private final HTMLTemplateFragment _iconTemplate;
+
+		private final HTMLTemplateFragment _titleContent;
+
+		private final CharSequence _additionalCSS;
+
+		/**
+		 * Creates a {@link ListEntryControl}.
+		 */
+		public ListEntryControl(WithProperties properties, HTMLTemplateFragment iconTemplate,
+				HTMLTemplateFragment titleContent, CharSequence additionalCSS) {
+			super(COMMANDS);
+			_properties = properties;
+			_iconTemplate = iconTemplate;
+			_titleContent = titleContent;
+			_additionalCSS = additionalCSS;
+		}
+
+		private void toggle() {
+			FormGroup group = (FormGroup) TemplateRenderer.model(_properties);
+			FormGroup itemGroup = (FormGroup) group.getMember(EditorUtils.LIST_ITEM_GROUP);
+			itemGroup.setCollapsed(!itemGroup.isCollapsed());
+		}
+
+		@Override
+		public Object getModel() {
+			return _properties;
+		}
+
+		@Override
+		protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
+			Icons.LIST_ENTRY_TEMPLATE.get().write(context, out, this);
+		}
+
+		/**
+		 * The header CSS class.
+		 */
+		@TemplateVariable("cssClass")
+		public String getCssClass() {
+			String cssClass = "dfEntryTitle";
+			if (!StringServices.isEmpty(_additionalCSS)) {
+				cssClass += " " + _additionalCSS;
+			}
+			return cssClass;
+		}
+
+		/**
+		 * The script collapsing or expanding the entry when the header is clicked.
+		 */
+		@TemplateVariable("onclick")
+		public void writeOnClick(TagWriter out) throws IOException {
+			TOGGLE.writeInvokeExpression(out, this);
+		}
+
+		/**
+		 * The content of the entry title.
+		 */
+		@TemplateVariable("titleContent")
+		public void writeTitleContent(DisplayContext context, TagWriter out) throws IOException {
+			_titleContent.write(context, out, _properties);
+		}
+
+		/**
+		 * The button to remove this entry from the list.
+		 */
+		@TemplateVariable("removeButton")
+		public void writeRemoveButton(DisplayContext context, TagWriter out) throws IOException {
+			member(LIST_REMOVE).write(context, out, _properties);
+		}
+
+		/**
+		 * The explicit toggle button of this entry.
+		 */
+		@TemplateVariable("toggleButton")
+		public void writeToggleButton(DisplayContext context, TagWriter out) throws IOException {
+			_iconTemplate.write(context, out, _properties);
+		}
+
+	}
+
 	/**
 	 * Creates a {@link HTMLTemplateFragment} to render an list entry title with a
 	 * {@link #LIST_REMOVE remove} command on the right side.
@@ -475,7 +586,8 @@ public class EditorUtils {
 	 */
 	public static CommandField addRemoveButton(FormContainer container, Command removeCommand,
 			Value<Boolean> invisible) {
-		CommandField removeButton = button(container, LIST_REMOVE, Icons.REMOVE_ICON, removeCommand);
+		CommandField removeButton =
+			button(container, LIST_REMOVE, com.top_logic.layout.form.values.edit.Icons.REMOVE_ICON, removeCommand);
 		removeButton.setControlProvider(Buttons.REMOVE_BUTTON);
 		Value<Boolean> parentImmutable = or(invisible, isImmutable(container));
 		bindLabel(removeButton, literal(I18NConstants.REMOVE_ELEMENT));

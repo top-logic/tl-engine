@@ -1,11 +1,14 @@
 <div id="{id}"
-	class="is-control {canInspectClass} rf_groupCell {collapsed ? 'collapsed'} {cssClass} {wholeLine ? 'rf_line tl-overflow--auto'} {rows > 1 ? 'rf_spanRow' + rows} {!hasBorder ? 'noBorder'} {!hasLegend ? 'noLegend'}"
+	class="is-control {canInspectClass} rf_groupCell {collapsed ? 'collapsed'} {cssClass} {wholeLine ? 'rf_line'} {rows > 1 ? 'rf_spanRow' + rows} {!hasBorder ? 'noBorder'} {!hasLegend ? 'noLegend'}"
 	style="{width ? 'width: ' + width + '; '}{style}"
 	draggable="{draggable}"
 	data-id="{dataId}"
 >
 	<tl:if test="hasLegend || collapsible || hasMenu">
-		<div class="rf_header">
+		<div class="rf_header"
+			onclick="{onclick}"
+			ondblclick="{ondblclick}"
+		>
 			<tl:if test="hasLegend">
 				{title}
 			</tl:if>

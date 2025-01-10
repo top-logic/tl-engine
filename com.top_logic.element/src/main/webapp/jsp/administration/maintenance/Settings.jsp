@@ -22,8 +22,6 @@
 		<basic:cssLink/>
 	</layout:head>
 
-	
-
 	<layout:body>
 		<basic:access>
 			<%
@@ -352,8 +350,13 @@
 								&#xA0;If checked, the resources will be reloaded also while applying the changes.
 								<br/>
 								<br/>
-								<button class="tlButton cButton cmdButton" name="SUBMIT" type="submit">
-									<h4 class="tlButtonLabel">Apply</h4>
+								<button class="tlButton cButton cmdButton"
+									name="SUBMIT"
+									type="submit"
+								>
+									<h4 class="tlButtonLabel">
+										Apply
+									</h4>
 								</button>
 								<input name="done"
 									type="hidden"

@@ -54,6 +54,7 @@ import com.top_logic.mig.html.DefaultResourceProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLMimeTypes;
@@ -458,18 +459,20 @@ public class FormPageTag extends PageAreaTag implements FormTagProperties {
 	 * 
 	 * @param labelAbove
 	 *        If <code>true</code> label is rendered above, else it will be rendered before.
+	 * @deprecated Use {@link #setLabelPosition(LabelPosition)}
 	 */
+	@Deprecated
+	@CalledFromJSP
 	public void setLabelAbove(Boolean labelAbove) {
 		_formTag.setLabelAbove(labelAbove);
 	}
 
 	/**
-	 * Returns whether the label is rendered above the content.
-	 * 
-	 * @return If <code>true</code> label is rendered above, else it will be rendered before.
+	 * Sets the default {@link LabelPosition} for the whole form.
 	 */
-	public Boolean getLabelAbove() {
-		return _formTag.getLabelAbove();
+	@CalledFromJSP
+	public void setLabelPosition(LabelPosition value) {
+		_formTag.setLabelPosition(value);
 	}
 
 	@Override

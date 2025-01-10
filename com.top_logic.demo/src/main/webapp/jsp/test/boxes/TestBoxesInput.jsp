@@ -5,24 +5,23 @@
 %><%@page import="com.top_logic.layout.form.boxes.reactive_tag.GroupCellTag"
 %><%@page import="com.top_logic.gui.ThemeFactory"
 %><%@page import="com.top_logic.util.Resources"
+%><%@page import="com.top_logic.model.annotate.LabelPosition"
 %><%@page language="java" extends="com.top_logic.util.TopLogicJspBase"
 %><%@taglib uri="ajaxform" prefix="form"
 %><%@taglib uri="layout" prefix="layout"
 %><layout:html>
 	<layout:head/>
 	<layout:body>
-		
-
 		<form:form>
 			Testing input elements in box layout.
 			<form:columns count="2">
 				<form:groupCell name="<%=TestBoxesComponent.GROUP1_GROUP %>"
 					columns="2"
-					labelAbove="false"
+					labelPosition="<%=LabelPosition.INLINE%>"
 				>
 					<form:inputCell name="<%=TestBoxesComponent.STRING_FIELD %>"/>
 					<form:inputCell name="<%=TestBoxesComponent.BOOLEAN_FIELD %>"
-						labelFirst="false"
+						labelPosition="<%=LabelPosition.AFTER_VALUE%>"
 					/>
 
 					<form:inputCell name="<%=TestBoxesComponent.DATE_FIELD %>"/>
@@ -36,7 +35,7 @@
 
 				<form:groupCell
 					columns="2"
-					labelAbove="true"
+					labelPosition="<%=LabelPosition.ABOVE%>"
 					personalizationName="bar"
 				>
 					<form:cellTitle raw="true">
@@ -45,7 +44,7 @@
 								colon="false"
 							/>
 						</span>
-						
+
 						<span class="dfToolbar">
 							<form:scope name="<%=TestBoxesComponent.GROUP2_GROUP %>">
 								<form:command name="<%=TestBoxesComponent.RESET_BUTTON %>"

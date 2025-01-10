@@ -2,18 +2,15 @@
 
 <settings>
 	<icon name="ICON_FILE_IMPORT"
-		value="css:bi bi-file-arrow-up-fill"
-	/>
-	<icon name="ICON_PLUS"
-		value="css:bi bi-plus-lg"
+		value="css:fa-solid fa-file-arrow-up"
 	/>
 	<icon name="THEME_EXPORT"
-		value="css:bi bi-upload"
+		value="css:fa-solid fa-upload"
 	/>
 	<icon name="THEME_IMPORT"
-		value="css:bi bi-download"
+		value="css:fa-solid fa-download"
 	/>
 	<icon name="com.top_logic.layout.themeedit.browser.providers.resources.Icons.FONT"
-		value="css:bi bi-fonts"
+		value="css:fa-solid fa-font"
 	/>
 </settings>

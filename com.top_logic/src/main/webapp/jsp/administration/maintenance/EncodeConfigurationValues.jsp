@@ -108,8 +108,13 @@ contentType="text/html; charset=UTF-8"
 					</tr>
 				</table>
 				<p>
-					<button class="tlButton cButton cmdButton" name="SUBMIT" type="submit">
-						<h4 class="tlButtonLabel">Encode / Decode</h4>
+					<button class="tlButton cButton cmdButton"
+						name="SUBMIT"
+						type="submit"
+					>
+						<h4 class="tlButtonLabel">
+							Encode / Decode
+						</h4>
 					</button>
 				</p>
 			</form>

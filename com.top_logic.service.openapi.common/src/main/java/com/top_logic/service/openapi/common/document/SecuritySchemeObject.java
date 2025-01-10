@@ -10,6 +10,7 @@ import java.lang.invoke.MethodHandles.Lookup;
 import java.net.URL;
 import java.util.Map;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.URLFormat;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
@@ -39,6 +40,7 @@ import com.top_logic.service.openapi.common.authentication.apikey.APIKeyPosition
 	SecuritySchemeObject.IN,
 	SecuritySchemeObject.FLOWS,
 	SecuritySchemeObject.X_TL_IN_USER_CONTEXT,
+	SecuritySchemeObject.X_TL_USERNAME_FIELD,
 })
 public interface SecuritySchemeObject extends Described {
 
@@ -68,6 +70,9 @@ public interface SecuritySchemeObject extends Described {
 
 	/** Configuration name for the value of {@link #isInUserContext()}. */
 	String X_TL_IN_USER_CONTEXT = "x-tl-in-user-context";
+
+	/** Configuration name for the value of {@link #getUsernameField()}. */
+	String X_TL_USERNAME_FIELD = "x-tl-username-field";
 
 	/**
 	 * Name of the security schema.
@@ -183,13 +188,31 @@ public interface SecuritySchemeObject extends Described {
 	boolean isInUserContext();
 
 	/**
+	 * Name of the field in a token introspection response, that holds the user name.
+	 * 
+	 * <p>
+	 * Only relevant when operations are executed in user context.
+	 * </p>
+	 * 
+	 * @see #isInUserContext()
+	 */
+	@Name(X_TL_USERNAME_FIELD)
+	@Label("Username field")
+	String getUsernameField();
+
+	/**
 	 * Marks this {@link SecuritySchemeObject} to be {@link #isInUserContext()}.
 	 * 
 	 * @param inUserContext
 	 *        See {@link #isInUserContext()}.
+	 * @param usernameField
+	 *        See {@link #getUsernameField()}.
 	 */
-	default void setUserContext(boolean inUserContext) {
+	default void setUserContext(boolean inUserContext, String usernameField) {
 		update(descriptor().getProperty(X_TL_IN_USER_CONTEXT), inUserContext);
+		if (!StringServices.isEmpty(usernameField)) {
+			update(descriptor().getProperty(X_TL_USERNAME_FIELD), usernameField);
+		}
 	}
 
 }

@@ -30,7 +30,6 @@ import com.top_logic.element.layout.formeditor.builder.TypedForm;
 import com.top_logic.element.layout.formeditor.builder.TypedFormDefinition;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
@@ -152,10 +151,6 @@ public class DefaultPDFExportCommand extends AbstractCommandHandler {
 		@Name(PDF_NAME)
 		@Format(TextWithEmbeddedExpressionsFormat.class)
 		Expr getPDFName();
-
-		@Override
-		@FormattedDefault(TARGET_MODEL_SELF)
-		ModelSpec getTarget();
 
 		@Override
 		@FormattedDefault("tl.command.defaultPDFExport")

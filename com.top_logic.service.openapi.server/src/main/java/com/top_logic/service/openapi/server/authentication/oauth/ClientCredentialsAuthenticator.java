@@ -42,6 +42,8 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 
 	private boolean _inUserContext;
 
+	private String _usernameField;
+
 	/**
 	 * Creates a new {@link ClientCredentialsAuthenticator}.
 	 */
@@ -50,6 +52,7 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 		_secret = secret;
 		_uriProvider = TypedConfigUtil.createInstance(config.getURIProvider());
 		_inUserContext = _config.isInUserContext();
+		_usernameField = _config.getUsernameField();
 	}
 
 	@Override
@@ -67,11 +70,16 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 		if (!_inUserContext) {
 			return null;
 		}
-		String username = introspectionResponse.getUsername();
-		if (StringServices.isEmpty(username)) {
-			Subject subject = introspectionResponse.getSubject();
-			if (subject != null) {
-				username = subject.getValue();
+		String username;
+		if (!StringServices.isEmpty(_usernameField)) {
+			username = introspectionResponse.getStringParameter(_usernameField);
+		} else {
+			username = introspectionResponse.getUsername();
+			if (StringServices.isEmpty(username)) {
+				Subject subject = introspectionResponse.getSubject();
+				if (subject != null) {
+					username = subject.getValue();
+				}
 			}
 		}
 		if (StringServices.isEmpty(username)) {
@@ -80,7 +88,9 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 				new AuthenticationFailure(I18NConstants.NO_USERNAME_IN_INTROSPECTION_RESPONSE);
 			authenticationFailure.setResponseEnhancer((response, failure, path) -> {
 				String noUserName = "No username available when accessing API '" + path + "'.";
-				Logger.warn(noUserName + " Response: " + jsonString, ClientCredentials.class);
+				String usernameField = !StringServices.isEmpty(_usernameField) ? _usernameField : "username";
+				Logger.warn(noUserName + " Fieldname: " + usernameField + ". Response: " + jsonString,
+					ClientCredentials.class);
 
 				AuthorizationUtil.setBearerAuthenticationRequestHeader(response, "invalid_token", noUserName);
 				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, noUserName);

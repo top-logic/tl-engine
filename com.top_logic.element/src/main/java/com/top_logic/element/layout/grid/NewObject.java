@@ -102,11 +102,6 @@ public final class NewObject extends TransientObject implements TLNamed {
 		return super.tValue(part);
 	}
 
-	@Override
-	public Object tGetData(String property) {
-		return null;
-	}
-
 	/**
 	 * Actually creates the persistent object from this transient {@link NewObject} template.
 	 * 

@@ -353,6 +353,7 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 	 *             {@link CommandHandlerUtil#getTargetModel(CommandHandler, LayoutComponent, Map)}.
 	 */
 	@Override
+	@Deprecated
 	public Object getTargetModel(LayoutComponent component, Map<String, Object> arguments) {
 		return baseModel(component);
 	}

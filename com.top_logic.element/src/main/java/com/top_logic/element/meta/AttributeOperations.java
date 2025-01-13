@@ -29,6 +29,9 @@ import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.col.LazyListUnmodifyable;
 import com.top_logic.basic.col.filter.FilterFactory;
 import com.top_logic.basic.col.map.MultiMaps;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.shared.collection.map.MappedIterator;
@@ -71,12 +74,14 @@ import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.knowledge.wrap.list.FastList;
 import com.top_logic.layout.form.FormContextProxy;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.model.utility.DefaultListOptionModel;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLClassPart;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLFormObjectBase;
@@ -98,6 +103,7 @@ import com.top_logic.model.annotate.TLFullTextRelevant;
 import com.top_logic.model.annotate.TLRange;
 import com.top_logic.model.annotate.TLSearchRange;
 import com.top_logic.model.annotate.TLSize;
+import com.top_logic.model.annotate.TLValueListeners;
 import com.top_logic.model.annotate.ui.BooleanDisplay;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPresentation;
@@ -798,6 +804,82 @@ public class AttributeOperations {
 			return targetTypeAnnotation.getValue();
 		}
 		return null;
+	}
+
+	/**
+	 * Determines all {@link ValueListener} relevant for the given {@link TLStructuredTypePart}.
+	 * This includes also the {@link ValueListener} annotated to the overridden parts.
+	 * 
+	 * @see TLValueListeners
+	 */
+	public static List<? extends ValueListener> getValueListeners(TLStructuredTypePart attribute) {
+		InstantiationContext context = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY;
+		List<PolymorphicConfiguration<? extends ValueListener>> configs =
+			AttributeOperations.getValueListenerConfigs(attribute);
+		return TypedConfiguration.getInstanceList(context, configs);
+	}
+
+	/**
+	 * Determines all {@link ValueListener} configurations relevant for the given
+	 * {@link TLStructuredTypePart}. This includes also the {@link ValueListener} annotated to the
+	 * overridden parts.
+	 * 
+	 * @see #getValueListeners(TLStructuredTypePart)
+	 */
+	public static List<PolymorphicConfiguration<? extends ValueListener>> getValueListenerConfigs(
+			TLStructuredTypePart attribute) {
+		Set<TLClassPart> overriddenParts;
+		if (attribute instanceof TLClassPart classPart) {
+			overriddenParts = TLModelUtil.getOverriddenParts(classPart);
+		} else {
+			overriddenParts = Collections.emptySet();
+		}
+		if (overriddenParts.isEmpty()) {
+			return localAnnotatedValueListeners(attribute);
+		}
+		return addValueListenerConfigs(Collections.emptyList(), new HashSet<>(), overriddenParts,
+			(TLClassPart) attribute);
+	}
+
+	private static List<PolymorphicConfiguration<? extends ValueListener>> addValueListenerConfigs(
+			List<PolymorphicConfiguration<? extends ValueListener>> allListeners,
+			Set<TLClassPart> processedParts, Set<TLClassPart> overriddenParts,
+			TLClassPart attribute) {
+		boolean isNew = processedParts.add(attribute);
+		if (!isNew) {
+			// Attribute already processed
+			return allListeners;
+		}
+
+		TLValueListeners annotation = attribute.getAnnotation(TLValueListeners.class);
+		if (annotation == null || !annotation.isIgnoreInherited()) {
+			/* Sort all inherited listeners before the local listeners. */
+			for (TLClassPart overridden : overriddenParts) {
+				allListeners = addValueListenerConfigs(allListeners, processedParts,
+					TLModelUtil.getOverriddenParts(overridden), overridden);
+			}
+		}
+		if (annotation == null) {
+			// No locally annotated listeners
+			return allListeners;
+		}
+		if (allListeners.isEmpty()) {
+			allListeners = new ArrayList<>();
+		}
+		allListeners.addAll(annotation.getListeners());
+		return allListeners;
+	}
+
+	private static List<PolymorphicConfiguration<? extends ValueListener>> localAnnotatedValueListeners(
+			TLStructuredTypePart attribute) {
+		TLValueListeners annotation = attribute.getAnnotation(TLValueListeners.class);
+		List<PolymorphicConfiguration<? extends ValueListener>> localListeners;
+		if (annotation == null) {
+			localListeners = Collections.emptyList();
+		} else {
+			localListeners = annotation.getListeners();
+		}
+		return localListeners;
 	}
 
 	public static String getFolderType(TLModelPart modelPart) {

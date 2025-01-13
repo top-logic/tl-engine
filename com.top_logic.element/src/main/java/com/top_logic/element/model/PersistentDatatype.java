@@ -30,54 +30,6 @@ import com.top_logic.model.impl.util.TLPrimitiveColumns;
 public class PersistentDatatype extends DynamicType implements TLPrimitive, TLPrimitiveColumns {
 
 	/**
-	 * Column that stores {@link #getKind()}.
-	 * 
-	 * @deprecated Use {@link TLPrimitiveColumns#KIND_ATTR} instead
-	 */
-	public static final String KIND_ATTR = TLPrimitiveColumns.KIND_ATTR;
-
-	/**
-	 * The table to store {@link PersistentDatatype}s in.
-	 * @deprecated Use {@link TLPrimitiveColumns#OBJECT_TYPE} instead
-	 */
-	public static final String OBJECT_TYPE = TLPrimitiveColumns.OBJECT_TYPE;
-
-	/**
-	 * Column that stores {@link #getDBType()}.
-	 * 
-	 * @deprecated Use {@link TLPrimitiveColumns#DB_TYPE_ATTR} instead
-	 */
-	public static final String DB_TYPE_ATTR = TLPrimitiveColumns.DB_TYPE_ATTR;
-
-	/**
-	 * Column that stores {@link #getDBSize()}.
-	 * 
-	 * @deprecated Use {@link TLPrimitiveColumns#DB_SIZE_ATTR} instead
-	 */
-	public static final String DB_SIZE_ATTR = TLPrimitiveColumns.DB_SIZE_ATTR;
-
-	/**
-	 * Column that stores {@link #getDBPrecision()}.
-	 * 
-	 * @deprecated Use {@link TLPrimitiveColumns#DB_PRECISION_ATTR} instead
-	 */
-	public static final String DB_PRECISION_ATTR = TLPrimitiveColumns.DB_PRECISION_ATTR;
-
-	/**
-	 * Column that stores {@link #isBinary()}.
-	 * 
-	 * @deprecated Use {@link TLPrimitiveColumns#BINARY_ATTR} instead
-	 */
-	public static final String BINARY_ATTR = TLPrimitiveColumns.BINARY_ATTR;
-
-	/**
-	 * Column that stores {@link #getStorageMapping()}.
-	 * 
-	 * @deprecated Use {@link TLPrimitiveColumns#STORAGE_MAPPING} instead
-	 */
-	public static final String STORAGE_MAPPING = TLPrimitiveColumns.STORAGE_MAPPING;
-
-	/**
 	 * Creates a {@link PersistentDatatype} for a given {@link KnowledgeObject}.
 	 */
 	public PersistentDatatype(KnowledgeObject ko) {

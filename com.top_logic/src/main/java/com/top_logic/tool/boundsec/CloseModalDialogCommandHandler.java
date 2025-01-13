@@ -75,17 +75,6 @@ public class CloseModalDialogCommandHandler extends AbstractSystemCommand {
 			handlerResult.setCloseDialog(false);
 		}
 	}
-    
-    /**
-	 * TODO #2829: Delete TL 6 deprecation
-	 * 
-	 * @see LayoutComponent#closeDialog()
-	 * 
-	 * @deprecated Use {@link LayoutComponent#closeDialog()}
-	 */
-    public static void closeDialog(LayoutComponent aDialog) {
-		aDialog.closeDialog();
-	}
 
 	@Override
 	@Deprecated

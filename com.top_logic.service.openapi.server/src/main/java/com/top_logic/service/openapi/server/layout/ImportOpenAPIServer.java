@@ -17,7 +17,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.ConfigurationError;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.ConfigurationErrorProtocol;
 import com.top_logic.basic.config.ConfigurationException;
@@ -157,7 +156,7 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 				if (value.isInUserContext()) {
 					authentication.setInUserContext(true);
 					String usernameField = value.getUsernameField();
-					if (!StringServices.isEmpty(usernameField)) {
+					if (usernameField != null) {
 						authentication.setUsernameField(usernameField);
 					}
 				}
@@ -168,7 +167,7 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 				if (value.isInUserContext()) {
 					authentication.setInUserContext(true);
 					String usernameField = value.getUsernameField();
-					if (!StringServices.isEmpty(usernameField)) {
+					if (usernameField != null) {
 						authentication.setUsernameField(usernameField);
 					}
 				}

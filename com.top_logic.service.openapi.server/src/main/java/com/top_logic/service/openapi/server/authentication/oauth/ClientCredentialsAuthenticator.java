@@ -71,7 +71,7 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 			return null;
 		}
 		String username;
-		if (!StringServices.isEmpty(_usernameField)) {
+		if (_usernameField != null) {
 			username = introspectionResponse.getStringParameter(_usernameField);
 		} else {
 			username = introspectionResponse.getUsername();

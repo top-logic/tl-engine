@@ -15,8 +15,13 @@ import com.nimbusds.oauth2.sdk.TokenIntrospectionSuccessResponse;
 import com.nimbusds.oauth2.sdk.auth.ClientSecretPost;
 import com.nimbusds.oauth2.sdk.auth.Secret;
 import com.nimbusds.oauth2.sdk.id.ClientID;
+import com.nimbusds.oauth2.sdk.id.Subject;
 
+import com.top_logic.base.accesscontrol.AuthorizationUtil;
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.service.openapi.common.authentication.oauth.ClientCredentials;
 import com.top_logic.service.openapi.common.authentication.oauth.ClientSecret;
 import com.top_logic.service.openapi.common.authentication.oauth.ServerCredentials;
 import com.top_logic.service.openapi.common.authentication.oauth.TokenURIProvider;
@@ -37,6 +42,8 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 
 	private boolean _inUserContext;
 
+	private String _usernameField;
+
 	/**
 	 * Creates a new {@link ClientCredentialsAuthenticator}.
 	 */
@@ -45,6 +52,7 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 		_secret = secret;
 		_uriProvider = TypedConfigUtil.createInstance(config.getURIProvider());
 		_inUserContext = _config.isInUserContext();
+		_usernameField = _config.getUsernameField();
 	}
 
 	@Override
@@ -62,7 +70,34 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 		if (!_inUserContext) {
 			return null;
 		}
-		return introspectionResponse.getUsername();
+		String username;
+		if (_usernameField != null) {
+			username = introspectionResponse.getStringParameter(_usernameField);
+		} else {
+			username = introspectionResponse.getUsername();
+			if (StringServices.isEmpty(username)) {
+				Subject subject = introspectionResponse.getSubject();
+				if (subject != null) {
+					username = subject.getValue();
+				}
+			}
+		}
+		if (StringServices.isEmpty(username)) {
+			String jsonString = introspectionResponse.toJSONObject().toJSONString();
+			AuthenticationFailure authenticationFailure =
+				new AuthenticationFailure(I18NConstants.NO_USERNAME_IN_INTROSPECTION_RESPONSE);
+			authenticationFailure.setResponseEnhancer((response, failure, path) -> {
+				String noUserName = "No username available when accessing API '" + path + "'.";
+				String usernameField = !StringServices.isEmpty(_usernameField) ? _usernameField : "username";
+				Logger.warn(noUserName + " Fieldname: " + usernameField + ". Response: " + jsonString,
+					ClientCredentials.class);
+
+				AuthorizationUtil.setBearerAuthenticationRequestHeader(response, "invalid_token", noUserName);
+				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, noUserName);
+			});
+			throw authenticationFailure;
+		}
+		return username;
 	}
 	@Override
 	protected ClientSecretPost getClientAuth() {

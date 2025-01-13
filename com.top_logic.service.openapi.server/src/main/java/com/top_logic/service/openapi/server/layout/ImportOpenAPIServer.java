@@ -155,6 +155,10 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 				ServerCredentials authentication = createOAuth2Authentication(ServerCredentials.class, value, warnings);
 				if (value.isInUserContext()) {
 					authentication.setInUserContext(true);
+					String usernameField = value.getUsernameField();
+					if (usernameField != null) {
+						authentication.setUsernameField(usernameField);
+					}
 				}
 				return authentication;
 			}
@@ -162,6 +166,10 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 				ServerCredentials authentication = createOpenIDConnectAuthentication(ServerCredentials.class, value);
 				if (value.isInUserContext()) {
 					authentication.setInUserContext(true);
+					String usernameField = value.getUsernameField();
+					if (usernameField != null) {
+						authentication.setUsernameField(usernameField);
+					}
 				}
 				return authentication;
 			}

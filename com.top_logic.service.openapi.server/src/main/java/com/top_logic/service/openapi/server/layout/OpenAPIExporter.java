@@ -680,7 +680,7 @@ public class OpenAPIExporter {
 				throw new UnsupportedOperationException();
 			}
 			if (config.isInUserContext()) {
-				securityScheme.setUserContext(true);
+				securityScheme.setUserContext(true, config.getUsernameField());
 			}
 			return securityScheme;
 		}

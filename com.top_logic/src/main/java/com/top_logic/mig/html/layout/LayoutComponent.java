@@ -3152,6 +3152,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
      *         used for the component).
      * @deprecated command parameters are not prefixed anymore
      */
+	@Deprecated
     public static String getPrefixedCommandParameterName(String aCommandParameterName) {
         return COMMAND_PREFIX + aCommandParameterName;
     }

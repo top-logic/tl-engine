@@ -343,6 +343,8 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 					};
 					field.addConstraint(constraint);
 				}
+
+				addAnnotatedListeners(field, attribute);
 			}
 			return result;
 		}
@@ -350,6 +352,10 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 		Logger.error("No form field available for attribute '" + attribute + "'.",
 			DefaultAttributeFormFactory.class);
 		return null;
+	}
+
+	private void addAnnotatedListeners(FormField field, TLStructuredTypePart attribute) {
+		AttributeOperations.getValueListeners(attribute).forEach(field::addValueListener);
 	}
 
 	public static OptionModel<?> getOptionList(final EditContext editContext, final LabelProvider theProv,

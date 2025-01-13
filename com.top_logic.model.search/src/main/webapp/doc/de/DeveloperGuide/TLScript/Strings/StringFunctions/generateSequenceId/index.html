@@ -1,0 +1,54 @@
+<h2>​Syntax</h2>
+
+<pre>
+	<code>generateSequenceId(sequence: $sequenceIdentifier, context:$additionalContext)</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Generiert die nächste Nummer in einer Sequenz basierend auf einem Sequenz-Identifier und einem optionalen Kontext. Falls noch keine Sequenz für diese Kombination aus Identifier und Kontext existiert, wird automatisch eine neue Sequenz angelegt, die bei 1 startet.</p>
+
+<h2>Paramter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Bezeichnung</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Standard</th>
+		</tr>
+		<tr>
+			<td>sequence</td>
+			<td>String</td>
+			<td>Der Sequenz-Identifier, der die Basis für die Sequenz bildet.</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>context</td>
+			<td>Fachobjekt</td>
+			<td>Ein optionaler Kontext-Parameter, der die Sequenz weiter spezifiziert. Mehrere Kontexte werden durch Unterstriche getrennt. Der Kontext kann ein einzelnes Objekt, eine Collection oder ein TLObject sein.</td>
+			<td>nein</td>
+			<td> </td>
+		</tr>
+	</thead>
+</table>
+
+<h2> </h2>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Double</p>
+
+<p>Gibt die nächste Nummer in der Sequenz zurück. Bei der ersten Verwendung einer neuen Sequenz wird 1 zurückgegeben.</p>
+
+<h2>Beispiele</h2>
+
+<pre>
+	<code>generateSequenceId("myCustomSequenceId", $context)
+</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> Beginnt bei 1 und inkrementiert bei jedem Aufruf um 1 (1, 2, 3, 4, ...)</p>

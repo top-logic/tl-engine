@@ -42,9 +42,6 @@ import com.top_logic.model.util.TLModelUtil;
  * 
  * Note: This method modifies the database and should not be used in read-only queries.
  * 
- * Example usage: - generateSequenceId("invoice", null) -> uses sequence "invoice_SequenceId" -
- * generateSequenceId("invoice", "dept_A") -> uses sequence "invoice_dept_A_SequenceId"
- * 
  * @author <a href="mailto:jhu@top-logic.com">Jonathan Hüsing</a>
  */
 public class GenerateSequenceId extends GenericMethod {

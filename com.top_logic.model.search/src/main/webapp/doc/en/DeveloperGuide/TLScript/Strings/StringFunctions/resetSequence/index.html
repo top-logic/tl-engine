@@ -3,7 +3,7 @@
 <p> </p>
 
 <pre>
-	<code>resetSequenceId(sequence: $sequenceIdentifier, context: $additionalContext, newValue: $valueToResetTo)</code>
+	<code>resetSequence(sequence: $sequenceIdentifier, context: $additionalContext, newValue: $valueToResetTo)</code>
 </pre>
 
 <h2>Description</h2>
@@ -62,13 +62,13 @@
 <h2>Examples</h2>
 
 <pre>
-	<code>resetSequenceId($existingSequence)</code>
+	<code>resetSequence($existingSequence)</code>
 </pre>
 
 <p><strong>Output:</strong> true</p>
 
 <pre>
-	<code>resetSequenceId($existingSequence, null, 1000)
+	<code>resetSequence($existingSequence, null, 1000)
 generateSequenceId($existingSequence)</code>
 </pre>
 

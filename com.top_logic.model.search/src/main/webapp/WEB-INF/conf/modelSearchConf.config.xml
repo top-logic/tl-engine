@@ -356,7 +356,9 @@
 					<method name="translate" class="com.top_logic.model.search.expr.config.operations.string.Translate$Builder"/>
 					<method name="internationalize" class="com.top_logic.model.search.expr.config.operations.string.Internationalize$Builder"/>
 					<method name="localize" class="com.top_logic.model.search.expr.config.operations.string.Localize$Builder"/>
-
+ 					<method name="generateSequenceId" class="com.top_logic.model.search.expr.config.operations.string.GenerateSequenceId$Builder"/>
+					<method name="resetSequence" class="com.top_logic.model.search.expr.config.operations.string.ResetSequence$Builder"/>
+					
 					<method name="binary" class="com.top_logic.model.search.expr.config.operations.binary.Binary$Builder"/>
 					<method name="zipArchive" class="com.top_logic.model.search.expr.config.operations.binary.ZipArchive$Builder"/>
 					<method name="zipEntry" class="com.top_logic.model.search.expr.config.operations.binary.ZipEntry$Builder"/>

@@ -702,6 +702,10 @@
 							max="10.0"
 							min="-10.0"
 						/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.IntegerInputTagProvider"/>
+						<column-info>
+							<editControlProvider class="com.top_logic.layout.form.control.IntegerInputControl$Provider"/>
+						</column-info>
 					</annotations>
 				</property>
 				<reference name="responsible"

@@ -274,84 +274,92 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 				if (annotation != null) {
 					List<ConstraintCheck> checks = TypedConfiguration.getInstanceList(
 						SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, annotation.getConstraints());
-					Constraint constraint = new Constraint() {
-						private Collection<FormField> _dependencies = Collections.emptyList();
-
-						@Override
-						public Collection<FormField> reportDependencies() {
-							return _dependencies;
-						}
-
-						@Override
-						public boolean check(Object value) throws CheckException {
-							// Lazily initialize dependencies, since the are not yet available
-							// at the time, the field is constructed. Moreover, the dependencies
-							// must be updated whenever a new check occurs, since the test
-							// expression may access other fields depending on the values received.
-							// The simplest example is boolean evaluation, where the second
-							// condition of an and condition is only evaluated, if the first
-							// condition yields true.
-							Set<FormField> newDependencies = computeDependencies();
-
-							Collection<FormField> oldDependencies = _dependencies;
-							for (FormField dependency : oldDependencies) {
-								if (!newDependencies.contains(dependency)) {
-									dependency.removeDependant(field);
-								}
-							}
-							for (FormField dependency : newDependencies) {
-								if (!oldDependencies.contains(dependency)) {
-									dependency.addDependant(field);
-								}
-							}
-							_dependencies = newDependencies;
-
-							for (FormField dependency : _dependencies) {
-								if (!dependency.hasValue()) {
-									return false;
-								}
-							}
-
-							TLObject object = updateContainer.getOverlay(update);
-							for (ConstraintCheck check : checks) {
-								ResKey failure = check.check(object, attribute);
-								if (failure != null) {
-									throw new CheckException(Resources.getInstance().getString(failure));
-								}
-							}
-							return true;
-						}
-
-						private Set<FormField> computeDependencies() {
-							HashSet<FormField> dependencies = new HashSet<>();
-							TLObject object = updateContainer.getOverlay(update);
-							for (ConstraintCheck dependency : checks) {
-								dependency.traceDependencies(object, attribute, p -> {
-									AttributeUpdate other = updateContainer.getAttributeUpdate(p.attribute(), p.object());
-									if (other == null) {
-										return;
-									}
-									
-									FormMember otherMember = updateContainer.getFormContext().getMember(other);
-									if (otherMember instanceof FormField && otherMember != field) {
-										dependencies.add((FormField) otherMember);
-									}
-								});
-							}
-							return dependencies;
-						}
-					};
-					field.addConstraint(constraint);
+					for (ConstraintCheck check : checks) {
+						field.addConstraint(toFormConstraint(update, updateContainer, field, check));
+					}
 				}
 
 				addAnnotatedListeners(field, attribute);
 			}
+			
 			return result;
 		}
 
 		Logger.error("No form field available for attribute '" + attribute + "'.",
 			DefaultAttributeFormFactory.class);
 		return null;
+	}
+
+	private Constraint toFormConstraint(AttributeUpdate update, final AttributeUpdateContainer updateContainer,
+			FormField field, ConstraintCheck check) {
+		Constraint constraint = new Constraint() {
+			private Collection<FormField> _dependencies = Collections.emptyList();
+
+			@Override
+			public Collection<FormField> reportDependencies() {
+				return _dependencies;
+			}
+
+			@Override
+			public boolean check(Object value) throws CheckException {
+				// Lazily initialize dependencies, since the are not yet available
+				// at the time, the field is constructed. Moreover, the dependencies
+				// must be updated whenever a new check occurs, since the test
+				// expression may access other fields depending on the values
+				// received.
+				// The simplest example is boolean evaluation, where the second
+				// condition of an and condition is only evaluated, if the first
+				// condition yields true.
+				Set<FormField> newDependencies = computeDependencies();
+
+				Collection<FormField> oldDependencies = _dependencies;
+				for (FormField dependency : oldDependencies) {
+					if (!newDependencies.contains(dependency)) {
+						dependency.removeDependant(field);
+					}
+				}
+				for (FormField dependency : newDependencies) {
+					if (!oldDependencies.contains(dependency)) {
+						dependency.addDependant(field);
+					}
+				}
+				_dependencies = newDependencies;
+
+				for (FormField dependency : _dependencies) {
+					if (!dependency.hasValue()) {
+						return false;
+					}
+				}
+
+				TLObject object = updateContainer.getOverlay(update);
+				final TLStructuredTypePart attribute = update.getAttribute();
+				ResKey failure = check.check(object, attribute);
+				if (failure != null) {
+					throw new CheckException(Resources.getInstance().getString(failure));
+				}
+				return true;
+			}
+
+			private Set<FormField> computeDependencies() {
+				HashSet<FormField> dependencies = new HashSet<>();
+				TLObject object = updateContainer.getOverlay(update);
+				final TLStructuredTypePart attribute = update.getAttribute();
+				check.traceDependencies(object, attribute, p -> {
+					AttributeUpdate other =
+						updateContainer.getAttributeUpdate(p.attribute(), p.object());
+					if (other == null) {
+						return;
+					}
+
+					FormMember otherMember = updateContainer.getFormContext().getMember(other);
+					if (otherMember instanceof FormField && otherMember != field) {
+						dependencies.add((FormField) otherMember);
+					}
+				});
+				return dependencies;
+			}
+		};
+		return constraint;
 	}
 
 	private void addAnnotatedListeners(FormField field, TLStructuredTypePart attribute) {

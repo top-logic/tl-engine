@@ -29,7 +29,7 @@ import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
- * {@link GenericMethod} resetting a Sequence Id by giving the specified context to the specified
+ * A {@link GenericMethod} implementation that resets a Sequence to a specified value.
  * 
  * 
  * @author <a href="mailto:jhu@top-logic.com">Jonathan Hüsing</a>

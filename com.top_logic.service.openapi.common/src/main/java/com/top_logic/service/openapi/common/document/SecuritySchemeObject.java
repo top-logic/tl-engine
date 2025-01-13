@@ -10,7 +10,6 @@ import java.lang.invoke.MethodHandles.Lookup;
 import java.net.URL;
 import java.util.Map;
 
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.URLFormat;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
@@ -198,6 +197,7 @@ public interface SecuritySchemeObject extends Described {
 	 */
 	@Name(X_TL_USERNAME_FIELD)
 	@Label("Username field")
+	@Nullable
 	String getUsernameField();
 
 	/**
@@ -210,7 +210,7 @@ public interface SecuritySchemeObject extends Described {
 	 */
 	default void setUserContext(boolean inUserContext, String usernameField) {
 		update(descriptor().getProperty(X_TL_IN_USER_CONTEXT), inUserContext);
-		if (!StringServices.isEmpty(usernameField)) {
+		if (usernameField != null) {
 			update(descriptor().getProperty(X_TL_USERNAME_FIELD), usernameField);
 		}
 	}

@@ -7,6 +7,7 @@ package com.top_logic.service.openapi.common.authentication.oauth;
 
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
@@ -64,6 +65,7 @@ public interface ServerCredentials extends TokenBasedAuthentication, ServerAuthe
 	 */
 	@Name(USERNAME_FIELD)
 	@DynamicMode(fun = HideActiveIfNot.class, args = @Ref(IN_USER_CONTEXT))
+	@Nullable
 	String getUsernameField();
 
 	/**

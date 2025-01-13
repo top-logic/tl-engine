@@ -15,7 +15,7 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class FloatPrimitiveRangeConstraint extends AbstractFloatPrimitiveConstraint {
+public class FloatPrimitiveRangeConstraint extends AbstractFloatPrimitiveConstraint implements IRangeConstraint {
 	boolean hasMin;
 	boolean hasMax;
     float min;
@@ -80,4 +80,24 @@ public class FloatPrimitiveRangeConstraint extends AbstractFloatPrimitiveConstra
 		return true;
 	}
 	
+	@Override
+	public Comparable<?> getLower() {
+		return Float.valueOf(min);
+	}
+
+	@Override
+	public boolean isLowerInclusive() {
+		return true;
+	}
+
+	@Override
+	public Comparable<?> getUpper() {
+		return Float.valueOf(max);
+	}
+
+	@Override
+	public boolean isUpperInclusive() {
+		return true;
+	}
+
 }

@@ -74,7 +74,7 @@ public class Group extends AbstractBoundWrapper implements IGroup {
 	 * @return The {@link TLClass} of {@link Group} objects.
 	 * 
 	 * @throws ConfigurationError
-	 *         iff {@link #GROUP_TYPE} could not be resolved.
+	 *         iff {@link #REPRESENTATIVE_GROUP_TYPE} could not be resolved.
 	 */
 	public static TLClass getGroupType() throws ConfigurationError {
 		return (TLClass) TLModelUtil.resolveQualifiedName(GROUP_TYPE);

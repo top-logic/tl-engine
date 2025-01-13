@@ -1,0 +1,77 @@
+<h2>Syntax</h2>
+
+<p> </p>
+
+<pre>
+	<code>resetSequenceId(sequence: $sequenceIdentifier, context: $additionalContext, newValue: $valueToResetTo)</code>
+</pre>
+
+<h2>Description</h2>
+
+<p> </p>
+
+<p> </p>
+
+<p>Resets an existing sequence to a specific value. Uses the same mechanism to identify the sequence as generateSequenceId (combination of sequence identifier and optional context). If the specified sequence does not exist, false is returned.</p>
+
+<p> </p>
+
+<h2>Paramter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Standard</th>
+		</tr>
+		<tr>
+			<td>sequence</td>
+			<td>String</td>
+			<td>The sequence identifier of the sequence to be reset.</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>context</td>
+			<td>Subject object</td>
+			<td>An optional context parameter that specifies the sequence. Multiple contexts are separated by underscores. The context can be a single object, a collection or a TLObject.</td>
+			<td>no</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>newValue</td>
+			<td>Number</td>
+			<td>The new value to which the sequence is to be set. The next call to generateSequenceId will return this value.</td>
+			<td>no</td>
+			<td>1</td>
+		</tr>
+	</thead>
+</table>
+
+<h2> </h2>
+
+<h2>Return value</h2>
+
+<p><strong>Type:</strong> Boolean</p>
+
+<p>Returns true if the sequence reset was successful. If the sequence was not found or an error occurred, false is returned.</p>
+
+<h2>Examples</h2>
+
+<pre>
+	<code>resetSequenceId($existingSequence)</code>
+</pre>
+
+<p><strong>Output:</strong> true</p>
+
+<pre>
+	<code>resetSequenceId($existingSequence, null, 1000)
+generateSequenceId($existingSequence)</code>
+</pre>
+
+<p><strong>Output:</strong> 1000</p>
+
+<p> </p>

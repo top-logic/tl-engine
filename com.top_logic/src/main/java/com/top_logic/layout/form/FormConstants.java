@@ -295,8 +295,29 @@ public interface FormConstants {
 	 * 
 	 * @see #FLEXIBLE_CSS_CLASS
 	 * @see #FIXED_RIGHT_CSS_CLASS
+	 * 
+	 * @deprecated The styles for this class are completely broken, since they imply colors and
+	 *             sizes.
 	 */
+	@Deprecated
 	public static final String FIXED_LEFT_CSS_CLASS = "lFixedLeft";
+
+	/**
+	 * Flexible cell layout.
+	 * 
+	 * @see #FLEXIBLE2_CSS_CLASS
+	 * @see #FIXED_RIGHT2_CSS_CLASS
+	 */
+	public static final String DECORATED_CELL2_CSS_CLASS = "cDecoratedCell2";
+
+	/**
+	 * CSS class that creates a fixed size box (at the left of the flexible box) within a flexible
+	 * table cell layout.
+	 * 
+	 * @see #FLEXIBLE2_CSS_CLASS
+	 * @see #FIXED_RIGHT2_CSS_CLASS
+	 */
+	public static final String FIXED_LEFT2_CSS_CLASS = "lFixedLeft2";
 
 	/**
 	 * CSS class that creates a flexible box that consumes all available space within a flexible
@@ -304,8 +325,34 @@ public interface FormConstants {
 	 * 
 	 * @see #FIXED_LEFT_CSS_CLASS
 	 * @see #FIXED_RIGHT_CSS_CLASS
+	 * 
+	 * @deprecated The styles for this class are completely broken, since they imply colors and
+	 *             sizes.
 	 */
+	@Deprecated
 	public static final String FLEXIBLE_CSS_CLASS = "lFlexible";
+
+	/**
+	 * CSS class that creates a flexible box that consumes all available space within a flexible
+	 * table cell layout.
+	 * 
+	 * @see #FIXED_LEFT2_CSS_CLASS
+	 * @see #FIXED_RIGHT2_CSS_CLASS
+	 */
+	public static final String FLEXIBLE2_CSS_CLASS = "lFlexible2";
+
+	/**
+	 * CSS class that creates a fixed size box (at the right of the flexible box) within a flexible
+	 * table cell layout.
+	 * 
+	 * @see #FLEXIBLE_CSS_CLASS
+	 * @see #FIXED_LEFT_CSS_CLASS
+	 * 
+	 * @deprecated The styles for this class are completely broken, since they imply colors and
+	 *             sizes.
+	 */
+	@Deprecated
+	public static final String FIXED_RIGHT_CSS_CLASS = "lFixedRight";
 
 	/**
 	 * CSS class that creates a fixed size box (at the right of the flexible box) within a flexible
@@ -314,7 +361,7 @@ public interface FormConstants {
 	 * @see #FLEXIBLE_CSS_CLASS
 	 * @see #FIXED_LEFT_CSS_CLASS
 	 */
-	public static final String FIXED_RIGHT_CSS_CLASS = "lFixedRight";
+	public static final String FIXED_RIGHT2_CSS_CLASS = "lFixedRight2";
 
 	/**
 	 * CSS class attached to all input elements that open a (popup-) menu.

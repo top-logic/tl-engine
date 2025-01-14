@@ -31,6 +31,12 @@ body {
 	transition-delay: 1s;
 }
 
+/* Show scroll bar in tables always. */
+.tl-table__content-container .tl-overflow--auto {
+	--sb-track-transition: var(--sb-track-color);
+	--sb-thumb-transition: var(--sb-thumb-color);
+}
+
 :is(.lcAuto, .lcScroll, .tl-overflow--auto):hover {
 	--sb-track-transition: var(--sb-track-color);
 	--sb-thumb-transition: var(--sb-thumb-color);

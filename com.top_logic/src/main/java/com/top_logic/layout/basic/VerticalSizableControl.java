@@ -75,6 +75,13 @@ public class VerticalSizableControl extends AbstractVisibleControl {
 	}
 
 	/**
+	 * The inner control.
+	 */
+	public HTMLFragment getContentControl() {
+		return _contentControl;
+	}
+
+	/**
 	 * Returns the controls maximal height.
 	 */
 	@TemplateVariable("maxHeight")

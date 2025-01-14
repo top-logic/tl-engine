@@ -6,20 +6,18 @@
 package com.top_logic.model.search.expr.config.operations.string;
 
 import java.sql.SQLException;
-import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.element.meta.TypeSpec;
+import com.top_logic.element.structured.util.SequenceIdGenerator;
 import com.top_logic.knowledge.service.CommitHandler;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.RowLevelLockingSequenceManager;
 import com.top_logic.knowledge.service.db2.SequenceManager;
-import com.top_logic.layout.provider.MetaLabelProvider;
-import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
@@ -30,12 +28,19 @@ import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
- * {@link GenericMethod} that generates the next number in a sequence based on a sequence identifier
- * and optional context. The sequence identifier is combined with the context (if provided) to
- * create a unique sequence key. Each sequence maintains its own counter. If no sequence exists for
- * the given identifier and context combination, a new sequence will be automatically created
- * starting from 0.
+ * A {@link GenericMethod} implementation that generates unique sequential numbers. The sequence is
+ * identified by combining:
  * 
+ * 1. A base sequence identifier (mandatory) 2. Optional context value(s) that create separate
+ * sequences for each unique context
+ * 
+ * The context parameter can be any value: - String/primitive values - TLObjects (using their ID) -
+ * Collections (combining all elements)
+ * 
+ * Each sequence maintains its own counter. If no sequence exists for the given identifier and
+ * context combination, a new sequence will be automatically created starting from 0.
+ * 
+ * Note: This method modifies the database and should not be used in read-only queries.
  * 
  * Example usage: - generateSequenceId("invoice", null) -> uses sequence "invoice_SequenceId" -
  * generateSequenceId("invoice", "dept_A") -> uses sequence "invoice_dept_A_SequenceId"
@@ -53,8 +58,8 @@ public class GenerateSequenceId extends GenericMethod {
 	private static final SequenceManager SEQUENCE_MANAGER = new RowLevelLockingSequenceManager();
 
 	/**
-	 * Technical suffix for the sequence actually used in sequence table to ensure that no clash is
-	 * produced with internal sequences.
+	 * Number of retry attempts used in case of non-fatal database failures. The operation will be
+	 * retried this many times before failing permanently.
 	 */
 	public static final int RETRY_COUNT = 3;
 
@@ -80,19 +85,19 @@ public class GenerateSequenceId extends GenericMethod {
 		// extract the sequence Identifier from the arguments
 		String sequenceId = asString(arguments[0]);
 
-		StringBuilder sequenceIdentifierBuilder = new StringBuilder(sequenceId);
-
 		// if no sequence Identifier was entered do not continue with the evaluation
 		if (sequenceId == null || sequenceId.equals("")) {
 			return null;
 		}
+
+		StringBuilder sequenceIdentifierBuilder = new StringBuilder(sequenceId);
 
 		// extract the context from the arguments
 		Object contextArg = arguments[1];
 
 		// add the optional Context to the sequence Identifier
 		if (contextArg != null) {
-			addNames(sequenceIdentifierBuilder, contextArg);
+			SequenceIdGenerator.addNames(sequenceIdentifierBuilder, contextArg);
 		}
 
 		// append the technical suffix after all context has been added
@@ -115,31 +120,6 @@ public class GenerateSequenceId extends GenericMethod {
 	@Override
 	public boolean isSideEffectFree() {
 		return false;
-	}
-
-	/**
-	 * Adds the given sequence name identifier to the given sequence name builder.
-	 */
-	public static void addNames(StringBuilder sequenceIdentifierBuilder, Object id) {
-		if (id instanceof Collection<?>) {
-			for (Object element : (Collection<?>) id) {
-				addNames(sequenceIdentifierBuilder, element);
-			}
-		} else if (id instanceof TLObject) {
-			addNameSeparator(sequenceIdentifierBuilder);
-			sequenceIdentifierBuilder.append(((TLObject) id).tId().asString());
-		} else if (id == null) {
-			return;
-		} else {
-			addNameSeparator(sequenceIdentifierBuilder);
-			sequenceIdentifierBuilder.append(MetaLabelProvider.INSTANCE.getLabel(id));
-		}
-	}
-
-	private static void addNameSeparator(StringBuilder builder) {
-		if (builder.length() > 0) {
-			builder.append('_');
-		}
 	}
 
 	/**

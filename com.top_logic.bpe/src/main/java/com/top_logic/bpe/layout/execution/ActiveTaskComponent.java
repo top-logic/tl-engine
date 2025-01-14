@@ -11,9 +11,11 @@ import java.util.Map;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.bpe.bpml.model.Iconified;
+import com.top_logic.bpe.bpml.model.Lane;
 import com.top_logic.bpe.bpml.model.ManualTask;
 import com.top_logic.bpe.bpml.model.Node;
 import com.top_logic.bpe.bpml.model.Task;
+import com.top_logic.bpe.execution.engine.GuiEngine;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
 import com.top_logic.bpe.execution.model.Token;
@@ -21,6 +23,7 @@ import com.top_logic.common.webfolder.WebFolderUtils;
 import com.top_logic.element.layout.formeditor.FormEditorUtil;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.component.DefaultEditAttributedComponent;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.FormMember;
@@ -38,6 +41,7 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.tool.execution.ExecutableState.CommandVisibility;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link DefaultEditAttributedComponent} that displays the configured attributes for a given
@@ -147,12 +151,25 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 
 		@Override
 		public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> someValues) {
-			EditComponent editComponent = (EditComponent) aComponent;
-			if (editComponent.getFormContext().checkAll()) {
-				return ExecutableState.EXECUTABLE;
-			} else {
+			if (!(model instanceof Token)) {
 				return FINISH_TASK_DISABLED_STATE;
 			}
+			// Get the current token and its associated node and lane
+			Token currentToken = (Token) model;
+			Node currentNode = currentToken.getNode();
+			Lane currentLane = currentNode.getLane();
+
+			// Get the current person
+			Person currentPerson = TLContext.currentUser();
+
+			if (GuiEngine.getInstance().isActor(currentPerson, currentLane, null)) {
+				// Only check form validity if user is an actor
+				EditComponent editComponent = (EditComponent) aComponent;
+				if (editComponent.getFormContext().checkAll()) {
+					return ExecutableState.EXECUTABLE;
+				}
+			}
+			return FINISH_TASK_DISABLED_STATE;
 		}
 
 	}

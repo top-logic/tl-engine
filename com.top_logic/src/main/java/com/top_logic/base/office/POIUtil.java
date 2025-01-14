@@ -23,6 +23,7 @@ import org.apache.poi.hssf.usermodel.HSSFRichTextString;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.poi.ss.SpreadsheetVersion;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.BuiltinFormats;
 import org.apache.poi.ss.usermodel.Cell;
@@ -1033,6 +1034,12 @@ public class POIUtil {
 	 *         if no {@link FormulaEvaluator} can be created for given workbook.
 	 */
 	public static RichTextString newRichTextString(Workbook workbook, String text) {
+		if (workbook == null) {
+			throw new IllegalArgumentException("Can not create rich text string for 'null' workbook.");
+		}
+		if (text != null) {
+			text = shortenTextSize(workbook, text);
+		}
 		if (workbook instanceof HSSFWorkbook) {
 			return new HSSFRichTextString(text);
 		} else if (workbook instanceof XSSFWorkbook) {
@@ -1040,13 +1047,28 @@ public class POIUtil {
 		} else if (workbook instanceof SXSSFWorkbook) {
 			return new XSSFRichTextString(text);
 		} else {
-			if (workbook == null) {
-				throw new IllegalArgumentException("Can not create rich text string for 'null' workbook.");
-			}
 			throw new UnsupportedOperationException("Can not produce rich text string for workbook of class '"
 				+ workbook.getClass().getCanonicalName() + "': " + workbook);
 		}
 	
+	}
+
+	/**
+	 * Cuts the text so that the maximum size of the permitted text is not exceeded.
+	 * 
+	 * @param workbook
+	 *        The {@link Workbook} containing the cell that will contain the given text.
+	 * @param text
+	 *        The text to check for maximal length. Must not be <code>null</code>.
+	 */
+	public static String shortenTextSize(Workbook workbook, String text) {
+		SpreadsheetVersion spreadsheetVersion = workbook.getSpreadsheetVersion();
+		int maxTextLength = spreadsheetVersion.getMaxTextLength();
+		if (text.length() > maxTextLength) {
+			return text.substring(0, maxTextLength);
+		} else {
+			return text;
+		}
 	}
 
 	/**
@@ -1063,6 +1085,13 @@ public class POIUtil {
 	 *         if no {@link FormulaEvaluator} can be created for given cell.
 	 */
 	public static RichTextString newRichTextString(Cell cell, String text) {
+		if (cell == null) {
+			throw new IllegalArgumentException("Can not create rich text string for 'null' cell.");
+		}
+		if (text != null) {
+			text = shortenTextSize(cell.getSheet().getWorkbook(), text);
+		}
+
 		if (cell instanceof HSSFCell) {
 			return new HSSFRichTextString(text);
 		} else if (cell instanceof XSSFCell) {
@@ -1070,9 +1099,6 @@ public class POIUtil {
 		} else if (cell instanceof SXSSFCell) {
 			return new XSSFRichTextString(text);
 		} else {
-			if (cell == null) {
-				throw new IllegalArgumentException("Can not create rich text string for 'null' cell.");
-			}
 			throw new UnsupportedOperationException("Can not produce rich text string for cell of class '"
 				+ cell.getClass().getCanonicalName() + "': " + cell);
 		}

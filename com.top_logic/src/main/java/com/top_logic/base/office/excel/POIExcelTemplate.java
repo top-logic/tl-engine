@@ -17,6 +17,7 @@ import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 
+import com.top_logic.base.office.POIUtil;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -619,7 +620,9 @@ public class POIExcelTemplate {
                         // if so, we must NOT remove the template definition
 						final boolean replace = entry.getBoolean(POITemplateEntry.ATTRIBUTE_REPLACE, false);
                         if(!replace) {
-							cell.setCellValue(stringValue.replace(template, ""));
+							String text = stringValue.replace(template, "");
+							text = POIUtil.shortenTextSize(cell.getSheet().getWorkbook(), text);
+							cell.setCellValue(text);
                         }
                     }
                 }

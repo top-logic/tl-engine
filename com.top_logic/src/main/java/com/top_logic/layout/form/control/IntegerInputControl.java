@@ -63,8 +63,10 @@ public class IntegerInputControl extends AbstractFormFieldControl {
 	private final TextInputControl textInput;
     private String incButtonId;
     private String decButtonId;
-    private Comparable min;
-    private Comparable max;
+
+	private long min;
+
+	private long max;
 
     /** 
      * Creates a {@link IntegerInputControl}.
@@ -195,7 +197,7 @@ public class IntegerInputControl extends AbstractFormFieldControl {
 
 	private void writeDecrementButton(DisplayContext context, TagWriter out, boolean disabled, Comparable value)
 			throws IOException {
-		boolean disabledState = disabled || isLessThanMin(value);
+		boolean disabledState = disabled || isLessOrEqualMin(value);
 
 		ThemeImage enabledImagePath = Icons.DECREMENT_BUTTON_IMAGE;
 		ThemeImage disabledImagePath = Icons.DECREMENT_BUTTON_DISABLED_IMAGE;
@@ -222,7 +224,7 @@ public class IntegerInputControl extends AbstractFormFieldControl {
 
 	private void writeIncrementButton(DisplayContext context, TagWriter out, boolean disabled, Comparable value)
 			throws IOException {
-		boolean disabledState = disabled || isGreaterThanMax(value);
+		boolean disabledState = disabled || isGreaterOrEqualMax(value);
 
 		ThemeImage enabledImagePath = Icons.INCREMENT_BUTTON_IMAGE;
 		ThemeImage disabledImagePath = Icons.INCREMENT_BUTTON_DISABLED_IMAGE;
@@ -262,9 +264,9 @@ public class IntegerInputControl extends AbstractFormFieldControl {
 		out.append(",");
 		textInput.writeInputIdJsString(out);
 		out.append(", ");
-		out.writeJsLiteral(min);
+		out.writeJsLiteral(min == Long.MIN_VALUE ? null : min);
 		out.append(", ");
-		out.writeJsLiteral(max);
+		out.writeJsLiteral(max == Long.MAX_VALUE ? null : max);
 		if (showWait(this)) {
 			out.append(",true");
 		}
@@ -328,16 +330,14 @@ public class IntegerInputControl extends AbstractFormFieldControl {
      * is empty, i.e. none has been entered, if the minimum is greater than the
      * implicit default value zero.
      */
-    private boolean isLessThanMin(Comparable aValue) {
+	private boolean isLessOrEqualMin(Comparable aValue) {
         boolean theResult = false;
-        if (min != null) {
-            if (aValue != null) {
-                theResult = aValue.compareTo(min) <= 0;
-            }
+		if (aValue != null) {
+			theResult = toLong(aValue) <= min;
         }
         return theResult;
     }
-    
+
     /** 
      * This method checks if the given value is less than the configured maximum.
      * 
@@ -346,16 +346,18 @@ public class IntegerInputControl extends AbstractFormFieldControl {
      * is empty, i.e. none has been entered, if the maximum is less than the
      * implicit default value zero.
      */
-    private boolean isGreaterThanMax(Comparable aValue) {
+	private boolean isGreaterOrEqualMax(Comparable aValue) {
         boolean theResult = false;
-        if (max != null) {
-            if (aValue != null) {
-                theResult = aValue.compareTo(max) >= 0;
-            }
+		if (aValue != null) {
+			theResult = toLong(aValue) >= max;
         }
         return theResult;
     }
     
+	private static long toLong(Object aValue) {
+		return ((Number) aValue).longValue();
+	}
+
     /** 
      * This method sets the minimum and maximum constraints of this control according
      * to any {@link RangeConstraint} attached to the model's {@link FormField}.
@@ -368,10 +370,14 @@ public class IntegerInputControl extends AbstractFormFieldControl {
                 Comparable theLowerComp = rangeConstraint.getLower();
                 Comparable theUpperComp = rangeConstraint.getUpper();
                 if (theLowerComp == null || isApplicableType(theLowerComp)) {
-                    min = theLowerComp;
+					min = toLong(theLowerComp);
+				} else {
+					min = Long.MIN_VALUE;
                 }
                 if (theUpperComp == null || isApplicableType(theUpperComp)) {
-                    max = theUpperComp;
+					max = toLong(theUpperComp);
+				} else {
+					max = Long.MAX_VALUE;
                 }
             }
         }

@@ -118,7 +118,8 @@ public class ImmutableDBContext extends DBContext {
 
 	@Override
 	protected PooledConnection internalGetConnection() {
-		throw new NullPointerException("This context '" + this + "' has no connection.");
+		throw new NullPointerException(
+			"Operation requires database write access but was called in read-only mode.");
 	}
 
 	@Override

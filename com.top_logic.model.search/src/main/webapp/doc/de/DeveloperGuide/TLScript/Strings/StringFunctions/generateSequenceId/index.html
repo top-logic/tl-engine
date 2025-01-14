@@ -6,7 +6,16 @@
 
 <h2>Beschreibung</h2>
 
-<p>Generiert die nächste Nummer in einer Sequenz basierend auf einem Sequenz-Identifier und einem optionalen Kontext. Falls noch keine Sequenz für diese Kombination aus Identifier und Kontext existiert, wird automatisch eine neue Sequenz angelegt, die bei 1 startet.</p>
+<p>Generiert die nächste fortlaufende Nummer aus einer Sequenz. Die Sequenz wird eindeutig identifiziert durch die Kombination aus:</p>
+
+<ol>
+	<li>Sequenz-Identifier (Pflichtfeld): Definiert die Basis-Sequenz (z.B. "invoice" für Rechnungsnummern)</li>
+	<li>Optionaler Kontext: Ermöglicht die Erzeugung separater Zählreihen. Jede eindeutige Kontext-Kombination führt zu einer eigenen, unabhängigen Sequenz.</li>
+</ol>
+
+<p>Für jede neue Kombination aus Sequenz-Identifier und Kontext wird automatisch eine eigene Sequenz angelegt, die bei 1 beginnt. Bestehende Sequenzen werden bei jedem Aufruf um 1 erhöht.</p>
+
+<p>Die Sequenzen bleiben auch über Sitzungen hinweg erhalten. Die fortlaufenden Nummern werden zentral in der Datenbank verwaltet.</p>
 
 <h2>Paramter</h2>
 
@@ -28,8 +37,8 @@
 		</tr>
 		<tr>
 			<td>context</td>
-			<td>Fachobjekt</td>
-			<td>Ein optionaler Kontext-Parameter, der die Sequenz weiter spezifiziert. Mehrere Kontexte werden durch Unterstriche getrennt. Der Kontext kann ein einzelnes Objekt, eine Collection oder ein TLObject sein.</td>
+			<td>Any</td>
+			<td>Ein optionaler Kontext-Parameter, durch den separate Sequenzen entstehen. Kann sein: String/primitive Werte - Fachobjekte (verwendet deren ID) - Collections (alle Elemente werden kombiniert)</td>
 			<td>nein</td>
 			<td> </td>
 		</tr>
@@ -47,8 +56,16 @@
 <h2>Beispiele</h2>
 
 <pre>
-	<code>generateSequenceId("myCustomSequenceId", $context)
+	<code>generateSequenceId("invoice", null)
 </code>
 </pre>
 
-<p><strong>Ausgabe:</strong> Beginnt bei 1 und inkrementiert bei jedem Aufruf um 1 (1, 2, 3, 4, ...)</p>
+<p><strong>Ausgabe: </strong>Eine Sequenznummer für alle Rechnungen, beginnt bei 1 und inkrementiert bei jedem Aufruf um 1 (1, 2, 3, 4, ...)</p>
+
+<pre>
+	<code>generateSequenceId("invoice", $productA)</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> Eine Sequenznummer für Rechnungen des Produkts A, beginnt bei 1 und inkrementiert bei jedem Aufruf um 1 (1, 2, 3, 4, ...)</p>
+
+<p>​</p>

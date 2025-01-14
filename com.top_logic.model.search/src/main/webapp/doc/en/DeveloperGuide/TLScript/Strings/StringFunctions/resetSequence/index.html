@@ -1,18 +1,19 @@
 <h2>Syntax</h2>
 
-<p> </p>
-
 <pre>
 	<code>resetSequence(sequence: $sequenceIdentifier, context: $additionalContext, newValue: $valueToResetTo)</code>
 </pre>
 
 <h2>Description</h2>
 
-<p> </p>
+<p>Resets a sequence to a specific value. The sequence is uniquely identified by the combination of:</p>
 
-<p> </p>
+<ol>
+	<li>Sequence identifier (mandatory field): Defines the base sequence (e.g. "invoice" for invoice numbers)</li>
+	<li>Optional context: An additional value that further subdivides the sequence. A separate sequence is used for each different context value.</li>
+</ol>
 
-<p>Resets an existing sequence to a specific value. Uses the same mechanism to identify the sequence as generateSequenceId (combination of sequence identifier and optional context). If the specified sequence does not exist, false is returned.</p>
+<p>The next call to generateSequenceId for this sequence will return the specified value.</p>
 
 <p> </p>
 
@@ -36,8 +37,8 @@
 		</tr>
 		<tr>
 			<td>context</td>
-			<td>Subject object</td>
-			<td>An optional context parameter that specifies the sequence. Multiple contexts are separated by underscores. The context can be a single object, a collection or a TLObject.</td>
+			<td>Any</td>
+			<td>An optional context parameter that creates separate sequences. Can be: - String/primitive values - Specialized objects (uses their ID) - Collections (all elements are combined)</td>
 			<td>no</td>
 			<td> </td>
 		</tr>
@@ -51,8 +52,6 @@
 	</thead>
 </table>
 
-<h2> </h2>
-
 <h2>Return value</h2>
 
 <p><strong>Type:</strong> Boolean</p>
@@ -65,13 +64,13 @@
 	<code>resetSequence($existingSequence)</code>
 </pre>
 
-<p><strong>Output:</strong> true</p>
+<p><strong>Output:</strong> true - Sequence $existingSequence is reset to 1</p>
 
 <pre>
-	<code>resetSequence($existingSequence, null, 1000)
-generateSequenceId($existingSequence)</code>
+	<code>resetSequence("slot", $parking, 100)
+generateSequenceId("slot", $parking)</code>
 </pre>
 
-<p><strong>Output:</strong> 1000</p>
+<p><strong>Output:</strong> A sequence for the parking spaces of the parking garage is reset to 100. The following generateSequenceId call returns 100.</p>
 
 <p> </p>

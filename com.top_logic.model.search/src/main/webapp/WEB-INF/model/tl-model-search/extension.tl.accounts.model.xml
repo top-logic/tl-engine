@@ -12,27 +12,36 @@
     // Not the group itself
     .filter(x -> $x != $g)
     // No representative groups
-    .filter(x -> $x.referers(`tl.accounts:Person#representativeGroup`) == null)
-    // Combined with
-    .union(
-        // All accounts
-        all(`tl.accounts:Person`)
-        // but not the account whose representative group is being edited.
-        .filter(a -> $g != $a.get(`tl.accounts:Person#representativeGroup`)))]]></function>
+    .filter(x -> !$x.instanceOf(`tl.accounts:RepresentativeGroup`))
+    // Combined with all accounts
+    .union(all(`tl.accounts:Person`))]]></function>
 							</options-by-expression>
 						</options>
 						<constraints>
-							<constraint class="com.top_logic.model.util.NoAttributeCycle">
-								<additional-observed-references>
-									<additional-observed-reference name="representativeGroup"
-										definition="tl.accounts:Person"
-									/>
-								</additional-observed-references>
-							</constraint>
+							<constraint class="com.top_logic.model.util.NoAttributeCycle"/>
 						</constraints>
 					</annotations>
 				</reference>
 			</attributes>		
+		</class>
+		
+		<class name="RepresentativeGroup">
+			<attributes>
+				<reference name="members">
+					<annotations>
+						<options>
+							<options-by-expression>
+								<function><![CDATA[// All accounts
+g -> all(`tl.accounts:Person`)
+    // Excluding the one that is the owner of this representative group.
+    .filter(p -> !$g
+        .referers(`tl.accounts:Person#representativeGroup`)
+        .containsElement($p))]]></function>
+							</options-by-expression>
+						</options>
+					</annotations>
+				</reference>
+			</attributes>
 		</class>
 	
 		<class name="Person">
@@ -69,19 +78,6 @@
 						</constraints>
 					</annotations>
 				</property>
-				<reference name="representativeGroup">
-					<annotations>
-						<constraints>
-							<constraint class="com.top_logic.model.util.NoAttributeCycle">
-								<additional-observed-references>
-									<additional-observed-reference name="members"
-										definition="tl.accounts:Group"
-									/>
-								</additional-observed-references>
-							</constraint>
-						</constraints>
-					</annotations>
-				</reference>
 				<reference name="deputyFor">
 					<annotations>
 						<storage-algorithm>

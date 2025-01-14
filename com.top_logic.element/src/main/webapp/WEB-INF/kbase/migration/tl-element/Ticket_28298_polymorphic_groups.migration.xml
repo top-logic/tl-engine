@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28298_polymorphic_groups"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_28409_Person_initializer"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<remove-annotations name="tl.accounts:Group#members">
+			<annotation class="com.top_logic.model.annotate.TLConstraints"/>
+		</remove-annotations>
+		<remove-annotations name="tl.accounts:Person#representativeGroup">
+			<annotation class="com.top_logic.model.annotate.TLConstraints"/>
+		</remove-annotations>
+		<add-annotations name="tl.accounts:Group#members">
+			<annotations>
+				<constraints>
+					<constraint class="com.top_logic.model.util.NoAttributeCycle"/>
+				</constraints>
+			</annotations>
+		</add-annotations>
+
+		<create-class name="tl.accounts:RepresentativeGroup"
+			abstract="false"
+			final="false"
+			without-primary-generalization="true"
+		/>
+		<add-class-generalizations name="tl.accounts:RepresentativeGroup">
+			<generalizations>
+				<generalization type="tl.accounts:Group"/>
+			</generalizations>
+		</add-class-generalizations>
+
+		<create-reference name="tl.accounts:RepresentativeGroup#members"
+			type="tl.accounts:Person"
+		/>
+		<mark-override name="tl.accounts:RepresentativeGroup#members"
+			definition="tl.accounts:Group#members"
+		/>
+		<reorder-part name="tl.accounts:RepresentativeGroup#members"/>
+
+		<drop-column
+			column="tType"
+			table="Group"
+			update-data="false"
+		/>
+
+		<add-mo-reference
+			before="name"
+			table="Group"
+		>
+			<reference
+				att_name="tType"
+				branch-global="false"
+				by-value="true"
+				deletion-policy="veto"
+				history-type="current"
+				initial="true"
+				is-container="false"
+				mandatory="true"
+				monomorphic="true"
+				storage="com.top_logic.knowledge.CurrentOnlyReferenceStorage"
+				target-type="MetaElement"
+			/>
+		</add-mo-reference>
+
+		<change-object-type
+			table="Group"
+			target-type="tl.accounts:Group"
+		/>
+
+		<change-referenced-objects-type
+			association-table="definesGroup"
+			source-type="tl.accounts:Group"
+			table="Group"
+			target-type="tl.accounts:RepresentativeGroup"
+		/>
+	</processors>
+</migration>

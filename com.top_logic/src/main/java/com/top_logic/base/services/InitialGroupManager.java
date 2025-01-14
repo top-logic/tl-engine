@@ -8,20 +8,19 @@ package com.top_logic.base.services;
 import java.util.Collection;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.module.ModuleException;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
-import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.Messages;
+import com.top_logic.util.model.ModelService;
 
 /**
  * The {@link InitialGroupManager} installs groups and roles for the application:
@@ -32,6 +31,9 @@ import com.top_logic.util.Messages;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@ServiceDependencies({
+	ModelService.Module.class,
+})
 public class InitialGroupManager extends KBBasedManagedClass<InitialGroupManager.Config> {
 
 	/**
@@ -89,23 +91,28 @@ public class InitialGroupManager extends KBBasedManagedClass<InitialGroupManager
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public InitialGroupManager(InstantiationContext context, Config config) throws ModuleException {
+	public InitialGroupManager(InstantiationContext context, Config config) {
 		super(context, config);
+	}
+
+	@Override
+	protected void startUp() {
+		super.startUp();
 
 		Transaction tx = kb().beginTransaction(Messages.CREATING_INITIAL_GROUPS_AND_ROLES.fill());
 		try {
-			init(config);
-
+			init();
 			tx.commit();
-		} catch (KnowledgeBaseException ex) {
-			throw new ModuleException("Unable to create initial groups.", ex, InitialGroupManager.class);
 		} finally {
 			tx.rollback();
 		}
-
 	}
 
-	private void init(Config config) {
+	/**
+	 * Allocates initial groups.
+	 */
+	protected void init() {
+		Config config = getConfig();
 		mkGroups(config.getGroups(), config.getDefaultGroup());
 	}
 
@@ -118,7 +125,8 @@ public class InitialGroupManager extends KBBasedManagedClass<InitialGroupManager
 			}
 		}
 		if (!defaultGroup.isEmpty() && _defaultGroup == null) {
-			throw new ConfigurationError("No group with name " + defaultGroup + " found to use as default group.");
+			Logger.error("No group with name " + defaultGroup + " found to use as default group.",
+				InitialGroupManager.class);
 		}
 	}
 
@@ -129,7 +137,7 @@ public class InitialGroupManager extends KBBasedManagedClass<InitialGroupManager
 				return existingGroup;
 			}
 
-			Group newGroup = Group.createGroup(groupName, kb());
+			Group newGroup = Group.createGroup(groupName);
 			if (Utils.equals(defaultGroup, groupName)) {
 				newGroup.setDefaultGroup(true);
 			}

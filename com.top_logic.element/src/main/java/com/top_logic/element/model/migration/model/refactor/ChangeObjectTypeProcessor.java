@@ -16,6 +16,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.sql.DBType;
@@ -52,8 +53,12 @@ public class ChangeObjectTypeProcessor extends AbstractConfiguredInstance<Change
 
 		/**
 		 * The type of the objects that should be changed.
+		 * 
+		 * <p>
+		 * If not given, all objects stored in {@link #getTable()} are changed.
+		 * </p>
 		 */
-		@Mandatory
+		@Nullable
 		@Name("source-type")
 		QualifiedTypeName getSourceType();
 
@@ -85,7 +90,8 @@ public class ChangeObjectTypeProcessor extends AbstractConfiguredInstance<Change
 		
 		Config<?> config = getConfig();
 		try {
-			Type sourceType = util.getTLTypeOrFail(connection, config.getSourceType());
+			QualifiedTypeName sourceTypeRef = config.getSourceType();
+			Type sourceType = sourceTypeRef == null ? null : util.getTLTypeOrFail(connection, sourceTypeRef);
 			Type targetType = util.getTLTypeOrFail(connection, config.getTargetType());
 			
 			MOClass table = (MOClass) context.getSchemaRepository().getType(config.getTable());
@@ -97,17 +103,24 @@ public class ChangeObjectTypeProcessor extends AbstractConfiguredInstance<Change
 			CompiledStatement update = query(
 				update(
 					table(tableName),
-					eqSQL(literal(DBType.ID, sourceType.getID()), column(tTypeColumn)),
+					sourceType == null ? literalBooleanLogical(true)
+						: eqSQL(literal(DBType.ID, sourceType.getID()), column(tTypeColumn)),
 					columnNames(tTypeColumn),
 					expressions(literal(DBType.ID, targetType.getID())))).toSql(connection.getSQLDialect());
 			
 			int cnt = update.executeUpdate(connection);
 
-			log.info("Changed type of " + cnt + " objects in table '" + tableName + "' from '"
-				+ config.getSourceType().getName() + "' to '" + config.getTargetType().getName() + "'.");
+			log.info("Changed type of "
+				+ cnt + " objects in table '" + tableName + "'" + (config.getSourceType() == null ? ""
+					: " from " + "'" + config.getSourceType().getName() + "'")
+				+ " to " + "'" + config.getTargetType().getName() + "'.");
 		} catch (SQLException | MigrationException ex) {
-			log.error("Failed to change type of objects in table '" + config.getTable() + "' from '"
-				+ config.getSourceType().getName() + "' to '" + config.getTargetType().getName() + "'.", ex);
+			log.error(
+				"Failed to change type of objects in table '"
+					+ config.getTable() + "'" + (config.getSourceType() == null ? ""
+						: " from " + "'" + config.getSourceType().getName() + "'")
+					+ " to '" + config.getTargetType().getName() + "'.",
+				ex);
 		}
 	}
 

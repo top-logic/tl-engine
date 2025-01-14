@@ -31,7 +31,7 @@ import com.top_logic.model.util.TLModelUtil;
  * is identified the same way as in {@link GenerateSequenceId}: The context parameter can be any
  * value (same as {@link GenerateSequenceId}).
  * 
- * If newValue is null, resets to 0.
+ * Standard value for reset is 0.
  * 
  * Returns true if reset was successful, false if it failed. Note: This method modifies the database
  * and should not be used in read-only queries.

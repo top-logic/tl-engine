@@ -334,9 +334,6 @@ public class IntegerInputControl extends AbstractFormFieldControl {
             if (aValue != null) {
                 theResult = aValue.compareTo(min) <= 0;
             }
-            else {
-                theResult = Integer.valueOf(0).compareTo((Integer)min) <= 0;
-            }
         }
         return theResult;
     }
@@ -354,9 +351,6 @@ public class IntegerInputControl extends AbstractFormFieldControl {
         if (max != null) {
             if (aValue != null) {
                 theResult = aValue.compareTo(max) >= 0;
-            }
-            else {
-                theResult = Integer.valueOf(0).compareTo((Integer)max) >= 0;
             }
         }
         return theResult;

@@ -120,7 +120,7 @@ public class TableTag extends AbstractFormFieldControlTag implements BodyTag, Co
 
 	@Override
 	public String addControl(HTMLFragment childControl) {
-		((TableControl) getControl()).addTitleBarControl(childControl);
+		table(getControl()).addTitleBarControl(childControl);
 
 		// Additional controls are displayed in a flow layout in the table title
 		// bar without any other user-defined markup.
@@ -154,5 +154,15 @@ public class TableTag extends AbstractFormFieldControlTag implements BodyTag, Co
 	@Override
 	public int doAfterBody() throws JspException {
 		return ControlBodyTagSupport.doAfterBody(bodyContent);
+	}
+
+	/**
+	 * Unwraps the {@link TableControl} from the created control.
+	 */
+	public static TableControl table(Control control) {
+		if (control instanceof VerticalSizableControl scrollbar) {
+			return (TableControl) scrollbar.getContentControl();
+		}
+		return (TableControl) control;
 	}
 }

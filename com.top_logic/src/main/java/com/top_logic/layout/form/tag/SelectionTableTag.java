@@ -146,7 +146,7 @@ public class SelectionTableTag extends AbstractFormFieldControlTag implements Bo
 
 	@Override
 	public String addControl(HTMLFragment childControl) {
-		((TableControl) getControl()).addTitleBarControl(childControl);
+		TableTag.table(getControl()).addTitleBarControl(childControl);
 	    // Additional controls are displayed in a flow layout without any other
 		// user-defined mark-up.
 	    return null;

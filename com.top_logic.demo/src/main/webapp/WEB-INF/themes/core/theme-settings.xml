@@ -160,4 +160,7 @@
 	<icon name="com.top_logic.demo.layout.form.demo.Icons.FILE_CODE"
 		value="css:fas fa-file-code"
 	/>
+	<int name="com.top_logic.layout.basic.Icons.FORM_TABLE_HEIGHT"
+		value="600"
+	/>
 </settings>

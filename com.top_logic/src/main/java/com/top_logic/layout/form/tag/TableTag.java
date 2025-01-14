@@ -19,6 +19,7 @@ import com.top_logic.layout.basic.VerticalSizableControl;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.decorator.DecorateService;
 import com.top_logic.layout.form.model.TableField;
+import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.table.ITableRenderer;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.control.TableControl;
@@ -74,12 +75,21 @@ public class TableTag extends AbstractFormFieldControlTag implements BodyTag, Co
 
 		TableControl tableControl = createTableControl(tableField, tableData, theTableRenderer, true);
 
+		return limitHeight(tableControl, tableControl.getViewModel().getConfigKey());
+	}
+
+	/**
+	 * Limits the height of the displayed table.
+	 * 
+	 * @see Icons#FORM_TABLE_HEIGHT
+	 */
+	public static Control limitHeight(Control tableControl, ConfigKey configKey) {
 		Integer defaultHeight = Icons.FORM_TABLE_HEIGHT.get();
 		if (defaultHeight == null || defaultHeight <= 0) {
 			return tableControl;
 		}
 
-		return new VerticalSizableControl(tableControl, tableControl.getViewModel().getConfigKey());
+		return new VerticalSizableControl(tableControl, configKey);
 	}
 	
 	private ITableRenderer getConfiguredTableRenderer(TableField tableField) {

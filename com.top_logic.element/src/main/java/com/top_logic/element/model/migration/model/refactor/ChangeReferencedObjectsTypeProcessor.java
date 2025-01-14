@@ -21,6 +21,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.sql.DBHelper;
@@ -58,8 +59,12 @@ public class ChangeReferencedObjectsTypeProcessor
 
 		/**
 		 * Qualified name of the reference of whose referenced objects should be changed.
+		 * 
+		 * <p>
+		 * If not given, all links in {@link #getAssociationTable()} are used.
+		 * </p>
 		 */
-		@Mandatory
+		@Nullable
 		@Name("reference")
 		QualifiedPartName getReference();
 
@@ -114,10 +119,11 @@ public class ChangeReferencedObjectsTypeProcessor
 		Util util = context.getSQLUtils();
 
 		Config<?> config = getConfig();
+		QualifiedPartName referenceSpec = config.getReference();
 		try {
 			DBHelper sqlDialect = connection.getSQLDialect();
 
-			TypePart reference = util.getTLTypePartOrFail(connection, config.getReference());
+			TypePart reference = referenceSpec == null ? null : util.getTLTypePartOrFail(connection, referenceSpec);
 			Set<TLID> targetIds = selectTargetIds(log, connection, sqlDialect, reference,
 				getTableName(context, config.getAssociationTable()));
 
@@ -141,12 +147,14 @@ public class ChangeReferencedObjectsTypeProcessor
 
 			int updatedRows = updateStatement.executeUpdate(connection);
 
-			log.info("Changed type of reference '" + config.getReference().getName() + "' " + updatedRows
-				+ " objects in table '" + tableName + "' from '"
-				+ config.getSourceType().getName() + "' to '" + config.getTargetType().getName() + "'.");
+			log.info("Changed type of "
+				+ (referenceSpec == null ? "" : "reference " + "'" + referenceSpec.getName() + "' ") + updatedRows
+				+ " objects in table '" + tableName + "' from '" + config.getSourceType().getName() + "' to '"
+				+ config.getTargetType().getName() + "'.");
 		} catch (SQLException | MigrationException exception) {
-			log.error("Failed to change type of the reference '" + config.getReference().getName()
-				+ "' objects in table '" + config.getTable() + "' from '"
+			log.error("Failed to change type of"
+				+ (referenceSpec == null ? "" : " the reference '" + referenceSpec.getName() + "'")
+				+ " objects in table '" + config.getTable() + "' from '"
 				+ config.getSourceType().getName() + "' to '" + config.getTargetType().getName() + "'.", exception);
 		}
 	}
@@ -169,7 +177,8 @@ public class ChangeReferencedObjectsTypeProcessor
 			}
 		} catch (SQLException exception) {
 			log.error("Failed to select target identifiers in association table '" + tableName
-				+ "' for links of reference '" + reference.getPartName() + "'.", exception);
+				+ "'" + (reference == null ? "" : " for links of reference '" + reference.getPartName() + "'") + ".",
+				exception);
 		}
 
 		return targetIds;
@@ -180,7 +189,9 @@ public class ChangeReferencedObjectsTypeProcessor
 			selectDistinct(
 				columns(columnDef(DEST_ID_DB_NAME)),
 				table(tableName),
-				eqSQL(column(META_ATTRIBUTE_ID_DB_NAME), literal(DBType.ID, reference.getDefinition())))).toSql(helper);
+				reference == null ? literalTrueLogical()
+					: eqSQL(column(META_ATTRIBUTE_ID_DB_NAME), literal(DBType.ID, reference.getDefinition()))))
+						.toSql(helper);
 	}
 
 }

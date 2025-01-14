@@ -38,14 +38,15 @@ import com.top_logic.knowledge.util.ItemByNameCache;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.WrapperNameComparator;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.IGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundObject;
 import com.top_logic.util.error.TopLogicException;
+import com.top_logic.util.model.ModelService;
 
 /**
  * A Group of members that are BoundObjects (normally Persons).
@@ -60,20 +61,39 @@ public class Group extends AbstractBoundWrapper implements IGroup {
 	/** Full qualified name of the {@link TLType} of a {@link Group}. */
 	public static final String GROUP_TYPE = "tl.accounts:Group";
 
+	/** Full qualified name of the {@link TLType} of a representative {@link Group}. */
+	public static final String REPRESENTATIVE_GROUP_TYPE = "tl.accounts:RepresentativeGroup";
+
 	/**
 	 * Resolves {@link #GROUP_TYPE}.
 	 * 
 	 * @implNote Casts result of {@link TLModelUtil#resolveQualifiedName(String)} to
-	 *           {@link TLStructuredType}. Potential {@link ConfigurationException} are wrapped into
+	 *           {@link TLClass}. Potential {@link ConfigurationException} are wrapped into
 	 *           {@link ConfigurationError}.
 	 * 
-	 * @return The {@link TLStructuredType} representing the {@link Group}s.
+	 * @return The {@link TLClass} of {@link Group} objects.
+	 * 
+	 * @throws ConfigurationError
+	 *         iff {@link #REPRESENTATIVE_GROUP_TYPE} could not be resolved.
+	 */
+	public static TLClass getGroupType() throws ConfigurationError {
+		return (TLClass) TLModelUtil.resolveQualifiedName(GROUP_TYPE);
+	}
+
+	/**
+	 * Resolves {@link #REPRESENTATIVE_GROUP_TYPE}.
+	 * 
+	 * @implNote Casts result of {@link TLModelUtil#resolveQualifiedName(String)} to
+	 *           {@link TLClass}. Potential {@link ConfigurationException} are wrapped into
+	 *           {@link ConfigurationError}.
+	 * 
+	 * @return The {@link TLClass} of representative {@link Group} objects.
 	 * 
 	 * @throws ConfigurationError
 	 *         iff {@link #GROUP_TYPE} could not be resolved.
 	 */
-	public static TLStructuredType getGroupType() throws ConfigurationError {
-		return (TLStructuredType) TLModelUtil.resolveQualifiedName(GROUP_TYPE);
+	public static TLClass getRepresentativeGroupType() throws ConfigurationError {
+		return (TLClass) TLModelUtil.resolveQualifiedName(REPRESENTATIVE_GROUP_TYPE);
 	}
 
     /** The KO attribute used to store the system Group flag. */
@@ -265,38 +285,30 @@ public class Group extends AbstractBoundWrapper implements IGroup {
     }
 
     /**
-     * Create a new Group with the specified name.
-     *
-     * The Group will <em>not</em> be committed.
-     *
-     * @param aName             the name of the Group; must not be null
-     * @param aKnowledgeBase    the KnowledgeBase in which to create the Group;
-     *                          must not be null
-     *
-     * @return the new Group wrapper; never null
-     */
-    public static Group createGroup (String aName, KnowledgeBase aKnowledgeBase) {
-		Group theGroup;
-		{
-			KnowledgeObject theKO = aKnowledgeBase.createKnowledgeObject(OBJECT_NAME);
-            theKO.setAttributeValue (NAME_ATTRIBUTE, aName);
-
-            theGroup = (Group) WrapperFactory.getWrapper(theKO);
-        }
-        return theGroup;
+	 * Create a {@link Group} with the specified name.
+	 *
+	 * @param name
+	 *        The name of the Group.
+	 * @return The new {@link Group}.
+	 */
+	public static Group createGroup(String name) {
+		Group result = ModelService.getInstance().createGroup();
+		result.setName(name);
+		return result;
     }
 
-    /**
-     * Create a new Group with the specified name in the defaultKB.
-     *
-     * @param aName             the name of the Group; must not be null
-     *
-     * @return the new Group wrapper; never null
-     */
-    public static Group createGroup (String aName) {
-
-        return createGroup(aName, getDefaultKnowledgeBase());
-    }
+	/**
+	 * Create a representative {@link Group}.
+	 *
+	 * @see Person#getRepresentativeGroup()
+	 */
+	public static Group createRepresentativeGroup(Person account) {
+		Group result = ModelService.getInstance().createRepresentativeGroup();
+		result.setName(account.getName());
+		result.setIsSystem(true);
+		result.bind(account);
+		return result;
+	}
 
     /**
      * Get a Group by its name.

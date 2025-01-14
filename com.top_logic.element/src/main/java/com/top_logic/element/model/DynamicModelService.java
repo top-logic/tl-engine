@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.top_logic.base.services.InitialGroupManager;
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.ConfigurationError;
@@ -79,6 +78,7 @@ import com.top_logic.model.impl.generated.TLObjectBase;
 import com.top_logic.model.impl.generated.TlModelFactory;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.model.CompatibilityService;
 import com.top_logic.util.model.ModelService;
 
@@ -88,7 +88,6 @@ import com.top_logic.util.model.ModelService;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @ServiceDependencies({
-	InitialGroupManager.Module.class,
 	CompatibilityService.Module.class,
 	WrapperMetaAttributeUtil.Module.class,
 })
@@ -284,6 +283,16 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 	@Override
 	public TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues) {
 		return getFactory(type.getModule()).createObject(type, context, initialValues);
+	}
+
+	@Override
+	public Group createGroup() {
+		return (Group) createObject(Group.getGroupType());
+	}
+
+	@Override
+	public Group createRepresentativeGroup() {
+		return (Group) createObject(Group.getRepresentativeGroupType());
 	}
 
 	/**

@@ -45,7 +45,6 @@ import com.top_logic.element.config.ObjectTypeConfig;
 import com.top_logic.element.config.PartConfig;
 import com.top_logic.element.config.ReferenceConfig;
 import com.top_logic.element.config.ReferenceConfig.ReferenceKind;
-import com.top_logic.element.config.RoleAssignment;
 import com.top_logic.element.config.SingletonConfig;
 import com.top_logic.element.config.annotation.TLSingletons;
 import com.top_logic.element.config.annotation.TLStorage;
@@ -95,7 +94,6 @@ import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
-import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
@@ -1137,28 +1135,6 @@ public class ModelResolver {
 
 		root = getFactory().createObject(type);
 		module.addSingleton(name, root);
-
-		setupRoles(module, singleton);
-	}
-	
-	private void setupRoles(TLModule module, SingletonConfig singleton) {
-		for (RoleAssignment assignment : singleton.getRoleAssignments()) {
-			for (String roleName : assignment.getRoles()) {
-				BoundedRole role = BoundedRole.getDefinedRole(module, roleName);
-				if (role == null) {
-					log().error("Role '" + roleName + "' used in assignment at '" + assignment.location()
-							+ "' is not defined.");
-				}
-
-				Group group = Group.getGroupByName(assignment.getGroup());
-				if (group == null) {
-					log().error("Reference to undefined group '" + assignment.getGroup() + "' in assignment at '"
-						+ assignment.location() + "'.");
-				}
-
-				BoundedRole.assignRole(module.getSingleton(singleton.getName()), group, role);
-			}
-		}
 	}
 
 	/**

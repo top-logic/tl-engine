@@ -51,4 +51,20 @@ public class Icons extends IconsBase {
 	@TemplateType(VerticalSizableControl.class)
 	public static ThemeVar<HTMLTemplateFragment> VERTICAL_SIZABLE_CONTROL_TEMPLATE;
 
+	/**
+	 * Default height in pixels of tables displayed in forms.
+	 * 
+	 * <p>
+	 * If a table gets larger than this threshold, the table gets a vertical scroll bar. In that
+	 * case, the user can personalize the table size by dragging the bottom border to any other size
+	 * to set a custom limit for that table.
+	 * </p>
+	 * 
+	 * <p>
+	 * When setting this value to zero, table scrolling in forms is prevented and the table always
+	 * show all rows.
+	 * </p>
+	 */
+	@DefaultValue("600")
+	public static ThemeVar<Integer> FORM_TABLE_HEIGHT;
 }

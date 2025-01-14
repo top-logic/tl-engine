@@ -14,6 +14,7 @@ import jakarta.servlet.jsp.tagext.BodyTag;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
 import com.top_logic.layout.Control;
+import com.top_logic.layout.basic.Icons;
 import com.top_logic.layout.basic.VerticalSizableControl;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.decorator.DecorateService;
@@ -72,6 +73,11 @@ public class TableTag extends AbstractFormFieldControlTag implements BodyTag, Co
 		}
 
 		TableControl tableControl = createTableControl(tableField, tableData, theTableRenderer, true);
+
+		Integer defaultHeight = Icons.FORM_TABLE_HEIGHT.get();
+		if (defaultHeight == null || defaultHeight <= 0) {
+			return tableControl;
+		}
 
 		return new VerticalSizableControl(tableControl, tableControl.getViewModel().getConfigKey());
 	}

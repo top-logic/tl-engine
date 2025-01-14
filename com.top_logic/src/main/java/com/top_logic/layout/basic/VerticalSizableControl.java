@@ -115,7 +115,14 @@ public class VerticalSizableControl extends AbstractVisibleControl {
 			personalConfiguration.setValue(configKey, null);
 		}
 
-		return 300.;
+		Integer defaultHeight = Icons.FORM_TABLE_HEIGHT.get();
+		if (defaultHeight == null || defaultHeight <= 0) {
+			// This should not happen, since no scrolling control should have been created in this
+			// situation.
+			return 300;
+		}
+
+		return defaultHeight;
 	}
 
 	/**

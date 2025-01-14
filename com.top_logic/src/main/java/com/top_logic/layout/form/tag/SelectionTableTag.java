@@ -243,7 +243,7 @@ public class SelectionTableTag extends AbstractFormFieldControlTag implements Bo
 			}
 		}
 		
-		return control;
+		return TableTag.limitHeight(control, viewModel.getConfigKey());
 	}
 
 	private void wrapAccessors(TableConfiguration tableConfiguration) {

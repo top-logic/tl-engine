@@ -14,10 +14,12 @@ import jakarta.servlet.jsp.tagext.BodyTag;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
 import com.top_logic.layout.Control;
+import com.top_logic.layout.basic.Icons;
 import com.top_logic.layout.basic.VerticalSizableControl;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.decorator.DecorateService;
 import com.top_logic.layout.form.model.TableField;
+import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.table.ITableRenderer;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.control.TableControl;
@@ -73,7 +75,21 @@ public class TableTag extends AbstractFormFieldControlTag implements BodyTag, Co
 
 		TableControl tableControl = createTableControl(tableField, tableData, theTableRenderer, true);
 
-		return new VerticalSizableControl(tableControl, tableControl.getViewModel().getConfigKey());
+		return limitHeight(tableControl, tableControl.getViewModel().getConfigKey());
+	}
+
+	/**
+	 * Limits the height of the displayed table.
+	 * 
+	 * @see Icons#FORM_TABLE_HEIGHT
+	 */
+	public static Control limitHeight(Control tableControl, ConfigKey configKey) {
+		Integer defaultHeight = Icons.FORM_TABLE_HEIGHT.get();
+		if (defaultHeight == null || defaultHeight <= 0) {
+			return tableControl;
+		}
+
+		return new VerticalSizableControl(tableControl, configKey);
 	}
 	
 	private ITableRenderer getConfiguredTableRenderer(TableField tableField) {
@@ -104,7 +120,7 @@ public class TableTag extends AbstractFormFieldControlTag implements BodyTag, Co
 
 	@Override
 	public String addControl(HTMLFragment childControl) {
-		((TableControl) getControl()).addTitleBarControl(childControl);
+		table(getControl()).addTitleBarControl(childControl);
 
 		// Additional controls are displayed in a flow layout in the table title
 		// bar without any other user-defined markup.
@@ -138,5 +154,15 @@ public class TableTag extends AbstractFormFieldControlTag implements BodyTag, Co
 	@Override
 	public int doAfterBody() throws JspException {
 		return ControlBodyTagSupport.doAfterBody(bodyContent);
+	}
+
+	/**
+	 * Unwraps the {@link TableControl} from the created control.
+	 */
+	public static TableControl table(Control control) {
+		if (control instanceof VerticalSizableControl scrollbar) {
+			return (TableControl) scrollbar.getContentControl();
+		}
+		return (TableControl) control;
 	}
 }

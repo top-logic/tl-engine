@@ -64,9 +64,9 @@ public class IntegerInputControl extends AbstractFormFieldControl {
     private String incButtonId;
     private String decButtonId;
 
-	private long min;
+	private long min = Long.MIN_VALUE;
 
-	private long max;
+	private long max = Long.MAX_VALUE;
 
     /** 
      * Creates a {@link IntegerInputControl}.

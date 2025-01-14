@@ -1541,6 +1541,20 @@ div.cal_zoom_inAnimation {
 	text-align: right;
 }
 
+.cDecoratedCell2 {
+	width: 100%;
+	display: inline-flex;
+}
+
+.lFlexible2 {
+	flex-grow: 1;	
+}
+
+.lFixedLeft2,
+.lFixedRight2 {
+	flex-grow: 0;	
+}
+
 .cDecoratedCell,
 .cExpandableTextInput,
 .cBlockTextInput {

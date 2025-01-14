@@ -1,18 +1,19 @@
 <h2>​​Syntax</h2>
 
-<p> </p>
-
 <pre>
 	<code>resetSequenceId(sequence: $sequenceIdentifier, context: $additionalContext, newValue: $valueToResetTo)</code>
 </pre>
 
 <h2>Beschreibung</h2>
 
-<p> </p>
+<p>Setzt eine Sequenz auf einen bestimmten Wert zurück. Die Sequenz wird eindeutig identifiziert durch die Kombination aus:</p>
 
-<p> </p>
+<ol>
+	<li>Sequenz-Identifier (Pflichtfeld): Definiert die Basis-Sequenz (z.B. "invoice" für Rechnungsnummern)</li>
+	<li>Optionaler Kontext: Ein zusätzlicher Wert, der die Sequenz weiter unterteilt. Für jeden unterschiedlichen Kontext-Wert wird eine eigene, separate Sequenz verwendet.</li>
+</ol>
 
-<p>Setzt eine bestehende Sequenz auf einen spezifischen Wert zurück. Verwendet den gleichen Mechanismus zur Identifizierung der Sequenz wie generateSequenceId (Kombination aus Sequenz-Identifier und optionalem Kontext). Falls die angegebene Sequenz nicht existiert, wird false zurückgegeben.</p>
+<p>Der nächste Aufruf von generateSequenceId für diese Sequenz wird den angegebenen Wert zurückgeben.</p>
 
 <p> </p>
 
@@ -36,8 +37,8 @@
 		</tr>
 		<tr>
 			<td>context</td>
-			<td>Fachobjekt</td>
-			<td>Ein optionaler Kontext-Parameter, der die Sequenz spezifiziert. Mehrere Kontexte werden durch Unterstriche getrennt. Der Kontext kann ein einzelnes Objekt, eine Collection oder ein TLObject sein.</td>
+			<td>Any</td>
+			<td>Ein optionaler Kontext-Parameter, durch den separate Sequenzen entstehen. Kann sein: - String/primitive Werte - Fachobjekte (verwendet deren ID) - Collections (alle Elemente werden kombiniert)</td>
 			<td>nein</td>
 			<td> </td>
 		</tr>
@@ -51,8 +52,6 @@
 	</thead>
 </table>
 
-<h2> </h2>
-
 <h2>Rückgabewert</h2>
 
 <p><strong>Typ:</strong> Boolean</p>
@@ -65,13 +64,13 @@
 	<code>resetSequenceId($existingSequence)</code>
 </pre>
 
-<p><strong>Ausgabe:</strong> true</p>
+<p><strong>Ausgabe:</strong> true - Sequenz $existingSequence wird auf 1 zurückgesetzt</p>
 
 <pre>
-	<code>resetSequenceId($existingSequence, null, 1000)
-generateSequenceId($existingSequence)</code>
+	<code>resetSequence("slot", $parking, 100)
+generateSequenceId("slot", $parking)</code>
 </pre>
 
-<p>​<strong>Ausgabe:</strong> 1000</p>
+<p>​<strong>Ausgabe:</strong> Eine Sequenz für die Stellplätze des Parkhauses wird auf 100 zurückgesetzt. Der folgende generateSequenceId-Aufruf gibt 100 zurück.</p>
 
 <p> </p>

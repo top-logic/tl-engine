@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.meta.form.fieldprovider;
 
+import static com.top_logic.mig.html.HTMLConstants.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -44,6 +46,7 @@ import com.top_logic.layout.ResourceView;
 import com.top_logic.layout.VetoException;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
@@ -255,7 +258,18 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 					// Nothing to render.
 					return;
 				}
+
 				FormMember field = getField(row, part);
+				if (field != null) {
+					out.beginBeginTag(DIV);
+					out.writeAttribute(CLASS_ATTR, FormConstants.DECORATED_CELL2_CSS_CLASS);
+					out.endBeginTag();
+
+					out.beginBeginTag(DIV);
+					out.writeAttribute(CLASS_ATTR, FormConstants.FLEXIBLE2_CSS_CLASS);
+					out.endBeginTag();
+				}
+
 				if (field instanceof Composite) {
 					CompositionControlProvider.INSTANCE.createControl(field).write(context, out);
 				} else if (field != null) {
@@ -272,7 +286,18 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 				}
 
 				if (field != null) {
-					new ErrorControl(field, true).write(context, out);
+					out.endTag(DIV);
+
+					out.beginBeginTag(DIV);
+					out.writeAttribute(CLASS_ATTR, FormConstants.FIXED_RIGHT2_CSS_CLASS);
+					out.endBeginTag();
+					{
+						ErrorControl errorControl = new ErrorControl(field, true);
+						errorControl.write(context, out);
+					}
+					out.endTag(DIV);
+
+					out.endTag(DIV);
 				}
 			}
 		}

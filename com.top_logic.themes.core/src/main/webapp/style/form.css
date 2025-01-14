@@ -391,11 +391,15 @@ div.rf_buttons {
     margin-left: calc(-1*var(--RF_HORIZONTAL_GAP_COLUMNS));
 }
 
-.rf_inputCell:first-child {
+/* 
+	Remove spacing between cell label and multi-field cell content as e.g. in I18N fields. 
+	Inner cells never wrap to multiple columns, therefore the first and last entry can have different margins.
+*/
+.rf_cell .rf_inputCell:first-child {
     margin-top: 0;
 }
 
-.rf_inputCell:last-child {
+.rf_cell .rf_inputCell:last-child {
     margin-bottom: 0;
 }
 

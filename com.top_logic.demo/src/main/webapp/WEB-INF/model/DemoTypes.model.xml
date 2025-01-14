@@ -694,6 +694,23 @@
 				<property name="long"
 					type="tl.core:Long"
 				/>
+				<property name="intConstraint"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<default-value>
+							<int value="0"/>
+						</default-value>
+						<value-range
+							max="16"
+							min="0"
+						/>
+						<tag-provider impl="com.top_logic.element.meta.form.tag.IntegerInputTagProvider"/>
+						<column-info>
+							<editControlProvider class="com.top_logic.layout.form.control.IntegerInputControl$Provider"/>
+						</column-info>
+					</annotations>
+				</property>
 				<property name="longConstraint"
 					type="tl.core:Long"
 				>
@@ -2279,14 +2296,26 @@
 						</storage-algorithm>
 					</annotations>
 				</property>
+				<property name="intConstraint"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<chain>
+										<config-reference name="parent"/>
+										<get-value attribute="intConstraint"/>
+									</chain>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
 				<property name="longConstraint"
 					type="tl.core:Long"
 				>
 					<annotations>
-						<value-range
-							max="10.0"
-							min="-10.0"
-						/>
 						<storage-algorithm>
 							<derived-storage>
 								<expression-evaluation>

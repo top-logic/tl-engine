@@ -785,10 +785,6 @@ div.dfListAdd {
 	width: calc(100% - 60px);
 }
 
-*:not(.sizeSet) > .rf_cell .cIntegerInput > .cTextInput:not(.searchIrrelevant) .is-input {
-	width: auto;
-}
-
 .rf_inputCell .rightAlign {
 	text-align: right;
 	padding-right: 5px;
@@ -1534,13 +1530,14 @@ div.cal_zoom_inAnimation {
 	background: transparent;
 }
 
-.cIntegerInput.num {
+.cIntegerInput {
 	display: inline-flex;
 	align-items: stretch;
 }
 
 .cIntegerInput input,
-.cTextInput.num input {
+.cTextInput.num input,
+.tl-table__cell.num {
 	text-align: right;
 }
 
@@ -1570,6 +1567,10 @@ div.cal_zoom_inAnimation {
 	height: inherit;
 }
 
+.input-image.is-action {
+	background-color: var(--field);
+}
+
 td.tl-table__cell--selected .cDecoratedCell a.input-image,
 td.tl-table__cell--selected .cDecoratedCell a.input-image:hover,
 td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
@@ -1577,12 +1578,10 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
 	outline: none !important;
 }
 
-.lFixedRight,
-.cIntegerInput.num .lFixedRight {
+.lFixedRight {
 	display: inline-flex;
-	align-items: stretch;
+	align-items: center;
 	color: var(--button-fg, var(--icon-primary));
-	background-color: var(--field);
 }
 
 .cDownload .lFixedRight {
@@ -1669,7 +1668,7 @@ input.is-checkbox[disabled] {
 }
 
 .cTextInput input,
-.cIntegerInput.num input,
+.cIntegerInput input,
 .cExpandableTextInput input,
 .cBlockTextInput input,
 .cPopupSelect input,
@@ -1691,7 +1690,7 @@ input.is-checkbox[disabled] {
     letter-spacing: var(--body-02-letter-spacing);
 }
 
-.cIntegerInput.num input,
+.cIntegerInput input,
 .cPopupSelect input,
 .cDateInput input,
 .cTimeInput input {
@@ -1711,7 +1710,7 @@ input.is-checkbox[disabled] {
 }
 
 .cTextInput.mandatory input,
-.cIntegerInput.num.mandatory input,
+.cIntegerInput.mandatory input,
 .cExpandableTextInput.mandatory input,
 .cBlockTextInput.mandatory input,
 .cPopupSelect.mandatory input,
@@ -1877,9 +1876,9 @@ textarea:focus,
 	outline: none !important;
 }
 
-.cIntegerInput.num input:focus,
-.cIntegerInput.num.error input:focus,
-.cIntegerInput.num.error-annotation input:focus {
+.cIntegerInput input:focus,
+.cIntegerInput.error input:focus,
+.cIntegerInput.error-annotation input:focus {
 	outline: none !important;
 	border: none;
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
@@ -1887,7 +1886,7 @@ textarea:focus,
 
 .cTextInput.disabled input,
 .cTextInput.disabled textarea,
-.cIntegerInput.num.disabled input,
+.cIntegerInput.disabled input,
 .cExpandableTextInput.disabled input,
 .cExpandableTextInput.disabled textarea,
 .cBlockTextInput.disabled input,

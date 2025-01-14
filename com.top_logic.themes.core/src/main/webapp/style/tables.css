@@ -1048,7 +1048,7 @@ Padding is spacing-01 instead of 03 for tables
 because of the datetimeinput field.
  */
 table td .cTextInput input,
-table td .cIntegerInput.num input, 
+table td .cIntegerInput input, 
 table td .cExpandableTextInput input, 
 table td .cBlockTextInput input, 
 table td .cPopupSelect input,

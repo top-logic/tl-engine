@@ -89,6 +89,7 @@
 								cssClass="tblRight"
 							/>
 							<column name="computedCntStructure"
+								cssClass="num"
 								filterProvider="com.top_logic.layout.table.filter.SimpleComparableFilterProvider"
 							>
 								<accessor class="com.top_logic.model.search.providers.AccessorByExpression"

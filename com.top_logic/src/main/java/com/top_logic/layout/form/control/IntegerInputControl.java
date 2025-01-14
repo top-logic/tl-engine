@@ -20,6 +20,7 @@ import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.constraints.IRangeConstraint;
 import com.top_logic.layout.form.constraints.RangeConstraint;
 import com.top_logic.layout.form.tag.Icons;
 import com.top_logic.layout.form.template.ControlProvider;
@@ -72,7 +73,14 @@ public class IntegerInputControl extends AbstractFormFieldControl {
      */
     public IntegerInputControl(FormField aModel) {
 		super(aModel);
-        textInput = new TextInputControl(aModel);
+		textInput = new TextInputControl(aModel) {
+			@Override
+			protected void writeControlClassesContent(Appendable out) throws IOException {
+				super.writeControlClassesContent(out);
+
+				out.append(FormConstants.FLEXIBLE_CSS_CLASS);
+			}
+		};
         textInput.setMultiLine(false);
         textInput.setRows(1);
     }
@@ -171,18 +179,17 @@ public class IntegerInputControl extends AbstractFormFieldControl {
         if (theObj != null && isApplicableType(theObj)) {
             theValue = (Comparable)theObj;
         }
+        
         // span to position the plus/minus buttons
         anOut.beginBeginTag(SPAN);
 		anOut.writeAttribute(ID_ATTR, buttonsId());
 		anOut.writeAttribute(CLASS_ATTR, FormConstants.FIXED_RIGHT_CSS_CLASS);
-        anOut.writeAttribute(STYLE_ATTR, "position: relative;");
         anOut.endBeginTag();
 		{
 			writeIncrementButton(aContext, anOut, isDisabled, theValue);
 
 			writeDecrementButton(aContext, anOut, isDisabled, theValue);
 		}
-
 		anOut.endTag(SPAN);
 	}
 
@@ -327,9 +334,6 @@ public class IntegerInputControl extends AbstractFormFieldControl {
             if (aValue != null) {
                 theResult = aValue.compareTo(min) <= 0;
             }
-            else {
-                theResult = Integer.valueOf(0).compareTo((Integer)min) <= 0;
-            }
         }
         return theResult;
     }
@@ -348,9 +352,6 @@ public class IntegerInputControl extends AbstractFormFieldControl {
             if (aValue != null) {
                 theResult = aValue.compareTo(max) >= 0;
             }
-            else {
-                theResult = Integer.valueOf(0).compareTo((Integer)max) >= 0;
-            }
         }
         return theResult;
     }
@@ -363,8 +364,7 @@ public class IntegerInputControl extends AbstractFormFieldControl {
      */
     private void setMinMax(FormField aField) {
 		for (Constraint constraint : aField.getConstraints()) {
-            if (constraint instanceof RangeConstraint) {
-                RangeConstraint rangeConstraint = (RangeConstraint) constraint;
+			if (constraint instanceof IRangeConstraint rangeConstraint) {
                 Comparable theLowerComp = rangeConstraint.getLower();
                 Comparable theUpperComp = rangeConstraint.getUpper();
                 if (theLowerComp == null || isApplicableType(theLowerComp)) {

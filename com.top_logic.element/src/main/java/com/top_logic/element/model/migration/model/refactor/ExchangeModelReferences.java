@@ -31,6 +31,7 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -51,6 +52,8 @@ import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
+import com.top_logic.model.TLClassifier;
+import com.top_logic.model.TLType;
 import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.BranchIdType;
 import com.top_logic.model.migration.data.MigrationException;
@@ -61,8 +64,8 @@ import com.top_logic.model.migration.data.TypePart;
 import com.top_logic.util.TLContext;
 
 /**
- * {@link MigrationProcessor} that exchanges references to model elements (such as enumeration
- * classifiers).
+ * {@link MigrationProcessor} that exchanges references to model elements (such as
+ * {@link TLClassifier enumeration classifiers} of {@link TLType types}).
  * 
  * <p>
  * This processor can be used in combination with a type change of a reference attribute from enum A
@@ -126,6 +129,11 @@ public class ExchangeModelReferences extends AbstractConfiguredInstance<Exchange
 
 			/**
 			 * The type of objects stored in this table that should be changed.
+			 * 
+			 * <p>
+			 * When no type is given, all objects in the table are considered and potentially
+			 * updated.
+			 * </p>
 			 */
 			@Name("type")
 			QualifiedTypeName getType();
@@ -139,6 +147,11 @@ public class ExchangeModelReferences extends AbstractConfiguredInstance<Exchange
 			/**
 			 * Name of the reference column of the given {@link #getTable()} that contains the
 			 * reference associated with the link stored in a table row.
+			 * 
+			 * <p>
+			 * The reference column must not be <code>null</code> when {@link #getReference()} is
+			 * set.
+			 * </p>
 			 */
 			@Nullable
 			@Name("reference-column")
@@ -151,11 +164,19 @@ public class ExchangeModelReferences extends AbstractConfiguredInstance<Exchange
 			 */
 			@Name("value-column")
 			@StringDefault(DBKnowledgeAssociation.REFERENCE_DEST_NAME)
+			@NonNullable
 			String getValueColumn();
 
 			/**
 			 * The reference stored in this association table that potentially stores mapped model
 			 * parts.
+			 * 
+			 * <p>
+			 * When no reference is given, all associations in the table are considered and
+			 * potentially updated.
+			 * </p>
+			 * 
+			 * @see #getReferenceColumn()
 			 */
 			@Name("reference")
 			QualifiedPartName getReference();
@@ -216,17 +237,24 @@ public class ExchangeModelReferences extends AbstractConfiguredInstance<Exchange
 							ref.getColumn(ReferencePart.name).getDBName()));
 					}
 
-					MOReference tType = (MOReference) table.getAttribute(PersistentObject.T_TYPE_ATTR);
-					String tTypeColumn = tType.getColumn(ReferencePart.name).getDBName();
+					SQLExpression where;
+					QualifiedTypeName objectType = tableUpdate.getType();
+					if (objectType != null) {
+						MOReference tType = (MOReference) table.getAttribute(PersistentObject.T_TYPE_ATTR);
+						String tTypeColumn = tType.getColumn(ReferencePart.name).getDBName();
 
-					Type type = util.getTLTypeOrFail(connection, tableUpdate.getType());
-					Collection<TLID> implIds = util.getImplementationIds(connection, type);
+						Type type = util.getTLTypeOrFail(connection, objectType);
+						Collection<TLID> implIds = util.getImplementationIds(connection, type);
+						where = inSet(column(tTypeColumn), implIds, DBType.ID);
+					} else {
+						where = literalTrueLogical();
+					}
 
 					CompiledStatement select = query(
 						select(
 							columns,
 							table(table.getDBMapping().getDBName()),
-							inSet(column(tTypeColumn), implIds, DBType.ID))).toSql(connection.getSQLDialect());
+							where)).toSql(connection.getSQLDialect());
 
 					select.setResultSetConfiguration(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 					int valueColumns = tableUpdate.getColumns().size();
@@ -265,11 +293,18 @@ public class ExchangeModelReferences extends AbstractConfiguredInstance<Exchange
 				} else {
 					AssociationUpdate associationUpdate = (AssociationUpdate) update;
 
-					MOReference ref = (MOReference) table.getAttribute(associationUpdate.getReferenceColumn());
-
 					MOReference value = (MOReference) table.getAttribute(associationUpdate.getValueColumn());
 
-					TypePart refId = util.getTLTypePartOrFail(connection, associationUpdate.getReference());
+					SQLExpression where;
+					QualifiedPartName reference = associationUpdate.getReference();
+					if (reference != null) {
+						MOReference ref = (MOReference) table.getAttribute(associationUpdate.getReferenceColumn());
+						TypePart refId = util.getTLTypePartOrFail(connection, reference);
+						where = eqSQL(column(ref.getColumn(ReferencePart.name).getDBName()),
+							literal(DBType.ID, refId.getDefinition()));
+					} else {
+						where = literalTrueLogical();
+					}
 
 					String valueColumn = value.getColumn(ReferencePart.name).getDBName();
 
@@ -286,8 +321,7 @@ public class ExchangeModelReferences extends AbstractConfiguredInstance<Exchange
 					CompiledStatement select = query(
 						update(
 							table(table.getDBMapping().getDBName()),
-							eqSQL(column(ref.getColumn(ReferencePart.name).getDBName()),
-								literal(DBType.ID, refId.getDefinition())),
+							where,
 							columnNames(valueColumn),
 							expressions(valueExpr))).toSql(connection.getSQLDialect());
 

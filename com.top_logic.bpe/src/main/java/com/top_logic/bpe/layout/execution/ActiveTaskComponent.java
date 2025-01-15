@@ -159,10 +159,13 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 			Node currentNode = currentToken.getNode();
 			Lane currentLane = currentNode.getLane();
 
+			// get the processExecution to calculate isActor
+			ProcessExecution currentProcessExecution = currentToken.getProcessExecution();
+
 			// Get the current person
 			Person currentPerson = TLContext.currentUser();
 
-			if (GuiEngine.getInstance().isActor(currentPerson, currentLane, null)) {
+			if (GuiEngine.getInstance().isActor(currentPerson, currentLane, currentProcessExecution)) {
 				// Only check form validity if user is an actor
 				EditComponent editComponent = (EditComponent) aComponent;
 				if (editComponent.getFormContext().checkAll()) {

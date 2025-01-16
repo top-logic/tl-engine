@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.folder">
+		<class name="Document">
+			<attributes>
+				<reference name="docVersion">
+					<annotations>
+						<storage-algorithm>
+							<query expr="doc -> all(`tl.folder:DocumentVersion`).filter(dv-> $dv.get(`tl.folder:DocumentVersion#doc`).equalsUnversioned($doc)).filter(dv -> $dv.get(`tl.folder:DocumentVersion#revision`) == $doc.get(`tl.folder:Document#versionNumber`)).firstElement()"/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>		
+		</class>
+	</module>
+</model>

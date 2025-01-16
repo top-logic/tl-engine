@@ -95,17 +95,6 @@
 						<fulltext-relevant value="false"/>
 					</annotations>
 				</property>
-				<reference name="docVersion"
-					kind="forwards"
-					navigate="true"
-					type="DocumentVersion"
-				>
-					<annotations>
-						<storage-algorithm>
-							<query expr="doc -> all(`tl.folder:DocumentVersion`).filter(dv-> $dv.get(`tl.folder:DocumentVersion#doc`).equalsUnversioned($doc)).filter(dv -> $dv.get(`tl.folder:DocumentVersion#revision`) == $doc.get(`tl.folder:Document#versionNumber`)).firstElement()"/>
-						</storage-algorithm>
-					</annotations>
-				</reference>
 			</attributes>
 		</class>
 		<class name="WebFolder">

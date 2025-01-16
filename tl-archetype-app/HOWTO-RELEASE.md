@@ -14,7 +14,7 @@ To release a new version of the TopLogic app archetype to Maven Central, you nee
    gpg --keyserver keyserver.ubuntu.com --send-keys 989FC5...
    ```
    
- * An account at Sonatype, see https://issues.sonatype.org/secure/Signup!default.jspa
+ * An account at Sonatype, see https://central.sonatype.com/
  * A server entry in your local Maven settings providing user name and password for your Sonatype account
 
    ```
@@ -37,7 +37,7 @@ To release a new version of the TopLogic app archetype to Maven Central, you nee
       <properties>
         <gpg.executable>gpg</gpg.executable>
         <tl.keyname>989FC5...</tl.keyname>
-        <tl.keypassid>tl-key-pass</tl.keypassid>
+        <tl.keypassid>tl-keypass</tl.keypassid>
       </properties>
     </profile>
     ```
@@ -56,7 +56,7 @@ release) using:
 
 ```
 cd ../tl-parent-all
-mvn  -P \!full-build -P maven-central
+mvn deploy -P \!full-build -P maven-central
 ```
 
 This results in a staging repository to be created at Sonatype:
@@ -92,7 +92,7 @@ Waiting for operation to complete...
 [INFO] ------------------------------------------------------------------------
 ```
 
-To finally release the staged artifacty to Maven Central, you have to issue the following command:
+To finally release the staged artifacts to Maven Central, you have to issue the following command:
 
 ```
 cd ../tl-parent-all
@@ -125,5 +125,5 @@ Waiting for operation to complete...
 If something went wrong and the release should be aborted, type:
 
 ```
-mvn nexus-staging:drop
+mvn nexus-staging:drop -P maven-central
 ```

@@ -476,7 +476,7 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 							try {
 								Object oldAttribute = oldFormModel.tValueByName(attributeName);
 								if (oldAttribute != null) {
-									_formModel.tSetData(attributeName, oldAttribute);
+									_formModel.tUpdateByName(attributeName, oldAttribute);
 								}
 							} catch (NoSuchAttributeException e) {
 								// Skip attributes that don't exist in old model

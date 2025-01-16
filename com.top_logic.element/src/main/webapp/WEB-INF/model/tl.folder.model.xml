@@ -95,6 +95,12 @@
 						<fulltext-relevant value="false"/>
 					</annotations>
 				</property>
+				<reference name="docVersion"
+					kind="forwards"
+					navigate="true"
+					type="DocumentVersion"
+				>
+				</reference>
 			</attributes>
 		</class>
 		<class name="WebFolder">

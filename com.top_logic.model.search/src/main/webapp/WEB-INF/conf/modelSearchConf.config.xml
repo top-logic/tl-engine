@@ -280,6 +280,7 @@
 					<declaration file="/WEB-INF/model/SearchExpressionStructure.model.xml"/>
 					<declaration file="/WEB-INF/model/tl-model-search/extension.tl.core.model.xml"/>
 					<declaration file="/WEB-INF/model/tl-model-search/extension.tl.accounts.model.xml"/>
+					<declaration file="/WEB-INF/model/tl-model-search/extension.tl.folder.model.xml"/>
 					<declaration file="/WEB-INF/model/tl.model.search.model.xml"/>
 				</declarations>
 				<settings>

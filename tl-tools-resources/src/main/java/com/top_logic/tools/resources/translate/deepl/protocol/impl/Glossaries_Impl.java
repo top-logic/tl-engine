@@ -1,5 +1,8 @@
 package com.top_logic.tools.resources.translate.deepl.protocol.impl;
 
+/**
+ * Implementation of {@link com.top_logic.tools.resources.translate.deepl.protocol.Glossaries}.
+ */
 public class Glossaries_Impl extends de.haumacher.msgbuf.data.AbstractDataObject implements com.top_logic.tools.resources.translate.deepl.protocol.Glossaries {
 
 	private final java.util.List<com.top_logic.tools.resources.translate.deepl.protocol.Glossary> _glossaries = new java.util.ArrayList<>();

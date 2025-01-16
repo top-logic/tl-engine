@@ -1,5 +1,8 @@
 package com.top_logic.tools.resources.translate.deepl.protocol.impl;
 
+/**
+ * Implementation of {@link com.top_logic.tools.resources.translate.deepl.protocol.Glossary}.
+ */
 public class Glossary_Impl extends de.haumacher.msgbuf.data.AbstractDataObject implements com.top_logic.tools.resources.translate.deepl.protocol.Glossary {
 
 	private String _glossaryId = "";

@@ -1,7 +1,7 @@
 package com.top_logic.tools.resources.translate.deepl.protocol.impl;
 
 /**
- * Result of the <code>translate</code> API call.
+ * Implementation of {@link com.top_logic.tools.resources.translate.deepl.protocol.TranslationResult}.
  */
 public class TranslationResult_Impl extends de.haumacher.msgbuf.data.AbstractDataObject implements com.top_logic.tools.resources.translate.deepl.protocol.TranslationResult {
 

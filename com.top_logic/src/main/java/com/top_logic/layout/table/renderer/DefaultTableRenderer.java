@@ -66,11 +66,6 @@ import com.top_logic.layout.table.control.TableControl.SortCommand;
 import com.top_logic.layout.table.control.TableControl.TableCommand;
 import com.top_logic.layout.table.control.TableUpdateAccumulator.UpdateRequest;
 import com.top_logic.layout.table.display.ClientDisplayData;
-import com.top_logic.layout.table.display.ColumnAnchor;
-import com.top_logic.layout.table.display.IndexRange;
-import com.top_logic.layout.table.display.RowIndexAnchor;
-import com.top_logic.layout.table.display.ViewportState;
-import com.top_logic.layout.table.display.VisiblePaneRequest;
 import com.top_logic.layout.table.model.AdditionalHeaderControlModel;
 import com.top_logic.layout.table.model.Column;
 import com.top_logic.layout.table.model.ColumnBaseConfig;
@@ -886,59 +881,9 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 			out.append("', ");
 			appendTableInformerCreator(_view, _model, out);
 			out.append(",");
-			appendClientDisplayData(out, _model);
+			ClientDisplayData.append(out, _model);
 			out.append(");");
 			HTMLUtil.endScriptAfterRendering(out);
-		}
-
-		private void appendClientDisplayData(TagWriter out, TableViewModel viewModel) throws IOException {
-			ClientDisplayData clientDisplayData = viewModel.getClientDisplayData();
-
-			out.append("function getDisplayData() {");
-
-			appendPaneRequest(out, viewModel);
-			appendViewportState(out, viewModel, clientDisplayData.getViewportState());
-
-			out.append("return { visiblePane:visiblePane, viewportState:viewportState }");
-			out.append("}()");
-		}
-
-		private void appendPaneRequest(TagWriter out, TableViewModel model) throws IOException {
-			VisiblePaneRequest paneRequest = PagePaneProvider.getPane(model);
-
-			IndexRange rowRange = paneRequest.getRowRange();
-			IndexRange columnRange = paneRequest.getColumnRange();
-
-			out.append("var visiblePane = new Object();");
-			out.append("visiblePane.rowRange = new Object();");
-			out.append("visiblePane.rowRange.firstIndex = " + rowRange.getFirstIndex() + ";");
-			out.append("visiblePane.rowRange.lastIndex = " + rowRange.getLastIndex() + ";");
-			out.append(
-				"visiblePane.rowRange.forcedVisibleIndexInRange = " + rowRange.getForcedVisibleIndexInRange() + ";");
-
-			out.append("visiblePane.columnRange = new Object();");
-			out.append("visiblePane.columnRange.firstIndex = "
-				+ TableUtil.getClientColumnIndex(model, columnRange.getFirstIndex()) + ";");
-			out.append("visiblePane.columnRange.lastIndex = "
-				+ TableUtil.getClientColumnIndex(model, columnRange.getLastIndex()) + ";");
-			out.append("visiblePane.columnRange.forcedVisibleIndexInRange = "
-				+ TableUtil.getClientColumnIndex(model, columnRange.getForcedVisibleIndexInRange()) + ";");
-		}
-
-		private void appendViewportState(TagWriter out, TableViewModel model, ViewportState state) throws IOException {
-			RowIndexAnchor rowAnchor = state.getRowAnchor();
-			ColumnAnchor columnAnchor = state.getColumnAnchor();
-
-			int columnIndex = TableUtil.getClientColumnIndex(model, model.getColumnIndex(columnAnchor.getColumnName()));
-
-			out.append("var viewportState = new Object();");
-			out.append("viewportState.rowAnchor = new Object();");
-			out.append("viewportState.rowAnchor.index = " + rowAnchor.getIndex() + ";");
-			out.append("viewportState.rowAnchor.indexPixelOffset = " + rowAnchor.getIndexPixelOffset() + ";");
-			
-			out.append("viewportState.columnAnchor = new Object();");
-			out.append("viewportState.columnAnchor.index = " + columnIndex + ";");
-			out.append("viewportState.columnAnchor.indexPixelOffset = " + columnAnchor.getIndexPixelOffset() + ";");
 		}
 
 		private void appendTableInformerCreator(TableControl view, TableViewModel viewModel, Appendable out)

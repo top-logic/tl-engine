@@ -165,7 +165,8 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 			// Get the current person
 			Person currentPerson = TLContext.currentUser();
 
-			if (GuiEngine.getInstance().isActor(currentPerson, currentLane, currentProcessExecution)) {
+			if (GuiEngine.getInstance().isActor(currentPerson, currentLane, currentProcessExecution)
+				|| currentPerson.isAdmin()) {
 				// Only check form validity if user is an actor
 				EditComponent editComponent = (EditComponent) aComponent;
 				if (editComponent.getFormContext().checkAll()) {

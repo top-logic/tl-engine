@@ -922,9 +922,9 @@ TABLE = {
 	 * @param {tableInformer} Holds the tables metadata.
 	 * @param{oldRangeOfRows} Range of row indidces that are rendered.
  	 * @param{newRangeOfRows} Range of row indidces that should be rendered.
-	 * @param {callbackBeforeRequest} Callback executed before the rendering request for further rows has sent to the server.
+	 * @param {callback} Callback executed after rows have been rendered.
 	 */
-	renderRows: function(tableContainer, tableInformer, oldRangeOfRows, newRangeOfRows, callbackBeforeRequest) {
+	renderRows: function(tableContainer, tableInformer, oldRangeOfRows, newRangeOfRows, callback) {
 		var rangeTransformations = TABLE.getAddAndRemoveRangeTransformations(oldRangeOfRows, newRangeOfRows);
 		var rowsHasChanged = rangeTransformations.addRanges.length > 0 || rangeTransformations.removeRanges.length > 0;
 		
@@ -932,11 +932,10 @@ TABLE = {
 			tableInformer.rangeOfRenderedRowIndices = newRangeOfRows;
 			
 			TABLE.replaceRenderedRangeOfRows(tableContainer, tableInformer, rangeTransformations);
-			
-			callbackBeforeRequest();
-			
 			TABLE.requestRowsToUpdate(tableContainer, rangeTransformations.addRanges, rangeTransformations.removeRanges, () => {});
 		}
+		
+		callback();
 	},
 	
 	/**

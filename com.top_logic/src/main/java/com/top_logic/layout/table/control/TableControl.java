@@ -123,6 +123,7 @@ import com.top_logic.layout.table.control.access.CellRef;
 import com.top_logic.layout.table.control.access.ColumsCollectionRef;
 import com.top_logic.layout.table.control.access.RowDisplay;
 import com.top_logic.layout.table.control.access.RowsCollectionRef;
+import com.top_logic.layout.table.display.ClientDisplayData;
 import com.top_logic.layout.table.display.ColumnAnchor;
 import com.top_logic.layout.table.display.IndexRange;
 import com.top_logic.layout.table.display.RowIndexAnchor;
@@ -264,6 +265,8 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 	/** Translation key for title of table */
 	public static final String RES_TITLE = "title";
+
+	private boolean _hasSelectionChanged = false;
 
 	/**
 	 * Property to transfer the table control ID to {@link TableButtons}.
@@ -1053,7 +1056,6 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	 */
 	@Override
 	protected void internalRevalidate(DisplayContext context, UpdateQueue actions) {
-
 		super.internalRevalidate(context, actions);
 
 		// Retrieve update requests from update accumulator
@@ -1064,6 +1066,12 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		// Get updates from row controls
 		for (LocalScope scope : rowScopes.values()) {
 			scope.revalidate(context, actions);
+		}
+
+		if (_hasSelectionChanged) {
+			handleChangedSelection(actions);
+
+			_hasSelectionChanged = false;
 		}
 	}
 
@@ -1127,13 +1135,39 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	@Override
 	public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
 		updateRows(formerlySelectedObjects);
-		updateRows(selectedObjects);
 
-		if (!model.getSelection().isEmpty()) {
-			setVisibleRange(model);
+		_hasSelectionChanged = true;
+	}
+
+	private void handleChangedSelection(UpdateQueue actions) {
+		SelectionModel selectionModel = getSelectionModel();
+		Set<?> selection = selectionModel.getSelection();
+
+		updateRows(selection);
+
+		if (!selection.isEmpty()) {
+			setVisibleRange(selectionModel);
+
+			if (isAttached()) {
+				actions.add(createScrollIntoViewportAction());
+			}
 		} else {
 			setUndefinedRange();
 		}
+	}
+
+	private JSSnipplet createScrollIntoViewportAction() {
+		return new JSSnipplet(new DynamicText() {
+
+			@Override
+			public void append(DisplayContext context, Appendable out) throws IOException {
+				out.append("TABLE.updateScrollPosition('");
+				out.append(getID());
+				out.append("',");
+				ClientDisplayData.append(out, getViewModel());
+				out.append(");");
+			}
+		});
 	}
 
 	private void setVisibleRange(Object selectionModel) {

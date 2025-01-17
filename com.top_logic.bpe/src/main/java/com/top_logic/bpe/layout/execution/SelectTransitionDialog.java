@@ -125,8 +125,8 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 	 * Creates a {@link SelectTransitionDialog}.
 	 */
 	public SelectTransitionDialog(Token token, HandlerResult suspended) {
-		super(I18NConstants.SELECT_TRANSITION_DIALOG, DisplayDimension.dim(550, DisplayUnit.PIXEL),
-			DisplayDimension.dim(320, DisplayUnit.PIXEL));
+		super(I18NConstants.SELECT_TRANSITION_DIALOG, DisplayDimension.dim(620, DisplayUnit.PIXEL),
+			DisplayDimension.dim(350, DisplayUnit.PIXEL));
 		_token = token;
 		_suspended = suspended;
 	}

@@ -12,6 +12,14 @@
 	border-spacing: 0 10px;
 }
 
+/* Modifier class that enables text wrapping in table cells
+ * while preserving all other tl-standard-table styles.
+ * Usage: <table class="tl-standard-table multiline">
+ */
+.tl-standard-table.multiline {
+    white-space: normal;
+}
+
 table.treeBody {
 	white-space: nowrap;
 	display: table;

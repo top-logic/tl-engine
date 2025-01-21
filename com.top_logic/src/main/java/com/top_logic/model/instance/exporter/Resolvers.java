@@ -5,14 +5,26 @@
  */
 package com.top_logic.model.instance.exporter;
 
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+import javax.xml.stream.XMLStreamWriter;
+
 import com.top_logic.basic.Log;
 import com.top_logic.basic.LogProtocol;
+import com.top_logic.basic.config.ConfigUtil;
+import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationValueBinding;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.xml.XMLStreamUtil;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.StorageDetail;
@@ -22,15 +34,18 @@ import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.access.WithStorageAttribute;
 import com.top_logic.model.annotate.ui.TLIDColumn;
 import com.top_logic.model.config.annotation.TableName;
 import com.top_logic.model.instance.annotation.TLInstanceResolver;
 import com.top_logic.model.instance.annotation.TLValueResolver;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
+import com.top_logic.model.instance.importer.resolver.AbstractValueResolver;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
 import com.top_logic.model.instance.importer.resolver.NoValueResolver;
 import com.top_logic.model.instance.importer.resolver.ValueResolver;
+import com.top_logic.model.instance.importer.schema.ComplexValueConf;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -50,6 +65,8 @@ public class Resolvers {
 	private final Map<String, TLStructuredType> _typeByName = new HashMap<>();
 
 	private final Map<TLStructuredTypePart, ValueResolver> _valueResolvers = new HashMap<>();
+
+	private final Map<TLStructuredTypePart, ConfigurationValueBinding<?>> _bindings = new HashMap<>();
 
 	/**
 	 * Adds a custom resolver for the given type.
@@ -202,11 +219,81 @@ public class Resolvers {
 
 	private ValueResolver lookupValueResolver(TLStructuredTypePart attribute) {
 		TLValueResolver annotation = attribute.getAnnotation(TLValueResolver.class);
-		if (annotation == null) {
-			return NoValueResolver.INSTANCE;
+		if (annotation != null) {
+			return TypedConfigUtil.createInstance(annotation.getImpl());
 		}
 
-		return TypedConfigUtil.createInstance(annotation.getImpl());
+		@SuppressWarnings("unchecked")
+		ConfigurationValueBinding<Object> binding = (ConfigurationValueBinding<Object>) binding(attribute);
+		if (binding != null) {
+			return new AbstractValueResolver<ComplexValueConf, Object>() {
+				@Override
+				public Object internalResolve(TLStructuredTypePart concreteAttribute, ComplexValueConf config) {
+					String xml = "<v>" + config.getContents() + "</v>";
+					try {
+						XMLStreamReader in = XMLStreamUtil.getDefaultInputFactory().createXMLStreamReader(new StringReader(xml));
+						Object result = binding.loadConfigItem(in, null);
+						in.close();
+						return result;
+					} catch (ConfigurationException | XMLStreamException ex) {
+						_log.error("Cannot read value from xml.", ex);
+						return null;
+					}
+				}
+
+				@Override
+				public ComplexValueConf internalCreateValueConf(TLStructuredTypePart concreteAttribute, Object value) {
+					StringWriter buffer = new StringWriter();
+					try {
+						XMLStreamWriter out =
+							XMLStreamUtil.getDefaultOutputFactory().createXMLStreamWriter(buffer);
+						binding.saveConfigItem(out, value);
+						out.close();
+					} catch (XMLStreamException ex) {
+						_log.error("Failed to serialize value.", ex);
+						return null;
+					}
+
+					ComplexValueConf conf = TypedConfiguration.newConfigItem(ComplexValueConf.class);
+					conf.setContents(buffer.toString());
+					return conf;
+				}
+			};
+		}
+
+		return NoValueResolver.INSTANCE;
+	}
+
+	/**
+	 * Looks up a {@link ConfigurationValueBinding} for the given attribute's application type.
+	 */
+	public ConfigurationValueBinding<?> binding(TLStructuredTypePart attribute) {
+		ConfigurationValueBinding<?> existing = _bindings.get(attribute);
+		if (existing != null || _bindings.containsKey(attribute)) {
+			return existing;
+		}
+
+		ConfigurationValueBinding<?> newBinding = lookupBinding(attribute);
+		_bindings.put(attribute, newBinding);
+		return newBinding;
+	}
+
+	private ConfigurationValueBinding<?> lookupBinding(TLStructuredTypePart attribute) {
+		TLPrimitive type = (TLPrimitive) attribute.getType();
+		StorageMapping<?> storageMapping = type.getStorageMapping();
+		Class<?> applicationType = storageMapping.getApplicationType();
+		Binding annotation = applicationType.getAnnotation(Binding.class);
+		if (annotation == null) {
+			return null;
+		}
+
+		Class<? extends ConfigurationValueBinding<?>> bindingType = annotation.value();
+		try {
+			return ConfigUtil.getInstance(bindingType);
+		} catch (ConfigurationException ex) {
+			_log.error("Cannot create value binding.", ex);
+			return null;
+		}
 	}
 
 }

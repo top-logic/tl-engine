@@ -30,16 +30,16 @@ public interface ValueVisitor<R, A> {
 	/**
 	 * Visit case for {@link PrimitiveValueConf}.
 	 */
-	R visit(PrimitiveValueConf ref, A arg);
+	R visit(PrimitiveValueConf value, A arg);
 
 	/**
 	 * Visit case for {@link ObjectConf}.
 	 */
-	R visit(ObjectConf ref, A arg);
+	R visit(ObjectConf obj, A arg);
 
 	/**
 	 * Visit case for {@link CustomValueConf} sub-configurations.
 	 */
-	R visit(CustomValueConf ref, A arg);
+	R visit(CustomValueConf value, A arg);
 
 }

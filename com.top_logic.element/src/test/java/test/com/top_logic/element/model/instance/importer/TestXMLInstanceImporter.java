@@ -47,7 +47,7 @@ public class TestXMLInstanceImporter extends TLModelTest {
 
 		XMLInstanceImporter importer = new XMLInstanceImporter(model, factory);
 		importer.addResolver(AccountResolver.KIND,
-			new AccountResolver(PersonManager.getManager()));
+			new AccountResolver());
 		importer.addResolver(PersistentObjectResolver.KIND,
 			new PersistentObjectResolver(PersistencyLayer.getKnowledgeBase()));
 		ObjectsConf configs = XMLInstanceImporter.loadConfig(instanceSource);
@@ -97,7 +97,7 @@ public class TestXMLInstanceImporter extends TLModelTest {
 		GlobalRefConf refConf = TypedConfiguration.newConfigItem(GlobalRefConf.class);
 		refConf.setKind(PersistentObjectResolver.KIND);
 		refConf.setId(PersonManager.getManager().getRoot().tId().asString());
-		anyConf.getReferences().add(refConf);
+		anyConf.getCollectionValue().add(refConf);
 		a4Conf.getAttributes().add(anyConf);
 
 		ObjectsConf config = TypedConfiguration.newConfigItem(ObjectsConf.class);

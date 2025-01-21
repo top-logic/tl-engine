@@ -19,6 +19,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationValueBinding;
 import com.top_logic.basic.xml.NewLineStyle;
 import com.top_logic.basic.xml.XMLStreamUtil;
+import com.top_logic.basic.xml.XmlTextWriter;
 
 /**
  * {@link ConfigurationValueBinding} for {@link BinaryDataSource}.
@@ -59,42 +60,8 @@ public class BinaryDataBinding extends AbstractConfigurationValueBinding<BinaryD
 	public void saveConfigItem(XMLStreamWriter out, BinaryDataSource item) throws XMLStreamException {
 		out.writeAttribute(NAME_ATTR, item.getName());
 		out.writeAttribute(CONTENT_TYPE_ATTR, item.getContentType());
-		try {
-			// Stream writing ASCII encoded to the given XML stream writer.
-			OutputStream output = new OutputStream() {
-				char[] chars = new char[1024];
-
-				@Override
-				public void write(int b) throws IOException {
-					chars[0] = (char) b;
-					try {
-						out.writeCharacters(chars, 0, 1);
-					} catch (XMLStreamException ex) {
-						throw new IOException(ex);
-					}
-				}
-
-				@Override
-				public void write(byte[] b, int start, int len) throws IOException {
-					int offset = 0;
-					while (offset < len) {
-						int chunk = Math.min(len - offset, chars.length);
-						for (int to = 0, from = start + offset; to < chunk; from++, to++) {
-							chars[to] = (char) b[from];
-						}
-
-						try {
-							out.writeCharacters(chars, 0, chunk);
-						} catch (XMLStreamException ex) {
-							throw new IOException(ex);
-						}
-
-						offset += chunk;
-					}
-				}
-			};
-			OutputStream binaryOut = MIME_ENCODER.wrap(output);
-			item.deliverTo(binaryOut);
+		try (OutputStream mime = MIME_ENCODER.wrap(new AsciiOutputStream(new XmlTextWriter(out)))) {
+			item.deliverTo(mime);
 		} catch (IOException ex) {
 			throw new XMLStreamException(ex);
 		}

@@ -36,6 +36,7 @@ import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.access.StorageMapping;
+import com.top_logic.model.access.WithStorageAttribute;
 import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.config.DatatypeConfig;
 import com.top_logic.model.export.EmptyPreloadContribution;

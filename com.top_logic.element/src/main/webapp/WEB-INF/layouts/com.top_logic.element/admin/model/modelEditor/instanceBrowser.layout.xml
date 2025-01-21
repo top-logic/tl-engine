@@ -33,6 +33,13 @@
 					image="theme:ICON_PLUS"
 					resourceKey="layouts.element.meta.InstanceBrowser.newInstance"
 				/>
+				<button id="exportInstances"
+					class="com.top_logic.element.layout.instances.export.InstanceExportCommand"
+					group="Export"
+					image="theme:com.top_logic.tool.export.Icons.DOWNLOAD"
+					resourceKey="layouts.element.meta.InstanceBrowser.exportInstances"
+					target="selection(self())"
+				/>
 			</buttons>
 			<tables>
 				<table name="fieldTable"

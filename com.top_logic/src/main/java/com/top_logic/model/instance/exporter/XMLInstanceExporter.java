@@ -6,6 +6,7 @@
 package com.top_logic.model.instance.exporter;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOError;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,10 +28,10 @@ import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.model.ModelKind;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
@@ -41,7 +42,8 @@ import com.top_logic.model.instance.importer.schema.ModelRefConf;
 import com.top_logic.model.instance.importer.schema.ObjectConf;
 import com.top_logic.model.instance.importer.schema.ObjectsConf;
 import com.top_logic.model.instance.importer.schema.ObjectsConf.ResolverDef;
-import com.top_logic.model.instance.importer.schema.RefConf;
+import com.top_logic.model.instance.importer.schema.PrimitiveValueConf;
+import com.top_logic.model.instance.importer.schema.ValueConf;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 
@@ -60,7 +62,7 @@ public class XMLInstanceExporter {
 
 	private Set<TLObject> _queue = new LinkedHashSet<>();
 
-	private Map<TLStructuredType, InstanceResolver> _resolvers = new HashMap<>();
+	private Resolvers _resolvers = new Resolvers();
 
 	private Map<TLModelPart, Boolean> _excludedParts = new HashMap<>();
 
@@ -109,9 +111,13 @@ public class XMLInstanceExporter {
 			return;
 		}
 
+		exportObject(obj);
+	}
+
+	private ObjectConf exportObject(TLObject obj) {
 		Integer id = nextId();
 		_exportIds.put(obj, id);
-		export(obj, id);
+		return export(obj, id);
 	}
 
 	/**
@@ -134,13 +140,15 @@ public class XMLInstanceExporter {
 		}
 	}
 
-	private void export(TLObject obj, Integer id) {
+	private ObjectConf export(TLObject obj, Integer id) {
 		ObjectConf conf = TypedConfiguration.newConfigItem(ObjectConf.class);
 		conf.setId(id.toString());
 		conf.setType(typeName(obj.tType()));
 		_objects.getObjects().add(conf);
 
 		exportAttributes(conf.getAttributes(), obj);
+
+		return conf;
 	}
 
 	private void exportAttributes(List<AttributeValueConf> attributes, TLObject obj) {
@@ -184,34 +192,42 @@ public class XMLInstanceExporter {
 		}
 	}
 
-	private void exportAttribute(List<AttributeValueConf> attributes, TLObject obj, TLStructuredTypePart part)
-			throws IOException {
+	private void exportAttribute(List<AttributeValueConf> attributes, TLObject obj, TLStructuredTypePart part) {
 		AttributeValueConf valueConf = TypedConfiguration.newConfigItem(AttributeValueConf.class);
 		valueConf.setName(part.getName());
 
 		Object value = obj.tValue(part);
 
 		if (part.getModelKind() == ModelKind.REFERENCE) {
-			List<RefConf> references = valueConf.getReferences();
-			exportRef(references, value);
+			List<ValueConf> references = valueConf.getCollectionValue();
+			exportRef(references, value, ((TLReference) part).isComposite());
 		} else {
-			valueConf.setValue(serialize((TLPrimitive) part.getType(), value));
+			TLPrimitive type = (TLPrimitive) part.getType();
+			if (value instanceof Collection<?> collection) {
+				for (Object entry : collection) {
+					PrimitiveValueConf entryConf = TypedConfiguration.newConfigItem(PrimitiveValueConf.class);
+					entryConf.setValue(serialize(type, entry));
+					valueConf.getCollectionValue().add(entryConf);
+				}
+			} else {
+				valueConf.setValue(serialize(type, value));
+			}
 		}
 
 		attributes.add(valueConf);
 	}
 
-	private void exportRef(List<RefConf> references, Object value) {
+	private void exportRef(List<ValueConf> references, Object value, boolean composite) {
 		if (value instanceof Collection<?> collection) {
 			for (Object entry : collection) {
-				exportRefEntry(references, entry);
+				exportRefEntry(references, entry, composite);
 			}
 		} else {
-			exportRefEntry(references, value);
+			exportRefEntry(references, value, composite);
 		}
 	}
 
-	private void exportRefEntry(List<RefConf> references, Object value) {
+	private void exportRefEntry(List<ValueConf> references, Object value, boolean composite) {
 		if (value == null) {
 			return;
 		}
@@ -232,7 +248,13 @@ public class XMLInstanceExporter {
 					return;
 				}
 
-				InstanceResolver resolver = resolver(target.tType());
+				if (composite) {
+					ObjectConf config = exportObject(target);
+					references.add(config);
+					return;
+				}
+
+				InstanceResolver resolver = _resolvers.resolver(target.tType());
 				if (resolver != null) {
 					GlobalRefConf ref = TypedConfiguration.newConfigItem(GlobalRefConf.class);
 					ref.setKind(typeName(target.tType()));
@@ -255,57 +277,21 @@ public class XMLInstanceExporter {
 		return Integer.valueOf(_nextId++);
 	}
 
-	private InstanceResolver resolver(TLStructuredType type) {
-		InstanceResolver result = _resolvers.get(type);
-		if (result != null || _resolvers.containsKey(type)) {
-			return result;
-		}
-
-		result = computeResolver(type);
-		if (result == null) {
-			result = findInheritedResolver(type);
-		}
-
-		// Remember for the rest of the import.
-		_resolvers.put(type, result);
-
-		return result;
-	}
-
-	/**
-	 * Hook for subclasses dynamically looking up {@link InstanceResolver}s for types.
-	 * 
-	 * @param type
-	 *        The type of instances that should be exported by reference.
-	 */
-	protected InstanceResolver computeResolver(TLStructuredType type) {
-		return null;
-	}
-
-	private InstanceResolver findInheritedResolver(TLStructuredType type) {
-		if (type instanceof TLClass classType) {
-			for (TLClass generalization : classType.getGeneralizations()) {
-				InstanceResolver result = resolver(generalization);
-				if (result != null) {
-					return result;
-				}
-			}
-		}
-		return null;
-	}
-
 	private String typeName(TLModelPart part) {
 		return _modelNames.computeIfAbsent(part, TLModelUtil::qualifiedName);
 	}
 
-	private String serialize(TLPrimitive type, Object value) throws IOException {
+	/**
+	 * Serializes a primitive value in a format that can be stored in an XML configuration.
+	 */
+	public static String serialize(TLPrimitive type, Object value) {
 		if (value == null) {
 			return "";
 		}
 		return serializeStorageValue(type.getDBType(), type.getStorageMapping().getStorageObject(value));
 	}
 
-	private String serializeStorageValue(DBType dbType, Object value) throws IOException {
+	private static String serializeStorageValue(DBType dbType, Object value) {
 		switch (dbType) {
 			case BLOB: {
 				return Base64.encodeBase64String(binary(value));
@@ -340,10 +326,15 @@ public class XMLInstanceExporter {
 		throw new UnreachableAssertion("Unsupported DB type: " + dbType);
 	}
 
-	private byte[] binary(Object value) throws IOException {
+	private static byte[] binary(Object value) {
 		if (value instanceof BinaryDataSource data) {
 			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-			data.deliverTo(buffer);
+			try {
+				data.deliverTo(buffer);
+			} catch (IOException ex) {
+				// Extremely unlikely, since writing to a buffer.
+				throw new IOError(ex);
+			}
 			return buffer.toByteArray();
 		}
 		if (value instanceof byte[] data) {

@@ -10,15 +10,15 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 
 /**
- * {@link RefConf Reference} to another object in the same import scope.
+ * {@link ValueConf Reference} to another object in the same import scope.
  * 
- * @see AttributeValueConf#getReferences()
+ * @see AttributeValueConf#getCollectionValue()
  * @see XMLInstanceImporter#getObject(String)
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @TagName("ref")
-public interface InstanceRefConf extends RefConf {
+public interface InstanceRefConf extends ValueConf {
 
 	/**
 	 * {@link ObjectConf#getId() ID} of another object in the same import that is referenced.

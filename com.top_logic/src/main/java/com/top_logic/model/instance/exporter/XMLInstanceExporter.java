@@ -113,7 +113,8 @@ public class XMLInstanceExporter {
 			return;
 		}
 
-		exportObject(obj);
+		ObjectConf conf = exportObject(obj);
+		_objects.getObjects().add(conf);
 	}
 
 	private ObjectConf exportObject(TLObject obj) {
@@ -127,7 +128,6 @@ public class XMLInstanceExporter {
 	 */
 	public ObjectsConf getExportConfig() {
 		processQueue();
-
 		return _objects;
 	}
 
@@ -137,7 +137,9 @@ public class XMLInstanceExporter {
 			_queue.clear();
 			for (TLObject next : batch) {
 				Integer id = _exportIds.get(next);
-				export(next, id);
+				ObjectConf conf = export(next, id);
+
+				_objects.getObjects().add(conf);
 			}
 		}
 	}
@@ -146,7 +148,6 @@ public class XMLInstanceExporter {
 		ObjectConf conf = TypedConfiguration.newConfigItem(ObjectConf.class);
 		conf.setId(id.toString());
 		conf.setType(typeName(obj.tType()));
-		_objects.getObjects().add(conf);
 
 		exportAttributes(conf.getAttributes(), obj);
 
@@ -211,11 +212,15 @@ public class XMLInstanceExporter {
 				if (value instanceof Collection<?> collection) {
 					for (Object entry : collection) {
 						ValueConf entryConf = valueResolver.createValueConf(part, entry);
-						collectionValue.add(entryConf);
+						if (entryConf != null) {
+							collectionValue.add(entryConf);
+						}
 					}
 				} else {
 					ValueConf entryConf = valueResolver.createValueConf(part, value);
-					collectionValue.add(entryConf);
+					if (entryConf != null) {
+						collectionValue.add(entryConf);
+					}
 				}
 			} else {
 				TLPrimitive type = (TLPrimitive) part.getType();

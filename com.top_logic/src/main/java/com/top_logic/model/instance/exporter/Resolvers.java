@@ -243,6 +243,9 @@ public class Resolvers {
 
 				@Override
 				public ComplexValueConf internalCreateValueConf(TLStructuredTypePart concreteAttribute, Object value) {
+					if (value == null) {
+						return null;
+					}
 					StringWriter buffer = new StringWriter();
 					try {
 						XMLStreamWriter out =

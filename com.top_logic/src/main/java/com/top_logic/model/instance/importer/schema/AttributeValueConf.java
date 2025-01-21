@@ -42,7 +42,7 @@ public interface AttributeValueConf extends ConfigurationItem {
 	 * </p>
 	 * 
 	 * <p>
-	 * For a reference attribute, {@link #getReferences()} must be set instead.
+	 * For a reference attribute, {@link #getCollectionValue()} must be set instead.
 	 * </p>
 	 */
 	@Nullable
@@ -54,13 +54,13 @@ public interface AttributeValueConf extends ConfigurationItem {
 	void setValue(String value);
 
 	/**
-	 * References to other objects to set in the {@link #getName()} attribute.
+	 * Values to set to the attribute {@link #getName()}.
 	 * 
 	 * <p>
-	 * For a primitive attribute, {@link #getValue()} must be set instead.
+	 * For single primitive values, {@link #getValue()} may be used as short-cut.
 	 * </p>
 	 */
 	@DefaultContainer
-	List<RefConf> getReferences();
+	List<ValueConf> getCollectionValue();
 
 }

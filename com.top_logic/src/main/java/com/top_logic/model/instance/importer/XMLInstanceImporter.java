@@ -41,6 +41,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.factory.TLFactory;
+import com.top_logic.model.instance.exporter.Resolvers;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
 import com.top_logic.model.instance.importer.resolver.NoInstanceResolver;
 import com.top_logic.model.instance.importer.schema.AttributeValueConf;
@@ -50,8 +51,9 @@ import com.top_logic.model.instance.importer.schema.ModelRefConf;
 import com.top_logic.model.instance.importer.schema.ObjectConf;
 import com.top_logic.model.instance.importer.schema.ObjectsConf;
 import com.top_logic.model.instance.importer.schema.ObjectsConf.ResolverDef;
-import com.top_logic.model.instance.importer.schema.RefConf;
-import com.top_logic.model.instance.importer.schema.RefVisitor;
+import com.top_logic.model.instance.importer.schema.PrimitiveValueConf;
+import com.top_logic.model.instance.importer.schema.ValueConf;
+import com.top_logic.model.instance.importer.schema.ValueVisitor;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -61,7 +63,7 @@ import com.top_logic.model.util.TLModelUtil;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class XMLInstanceImporter implements RefVisitor<TLObject, Void> {
+public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTypePart> {
 
 	private final TLFactory _factory;
 
@@ -71,7 +73,7 @@ public class XMLInstanceImporter implements RefVisitor<TLObject, Void> {
 
 	private Map<String, TLObject> _objectById = new HashMap<>();
 
-	private Map<String, InstanceResolver> _resolvers = new HashMap<>();
+	private Resolvers _resolvers = new Resolvers();
 
 	private InstanceResolver _defaultResolver = NoInstanceResolver.INSTANCE;
 
@@ -204,53 +206,58 @@ public class XMLInstanceImporter implements RefVisitor<TLObject, Void> {
 		}
 
 		for (ObjectConf config : configs) {
-			TLObject obj = _objectById.get(config.getId());
-			TLClass type = (TLClass) obj.tType();
-			for (AttributeValueConf valueConf : config.getAttributes()) {
-				String attrName = valueConf.getName();
-				TLStructuredTypePart part = type.getPart(attrName);
-				if (part == null) {
-					_log.error("No such part '" + attrName + "' in type '" + type + "' at " + valueConf.location());
-					continue;
-				}
-				if (part.getModelKind() == ModelKind.REFERENCE) {
-					if (valueConf.getValue() != null) {
-						_log.error("Reference attribute must not be assigned a plain value at " + valueConf.location());
-					}
-					List<TLObject> refs = resolve(valueConf.getReferences());
-					Object value;
-					if (part.isMultiple()) {
-						value = refs;
-					} else {
-						if (refs.size() > 1) {
-							_log.error("Multiple values cannot be stored into singleton reference '" + part + "' at "
-								+ valueConf.location());
-							value = refs.get(0);
-						} else {
-							value = CollectionUtil.getSingleValueFromCollection(refs);
-						}
-					}
-					obj.tUpdate(part, value);
-				} else {
-					if (valueConf.getReferences().size() > 0) {
-						_log.error("Plain attribute must not be assigned a reference value at " + valueConf.location());
-					}
-					obj.tUpdate(part, parse((TLPrimitive) part.getType(), valueConf.getValue()));
-				}
-			}
+			importObject(config);
 		}
 	}
 
-	private List<TLObject> resolve(List<RefConf> references) {
+	private TLObject importObject(ObjectConf config) {
+		TLObject obj = _objectById.get(config.getId());
+		TLClass type = (TLClass) obj.tType();
+		for (AttributeValueConf valueConf : config.getAttributes()) {
+			String attrName = valueConf.getName();
+			TLStructuredTypePart part = type.getPart(attrName);
+			if (part == null) {
+				_log.error("No such part '" + attrName + "' in type '" + type + "' at " + valueConf.location());
+				continue;
+			}
+			if (part.getModelKind() == ModelKind.REFERENCE) {
+				if (valueConf.getValue() != null) {
+					_log.error("Reference attribute must not be assigned a plain value at " + valueConf.location());
+				}
+				List<TLObject> refs = resolve(part, valueConf.getCollectionValue());
+				Object value;
+				if (part.isMultiple()) {
+					value = refs;
+				} else {
+					if (refs.size() > 1) {
+						_log.error("Multiple values cannot be stored into singleton reference '" + part + "' at "
+							+ valueConf.location());
+						value = refs.get(0);
+					} else {
+						value = CollectionUtil.getSingleValueFromCollection(refs);
+					}
+				}
+				obj.tUpdate(part, value);
+			} else {
+				if (valueConf.getCollectionValue().size() > 0) {
+					_log.error("Plain attribute must not be assigned a reference value at " + valueConf.location());
+				}
+				obj.tUpdate(part, parse(_log, (TLPrimitive) part.getType(), valueConf.getValue()));
+			}
+		}
+		return obj;
+	}
+
+	private List<TLObject> resolve(TLStructuredTypePart part, List<ValueConf> references) {
 		if (references.isEmpty()) {
 			return Collections.emptyList();
 		}
 		if (references.size() == 1) {
-			return Collections.singletonList(resolveSingle(references.get(0)));
+			return Collections.singletonList((TLObject) resolveSingle(part, references.get(0)));
 		}
 		ArrayList<TLObject> result = new ArrayList<>(references.size());
-		for (RefConf ref : references) {
-			TLObject element = resolveSingle(ref);
+		for (ValueConf ref : references) {
+			TLObject element = (TLObject) resolveSingle(part, ref);
 			if (element != null) {
 				result.add(element);
 			}
@@ -258,12 +265,18 @@ public class XMLInstanceImporter implements RefVisitor<TLObject, Void> {
 		return result;
 	}
 
-	private TLObject resolveSingle(RefConf ref) {
-		return ref.visit(this, null);
+	private Object resolveSingle(TLStructuredTypePart part, ValueConf ref) {
+		return ref.visit(this, part);
 	}
 
 	@Override
-	public TLObject visit(InstanceRefConf ref, Void arg) {
+	public Object visit(PrimitiveValueConf ref, TLStructuredTypePart attribute) {
+		String value = ref.getValue();
+		return parse(_log, (TLPrimitive) attribute.getType(), value);
+	}
+
+	@Override
+	public TLObject visit(InstanceRefConf ref, TLStructuredTypePart arg) {
 		TLObject result = _objectById.get(ref.getId());
 		if (result == null) {
 			_log.error("Unresolved reference '" + ref.getId() + "' at " + ref.location());
@@ -272,7 +285,12 @@ public class XMLInstanceImporter implements RefVisitor<TLObject, Void> {
 	}
 
 	@Override
-	public TLObject visit(GlobalRefConf ref, Void arg) {
+	public Object visit(ObjectConf ref, TLStructuredTypePart arg) {
+		return importObject(ref);
+	}
+
+	@Override
+	public TLObject visit(GlobalRefConf ref, TLStructuredTypePart arg) {
 		String kind = ref.getKind();
 		return resolver(kind).resolve(kind, ref.getId());
 	}
@@ -286,7 +304,7 @@ public class XMLInstanceImporter implements RefVisitor<TLObject, Void> {
 	}
 
 	@Override
-	public TLObject visit(ModelRefConf ref, Void arg) {
+	public TLObject visit(ModelRefConf ref, TLStructuredTypePart arg) {
 		String name = ref.getName();
 		int typeStart = name.indexOf(':');
 		int partStart = name.indexOf('#');
@@ -398,18 +416,26 @@ public class XMLInstanceImporter implements RefVisitor<TLObject, Void> {
 		return type;
 	}
 
-	private Object parse(TLPrimitive type, String value) {
+	/**
+	 * Parses a serialized primitive type value.
+	 */
+	public static Object parse(Log log, TLPrimitive type, String value) {
 		if (value == null || value.trim().isEmpty()) {
 			return null;
 		}
-		return type.getStorageMapping().getBusinessObject(parseStorageValue(type.getDBType(), value));
+		return type.getStorageMapping().getBusinessObject(parseStorageValue(log, type.getDBType(), value));
 	}
 
-	private Object parseStorageValue(DBType dbType, String value) {
+	private static Object parseStorageValue(Log log, DBType dbType, String value) {
 		switch (dbType) {
 			case BLOB: {
-				byte[] result = Base64.decodeBase64(value);
-				return BinaryDataFactory.createBinaryData(result);
+				try {
+					byte[] result = Base64.decodeBase64(value);
+					return BinaryDataFactory.createBinaryData(result);
+				} catch (Exception ex) {
+					log.error("Invalid binary format in '" + value + "':" + ex.getMessage(), ex);
+					return null;
+				}
 			}
 			case BOOLEAN:
 				return Boolean.valueOf(value);
@@ -419,28 +445,63 @@ public class XMLInstanceImporter implements RefVisitor<TLObject, Void> {
 				try {
 					return XmlDateTimeFormat.INSTANCE.parseObject(value);
 				} catch (ParseException ex) {
-					_log.error("Invalid date format in '" + value + "':" + ex.getMessage(), ex);
+					log.error("Invalid date format in '" + value + "':" + ex.getMessage(), ex);
 					return null;
 				}
 			case DECIMAL:
 			case DOUBLE:
-				return Double.parseDouble(value);
+				try {
+					return Double.parseDouble(value);
+				} catch (NumberFormatException ex) {
+					log.error("Invalid number format in '" + value + "':" + ex.getMessage(), ex);
+					return null;
+				}
 			case FLOAT:
-				return Float.parseFloat(value);
+				try {
+					return Float.parseFloat(value);
+				} catch (NumberFormatException ex) {
+					log.error("Invalid number format in '" + value + "':" + ex.getMessage(), ex);
+					return null;
+				}
 			case BYTE:
-				return Byte.parseByte(value);
+				try {
+					return Byte.parseByte(value);
+				} catch (NumberFormatException ex) {
+					log.error("Invalid number format in '" + value + "':" + ex.getMessage(), ex);
+					return null;
+				}
 			case SHORT:
-				return Short.parseShort(value);
+				try {
+					return Short.parseShort(value);
+				} catch (NumberFormatException ex) {
+					log.error("Invalid number format in '" + value + "':" + ex.getMessage(), ex);
+					return null;
+				}
 			case INT:
-				return Integer.parseInt(value);
+				try {
+					return Integer.parseInt(value);
+				} catch (NumberFormatException ex) {
+					log.error("Invalid number format in '" + value + "':" + ex.getMessage(), ex);
+					return null;
+				}
 			case LONG:
-				return Long.parseLong(value);
+				try {
+					return Long.parseLong(value);
+				} catch (NumberFormatException ex) {
+					log.error("Invalid number format in '" + value + "':" + ex.getMessage(), ex);
+					return null;
+				}
 			case CLOB:
 			case STRING:
 			case CHAR:
 				return value;
 			case ID:
-				return LongID.fromExternalForm(value);
+				try {
+					return LongID.fromExternalForm(value);
+				} catch (NumberFormatException ex) {
+					log.error("Invalid ID format in '" + value + "':" + ex.getMessage(), ex);
+					return null;
+				}
 		}
 
 		throw new UnreachableAssertion("Unsupported DB type: " + dbType);

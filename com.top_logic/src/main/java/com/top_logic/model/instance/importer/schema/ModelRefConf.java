@@ -9,12 +9,12 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 
 /**
- * {@link RefConf Reference} to the context model on which the import is based on.
+ * {@link ValueConf Reference} to the context model on which the import is based on.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @TagName("model-ref")
-public interface ModelRefConf extends RefConf {
+public interface ModelRefConf extends ValueConf {
 
 	/**
 	 * Name of the model part to reference.

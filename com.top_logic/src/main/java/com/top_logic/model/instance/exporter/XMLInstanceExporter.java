@@ -35,6 +35,8 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
+import com.top_logic.model.instance.importer.resolver.NoValueResolver;
+import com.top_logic.model.instance.importer.resolver.ValueResolver;
 import com.top_logic.model.instance.importer.schema.AttributeValueConf;
 import com.top_logic.model.instance.importer.schema.GlobalRefConf;
 import com.top_logic.model.instance.importer.schema.InstanceRefConf;
@@ -202,15 +204,31 @@ public class XMLInstanceExporter {
 			List<ValueConf> references = valueConf.getCollectionValue();
 			exportRef(references, value, ((TLReference) part).isComposite());
 		} else {
-			TLPrimitive type = (TLPrimitive) part.getType();
-			if (value instanceof Collection<?> collection) {
-				for (Object entry : collection) {
-					PrimitiveValueConf entryConf = TypedConfiguration.newConfigItem(PrimitiveValueConf.class);
-					entryConf.setValue(serialize(type, entry));
-					valueConf.getCollectionValue().add(entryConf);
+			ValueResolver valueResolver = _resolvers.valueResolver(part);
+			if (valueResolver != NoValueResolver.INSTANCE) {
+				List<ValueConf> collectionValue = valueConf.getCollectionValue();
+
+				if (value instanceof Collection<?> collection) {
+					for (Object entry : collection) {
+						ValueConf entryConf = valueResolver.createValueConf(part, entry);
+						collectionValue.add(entryConf);
+					}
+				} else {
+					ValueConf entryConf = valueResolver.createValueConf(part, value);
+					collectionValue.add(entryConf);
 				}
 			} else {
-				valueConf.setValue(serialize(type, value));
+				TLPrimitive type = (TLPrimitive) part.getType();
+				if (value instanceof Collection<?> collection) {
+					List<ValueConf> collectionValue = valueConf.getCollectionValue();
+					for (Object entry : collection) {
+						PrimitiveValueConf entryConf = TypedConfiguration.newConfigItem(PrimitiveValueConf.class);
+						entryConf.setValue(serialize(type, entry));
+						collectionValue.add(entryConf);
+					}
+				} else {
+					valueConf.setValue(serialize(type, value));
+				}
 			}
 		}
 

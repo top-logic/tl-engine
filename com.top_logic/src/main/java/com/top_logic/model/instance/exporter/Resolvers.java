@@ -26,8 +26,11 @@ import com.top_logic.model.access.WithStorageAttribute;
 import com.top_logic.model.annotate.ui.TLIDColumn;
 import com.top_logic.model.config.annotation.TableName;
 import com.top_logic.model.instance.annotation.TLInstanceResolver;
+import com.top_logic.model.instance.annotation.TLValueResolver;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
+import com.top_logic.model.instance.importer.resolver.NoValueResolver;
+import com.top_logic.model.instance.importer.resolver.ValueResolver;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -45,6 +48,8 @@ public class Resolvers {
 	private final Map<String, InstanceResolver> _resolverByKind = new HashMap<>();
 
 	private final Map<String, TLStructuredType> _typeByName = new HashMap<>();
+
+	private final Map<TLStructuredTypePart, ValueResolver> _valueResolvers = new HashMap<>();
 
 	/**
 	 * Adds a custom resolver for the given type.
@@ -179,6 +184,29 @@ public class Resolvers {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Fetches a {@link ValueResolver} to use for the given attribute.
+	 */
+	public ValueResolver valueResolver(TLStructuredTypePart attribute) {
+		ValueResolver existing = _valueResolvers.get(attribute);
+		if (existing != null) {
+			return existing;
+		}
+
+		ValueResolver newResolver = lookupValueResolver(attribute);
+		_valueResolvers.put(attribute, newResolver);
+		return newResolver;
+	}
+
+	private ValueResolver lookupValueResolver(TLStructuredTypePart attribute) {
+		TLValueResolver annotation = attribute.getAnnotation(TLValueResolver.class);
+		if (annotation == null) {
+			return NoValueResolver.INSTANCE;
+		}
+
+		return TypedConfigUtil.createInstance(annotation.getImpl());
 	}
 
 }

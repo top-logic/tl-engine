@@ -37,4 +37,9 @@ public interface ValueVisitor<R, A> {
 	 */
 	R visit(ObjectConf ref, A arg);
 
+	/**
+	 * Visit case for {@link CustomValueConf} sub-configurations.
+	 */
+	R visit(CustomValueConf ref, A arg);
+
 }

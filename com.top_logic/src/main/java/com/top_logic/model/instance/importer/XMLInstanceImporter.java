@@ -44,7 +44,9 @@ import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.instance.exporter.Resolvers;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
 import com.top_logic.model.instance.importer.resolver.NoInstanceResolver;
+import com.top_logic.model.instance.importer.resolver.ValueResolver;
 import com.top_logic.model.instance.importer.schema.AttributeValueConf;
+import com.top_logic.model.instance.importer.schema.CustomValueConf;
 import com.top_logic.model.instance.importer.schema.GlobalRefConf;
 import com.top_logic.model.instance.importer.schema.InstanceRefConf;
 import com.top_logic.model.instance.importer.schema.ModelRefConf;
@@ -273,6 +275,12 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	public Object visit(PrimitiveValueConf ref, TLStructuredTypePart attribute) {
 		String value = ref.getValue();
 		return parse(_log, (TLPrimitive) attribute.getType(), value);
+	}
+
+	@Override
+	public Object visit(CustomValueConf ref, TLStructuredTypePart arg) {
+		ValueResolver resolver = _resolvers.valueResolver(arg);
+		return resolver.resolve(arg, ref);
 	}
 
 	@Override

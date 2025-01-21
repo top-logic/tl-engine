@@ -229,14 +229,16 @@ public class Resolvers {
 			return new AbstractValueResolver<ComplexValueConf, Object>() {
 				@Override
 				public Object internalResolve(TLStructuredTypePart concreteAttribute, ComplexValueConf config) {
-					String xml = "<v>" + config.getContents() + "</v>";
+					String xml = config.getContents();
 					try {
 						XMLStreamReader in = XMLStreamUtil.getDefaultInputFactory().createXMLStreamReader(new StringReader(xml));
+						// Place stream on attribute tag.
+						in.nextTag();
 						Object result = binding.loadConfigItem(in, null);
 						in.close();
 						return result;
 					} catch (ConfigurationException | XMLStreamException ex) {
-						_log.error("Cannot read value from xml.", ex);
+						_log.error("Cannot read value of '" + concreteAttribute + "' from xml.", ex);
 						return null;
 					}
 				}
@@ -250,10 +252,12 @@ public class Resolvers {
 					try {
 						XMLStreamWriter out =
 							XMLStreamUtil.getDefaultOutputFactory().createXMLStreamWriter(buffer);
+						out.writeStartElement("value");
 						binding.saveConfigItem(out, value);
+						out.writeEndElement();
 						out.close();
 					} catch (XMLStreamException ex) {
-						_log.error("Failed to serialize value.", ex);
+						_log.error("Failed to serialize value of '" + concreteAttribute + "'.", ex);
 						return null;
 					}
 
@@ -294,7 +298,7 @@ public class Resolvers {
 		try {
 			return ConfigUtil.getInstance(bindingType);
 		} catch (ConfigurationException ex) {
-			_log.error("Cannot create value binding.", ex);
+			_log.error("Cannot create value binding for '" + attribute + "'.", ex);
 			return null;
 		}
 	}

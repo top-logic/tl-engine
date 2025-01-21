@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import com.top_logic.basic.Named;
+import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.config.annotation.Label;
 
 /**
@@ -19,6 +20,7 @@ import com.top_logic.basic.config.annotation.Label;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @Label("Binary data")
+@Binding(BinaryDataBinding.class)
 public interface BinaryDataSource extends Named {
 
 	/**

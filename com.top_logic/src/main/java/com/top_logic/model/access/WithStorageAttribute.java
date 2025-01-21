@@ -3,15 +3,17 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.element.meta.kbbased.storage;
+package com.top_logic.model.access;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.model.StorageDetail;
 
 /**
- * Mix-in interface for a storage configuration that allows to define a database column.
+ * Mix-in interface for a {@link StorageDetail} configurations that allows to define a database
+ * column.
  */
 @Abstract
 public interface WithStorageAttribute extends ConfigurationItem {

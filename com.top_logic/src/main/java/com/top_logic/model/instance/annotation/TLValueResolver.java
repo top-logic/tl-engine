@@ -11,24 +11,26 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.annotate.AnnotationInheritance;
 import com.top_logic.model.annotate.AnnotationInheritance.Policy;
+import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
 import com.top_logic.model.config.TLTypeAnnotation;
-import com.top_logic.model.instance.importer.resolver.InstanceResolver;
+import com.top_logic.model.instance.importer.resolver.ValueResolver;
 
 /**
- * Annotation specifying an {@link InstanceResolver} implementation for a certain object type.
+ * Annotating associating a {@link ValueResolver} implementation with a primitive type.
  */
-@TagName("instance-resolver")
+@TagName("value-resolver")
 @AnnotationInheritance(Policy.REDEFINE)
-@TargetType(value = TLTypeKind.REF)
-public interface TLInstanceResolver extends TLTypeAnnotation {
+@TargetType(value = TLTypeKind.CUSTOM)
+public interface TLValueResolver extends TLAttributeAnnotation, TLTypeAnnotation {
 
 	/**
-	 * The resolver implementation to use for the annotated type.
+	 * The {@link ValueResolver} implementation to use for exporting and importing values of the
+	 * annotated type.
 	 */
 	@Mandatory
 	@DefaultContainer
-	PolymorphicConfiguration<? extends InstanceResolver> getImpl();
+	PolymorphicConfiguration<? extends ValueResolver> getImpl();
 
 }

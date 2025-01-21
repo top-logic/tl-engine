@@ -6,7 +6,7 @@
 package com.top_logic.basic.io.binary;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Base64;
 import java.util.Base64.Encoder;
 
@@ -17,16 +17,15 @@ import javax.xml.stream.XMLStreamWriter;
 import com.top_logic.basic.config.AbstractConfigurationValueBinding;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationValueBinding;
-import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.xml.NewLineStyle;
 import com.top_logic.basic.xml.XMLStreamUtil;
 
 /**
- * {@link ConfigurationValueBinding} for {@link BinaryData}.
+ * {@link ConfigurationValueBinding} for {@link BinaryDataSource}.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class BinaryDataBinding extends AbstractConfigurationValueBinding<BinaryData> {
+public class BinaryDataBinding extends AbstractConfigurationValueBinding<BinaryDataSource> {
 
 	/**
 	 * Here is not default Mime-Encoder ({@link Base64#getMimeEncoder()}) used, because is always
@@ -47,7 +46,7 @@ public class BinaryDataBinding extends AbstractConfigurationValueBinding<BinaryD
 	}
 
 	@Override
-	public BinaryData loadConfigItem(XMLStreamReader in, BinaryData baseValue)
+	public BinaryDataSource loadConfigItem(XMLStreamReader in, BinaryDataSource baseValue)
 			throws XMLStreamException, ConfigurationException {
 		String name = in.getAttributeValue(null, NAME_ATTR);
 		String contentType = in.getAttributeValue(null, CONTENT_TYPE_ATTR);
@@ -57,13 +56,45 @@ public class BinaryDataBinding extends AbstractConfigurationValueBinding<BinaryD
 	}
 
 	@Override
-	public void saveConfigItem(XMLStreamWriter out, BinaryData item) throws XMLStreamException {
+	public void saveConfigItem(XMLStreamWriter out, BinaryDataSource item) throws XMLStreamException {
 		out.writeAttribute(NAME_ATTR, item.getName());
 		out.writeAttribute(CONTENT_TYPE_ATTR, item.getContentType());
-		try (InputStream in = item.getStream()) {
-			byte[] buffer = new byte[(int) item.getSize()];
-			StreamUtilities.readFully(in, buffer);
-			out.writeCharacters(MIME_ENCODER.encodeToString(buffer));
+		try {
+			// Stream writing ASCII encoded to the given XML stream writer.
+			OutputStream output = new OutputStream() {
+				char[] chars = new char[1024];
+
+				@Override
+				public void write(int b) throws IOException {
+					chars[0] = (char) b;
+					try {
+						out.writeCharacters(chars, 0, 1);
+					} catch (XMLStreamException ex) {
+						throw new IOException(ex);
+					}
+				}
+
+				@Override
+				public void write(byte[] b, int start, int len) throws IOException {
+					int offset = 0;
+					while (offset < len) {
+						int chunk = Math.min(len - offset, chars.length);
+						for (int to = 0, from = start + offset; to < chunk; from++, to++) {
+							chars[to] = (char) b[from];
+						}
+
+						try {
+							out.writeCharacters(chars, 0, chunk);
+						} catch (XMLStreamException ex) {
+							throw new IOException(ex);
+						}
+
+						offset += chunk;
+					}
+				}
+			};
+			OutputStream binaryOut = MIME_ENCODER.wrap(output);
+			item.deliverTo(binaryOut);
 		} catch (IOException ex) {
 			throw new XMLStreamException(ex);
 		}

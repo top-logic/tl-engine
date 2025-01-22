@@ -107,7 +107,7 @@ public abstract class SimpleAdditionalHeaderControl extends AdditionalHeaderCont
 	 */
 	protected String composeStaticWithDynamicPart(ResKey staticPart, Object dynamicPart) {
 		String dynamicPartLabel = getLabel(dynamicPart);
-		if (staticPart == null) {
+		if (staticPart == null || staticPart == ResKey.NONE) {
 			return dynamicPartLabel;
 		}
 		if (isEmpty(dynamicPartLabel)) {

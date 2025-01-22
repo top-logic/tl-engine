@@ -9,6 +9,7 @@ import static java.util.Collections.*;
 
 import java.util.List;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
@@ -31,6 +32,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
+@InApp
 public class AdditionalHeaderControlProviderByExpression
 		extends AbstractConfiguredInstance<AdditionalHeaderControlProviderByExpression.Config> implements ControlProvider {
 

@@ -15,8 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import com.lowagie.text.pdf.codec.wmf.MetaObject;
-
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.TLID;
@@ -35,6 +33,7 @@ import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
+import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.PersistentObject;

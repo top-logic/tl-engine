@@ -4,363 +4,357 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
 	<actions>
-		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
-			command-label="Knoten anlegen"
-			command-name="openNewElementDialog"
-			component-implementation-comment="com.top_logic.layout.tree.component.TreeComponent"
-			component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
-			user-id="root"
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Objekt erstellen und Dokument anhängen"
 		>
-			<arguments/>
-		</action>
-		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-			user-id="root"
-		>
-			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Name"
-			>
-				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					tab-path="Anlageformular"
-				/>
-			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="t"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-			user-id="root"
-		>
-			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Name"
-			>
-				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					tab-path="Anlageformular"
-				/>
-			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="testFolder"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-			user-id="root"
-		>
-			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="booleanMandatory"
-			>
-				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					tab-path="Anlageformular"
-				/>
-			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-				value="true"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-			user-id="root"
-		>
-			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="booleanRadioMandatory"
-			>
-				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					tab-path="Anlageformular"
-				/>
-			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-				value="false"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-			user-id="root"
-		>
-			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="booleanMandatory"
-			>
-				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					tab-path="Anlageformular"
-				/>
-			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-				value="false"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-			user-id="root"
-		>
-			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="booleanSelectMandatory"
-			>
-				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					tab-path="Anlageformular"
-				/>
-			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
-				value="false"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.element.layout.create.GenericStructureCreateHandler"
-			command-label="Anlegen"
-			command-name="genericCreateStructure"
-			component-implementation-comment="com.top_logic.layout.form.component.AbstractCreateComponent"
-			component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesnewElementDialog"
-			user-id="root"
-		>
-			<arguments/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
-			failure-expected="false"
-			user-id="root"
-		>
-			<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Hochladen"
-			>
-				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-					tab-path="Strukturen > Typendemo > Typendemo"
-				/>
-			</model-name>
-		</action>
-		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-			user-id="root"
-		>
-			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Dateien"
-			>
-				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-				<values>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
-						base64data="dGVzdA"
-						content-type="text/plain"
-						name="test.txt"
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Knoten anlegen"
+					command-name="openNewElementDialog"
+					component-implementation-comment="com.top_logic.layout.tree.component.TreeComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesTree"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Anlageformular"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="t"
 					/>
-				</values>
-			</value>
-		</action>
-		<action class="com.top_logic.layout.scripting.action.FormInput$Op"
-			user-id="root"
-		>
-			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Beschreibung"
-			>
-				<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
-			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="test"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
-			component-name="rootLayout#masterFrame"
-			label="Hochladen"
-			user-id="root"
-		/>
-		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-			user-id="root"
-		>
-			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Administration > Development"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-			user-id="root"
-		>
-			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Administration > Development > Script Konsole"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
-			user-id="root"
-		>
-			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Suchausdruck"
-			>
-				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					tab-path="Administration > Development > Script Konsole > Editor"
-				/>
-			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="all(`tl.folder:Document`).firstElement()"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
-			command-label="Script ausführen"
-			command-name="executeSearchConsole"
-			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
-			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
-			user-id="root"
-		>
-			<arguments/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-			comparision="equals"
-			inverted="false"
-			user-id="root"
-		>
-			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-				column-label="Name"
-			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Development > Script Konsole > Ergebnis"
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Name"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Anlageformular"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="testFolder"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
-				</table>
-				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-					name="test.txt"
-				/>
-			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="test.txt"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-			comparision="equals"
-			inverted="false"
-			user-id="root"
-		>
-			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-				column-label="Version"
-			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Development > Script Konsole > Ergebnis"
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="booleanMandatory"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Anlageformular"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="true"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
-				</table>
-				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
-					name="test.txt"
-				/>
-			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-				value="1"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
-			user-id="root"
-		>
-			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Suchausdruck"
-			>
-				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					tab-path="Administration > Development > Script Konsole > Editor"
-				/>
-			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="all(`tl.folder:Document`).firstElement().get(`tl.folder:Document#docVersion`)"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
-			command-label="Script ausführen"
-			command-name="executeSearchConsole"
-			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
-			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
-			user-id="root"
-		>
-			<arguments/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-			comparision="equals"
-			inverted="false"
-			user-id="root"
-		>
-			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-				column-label="Revision"
-			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Development > Script Konsole > Ergebnis"
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="booleanRadioMandatory"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Anlageformular"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="false"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
-				</table>
-				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name">
-					<name>"test.txt" in Version 1</name>
-				</row-object>
-			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-				value="1"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-			user-id="root"
-		>
-			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Strukturen"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
-			command-label="Bearbeiten"
-			command-name="ElementSwitchEditCommand"
-			component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
-			component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-			user-id="root"
-		>
-			<arguments/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
-			failure-expected="false"
-			user-id="root"
-		>
-			<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-				<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-					tab-path="Strukturen > Typendemo > Typendemo"
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="booleanMandatory"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Anlageformular"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="false"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="booleanSelectMandatory"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Anlageformular"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+						value="false"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.create.GenericStructureCreateHandler"
+					command-label="Anlegen"
+					command-name="genericCreateStructure"
+					component-implementation-comment="com.top_logic.layout.form.component.AbstractCreateComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesnewElementDialog"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Hochladen"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Dateien"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.Base64Value"
+								base64data="dGVzdA"
+								content-type="text/plain"
+								name="test.txt"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Beschreibung"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="test"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Hochladen"
+					user-id="root"
 				/>
-				<path>
-					<labeled-member label="webFolder"/>
-					<named-member name="rows"/>
-					<object>
-						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
-							provider-name="com.top_logic.common.folder.model.FolderNode$Naming"
-						>
-							<name>
-								<part key="element">
-									<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-										value="test.txt"
-									/>
-								</part>
-							</name>
-						</business-object>
-					</object>
-					<labeled-member label="Löschen"/>
-					<labeled-member label="Löschen"/>
-				</path>
-			</model-name>
+			</actions>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
-			component-name="rootLayout#masterFrame"
-			label="Ja"
-			user-id="root"
-		/>
-		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
-			command-label="Speichern"
-			command-name="defaultSave"
-			component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
-			component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-			user-id="root"
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Auf Inhalt des WebFolder's mittels TL Script zugreifen"
 		>
-			<arguments/>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Suchausdruck"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Script Konsole > Editor"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value>all(`DemoTypes:A`).filter(x -&gt; $x.get(`DemoTypes:A#name`).equals("testFolder")).firstElement().get(`DemoTypes:A#webFolder`).get(`tl.folder:WebFolder#content`)</value>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen"
+					command-name="executeSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="name"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
+							/>
+							<path>
+								<named-member name="result"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
+							name="test.txt"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="test.txt"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Suchausdruck"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Script Konsole > Editor"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value>all(`DemoTypes:A`).filter(x -&gt; $x.get(`DemoTypes:A#name`).equals("testFolder")).firstElement().get(`DemoTypes:A#webFolder`).get(`tl.folder:WebFolder#content`).get(`tl.folder:Document#docVersion`)</value>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen"
+					command-name="executeSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Revision"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
+							/>
+							<path>
+								<named-member name="result"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name">
+							<name>"test.txt" in Version 1</name>
+						</row-object>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+						value="1"
+					/>
+				</action>
+			</actions>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
-			command-label="Löschen..."
-			command-name="elementRemove"
-			component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
-			component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
-			user-id="root"
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="CleanUp"
 		>
-			<arguments/>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent$StructuredElementSwitchEditCommandHandler"
+					command-label="Bearbeiten"
+					command-name="ElementSwitchEditCommand"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+					failure-expected="false"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+							tab-path="Strukturen > Typendemo > Typendemo"
+						/>
+						<path>
+							<labeled-member label="webFolder"/>
+							<named-member name="rows"/>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedValue"
+									provider-name="com.top_logic.common.folder.model.FolderNode$Naming"
+								>
+									<name>
+										<part key="element">
+											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+												value="test.txt"
+											/>
+										</part>
+									</name>
+								</business-object>
+							</object>
+							<labeled-member label="Löschen"/>
+							<labeled-member label="Löschen"/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
+					component-name="rootLayout#masterFrame"
+					label="Ja"
+					user-id="root"
+				/>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.form.component.DefaultSaveCommandHandler"
+					command-label="Speichern"
+					command-name="defaultSave"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.structured.StructuredElementRemoveHandler"
+					command-label="Löschen..."
+					command-name="elementRemove"
+					component-implementation-comment="com.top_logic.element.layout.structured.AdminElementComponent"
+					component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypesEdit"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+			</actions>
 		</action>
 	</actions>
 </action>

@@ -65,7 +65,7 @@ import com.top_logic.util.TLContext;
 
 /**
  * {@link MigrationProcessor} that exchanges references to model elements (such as
- * {@link TLClassifier enumeration classifiers} of {@link TLType types}).
+ * {@link TLClassifier enumeration classifiers} or {@link TLType types}).
  * 
  * <p>
  * This processor can be used in combination with a type change of a reference attribute from enum A

@@ -17,6 +17,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.form.template.ControlProvider;
@@ -38,6 +39,13 @@ public class AdditionalHeaderControlProviderByExpression
 
 	/** {@link ConfigurationItem} for the {@link AdditionalHeaderControlProviderByExpression}. */
 	@TagName(Config.TAG_NAME)
+	@DisplayOrder({
+		Config.LABEL,
+		Config.RES_KEY,
+		Config.TOOLTIP,
+		Config.USE_ROW_OBJECTS,
+		ColumnBaseConfig.CSS_CLASS
+	})
 	public interface Config extends PolymorphicConfiguration<AdditionalHeaderControlProviderByExpression> {
 
 		/** The {@link TagName} for this {@link ConfigurationItem}. */

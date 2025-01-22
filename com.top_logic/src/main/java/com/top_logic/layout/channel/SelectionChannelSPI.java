@@ -5,8 +5,8 @@
  */
 package com.top_logic.layout.channel;
 
-import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.form.component.AbstractSelectorComponent;
+import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutComponent.Config;
 import com.top_logic.tool.boundsec.assistent.AssistentComponent;
@@ -79,8 +79,8 @@ public class SelectionChannelSPI extends ChannelSPI {
 	 * Heuristics whether the given component is a multi-selection component.
 	 */
 	public static boolean isMultiSelection(LayoutComponent component) {
-		if (component instanceof SelectableWithSelectionModel) {
-			return ((SelectableWithSelectionModel) component).getSelectionModel().isMultiSelectionSupported();
+		if (component instanceof SelectionModelOwner) {
+			return ((SelectionModelOwner) component).getSelectionModel().isMultiSelectionSupported();
 		}
 		Config componentConfig = component.getConfig();
 		if (componentConfig instanceof AbstractSelectorComponent.UIOptions) {

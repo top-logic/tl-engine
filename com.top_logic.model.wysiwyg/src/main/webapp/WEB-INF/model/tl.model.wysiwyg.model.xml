@@ -14,7 +14,6 @@
 						<storage-algorithm>
 							<implementation class="com.top_logic.model.wysiwyg.storage.StructuredTextAttributeStorage" />
 						</storage-algorithm>
-						<value-resolver impl="com.top_logic.model.wysiwyg.storage.StructuredTextValueResolver"/>
 					</annotations>
 				</datatype>
 			</types>

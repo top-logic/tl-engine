@@ -210,7 +210,7 @@
 					user-id="root"
 				>
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-						column-label="name"
+						column-label="Name"
 					>
 						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"

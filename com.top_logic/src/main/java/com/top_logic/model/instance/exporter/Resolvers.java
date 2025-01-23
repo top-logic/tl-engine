@@ -43,6 +43,7 @@ import com.top_logic.model.instance.annotation.TLValueResolver;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.instance.importer.resolver.AbstractValueResolver;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
+import com.top_logic.model.instance.importer.resolver.NoInstanceResolver;
 import com.top_logic.model.instance.importer.resolver.NoValueResolver;
 import com.top_logic.model.instance.importer.resolver.ValueResolver;
 import com.top_logic.model.instance.importer.schema.ComplexValueConf;
@@ -103,8 +104,14 @@ public class Resolvers {
 		if (result != null) {
 			return result;
 		}
-		TLStructuredType type = _typeByName.computeIfAbsent(kind, this::lookupType);
-		InstanceResolver typeResolver = resolver(type);
+		InstanceResolver typeResolver;
+		try {
+			TLStructuredType type = _typeByName.computeIfAbsent(kind, this::lookupType);
+			typeResolver = resolver(type);
+		} catch (Exception ex) {
+			_log.error("Cannot resolve type '" + kind + "'.", ex);
+			typeResolver = NoInstanceResolver.INSTANCE;
+		}
 		_resolverByKind.put(kind, typeResolver);
 		return typeResolver;
 	}
@@ -177,6 +184,10 @@ public class Resolvers {
 					Object value = XMLInstanceImporter.parse(_log, idValueType, id);
 					KnowledgeObject item = (KnowledgeObject) PersistencyLayer.getKnowledgeBase()
 						.getObjectByAttribute(tableName, searchColumn, value);
+					if (item == null) {
+						_log.error("Cannot resolve object of type '" + type + "' with ID '" + id + "'.");
+						return null;
+					}
 					return item.getWrapper();
 				}
 

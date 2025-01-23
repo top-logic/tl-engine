@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objects>
+	<object id="1"
+		type="test.containmentContext:World"
+	>
+		<attribute name="name"
+			value="Mars"
+		/>
+		<attribute name="things">
+			<object id="2"
+				type="test.containmentContext:Thing"
+			>
+				<attribute name="name"
+					value="Sand"
+				/>
+				<attribute name="uses"/>
+				<attribute name="createdFor">
+					<ref id="1"/>
+				</attribute>
+			</object>
+			<object id="3"
+				type="test.containmentContext:Thing"
+			>
+				<attribute name="name"
+					value="CO2"
+				/>
+				<attribute name="uses"/>
+				<attribute name="createdFor">
+					<ref id="1"/>
+				</attribute>
+			</object>
+		</attribute>
+	</object>
+	<object id="4"
+		type="test.containmentContext:World"
+	>
+		<attribute name="name"
+			value="Erde"
+		/>
+		<attribute name="things">
+			<object id="5"
+				type="test.containmentContext:Thing"
+			>
+				<attribute name="name"
+					value="Wasser"
+				/>
+				<attribute name="uses"/>
+				<attribute name="createdFor">
+					<ref id="4"/>
+				</attribute>
+			</object>
+			<object id="6"
+				type="test.containmentContext:Thing"
+			>
+				<attribute name="name"
+					value="Stein"
+				/>
+				<attribute name="uses"/>
+				<attribute name="createdFor">
+					<ref id="4"/>
+				</attribute>
+			</object>
+			<object id="7"
+				type="test.containmentContext:Thing"
+			>
+				<attribute name="name"
+					value="Haus"
+				/>
+				<attribute name="uses">
+					<object id="8"
+						type="test.containmentContext:Usage"
+					>
+						<attribute name="thing">
+							<ref id="9"/>
+						</attribute>
+						<attribute name="reason"
+							value="für Stabilität"
+						/>
+					</object>
+					<object id="10"
+						type="test.containmentContext:Usage"
+					>
+						<attribute name="thing">
+							<ref id="6"/>
+						</attribute>
+						<attribute name="reason"
+							value="zum Bauen"
+						/>
+					</object>
+				</attribute>
+				<attribute name="createdFor">
+					<ref id="4"/>
+				</attribute>
+			</object>
+			<ref id="9"/>
+		</attribute>
+	</object>
+	<object id="9"
+		type="test.containmentContext:Thing"
+	>
+		<attribute name="name"
+			value="Zement"
+		/>
+		<attribute name="uses">
+			<object id="11"
+				type="test.containmentContext:Usage"
+			>
+				<attribute name="thing">
+					<ref id="5"/>
+				</attribute>
+				<attribute name="reason"
+					value="zum Abbinden"
+				/>
+			</object>
+		</attribute>
+		<attribute name="createdFor">
+			<ref id="4"/>
+		</attribute>
+	</object>
+</objects>

@@ -23,6 +23,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.basic.xml.XMLPrettyPrinter;
+import com.top_logic.knowledge.service.db2.InitialDataSetupService;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
@@ -75,7 +76,9 @@ public class InstanceExportCommand extends AbstractCommandHandler {
 		}
 		ObjectsConf export = exporter.getExportConfig();
 
-		String downloadName = new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss").format(new Date()) + "_" + typeName + ".xml";
+		String downloadName =
+			new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss").format(new Date()) + "_" + typeName
+				+ InitialDataSetupService.FILE_SUFFIX;
 		aContext.getWindowScope().deliverContent(new BinaryDataSource() {
 			@Override
 			public String getName() {

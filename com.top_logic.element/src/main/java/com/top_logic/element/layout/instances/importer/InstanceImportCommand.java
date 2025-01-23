@@ -5,17 +5,12 @@
  */
 package com.top_logic.element.layout.instances.importer;
 
-import java.util.Collections;
 import java.util.Map;
 
 import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
-import com.top_logic.basic.config.ConfigurationReader;
-import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -67,16 +62,11 @@ public class InstanceImportCommand extends AbstractCommandHandler {
 					new XMLInstanceImporter(applicationModel, ModelService.getInstance().getFactory());
 				importer.setLog(log.asLog());
 
-				InstantiationContext context = new DefaultInstantiationContext(InstanceImportCommand.class);
-				Map<String, ConfigurationDescriptor> types =
-						Collections.singletonMap("objects",
-							TypedConfiguration.getConfigurationDescriptor(ObjectsConf.class));
-
 				KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 				try (Transaction tx = kb.beginTransaction()) {
 					try {
 						log.info(I18NConstants.PARSING_DATA);
-						ObjectsConf objects = (ObjectsConf) ConfigurationReader.readContent(context, types, data);
+						ObjectsConf objects = XMLInstanceImporter.loadConfig(data);
 
 						log.info(I18NConstants.IMPORTING_OBJECTS);
 						importer.importInstances(objects);

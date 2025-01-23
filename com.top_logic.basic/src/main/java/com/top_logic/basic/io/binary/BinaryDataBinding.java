@@ -22,7 +22,7 @@ import com.top_logic.basic.xml.XMLStreamUtil;
 import com.top_logic.basic.xml.XmlTextWriter;
 
 /**
- * {@link ConfigurationValueBinding} for {@link BinaryDataSource}.
+ * {@link ConfigurationValueBinding} for {@link BinaryData} and {@link BinaryDataSource}.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -47,7 +47,7 @@ public class BinaryDataBinding extends AbstractConfigurationValueBinding<BinaryD
 	}
 
 	@Override
-	public BinaryDataSource loadConfigItem(XMLStreamReader in, BinaryDataSource baseValue)
+	public BinaryData loadConfigItem(XMLStreamReader in, BinaryDataSource baseValue)
 			throws XMLStreamException, ConfigurationException {
 		String name = in.getAttributeValue(null, NAME_ATTR);
 		String contentType = in.getAttributeValue(null, CONTENT_TYPE_ATTR);

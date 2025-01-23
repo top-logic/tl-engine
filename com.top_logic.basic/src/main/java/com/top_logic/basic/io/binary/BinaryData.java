@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.StreamUtilities;
 
@@ -20,6 +21,7 @@ import com.top_logic.basic.io.StreamUtilities;
  * 
  * @author     <a href="mailto:kbu@top-logic.com">kbu</a>
  */
+@Binding(BinaryDataBinding.class)
 public interface BinaryData extends BinaryDataSource, BinaryContent {
 
 	/**

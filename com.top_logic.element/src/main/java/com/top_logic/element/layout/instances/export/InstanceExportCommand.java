@@ -8,7 +8,9 @@ package com.top_logic.element.layout.instances.export;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.StringWriter;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
@@ -58,18 +60,26 @@ public class InstanceExportCommand extends AbstractCommandHandler {
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
+		String typeName = "objects";
+
 		XMLInstanceExporter exporter = new XMLInstanceExporter();
+		boolean first = true;
 		for (Object value : values) {
 			if (value instanceof TLObject obj) {
+				if (first) {
+					typeName = obj.tType().getName();
+					first = false;
+				}
 				exporter.export(obj);
 			}
 		}
 		ObjectsConf export = exporter.getExportConfig();
 
+		String downloadName = new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss").format(new Date()) + "_" + typeName + ".xml";
 		aContext.getWindowScope().deliverContent(new BinaryDataSource() {
 			@Override
 			public String getName() {
-				return "objects.xml";
+				return downloadName;
 			}
 
 			@Override

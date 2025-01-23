@@ -202,14 +202,18 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	 */
 	public void importInstances(List<ObjectConf> configs) {
 		for (ObjectConf config : configs) {
-			TLClass type = (TLClass) TLModelUtil.findType(_model, config.getType());
-			TLObject obj = _factory.createObject(type);
-			addObject(config.getId(), obj);
+			createObject(config);
 		}
 
 		for (ObjectConf config : configs) {
 			importObject(config);
 		}
+	}
+
+	private void createObject(ObjectConf config) {
+		TLClass type = (TLClass) TLModelUtil.findType(_model, config.getType());
+		TLObject obj = _factory.createObject(type);
+		addObject(config.getId(), obj);
 	}
 
 	private TLObject importObject(ObjectConf config) {
@@ -294,13 +298,24 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 
 	@Override
 	public Object visit(ObjectConf ref, TLStructuredTypePart arg) {
-		return importObject(ref);
+		try {
+			createObject(ref);
+			return importObject(ref);
+		} catch (Exception ex) {
+			_log.error("Cannot import object " + ref.getId() + " of type '" + ref.getType() + "'.");
+			return null;
+		}
 	}
 
 	@Override
 	public TLObject visit(GlobalRefConf ref, TLStructuredTypePart arg) {
-		String kind = ref.getKind();
-		return resolver(kind).resolve(kind, ref.getId());
+		try {
+			String kind = ref.getKind();
+			return resolver(kind).resolve(kind, ref.getId());
+		} catch (Exception ex) {
+			_log.error("Cannot resolve object with ID '" + ref.getId() + "'.", ex);
+			return null;
+		}
 	}
 
 	private InstanceResolver resolver(String kind) {

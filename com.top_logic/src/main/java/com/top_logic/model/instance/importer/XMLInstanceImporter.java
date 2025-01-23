@@ -226,44 +226,68 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 				_log.error("No such part '" + attrName + "' in type '" + type + "' at " + valueConf.location());
 				continue;
 			}
-			if (part.getModelKind() == ModelKind.REFERENCE) {
-				if (valueConf.getValue() != null) {
-					_log.error("Reference attribute must not be assigned a plain value at " + valueConf.location());
-				}
-				List<TLObject> refs = resolve(part, valueConf.getCollectionValue());
-				Object value;
-				if (part.isMultiple()) {
-					value = refs;
-				} else {
-					if (refs.size() > 1) {
-						_log.error("Multiple values cannot be stored into singleton reference '" + part + "' at "
-							+ valueConf.location());
-						value = refs.get(0);
-					} else {
-						value = CollectionUtil.getSingleValueFromCollection(refs);
-					}
-				}
+
+			Object value;
+			try {
+				value = resolveValue(part, valueConf);
+			} catch (Exception ex) {
+				_log.error("Failed to resolve value at " + valueConf.location(), ex);
+				continue;
+			}
+			try {
 				obj.tUpdate(part, value);
-			} else {
-				if (valueConf.getCollectionValue().size() > 0) {
-					_log.error("Plain attribute must not be assigned a reference value at " + valueConf.location());
-				}
-				obj.tUpdate(part, parse(_log, (TLPrimitive) part.getType(), valueConf.getValue()));
+			} catch (Exception ex) {
+				_log.error("Failed to set value '" + value + "' to attribute '" + part + "' at " + valueConf.location(),
+					ex);
 			}
 		}
 		return obj;
 	}
 
-	private List<TLObject> resolve(TLStructuredTypePart part, List<ValueConf> references) {
+	private Object resolveValue(TLStructuredTypePart part, AttributeValueConf valueConf) {
+		Object value;
+		if (part.getModelKind() == ModelKind.REFERENCE) {
+			if (valueConf.getValue() != null) {
+				_log.error("Reference attribute must not be assigned a plain value at " + valueConf.location());
+			}
+			value = resolveCollectionValue(part, valueConf);
+		} else {
+			if (valueConf.getCollectionValue().size() > 0) {
+				value = resolveCollectionValue(part, valueConf);
+			} else {
+				value = parse(_log, (TLPrimitive) part.getType(), valueConf.getValue());
+			}
+		}
+		return value;
+	}
+
+	private Object resolveCollectionValue(TLStructuredTypePart part, AttributeValueConf valueConf) {
+		List<Object> refs = resolve(part, valueConf.getCollectionValue());
+		Object value;
+		if (part.isMultiple()) {
+			value = refs;
+		} else {
+			if (refs.size() > 1) {
+				_log.error("Multiple values cannot be stored into singleton reference '" + part + "' at "
+					+ valueConf.location());
+				value = refs.get(0);
+			} else {
+				value = CollectionUtil.getSingleValueFromCollection(refs);
+			}
+		}
+		return value;
+	}
+
+	private List<Object> resolve(TLStructuredTypePart part, List<ValueConf> references) {
 		if (references.isEmpty()) {
 			return Collections.emptyList();
 		}
 		if (references.size() == 1) {
-			return Collections.singletonList((TLObject) resolveSingle(part, references.get(0)));
+			return Collections.singletonList(resolveSingle(part, references.get(0)));
 		}
-		ArrayList<TLObject> result = new ArrayList<>(references.size());
+		ArrayList<Object> result = new ArrayList<>(references.size());
 		for (ValueConf ref : references) {
-			TLObject element = (TLObject) resolveSingle(part, ref);
+			Object element = resolveSingle(part, ref);
 			if (element != null) {
 				result.add(element);
 			}

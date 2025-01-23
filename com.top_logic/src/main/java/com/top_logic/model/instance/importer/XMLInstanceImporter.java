@@ -179,6 +179,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	 */
 	public void setLog(Log log) {
 		_log = log;
+		_resolvers.setLog(log);
 	}
 
 	/**

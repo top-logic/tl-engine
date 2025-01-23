@@ -8,27 +8,39 @@ package com.top_logic.element.layout.instances.importer;
 import java.util.Collections;
 import java.util.Map;
 
-import com.top_logic.basic.ConfigurationError;
+import com.top_logic.basic.AbortExecutionException;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.binary.BinaryData;
-import com.top_logic.layout.form.FormContainer;
-import com.top_logic.layout.form.component.AbstractCreateCommandHandler;
+import com.top_logic.knowledge.service.KnowledgeBase;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.DisplayDimension;
+import com.top_logic.layout.form.FormHandler;
 import com.top_logic.layout.form.values.edit.EditorFactory;
+import com.top_logic.layout.messagebox.ProgressDialog;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.instance.importer.schema.ObjectsConf;
+import com.top_logic.tool.boundsec.AbstractCommandHandler;
+import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.model.ModelService;
 
 /**
+ * {@link CommandHandler} importing objects from an uploaded XML file.
  * 
+ * @see XMLInstanceImporter
  */
-public class InstanceImportCommand extends AbstractCreateCommandHandler {
+public class InstanceImportCommand extends AbstractCommandHandler {
 
 	/**
 	 * Creates a {@link InstanceImportCommand}.
@@ -38,25 +50,48 @@ public class InstanceImportCommand extends AbstractCreateCommandHandler {
 	}
 
 	@Override
-	public Object createObject(LayoutComponent component, Object createContext, FormContainer formContainer,
-			Map<String, Object> arguments) {
-		try {
-			UploadForm form = (UploadForm) EditorFactory.getModel(formContainer);
-			BinaryData data = form.getData();
+	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model,
+			Map<String, Object> someArguments) {
+		UploadForm form = (UploadForm) EditorFactory.getModel(((FormHandler) aComponent).getFormContext());
+		BinaryData data = form.getData();
 
-			TLModel model = ModelService.getApplicationModel();
+		aComponent.closeDialog();
 
-			XMLInstanceImporter importer = new XMLInstanceImporter(model, ModelService.getInstance().getFactory());
+		return new ProgressDialog(I18NConstants.IMPORT_PROGRESS, DisplayDimension.px(500),
+			DisplayDimension.px(300)) {
+			@Override
+			protected void run(I18NLog log) throws AbortExecutionException {
+				TLModel applicationModel = ModelService.getApplicationModel();
 
-			InstantiationContext context = new DefaultInstantiationContext(InstanceImportCommand.class);
-			Map<String, ConfigurationDescriptor> types =
-				Collections.singletonMap("objects", TypedConfiguration.getConfigurationDescriptor(ObjectsConf.class));
-			ObjectsConf objects = (ObjectsConf) ConfigurationReader.readContent(context, types, data);
-			importer.importInstances(objects);
-			return null;
-		} catch (ConfigurationException ex) {
-			throw new ConfigurationError(ex);
-		}
+				XMLInstanceImporter importer =
+					new XMLInstanceImporter(applicationModel, ModelService.getInstance().getFactory());
+				importer.setLog(log.asLog());
+
+				InstantiationContext context = new DefaultInstantiationContext(InstanceImportCommand.class);
+				Map<String, ConfigurationDescriptor> types =
+						Collections.singletonMap("objects",
+							TypedConfiguration.getConfigurationDescriptor(ObjectsConf.class));
+
+				KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+				try (Transaction tx = kb.beginTransaction()) {
+					try {
+						log.info(I18NConstants.PARSING_DATA);
+						ObjectsConf objects = (ObjectsConf) ConfigurationReader.readContent(context, types, data);
+
+						log.info(I18NConstants.IMPORTING_OBJECTS);
+						importer.importInstances(objects);
+
+						log.info(I18NConstants.COMMITTING_CHANGES);
+						tx.commit();
+
+						log.info(I18NConstants.IMPORT_FINISHED);
+					} catch (ConfigurationException ex) {
+						log.error(ex.getErrorKey());
+						Logger.error("Import failed.", ex);
+					}
+				}
+			}
+		}.open(aContext);
 	}
 
 }

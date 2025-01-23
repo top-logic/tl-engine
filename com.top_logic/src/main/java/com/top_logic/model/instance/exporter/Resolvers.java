@@ -70,6 +70,20 @@ public class Resolvers {
 	private final Map<TLStructuredTypePart, ConfigurationValueBinding<?>> _bindings = new HashMap<>();
 
 	/**
+	 * Creates {@link Resolvers}.
+	 */
+	public Resolvers() {
+		super();
+	}
+
+	/**
+	 * Updates the log output.
+	 */
+	public void setLog(Log log) {
+		_log = log;
+	}
+
+	/**
 	 * Adds a custom resolver for the given type.
 	 */
 	public void put(TLStructuredType type, InstanceResolver resolver) {

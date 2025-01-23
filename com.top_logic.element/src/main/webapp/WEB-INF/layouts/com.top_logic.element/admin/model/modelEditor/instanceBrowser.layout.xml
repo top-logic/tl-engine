@@ -35,6 +35,8 @@
 				/>
 				<button id="exportInstances"
 					class="com.top_logic.element.layout.instances.export.InstanceExportCommand"
+					clique="exportButtons"
+					executability="com.top_logic.tool.execution.NoSelectionDisabled"
 					group="Export"
 					image="theme:com.top_logic.tool.export.Icons.DOWNLOAD"
 					resourceKey="layouts.element.meta.InstanceBrowser.exportInstances"
@@ -98,6 +100,7 @@
 			</tables>
 			<dialogs>
 				<layout-reference resource="com.top_logic.element/admin/model/modelEditor/formDisplay/dialog.layout.xml"/>
+				<layout-reference resource="com.top_logic.element/admin/model/modelEditor/instanceUpload/dialog.layout.xml"/>
 			</dialogs>
 		</grid>
 	</components>

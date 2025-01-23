@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Random;
 
 import junit.framework.Test;
 
@@ -19,9 +20,9 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.StreamUtilities;
-import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataBinding;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
 
 /**
  * Test case for {@link BinaryDataBinding}.
@@ -58,6 +59,30 @@ public class TestBinaryDataBinding extends AbstractTypedConfigurationTestCase {
 		A item = TypedConfiguration.newConfigItem(A.class);
 		item.setMyData(
 			BinaryDataFactory.createBinaryData("Hello world!".getBytes("utf-8"), "text/plain", "myname"));
+		doDumpLoad(item);
+	}
+
+	public void testReadWriteLarge() throws ConfigurationException, IOException {
+		A item = TypedConfiguration.newConfigItem(A.class);
+		byte[] bytes = new byte[1024 * 10 + 13];
+		new Random(42).nextBytes(bytes);
+		item.setMyData(BinaryDataFactory.createBinaryData(bytes));
+		doDumpLoad(item);
+	}
+
+	public void testReadWriteEmpty() throws ConfigurationException, IOException {
+		A item = TypedConfiguration.newConfigItem(A.class);
+		byte[] bytes = new byte[0];
+		new Random(42).nextBytes(bytes);
+		item.setMyData(BinaryDataFactory.createBinaryData(bytes));
+		doDumpLoad(item);
+	}
+
+	public void testReadWriteAligned() throws ConfigurationException, IOException {
+		A item = TypedConfiguration.newConfigItem(A.class);
+		byte[] bytes = new byte[1024];
+		new Random(42).nextBytes(bytes);
+		item.setMyData(BinaryDataFactory.createBinaryData(bytes));
 		doDumpLoad(item);
 	}
 

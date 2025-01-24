@@ -488,15 +488,18 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	 * Callback invoked, after all modules are up and running.
 	 */
 	public void applicationStarted() {
-		List<PolymorphicConfiguration<? extends StartupAction>> actions =
-			_migrationInfo.getMigrations().stream().flatMap(m -> m.getStartupActions().stream()).toList();
-		if (!actions.isEmpty()) {
+		List<MigrationConfig> migrationsWithActions =
+			_migrationInfo.getMigrations().stream().filter(m -> !m.getStartupActions().isEmpty()).toList();
+		if (!migrationsWithActions.isEmpty()) {
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 			try (Transaction tx = kb.beginTransaction()) {
-				for (var actionConfig : actions) {
-					StartupAction action = TypedConfigUtil.createInstance(actionConfig);
-					
-					action.perform();
+				for (var m : migrationsWithActions) {
+					Logger.info("Performing startup actions from: " + m.getVersion().getModule() + ": "
+						+ m.getVersion().getName(), MigrationService.class);
+					for (var actionConfig : m.getStartupActions()) {
+						StartupAction action = TypedConfigUtil.createInstance(actionConfig);
+						action.perform();
+					}
 				}
 				
 				tx.commit();

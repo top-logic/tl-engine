@@ -5,7 +5,9 @@
  */
 package com.top_logic.contact.layout.person;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.contact.business.AbstractContact;
 import com.top_logic.contact.business.ContactFactory;
 import com.top_logic.contact.business.PersonContact;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -27,7 +29,28 @@ public class ContactPersonManager extends TLPersonManager {
 	@Override
 	public void initUser(Person account) {
 		String loginName = account.getName();
-		PersonContact user = ContactFactory.getInstance().createNewPersonContact(loginName, null);
+
+		PersonContact user = null;
+		for (Object existing : ContactFactory.getInstance().getAllContactsWithAttribute(ContactFactory.PERSON_TYPE,
+			AbstractContact.FKEY_ATTRIBUTE, loginName, false)) {
+			if (existing instanceof PersonContact existingContact) {
+				if (existingContact.getPerson() == null) {
+					if (user != null) {
+						// Not unique.
+						Logger.info("Contact for new account is not unique: " + loginName, ContactPersonManager.class);
+						user = null;
+						break;
+					}
+					user = existingContact;
+				}
+			}
+		}
+
+		if (user == null) {
+			user = ContactFactory.getInstance().createNewPersonContact(loginName, null);
+		} else {
+			Logger.info("Reusing contact for new account: " + loginName, ContactPersonManager.class);
+		}
 		account.setUser(user);
 	}
 

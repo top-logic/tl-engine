@@ -67,7 +67,11 @@
 							<foreign-key-storage
 								storage-attribute="contact"
 								storage-type="Person"
-							/>
+							>
+								<change-listeners>
+									<change-listener class="com.top_logic.contact.business.OnContactAccountChange"/>
+								</change-listeners>
+							</foreign-key-storage>
 						</storage-algorithm>
 						<delete-protected/>
 					</annotations>

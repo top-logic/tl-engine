@@ -1,9 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
 <layout name="Dialog">
 	<dialogInfo
 		height="250"
 		image="theme:ICON_FILE_IMPORT"
-		openerCommandGroup="Create"
 		openerClique="importButtons"
+		openerCommandGroup="Create"
 		width="400"
 	/>
 
@@ -20,8 +22,7 @@
 			<button id="upload"
 				class="com.top_logic.element.layout.instances.importer.InstanceImportCommand"
 				group="Create"
-			>
-			</button>
+			/>
 		</buttons>
 	</form>
 </layout>

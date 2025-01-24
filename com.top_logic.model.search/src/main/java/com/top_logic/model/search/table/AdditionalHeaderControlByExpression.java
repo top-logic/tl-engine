@@ -15,6 +15,7 @@ import com.top_logic.layout.table.model.AdditionalHeaderControl;
 import com.top_logic.layout.table.model.AdditionalHeaderControlModel;
 import com.top_logic.layout.table.model.SimpleAdditionalHeaderControl;
 import com.top_logic.mig.html.HTMLUtil;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
@@ -33,6 +34,8 @@ public class AdditionalHeaderControlByExpression extends SimpleAdditionalHeaderC
 	private final String _cssClass;
 
 	private final boolean _useRowObjects;
+
+	private final LayoutComponent _component;
 
 	/**
 	 * Creates an {@link AdditionalHeaderControlByExpression}.
@@ -60,6 +63,7 @@ public class AdditionalHeaderControlByExpression extends SimpleAdditionalHeaderC
 	 */
 	public AdditionalHeaderControlByExpression(AdditionalHeaderControlModel model, QueryExecutor labelScript,
 			QueryExecutor tooltipScript, ResKey resKey, String cssClass, boolean useRowObjects,
+			LayoutComponent component,
 			Map<String, ControlCommand> map) {
 		super(model, map);
 		_label = labelScript;
@@ -67,6 +71,7 @@ public class AdditionalHeaderControlByExpression extends SimpleAdditionalHeaderC
 		_resKey = resKey;
 		_cssClass = cssClass;
 		_useRowObjects = useRowObjects;
+		_component = component;
 	}
 
 	@Override
@@ -99,7 +104,7 @@ public class AdditionalHeaderControlByExpression extends SimpleAdditionalHeaderC
 		if (script == null) {
 			return "";
 		}
-		return script.execute(getValues());
+		return script.execute(getValues(), _component.getModel());
 	}
 
 	private List<?> getValues() {

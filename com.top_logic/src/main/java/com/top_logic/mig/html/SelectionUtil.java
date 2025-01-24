@@ -30,20 +30,21 @@ public class SelectionUtil {
 	 * 
 	 * @param model
 	 *        Model holding the selection.
-	 * @param selection
+	 * @param newSelection
 	 *        New selected tree nodes.
 	 */
-	public static void setTreeSelection(SelectionModel model, Set<? extends TreeUINode<?>> selection) {
-		setSelection(model, selection);
-
-		Set<?> actualSelection = model.getSelection();
-		for (TreeUINode<?> selectedNode : selection) {
-			if (!actualSelection.contains(selectedNode)) {
-				// selection of given node was actually declined.
+	public static void setTreeSelection(SelectionModel model, Set<? extends TreeUINode<?>> newSelection) {
+		Set<?> oldSelection = model.getSelection();
+		for (TreeUINode<?> selectedNode : newSelection) {
+			if (oldSelection.contains(selectedNode)) {
+				// skip parents expansion of already displayed nodes
 				continue;
 			}
 			TLTreeModelUtil.expandParents(selectedNode);
 		}
+
+		setSelection(model, newSelection);
+
 	}
 
 	/**

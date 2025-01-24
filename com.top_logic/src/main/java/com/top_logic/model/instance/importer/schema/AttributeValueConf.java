@@ -38,7 +38,7 @@ public interface AttributeValueConf extends ConfigurationItem {
 	 * 
 	 * <p>
 	 * The value must be a serialized variant of the value stored in the database compatible with
-	 * {@link StorageMapping#getBusinessObject(Object)} of the attribute's type.
+	 * {@link StorageMapping#getBusinessObject(Object) the storage mapping} of the attribute's type.
 	 * </p>
 	 * 
 	 * <p>

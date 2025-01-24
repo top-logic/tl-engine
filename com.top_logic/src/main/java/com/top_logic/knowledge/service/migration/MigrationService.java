@@ -492,17 +492,16 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 			_migrationInfo.getMigrations().stream().filter(m -> !m.getStartupActions().isEmpty()).toList();
 		if (!migrationsWithActions.isEmpty()) {
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-			try (Transaction tx = kb.beginTransaction()) {
-				for (var m : migrationsWithActions) {
-					Logger.info("Performing startup actions from: " + m.getVersion().getModule() + ": "
+			for (var m : migrationsWithActions) {
+				Logger.info("Performing startup actions from: " + m.getVersion().getModule() + ": "
 						+ m.getVersion().getName(), MigrationService.class);
-					for (var actionConfig : m.getStartupActions()) {
-						StartupAction action = TypedConfigUtil.createInstance(actionConfig);
+				for (var actionConfig : m.getStartupActions()) {
+					StartupAction action = TypedConfigUtil.createInstance(actionConfig);
+					try (Transaction tx = kb.beginTransaction()) {
 						action.perform();
+						tx.commit();
 					}
 				}
-				
-				tx.commit();
 			}
 		}
 	}

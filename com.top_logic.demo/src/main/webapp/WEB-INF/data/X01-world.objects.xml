@@ -5,14 +5,14 @@
 		type="test.containmentContext:World"
 	>
 		<attribute name="name"
-			value="Mars"
+			value="Venus"
 		/>
 		<attribute name="things">
 			<object id="2"
 				type="test.containmentContext:Thing"
 			>
 				<attribute name="name"
-					value="Sand"
+					value="Staub"
 				/>
 				<attribute name="uses"/>
 				<attribute name="createdFor">

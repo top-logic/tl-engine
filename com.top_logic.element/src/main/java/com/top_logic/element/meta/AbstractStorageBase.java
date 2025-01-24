@@ -7,6 +7,7 @@ package com.top_logic.element.meta;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -14,9 +15,12 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.kbbased.storage.GenericMandatoryCheck;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -37,8 +41,15 @@ public abstract class AbstractStorageBase<C extends AbstractStorageBase.Config<?
 	 * Base configuration interface for {@link AbstractStorageBase}.
 	 */
 	public interface Config<I extends StorageImplementation> extends PolymorphicConfiguration<I> {
-		// No properties by default.
+		/**
+		 * Listeners that are invoked whenever a value is set.
+		 */
+		@Name("change-listeners")
+		@Options(fun = AllInAppImplementations.class)
+		List<PolymorphicConfiguration<? extends AttributeChangeListener>> getChangeListeners();
 	}
+
+	private final AttributeChangeListener _listener;
 
 	/**
 	 * Creates a {@link AbstractStorageBase} from configuration.
@@ -51,6 +62,9 @@ public abstract class AbstractStorageBase<C extends AbstractStorageBase.Config<?
 	@CalledByReflection
 	public AbstractStorageBase(InstantiationContext context, C config) {
 		super(context, config);
+
+		_listener = AttributeChangeListener.instantiate(context,
+			config == null ? Collections.emptyList() : config.getChangeListeners());
 	}
 
 	@Override
@@ -70,6 +84,8 @@ public abstract class AbstractStorageBase<C extends AbstractStorageBase.Config<?
 		Object persistentValue = toPersistentValue(value);
 		checkSetValue(object, attribute, persistentValue);
 		internalSetAttributeValue(object, attribute, persistentValue);
+
+		_listener.notifyChange(object, attribute, persistentValue);
 	}
 
 	/**

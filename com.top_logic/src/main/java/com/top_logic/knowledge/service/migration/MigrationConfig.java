@@ -29,6 +29,7 @@ import com.top_logic.knowledge.service.db2.migration.config.ReplayConfig;
 	MigrationConfig.PROCESSORS_PROPERTY,
 	MigrationConfig.MIGRATION_PROPERTY,
 	MigrationConfig.POST_PROCESSORS,
+	MigrationConfig.STARTUP_ACTIONS,
 })
 public interface MigrationConfig extends ConfigurationItem {
 
@@ -49,6 +50,9 @@ public interface MigrationConfig extends ConfigurationItem {
 
 	/** Configuration name for {@link #getPostProcessors()}. */
 	String POST_PROCESSORS = "post-processors";
+
+	/** Configuration name for {@link #getStartupActions()}. */
+	String STARTUP_ACTIONS = "startup-actions";
 
 	/**
 	 * The versions which are needed to be able to apply this migration.
@@ -129,6 +133,12 @@ public interface MigrationConfig extends ConfigurationItem {
 	 * @see #getPostProcessors()
 	 */
 	void setPostProcessors(List<PolymorphicConfiguration<? extends MigrationPostProcessor>> value);
+
+	/**
+	 * Actions to apply after the system has started all modules.
+	 */
+	@Name(STARTUP_ACTIONS)
+	List<PolymorphicConfiguration<? extends StartupAction>> getStartupActions();
 
 }
 

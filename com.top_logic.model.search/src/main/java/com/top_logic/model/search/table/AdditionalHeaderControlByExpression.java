@@ -104,6 +104,9 @@ public class AdditionalHeaderControlByExpression extends SimpleAdditionalHeaderC
 		if (script == null) {
 			return "";
 		}
+		if (_component == null) {
+			return script.execute(getValues());
+		}
 		return script.execute(getValues(), _component.getModel());
 	}
 

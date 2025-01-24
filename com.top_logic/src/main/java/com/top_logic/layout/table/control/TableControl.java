@@ -238,8 +238,6 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	private Map<Integer, LocalScope> rowScopes;
 	private boolean rowScopesInstalled;
 	
-	private Set<?> _selection = new HashSet<>();
-
 	/**
 	 * The current renderer of this {@link TableControl}. May not be
 	 * <code>null</code>.
@@ -267,8 +265,6 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 	/** Translation key for title of table */
 	public static final String RES_TITLE = "title";
-
-	private boolean _hasSelectionChanged = false;
 
 	/**
 	 * Property to transfer the table control ID to {@link TableButtons}.
@@ -1058,19 +1054,8 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	 */
 	@Override
 	protected void internalRevalidate(DisplayContext context, UpdateQueue actions) {
+
 		super.internalRevalidate(context, actions);
-
-		if (_hasSelectionChanged) {
-			Set<?> newSelection = getSelection();
-
-			updateRows(_selection);
-			updateRows(newSelection);
-
-			handleChangedSelection(actions, newSelection);
-
-			_hasSelectionChanged = false;
-			_selection = newSelection;
-		}
 
 		// Retrieve update requests from update accumulator
 		List<UpdateRequest> updateRequests = updateAccumulator.getUpdates();
@@ -1106,7 +1091,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	 */
 	@Override
 	public boolean hasUpdates() {
-		boolean hasUpdates = updateAccumulator.hasUpdates() || super.hasUpdates() || _hasSelectionChanged;
+		boolean hasUpdates = updateAccumulator.hasUpdates() || super.hasUpdates();
 		
 		// Check, if controls of the row scopes have updates
 		if (!hasUpdates) {
@@ -1142,17 +1127,14 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	
 	@Override
 	public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
-		if (!Utils.equals(formerlySelectedObjects, selectedObjects)) {
-			_hasSelectionChanged = true;
-		}
-	}
+		updateRows(formerlySelectedObjects);
+		updateRows(selectedObjects);
 
-	private void handleChangedSelection(UpdateQueue actions, Set<?> selection) {
-		if (!selection.isEmpty()) {
-			setVisibleRange(getSelectionModel());
+		if (!model.getSelection().isEmpty()) {
+			setVisibleRange(model);
 
 			if (isAttached()) {
-				actions.add(createScrollIntoViewportAction());
+				addUpdate(createScrollIntoViewportAction());
 			}
 		} else {
 			setUndefinedRange();
@@ -2742,10 +2724,6 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	 */
 	public int getDisplayVersion() {
 		return controlWriteCounter;
-	}
-
-	private Set<?> getSelection() {
-		return getSelectionModel().getSelection();
 	}
 
 	/**

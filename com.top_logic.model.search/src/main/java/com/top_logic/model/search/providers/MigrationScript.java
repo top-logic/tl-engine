@@ -9,6 +9,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.knowledge.service.migration.StartupAction;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -21,6 +22,7 @@ public class MigrationScript extends AbstractConfiguredInstance<MigrationScript.
 	/**
 	 * Configuration options for {@link MigrationScript}.
 	 */
+	@TagName("migration-script")
 	public interface Config extends PolymorphicConfiguration<MigrationScript> {
 		/**
 		 * The TL-Script to execute after first application startup with a new software version.

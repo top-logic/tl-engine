@@ -48,6 +48,7 @@ public class ContactPersonManager extends TLPersonManager {
 
 		if (user == null) {
 			user = ContactFactory.getInstance().createNewPersonContact(loginName, null);
+			user.tUpdateByName(ContactFactory.LOGIN_NAME, account.getName());
 		} else {
 			Logger.info("Reusing contact for new account: " + loginName, ContactPersonManager.class);
 		}

@@ -27,9 +27,6 @@
 			binary="false"
 		/>
 	
-		<remove-annotations name="tl.accounts:Person#contact">
-			<annotation class="com.top_logic.element.config.annotation.TLStorage"/>
-		</remove-annotations>
 		<create-property name="Contacts:PersonContact#loginName"
 			type="tl.core:String"
 		>
@@ -40,20 +37,6 @@
 				</storage-algorithm>
 			</annotations>
 		</create-property>
-		<add-annotations name="tl.accounts:Person#contact">
-			<annotations>
-				<storage-algorithm>
-					<foreign-key-storage
-						storage-attribute="contact"
-						storage-type="Person"
-					>
-						<change-listeners>
-							<change-listener class="com.top_logic.contact.business.OnContactAccountChange"/>
-						</change-listeners>
-					</foreign-key-storage>
-				</storage-algorithm>
-			</annotations>
-		</add-annotations>
 		<reorder-part name="Contacts:PersonContact#loginName"/>
 	</processors>
 	

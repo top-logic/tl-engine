@@ -52,6 +52,11 @@ public class ContactFactory extends AbstractWrapperResolver {
     /** The name of the structure we use */
     public static final String STRUCTURE_NAME      = "Contacts";
 
+	/**
+	 * Attribute to remember the login name of an assigned account.
+	 */
+	public static final String LOGIN_NAME = "loginName";
+
 	private final ConcurrentHashMap<String, QueryCache<?>> _caches = new ConcurrentHashMap<>();
 
 	@Override

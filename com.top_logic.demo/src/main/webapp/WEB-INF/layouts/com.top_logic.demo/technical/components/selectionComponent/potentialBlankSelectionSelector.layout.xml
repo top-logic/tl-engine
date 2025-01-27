@@ -22,5 +22,15 @@
 		<defaultSelectionProvider class="com.top_logic.model.search.providers.ListSelectionProviderByExpression">
 			<function>options -&gt; $options.filter(x -&gt; $x.get(`DemoTypes:DemoTypes.All#name`).stringContains("1"))</function>
 		</defaultSelectionProvider>
+		<selectionOnModelChange>
+			<expression><![CDATA[model -> currentSelection -> {
+  options = $model.get(`tl.element:StructuredElementContainer#children`);
+  newOptions = $options.filter(x -> $x.get(`DemoTypes:DemoTypes.All#name`).stringContains("1")).union($currentSelection);
+  if ($currentSelection.size() < $newOptions.size(), {
+    info(#("Ihre Auswahl wurde nach Modellwechsel um die Standardauswahl erweitert."@de, "Your selection was expanded to include the standard selection after the model change."@en))
+  });
+  $newOptions;
+}]]></expression>
+		</selectionOnModelChange>
 	</arguments>
 </config:template-call>

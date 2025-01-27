@@ -208,7 +208,7 @@ public abstract class AbstractSelectorComponent extends FormComponent
 
 	private CommandHandler _onSelectionChange;
 
-	private boolean _modelChange;
+	private boolean _modelChanged;
 
 	private IFunction2<Object, Object, Object> _selectionOnModelChange;
 
@@ -411,15 +411,15 @@ public abstract class AbstractSelectorComponent extends FormComponent
 
 	@Override
 	public boolean isModelValid() {
-		return !_modelChange && super.isModelValid();
+		return !_modelChanged && super.isModelValid();
 	}
 
 	@Override
 	public boolean validateModel(DisplayContext context) {
 		boolean result = super.validateModel(context);
 
-		if (_modelChange) {
-			_modelChange = false;
+		if (_modelChanged) {
+			_modelChanged = false;
 			if (_selectionOnModelChange != null) {
 				Object currentSelection = getSelected();
 				Object newSelection = _selectionOnModelChange.apply(getModel(), currentSelection);
@@ -434,7 +434,7 @@ public abstract class AbstractSelectorComponent extends FormComponent
 	@Override
 	protected void afterModelSet(Object oldModel, Object newModel) {
 		super.afterModelSet(oldModel, newModel);
-		_modelChange = true;
+		_modelChanged = true;
 	}
 
 	@Override

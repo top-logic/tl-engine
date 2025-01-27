@@ -7,21 +7,27 @@ package com.top_logic.model.instance.importer.schema;
 
 import java.util.List;
 
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 
 /**
  * Import description of a single new object to create.
  * 
- * @see XMLInstanceImporter#importInstances(List)
+ * <p>
+ * The object configuration can either occur top-level or within a composition reference to be
+ * exported as part of another object.
+ * </p>
+ * 
+ * @see XMLInstanceImporter#importInstances(ObjectsConf)
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public interface ObjectConf extends ConfigurationItem {
+@TagName("object")
+public interface ObjectConf extends ValueConf {
 
 	/**
 	 * Optional import-local identifier that is used to reference this object from references of

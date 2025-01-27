@@ -10,7 +10,6 @@ import static com.top_logic.model.search.expr.query.QueryExecutor.*;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 
 import junit.framework.Test;
@@ -33,7 +32,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
-import com.top_logic.model.instance.importer.schema.ObjectConf;
+import com.top_logic.model.instance.importer.schema.ObjectsConf;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.SearchBuilder;
@@ -141,10 +140,10 @@ public abstract class AbstractSearchExpressionTest extends BasicTestCase {
 	protected XMLInstanceImporter scenario(String name) throws ConfigurationException {
 		XMLInstanceImporter importer;
 		try (Transaction tx = kb().beginTransaction()) {
-			List<ObjectConf> configs = XMLInstanceImporter.loadConfigs(resource(name));
+			ObjectsConf config = XMLInstanceImporter.loadConfig(resource(name));
 			importer = new XMLInstanceImporter(model(), ModelService.getInstance().getFactory());
 			importer.setLog(new AssertProtocol());
-			importer.importInstances(configs);
+			importer.importInstances(config);
 
 			tx.commit();
 		}

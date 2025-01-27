@@ -14,17 +14,17 @@ import com.top_logic.basic.config.annotation.Abstract;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @Abstract
-public interface RefConf extends ConfigurationItem {
+public interface ValueConf extends ConfigurationItem {
 
 	/**
-	 * Visit method for the {@link RefConf} hierarchy.
+	 * Visit method for the {@link ValueConf} hierarchy.
 	 * 
 	 * @param v
-	 *        The {@link RefVisitor} to call.
+	 *        The {@link ValueVisitor} to call.
 	 * @param arg
 	 *        The visit argument to pass to the visitor.
 	 * @return The result returned from the visitor.
 	 */
-	<R, A> R visit(RefVisitor<R, A> v, A arg);
+	<R, A> R visit(ValueVisitor<R, A> v, A arg);
 
 }

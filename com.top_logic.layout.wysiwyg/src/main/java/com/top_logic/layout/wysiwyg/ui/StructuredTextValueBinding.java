@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.model.wysiwyg.storage;
+package com.top_logic.layout.wysiwyg.ui;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,44 +17,36 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 
-import com.top_logic.basic.Log;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.AbstractConfigurationValueBinding;
+import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationValueBinding;
 import com.top_logic.basic.io.StreamUtilities;
+import com.top_logic.basic.io.binary.AsciiOutputStream;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
-import com.top_logic.basic.xml.XMLStreamUtil;
-import com.top_logic.basic.xml.log.XMLStreamLog;
-import com.top_logic.layout.wysiwyg.ui.StructuredText;
-import com.top_logic.layout.wysiwyg.ui.StructuredTextValueBinding;
-import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.io.AttributeValueBinding;
+import com.top_logic.basic.xml.XmlTextWriter;
 
 /**
- * {@link AttributeValueBinding} for {@link StructuredText} values.
- *
- * @see StructuredTextValueBinding A copy of this code for XML serialization in context of typed
- *      configuration.
+ * {@link ConfigurationValueBinding} including {@link StructuredText} values in typed
+ * configurations.
  */
-public class StructuredTextAttributeValueBinding implements AttributeValueBinding<StructuredText> {
+public class StructuredTextValueBinding extends AbstractConfigurationValueBinding<StructuredText> {
 
 	/**
-	 * Singleton {@link StructuredTextAttributeValueBinding} instance.
+	 * Singleton {@link StructuredTextValueBinding} instance.
 	 */
-	public static final StructuredTextAttributeValueBinding INSTANCE = new StructuredTextAttributeValueBinding();
+	public static final StructuredTextValueBinding INSTANCE = new StructuredTextValueBinding();
 
-	private StructuredTextAttributeValueBinding() {
+	private StructuredTextValueBinding() {
 		// Singleton constructor.
 	}
 
 	/**
 	 * Element containing the HTML contents in a CDATA section.
 	 */
-	private static final String TEXT = "text";
-
-	/**
-	 * Attribute of {@link #TEXT} defining the number of exported images.
-	 */
-	private static final String IMAGE_COUNT = "img-count";
+	private static final String SOURCE_CODE = "source-code";
 
 	/**
 	 * Element with the {@link #NAME_ATTR} containing the image content as BASE64 encoded text
@@ -68,7 +60,8 @@ public class StructuredTextAttributeValueBinding implements AttributeValueBindin
 	private static final String NAME_ATTR = "name";
 
 	@Override
-	public StructuredText loadValue(XMLStreamLog log, XMLStreamReader in, TLStructuredTypePart attribute) throws XMLStreamException {
+	public StructuredText loadConfigItem(XMLStreamReader in, StructuredText baseValue)
+			throws XMLStreamException, ConfigurationException {
 		StructuredText result = new StructuredText();
 
 		int textTag = in.nextTag();
@@ -77,27 +70,17 @@ public class StructuredTextAttributeValueBinding implements AttributeValueBindin
 		}
 
 		if (textTag != XMLStreamConstants.START_ELEMENT) {
-			throw new XMLStreamException("Expected start of " + TEXT + " element.", in.getLocation());
+			throw new XMLStreamException("Expected start of " + SOURCE_CODE + " element.", in.getLocation());
 		}
-		if (!in.getLocalName().equals(TEXT)) {
-			throw new XMLStreamException("Expected " + TEXT + " element, found: " + in.getLocalName(),
+		if (!in.getLocalName().equals(SOURCE_CODE)) {
+			throw new XMLStreamException("Expected " + SOURCE_CODE + " element, found: " + in.getLocalName(),
 				in.getLocation());
 		}
-		int expectedImageCount = -1;
-		String imgCount = in.getAttributeValue(null, IMAGE_COUNT);
-		if (!StringServices.isEmpty(imgCount)) {
-			try {
-				expectedImageCount = Integer.parseInt(imgCount);
-			} catch (NumberFormatException ex) {
-				throw new XMLStreamException("Reading image count failed.", in.getLocation(), ex);
-			}
-		}
-		result.setSourceCode(XMLStreamUtil.nextText(in));
+		result.setSourceCode(in.getElementText());
 		if (in.getEventType() != XMLStreamConstants.END_ELEMENT) {
-			throw new XMLStreamException("Expected end of " + TEXT + " element.", in.getLocation());
+			throw new XMLStreamException("Expected end of " + SOURCE_CODE + " element.", in.getLocation());
 		}
 
-		int readImages = 0;
 		readImages:
 		while (true) {
 			switch (in.nextTag()) {
@@ -124,35 +107,26 @@ public class StructuredTextAttributeValueBinding implements AttributeValueBindin
 					} catch (IOException ex) {
 						throw new XMLStreamException("Reading image failed.", in.getLocation(), ex);
 					}
-					readImages++;
 					break;
 
 				default:
 					break;
 			}
 		}
-		if (expectedImageCount > -1) {
-			if( expectedImageCount != readImages) {
-				throw new XMLStreamException(
-					"Unexpected number of images: Expected '" + expectedImageCount + "', Actual '" + readImages + "'.",
-					in.getLocation());
-			}
-		} else {
-			// No expected number of images given.
-		}
 		return result;
 	}
 
 	@Override
-	public void storeValue(Log log, XMLStreamWriter out, TLStructuredTypePart attribute, StructuredText value) throws XMLStreamException {
+	public void saveConfigItem(XMLStreamWriter out, StructuredText value) throws XMLStreamException {
 		String sourceCode = value.getSourceCode();
 		if (StringServices.isEmpty(sourceCode)) {
 			return;
 		}
 
 		Set<Entry<String, BinaryData>> images = value.getImages().entrySet();
-		out.writeStartElement(TEXT);
-		out.writeAttribute(IMAGE_COUNT, Integer.toString(images.size()));
+		out.writeStartElement(SOURCE_CODE);
+		// Note: When writing unescaped HTML, pretty-printing the configuation would break HTML
+		// newline semantics!
 		out.writeCData(sourceCode);
 		out.writeEndElement();
 
@@ -160,19 +134,14 @@ public class StructuredTextAttributeValueBinding implements AttributeValueBindin
 			out.writeStartElement(IMAGE);
 			out.writeAttribute(NAME_ATTR, image.getKey());
 			try (InputStream imageData = image.getValue().getStream()) {
-				try (OutputStream xmlData = Base64.getEncoder().wrap(new AsciiOutputStream(out))) {
+				try (OutputStream xmlData = Base64.getEncoder().wrap(new AsciiOutputStream(new XmlTextWriter(out)))) {
 					StreamUtilities.copyStreamContents(imageData, xmlData);
 				}
 			} catch (IOException ex) {
-				log.error("Cannot convert image in attribute '" + attribute + "'.", ex);
+				Logger.error("Cannot convert image in structured text.", ex);
 			}
 			out.writeEndElement();
 		}
-	}
-
-	@Override
-	public boolean useEmptyElement(TLStructuredTypePart attribute, StructuredText value) {
-		return StringServices.isEmpty(value.getSourceCode());
 	}
 
 	private static final class AsciiInputStream extends InputStream {
@@ -239,71 +208,4 @@ public class StructuredTextAttributeValueBinding implements AttributeValueBindin
 			}
 		}
 	}
-
-	private static final class AsciiOutputStream extends OutputStream {
-		private final XMLStreamWriter _out;
-	
-		private final char[] _buffer = new char[4096];
-	
-		private int _pos = 0;
-	
-	
-		/**
-		 * Creates a {@link AsciiOutputStream}.
-		 *
-		 * @param out
-		 *        The {@link XMLStreamWriter} to write ASCII data to using
-		 *        {@link XMLStreamWriter#writeCharacters(char[], int, int)}.
-		 */
-		public AsciiOutputStream(XMLStreamWriter out) {
-			_out = out;
-		}
-	
-		@Override
-		public void write(int b) throws IOException {
-			flush(1);
-			enter(b);
-		}
-
-		@Override
-		public void write(byte[] b, int off, final int len) throws IOException {
-			final int stop = off + len;
-			while (off < stop) {
-				flush(len);
-				for (int limit = Math.min(off + _buffer.length, stop); off < limit; off++) {
-					enter(b[off]);
-				}
-			}
-		}
-
-		protected void enter(int b) throws IOException {
-			if (b > 127) {
-				throw new IOException("Not an ASCII character: " + b);
-			}
-			_buffer[_pos++] = (char)b;
-		}
-	
-		private void flush(int requiredSize) throws IOException {
-			if (_pos + requiredSize > _buffer.length) {
-				flush();
-			}
-		}
-	
-		@Override
-		public void flush() throws IOException {
-			try {
-				_out.writeCharacters(_buffer, 0, _pos);
-				_pos = 0;
-			} catch (XMLStreamException ex) {
-				throw new IOException(ex);
-			}
-		}
-	
-		@Override
-		public void close() throws IOException {
-			flush();
-			super.close();
-		}
-	}
-
 }

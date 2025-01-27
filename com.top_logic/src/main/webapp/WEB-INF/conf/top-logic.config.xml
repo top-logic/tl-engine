@@ -67,6 +67,7 @@
 			       <module key="com.top_logic.layout.editor.DynamicComponentService$Module" value="true" />
 			       <module key="com.top_logic.tool.boundsec.commandhandlers.BookmarkService$Module" value="true"/>
 			       <module key="com.top_logic.util.LayoutBasedSecurity$Module" value="true"/>
+			       <module key="com.top_logic.knowledge.service.db2.InitialDataSetupService$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>

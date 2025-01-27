@@ -1785,7 +1785,16 @@ public class TLModelUtil {
 	 * @see #resolveQualifiedName(String)
 	 */
 	public static TLModelPart resolveModelPart(String qualifiedName) throws TopLogicException {
-		TLObject object = TLModelUtil.resolveQualifiedName(qualifiedName);
+		return resolveModelPart(model(), qualifiedName);
+	}
+
+	/**
+	 * Resolves the {@link TLModelPart} with the given qualified name in the given model.
+	 *
+	 * @see #resolveQualifiedName(String)
+	 */
+	public static TLModelPart resolveModelPart(TLModel model, String qualifiedName) throws TopLogicException {
+		TLObject object = TLModelUtil.resolveQualifiedName(model, qualifiedName);
 
 		if (object instanceof TLModelPart) {
 			return (TLModelPart) object;

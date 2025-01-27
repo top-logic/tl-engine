@@ -5,8 +5,6 @@
  */
 package test.com.top_logic.element.model.instance.importer;
 
-import java.util.List;
-
 import junit.framework.Test;
 
 import test.com.top_logic.basic.module.ServiceTestSetup;
@@ -30,6 +28,7 @@ import com.top_logic.model.instance.importer.resolver.PersistentObjectResolver;
 import com.top_logic.model.instance.importer.schema.AttributeValueConf;
 import com.top_logic.model.instance.importer.schema.GlobalRefConf;
 import com.top_logic.model.instance.importer.schema.ObjectConf;
+import com.top_logic.model.instance.importer.schema.ObjectsConf;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
 
@@ -48,10 +47,10 @@ public class TestXMLInstanceImporter extends TLModelTest {
 
 		XMLInstanceImporter importer = new XMLInstanceImporter(model, factory);
 		importer.addResolver(AccountResolver.KIND,
-			new AccountResolver(PersonManager.getManager()));
+			new AccountResolver());
 		importer.addResolver(PersistentObjectResolver.KIND,
 			new PersistentObjectResolver(PersistencyLayer.getKnowledgeBase()));
-		List<ObjectConf> configs = XMLInstanceImporter.loadConfigs(instanceSource);
+		ObjectsConf configs = XMLInstanceImporter.loadConfig(instanceSource);
 
 		importer.importInstances(configs);
 
@@ -98,10 +97,13 @@ public class TestXMLInstanceImporter extends TLModelTest {
 		GlobalRefConf refConf = TypedConfiguration.newConfigItem(GlobalRefConf.class);
 		refConf.setKind(PersistentObjectResolver.KIND);
 		refConf.setId(PersonManager.getManager().getRoot().tId().asString());
-		anyConf.getReferences().add(refConf);
+		anyConf.getCollectionValue().add(refConf);
 		a4Conf.getAttributes().add(anyConf);
 
-		importer.importInstances(list(a4Conf));
+		ObjectsConf config = TypedConfiguration.newConfigItem(ObjectsConf.class);
+		config.getObjects().add(a4Conf);
+
+		importer.importInstances(config);
 
 		// Test case for #22779
 		ConfigValue configValue = (ConfigValue) get(a1, "item");

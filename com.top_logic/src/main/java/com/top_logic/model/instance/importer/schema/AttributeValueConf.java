@@ -11,6 +11,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.model.access.StorageMapping;
 
 /**
  * Configuration specifying an attribute value of an {@link ObjectConf object import declaration}.
@@ -33,10 +34,15 @@ public interface AttributeValueConf extends ConfigurationItem {
 	void setName(String value);
 
 	/**
-	 * Textual value of a primitive attribute.
+	 * Textual representation of a primitive attribute's value.
 	 * 
 	 * <p>
-	 * For a reference attribute, {@link #getReferences()} must be set instead.
+	 * The value must be a serialized variant of the value stored in the database compatible with
+	 * {@link StorageMapping#getBusinessObject(Object) the storage mapping} of the attribute's type.
+	 * </p>
+	 * 
+	 * <p>
+	 * For a reference attribute, {@link #getCollectionValue()} must be set instead.
 	 * </p>
 	 */
 	@Nullable
@@ -48,13 +54,13 @@ public interface AttributeValueConf extends ConfigurationItem {
 	void setValue(String value);
 
 	/**
-	 * References to other objects to set in the {@link #getName()} attribute.
+	 * Values to set to the attribute {@link #getName()}.
 	 * 
 	 * <p>
-	 * For a primitive attribute, {@link #getValue()} must be set instead.
+	 * For single primitive values, {@link #getValue()} may be used as short-cut.
 	 * </p>
 	 */
 	@DefaultContainer
-	List<RefConf> getReferences();
+	List<ValueConf> getCollectionValue();
 
 }

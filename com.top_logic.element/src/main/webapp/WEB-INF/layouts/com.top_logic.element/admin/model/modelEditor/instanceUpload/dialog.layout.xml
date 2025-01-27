@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout name="Dialog">
+	<dialogInfo
+		height="250"
+		image="theme:ICON_FILE_IMPORT"
+		openerClique="importButtons"
+		openerCommandGroup="Create"
+		width="400"
+	/>
+
+	<form name="Form"
+		buttonbar="true"
+		resetInvisible="true"
+	>
+		<modelBuilder class="com.top_logic.layout.form.declarative.DefaultDeclarativeFormBuilder"
+			create="true"
+			formType="com.top_logic.element.layout.instances.importer.UploadForm"
+		/>
+
+		<buttons>
+			<button id="upload"
+				class="com.top_logic.element.layout.instances.importer.InstanceImportCommand"
+				group="Create"
+			/>
+		</buttons>
+	</form>
+</layout>

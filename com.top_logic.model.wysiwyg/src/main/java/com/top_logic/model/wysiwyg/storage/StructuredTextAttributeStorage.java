@@ -18,11 +18,11 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.element.meta.kbbased.storage.AbstractStorage;
-import com.top_logic.element.meta.kbbased.storage.WithStorageAttribute;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.access.WithStorageAttribute;
 
 /**
  * {@link AbstractStorage} to store source code and images for a HTML attribute.

@@ -40,6 +40,18 @@ public class XMLFragmentString extends AbstractConfigurationValueBinding<String>
 	@Override
 	public String loadConfigItem(XMLStreamReader in, String baseValue)
 			throws XMLStreamException, ConfigurationException {
+		return readFragment(in);
+	}
+
+	/**
+	 * Reads an XML fragment from the given {@link XMLStreamReader} into an XML string.
+	 * 
+	 * <p>
+	 * After return, the reader has either seen the closing tag corresponding to the opening tag it
+	 * has last read when the method was called, or on the end event of the document.
+	 * </p>
+	 */
+	public static String readFragment(XMLStreamReader in) throws XMLStreamException, IOError {
 		TagWriter out = new TagWriter();
 		try {
 			forwardContent(in, out);
@@ -49,10 +61,13 @@ public class XMLFragmentString extends AbstractConfigurationValueBinding<String>
 		return out.toString().trim();
 	}
 
-	private void forwardContent(XMLStreamReader in, TagWriter out) throws XMLStreamException, IOException {
-		int tag;
-		while ((tag = in.next()) != XMLStreamConstants.END_ELEMENT) {
+	private static void forwardContent(XMLStreamReader in, TagWriter out) throws XMLStreamException, IOException {
+		while (true) {
+			int tag = in.next();
 			switch (tag) {
+				case XMLStreamConstants.END_ELEMENT:
+				case XMLStreamConstants.END_DOCUMENT:
+					return;
 				case XMLStreamConstants.CDATA: {
 					out.writeCDATAContent(in.getText());
 					break;
@@ -74,10 +89,36 @@ public class XMLFragmentString extends AbstractConfigurationValueBinding<String>
 		}
 	}
 
-	private void forwardContent(XMLStreamReader in, XMLStreamWriter out) throws XMLStreamException {
-		int tag;
-		while ((tag = in.next()) != XMLStreamConstants.END_ELEMENT) {
+	private static void forwardElement(XMLStreamReader in, TagWriter out) throws XMLStreamException, IOException {
+		String localName = in.getLocalName();
+		out.beginBeginTag(localName);
+		for (int n = 0, cnt = in.getAttributeCount(); n < cnt; n++) {
+			out.writeAttribute(in.getAttributeLocalName(n), in.getAttributeValue(n));
+		}
+		out.endBeginTag();
+		forwardContent(in, out);
+		out.endTag(localName);
+	}
+
+	@Override
+	public void saveConfigItem(XMLStreamWriter out, String item) throws XMLStreamException {
+		forwardFragment(out, item);
+	}
+
+	private static void forwardFragment(XMLStreamWriter out, String xmlFragment) throws XMLStreamException {
+		XMLStreamReader in =
+			XMLStreamUtil.getDefaultInputFactory().createXMLStreamReader(new StringReader("<r>" + xmlFragment + "</r>"));
+		XMLStreamUtil.nextStartTag(in);
+		forwardContent(in, out);
+	}
+
+	private static void forwardContent(XMLStreamReader in, XMLStreamWriter out) throws XMLStreamException {
+		while (true) {
+			int tag = in.next();
 			switch (tag) {
+				case XMLStreamConstants.END_DOCUMENT:
+				case XMLStreamConstants.END_ELEMENT:
+					return;
 				case XMLStreamConstants.CDATA: {
 					out.writeCData(in.getText());
 					break;
@@ -99,18 +140,7 @@ public class XMLFragmentString extends AbstractConfigurationValueBinding<String>
 		}
 	}
 
-	private void forwardElement(XMLStreamReader in, TagWriter out) throws XMLStreamException, IOException {
-		String localName = in.getLocalName();
-		out.beginBeginTag(localName);
-		for (int n = 0, cnt = in.getAttributeCount(); n < cnt; n++) {
-			out.writeAttribute(in.getAttributeLocalName(n), in.getAttributeValue(n));
-		}
-		out.endBeginTag();
-		forwardContent(in, out);
-		out.endTag(localName);
-	}
-
-	private void forwardElement(XMLStreamReader in, XMLStreamWriter out) throws XMLStreamException {
+	private static void forwardElement(XMLStreamReader in, XMLStreamWriter out) throws XMLStreamException {
 		String localName = in.getLocalName();
 		out.writeStartElement(localName);
 		for (int n = 0, cnt = in.getAttributeCount(); n < cnt; n++) {
@@ -118,14 +148,6 @@ public class XMLFragmentString extends AbstractConfigurationValueBinding<String>
 		}
 		forwardContent(in, out);
 		out.writeEndElement();
-	}
-
-	@Override
-	public void saveConfigItem(XMLStreamWriter out, String item) throws XMLStreamException {
-		XMLStreamReader in =
-			XMLStreamUtil.getDefaultInputFactory().createXMLStreamReader(new StringReader("<r>" + item + "</r>"));
-		XMLStreamUtil.nextStartTag(in);
-		forwardContent(in, out);
 	}
 
 }

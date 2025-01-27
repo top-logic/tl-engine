@@ -28,11 +28,11 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-model-wysiwyg</artifactId>
+      <artifactId>tl-contact</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-contact</artifactId>
+      <artifactId>tl-model-wysiwyg</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>

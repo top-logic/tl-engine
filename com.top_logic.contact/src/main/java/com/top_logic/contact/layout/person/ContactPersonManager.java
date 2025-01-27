@@ -7,6 +7,8 @@ package com.top_logic.contact.layout.person;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.contact.business.AbstractContact;
 import com.top_logic.contact.business.ContactFactory;
 import com.top_logic.contact.business.PersonContact;
@@ -20,10 +22,27 @@ import com.top_logic.knowledge.wrap.person.TLPersonManager;
 public class ContactPersonManager extends TLPersonManager {
 
 	/**
+	 * Configuration options for {@link ContactPersonManager}.
+	 */
+	public interface Config<I extends ContactPersonManager> extends TLPersonManager.Config {
+		/**
+		 * Whether a contact that was assigned to an account is re-used for a newly created account,
+		 * if the login names match.
+		 */
+		@BooleanDefault(true)
+		@Name("reuse-contacts")
+		boolean reuseContacts();
+	}
+
+	private final boolean _reuseContacts;
+
+	/**
 	 * Creates a {@link ContactPersonManager}.
 	 */
 	public ContactPersonManager(InstantiationContext context, Config config) {
 		super(context, config);
+
+		_reuseContacts = config.reuseContacts();
 	}
 
 	@Override
@@ -31,17 +50,20 @@ public class ContactPersonManager extends TLPersonManager {
 		String loginName = account.getName();
 
 		PersonContact user = null;
-		for (Object existing : ContactFactory.getInstance().getAllContactsWithAttribute(ContactFactory.PERSON_TYPE,
-			AbstractContact.FKEY_ATTRIBUTE, loginName, false)) {
-			if (existing instanceof PersonContact existingContact) {
-				if (existingContact.getPerson() == null) {
-					if (user != null) {
-						// Not unique.
-						Logger.info("Contact for new account is not unique: " + loginName, ContactPersonManager.class);
-						user = null;
-						break;
+		if (_reuseContacts) {
+			for (Object existing : ContactFactory.getInstance().getAllContactsWithAttribute(ContactFactory.PERSON_TYPE,
+				AbstractContact.FKEY_ATTRIBUTE, loginName, false)) {
+				if (existing instanceof PersonContact existingContact) {
+					if (existingContact.getPerson() == null) {
+						if (user != null) {
+							// Not unique.
+							Logger.info("Contact for new account is not unique: " + loginName,
+								ContactPersonManager.class);
+							user = null;
+							break;
+						}
+						user = existingContact;
 					}
-					user = existingContact;
 				}
 			}
 		}

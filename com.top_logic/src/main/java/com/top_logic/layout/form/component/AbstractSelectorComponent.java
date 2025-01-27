@@ -410,6 +410,11 @@ public abstract class AbstractSelectorComponent extends FormComponent
 	protected abstract List<?> getOptionList();
 
 	@Override
+	public boolean isModelValid() {
+		return !_modelChange && super.isModelValid();
+	}
+
+	@Override
 	public boolean validateModel(DisplayContext context) {
 		boolean result = super.validateModel(context);
 

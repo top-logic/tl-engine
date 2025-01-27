@@ -10,7 +10,8 @@
  	<metaobject object_type="MOKnowledgeObject" object_name="Contact" super_class="AttributedObject" db_name="CONTACT">
 <attributes>
   		<mo_attribute att_name="name" 			att_type="String" 	mandatory="true"  db_size="128" />
-		<mo_attribute att_name="FKey" 			att_type="String" 	mandatory="false" db_size="32"  />
+  		<!-- Note: Must be as long as Person#name since the login name is cached in this attribute. -->
+		<mo_attribute att_name="FKey" 			att_type="String" 	mandatory="false" db_size="150"  />
 		<mo_attribute att_name="FKey2" 			att_type="String" 	mandatory="false" db_size="32"  />
 		<mo_attribute att_name="remarks"        att_type="String" 	mandatory="false" db_size="254" />
 </attributes>

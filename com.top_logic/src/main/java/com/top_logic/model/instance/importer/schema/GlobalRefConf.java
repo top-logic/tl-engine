@@ -11,14 +11,14 @@ import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
 
 /**
- * {@link RefConf Reference} to a pre-existing instance in the target application of an import.
+ * {@link ValueConf Reference} to a pre-existing instance in the target application of an import.
  * 
- * @see AttributeValueConf#getReferences()
+ * @see AttributeValueConf#getCollectionValue()
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @TagName("global-ref")
-public interface GlobalRefConf extends RefConf {
+public interface GlobalRefConf extends ValueConf {
 
 	/**
 	 * The {@link InstanceResolver} kind the {@link #getId()} is made for.
@@ -38,8 +38,8 @@ public interface GlobalRefConf extends RefConf {
 	 * Identifier of the object being referenced.
 	 * 
 	 * <p>
-	 * The syntax of the identifier may vary from {@link #getKind() type} to {@link #getKind()
-	 * type}.
+	 * The syntax of the identifier depends on the {@link InstanceResolver} used to create this ID
+	 * and may vary from {@link #getKind() type} to {@link #getKind() type}.
 	 * </p>
 	 * 
 	 * @see InstanceResolver#resolve(String, String)

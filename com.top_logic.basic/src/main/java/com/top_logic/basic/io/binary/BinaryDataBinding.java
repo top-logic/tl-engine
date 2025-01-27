@@ -6,7 +6,7 @@
 package com.top_logic.basic.io.binary;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Base64;
 import java.util.Base64.Encoder;
 
@@ -17,16 +17,16 @@ import javax.xml.stream.XMLStreamWriter;
 import com.top_logic.basic.config.AbstractConfigurationValueBinding;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationValueBinding;
-import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.xml.NewLineStyle;
 import com.top_logic.basic.xml.XMLStreamUtil;
+import com.top_logic.basic.xml.XmlTextWriter;
 
 /**
- * {@link ConfigurationValueBinding} for {@link BinaryData}.
+ * {@link ConfigurationValueBinding} for {@link BinaryData} and {@link BinaryDataSource}.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class BinaryDataBinding extends AbstractConfigurationValueBinding<BinaryData> {
+public class BinaryDataBinding extends AbstractConfigurationValueBinding<BinaryDataSource> {
 
 	/**
 	 * Here is not default Mime-Encoder ({@link Base64#getMimeEncoder()}) used, because is always
@@ -47,7 +47,7 @@ public class BinaryDataBinding extends AbstractConfigurationValueBinding<BinaryD
 	}
 
 	@Override
-	public BinaryData loadConfigItem(XMLStreamReader in, BinaryData baseValue)
+	public BinaryData loadConfigItem(XMLStreamReader in, BinaryDataSource baseValue)
 			throws XMLStreamException, ConfigurationException {
 		String name = in.getAttributeValue(null, NAME_ATTR);
 		String contentType = in.getAttributeValue(null, CONTENT_TYPE_ATTR);
@@ -57,13 +57,11 @@ public class BinaryDataBinding extends AbstractConfigurationValueBinding<BinaryD
 	}
 
 	@Override
-	public void saveConfigItem(XMLStreamWriter out, BinaryData item) throws XMLStreamException {
+	public void saveConfigItem(XMLStreamWriter out, BinaryDataSource item) throws XMLStreamException {
 		out.writeAttribute(NAME_ATTR, item.getName());
 		out.writeAttribute(CONTENT_TYPE_ATTR, item.getContentType());
-		try (InputStream in = item.getStream()) {
-			byte[] buffer = new byte[(int) item.getSize()];
-			StreamUtilities.readFully(in, buffer);
-			out.writeCharacters(MIME_ENCODER.encodeToString(buffer));
+		try (OutputStream mime = MIME_ENCODER.wrap(new AsciiOutputStream(new XmlTextWriter(out)))) {
+			item.deliverTo(mime);
 		} catch (IOException ex) {
 			throw new XMLStreamException(ex);
 		}

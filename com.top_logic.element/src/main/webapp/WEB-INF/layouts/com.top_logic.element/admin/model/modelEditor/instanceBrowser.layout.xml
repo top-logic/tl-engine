@@ -33,6 +33,15 @@
 					image="theme:ICON_PLUS"
 					resourceKey="layouts.element.meta.InstanceBrowser.newInstance"
 				/>
+				<button id="exportInstances"
+					class="com.top_logic.element.layout.instances.export.InstanceExportCommand"
+					clique="exportButtons"
+					executability="com.top_logic.tool.execution.NoSelectionDisabled"
+					group="Export"
+					image="theme:com.top_logic.tool.export.Icons.DOWNLOAD"
+					resourceKey="layouts.element.meta.InstanceBrowser.exportInstances"
+					target="selection(self())"
+				/>
 			</buttons>
 			<tables>
 				<table name="fieldTable"
@@ -91,6 +100,7 @@
 			</tables>
 			<dialogs>
 				<layout-reference resource="com.top_logic.element/admin/model/modelEditor/formDisplay/dialog.layout.xml"/>
+				<layout-reference resource="com.top_logic.element/admin/model/modelEditor/instanceUpload/dialog.layout.xml"/>
 			</dialogs>
 		</grid>
 	</components>

@@ -6,11 +6,11 @@
 package com.top_logic.model.instance.importer.schema;
 
 /**
- * Visitor interface for the {@link RefConf} hierarchy.
+ * Visitor interface for the {@link ValueConf} hierarchy.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public interface RefVisitor<R, A> {
+public interface ValueVisitor<R, A> {
 
 	/**
 	 * Visit case for {@link InstanceRefConf}.
@@ -26,5 +26,20 @@ public interface RefVisitor<R, A> {
 	 * Visit case for {@link GlobalRefConf}.
 	 */
 	R visit(GlobalRefConf ref, A arg);
+
+	/**
+	 * Visit case for {@link PrimitiveValueConf}.
+	 */
+	R visit(PrimitiveValueConf value, A arg);
+
+	/**
+	 * Visit case for {@link ObjectConf}.
+	 */
+	R visit(ObjectConf obj, A arg);
+
+	/**
+	 * Visit case for {@link CustomValueConf} sub-configurations.
+	 */
+	R visit(CustomValueConf value, A arg);
 
 }

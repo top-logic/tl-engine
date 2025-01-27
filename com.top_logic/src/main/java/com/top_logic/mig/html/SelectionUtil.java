@@ -34,12 +34,7 @@ public class SelectionUtil {
 	 *        New selected tree nodes.
 	 */
 	public static void setTreeSelection(SelectionModel model, Set<? extends TreeUINode<?>> newSelection) {
-		Set<?> oldSelection = model.getSelection();
 		for (TreeUINode<?> selectedNode : newSelection) {
-			if (oldSelection.contains(selectedNode)) {
-				// skip parents expansion of already displayed nodes
-				continue;
-			}
 			TLTreeModelUtil.expandParents(selectedNode);
 		}
 

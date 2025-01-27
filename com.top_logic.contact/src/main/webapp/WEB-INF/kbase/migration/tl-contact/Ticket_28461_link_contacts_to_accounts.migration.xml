@@ -18,6 +18,15 @@
 		/>
 	</dependencies>
 	<processors>
+		<alter-column
+			table="Contact"
+			column="FKey"
+			db_type="varchar"
+			db_size="150"
+			db_prec="0"
+			binary="false"
+		/>
+	
 		<remove-annotations name="tl.accounts:Person#contact">
 			<annotation class="com.top_logic.element.config.annotation.TLStorage"/>
 		</remove-annotations>

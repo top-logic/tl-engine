@@ -644,20 +644,11 @@ td.fltButton {
 	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
 }
 
-.tl-table__header-cell-content .fltButton.activeFilter {
-	color: var(--icon-interactive);
-}
-
-.tl-table__header-cell-content .fltButton.activeFilter:hover {
+.fltReset a:not(.disabled),
+.tl-table__header-cell-content .fltButton.activeFilter,
+.resetSidebarFilterButton i {
 	color: var(--support-danger);
-}
-
-.fltReset a:not(.disabled) {
-	color: var(--icon-interactive);
-}
-
-.fltReset:hover a:not(.disabled) {
-	color: var(--support-danger);
+	text-shadow: var(--icon-outline);
 }
 
 th span.tl-table__filter-sort-icons {

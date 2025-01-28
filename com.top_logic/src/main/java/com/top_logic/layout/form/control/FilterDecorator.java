@@ -20,7 +20,6 @@ import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.renderer.ColumnLabelProvider;
 import com.top_logic.layout.table.renderer.TableButtons;
-import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.util.css.CssUtil;
 
 /**
@@ -66,9 +65,10 @@ public class FilterDecorator implements ContentDecorator {
 				FormConstants.TOGGLE_BUTTON_CSS_CLASS);
 			out.writeAttribute(ALT_ATTR, getAltText(collapsed, formGroup.getLabel(), context));
 			tag.endEmptyTag(context, out);
-			out.writeText(HTMLConstants.NBSP);
-		}	
+		}
+		out.beginTag(SPAN);
 		writeColumnLabel(out);
+		out.endTag(SPAN);
 		writeResetFilterButton(context, out);
 		out.endTag(DIV);
 	}

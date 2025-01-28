@@ -331,6 +331,7 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	 * @see CommonClientConfigs#ENABLE_METRICS_PUSH_DOC
 	 */
 	@Name(ENABLE_METRICS_PUSH_CONFIG)
+	@Label("Enable Telemetry")
 	@BooleanDefault(false)
 	@KafkaClientProperty
 	boolean getEnableMetricsPush();

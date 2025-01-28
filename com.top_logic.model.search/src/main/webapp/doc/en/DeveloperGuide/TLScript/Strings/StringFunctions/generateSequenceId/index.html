@@ -1,0 +1,71 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>generateSequenceId(sequence: $sequenceIdentifier, context:$additionalContext)</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Generates the next consecutive number from a sequence. The sequence is uniquely identified by the combination of:</p>
+
+<ol>
+	<li>Sequence identifier (mandatory field): Defines the base sequence (e.g. "invoice" for invoice numbers)</li>
+	<li>Optional context: Enables the creation of separate counting sequences. Each unique context combination leads to a separate, independent sequence.</li>
+</ol>
+
+<p>A separate sequence is automatically created for each new combination of sequence identifier and context, starting at 1. Existing sequences are incremented by 1 each time they are called.</p>
+
+<p>The sequences are also retained across sessions. The consecutive numbers are managed centrally in the database.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Standard</th>
+		</tr>
+		<tr>
+			<td>sequence</td>
+			<td>String</td>
+			<td>The sequence identifier that forms the basis for the sequence.</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>context</td>
+			<td>Any</td>
+			<td>An optional context parameter that creates separate sequences. Can be: String/primitive values - Specialized objects (uses their ID) - Collections (all elements are combined)</td>
+			<td>no</td>
+			<td> </td>
+		</tr>
+	</thead>
+</table>
+
+<h2> </h2>
+
+<h2>Return value</h2>
+
+<p><strong>Type:</strong> Double</p>
+
+<p>Returns the next number in the sequence. The first time a new sequence is used, 1 is returned.</p>
+
+<h2>Examples</h2>
+
+<pre>
+	<code>generateSequenceId("invoice", null)
+</code>
+</pre>
+
+<p><strong>Output: </strong>A sequence number for all invoices, starts at 1 and increments by 1 with each call (1, 2, 3, 4, ...)</p>
+
+<pre>
+	<code>generateSequenceId("invoice", $productA)</code>
+</pre>
+
+<p><strong>Output:</strong> A sequence number for invoices of product A, starts at 1 and increments by 1 with each call (1, 2, 3, 4, ...)</p>
+
+<p></p>

@@ -692,14 +692,14 @@ div.fltList {
     padding: 0 var(--spacing-03);
 }
 
-.sidebarFilterEntry.collapsibleFilterEntry {
-	background-color: var(--layer-accent);
-	color: var(--layer-accent-text);
-	--button-fg: var(--layer-accent-icon);
-}
-
 .sidebarFilterEntry.collapsibleFilterEntry:hover {
 	background: var(--layer-accent-hover);
+}
+
+.collapsibleFilterEntry span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .checkboxMultiSelectEntry {

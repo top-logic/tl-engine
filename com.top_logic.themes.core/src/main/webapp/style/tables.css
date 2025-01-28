@@ -645,7 +645,9 @@ td.fltButton {
 }
 
 .fltReset a:not(.disabled),
+.fltReset:hover a:not(.disabled), 
 .tl-table__header-cell-content .fltButton.activeFilter,
+.tl-table__header-cell-content .fltButton.activeFilter:hover, 
 .resetSidebarFilterButton i {
 	color: var(--support-danger);
 	text-shadow: var(--icon-outline);

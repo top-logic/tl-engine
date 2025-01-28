@@ -23,14 +23,17 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
 import com.top_logic.basic.db.sql.CompiledStatement;
+import com.top_logic.basic.db.sql.SQLModifyColumn;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MetaObject;
+import com.top_logic.dob.attr.MOAttributeImpl;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MORepository;
 import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.dob.schema.config.AttributeConfig;
+import com.top_logic.dob.schema.config.DBColumnType;
 import com.top_logic.dob.schema.config.MetaObjectConfig;
 import com.top_logic.dob.schema.config.MetaObjectName;
 import com.top_logic.dob.schema.config.PrimitiveAttributeConfig;
@@ -50,7 +53,7 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 	 * Configuration options for {@link AlterColumnProcessor}.
 	 */
 	@TagName("alter-column")
-	public interface Config<I extends AlterColumnProcessor> extends PolymorphicConfiguration<I> {
+	public interface Config<I extends AlterColumnProcessor> extends PolymorphicConfiguration<I>, DBColumnType {
 		/**
 		 * Logical name of the table to copy from.
 		 * 
@@ -213,6 +216,24 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 			newColumn.setMandatory(newMandatory.booleanValue());
 		}
 
+		Config<?> config = getConfig();
+		DBType newDbType = config.getDBType();
+		if (newDbType != null) {
+			((MOAttributeImpl) newColumn).setSQLType(newDbType);
+		}
+		Integer newDbSize = config.getDBSize();
+		if (newDbSize != null) {
+			((MOAttributeImpl) newColumn).setSQLSize(newDbSize);
+		}
+		Integer newDbPrecision = config.getDBPrecision();
+		if (newDbPrecision != null) {
+			((MOAttributeImpl) newColumn).setSQLPrecision(newDbPrecision);
+		}
+		Boolean newBinary = config.isBinary();
+		if (newBinary != null) {
+			((MOAttributeImpl) newColumn).setBinary(newBinary);
+		}
+
 		for (int n = 0, cnt = column.getDbMapping().length; n < cnt; n++) {
 			DBAttribute oldDbColumn = column.getDbMapping()[n];
 			DBAttribute newDbColumn = newColumn.getDbMapping()[n];
@@ -226,14 +247,23 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 
 				sql.executeUpdate(connection);
 			}
-			if (!oldDbColumn.getSQLType().equals(newDbColumn.getSQLType())) {
+			if (!oldDbColumn.getSQLType().equals(newDbColumn.getSQLType()) ||
+				oldDbColumn.isBinary() != newDbColumn.isBinary() ||
+				oldDbColumn.getSQLSize() != newDbColumn.getSQLSize() ||
+				oldDbColumn.getSQLPrecision() != newDbColumn.getSQLPrecision()
+			) {
 				log.info(
 					"Alter column '" + oldDbColumn.getDBName() + "' of table '" + table.getName() + "': Change type to "
-						+ newDbColumn.getSQLType());
-				CompiledStatement sql = query(
-					modifyColumnType(table(table.getDBMapping().getDBName()), oldDbColumn.getDBName(),
-						newDbColumn.getSQLType()))
-							.toSql(connection.getSQLDialect());
+						+ newDbColumn.getSQLType() + ", binary=" + newDbColumn.isBinary() + ", size="
+						+ newDbColumn.getSQLSize() + ", precision=" + newDbColumn.getSQLPrecision());
+				SQLModifyColumn modification = modifyColumnType(table(table.getDBMapping().getDBName()), oldDbColumn.getDBName(),
+					newDbColumn.getSQLType());
+
+				modification.setBinary(newDbColumn.isBinary());
+				modification.setSize(newDbColumn.getSQLSize());
+				modification.setPrecision(newDbColumn.getSQLPrecision());
+
+				CompiledStatement sql = query(modification).toSql(connection.getSQLDialect());
 
 				sql.executeUpdate(connection);
 			}

@@ -23,7 +23,7 @@
 		value="css:fa-solid fa-stopwatch"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER"
-		value="css:fas fa-filter"
+		value="css:fa-solid fa-filter"
 	/>
 	<icon name="com.top_logic.demo.layout.form.demo.Icons.USER_ICON"
 		value="css:fas fa-users"

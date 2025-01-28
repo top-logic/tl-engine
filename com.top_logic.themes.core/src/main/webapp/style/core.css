@@ -699,7 +699,7 @@ div.fltList {
 }
 
 .sidebarFilterEntry.collapsibleFilterEntry:hover {
-	background: var(--layer-hover);
+	background: var(--layer-accent-hover);
 }
 
 .checkboxMultiSelectEntry {

@@ -34,7 +34,7 @@
 		<tl.version>7.10.0-SNAPSHOT</tl.version>
 		<jetty.version>12.0.6</jetty.version>
 		<poi.version>5.2.5</poi.version>
-		<kafka.version>3.6.1</kafka.version>
+		<kafka.version>3.9.0</kafka.version>
 		<zookeeper.version>3.8.3</zookeeper.version>
 		<slf4j.version>2.0.7</slf4j.version>
 		<log4j.version>2.20.0</log4j.version>
@@ -1540,11 +1540,11 @@
 							<rule>
 								<groupId>org.apache.kafka</groupId>
 								
-								<!-- Limit to Kafka 3.6.x for compatibility -->
+								<!-- Limit to Kafka 3.9.x for compatibility -->
 								<ignoreVersions>
 									<ignoreVersion>
 										<type>regex</type>
-										<version>(?!3\.6\.).*</version>
+										<version>(?!3\.9\.).*</version>
 									</ignoreVersion>
 								</ignoreVersions>
 							</rule>

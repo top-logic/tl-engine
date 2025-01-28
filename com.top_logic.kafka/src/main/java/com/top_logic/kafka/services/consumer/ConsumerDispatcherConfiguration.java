@@ -87,6 +87,7 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 	CommonClientConfigs.CLIENT_DNS_LOOKUP_CONFIG,
 	CommonClientConfigs.CONNECTIONS_MAX_IDLE_MS_CONFIG,
 	CommonClientConfigs.METADATA_MAX_AGE_CONFIG,
+	CommonClientConfigs.ENABLE_METRICS_PUSH_CONFIG,
 	CommonClientConfigs.METRICS_NUM_SAMPLES_CONFIG,
 	CommonClientConfigs.METRICS_RECORDING_LEVEL_CONFIG,
 	CommonClientConfigs.METRICS_SAMPLE_WINDOW_MS_CONFIG,

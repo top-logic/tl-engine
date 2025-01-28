@@ -1,0 +1,71 @@
+<h2>​Syntax</h2>
+
+<pre>
+	<code>generateSequenceId(sequence: $sequenceIdentifier, context:$additionalContext)</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Generiert die nächste fortlaufende Nummer aus einer Sequenz. Die Sequenz wird eindeutig identifiziert durch die Kombination aus:</p>
+
+<ol>
+	<li>Sequenz-Identifier (Pflichtfeld): Definiert die Basis-Sequenz (z.B. "invoice" für Rechnungsnummern)</li>
+	<li>Optionaler Kontext: Ermöglicht die Erzeugung separater Zählreihen. Jede eindeutige Kontext-Kombination führt zu einer eigenen, unabhängigen Sequenz.</li>
+</ol>
+
+<p>Für jede neue Kombination aus Sequenz-Identifier und Kontext wird automatisch eine eigene Sequenz angelegt, die bei 1 beginnt. Bestehende Sequenzen werden bei jedem Aufruf um 1 erhöht.</p>
+
+<p>Die Sequenzen bleiben auch über Sitzungen hinweg erhalten. Die fortlaufenden Nummern werden zentral in der Datenbank verwaltet.</p>
+
+<h2>Paramter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Bezeichnung</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Standard</th>
+		</tr>
+		<tr>
+			<td>sequence</td>
+			<td>String</td>
+			<td>Der Sequenz-Identifier, der die Basis für die Sequenz bildet.</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>context</td>
+			<td>Any</td>
+			<td>Ein optionaler Kontext-Parameter, durch den separate Sequenzen entstehen. Kann sein: String/primitive Werte - Fachobjekte (verwendet deren ID) - Collections (alle Elemente werden kombiniert)</td>
+			<td>nein</td>
+			<td> </td>
+		</tr>
+	</thead>
+</table>
+
+<h2> </h2>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Double</p>
+
+<p>Gibt die nächste Nummer in der Sequenz zurück. Bei der ersten Verwendung einer neuen Sequenz wird 1 zurückgegeben.</p>
+
+<h2>Beispiele</h2>
+
+<pre>
+	<code>generateSequenceId("invoice", null)
+</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Eine Sequenznummer für alle Rechnungen, beginnt bei 1 und inkrementiert bei jedem Aufruf um 1 (1, 2, 3, 4, ...)</p>
+
+<pre>
+	<code>generateSequenceId("invoice", $productA)</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> Eine Sequenznummer für Rechnungen des Produkts A, beginnt bei 1 und inkrementiert bei jedem Aufruf um 1 (1, 2, 3, 4, ...)</p>
+
+<p>​</p>

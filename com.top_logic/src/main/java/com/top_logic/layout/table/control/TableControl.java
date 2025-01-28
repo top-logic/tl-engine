@@ -123,6 +123,7 @@ import com.top_logic.layout.table.control.access.CellRef;
 import com.top_logic.layout.table.control.access.ColumsCollectionRef;
 import com.top_logic.layout.table.control.access.RowDisplay;
 import com.top_logic.layout.table.control.access.RowsCollectionRef;
+import com.top_logic.layout.table.display.ClientDisplayData;
 import com.top_logic.layout.table.display.ColumnAnchor;
 import com.top_logic.layout.table.display.IndexRange;
 import com.top_logic.layout.table.display.RowIndexAnchor;
@@ -1131,9 +1132,27 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 		if (!model.getSelection().isEmpty()) {
 			setVisibleRange(model);
+
+			if (isAttached()) {
+				addUpdate(createScrollIntoViewportAction());
+			}
 		} else {
 			setUndefinedRange();
 		}
+	}
+
+	private JSSnipplet createScrollIntoViewportAction() {
+		return new JSSnipplet(new DynamicText() {
+
+			@Override
+			public void append(DisplayContext context, Appendable out) throws IOException {
+				out.append("TABLE.updateScrollPosition('");
+				out.append(getID());
+				out.append("',");
+				ClientDisplayData.append(out, getViewModel());
+				out.append(");");
+			}
+		});
 	}
 
 	private void setVisibleRange(Object selectionModel) {

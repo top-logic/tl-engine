@@ -93,7 +93,7 @@
 				<generalization type="tl.model:TLObject"/>
 			</generalizations>
 			<attributes>
-				<property name="description"
+				<property name="descriptionI18N"
 					type="tl.model.i18n:I18NHtml"
 				>
 					<annotations>
@@ -344,7 +344,7 @@
 						<sort-order value="2000.0"/>
 					</annotations>
 				</property>
-				<property name="myTasksTitle"
+				<property name="myTasksTitleI18N"
 					type="tl.model.i18n:I18NString"
 				>
 					<annotations>
@@ -352,7 +352,7 @@
 						<sort-order value="2001.0"/>
 					</annotations>
 				</property>
-				<property name="myTasksDescription"
+				<property name="myTasksDescriptionI18N"
 					type="tl.model.i18n:I18NHtml"
 				>
 					<annotations>
@@ -368,7 +368,7 @@
 						<sort-order value="2010.0"/>
 					</annotations>
 				</property>
-				<property name="myProcessesTitle"
+				<property name="myProcessesTitleI18N"
 					type="tl.model.i18n:I18NString"
 				>
 					<annotations>
@@ -376,7 +376,7 @@
 						<sort-order value="2011.0"/>
 					</annotations>
 				</property>
-				<property name="myProcessesDescription"
+				<property name="myProcessesDescriptionI18N"
 					type="tl.model.i18n:I18NHtml"
 				>
 					<annotations>
@@ -896,7 +896,7 @@
 				<id-column value="label"/>
 			</annotations>
 			<attributes>
-				<property name="title"
+				<property name="titleI18N"
 					type="tl.model.i18n:I18NString"
 				>
 					<annotations>
@@ -945,7 +945,7 @@
 				>
 					<annotations>
 						<storage-algorithm>
-							<query expr="t -> $t.get(`tl.bpe.bpml:Task#title`).localize() || $t.get(`tl.bpe.bpml:Task#name`)"/>
+							<query expr="t -> $t.get(`tl.bpe.bpml:Task#titleI18N`).localize() || $t.get(`tl.bpe.bpml:Task#name`)"/>
 						</storage-algorithm>
 					</annotations>
 				</property>
@@ -1149,7 +1149,7 @@
 						<sort-order value="3.0"/>
 					</annotations>
 				</reference>
-				<property name="taskTitle"
+				<property name="taskTitleFunction"
 					type="tl.model.search:Expr"
 				>
 					<annotations>

@@ -51,6 +51,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.migration.MigrationService;
 import com.top_logic.mig.html.ContainerDetector;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.license.InvalidLicenceException;
@@ -610,6 +611,10 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 			Messages.APPLICATION_STARTUP__NAME_VERSION.fill(theVersion.getName(), theVersion.getVersionString()));
 		{
 			ModuleUtil.INSTANCE.startConfiguredModules();
+
+			if (MigrationService.Module.INSTANCE.isActive()) {
+				MigrationService.Module.INSTANCE.getImplementationInstance().applicationStarted();
+			}
 		}
 		commitStartupChanges(tx, theVersion);
 	}

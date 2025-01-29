@@ -13,9 +13,6 @@
 		<dependency name="Ticket_28298_update_account"
 			module="tl-element"
 		/>
-		<dependency name="Ticket_27999_Multiple_composition_tables"
-			module="tl-contact"
-		/>
 		<dependency name="Ticket_27604_Upgrade_GridCreateHandlerByExpression_createType"
 			module="tl-model-search"
 		/>

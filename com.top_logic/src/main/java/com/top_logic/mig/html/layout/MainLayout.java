@@ -505,6 +505,11 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 			throw new IllegalArgumentException(
 				"Can not replace main layout '" + this + "' for layout key: " + normalizedLayoutKey);
 		}
+		LayoutComponent dialogTopLayout = knownComponent.getDialogTopLayout();
+		if (dialogTopLayout != null) {
+			// Component is displayed in dialog
+			getDialogSupport().notifyDialogContentReplaced(dialogTopLayout, knownComponent);
+		}
 		boolean isDialogTopLayout = isDialogTopLayout(knownComponent);
 
 		if (isDialogTopLayout) {

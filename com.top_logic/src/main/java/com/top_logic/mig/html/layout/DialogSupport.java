@@ -6,13 +6,12 @@
 package com.top_logic.mig.html.layout;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.col.TypedAnnotatable;
-import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.WindowScope;
@@ -31,10 +30,11 @@ import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
  */
 public class DialogSupport {
 
-	private static final Property<DialogWindowControl> DIALOG_CONTROL =
-		TypedAnnotatable.property(DialogWindowControl.class, "dialogControl");
+	/** Cache holding the created {@link DialogWindowControl}s by dialog. */
+	private final Map<LayoutComponent, DialogWindowControl> _createdControls =
+		new HashMap<>();
 
-	/** The list containing all opened dialogs */
+	/** All currently open dialogs. */
 	private final LinkedHashMap<LayoutComponent, DialogComponent> _openedDialogs =
 		new LinkedHashMap<>();
 
@@ -69,14 +69,14 @@ public class DialogSupport {
 		}
 		else {
 			DialogComponent newDialog = DialogComponent.newDialog(dialog, info, dialogTitle);
-			DialogWindowControl formerCtrl = dialog.get(DIALOG_CONTROL);
+			DialogWindowControl formerCtrl = _createdControls.get(dialog);
 			DialogWindowControl dialogControl;
 			if (formerCtrl != null) {
 				dialogControl = formerCtrl;
 				dialogControl.setWindowModel(newDialog);
 			} else {
 				dialogControl = dialog.getMainLayout().getLayoutFactory().createDialogLayout(newDialog);
-				dialog.set(DIALOG_CONTROL, dialogControl);
+				_createdControls.put(dialog, dialogControl);
 			}
 			_openedDialogs.put(dialog, newDialog);
 			_window.openDialog(dialogControl);
@@ -151,6 +151,20 @@ public class DialogSupport {
 		}
 
 		OpenModalDialogCommandHandler.openDialog(theDialog, dialogTitle);
+	}
+
+	/**
+	 * Informs this {@link DialogSupport} that a component in a dialog is going to be replaced.
+	 * 
+	 * @param dialog
+	 *        The dialog in which a component will be replaced.
+	 * @param dialogPart
+	 *        The component within the dialog that is replaced.
+	 */
+	public void notifyDialogContentReplaced(LayoutComponent dialog, LayoutComponent dialogPart) {
+		/* Remove cached control. A part of the dialog becomes invalid, therefore its control
+		 * becomes invalid. */
+		_createdControls.remove(dialog);
 	}
 
 }

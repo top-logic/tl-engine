@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -36,15 +36,6 @@ public interface TaskBase extends com.top_logic.bpe.bpml.model.Node, com.top_log
 	String LABEL_ATTR = "label";
 
 	/**
-	 * Part <code>title</code> of <code>Task</code>
-	 * 
-	 * <p>
-	 * Declared as <code>tl.model.i18n:I18NString</code> in configuration.
-	 * </p>
-	 */
-	String TITLE_ATTR = "title";
-
-	/**
 	 * Part <code>titleFunction</code> of <code>Task</code>
 	 * 
 	 * <p>
@@ -52,6 +43,15 @@ public interface TaskBase extends com.top_logic.bpe.bpml.model.Node, com.top_log
 	 * </p>
 	 */
 	String TITLE_FUNCTION_ATTR = "titleFunction";
+
+	/**
+	 * Part <code>titleI18N</code> of <code>Task</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model.i18n:I18NString</code> in configuration.
+	 * </p>
+	 */
+	String TITLE_I18N_ATTR = "titleI18N";
 
 	/**
 	 * Part <code>tokenType</code> of <code>Task</code>
@@ -78,20 +78,6 @@ public interface TaskBase extends com.top_logic.bpe.bpml.model.Node, com.top_log
 	}
 
 	/**
-	 * Getter for part {@link #TITLE_ATTR}.
-	 */
-	default com.top_logic.basic.util.ResKey getTitle() {
-		return (com.top_logic.basic.util.ResKey) tValueByName(TITLE_ATTR);
-	}
-
-	/**
-	 * Setter for part {@link #TITLE_ATTR}.
-	 */
-	default void setTitle(com.top_logic.basic.util.ResKey newValue) {
-		tUpdateByName(TITLE_ATTR, newValue);
-	}
-
-	/**
 	 * Getter for part {@link #TITLE_FUNCTION_ATTR}.
 	 */
 	default com.top_logic.model.search.expr.SearchExpression getTitleFunction() {
@@ -103,6 +89,20 @@ public interface TaskBase extends com.top_logic.bpe.bpml.model.Node, com.top_log
 	 */
 	default void setTitleFunction(com.top_logic.model.search.expr.SearchExpression newValue) {
 		tUpdateByName(TITLE_FUNCTION_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #TITLE_I18N_ATTR}.
+	 */
+	default com.top_logic.basic.util.ResKey getTitleI18N() {
+		return (com.top_logic.basic.util.ResKey) tValueByName(TITLE_I18N_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #TITLE_I18N_ATTR}.
+	 */
+	default void setTitleI18N(com.top_logic.basic.util.ResKey newValue) {
+		tUpdateByName(TITLE_I18N_ATTR, newValue);
 	}
 
 	/**

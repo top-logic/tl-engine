@@ -20,6 +20,7 @@
 		model="${model}"
 		name="TaskEdit"
 		page="/jsp/processExecution/EditTask.jsp"
+		resetInvisible="${resetInvisible}"
 		saveClosesDialog="${saveClosesDialog}"
 		showMaximize="${showMaximize}"
 		showMinimize="${showMinimize}"

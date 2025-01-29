@@ -559,8 +559,6 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 		protected void setSelection(SelectionModel selectionModel, Set<List<?>> selectedPaths) {
 			Set<GridTreeTableNode> selectectedTreeNodes = formGroupsToTreeNodes(selectedPaths);
 
-			SelectionUtil.setSelection(selectionModel, selectectedTreeNodes);
-
 			for (GridTreeTableNode selectedNode : selectectedTreeNodes) {
 				if (expandSelectedNode()) {
 					TreeUIModelUtil.expandSelfAndParents(getTreeModel(), selectedNode);
@@ -568,6 +566,8 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 					TreeUIModelUtil.expandParents(getTreeModel(), selectedNode);
 				}
 			}
+
+			SelectionUtil.setSelection(selectionModel, selectectedTreeNodes);
 		}
 
 		private Set<GridTreeTableNode> formGroupsToTreeNodes(Set<List<?>> paths) {

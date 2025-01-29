@@ -1133,7 +1133,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		if (!model.getSelection().isEmpty()) {
 			setVisibleRange(model);
 
-			if (isAttached()) {
+			if (isAttached() && !isRepaintRequested()) {
 				addUpdate(createScrollIntoViewportAction());
 			}
 		} else {

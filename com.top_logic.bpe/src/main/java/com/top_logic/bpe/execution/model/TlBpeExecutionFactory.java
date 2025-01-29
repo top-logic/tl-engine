@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -140,10 +140,10 @@ public class TlBpeExecutionFactory extends com.top_logic.element.meta.kbbased.Ab
 	}
 
 	/**
-	 * Lookup {@link Token#DESCRIPTION_ATTR} of {@link Token}.
+	 * Lookup {@link Token#DESCRIPTION_I18N_ATTR} of {@link Token}.
 	 */
-	public static com.top_logic.model.TLProperty getDescriptionTokenAttr() {
-		return (com.top_logic.model.TLProperty) getTokenType().getPart(Token.DESCRIPTION_ATTR);
+	public static com.top_logic.model.TLProperty getDescriptionI18NTokenAttr() {
+		return (com.top_logic.model.TLProperty) getTokenType().getPart(Token.DESCRIPTION_I18N_ATTR);
 	}
 
 	/**
@@ -151,13 +151,6 @@ public class TlBpeExecutionFactory extends com.top_logic.element.meta.kbbased.Ab
 	 */
 	public static com.top_logic.model.TLProperty getDurationInMinutesTokenAttr() {
 		return (com.top_logic.model.TLProperty) getTokenType().getPart(Token.DURATION_IN_MINUTES_ATTR);
-	}
-
-	/**
-	 * Lookup {@link Token#DYNAMIC_ACTORS_ATTR} of {@link Token}.
-	 */
-	public static com.top_logic.model.TLReference getDynamicActorsTokenAttr() {
-		return (com.top_logic.model.TLReference) getTokenType().getPart(Token.DYNAMIC_ACTORS_ATTR);
 	}
 
 	/**

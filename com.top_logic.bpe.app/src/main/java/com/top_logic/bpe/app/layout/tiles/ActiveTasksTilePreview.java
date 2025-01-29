@@ -17,7 +17,7 @@ import com.top_logic.mig.html.layout.tiles.component.ComponentTile;
 import com.top_logic.mig.html.layout.tiles.component.TilePreview;
 
 /**
- * {@link TilePreview} for the "active tasks" using the {@link Collaboration#getMyTasksTitle()
+ * {@link TilePreview} for the "active tasks" using the {@link Collaboration#getMyTasksTitleI18N()
  * configured title} from the {@link Collaboration}.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -42,7 +42,7 @@ public class ActiveTasksTilePreview extends ModelBasedPreview<ModelBasedPreview.
 
 	@Override
 	protected HTMLFragment labelContent(ComponentTile tile) {
-		ResKey result = collaboration(tile).getMyTasksTitle();
+		ResKey result = collaboration(tile).getMyTasksTitleI18N();
 		if (result != null) {
 			return Fragments.message(result);
 		}
@@ -51,7 +51,7 @@ public class ActiveTasksTilePreview extends ModelBasedPreview<ModelBasedPreview.
 
 	@Override
 	protected HTMLFragment descriptionContent(ComponentTile tile) {
-		I18NStructuredText result = collaboration(tile).getMyTasksDescription();
+		I18NStructuredText result = collaboration(tile).getMyTasksDescriptionI18N();
 		if (result != null) {
 			return Fragments.htmlSource(result.localizeSourceCode());
 		}

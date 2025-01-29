@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -43,15 +43,6 @@ public interface TokenBase extends com.top_logic.bpe.bpml.model.Iconified, com.t
 	 * </p>
 	 */
 	String DURATION_IN_MINUTES_ATTR = "durationInMinutes";
-
-	/**
-	 * Part <code>dynamicActors</code> of <code>Token</code>
-	 * 
-	 * <p>
-	 * Declared as <code>tl.accounts:Person</code> in configuration.
-	 * </p>
-	 */
-	String DYNAMIC_ACTORS_ATTR = "dynamicActors";
 
 	/**
 	 * Part <code>executionNumber</code> of <code>Token</code>
@@ -158,11 +149,11 @@ public interface TokenBase extends com.top_logic.bpe.bpml.model.Iconified, com.t
 	}
 
 	/**
-	 * Getter for part {@link #DESCRIPTION_ATTR}.
+	 * Getter for part {@link #DESCRIPTION_I18N_ATTR}.
 	 */
 	@Override
-	default com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText getDescription() {
-		return (com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText) tValueByName(DESCRIPTION_ATTR);
+	default com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText getDescriptionI18N() {
+		return (com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText) tValueByName(DESCRIPTION_I18N_ATTR);
 	}
 
 	/**
@@ -170,14 +161,6 @@ public interface TokenBase extends com.top_logic.bpe.bpml.model.Iconified, com.t
 	 */
 	default Long getDurationInMinutes() {
 		return (Long) tValueByName(DURATION_IN_MINUTES_ATTR);
-	}
-
-	/**
-	 * Getter for part {@link #DYNAMIC_ACTORS_ATTR}.
-	 */
-	@SuppressWarnings("unchecked")
-	default java.util.Set<? extends com.top_logic.knowledge.wrap.person.Person> getDynamicActors() {
-		return (java.util.Set<? extends com.top_logic.knowledge.wrap.person.Person>) tValueByName(DYNAMIC_ACTORS_ATTR);
 	}
 
 	/**

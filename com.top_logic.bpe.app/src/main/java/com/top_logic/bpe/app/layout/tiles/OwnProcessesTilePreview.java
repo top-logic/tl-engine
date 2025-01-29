@@ -18,7 +18,7 @@ import com.top_logic.mig.html.layout.tiles.component.TilePreview;
 
 /**
  * {@link TilePreview} for the "own processes" using the .
- * {@link Collaboration#getMyProcessesTitle() configured title} in the {@link Collaboration}.
+ * {@link Collaboration#getMyProcessesTitleI18N() configured title} in the {@link Collaboration}.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -42,7 +42,7 @@ public class OwnProcessesTilePreview extends ModelBasedPreview<ModelBasedPreview
 
 	@Override
 	protected HTMLFragment labelContent(ComponentTile tile) {
-		ResKey result = collaboration(tile).getMyProcessesTitle();
+		ResKey result = collaboration(tile).getMyProcessesTitleI18N();
 		if (result != null) {
 			return Fragments.message(result);
 		}
@@ -51,7 +51,7 @@ public class OwnProcessesTilePreview extends ModelBasedPreview<ModelBasedPreview
 
 	@Override
 	protected HTMLFragment descriptionContent(ComponentTile tile) {
-		I18NStructuredText result = collaboration(tile).getMyProcessesDescription();
+		I18NStructuredText result = collaboration(tile).getMyProcessesDescriptionI18N();
 		if (result != null) {
 			return Fragments.htmlSource(result.localizeSourceCode());
 		}

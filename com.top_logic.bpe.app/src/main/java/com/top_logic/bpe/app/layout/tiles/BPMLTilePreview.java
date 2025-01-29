@@ -83,7 +83,7 @@ public class BPMLTilePreview<C extends LabelBasedPreview.Config<?>> extends Labe
 	 */
 	protected HTMLFragment specificDescriptionContent(Object model) {
 		if (model instanceof Described) {
-			I18NStructuredText html = ((Described) model).getDescription();
+			I18NStructuredText html = ((Described) model).getDescriptionI18N();
 			if (html != null) {
 				return Fragments.htmlSource(html.localizeSourceCode());
 			}

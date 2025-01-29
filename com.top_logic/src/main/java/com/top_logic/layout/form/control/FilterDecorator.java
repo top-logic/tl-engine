@@ -29,9 +29,10 @@ import com.top_logic.util.css.CssUtil;
  */
 public class FilterDecorator implements ContentDecorator {
 	
-	private static final String SIDEBAR_FILTER_ENTRY_CLASS = "sidebarFilterEntry";
-	private static final String COLLAPSIBLE_ENTRY_CLASS = "collapsibleFilterEntry";
-	private static final String RESET_SIDEBAR_FILTER_BUTTON_CLASS = "resetSidebarFilterButton";
+	private static final String SIDEBAR_FILTER_ENTRY_CLASS = "tl-sidebar-filter__entry";
+	private static final String COLLAPSIBLE_ENTRY_CLASS = "tl-sidebar-filter__entry--collapsible";
+	private static final String RESET_SIDEBAR_FILTER_BUTTON_CLASS = "tl-sidebar-filter__reset-button";
+	private static final String SIDEBAR_FILTER_ENTRY_TEXT_CLASS = "tl-sidebar-filter__entry-text";
 
 	private String columnName;
 
@@ -66,7 +67,8 @@ public class FilterDecorator implements ContentDecorator {
 			out.writeAttribute(ALT_ATTR, getAltText(collapsed, formGroup.getLabel(), context));
 			tag.endEmptyTag(context, out);
 		}
-		out.beginTag(SPAN);
+		out.beginBeginTag(SPAN);
+		out.writeAttribute(CLASS_ATTR, SIDEBAR_FILTER_ENTRY_TEXT_CLASS);
 		writeColumnLabel(out);
 		out.endTag(SPAN);
 		writeResetFilterButton(context, out);

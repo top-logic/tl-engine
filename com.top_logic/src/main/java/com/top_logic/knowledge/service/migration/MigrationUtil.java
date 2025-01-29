@@ -1205,7 +1205,7 @@ public class MigrationUtil {
 						Version initial = initialVersions.get(baseModule);
 
 						// Do not add a cyclic dependency between initial versions.
-						if (!version.equals(initial)) {
+						if (!version.equals(initial) && initial != null) {
 							dependencies.put(baseModule, initial);
 						}
 					}

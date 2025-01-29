@@ -484,6 +484,28 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		migrate(log);
 	}
 
+	/**
+	 * Callback invoked, after all modules are up and running.
+	 */
+	public void applicationStarted() {
+		List<MigrationConfig> migrationsWithActions =
+			_migrationInfo.getMigrations().stream().filter(m -> !m.getStartupActions().isEmpty()).toList();
+		if (!migrationsWithActions.isEmpty()) {
+			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+			for (var m : migrationsWithActions) {
+				Logger.info("Performing startup actions from: " + m.getVersion().getModule() + ": "
+						+ m.getVersion().getName(), MigrationService.class);
+				for (var actionConfig : m.getStartupActions()) {
+					StartupAction action = TypedConfigUtil.createInstance(actionConfig);
+					try (Transaction tx = kb.beginTransaction()) {
+						action.perform();
+						tx.commit();
+					}
+				}
+			}
+		}
+	}
+
 	private void migrate(Protocol log) {
 		PooledConnection connection = _connectionPool.borrowWriteConnection();
 		try {

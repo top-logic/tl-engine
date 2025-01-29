@@ -13,6 +13,9 @@
 		<dependency name="Ticket_26970_Update_stored_table_definition"
 			module="tl-element"
 		/>
+		<dependency name="Ticket_26959_drop_api_generalization"
+			module="tl-model-search"
+		/>
 		<dependency name="Ticket_26398_remove_table_interfaces"
 			module="tl-contact"
 		/>

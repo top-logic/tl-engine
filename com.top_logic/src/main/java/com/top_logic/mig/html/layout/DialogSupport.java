@@ -11,6 +11,8 @@ import java.util.Map;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.WindowScope;
@@ -28,6 +30,9 @@ import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class DialogSupport {
+
+	private static final Property<DialogWindowControl> DIALOG_CONTROL =
+		TypedAnnotatable.property(DialogWindowControl.class, "dialogControl");
 
 	/** The list containing all opened dialogs */
 	private final LinkedHashMap<LayoutComponent, DialogComponent> _openedDialogs =
@@ -64,8 +69,15 @@ public class DialogSupport {
 		}
 		else {
 			DialogComponent newDialog = DialogComponent.newDialog(dialog, info, dialogTitle);
-			DialogWindowControl dialogControl =
-				dialog.getMainLayout().getLayoutFactory().createDialogLayout(newDialog);
+			DialogWindowControl formerCtrl = dialog.get(DIALOG_CONTROL);
+			DialogWindowControl dialogControl;
+			if (formerCtrl != null) {
+				dialogControl = formerCtrl;
+				dialogControl.setWindowModel(newDialog);
+			} else {
+				dialogControl = dialog.getMainLayout().getLayoutFactory().createDialogLayout(newDialog);
+				dialog.set(DIALOG_CONTROL, dialogControl);
+			}
 			_openedDialogs.put(dialog, newDialog);
 			_window.openDialog(dialogControl);
 		}

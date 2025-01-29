@@ -259,9 +259,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		/** @see #getHelpId() */
 		String HELP_ID = "helpID";
 
-		/** @see #getResetInvisible() */
-		String RESET_INVISIBLE = "resetInvisible";
-
 		/** @see #getDropTarget() */
 		String DROP_TARGET = "dropTarget";
 
@@ -545,17 +542,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		 * @see #getHelpId()
 		 */
 		void setHelpId(String value);
-
-		/**
-		 * Whether the component is {@link LayoutComponent#invalidate() invalidated}, when the it
-		 * becomes invisible.
-		 * 
-		 * <p>
-		 * This allows to release resources when this component is no longer visible.
-		 * </p>
-		 */
-		@Name(RESET_INVISIBLE)
-		boolean getResetInvisible();
 
 		/**
 		 * {@link ComponentDropTarget} that handles drop operations over the configured component.

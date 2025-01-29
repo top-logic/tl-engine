@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -90,13 +90,13 @@ public interface ParticipantBase extends com.top_logic.bpe.bpml.model.Named, com
 	String PROCESS_ATTR = "process";
 
 	/**
-	 * Part <code>taskTitle</code> of <code>Participant</code>
+	 * Part <code>taskTitleFunction</code> of <code>Participant</code>
 	 * 
 	 * <p>
 	 * Declared as <code>tl.model.search:Expr</code> in configuration.
 	 * </p>
 	 */
-	String TASK_TITLE_ATTR = "taskTitle";
+	String TASK_TITLE_FUNCTION_ATTR = "taskTitleFunction";
 
 	/**
 	 * Part <code>tokenType</code> of <code>Participant</code>
@@ -213,17 +213,17 @@ public interface ParticipantBase extends com.top_logic.bpe.bpml.model.Named, com
 	}
 
 	/**
-	 * Getter for part {@link #TASK_TITLE_ATTR}.
+	 * Getter for part {@link #TASK_TITLE_FUNCTION_ATTR}.
 	 */
-	default com.top_logic.model.search.expr.SearchExpression getTaskTitle() {
-		return (com.top_logic.model.search.expr.SearchExpression) tValueByName(TASK_TITLE_ATTR);
+	default com.top_logic.model.search.expr.SearchExpression getTaskTitleFunction() {
+		return (com.top_logic.model.search.expr.SearchExpression) tValueByName(TASK_TITLE_FUNCTION_ATTR);
 	}
 
 	/**
-	 * Setter for part {@link #TASK_TITLE_ATTR}.
+	 * Setter for part {@link #TASK_TITLE_FUNCTION_ATTR}.
 	 */
-	default void setTaskTitle(com.top_logic.model.search.expr.SearchExpression newValue) {
-		tUpdateByName(TASK_TITLE_ATTR, newValue);
+	default void setTaskTitleFunction(com.top_logic.model.search.expr.SearchExpression newValue) {
+		tUpdateByName(TASK_TITLE_FUNCTION_ATTR, newValue);
 	}
 
 	/**

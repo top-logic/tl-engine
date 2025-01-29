@@ -18,7 +18,7 @@
 				<tl:tokenType/>
 				<tl:displayDescription/>
 				<tl:exportDescription/>
-				<tl:taskTitle/>
+				<tl:taskTitleFunction/>
 				<tl:defaultOperation/>
 				<tl:edgeFormType/>
 			</bpmn:extensionElements>
@@ -27,13 +27,13 @@
 			<tl:name value="My Process"/>
 			<tl:icon/>
 			<tl:state value="Development"/>
-			<tl:description/>
+			<tl:descriptionI18N/>
 			<tl:myTasksIcon/>
-			<tl:myTasksTitle/>
-			<tl:myTasksDescription/>
+			<tl:myTasksTitleI18N/>
+			<tl:myTasksDescriptionI18N/>
 			<tl:myProcessesIcon/>
-			<tl:myProcessesTitle/>
-			<tl:myProcessesDescription/>
+			<tl:myProcessesTitleI18N/>
+			<tl:myProcessesDescriptionI18N/>
 		</bpmn:extensionElements>
 	</bpmn:collaboration>
 	<bpmn:process id="Process_1"
@@ -75,7 +75,7 @@
 			<bpmn:extensionElements>
 				<tl:icon/>
 				<tl:title/>
-				<tl:description/>
+				<tl:descriptionI18N/>
 			</bpmn:extensionElements>
 		</bpmn:startEvent>
 		<bpmn:manualTask id="Task_16uk174"
@@ -85,10 +85,10 @@
 			<bpmn:incoming>SequenceFlow_16fzfu0</bpmn:incoming>
 			<bpmn:extensionElements>
 				<tl:icon/>
-				<tl:title/>
+				<tl:titleI18N/>
 				<tl:titleFunction/>
 				<tl:formDefinition/>
-				<tl:description/>
+				<tl:descriptionI18N/>
 				<tl:canEdit value="true"/>
 				<tl:tokenType/>
 			</bpmn:extensionElements>
@@ -100,10 +100,10 @@
 			<bpmn:incoming>SequenceFlow_04zbagu</bpmn:incoming>
 			<bpmn:extensionElements>
 				<tl:icon/>
-				<tl:title/>
+				<tl:titleI18N/>
 				<tl:titleFunction/>
 				<tl:formDefinition/>
-				<tl:description/>
+				<tl:descriptionI18N/>
 				<tl:canEdit value="true"/>
 				<tl:tokenType/>
 			</bpmn:extensionElements>

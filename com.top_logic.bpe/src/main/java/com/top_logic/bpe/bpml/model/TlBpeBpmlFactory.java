@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -83,10 +83,10 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
-	 * Lookup {@link Described#DESCRIPTION_ATTR} of {@link Described}.
+	 * Lookup {@link Described#DESCRIPTION_I18N_ATTR} of {@link Described}.
 	 */
-	public static com.top_logic.model.TLProperty getDescriptionDescribedAttr() {
-		return (com.top_logic.model.TLProperty) getDescribedType().getPart(Described.DESCRIPTION_ATTR);
+	public static com.top_logic.model.TLProperty getDescriptionI18NDescribedAttr() {
+		return (com.top_logic.model.TLProperty) getDescribedType().getPart(Described.DESCRIPTION_I18N_ATTR);
 	}
 
 	/**
@@ -272,10 +272,10 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
-	 * Lookup {@link Collaboration#MY_PROCESSES_DESCRIPTION_ATTR} of {@link Collaboration}.
+	 * Lookup {@link Collaboration#MY_PROCESSES_DESCRIPTION_I18N_ATTR} of {@link Collaboration}.
 	 */
-	public static com.top_logic.model.TLProperty getMyProcessesDescriptionCollaborationAttr() {
-		return (com.top_logic.model.TLProperty) getCollaborationType().getPart(Collaboration.MY_PROCESSES_DESCRIPTION_ATTR);
+	public static com.top_logic.model.TLProperty getMyProcessesDescriptionI18NCollaborationAttr() {
+		return (com.top_logic.model.TLProperty) getCollaborationType().getPart(Collaboration.MY_PROCESSES_DESCRIPTION_I18N_ATTR);
 	}
 
 	/**
@@ -286,17 +286,17 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
-	 * Lookup {@link Collaboration#MY_PROCESSES_TITLE_ATTR} of {@link Collaboration}.
+	 * Lookup {@link Collaboration#MY_PROCESSES_TITLE_I18N_ATTR} of {@link Collaboration}.
 	 */
-	public static com.top_logic.model.TLProperty getMyProcessesTitleCollaborationAttr() {
-		return (com.top_logic.model.TLProperty) getCollaborationType().getPart(Collaboration.MY_PROCESSES_TITLE_ATTR);
+	public static com.top_logic.model.TLProperty getMyProcessesTitleI18NCollaborationAttr() {
+		return (com.top_logic.model.TLProperty) getCollaborationType().getPart(Collaboration.MY_PROCESSES_TITLE_I18N_ATTR);
 	}
 
 	/**
-	 * Lookup {@link Collaboration#MY_TASKS_DESCRIPTION_ATTR} of {@link Collaboration}.
+	 * Lookup {@link Collaboration#MY_TASKS_DESCRIPTION_I18N_ATTR} of {@link Collaboration}.
 	 */
-	public static com.top_logic.model.TLProperty getMyTasksDescriptionCollaborationAttr() {
-		return (com.top_logic.model.TLProperty) getCollaborationType().getPart(Collaboration.MY_TASKS_DESCRIPTION_ATTR);
+	public static com.top_logic.model.TLProperty getMyTasksDescriptionI18NCollaborationAttr() {
+		return (com.top_logic.model.TLProperty) getCollaborationType().getPart(Collaboration.MY_TASKS_DESCRIPTION_I18N_ATTR);
 	}
 
 	/**
@@ -307,10 +307,10 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
-	 * Lookup {@link Collaboration#MY_TASKS_TITLE_ATTR} of {@link Collaboration}.
+	 * Lookup {@link Collaboration#MY_TASKS_TITLE_I18N_ATTR} of {@link Collaboration}.
 	 */
-	public static com.top_logic.model.TLProperty getMyTasksTitleCollaborationAttr() {
-		return (com.top_logic.model.TLProperty) getCollaborationType().getPart(Collaboration.MY_TASKS_TITLE_ATTR);
+	public static com.top_logic.model.TLProperty getMyTasksTitleI18NCollaborationAttr() {
+		return (com.top_logic.model.TLProperty) getCollaborationType().getPart(Collaboration.MY_TASKS_TITLE_I18N_ATTR);
 	}
 
 	/**
@@ -685,17 +685,17 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
-	 * Lookup {@link Task#TITLE_ATTR} of {@link Task}.
-	 */
-	public static com.top_logic.model.TLProperty getTitleTaskAttr() {
-		return (com.top_logic.model.TLProperty) getTaskType().getPart(Task.TITLE_ATTR);
-	}
-
-	/**
 	 * Lookup {@link Task#TITLE_FUNCTION_ATTR} of {@link Task}.
 	 */
 	public static com.top_logic.model.TLProperty getTitleFunctionTaskAttr() {
 		return (com.top_logic.model.TLProperty) getTaskType().getPart(Task.TITLE_FUNCTION_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Task#TITLE_I18N_ATTR} of {@link Task}.
+	 */
+	public static com.top_logic.model.TLProperty getTitleI18NTaskAttr() {
+		return (com.top_logic.model.TLProperty) getTaskType().getPart(Task.TITLE_I18N_ATTR);
 	}
 
 	/**
@@ -881,10 +881,10 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
-	 * Lookup {@link Participant#TASK_TITLE_ATTR} of {@link Participant}.
+	 * Lookup {@link Participant#TASK_TITLE_FUNCTION_ATTR} of {@link Participant}.
 	 */
-	public static com.top_logic.model.TLProperty getTaskTitleParticipantAttr() {
-		return (com.top_logic.model.TLProperty) getParticipantType().getPart(Participant.TASK_TITLE_ATTR);
+	public static com.top_logic.model.TLProperty getTaskTitleFunctionParticipantAttr() {
+		return (com.top_logic.model.TLProperty) getParticipantType().getPart(Participant.TASK_TITLE_FUNCTION_ATTR);
 	}
 
 	/**

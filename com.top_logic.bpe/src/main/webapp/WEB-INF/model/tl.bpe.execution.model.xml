@@ -294,14 +294,14 @@
 						</storage-algorithm>
 					</annotations>
 				</property>
-				<property name="description"
+				<property name="descriptionI18N"
 					override="true"
 					type="tl.model.i18n:I18NHtml"
 				>
 					<annotations>
 						<delete-protected/>
 						<storage-algorithm>
-							<query expr="self -> $self.get(`tl.bpe.execution:Token#node`).get(`tl.bpe.bpml:Described#description`)"/>
+							<query expr="self -> $self.get(`tl.bpe.execution:Token#node`).get(`tl.bpe.bpml:Described#descriptionI18N`)"/>
 						</storage-algorithm>
 					</annotations>
 				</property>

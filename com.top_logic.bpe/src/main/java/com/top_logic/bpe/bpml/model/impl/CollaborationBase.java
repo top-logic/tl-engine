@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -36,13 +36,13 @@ public interface CollaborationBase extends com.top_logic.bpe.bpml.model.Named, c
 	String MESSAGE_FLOWS_ATTR = "messageFlows";
 
 	/**
-	 * Part <code>myProcessesDescription</code> of <code>Collaboration</code>
+	 * Part <code>myProcessesDescriptionI18N</code> of <code>Collaboration</code>
 	 * 
 	 * <p>
 	 * Declared as <code>tl.model.i18n:I18NHtml</code> in configuration.
 	 * </p>
 	 */
-	String MY_PROCESSES_DESCRIPTION_ATTR = "myProcessesDescription";
+	String MY_PROCESSES_DESCRIPTION_I18N_ATTR = "myProcessesDescriptionI18N";
 
 	/**
 	 * Part <code>myProcessesIcon</code> of <code>Collaboration</code>
@@ -54,22 +54,22 @@ public interface CollaborationBase extends com.top_logic.bpe.bpml.model.Named, c
 	String MY_PROCESSES_ICON_ATTR = "myProcessesIcon";
 
 	/**
-	 * Part <code>myProcessesTitle</code> of <code>Collaboration</code>
+	 * Part <code>myProcessesTitleI18N</code> of <code>Collaboration</code>
 	 * 
 	 * <p>
 	 * Declared as <code>tl.model.i18n:I18NString</code> in configuration.
 	 * </p>
 	 */
-	String MY_PROCESSES_TITLE_ATTR = "myProcessesTitle";
+	String MY_PROCESSES_TITLE_I18N_ATTR = "myProcessesTitleI18N";
 
 	/**
-	 * Part <code>myTasksDescription</code> of <code>Collaboration</code>
+	 * Part <code>myTasksDescriptionI18N</code> of <code>Collaboration</code>
 	 * 
 	 * <p>
 	 * Declared as <code>tl.model.i18n:I18NHtml</code> in configuration.
 	 * </p>
 	 */
-	String MY_TASKS_DESCRIPTION_ATTR = "myTasksDescription";
+	String MY_TASKS_DESCRIPTION_I18N_ATTR = "myTasksDescriptionI18N";
 
 	/**
 	 * Part <code>myTasksIcon</code> of <code>Collaboration</code>
@@ -81,13 +81,13 @@ public interface CollaborationBase extends com.top_logic.bpe.bpml.model.Named, c
 	String MY_TASKS_ICON_ATTR = "myTasksIcon";
 
 	/**
-	 * Part <code>myTasksTitle</code> of <code>Collaboration</code>
+	 * Part <code>myTasksTitleI18N</code> of <code>Collaboration</code>
 	 * 
 	 * <p>
 	 * Declared as <code>tl.model.i18n:I18NString</code> in configuration.
 	 * </p>
 	 */
-	String MY_TASKS_TITLE_ATTR = "myTasksTitle";
+	String MY_TASKS_TITLE_I18N_ATTR = "myTasksTitleI18N";
 
 	/**
 	 * Part <code>participants</code> of <code>Collaboration</code>
@@ -174,17 +174,17 @@ public interface CollaborationBase extends com.top_logic.bpe.bpml.model.Named, c
 	}
 
 	/**
-	 * Getter for part {@link #MY_PROCESSES_DESCRIPTION_ATTR}.
+	 * Getter for part {@link #MY_PROCESSES_DESCRIPTION_I18N_ATTR}.
 	 */
-	default com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText getMyProcessesDescription() {
-		return (com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText) tValueByName(MY_PROCESSES_DESCRIPTION_ATTR);
+	default com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText getMyProcessesDescriptionI18N() {
+		return (com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText) tValueByName(MY_PROCESSES_DESCRIPTION_I18N_ATTR);
 	}
 
 	/**
-	 * Setter for part {@link #MY_PROCESSES_DESCRIPTION_ATTR}.
+	 * Setter for part {@link #MY_PROCESSES_DESCRIPTION_I18N_ATTR}.
 	 */
-	default void setMyProcessesDescription(com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText newValue) {
-		tUpdateByName(MY_PROCESSES_DESCRIPTION_ATTR, newValue);
+	default void setMyProcessesDescriptionI18N(com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText newValue) {
+		tUpdateByName(MY_PROCESSES_DESCRIPTION_I18N_ATTR, newValue);
 	}
 
 	/**
@@ -202,31 +202,31 @@ public interface CollaborationBase extends com.top_logic.bpe.bpml.model.Named, c
 	}
 
 	/**
-	 * Getter for part {@link #MY_PROCESSES_TITLE_ATTR}.
+	 * Getter for part {@link #MY_PROCESSES_TITLE_I18N_ATTR}.
 	 */
-	default com.top_logic.basic.util.ResKey getMyProcessesTitle() {
-		return (com.top_logic.basic.util.ResKey) tValueByName(MY_PROCESSES_TITLE_ATTR);
+	default com.top_logic.basic.util.ResKey getMyProcessesTitleI18N() {
+		return (com.top_logic.basic.util.ResKey) tValueByName(MY_PROCESSES_TITLE_I18N_ATTR);
 	}
 
 	/**
-	 * Setter for part {@link #MY_PROCESSES_TITLE_ATTR}.
+	 * Setter for part {@link #MY_PROCESSES_TITLE_I18N_ATTR}.
 	 */
-	default void setMyProcessesTitle(com.top_logic.basic.util.ResKey newValue) {
-		tUpdateByName(MY_PROCESSES_TITLE_ATTR, newValue);
+	default void setMyProcessesTitleI18N(com.top_logic.basic.util.ResKey newValue) {
+		tUpdateByName(MY_PROCESSES_TITLE_I18N_ATTR, newValue);
 	}
 
 	/**
-	 * Getter for part {@link #MY_TASKS_DESCRIPTION_ATTR}.
+	 * Getter for part {@link #MY_TASKS_DESCRIPTION_I18N_ATTR}.
 	 */
-	default com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText getMyTasksDescription() {
-		return (com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText) tValueByName(MY_TASKS_DESCRIPTION_ATTR);
+	default com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText getMyTasksDescriptionI18N() {
+		return (com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText) tValueByName(MY_TASKS_DESCRIPTION_I18N_ATTR);
 	}
 
 	/**
-	 * Setter for part {@link #MY_TASKS_DESCRIPTION_ATTR}.
+	 * Setter for part {@link #MY_TASKS_DESCRIPTION_I18N_ATTR}.
 	 */
-	default void setMyTasksDescription(com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText newValue) {
-		tUpdateByName(MY_TASKS_DESCRIPTION_ATTR, newValue);
+	default void setMyTasksDescriptionI18N(com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText newValue) {
+		tUpdateByName(MY_TASKS_DESCRIPTION_I18N_ATTR, newValue);
 	}
 
 	/**
@@ -244,17 +244,17 @@ public interface CollaborationBase extends com.top_logic.bpe.bpml.model.Named, c
 	}
 
 	/**
-	 * Getter for part {@link #MY_TASKS_TITLE_ATTR}.
+	 * Getter for part {@link #MY_TASKS_TITLE_I18N_ATTR}.
 	 */
-	default com.top_logic.basic.util.ResKey getMyTasksTitle() {
-		return (com.top_logic.basic.util.ResKey) tValueByName(MY_TASKS_TITLE_ATTR);
+	default com.top_logic.basic.util.ResKey getMyTasksTitleI18N() {
+		return (com.top_logic.basic.util.ResKey) tValueByName(MY_TASKS_TITLE_I18N_ATTR);
 	}
 
 	/**
-	 * Setter for part {@link #MY_TASKS_TITLE_ATTR}.
+	 * Setter for part {@link #MY_TASKS_TITLE_I18N_ATTR}.
 	 */
-	default void setMyTasksTitle(com.top_logic.basic.util.ResKey newValue) {
-		tUpdateByName(MY_TASKS_TITLE_ATTR, newValue);
+	default void setMyTasksTitleI18N(com.top_logic.basic.util.ResKey newValue) {
+		tUpdateByName(MY_TASKS_TITLE_I18N_ATTR, newValue);
 	}
 
 	/**

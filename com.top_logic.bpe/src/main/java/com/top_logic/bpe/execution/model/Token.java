@@ -86,12 +86,12 @@ public interface Token extends TokenBase {
 						literal(token)));
 			}
 
-			ResKey label = ((Task) node).getTitle();
+			ResKey label = ((Task) node).getTitleI18N();
 			if (label != null) {
 				return Fragments.message(label);
 			}
 		}
-		SearchExpression titleTemplate = token.participant(node.getProcess()).getTaskTitle();
+		SearchExpression titleTemplate = token.participant(node.getProcess()).getTaskTitleFunction();
 		if (titleTemplate != null) {
 			return new ExpressionFragment(
 				call(titleTemplate, literal(token.getProcessExecution()), literal(token)));

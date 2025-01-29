@@ -24,6 +24,7 @@ import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayT
 @DisplayOrder({
 	LayoutComponentUIOptions.TITLE_KEY,
 	LayoutComponentUIOptions.MODEL,
+	LayoutComponentUIOptions.RESET_INVISIBLE
 })
 public interface LayoutComponentUIOptions extends ConfigurationItem {
 
@@ -32,6 +33,9 @@ public interface LayoutComponentUIOptions extends ConfigurationItem {
 
 	/** @see #getModelSpec() */
 	String MODEL = "model";
+
+	/** @see #getResetInvisible() */
+	String RESET_INVISIBLE = "resetInvisible";
 
 	/**
 	 * Internationalized title of this component.
@@ -109,5 +113,16 @@ public interface LayoutComponentUIOptions extends ConfigurationItem {
 	 * @see #getModelSpec()
 	 */
 	void setModelSpec(ModelSpec value);
+
+	/**
+	 * Whether the component is {@link LayoutComponent#invalidate() invalidated}, when the it
+	 * becomes invisible.
+	 * 
+	 * <p>
+	 * This allows to release resources when this component is no longer visible.
+	 * </p>
+	 */
+	@Name(RESET_INVISIBLE)
+	boolean getResetInvisible();
 
 }

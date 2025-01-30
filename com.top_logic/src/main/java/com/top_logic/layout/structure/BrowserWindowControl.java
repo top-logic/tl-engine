@@ -295,6 +295,11 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 			Logger.warn("Dialog '" + aDialog + "' is  already open.", this);
 			return;
 		}
+		if (dialogsToClose.remove(aDialog)) {
+			// Dialog was first requested to close and then to re-open again.
+			addDialog(aDialog);
+			return;
+		}
 
 		unregisterAndCloseAllPopupDialogs();
 
@@ -354,7 +359,6 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 
 	private void removeDialog(DialogWindowControl dialog) {
 		dialogs.remove(dialog);
-		dropLayerScope(dialog);
 		disableTopmostDialog(false);
 		// dialogs are in general points of no return in history
 		pop();
@@ -573,6 +577,7 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 
 	private void dropIncrementalDialogUpdates() {
 		dialogsToClose.forEach(DialogWindowControl::detach);
+		dialogsToClose.forEach(this::dropLayerScope);
 		dialogsToClose.clear();
 		dialogsToOpen.clear();
 	}

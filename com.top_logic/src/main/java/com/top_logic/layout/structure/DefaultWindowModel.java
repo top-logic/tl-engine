@@ -24,12 +24,12 @@ public class DefaultWindowModel extends DefaultLayoutModel implements WindowMode
 	private int borderSize;
 	private int titleBarHeight;
 
-	private final ToolBar _toolbar;
+	private ToolBar _toolbar;
 
 	public DefaultWindowModel(LayoutData layoutData, HTMLFragment title) {
 		super(layoutData);
-		_toolbar = new DefaultToolBar(this, new DefaultExpandable(), title, true, Decision.TRUE, Decision.FALSE,
-			Decision.FALSE);
+		setToolbar(new DefaultToolBar(this, new DefaultExpandable(), title, true,
+			Decision.TRUE, Decision.FALSE, Decision.FALSE));
 		this.titleBarShown = title != null;
 
 		Theme theme = ThemeFactory.getTheme();
@@ -61,6 +61,13 @@ public class DefaultWindowModel extends DefaultLayoutModel implements WindowMode
 		return _toolbar;
 	}
 	
+	/**
+	 * Setter for {@link #getToolbar()}.
+	 */
+	public void setToolbar(ToolBar toolbar) {
+		_toolbar = toolbar;
+	}
+
 	@Override
 	public int getTitleBarHeight() {
 		return titleBarHeight;

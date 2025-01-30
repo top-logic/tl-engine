@@ -72,8 +72,10 @@ public class DialogSupport {
 			DialogWindowControl formerCtrl = _createdControls.get(dialog);
 			DialogWindowControl dialogControl;
 			if (formerCtrl != null) {
+				// Ensure that the new WindowModel has the same toolbar
+				newDialog.setToolbar(formerCtrl.getWindowModel().getToolbar());
+				formerCtrl.setWindowModel(newDialog);
 				dialogControl = formerCtrl;
-				dialogControl.setWindowModel(newDialog);
 			} else {
 				dialogControl = dialog.getMainLayout().getLayoutFactory().createDialogLayout(newDialog);
 				_createdControls.put(dialog, dialogControl);

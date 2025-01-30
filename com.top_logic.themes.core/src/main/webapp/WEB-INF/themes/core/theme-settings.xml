@@ -221,10 +221,10 @@
 		expr="%TREE_NEW_ELEMENT%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.REMOVE_FILTER"
-		value="css:fa-solid fa-filter tablefilter"
+		value="css:fa-solid fa-filter-circle-xmark"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.REMOVE_FILTER_DISABLED"
-		value="css:fa-solid fa-filter"
+		value="css:fa-solid fa-filter-circle-xmark"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.SORTABLE"
 		value="css:fa-solid fa-sort"
@@ -242,7 +242,7 @@
 		expr="%com.top_logic.layout.table.renderer.Icons.SORT_DESC%"
 	/>
 	<icon name="com.top_logic.layout.table.renderer.Icons.FILTER"
-		expr="%com.top_logic.layout.table.renderer.Icons.REMOVE_FILTER_DISABLED%"
+		value="css:fa-solid fa-filter"
 	/>
 	<icon name="com.top_logic.layout.structure.Icons.WINDOW_MAXIMIZE"
 		value="css:fa-solid fa-expand"
@@ -2095,6 +2095,20 @@
 	/>
 	<color name="icon-interactive"
 		value="#2968c8"
+	/>
+	<string name="icon-outline"
+		value=" 1px 0 #fff,
+			    -1px 0 #fff, 0 1px #fff,
+			    0 -1px #fff, 0.5px 0.5px #fff,
+			    -0.5px -0.5px #fff,
+			    0.5px -0.5px #fff,
+			    -0.5px 0.5px #fff,
+			    1px 0.5px white,
+			    0.5px 1px white,
+			    -1px 0.5px white,
+			    0.5px -1px white,
+			    -0.5px 1px white,
+			    1px -0.5px white;"
 	/>
 	<color name="layer"
 		value="#f0f1f2"

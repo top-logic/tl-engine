@@ -20,7 +20,6 @@ import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.renderer.ColumnLabelProvider;
 import com.top_logic.layout.table.renderer.TableButtons;
-import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.util.css.CssUtil;
 
 /**
@@ -30,9 +29,10 @@ import com.top_logic.util.css.CssUtil;
  */
 public class FilterDecorator implements ContentDecorator {
 	
-	private static final String SIDEBAR_FILTER_ENTRY_CLASS = "sidebarFilterEntry";
-	private static final String COLLAPSIBLE_ENTRY_CLASS = "collapsibleFilterEntry";
-	private static final String RESET_SIDEBAR_FILTER_BUTTON_CLASS = "resetSidebarFilterButton";
+	private static final String SIDEBAR_FILTER_ENTRY_CLASS = "tl-sidebar-filter__entry";
+	private static final String COLLAPSIBLE_ENTRY_CLASS = "tl-sidebar-filter__entry--collapsible";
+	private static final String RESET_SIDEBAR_FILTER_BUTTON_CLASS = "tl-sidebar-filter__reset-button";
+	private static final String SIDEBAR_FILTER_ENTRY_TEXT_CLASS = "tl-sidebar-filter__entry-text";
 
 	private String columnName;
 
@@ -66,9 +66,12 @@ public class FilterDecorator implements ContentDecorator {
 				FormConstants.TOGGLE_BUTTON_CSS_CLASS);
 			out.writeAttribute(ALT_ATTR, getAltText(collapsed, formGroup.getLabel(), context));
 			tag.endEmptyTag(context, out);
-			out.writeText(HTMLConstants.NBSP);
-		}	
+		}
+		out.beginBeginTag(SPAN);
+		out.writeAttribute(CLASS_ATTR, SIDEBAR_FILTER_ENTRY_TEXT_CLASS);
+		out.endBeginTag();
 		writeColumnLabel(out);
+		out.endTag(SPAN);
 		writeResetFilterButton(context, out);
 		out.endTag(DIV);
 	}

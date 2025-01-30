@@ -644,20 +644,13 @@ td.fltButton {
 	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
 }
 
-.tl-table__header-cell-content .fltButton.activeFilter {
-	color: var(--icon-interactive);
-}
-
-.tl-table__header-cell-content .fltButton.activeFilter:hover {
+.fltReset a:not(.disabled),
+.fltReset:hover a:not(.disabled), 
+.tl-table__header-cell-content .fltButton.activeFilter,
+.tl-table__header-cell-content .fltButton.activeFilter:hover, 
+.tl-sidebar-filter__reset-button i {
 	color: var(--support-danger);
-}
-
-.fltReset a:not(.disabled) {
-	color: var(--icon-interactive);
-}
-
-.fltReset:hover a:not(.disabled) {
-	color: var(--support-danger);
+	text-shadow: var(--icon-outline);
 }
 
 th span.tl-table__filter-sort-icons {
@@ -694,7 +687,7 @@ div.tl-table__filter-sort-container {
   	margin-bottom: var(--spacing-03);
 }
 
-.sidebarFilterEntry {
+.tl-sidebar-filter__entry {
 	position: relative;
 	box-sizing: border-box;
 	height: 1.5rem;
@@ -706,11 +699,11 @@ div.tl-table__filter-sort-container {
 	align-items: center;
 }
 
-.collapsibleFilterEntry {
+.tl-sidebar-filter__entry--collapsible {
 	cursor: pointer;
 }
 
-.resetSidebarFilterButton {
+.tl-sidebar-filter__reset-button {
 	position: absolute;
 	right: 0;
 	padding-right: var(--spacing-01);

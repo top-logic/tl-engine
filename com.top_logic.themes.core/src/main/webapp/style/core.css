@@ -682,7 +682,7 @@ div.fltList {
 	max-height: none;
 }
 
-.sidebarFilterEntry.collapsibleFilterEntry {
+.tl-sidebar-filter__entry.tl-sidebar-filter__entry--collapsible {
     display: flex;
     align-items: center;
     gap: var(--spacing-01);
@@ -692,14 +692,14 @@ div.fltList {
     padding: 0 var(--spacing-03);
 }
 
-.sidebarFilterEntry.collapsibleFilterEntry {
-	background-color: var(--layer-accent);
-	color: var(--layer-accent-text);
-	--button-fg: var(--layer-accent-icon);
+.tl-sidebar-filter__entry.tl-sidebar-filter__entry--collapsible:hover {
+	background: var(--layer-accent-hover);
 }
 
-.sidebarFilterEntry.collapsibleFilterEntry:hover {
-	background: var(--layer-hover);
+.tl-sidebar-filter__entry--collapsible .tl-sidebar-filter__entry-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .checkboxMultiSelectEntry {

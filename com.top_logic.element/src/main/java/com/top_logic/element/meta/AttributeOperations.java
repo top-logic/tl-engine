@@ -72,7 +72,6 @@ import com.top_logic.knowledge.wrap.WebFolderFactory;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.knowledge.wrap.list.FastList;
-import com.top_logic.layout.form.FormContextProxy;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.model.utility.DefaultListOptionModel;
@@ -365,28 +364,6 @@ public class AttributeOperations {
 	@Deprecated
 	public static Set<? extends TLObject> getReferers(TLObject self, TLStructuredTypePart reference) {
 		return self.tReferers((TLReference) reference);
-	}
-
-	/**
-	 * Potential values that can be set to the given attribute.
-	 * 
-	 * <p>
-	 * Deprecated: Use {@link #allOptions(EditContext)}, other parameters are unused.
-	 * </p>
-	 * 
-	 * @param self
-	 *        The base object.
-	 * @param editContext
-	 *        The current update context.
-	 * @param form
-	 *        The current form inputs.
-	 * @return All available options.
-	 * 
-	 * @deprecated Use {@link #allOptions(EditContext)}.
-	 */
-	@Deprecated
-	public static OptionModel<?> getOptions(TLObject self, EditContext editContext, FormContextProxy form) {
-		return allOptions(editContext);
 	}
 
 	/**

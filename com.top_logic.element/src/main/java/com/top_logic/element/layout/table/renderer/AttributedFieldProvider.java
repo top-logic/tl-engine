@@ -7,19 +7,23 @@ package com.top_logic.element.layout.table.renderer;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.AttributeSettings;
+import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.LegacyTypeCodes;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.fieldprovider.FloatFieldProvider;
 import com.top_logic.element.meta.form.fieldprovider.LongFieldProvider;
+import com.top_logic.element.meta.kbbased.filtergen.Generator;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.FormFactory;
+import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.table.model.AbstractFieldProvider;
 import com.top_logic.mig.html.HTMLFormatter;
@@ -71,16 +75,28 @@ public class AttributedFieldProvider extends AbstractFieldProvider {
             int           theType     = AttributeOperations.getMetaAttributeType(theMA);
 
 			if (AttributeOperations.getOptions(theMA) != null) {
-				OptionModel<?> options = AttributeOperations
-					.allOptions(this.context.getAttributeUpdateContainer().getAttributeUpdate(theMA, theModel));
+				AttributeUpdate editContext = this.context.getAttributeUpdateContainer().getAttributeUpdate(theMA, theModel);
+				OptionModel<?> options = AttributeOperations.allOptions(editContext);
+				Generator generator = editContext.getOptions();
+				Comparator<?> optionOrder = generator != null ? generator.getOptionOrder() : null;
 
                 switch (theType) {
-                    case LegacyTypeCodes.TYPE_WRAPPER:
-						return FormFactory.newSelectField(aName, options, false, Collections.singletonList(theValue),
-							isMandatory, false, null);
-                    case LegacyTypeCodes.TYPE_TYPEDSET:
-						return FormFactory.newSelectField(aName, options, true,
+					case LegacyTypeCodes.TYPE_WRAPPER: {
+						SelectField field = FormFactory.newSelectField(aName, options, false,
+							Collections.singletonList(theValue), isMandatory, false, null);
+						if (optionOrder != null) {
+							field.setOptionComparator(optionOrder);
+						}
+						return field;
+					}
+					case LegacyTypeCodes.TYPE_TYPEDSET: {
+						SelectField field = FormFactory.newSelectField(aName, options, true,
 							CollectionUtil.toList((Collection) theValue), isMandatory, false, null);
+						if (optionOrder != null) {
+							field.setOptionComparator(optionOrder);
+						}
+						return field;
+					}
                     default:
                         break;
                 }

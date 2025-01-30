@@ -47,7 +47,6 @@ import com.top_logic.layout.window.WindowComponent;
 import com.top_logic.layout.window.WindowManager;
 import com.top_logic.layout.xml.LayoutControlComponent;
 import com.top_logic.mig.html.layout.ComponentName;
-import com.top_logic.mig.html.layout.DefaultDescendingLayoutVisitor;
 import com.top_logic.mig.html.layout.DialogComponent;
 import com.top_logic.mig.html.layout.Layout;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -665,25 +664,10 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 	public DialogWindowControl createDialogLayout(DialogComponent currentDialog) {
 		enhanceDialog(currentDialog);
 		
-		DialogWindowControl theDialogLayout =
-			new DialogWindowControl(currentDialog);
+		DialogWindowControl dialogLayout = new DialogWindowControl(currentDialog);
 		final LayoutComponent contentComponent = currentDialog.getContentComponent();
 		
-		currentDialog.addListener(DialogModel.CLOSED_PROPERTY, (sender, oldValue, newValue) -> {
-			if (newValue) {
-				// Detached.
-				contentComponent.acceptVisitorRecursively(new DefaultDescendingLayoutVisitor() {
-					@Override
-					public boolean visitLayoutComponent(LayoutComponent aComponent) {
-						// Reset toolbars.
-						aComponent.setToolBar(null);
-						return true;
-					}
-				});
-			}
-		});
-		
-		LayoutControl theContent;
+		LayoutControl content;
 
 		if (_config.getAutomaticToolbars() && _config.getAutomaticToolbarsInDialogs()) {
 			markMaximizables(contentComponent);
@@ -694,14 +678,14 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 			_contextToolbar = currentDialog.getToolbar();
 		}
 		try {
-			theContent = createLayout(contentComponent);
+			content = createLayout(contentComponent);
 		} finally {
 			_contextToolbar = null;
 		}
 
-		theDialogLayout.setChildControl(theContent);
-		theDialogLayout.setConstraint(currentDialog.getLayoutData());
-		return theDialogLayout;
+		dialogLayout.setChildControl(content);
+		dialogLayout.setConstraint(currentDialog.getLayoutData());
+		return dialogLayout;
 	}
 
 	private void enhanceDialog(DialogComponent currentDialog) {

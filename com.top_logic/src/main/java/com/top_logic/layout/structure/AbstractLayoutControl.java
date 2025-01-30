@@ -79,6 +79,10 @@ public abstract class AbstractLayoutControl<I extends AbstractLayoutControl<?>> 
     }
 
 	void initParent(LayoutControl newParent) {
+		if (this.parent == newParent) {
+			// No op. May happen when a cached Dialog control is reused.
+			return;
+		}
 		LayoutControl oldParent = this.parent;
 		
 		assert newParent != null : "The parent must not be null.";

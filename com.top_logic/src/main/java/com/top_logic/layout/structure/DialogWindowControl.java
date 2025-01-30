@@ -87,12 +87,22 @@ public class DialogWindowControl extends WindowControl<DialogWindowControl> impl
 	 */
 	public DialogWindowControl(DialogModel dialogModel) {
 		super(dialogModel, DIALOG_COMMANDS);
-		if (dialogModel.isClosed()) {
+	}
+	
+	@Override
+	public void setWindowModel(WindowModel model) {
+		DialogModel dialogModel = getDialogModel();
+		if (dialogModel != null) {
+			dialogModel.removeListener(DialogModel.CLOSED_PROPERTY, this);
+		}
+		super.setWindowModel(model);
+		DialogModel newDialogModel = getDialogModel();
+		if (newDialogModel.isClosed()) {
 			/* dialog models can not be reopened. If this Control is displayed, it never disappears
 			 * from the client */
 			throw new IllegalArgumentException("Dialog model must not already be closed.");
 		}
-		getDialogModel().addListener(DialogModel.CLOSED_PROPERTY, this);
+		newDialogModel.addListener(DialogModel.CLOSED_PROPERTY, this);
 	}
 	
 	/**

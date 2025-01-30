@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
@@ -39,6 +40,7 @@ import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.AttributeUpdateContainer.Handle;
 import com.top_logic.element.meta.LegacyTypeCodes;
+import com.top_logic.element.meta.kbbased.filtergen.Generator;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -368,9 +370,17 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 
 	public static OptionModel<?> getOptionList(final EditContext editContext, final LabelProvider theProv,
 			final SelectField selectField) {
+		Generator generator = editContext.getOptions();
+		Comparator optionComparator;
+		if (generator != null) {
+			Comparator<?> generatorOrder = generator.getOptionOrder();
+			optionComparator = generatorOrder != null ? generatorOrder : LabelComparator.newCachingInstance(theProv);
+		} else {
+			optionComparator = LabelComparator.newCachingInstance(theProv);
+		}
 		// Set the used comparator to the field to guarantee the same order of the options
 		// in OptimizedSelectiorContext
-		selectField.setOptionComparator(LabelComparator.newCachingInstance(theProv));
+		selectField.setOptionComparator(optionComparator);
 		
 		// Create the possible options to this field as lazy list that
         // is only created, if it is really used. If the field is

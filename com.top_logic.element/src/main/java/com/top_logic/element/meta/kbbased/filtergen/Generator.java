@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.meta.kbbased.filtergen;
 
+import java.util.Comparator;
+
 import com.top_logic.element.config.annotation.TLOptions;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.form.EditContext;
@@ -28,6 +30,16 @@ public interface Generator {
 	 * @see AttributeUpdate#getAttribute()
 	 * @see AttributeUpdate#getObject()
 	 */
-	public OptionModel<?> generate(EditContext editContext);
+	OptionModel<?> generate(EditContext editContext);
+
+	/**
+	 * The order in which the {@link #generate(EditContext) options} must be displayed.
+	 * 
+	 * @return May be <code>null</code>. In that case the order of the options at the UI is
+	 *         unspecified.
+	 */
+	default Comparator<?> getOptionOrder() {
+		return null;
+	}
 
 }

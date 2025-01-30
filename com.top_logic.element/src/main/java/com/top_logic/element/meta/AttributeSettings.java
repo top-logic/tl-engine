@@ -21,6 +21,7 @@ import com.top_logic.element.config.annotation.ConfigType;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.model.imagegallery.GalleryImage;
 import com.top_logic.model.ModelKind;
+import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotatedConfig;
@@ -268,7 +269,7 @@ public class AttributeSettings extends com.top_logic.model.annotate.util.Attribu
 	 *        The {@link InstantiationContext} to instantiate the binding, if a custom one is
 	 *        annotated at the given attribute.
 	 */
-	public AttributeValueBinding<?> getExportBinding(InstantiationContext context, TLStructuredTypePart attribute) {
+	public AttributeValueBinding<?> getExportBinding(InstantiationContext context, TLModelPart attribute) {
 		TLExportBinding bindingAnnotation = attribute.getAnnotation(TLExportBinding.class);
 		if (bindingAnnotation != null) {
 			return context.getInstance(bindingAnnotation.getImpl());

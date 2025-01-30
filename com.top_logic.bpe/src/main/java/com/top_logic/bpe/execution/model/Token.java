@@ -91,11 +91,6 @@ public interface Token extends TokenBase {
 				return Fragments.message(label);
 			}
 		}
-		SearchExpression titleTemplate = token.participant(node.getProcess()).getTaskTitleFunction();
-		if (titleTemplate != null) {
-			return new ExpressionFragment(
-				call(titleTemplate, literal(token.getProcessExecution()), literal(token)));
-		}
 
 		String name = node.getName();
 		if (!StringServices.isEmpty(name)) {

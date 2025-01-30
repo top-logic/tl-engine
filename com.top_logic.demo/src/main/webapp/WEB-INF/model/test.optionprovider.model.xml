@@ -172,7 +172,10 @@
 				>
 					<annotations>
 						<options>
-							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"/>
+							<options-by-expression
+								alphabetic-order="false"
+								function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"
+							/>
 						</options>
 						<format>
 							<decimal pattern="'#'#"/>
@@ -192,7 +195,10 @@
 				>
 					<annotations>
 						<options>
-							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1).map(n -> $n / 10)"/>
+							<options-by-expression
+								alphabetic-order="false"
+								function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1).map(n -> $n / 10)"
+							/>
 						</options>
 					</annotations>
 				</property>
@@ -201,7 +207,7 @@
 				>
 					<annotations>
 						<options>
-							<options-by-expression>
+							<options-by-expression alphabetic-order="false">
 								<function>x -&gt; count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1).map(n -&gt; "Option " + $n)</function>
 							</options-by-expression>
 						</options>
@@ -213,7 +219,10 @@
 				>
 					<annotations>
 						<options>
-							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"/>
+							<options-by-expression
+								alphabetic-order="false"
+								function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"
+							/>
 						</options>
 					</annotations>
 				</property>
@@ -254,7 +263,10 @@
 				>
 					<annotations>
 						<options>
-							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1).map(n -> $n / 10)"/>
+							<options-by-expression
+								alphabetic-order="false"
+								function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1).map(n -> $n / 10)"
+							/>
 						</options>
 					</annotations>
 				</property>

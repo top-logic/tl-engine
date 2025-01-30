@@ -29,6 +29,12 @@
 					navigate="true"
 					type="Ticket"
 				/>
+				<reference name="responsibles"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="tl.accounts:Person"
+				/>
 			</attributes>
 		</class>
 		<class name="Ticket">

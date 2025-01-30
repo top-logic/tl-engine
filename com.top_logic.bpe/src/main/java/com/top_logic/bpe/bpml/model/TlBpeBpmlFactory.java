@@ -881,13 +881,6 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
-	 * Lookup {@link Participant#TASK_TITLE_FUNCTION_ATTR} of {@link Participant}.
-	 */
-	public static com.top_logic.model.TLProperty getTaskTitleFunctionParticipantAttr() {
-		return (com.top_logic.model.TLProperty) getParticipantType().getPart(Participant.TASK_TITLE_FUNCTION_ATTR);
-	}
-
-	/**
 	 * Lookup {@link Participant#TOKEN_TYPE_ATTR} of {@link Participant}.
 	 */
 	public static com.top_logic.model.TLReference getTokenTypeParticipantAttr() {

@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -118,14 +119,20 @@ public class HandleTLExtensions implements Handler {
 		}
 
 		assert in.getEventType() == XMLStreamConstants.END_ELEMENT : "Not at an end tag after reading extension '"
-			+ localName + "': " + XMLStreamUtil.getEventName(in.getEventType());
+			+ localName + "': " + XMLStreamUtil.getEventName(in.getEventType()) + ", location: " + location(in);
 
 		String namespace = in.getNamespaceURI();
 		String localNameAfter = in.getLocalName();
 
 		assert BPMLExporter.TL_EXTENSIONS_NS.equals(namespace)
 			&& localName.equals(localNameAfter) : "Invalid state after reading extension '" + localName
-				+ "', looking at tag: " + (namespace == null ? "" : (namespace + "/")) + localNameAfter;
+				+ "', looking at tag: " + (namespace == null ? "" : (namespace + "/")) + localNameAfter + ", location: "
+				+ location(in);
+	}
+
+	private String location(XMLStreamReader in) {
+		Location location = in.getLocation();
+		return "line " + location.getLineNumber() + ", column " + location.getColumnNumber();
 	}
 
 	private AttributeValueBinding<?> fetchBinding(ImportContext context, TLModelPart attribute) {

@@ -659,15 +659,8 @@ a.fChoose:hover,
 	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
 }
 
-.cButton.dfRemove {
-	color: var(--support-danger) !important;
-}
-
 .cButton.dfRemove a {
-	color: var(--support-danger) !important;
-}
-
-.cButton.dfRemove a:hover {
+	text-shadow: var(--icon-outline);
 	color: var(--support-danger) !important;
 }
 

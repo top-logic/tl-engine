@@ -29,12 +29,12 @@
 					<property name="showPopOut"/>
 
 					<property name="defaultSelectionProvider"/>
+					<property name="selectionOnModelChange"/>
 
 					<property name="securityObject"/>
 
 					<property name="buttons"/>
 					<property name="onSelectionChange"/>
-					<property name="selectionOnModelChange"/>
 				</value>
 			</display-order>
 		</annotations>

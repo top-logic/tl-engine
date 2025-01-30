@@ -22,15 +22,14 @@ import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.Equality;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
 import com.top_logic.basic.func.Function1;
-import com.top_logic.basic.func.IFunction2;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.LabelProvider;
-import com.top_logic.layout.ScriptFunction2;
 import com.top_logic.layout.VetoException;
 import com.top_logic.layout.basic.DirtyHandling;
 import com.top_logic.layout.basic.check.ChangeHandler;
@@ -50,8 +49,10 @@ import com.top_logic.layout.form.model.ValueVetoListener;
 import com.top_logic.layout.form.selection.TableSelectDialogProvider;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.SelectionControlProvider;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMandatory;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.provider.SelectControlProvider;
 import com.top_logic.layout.structure.ContentLayouting;
 import com.top_logic.layout.structure.LayoutControlProvider.Layouting;
@@ -152,19 +153,11 @@ public abstract class AbstractSelectorComponent extends FormComponent
 		boolean isMultiple();
 
 		/**
-		 * Computes the new selection of the component when the model of the component changes.
-		 * 
-		 * <p>
-		 * The function is called with the new model and the current selection.
-		 * </p>
-		 * 
-		 * <p>
-		 * When nothing is set, then the selection remains untouched on model change, i.e. it is
-		 * tried to reuse the current selection if possible.
-		 * </p>
+		 * Updates the selection of the component when the model of the component has changed.
 		 */
 		@Name(SELECTION_ON_MODEL_CHANGE)
-		ScriptFunction2<Object, Object, Object> getSelectionOnModelChange();
+		@Options(fun = AllInAppImplementations.class)
+		PolymorphicConfiguration<SelectionUpdater> getSelectionOnModelChange();
 
 	}
 
@@ -210,7 +203,7 @@ public abstract class AbstractSelectorComponent extends FormComponent
 
 	private boolean _modelChanged;
 
-	private IFunction2<Object, Object, Object> _selectionOnModelChange;
+	private SelectionUpdater _selectionUpdateOnModelChange;
 
 	/**
 	 * Creates a {@link AbstractSelectorComponent} from configuration.
@@ -224,7 +217,7 @@ public abstract class AbstractSelectorComponent extends FormComponent
 	public AbstractSelectorComponent(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
 		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
-		_selectionOnModelChange = context.getInstance(config.getSelectionOnModelChange());
+		_selectionUpdateOnModelChange = context.getInstance(config.getSelectionOnModelChange());
 	}
 
 	@Override
@@ -420,10 +413,8 @@ public abstract class AbstractSelectorComponent extends FormComponent
 
 		if (_modelChanged) {
 			_modelChanged = false;
-			if (_selectionOnModelChange != null) {
-				Object currentSelection = getSelected();
-				Object newSelection = _selectionOnModelChange.apply(getModel(), currentSelection);
-				setSelected(newSelection);
+			if (_selectionUpdateOnModelChange != null) {
+				_selectionUpdateOnModelChange.updateSelection(this);
 			}
 		}
 		updateDefaultSelection();

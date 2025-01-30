@@ -90,15 +90,6 @@ public interface ParticipantBase extends com.top_logic.bpe.bpml.model.Named, com
 	String PROCESS_ATTR = "process";
 
 	/**
-	 * Part <code>taskTitleFunction</code> of <code>Participant</code>
-	 * 
-	 * <p>
-	 * Declared as <code>tl.model.search:Expr</code> in configuration.
-	 * </p>
-	 */
-	String TASK_TITLE_FUNCTION_ATTR = "taskTitleFunction";
-
-	/**
 	 * Part <code>tokenType</code> of <code>Participant</code>
 	 * 
 	 * <p>
@@ -210,20 +201,6 @@ public interface ParticipantBase extends com.top_logic.bpe.bpml.model.Named, com
 	 */
 	default void setProcess(com.top_logic.bpe.bpml.model.Process newValue) {
 		tUpdateByName(PROCESS_ATTR, newValue);
-	}
-
-	/**
-	 * Getter for part {@link #TASK_TITLE_FUNCTION_ATTR}.
-	 */
-	default com.top_logic.model.search.expr.SearchExpression getTaskTitleFunction() {
-		return (com.top_logic.model.search.expr.SearchExpression) tValueByName(TASK_TITLE_FUNCTION_ATTR);
-	}
-
-	/**
-	 * Setter for part {@link #TASK_TITLE_FUNCTION_ATTR}.
-	 */
-	default void setTaskTitleFunction(com.top_logic.model.search.expr.SearchExpression newValue) {
-		tUpdateByName(TASK_TITLE_FUNCTION_ATTR, newValue);
 	}
 
 	/**

@@ -1149,14 +1149,6 @@
 						<sort-order value="3.0"/>
 					</annotations>
 				</reference>
-				<property name="taskTitleFunction"
-					type="tl.model.search:Expr"
-				>
-					<annotations>
-						<bpml-extension/>
-						<sort-order value="4000.0"/>
-					</annotations>
-				</property>
 				<reference name="collaboration"
 					aggregate="true"
 					inverse-reference="participants"

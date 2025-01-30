@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.bpe.bpml.display.StandardForm.Config.AnnotationOverlay;
@@ -48,7 +49,7 @@ import com.top_logic.model.form.definition.FormVisibility;
  * {@link FormProvider} using the standard form of the {@link ProcessExecution} object or the form
  * of another task customized with visibility annotations.
  */
-@Label("Other form")
+@Label("Form reference")
 public class StandardForm extends AbstractConfiguredInstance<StandardForm.Config<?>> implements FormProvider {
 
 	/**
@@ -59,6 +60,7 @@ public class StandardForm extends AbstractConfiguredInstance<StandardForm.Config
 		Config.DEFAULT_VISIBILITY,
 		Config.OVERLAYS,
 	})
+	@TagName("standard-form")
 	public interface Config<I extends StandardForm> extends PolymorphicConfiguration<I> {
 
 		/**

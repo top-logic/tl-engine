@@ -944,6 +944,7 @@
 					type="tl.core:String"
 				>
 					<annotations>
+						<visibility value="hidden"/>
 						<storage-algorithm>
 							<query expr="t -> $t.get(`tl.bpe.bpml:Task#titleI18N`).localize() || $t.get(`tl.bpe.bpml:Task#name`)"/>
 						</storage-algorithm>

@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.meta.form.fieldprovider;
 
+import java.util.Comparator;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
@@ -18,6 +19,7 @@ import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.OptionProvider;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
+import com.top_logic.element.meta.kbbased.filtergen.Generator;
 import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.constraints.GenericMandatoryConstraint;
@@ -99,16 +101,23 @@ public class ComplexFieldProvider extends AbstractSelectFieldProvider
 			: null;
 
 		OptionModel<?> options;
+		Comparator comparator;
 		if (editContext.getOptions() != null) {
-			options = editContext.getOptions().generate(editContext);
+			Generator generator = editContext.getOptions();
+			options = generator.generate(editContext);
+			comparator = generator.getOptionOrder();
 		} else {
 			options = getConfig().getOptionProvider().getOptions(editContext);
+			comparator = null;
 		}
 		options = filterOptions(options, editContext);
 		SelectField selectField =
 			newSelectField(fieldName, options, editContext.isMultiple(), false, isSearch, isMandatory,
 				mandatoryChecker,
 				isDisabled, true);
+		if (comparator != null) {
+			selectField.setOptionComparator(comparator);
+		}
 		if (!editContext.isOrdered()) {
 			OptionsPresentation optionsPresentation = AttributeOperations.getOptionsPresentation(
 				editContext.getAnnotation(OptionsDisplay.class), editContext.getValueType());

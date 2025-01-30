@@ -7,6 +7,7 @@ package com.top_logic.element.meta.form.fieldprovider;
 
 import java.text.Format;
 import java.text.NumberFormat;
+import java.util.Comparator;
 import java.util.regex.Pattern;
 
 import com.top_logic.basic.Logger;
@@ -71,6 +72,10 @@ public class LongFieldProvider extends AbstractFieldProvider {
 			OptionModel<?> optionModel = options.generate(editContext);
 			SelectField result = FormFactory.newSelectField(fieldName, optionModel, multiple,
 				isMandatory, isDisabled, mandatoryChecker);
+			Comparator optionOrder = options.getOptionOrder();
+			if (optionOrder != null) {
+				result.setOptionComparator(optionOrder);
+			}
 			result.setOptionLabelProvider(new FormatLabelProvider(format));
 			return result;
 		}

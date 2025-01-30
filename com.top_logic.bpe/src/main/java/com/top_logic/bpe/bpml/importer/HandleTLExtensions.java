@@ -117,7 +117,7 @@ public class HandleTLExtensions implements Handler {
 			}
 		}
 
-		assert in.getEventType() == XMLStreamConstants.END_ELEMENT : "Not at an end tag after reading extendsion '"
+		assert in.getEventType() == XMLStreamConstants.END_ELEMENT : "Not at an end tag after reading extension '"
 			+ localName + "': " + XMLStreamUtil.getEventName(in.getEventType());
 
 		String namespace = in.getNamespaceURI();

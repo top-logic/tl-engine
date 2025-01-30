@@ -395,6 +395,9 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 			@Override
 			public boolean check(Object value) throws CheckException {
 				Decision decision = (Decision) CollectionUtil.getSingleValueFrom(value);
+				if (decision == null) {
+					return true;
+				}
 				List<ResKey> errors = decision.getDisabledReasons();
 				if (!errors.isEmpty()) {
 					CheckException[] checkExceptions = new CheckException[errors.size()];

@@ -69,6 +69,7 @@ public class FilterDecorator implements ContentDecorator {
 		}
 		out.beginBeginTag(SPAN);
 		out.writeAttribute(CLASS_ATTR, SIDEBAR_FILTER_ENTRY_TEXT_CLASS);
+		out.endBeginTag();
 		writeColumnLabel(out);
 		out.endTag(SPAN);
 		writeResetFilterButton(context, out);

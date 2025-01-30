@@ -71,6 +71,17 @@
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
 			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field
+							attribute="comment"
+							fullQualifiedName="test.process:TicketChangeProperties#comment"
+							type="tl.model.wysiwyg:Html"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
 			<attributes>
 				<property name="comment"
 					type="tl.model.wysiwyg:Html"

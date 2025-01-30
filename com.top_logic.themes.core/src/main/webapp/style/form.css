@@ -1581,7 +1581,10 @@ div.cal_zoom_inAnimation {
 	height: inherit;
 }
 
-.input-image.is-action {
+.cIntegerInput .input-image, 
+.cDateInput .input-image, 
+.cTimeInput .input-image, 
+.cPopupSelect .input-image {
 	background-color: var(--field);
 }
 
@@ -1656,6 +1659,18 @@ input.is-checkbox[disabled] {
 .lFixedRight .button_minus:focus::after {
 	box-shadow: none;
 	outline: none !important;
+}
+
+.cTextSelect {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-02);
+}
+
+.cTextSelect .option {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-01);
 }
 
 .cTextInput,

@@ -18,7 +18,6 @@
 				<tl:tokenType/>
 				<tl:displayDescription/>
 				<tl:exportDescription/>
-				<tl:taskTitleFunction/>
 				<tl:defaultOperation/>
 				<tl:edgeFormType/>
 			</bpmn:extensionElements>

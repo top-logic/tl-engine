@@ -14,10 +14,8 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
-import com.top_logic.layout.form.FormContextProxy;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.model.TLObject;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
@@ -50,9 +48,9 @@ public interface TLOptions extends TLAttributeAnnotation, TLTypeAnnotation {
 	/**
 	 * The {@link Generator} computing options for a select field.
 	 * 
-	 * @see AttributeOperations#getOptions(TLObject, EditContext, FormContextProxy) The configured generator must not be invoked directly by the
-	 *      application. The Utility method must be used instead to include type-based default
-	 *      options.
+	 * @see AttributeOperations#allOptions(EditContext) The configured generator must not be invoked
+	 *      directly by the application. The Utility method must be used instead to include
+	 *      type-based default options.
 	 */
 	@Name(GENERATOR_PROPERTY)
 	@Mandatory

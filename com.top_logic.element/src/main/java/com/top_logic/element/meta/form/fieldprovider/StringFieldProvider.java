@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.meta.form.fieldprovider;
 
+import java.util.Comparator;
+
 import com.top_logic.basic.format.IdentityFormat;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.form.AbstractFieldProvider;
@@ -46,6 +48,10 @@ public class StringFieldProvider extends AbstractFieldProvider {
 			OptionModel<?> optionModel = options.generate(editContext);
 			SelectField result = FormFactory.newSelectField(fieldName, optionModel, multiple,
 				isMandatory, isDisabled, mandatoryChecker);
+			Comparator optionOrder = options.getOptionOrder();
+			if (optionOrder != null) {
+				result.setOptionComparator(optionOrder);
+			}
 			return result;
 		}
 

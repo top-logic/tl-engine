@@ -7,6 +7,7 @@ package com.top_logic.element.meta.kbbased;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
@@ -92,6 +93,11 @@ public final class NamedOptions extends AbstractConfiguredInstance<NamedOptions.
 	@Override
 	public OptionModel<?> generate(EditContext editContext) {
 		return _impl.generate(editContext);
+	}
+
+	@Override
+	public Comparator<?> getOptionOrder() {
+		return _impl.getOptionOrder();
 	}
 
 }

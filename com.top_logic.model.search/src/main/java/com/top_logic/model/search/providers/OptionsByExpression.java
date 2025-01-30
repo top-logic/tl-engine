@@ -6,29 +6,36 @@
 package com.top_logic.model.search.providers;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.col.Equality;
 import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.InAppClassifierConstants;
 import com.top_logic.element.config.annotation.TLOptions;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
+import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.model.utility.AbstractOptionModel;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
@@ -58,14 +65,35 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 	/**
 	 * Configuration options for {@link OptionsByExpression}.
 	 */
+	@DisplayOrder({
+		Config.FUNCTION,
+		Config.ALPHABETICAL_ORDER
+	})
 	@TagName("options-by-expression")
 	public interface Config<I extends OptionsByExpression> extends PolymorphicConfiguration<I> {
+
+		/** Configuration name for {@link #getAlphabeticalOrder()}. */
+		String ALPHABETICAL_ORDER = "alphabetic-order";
+
+		/** Configuration name for {@link #getFunction()}. */
+		String FUNCTION = "function";
 
 		/**
 		 * The function that is executed with the object containing the property for which options
 		 * are to be computed as single argument.
 		 */
 		Expr getFunction();
+
+		/**
+		 * Whether to present the options in alphabetical order of their labels.
+		 * 
+		 * <p>
+		 * If not checked, options are displayed in the order created by {@link #getFunction()}.
+		 * </p>
+		 */
+		@Name(ALPHABETICAL_ORDER)
+		@BooleanDefault(true)
+		boolean getAlphabeticalOrder();
 
 	}
 
@@ -86,6 +114,15 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 	@Override
 	public OptionModel<?> generate(EditContext editContext) {
 		return new ScriptObservingOptionList(editContext.getOverlay(), editContext.getValueType());
+	}
+
+	@Override
+	public Comparator<?> getOptionOrder() {
+		if (getConfig().getAlphabeticalOrder()) {
+			return LabelComparator.newCachingInstance(MetaLabelProvider.INSTANCE);
+		} else {
+			return Equality.INSTANCE;
+		}
 	}
 
 	@Override

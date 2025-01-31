@@ -13,11 +13,11 @@
 
 	<config
 		model="${model}"
-		titleKey="${titleKey}"
 		showMaximize="${showMaximize}"
 		showMinimize="${showMinimize}"
 		showPopOut="${showPopOut}"
 		startEvent="${startEvent}"
+		titleKey="${titleKey}"
 		toolbar="${toolbar}"
 	>
 		<buttons>

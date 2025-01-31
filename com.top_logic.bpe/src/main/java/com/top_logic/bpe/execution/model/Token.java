@@ -5,28 +5,11 @@
  */
 package com.top_logic.bpe.execution.model;
 
-import static com.top_logic.model.search.expr.SearchExpressionFactory.*;
-
-import java.io.IOException;
 import java.util.Date;
 
-import com.top_logic.base.services.simpleajax.HTMLFragment;
-import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.Logger;
-import com.top_logic.basic.StringServices;
-import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.bpe.bpml.model.ManualTask;
-import com.top_logic.bpe.bpml.model.Node;
-import com.top_logic.bpe.bpml.model.Participant;
-import com.top_logic.bpe.bpml.model.Process;
-import com.top_logic.bpe.bpml.model.SubProcess;
 import com.top_logic.bpe.bpml.model.Task;
 import com.top_logic.bpe.execution.model.impl.TokenBase;
-import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.layout.basic.fragments.Fragments;
-import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.query.ExpressionFragment;
 
 /**
  * Interface for {@link #TOKEN_TYPE} business objects.
@@ -66,64 +49,6 @@ public interface Token extends TokenBase {
 		}
 		long duration = finished.getTime() - created.getTime();
 		return duration / 1000 / 60;
-	}
-
-
-	/**
-	 * Computes the label for this {@link Token}.
-	 */
-	default HTMLFragment calculateLabelFragment() {
-		return calculateLabelFragment(this);
-	}
-
-	private static HTMLFragment calculateLabelFragment(Token token) {
-		Node node = token.getNode();
-		if (node instanceof Task) {
-			SearchExpression labelFunction = ((Task) node).getTitleFunction();
-			if (labelFunction != null) {
-				return new ExpressionFragment(
-					call(labelFunction, literal(token.getProcessExecution()), literal(token.getNode()),
-						literal(token)));
-			}
-
-			ResKey label = ((Task) node).getTitleI18N();
-			if (label != null) {
-				return Fragments.message(label);
-			}
-		}
-
-		String name = node.getName();
-		if (!StringServices.isEmpty(name)) {
-			return Fragments.text(name);
-		}
-
-		return null;
-	}
-
-	/**
-	 * the label of the token as it was shown in the create revision of the token
-	 */
-	@CalledByReflection
-	default String calculateLabel() {
-		HTMLFragment fragment = calculateLabelFragment();
-		if (fragment != null) {
-			TagWriter out = new TagWriter();
-			try {
-				fragment.write(DefaultDisplayContext.getDisplayContext(), out);
-			} catch (IOException ex) {
-				Logger.error("Problem claculating label.", ex, Token.class);
-			}
-			return out.toString();
-		}
-		return "";
-	}
-
-	private Participant participant(Process process) {
-		if (process instanceof SubProcess) {
-			return participant(((SubProcess) process).getProcess());
-		} else {
-			return process.getParticipant();
-		}
 	}
 
 	/**

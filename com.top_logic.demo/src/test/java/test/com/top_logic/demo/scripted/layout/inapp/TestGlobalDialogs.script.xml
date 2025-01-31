@@ -308,7 +308,7 @@
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 			command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 			command-label="Bearbeiten"
-			command-name="customEdit"
+			command-name="switchToAJAXEdit"
 			component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
 			component-name="4633ffdd-38ae-4af1-aa4c-b63dec54f6ad.layout.xml#Form"
 			user-id="root"

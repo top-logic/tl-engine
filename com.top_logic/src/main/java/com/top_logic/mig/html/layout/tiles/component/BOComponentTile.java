@@ -23,6 +23,7 @@ import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.tiles.I18NConstants;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.util.Resources;
 
 /**
  * {@link ComponentTile} for the combination of a {@link Selectable} and some selectable object. The
@@ -101,10 +102,11 @@ public abstract class BOComponentTile extends AbstractComponentTile {
 		if (editCommmand == null) {
 			return;
 		}
-		ResKey label = I18NConstants.EDIT_TILE_COMMAND_LABEL;
 		Map<String, Object> args =
 			Collections.singletonMap(EditableComponentExecutability.EDITED_COMPONENT_ARG, toEdit);
-		commands.add(new ComponentCommandModel(editCommmand, invocationComponent, args, label));
+		ComponentCommandModel commandModel = new ComponentCommandModel(editCommmand, invocationComponent, args);
+		commandModel.setLabel(Resources.getInstance().getString(I18NConstants.EDIT_TILE_COMMAND_LABEL));
+		commands.add(commandModel);
 	}
 
 	private static void removeCommand(Collection<CommandModel> commands, LayoutComponent invocationComponent,
@@ -113,10 +115,11 @@ public abstract class BOComponentTile extends AbstractComponentTile {
 		if (deleteCommmand == null) {
 			return;
 		}
-		ResKey label = I18NConstants.DELETE_TILE_COMMAND_LABEL;
 		Map<String, Object> args =
 			Collections.singletonMap(EditableComponentExecutability.EDITED_COMPONENT_ARG, toRemove);
-		commands.add(new ComponentCommandModel(deleteCommmand, invocationComponent, args, label));
+		ComponentCommandModel commandModel = new ComponentCommandModel(deleteCommmand, invocationComponent, args);
+		commandModel.setLabel(Resources.getInstance().getString(I18NConstants.DELETE_TILE_COMMAND_LABEL));
+		commands.add(commandModel);
 	}
 
 }

@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<config:template
-	xmlns:config="http://www.top-logic.com/ns/config/6.0"
->
+<config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<properties extends="com.top_logic.mig.html.layout.LayoutComponentUIOptions, com.top_logic.layout.form.component.Editor$UIOptions, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.structure.ButtonbarOptions, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.layout.form.component.EditComponent$UIOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters">
 		<annotations>
 			<display-inherited value="APPEND"/>
@@ -22,10 +20,10 @@
 		page="/jsp/processExecution/EditTask.jsp"
 		resetInvisible="${resetInvisible}"
 		saveClosesDialog="${saveClosesDialog}"
+		securityObject="${securityObject}"
 		showMaximize="${showMaximize}"
 		showMinimize="${showMinimize}"
 		showPopOut="${showPopOut}"
-		securityObject="${securityObject}"
 		titleKey="${titleKey}"
 		toolbar="${toolbar}"
 	>

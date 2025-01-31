@@ -11,14 +11,14 @@
 		</annotations>
 	</properties>
 
-	<config 
+	<config
 		buttonbar="${buttonbar}"
 		isSecurityMaster="${isSecurityMaster}"
 		model="${model}"
+		securityObject="${securityObject}"
 		showMaximize="${showMaximize}"
 		showMinimize="${showMinimize}"
 		showPopOut="${showPopOut}"
-		securityObject="${securityObject}"
 		titleKey="${titleKey}"
 		toolbar="${toolbar}"
 	>

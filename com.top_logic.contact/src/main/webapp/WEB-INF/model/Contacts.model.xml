@@ -317,6 +317,21 @@
 					kind="backwards"
 					type="tl.accounts:Person"
 				/>
+				<!-- The login name of the last assigned account. When the account gets 
+					deleted and re-created later on, this property can be used to re-use the 
+					contact. -->
+				<property name="loginName"
+					type="tl.core:String"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+						<storage-algorithm>
+							<primitive-storage
+								storage-attribute="FKey"
+							/>
+						</storage-algorithm>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 	</module>

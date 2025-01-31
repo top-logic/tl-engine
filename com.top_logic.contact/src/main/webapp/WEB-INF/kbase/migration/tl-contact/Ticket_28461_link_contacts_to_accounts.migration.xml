@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28461_link_contacts_to_accounts"
+		module="tl-contact"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_28298_polymorphic_groups"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28298_add_group_member_options"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_27999_Multiple_composition_tables"
+			module="tl-contact"
+		/>
+	</dependencies>
+	<processors>
+		<alter-column
+			table="Contact"
+			column="FKey"
+			db_type="varchar"
+			db_size="150"
+			db_prec="0"
+			binary="false"
+		/>
+	
+		<create-property name="Contacts:PersonContact#loginName"
+			type="tl.core:String"
+		>
+			<annotations>
+				<visibility value="hidden"/>
+				<storage-algorithm>
+					<primitive-storage storage-attribute="FKey"/>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<reorder-part name="Contacts:PersonContact#loginName"/>
+	</processors>
+	
+	<startup-actions>
+		<migration-script>
+			<script>
+			all(`Contacts:PersonContact`)
+			    .filter(c -> $c.get(`Contacts:PersonContact#account`) != null)
+			    .foreach(c -> $c.set(`Contacts:PersonContact#loginName`, 
+			        $c.get(`Contacts:PersonContact#account`)
+			          .get(`tl.accounts:Person#name`)))
+			</script>
+		</migration-script>
+	</startup-actions>
+</migration>

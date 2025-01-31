@@ -13,6 +13,9 @@
 		<dependency name="Ticket_28298_polymorphic_groups"
 			module="tl-element"
 		/>
+		<dependency name="Ticket_28298_add_group_member_options"
+			module="tl-model-search"
+		/>
 		<dependency name="Ticket_27999_Multiple_composition_tables"
 			module="tl-contact"
 		/>

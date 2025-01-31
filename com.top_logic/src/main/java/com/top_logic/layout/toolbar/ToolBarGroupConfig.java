@@ -87,20 +87,13 @@ public interface ToolBarGroupConfig extends NamedConfigMandatory {
 				}
 				// Prevent a missing key warning, if the default key is not defined but was
 				// overridden in the the toolbar-local UI config.
-				return new ComponentCommandModel(command, component, buttonConfig.getArguments(), toLabel(component, command, buttonConfig));
-			}
-
-			private static ResKey toLabel(LayoutComponent component, CommandHandler command,
-					ButtonConfig buttonConfig) {
-				ResKey labelKey;
+				ComponentCommandModel commandModel =
+					new ComponentCommandModel(command, component, buttonConfig.getArguments());
 				if (isSet(buttonConfig, ButtonUIConfig.LABEL_KEY)) {
-					labelKey = buttonConfig.getLabelKey();
-				} else {
-					labelKey =
-						ResKey.fallback(component.getResPrefix().key(command.getID()),
-							command.getResourceKey(component));
+					ResKey labelKey = buttonConfig.getLabelKey();
+					commandModel.setLabel(Resources.getInstance().getString(labelKey));
 				}
-				return labelKey;
+				return commandModel;
 			}
 
 			private static CommandModel applyUI(CommandModel button, ButtonUIConfig uiConfig) {

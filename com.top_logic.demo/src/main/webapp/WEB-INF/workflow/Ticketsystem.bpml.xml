@@ -18,7 +18,6 @@
 				<tl:tokenType value="test.process:TicketChange"/>
 				<tl:displayDescription/>
 				<tl:exportDescription/>
-				<tl:taskTitle/>
 				<tl:defaultOperation/>
 				<tl:edgeFormType value="test.process:TicketChangeUI"/>
 			</bpmn:extensionElements>
@@ -27,13 +26,13 @@
 			<tl:name value="Ticketsystem"/>
 			<tl:icon value="css:bi bi-bug-fill"/>
 			<tl:state value="Development"/>
-			<tl:description/>
+			<tl:descriptionI18N/>
 			<tl:myTasksIcon/>
-			<tl:myTasksTitle/>
-			<tl:myTasksDescription/>
+			<tl:myTasksTitleI18N/>
+			<tl:myTasksDescriptionI18N/>
 			<tl:myProcessesIcon/>
-			<tl:myProcessesTitle/>
-			<tl:myProcessesDescription/>
+			<tl:myProcessesTitleI18N/>
+			<tl:myProcessesDescriptionI18N/>
 		</bpmn:extensionElements>
 	</bpmn:collaboration>
 	<bpmn:process id="Process_1"
@@ -49,6 +48,7 @@
 				<bpmn:flowNodeRef>Task_0yx29j8</bpmn:flowNodeRef>
 				<bpmn:flowNodeRef>Task_1f5o1hp</bpmn:flowNodeRef>
 				<bpmn:extensionElements>
+					<tl:title/>
 					<tl:actorGroups/>
 					<tl:actorRule/>
 				</bpmn:extensionElements>
@@ -59,6 +59,7 @@
 				<bpmn:flowNodeRef>ExclusiveGateway_10itha6</bpmn:flowNodeRef>
 				<bpmn:flowNodeRef>Task_1uw425j</bpmn:flowNodeRef>
 				<bpmn:extensionElements>
+					<tl:title/>
 					<tl:actorGroups/>
 					<tl:actorRule/>
 				</bpmn:extensionElements>
@@ -75,6 +76,7 @@
 				<bpmn:flowNodeRef>Task_16uk174</bpmn:flowNodeRef>
 				<bpmn:flowNodeRef>Task_1gh83yo</bpmn:flowNodeRef>
 				<bpmn:extensionElements>
+					<tl:title/>
 					<tl:actorGroups/>
 					<tl:actorRule/>
 				</bpmn:extensionElements>
@@ -150,7 +152,8 @@
 			<bpmn:outgoing>SequenceFlow_16fzfu0</bpmn:outgoing>
 			<bpmn:extensionElements>
 				<tl:icon/>
-				<tl:description/>
+				<tl:title/>
+				<tl:descriptionI18N/>
 			</bpmn:extensionElements>
 		</bpmn:startEvent>
 		<bpmn:manualTask id="Task_02mdyhg"
@@ -168,7 +171,7 @@
 				</tl:titleI18N>
 				<tl:titleFunction/>
 				<tl:formDefinition/>
-				<tl:description/>
+				<tl:descriptionI18N/>
 				<tl:canEdit value="true"/>
 				<tl:tokenType/>
 			</bpmn:extensionElements>
@@ -183,12 +186,12 @@
 				<tl:titleI18N>
 					<resource>
 						<en>Query raised</en>
-						<de>Rückfrage gestellt</de>
+						<de>RÃ¼ckfrage gestellt</de>
 					</resource>
 				</tl:titleI18N>
 				<tl:titleFunction/>
 				<tl:formDefinition/>
-				<tl:description/>
+				<tl:descriptionI18N/>
 				<tl:canEdit value="true"/>
 				<tl:tokenType/>
 			</bpmn:extensionElements>
@@ -213,7 +216,7 @@
 						<form-provider class=""/>
 					</process-form>
 				</tl:formDefinition>
-				<tl:description/>
+				<tl:descriptionI18N/>
 				<tl:canEdit value="true"/>
 				<tl:tokenType value="tl.bpe.execution:Token"/>
 			</bpmn:extensionElements>
@@ -227,8 +230,8 @@
 				<tl:icon value="css:bi bi-question-circle-fill"/>
 				<tl:titleI18N>
 					<resource>
-						<en>Decide on implementation</en>
-						<de>Umsetzung entscheiden</de>
+						<en>Decide on implementation: {0}</en>
+						<de>Umsetzung entscheiden: {0}</de>
 					</resource>
 				</tl:titleI18N>
 				<tl:titleFunction/>
@@ -241,7 +244,7 @@
 						</form-provider>
 					</process-form>
 				</tl:formDefinition>
-				<tl:description/>
+				<tl:descriptionI18N/>
 				<tl:canEdit value="false"/>
 				<tl:tokenType/>
 			</bpmn:extensionElements>
@@ -261,7 +264,7 @@
 				</tl:titleI18N>
 				<tl:titleFunction/>
 				<tl:formDefinition/>
-				<tl:description/>
+				<tl:descriptionI18N/>
 				<tl:canEdit value="true"/>
 				<tl:tokenType/>
 			</bpmn:extensionElements>
@@ -282,7 +285,10 @@
 						<de>Umsetzen</de>
 					</resource>
 				</tl:titleI18N>
-				<tl:titleFunction/>
+				<tl:titleFunction><![CDATA[i18n -> ticket -> $ticket.get(`test.process:Ticket#reworkCnt`) == 0 ? 
+    $i18n :
+    #("{0} (Nacharbeit)"@de, "{0} (Rework)"@en)
+        .fill($i18n)]]></tl:titleFunction>
 				<tl:formDefinition>
 					<process-form>
 						<form-provider class="com.top_logic.bpe.bpml.display.StandardForm"
@@ -297,7 +303,7 @@
 						</form-provider>
 					</process-form>
 				</tl:formDefinition>
-				<tl:description/>
+				<tl:descriptionI18N/>
 				<tl:canEdit value="true"/>
 				<tl:tokenType/>
 			</bpmn:extensionElements>
@@ -330,12 +336,12 @@
 				<tl:title>
 					<resource>
 						<en>Ask a question</en>
-						<de>Rückfrage stellen</de>
+						<de>RÃ¼ckfrage stellen</de>
 					</resource>
 				</tl:title>
 				<tl:tooltip>
 					<de>
-						<text img-count="0"><![CDATA[<p>Das Ticket enthält Unklarheiten, die eine direkte Umsetzung nicht möglich machen. Das Ticket wird an den Ersteller zur Klärung zurückgegeben.</p>
+						<text img-count="0"><![CDATA[<p>Das Ticket enthÃ¤lt Unklarheiten, die eine direkte Umsetzung nicht mÃ¶glich machen. Das Ticket wird an den Ersteller zur KlÃ¤rung zurÃ¼ckgegeben.</p>
 ]]></text>
 					</de>
 					<en>
@@ -377,7 +383,7 @@
 				<tl:title>
 					<resource>
 						<en>Ask a question</en>
-						<de>Rückfrage stellen</de>
+						<de>RÃ¼ckfrage stellen</de>
 					</resource>
 				</tl:title>
 				<tl:tooltip/>
@@ -401,7 +407,7 @@
 				</tl:title>
 				<tl:tooltip>
 					<de>
-						<text img-count="0"><![CDATA[<p>Das Ticket is offensichtlich unbegründet. Die Bearbeitung des Tickets wird direkt beendet.</p>
+						<text img-count="0"><![CDATA[<p>Das Ticket is offensichtlich unbegrÃ¼ndet. Die Bearbeitung des Tickets wird direkt beendet.</p>
 ]]></text>
 					</de>
 					<en>
@@ -416,7 +422,7 @@
 			</bpmn:extensionElements>
 		</bpmn:sequenceFlow>
 		<bpmn:sequenceFlow id="SequenceFlow_0q8r6ez"
-			name="Bearbeitung entscheiden "
+			name=""
 			sourceRef="Task_1f5o1hp"
 			targetRef="ExclusiveGateway_15jne36"
 		>
@@ -429,7 +435,7 @@
 				</tl:title>
 				<tl:tooltip>
 					<de>
-						<text img-count="0"><![CDATA[<p>Über die weitere Bearbeitung dieses Tickets entscheiden. Das Ticket kann entweder an den Ersteller zur Klärung von Rückfragen zurückgegeben, an die Implementierung übergeben, oder final abgelehnt werden.</p>
+						<text img-count="0"><![CDATA[<p>Ãber die weitere Bearbeitung dieses Tickets entscheiden. Das Ticket kann entweder an den Ersteller zur KlÃ¤rung von RÃ¼ckfragen zurÃ¼ckgegeben, an die Implementierung Ã¼bergeben, oder final abgelehnt werden.</p>
 ]]></text>
 					</de>
 					<en>
@@ -452,7 +458,7 @@
 				<tl:title>
 					<resource>
 						<en>Finalize</en>
-						<de>Abschließen</de>
+						<de>AbschlieÃen</de>
 					</resource>
 				</tl:title>
 				<tl:tooltip/>
@@ -471,13 +477,13 @@
 				<tl:title>
 					<resource>
 						<en>Reject solution</en>
-						<de>Lösung ablehnen</de>
+						<de>LÃ¶sung ablehnen</de>
 					</resource>
 				</tl:title>
 				<tl:tooltip/>
 				<tl:weight/>
 				<tl:rule/>
-				<tl:operation/>
+				<tl:operation><![CDATA[ticket -> $ticket.set(`test.process:Ticket#reworkCnt`, $ticket.get(`test.process:Ticket#reworkCnt`) + 1)]]></tl:operation>
 				<tl:formType/>
 			</bpmn:extensionElements>
 		</bpmn:sequenceFlow>
@@ -490,7 +496,7 @@
 				<tl:title>
 					<resource>
 						<en>Query to creator</en>
-						<de>Rückfrage an Ersteller</de>
+						<de>RÃ¼ckfrage an Ersteller</de>
 					</resource>
 				</tl:title>
 				<tl:tooltip/>
@@ -583,7 +589,7 @@
 				<tl:title>
 					<resource>
 						<en>Accept solution</en>
-						<de>Lösung akzeptieren</de>
+						<de>LÃ¶sung akzeptieren</de>
 					</resource>
 				</tl:title>
 				<tl:tooltip/>
@@ -652,7 +658,7 @@
 				</tl:title>
 				<tl:tooltip>
 					<de>
-						<text img-count="0"><![CDATA[<p>Das Ticket wird zur Lösung an einen Bearbeiter zugewiesen.</p>
+						<text img-count="0"><![CDATA[<p>Das Ticket wird zur LÃ¶sung an einen Bearbeiter zugewiesen.</p>
 ]]></text>
 					</de>
 					<en>

@@ -181,8 +181,20 @@
 					<annotations>
 						<storage-algorithm>
 							<query>
-								<expr><![CDATA[t -> 
-    $t.get(`tl.bpe.execution:Token#node`).label()]]></expr>
+								<expr><![CDATA[token -> {
+    task = $token.get(`tl.bpe.execution:Token#node`);
+    exec = $token.get(`tl.bpe.execution:Token#processExecution`);
+
+    fun = $task.get(`tl.bpe.bpml:Task#titleFunction`);
+    i18n = $task.get(`tl.bpe.bpml:Task#titleI18N`);
+    
+    switch {
+        $fun == null:
+            $i18n.fill($exec, $task).localize();
+        default:
+            $fun($i18n, $exec, $task, $token).localize();
+    }
+}]]></expr>
 							</query>
 						</storage-algorithm>
 						<sort-order value="1.0"/>

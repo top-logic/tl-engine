@@ -7,7 +7,6 @@ package com.top_logic.layout.basic;
 
 import java.util.Map;
 
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.check.CheckScope;
 import com.top_logic.layout.basic.check.DefaultCheckScope;
@@ -39,15 +38,10 @@ public class ComponentCommandModel extends DynamicDelegatingCommandModel {
 	 * @param someArguments
 	 *        The arguments to pass to the given handler, see
 	 *        {@link CommandHandler#handleCommand(DisplayContext, LayoutComponent, Object, Map)}.
-	 * @param label
-	 *        The label of the button.
 	 */
 	public ComponentCommandModel(CommandHandler command, LayoutComponent component,
-			Map<String, Object> someArguments, ResKey label) {
+			Map<String, Object> someArguments) {
 		super(ComponentCommand.newInstance(command, component, someArguments));
-		if (label == null) {
-			throw new IllegalArgumentException("'label' must not be 'null'.");
-		}
 		setNotExecutableImage(command.getNotExecutableImage(component));
 		setCssClasses(command.getCssClasses(component));
 		setShowProgress(true);

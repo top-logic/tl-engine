@@ -101,7 +101,6 @@
 					${editExecutability}
 				</executability>
 			</button>
-
 			<include name="templates/editComponentCommands.xml"/>
 			<reference command-id="configureEditFormDefinitionCommand"/>
 			<reference command-id="deleteEditFormDefinitionCommand"/>

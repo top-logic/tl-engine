@@ -897,8 +897,7 @@ public CommandScriptWriter getCommandScriptWriter(LayoutComponent component);
 	 * @see ButtonControl#ButtonControl(CommandModel)
 	 */
 	default CommandModel createCommandModel(LayoutComponent component, Map<String, Object> arguments) {
-		ResKey label = getResourceKey(component);
-		return new ComponentCommandModel(this, component, arguments, label);
+		return new ComponentCommandModel(this, component, arguments);
 	}
 
 }

@@ -132,8 +132,10 @@ public abstract class ToggleCommandHandler extends AbstractCommandHandler {
 
 	@Override
 	public CommandModel createCommandModel(LayoutComponent component, Map<String, Object> arguments) {
+		ToggleCommandModel commandModel = new ToggleCommandModel(this, component, arguments);
 		ResKey label = getResourceKey(component);
-		return new ToggleCommandModel(this, component, arguments, label);
+		commandModel.setLabel(Resources.getInstance().getString(label));
+		return commandModel;
 	}
 
 	static class ToggleCommandModel extends ComponentCommandModel {
@@ -144,9 +146,8 @@ public abstract class ToggleCommandHandler extends AbstractCommandHandler {
 		 * Creates a {@link ToggleCommandModel}.
 		 */
 		public ToggleCommandModel(ToggleCommandHandler command, LayoutComponent component,
-				Map<String, Object> someArguments,
-				ResKey label) {
-			super(command, component, someArguments, label);
+				Map<String, Object> someArguments) {
+			super(command, component, someArguments);
 
 			_state = command.getState(component);
 		}

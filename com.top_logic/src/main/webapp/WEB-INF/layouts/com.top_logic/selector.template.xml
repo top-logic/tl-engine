@@ -29,6 +29,7 @@
 					<property name="showPopOut"/>
 
 					<property name="defaultSelectionProvider"/>
+					<property name="selectionOnModelChange"/>
 
 					<property name="securityObject"/>
 
@@ -81,6 +82,7 @@
 		securityObject="${securityObject}"
 		securityProviderClass="${securityProviderClass}"
 		selection="${selection}"
+		selectionOnModelChange="${selectionOnModelChange}"
 		showMaximize="${showMaximize}"
 		showMinimize="${showMinimize}"
 		showPopOut="${showPopOut}"

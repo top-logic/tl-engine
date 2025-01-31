@@ -22,6 +22,7 @@ import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.Equality;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
@@ -48,8 +49,10 @@ import com.top_logic.layout.form.model.ValueVetoListener;
 import com.top_logic.layout.form.selection.TableSelectDialogProvider;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.SelectionControlProvider;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMandatory;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.provider.SelectControlProvider;
 import com.top_logic.layout.structure.ContentLayouting;
 import com.top_logic.layout.structure.LayoutControlProvider.Layouting;
@@ -94,6 +97,9 @@ public abstract class AbstractSelectorComponent extends FormComponent
 		 * @see #getTypes()
 		 */
 		String TYPES = "types";
+
+		/** @see #getSelectionOnModelChange() */
+		String SELECTION_ON_MODEL_CHANGE = "selectionOnModelChange";
 
 		/**
 		 * Option how to display the selection.
@@ -146,6 +152,13 @@ public abstract class AbstractSelectorComponent extends FormComponent
 		@Name(MULTIPLE)
 		boolean isMultiple();
 
+		/**
+		 * Updates the selection of the component when the model of the component has changed.
+		 */
+		@Name(SELECTION_ON_MODEL_CHANGE)
+		@Options(fun = AllInAppImplementations.class)
+		PolymorphicConfiguration<SelectionUpdater> getSelectionOnModelChange();
+
 	}
 
 	/**
@@ -188,6 +201,10 @@ public abstract class AbstractSelectorComponent extends FormComponent
 
 	private CommandHandler _onSelectionChange;
 
+	private boolean _modelChanged;
+
+	private SelectionUpdater _selectionUpdateOnModelChange;
+
 	/**
 	 * Creates a {@link AbstractSelectorComponent} from configuration.
 	 * 
@@ -200,6 +217,7 @@ public abstract class AbstractSelectorComponent extends FormComponent
 	public AbstractSelectorComponent(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
 		_onSelectionChange = context.getInstance(config.getOnSelectionChange());
+		_selectionUpdateOnModelChange = context.getInstance(config.getSelectionOnModelChange());
 	}
 
 	@Override
@@ -385,12 +403,29 @@ public abstract class AbstractSelectorComponent extends FormComponent
 	protected abstract List<?> getOptionList();
 
 	@Override
+	public boolean isModelValid() {
+		return !_modelChanged && super.isModelValid();
+	}
+
+	@Override
 	public boolean validateModel(DisplayContext context) {
 		boolean result = super.validateModel(context);
 
+		if (_modelChanged) {
+			_modelChanged = false;
+			if (_selectionUpdateOnModelChange != null) {
+				_selectionUpdateOnModelChange.updateSelection(this);
+			}
+		}
 		updateDefaultSelection();
 
 		return result;
+	}
+
+	@Override
+	protected void afterModelSet(Object oldModel, Object newModel) {
+		super.afterModelSet(oldModel, newModel);
+		_modelChanged = true;
 	}
 
 	@Override

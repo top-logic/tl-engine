@@ -523,7 +523,7 @@
 			</annotations>
 			<attributes>
 				<property name="rule"
-					type="tl.bpe.bpml:SequenceFlowRule"
+					type="SequenceFlowRule"
 				>
 					<annotations>
 						<bpml-extension/>
@@ -793,20 +793,20 @@
 				<generalization type="Iconified"/>
 				<generalization type="Described"/>
 			</generalizations>
+			<annotations>
+				<table name="BPNode"/>
+				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.StartEventImpl"/>
+			</annotations>
 			<attributes>
 				<property name="title"
-						type="tl.model.i18n:I18NString"
-					>
+					type="tl.model.i18n:I18NString"
+				>
 					<annotations>
 						<bpml-extension/>
 						<sort-order value="500.5"/>
 					</annotations>
 				</property>
 			</attributes>
-			<annotations>
-				<table name="BPNode"/>
-				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.StartEventImpl"/>
-			</annotations>
 		</class>
 		<interface name="Gateway">
 			<generalizations>
@@ -944,10 +944,14 @@
 					type="tl.core:String"
 				>
 					<annotations>
-						<visibility value="hidden"/>
 						<storage-algorithm>
-							<query expr="t -> $t.get(`tl.bpe.bpml:Task#titleI18N`).localize() || $t.get(`tl.bpe.bpml:Task#name`)"/>
+							<query>
+								<expr><![CDATA[t -> {
+$t.get(`tl.bpe.bpml:Task#titleI18N`).localize() || $t.get(`tl.bpe.bpml:Task#name`)
+}]]></expr>
+							</query>
 						</storage-algorithm>
+						<visibility value="hidden"/>
 					</annotations>
 				</property>
 			</attributes>

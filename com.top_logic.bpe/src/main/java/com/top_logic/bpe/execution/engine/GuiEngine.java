@@ -106,7 +106,7 @@ public class GuiEngine {
 				rule.getRuleConditions().stream()
 					.map(config -> (RuleCondition) new StandardRule(null, (StandardRule.Config<?>) config))
 					.filter(condition -> condition.getRuleType() == RuleType.DEFAULT)
-					.filter(condition -> !condition.getCondition(token.getProcessExecution()))
+					.filter(condition -> !condition.getTestCondition(token.getProcessExecution()))
 					.map(RuleCondition::getMessage)
 					.forEach(errors::add);
 			}
@@ -135,7 +135,7 @@ public class GuiEngine {
 					.filter(condition -> condition.getRuleType() == RuleType.WARNING) // Only
 																						// WARNING
 																						// rules
-					.filter(condition -> !condition.getCondition(token.getProcessExecution())) // Only
+					.filter(condition -> !condition.getTestCondition(token.getProcessExecution())) // Only
 																								// false
 																								// (active)
 																								// warnings

@@ -5,17 +5,23 @@
  */
 package com.top_logic.bpe.layout.execution;
 
-import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.form.definition.FormDefinition;
 
 /**
- * @author     <a href="mailto:fma@top-logic.com">fma</a>
+ * Component that provides a {@link FormDefinition}.
+ * 
+ * @author <a href="mailto:fma@top-logic.com">fma</a>
  */
 public interface DisplayDescriptionAware {
 
-	@Hidden
-	public FormDefinition getDisplayDescription();
+	/**
+	 * The form to show for a workflow state.
+	 */
+	FormDefinition getDisplayDescription();
 
+	/**
+	 * The process-driven object.
+	 */
 	TLObject getContextModel();
 }

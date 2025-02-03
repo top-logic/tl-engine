@@ -17,6 +17,7 @@ import com.top_logic.bpe.bpml.model.SequenceFlow;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
@@ -35,8 +36,7 @@ public class StandardRule extends AbstractConfiguredInstance<StandardRule.Config
 	private final ResKey _message;
 
 	/**
-	 * 
-	 * Creates a new {@link StandardRule}.
+	 * Creates a {@link StandardRule}.
 	 *
 	 * @param context
 	 *        The context for instantiating sub configurations.
@@ -76,7 +76,6 @@ public class StandardRule extends AbstractConfiguredInstance<StandardRule.Config
 		String MESSAGE = "message";
 
 		/**
-		 * 
 		 * The {@link Expr} used to calculate if the {@link SequenceFlow} is accessible.
 		 * 
 		 * <p>
@@ -141,8 +140,8 @@ public class StandardRule extends AbstractConfiguredInstance<StandardRule.Config
 	 * Returns the {@link Boolean} calculated by the given {@link Expr}.
 	 */
 	@Override
-	public Boolean getCondition(ProcessExecution process) {
-		return (Boolean) _condition.execute(process);
+	public boolean getTestCondition(ProcessExecution process) {
+		return SearchExpression.isTrue(_condition.execute(process));
 	}
 
 	/**

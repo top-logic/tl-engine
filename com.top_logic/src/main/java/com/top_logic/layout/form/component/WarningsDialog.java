@@ -207,7 +207,8 @@ public class WarningsDialog {
 	}
 
 	/**
-	 * Opens the WarningsDialog without using FormContext, taking a list of ResKey warnings instead.
+	 * Opens the {@link WarningsDialog} without using {@link FormContext}, taking a list of ResKey
+	 * warnings instead.
 	 *
 	 * @param scope
 	 *        The window to open the dialog in.
@@ -232,10 +233,10 @@ public class WarningsDialog {
 			protected void writeMessage(DisplayContext context, TagWriter out) throws IOException {
 				Resources resources = Resources.getInstance();
 
-				out.beginTag("h2");
+				out.beginTag(H2);
 				out.writeText(getResource(resources, Resources.derivedKey(resourceBaseKey, CONFIRM_HEADING_SUFFIX),
 					I18NConstants.WARNING_CONFIRM_HEADING));
-				out.endTag("h2");
+				out.endTag(H2);
 
 				out.writeText(getResource(resources, Resources.derivedKey(resourceBaseKey, CONFIRM_MESSAGE_SUFFIX),
 					I18NConstants.WARNING_CONFIRM_MESSAGE));
@@ -285,7 +286,7 @@ public class WarningsDialog {
 	}
 
 	// Inner class to handle warnings directly from the list of ResKey
-	public static final class ShowWarningsWithoutFormContext implements Command {
+	private static final class ShowWarningsWithoutFormContext implements Command {
 		private final List<ResKey> warnings;
 
 		private final Command continuation;

@@ -33,7 +33,6 @@ import com.top_logic.element.layout.formeditor.FormEditorUtil;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.gui.DefaultCreateAttributedComponent;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.basic.ThemeImage;
@@ -138,13 +137,16 @@ public class ProcessExecutionCreateComponent extends DefaultCreateAttributedComp
 		return res;
 	}
 
+	/**
+	 * The icon to display in the header of the process creation.
+	 */
 	public ThemeImage getIcon() {
 		StartEvent startEvent = startEvent();
 		ThemeImage res = startEvent.getIcon();
 		if (res == null) {
-			ManualTask task = nextManualTask(startEvent);
-			if (task instanceof Iconified) {
-				res = ((Iconified) task).getIcon();
+			ManualTask nextTask = nextManualTask(startEvent);
+			if (nextTask != null) {
+				res = ((Iconified) nextTask).getIcon();
 			}
 		}
 		if (res == null) {
@@ -177,7 +179,7 @@ public class ProcessExecutionCreateComponent extends DefaultCreateAttributedComp
 
 	}
 
-	public static ManualTask nextManualTask(StartEvent startEvent) {
+	private static ManualTask nextManualTask(StartEvent startEvent) {
 		Edge edge = getSingleValueOrNull(startEvent.getOutgoing());
 		int numOfTasksFound = 0;
 		ManualTask singleTask = null;
@@ -207,7 +209,6 @@ public class ProcessExecutionCreateComponent extends DefaultCreateAttributedComp
 		GuiEngine guiEngine = GuiEngine.getInstance();
 		Lane lane = startEvent.getLane();
 		Lane targetLane = target.getLane();
-		PersonManager r = PersonManager.getManager();
 		Person currentPerson = TLContext.currentUser();
 		return targetLane == lane || guiEngine.isActor(currentPerson, targetLane, null);
 	}

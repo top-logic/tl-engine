@@ -395,7 +395,7 @@ public class ExecutionEngine {
 																											// RuleCondition
 					.filter(condition -> condition.getRuleType() != RuleType.WARNING) // Ignore
 																						// warnings
-					.allMatch(condition -> condition.getCondition(processExecution)); // Check all
+					.allMatch(condition -> condition.getTestCondition(processExecution)); // Check all
 																						// non-warning
 																						// conditions
 				// If all conditions are true, return the target

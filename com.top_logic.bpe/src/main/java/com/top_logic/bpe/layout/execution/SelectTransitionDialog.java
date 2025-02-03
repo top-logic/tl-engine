@@ -530,7 +530,7 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 																									// consider
 																									// HIDDEN
 																									// conditions
-								.allMatch(condition -> condition.getCondition(token.getProcessExecution()));
+								.allMatch(condition -> condition.getTestCondition(token.getProcessExecution()));
 							if (showEdge) {
 								res.add(new Decision(token, edge, gatewayOutgoing));
 							}

@@ -6,24 +6,25 @@
 package com.top_logic.bpe.bpml.display;
 
 /**
- * Defines the types of conditions that can be applied to sequence flows.
+ * Types of conditions that can be applied to sequence flows.
+ * 
+ * @see RuleCondition#getRuleType()
  *
  * @author <a href="mailto:Jonathan.Hüsing@top-logic.com">Jonathan Hüsing</a>
  */
 public enum RuleType {
 	/**
-	 * This is the default Condition with an Error Message.
+	 * Default condition that show an error message if not met.
 	 */
 	DEFAULT,
 
 	/**
-	 * This is a special Condition, where the @Link{SequenceFlow} will be hidden.
+	 * Condition that hides the edge when not fulfilled.
 	 */
 	HIDDEN,
 
 	/**
-	 * This is a special Condition, where a Warning Message pops up before Continuing with the next
-	 * Node.
+	 * Condition showing a warning message before continuing with the next step.
 	 */
 	WARNING
 }

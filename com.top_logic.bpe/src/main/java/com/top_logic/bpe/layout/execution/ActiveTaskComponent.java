@@ -8,6 +8,7 @@ package com.top_logic.bpe.layout.execution;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.CalledFromJSP;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.bpe.bpml.model.Iconified;
@@ -26,11 +27,7 @@ import com.top_logic.element.meta.form.component.DefaultEditAttributedComponent;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.basic.ThemeImage;
-import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.component.EditComponent;
-import com.top_logic.layout.form.model.FolderField;
-import com.top_logic.layout.form.model.FormContext;
-import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
@@ -51,8 +48,9 @@ import com.top_logic.util.TLContext;
  */
 public class ActiveTaskComponent extends DefaultEditAttributedComponent implements DisplayDescriptionAware {
 
-	public static final String EXECUTION_ATTRIBUTES = "executionAttributes";
-
+	/**
+	 * Creates an {@link ActiveTaskComponent}.
+	 */
 	public ActiveTaskComponent(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
 	}
@@ -68,27 +66,19 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 		return ((ManualTask) node).getDisplayDescription();
 	}
 
+	/**
+	 * The current process-controlled object.
+	 */
 	public ProcessExecution getProcessExecution() {
 		return getToken().getProcessExecution();
 	}
 
+	/**
+	 * The displayed workflow state.
+	 */
 	public Token getToken() {
 		return (Token) getModel();
 	}
-
-	public static boolean isTable(FormContext formContext, String attributeID) {
-		FormMember member = formContext.getMember(attributeID);
-		if (member instanceof SelectField) {
-			SelectField sf = (SelectField) member;
-			if (sf.isMultiple()) {
-				return true;
-			} else {
-				return false;
-			}
-		}
-		return member instanceof FolderField;
-	}
-
 
 	@Override
 	public List<String> getExcludeList() {
@@ -136,6 +126,10 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 		return getProcessExecution();
 	}
 
+	/**
+	 * The icon for the current task.
+	 */
+	@CalledFromJSP
 	public ThemeImage getIcon() {
 		Token model = getToken();
 		ThemeImage icon = ((Iconified) model).getIcon();
@@ -145,6 +139,10 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 		return icon;
 	}
 
+	/**
+	 * {@link ExecutabilityRule} that decides, whether a currently displayed workflow task can
+	 * proceed.
+	 */
 	public static class FinishTaskRule implements ExecutabilityRule {
 
 		private static final ExecutableState FINISH_TASK_DISABLED_STATE = ExecutableState.createDisabledState(I18NConstants.FINISH_TASK_DISABLED);

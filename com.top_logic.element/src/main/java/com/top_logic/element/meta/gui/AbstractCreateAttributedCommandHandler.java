@@ -30,14 +30,7 @@ import com.top_logic.model.util.TLModelUtil;
 
 
 /**
- * Extended handler for create commands with {@link com.top_logic.knowledge.wrap.Wrapper}.
- * 
- * <p>
- * Additionally to the {@link AbstractCreateCommandHandler}, this class allows the automatic storage
- * of values from the {@link com.top_logic.knowledge.wrap.Wrapper} objects via
- * {@link #saveMetaAttributes(Map, TLObject)}. This will only store the values defined in the
- * {@link com.top_logic.model.TLClass}.
- * </p>
+ * {@link AbstractCreateCommandHandler} for creating dynamic typed objects.
  * 
  * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */

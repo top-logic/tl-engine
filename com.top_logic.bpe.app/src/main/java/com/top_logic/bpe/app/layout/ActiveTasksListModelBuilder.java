@@ -23,7 +23,8 @@ import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.TLContext;
 
-public class ActiveTasksListModelBuilder extends ProcessExecutionListModelBuilder {
+public class ActiveTasksListModelBuilder
+		extends ProcessExecutionListModelBuilder<ProcessExecutionListModelBuilder.Config> {
 
 		public static class ActorFilter implements Filter<Token> {
 

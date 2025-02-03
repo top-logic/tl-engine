@@ -5,40 +5,32 @@
  */
 package com.top_logic.bpe.bpml.display;
 
-import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 
 /**
- * Defines conditions that govern sequence flow transitions
+ * Defines conditions that govern sequence flow transitions.
  *
  * @author <a href="mailto:Jonathan.Hüsing@top-logic.com">Jonathan Hüsing</a>
  */
-
-@Label("SequenceFlow Rule Definition")
 public interface RuleCondition {
 
-
 	/**
-	 * Evaluates condition against process state.
+	 * Tests, whether this condition is satisfied.
 	 *
 	 * @param process
-	 *        Current processExecution
-	 * @return True if condition is satisfied
+	 *        Current process execution object representing the state of the workflow to test the
+	 *        condition on.
 	 */
-	Boolean getCondition(ProcessExecution process);
+	boolean getTestCondition(ProcessExecution process);
 
 	/**
-	 * Gets the error or warning message for this condition
-	 * 
-	 * @return Message resource key
+	 * The error or warning message to show, if this condition is not satisfied.
 	 */
 	ResKey getMessage();
 
 	/**
-	 * Gets the classification type of this Condition.
-	 * 
-	 * @return Rule type
+	 * Specifies the UI behavior to show, when this condition is not satisfied.
 	 */
 	RuleType getRuleType();
 

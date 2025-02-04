@@ -1,0 +1,538 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28310_workflow_upgrade"
+		module="tl-bpe"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_28298_polymorphic_groups"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28298_add_group_member_options"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_28461_link_contacts_to_accounts"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_27517_Refactoring_User_Management"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_28298_update_account"
+			module="tl-layout-formeditor"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+		<dependency name="Ticket_25210_Model_references_in_form_definitions"
+			module="tl-bpe"
+		/>
+	</dependencies>
+	<processors>
+		<remove-annotations name="tl.bpe.execution">
+			<annotation class="com.top_logic.model.annotate.TLModuleDisplayGroup"/>
+		</remove-annotations>
+		<remove-annotations name="tl.bpe.execution:Token#name">
+			<annotation class="com.top_logic.model.annotate.TLSearchRange"/>
+		</remove-annotations>
+		<remove-annotations name="tl.bpe.execution:Token#name">
+			<annotation class="com.top_logic.model.annotate.TLDeleteProtected"/>
+		</remove-annotations>
+		<remove-annotations name="tl.bpe.execution:Token#name">
+			<annotation class="com.top_logic.element.config.annotation.TLStorage"/>
+		</remove-annotations>
+		<remove-annotations name="tl.bpe.bpml:EventDefinition#event">
+			<annotation class="com.top_logic.model.annotate.TLVisibility"/>
+		</remove-annotations>
+		<remove-annotations name="tl.bpe.bpml:Participant#dynamicName">
+			<annotation class="com.top_logic.model.annotate.TLSortOrder"/>
+		</remove-annotations>
+		<remove-annotations name="tl.bpe.bpml:Participant#displayDescription">
+			<annotation class="com.top_logic.bpe.bpml.display.GuiType"/>
+		</remove-annotations>
+		<remove-annotations name="tl.bpe.bpml:Participant#displayDescription">
+			<annotation class="com.top_logic.bpe.bpml.display.TemplateBuilder"/>
+		</remove-annotations>
+		<remove-annotations name="tl.bpe.bpml:Participant#exportDescription">
+			<annotation class="com.top_logic.bpe.bpml.display.GuiType"/>
+		</remove-annotations>
+		<remove-annotations name="tl.bpe.bpml:Participant#exportDescription">
+			<annotation class="com.top_logic.bpe.bpml.display.TemplateBuilder"/>
+		</remove-annotations>
+		<remove-class-generalizations name="tl.bpe.execution:Token">
+			<generalization type="tl.bpe.execution:Named"/>
+		</remove-class-generalizations>
+
+		<update-enum 
+			name="tl5.enum:bpe.execution.state"
+			new-name="tl.bpe.execution:ExecutionState"
+		/>
+		
+		<!-- 
+			Invert reference tl.bpe.execution:Token#processExecution to 
+			tl.bpe.execution:ProcessExecution#allTokens and make it a multi-composition.
+		-->
+
+		<delete-reference name="tl.bpe.execution:ProcessExecution#allTokens"/>
+
+		<create-reference name="tl.bpe.execution:ProcessExecution#allTokens"
+			composite="true"
+			multiple="true"
+			navigate="true"
+			ordered="true"
+			type="tl.bpe.execution:Token"
+		>
+			<annotations>
+				<reference-display value="table"/>
+				<main-properties properties="name,startDate,finishDate,finishBy"/>
+			</annotations>
+		</create-reference>
+
+		<exchange-model-refs>
+			<table-update
+				table="hasWrapperAttValue"
+				columns="metaAttribute"
+			/>
+			
+			<model-refs>
+				<model-ref
+					source="tl.bpe.execution:Token#processExecution"
+					target="tl.bpe.execution:ProcessExecution#allTokens"
+				/>
+			</model-refs>			
+		</exchange-model-refs>
+
+		<invert-link-table
+			table="hasWrapperAttValue"
+			reference="tl.bpe.execution:ProcessExecution#allTokens"
+		/>
+		
+		<move-links
+			source-table="hasWrapperAttValue"
+			dest-table="hasStructureChild"
+			reference="tl.bpe.execution:ProcessExecution#allTokens"
+		/>
+
+		<delete-reference name="tl.bpe.execution:Token#processExecution"/>
+
+		<create-inverse-reference name="tl.bpe.execution:Token#processExecution"
+			aggregate="true"
+			inverse-reference="tl.bpe.execution:ProcessExecution#allTokens"
+			navigate="true"
+		/>
+		
+		<change-part-type
+			part="tl.bpe.bpml:TimerEventDefinition#delayInMillis"
+			target="tl.core:Duration"
+		/>
+		
+		<delete-reference name="tl.bpe.execution:Token#dynamicActors"/>
+		
+		<delete-property name="tl.bpe.execution:Token#description"/>
+		
+		<delete-property name="tl.bpe.bpml:TimerEventDefinition#delayInUnit"/>
+		<delete-property name="tl.bpe.bpml:TimerEventDefinition#timeUnit"/>
+		
+		<delete-property name="tl.bpe.bpml:Participant#taskTitle"/>
+		
+		<create-datatype name="tl.bpe.bpml:ProcessFormDefinition"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="CONFIGURATION"/>
+				<export-binding>
+					<store-config
+						root-tag="process-form"
+						root-type="com.top_logic.bpe.bpml.display.ProcessFormDefinition"
+					/>
+				</export-binding>
+			</annotations>
+			<configuration-storage config-interface="com.top_logic.bpe.bpml.display.ProcessFormDefinition"/>
+		</create-datatype>
+		<create-datatype name="tl.bpe.bpml:SequenceFlowRule"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="CONFIGURATION"/>
+				<export-binding>
+					<store-config
+						root-tag="sequence-flow"
+						root-type="com.top_logic.bpe.bpml.display.SequenceFlowRule"
+					/>
+				</export-binding>
+			</annotations>
+			<configuration-storage config-interface="com.top_logic.bpe.bpml.display.SequenceFlowRule"/>
+		</create-datatype>
+		<create-property name="tl.bpe.execution:Token#actor"
+			type="tl.core:String"
+		>
+			<annotations>
+				<storage-algorithm>
+					<query>
+						<expr><![CDATA[token -> 
+{ 
+     lane = $token
+         .get(`tl.bpe.execution:Token#node`)
+         .get(`tl.bpe.bpml:Node#lane`);
+     $lane.get(`tl.bpe.bpml:Lane#title`).isEmpty() 
+         ? $lane.get(`tl.bpe.bpml:Lane#name`)
+         : $lane.get(`tl.bpe.bpml:Lane#title`).localize()
+}]]></expr>
+					</query>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		
+		<create-property name="tl.bpe.bpml:Described#descriptionI18N"
+		  type="tl.model.i18n:I18NHtml"
+		>
+		  <annotations>
+		    <bpml-extension/>
+		    <sort-order value="1000.0"/>
+		  </annotations>
+		</create-property>
+		<!-- TODO: Move data. -->
+		<delete-property name="tl.bpe.bpml:Described#description"/>
+
+		<create-property name="tl.bpe.bpml:Collaboration#myTasksTitleI18N"
+			type="tl.model.i18n:I18NString"
+		>
+			<annotations>
+				<bpml-extension/>
+				<sort-order value="2001.0"/>
+			</annotations>
+		</create-property>
+		<!-- TODO: Move data. -->
+		<delete-property name="tl.bpe.bpml:Collaboration#myTasksTitle"/>
+		
+		<create-property name="tl.bpe.bpml:Collaboration#myTasksDescriptionI18N"
+			type="tl.model.i18n:I18NHtml"
+		>
+			<annotations>
+				<bpml-extension/>
+				<sort-order value="2002.0"/>
+			</annotations>
+		</create-property>
+		<!-- TODO: Move data. -->
+		<delete-property name="tl.bpe.bpml:Collaboration#myTasksDescription"/>
+		
+		<create-property name="tl.bpe.bpml:Collaboration#myProcessesTitleI18N"
+			type="tl.model.i18n:I18NString"
+		>
+			<annotations>
+				<bpml-extension/>
+				<sort-order value="2011.0"/>
+			</annotations>
+		</create-property>
+		<!-- Move data. -->		
+		<delete-property name="tl.bpe.bpml:Collaboration#myProcessesTitle"/>
+
+		<create-property name="tl.bpe.bpml:Collaboration#myProcessesDescriptionI18N"
+			type="tl.model.i18n:I18NHtml"
+		>
+			<annotations>
+				<bpml-extension/>
+				<sort-order value="2012.0"/>
+			</annotations>
+		</create-property>
+		<!-- TODO: Move data. -->
+		<delete-property name="tl.bpe.bpml:Collaboration#myProcessesDescription"/>
+		
+		<create-property name="tl.bpe.bpml:Edge#title"
+			type="tl.model.i18n:I18NString"
+		>
+			<annotations>
+				<bpml-extension/>
+				<sort-order value="500.5"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.bpe.bpml:Edge#tooltip"
+			type="tl.model.i18n:I18NHtml"
+		>
+			<annotations>
+				<bpml-extension/>
+				<sort-order value="500.7"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.bpe.bpml:Edge#weight"
+			type="tl.core:Double"
+		>
+			<annotations>
+				<bpml-extension/>
+				<sort-order value="1000.0"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.bpe.bpml:SequenceFlow#operation"
+			type="tl.model.search:Expr"
+		>
+			<annotations>
+				<bpml-extension/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.bpe.bpml:Lane#title"
+			type="tl.model.i18n:I18NString"
+		>
+			<annotations>
+				<bpml-extension/>
+				<sort-order value="500.5"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.bpe.bpml:StartEvent#title"
+			type="tl.model.i18n:I18NString"
+		>
+			<annotations>
+				<bpml-extension/>
+				<sort-order value="500.5"/>
+			</annotations>
+		</create-property>
+
+		<create-property name="tl.bpe.bpml:Task#titleI18N"
+			type="tl.model.i18n:I18NString"
+		>
+			<annotations>
+				<bpml-extension/>
+				<sort-order value="500.5"/>
+			</annotations>
+		</create-property>
+		<!-- TODO: Move data. -->
+		<delete-property name="tl.bpe.bpml:Task#title"/>
+		
+		<create-property name="tl.bpe.bpml:Task#titleFunction"
+			type="tl.model.search:Expr"
+		>
+			<annotations>
+				<bpml-extension/>
+				<sort-order value="501.0"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.bpe.bpml:Task#label"
+			type="tl.core:String"
+		>
+			<annotations>
+				<storage-algorithm>
+					<query>
+						<expr><![CDATA[t -> {
+$t.get(`tl.bpe.bpml:Task#titleI18N`).localize() || $t.get(`tl.bpe.bpml:Task#name`)
+}]]></expr>
+					</query>
+				</storage-algorithm>
+				<visibility value="hidden"/>
+			</annotations>
+		</create-property>
+
+		<create-property name="tl.bpe.bpml:ManualTask#formDefinition"
+			type="tl.bpe.bpml:ProcessFormDefinition"
+		>
+			<annotations>
+				<form-type>
+					<script function="task -> $task.get(`tl.bpe.bpml:Node#process`).get(`tl.bpe.bpml:Process#participant`).get(`tl.bpe.bpml:Participant#modelType`)"/>
+				</form-type>
+				<form-templates>
+					<function class="com.top_logic.bpe.layout.execution.ManualTaskTemplateBuilder"/>
+				</form-templates>
+				<bpml-extension/>
+				<sort-order value="800.1"/>
+				<label-position value="hide-label"/>
+			</annotations>
+		</create-property>
+		<!-- TODO: Move data. -->		
+		<delete-property name="tl.bpe.bpml:ManualTask#displayDescription"/>
+
+		<create-property name="tl.bpe.bpml:ManualTask#canEdit"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<default-value>
+					<boolean value="true"/>
+				</default-value>
+				<bpml-extension/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.bpe.bpml:Participant#defaultOperation"
+			type="tl.model.search:Expr"
+		>
+			<annotations>
+				<bpml-extension/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.bpe.execution:Token#descriptionI18N"
+			type="tl.model.i18n:I18NHtml"
+		>
+			<annotations>
+				<delete-protected/>
+				<storage-algorithm>
+					<query expr="self -> $self.get(`tl.bpe.execution:Token#node`).get(`tl.bpe.bpml:Described#descriptionI18N`)"/>
+				</storage-algorithm>
+			</annotations>
+		</create-property>
+		<mark-override name="tl.bpe.execution:Token#descriptionI18N"
+			definition="tl.bpe.bpml:Described#descriptionI18N"
+		/>
+		<change-part-type
+			part="tl.bpe.bpml:SequenceFlow#rule"
+			target="tl.bpe.bpml:SequenceFlowRule"
+		/>
+		<add-annotations name="tl.bpe.execution:Token">
+			<annotations>
+				<dynamic-icon>
+					<icon-by-expression icon="t -> $t.get(`tl.bpe.execution:Token#icon`)"/>
+				</dynamic-icon>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.bpe.execution:Token#name">
+			<annotations>
+				<sort-order value="1.0"/>
+				<storage-algorithm>
+					<query>
+						<expr><![CDATA[token -> {
+    task = $token.get(`tl.bpe.execution:Token#node`);
+    exec = $token.get(`tl.bpe.execution:Token#processExecution`);
+
+    fun = $task.get(`tl.bpe.bpml:Task#titleFunction`);
+    i18n = $task.get(`tl.bpe.bpml:Task#titleI18N`);
+    
+    switch {
+        $fun == null:
+            $i18n.fill($exec, $task).localize();
+        default:
+            $fun($i18n, $exec, $task, $token).localize();
+    }
+}]]></expr>
+					</query>
+				</storage-algorithm>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.bpe.bpml:EventDefinition#event">
+			<annotations>
+				<visibility value="hidden"/>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.bpe.bpml:Task">
+			<annotations>
+				<id-column value="label"/>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.bpe.bpml:Participant#dynamicName">
+			<annotations>
+				<sort-order value="5000.0"/>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.bpe.bpml:Participant#displayDescription">
+			<annotations>
+				<form-type>
+					<script function="model -> $model.get(`tl.bpe.bpml:Participant#modelType`)"/>
+				</form-type>
+				<form-templates>
+					<function class="com.top_logic.bpe.layout.execution.ParticipantTemplateBuilder"/>
+				</form-templates>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.bpe.bpml:Participant#exportDescription">
+			<annotations>
+				<form-type>
+					<script function="model -> $model.get(`tl.bpe.bpml:Participant#modelType`)"/>
+				</form-type>
+				<form-templates>
+					<function class="com.top_logic.bpe.layout.execution.ParticipantTemplateBuilder"/>
+				</form-templates>
+			</annotations>
+		</add-annotations>
+		<create-reference name="tl.bpe.bpml:SequenceFlow#formType"
+			navigate="true"
+			type="tl.model:TLClass"
+		>
+			<annotations>
+				<bpml-extension/>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.bpe.bpml:Task#tokenType"
+			type="tl.model:TLClass"
+		>
+			<annotations>
+				<options>
+					<options-by-expression>
+						<function><![CDATA[task -> ($task
+    .get(`tl.bpe.bpml:Task#process`)
+    .get(`tl.bpe.bpml:Process#participant`)
+    .get(`tl.bpe.bpml:Participant#tokenType`) 
+    || `tl.bpe.execution:Token`)
+    .recursion(t -> $t.get(`tl.model:TLClass#specializations`))]]></function>
+					</options-by-expression>
+				</options>
+				<bpml-extension/>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.bpe.bpml:Participant#tokenType"
+			navigate="true"
+			type="tl.model:TLClass"
+		>
+			<annotations>
+				<sort-order value="4.0"/>
+				<options>
+					<options-by-expression function="`tl.bpe.execution:Token`.recursion(t -> $t.get(`tl.model:TLClass#specializations`))"/>
+				</options>
+				<bpml-extension/>
+			</annotations>
+		</create-reference>
+		<create-reference name="tl.bpe.bpml:Participant#edgeFormType"
+			navigate="true"
+			type="tl.model:TLClass"
+		>
+			<annotations>
+				<bpml-extension/>
+			</annotations>
+		</create-reference>
+		<reorder-part name="tl.bpe.execution:Token#name"
+			before="node"
+		/>
+		<reorder-part name="tl.bpe.execution:Token#descriptionI18N"
+			before="icon"
+		/>
+		<reorder-part name="tl.bpe.execution:Token#actor"/>
+		<reorder-part name="tl.bpe.bpml:Described#descriptionI18N"/>
+		<reorder-part name="tl.bpe.bpml:Collaboration#myTasksTitleI18N"
+			before="myProcessesIcon"
+		/>
+		<reorder-part name="tl.bpe.bpml:Collaboration#myTasksDescriptionI18N"
+			before="myProcessesIcon"
+		/>
+		<reorder-part name="tl.bpe.bpml:Collaboration#myProcessesTitleI18N"
+			before="state"
+		/>
+		<reorder-part name="tl.bpe.bpml:Collaboration#myProcessesDescriptionI18N"
+			before="state"
+		/>
+		<reorder-part name="tl.bpe.bpml:Edge#title"
+			before="process"
+		/>
+		<reorder-part name="tl.bpe.bpml:Edge#tooltip"
+			before="process"
+		/>
+		<reorder-part name="tl.bpe.bpml:Edge#weight"/>
+		<reorder-part name="tl.bpe.bpml:SequenceFlow#operation"/>
+		<reorder-part name="tl.bpe.bpml:SequenceFlow#formType"/>
+		<reorder-part name="tl.bpe.bpml:Lane#title"/>
+		<reorder-part name="tl.bpe.bpml:StartEvent#title"/>
+		<reorder-part name="tl.bpe.bpml:Task#titleI18N"
+			before="boundaryEvents"
+		/>
+		<reorder-part name="tl.bpe.bpml:Task#titleFunction"
+			before="boundaryEvents"
+		/>
+		<reorder-part name="tl.bpe.bpml:Task#tokenType"/>
+		<reorder-part name="tl.bpe.bpml:Task#label"/>
+		<reorder-part name="tl.bpe.bpml:ManualTask#formDefinition"/>
+		<reorder-part name="tl.bpe.bpml:ManualTask#canEdit"/>
+		<reorder-part name="tl.bpe.bpml:Participant#tokenType"/>
+		<reorder-part name="tl.bpe.bpml:Participant#defaultOperation"/>
+		<reorder-part name="tl.bpe.bpml:Participant#edgeFormType"/>
+		<delete-class name="tl.bpe.execution:Named"/>
+	</processors>
+	<post-processors/>
+</migration>

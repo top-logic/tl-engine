@@ -79,7 +79,7 @@
 
 					<editor name="ServiceConfigEditor"
 						applyCommand="storeCustomServiceConfig"
-						editCommand="switchToAJAXEdit"
+						editCommand="customEdit"
 						model="selection(TLServiceList)"
 						securityProviderClass="securityRoot"
 						showMaximize="true"
@@ -111,7 +111,7 @@
 								image="theme:SAVE_SERVICE_CONFIGURATION"
 							/>
 
-							<button id="switchToAJAXEdit"
+							<button id="customEdit"
 								class="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 								clique="edit"
 							>

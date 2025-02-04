@@ -725,7 +725,7 @@
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
+					command-name="customEdit"
 					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
 					component-name="3e3325c0-0e2f-45ce-916c-6cbf46e4df6b.layout.xml#Grid"
 					user-id="root"

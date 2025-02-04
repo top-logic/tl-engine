@@ -2220,7 +2220,7 @@
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 					command-label="Bearbeiten"
-					command-name="switchToAJAXEdit"
+					command-name="customEdit"
 					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
 					component-name="26bccc4b-cc9f-4c31-9f1c-47043e15270d.layout.xml#Form"
 					user-id="root"

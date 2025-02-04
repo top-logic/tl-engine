@@ -56,11 +56,6 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 	}
 	
 	@Override
-	protected ExecutabilityRule getIntrinsicEditExecutability() {
-		return super.getIntrinsicEditExecutability().combine(CanEditTask.INSTANCE);
-	}
-
-	@Override
 	public FormDefinition getDisplayDescription() {
 		Node node = getToken().getNode();
 		return ((ManualTask) node).getDisplayDescription();
@@ -132,6 +127,10 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 	@CalledFromJSP
 	public ThemeImage getIcon() {
 		Token model = getToken();
+		if (model == null) {
+			// Can happen after editing this component (when opened in a dialog).
+			return null;
+		}
 		ThemeImage icon = ((Iconified) model).getIcon();
 		if (icon == null) {
 			icon = MetaResourceProvider.INSTANCE.getImage(model, Flavor.ENLARGED);
@@ -176,7 +175,12 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 
 	}
 
-	private static class CanEditTask implements ExecutabilityRule {
+	/**
+	 * {@link ExecutabilityRule} that controls the edit mode of a task editor.
+	 * 
+	 * @see ManualTask#getCanEdit()
+	 */
+	public static class CanEditTask implements ExecutabilityRule {
 	
 		/**
 		 * Singleton {@link CanEditTask} instance.

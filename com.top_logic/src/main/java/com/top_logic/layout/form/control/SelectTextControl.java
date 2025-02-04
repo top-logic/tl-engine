@@ -58,7 +58,7 @@ public class SelectTextControl extends AbstractSelectControl {
 			OpenSelector.INSTANCE,
 		});
 
-	private static final String CSS_CLASS_OPTION = "tl-text-select__option";
+	private static final String CSS_CLASS_OPTION = "option";
 
 	private static final String CSS_CLASS_OPTION_TEXT = "tl-text-select__option-text";
 

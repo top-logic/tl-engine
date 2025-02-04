@@ -20,15 +20,6 @@
 			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
 			type="com.top_logic.layout.ModelSpec"
 		/>
-		<property name="editExecutability"
-			element-type="com.top_logic.basic.config.PolymorphicConfiguration"
-			instance-type="com.top_logic.tool.execution.ExecutabilityRule"
-			type="List"
-		>
-			<!-- Note: Required to produce format compatible with CommandHandler.Config#executability. -->
-			<entry-tag value="rule"/>
-			<display-minimized/>
-		</property>
 		<property name="saveClosesDialog"
 			default="true"
 			type="boolean"
@@ -53,12 +44,6 @@
 			type="List"
 		>
 			<acceptable-classifiers value="customTransaction, form, commons"/>
-		</property>
-		<property name="edit-group"
-			default="Write"
-			type="String"
-		>
-			<hidden/>
 		</property>
 	</properties>
 

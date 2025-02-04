@@ -58,7 +58,11 @@ public class SelectTextControl extends AbstractSelectControl {
 			OpenSelector.INSTANCE,
 		});
 
-	private static final String CSS_CLASS_OPTION = "option";
+	private static final String CSS_CLASS_OPTION = "tl-text-select__option";
+
+	private static final String CSS_CLASS_OPTION_TEXT = "tl-text-select__option-text";
+
+	private static final String CSS_CLASS_OPTION_CLEAR = "tl-text-select__option-clear";
 
 	private static final String SELECTED_VALUE = "valueDisplay";
 
@@ -76,7 +80,7 @@ public class SelectTextControl extends AbstractSelectControl {
 
 	@Override
 	protected String getTypeCssClass() {
-		return "cTextSelect";
+		return "tl-text-select";
 	}
 
 	@Override
@@ -104,7 +108,11 @@ public class SelectTextControl extends AbstractSelectControl {
 					if (_selectionRenderer != null) {
 						_selectionRenderer.write(context, out, option);
 					} else {
+						out.beginBeginTag(SPAN);
+						out.writeAttribute(CLASS_ATTR, CSS_CLASS_OPTION_TEXT);
+						out.endBeginTag();
 						out.writeText(optionLabelProvider.getLabel(option));
+						out.endTag(SPAN);
 					}
 					writeClearButton(context, out, getOptionID(option));
 					out.endTag(SPAN);
@@ -246,6 +254,7 @@ public class SelectTextControl extends AbstractSelectControl {
 
 		out.beginBeginTag(SPAN);
 		out.writeAttribute(ID_ATTR, getClearButtonSpanID(optionID));
+		out.writeAttribute(CLASS_ATTR, CSS_CLASS_OPTION_CLEAR);
 
 		out.endBeginTag();
 

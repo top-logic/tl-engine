@@ -1576,15 +1576,12 @@ div.cal_zoom_inAnimation {
 	padding-right: var(--spacing-02);
 }
 
-.cBlockTextInput .lFixedRight a:not(.lFlexible),
-.cExpandableTextInput .lFixedRight a:not(.lFlexible) {
-	height: inherit;
-}
-
 .cIntegerInput .input-image, 
 .cDateInput .input-image, 
 .cTimeInput .input-image, 
-.cPopupSelect .input-image {
+.cPopupSelect .input-image,
+.cBlockTextInput .fToggle,
+.cExpandableTextInput .fToggle {
 	background-color: var(--field);
 }
 
@@ -1661,16 +1658,21 @@ input.is-checkbox[disabled] {
 	outline: none !important;
 }
 
-.cTextSelect {
+.tl-text-select {
     display: flex;
     align-items: center;
-    gap: var(--spacing-02);
+    flex-wrap: wrap;
+    column-gap: var(--spacing-02);
 }
 
-.cTextSelect .option {
+.tl-text-select .tl-text-select__option {
     display: flex;
     align-items: center;
     gap: var(--spacing-01);
+}
+
+.tl-text-select__option-clear i.fa-solid.fa-xmark {
+    vertical-align: middle;	/* Rule is needed to center the x icon vertically */
 }
 
 .cTextInput,

@@ -1396,6 +1396,7 @@ public class JSON {
 					bufferChar();
 					break;
 					
+				case '+':
 				case '-': 
 				case '0': 
 				case '1': 

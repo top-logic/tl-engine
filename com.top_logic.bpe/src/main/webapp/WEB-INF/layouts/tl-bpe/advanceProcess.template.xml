@@ -11,7 +11,7 @@
 		applyCommand="storeAttributes"
 		buttonbar="${buttonbar}"
 		deleteCommand=""
-		editExecutability="${editExecutability}"
+		editCommand="customEdit"
 		editMode="${editMode}"
 		isSecurityMaster="${isSecurityMaster}"
 		metaElementName="tl.bpe.execution:Token"
@@ -29,6 +29,17 @@
 	>
 		<buttons>
 			${buttons}
+			<button id="customEdit"
+				class="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+				clique="edit"
+				group="${edit-group}"
+			>
+				<executability>
+					<reference rule-id="SwitchToEditMode"/>
+					<rule class="com.top_logic.bpe.layout.execution.ActiveTaskComponent$CanEditTask"/>
+					${editExecutability}
+				</executability>
+			</button>
 			<include name="templates/editComponentCommands.xml"/>
 		</buttons>
 	</component>

@@ -90,7 +90,6 @@ public class StandardRule extends AbstractConfiguredInstance<StandardRule.Config
 		Expr getCondition();
 
 		/**
-		 * 
 		 * Defines the type of Rule we want to use.
 		 *
 		 * <p>
@@ -113,20 +112,14 @@ public class StandardRule extends AbstractConfiguredInstance<StandardRule.Config
 		RuleType getRuleType();
 
 		/**
-		 * 
 		 * The {@link ResKey} to be shown, when the Condition is not met.
-		 *
-		 *
 		 */
 		@Name(MESSAGE)
 		@DynamicMode(fun = IsHidden.class, args = @Ref(RULETYPE))
 		ResKey getMessage();
 
 		/**
-		 * 
-		 * inner Class to determine the visibility of the Message input.
-		 *
-		 * @author <a href=mailto:Christian.Braun@top-logic.com>Christian Braun</a>
+		 * Function determining the visibility of {@link Config#getMessage()}.
 		 */
 		class IsHidden extends Function1<FieldMode, RuleType> {
 			@Override

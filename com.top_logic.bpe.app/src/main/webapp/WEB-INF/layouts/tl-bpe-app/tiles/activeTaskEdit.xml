@@ -9,6 +9,7 @@
 
 	<include name="element/editAttributedDetail.xml"
 		componentClass="com.top_logic.bpe.layout.execution.ActiveTaskComponent"
+		editCommand="customEdit"
 		defaultFor="tl.bpe.execution:Token"
 		deleteCommand=""
 		metaElementName="tl.bpe.execution:Token"
@@ -31,6 +32,16 @@
 							tokenTable="${tokenTable}"
 						/>
 					</postCreateActions>
+				</button>
+				<button id="customEdit"
+					class="com.top_logic.layout.form.component.SwitchEditCommandHandler"
+					clique="edit"
+					group="Write"
+				>
+					<executability>
+						<reference rule-id="SwitchToEditMode"/>
+						<rule class="com.top_logic.bpe.layout.execution.ActiveTaskComponent$CanEditTask"/>
+					</executability>
 				</button>
 			</buttons>
 		</subConfiguration>

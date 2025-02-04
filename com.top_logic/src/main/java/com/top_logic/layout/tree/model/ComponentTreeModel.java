@@ -265,11 +265,11 @@ public class ComponentTreeModel {
 				@Override
 				public Bubble handleVisibilityChange(Object sender, Boolean oldVisibility, Boolean newVisibility) {
 					if (!Utils.equals(oldVisibility, newVisibility) && sender == tabbar) {
-						if (Boolean.FALSE.equals(newVisibility)) {
-							removeChildren(_node);
-						} else {
+						if (newVisibility != null && newVisibility) {
 							updateSubTree(_node, _tabBarModel);
 							initSubtree(_node);
+						} else {
+							removeChildren(_node);
 						}
 					}
 					return Bubble.BUBBLE;

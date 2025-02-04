@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.config.ConfigurationException;
@@ -19,19 +20,26 @@ import com.top_logic.bpe.execution.engine.GuiEngine;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.TLContext;
 
+/**
+ * Model builder for the list of active tasks.
+ */
 public class ActiveTasksListModelBuilder
 		extends ProcessExecutionListModelBuilder<ProcessExecutionListModelBuilder.Config> {
 
+	/**
+	 * Filter for {@link Token}s the current {@link Person} is actor for.
+	 */
 		public static class ActorFilter implements Filter<Token> {
 
 			private Person _currentPerson;
 
+			/**
+			 * Creates an {@link ActorFilter}.
+			 */
 			public ActorFilter() {
-				PersonManager r = PersonManager.getManager();
 				_currentPerson = TLContext.currentUser();
 			}
 
@@ -39,9 +47,17 @@ public class ActiveTasksListModelBuilder
 			public boolean accept(Token token) {
 				return GuiEngine.getInstance().isActor(_currentPerson, token);
 			}
-
 		}
 
+		/**
+		 * Creates a {@link ActiveTasksListModelBuilder} from configuration.
+		 * 
+		 * @param context
+		 *        The context for instantiating sub configurations.
+		 * @param config
+		 *        The configuration.
+		 */
+		@CalledByReflection
 		public ActiveTasksListModelBuilder(InstantiationContext context, Config config) throws ConfigurationException {
 			super(context, config);
 		}

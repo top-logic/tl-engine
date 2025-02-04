@@ -10,8 +10,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.listener.EventType.Bubble;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.layout.SingleSelectionModel;
 import com.top_logic.layout.component.TabComponent;
+import com.top_logic.layout.component.TabComponent.TabComponentTabBarModel;
 import com.top_logic.layout.tabbar.TabBarModel;
 import com.top_logic.layout.tabbar.TabBarModel.TabBarListener;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
@@ -20,6 +23,7 @@ import com.top_logic.mig.html.layout.Card;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutContainer;
 import com.top_logic.mig.html.layout.SimpleCard;
+import com.top_logic.mig.html.layout.VisibilityListener;
 
 /**
  * The class {@link ComponentTreeModel} creates a {@link #getTree() tree} that
@@ -239,26 +243,66 @@ public class ComponentTreeModel {
 
 		private final TabBarModel _tabBarModel;
 
+		private VisibilityListener _visibilityListener;
+
 		public InternalTabBarListener(DefaultMutableTLTreeNode node, TabBarModel tabBarModel) {
 			_node = node;
 			_tabBarModel = tabBarModel;
 			_tabBarModel.addTabBarListener(this);
+
+			if (tabBarModel instanceof TabComponentTabBarModel tabTabbarModel) {
+				TabComponent tabbar = tabTabbarModel.getComponent();
+
+				_visibilityListener = updateTreeOnVisibleChange(tabbar);
+
+				tabbar.addListener(LayoutComponent.VISIBILITY_EVENT, _visibilityListener);
+			}
+		}
+
+		private VisibilityListener updateTreeOnVisibleChange(TabComponent tabbar) {
+			return new VisibilityListener() {
+
+				@Override
+				public Bubble handleVisibilityChange(Object sender, Boolean oldVisibility, Boolean newVisibility) {
+					if (!Utils.equals(oldVisibility, newVisibility) && sender == tabbar) {
+						if (newVisibility != null && newVisibility) {
+							updateSubTree(_node, _tabBarModel);
+							initSubtree(_node);
+						} else {
+							removeChildren(_node);
+						}
+					}
+					return Bubble.BUBBLE;
+				}
+			};
 		}
 
 		void detach() {
 			_tabBarModel.removeTabBarListener(this);
+			if (_tabBarModel instanceof TabComponentTabBarModel tabTabbarModel) {
+				tabTabbarModel.getComponent().removeListener(LayoutComponent.VISIBILITY_EVENT, _visibilityListener);
+			}
 		}
 
 		@Override
 		public void inactiveCardChanged(TabBarModel sender, Card card) {
-			// currently nothing to do
+			handleCardChanged(sender);
 		}
 
 		@Override
 		public void notifyCardsChanged(TabBarModel sender, List<Card> oldAllCards) {
+			handleCardChanged(sender);
+		}
+
+		private void handleCardChanged(TabBarModel sender) {
 			if (sender != _tabBarModel) {
 				return;
 			}
+
+			handleTreeChange(sender);
+		}
+
+		private void handleTreeChange(TabBarModel sender) {
 			removeChildren(_node);
 			updateSubTree(_node, sender);
 			initSubtree(_node);

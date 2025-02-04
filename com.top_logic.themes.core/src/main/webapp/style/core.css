@@ -647,7 +647,7 @@ div.fltList {
 }
 
 .defaultFilterContainer .cPopupSelect,
-.defaultFilterContainer .cTextSelect,
+.defaultFilterContainer .tl-text-select,
 .defaultFilterContainer .cExpandableTextInput,
 .defaultFilterContainer .cTextInput,
 .defaultFilterContainer .cDatetime,

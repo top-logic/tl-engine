@@ -225,7 +225,7 @@
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 					command-label="Bearbeiten"
-					command-name="gridEdit"
+					command-name="switchToAJAXEdit"
 					component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
 					component-name="com.top_logic.demo/technical/components/selectionOptions/gridGrid.layout.xml#Grid"
 					user-id="root"

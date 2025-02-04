@@ -1665,13 +1665,13 @@ input.is-checkbox[disabled] {
     column-gap: var(--spacing-02);
 }
 
-.tl-text-select .tl-text-select__option {
+.tl-text-select .option {
     display: flex;
     align-items: center;
     gap: var(--spacing-01);
 }
 
-.tl-text-select__option-clear i.fa-solid.fa-xmark {
+.tl-text-select__option-clear i {
     vertical-align: middle;	/* Rule is needed to center the x icon vertically */
 }
 
@@ -1974,7 +1974,19 @@ span.disabled > span.lFlexible > select.tl-select:not( [multiple="multiple"] ) {
 
 .cExpandableTextInput .lFlexible,
 .cBlockTextInput .lFlexible {
-	display: inline-flex
+	display: inline-flex;
+}
+
+.cExpandableTextInput .lFixedRight,
+.cBlockTextInput .lFixedRight {
+	display: inline-flex;
+	align-items: stretch;
+}
+
+.cExpandableTextInput .lFixedRight a:not(.lFlexible).fToggle,
+.cBlockTextInput .lFixedRight a:not(.lFlexible).fToggle {
+	flex: 1;
+	height: inherit;
 }
 
 input[type="checkbox"] {

@@ -13,12 +13,8 @@ import java.io.OutputStream;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Array;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -48,7 +44,6 @@ import com.top_logic.basic.Log;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.Settings;
 import com.top_logic.basic.col.equal.EqualitySpecification;
-import com.top_logic.basic.col.map.MultiMaps;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationReader;
@@ -63,7 +58,6 @@ import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.FileBasedBinaryContent;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.binary.BinaryData;
-import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.gui.Theme;
@@ -370,31 +364,36 @@ public class TestComponentConfiguration extends BasicTestCase {
 	}
 
 	private static Map<String, List<BinaryData>> findOverlays() throws IOException {
-		Map<String, List<BinaryData>> overlays = new HashMap<>();
-		for (File webapp : FileManager.getInstance().getIDEPaths()) {
-			if (!webapp.getName().equals(ModuleLayoutConstants.WEBAPP_LOCAL_DIR_NAME)) {
-				throw new IllegalArgumentException(
-					"Expected " + webapp.getCanonicalPath() + " to be a web application.");
-			}
-			Path layoutFile = new File(webapp, ModuleLayoutConstants.LAYOUT_PATH).toPath();
-			if (!Files.isDirectory(layoutFile)) {
-				// No layouts
-				continue;
-			}
-			FileUtilities.walkFileTree(layoutFile, new SimpleFileVisitor<Path>() {
-				@Override
-				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-					FileVisitResult result = super.visitFile(file, attrs);
-					if (file.toString().endsWith(LayoutModelConstants.LAYOUT_XML_OVERLAY_FILE_SUFFIX)) {
-						String componentName = LayoutUtils.getOverlayedComponentPath(layoutFile.relativize(file));
-						MultiMaps.add(overlays, componentName,
-							BinaryDataFactory.createBinaryDataWithName(file, componentName), ArrayList::new);
-					}
-					return result;
+		FileManager fm = FileManager.getInstance();
+
+		Collection<String> next = new ArrayList<>();
+		String layoutPath = "/" + ModuleLayoutConstants.LAYOUT_PATH + "/";
+		Collection<String> worklist = fm.getResourcePaths(layoutPath);
+		List<String> overlayPaths = new ArrayList<>();
+		do {
+			for (String path : worklist) {
+				if (fm.isDirectory(path)) {
+					next.addAll(fm.getResourcePaths(path));
+					continue;
 				}
-			});
+
+				if (path.endsWith(LayoutModelConstants.LAYOUT_XML_OVERLAY_FILE_SUFFIX)) {
+					overlayPaths.add(path);
+				}
+			}
+			worklist = next;
+			next = new ArrayList<>();
+		} while (!worklist.isEmpty());
+
+		Map<String, List<BinaryData>> overlays = new HashMap<>();
+		for (String overlayPath : overlayPaths) {
+			String baseName = LayoutUtils.baseName(overlayPath);
+			String componentName = baseName.substring(layoutPath.length());
+
+			List<BinaryData> overlayData = fm.getDataOverlays(overlayPath);
+			Collections.reverse(overlayData);
+			overlays.put(componentName, overlayData);
 		}
-		overlays.values().forEach(Collections::reverse);
 		return overlays;
 	}
 

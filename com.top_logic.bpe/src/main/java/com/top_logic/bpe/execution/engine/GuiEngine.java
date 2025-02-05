@@ -18,7 +18,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.bpe.bpml.display.RuleCondition;
 import com.top_logic.bpe.bpml.display.RuleType;
 import com.top_logic.bpe.bpml.display.SequenceFlowRule;
-import com.top_logic.bpe.bpml.display.StandardRule;
+import com.top_logic.bpe.bpml.display.ConfigurableCondition;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.bpml.model.Edge;
 import com.top_logic.bpe.bpml.model.ExclusiveGateway;
@@ -104,7 +104,7 @@ public class GuiEngine {
 			if (rule != null) {
 				// Collect all failing conditions
 				rule.getRuleConditions().stream()
-					.map(config -> (RuleCondition) new StandardRule(null, (StandardRule.Config<?>) config))
+					.map(config -> (RuleCondition) new ConfigurableCondition(null, (ConfigurableCondition.Config<?>) config))
 					.filter(condition -> condition.getRuleType() == RuleType.DEFAULT)
 					.filter(condition -> !condition.getTestCondition(token.getProcessExecution()))
 					.map(RuleCondition::getMessage)
@@ -129,7 +129,7 @@ public class GuiEngine {
 
 			if (rule != null) {
 				warnings = rule.getRuleConditions().stream()
-					.map(config -> (RuleCondition) new StandardRule(null, (StandardRule.Config<?>) config)) // Instantiate
+					.map(config -> (RuleCondition) new ConfigurableCondition(null, (ConfigurableCondition.Config<?>) config)) // Instantiate
 																											// each
 																											// RuleCondition
 					.filter(condition -> condition.getRuleType() == RuleType.WARNING) // Only

@@ -269,7 +269,8 @@ public class MigrationUtils {
 		Element owner = getTLTypeOrFail(log, module, reference.getTypeName());
 		Element attributes = getAttributes(log, owner);
 		if (attributes == null) {
-			attributes = model.createElement(AttributedTypeConfig.ATTRIBUTES);
+			String attributesTag = attributesTag(owner);
+			attributes = model.createElement(attributesTag);
 			owner.appendChild(attributes);
 		}
 		Element newAttribute = model.createElement(tagName);
@@ -630,8 +631,10 @@ public class MigrationUtils {
 	}
 
 	private static Element getAttributes(Log log, Element structuredType) {
+		String attributes = attributesTag(structuredType);
+
 		return getUniqueChild(structuredType,
-			child -> AttributedTypeConfig.ATTRIBUTES.equals(child.getTagName()),
+			child -> attributes.equals(child.getTagName()),
 			child -> log.error("Multiple attributes: " + DOMUtil.toString(structuredType)));
 	}
 
@@ -1946,11 +1949,19 @@ public class MigrationUtils {
 		Element newOwner = getTLTypeOrFail(log, newModule, newName.getTypeName());
 		Element attributes = getAttributes(log, newOwner);
 		if (attributes == null) {
-			attributes = tlModel.createElement(AttributedTypeConfig.ATTRIBUTES);
+			String attributesTag = attributesTag(newOwner);
+			attributes = tlModel.createElement(attributesTag);
 			newOwner.appendChild(attributes);
 		}
 		part.setAttribute(PartConfig.NAME, newName.getPartName());
 		attributes.appendChild(part);
+	}
+
+	private static String attributesTag(Element structuredType) {
+		String attributes =
+			structuredType.getLocalName().equals(EnumConfig.TAG_NAME) ? EnumConfig.CLASSIFIERS
+				: AttributedTypeConfig.ATTRIBUTES;
+		return attributes;
 	}
 
 	/**

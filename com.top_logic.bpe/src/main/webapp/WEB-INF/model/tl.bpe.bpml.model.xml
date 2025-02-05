@@ -522,6 +522,16 @@
 				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.SequenceFlowImpl"/>
 			</annotations>
 			<attributes>
+			    <property name="withConfirm"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<default-value>
+							<boolean value="true"/>
+						</default-value>
+						<bpml-extension/>
+					</annotations>
+				</property>
 				<property name="rule"
 					type="SequenceFlowRule"
 				>

@@ -75,13 +75,10 @@
 		</config>
 		
 		<config service-class="com.top_logic.model.search.expr.config.SearchBuilder">
-			<instance class="com.top_logic.model.search.expr.config.SearchBuilder">
+			<instance>
 				<methods>
 					<method name="createProcessInstance" class="com.top_logic.bpe.execution.script.CreateProcessInstance$Builder"/>					
 				</methods>
-				<method-resolvers>
-					<method-resolver class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions$Module"/>
-				</method-resolvers>
 			</instance>
 		</config>
 	</services>

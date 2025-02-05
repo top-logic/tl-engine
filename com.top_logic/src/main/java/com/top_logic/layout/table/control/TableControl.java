@@ -35,6 +35,7 @@ import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.listener.PropertyListener;
+import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
@@ -789,13 +790,16 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	}
 
 	private int getLastClickedRow() {
-		int lastClickedRow;
-		if (getSelectionModel() instanceof SingleSelectionModel) {
-			lastClickedRow = -1;
-		} else {
-			Object lastSelectedRowObject = ((DefaultMultiSelectionModel) getSelectionModel()).getLastSelected();
-			lastClickedRow = getViewModel().getRowOfObject(lastSelectedRowObject);
+		int lastClickedRow = -1;
+
+		if (getSelectionModel() instanceof DefaultMultiSelectionModel multiselectionModel) {
+			Object lastSelectedRowObject = multiselectionModel.getLastSelected();
+
+			if (lastSelectedRowObject != null) {
+				lastClickedRow = getViewModel().getRowOfObject(lastSelectedRowObject);
+			}
 		}
+
 		return lastClickedRow;
 	}
     
@@ -1161,8 +1165,12 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		if (selectionModel instanceof DefaultSingleSelectionModel) {
 			row = viewModel.getRowOfObject(((DefaultSingleSelectionModel) selectionModel).getSingleSelection());
 		} else {
-			Object lastSelectedRow = ((DefaultMultiSelectionModel) selectionModel).getLastSelected();
-			row = viewModel.getRowOfObject(lastSelectedRow);
+			DefaultMultiSelectionModel multiselectionModel = (DefaultMultiSelectionModel) selectionModel;
+			Object selected = multiselectionModel.getLastSelected();
+			if (selected == null) {
+				selected = CollectionUtilShared.getSingleValueFromCollection(multiselectionModel.getSelection());
+			}
+			row = viewModel.getRowOfObject(selected);
 		}
 		if (row != TableViewModel.NO_ROW) {
 			getVisiblePaneRequest().setPersistentRowRange(IndexRange.singleIndex(row));

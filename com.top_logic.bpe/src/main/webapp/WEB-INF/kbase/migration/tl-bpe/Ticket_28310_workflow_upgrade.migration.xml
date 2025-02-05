@@ -10,7 +10,7 @@
 		<dependency name="Ticket_27906_polymorphic_format_annotations"
 			module="tl"
 		/>
-		<dependency name="Ticket_28298_polymorphic_groups"
+		<dependency name="Ticket_28338_create_duration"
 			module="tl-element"
 		/>
 		<dependency name="Ticket_28298_add_group_member_options"
@@ -71,6 +71,25 @@
 			name="tl5.enum:bpe.execution.state"
 			new-name="tl.bpe.execution:ExecutionState"
 		/>
+		<update-property 
+			name="tl.bpe.execution:ExecutionState#bpe.execution.state.running"
+			new-name="tl.bpe.execution:ExecutionState#RUNNING"
+		/>
+		<update-property 
+			name="tl.bpe.execution:ExecutionState#bpe.execution.state.finished"
+			new-name="tl.bpe.execution:ExecutionState#FINISHED"
+		/>
+		<update-property 
+			name="tl.bpe.execution:ExecutionState#bpe.execution.state.aborted"
+			new-name="tl.bpe.execution:ExecutionState#ABORTED"
+		/>
+
+		<update-reference name="tl.bpe.execution:ProcessExecution#collaboration"
+			mandatory="false"
+		/>
+		<update-reference name="tl.bpe.execution:ProcessExecution#process"
+			mandatory="false"
+		/>
 		
 		<!-- 
 			Invert reference tl.bpe.execution:Token#processExecution to 
@@ -125,18 +144,33 @@
 			navigate="true"
 		/>
 		
+		<add-annotations name="tl.bpe.execution:ProcessExecution#executionState">
+			<annotations>
+				<default-value>
+					<classifier value="RUNNING"/>
+				</default-value>
+			</annotations>
+		</add-annotations>
+
+		<delete-property name="tl.bpe.bpml:TimerEventDefinition#delayInMillis"/>
+
+		<update-property 
+			name="tl.bpe.bpml:TimerEventDefinition#delayInUnit"
+			new-name="tl.bpe.bpml:TimerEventDefinition#delayInMillis"
+		/>
+
+		<!-- TODO: Not correct for duration not given in milliseconds: timeUnit must be considered. -->
 		<change-part-type
 			part="tl.bpe.bpml:TimerEventDefinition#delayInMillis"
 			target="tl.core:Duration"
 		/>
+
+		<delete-property name="tl.bpe.bpml:TimerEventDefinition#timeUnit"/>
 		
 		<delete-reference name="tl.bpe.execution:Token#dynamicActors"/>
 		
 		<delete-property name="tl.bpe.execution:Token#description"/>
-		
-		<delete-property name="tl.bpe.bpml:TimerEventDefinition#delayInUnit"/>
-		<delete-property name="tl.bpe.bpml:TimerEventDefinition#timeUnit"/>
-		
+				
 		<delete-property name="tl.bpe.bpml:Participant#taskTitle"/>
 		
 		<create-datatype name="tl.bpe.bpml:ProcessFormDefinition"
@@ -385,9 +419,13 @@ $t.get(`tl.bpe.bpml:Task#titleI18N`).localize() || $t.get(`tl.bpe.bpml:Task#name
 				</dynamic-icon>
 			</annotations>
 		</add-annotations>
-		<add-annotations name="tl.bpe.execution:Token#name">
+
+		<!-- Delete and re-create, since it was an override before. -->		
+		<delete-property name="tl.bpe.execution:Token#name"/>
+		<create-property name="tl.bpe.execution:Token#name"
+			type="tl.core:String"
+		>
 			<annotations>
-				<sort-order value="1.0"/>
 				<storage-algorithm>
 					<query>
 						<expr><![CDATA[token -> {
@@ -406,8 +444,10 @@ $t.get(`tl.bpe.bpml:Task#titleI18N`).localize() || $t.get(`tl.bpe.bpml:Task#name
 }]]></expr>
 					</query>
 				</storage-algorithm>
+				<sort-order value="1.0"/>
 			</annotations>
-		</add-annotations>
+		</create-property>
+
 		<add-annotations name="tl.bpe.bpml:EventDefinition#event">
 			<annotations>
 				<visibility value="hidden"/>
@@ -532,6 +572,14 @@ $t.get(`tl.bpe.bpml:Task#titleI18N`).localize() || $t.get(`tl.bpe.bpml:Task#name
 		<reorder-part name="tl.bpe.bpml:Participant#tokenType"/>
 		<reorder-part name="tl.bpe.bpml:Participant#defaultOperation"/>
 		<reorder-part name="tl.bpe.bpml:Participant#edgeFormType"/>
+
+		<reorder-part name="tl.bpe.execution:ProcessExecution#allTokens"
+			before="activeTokens"
+		/>
+		<reorder-part name="tl.bpe.execution:Token#processExecution"
+			before="finishDate"
+		/>
+
 		<delete-class name="tl.bpe.execution:Named"/>
 	</processors>
 	<post-processors/>

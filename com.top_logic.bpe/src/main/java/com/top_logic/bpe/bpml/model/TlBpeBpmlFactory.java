@@ -419,6 +419,13 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
+	 * Lookup {@link SequenceFlow#WITH_CONFIRM_ATTR} of {@link SequenceFlow}.
+	 */
+	public static com.top_logic.model.TLProperty getWithConfirmSequenceFlowAttr() {
+		return (com.top_logic.model.TLProperty) getSequenceFlowType().getPart(SequenceFlow.WITH_CONFIRM_ATTR);
+	}
+
+	/**
 	 * Lookup {@link Lane} type.
 	 */
 	public static com.top_logic.model.TLClass getLaneType() {

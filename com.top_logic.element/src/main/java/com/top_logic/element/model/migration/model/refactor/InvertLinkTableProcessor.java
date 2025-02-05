@@ -110,7 +110,8 @@ public class InvertLinkTableProcessor extends AbstractConfiguredInstance<InvertL
 		String tableName = getConfig().getTable();
 		QualifiedPartName invertedReference = getConfig().getReference();
 
-		log.info("Inverting links " + (invertedReference == null ? "" : "of reference '" + invertedReference + "' ")
+		log.info("Inverting links "
+			+ (invertedReference == null ? "" : "of reference '" + invertedReference.getName() + "' ")
 			+ "in table '" + tableName + "'. ");
 
 		MORepository repository = context.getPersistentRepository();

@@ -1539,9 +1539,9 @@ public class MigrationUtils {
 	public static void updateEnum(Log log, Document tlModel, QualifiedTypeName typeName, QualifiedTypeName newName,
 			AnnotatedConfig<TLTypeAnnotation> annotations) throws MigrationException {
 		Element module = getTLModuleOrFail(tlModel, typeName.getModuleName());
-		Element type = getTLEnumeration(log, module, typeName.getName());
+		Element type = getTLEnumeration(log, module, typeName.getTypeName());
 		if (type == null) {
-			throw new MigrationException("No such enum '" + typeName.getName() + "'.");
+			throw new MigrationException("No such enum '" + typeName.getName() + "' in module config.");
 		}
 
 		if (!annotations.getAnnotations().isEmpty()) {

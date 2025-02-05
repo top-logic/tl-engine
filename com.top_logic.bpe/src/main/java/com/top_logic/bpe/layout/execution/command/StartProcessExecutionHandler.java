@@ -20,6 +20,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.bpe.bpml.model.Edge;
 import com.top_logic.bpe.bpml.model.Node;
+import com.top_logic.bpe.bpml.model.SequenceFlow;
 import com.top_logic.bpe.bpml.model.Task;
 import com.top_logic.bpe.execution.engine.ExecutionEngine;
 import com.top_logic.bpe.execution.engine.GuiEngine;
@@ -126,26 +127,29 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler impleme
 					new SelectTransitionDialog(token, suspended).open(aContext);
 				} else {
 					Edge edge = GuiEngine.getInstance().getSingleOutgoingEdge(token);
-					Command continuationYes =
-						suspended.resumeContinuation(Collections.singletonMap(FinishTaskCommand.CONTEXT, edge));
-					Command continuationNo = suspended.resumeContinuation(
-						Collections.singletonMap(FinishTaskCommand.CONTEXT, FinishTaskCommand.CANCEL));
-					String message = Resources.getInstance().getString(I18NConstants.CONFIRM_FINISH_TASK);
-					MessageBox.confirm(aContext.getWindowScope(), MessageType.CONFIRM, message,
-						MessageBox.button(ButtonType.YES, continuationYes),
-						MessageBox.button(ButtonType.NO, continuationNo));
+					if (edge instanceof SequenceFlow) {
+					    SequenceFlow sf = (SequenceFlow) edge;
+					    boolean withConfirm = sf.getWithConfirm();
+					    
+					    if (withConfirm) {
+					        Command continuationYes = suspended.resumeContinuation(
+					            Collections.singletonMap(FinishTaskCommand.CONTEXT, edge));
+					        Command continuationNo = suspended.resumeContinuation(
+					            Collections.singletonMap(FinishTaskCommand.CONTEXT, FinishTaskCommand.CANCEL));
+					        String message = Resources.getInstance().getString(I18NConstants.CONFIRM_FINISH_TASK);
+					        MessageBox.confirm(aContext.getWindowScope(), MessageType.CONFIRM, message,
+					            MessageBox.button(ButtonType.YES, continuationYes),
+					            MessageBox.button(ButtonType.NO, continuationNo));
+					    } else {
+							executeTransition(token, edge);
+					    }
+					}
 				}
 				return suspended;
 			} else {
 				if (context instanceof Edge edge) {
 					// Advance process to next step(s).
-					KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-					try (Transaction tx = kb.beginTransaction()) {
-						ExecutionEngine.getInstance().execute(token, Collections.singletonList(edge), null);
-						tx.commit();
-					} catch (Exception ex) {
-						throw new RuntimeException("Can not complete task for token '" + token + "'.", ex);
-					}
+					executeTransition(token, edge);
 				} else if (context instanceof Decision decision) {
 					KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 					try (Transaction tx = kb.beginTransaction()) {
@@ -192,6 +196,16 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler impleme
 
 	private ProcessExecution retrieveProcessExecution(HandlerResult res) {
 		return (ProcessExecution) CollectionUtil.getFirst(res.getProcessed());
+	}
+
+	private void executeTransition(Token token, Edge edge) {
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		try (Transaction tx = kb.beginTransaction()) {
+			ExecutionEngine.getInstance().execute(token, Collections.singletonList(edge), null);
+			tx.commit();
+		} catch (Exception ex) {
+			throw new RuntimeException("Can not complete task for token '" + token + "'.", ex);
+		}
 	}
 
 }

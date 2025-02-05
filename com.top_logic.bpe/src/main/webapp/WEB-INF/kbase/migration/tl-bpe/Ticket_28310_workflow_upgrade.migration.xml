@@ -77,7 +77,7 @@
 			tl.bpe.execution:ProcessExecution#allTokens and make it a multi-composition.
 		-->
 
-		<delete-reference name="tl.bpe.execution:ProcessExecution#allTokens"/>
+		<delete-inverse-reference name="tl.bpe.execution:ProcessExecution#allTokens"/>
 
 		<create-reference name="tl.bpe.execution:ProcessExecution#allTokens"
 			composite="true"

@@ -277,30 +277,10 @@ public class WarningsDialog {
 			}
 		};
 
-		Command expandWarnings = new ShowWarningsWithoutFormContext(warnings, onCancel);
-
 		return MessageBox.confirm(scope, LAYOUT, true,
 			title, message,
 			MessageBox.button(ButtonType.YES, onConfirm),
-			MessageBox.button(ButtonType.CANCEL, expandWarnings));
-	}
-
-	// Inner class to handle warnings directly from the list of ResKey
-	private static final class ShowWarningsWithoutFormContext implements Command {
-		private final List<ResKey> warnings;
-
-		private final Command continuation;
-
-		public ShowWarningsWithoutFormContext(List<ResKey> warnings, Command continuation) {
-			this.warnings = warnings;
-			this.continuation = continuation;
-		}
-
-		@Override
-		public HandlerResult executeCommand(DisplayContext context) {
-			// Implement any additional logic for displaying ResKey-based warnings if needed.
-			return continuation.executeCommand(context);
-		}
+			MessageBox.button(ButtonType.CANCEL, onCancel));
 	}
 
 }

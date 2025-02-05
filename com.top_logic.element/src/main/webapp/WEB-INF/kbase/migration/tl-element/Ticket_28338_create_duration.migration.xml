@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28338_create_duration"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_28298_polymorphic_groups"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<create-datatype name="tl.core:Duration"
+			db_size="20"
+			db_type="long"
+			kind="Integer"
+		>
+			<annotations>
+				<config-type value="DURATION"/>
+				<search-range value="true"/>
+			</annotations>
+			<storage-mapping class="com.top_logic.element.meta.kbbased.storage.mappings.LongMapping"/>
+		</create-datatype>
+	</processors>
+</migration>

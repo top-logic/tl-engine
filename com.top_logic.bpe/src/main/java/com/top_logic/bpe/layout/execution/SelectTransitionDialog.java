@@ -26,7 +26,7 @@ import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.bpe.bpml.display.RuleCondition;
 import com.top_logic.bpe.bpml.display.RuleType;
 import com.top_logic.bpe.bpml.display.SequenceFlowRule;
-import com.top_logic.bpe.bpml.display.StandardRule;
+import com.top_logic.bpe.bpml.display.ConfigurableCondition;
 import com.top_logic.bpe.bpml.model.DefaultGateway;
 import com.top_logic.bpe.bpml.model.Edge;
 import com.top_logic.bpe.bpml.model.EndEvent;
@@ -525,7 +525,7 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 							// Check visibility rules - only show edges where all HIDDEN conditions
 							// are met
 							boolean showEdge = rule.getRuleConditions().stream()
-								.map(config -> (RuleCondition) new StandardRule(null, (StandardRule.Config<?>) config))
+								.map(config -> (RuleCondition) new ConfigurableCondition(null, (ConfigurableCondition.Config<?>) config))
 								.filter(condition -> condition.getRuleType() == RuleType.HIDDEN) // Only
 																									// consider
 																									// HIDDEN

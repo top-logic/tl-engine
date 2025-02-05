@@ -20,7 +20,7 @@ import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.bpe.bpml.display.RuleCondition;
 import com.top_logic.bpe.bpml.display.RuleType;
 import com.top_logic.bpe.bpml.display.SequenceFlowRule;
-import com.top_logic.bpe.bpml.display.StandardRule;
+import com.top_logic.bpe.bpml.display.ConfigurableCondition;
 import com.top_logic.bpe.bpml.model.BoundaryEvent;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.bpml.model.Edge;
@@ -390,7 +390,7 @@ public class ExecutionEngine {
 				SequenceFlow sf = (SequenceFlow) edge;
 				SequenceFlowRule rule = sf.getRule();
 				Boolean allConditionsTrue = rule.getRuleConditions().stream()
-					.map(config -> (RuleCondition) new StandardRule(null, (StandardRule.Config<?>) config)) // Cast
+					.map(config -> (RuleCondition) new ConfigurableCondition(null, (ConfigurableCondition.Config<?>) config)) // Cast
 																											// to
 																											// RuleCondition
 					.filter(condition -> condition.getRuleType() != RuleType.WARNING) // Ignore

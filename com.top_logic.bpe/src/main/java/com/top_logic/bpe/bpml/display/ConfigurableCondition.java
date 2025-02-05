@@ -15,6 +15,8 @@ import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.bpe.bpml.model.SequenceFlow;
 import com.top_logic.bpe.execution.model.ProcessExecution;
+import com.top_logic.bpe.layout.execution.SelectTransitionDialog;
+import com.top_logic.layout.form.component.WarningsDialog;
 import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -27,7 +29,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  *
  * @author <a href="mailto:Jonathan.Hüsing@top-logic.com">Jonathan Hüsing</a>
  */
-public class StandardRule extends AbstractConfiguredInstance<StandardRule.Config<?>> implements RuleCondition {
+public class ConfigurableCondition extends AbstractConfiguredInstance<ConfigurableCondition.Config<?>> implements RuleCondition {
 
 	private final QueryExecutor _condition;
 
@@ -36,14 +38,14 @@ public class StandardRule extends AbstractConfiguredInstance<StandardRule.Config
 	private final ResKey _message;
 
 	/**
-	 * Creates a {@link StandardRule}.
+	 * Creates a {@link ConfigurableCondition}.
 	 *
 	 * @param context
 	 *        The context for instantiating sub configurations.
 	 * @param config
 	 *        The configuration.
 	 */
-	public StandardRule(InstantiationContext context, Config<?> config) {
+	public ConfigurableCondition(InstantiationContext context, Config<?> config) {
 		super(context, config);
 
 		_ruleType = config.getRuleType();
@@ -90,22 +92,19 @@ public class StandardRule extends AbstractConfiguredInstance<StandardRule.Config
 		Expr getCondition();
 
 		/**
-		 * Defines the type of Rule we want to use.
+		 * Defines rule enforcement for {@link SequenceFlow} transitions when a
+		 * {@link ConfigurableCondition} evaluates to false.
 		 *
 		 * <p>
-		 * Default - If false, we cannot access this {@link SequenceFlow} and get a Custom Error
-		 * Message.
+		 * Default - Block {@link SequenceFlow} and show error message.
 		 * </p>
 		 * 
-		 * 
 		 * <p>
-		 * Hidden - If false, we cannot see the {@link SequenceFlow}.
+		 * Hidden - Hide {@link SequenceFlow} from {@link SelectTransitionDialog}
 		 * </p>
 		 * 
-		 * 
 		 * <p>
-		 * Warning - If false, we can access this {@link SequenceFlow}, however we get a pop up with
-		 * a custom Warning Message.
+		 * Warning - Allow {@link SequenceFlow} but show a {@link WarningsDialog}
 		 * </p>
 		 */
 		@Name(RULETYPE)

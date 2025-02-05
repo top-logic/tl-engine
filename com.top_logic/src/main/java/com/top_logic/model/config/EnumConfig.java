@@ -28,8 +28,14 @@ public interface EnumConfig extends TypeConfig {
 	String TAG_NAME = "enum";
 
 	/**
+	 * @see #getClassifiers()
+	 */
+	String CLASSIFIERS = "classifiers";
+
+	/**
 	 * The literals of the enumeration.
 	 */
+	@Name(CLASSIFIERS)
 	@DefaultContainer
 	@Key(ClassifierConfig.NAME)
 	List<ClassifierConfig> getClassifiers();

@@ -1,0 +1,58 @@
+<h2>​Syntax</h2>
+
+<pre>
+	<code>createProcessInstance($nameOfWorkflowParticipant, $nameOfInstance)
+</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Erstellt und initialisiert eine neue Prozessinstanz basierend auf einem Worfklow (Participant). Die Funktion sucht nach einem StartEvent des angegebenen Workflows und initialisiert eine neue Prozessinstanz mit diesem StartEvent. Die Prozessinstanz wird mit dem gegebenen Namen oder einem Standardnamen versehen initialisiert.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>participantName</td>
+			<td>Zeichenkette</td>
+			<td>Name des Workflows, dessen Prozess instanziiert werden soll</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>processName</td>
+			<td>Zeichenkette</td>
+			<td>Name für die neue Prozessinstanz</td>
+			<td>nein</td>
+			<td>"newProcessInstance"</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> ProcessExecution</p>
+
+<p>Gibt die erstellte und initialisierte Prozessinstanz zurück. Falls der Workflow nicht gefunden wird oder kein StartEvent existiert, wird null zurückgegeben.</p>
+
+<h2>Beispiele</h2>
+
+<pre>
+	<code>// Erstellt eine Prozessinstanz für den Workflow namens Ticketsystem mit Standardnamen
+createProcessInstance("Ticketsystem")
+
+// Erstellt eine Prozessinstanz für den Workflow namens Ticketsystem  mit spezifischem Namen
+createProcessInstance("Ticketsystem", "Ticket-001")</code>
+</pre>
+
+<p>​</p>

@@ -3463,9 +3463,10 @@ public class Util {
 		if (columns.isEmpty()) {
 			return;
 		}
+		
 		CompiledStatement sql = query(parameterDefs,
 		update(
-			table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
+			table(SQLH.mangleDBName(part.getTable())),
 			and(
 				eqBranch(),
 				eqSQL(

@@ -27,6 +27,7 @@ import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent;
 import com.top_logic.bpe.layout.execution.SelectTransitionDialog;
+import com.top_logic.bpe.layout.execution.SelectTransitionDialog.Decision;
 import com.top_logic.bpe.layout.execution.init.ProcessInitializer;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -141,6 +142,14 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler impleme
 					KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 					try (Transaction tx = kb.beginTransaction()) {
 						ExecutionEngine.getInstance().execute(token, Collections.singletonList(edge), null);
+						tx.commit();
+					} catch (Exception ex) {
+						throw new RuntimeException("Can not complete task for token '" + token + "'.", ex);
+					}
+				} else if (context instanceof Decision decision) {
+					KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+					try (Transaction tx = kb.beginTransaction()) {
+						ExecutionEngine.getInstance().execute(token, decision.getPath(), null);
 						tx.commit();
 					} catch (Exception ex) {
 						throw new RuntimeException("Can not complete task for token '" + token + "'.", ex);

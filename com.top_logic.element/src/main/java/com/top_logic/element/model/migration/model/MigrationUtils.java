@@ -1541,7 +1541,7 @@ public class MigrationUtils {
 		Element module = getTLModuleOrFail(tlModel, typeName.getModuleName());
 		Element type = getTLEnumeration(log, module, typeName.getName());
 		if (type == null) {
-			throw new MigrationException("No such enum '" + typeName + "'.");
+			throw new MigrationException("No such enum '" + typeName.getName() + "'.");
 		}
 
 		if (!annotations.getAnnotations().isEmpty()) {

@@ -2888,6 +2888,14 @@ div.ssiContentArea {
 	--highlight-weight: bolder;
 }
 
+.tl-text-primary {
+    --highlight-fg: var(--text-primary);
+}
+
+.tl-text-secondary {
+    --highlight-fg: var(--text-secondary);
+}
+
 /* If the accent style is directly set on an icon, set all text colors to the view-mode foreground */
 i.tl-danger,
 i.tl-warning,
@@ -2900,3 +2908,5 @@ i.tl-accent-2 {
 	--highlight-fg: var(--highlight);
 	color: var(--highlight, inherit);
 }
+
+

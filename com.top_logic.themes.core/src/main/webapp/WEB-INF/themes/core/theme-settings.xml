@@ -2587,11 +2587,10 @@
 	/>
 	
 	<string name="form-label-height"
-		value="24px"
+		value="1.5rem"
 	/>
-	
 	<string name="form-line-height"
-		value="2rem"
+		value="1.5rem"
 	/>
 	
 	<size name="breadcrumb-height"

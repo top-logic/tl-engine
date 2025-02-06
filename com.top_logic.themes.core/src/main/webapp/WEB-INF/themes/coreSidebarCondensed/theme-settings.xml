@@ -109,8 +109,5 @@
 	<string name="spacing-07"
 		value="3rem"
 	/>
-	<string name="form-line-height"
-		value="1.5rem"
-	/>
 </settings>
 

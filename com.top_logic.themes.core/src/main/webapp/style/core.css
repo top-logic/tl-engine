@@ -1225,7 +1225,7 @@ td.rightList {
 	color: var(--button-secondary);
 	background: transparent;
 	box-shadow: inset 0px 0px 0px 2px var(--button-secondary);
-	height: var(--form-line-height);
+	height: 2rem;
 	padding: var(--spacing-02) var(--spacing-03);
 	border-radius: .25rem;
 	border: none;
@@ -2253,7 +2253,7 @@ h5.card-title > a:hover {
     display: flex;
     align-items: center;
     gap: var(--spacing-02);
-    height: var(--form-line-height);
+    height: 2rem;
     padding: 0 var(--spacing-02);
     position: relative;
 }
@@ -2690,7 +2690,7 @@ div.ssiContentArea {
 	align-items: center;
 	flex-shrink: 0;
 	gap: var(--spacing-02);
-	height: var(--form-line-height);
+	height: 2rem;
 	padding: 0 var(--spacing-03);
 	border-radius: var(--corner-radius);
 	font-family: var(--font-family);

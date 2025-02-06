@@ -414,11 +414,6 @@ div.rf_buttons {
 	align-items: center;
 }
 
-.rf_columnsLayout.keep .rf_inputCell.rf_labelAbove {
-	display: flex !important;
-	flex-direction: column;
-}
-
 .rf_columnsLayout.keep .rf_inputCell:not(.rf_labelAbove) .rf_cell {
 	min-width: var(--RF_FIRST_COLUMN_WIDTH);
 }
@@ -453,9 +448,37 @@ div.rf_buttons {
 
 /* even empty cells have a height */
 .rf_cell {
-	min-height: var(--form-line-height);
+	min-height: 1.5rem;
 	box-sizing: border-box;
 	overflow-wrap: break-word;
+	margin-top: 0.5rem;		/* Margin is associated with the margin in the following selector */
+}
+
+/* 
+ * Form field vertical margins:
+ * - Default .rf_cell margin-top: 0.5rem
+ * - Reduced to 0.25rem when cell contains larger inputs (2rem instead of 1.5)
+ *   (ensures balanced alignment of label and field)
+ */
+.rf_cell:has(
+  .lFixedRight a:not(.lFlexible),
+  .lFixedRight:not(.timePart) span:not(.lFlexible),
+  .lFixedRight span span:not(.lFlexible),
+  .lFixedRight .fChoose:not(.lFlexible),
+  .cTextInput input,
+  .cIntegerInput input,
+  .cExpandableTextInput input,
+  .cBlockTextInput input,
+  .cPopupSelect input,
+  .cDateInput input,
+  .cTimeInput input,
+  select.tl-select:not([multiple="multiple"]),
+  .cIconChooser .fptBodyContent .displayedIcons,
+  .ddwttDropBtn,
+  .ddwttSearch,
+  .ddwttTag
+) {
+  margin-top: 0.25rem;
 }
 
 /* columns layout */
@@ -721,6 +744,7 @@ div.dfListAdd {
 
 .rf_label {
 	white-space: nowrap;
+    margin-top: .5rem;
 }
 
 /* The line height of the label is reduced, if the label is rendered above, or there is not enough space. */
@@ -1610,8 +1634,8 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
     align-items: center;
     justify-content: center;
     color: var(--button-fg, var(--icon-primary));
-    height: var(--form-line-height);
-    width: var(--form-line-height);
+    height: 2rem;
+    width: 2rem;
 }
 
 .lFixedRight .button_minus {
@@ -1692,7 +1716,7 @@ input.is-checkbox[disabled] {
 	background: var(--highlight-bg, var(--field));
 	border: none;
 	padding: 0 var(--spacing-03);
-	height: var(--form-line-height);
+	height: 2rem;
 	box-sizing: border-box;
 	max-width: 100%;
 	white-space: break-spaces;
@@ -1928,7 +1952,7 @@ select.tl-select:not([multiple="multiple"]) {
 	color: var(--text-primary);
 	padding-left: var(--spacing-03);
 	padding-right: var(--spacing-06);
-	height: var(--form-line-height);
+	height: 2rem;
 	max-width: 100%;
 	box-sizing: border-box;
 	background-image: linear-gradient(45deg, transparent 49%, var(--icon-primary) 50%), linear-gradient(135deg, var(--icon-primary) 49%, transparent 50%);
@@ -2241,8 +2265,8 @@ div.imageContainer {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	height: var(--form-line-height);
-	width: var(--form-line-height);
+	height: 2rem;
+	width: 2rem;
     margin-bottom: var(--spacing-01);
     margin-right: var(--spacing-01);
 	border: 1px solid var(--border-subtle);
@@ -2520,7 +2544,7 @@ a.input-image.tristate.tBoolean {
 	letter-spacing: var(--body-02-letter-spacing);
 	width: fit-content;
 	max-width: 100%;
-	height: var(--form-line-height);
+	height: 2rem;
 	border: none;
 	display: inline-flex;
 	align-items: center;
@@ -2603,7 +2627,7 @@ span.disabled .ddwttDropBtn {
 	font-size: var(--body-02-font-size);
 	line-height: var(--body-02-line-height);
 	letter-spacing: var(--body-02-letter-spacing);
-	height: var(--form-line-height);
+	height: 2rem;
 	border: none;
 	border-radius: initial;
 	background: var(--field);
@@ -2681,7 +2705,7 @@ img.ddwttItemIcon {
 	width: fit-content;
 	align-items: center;
 	justify-content: center;
-	height: var(--form-line-height);
+	height: 2rem;
 	border: 1px solid var(--border-subtle);
 	box-sizing: border-box;
 	padding: 0 var(--spacing-02);

@@ -1168,7 +1168,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 			DefaultMultiSelectionModel multiselectionModel = (DefaultMultiSelectionModel) selectionModel;
 			Object selected = multiselectionModel.getLastSelected();
 			if (selected == null) {
-				selected = CollectionUtilShared.getSingleValueFromCollection(multiselectionModel.getSelection());
+				selected = CollectionUtilShared.getFirst(multiselectionModel.getSelection());
 			}
 			row = viewModel.getRowOfObject(selected);
 		}

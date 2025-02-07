@@ -84,6 +84,9 @@ public class TestJSON extends BasicTestCase {
 	
 	public void testDoubleParse() throws ParseException {
 		assertParse(Double.valueOf(42.13), "42.13");
+		assertParse(Double.valueOf(42.13), "4213E-2");
+		assertParse(Double.valueOf(42.13), "4.213E1");
+		assertParse(Double.valueOf(42.13), "4.213E+1");
 	}
 
 	public void testQuoteControlCharacters() {

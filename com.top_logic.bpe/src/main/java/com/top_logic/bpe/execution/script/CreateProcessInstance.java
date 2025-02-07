@@ -63,8 +63,8 @@ public class CreateProcessInstance extends GenericMethod {
 	 * Instantiates and initializes a process for the given participant
 	 * 
 	 * @param arguments
-	 *        script arguments where: args[0]: participant name (required) args[1]: process instance
-	 *        name (optional)
+	 *        script arguments where: args[0]: participant name (required) args[1]: start event name
+	 *        (optional) args[2]: name of newly created process instance (optional)
 	 * @param definitions
 	 *        evaluation context
 	 * @return initialized process execution or null if participant not found
@@ -76,13 +76,17 @@ public class CreateProcessInstance extends GenericMethod {
 			return null;
 		}
 
-		String processName = arguments.length > 1 ? asString(arguments[1]) : DEFAULT_PROCESS_NAME;
+		// Extract optional start event name (args[1])
+		String startEventName = arguments.length > 1 ? asString(arguments[1]) : null;
+
+		// Extract optional process name (args[2])
+		String processName = arguments.length > 2 ? asString(arguments[2]) : DEFAULT_PROCESS_NAME;
 		if (processName == null || processName.isEmpty()) {
 			processName = DEFAULT_PROCESS_NAME;
 		}
 
 		// Find start event using query
-		StartEvent startEvent = findStartEvent(participantName);
+		StartEvent startEvent = findStartEvent(participantName, startEventName);
 		if (startEvent == null) {
 			return null;
 		}
@@ -117,27 +121,35 @@ public class CreateProcessInstance extends GenericMethod {
 	}
 
 	/**
-	 * Locates start event by querying participant with given name
-	 * 
+	 * Locates start event for a participant with the given name and optional start event name
+	 *
 	 * @param participantName
-	 *        of the participant to find
-	 * @return matching start event or null if not found
+	 *        Name of the participant to find
+	 * @param startEventName
+	 *        Optional name of the start event (can be null)
+	 * @return Matching start event or null if not found
 	 */
-	private StartEvent findStartEvent(String participantName) {
+	private StartEvent findStartEvent(String participantName, String startEventName) {
 		try {
-			String searchExpression = String.format("""
-					all(`tl.bpe.bpml:Participant`)
-					.filter(p -> $p.get(`tl.bpe.bpml:Participant#name`) == "%s")
-					.singleElement()
-					.get(`tl.bpe.bpml:Participant#process`)
-					.get(`tl.bpe.bpml:Process#nodes`)
-					.filter(n -> $n.instanceOf(`tl.bpe.bpml:StartEvent`))
-					.singleElement()
-					""", participantName);
+			StringBuilder query = new StringBuilder()
+				.append("all(`tl.bpe.bpml:Participant`)")
+				.append(".filter(p -> $p.get(`tl.bpe.bpml:Participant#name`) == \"").append(participantName)
+				.append("\")")
+				.append(".singleElement()")
+				.append(".get(`tl.bpe.bpml:Participant#process`)")
+				.append(".get(`tl.bpe.bpml:Process#nodes`)")
+				.append(".filter(n -> $n.instanceOf(`tl.bpe.bpml:StartEvent`)");
 
-			Expr expr = new SearchExpressionParser(new StringReader(searchExpression)).expr();
-			QueryExecutor executor = QueryExecutor.compile(expr);
-			return (StartEvent) executor.execute();
+			if (startEventName != null && !startEventName.isEmpty()) {
+				query.append(" && $n.get(`tl.bpe.bpml:Node#name`).equals(\"").append(startEventName).append("\")");
+			}
+
+			query.append(")")
+				.append(".firstElement()");
+
+			Expr expr = new SearchExpressionParser(new StringReader(query.toString())).expr();
+			return (StartEvent) QueryExecutor.compile(expr).execute();
+
 		} catch (ParseException ex) {
 			throw new UnreachableAssertion(ex);
 		}
@@ -151,6 +163,7 @@ public class CreateProcessInstance extends GenericMethod {
 		/** Description of parameters for a {@link CreateProcessInstance}. */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("participant")
+			.optional("startEvent")
 			.optional("name")
 			.build();
 

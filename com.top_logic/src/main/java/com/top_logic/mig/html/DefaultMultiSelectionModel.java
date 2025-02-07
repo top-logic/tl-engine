@@ -272,10 +272,17 @@ public class DefaultMultiSelectionModel extends AbstractRestrainedSelectionModel
 	}
 
 	/**
-	 * object, that has been (de-)selected at last time of modification of this selection
-	 *         model.
+	 * object, that has been (de-)selected at last time of modification of this selection model.
+	 * 
+	 * <p>
+	 * Returns null if the selection has no lead object.
+	 * </p>
 	 */
 	public Object getLastSelected() {
+		if (_lastSelected == NO_LEAD) {
+			return null;
+		}
+
 		return _lastSelected;
 	}
 

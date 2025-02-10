@@ -45,15 +45,6 @@ public interface SequenceFlowBase extends com.top_logic.bpe.bpml.model.Edge {
 	String RULE_ATTR = "rule";
 
 	/**
-	 * Part <code>withConfirm</code> of <code>SequenceFlow</code>
-	 * 
-	 * <p>
-	 * Declared as <code>tl.core:Boolean</code> in configuration.
-	 * </p>
-	 */
-	String WITH_CONFIRM_ATTR = "withConfirm";
-
-	/**
 	 * Getter for part {@link #FORM_TYPE_ATTR}.
 	 */
 	default com.top_logic.model.TLClass getFormType() {
@@ -93,20 +84,6 @@ public interface SequenceFlowBase extends com.top_logic.bpe.bpml.model.Edge {
 	 */
 	default void setRule(com.top_logic.bpe.bpml.display.SequenceFlowRule newValue) {
 		tUpdateByName(RULE_ATTR, newValue);
-	}
-
-	/**
-	 * Getter for part {@link #WITH_CONFIRM_ATTR}.
-	 */
-	default boolean getWithConfirm() {
-		return (Boolean) tValueByName(WITH_CONFIRM_ATTR);
-	}
-
-	/**
-	 * Setter for part {@link #WITH_CONFIRM_ATTR}.
-	 */
-	default void setWithConfirm(boolean newValue) {
-		tUpdateByName(WITH_CONFIRM_ATTR, newValue);
 	}
 
 }

@@ -1,0 +1,56 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>reachableNodes($currentToken)
+</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Gibt alle Knoten zurück, die von der aktuellen Aufgabe einer Prozessinstanz aus erreicht werden können.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Prozess-Name</th>
+			<th>Typ</th>
+			<th>Typ Beschreibung</th>
+			<th>Obligatorisch</th>
+			<th>Standard</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>currentToken</td>
+			<td>Aufgabe</td>
+			<td>Aktuelle Aufgabe einer Prozessinstanz</td>
+			<td>Ja</td>
+			<td>-</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Menge&lt;Knoten&gt;</p>
+
+<p>Gibt eine Menge von erreichbaren Knoten zurück. Gibt false zurück, wenn der Parameter Sperre ungültig ist.</p>
+
+<h2>Beispiele:</h2>
+
+<pre>
+	<code>// Create a process instance with specific name
+processInstance = createProcessInstance($startEvent, "Process-001");
+
+// Get one of the current Tokens
+currentToken = $processInstance.get(`tl.bpe.execution:ProcessExecution#activeTokens`).firstElement();
+
+// Get all reachable nodes from current token
+reachableNodes($currentToken)</code>
+</pre>
+
+<p><strong>Ausgabe: </strong> Eine Menge von erreichbaren Knoten: [Node 2, Node 3, ...]</p>
+
+<p> </p>

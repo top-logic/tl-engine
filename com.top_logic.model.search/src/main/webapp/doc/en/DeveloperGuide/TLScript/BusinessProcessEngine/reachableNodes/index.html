@@ -1,0 +1,56 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>reachableNodes($currentToken)
+</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Returns all nodes that can be reached from the current token of a process instance.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Process name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>currentToken</td>
+			<td>Token</td>
+			<td>Current token of a process instance</td>
+			<td>Yes</td>
+			<td>-</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><strong>Type:</strong> Set&lt;Node&gt;</p>
+
+<p>Returns a set of reachable nodes. Returns false if the token parameter is invalid.</p>
+
+<h2>Examples</h2>
+
+<pre>
+	<code>// Create a process instance with specific name
+processInstance = createProcessInstance($startEvent, "Process-001");
+
+// Get one of the current Tokens
+currentToken = $processInstance.get(`tl.bpe.execution:ProcessExecution#activeTokens`).firstElement();
+
+// Get all reachable nodes from current token
+reachableNodes($currentToken)</code>
+</pre>
+
+<p><strong>Output: </strong> A set of reachable Nodes: [Node 2, Node 3, ...]</p>
+
+<p>​</p>

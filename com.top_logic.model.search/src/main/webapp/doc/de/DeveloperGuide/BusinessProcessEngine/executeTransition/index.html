@@ -1,0 +1,66 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>executeTransition($currentToken, $targetNode)
+</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Führt einen Übergang von der aktuellen Sperre zu einem angegebenen Zielknoten in einer Prozessinstanz aus, wenn ein gültiger Pfad zwischen ihnen besteht.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name des Prozesses</th>
+			<th>Typ</th>
+			<th>Typ Beschreibung</th>
+			<th>Obligatorisch</th>
+			<th>Standard</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>currentToken</td>
+			<td>Aufgabe</td>
+			<td>Aktuelles Token einer Prozessinstanz</td>
+			<td>Ja</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>target</td>
+			<td>Node</td>
+			<td>Zielknoten für den Übergang zu</td>
+			<td>Ja</td>
+			<td>-</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Boolean</p>
+
+<p>Gibt true zurück, wenn der Übergang erfolgreich ausgeführt wurde, false, wenn der Übergang nicht möglich ist oder die Parameter ungültig sind.</p>
+
+<h2>Beispiele</h2>
+
+<pre>
+	<code>// Create a process instance with specific name
+processInstance = createProcessInstance($startEvent, "Process-001");
+
+// Get one of the current Tokens
+currentToken = $processInstance.get(`tl.bpe.execution:ProcessExecution#activeTokens`).firstElement();
+
+// Get all reachable nodes from current token
+targetNode = reachableNodes($currentToken).firstElement();
+
+// Execute Transition to first element of reachableNodes
+executeTransition($currentToken, $targetNode)</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>true - Die aktive Aufgabe von "Process-001" ist jetzt die Aufgabe zugehörig zu $targetNode.</p>
+
+<p> </p>

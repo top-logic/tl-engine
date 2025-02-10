@@ -69,7 +69,7 @@
 		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
 			<instance>
 				<handlers>
-		            <handler id="createProcessExecution" class="com.top_logic.bpe.execution.engine.ExecutionProcessCreateHandler" /> 
+		            <handler id="createProcessExecution" class="com.top_logic.bpe.execution.engine.ExecutionProcessCreateHandler" /> 								
 				</handlers>	
 			</instance>
 		</config>
@@ -78,6 +78,8 @@
 			<instance>
 				<methods>
 					<method name="createProcessInstance" class="com.top_logic.bpe.execution.script.CreateProcessInstance$Builder"/>					
+					<method name="transitionProcessInstance" class="com.top_logic.bpe.execution.script.TransitionProcessInstance$Builder"/>
+					<method name="getReachableTargets" class="com.top_logic.bpe.execution.script.GetReachableTargets$Builder"/>
 				</methods>
 			</instance>
 		</config>

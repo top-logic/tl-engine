@@ -5,15 +5,12 @@
  */
 package com.top_logic.bpe.execution.script;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.bpe.BPEUtil;
-import com.top_logic.bpe.bpml.model.Edge;
 import com.top_logic.bpe.bpml.model.Node;
-import com.top_logic.bpe.execution.engine.ExecutionEngine;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.model.TLType;
@@ -26,54 +23,56 @@ import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
- * TODO jhu add comment
+ * A {@link GenericMethod} implementation that retrieves all reachable {@link Node}s from a given
+ * {@link Token}.
  *
  * @author <a href="mailto:Jonathan.Hüsing@top-logic.com">Jonathan Hüsing</a>
  */
-public class TransitionProcessInstance extends GenericMethod {
+public class ReachableNodes extends GenericMethod {
 
-	protected TransitionProcessInstance(String name, SearchExpression[] arguments) {
+	/**
+	 * Creates a new {@link ReachableNodes}.
+	 */
+	protected ReachableNodes(String name, SearchExpression[] arguments) {
 		super(name, arguments);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new TransitionProcessInstance(getName(), arguments);
+		return new ReachableNodes(getName(), arguments);
 	}
 
 	@Override
 	public TLType getType(List<TLType> argumentTypes) {
-		return TLModelUtil.findType(TypeSpec.BOOLEAN_TYPE); // Return boolean
-	}
-
-	@Override
-	protected Object eval(Object[] arguments, EvalContext definitions) {
-		if (arguments.length < 2 || arguments[0] == null || arguments[1] == null) {
-			return false;
-		}
-
-		Token token = (Token) arguments[0];
-		Node target = (Node) arguments[1];
-
-		// Find path to target
-		List<Edge> path = BPEUtil.getPossibleTransitions(token).getOrDefault(target, new ArrayList<>());
-		if (path.isEmpty()) {
-			return false;
-		}
-
-		ExecutionEngine.getInstance().execute(token, path, null);
-		return true;
+		return TLModelUtil.findType(TypeSpec.OBJECT_TYPE);
 	}
 
 	/**
-	 * {@link AbstractSimpleMethodBuilder} creating an {@link TransitionProcessInstance} function.
+	 * Retrieves all {@link Node}s that can be reached from the given {@link Token}.
+	 * 
+	 * @param arguments
+	 *        args[0]: source token from which to find reachable nodes
+	 * @param definitions
+	 *        evaluation context
+	 * @return set of reachable nodes, false if token is invalid
 	 */
-	public static final class Builder extends AbstractSimpleMethodBuilder<TransitionProcessInstance> {
+	@Override
+	protected Object eval(Object[] arguments, EvalContext definitions) {
+		if (arguments.length < 1 || arguments[0] == null) {
+			return false;
+		}
+		Token currentToken = (Token) arguments[0];
+		return BPEUtil.getPossibleTransitions(currentToken).keySet();
+	}
 
-		/** Description of parameters for a {@link TransitionProcessInstance}. */
+	/**
+	 * {@link AbstractSimpleMethodBuilder} creating an {@link ReachableNodes} function.
+	 */
+	public static final class Builder extends AbstractSimpleMethodBuilder<ReachableNodes> {
+
+		/** Description of parameters for a {@link ReachableNodes}. */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("currentToken")
-			.mandatory("target")
 			.build();
 
 		/**
@@ -89,13 +88,11 @@ public class TransitionProcessInstance extends GenericMethod {
 		}
 
 		@Override
-		public TransitionProcessInstance build(Expr expr, SearchExpression[] args)
+		public ReachableNodes build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new TransitionProcessInstance(getConfig().getName(), args);
+			return new ReachableNodes(getConfig().getName(), args);
 		}
 
 	}
-
-
 
 }

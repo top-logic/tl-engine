@@ -11,10 +11,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.bpe.bpml.display.ConfigurableCondition;
 import com.top_logic.bpe.bpml.display.RuleCondition;
 import com.top_logic.bpe.bpml.display.RuleType;
 import com.top_logic.bpe.bpml.display.SequenceFlowRule;
-import com.top_logic.bpe.bpml.display.StandardRule;
 import com.top_logic.bpe.bpml.model.AnnotationAssociation;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.bpml.model.Edge;
@@ -154,11 +154,11 @@ public class BPEUtil {
 							if (rule != null) {
 								// only valid if no error or hidden conditions are false
 								boolean isValid = rule.getRuleConditions().stream()
-									.map(config -> (RuleCondition) new StandardRule(null,
-										(StandardRule.Config<?>) config))
+									.map(config -> (RuleCondition) new ConfigurableCondition(null,
+										(ConfigurableCondition.Config<?>) config))
 									.filter(condition -> condition.getRuleType() == RuleType.HIDDEN ||
 										condition.getRuleType() == RuleType.DEFAULT)
-									.allMatch(condition -> condition.getCondition(token.getProcessExecution()));
+									.allMatch(condition -> condition.getTestCondition(token.getProcessExecution()));
 
 								if (isValid) {
 									transitions.put(flow.getTarget(), Arrays.asList(edge, gatewayOutgoing));

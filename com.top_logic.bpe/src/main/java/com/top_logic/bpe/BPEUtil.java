@@ -5,17 +5,31 @@
  */
 package com.top_logic.bpe;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.top_logic.bpe.bpml.display.RuleCondition;
+import com.top_logic.bpe.bpml.display.RuleType;
+import com.top_logic.bpe.bpml.display.SequenceFlowRule;
+import com.top_logic.bpe.bpml.display.StandardRule;
 import com.top_logic.bpe.bpml.model.AnnotationAssociation;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.bpml.model.Edge;
 import com.top_logic.bpe.bpml.model.Externalized;
+import com.top_logic.bpe.bpml.model.Gateway;
 import com.top_logic.bpe.bpml.model.Lane;
 import com.top_logic.bpe.bpml.model.MessageFlow;
 import com.top_logic.bpe.bpml.model.Node;
 import com.top_logic.bpe.bpml.model.Participant;
 import com.top_logic.bpe.bpml.model.Process;
+import com.top_logic.bpe.bpml.model.SequenceFlow;
 import com.top_logic.bpe.bpml.model.TextAnnotation;
 import com.top_logic.bpe.bpml.model.impl.LaneSetBase;
+import com.top_logic.bpe.execution.engine.GuiEngine;
+import com.top_logic.bpe.execution.model.Token;
 
 /**
  * Utility class for the business process engine.
@@ -110,6 +124,60 @@ public class BPEUtil {
 
 	private static boolean matches(String selectionId, Externalized model) {
 		return selectionId.equals(model.getExtId());
+	}
+
+	/**
+	 * Gets all possible target nodes and their paths from a given token's current position.
+	 * 
+	 * @param token
+	 *        The token representing current position in the workflow
+	 * @return Map of possible target nodes to their respective paths
+	 */
+	public static Map<Node, List<Edge>> getPossibleTransitions(Token token) {
+		Map<Node, List<Edge>> transitions = new HashMap<>();
+		Node currentNode = token.getNode();
+
+		// Check direct outgoing edges
+		for (Edge edge : currentNode.getOutgoing()) {
+			Node nextNode = edge.getTarget();
+
+			if (!(nextNode instanceof Gateway)) {
+				// Direct non-gateway target
+				transitions.put(nextNode, Collections.singletonList(edge));
+			} else {
+				Gateway gateway = (Gateway) nextNode;
+				if (GuiEngine.getInstance().needsDecision(gateway)) {
+					// Check all gateway paths
+					for (Edge gatewayOutgoing : gateway.getOutgoing()) {
+						if (gatewayOutgoing instanceof SequenceFlow flow) {
+							SequenceFlowRule rule = flow.getRule();
+							if (rule != null) {
+								// only valid if no error or hidden conditions are false
+								boolean isValid = rule.getRuleConditions().stream()
+									.map(config -> (RuleCondition) new StandardRule(null,
+										(StandardRule.Config<?>) config))
+									.filter(condition -> condition.getRuleType() == RuleType.HIDDEN ||
+										condition.getRuleType() == RuleType.DEFAULT)
+									.allMatch(condition -> condition.getCondition(token.getProcessExecution()));
+
+								if (isValid) {
+									transitions.put(flow.getTarget(), Arrays.asList(edge, gatewayOutgoing));
+								}
+							} else {
+								// No rules - path is valid
+								transitions.put(flow.getTarget(), Arrays.asList(edge, gatewayOutgoing));
+							}
+						}
+					}
+				} else {
+					// Automatic gateway - add all targets
+					for (Edge gatewayOutgoing : gateway.getOutgoing()) {
+						transitions.put(gatewayOutgoing.getTarget(), Arrays.asList(edge, gatewayOutgoing));
+					}
+				}
+			}
+		}
+		return transitions;
 	}
 
 }

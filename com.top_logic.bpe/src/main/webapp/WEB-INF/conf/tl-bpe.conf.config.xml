@@ -78,8 +78,8 @@
 			<instance>
 				<methods>
 					<method name="createProcessInstance" class="com.top_logic.bpe.execution.script.CreateProcessInstance$Builder"/>					
-					<method name="transitionProcessInstance" class="com.top_logic.bpe.execution.script.TransitionProcessInstance$Builder"/>
-					<method name="getReachableTargets" class="com.top_logic.bpe.execution.script.GetReachableTargets$Builder"/>
+					<method name="executeTransition" class="com.top_logic.bpe.execution.script.ExecuteTransition$Builder"/>
+					<method name="reachableNodes" class="com.top_logic.bpe.execution.script.ReachableNodes$Builder"/>
 				</methods>
 			</instance>
 		</config>

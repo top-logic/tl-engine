@@ -1,0 +1,58 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>createProcessInstance($startEvent, $instanceName)
+</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Erzeugt und initialisiert eine neue Prozessinstanz auf der Grundlage eines StartEvents. Die Prozessinstanz wird entweder mit dem angegebenen Namen oder einem Standardnamen initialisiert.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Prozessname</th>
+			<th>Typ</th>
+			<th>Typ Beschreibung</th>
+			<th>Obligatorisch</th>
+			<th>Standard</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>startEvent</td>
+			<td>StartEvent</td>
+			<td>Startereignis, das den zu instanziierenden Prozess definiert</td>
+			<td>Ja</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>name</td>
+			<td>Zeichenkette</td>
+			<td>Name für die neue Prozessinstanz</td>
+			<td>nein</td>
+			<td>"neueProzessinstanz"</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> ProcessExecution</p>
+
+<p>Gibt die erstellte und initialisierte Prozessinstanz zurück. Wenn der startEvent-Parameter null ist, wird null zurückgegeben.</p>
+
+<h2>Beispiele</h2>
+
+<pre>
+	<code>// Create a process instance with default name
+createProcessInstance($startEvent)
+
+// Create a process instance with specific name
+createProcessInstance($startEvent, "Process-001")</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Die neu erstellte Prozessinstanz.</p>

@@ -55,7 +55,7 @@ public class CreateProcessInstance extends GenericMethod {
 	}
 
 	/**
-	 * Instantiates and initializes a process for the given participant
+	 * Instantiates and initializes a process for the given {@link StartEvent}
 	 * 
 	 * @param arguments
 	 *        script arguments where: args[0]:start event args[1]: name of newly created process

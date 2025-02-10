@@ -522,16 +522,6 @@
 				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.SequenceFlowImpl"/>
 			</annotations>
 			<attributes>
-			    <property name="withConfirm"
-					type="tl.core:Boolean"
-				>
-					<annotations>
-						<default-value>
-							<boolean value="true"/>
-						</default-value>
-						<bpml-extension/>
-					</annotations>
-				</property>
 				<property name="rule"
 					type="SequenceFlowRule"
 				>
@@ -808,6 +798,13 @@
 				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.StartEventImpl"/>
 			</annotations>
 			<attributes>
+			    <property name="requireReview"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<bpml-extension/>
+					</annotations>
+				</property>
 				<property name="title"
 					type="tl.model.i18n:I18NString"
 				>

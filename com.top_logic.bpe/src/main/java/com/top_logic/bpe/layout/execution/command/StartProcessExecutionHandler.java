@@ -21,6 +21,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.bpe.bpml.model.Edge;
 import com.top_logic.bpe.bpml.model.Node;
 import com.top_logic.bpe.bpml.model.SequenceFlow;
+import com.top_logic.bpe.bpml.model.StartEvent;
 import com.top_logic.bpe.bpml.model.Task;
 import com.top_logic.bpe.execution.engine.ExecutionEngine;
 import com.top_logic.bpe.execution.engine.GuiEngine;
@@ -35,18 +36,13 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.WithPostCreateActions;
-import com.top_logic.layout.messagebox.MessageBox;
-import com.top_logic.layout.messagebox.MessageBox.ButtonType;
-import com.top_logic.layout.messagebox.MessageBox.MessageType;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
 /**
@@ -94,6 +90,8 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler impleme
 
 	@Override
 	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model, Map<String, Object> someArguments) {
+		// create Process Instance and add to Arguments to skip the creation when method is called
+		// again
 		ProcessExecution processExecution = (ProcessExecution) someArguments.get(PROCESS_EXECUTION);
 		if (processExecution == null) {
 			// TODO: Remove bullshit.
@@ -103,11 +101,8 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler impleme
 				HandlerResult res = handler.handleCommand(aContext, aComponent, model, someArguments);
 				if (res.isSuccess()) {
 					processExecution = retrieveProcessExecution(res);
-
 					init(aComponent, model, processExecution);
-
 					tx.commit();
-
 					someArguments.put(PROCESS_EXECUTION, processExecution);
 				} else {
 					return res;
@@ -115,55 +110,35 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler impleme
 			}
 		}
 
-		Token token = findSingleToken(processExecution);
-		if (token != null) {
-			Object context = someArguments.get(FinishTaskCommand.CONTEXT);
-			if (context == null) {
-				// Decide about the next step.
-				HandlerResult suspended = HandlerResult.suspended();
-				Node node = GuiEngine.getInstance().getNextNode(token);
+		StartEvent startEvent = ((ProcessExecutionCreateComponent) aComponent).startEvent();
 
-				if (GuiEngine.getInstance().needsDecision(node)) {
-					new SelectTransitionDialog(token, suspended).open(aContext);
-				} else {
-					Edge edge = GuiEngine.getInstance().getSingleOutgoingEdge(token);
-					if (edge instanceof SequenceFlow) {
-					    SequenceFlow sf = (SequenceFlow) edge;
-					    boolean withConfirm = sf.getWithConfirm();
-					    
-					    if (withConfirm) {
-					        Command continuationYes = suspended.resumeContinuation(
-					            Collections.singletonMap(FinishTaskCommand.CONTEXT, edge));
-					        Command continuationNo = suspended.resumeContinuation(
-					            Collections.singletonMap(FinishTaskCommand.CONTEXT, FinishTaskCommand.CANCEL));
-					        String message = Resources.getInstance().getString(I18NConstants.CONFIRM_FINISH_TASK);
-					        MessageBox.confirm(aContext.getWindowScope(), MessageType.CONFIRM, message,
-					            MessageBox.button(ButtonType.YES, continuationYes),
-					            MessageBox.button(ButtonType.NO, continuationNo));
-					    } else {
-							executeTransition(token, edge);
-					    }
+		// automatically move to next token as user already inputed datat for first token in
+		// creation dialog
+		if (!startEvent.getRequireReview()) {
+			Token token = findSingleToken(processExecution);
+			if (token != null) {
+				Object context = someArguments.get(FinishTaskCommand.CONTEXT);
+				if (context == null) {
+					// Decide about the next step.
+					HandlerResult suspended = HandlerResult.suspended();
+					Node node = GuiEngine.getInstance().getNextNode(token);
+
+					if (GuiEngine.getInstance().needsDecision(node)) {
+						new SelectTransitionDialog(token, suspended).open(aContext);
+					} else {
+						Edge edge = GuiEngine.getInstance().getSingleOutgoingEdge(token);
+						if (edge instanceof SequenceFlow) {
+							executeTransition(token, Collections.singletonList(edge));
+						}
 					}
-				}
-				return suspended;
-			} else {
-				if (context instanceof Edge edge) {
-					// Advance process to next step(s).
-					executeTransition(token, edge);
+					return suspended;
 				} else if (context instanceof Decision decision) {
-					KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-					try (Transaction tx = kb.beginTransaction()) {
-						ExecutionEngine.getInstance().execute(token, decision.getPath(), null);
-						tx.commit();
-					} catch (Exception ex) {
-						throw new RuntimeException("Can not complete task for token '" + token + "'.", ex);
-					}
+					executeTransition(token, decision.getPath());
 				}
 			}
 		}
 
 		WithPostCreateActions.processCreateActions(_actions, aComponent, processExecution);
-
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
@@ -198,10 +173,10 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler impleme
 		return (ProcessExecution) CollectionUtil.getFirst(res.getProcessed());
 	}
 
-	private void executeTransition(Token token, Edge edge) {
+	private void executeTransition(Token token, List<Edge> edges) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		try (Transaction tx = kb.beginTransaction()) {
-			ExecutionEngine.getInstance().execute(token, Collections.singletonList(edge), null);
+			ExecutionEngine.getInstance().execute(token, edges, null);
 			tx.commit();
 		} catch (Exception ex) {
 			throw new RuntimeException("Can not complete task for token '" + token + "'.", ex);

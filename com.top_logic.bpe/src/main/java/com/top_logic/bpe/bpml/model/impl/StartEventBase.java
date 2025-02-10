@@ -18,6 +18,15 @@ public interface StartEventBase extends com.top_logic.bpe.bpml.model.Event, com.
 	String START_EVENT_TYPE = "StartEvent";
 
 	/**
+	 * Part <code>requireReview</code> of <code>StartEvent</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Boolean</code> in configuration.
+	 * </p>
+	 */
+	String REQUIRE_REVIEW_ATTR = "requireReview";
+
+	/**
 	 * Part <code>title</code> of <code>StartEvent</code>
 	 * 
 	 * <p>
@@ -25,6 +34,20 @@ public interface StartEventBase extends com.top_logic.bpe.bpml.model.Event, com.
 	 * </p>
 	 */
 	String TITLE_ATTR = "title";
+
+	/**
+	 * Getter for part {@link #REQUIRE_REVIEW_ATTR}.
+	 */
+	default boolean getRequireReview() {
+		return (Boolean) tValueByName(REQUIRE_REVIEW_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #REQUIRE_REVIEW_ATTR}.
+	 */
+	default void setRequireReview(boolean newValue) {
+		tUpdateByName(REQUIRE_REVIEW_ATTR, newValue);
+	}
 
 	/**
 	 * Getter for part {@link #TITLE_ATTR}.

@@ -419,13 +419,6 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
-	 * Lookup {@link SequenceFlow#WITH_CONFIRM_ATTR} of {@link SequenceFlow}.
-	 */
-	public static com.top_logic.model.TLProperty getWithConfirmSequenceFlowAttr() {
-		return (com.top_logic.model.TLProperty) getSequenceFlowType().getPart(SequenceFlow.WITH_CONFIRM_ATTR);
-	}
-
-	/**
 	 * Lookup {@link Lane} type.
 	 */
 	public static com.top_logic.model.TLClass getLaneType() {
@@ -598,6 +591,13 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 */
 	public static com.top_logic.model.TLClass getStartEventType() {
 		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(StartEvent.START_EVENT_TYPE);
+	}
+
+	/**
+	 * Lookup {@link StartEvent#REQUIRE_REVIEW_ATTR} of {@link StartEvent}.
+	 */
+	public static com.top_logic.model.TLProperty getRequireReviewStartEventAttr() {
+		return (com.top_logic.model.TLProperty) getStartEventType().getPart(StartEvent.REQUIRE_REVIEW_ATTR);
 	}
 
 	/**

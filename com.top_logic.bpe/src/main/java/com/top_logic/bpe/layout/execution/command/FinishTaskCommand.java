@@ -22,7 +22,6 @@ import com.top_logic.basic.util.Utils;
 import com.top_logic.bpe.bpml.model.Edge;
 import com.top_logic.bpe.bpml.model.Gateway;
 import com.top_logic.bpe.bpml.model.Node;
-import com.top_logic.bpe.bpml.model.SequenceFlow;
 import com.top_logic.bpe.execution.engine.ExecutionEngine;
 import com.top_logic.bpe.execution.engine.GuiEngine;
 import com.top_logic.bpe.execution.model.Token;
@@ -159,59 +158,20 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 						.buttons(MessageBox.button(ButtonType.OK))
 						.confirm(aContext.getWindowScope());
 				}
-
-				// Check for warnings
-				if (!warnings.isEmpty() && !Utils.isTrue((Boolean) someArguments.get("warningsAcknowledged"))) {
-					HandlerResult suspended = HandlerResult.suspended();
-					Command acknowledge = new Command() {
-						@Override
-						public HandlerResult executeCommand(DisplayContext anInnerContext) {
-							return suspended.resumeContinuation(Collections.singletonMap("warningsAcknowledged", true))
-								.executeCommand(anInnerContext);
-						}
-					};
-
-					WarningsDialog.openWarningsDialogWithoutFormContext(aContext.getWindowScope(),
-						ResKey.legacy("workflow"), warnings, acknowledge, Command.DO_NOTHING);
-					return suspended;
-				}
-
-				// Check withConfirm flag
-				if (outgoing instanceof SequenceFlow) {
-					SequenceFlow sf = (SequenceFlow) outgoing;
-					if (sf.getWithConfirm()) {
-						return confirmFinish(aContext, token, warnings);
-					} else {
-						executeTransition(token, outgoing, someArguments);
-					}
-				}
+				return confirmFinish(aContext, token, warnings);
 			}
 		}
-		if (context instanceof Edge edge) {
-			// Advance process to next step(s).
-			executeTransition(token, edge, someArguments);
-		} else if (context instanceof Decision decision) {
-			try (Transaction tx = token.tKnowledgeBase().beginTransaction()) {
-				Object additional = someArguments.get(ADDITIONAL);
-				ExecutionEngine.getInstance().execute(token, decision.getPath(), additional);
-				tx.commit();
-			} catch (Exception ex) {
-				throw new RuntimeException("Can not complete task for token '" + token + "'.", ex);
-			}
+
+		// Decision is already made.
+		Decision decision = (Decision) context;
+		try (Transaction tx = token.tKnowledgeBase().beginTransaction()) {
+			Object additional = someArguments.get(ADDITIONAL);
+			ExecutionEngine.getInstance().execute(token, decision.getPath(), additional);
+			tx.commit();
 		}
 
 		WithPostCreateActions.processCreateActions(_actions, aComponent, token.getProcessExecution());
 		return HandlerResult.DEFAULT_RESULT;
-	}
-
-	private void executeTransition(Token token, Edge edge, Map<String, Object> someArguments) {
-		try (Transaction tx = token.tKnowledgeBase().beginTransaction()) {
-			Object additional = someArguments.get(ADDITIONAL);
-			ExecutionEngine.getInstance().execute(token, Collections.singletonList(edge), null);
-			tx.commit();
-		} catch (Exception ex) {
-			throw new RuntimeException("Can not complete task for token '" + token + "'.", ex);
-		}
 	}
 
 	private HandlerResult confirmFinish(DisplayContext context, Token token, List<ResKey> warnings) {

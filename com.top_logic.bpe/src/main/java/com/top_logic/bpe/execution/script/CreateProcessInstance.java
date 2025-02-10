@@ -5,10 +5,8 @@
  */
 package com.top_logic.bpe.execution.script;
 
-import java.io.StringReader;
 import java.util.List;
 
-import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.bpe.bpml.model.StartEvent;
@@ -24,9 +22,6 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
-import com.top_logic.model.search.expr.parser.ParseException;
-import com.top_logic.model.search.expr.parser.SearchExpressionParser;
-import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
 
@@ -63,32 +58,24 @@ public class CreateProcessInstance extends GenericMethod {
 	 * Instantiates and initializes a process for the given participant
 	 * 
 	 * @param arguments
-	 *        script arguments where: args[0]: participant name (required) args[1]: start event name
-	 *        (optional) args[2]: name of newly created process instance (optional)
+	 *        script arguments where: args[0]:start event args[1]: name of newly created process
+	 *        instance (optional)
 	 * @param definitions
 	 *        evaluation context
 	 * @return initialized process execution or null if participant not found
 	 */
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		String participantName = asString(arguments[0]);
-		if (participantName == null || participantName.isEmpty()) {
-			return null;
-		}
-
-		// Extract optional start event name (args[1])
-		String startEventName = arguments.length > 1 ? asString(arguments[1]) : null;
-
-		// Extract optional process name (args[2])
-		String processName = arguments.length > 2 ? asString(arguments[2]) : DEFAULT_PROCESS_NAME;
-		if (processName == null || processName.isEmpty()) {
-			processName = DEFAULT_PROCESS_NAME;
-		}
-
-		// Find start event using query
-		StartEvent startEvent = findStartEvent(participantName, startEventName);
+		// extract startEvent from parameters
+		StartEvent startEvent = (StartEvent) arguments[0];
 		if (startEvent == null) {
 			return null;
+		}
+
+		// Extract optional process name (args[1])
+		String processName = arguments.length > 1 ? asString(arguments[1]) : DEFAULT_PROCESS_NAME;
+		if (processName == null || processName.isEmpty()) {
+			processName = DEFAULT_PROCESS_NAME;
 		}
 
 		// Create process instance
@@ -121,49 +108,13 @@ public class CreateProcessInstance extends GenericMethod {
 	}
 
 	/**
-	 * Locates start event for a participant with the given name and optional start event name
-	 *
-	 * @param participantName
-	 *        Name of the participant to find
-	 * @param startEventName
-	 *        Optional name of the start event (can be null)
-	 * @return Matching start event or null if not found
-	 */
-	private StartEvent findStartEvent(String participantName, String startEventName) {
-		try {
-			StringBuilder query = new StringBuilder()
-				.append("all(`tl.bpe.bpml:Participant`)")
-				.append(".filter(p -> $p.get(`tl.bpe.bpml:Participant#name`) == \"").append(participantName)
-				.append("\")")
-				.append(".singleElement()")
-				.append(".get(`tl.bpe.bpml:Participant#process`)")
-				.append(".get(`tl.bpe.bpml:Process#nodes`)")
-				.append(".filter(n -> $n.instanceOf(`tl.bpe.bpml:StartEvent`)");
-
-			if (startEventName != null && !startEventName.isEmpty()) {
-				query.append(" && $n.get(`tl.bpe.bpml:Node#name`).equals(\"").append(startEventName).append("\")");
-			}
-
-			query.append(")")
-				.append(".firstElement()");
-
-			Expr expr = new SearchExpressionParser(new StringReader(query.toString())).expr();
-			return (StartEvent) QueryExecutor.compile(expr).execute();
-
-		} catch (ParseException ex) {
-			throw new UnreachableAssertion(ex);
-		}
-	}
-
-	/**
 	 * {@link AbstractSimpleMethodBuilder} creating an {@link CreateProcessInstance} function.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<CreateProcessInstance> {
 
 		/** Description of parameters for a {@link CreateProcessInstance}. */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
-			.mandatory("participant")
-			.optional("startEvent")
+			.mandatory("startEvent")
 			.optional("name")
 			.build();
 

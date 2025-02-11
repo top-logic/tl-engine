@@ -1033,6 +1033,12 @@ table td a.cDownload {
 	text-overflow: ellipsis;
 }
 
+:is(.lFlexible,.lFlexibleCustom) :is(textarea) {
+	box-sizing: border-box;
+	width: 100%;
+	text-overflow: ellipsis;
+}
+
 .tl-table__cell :is(.lFlexible,.lFlexibleCustom) {
 	height: var(--table-row-height);
 }

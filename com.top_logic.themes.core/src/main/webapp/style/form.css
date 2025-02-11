@@ -1533,6 +1533,7 @@ div.cal_zoom_inAnimation {
 .cIntegerInput {
 	display: inline-flex;
 	align-items: stretch;
+	width: 100%;
 }
 
 .cIntegerInput input,
@@ -1767,7 +1768,7 @@ input.is-checkbox[disabled] {
 }
 
 .cTextPopup {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     flex-wrap: nowrap;
     gap: var(--spacing-02);

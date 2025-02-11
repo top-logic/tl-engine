@@ -770,7 +770,7 @@ tr.tblSelected.tblFilterIndirectMatch td,
 .tblFilterIndirectMatch.tl-table__row:not(.tblSelected):hover .cButton a,
 .tblFilterIndirectMatch.tl-table__row:not(.tblSelected):hover .treeType > i,
 .tblFilterIndirectMatch.tl-table__row.tblSelected .treeType > i {
-	color: var(--icon-on-color-disabled);
+	color: var(--icon-disabled);
 }
 
 .tblFilterIndirectMatch.tl-table__row:not(.tblSelected):hover .tl-table__cell a,

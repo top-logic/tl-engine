@@ -1983,8 +1983,8 @@ span.disabled > span.lFlexible > select.tl-select:not( [multiple="multiple"] ) {
 	align-items: stretch;
 }
 
-.cExpandableTextInput .lFixedRight a:not(.lFlexible).fToggle,
-.cBlockTextInput .lFixedRight a:not(.lFlexible).fToggle {
+.cExpandableTextInput a.fToggle,
+.cBlockTextInput a.fToggle {
 	flex: 1;
 	height: inherit;
 }

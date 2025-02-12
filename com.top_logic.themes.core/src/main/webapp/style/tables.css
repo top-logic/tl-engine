@@ -1026,14 +1026,14 @@ table td a.cDownload {
 }
 
 :is(.tl-table__cell,.rf_cell) :is(.lFlexible,.lFlexibleCustom,.ddwttContainer),
-:is(.lFlexible,.lFlexibleCustom) :is(input:is(.is-input,.is-popup)) {
+:is(.lFlexible,.lFlexibleCustom) input:is(.is-input,.is-popup) {
 	box-sizing: border-box;
 	width: 100%;
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
-:is(.lFlexible,.lFlexibleCustom) :is(textarea) {
+:is(.lFlexible,.lFlexibleCustom) textarea {
 	box-sizing: border-box;
 	width: 100%;
 	text-overflow: ellipsis;

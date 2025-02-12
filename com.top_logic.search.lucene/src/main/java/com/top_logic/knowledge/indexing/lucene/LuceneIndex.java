@@ -630,8 +630,8 @@ public final class LuceneIndex extends ConfiguredManagedClass<LuceneIndex.Lucene
     public void resetIndex() {
 		shutDown();
 		deleteIndex(); // Cleanup
-		createIndex();
 		init(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY);
+		createIndex();
     }
     
     /**

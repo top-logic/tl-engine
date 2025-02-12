@@ -748,46 +748,44 @@ div.tblTreeFrozenTitle > table.tblFrozen {
 	height: 100%;
 }
 
-tr.tblFrozen {
-}
-
-tr.tblFilterDirectMatch {
-}
-
-tr.tblFilterDirectMatch td,
-tr.tblFilterDirectMatch td input {
-}
-
-tr.tblFilterIndirectMatch {
-}
-
-tr.tblFilterIndirectMatch td {
+tr.tblFilterIndirectMatch td,
+tr.tblFilterIndirectMatch td a {
 	color: var(--text-disabled);
 }
 
-tr.tblSelected.tblFilterIndirectMatch td {
-	color: var(--text-on-color-disabled);
-}
-
-tr.tblFilterIndirectMatch .cButton a {
+tr.tblFilterIndirectMatch .cButton a,
+tr.tblFilterIndirectMatch i {
 	color: var(--icon-disabled);
 }
 
-.tblFilterIndirectMatch.tl-table__row:not(.tblSelected):hover .tl-table__cell-container {
+tr.tblSelected.tblFilterIndirectMatch td,
+.tblFilterIndirectMatch.tl-table__row:not(.tblSelected):hover .tl-table__cell-container,
+.tblFilterIndirectMatch.tl-table__row:not(.tblSelected):hover .tl-table__cell a,
+.tblFilterIndirectMatch.tl-table__row.tblSelected .tl-table__cell a {
 	color: var(--text-on-color-disabled);
 }
 
-.tblFilterIndirectMatch.tl-table__row:not(.tblSelected):hover .cButton a {
-	color: var(--icon-on-color-disabled);
+.tblFilterIndirectMatch.tblSelected i,
+.tblFilterIndirectMatch:not(.tblSelected):hover i,
+.tblFilterIndirectMatch.tl-table__row:not(.tblSelected):hover .cButton a,
+.tblFilterIndirectMatch.tl-table__row:not(.tblSelected):hover .treeType > i,
+.tblFilterIndirectMatch.tl-table__row.tblSelected .treeType > i {
+	color: var(--icon-disabled);
+}
+
+.tblFilterIndirectMatch.tl-table__row:not(.tblSelected):hover .tl-table__cell a,
+.tblFilterIndirectMatch.tl-table__row.tblSelected:hover .tl-table__cell a {
+	text-decoration: none;
+}
+
+.tblFilterIndirectMatch.tl-table__row .tl-table__cell a:focus {
+	outline: none;
 }
 
 tr.tblFilterIndirectMatch td img,
 tr.tblFilterIndirectMatch td select,
 tr.tblFilterIndirectMatch td input {
 	opacity: 0.6;
-}
-
-tr.tblFilterNotValidated {
 }
 
 tr.tblFilterNotValidated td,

@@ -2410,6 +2410,7 @@ div.treeNode.treeSelected.dndInsertInto {
 }
 
 .cCollapsibleToolbar .cButton,
+.cCollapsibleToolbar .ddwttContainer,
 .cToolbar .cButton,
 .tl-table__title-toolbar .cButton {
 	display: inline-flex;

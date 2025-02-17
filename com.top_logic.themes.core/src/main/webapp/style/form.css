@@ -2489,7 +2489,7 @@ a.input-image.tristate.tBoolean {
 	position: relative;
 	text-align: center;
 	cursor: default;
-	margin: 0 !important;
+	margin: 0;
 	overflow: hidden;
 }
 

@@ -24,6 +24,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutContainer;
 import com.top_logic.mig.html.layout.SimpleCard;
 import com.top_logic.mig.html.layout.VisibilityListener;
+import com.top_logic.mig.html.layout.tiles.RootTileComponent;
 
 /**
  * The class {@link ComponentTreeModel} creates a {@link #getTree() tree} that
@@ -122,6 +123,11 @@ public class ComponentTreeModel {
 		}
 		if (baseObject instanceof TabComponent) {
 			return ((TabComponent) baseObject).getTabBarModel();
+		}
+		if (baseObject instanceof RootTileComponent) {
+			/* Do not use tab components in tiles: The root tile component itself has a
+			 * breadcrumb. */
+			return null;
 		}
 		if (baseObject instanceof LayoutContainer) {
 			Collection<LayoutComponent> children = ((LayoutContainer) baseObject).getChildList();

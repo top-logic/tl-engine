@@ -159,7 +159,7 @@
 			new-name="tl.bpe.bpml:TimerEventDefinition#delayInMillis"
 		/>
 
-		<!-- TODO: Not correct for duration not given in milliseconds: timeUnit must be considered. -->
+		<!-- Not correct for duration not given in milliseconds: timeUnit should have been also considered. -->
 		<change-part-type
 			part="tl.bpe.bpml:TimerEventDefinition#delayInMillis"
 			target="tl.core:Duration"

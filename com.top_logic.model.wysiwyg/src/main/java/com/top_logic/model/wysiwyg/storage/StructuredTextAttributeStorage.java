@@ -42,7 +42,7 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 	}
 
 	/** Name of the database table storing the images. */
-	private static final String HTML_ATTRIBUTE_STORAGE = "HTMLAttributeStorage";
+	public static final String HTML_ATTRIBUTE_STORAGE = "HTMLAttributeStorage";
 
 	private String _storageAttribute;
 

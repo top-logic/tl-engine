@@ -31,6 +31,9 @@
 	<dim name="SIDEBAR_WIDTH_MINIMIZED"
 		value="40px"
 	/>
+	<boolean name="SIDEBAR_MINIMIZED"
+		value="false"
+	/>
 	<int name="MAIN_LAYOUT_SIDE_BORDER"
 		value="8"
 	/>

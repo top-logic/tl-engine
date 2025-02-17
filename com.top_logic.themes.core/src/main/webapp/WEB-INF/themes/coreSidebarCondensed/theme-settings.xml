@@ -10,6 +10,9 @@
 	<dim name="SIDEBAR_WIDTH_MINIMIZED"
 		value="40px"
 	/>
+	<boolean name="SIDEBAR_MINIMIZED"
+		value="true"
+	/>
 	<size name="TABLE_TITLE_HEIGHT"
 		value="28px"
 	/>

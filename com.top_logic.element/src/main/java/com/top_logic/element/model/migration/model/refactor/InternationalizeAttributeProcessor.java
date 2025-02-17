@@ -10,6 +10,7 @@ import static com.top_logic.basic.db.sql.SQLFactory.*;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -28,6 +29,7 @@ import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOClass;
@@ -65,9 +67,13 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 
 		/**
 		 * The supported languages mapped to column names, where the value for the corresponding
-		 * language is stored.
+		 * language was stored before.
+		 * 
+		 * <p>
+		 * By default, the default system language is taken from a column that is named like the
+		 * given {@link #getAttribute() target attribute}.
+		 * </p>
 		 */
-		@Mandatory
 		@Name("columns")
 		@MapBinding(key = "lang", attribute = "name", tag = "column")
 		Map<String, String> getColumns();
@@ -121,7 +127,7 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 			MOReference tType = (MOReference) table.getAttribute(PersistentObject.T_TYPE_ATTR);
 			String tTypeColumn = tType.getColumn(ReferencePart.name).getDBName();
 
-			for (Entry<String, String> entry : config.getColumns().entrySet()) {
+			for (Entry<String, String> entry : getSourceColumns().entrySet()) {
 				String lang = entry.getKey();
 				String column = entry.getValue();
 
@@ -255,6 +261,19 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 			log.error("Failed to move values of '" + config.getAttribute().getName() + "' from '" + objType
 				+ "' to internationalization table.", ex);
 		}
+	}
+
+
+	/**
+	 * Computes the source column mapping from where the texts in different languages is taken from.
+	 */
+	protected Map<String, String> getSourceColumns() {
+		Config<?> config = getConfig();
+		Map<String, String> sourceColumns = new HashMap<>();
+		String defaultLang = ResourcesModule.getInstance().getDefaultLocale().getLanguage();
+		sourceColumns.put(defaultLang, config.getAttribute().getPartName());
+		sourceColumns.putAll(config.getColumns());
+		return sourceColumns;
 	}
 
 	private CompiledStatement createI18NInsert(MigrationContext context, PooledConnection connection, MOClass i18nTable)

@@ -20,6 +20,7 @@
 
 				<components>
 					<layout name="sblSidebar"
+						initiallyMinimized="%SIDEBAR_MINIMIZED%"
 						resizable="false"
 					>
 						<layoutInfo size="%SIDEBAR_WIDTH%"/>

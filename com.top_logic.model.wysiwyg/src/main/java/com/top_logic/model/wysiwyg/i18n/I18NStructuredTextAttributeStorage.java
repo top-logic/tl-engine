@@ -51,16 +51,16 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 		extends CommonStructuredTextAttributeStorage<C> {
 
 	/** Name of the database table storing the sources codes. */
-	private static final String SOURCES_CODES_TABLE_NAME = I18NAttributeStorage.I18N_STORAGE_KO_TYPE;
+	public static final String SOURCES_CODES_TABLE_NAME = I18NAttributeStorage.I18N_STORAGE_KO_TYPE;
 
 	/** Name of the database table storing the images. */
-	private static final String IMAGES_TABLE_NAME = "I18NHTMLAttributeStorage";
+	public static final String IMAGES_TABLE_NAME = "I18NHTMLAttributeStorage";
 
 	/** Name of the column for the language in which the image is used. */
-	private static final String LANGUAGE_ATTRIBUTE_NAME = I18NAttributeStorage.LANGUAGE_ATTRIBUTE_NAME;
+	public static final String LANGUAGE_ATTRIBUTE_NAME = I18NAttributeStorage.LANGUAGE_ATTRIBUTE_NAME;
 
 	/** Name of the column for the source code. */
-	private static final String SOURCE_CODE_ATTRIBUTE_NAME = I18NAttributeStorage.VALUE_ATTRIBUTE_NAME;
+	public static final String SOURCE_CODE_ATTRIBUTE_NAME = I18NAttributeStorage.VALUE_ATTRIBUTE_NAME;
 
 	private AssociationSetQuery<? extends KnowledgeItem> _sourceCodesQuery;
 

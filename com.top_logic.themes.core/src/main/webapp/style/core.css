@@ -1922,7 +1922,7 @@ span.ltcCounting input {
     justify-content: center;
     align-items: center;
     width: 100%;
-    min-height: 15rem;
+    height: 15rem; /* Must be 15rem to ensure that the card never gets larger because of previewBoxOuter's content. */
     overflow: hidden;
     background: var(--background);
 }

@@ -256,6 +256,14 @@ public class TextInputControl extends AbstractFormFieldControl implements WithPl
 		return "cTextInput";
 	}
 
+	/**
+	 * Writes the CSS classes for the button next to the text input field.
+	 */
+	@TemplateVariable("inputButtonCssClass")
+	public void getButtonCssClass(Appendable out) throws IOException {
+		out.append("lFixedRight");
+	}
+
 	@Override
     protected void writeEditable(DisplayContext context, TagWriter out) throws IOException {
 		updateMinMaxLength();

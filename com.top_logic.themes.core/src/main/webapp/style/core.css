@@ -417,7 +417,7 @@ a.cmdLink:visited {
 	margin: 0 var(--spacing-02);
 }
 
-.cTextPopupEditor .cTextInput .lFlexible textarea {
+.cTextPopupEditor .tl-text-input .lFlexible textarea {
 	height: 3rem;
 	margin-top: var(--spacing-02);
 }
@@ -430,11 +430,11 @@ a.cmdLink:visited {
 }
 
 .fltGlobalContainer input,
-.fltGlobalContainer .cTextInput input {
+.fltGlobalContainer .tl-text-input input {
 	background: var(--background);
 }
 
-.fltGlobalContainer .cTextInput input {
+.fltGlobalContainer .tl-text-input input {
 	margin-bottom: var(--spacing-03);
 }
 
@@ -492,17 +492,17 @@ hr {
 }
 
 .sidebarFilterContainer input,
-.sidebarFilterContainer .cTextInput input,
-.sidebarFilterContainer .cDateInput input,
-.sidebarFilterContainer .cDateInput .lFixedRight,
-.sidebarFilterContainer .cTimeInput input,
-.sidebarFilterContainer .cTimeInput .lFixedRight,
+.sidebarFilterContainer .tl-text-input input,
+.sidebarFilterContainer .tl-date-input input,
+.sidebarFilterContainer .tl-date-input .lFixedRight,
+.sidebarFilterContainer .tl-time-input input,
+.sidebarFilterContainer .tl-time-input .lFixedRight,
 .sidebarFilterContainer .ddwttDropBtn {
 	color: var(--highlight-fg, inherit);
 	background: var(--highlight-bg, var(--background));
 }
 
-.sidebarFilterContainer .cTextInput input {
+.sidebarFilterContainer .tl-text-input input {
 	margin-bottom: var(--spacing-03);
 }
 
@@ -633,12 +633,12 @@ div.fltList {
 
 .defaultFilterContainer .cPopupSelect,
 .defaultFilterContainer .tl-text-select,
-.defaultFilterContainer .cExpandableTextInput,
-.defaultFilterContainer .cTextInput,
+.defaultFilterContainer .tl-expandable-text-input,
+.defaultFilterContainer .tl-text-input,
 .defaultFilterContainer .cDatetime,
-.defaultFilterContainer .cDateInput,
+.defaultFilterContainer .tl-date-input,
 .defaultFilterContainer .cIntegerInput,
-.defaultFilterContainer .cTimeInput {
+.defaultFilterContainer .tl-time-input {
 	width: 100%;
 	white-space: break-spaces;
 	word-wrap: break-word;
@@ -653,16 +653,16 @@ div.fltList {
 	width: 65px;
 }
 
-.defaultFilterContainer .cDateInput input {
+.defaultFilterContainer .tl-date-input input {
 	width: 100px;
 }
 
 .defaultFilterContainer input,
-.defaultFilterContainer .cTextInput input,
-.defaultFilterContainer .cDateInput input,
-.defaultFilterContainer .cDateInput .lFixedRight,
-.defaultFilterContainer .cTimeInput input,
-.defaultFilterContainer .cTimeInput .lFixedRight,
+.defaultFilterContainer .tl-text-input input,
+.defaultFilterContainer .tl-date-input input,
+.defaultFilterContainer .tl-date-input .lFixedRight,
+.defaultFilterContainer .tl-time-input input,
+.defaultFilterContainer .tl-time-input .lFixedRight,
 .defaultFilterContainer .ddwttDropBtn {
 	color: var(--highlight-fg, inherit);
 	background: var(--highlight-bg, var(--background));

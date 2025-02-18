@@ -101,7 +101,7 @@ public class TimeInputControl extends TextInputControl {
 
 	@Override
 	protected String getTypeCssClass() {
-		return "cTimeInput";
+		return "tl-time-input";
 	}
 
 	@Override

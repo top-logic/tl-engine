@@ -923,13 +923,13 @@ table td span.cDecoratedCell,
 table td span.cPopupSelect,
 table td span.tl-text-select,
 table td span.cDropdownSelect,
-table td span.cDateInput,
+table td span.tl-date-input,
 table td span.cIntegerInput,
 table td span.cDatetime,
-table td span.cTimeInput,
+table td span.tl-time-input,
 table td span.cTextPopup,
-table td span.cExpandableTextInput,
-table td span.cTextInput,
+table td span.tl-expandable-text-input,
+table td span.tl-text-input,
 table td span.cIconChooser,
 table td span.cDataItem.download,
 table td span.downloadControl {
@@ -994,19 +994,19 @@ table td span.cTextPopup.descriptionSizeConstraint span.content{
 	text-overflow: ellipsis;
 }
 
-.cTextPopupEditor .cTextInput.cannot-edit:not(.disabled) {
+.cTextPopupEditor .tl-text-input.cannot-edit:not(.disabled) {
 	display: inline-block;
 	width: 497px;
 	height: 280px;
 	overflow: auto;
 }
 
-.cTextPopupEditor .cTextInput.cannot-edit:not(.disabled) {
+.cTextPopupEditor .tl-text-input.cannot-edit:not(.disabled) {
     padding: 2px 8px 4px 8px;
     box-sizing: border-box;
 }
 
-.cTextPopupEditor .cTextInput .is-input {
+.cTextPopupEditor .tl-text-input .is-input {
     width: 100%;
     box-sizing: border-box;    
 }
@@ -1055,19 +1055,19 @@ table td a.cDownload {
 Padding is spacing-01 instead of 03 for tables 
 because of the datetimeinput field.
  */
-table td .cTextInput input,
+table td .tl-text-input input,
 table td .cIntegerInput input, 
-table td .cExpandableTextInput input, 
-table td .cBlockTextInput input, 
+table td .tl-expandable-text-input input, 
+table td .tl-block-text-input input, 
 table td .cPopupSelect input,
-table td .cDatetime .cDateInput input,
-table td .cDatetime .cTimeInput input,
-table td .cDateInput input,
+table td .cDatetime .tl-date-input input,
+table td .cDatetime .tl-time-input input,
+table td .tl-date-input input,
 table td .ddwttDropBtn {
 	padding: 0 var(--spacing-01);
 }
 
-table.tl-table td .cDateTime .lFixedRight .cDateInput .lFlexible {
+table.tl-table td .cDateTime .lFixedRight .tl-date-input .lFlexible {
 	width: fit-content !important;
 }
 

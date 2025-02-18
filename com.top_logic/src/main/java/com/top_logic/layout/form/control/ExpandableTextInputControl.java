@@ -96,6 +96,12 @@ public class ExpandableTextInputControl extends TextInputControl implements Coll
 	}
 
 	@Override
+	@TemplateVariable("inputButtonCssClass")
+	public void getButtonCssClass(Appendable out) throws IOException {
+		out.append("cExpandableButton");
+	}
+
+	@Override
 	protected void writeEditable(DisplayContext context, TagWriter out) throws IOException {
 		if (this.isMultiLine()) {
 			Icons.TEXT_INPUT_WITH_BUTTONS_EDIT_MULTI_TEMPLATE.get().write(context, out, this);

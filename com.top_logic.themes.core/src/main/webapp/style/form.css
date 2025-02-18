@@ -1655,13 +1655,15 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
 }
 
 .lFixedRight button:hover,
-.lFixedRight a:hover {
+.lFixedRight a:hover,
+.cExpandableButton a:hover {
 	background: var(--field-hover);
 	text-decoration: none;
 }
 
 .lFixedRight button:focus-within,
 .lFixedRight a:focus-within,
+.cExpandableButton a:focus-within,
 .lFixedRight .button_minus:focus-within::after {
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 	border-left: none;
@@ -1670,6 +1672,7 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
 
 .lFixedRight button.disabled,
 .lFixedRight a.disabled,
+.cExpandableButton a.disabled,
 .lFixedRight .fChoose.disabled,
 .lFixedRight span.disabled,
 .lFixedRight span span.disabled,
@@ -1679,12 +1682,14 @@ input.is-checkbox[disabled] {
 }
 
 .lFixedRight button.disabled:hover,
-.lFixedRight a.disabled:hover {
-	background: none;
+.lFixedRight a.disabled:hover,
+.cExpandableButton a.disabled:hover {
+	background: var(--field);
 }
 
 .lFixedRight button.disabled:focus,
 .lFixedRight a.disabled:focus,
+.cExpandableButton a.disabled:focus,
 .lFixedRight .button_minus:focus::after {
 	box-shadow: none;
 	outline: none !important;
@@ -2045,16 +2050,18 @@ span.disabled > span.lFlexible > select.tl-select:not( [multiple="multiple"] ) {
 	display: inline-flex;
 }
 
-.cExpandableTextInput .lFixedRight,
-.cBlockTextInput .lFixedRight {
+.cExpandableTextInput .cExpandableButton,
+.cBlockTextInput .cExpandableButton {
 	display: inline-flex;
 	align-items: stretch;
 }
 
-.cExpandableTextInput a.fToggle,
-.cBlockTextInput a.fToggle {
-	flex: 1;
-	height: inherit;
+.cExpandableButton a:not(.lFlexible) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--button-fg, var(--icon-primary));
+    width: var(--form-line-height);
 }
 
 input[type="checkbox"] {

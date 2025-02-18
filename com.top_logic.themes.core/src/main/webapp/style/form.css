@@ -125,12 +125,12 @@ div.fptTitleContent {
 }
 
 div.fptTitleContent .tlTranslatedI18nField, 
-div.fptTitleContent .cTextInput {
+div.fptTitleContent .tl-text-input {
 	width: calc(100% - var(--heading-04-font-size) - 6px);
 }
 
 div.fptTitleContent, 
-div.fptTitleContent .cTextInput,
+div.fptTitleContent .tl-text-input,
 div.fptTitle input.is-input, 
 div.fptTitle select.is-input {
 	font-family: var(--font-family);
@@ -777,7 +777,7 @@ div.dfListAdd {
 	display: flex;
 }
 
-.tl-i18n-input > .cTextInput {
+.tl-i18n-input > .tl-text-input {
 	flex-grow: 1;
 }
 
@@ -1520,8 +1520,8 @@ div.cal_zoom_inAnimation {
 }
 
 .cDatetime, 
-.cDateInput, 
-.cTimeInput {
+.tl-date-input, 
+.tl-time-input {
 	display: inline-flex;
 	align-items: center;
 }
@@ -1537,7 +1537,7 @@ div.cal_zoom_inAnimation {
 }
 
 .cIntegerInput input,
-.cTextInput.num input,
+.tl-text-input.num input,
 .tl-table__cell.num {
 	text-align: right;
 }
@@ -1557,8 +1557,8 @@ div.cal_zoom_inAnimation {
 }
 
 .cDecoratedCell,
-.cExpandableTextInput,
-.cBlockTextInput {
+.tl-expandable-text-input,
+.tl-block-text-input {
 	display: inline-flex;
 }
 
@@ -1578,11 +1578,11 @@ div.cal_zoom_inAnimation {
 }
 
 .cIntegerInput .input-image, 
-.cDateInput .input-image, 
-.cTimeInput .input-image, 
+.tl-date-input .input-image, 
+.tl-time-input .input-image, 
 .cPopupSelect .input-image,
-.cBlockTextInput .fToggle,
-.cExpandableTextInput .fToggle {
+.tl-block-text-input .fToggle,
+.tl-expandable-text-input .fToggle {
 	background-color: var(--field);
 }
 
@@ -1629,13 +1629,13 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
 }
 
 .lFixedRight a:hover,
-.cExpandableButton a:hover {
+.tl-expandable-button a:hover {
 	background: var(--field-hover);
 	text-decoration: none;
 }
 
 .lFixedRight a:focus-within,
-.cExpandableButton a:focus-within,
+.tl-expandable-button a:focus-within,
 .lFixedRight .button_minus:focus-within::after {
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 	border-left: none;
@@ -1643,7 +1643,7 @@ td.tl-table__cell--selected .cDecoratedCell a.input-image:focus {
 }
 
 .lFixedRight a.disabled,
-.cExpandableButton a.disabled,
+.tl-expandable-button a.disabled,
 .lFixedRight .fChoose.disabled,
 .lFixedRight span.disabled,
 .lFixedRight span span.disabled,
@@ -1653,12 +1653,12 @@ input.is-checkbox[disabled] {
 }
 
 .lFixedRight a.disabled:hover,
-.cExpandableButton a.disabled:hover {
+.tl-expandable-button a.disabled:hover {
 	background: var(--field);
 }
 
 .lFixedRight a.disabled:focus,
-.cExpandableButton a.disabled:focus,
+.tl-expandable-button a.disabled:focus,
 .lFixedRight .button_minus:focus::after {
 	box-shadow: none;
 	outline: none !important;
@@ -1681,10 +1681,10 @@ input.is-checkbox[disabled] {
     vertical-align: middle;	/* Rule is needed to center the x icon vertically */
 }
 
-.cTextInput,
-.cDateInput,
+.tl-text-input,
+.tl-date-input,
 .cDatetime,
-.cTimeInput,
+.tl-time-input,
 .cPopupSelect,
 .cCheckList-counts,
 .cBooleanChoice,
@@ -1693,10 +1693,10 @@ input.is-checkbox[disabled] {
 	font-weight: var(--highlight-weight, normal);
 }
 
-.tl-table__cell .cTextInput,
-.tl-table__cell .cDateInput,
+.tl-table__cell .tl-text-input,
+.tl-table__cell .tl-date-input,
 .tl-table__cell .cDatetime,
-.tl-table__cell .cTimeInput,
+.tl-table__cell .tl-time-input,
 .tl-table__cell .cPopupSelect,
 .tl-table__cell .cCheckList-counts,
 .tl-table__cell .cBooleanChoice,
@@ -1704,13 +1704,13 @@ input.is-checkbox[disabled] {
 	color: var(--highlight-fg, inherit);
 }
 
-.cTextInput input,
+.tl-text-input input,
 .cIntegerInput input,
-.cExpandableTextInput input,
-.cBlockTextInput input,
+.tl-expandable-text-input input,
+.tl-block-text-input input,
 .cPopupSelect input,
-.cDateInput input,
-.cTimeInput input {
+.tl-date-input input,
+.tl-time-input input {
 	color: var(--highlight-fg, var(--text-primary));
 	background: var(--highlight-bg, var(--field));
 	border: none;
@@ -1729,38 +1729,38 @@ input.is-checkbox[disabled] {
 
 .cIntegerInput input,
 .cPopupSelect input,
-.cDateInput input,
-.cTimeInput input {
+.tl-date-input input,
+.tl-time-input input {
 	padding-right: var(--spacing-01);
 }
 	
-.cDatetime .cTimeInput input {
+.cDatetime .tl-time-input input {
 	padding: 0 var(--spacing-01);
 }
 
-.cDateInput input {
+.tl-date-input input {
     width: 7em;
 }
 
-.cDatetime .cTimeInput input {
+.cDatetime .tl-time-input input {
     width: 3.5em !important;
 }
 
-.cTextInput.mandatory input,
+.tl-text-input.mandatory input,
 .cIntegerInput.mandatory input,
-.cExpandableTextInput.mandatory input,
-.cBlockTextInput.mandatory input,
+.tl-expandable-text-input.mandatory input,
+.tl-block-text-input.mandatory input,
 .cPopupSelect.mandatory input,
-.cDateInput.mandatory input,
-.cTimeInput.mandatory input,
+.tl-date-input.mandatory input,
+.tl-time-input.mandatory input,
 .ddwttContainer.mandatory button,
 .mandatory .lFixedRight a {
 	box-shadow: inset 0px -2px 0px 0px var(--focus);
 }
 
-.cTextInput textarea,
-.cExpandableTextInput textarea, 
-.cBlockTextInput textarea {
+.tl-text-input textarea,
+.tl-expandable-text-input textarea, 
+.tl-block-text-input textarea {
 	color: var(--highlight-fg, var(--text-primary));
 	background: var(--highlight-bg, var(--field));
 	border: none;
@@ -1779,12 +1779,12 @@ input.is-checkbox[disabled] {
     gap: var(--spacing-02);
 }
 
-.cTextInput input::placeholder,
-.cTextInput textarea::placeholder,
-.cExpandableTextInput input::placeholder,
-.cExpandableTextInput textarea::placeholder,
-.cBlockTextInput input::placeholder,
-.cBlockTextInput textarea::placeholder,
+.tl-text-input input::placeholder,
+.tl-text-input textarea::placeholder,
+.tl-expandable-text-input input::placeholder,
+.tl-expandable-text-input textarea::placeholder,
+.tl-block-text-input input::placeholder,
+.tl-block-text-input textarea::placeholder,
 .cPopupSelect input::placeholder {
 	color: var(--text-placeholder);
 }
@@ -1921,26 +1921,26 @@ textarea:focus,
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
-.cTextInput.disabled input,
-.cTextInput.disabled textarea,
+.tl-text-input.disabled input,
+.tl-text-input.disabled textarea,
 .cIntegerInput.disabled input,
-.cExpandableTextInput.disabled input,
-.cExpandableTextInput.disabled textarea,
-.cBlockTextInput.disabled input,
-.cBlockTextInput.disabled textarea,
+.tl-expandable-text-input.disabled input,
+.tl-expandable-text-input.disabled textarea,
+.tl-block-text-input.disabled input,
+.tl-block-text-input.disabled textarea,
 .cPopupSelect.disabled input,
 .cDropdownSelect.disabled select.tl-select,
-.cDateInput.disabled input,
-.cTimeInput.disabled input {
+.tl-date-input.disabled input,
+.tl-time-input.disabled input {
 	color: var(--text-disabled);
 }
 
-.cTextInput.disabled input::placeholder,
-.cTextInput.disabled textarea::placeholder,
-.cExpandableTextInput.disabled input:placeholder,
-.cExpandableTextInput.disabled textarea::placeholder,
-.cBlockTextInput.disabled input:placeholder,
-.cBlockTextInput.disabled textarea::placeholder,
+.tl-text-input.disabled input::placeholder,
+.tl-text-input.disabled textarea::placeholder,
+.tl-expandable-text-input.disabled input:placeholder,
+.tl-expandable-text-input.disabled textarea::placeholder,
+.tl-block-text-input.disabled input:placeholder,
+.tl-block-text-input.disabled textarea::placeholder,
 .cPopupSelect.disabled input::placeholder {
 	color: var(--text-disabled);
 }
@@ -1978,18 +1978,18 @@ span.disabled > span.lFlexible > select.tl-select:not( [multiple="multiple"] ) {
 	background-image: linear-gradient(45deg, transparent 49%, var(--icon-primary) 50%), linear-gradient(135deg, var(--icon-primary) 49%, transparent 50%);
 }
 
-.cExpandableTextInput .lFlexible,
-.cBlockTextInput .lFlexible {
+.tl-expandable-text-input .lFlexible,
+.tl-block-text-input .lFlexible {
 	display: inline-flex;
 }
 
-.cExpandableTextInput .cExpandableButton,
-.cBlockTextInput .cExpandableButton {
+.tl-expandable-text-input .tl-expandable-button,
+.tl-block-text-input .tl-expandable-button {
 	display: inline-flex;
 	align-items: stretch;
 }
 
-.cExpandableButton a:not(.lFlexible) {
+.tl-expandable-button a:not(.lFlexible) {
     display: inline-flex;
     align-items: center;
     justify-content: center;

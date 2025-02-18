@@ -436,7 +436,7 @@ div.mcMinimized .accText {
 	display: initial;	
 }
 
-.quickSearch .cTextInput {
+.quickSearch .tl-text-input {
 	flex-grow: 2;
 }
 

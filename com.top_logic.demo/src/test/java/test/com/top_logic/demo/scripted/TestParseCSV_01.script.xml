@@ -45,7 +45,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Test > Transiente Objekte"
+							path="Test > test.transient"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -96,7 +96,7 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="Test > Transiente Objekte > CSV file"
+							path="Test > test.transient > CSV file"
 						/>
 						<selection-state boolean="true"/>
 					</selection>
@@ -1768,30 +1768,13 @@
 								/>
 							</model-name>
 						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
-							failure-expected="false"
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.tree.renderer.TreeCellRenderer$ToggleNaming$ToggleName"
-								expand="true"
-							>
-								<context-model config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
-									/>
-								</context-model>
-								<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-									path="Test > Transiente Objekte"
-								/>
-							</model-name>
-						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 							change-kind="ABSOLUTE"
 							user-id="root"
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-									path="Test > Transiente Objekte > CSV file"
+									path="Test > test.transient > CSV file"
 								/>
 								<selection-state boolean="true"/>
 							</selection>
@@ -1899,7 +1882,7 @@
 						>
 							<selection>
 								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-									path="Test > Transiente Objekte > CSV file"
+									path="Test > test.transient > CSV file"
 								/>
 								<selection-state boolean="true"/>
 							</selection>

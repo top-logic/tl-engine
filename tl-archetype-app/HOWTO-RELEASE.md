@@ -50,13 +50,19 @@ To release a new version of the TopLogic app archetype to Maven Central, you nee
       <passphrase>{FyY0t4...}</passphrase>
     </server>
     ```
+Make sure, you have Java 17 in the path. Adjust Maven settings to work around module path issue in Maven:
+
+```
+java -version
+export MAVEN_OPTS="--add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.text=ALL-UNNAMED --add-opens=java.desktop/java.awt.font=ALL-UNNAMED"
+```
 
 Having this all set up, you can prepare a release (after the version number has been incremented to the new version to 
 release) using:
 
 ```
-cd ../tl-parent-all
-mvn deploy -P \!full-build -P maven-central
+cd tl-parent-all
+mvn clean deploy -P \!full-build -P maven-central
 ```
 
 This results in a staging repository to be created at Sonatype:
@@ -95,7 +101,7 @@ Waiting for operation to complete...
 To finally release the staged artifacts to Maven Central, you have to issue the following command:
 
 ```
-cd ../tl-parent-all
+cd tl-parent-all
 mvn nexus-staging:release -P \!full-build -P maven-central
 ```
 

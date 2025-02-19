@@ -35,7 +35,7 @@
 		<jetty.version>12.0.6</jetty.version>
 		<poi.version>5.2.5</poi.version>
 		<kafka.version>3.9.0</kafka.version>
-		<zookeeper.version>3.8.3</zookeeper.version>
+		<zookeeper.version>3.9.3</zookeeper.version>
 		<slf4j.version>2.0.7</slf4j.version>
 		<log4j.version>2.20.0</log4j.version>
 		<fasterxml.version>2.16.1</fasterxml.version>

@@ -249,7 +249,7 @@ public class RowTypeCellRenderer extends AbstractCellRenderer
 	 *         iff given {@link TagWriter} throws one.
 	 */
 	protected void writeCellAttributes(DisplayContext context, TagWriter out, Cell cell) throws IOException {
-		out.writeAttribute(CLASS_ATTR, "cDecoratedCell");
+		out.writeAttribute(CLASS_ATTR, "tl-decorated-cell");
 	}
 
 	private void writeDecoration(DisplayContext context, TagWriter out, Cell cell) throws IOException {

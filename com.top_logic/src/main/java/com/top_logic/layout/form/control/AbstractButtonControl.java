@@ -420,7 +420,7 @@ public abstract class AbstractButtonControl<M extends ButtonUIModel> extends Abs
 	public void writeCommandImage(TagWriter out) throws IOException {
 		ThemeImage img = getCommandImage();
 		if (img != null) {
-			img.writeWithCss(DefaultDisplayContext.getDisplayContext(), out, "cmdImg");
+			img.writeWithCss(DefaultDisplayContext.getDisplayContext(), out, "tl-cmd-button__img");
 		}
 	}
 

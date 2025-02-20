@@ -94,7 +94,7 @@ public class IconChooserControl extends AbstractVisibleControl {
 
 	@Override
 	protected String getTypeCssClass() {
-		return "cIconChooser";
+		return "tl-icon-chooser";
 	}
 
 	@Override
@@ -130,7 +130,7 @@ public class IconChooserControl extends AbstractVisibleControl {
 
 	private void writeFixedHeaderSearch(DisplayContext context, TagWriter out) throws IOException {
 		out.beginBeginTag(DIV);
-		out.writeAttribute(CLASS_ATTR, "searchTextField");
+		out.writeAttribute(CLASS_ATTR, "tl-seach-text-field");
 		out.endBeginTag();
 		createPatternFieldControl().write(context, out);
 		Icons.ICON_CHOOSER__SEARCH.write(context, out);
@@ -167,7 +167,7 @@ public class IconChooserControl extends AbstractVisibleControl {
 
 		out.beginBeginTag(DIV);
 		out.writeAttribute(ID_ATTR, iconListId());
-		out.writeAttribute(CLASS_ATTR, "fptBody");
+		out.writeAttribute(CLASS_ATTR, "tl-form-page__body");
 		writeOnClick(out);
 		out.endBeginTag();
 
@@ -181,7 +181,7 @@ public class IconChooserControl extends AbstractVisibleControl {
 		ThemeImage selectedImage = (ThemeImage) _model.getValue();
 
 		out.beginBeginTag(DIV);
-		out.writeAttribute(CLASS_ATTR, "fptBodyContent " + FormConstants.OVERFLOW_AUTO_CLASS);
+		out.writeAttribute(CLASS_ATTR, "tl-form-page__body-content " + FormConstants.OVERFLOW_AUTO_CLASS);
 		out.endBeginTag();
 
 		// render all icons
@@ -190,9 +190,9 @@ public class IconChooserControl extends AbstractVisibleControl {
 
 			for (ThemeImage img : icon.getImages()) {
 				if (img.equals(selectedImage)) {
-					cssClass = "displayedIcons selected";
+					cssClass = "tl-displayed-icons selected";
 				} else {
-					cssClass = "displayedIcons";
+					cssClass = "tl-displayed-icons";
 				}
 
 				renderButton(context, out, img, cssClass, icon.getLabel(), null, true);
@@ -293,7 +293,7 @@ public class IconChooserControl extends AbstractVisibleControl {
 	}
 
 	private String iconListId() {
-		return getID() + "-fptBody";
+		return getID() + "-tl-form-page__body";
 	}
 
 	private TextInputControl createPatternFieldControl() {

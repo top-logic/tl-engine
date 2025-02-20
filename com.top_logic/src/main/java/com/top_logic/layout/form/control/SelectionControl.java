@@ -246,7 +246,7 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 
 	@Override
 	protected String getTypeCssClass() {
-		return "cPopupSelect";
+		return "tl-popup-select";
 	}
 
 	@Override

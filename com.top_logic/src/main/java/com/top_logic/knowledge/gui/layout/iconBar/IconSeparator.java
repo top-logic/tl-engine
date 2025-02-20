@@ -40,7 +40,7 @@ public class IconSeparator extends Adorner {
 			ServletException {
 		Writer theWriter = anOut.contentWriter();
 		theWriter.write("<td class=\"cmdButtonCell\" valign=\"top\">");
-		theWriter.write("<img class=\"cmdImg\" src=\"");
+		theWriter.write("<img class=\"tl-cmd-button__img\" src=\"");
 		theWriter.write(aRequest.getContextPath());
 		theWriter.write(ThemeFactory.getTheme().getFileLink(SEPARATOR_IMAGE));
 		theWriter.write("\" />");

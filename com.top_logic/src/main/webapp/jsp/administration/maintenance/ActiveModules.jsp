@@ -105,7 +105,7 @@ void inspect(DisplayContext context, TagWriter out, LayoutComponent component, B
 			<h4>
 				Finished
 			</h4>
-			<button class="tlButton cButton cmdButton"
+			<button class="tlButton cButton tl-cmd-button"
 				onclick="self.location.href = '<%=component.getComponentURL(displayContext).getURL()%>';"
 			>
 				<h4 class="tlButtonLabel">
@@ -182,7 +182,7 @@ void inspect(DisplayContext context, TagWriter out, LayoutComponent component, B
 				</table>
 				<div class="cmdButtons">
 					<p>
-						<button class="tlButton cButton cmdButton"
+						<button class="tlButton cButton tl-cmd-button"
 							name="RELOAD"
 							type="submit"
 						>

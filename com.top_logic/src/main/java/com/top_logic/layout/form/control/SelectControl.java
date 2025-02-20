@@ -252,7 +252,7 @@ public class SelectControl extends AbstractSelectControl implements OptionModelL
 
 	@Override
 	protected String getTypeCssClass() {
-		return "cDropdownSelect";
+		return "tl-dropdown-select";
 	}
 
 	/*

@@ -119,7 +119,7 @@ public class IntegerInputControl extends AbstractFormFieldControl {
 
 	@Override
 	protected String getTypeCssClass() {
-		return "cIntegerInput";
+		return "tl-integer-input";
 	}
 
     @Override

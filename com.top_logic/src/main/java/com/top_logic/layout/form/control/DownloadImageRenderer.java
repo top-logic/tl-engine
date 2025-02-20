@@ -37,7 +37,7 @@ public class DownloadImageRenderer extends DefaultControlRenderer<IDownloadContr
 	/**
 	 * css class of the additional span rendered in download mode
 	 */
-	public static final String DOWNLOAD_CSS = "downloadControl";
+	public static final String DOWNLOAD_CSS = "tl-download-control";
 
 	/** @see #isDownloadAllowed() */
 	private boolean _downloadAllowed;

@@ -1611,6 +1611,8 @@
 					<form:input name="switchStateField"/>
 				</form:descriptionCell>
 			</form:group>
+
+			<form:custom name="testDynamicGroups"/>
 		</form:form>
 	</layout:body>
 </layout:html>

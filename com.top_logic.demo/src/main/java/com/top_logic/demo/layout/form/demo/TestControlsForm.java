@@ -137,6 +137,7 @@ import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.folder.FolderControl;
 import com.top_logic.layout.form.CheckException;
 import com.top_logic.layout.form.Constraint;
+import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
@@ -229,6 +230,7 @@ import com.top_logic.layout.messagebox.ProgressDialog;
 import com.top_logic.layout.provider.BooleanLabelProvider;
 import com.top_logic.layout.provider.DateTimeLabelProvider;
 import com.top_logic.layout.provider.DefaultLabelProvider;
+import com.top_logic.layout.provider.ImageButtonControlProvider;
 import com.top_logic.layout.provider.LabelResourceProvider;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.resources.NestedResourceView;
@@ -1739,6 +1741,9 @@ public class TestControlsForm extends FormComponent {
 		context.addMember(createConfigurationGroup());
 
 		addOpenCalendarControl(controlsGroup);
+
+		context.addMember(testDynamicGroups());
+
 		return context;
 	}
 
@@ -2903,6 +2908,68 @@ public class TestControlsForm extends FormComponent {
 				return HandlerResult.DEFAULT_RESULT;
 			}
 		};
+	}
+
+	private FormMember testDynamicGroups() {
+		FormGroup group = new FormGroup("testDynamicGroups", PlainKeyResources.INSTANCE);
+		group.setLabel("Dynamic Groups");
+
+		FormGroup dynamicContent = new FormGroup("dynamicContent", PlainKeyResources.INSTANCE);
+		group.addMember(dynamicContent);
+
+		CommandField add = new CommandField("add") {
+			int _nextId = 1;
+
+			@Override
+			public HandlerResult executeCommand(DisplayContext context1) {
+				int id = _nextId++;
+				FormGroup inner = new FormGroup("inner-" + id, PlainKeyResources.INSTANCE);
+				inner.setLabel("Group " + id);
+
+				CommandField remove = new CommandField("remove") {
+					@Override
+					public HandlerResult executeCommand(DisplayContext context2) {
+						inner.getParent().removeMember(inner);
+						return HandlerResult.DEFAULT_RESULT;
+					}
+				};
+				remove.setControlProvider(ImageButtonControlProvider.INSTANCE);
+				remove.setImage(com.top_logic.layout.table.control.Icons.DELETE_TOOLBAR);
+				inner.addMember(remove);
+
+				StringField prop1 = FormFactory.newStringField("prop1");
+				StringField prop2 = FormFactory.newStringField("prop2");
+
+				inner.addMember(prop1);
+				inner.addMember(prop2);
+
+				dynamicContent.addMember(inner);
+
+				Templates.template(inner, Templates.fieldsetBox(
+					Templates.horizontalBox(
+						Templates.span(Templates.css(FormConstants.FLEXIBLE2_CSS_CLASS), Templates.label()),
+						Templates.span(Templates.css(FormConstants.FIXED_RIGHT2_CSS_CLASS),
+							Templates.member("remove"))),
+					Templates.verticalBox(
+						Templates.fieldBox("prop1"),
+						Templates.fieldBox("prop2")),
+					ConfigKey.none()));
+
+				return HandlerResult.DEFAULT_RESULT;
+			}
+		};
+		add.setControlProvider(ImageButtonControlProvider.INSTANCE);
+		add.setImage(com.top_logic.layout.table.control.Icons.ADD_ROW);
+		group.addMember(add);
+
+		Templates.template(group, Templates.fieldsetBox(
+			Templates.horizontalBox(
+				Templates.span(Templates.css(FormConstants.FLEXIBLE2_CSS_CLASS), Templates.label()),
+				Templates.span(Templates.css(FormConstants.FIXED_RIGHT2_CSS_CLASS), Templates.member("add"))),
+			Templates.member("dynamicContent"),
+			ConfigKey.none()));
+
+		return group;
 	}
 
 	private FormMember testLengthConstraint() {

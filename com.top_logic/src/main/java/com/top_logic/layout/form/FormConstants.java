@@ -51,7 +51,7 @@ public interface FormConstants {
     public static final String BUTTON_PLUS_CSS_CLASS = "button_plus";
     
     /** Prefix for the {@link IntegerInputControl}'s minus button style class */
-    public static final String BUTTON_MINUS_CSS_CLASS = "button_minus";
+    public static final String BUTTON_MINUS_CSS_CLASS = "tl-button-minus";
 
 	/**
 	 * CSS class that describes a top-level HTML element of a conditionally

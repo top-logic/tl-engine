@@ -67,7 +67,7 @@ public class FlexibleCellControlProvider implements ControlProvider {
 
 			@Override
 			protected String getTypeCssClass() {
-				return "cDecoratedCell";
+				return "tl-decorated-cell";
 			}
 
 			@Override

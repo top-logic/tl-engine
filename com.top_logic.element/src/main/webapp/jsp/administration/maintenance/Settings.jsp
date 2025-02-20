@@ -350,7 +350,7 @@
 								&#xA0;If checked, the resources will be reloaded also while applying the changes.
 								<br/>
 								<br/>
-								<button class="tlButton cButton cmdButton"
+								<button class="tlButton cButton tl-cmd-button"
 									name="SUBMIT"
 									type="submit"
 								>

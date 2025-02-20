@@ -89,7 +89,7 @@ public class IDColumnTableCellRenderer extends AbstractCellRenderer {
 			return;
 		}
 
-		out.beginTag(SPAN, CLASS_ATTR, "cDecoratedCell");
+		out.beginTag(SPAN, CLASS_ATTR, "tl-decorated-cell");
 		out.beginTag(SPAN, CLASS_ATTR, FormConstants.FIXED_LEFT_CSS_CLASS);
 		ThemeImage image = _rowObjectResourceProvider.getImage(rowObject, Flavor.DEFAULT);
 		if (image != null) {
@@ -101,7 +101,7 @@ public class IDColumnTableCellRenderer extends AbstractCellRenderer {
 		if (hasLink) {
 			out.beginBeginTag(HTMLConstants.ANCHOR);
 			out.writeAttribute(HTMLConstants.HREF_ATTR, HTMLConstants.HREF_EMPTY_LINK);
-			CssUtil.writeCombinedCssClasses(out, GotoHandler.GOTO_CLASS, "cDecoratedCell", cssClass);
+			CssUtil.writeCombinedCssClasses(out, GotoHandler.GOTO_CLASS, "tl-decorated-cell", cssClass);
 			out.writeAttribute(HTMLConstants.ONCLICK_ATTR, link);
 			if (hasTooltip) {
 				// OverLib attributes are OK for ANCHOR, too
@@ -110,12 +110,12 @@ public class IDColumnTableCellRenderer extends AbstractCellRenderer {
 			out.endBeginTag();
 		} else if (hasTooltip) {
 			out.beginBeginTag(HTMLConstants.SPAN);
-			CssUtil.writeCombinedCssClasses(out, "cDecoratedCell", cssClass);
+			CssUtil.writeCombinedCssClasses(out, "tl-decorated-cell", cssClass);
 			OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out, tooltip);
 			out.endBeginTag();
 		} else if (hasCssClass) {
 			out.beginBeginTag(HTMLConstants.SPAN);
-			CssUtil.writeCombinedCssClasses(out, "cDecoratedCell", cssClass);
+			CssUtil.writeCombinedCssClasses(out, "tl-decorated-cell", cssClass);
 			out.endBeginTag();
 		}
 

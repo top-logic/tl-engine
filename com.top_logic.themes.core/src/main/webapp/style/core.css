@@ -626,13 +626,13 @@ div.fltList {
 	margin-top: var(--spacing-02);
 }
 
-.defaultFilterContainer .cPopupSelect,
+.defaultFilterContainer .tl-popup-select,
 .defaultFilterContainer .tl-text-select,
 .defaultFilterContainer .tl-expandable-text-input,
 .defaultFilterContainer .tl-text-input,
-.defaultFilterContainer .cDatetime,
+.defaultFilterContainer .tl-datetime,
 .defaultFilterContainer .tl-date-input,
-.defaultFilterContainer .cIntegerInput,
+.defaultFilterContainer .tl-integer-input,
 .defaultFilterContainer .tl-time-input {
 	width: 100%;
 	white-space: break-spaces;
@@ -640,11 +640,11 @@ div.fltList {
 	word-break: break-word;
 }
 
-.defaultFilterContainer .cDatetime {
+.defaultFilterContainer .tl-datetime {
 	flex-wrap: wrap;
 }
 
-.defaultFilterContainer .cDatetime input {
+.defaultFilterContainer .tl-datetime input {
 	width: 65px;
 }
 

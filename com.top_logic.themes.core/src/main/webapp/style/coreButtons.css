@@ -653,6 +653,7 @@ a.fChoose:hover,
 .dfListAdd .cButton a:hover,
 .cButton.dfRemove a:hover {
 	color: var(--button-fg, var(--icon-primary));
+	text-decoration: none;
 }
 
 .cButton.fToggle a:hover {

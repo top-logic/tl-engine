@@ -77,7 +77,7 @@ public class ValueWithErrorControlProvider extends AbstractConfiguredInstance<Va
 	/** Default for {@link Config#getErrorFirst()}. */
 	private static final boolean ERROR_FIRST_DEFAULT = false;
 
-	private static final CharSequence CSS_CLASS = "cDecoratedCell " + FormConstants.FLEXIBLE_CSS_CLASS;
+	private static final CharSequence CSS_CLASS = "tl-decorated-cell " + FormConstants.FLEXIBLE_CSS_CLASS;
 
 	/**
 	 * Creates an {@link ValueWithErrorControlProvider} with the given {@link ControlProvider} as

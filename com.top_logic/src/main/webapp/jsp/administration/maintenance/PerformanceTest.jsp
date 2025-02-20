@@ -173,7 +173,7 @@ long startTime = System.currentTimeMillis();
 									%>
 								</div>
 								<p>
-									<button class="tlButton cButton cmdButton"
+									<button class="tlButton cButton tl-cmd-button"
 										name="SUBMIT"
 										type="submit"
 									>

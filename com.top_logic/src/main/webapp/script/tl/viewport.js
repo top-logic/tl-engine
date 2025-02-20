@@ -880,10 +880,10 @@ services.viewport = {
 	      		currButton = buttonsClone[i].firstElementChild;
 				
 				let additionalClass = "";
-				if (currButton.classList.contains("cmdButton")) {
-					additionalClass = " cmdButton";
-				} else if (currButton.classList.contains("cmdButtonDisabled")) {
-					additionalClass = " cmdButtonDisabled";
+				if (currButton.classList.contains("tl-cmd-button")) {
+					additionalClass = " tl-cmd-button";
+				} else if (currButton.classList.contains("tl-cmd-button--disabled")) {
+					additionalClass = " tl-cmd-button--disabled";
 				}
 	      		currButton.classList = "tlInDropdown" + additionalClass;
 	      		dropdownHtml += currButton.outerHTML;

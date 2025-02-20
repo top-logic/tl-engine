@@ -189,7 +189,7 @@ services.wysiwyg = {
 		},
 		
 		findScrollContainer: function(el) {
-			var cls = "fptBodyContent";
+			var cls = "tl-form-page__body-content";
 		    while (el = el.parentElement) {
 		    	if(el.classList.contains(cls)) {
 		    		return el;

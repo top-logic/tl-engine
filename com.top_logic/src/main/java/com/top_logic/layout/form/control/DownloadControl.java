@@ -46,7 +46,7 @@ public class DownloadControl extends AbstractConstantControl implements IDownloa
 
 	@Override
 	protected String getTypeCssClass() {
-		return "cDownload";
+		return "tl-download";
 	}
 
 	@Override

@@ -79,8 +79,8 @@ div.cmdProgress img {
 ****					****
 */
 .cmdButtons .cButton,
-.cButton.cmdButton,
-.cButton.cmdButtonDisabled,
+.cButton.tl-cmd-button,
+.cButton.tl-cmd-button--disabled,
 .cDefaultButton button,
 .cDefaultButton button:disabled,
 .tlButtonScrollContainer .tlDropdownButton,
@@ -212,7 +212,7 @@ with hard coded popup window dimension
 	white-space: nowrap;
 }
 
-.tlButton .cmdImg,
+.tlButton .tl-cmd-button__img,
 .fltSubContent .menuEntryCell:first-child, 
 .fltSubContent .menuEntryCell img.menuEntryImage {
 	color: var(--button-secondary);
@@ -235,7 +235,7 @@ with hard coded popup window dimension
 	text-decoration: none;
 }
 
-.tlButton:hover .cmdImg, 
+.tlButton:hover .tl-cmd-button__img, 
 .fltSubContent .cMenuButton.menuEntryEnabled:hover .menuEntryCell:first-child, 
 .fltSubContent .cMenuButton.menuEntryEnabled:hover img.menuEntryImage {
 	color: var(--icon-on-color);
@@ -258,7 +258,7 @@ with hard coded popup window dimension
 	color: var(--text-on-color);
 }
 
-.tlButton:focus .cmdImg, 
+.tlButton:focus .tl-cmd-button__img, 
 .fltSubContent .cMenuButton.menuEntryEnabled:focus .menuEntryCell:first-child, 
 .fltSubContent .cMenuButton.menuEntryEnabled:focus img.menuEntryImage {
 	color: var(--icon-on-color);
@@ -281,14 +281,14 @@ with hard coded popup window dimension
 	color: var(--text-on-color);
 }
 
-.tlButton:active .cmdImg,
+.tlButton:active .tl-cmd-button__img,
 .fltSubContent .cMenuButton.menuEntryEnabled:active .menuEntryCell:first-child, 
 .fltSubContent .cMenuButton.menuEntryEnabled:active img.menuEntryImage {
 	color: var(--icon-on-color);
 }
 
-.tlButton.cmdButtonDisabled,
-.tlButton.cmdButtonDisabled:hover,
+.tlButton.tl-cmd-button--disabled,
+.tlButton.tl-cmd-button--disabled:hover,
 .cDefaultButton button:disabled,
 .cButton.cLinkButton.cmdLinkDisabled {
 	cursor: default;
@@ -297,20 +297,20 @@ with hard coded popup window dimension
 	text-decoration: none;
 }
 
-.tlButton.cmdButtonDisabled:focus,
+.tlButton.tl-cmd-button--disabled:focus,
 .cButton.cLinkButton.cmdLinkDisabled:focus {
 	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
 	outline: none !important;
 }
 
-.tlButton.cmdButtonDisabled .tlButtonLabel,
-.tlInDropdown.cmdButtonDisabled .tlButtonLabel,
+.tlButton.tl-cmd-button--disabled .tlButtonLabel,
+.tlInDropdown.tl-cmd-button--disabled .tlButtonLabel,
 .cDefaultButton button:disabled,
 .cButton.cLinkButton.cmdLinkDisabled {
 	color: var(--text-disabled);
 }
 
-.tlButton.cmdButtonDisabled .cmdImg {
+.tlButton.tl-cmd-button--disabled .tl-cmd-button__img {
 	color: var(--icon-disabled);
 }
 
@@ -323,7 +323,7 @@ with hard coded popup window dimension
 	color: var(--text-on-color);
 }
 
-.tlButton.tlPrimaryButton .cmdImg {
+.tlButton.tlPrimaryButton .tl-cmd-button__img {
 	color: var(--icon-on-color);
 }
 
@@ -341,16 +341,16 @@ with hard coded popup window dimension
 	background: var(--button-primary-active);
 }
 
-.tlButton.tlPrimaryButton.cmdButtonDisabled {
+.tlButton.tlPrimaryButton.tl-cmd-button--disabled {
 	background: var(--button-disabled);
 	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
 }
 
-.tlButton.tlPrimaryButton.cmdButtonDisabled .tlButtonLabel {
+.tlButton.tlPrimaryButton.tl-cmd-button--disabled .tlButtonLabel {
 	color: var(--text-on-color-disabled);
 }
 
-.tlButton.tlPrimaryButton.cmdButtonDisabled .cmdImg {
+.tlButton.tlPrimaryButton.tl-cmd-button--disabled .tl-cmd-button__img {
 	color: var(--icon-on-color-disabled);
 }
 
@@ -363,7 +363,7 @@ with hard coded popup window dimension
 	color: var(--link-primary);
 }
 
-.tlButton.tlGhostButton .cmdImg {
+.tlButton.tlGhostButton .tl-cmd-button__img {
 	color: var(--link-primary);
 }
 
@@ -376,7 +376,7 @@ with hard coded popup window dimension
 	color: var(--link-primary-hover);
 }
 
-.tlButton.tlGhostButton:hover .cmdImg {
+.tlButton.tlGhostButton:hover .tl-cmd-button__img {
 	color: var(--link-primary-hover);
 }
 
@@ -391,16 +391,16 @@ with hard coded popup window dimension
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
-.tlButton.tlGhostButton.cmdButtonDisabled {
+.tlButton.tlGhostButton.tl-cmd-button--disabled {
 	background: transparent;
 	box-shadow: none;
 }
 
-.tlButton.tlGhostButton.cmdButtonDisabled .tlButtonLabel {
+.tlButton.tlGhostButton.tl-cmd-button--disabled .tlButtonLabel {
 	color: var(--text-disabled);
 }
 
-.tlButton.tlGhostButton.cmdButtonDisabled .cmdImg {
+.tlButton.tlGhostButton.tl-cmd-button--disabled .tl-cmd-button__img {
 	color: var(--icon-disabled);
 }
 
@@ -413,7 +413,7 @@ with hard coded popup window dimension
 	color: var(--text-on-color);
 }
 
-.tlButton.tlDangerButtonPrimary .cmdImg {
+.tlButton.tlDangerButtonPrimary .tl-cmd-button__img {
 	color: var(--icon-on-color);
 }
 
@@ -432,21 +432,21 @@ with hard coded popup window dimension
 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset);
 }
 
-.tlButton.tlDangerButtonPrimary.cmdButtonDisabled {
+.tlButton.tlDangerButtonPrimary.tl-cmd-button--disabled {
 	background: var(--button-disabled);
 	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
 }
 
-.tlButton.tlDangerButtonPrimary.cmdButtonDisabled:focus {
+.tlButton.tlDangerButtonPrimary.tl-cmd-button--disabled:focus {
 	box-shadow: none;
 	outline: none !important;
 }
 
-.tlButton.tlDangerButtonPrimary.cmdButtonDisabled .tlButtonLabel {
+.tlButton.tlDangerButtonPrimary.tl-cmd-button--disabled .tlButtonLabel {
 	color: var(--text-on-color-disabled);
 }
 
-.tlButton.tlDangerButtonPrimary.cmdButtonDisabled .cmdImg {
+.tlButton.tlDangerButtonPrimary.tl-cmd-button--disabled .tl-cmd-button__img {
 	color: var(--icon-on-color-disabled);
 }
 
@@ -460,7 +460,7 @@ with hard coded popup window dimension
 	color: var(--button-danger);
 }
 
-.tlButton.tlDangerButtonSecondary .cmdImg {
+.tlButton.tlDangerButtonSecondary .tl-cmd-button__img {
 	color: var(--button-danger);
 }
 
@@ -473,7 +473,7 @@ with hard coded popup window dimension
 	color: var(--text-on-color);
 }
 
-.tlButton.tlDangerButtonSecondary:hover .cmdImg {
+.tlButton.tlDangerButtonSecondary:hover .tl-cmd-button__img {
 	color: var(--icon-on-color);
 }
 
@@ -491,20 +491,20 @@ with hard coded popup window dimension
 	color: var(--text-on-color);
 }
 
-.tlButton.tlDangerButtonSecondary:active .cmdImg {
+.tlButton.tlDangerButtonSecondary:active .tl-cmd-button__img {
 	color: var(--icon-on-color);
 }
 
-.tlButton.tlDangerButtonSecondary.cmdButtonDisabled {
+.tlButton.tlDangerButtonSecondary.tl-cmd-button--disabled {
 	background: none;
 	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
 }
 
-.tlButton.tlDangerButtonSecondary.cmdButtonDisabled .tlButtonLabel {
+.tlButton.tlDangerButtonSecondary.tl-cmd-button--disabled .tlButtonLabel {
 	color: var(--text-disabled);
 }
 
-.tlButton.tlDangerButtonSecondary.cmdButtonDisabled .cmdImg {
+.tlButton.tlDangerButtonSecondary.tl-cmd-button--disabled .tl-cmd-button__img {
 	color: var(--icon-disabled);
 }
 
@@ -544,11 +544,11 @@ with hard coded popup window dimension
 	padding: 0.2em var(--spacing-03);
 }
 
-.tlInDropdown:not(.cmdButton:hover) {
+.tlInDropdown:not(.tl-cmd-button:hover) {
 	background-color: var(--layer);
 }
 
-.tlInDropdown.cmdButtonDisabled {
+.tlInDropdown.tl-cmd-button--disabled {
 	cursor: default;
 }
 
@@ -562,7 +562,7 @@ with hard coded popup window dimension
 	line-height: 2em;
 }
 
-.tlDropdownContent a .cmdImg {
+.tlDropdownContent a .tl-cmd-button__img {
 	color: var(--icon-secondary);
 	padding-right: var(--spacing-02);
 }
@@ -576,11 +576,11 @@ with hard coded popup window dimension
 	text-decoration: none;
 }
 
-.tlDropdownContent a:hover:not(.cmdButtonDisabled) .tlButtonLabel {
+.tlDropdownContent a:hover:not(.tl-cmd-button--disabled) .tlButtonLabel {
 	color: var(--text-primary);
 }
 
-.tlDropdownContent a:hover:not(.cmdButtonDisabled) .cmdImg {
+.tlDropdownContent a:hover:not(.tl-cmd-button--disabled) .tl-cmd-button__img {
 	color: var(--button-fg, var(--icon-primary));
 	text-decoration: none;
 }
@@ -591,10 +591,10 @@ with hard coded popup window dimension
 }
 
 span.cImageButton .input-image.disabled i, span.cmdLink .input-image.disabled i, span.cOpenCalendar .input-image.disabled i, 
-span.tl-time-input .input-image.disabled i, span.cPopupSelect .input-image.disabled i, .cIntegerInput .input-image.disabled i, 
-span.tl-text-select .input-image.disabled i, span.cImageLinkButton .input-image.disabled i, .cDownload .input-image.disabled i, 
-span.cDecoratedCell .input-image.disabled i, span.tl-expandable-text-input .input-image.disabled i, span.tl-block-text-input .input-image.disabled i, 
-span.urlWithIcon .input-image.disabled i, span.cIconSelect .input-image.cannot-edit i, .fChoose.input-image.disabled i, a.cmdButtonDisabled i, 
+span.tl-time-input .input-image.disabled i, span.tl-popup-select .input-image.disabled i, .tl-integer-input .input-image.disabled i, 
+span.tl-text-select .input-image.disabled i, span.cImageLinkButton .input-image.disabled i, .tl-download .input-image.disabled i, 
+span.tl-decorated-cell .input-image.disabled i, span.tl-expandable-text-input .input-image.disabled i, span.tl-block-text-input .input-image.disabled i, 
+span.urlWithIcon .input-image.disabled i, span.tl-icon-select .input-image.cannot-edit i, .fChoose.input-image.disabled i, a.tl-cmd-button--disabled i, 
 .cMenuButton.menuEntryDisabled i, .cMenuButton.menuEntryDisabled:hover i, .cmdLinkDisabled .input-image.disabled i,
 span.dlgToolbar .input-image.disabled i, span.pdlgToolbar .input-image.disabled i,
 div.cCollapsibleToolbar .input-image.disabled i, .tl-table__title-toolbar .input-image.disabled i {
@@ -681,9 +681,9 @@ a.fChoose:hover,
 
 /* Icon Styles for design mode hamburger buttons */
 .tlAdditionalRightContent .cButton.cImageButton,
-.tlAdditionalRightContent .cButton.cImageButton.cmdButtonDisabled, 
+.tlAdditionalRightContent .cButton.cImageButton.tl-cmd-button--disabled, 
 .sblLogo .cButton.cImageButton,
-.sblLogo .cButton.cImageButton.cmdButtonDisabled {
+.sblLogo .cButton.cImageButton.tl-cmd-button--disabled {
 	display: inline-flex;
 	justify-content: center;
 	align-items: center;
@@ -694,14 +694,14 @@ a.fChoose:hover,
 }
 
 .tlAdditionalRightContent .cButton.cImageButton,
-.tlAdditionalRightContent .cButton.cImageButton.cmdButtonDisabled {
+.tlAdditionalRightContent .cButton.cImageButton.tl-cmd-button--disabled {
 	height: var(--tabbar-height);
 	width: var(--tabbar-height);
 	box-sizing: border-box;
 }
 
 .sblLogo .cButton.cImageButton, 
-.sblLogo .cButton.cImageButton.cmdButtonDisabled {
+.sblLogo .cButton.cImageButton.tl-cmd-button--disabled {
 	width: .5rem;
 }
 
@@ -741,15 +741,15 @@ a.fChoose:hover,
 	background: var(--button-primary-active);
 }
 
-.tlAdditionalRightContent .cButton.cImageButton.cmdButtonDisabled,
-.sblLogo .cImageButton.cmdButtonDisabled {
+.tlAdditionalRightContent .cButton.cImageButton.tl-cmd-button--disabled,
+.sblLogo .cImageButton.tl-cmd-button--disabled {
 	background: var(--button-disabled);
 	box-shadow: inset 0px 0px 0px 2px var(--button-disabled);
 	cursor: default;
 }
 
-.tlAdditionalRightContent .cButton.cImageButton.cmdButtonDisabled a,
-.sblLogo .cImageButton.cmdButtonDisabled a {
+.tlAdditionalRightContent .cButton.cImageButton.tl-cmd-button--disabled a,
+.sblLogo .cImageButton.tl-cmd-button--disabled a {
 	color: var(--icon-on-color-disabled);
 	cursor: default;
 }

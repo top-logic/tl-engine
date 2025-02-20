@@ -99,6 +99,6 @@ div.ace_tooltip>code.inlineCode {
 	width: 100vw;
 }
 
-.modelBasedSearch .cPopupSelect.active {
+.modelBasedSearch .tl-popup-select.active {
 	width: unset;
 }

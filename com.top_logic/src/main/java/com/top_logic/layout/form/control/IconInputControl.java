@@ -109,7 +109,7 @@ public class IconInputControl extends AbstractFormFieldControl {
 
 	@Override
 	protected String getTypeCssClass() {
-		return "cIconChooser";
+		return "tl-icon-chooser";
 	}
 
 	/**

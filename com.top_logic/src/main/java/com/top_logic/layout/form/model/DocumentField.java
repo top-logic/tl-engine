@@ -207,7 +207,7 @@ public class DocumentField extends CompositeField {
 	    	+		" xmlns='" + HTMLConstants.XHTML_NS + "'"
 	    	+  		" xmlns:t='" + FormTemplateConstants.TEMPLATE_NS + "'"
 	    	+		" xmlns:p='" + FormPatternConstants.PATTERN_NS + "'"
-	    	+		" class='" + "cDecoratedCell" + "'"
+	    	+		" class='" + "tl-decorated-cell" + "'"
 	    	+	">"
 	    	+		"<p:field name='" + DocumentField.DOCUMENT_FIELD + "' />"
 	    	+		"<p:field name='" + DocumentField.TEMPLATE_FIELD + "' />"

@@ -74,7 +74,7 @@ public class BooleanChoiceControl extends AbstractFormFieldControl {
 
 	@Override
 	protected String getTypeCssClass() {
-		return "cBooleanChoice";
+		return "tl-boolean-choice";
 	}
 
 	@Override

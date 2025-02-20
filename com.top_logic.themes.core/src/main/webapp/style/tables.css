@@ -919,20 +919,20 @@ table td .ddwttContainer {
 	width: 100%;
 }
 
-table td span.cDecoratedCell,
-table td span.cPopupSelect,
+table td span.tl-decorated-cell,
+table td span.tl-popup-select,
 table td span.tl-text-select,
-table td span.cDropdownSelect,
+table td span.tl-dropdown-select,
 table td span.tl-date-input,
-table td span.cIntegerInput,
-table td span.cDatetime,
+table td span.tl-integer-input,
+table td span.tl-datetime,
 table td span.tl-time-input,
-table td span.cTextPopup,
+table td span.tl-text-popup,
 table td span.tl-expandable-text-input,
 table td span.tl-text-input,
-table td span.cIconChooser,
-table td span.cDataItem.download,
-table td span.downloadControl {
+table td span.tl-icon-chooser,
+table td span.tl-data-item.download,
+table td span.tl-download-control {
 	display: flex;
 	flex-wrap: nowrap;
 	align-items: center;
@@ -940,18 +940,18 @@ table td span.downloadControl {
 	height: 100%;
 }
 
-table td span.cDecoratedCell :is(.lFlexible,.lFixedLeft) 
-table td span.cDecoratedCell :is(.lFlexible,.lFixedLeft) > .cTooltip {
+table td span.tl-decorated-cell :is(.lFlexible,.lFixedLeft) 
+table td span.tl-decorated-cell :is(.lFlexible,.lFixedLeft) > .cTooltip {
 	height: inherit;
 	display: inline-flex;
 	align-items: center;
 }
 
-table .cDecoratedCell > .lFlexible > :first-child:not(a) {
+table .tl-decorated-cell > .lFlexible > :first-child:not(a) {
 	flex-grow: 2;
 }
 
-table td span.cDecoratedCell {
+table td span.tl-decorated-cell {
 	gap: var(--spacing-01);
 }
 
@@ -964,22 +964,22 @@ td.tl-table__cell--selected .treeType > i {
 	color: var(--highlight-fg, var(--button-fg, var(--icon-primary)));
 }
 
-table td span.cTextPopup span.content {
+table td span.tl-text-popup span.content {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
-table td .cDataItem span.lFlexible span.content,
-table td span.downloadControl span.content {
+table td .tl-data-item span.lFlexible span.content,
+table td span.tl-download-control span.content {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
 
-table td span.cTextPopup.descriptionSizeConstraint span.content{
+table td span.tl-text-popup.descriptionSizeConstraint span.content{
 	position: relative;
 }
 
-.cTextPopup.descriptionSizeConstraint .cImageButton{
+.tl-text-popup.descriptionSizeConstraint .cImageButton{
 	vertical-align: middle;
 }
 
@@ -1011,24 +1011,24 @@ table td span.cTextPopup.descriptionSizeConstraint span.content{
     box-sizing: border-box;    
 }
 
-span.cTextPopupView span.content p,
-span.cTextPopupView span.content ul,
-span.cTextPopupView span.content li,
-span.cTextPopup span.content p,
-span.cTextPopup span.content ul,
-span.cTextPopup span.content li {
+span.tl-text-popup-view span.content p,
+span.tl-text-popup-view span.content ul,
+span.tl-text-popup-view span.content li,
+span.tl-text-popup span.content p,
+span.tl-text-popup span.content ul,
+span.tl-text-popup span.content li {
 	margin: 0px;
 	padding: 0px;
 	display: inline;
 }
 
-table td span.cTextPopupView span.content p,
-table td span.cTextPopupView span.content ul,
-table td span.cTextPopupView span.content li,
-table td span.cTextPopup span.content p,
-table td span.cTextPopup span.content ul,
-table td span.cTextPopup span.content li,
-table td a.cDownload {
+table td span.tl-text-popup-view span.content p,
+table td span.tl-text-popup-view span.content ul,
+table td span.tl-text-popup-view span.content li,
+table td span.tl-text-popup span.content p,
+table td span.tl-text-popup span.content ul,
+table td span.tl-text-popup span.content li,
+table td a.tl-download {
 	display: block;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -1056,18 +1056,18 @@ Padding is spacing-01 instead of 03 for tables
 because of the datetimeinput field.
  */
 table td .tl-text-input input,
-table td .cIntegerInput input, 
+table td .tl-integer-input input, 
 table td .tl-expandable-text-input input, 
 table td .tl-block-text-input input, 
-table td .cPopupSelect input,
-table td .cDatetime .tl-date-input input,
-table td .cDatetime .tl-time-input input,
+table td .tl-popup-select input,
+table td .tl-datetime .tl-date-input input,
+table td .tl-datetime .tl-time-input input,
 table td .tl-date-input input,
 table td .ddwttDropBtn {
 	padding: 0 var(--spacing-01);
 }
 
-table.tl-table td .cDateTime .lFixedRight .tl-date-input .lFlexible {
+table.tl-table td .tl-datetime .lFixedRight .tl-date-input .lFlexible {
 	width: fit-content !important;
 }
 
@@ -1334,7 +1334,7 @@ th .tl-table__cell-container {
 	width: 100%;
 }
 
-.tl-table__cell-container .cPopupSelect.cannot-edit {
+.tl-table__cell-container .tl-popup-select.cannot-edit {
 	flex-wrap: nowrap;
 }
 

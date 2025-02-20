@@ -139,7 +139,7 @@ public class ChecklistControl extends AbstractControl implements ValueListener, 
     
     @Override
 	protected String getTypeCssClass() {
-		return "cCheckList";
+		return "tl-checklist";
 	}
 
 	@Override
@@ -162,7 +162,7 @@ public class ChecklistControl extends AbstractControl implements ValueListener, 
             // Begin label span
             out.beginBeginTag(SPAN);
             out.writeAttribute(ID_ATTR, this.getShortStateID());
-			out.writeAttribute(CLASS_ATTR, "cCheckList-counts");
+			out.writeAttribute(CLASS_ATTR, "tl-checklist-counts");
             out.endBeginTag();
             
             if (field.isMultiple()) {

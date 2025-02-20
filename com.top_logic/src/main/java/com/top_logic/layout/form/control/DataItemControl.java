@@ -280,7 +280,7 @@ public class DataItemControl extends AbstractFormFieldControl implements Content
 
 	@Override
 	protected String getTypeCssClass() {
-		return "cDataItem";
+		return "tl-data-item";
 	}
 
 	@Override

@@ -3934,7 +3934,7 @@ public class GridComponent extends EditComponent implements
 				if (value instanceof FormField field) {
 					out.beginBeginTag(DIV);
 					out.beginCssClasses();
-					out.append("cDecoratedCell");
+					out.append("tl-decorated-cell");
 					out.append(FormConstants.FLEXIBLE_CSS_CLASS);
 					out.endCssClasses();
 					out.endBeginTag();

@@ -96,7 +96,7 @@
 				</tr>
 			</table>
 			<div class="cmdButtons">
-				<button class="tlButton cButton cmdButton" name="submit" type="submit">
+				<button class="tlButton cButton tl-cmd-button" name="submit" type="submit">
 					<h4 class="tlButtonLabel">Make It So</h4>
 				</button>
 			</div>

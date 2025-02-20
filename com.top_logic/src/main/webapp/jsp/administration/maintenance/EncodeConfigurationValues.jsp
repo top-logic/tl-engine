@@ -108,7 +108,7 @@ contentType="text/html; charset=UTF-8"
 					</tr>
 				</table>
 				<p>
-					<button class="tlButton cButton cmdButton"
+					<button class="tlButton cButton tl-cmd-button"
 						name="SUBMIT"
 						type="submit"
 					>

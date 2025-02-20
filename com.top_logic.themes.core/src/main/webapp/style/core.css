@@ -276,25 +276,20 @@ a, a:link {
 	text-decoration: none;
 }
 
-a:not(.disabled):hover {
+a:hover {
 	color: var(--highlight, var(--link-primary-hover));
 	text-decoration: underline;
 }
 
-a:not(.disabled):active {
+a:active {
 	color: var(--highlight, var(--text-primary));
 	text-decoration: underline;
 }
 
-a:not(.disabled):focus {
+a:focus {
     color: var(--highlight, var(--link-primary-hover));
 	outline: 2px solid var(--focus);
 	outline-offset: 2px;
-}
-
-a:visited, a.gotoLink:visited,
-a.cmdLink:visited {
-    /* color: var(--link-primary); */
 }
 
 .cmdLinkDisabled {

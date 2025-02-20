@@ -2206,8 +2206,7 @@ img.type-image {
 a.tristate, 
 input.tristate,
 button.tristate {
-	margin-left: var(--spacing-01);
-	margin-right: var(--spacing-01);
+	margin: 0 var(--spacing-01);
 }
 
 .rf_firstColumn .tBoolean > .type-image,

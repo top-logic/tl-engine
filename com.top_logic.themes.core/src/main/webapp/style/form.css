@@ -1989,7 +1989,7 @@ span.disabled > span.lFlexible > select.tl-select:not( [multiple="multiple"] ) {
 	align-items: stretch;
 }
 
-.tl-expandable-button a:not(.lFlexible) {
+.tl-expandable-button a {
     display: inline-flex;
     align-items: center;
     justify-content: center;

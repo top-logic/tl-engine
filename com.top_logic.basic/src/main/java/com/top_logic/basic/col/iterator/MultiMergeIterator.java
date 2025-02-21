@@ -19,7 +19,7 @@ import java.util.PriorityQueue;
  */
 public class MultiMergeIterator<E> implements Iterator<E> {
 
-	private final PriorityQueue<ValueFromIterator<E>> _values;
+	private final PriorityQueue<ValueFromIterator<? extends E>> _values;
 
 	/**
 	 * Creates a {@link MultiMergeIterator}.
@@ -30,10 +30,10 @@ public class MultiMergeIterator<E> implements Iterator<E> {
 	 *        {@link Iterator}s to merge. Each {@link Iterator} must return its values in
 	 *        {@link Comparator} order.
 	 */
-	public MultiMergeIterator(Comparator<? super E> comparator, Iterator<? extends Iterator<E>> iterators) {
+	public MultiMergeIterator(Comparator<? super E> comparator, Iterator<? extends Iterator<? extends E>> iterators) {
 		_values = new PriorityQueue<>(new ValueFromIteratorComparator<>(comparator));
 		while (iterators.hasNext()) {
-			Iterator<E> iterator = iterators.next();
+			Iterator<? extends E> iterator = iterators.next();
 			if (iterator.hasNext()) {
 				_values.add(new ValueFromIterator<>(iterator));
 			}
@@ -50,7 +50,7 @@ public class MultiMergeIterator<E> implements Iterator<E> {
 		if (_values.isEmpty()) {
 			throw new NoSuchElementException();
 		}
-		ValueFromIterator<E> nextValue = _values.poll();
+		ValueFromIterator<? extends E> nextValue = _values.poll();
 		E result = nextValue._value;
 		if (nextValue.update()) {
 			_values.offer(nextValue);
@@ -58,7 +58,7 @@ public class MultiMergeIterator<E> implements Iterator<E> {
 		return result;
 	}
 
-	private static class ValueFromIteratorComparator<E> implements Comparator<ValueFromIterator<E>> {
+	private static class ValueFromIteratorComparator<E> implements Comparator<ValueFromIterator<? extends E>> {
 
 		private Comparator<? super E> _valueComparator;
 
@@ -67,7 +67,7 @@ public class MultiMergeIterator<E> implements Iterator<E> {
 		}
 
 		@Override
-		public int compare(ValueFromIterator<E> o1, ValueFromIterator<E> o2) {
+		public int compare(ValueFromIterator<? extends E> o1, ValueFromIterator<? extends E> o2) {
 			if (o1 == o2) {
 				return 0;
 			}

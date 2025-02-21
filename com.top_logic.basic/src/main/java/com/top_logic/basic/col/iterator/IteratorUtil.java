@@ -125,8 +125,8 @@ public class IteratorUtil extends IteratorUtilShared {
 	 *        Iterators to merge. It is expected that the values from each iterator are returned in
 	 *        {@link Comparator} order.
 	 */
-	public static <T> Iterator<T> mergeIterators(Comparator<? super T> comparator,
-			List<? extends Iterator<T>> iterators) {
+	public static <T> Iterator<? extends T> mergeIterators(Comparator<? super T> comparator,
+			List<? extends Iterator<? extends T>> iterators) {
 		switch (iterators.size()) {
 			case 0: {
 				return emptyIterator();

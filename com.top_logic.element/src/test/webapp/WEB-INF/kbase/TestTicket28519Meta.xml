@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- the following are only demo-objects, do not plain copy to other modules -->
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+	<metaobjects>
+		<metaobject
+			object_name="Ticket28519_A"
+			super_class="AttributedObject"
+		/>
+		<metaobject
+			object_name="Ticket28519_B"
+			super_class="AttributedObject"
+		>
+			<attributes>
+				<reference
+					att_name="referrer"
+					target-type="Ticket28519_A"
+				/>
+			</attributes>
+		</metaobject>
+		<metaobject
+			object_name="Ticket28519_B1"
+			super_class="Ticket28519_B"
+		/>
+		<metaobject
+			object_name="Ticket28519_B2"
+			super_class="Ticket28519_B"
+		/>
+	</metaobjects>
+</objectlist>

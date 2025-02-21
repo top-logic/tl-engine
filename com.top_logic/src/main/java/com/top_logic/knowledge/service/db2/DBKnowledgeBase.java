@@ -2023,7 +2023,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 					CompiledQuery<E> compiledQuery = compileMonomorphicQuery(resultType, entry.getValue());
 					monomorphicQueries.add(compiledQuery);
 				}
-				result = new ConcatenatedCompiledQuery<>(getConnectionPool(), monomorphicQueries);
+				result = new ConcatenatedCompiledQuery<>(getConnectionPool(), monomorphicQueries, query.getOrder());
 				break;
 			}
 		}

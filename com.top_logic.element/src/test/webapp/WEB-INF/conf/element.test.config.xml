@@ -65,6 +65,7 @@
 					<declaration file="/WEB-INF/model/projElement.model.xml"/>
 					<declaration file="/WEB-INF/model/securityChildren.model.xml"/>
 					<declaration file="/WEB-INF/model/TestTypes.model.xml"/>
+					<declaration file="/WEB-INF/model/ticket28519.model.xml"/>
 					<declaration file="/WEB-INF/model/TestXMLInstanceImporter.model.xml"/>
 				</declarations>
 				<settings>
@@ -123,6 +124,7 @@
 					<declarations>
 			            <declaration resource="webinf://kbase/TestElementMeta.xml"/>
 						<declaration resource="webinf://kbase/TestTypesMeta.xml" />
+						<declaration resource="webinf://kbase/TestTicket28519Meta.xml" />
 			        </declarations>
 			    </type-system>
 				<type-system name="TestTypes" class="com.top_logic.knowledge.service.TypeSystemSetup">

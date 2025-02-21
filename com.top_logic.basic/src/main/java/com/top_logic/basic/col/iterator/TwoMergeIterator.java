@@ -24,7 +24,7 @@ public class TwoMergeIterator<E> implements Iterator<E> {
 
 	private final Comparator<? super E> _comparator;
 
-	private final Iterator<E> _it1, _it2;
+	private final Iterator<? extends E> _it1, _it2;
 
 	private E _val1, _val2;
 
@@ -38,7 +38,7 @@ public class TwoMergeIterator<E> implements Iterator<E> {
 	 * @param it2
 	 *        Second iterator. Must be return its values in {@link Comparator} order.
 	 */
-	public TwoMergeIterator(Comparator<? super E> comparator, Iterator<E> it1, Iterator<E> it2) {
+	public TwoMergeIterator(Comparator<? super E> comparator, Iterator<? extends E> it1, Iterator<? extends E> it2) {
 		_comparator = comparator;
 		_it1 = it1;
 		_it2 = it2;

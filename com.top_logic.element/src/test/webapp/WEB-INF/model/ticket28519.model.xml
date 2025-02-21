@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="ticket28519">
+			<annotations>
+				<package-binding
+					implementation-package="test.com.top_logic.element.meta.model.ticket28519.impl"
+					interface-package="test.com.top_logic.element.meta.model.ticket28519"
+				/>
+			</annotations>
+			<types>
+				<class name="A">
+					<annotations>
+						<table name="Ticket28519_A"/>
+					</annotations>
+					<attributes>
+						<reference name="bs"
+							multiple="true"
+							type="B"
+						>
+							<annotations>
+								<storage-algorithm>
+									<inline-set-storage container-column="referrer"/>
+								</storage-algorithm>
+							</annotations>
+						</reference>
+					</attributes>
+				</class>
+				<class name="B"
+					abstract="true"
+				>
+					<annotations>
+						<table name="Ticket28519_B"/>
+					</annotations>
+				</class>
+				<class name="B1">
+					<annotations>
+						<table name="Ticket28519_B1"/>
+					</annotations>
+					<generalizations>
+						<generalization type="B"/>
+					</generalizations>
+				</class>
+				<class name="B2">
+					<annotations>
+						<table name="Ticket28519_B2"/>
+					</annotations>
+					<generalizations>
+						<generalization type="B"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

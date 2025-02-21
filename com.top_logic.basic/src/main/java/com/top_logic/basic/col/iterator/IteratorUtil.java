@@ -6,8 +6,10 @@
 package com.top_logic.basic.col.iterator;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.commons.collections4.iterators.ArrayIterator;
 
@@ -108,4 +110,37 @@ public class IteratorUtil extends IteratorUtilShared {
 		return new UnmodifiableIterator<>(iterator);
 	}
 
+	/**
+	 * Creates a merge iterator from multiple sorted iterators. Each iterator must return its values
+	 * in comparator order. Otherwise the result iterator is also not sorted.
+	 * 
+	 * <p>
+	 * The returned iterator fetches elements from the given iterators and returns them in given
+	 * comparator order.
+	 * </p>
+	 *
+	 * @param comparator
+	 *        The sort order of the returned elements
+	 * @param iterators
+	 *        Iterators to merge. It is expected that the values from each iterator are returned in
+	 *        {@link Comparator} order.
+	 */
+	public static <T> Iterator<T> mergeIterators(Comparator<? super T> comparator,
+			List<? extends Iterator<T>> iterators) {
+		switch (iterators.size()) {
+			case 0: {
+				return emptyIterator();
+			}
+			case 1: {
+				return iterators.get(0);
+			}
+			case 2: {
+				return new TwoMergeIterator<>(comparator, iterators.get(0), iterators.get(1));
+			}
+			default: {
+				return new MultiMergeIterator<>(comparator, iterators.iterator());
+			}
+		}
+
+	}
 }

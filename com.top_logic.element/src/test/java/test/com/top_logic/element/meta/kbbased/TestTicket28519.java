@@ -29,9 +29,11 @@ import com.top_logic.model.export.PreloadContext;
 import com.top_logic.util.model.ModelService;
 
 /**
+ * Test of Ticket 28519.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@SuppressWarnings("javadoc")
 public class TestTicket28519 extends BasicTestCase {
 
 	public void testPreloadAttribute(){

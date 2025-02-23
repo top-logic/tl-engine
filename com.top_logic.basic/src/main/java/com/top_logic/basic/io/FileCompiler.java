@@ -23,6 +23,7 @@ import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.ResourceDeclaration;
@@ -30,6 +31,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 
 
@@ -108,6 +110,12 @@ public abstract class FileCompiler extends ConfiguredManagedClass<FileCompiler.C
 		 *        New value of {@link #getTarget()}.
 		 */
 		void setTarget(String target);
+
+		/**
+		 * The character set used to read resources.
+		 */
+		@StringDefault(StringServices.UTF8)
+		String getCharset();
 
 		/**
 		 * The named of the files to include into the compiled file.
@@ -338,12 +346,10 @@ public abstract class FileCompiler extends ConfiguredManagedClass<FileCompiler.C
 	}
 
     /**
-     * Return the {@link Charset} assumed for handling the files.
-     * 
-     * @return the character set for "US-ASCII", here
-     */ 
+	 * The character set of resource files.
+	 */ 
     protected Charset getCharset() {
-        return Charset.forName("US-ASCII");
+		return Charset.forName(getConfig().getCharset());
     }
     
     /** 
@@ -355,21 +361,14 @@ public abstract class FileCompiler extends ConfiguredManagedClass<FileCompiler.C
 		try {
 			File targetFile = _fileManager.getIDEFile(target);
 			targetFile.getParentFile().mkdirs();
-            FileOutputStream out = new FileOutputStream(targetFile);
-            try {
+			try (FileOutputStream out = new FileOutputStream(targetFile)) {
             	Writer writer = new OutputStreamWriter(out, cs);
 				for (String baseName : getBaseNames()) {
                     try {
-						InputStream in = _fileManager.getStream(baseName);
-                        try {
-                        	Reader reader = new InputStreamReader(in, cs);
-                        	try {
+						try (InputStream in = _fileManager.getStream(baseName)) {
+							try (Reader reader = new InputStreamReader(in, cs)) {
                         		compile(reader, writer, baseName);
-                        	} finally {
-                        		reader.close();
                         	}
-						} finally {
-							in.close();
 						}
                     } catch (FileNotFoundException ex) {
                     	Logger.warn("File '" + baseName + "' does not exist.", ex, FileCompiler.class);
@@ -378,8 +377,6 @@ public abstract class FileCompiler extends ConfiguredManagedClass<FileCompiler.C
                     }
                 }
                 writer.flush();
-			} finally {
-				out.close();
 			}
         } catch (IOException ex) {
 			throw new ConfigurationError("Failed to compileFiles to '" + target + "'", ex);

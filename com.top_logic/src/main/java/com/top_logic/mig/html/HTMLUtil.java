@@ -608,6 +608,8 @@ public class HTMLUtil {
 			}
 			writer.endAttribute();
 		}
+		// Use well-defined charset for scripts (otherwise the container decides sometimes wrong).
+		writer.writeAttribute(CHARSET_ATTR, StringServices.UTF8);
 		writer.endBeginTag();
 		// empty tag is not allowed in script tag
 		writer.endTag(SCRIPT_REF);

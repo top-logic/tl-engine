@@ -45,6 +45,15 @@ public interface SequenceFlowBase extends com.top_logic.bpe.bpml.model.Edge {
 	String RULE_ATTR = "rule";
 
 	/**
+	 * Part <code>skipStandardOperation</code> of <code>SequenceFlow</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Boolean</code> in configuration.
+	 * </p>
+	 */
+	String SKIP_STANDARD_OPERATION_ATTR = "skipStandardOperation";
+
+	/**
 	 * Getter for part {@link #FORM_TYPE_ATTR}.
 	 */
 	default com.top_logic.model.TLClass getFormType() {
@@ -84,6 +93,20 @@ public interface SequenceFlowBase extends com.top_logic.bpe.bpml.model.Edge {
 	 */
 	default void setRule(com.top_logic.bpe.bpml.display.SequenceFlowRule newValue) {
 		tUpdateByName(RULE_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #SKIP_STANDARD_OPERATION_ATTR}.
+	 */
+	default boolean getSkipStandardOperation() {
+		return (Boolean) tValueByName(SKIP_STANDARD_OPERATION_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #SKIP_STANDARD_OPERATION_ATTR}.
+	 */
+	default void setSkipStandardOperation(boolean newValue) {
+		tUpdateByName(SKIP_STANDARD_OPERATION_ATTR, newValue);
 	}
 
 }

@@ -468,13 +468,13 @@ public class ExecutionEngine {
 		) {
 			Token nextToken = createActiveToken(processExecution, target, previousToken);
 
-			// Execute default operation once
-				SearchExpression defaultOperation =
-					processExecution.getProcess().getParticipant().getDefaultOperation();
-				if (defaultOperation != null) {
-					QueryExecutor.compile(defaultOperation).execute(processExecution, previousToken, nextToken,
-						additional);
-				}
+			// Execute default operation only if the last edge doesn't skip it
+			SearchExpression defaultOperation = processExecution.getProcess().getParticipant().getDefaultOperation();
+			if (defaultOperation != null &&
+				!(lastEdge instanceof SequenceFlow flow && flow.getSkipStandardOperation())) {
+				QueryExecutor.compile(defaultOperation).execute(processExecution, previousToken, nextToken,
+					additional);
+			}
 
 			for (Edge edge : path) {
 				if (edge instanceof SequenceFlow flow) {

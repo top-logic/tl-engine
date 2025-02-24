@@ -94,9 +94,9 @@ public class TwoMergeIterator<E> implements Iterator<E> {
 
 	private void fillVal2() {
 		if (_it2.hasNext()) {
-			_val1 = _it2.next();
+			_val2 = _it2.next();
 		} else {
-			_val1 = empty();
+			_val2 = empty();
 		}
 	}
 

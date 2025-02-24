@@ -6,10 +6,12 @@
 package test.com.top_logic.basic.col.iterator;
 
 import static com.top_logic.basic.col.iterator.IteratorUtil.*;
+import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -146,6 +148,34 @@ public class TestIteratorUtil extends TestCase {
 		assertEquals(new HashSet<>(EXAMPLE_LIST), toSet(createExampleIterator()));
 	}
 	
+	public void testMerge() {
+		Comparator<Integer> cmp = (i1, i2) -> i1.compareTo(i2);
+
+		List<Integer> first = list(0, 3, 5, 8);
+		List<Integer> second = list(1, 4, 6);
+		List<Integer> third = list(2, 7);
+
+		ArrayList<Object> emptyMerge = toList(IteratorUtil.mergeIterators(cmp, list()));
+		assertEquals(list(), emptyMerge);
+
+		ArrayList<Object> singleMerge = toList(IteratorUtil.mergeIterators(cmp, list(first.iterator())));
+		assertEquals(first, singleMerge);
+		singleMerge = toList(IteratorUtil.mergeIterators(cmp, list(second.iterator())));
+		assertEquals(second, singleMerge);
+
+		ArrayList<Object> twoMerge =
+			toList(IteratorUtil.mergeIterators(cmp, list(first.iterator(), second.iterator())));
+		assertEquals(list(0, 1, 3, 4, 5, 6, 8), twoMerge);
+		twoMerge =
+			toList(IteratorUtil.mergeIterators(cmp, list(first.iterator(), third.iterator())));
+		assertEquals(list(0, 2, 3, 5, 7, 8), twoMerge);
+
+		ArrayList<Object> threeMerge =
+			toList(IteratorUtil.mergeIterators(cmp, list(first.iterator(), second.iterator(), third.iterator())));
+		assertEquals(list(0, 1, 2, 3, 4, 5, 6, 7, 8), threeMerge);
+
+	}
+
 	private static Iterator<String> createExampleIterator() {
 		return EXAMPLE_LIST.iterator();
 	}

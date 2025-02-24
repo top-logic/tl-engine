@@ -80,6 +80,7 @@
 					<method name="createProcessInstance" class="com.top_logic.bpe.execution.script.CreateProcessInstance$Builder"/>					
 					<method name="executeTransition" class="com.top_logic.bpe.execution.script.ExecuteTransition$Builder"/>
 					<method name="reachableNodes" class="com.top_logic.bpe.execution.script.ReachableNodes$Builder"/>
+					<method name="forceTransition" class="com.top_logic.bpe.execution.script.ForceTransition$Builder"/>
 				</methods>
 			</instance>
 		</config>

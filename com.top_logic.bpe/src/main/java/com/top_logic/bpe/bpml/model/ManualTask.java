@@ -52,6 +52,16 @@ public interface ManualTask extends ManualTaskBase {
 		// Use default form of model.
 		TLFormDefinition annotation = modelType.getAnnotation(TLFormDefinition.class);
 		if (annotation == null) {
+			// Check generalizations for form definition
+			for (TLClass generalization : modelType.getGeneralizations()) {
+				TLFormDefinition generalizationAnnotation = generalization.getAnnotation(TLFormDefinition.class);
+				if (generalizationAnnotation != null) {
+					FormDefinition defaultForm = generalizationAnnotation.getForm();
+					if (defaultForm != null) {
+						return defaultForm;
+					}
+				}
+			}
 			return null;
 		}
 

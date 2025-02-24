@@ -1,0 +1,82 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>forceTransition($processInstance, $targetTask)
+</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Erzwingt den Übergang einer Prozessinstanz zu einer bestimmten Aufgabenbeschreibung. Diese Methode ermöglicht eine direkte Manipulation des Workflow-Zustandes unter Umgehung der normalen Ablaufsteuerung. Sie sollte mit Bedacht verwendet werden.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name des Prozesses</th>
+			<th>Typ</th>
+			<th>Typ Beschreibung</th>
+			<th>Obligatorisch</th>
+			<th>Standard</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>processInstance</td>
+			<td>ProzessAusführung</td>
+			<td>Die Prozessinstanz, deren Zustand geändert werden soll.</td>
+			<td>Ja</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>targetTask</td>
+			<td>Aufgabenbeschreibung</td>
+			<td>Die Aufgabenbeschreibung, zu der die Prozessinstanz übergehen soll.</td>
+			<td>Ja</td>
+			<td>-</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Boolean</p>
+
+<p>Gibt <code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">true</code> zurück, wenn der erzwungene Übergang erfolgreich war. Gibt <code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">false</code> zurück, wenn der Vorgang fehlgeschlagen ist, z. B. aufgrund ungültiger Argumente oder wenn keine aktiven Token in der Prozessinstanz vorhanden sind.</p>
+
+<h2>Beispiele</h2>
+
+<pre>
+	<code>//lets say we have a process with 4 Tasks: Submitted, InProgress, Review, Closed
+//The normal flow would be:
+// Submitted -&gt; InProgress -&gt; Review -&gt; Closed
+//But sometimes we need to skip steps and force a processInstance directly to Closed
+//This example shows how to move a process from Submitted directly to Closed,
+//bypassing both InProgress and Review tasks.
+//Here's how we can do this: 
+
+// First create a process instance with a specific name
+processInstance = createProcessInstance($startEvent, "Process-001");
+
+// Find the Closed task in our workflow definition
+closedTask = all(`tl.bpe.bpml:Participant`)
+    // Find the matching participant (workflow)
+    .filter(p -&gt; $p.get(`tl.bpe.bpml:Participant#name`) == $processName)
+    // Get the single matching participant
+    .singleElement()
+    // Get its process
+    .get(`tl.bpe.bpml:Participant#process`)
+    // Get all nodes
+    .get(`tl.bpe.bpml:Process#nodes`)
+    // Filter out the Closed task
+    .filter(n -&gt; $n.get(`tl.bpe.bpml:Node#name`) == "Closed")
+    .singleElement();
+
+// Force the process to move directly to the Closed task, skipping InProgress and Review
+forceTransition($processInstance, $closedTask)</code>
+</pre>
+
+<p> </p>
+
+<p> </p>

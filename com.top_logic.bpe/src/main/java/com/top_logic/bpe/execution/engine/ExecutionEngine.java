@@ -17,10 +17,11 @@ import java.util.stream.Stream;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.bpe.BPEUtil;
+import com.top_logic.bpe.bpml.display.ConfigurableCondition;
 import com.top_logic.bpe.bpml.display.RuleCondition;
 import com.top_logic.bpe.bpml.display.RuleType;
 import com.top_logic.bpe.bpml.display.SequenceFlowRule;
-import com.top_logic.bpe.bpml.display.ConfigurableCondition;
 import com.top_logic.bpe.bpml.model.BoundaryEvent;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.bpml.model.Edge;
@@ -43,9 +44,7 @@ import com.top_logic.bpe.bpml.model.StartEvent;
 import com.top_logic.bpe.bpml.model.Task;
 import com.top_logic.bpe.bpml.model.TimerEventDefinition;
 import com.top_logic.bpe.execution.model.ProcessExecution;
-import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
 import com.top_logic.bpe.execution.model.Token;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -341,7 +340,7 @@ public class ExecutionEngine {
 	private void createNextTokens(ProcessExecution processExecution, Node current, Token previousToken) {
 		for (Edge edge : current.getOutgoing()) {
 			Node next = edge.getTarget();
-			Token newToken = createFollowupToken(processExecution, next, previousToken);
+			Token newToken = BPEUtil.createFollowupToken(processExecution, next, previousToken);
 
 			activate(processExecution, newToken);
 			activateBoundaryEvents(processExecution, next, previousToken);
@@ -358,7 +357,7 @@ public class ExecutionEngine {
 	 */
 	private void activateBoundaryEvents(ProcessExecution processExecution, Node target, Token previousToken) {
 		for (Node boundaryEvent : boundaryEvents(target)) {
-			Token newToken = createFollowupToken(processExecution, boundaryEvent, previousToken);
+			Token newToken = BPEUtil.createFollowupToken(processExecution, boundaryEvent, previousToken);
 
 			activate(processExecution, newToken);
 		}
@@ -445,7 +444,7 @@ public class ExecutionEngine {
 		Set<? extends Edge> outgoing = parallelGateway.getOutgoing();
 		for (Edge edge : outgoing) {
 			Node target = edge.getTarget();
-			Token next = createToken(processExecution, target);
+			Token next = BPEUtil.createToken(processExecution, target);
 			next.setPrevious(current);
 
 			advanceAll(processExecution, current, next);
@@ -508,14 +507,14 @@ public class ExecutionEngine {
 	 * @return The newly created token for the given node.
 	 */
 	private Token createActiveToken(ProcessExecution execution, Node node, Token previousToken) {
-		Token nextToken = createFollowupToken(execution, node, previousToken);
+		Token nextToken = BPEUtil.createFollowupToken(execution, node, previousToken);
 		advance(execution, previousToken, nextToken);
 
 		// Start all boundary timer events.
 		for (BoundaryEvent event : boundaryEvents(node)) {
 			EventDefinition definition = event.getDefinition();
 			if (definition instanceof TimerEventDefinition) {
-				Token eventToken = createFollowupToken(execution, event, previousToken);
+				Token eventToken = BPEUtil.createFollowupToken(execution, event, previousToken);
 				activate(execution, eventToken);
 			}
 		}
@@ -602,35 +601,7 @@ public class ExecutionEngine {
 		update(execution);
 	}
 
-	/**
-	 * creates a new token for the given ProcessExecution which is connected to the given node the
-	 * given token is set as a previous token for the new one
-	 * @return the new token
-	 */
-	private Token createFollowupToken(ProcessExecution execution, Node node, Token previousToken) {
-		Token token = createToken(execution, node);
-		token.setPrevious(asSet(previousToken));
-		return token;
-	}
 
-	private Token createToken(ProcessExecution execution, Node node) {
-		// use the Token Type mentioned in the ParticipantBase otherwise use the default Type
-		TLClass tokenType = execution.getProcess().getParticipant().getTokenType();
-		if (tokenType == null) {
-			tokenType = TlBpeExecutionFactory.getTokenType();
-		}
-		TlBpeExecutionFactory factory = TlBpeExecutionFactory.getInstance();
-		Token token = (Token) factory.createObject(tokenType, null);
-
-		token.setNode(node);
-		execution.addAllToken(token);
-
-		return token;
-	}
-
-	private static <T> Set<T> asSet(T singleton) {
-		return singleton == null ? Collections.emptySet() : Collections.singleton(singleton);
-	}
 
 	private List<StartEvent> getTimerStartEvents(Process process) {
 		return getStartEvents(process)

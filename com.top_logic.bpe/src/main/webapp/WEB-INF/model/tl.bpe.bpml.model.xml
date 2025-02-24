@@ -529,6 +529,13 @@
 						<bpml-extension/>
 					</annotations>
 				</property>
+				<property name="skipStandardOperation"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<bpml-extension/>
+					</annotations>
+				</property>
 				<property name="operation"
 					type="tl.model.search:Expr"
 				>

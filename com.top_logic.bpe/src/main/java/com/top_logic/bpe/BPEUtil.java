@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.bpe.bpml.display.ConfigurableCondition;
 import com.top_logic.bpe.bpml.display.RuleCondition;
@@ -29,7 +30,10 @@ import com.top_logic.bpe.bpml.model.SequenceFlow;
 import com.top_logic.bpe.bpml.model.TextAnnotation;
 import com.top_logic.bpe.bpml.model.impl.LaneSetBase;
 import com.top_logic.bpe.execution.engine.GuiEngine;
+import com.top_logic.bpe.execution.model.ProcessExecution;
+import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
 import com.top_logic.bpe.execution.model.Token;
+import com.top_logic.model.TLClass;
 
 /**
  * Utility class for the business process engine.
@@ -178,6 +182,59 @@ public class BPEUtil {
 			}
 		}
 		return transitions;
+	}
+
+	/**
+	 * Creates a Set from a single element, returning an empty set if the element is null.
+	 * 
+	 * @param <T>
+	 *        The type of the element
+	 * @param singleton
+	 *        The element to convert to a Set
+	 * @return A singleton Set or empty Set if the element is null
+	 */
+	public static <T> Set<T> asSet(T singleton) {
+		return singleton == null ? Collections.emptySet() : Collections.singleton(singleton);
+	}
+
+	/**
+	 * Creates a new token for the given ProcessExecution which is connected to the given node.
+	 * 
+	 * @param execution
+	 *        The process execution
+	 * @param node
+	 *        The node to connect the token to
+	 * @return The new token
+	 */
+	public static Token createToken(ProcessExecution execution, Node node) {
+		TLClass tokenType = execution.getProcess().getParticipant().getTokenType();
+		if (tokenType == null) {
+			tokenType = TlBpeExecutionFactory.getTokenType();
+		}
+		TlBpeExecutionFactory factory = TlBpeExecutionFactory.getInstance();
+		Token token = (Token) factory.createObject(tokenType, null);
+
+		token.setNode(node);
+		execution.addAllToken(token);
+
+		return token;
+	}
+
+	/**
+	 * Creates a new token connected to the given node with a link to a previous token.
+	 * 
+	 * @param execution
+	 *        The process execution
+	 * @param node
+	 *        The node to connect the token to
+	 * @param previousToken
+	 *        The previous token to link
+	 * @return The new token
+	 */
+	public static Token createFollowupToken(ProcessExecution execution, Node node, Token previousToken) {
+		Token token = createToken(execution, node);
+		token.setPrevious(asSet(previousToken));
+		return token;
 	}
 
 }

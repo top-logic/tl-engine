@@ -37,6 +37,7 @@ import com.top_logic.element.meta.form.fieldprovider.form.TLFormType;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -246,7 +247,7 @@ public class StandardForm extends AbstractConfiguredInstance<StandardForm.Config
 			return null;
 		}
 		
-		FormDefinition defaultForm;
+		FormDefinition defaultForm = null; // Initialize with null
 
 		Config<?> config = getConfig();
 		String sourceId = config.getSourceTask();
@@ -258,10 +259,25 @@ public class StandardForm extends AbstractConfiguredInstance<StandardForm.Config
 		} else {
 			TLFormDefinition annotation = modelType.getAnnotation(TLFormDefinition.class);
 			if (annotation == null) {
-				return null;
-			}
+				TLClass modelClass = (TLClass) modelType;
+				// Check generalizations for form definition
+				for (TLClass generalization : modelClass.getGeneralizations()) {
+					TLFormDefinition generalizationAnnotation = generalization.getAnnotation(TLFormDefinition.class);
+					if (generalizationAnnotation != null) {
+						defaultForm = generalizationAnnotation.getForm();
+						if (defaultForm != null) {
+							break; // Found a form, exit the loop
+						}
+					}
+				}
 
-			defaultForm = annotation.getForm();
+				// If no generalization had a form, defaultForm will remain null
+				if (defaultForm == null) {
+					return null;
+				}
+			} else {
+				defaultForm = annotation.getForm();
+			}
 		}
 		
 		List<AnnotationOverlay> overlays = config.getOverlays();

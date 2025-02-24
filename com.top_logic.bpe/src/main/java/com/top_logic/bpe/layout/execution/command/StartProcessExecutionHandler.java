@@ -34,7 +34,6 @@ import com.top_logic.bpe.layout.execution.init.ProcessInitializer;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.WithPostCreateActions;
@@ -43,7 +42,6 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.TLContext;
 
 /**
  * {@link CommandHandler} to start a {@link ProcessExecution} and skip the first {@link Task} if it
@@ -152,13 +150,11 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler impleme
 	}
 
 	private Token findSingleToken(ProcessExecution processExecution) {
-		Set<? extends Token> tokens = processExecution.getUserRelevantTokens();
+		Set<? extends Token> tokens = processExecution.getActiveTokens();
 		Filter<Token> filter = new Filter<>() {
-			Person _person = TLContext.currentUser();
-
 			@Override
 			public boolean accept(Token token) {
-				return GuiEngine.getInstance().isActor(_person, token);
+				return token.getActive();
 			}
 		};
 		tokens = FilterUtil.filterSet(filter, tokens);

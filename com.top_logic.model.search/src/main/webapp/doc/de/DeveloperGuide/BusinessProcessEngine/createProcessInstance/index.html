@@ -1,0 +1,58 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>createProcessInstance($startEvent, $name)
+</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Erzeugt und initialisiert eine neue Prozessinstanz basierend auf einem Start-Event. Die Funktion initialisiert eine neue Prozessinstanz mit dem übergebenen StartEvent und setzt dessen Namen. Die Prozessinstanz kann entweder mit einem gegebenen Namen initialisiert werden oder verwendet einen Standardnamen, wenn keiner angegeben wird.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Prozessname</th>
+			<th>Typ</th>
+			<th>Typ Beschreibung</th>
+			<th>Obligatorisch</th>
+			<th>Standard</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>startEreignis</td>
+			<td>Start-Ereignis</td>
+			<td>Das Start-Event-Objekt, das zur Initialisierung des Prozesses verwendet wird.</td>
+			<td>Ja</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>Name</td>
+			<td>Zeichenkette</td>
+			<td>Name für die neue Prozessinstanz.</td>
+			<td>nein</td>
+			<td>"newProcessInstance"</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> ProcessExecution</p>
+
+<p>Gibt die erstellte und initialisierte Prozessinstanz zurück. Wenn der Workflow nicht gefunden wird oder kein StartEvent existiert, wird null zurückgegeben.</p>
+
+<h2>Beispiele:</h2>
+
+<pre>
+	<code>// Creates a process instance for the given StartEvent
+createProcessInstance($startEvent)
+
+// Creates a process instance for the given StartEvent with a specific name
+createProcessInstance($startEvent, "Ticket-001")</code>
+</pre>
+
+<p> </p>

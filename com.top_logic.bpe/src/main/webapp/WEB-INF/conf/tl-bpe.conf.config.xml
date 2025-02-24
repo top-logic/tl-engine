@@ -80,6 +80,7 @@
 					<method name="createProcessInstance" class="com.top_logic.bpe.execution.script.CreateProcessInstance$Builder"/>					
 					<method name="transitionProcessInstance" class="com.top_logic.bpe.execution.script.TransitionProcessInstance$Builder"/>
 					<method name="getReachableTargets" class="com.top_logic.bpe.execution.script.GetReachableTargets$Builder"/>
+					<method name="forceTransition" class="com.top_logic.bpe.execution.script.ForceTransition$Builder"/>
 				</methods>
 				<method-resolvers>
 					<method-resolver class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions$Module"/>

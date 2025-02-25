@@ -1392,6 +1392,7 @@ public class JSON {
 				switch (currentChar) {
 				case '.':
 				case 'E':
+				case 'e':
 					isFloat = true;
 					bufferChar();
 					break;

@@ -68,11 +68,13 @@ public class ParseExcel extends GenericMethod {
 	 */
 	private static final int HEADERS_INDEX = 3;
 
+	private static final int IMPORT_ACTIVE_SHEET_INDEX = 4;
+
 	/**
 	 * Position of the Boolean, which indicates if the raw result of parsing is returned (as a List
 	 * of Strings).
 	 */
-	private static final int RAW_INDEX = 4;
+	private static final int RAW_INDEX = 5;
 
 	private int NUMBER_OF_SHEETS_FOR_IMPORT = 1;
 
@@ -82,11 +84,15 @@ public class ParseExcel extends GenericMethod {
 
 	private Boolean IMPORT_ALL_SHEETS = false;
 
+	private Boolean IMPORT_ACTIVE_SHEET = false;
+
 	private String DEFAULT_HEADER = "A";
 
 	private String OVERHEADER = "->";
 
 	private String FROM_TO = ":";
+
+	private String FOR_ALL = "all";
 
 	/**
 	 * Creates a {@link ParseExcel}.
@@ -114,22 +120,23 @@ public class ParseExcel extends GenericMethod {
 		}
 
 		IMPORT_ALL_SHEETS = asBoolean(arguments[IMPORT_ALL_SHEETS_INDEX]);
+		IMPORT_ACTIVE_SHEET = asBoolean(arguments[IMPORT_ACTIVE_SHEET_INDEX]);
 		IMPORT_SELECTED_SHEETS = (List<Object>) asList(arguments[IMPORT_SELECTED_SHEETS_INDEX]);
 		fixSelectedSheetsEntries();
 		HEADERS_AT = getHeaderMap(arguments);
 
-		Map<String, List<List<Object>>> importedSheets = parse(input);
+		Map<Object, List<List<Object>>> importedSheets = parse(input);
 
 		Boolean raw = asBoolean(arguments[RAW_INDEX]);
 		if (raw == true) {
 			return determineReturn(importedSheets);
 		} else {
-			HashMap<String, List<Map<String, Object>>> mapedResult = new HashMap<>();
+			HashMap<Object, List<Map<String, Object>>> mapedResult = new HashMap<>();
 			ArrayList<String> headers = new ArrayList<>();
-			for (String key : importedSheets.keySet()) {
+			for (Object key : importedSheets.keySet()) {
 				List<List<Object>> value = importedSheets.get(key);
 				ArrayList<Map<String, Object>> sheetEntries = new ArrayList<>();
-				if (HEADERS_AT.containsKey(key)) {
+				if (HEADERS_AT.containsKey(key) || HEADERS_AT.containsKey(FOR_ALL)) {
 					ArrayList<Integer> headersPositions = new ArrayList<>();
 					setHeaders(headers, headersPositions, key, value);
 					if (headersPositions.size() > 0) {
@@ -156,9 +163,9 @@ public class ParseExcel extends GenericMethod {
 		}
 	}
 
-	private Object determineReturn(Map<String, ?> result) {
-		if ((result.size() == 1) && (IMPORT_ALL_SHEETS == false)) {
-			String key = (String) result.keySet().toArray()[0];
+	private Object determineReturn(Map<Object, ?> result) {
+		if (result.size() == 1) {
+			Object key = result.keySet().toArray()[0];
 			if (IMPORT_SELECTED_SHEETS.contains(key)) {
 				return result;
 			}
@@ -167,14 +174,22 @@ public class ParseExcel extends GenericMethod {
 		return result;
 	}
 
-	private void setHeaders(ArrayList<String> headers, ArrayList<Integer> headersPositions, String key, List<List<Object>> value) {
+	private void setHeaders(ArrayList<String> headers, ArrayList<Integer> headersPositions, Object key,
+			List<List<Object>> value) {
 
 		List<Object> headersPositionsForKey = HEADERS_AT.get(key);
-		if (headersPositionsForKey == null) {
+		List<Object> headersPositionsForALL = HEADERS_AT.get(FOR_ALL);
+		if (headersPositionsForKey == null && headersPositionsForALL == null) {
 			generateDefaultHeaders(headers, value);
 		} else {
-			for (int i=0; i < headersPositionsForKey.size(); ++i) {
-				Object headObject = headersPositionsForKey.get(i);
+			List<Object> headersPositionsList;
+			if (headersPositionsForKey != null) {
+				headersPositionsList = headersPositionsForKey;
+			} else {
+				headersPositionsList = headersPositionsForALL;
+			}
+			for (int i = 0; i < headersPositionsList.size(); ++i) {
+				Object headObject = headersPositionsList.get(i);
 
 				if (headObject instanceof String) {
 					String trimmedHeadObject = ((String) headObject).replace(" ", "");
@@ -345,7 +360,7 @@ public class ParseExcel extends GenericMethod {
 	}
 
 	@SuppressWarnings("resource")
-	private Map<String, List<List<Object>>> parse(Object input) {
+	private Map<Object, List<List<Object>>> parse(Object input) {
 		try {
 			BinaryDataSource data = (BinaryDataSource) input;
 
@@ -359,13 +374,13 @@ public class ParseExcel extends GenericMethod {
 			Workbook workbook = WorkbookFactory.create(in);
 
 
-			Map<String, List<List<Object>>> importedSheets = new HashMap<>();
+			Map<Object, List<List<Object>>> importedSheets = new HashMap<>();
 			if (IMPORT_ALL_SHEETS == true) {
 				NUMBER_OF_SHEETS_FOR_IMPORT = workbook.getNumberOfSheets();
 
 				for (int sheetIndex = 0; sheetIndex < NUMBER_OF_SHEETS_FOR_IMPORT; ++sheetIndex) {
 					Sheet sheet = workbook.getSheetAt(sheetIndex);
-					addSheetValues(sheet, importedSheets);
+					addSheetValues(sheet, importedSheets, sheetIndex);
 				}
 			} else {
 				if (IMPORT_SELECTED_SHEETS.size() > 0) {
@@ -379,12 +394,15 @@ public class ParseExcel extends GenericMethod {
 							sheet = workbook.getSheet((String) importSheet);
 						}
 						if (sheet != null) {
-							addSheetValues(sheet, importedSheets);
+							addSheetValues(sheet, importedSheets, importSheet);
 						}
 					}
-				} else {
+				} else if(IMPORT_ACTIVE_SHEET) {
 					Sheet sheet = workbook.getSheetAt(workbook.getActiveSheetIndex());
-					addSheetValues(sheet, importedSheets);
+					addSheetValues(sheet, importedSheets, workbook.getActiveSheetIndex());
+				} else {
+					Sheet sheet = workbook.getSheetAt(0);
+					addSheetValues(sheet, importedSheets, 0);
 				}
 			}
 			workbook.close();
@@ -398,8 +416,7 @@ public class ParseExcel extends GenericMethod {
 	}
 
 
-	private void addSheetValues(Sheet sheet, Map<String, List<List<Object>>> importedSheets) {
-		String sheetName = sheet.getSheetName();
+	private void addSheetValues(Sheet sheet, Map<Object, List<List<Object>>> importedSheets, Object importSheet) {
 		int lastRow = sheet.getLastRowNum();
 		List<List<Object>> rows = new ArrayList<>();
 
@@ -408,7 +425,7 @@ public class ParseExcel extends GenericMethod {
 			rows.add(getRowValue(nextRow));
 		}
 
-		importedSheets.put(sheetName, rows);
+		importedSheets.put(importSheet, rows);
 	}
 
 	private List<Object> getRowValue(Row row) {
@@ -450,12 +467,18 @@ public class ParseExcel extends GenericMethod {
 	@SuppressWarnings("unchecked")
 	private Map<String, List<Object>> getHeaderMap(Object[] arguments) {
 		Map<String, List<Object>> result = new HashMap<>();
-		if (arguments[HEADERS_INDEX] != null) {
-			Map<?, ?> parsers = asMap(arguments[HEADERS_INDEX]);
-			for (Entry<?, ?> entry : parsers.entrySet()) {
-				String sheetName = asString(entry.getKey());
-				List<Object> headers = (List<Object>) asList(entry.getValue());
-				result.put(sheetName, headers);
+		Object value = arguments[HEADERS_INDEX];
+		if (value != null) {
+			if (value instanceof Map<?, ?>) {
+				Map<?, ?> parsers = asMap(arguments[HEADERS_INDEX]);
+				for (Entry<?, ?> entry : parsers.entrySet()) {
+					String sheetName = asString(entry.getKey());
+					List<Object> headers = (List<Object>) asList(entry.getValue());
+					result.put(sheetName, headers);
+				}
+			} else {
+				List<Object> headers = (List<Object>) asList(arguments[HEADERS_INDEX]);
+				result.put(FOR_ALL, headers);
 			}
 		}
 		return result;
@@ -472,6 +495,7 @@ public class ParseExcel extends GenericMethod {
 			.optional("importAllSheets", false)
 			.optional("importSheets")
 			.optional("headers")
+			.optional("importActiveSheet", false)
 			.optional("raw", false)
 			.build();
 

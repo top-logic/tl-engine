@@ -1427,7 +1427,7 @@ th .tl-table__cell-container {
 
 th:last-child .tl-table__cell-resizer {
 	right: 0;
-	width: 8px;
+	width: 12px;
 }
 
 .tl-table__cell {

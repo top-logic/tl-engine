@@ -50,16 +50,31 @@
 		</tr>
 		<tr>
 			<td>headers</td>
-			<td>map</td>
-			<td>Map with sheet name as key and positions of the headers in the sheet as value. Allowed values are strings (e.g. "B2:F2") or a list of strings.</td>
+			<td>Map / List</td>
+			<td>
+			<p>Map with sheet name as key and positions of the headers in the sheet as value. Individual positions or areas (e.g. "B2:F2") or a list of positions and/or areas are permitted as a valid value.</p>
+
+			<p>If you do not specify a sheet name, the specified value (e.g. list of ranges) is used as the header for all sheets.</p>
+			</td>
 			<td>No</td>
 			<td>null</td>
+		</tr>
+		<tr>
+			<td>importActiveSheet</td>
+			<td>Boolean</td>
+			<td>
+			<p>Whether the active sheet should be imported.</p>
+
+			<p>The active sheet is the sheet that was last edited and saved, which is also displayed directly (at least in Windows) when the Excel file is opened.</p>
+			</td>
+			<td>No</td>
+			<td>false</td>
 		</tr>
 		<tr>
 			<td>raw</td>
 			<td>Boolean</td>
 			<td>
-			<p>Whether the function should return the raw data as a list of lists. Otherwise, the function returns a list of maps.</p>
+			<p>Whether the function should return the raw data as a list of rows consisting of a list of column values. Otherwise, the function returns a list of rows consisting of maps of the column values to the headers.</p>
 
 			<p>In the case of headers:null and raw:false, a list of headers corresponding to the Excel column names is generated first. The width of the columns corresponds to the longest column name. The entries from the columns are then mapped accordingly, with missing entries being filled with empty strings.</p>
 			</td>
@@ -71,9 +86,9 @@
 
 <h2>Return value</h2>
 
-<p><strong>Type:</strong> Map&lt;String, List&gt;</p>
+<p><strong>Type:</strong> Map&lt;String, List&gt; / a list</p>
 
-<p>Creates a list/map for each row in the input sheet and then combines these lists into one list. A map entry is then created for each sheet with sheet name as the key and the list as the value.</p>
+<p>Creates one list/map per row in the input sheet and then combines these lists into one list. A map entry is then created for each sheet with sheet name/sheet number as the key and the list as the value. If only one sheet is parsed, then only one list is returned.</p>
 
 <h2>Examples</h2>
 
@@ -83,21 +98,26 @@
 
 <p><img src="ref:grafik_82805.png" style="height:211px; opacity:1; width:534px" /></p>
 
-<p>It is also assumed that this file is already saved in a variable <code class="hljs inlineCode">importedData</code>.</p>
+<p>It is also assumed that this file is already stored in a variable <code class="hljs inlineCode">importedData</code>.</p>
 
 <h3>Example 1:</h3>
 
 <pre>
 <code>{
     ...
-    result = $importedData.parseExcel();
-    $result
+    $importedData.parseExcel();
 }</code>
 </pre>
 
-<p><strong>Output:</strong> [<span style="color:#e74c3c">{A=</span>"", <span style="color:#e74c3c">B=</span>"Connected cells", <span style="color:#e74c3c">C=</span>"", <span style="color:#e74c3c">D=</span>""}, <span style="color:#e74c3c">{A=</span>"A2", <span style="color:#e74c3c">B=</span>"B2", <span style="color:#e74c3c">C=</span>"C2", <span style="color:#e74c3c">D=</span>"D2"}, <span style="color:#e74c3c">{A=</span>"A3", <span style="color:#e74c3c">B=</span>"B3", <span style="color:#e74c3c">C=</span>"C3", <span style="color:#e74c3c">D=</span>"D3"}, <span style="color:#e74c3c">{A=</span>"A4", <span style="color:#e74c3c">B=</span>"B4", <span style="color:#e74c3c">C=</span>"C4", <span style="color:#e74c3c">D=</span>"D4"}]</p>
+<p><strong>Output:</strong> [<span style="color:#e74c3c">{A=</span>"", <span style="color:#e74c3c">B=</span>"Connected cells", <span style="color:#e74c3c">C=</span>"", <span style="color:#e74c3c">D=</span>""}, </p>
 
-<p>When <code class="hljs inlineCode">$importedData.parseExcel()</code> is called up, the currently active sheet of the Excel file is imported. A list of headers is generated first. The width of the columns corresponds to the longest column name. The entries from the columns are then mapped accordingly, whereby missing entries are filled with empty strings. For connected cells (here B1 - C1), the value for the smallest column name is entered. As</p>
+<p>                 <span style="color:#e74c3c">{A=</span>"A2", <span style="color:#e74c3c">B=</span>"B2", <span style="color:#e74c3c">C=</span>"C2", <span style="color:#e74c3c">D=</span>"D2"}, </p>
+
+<p>                 <span style="color:#e74c3c">{A=</span>"A3", <span style="color:#e74c3c">B=</span>"B3", <span style="color:#e74c3c">C=</span>"C3", <span style="color:#e74c3c">D=</span>"D3"}, </p>
+
+<p>                 <span style="color:#e74c3c">{A=</span>"A4", <span style="color:#e74c3c">B=</span>"B4", <span style="color:#e74c3c">C=</span>"C4", <span style="color:#e74c3c">D=</span>"D4"}]</p>
+
+<p>When <code class="hljs inlineCode">$importedData.parseExcel()</code> is called up, the currently active sheet of the Excel file is imported. A list of headers is generated first. The width of the columns corresponds to the longest column name. The entries from the columns are then mapped accordingly, with missing entries being filled with empty strings. For connected cells (here B1 - C1), the value for the smallest column name is entered. As</p>
 
 <p> </p>
 
@@ -106,30 +126,30 @@
 <pre>
 <code>{
     ...
-    result = $importedData.parseExcel(importSheets: 0);
-    $result
+    $importedData.parseExcel(importSheets: 0);
 }</code>
 </pre>
 
-<p><strong>Output: </strong>[<span style="color:#e74c3c">{A=</span>"", <span style="color:#e74c3c">B=</span>"", <span style="color:#e74c3c">C=</span>"", <span style="color:#e74c3c">D=</span>"", <span style="color:#e74c3c">E=</span>"", <span style="color:#e74c3c">F=</span>"", <span style="color:#e74c3c">G=</span>"", <span style="color:#e74c3c">H=</span>"", <span style="color:#e74c3c">I=</span>"", <span style="color:#e74c3c">J=</span>"", <span style="color:#e74c3c">K=</span>"", <span style="color:#e74c3c">L=</span>""}, <span style="color:#e74c3c">{A=</span>"", <span style="color:#e74c3c">B=</span>"Date", <span style="color:#e74c3c">C=</span>"Integer", <span style="color:#e74c3c">D=</span>"Floating point", <span style="color:#e74c3c">E=</span>"Percent", <span style="color:#e74c3c">F=</span>"Currency", <span style="color:#e74c3c">G=</span>"", <span style="color:#e74c3c">H=</span>"", <span style="color:#e74c3c">I=</span>"I2", <span style="color:#e74c3c">J=</span>"", <span style="color:#e74c3c">K=</span>"", <span style="color:#e74c3c">L=</span>""}, <span style="color:#e74c3c">{A=</span>"", <span style="color:#e74c3c">B=Thu</span> Aug 01 00:00:00 CEST 2024, <span style="color:#e74c3c">C=120</span>.0, <span style="color:#e74c3c">D=12</span>.85, <span style="color:#e74c3c">E=0</span>.1071, <span style="color:#e74c3c">F=5</span>.35, <span style="color:#e74c3c">G=</span>"", <span style="color:#e74c3c">H=</span>"", <span style="color:#e74c3c">I=</span>"", <span style="color:#e74c3c">J=</span>"J3", <span style="color:#e74c3c">K=</span>"", <span style="color:#e74c3c">L=</span>""}, ...,<span style="color:#e74c3c"> </span><span style="color:#e74c3c">{A=</span>"", <span style="color:#e74c3c">B=sum</span>, <span style="color:#e74c3c">C=620</span>.0, <span style="color:#e74c3c">D=SUM</span>(D3:D5), <span style="color:#e74c3c">E=SUM</span>(E3:E5), <span style="color:#e74c3c">F=SUM</span>(F3:F5), <span style="color:#e74c3c">G=</span>"", <span style="color:#e74c3c">H=</span>"", <span style="color:#e74c3c">I=</span>"I7", <span style="color:#e74c3c">J=</span>"J7", <span style="color:#e74c3c">K=</span>"K7", <span style="color:#e74c3c">L=</span>"L7"}]</p>
+<p><strong>Output: </strong>[<span style="color:#e74c3c">{A=</span>"", <span style="color:#e74c3c">B=</span>"", <span style="color:#e74c3c">C=</span>"", <span style="color:#e74c3c">D=</span>"", <span style="color:#e74c3c">E=</span>"", <span style="color:#e74c3c">F=</span>"", <span style="color:#e74c3c">G=</span>"", <span style="color:#e74c3c">H=</span>"", <span style="color:#e74c3c">I=</span>"", <span style="color:#e74c3c">J=</span>"", <span style="color:#e74c3c">K=</span>"", <span style="color:#e74c3c">L=</span>""}, </p>
 
-<p>When <code class="hljs inlineCode">parseExcel()</code> is called, it is specified here that the first sheet is to be imported. However, as no sheet has been explicitly specified and only one sheet is imported/parsed, the result is a list of maps and not a map. For comparison: The result of <code class="hljs inlineCode">parseExcel(importSheets: "Test")</code> would be</p>
+<p>                 <span style="color:#e74c3c">{A=</span>"", <span style="color:#e74c3c">B=</span>"Date", <span style="color:#e74c3c">C=</span>"Integer", <span style="color:#e74c3c">D=</span>"Floating point", <span style="color:#e74c3c">E=</span>"Percent", <span style="color:#e74c3c">F=</span>"Currency", <span style="color:#e74c3c">G=</span>"", <span style="color:#e74c3c">H=</span>"", <span style="color:#e74c3c">I=</span>"I2", <span style="color:#e74c3c">J=</span>"", <span style="color:#e74c3c">K=</span>"", <span style="color:#e74c3c">L=</span>""}, </p>
 
-<p><span style="color:#16a085">{Test=</span>[<span style="color:#e74c3c">{A=</span>"", <span style="color:#e74c3c">B=</span>"", <span style="color:#e74c3c">C=</span>"", <span style="color:#e74c3c">D=</span>"", <span style="color:#e74c3c">E=</span>"", <span style="color:#e74c3c">F=</span>"", <span style="color:#e74c3c">G=</span>"", <span style="color:#e74c3c">H=</span>"", <span style="color:#e74c3c">I=</span>"", <span style="color:#e74c3c">J=</span>"", <span style="color:#e74c3c">K=</span>"", <span style="color:#e74c3c">L=</span>""}, <span style="color:#e74c3c">{A=</span>"", <span style="color:#e74c3c">B=</span>"Date", <span style="color:#e74c3c">C=</span>"Integer", <span style="color:#e74c3c">D=</span>"Floating point", <span style="color:#e74c3c">E=</span>"Percent", <span style="color:#e74c3c">F=</span>"Currency", <span style="color:#e74c3c">G=</span>"", <span style="color:#e74c3c">H=</span>"", <span style="color:#e74c3c">I=</span>"I2", <span style="color:#e74c3c">J=</span>"", <span style="color:#e74c3c">K=</span>"", <span style="color:#e74c3c">L=</span>""}, <span style="color:#e74c3c">{A=</span>"", <span style="color:#e74c3c">B=Thu</span> Aug 01 00:00:00 CEST 2024, <span style="color:#e74c3c">C=120</span>.0, <span style="color:#e74c3c">D=12</span>.85, <span style="color:#e74c3c">E=0</span>.1071, <span style="color:#e74c3c">F=5</span>.35, <span style="color:#e74c3c">G=</span>"", <span style="color:#e74c3c">H=</span>"", <span style="color:#e74c3c">I=</span>"", <span style="color:#e74c3c">J=</span>"J3", <span style="color:#e74c3c">K=</span>"", <span style="color:#e74c3c">L=</span>""}, ...,<span style="color:#e74c3c"> </span><span style="color:#e74c3c">{A=</span>"", <span style="color:#e74c3c">B=sum</span>, <span style="color:#e74c3c">C=620</span>.0, <span style="color:#e74c3c">D=SUM</span>(D3:D5), <span style="color:#e74c3c">E=SUM</span>(E3:E5), <span style="color:#e74c3c">F=SUM</span>(F3:F5), <span style="color:#e74c3c">G=</span>"", <span style="color:#e74c3c">H=</span>"", <span style="color:#e74c3c">I=</span>"I7", <span style="color:#e74c3c">J=</span>"J7", <span style="color:#e74c3c">K=</span>"K7", <span style="color:#e74c3c">L=</span>"L7"}]}.</p>
+<p>                 <span style="color:#e74c3c">{A=</span>"", <span style="color:#e74c3c">B=Thu</span> Aug 01 00:00:00 CEST 2024, <span style="color:#e74c3c">C=120</span>.0, <span style="color:#e74c3c">D=12</span>.85, <span style="color:#e74c3c">E=0</span>.1071, <span style="color:#e74c3c">F=5</span>.35, <span style="color:#e74c3c">G=</span>"", <span style="color:#e74c3c">H=</span>"", <span style="color:#e74c3c">I=</span>"", <span style="color:#e74c3c">J=</span>"J3", <span style="color:#e74c3c">K=</span>"", <span style="color:#e74c3c">L=</span>""}, </p>
 
-<p></p>
+<p>             ...,<span style="color:#e74c3c"> </span><span style="color:#e74c3c">{A=</span>"", <span style="color:#e74c3c">B=sum</span>, <span style="color:#e74c3c">C=620</span>.0, <span style="color:#e74c3c">D=SUM</span>(D3:D5), <span style="color:#e74c3c">E=SUM</span>(E3:E5), <span style="color:#e74c3c">F=SUM</span>(F3:F5), <span style="color:#e74c3c">G=</span>"", <span style="color:#e74c3c">H=</span>"", <span style="color:#e74c3c">I=</span>"I7", <span style="color:#e74c3c">J=</span>"J7", <span style="color:#e74c3c">K=</span>"K7", <span style="color:#e74c3c">L=</span>"L7"}]</p>
+
+<p> </p>
 
 <h3>Example 3:</h3>
 
 <pre>
 <code>{
     ...
-    result = $importedData.parseExcel(importSheets: [0, "0"]);
-    $result
+    $importedData.parseExcel(importSheets: [0, "0"]);
 }</code>
 </pre>
 
-<p><strong>Output:</strong> <span style="color:#16a085">{0=</span>[...], <span style="color:#16a085">Test=</span>[...]}</p>
+<p><strong>Output:</strong> <span style="color:#16a085">{0=</span>[...], <span style="color:#16a085">"0"</span>=[...]}</p>
 
 <p>Here, when <code class="hljs inlineCode">parseExcel()</code> is called, it is specified that the first sheet and the sheet with the name 0 are to be imported.</p>
 
@@ -140,13 +160,16 @@
 <pre>
 <code>{
     ...
-    result = $importedData.parseExcel(importSheets: "Vergleich", 
+    $importedData.parseExcel(importSheets: "Vergleich", 
         headers:{"Vergleich": ["C3", "D3", "E3-&gt;E4:F4", "G3-&gt;G4:H4"]});
-    $result
 }</code>
 </pre>
 
-<p><strong>Output:</strong> <span style="color:#16a085">{Comparison=</span>[{Current <span style="color:#2980b9">year={Expenditure</span><span style="color:#2980b9"></span>="W15", <span style="color:#2980b9">Income=</span>"W14"}, <span style="color:#e74c3c">Previous</span><span style="color:#2980b9">year={Expenditure=</span>"W13_2", <span style="color:#2980b9">Income=W13_1}</span>, <span style="color:#e74c3c">H1=</span>"W11", <span style="color:#e74c3c">H2=</span>"W12"}, {current <span style="color:#2980b9">year={expenditure=</span>"", <span style="color:#2980b9">income=</span>"W24"}, <span style="color:#e74c3c">previous</span><span style="color:#2980b9">year={expenditure=</span>"", <span style="color:#2980b9">income=</span>"W23_1"}, <span style="color:#e74c3c">H1=</span>"W21", <span style="color:#e74c3c">H2=</span>"W22"}, ...]}</p>
+<p><strong>Output:</strong> [{Current <span style="color:#2980b9">year={expenditure</span><span style="color:#2980b9"></span>="W15", <span style="color:#2980b9">income=</span>"W14"}, <span style="color:#e74c3c">previous</span><span style="color:#2980b9">year={expenditure=</span>"W13_2", <span style="color:#2980b9">income=W13_1}</span>, <span style="color:#e74c3c">H1=</span>"W11", <span style="color:#e74c3c">H2=</span>"W12"},</p>
+
+<p>                  {current <span style="color:#2980b9">year={expenditure=</span>"", <span style="color:#2980b9">revenue=</span>"W24"}, <span style="color:#e74c3c">previous</span><span style="color:#2980b9">year={expenditure=</span>"", <span style="color:#2980b9">revenue=</span>"W23_1"}, <span style="color:#e74c3c">H1=</span>"W21", <span style="color:#e74c3c">H2=</span>"W22"}, </p>
+
+<p>                  ...]</p>
 
 <p>When calling up <code class="hljs inlineCode">parseExcel()</code>, it is specified here that the sheet with the name "Comparison" is to be imported and that the headers in this sheet are to be found in positions C3, D3, E3 (as main header) with sub-header E4 and F4, G3 (as main header) with sub-headers G4 and H4. Now all rows from the fifth row and only columns C to H are imported and mapped accordingly.</p>
 
@@ -157,13 +180,16 @@
 <pre>
 <code>{
     ...
-    result = $importedData.parseExcel(importSheets: "Test", 
+    $importedData.parseExcel(importSheets: "Test", 
         headers:{"Test": "B2:F2"});
-    $result
 }</code>
 </pre>
 
-<p><strong>Output:</strong> <span style="color:#16a085">{Test=</span>[<span style="color:#e74c3c">{Integer=120</span>.0, <span style="color:#e74c3c">Date=Thu</span> Aug 01 00:00:00 CEST 2024, <span style="color:#e74c3c">Currency=5</span>.35, <span style="color:#e74c3c">Floating point=12</span>.85, <span style="color:#e74c3c">Percent=D3/C3}</span>, ..., <span style="color:#e74c3c">{Integer=</span>"", <span style="color:#e74c3c">Date=</span>"", <span style="color:#e74c3c">Currency=</span>"", <span style="color:#e74c3c">Floating point=</span>"", <span style="color:#e74c3c">Percent=</span>""}, <span style="color:#e74c3c">{Integer=SUM</span>(C3:C5), <span style="color:#e74c3c">Date=</span>"Sum", <span style="color:#e74c3c">Currency=SUM</span>(F3:F5), <span style="color:#e74c3c">Floating point=SUM</span>(D3:D5), <span style="color:#e74c3c">Percent=SUM</span>(E3:E5)}]}</p>
+<p><strong>Output:</strong> [<span style="color:#e74c3c">{Integer=120</span>.0, <span style="color:#e74c3c">Date=Thu</span> Aug 01 00:00:00 CEST 2024, <span style="color:#e74c3c">Currency=5</span>.35, <span style="color:#e74c3c">Floating point=12</span>.85, <span style="color:#e74c3c">Percent=D3/C3}</span>,</p>
+
+<p>            ..., <span style="color:#e74c3c">{Integer=</span>"", <span style="color:#e74c3c">Date=</span>"", <span style="color:#e74c3c">Currency=</span>"", <span style="color:#e74c3c">Floating point=</span>"", <span style="color:#e74c3c">Percent=</span>""}, </p>
+
+<p>                 <span style="color:#e74c3c">{Integer=SUM</span>(C3:C5), <span style="color:#e74c3c">Date=</span>"Sum", <span style="color:#e74c3c">Currency=SUM</span>(F3:F5), <span style="color:#e74c3c">Floating point=SUM</span>(D3:D5), <span style="color:#e74c3c">Percent=SUM</span>(E3:E5)}]</p>
 
 <p>When calling up <code class="hljs inlineCode">parseExcel()</code>, it is specified here that the sheet with the name "Test" is to be imported and that the headers in this sheet are to be found in positions B2 to F2. Now all rows from the third row and only columns B to F are imported and mapped accordingly.</p>
 
@@ -174,11 +200,20 @@
 <pre>
 <code>{
     ...
-    result = $importedData.parseExcel(importSheets: "Test", raw:true);
-    $result
+    $importedData.parseExcel(importSheets: "Test", raw:true);
 }</code>
 </pre>
 
-<p><strong>Output:</strong> <span style="color:#16a085">{Test=</span>[[], [, "Date", "Integer", "Floating point", "Percent", "Currency", , , "I2"], [, Thu Aug 01 00:00:00 CEST 2024, 120.0, 12.85, D3/C3, 5.35, , , , "J3"], [, Fri Aug 02 00:00:00 CEST 2024, 200.0, 20.2, D4/C4, 5.05, , , , , , "K4"], [, Sat Aug 03 00:00:00 CEST 2024, 300.0, 66.6, D5/C5, 11.1, , , , , , , "L5"], [, ], [, "Sum", SUM(C3:C5), SUM(D3:D5), SUM(E3:E5), SUM(F3:F5), , , "I7", "J7", "K7", "L7"]]}</p>
+<p><strong>Output:</strong> [[], [, "Date", "Integer", "Floating point", "Percent", "Currency", , , "I2"],</p>
+
+<p>                       [, Thu Aug 01 00:00:00 CEST 2024, 120.0, 12.85, D3/C3, 5.35, , , , "J3"], </p>
+
+<p>                       [, Fri Aug 02 00:00:00 CEST 2024, 200.0, 20.2, D4/C4, 5.05, , , , , "K4"], </p>
+
+<p>                       [, Sat Aug 03 00:00:00 CEST 2024, 300.0, 66.6, D5/C5, 11.1, , , , , , , "L5"], </p>
+
+<p>                       [, ], </p>
+
+<p>                       [, "Sum", SUM(C3:C5), SUM(D3:D5), SUM(E3:E5), SUM(F3:F5), , , "I7", "J7", "K7", "L7"]]</p>
 
 <p>The call to <code class="hljs inlineCode">parseExcel(importSheers: "Test", raw:true)</code> returns a map of lists of lists for the "Test" sheet.</p>

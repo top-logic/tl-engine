@@ -8,7 +8,7 @@
 
 <h2>Beschreibung</h2>
 
-<p>Liest die eingegebene Excel-Datei und erzeugt daraus eine Map&lt;String, List&gt;. Hierbei wird der Sheetname als Schlüssel für die Map verwendet. Die zugehörigen Listen ergeben sich aus den Inhalten des Sheets.</p>
+<p>Liest die eingegebene Excel-Datei und erzeugt daraus eine Datenstruktur. Hierbei wird der Sheetname als Schlüssel für die Map verwendet. Die zugehörigen Listen ergeben sich aus den Inhalten des Sheets. Standardmäßig wird das erste Sheet importiert, aber Sie können auch alle Sheets, das aktive Sheet oder bestimmte Sheets nach Index oder Namen auswählen.</p>
 
 <h2>​Parameter</h2>
 
@@ -42,8 +42,6 @@
 			<td>List</td>
 			<td>
 			<p>Liste von Sheets, die importiert werden sollen. Zulässig sind Sheetnamen als Strings und/oder Sheetpositionen in der Datei (beginnend mit 0). Zum Beispiel werden bei der Eingabe importSheets : [0, "1", "Tabelle2"] das erste Sheet und die Sheets mit den Namen "1" bzw. "Tabelle2" importiert.</p>
-
-			<p>Im Falle <strong>importAllSheets:false</strong> und <strong>importSheets:null</strong> wird das aktuell aktive Sheet der Exceldatei importiert.</p>
 			</td>
 			<td>Nein</td>
 			<td>null</td>
@@ -74,9 +72,9 @@
 			<td>raw</td>
 			<td>Boolean</td>
 			<td>
-			<p>Ob die Funktion die Rohdaten als Liste von Zeilen bestehend aus Liste von Spaltenwerten zurück lieferen soll. Ansonsten liefert die Funktion eine Liste von Zeilen bestehend aus Maps der Spaltenwerte auf die Header.</p>
+			<p>Ob die Funktion die Rohdaten als Liste von Zeilen zurückliefern soll, wobei jede Zeile als Liste von Spaltenwerten dargestellt wird. Wenn <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">raw:false</code></strong> (Standard), liefert die Funktion stattdessen eine Liste von Zeilen, wobei jede Zeile als Map dargestellt wird, die Spaltenwerte auf Header abbildet.</p>
 
-			<p>Im Falle headers:null und raw:false wird zuerst eine Liste von Headern entsprechend den Excelspaltennamen erzeugt. Die Breite der Spalten entsprechen dem längsten Spaltennamen. Anschließend werden die Einträge aus den Spalten entsprechend gemappt, wobei fehlenden Einträge mit leeren Strings aufgefüllt werden.</p>
+			<p>Im Falle <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">headers:null</code></strong> und <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">raw:false</code></strong> wird zuerst eine Liste von Headern entsprechend den Excel-Spaltennamen (A, B, C, ...) erzeugt. Die Anzahl der erzeugten Header entspricht der maximalen Breite der Daten in der Excel-Tabelle. Anschließend werden die Einträge aus den Spalten den entsprechenden Header-Schlüsseln zugeordnet, wobei fehlende Einträge mit leeren Strings aufgefüllt werden.</p>
 			</td>
 			<td>Nein</td>
 			<td>false</td>
@@ -86,13 +84,56 @@
 
 <h2>Rückgabewert</h2>
 
-<p><strong>Typ:</strong> Map&lt;String, List&gt; / eine Liste</p>
+<p><strong>Typ:</strong> Map&lt;Object, List&gt; / eine Liste</p>
 
-<p>Erzeugt pro Zeile in dem Eingabesheet eine Liste/Map und fasst anschließend diese Listen in einer Liste zusammen. Anschließend wird pro Sheet eine Map eintrag mit Sheetname/Sheetnummer als Schlüssel und die Liste als Wert erzeugt. Wird nur ein Sheet geparset, dann wird nur eine Liste zurückgegeben.</p>
+<ol>
+	<li>Pro Zeile wird eine Liste (bei <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">raw:true</code></strong>) oder eine Map (bei <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">raw:false</code></strong>) mit Spaltenwerten erzeugt</li>
+	<li>Diese Zeilen-Objekte werden pro Sheet in einer Liste zusammengefasst</li>
+	<li>Pro Sheet wird ein Map-Eintrag mit Sheetname/Sheetnummer als Schlüssel und der Liste als Wert erzeugt</li>
+	<li>Wird nur ein Sheet geparst, dann wird nur die entsprechende Liste zurückgegeben (keine Map mit einem Eintrag)</li>
+</ol>
+
+<h2>Hinweise zum Verhalten</h2>
+
+<p>Die Priorität der Parameter ist wie folgt:</p>
+
+<ol>
+	<li>Wenn <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">importAllSheets:true</code> </strong>ist, werden alle verfügbaren Sheets importiert, unabhängig von den anderen Parametern.</li>
+	<li>Wenn <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">importAllSheets:false</code> </strong>und <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">importSheets</code> nicht leer </strong>ist, werden nur die in <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">importSheets</code> </strong>angegebenen Sheets importiert.</li>
+	<li>Wenn <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">importAllSheets:false</code></strong>, <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">importSheets</code> leer </strong>ist und <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">importActiveSheet:true</code> </strong>ist, wird das aktive Sheet importiert.</li>
+	<li>Wenn <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">importAllSheets:false</code></strong>, <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">importSheets</code> leer </strong>ist und <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">importActiveSheet:false</code> </strong>ist, wird das erste Sheet importiert.</li>
+</ol>
+
+<p>Der Standardfall (ohne Parameter) entspricht Fall 4: Es wird das erste Sheet importiert.</p>
+
+<h3>Header-Spezifikation:</h3>
+
+<p>Die Header können auf verschiedene Arten definiert werden:</p>
+
+<ul>
+	<li><strong>Einzelne Zelle</strong>: z.B. "A1", "B2" - Importiert den Wert an dieser Position als Header</li>
+	<li><strong>Zellbereich</strong>: z.B. "A1:C1" - Importiert alle Werte in diesem Bereich als Header</li>
+	<li><strong>Übergeordneter Header</strong>: z.B. "A1-&gt;B2:C2" - Verwendet den Wert von A1 als übergeordneten Header für die Werte in B2 bis C2</li>
+</ul>
+
+<p>Der Schlüssel "all" kann verwendet werden, um die Header-Definitionen auf alle Sheets anzuwenden:</p>
+
+<pre>
+<code class="language-java">headers: {"all": ["B2:F2"]}</code></pre>
+
+<div>Sie können auch verschiedene Header-Definitionen für verschiedene Sheets angeben:</div>
+
+<div>
+<pre>
+<code class="language-java">headers: {
+  "Sheet1": ["A1", "B1:C1"],
+  0: ["A2", "B2"] // für das Sheet mit Index 0
+}</code></pre>
+</div>
 
 <h2>Beispiele</h2>
 
-<p>Im folgenden Beispiele der Aufbau der Eingabedatei wie folgt. Die Datei hat drei Sheets: "Test", "0" und "Vergleich". Sheet "0" ist das aktive Sheet.</p>
+<p>Im Folgenden wird der Aufbau einer Beispiel-Excel-Datei beschrieben. Die Datei hat drei Sheets: "Test", "0" und "Vergleich". Sheet "0" ist das aktive Sheet.</p>
 
 <p><img src="ref:grafik_17518.png" style="height:157px; opacity:1; width:533px" /> <img src="ref:grafik_40001.png" style="height:155px; opacity:1; width:231px" /></p>
 
@@ -100,7 +141,7 @@
 
 <p>Ferner sei Angenommen, dass diese Datei in einer Variablen <code class="hljs inlineCode">importedData</code> bereits gespeichert ist.</p>
 
-<h3>Beispiel 1:</h3>
+<h3>Beispiel 1: Standard-Import des ersten Sheets</h3>
 
 <pre>
 <code>{
@@ -109,19 +150,45 @@
 }</code>
 </pre>
 
-<p><strong>Ausgabe:</strong> [{<span style="color:#e74c3c">A</span>="", <span style="color:#e74c3c">B</span>="Verbundene Zellen", <span style="color:#e74c3c">C</span>="", <span style="color:#e74c3c">D</span>=""}, </p>
+<p><strong>Ausgabe:</strong></p>
 
-<p>                  {<span style="color:#e74c3c">A</span>="A2", <span style="color:#e74c3c">B</span>="B2", <span style="color:#e74c3c">C</span>="C2", <span style="color:#e74c3c">D</span>="D2"}, </p>
-
-<p>                  {<span style="color:#e74c3c">A</span>="A3", <span style="color:#e74c3c">B</span>="B3", <span style="color:#e74c3c">C</span>="C3", <span style="color:#e74c3c">D</span>="D3"}, </p>
-
-<p>                  {<span style="color:#e74c3c">A</span>="A4", <span style="color:#e74c3c">B</span>="B4", <span style="color:#e74c3c">C</span>="C4", <span style="color:#e74c3c">D</span>="D4"}]</p>
-
-<p>Beim Aufruf von <code class="hljs inlineCode">$importedData.parseExcel()</code> wird das aktuell aktive Sheet der Exceldatei importiert. Hierbei wird zuerst eine Liste von Headern erzeugt. Die Breite der Spalten entsprechen dem längsten Spaltennamen. Anschließend werden die Einträge aus den Spalten entsprechend gemappt, wobei fehlenden Einträge mit leeren Strings aufgefüllt werden. Bei verbundenen Zellen (hier B1 - C1) wird der Wert für den kleinsten Spaltennamen eingetragen. Da</p>
+<pre>
+<code class="language-json">[
+  {
+    "A": "",
+    "B": "Verbundene Zellen",
+    "C": "",
+    "D": ""
+  },
+  {
+    "A": "A2",
+    "B": "B2",
+    "C": "C2",
+    "D": "D2"
+  },
+  {
+    "A": "A3",
+    "B": "B3",
+    "C": "C3",
+    "D": "D3"
+  },
+  {
+    "A": "A4",
+    "B": "B4",
+    "C": "C4",
+    "D": "D4"
+  }
+]</code></pre>
 
 <p> </p>
 
-<h3>Beispiel 2:</h3>
+<p>Beim Aufruf von <code class="hljs inlineCode">$importedData.parseExcel()</code> wird das erste Sheet der Excel-Datei importiert. Hierbei wird zuerst eine Liste von Headern erzeugt. Die Breite der Spalten entsprechen dem längsten Spaltennamen. Anschließend werden die Einträge aus den Spalten entsprechend gemappt, wobei fehlenden Einträge mit leeren Strings aufgefüllt werden. Bei verbundenen Zellen (hier B1 - C1) wird der Wert für den kleinsten Spaltennamen eingetragen. Da</p>
+
+<p> </p>
+
+<p> </p>
+
+<h3>Beispiel 2: Import eines spezifischen Sheets nach Index</h3>
 
 <pre>
 <code>{
@@ -130,17 +197,115 @@
 }</code>
 </pre>
 
-<p><strong>Ausgabe: </strong>[{<span style="color:#e74c3c">A</span>="", <span style="color:#e74c3c">B</span>="", <span style="color:#e74c3c">C</span>="", <span style="color:#e74c3c">D</span>="", <span style="color:#e74c3c">E</span>="", <span style="color:#e74c3c">F</span>="", <span style="color:#e74c3c">G</span>="", <span style="color:#e74c3c">H</span>="", <span style="color:#e74c3c">I</span>="", <span style="color:#e74c3c">J</span>="", <span style="color:#e74c3c">K</span>="", <span style="color:#e74c3c">L</span>=""}, </p>
+<p><strong>Ausgabe: </strong></p>
 
-<p>                  {<span style="color:#e74c3c">A</span>="", <span style="color:#e74c3c">B</span>="Datum", <span style="color:#e74c3c">C</span>="Integer", <span style="color:#e74c3c">D</span>="Gleitkomma", <span style="color:#e74c3c">E</span>="Prozent", <span style="color:#e74c3c">F</span>="Währung", <span style="color:#e74c3c">G</span>="", <span style="color:#e74c3c">H</span>="", <span style="color:#e74c3c">I</span>="I2", <span style="color:#e74c3c">J</span>="", <span style="color:#e74c3c">K</span>="", <span style="color:#e74c3c">L</span>=""}, </p>
-
-<p>                  {<span style="color:#e74c3c">A</span>="", <span style="color:#e74c3c">B</span>=Thu Aug 01 00:00:00 CEST 2024, <span style="color:#e74c3c">C</span>=120.0, <span style="color:#e74c3c">D</span>=12.85, <span style="color:#e74c3c">E</span>=0.1071, <span style="color:#e74c3c">F</span>=5.35, <span style="color:#e74c3c">G</span>="", <span style="color:#e74c3c">H</span>="", <span style="color:#e74c3c">I</span>="", <span style="color:#e74c3c">J</span>="J3", <span style="color:#e74c3c">K</span>="", <span style="color:#e74c3c">L</span>=""}, </p>
-
-<p>             ...,<span style="color:#e74c3c"> </span>{<span style="color:#e74c3c">A</span>="", <span style="color:#e74c3c">B</span>=Summe, <span style="color:#e74c3c">C</span>=620.0, <span style="color:#e74c3c">D</span>=SUM(D3:D5), <span style="color:#e74c3c">E</span>=SUM(E3:E5), <span style="color:#e74c3c">F</span>=SUM(F3:F5), <span style="color:#e74c3c">G</span>="", <span style="color:#e74c3c">H</span>="", <span style="color:#e74c3c">I</span>="I7", <span style="color:#e74c3c">J</span>="J7", <span style="color:#e74c3c">K</span>="K7", <span style="color:#e74c3c">L</span>="L7"}]</p>
+<pre>
+<code class="language-json">{
+  "0": [
+    {
+      "A": "",
+      "B": "",
+      "C": "",
+      "D": "",
+      "E": "",
+      "F": "",
+      "G": "",
+      "H": "",
+      "I": "",
+      "J": "",
+      "K": "",
+      "L": ""
+    },
+    {
+      "A": "",
+      "B": "Date",
+      "C": "Integer",
+      "D": "Float",
+      "E": "Percent",
+      "F": "Währung",
+      "G": "",
+      "H": "",
+      "I": "I2",
+      "J": "",
+      "K": "",
+      "L": ""
+    },
+    {
+      "A": "",
+      "B": "Thu Aug 01 00:00:00 CEST 2024",
+      "C": 120.0,
+      "D": 12.85,
+      "E": "D3/C3",
+      "F": 5.35,
+      "G": "",
+      "H": "",
+      "I": "",
+      "J": "J3",
+      "K": "",
+      "L": ""
+    },
+    {
+      "A": "",
+      "B": "Fri Aug 02 00:00:00 CEST 2024",
+      "C": 200.0,
+      "D": 20.2,
+      "E": "D4/C4",
+      "F": 5.05,
+      "G": "",
+      "H": "",
+      "I": "",
+      "J": "",
+      "K": "K4",
+      "L": ""
+    },
+    {
+      "A": "",
+      "B": "Sat Aug 03 00:00:00 CEST 2024",
+      "C": 300.0,
+      "D": 69.33,
+      "E": "D5/C5",
+      "F": 11.1,
+      "G": "",
+      "H": "",
+      "I": "",
+      "J": "",
+      "K": "",
+      "L": "L5"
+    },
+    {
+      "A": "",
+      "B": "",
+      "C": "",
+      "D": "",
+      "E": "",
+      "F": "",
+      "G": "",
+      "H": "",
+      "I": "",
+      "J": "",
+      "K": "",
+      "L": ""
+    },
+    {
+      "A": "",
+      "B": "Summe",
+      "C": "SUM(C3:C5)",
+      "D": "SUM(D3:D5)",
+      "E": "SUM(E3:E5)",
+      "F": "SUM(F3:F5)",
+      "G": "",
+      "H": "",
+      "I": "I7",
+      "J": "J7",
+      "K": "K7",
+      "L": "L7"
+    }
+  ]
+}</code></pre>
 
 <p> </p>
 
-<h3>Beispiel 3:</h3>
+<h3>Beispiel 3: Import mehrerer Sheets</h3>
 
 <pre>
 <code>{
@@ -155,7 +320,7 @@
 
 <p>​​</p>
 
-<h3>Beispiel 4:</h3>
+<h3>Beispiel 4: Import mit komplexen Header-Definitionen</h3>
 
 <pre>
 <code>{
@@ -165,17 +330,79 @@
 }</code>
 </pre>
 
-<p><strong>Ausgabe:</strong> [{<span style="color:#e74c3c">Aktuelles Jahr</span>={<span style="color:#2980b9">Ausgaben</span><span style="color:#2980b9"></span>="W15", <span style="color:#2980b9">Einnahmen</span>="W14"}, <span style="color:#e74c3c">Vorjahr</span>={<span style="color:#2980b9">Ausgaben</span>="W13_2", <span style="color:#2980b9">Einnahmen</span>=W13_1}, <span style="color:#e74c3c">H1</span>="W11", <span style="color:#e74c3c">H2</span>="W12"},</p>
+<p><strong>Ausgabe:</strong></p>
 
-<p>                  {<span style="color:#e74c3c">Aktuelles Jahr</span>={<span style="color:#2980b9">Ausgaben</span>="", <span style="color:#2980b9">Einnahmen</span>="W24"}, <span style="color:#e74c3c">Vorjahr</span>={<span style="color:#2980b9">Ausgaben</span>="", <span style="color:#2980b9">Einnahmen</span>="W23_1"}, <span style="color:#e74c3c">H1</span>="W21", <span style="color:#e74c3c">H2</span>="W22"}, </p>
-
-<p>                  ...]</p>
+<pre>
+<code class="language-json">{
+  "Vergleich": [
+    {
+      "Aktuelles Jahr": {
+        "Ausgaben": "W15",
+        "Einnahmen": "W14"
+      },
+      "Vorjahr": {
+        "Ausgaben": "W13_2",
+        "Einnahmen": "W13_1"
+      },
+      "H1": "W11",
+      "H2": "W12"
+    },
+    {
+      "Aktuelles Jahr": {
+        "Ausgaben": "",
+        "Einnahmen": "W24"
+      },
+      "Vorjahr": {
+        "Ausgaben": "",
+        "Einnahmen": "W23_1"
+      },
+      "H1": "W21",
+      "H2": "W22"
+    },
+    {
+      "Aktuelles Jahr": {
+        "Ausgaben": "W35",
+        "Einnahmen": ""
+      },
+      "Vorjahr": {
+        "Ausgaben": "W33_2",
+        "Einnahmen": ""
+      },
+      "H1": "W31",
+      "H2": "W32"
+    },
+    {
+      "Aktuelles Jahr": {
+        "Ausgaben": "",
+        "Einnahmen": "W44"
+      },
+      "Vorjahr": {
+        "Ausgaben": "",
+        "Einnahmen": ""
+      },
+      "H1": "",
+      "H2": "W42"
+    },
+    {
+      "Aktuelles Jahr": {
+        "Ausgaben": "",
+        "Einnahmen": ""
+      },
+      "Vorjahr": {
+        "Ausgaben": "W53_2",
+        "Einnahmen": "W53_1"
+      },
+      "H1": "",
+      "H2": ""
+    }
+  ]
+}</code></pre>
 
 <p>Hier wird beim Aufruf von <code class="hljs inlineCode">parseExcel()</code> angegeben, dass das Sheet mit den Namen "Vergleich" importiert werden sollen und die Header in diesem Sheet auf Positionen C3, D3, E3 (als Hauptheader) mit Unterheader E4 und F4, G3 (als Hauptheader) mit Unterheader G4 und H4 zu finden sind. Nun werden alle Zeilen ab der fünften Zeile und nur die Spalten C bis H importiert und entsprechend gemappt.</p>
 
 <p>​​</p>
 
-<h3>Beispiel 5:</h3>
+<h3>Beispiel 5: Import mit Header-Bereich</h3>
 
 <pre>
 <code>{
@@ -185,17 +412,54 @@
 }</code>
 </pre>
 
-<p><strong>Ausgabe:</strong> [{<span style="color:#e74c3c">Integer</span>=120.0, <span style="color:#e74c3c">Datum</span>=Thu Aug 01 00:00:00 CEST 2024, <span style="color:#e74c3c">Währung</span>=5.35, <span style="color:#e74c3c">Gleitkomma</span>=12.85, <span style="color:#e74c3c">Prozent</span>=D3/C3},</p>
+<p><strong>Ausgabe:</strong></p>
 
-<p>            ..., {<span style="color:#e74c3c">Integer</span>="", <span style="color:#e74c3c">Datum</span>="", <span style="color:#e74c3c">Währung</span>="", <span style="color:#e74c3c">Gleitkomma</span>="", <span style="color:#e74c3c">Prozent</span>=""}, </p>
-
-<p>                  {<span style="color:#e74c3c">Integer</span>=SUM(C3:C5), <span style="color:#e74c3c">Datum</span>="Summe", <span style="color:#e74c3c">Währung</span>=SUM(F3:F5), <span style="color:#e74c3c">Gleitkomma</span>=SUM(D3:D5), <span style="color:#e74c3c">Prozent</span>=SUM(E3:E5)}]</p>
+<pre>
+<code class="language-json">{
+  "Test": [
+    {
+      "Integer": 120.0,
+      "Float": 12.85,
+      "Percent": "D3/C3",
+      "Währung": 5.35,
+      "Date": "Thu Aug 01 00:00:00 CEST 2024"
+    },
+    {
+      "Integer": 200.0,
+      "Float": 20.2,
+      "Percent": "D4/C4",
+      "Währung": 5.05,
+      "Date": "Fri Aug 02 00:00:00 CEST 2024"
+    },
+    {
+      "Integer": 300.0,
+      "Float": 69.33,
+      "Percent": "D5/C5",
+      "Währung": 11.1,
+      "Date": "Sat Aug 03 00:00:00 CEST 2024"
+    },
+    {
+      "Integer": "",
+      "Float": "",
+      "Percent": "",
+      "Währung": "",
+      "Date": ""
+    },
+    {
+      "Integer": "SUM(C3:C5)",
+      "Float": "SUM(D3:D5)",
+      "Percent": "SUM(E3:E5)",
+      "Währung": "SUM(F3:F5)",
+      "Date": "Summe"
+    }
+  ]
+}</code></pre>
 
 <p>Hier wird beim Aufruf von <code class="hljs inlineCode">parseExcel()</code> angegeben, dass das Sheet mit den Namen "Test" importiert werden sollen und die Header in diesem Sheet auf den Positionen B2 bis F2 zu finden sind. Nun werden alle Zeilen ab der dritten Zeile und nur die Spalten B bis F importiert und entsprechend gemappt.</p>
 
 <p>​</p>
 
-<h3>Beispiel 6:</h3>
+<h3>Beispiel 6: Import mit Rohdaten</h3>
 
 <pre>
 <code>{
@@ -204,16 +468,78 @@
 }</code>
 </pre>
 
-<p><strong>Ausgabe:</strong> [[], [, "Datum", "Integer", "Gleitkomma", "Prozent", "Währung", , , "I2"],</p>
+<p><strong>Ausgabe:</strong></p>
 
-<p>                       [, Thu Aug 01 00:00:00 CEST 2024, 120.0, 12.85, D3/C3, 5.35, , , , "J3"], </p>
-
-<p>                       [, Fri Aug 02 00:00:00 CEST 2024, 200.0, 20.2, D4/C4, 5.05, , , , , "K4"], </p>
-
-<p>                       [, Sat Aug 03 00:00:00 CEST 2024, 300.0, 66.6, D5/C5, 11.1, , , , , , "L5"], </p>
-
-<p>                       [, ], </p>
-
-<p>                       [, "Summe", SUM(C3:C5), SUM(D3:D5), SUM(E3:E5), SUM(F3:F5), , , "I7", "J7", "K7", "L7"]]</p>
+<pre>
+<code class="language-json">{
+  "Test": [
+    [],
+    [
+      null,
+      "Date",
+      "Integer",
+      "Float",
+      "Percent",
+      "Währung",
+      null,
+      null,
+      "I2"
+    ],
+    [
+      null,
+      "Thu Aug 01 00:00:00 CEST 2024",
+      120.0,
+      12.85,
+      "D3/C3",
+      5.35,
+      null,
+      null,
+      null,
+      "J3"
+    ],
+    [
+      null,
+      "Fri Aug 02 00:00:00 CEST 2024",
+      200.0,
+      20.2,
+      "D4/C4",
+      5.05,
+      null,
+      null,
+      null,
+      null,
+      "K4"
+    ],
+    [
+      null,
+      "Sat Aug 03 00:00:00 CEST 2024",
+      300.0,
+      69.33,
+      "D5/C5",
+      11.1,
+      null,
+      null,
+      null,
+      null,
+      null,
+      "L5"
+    ],
+    [],
+    [
+      null,
+      "Summe",
+      "SUM(C3:C5)",
+      "SUM(D3:D5)",
+      "SUM(E3:E5)",
+      "SUM(F3:F5)",
+      null,
+      null,
+      "I7",
+      "J7",
+      "K7",
+      "L7"
+    ]
+  ]
+}</code></pre>
 
 <p>Der Aufruf von <code class="hljs inlineCode">parseExcel(importSheers: "Test", raw:true)</code> liefert eine Map von Listen von Listen für das Sheet "Test".</p>

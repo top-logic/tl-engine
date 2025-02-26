@@ -475,7 +475,7 @@
 											value="A"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="A1"
+											value=""
 										/>
 									</value>
 									<value>
@@ -483,7 +483,7 @@
 											value="B"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="B1"
+											value=""
 										/>
 									</value>
 									<value>
@@ -491,7 +491,55 @@
 											value="C"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="C1"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="D"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="E"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="F"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="G"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="H"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="I"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
 										/>
 									</value>
 								</values>
@@ -524,7 +572,7 @@
 											value="A"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="A2"
+											value=""
 										/>
 									</value>
 									<value>
@@ -532,7 +580,7 @@
 											value="B"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="B2"
+											value="Date"
 										/>
 									</value>
 									<value>
@@ -540,7 +588,55 @@
 											value="C"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="C2"
+											value="Integer"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="D"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="Float"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="E"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="Percent"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="F"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="G"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="H"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="I"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
 										/>
 									</value>
 								</values>
@@ -573,7 +669,298 @@
 											value="A"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="A3"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="B"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
+											value="2024-07-31T22:00:00.000Z"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="C"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+											value="120.0"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="D"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+											value="12.85"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="E"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="D3/C3"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="F"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="G"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="G3"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="H"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="I"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+								</values>
+							</expected-value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+								column-label="Result"
+							>
+								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Development > Script Konsole > Ergebnis"
+									/>
+									<path>
+										<named-member name="result"/>
+									</path>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+									displayed-row-index="3"
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+								<values>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="A"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="B"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
+											value="2024-08-01T22:00:00.000Z"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="C"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+											value="200.0"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="D"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+											value="20.2"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="E"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="D4/C4"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="F"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="G"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="H"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="H3"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="I"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+								</values>
+							</expected-value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+								column-label="Result"
+							>
+								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Development > Script Konsole > Ergebnis"
+									/>
+									<path>
+										<named-member name="result"/>
+									</path>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+									displayed-row-index="4"
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+								<values>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="A"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="B"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
+											value="2024-08-02T22:00:00.000Z"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="C"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+											value="300.0"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="D"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+											value="69.33"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="E"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="D5/C5"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="F"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="G"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="H"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="I"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="I3"
+										/>
+									</value>
+								</values>
+							</expected-value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+								column-label="Result"
+							>
+								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Development > Script Konsole > Ergebnis"
+									/>
+									<path>
+										<named-member name="result"/>
+									</path>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+									displayed-row-index="5"
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+								<values>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="A"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
 										/>
 									</value>
 									<value>
@@ -581,7 +968,7 @@
 											value="B"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="B3"
+											value=""
 										/>
 									</value>
 									<value>
@@ -589,7 +976,152 @@
 											value="C"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="C3"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="D"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="E"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="F"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="G"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="H"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="I"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+								</values>
+							</expected-value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+							comparision="equals"
+							inverted="false"
+							user-id="root"
+						>
+							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+								column-label="Result"
+							>
+								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+										tab-path="Administration > Development > Script Konsole > Ergebnis"
+									/>
+									<path>
+										<named-member name="result"/>
+									</path>
+								</table>
+								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+									displayed-row-index="6"
+								/>
+							</actual-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+								<values>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="A"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="B"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="Summe"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="C"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="SUM(C3:C5)"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="D"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="SUM(D3:D5)"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="E"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="SUM(E3:E5)"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="F"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="G"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="G7"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="H"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="H7"
+										/>
+									</value>
+									<value>
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="I"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="I7"
 										/>
 									</value>
 								</values>
@@ -724,22 +1256,6 @@
 											value=""
 										/>
 									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="K"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
 								</values>
 							</expected-value>
 						</action>
@@ -778,7 +1294,7 @@
 											value="B"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
+											value="Date"
 										/>
 									</value>
 									<value>
@@ -786,7 +1302,7 @@
 											value="C"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
+											value="Integer"
 										/>
 									</value>
 									<value>
@@ -794,7 +1310,7 @@
 											value="D"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
+											value="Float"
 										/>
 									</value>
 									<value>
@@ -802,7 +1318,7 @@
 											value="E"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
+											value="Percent"
 										/>
 									</value>
 									<value>
@@ -832,22 +1348,6 @@
 									<value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="I"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="K"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value=""
@@ -890,24 +1390,24 @@
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="B"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
+											value="2024-07-31T22:00:00.000Z"
 										/>
 									</value>
 									<value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="C"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+											value="120.0"
 										/>
 									</value>
 									<value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="D"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+											value="12.85"
 										/>
 									</value>
 									<value>
@@ -915,7 +1415,7 @@
 											value="E"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Vorjahr"
+											value="D3/C3"
 										/>
 									</value>
 									<value>
@@ -931,7 +1431,7 @@
 											value="G"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
+											value="G3"
 										/>
 									</value>
 									<value>
@@ -939,28 +1439,12 @@
 											value="H"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Aktuelles Jahr"
+											value=""
 										/>
 									</value>
 									<value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="I"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="K"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value=""
@@ -1003,24 +1487,24 @@
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="B"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
+											value="2024-08-01T22:00:00.000Z"
 										/>
 									</value>
 									<value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="C"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Art. Nr."
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+											value="200.0"
 										/>
 									</value>
 									<value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="D"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Name"
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+											value="20.2"
 										/>
 									</value>
 									<value>
@@ -1028,7 +1512,7 @@
 											value="E"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Einkauf"
+											value="D4/C4"
 										/>
 									</value>
 									<value>
@@ -1036,7 +1520,7 @@
 											value="F"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Verkauf"
+											value=""
 										/>
 									</value>
 									<value>
@@ -1044,7 +1528,7 @@
 											value="G"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Differenz"
+											value=""
 										/>
 									</value>
 									<value>
@@ -1052,7 +1536,7 @@
 											value="H"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Einkauf"
+											value="H3"
 										/>
 									</value>
 									<value>
@@ -1060,25 +1544,8 @@
 											value="I"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Verkauf"
+											value=""
 										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Differenz"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="K"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
-											<value><![CDATA[Differenz
-Jahre]]></value>
-										</value>
 									</value>
 								</values>
 							</expected-value>
@@ -1117,8 +1584,8 @@ Jahre]]></value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="B"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DateNaming$Name"
+											value="2024-08-02T22:00:00.000Z"
 										/>
 									</value>
 									<value>
@@ -1126,31 +1593,31 @@ Jahre]]></value>
 											value="C"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="1000.0"
+											value="300.0"
 										/>
 									</value>
 									<value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="D"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="qwertz"
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+											value="69.33"
 										/>
 									</value>
 									<value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="E"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="20.0"
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="D5/C5"
 										/>
 									</value>
 									<value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="F"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="15.0"
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
 										/>
 									</value>
 									<value>
@@ -1158,39 +1625,23 @@ Jahre]]></value>
 											value="G"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E5-F5"
+											value=""
 										/>
 									</value>
 									<value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="H"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="20.0"
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
 										/>
 									</value>
 									<value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="I"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="10.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J"
-										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H5-I5"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="K"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J5-G5"
+											value="I3"
 										/>
 									</value>
 								</values>
@@ -1238,8 +1689,8 @@ Jahre]]></value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="C"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="1001.0"
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
 										/>
 									</value>
 									<value>
@@ -1247,23 +1698,23 @@ Jahre]]></value>
 											value="D"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="asdf"
+											value=""
 										/>
 									</value>
 									<value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="E"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="30.0"
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
 										/>
 									</value>
 									<value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="F"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="30.0"
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
 										/>
 									</value>
 									<value>
@@ -1271,39 +1722,23 @@ Jahre]]></value>
 											value="G"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E6-F6"
+											value=""
 										/>
 									</value>
 									<value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="H"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="40.0"
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
 										/>
 									</value>
 									<value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="I"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="35.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J"
-										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H6-I6"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="K"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J6-G6"
+											value=""
 										/>
 									</value>
 								</values>
@@ -1344,15 +1779,15 @@ Jahre]]></value>
 											value="B"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
+											value="Summe"
 										/>
 									</value>
 									<value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="C"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="1002.0"
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="SUM(C3:C5)"
 										/>
 									</value>
 									<value>
@@ -1360,23 +1795,23 @@ Jahre]]></value>
 											value="D"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="yxcv"
+											value="SUM(D3:D5)"
 										/>
 									</value>
 									<value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="E"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="40.0"
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="SUM(E3:E5)"
 										/>
 									</value>
 									<value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="F"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="25.0"
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value=""
 										/>
 									</value>
 									<value>
@@ -1384,39 +1819,23 @@ Jahre]]></value>
 											value="G"
 										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E7-F7"
+											value="G7"
 										/>
 									</value>
 									<value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="H"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="30.0"
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+											value="H7"
 										/>
 									</value>
 									<value>
 										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 											value="I"
 										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="25.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J"
-										/>
 										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H7-I7"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="K"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J7-G7"
+											value="I7"
 										/>
 									</value>
 								</values>
@@ -1493,771 +1912,658 @@ Jahre]]></value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
 								<values>
 									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="A"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="B"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="C"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="D"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="F"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="G"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="I"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="K"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-								</values>
-							</expected-value>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-							comparision="equals"
-							inverted="false"
-							user-id="root"
-						>
-							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-								column-label="Result"
-							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="Administration > Development > Script Konsole > Ergebnis"
-									/>
-									<path>
-										<named-member name="result"/>
-									</path>
-								</table>
-								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="1"
-								/>
-							</actual-value>
-							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
-								<values>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="A"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="B"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="C"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="D"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="F"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="G"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="I"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="K"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-								</values>
-							</expected-value>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-							comparision="equals"
-							inverted="false"
-							user-id="root"
-						>
-							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-								column-label="Result"
-							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="Administration > Development > Script Konsole > Ergebnis"
-									/>
-									<path>
-										<named-member name="result"/>
-									</path>
-								</table>
-								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="2"
-								/>
-							</actual-value>
-							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
-								<values>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="A"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="B"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="C"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Art. Nr."
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="D"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Name"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Vorjahr"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="F"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="G"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Aktuelles Jahr"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="I"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="K"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
-											<value><![CDATA[Differenz
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+											value="2"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+											<values>
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+													<values>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="A"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="B"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="C"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="D"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="E"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="F"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="G"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="H"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="I"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="J"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="K"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+													</values>
+												</value>
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+													<values>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="A"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="B"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="C"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="D"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="E"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="F"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="G"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="H"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="I"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="J"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="K"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+													</values>
+												</value>
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+													<values>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="A"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="B"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="C"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Art. Nr."
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="D"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Name"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="E"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Vorjahr"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="F"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="G"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="H"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Aktuelles Jahr"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="I"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="J"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="K"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+																<value><![CDATA[Differenz
 Jahre]]></value>
+															</value>
+														</value>
+													</values>
+												</value>
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+													<values>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="A"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="B"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="C"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="D"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="E"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Einkauf"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="F"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Verkauf"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="G"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Differenz"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="H"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Einkauf"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="I"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Verkauf"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="J"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Differenz"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="K"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+													</values>
+												</value>
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+													<values>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="A"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="B"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="C"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="1000.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="D"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="qwertz"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="E"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="20.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="F"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="15.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="G"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="E5-F5"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="H"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="20.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="I"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="10.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="J"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="H5-I5"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="K"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="J5-G5"
+															/>
+														</value>
+													</values>
+												</value>
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+													<values>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="A"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="B"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="C"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="1001.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="D"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="asdf"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="E"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="30.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="F"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="30.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="G"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="E6-F6"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="H"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="40.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="I"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="35.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="J"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="H6-I6"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="K"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="J6-G6"
+															/>
+														</value>
+													</values>
+												</value>
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+													<values>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="A"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="B"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="C"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="1002.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="D"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="yxcv"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="E"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="40.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="F"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="25.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="G"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="E7-F7"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="H"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="30.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="I"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="25.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="J"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="H7-I7"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="K"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="J7-G7"
+															/>
+														</value>
+													</values>
+												</value>
+											</values>
 										</value>
-									</value>
-								</values>
-							</expected-value>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-							comparision="equals"
-							inverted="false"
-							user-id="root"
-						>
-							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-								column-label="Result"
-							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="Administration > Development > Script Konsole > Ergebnis"
-									/>
-									<path>
-										<named-member name="result"/>
-									</path>
-								</table>
-								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="3"
-								/>
-							</actual-value>
-							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
-								<values>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="A"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="B"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="C"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="D"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Einkauf"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="F"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Verkauf"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="G"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Differenz"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Einkauf"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="I"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Verkauf"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Differenz"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="K"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-								</values>
-							</expected-value>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-							comparision="equals"
-							inverted="false"
-							user-id="root"
-						>
-							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-								column-label="Result"
-							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="Administration > Development > Script Konsole > Ergebnis"
-									/>
-									<path>
-										<named-member name="result"/>
-									</path>
-								</table>
-								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="4"
-								/>
-							</actual-value>
-							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
-								<values>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="A"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="B"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="C"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="1000.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="D"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="qwertz"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="20.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="F"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="15.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="G"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E5-F5"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="20.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="I"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="10.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H5-I5"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="K"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J5-G5"
-										/>
-									</value>
-								</values>
-							</expected-value>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-							comparision="equals"
-							inverted="false"
-							user-id="root"
-						>
-							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-								column-label="Result"
-							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="Administration > Development > Script Konsole > Ergebnis"
-									/>
-									<path>
-										<named-member name="result"/>
-									</path>
-								</table>
-								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="5"
-								/>
-							</actual-value>
-							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
-								<values>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="A"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="B"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="C"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="1001.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="D"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="asdf"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="30.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="F"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="30.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="G"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E6-F6"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="40.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="I"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="35.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H6-I6"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="K"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J6-G6"
-										/>
-									</value>
-								</values>
-							</expected-value>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-							comparision="equals"
-							inverted="false"
-							user-id="root"
-						>
-							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-								column-label="Result"
-							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="Administration > Development > Script Konsole > Ergebnis"
-									/>
-									<path>
-										<named-member name="result"/>
-									</path>
-								</table>
-								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="6"
-								/>
-							</actual-value>
-							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
-								<values>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="A"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="B"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="C"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="1002.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="D"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="yxcv"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="40.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="F"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="25.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="G"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E7-F7"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="30.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="I"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="25.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H7-I7"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="K"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J7-G7"
-										/>
 									</value>
 								</values>
 							</expected-value>
@@ -2320,771 +2626,658 @@ Jahre]]></value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
 								<values>
 									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="A"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="B"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="C"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="D"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="F"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="G"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="I"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="K"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-								</values>
-							</expected-value>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-							comparision="equals"
-							inverted="false"
-							user-id="root"
-						>
-							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-								column-label="Result"
-							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="Administration > Development > Script Konsole > Ergebnis"
-									/>
-									<path>
-										<named-member name="result"/>
-									</path>
-								</table>
-								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="1"
-								/>
-							</actual-value>
-							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
-								<values>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="A"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="B"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="C"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="D"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="F"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="G"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="I"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="K"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-								</values>
-							</expected-value>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-							comparision="equals"
-							inverted="false"
-							user-id="root"
-						>
-							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-								column-label="Result"
-							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="Administration > Development > Script Konsole > Ergebnis"
-									/>
-									<path>
-										<named-member name="result"/>
-									</path>
-								</table>
-								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="2"
-								/>
-							</actual-value>
-							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
-								<values>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="A"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="B"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="C"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Art. Nr."
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="D"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Name"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Vorjahr"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="F"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="G"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Aktuelles Jahr"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="I"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="K"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
-											<value><![CDATA[Differenz
+										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+											value="2"
+										/>
+										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+											<values>
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+													<values>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="A"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="B"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="C"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="D"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="E"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="F"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="G"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="H"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="I"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="J"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="K"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+													</values>
+												</value>
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+													<values>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="A"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="B"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="C"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="D"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="E"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="F"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="G"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="H"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="I"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="J"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="K"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+													</values>
+												</value>
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+													<values>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="A"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="B"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="C"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Art. Nr."
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="D"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Name"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="E"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Vorjahr"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="F"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="G"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="H"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Aktuelles Jahr"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="I"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="J"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="K"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+																<value><![CDATA[Differenz
 Jahre]]></value>
+															</value>
+														</value>
+													</values>
+												</value>
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+													<values>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="A"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="B"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="C"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="D"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="E"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Einkauf"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="F"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Verkauf"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="G"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Differenz"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="H"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Einkauf"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="I"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Verkauf"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="J"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="Differenz"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="K"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+													</values>
+												</value>
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+													<values>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="A"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="B"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="C"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="1000.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="D"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="qwertz"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="E"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="20.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="F"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="15.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="G"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="E5-F5"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="H"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="20.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="I"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="10.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="J"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="H5-I5"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="K"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="J5-G5"
+															/>
+														</value>
+													</values>
+												</value>
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+													<values>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="A"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="B"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="C"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="1001.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="D"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="asdf"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="E"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="30.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="F"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="30.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="G"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="E6-F6"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="H"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="40.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="I"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="35.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="J"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="H6-I6"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="K"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="J6-G6"
+															/>
+														</value>
+													</values>
+												</value>
+												<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
+													<values>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="A"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="B"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value=""
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="C"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="1002.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="D"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="yxcv"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="E"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="40.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="F"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="25.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="G"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="E7-F7"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="H"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="30.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="I"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+																value="25.0"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="J"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="H7-I7"
+															/>
+														</value>
+														<value>
+															<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="K"
+															/>
+															<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+																value="J7-G7"
+															/>
+														</value>
+													</values>
+												</value>
+											</values>
 										</value>
-									</value>
-								</values>
-							</expected-value>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-							comparision="equals"
-							inverted="false"
-							user-id="root"
-						>
-							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-								column-label="Result"
-							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="Administration > Development > Script Konsole > Ergebnis"
-									/>
-									<path>
-										<named-member name="result"/>
-									</path>
-								</table>
-								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="3"
-								/>
-							</actual-value>
-							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
-								<values>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="A"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="B"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="C"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="D"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Einkauf"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="F"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Verkauf"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="G"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Differenz"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Einkauf"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="I"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Verkauf"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="Differenz"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="K"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-								</values>
-							</expected-value>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-							comparision="equals"
-							inverted="false"
-							user-id="root"
-						>
-							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-								column-label="Result"
-							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="Administration > Development > Script Konsole > Ergebnis"
-									/>
-									<path>
-										<named-member name="result"/>
-									</path>
-								</table>
-								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="4"
-								/>
-							</actual-value>
-							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
-								<values>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="A"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="B"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="C"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="1000.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="D"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="qwertz"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="20.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="F"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="15.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="G"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E5-F5"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="20.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="I"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="10.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H5-I5"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="K"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J5-G5"
-										/>
-									</value>
-								</values>
-							</expected-value>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-							comparision="equals"
-							inverted="false"
-							user-id="root"
-						>
-							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-								column-label="Result"
-							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="Administration > Development > Script Konsole > Ergebnis"
-									/>
-									<path>
-										<named-member name="result"/>
-									</path>
-								</table>
-								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="5"
-								/>
-							</actual-value>
-							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
-								<values>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="A"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="B"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="C"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="1001.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="D"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="asdf"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="30.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="F"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="30.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="G"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E6-F6"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="40.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="I"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="35.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H6-I6"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="K"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J6-G6"
-										/>
-									</value>
-								</values>
-							</expected-value>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-							comparision="equals"
-							inverted="false"
-							user-id="root"
-						>
-							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-								column-label="Result"
-							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										tab-path="Administration > Development > Script Konsole > Ergebnis"
-									/>
-									<path>
-										<named-member name="result"/>
-									</path>
-								</table>
-								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-									displayed-row-index="6"
-								/>
-							</actual-value>
-							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
-								<values>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="A"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="B"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value=""
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="C"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="1002.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="D"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="yxcv"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="40.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="F"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="25.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="G"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="E7-F7"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="30.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="I"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-											value="25.0"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="H7-I7"
-										/>
-									</value>
-									<value>
-										<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="K"
-										/>
-										<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-											value="J7-G7"
-										/>
 									</value>
 								</values>
 							</expected-value>
@@ -4788,7 +4981,7 @@ Jahre]]></value>
 								/>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-								value="[[A1, B1, C1], [A2, B2, C2], [A3, B3, C3]]"
+								value="[[], [, Date, Integer, Float, Percent], [, 01.08.2024, 120, 12,85, D3/C3, , G3], [, 02.08.2024, 200, 20,2, D4/C4, , , H3], [, 03.08.2024, 300, 69,33, D5/C5, , , , I3], [], [, Summe, SUM(C3:C5), SUM(D3:D5), SUM(E3:E5), , G7, H7, I7]]"
 							/>
 						</action>
 					</actions>
@@ -4850,10 +5043,9 @@ Jahre]]></value>
 									displayed-row-index="0"
 								/>
 							</actual-value>
-							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
-								<value><![CDATA[[[], [], [, , , , Vorjahr, , , Aktuelles Jahr, , ], [, , Art. Nr., Name, Einkauf, Verkauf, Differenz, Einkauf, Verkauf, Differenz, Differenz
-Jahre], [, , 1.000, qwertz, 20, 15, E5-F5, 20, 10, H5-I5, J5-G5], [, , 1.001, asdf, 30, 30, E6-F6, 40, 35, H6-I6, J6-G6], [, , 1.002, yxcv, 40, 25, E7-F7, 30, 25, H7-I7, J7-G7]]]]></value>
-							</expected-value>
+							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="[[], [, Date, Integer, Float, Percent], [, 01.08.2024, 120, 12,85, D3/C3, , G3], [, 02.08.2024, 200, 20,2, D4/C4, , , H3], [, 03.08.2024, 300, 69,33, D5/C5, , , , I3], [], [, Summe, SUM(C3:C5), SUM(D3:D5), SUM(E3:E5), , G7, H7, I7]]"
+							/>
 						</action>
 					</actions>
 				</action>

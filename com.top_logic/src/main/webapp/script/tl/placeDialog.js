@@ -99,8 +99,9 @@ PlaceDialog = {
 		let topSpace = targetPos.top,
 			bottomSpace = (document.documentElement.clientHeight - targetPos.bottom);
 			
+		// ttPadding is given in rem and therefore needs to be converted to px by multiplying with 16 (base rem size for most brwosers)
 		let contentStyle = window.getComputedStyle(tooltip.firstElementChild),
-			ttPadding = parseFloat(contentStyle.getPropertyValue("--ttPadding")),
+			ttPadding = 16 * parseFloat(contentStyle.getPropertyValue("--ttPadding")),
 			lineH = contentStyle.lineHeight;
 
 		let verticalDir, verticalPos;
@@ -150,13 +151,14 @@ PlaceDialog = {
 			
 		let verticalSpace = ttUp ? topSpace : bottomSpace,
 			verticalDir = ttUp ? "top" : "bottom",
-			verticalPos = Math.max(0, (verticalSpace - sumHeight)),
+			verticalPos = Math.max(ttPadding, (verticalSpace - sumHeight)),
 			maxHeight = (verticalSpace - offset);
 			
 		if (maxHeight < ((2 * ttPadding) + lineH)) {
 			tooltip.style.display = "none";
 			return;
 		}
+		maxHeight = maxHeight - ttPadding;
 		tooltip.classList.toggle("ttVerticalArrowBottom", ttUp);
 		tooltip.classList.toggle("ttVerticalArrowTop", !ttUp);
 		tooltip.style.setProperty("max-height", maxHeight + "px");
@@ -165,12 +167,13 @@ PlaceDialog = {
 	},
 	
 	setHorizontalPosition: function(tooltip, ttPos, targetPos, positioning) {
+		// ttPadding is given in rem and therefore needs to be converted to px by multiplying with 16 (base rem size for most brwosers)
 		let windowW = window.innerWidth,
 			ttWidth = ttPos.width,
 			arrowStyle = window.getComputedStyle(tooltip, "::after"),
 			arrowDim = parseFloat(arrowStyle.getPropertyValue("--ttArrow-dim")),
 			offset = (arrowDim / 2) - 3,
-			ttPadding = parseFloat(window.getComputedStyle(tooltip.firstElementChild).getPropertyValue("--ttPadding")),
+			ttPadding = 16 * parseFloat(window.getComputedStyle(tooltip.firstElementChild).getPropertyValue("--ttPadding")),
 			minWidthTt = (2 * ttPadding) + offset;
 
 		let horizontalSpace, horizontalDir, horizontalPos;

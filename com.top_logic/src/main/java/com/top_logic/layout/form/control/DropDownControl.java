@@ -109,6 +109,10 @@ public class DropDownControl extends AbstractSelectControl {
 		_preventClear = preventClear;
 	}
 
+	private String getButtonID() {
+		return getID() + "-Button";
+	}
+
 	private String getButtonContentID() {
 		return getID() + "-ButtonContent";
 	}
@@ -169,14 +173,16 @@ public class DropDownControl extends AbstractSelectControl {
 				renderTags(context, out);
 			}
 			
-			renderDropDownButton(context, out, dropdown);
+			renderDropDownButton(context, out);
 
 			renderDropDownBox(context, out, dropdown);
 		}
 		out.endTag(SPAN);
 	}
 
-	private void renderDropDownButton(DisplayContext context, TagWriter out, FormField dropdown) throws IOException {
+	private void renderDropDownButton(DisplayContext context, TagWriter out) throws IOException {
+		FormField dropdown = getFieldModel();
+
 		out.beginBeginTag(BUTTON);
 		out.writeAttribute(CLASS_ATTR, "ddwttDropBtn");
 		if (dropdown.isDisabled()) {
@@ -184,7 +190,14 @@ public class DropDownControl extends AbstractSelectControl {
 		}
 		out.writeAttribute(TYPE_ATTR, "button");
 		addButtonEvents(out);
-		out.writeAttribute(ID, getInputId());
+		out.writeAttribute(ID, getButtonID());
+		if (!isMultiple()) {
+			List<?> selection = SelectFieldUtils.getSelectionListSorted(dropdown);
+			if (selection.size() > 0) {
+				Object item = selection.get(0);
+				renderTooltip(context, out, dropdown, item);
+			}
+		}
 		out.endBeginTag();
 		{
 			renderButtonContent(context, out);
@@ -221,6 +234,7 @@ public class DropDownControl extends AbstractSelectControl {
 				if (selection.size() > 0) {
 					label = getItemLabel(dropdown, selection.get(0));
 					renderItemIcon(context, out, dropdown, selection.get(0), Flavor.DEFAULT);
+//					renderTooltip(context, out, dropdown, selection.get(0));
 				} else {
 					Object placeholder = dropdown.getPlaceholder();
 					if (Utils.isEmpty(placeholder)) {
@@ -496,7 +510,7 @@ public class DropDownControl extends AbstractSelectControl {
 					}
 				}
 			}
-			addUpdate(new ElementReplacement(getButtonContentID(), this::renderButtonContent));
+			addUpdate(new ElementReplacement(getButtonID(), this::renderDropDownButton));
 		}
 	}
 

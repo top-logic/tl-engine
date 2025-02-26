@@ -11,12 +11,16 @@ import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.col.Sink;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.search.configured.QueryExecutorMethod;
 import com.top_logic.model.search.expr.Access;
 import com.top_logic.model.search.expr.DynamicGet;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.SearchExpressionCall;
+import com.top_logic.model.search.expr.interpreter.DefResolver;
 import com.top_logic.model.search.expr.interpreter.Rewriter;
+import com.top_logic.model.search.expr.visit.Copy;
 import com.top_logic.model.util.Pointer;
 
 /**
@@ -52,6 +56,17 @@ final class TracingAccessRewriter extends Rewriter<Void> {
 			List<SearchExpression> argumentsList = descendParts(expr, arg, expr.getArguments());
 			SearchExpression[] arguments = argumentsList.toArray(new SearchExpression[0]);
 			return new TracingDynamicGet(expr.getName(), null, arguments);
+		} else if (expr instanceof QueryExecutorMethod) {
+			List<SearchExpression> argumentsList = descendParts(expr, arg, expr.getArguments());
+			SearchExpression[] arguments = argumentsList.toArray(new SearchExpression[0]);
+			SearchExpression configuredSearch = ((QueryExecutorMethod) expr).getExecutor().getSearch();
+
+			/* Copy search expression to avoid changing internal search expression of original
+			 * expression. */
+			SearchExpression searchCopy = configuredSearch.visit(Copy.INSTANCE, null);
+			SearchExpression tracedSearch = searchCopy.visit(this, arg);
+			tracedSearch.visit(new DefResolver(), null);
+			return new SearchExpressionCall(expr.getName(), tracedSearch, arguments);
 		} else {
 			return super.visitGenericMethod(expr, arg);
 		}

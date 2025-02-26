@@ -74,7 +74,14 @@ public class QueryExecutorMethod extends GenericMethod {
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		return _executor.get().execute(arguments);
+		return getExecutor().execute(arguments);
+	}
+
+	/**
+	 * The {@link QueryExecutor} to delegate evaluation to.
+	 */
+	public QueryExecutor getExecutor() {
+		return _executor.get();
 	}
 
 	@Override

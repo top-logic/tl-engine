@@ -2250,6 +2250,13 @@ public class Fragments {
 	}
 
 	/**
+	 * Creates an {@link Attribute} with name {@link HTMLConstants#CHARSET_ATTR}.
+	 */
+	public static Attribute charset(String value) {
+		return attribute(HTMLConstants.CHARSET_ATTR, value);
+	}
+
+	/**
 	 * Creates an {@link Attribute} with name {@link HTMLConstants#HREF_ATTR}.
 	 */
 	public static Attribute href(String value) {

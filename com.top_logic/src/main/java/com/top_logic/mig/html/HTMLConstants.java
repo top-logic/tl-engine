@@ -174,6 +174,9 @@ public interface HTMLConstants {
 	/** Constant for the HTML attribute "src". */
     public static final String SRC_ATTR = "src";
 
+	/** Constant for the HTML attribute "charset". */
+	public static final String CHARSET_ATTR = "charset";
+
 	/** Constant for the HTML attribute "href". */
     public static final String HREF_ATTR = "href";
 

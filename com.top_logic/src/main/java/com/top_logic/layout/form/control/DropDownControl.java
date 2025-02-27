@@ -77,6 +77,8 @@ public class DropDownControl extends AbstractSelectControl {
 
 	private Renderer<Object> _selectionRenderer;
 
+	private List<?> _selection;
+
 	/**
 	 * @param model
 	 *        given {@link FormField}
@@ -192,9 +194,9 @@ public class DropDownControl extends AbstractSelectControl {
 		addButtonEvents(out);
 		out.writeAttribute(ID, getButtonID());
 		if (!isMultiple()) {
-			List<?> selection = SelectFieldUtils.getSelectionListSorted(dropdown);
-			if (selection.size() > 0) {
-				Object item = selection.get(0);
+			_selection = SelectFieldUtils.getSelectionList(dropdown);
+			if (_selection.size() > 0) {
+				Object item = _selection.get(0);
 				renderTooltip(context, out, dropdown, item);
 			}
 		}
@@ -227,14 +229,12 @@ public class DropDownControl extends AbstractSelectControl {
 		out.endBeginTag();
 		{
 			String label;
-			List<?> selection = SelectFieldUtils.getSelectionListSorted(dropdown);
 			if (isMultiple()) {
 				label = SelectFieldUtils.getEmptySelectionLabel(dropdown, false);
 			} else {
-				if (selection.size() > 0) {
-					label = getItemLabel(dropdown, selection.get(0));
-					renderItemIcon(context, out, dropdown, selection.get(0), Flavor.DEFAULT);
-//					renderTooltip(context, out, dropdown, selection.get(0));
+				if (_selection.size() > 0) {
+					label = getItemLabel(dropdown, _selection.get(0));
+					renderItemIcon(context, out, dropdown, _selection.get(0), Flavor.DEFAULT);
 				} else {
 					Object placeholder = dropdown.getPlaceholder();
 					if (Utils.isEmpty(placeholder)) {

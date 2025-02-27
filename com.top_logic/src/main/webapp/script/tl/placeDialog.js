@@ -99,9 +99,8 @@ PlaceDialog = {
 		let topSpace = targetPos.top,
 			bottomSpace = (document.documentElement.clientHeight - targetPos.bottom);
 			
-		// ttPadding is given in rem and therefore needs to be converted to px by multiplying with 16 (base rem size for most brwosers)
 		let contentStyle = window.getComputedStyle(tooltip.firstElementChild),
-			ttPadding = 16 * parseFloat(contentStyle.getPropertyValue("--ttPadding")),
+			ttPadding = BAL.convertRemToPixel(parseFloat(contentStyle.getPropertyValue("--ttPadding"))),
 			lineH = contentStyle.lineHeight;
 
 		let verticalDir, verticalPos;
@@ -167,13 +166,12 @@ PlaceDialog = {
 	},
 	
 	setHorizontalPosition: function(tooltip, ttPos, targetPos, positioning) {
-		// ttPadding is given in rem and therefore needs to be converted to px by multiplying with 16 (base rem size for most brwosers)
 		let windowW = window.innerWidth,
 			ttWidth = ttPos.width,
 			arrowStyle = window.getComputedStyle(tooltip, "::after"),
 			arrowDim = parseFloat(arrowStyle.getPropertyValue("--ttArrow-dim")),
 			offset = (arrowDim / 2) - 3,
-			ttPadding = 16 * parseFloat(window.getComputedStyle(tooltip.firstElementChild).getPropertyValue("--ttPadding")),
+			ttPadding = BAL.convertRemToPixel(parseFloat(window.getComputedStyle(tooltip.firstElementChild).getPropertyValue("--ttPadding"))),
 			minWidthTt = (2 * ttPadding) + offset;
 
 		let horizontalSpace, horizontalDir, horizontalPos;

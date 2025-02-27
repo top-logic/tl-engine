@@ -12,22 +12,20 @@ import com.top_logic.basic.col.Sink;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.configured.QueryExecutorMethod;
+import com.top_logic.model.search.configured.TracingScriptMethod;
 import com.top_logic.model.search.expr.Access;
 import com.top_logic.model.search.expr.DynamicGet;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.SearchExpressionFactory;
-import com.top_logic.model.search.expr.interpreter.DefResolver;
 import com.top_logic.model.search.expr.interpreter.Rewriter;
-import com.top_logic.model.search.expr.visit.Copy;
 import com.top_logic.model.util.Pointer;
 
 /**
  * {@link Rewriter} replacing expressions accessing model properties with those that create an
  * access trace in the context variable {@link TracingAccessRewriter#TRACE}.
  */
-final class TracingAccessRewriter extends Rewriter<Void> {
+public final class TracingAccessRewriter extends Rewriter<Void> {
 
 	/**
 	 * Singleton {@link TracingAccessRewriter} instance.
@@ -59,14 +57,8 @@ final class TracingAccessRewriter extends Rewriter<Void> {
 		} else if (expr instanceof QueryExecutorMethod) {
 			List<SearchExpression> argumentsList = descendParts(expr, arg, expr.getArguments());
 			SearchExpression[] arguments = argumentsList.toArray(new SearchExpression[0]);
-			SearchExpression configuredSearch = ((QueryExecutorMethod) expr).getExecutor().getSearch();
 
-			/* Copy search expression to avoid changing internal search expression of original
-			 * expression. */
-			SearchExpression searchCopy = configuredSearch.visit(Copy.INSTANCE, null);
-			SearchExpression tracedSearch = searchCopy.visit(this, arg);
-			tracedSearch.visit(new DefResolver(), null);
-			return SearchExpressionFactory.call(tracedSearch, arguments);
+			return new TracingScriptMethod(expr.getName(), arguments);
 		} else {
 			return super.visitGenericMethod(expr, arg);
 		}

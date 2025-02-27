@@ -8,7 +8,6 @@ package com.top_logic.model.search.configured;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
@@ -23,7 +22,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  */
 public class QueryExecutorMethod extends GenericMethod {
 
-	private final Supplier<QueryExecutor> _executor;
+	private final Function<String, QueryExecutor> _executor;
 
 	private Function<List<TLType>, TLType> _typeComputation = argumentTypes -> null;
 
@@ -38,7 +37,7 @@ public class QueryExecutorMethod extends GenericMethod {
 	 * @param arguments
 	 *        See {@link #getArguments()}.
 	 */
-	QueryExecutorMethod(Supplier<QueryExecutor> executor, String name, SearchExpression[] arguments) {
+	QueryExecutorMethod(Function<String, QueryExecutor> executor, String name, SearchExpression[] arguments) {
 		super(name, arguments);
 		_executor = executor;
 	}
@@ -81,7 +80,7 @@ public class QueryExecutorMethod extends GenericMethod {
 	 * The {@link QueryExecutor} to delegate evaluation to.
 	 */
 	public QueryExecutor getExecutor() {
-		return _executor.get();
+		return _executor.apply(getName());
 	}
 
 	@Override

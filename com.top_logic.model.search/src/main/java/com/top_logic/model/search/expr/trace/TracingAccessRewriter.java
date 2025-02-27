@@ -64,6 +64,10 @@ public final class TracingAccessRewriter extends Rewriter<Void> {
 		}
 	}
 
+	/**
+	 * Marks the combination of {@link TLObject self} and {@link TLStructuredTypePart part} as
+	 * relevant for the trace.
+	 */
 	public static void traceAccess(EvalContext definitions, TLObject self, TLStructuredTypePart part) {
 		@SuppressWarnings("unchecked")
 		Sink<Pointer> trace = (Sink<Pointer>) definitions.getVar(TRACE);

@@ -17,7 +17,7 @@ import com.top_logic.model.search.expr.DynamicGet;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.SearchExpressionCall;
+import com.top_logic.model.search.expr.SearchExpressionFactory;
 import com.top_logic.model.search.expr.interpreter.DefResolver;
 import com.top_logic.model.search.expr.interpreter.Rewriter;
 import com.top_logic.model.search.expr.visit.Copy;
@@ -66,7 +66,7 @@ final class TracingAccessRewriter extends Rewriter<Void> {
 			SearchExpression searchCopy = configuredSearch.visit(Copy.INSTANCE, null);
 			SearchExpression tracedSearch = searchCopy.visit(this, arg);
 			tracedSearch.visit(new DefResolver(), null);
-			return new SearchExpressionCall(expr.getName(), tracedSearch, arguments);
+			return SearchExpressionFactory.call(tracedSearch, arguments);
 		} else {
 			return super.visitGenericMethod(expr, arg);
 		}

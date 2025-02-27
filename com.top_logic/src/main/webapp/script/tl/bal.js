@@ -370,6 +370,14 @@ BAL = {
 			"<iframe src='" + escape(url) + "' width='0' height='0' frameborder='0' scrolling='no'></iframe>";
 	},
 	
+	convertPixelToRem: function(px) {
+		return parseFloat(px) / parseFloat(getComputedStyle(document.documentElement).fontSize);
+	},
+	
+	convertRemToPixel: function(rem) {
+		return parseFloat(rem) * parseFloat(getComputedStyle(document.documentElement).fontSize);
+	},
+	
     getEffectiveWidth: function(element) {
         var paddingLeft   = BAL.getComputedStyleInt(element, "paddingLeft");
         var paddingRight  = BAL.getComputedStyleInt(element, "paddingRight");

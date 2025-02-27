@@ -77,6 +77,8 @@ public class DropDownControl extends AbstractSelectControl {
 
 	private Renderer<Object> _selectionRenderer;
 
+	private List<?> _selection;
+
 	/**
 	 * @param model
 	 *        given {@link FormField}
@@ -107,6 +109,10 @@ public class DropDownControl extends AbstractSelectControl {
 	protected DropDownControl(FormField model, Map<String, ControlCommand> command, boolean preventClear) {
 		super(model, command);
 		_preventClear = preventClear;
+	}
+
+	private String getButtonID() {
+		return getID() + "-Button";
 	}
 
 	private String getButtonContentID() {
@@ -169,14 +175,16 @@ public class DropDownControl extends AbstractSelectControl {
 				renderTags(context, out);
 			}
 			
-			renderDropDownButton(context, out, dropdown);
+			renderDropDownButton(context, out);
 
 			renderDropDownBox(context, out, dropdown);
 		}
 		out.endTag(SPAN);
 	}
 
-	private void renderDropDownButton(DisplayContext context, TagWriter out, FormField dropdown) throws IOException {
+	private void renderDropDownButton(DisplayContext context, TagWriter out) throws IOException {
+		FormField dropdown = getFieldModel();
+
 		out.beginBeginTag(BUTTON);
 		out.writeAttribute(CLASS_ATTR, "ddwttDropBtn");
 		if (dropdown.isDisabled()) {
@@ -184,7 +192,14 @@ public class DropDownControl extends AbstractSelectControl {
 		}
 		out.writeAttribute(TYPE_ATTR, "button");
 		addButtonEvents(out);
-		out.writeAttribute(ID, getInputId());
+		out.writeAttribute(ID, getButtonID());
+		if (!isMultiple()) {
+			_selection = SelectFieldUtils.getSelectionList(dropdown);
+			if (_selection.size() > 0) {
+				Object item = _selection.get(0);
+				renderTooltip(context, out, dropdown, item);
+			}
+		}
 		out.endBeginTag();
 		{
 			renderButtonContent(context, out);
@@ -214,13 +229,12 @@ public class DropDownControl extends AbstractSelectControl {
 		out.endBeginTag();
 		{
 			String label;
-			List<?> selection = SelectFieldUtils.getSelectionListSorted(dropdown);
 			if (isMultiple()) {
 				label = SelectFieldUtils.getEmptySelectionLabel(dropdown, false);
 			} else {
-				if (selection.size() > 0) {
-					label = getItemLabel(dropdown, selection.get(0));
-					renderItemIcon(context, out, dropdown, selection.get(0), Flavor.DEFAULT);
+				if (_selection.size() > 0) {
+					label = getItemLabel(dropdown, _selection.get(0));
+					renderItemIcon(context, out, dropdown, _selection.get(0), Flavor.DEFAULT);
 				} else {
 					Object placeholder = dropdown.getPlaceholder();
 					if (Utils.isEmpty(placeholder)) {
@@ -496,7 +510,7 @@ public class DropDownControl extends AbstractSelectControl {
 					}
 				}
 			}
-			addUpdate(new ElementReplacement(getButtonContentID(), this::renderButtonContent));
+			addUpdate(new ElementReplacement(getButtonID(), this::renderDropDownButton));
 		}
 	}
 

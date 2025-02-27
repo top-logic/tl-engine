@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -30,6 +31,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.model.search.expr.config.MethodResolver;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -68,12 +70,14 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 		 * </p>
 		 */
 		@Name(SCRIPTS)
-		@Key(ConfiguredMethodBuilder.Config.NAME_ATTRIBUTE)
-		Map<String, ConfiguredMethodBuilder.Config<? extends ConfiguredMethodBuilder<?>>> getScripts();
+		@Key(ConfiguredScript.Config.NAME_ATTRIBUTE)
+		Map<String, ConfiguredScript.Config> getScripts();
 
 	}
 
-	private Map<String, ConfiguredMethodBuilder<?>> _builders = Collections.emptyMap();
+	private Map<String, ConfiguredScript> _builders = Collections.emptyMap();
+
+	private Map<String, QueryExecutor> _executors = Collections.emptyMap();
 
 	private Map<String, Factory> _factories = Collections.emptyMap();
 
@@ -89,14 +93,16 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 		super.startUp();
 		_builders = TypedConfigUtil.createInstanceMap(getConfig().getScripts());
 		initFactoriesFromMethodBuilders();
-		for (Entry<String, ConfiguredMethodBuilder<?>> builder : _builders.entrySet()) {
-			resolveExternals(builder);
+		Map<String, QueryExecutor> executors = new HashMap<>();
+		for (Entry<String, ConfiguredScript> builder : _builders.entrySet()) {
+			executors.put(builder.getKey(), createExecutor(builder));
 		}
+		_executors = executors;
 	}
 
-	private void resolveExternals(Entry<String, ConfiguredMethodBuilder<?>> builder) {
+	private QueryExecutor createExecutor(Entry<String, ConfiguredScript> builder) {
 		try {
-			builder.getValue().resolveExternalRelations();
+			return builder.getValue().createExecutor();
 		} catch (RuntimeException ex) {
 			throw new TopLogicException(I18NConstants.ERROR_RESOLVING_SCRIPT__NAME.fill(builder.getKey()), ex);
 		}
@@ -112,6 +118,7 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	protected void shutDown() {
 		_builders.clear();
 		_factories.clear();
+		_executors.clear();
 		super.shutDown();
 	}
 
@@ -132,7 +139,7 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 
 	@Override
 	public Optional<String> getDocumentation(DisplayContext context, String functionName) {
-		ConfiguredMethodBuilder<?> script = _builders.get(functionName);
+		ConfiguredScript script = _builders.get(functionName);
 		if (script == null) {
 			return Optional.empty();
 		}
@@ -147,6 +154,20 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 			throw new IOError(ex);
 		}
 		return Optional.of(sw.toString());
+	}
+
+	/**
+	 * Determines the {@link QueryExecutor} for the configured function.
+	 *
+	 * @throws TopLogicException
+	 *         iff there is no executor for the given name.
+	 */
+	public QueryExecutor getExecutor(String function) {
+		QueryExecutor queryExecutor = _executors.get(function);
+		if (queryExecutor == null) {
+			throw new TopLogicException(I18NConstants.ERROR_NO_SUCH_SCRIPT__NAME.fill(function));
+		}
+		return queryExecutor;
 	}
 
 	/**

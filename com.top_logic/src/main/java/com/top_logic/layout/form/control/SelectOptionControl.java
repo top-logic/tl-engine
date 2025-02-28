@@ -136,9 +136,10 @@ public class SelectOptionControl extends AbstractSelectControl {
 			// and the new value is not displayed in the client.
 			out.beginAttribute(ONCLICK_ATTR);
 			out.append(FormConstants.SELECT_OPTION_CONTROL_CLASS);
-			out.append(".handleOnChange(this");
+			out.append(".handleOnChange(this, ");
+			writeIdJsString(out);
 			if (showWait(this)) {
-				out.append(",true");
+				out.append(", true");
 			}
 			out.append("); return true;");
 			out.endAttribute();

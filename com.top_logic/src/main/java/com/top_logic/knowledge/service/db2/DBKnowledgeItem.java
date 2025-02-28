@@ -723,7 +723,11 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 	 */
 	static long getLastUpdate(AbstractDBKnowledgeItem item) {
 		MOAttribute attribute = item.revMinAttribute();
-		return longValue(attribute.getStorage().getApplicationValue(attribute, item, item, item.getLocalValues()));
+		Object revMin = attribute.getStorage().getApplicationValue(attribute, item, item, item.getLocalValues());
+		if (revMin == null) {
+			return Revision.CURRENT_REV;
+		}
+		return longValue(revMin);
 	}
     
     /*package protected*/ final void setLastUpdateLocal(Long revMin) {

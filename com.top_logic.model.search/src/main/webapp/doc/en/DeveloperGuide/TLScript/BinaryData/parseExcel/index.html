@@ -1,4 +1,4 @@
-<p></p>
+<p> </p>
 
 <h2>Syntax</h2>
 
@@ -52,7 +52,7 @@
 			<td>
 			<p>Map with sheet name as key and positions of the headers in the sheet as value. Individual positions or areas (e.g. "B2:F2") or a list of positions and/or areas are permitted as a valid value.</p>
 
-			<p>If you do not specify a sheet name, the specified value (e.g. list of ranges) is used as the header for all sheets.</p>
+			<p>If no sheet name is specified, the specified value (e.g. list of ranges) is used as the header for all sheets.</p>
 			</td>
 			<td>No</td>
 			<td>null</td>
@@ -89,7 +89,7 @@
 <ol>
 	<li>One list (for <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">raw:true</code></strong>) or a map (with <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">raw:false</code></strong>) with column values is generated</li>
 	<li>These row objects are summarized per sheet in a list</li>
-	<li>A map entry with sheet name/sheet number as key and the list as value is created for each sheet</li>
+	<li>A map entry with sheet name/sheet number as the key and the list as the value is created for each sheet</li>
 	<li>If only one sheet is parsed, then only the corresponding list is returned (no map with an entry)</li>
 </ol>
 
@@ -104,7 +104,7 @@
 	<li>If <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">importAllSheets:false</code></strong>, <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">importSheets</code> is </strong> <strong>empty </strong>and <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">importActiveSheet:false</code> </strong>the first sheet is imported.</li>
 </ol>
 
-<p>The default case (without parameters) corresponds to case 4: The first sheet is imported.</p>
+<p>The standard case (without parameters) corresponds to case 4: The first sheet is imported.</p>
 
 <h3>Header specification:</h3>
 
@@ -121,13 +121,30 @@
 <pre>
 <code class="language-java">headers: {"all": ["B2:F2"]}</code></pre>
 
+<div>
+<p>You can also specify the headers as a list. In this case, the header definitions are applied to all sheets:</p>
+
+<pre>
+<code class="language-java">headers: ["B2:F2"]</code></pre>
+</div>
+
+<div>The advantage of using the "all" key is that you can define separate headers for the individual sheets:</div>
+
+<div>
+<pre>
+<code class="language-java">headers: {
+  "all": ["A1", "B1:C1"], // for all the other Sheets
+  0: ["A2", "B2"] // for Sheet with index 0
+}</code></pre>
+</div>
+
 <div>You can also specify different header definitions for different sheets:</div>
 
 <div>
 <pre>
 <code class="language-java">headers: {
   "Sheet1": ["A1", "B1:C1"],
-  0: ["A2", "B2"] // für das Sheet mit Index 0
+  0: ["A2", "B2"] // for Sheet with Index 0
 }</code></pre>
 </div>
 
@@ -318,7 +335,7 @@
 
 <p>Here, when <code class="hljs inlineCode">parseExcel()</code> is called, it is specified that the first sheet and the sheet with the name 0 are to be imported.</p>
 
-<p></p>
+<p> </p>
 
 <h3>Example 4: Import with complex header definitions</h3>
 
@@ -400,7 +417,7 @@
 
 <p>Here, when <code class="hljs inlineCode">parseExcel()</code> is called, it is specified that the sheet with the name "Comparison" is to be imported and that the headers in this sheet are to be found in positions C3, D3, E3 (as main header) with subheader E4 and F4, G3 (as main header) with subheaders G4 and H4. Now all rows from the fifth row and only columns C to H are imported and mapped accordingly.</p>
 
-<p></p>
+<p> </p>
 
 <h3>Example 5: Import with header area</h3>
 
@@ -457,7 +474,7 @@
 
 <p>Here, when calling <code class="hljs inlineCode">parseExcel()</code>, it is specified that the sheet with the name "Test" is to be imported and that the headers in this sheet are to be found in positions B2 to F2. Now all rows from the third row and only columns B to F are imported and mapped accordingly.</p>
 
-<p></p>
+<p> </p>
 
 <h3>Example 6: Import with raw data</h3>
 

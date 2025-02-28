@@ -121,6 +121,23 @@
 <pre>
 <code class="language-java">headers: {"all": ["B2:F2"]}</code></pre>
 
+<div>
+<p>Man kann die Header auch als eine Liste angeben. In diesem Fall wird die Header-Definitionen auf alle Sheets angewendet:</p>
+
+<pre>
+<code class="language-java">headers: ["B2:F2"]</code></pre>
+</div>
+
+<div>Der Vorteil bei der Verwendung des Schlüssels "all" besteht darin, dass man für die einzelne Sheets separat eigene Header definieren kann:</div>
+
+<div>
+<pre>
+<code class="language-java">headers: {
+  "all": ["A1", "B1:C1"], // für allen anderen Sheets
+  0: ["A2", "B2"] // für das Sheet mit Index 0
+}</code></pre>
+​</div>
+
 <div>Sie können auch verschiedene Header-Definitionen für verschiedene Sheets angeben:</div>
 
 <div>

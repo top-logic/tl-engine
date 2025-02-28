@@ -434,8 +434,8 @@ services.form = {
 	 * <<class>>
 	 */
 	SelectOptionControl : {
-		handleOnChange : function(inputElement, showWait) {
-			services.form.sendValueUpdate(inputElement, inputElement.parentNode.id,
+		handleOnChange : function(inputElement, ctrlID, showWait) {
+			services.form.sendValueUpdate(inputElement, ctrlID,
                     inputElement.checked, showWait);
 
 			return false;
@@ -446,8 +446,8 @@ services.form = {
 	 * <<class>>
 	 */
 	SelectionPartControl : {
-		handleOnChange : function(inputElement, showWait) {
-			services.form.sendValueUpdate(inputElement, inputElement.parentNode.id,
+		handleOnChange : function(inputElement, ctrlID, showWait) {
+			services.form.sendValueUpdate(inputElement, ctrlID,
 				inputElement.checked, showWait);
 			
 			return false;

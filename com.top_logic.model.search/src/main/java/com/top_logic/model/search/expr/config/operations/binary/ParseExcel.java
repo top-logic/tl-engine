@@ -166,9 +166,6 @@ public class ParseExcel extends GenericMethod {
 	private Object determineReturn(Map<Object, ?> result) {
 		if (result.size() == 1) {
 			Object key = result.keySet().toArray()[0];
-			if (IMPORT_SELECTED_SHEETS.contains(key)) {
-				return result;
-			}
 			return result.get(key);
 		}
 		return result;
@@ -219,13 +216,15 @@ public class ParseExcel extends GenericMethod {
 						}
 						setStartRow(headersPositions.get(0), parsedEnd, headersPositions);
 						for (int j = parsedStart[0]; j <= parsedEnd[0]; ++j) {
-							String header = (String) value.get(parsedStart[1]).get(j);
-							if (multiHeader.length != 1) {
-								int[] parsedCell = parseCellID(multiHeader[0]);
-								header = (String) value.get(parsedCell[1]).get(parsedCell[0]) + OVERHEADER + header;
+							if (j < value.get(parsedStart[1]).size()) {
+								String header = (String) value.get(parsedStart[1]).get(j);
+								if (multiHeader.length != 1) {
+									int[] parsedCell = parseCellID(multiHeader[0]);
+									header = (String) value.get(parsedCell[1]).get(parsedCell[0]) + OVERHEADER + header;
+								}
+								headers.add(header);
+								headersPositions.add(j);
 							}
-							headers.add(header);
-							headersPositions.add(j);
 						}
 					}
 				} else {

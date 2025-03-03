@@ -1,4 +1,4 @@
-<p> </p>
+<p></p>
 
 <h2>Syntax</h2>
 
@@ -133,8 +133,8 @@
 <div>
 <pre>
 <code class="language-java">headers: {
-  "all": ["A1", "B1:C1"], // for all the other Sheets
-  0: ["A2", "B2"] // for Sheet with index 0
+  "all": ["A1", "B1:C1"], // für allen anderen Sheets
+  0: ["A2", "B2"] // für das Sheet mit Index 0
 }</code></pre>
 </div>
 
@@ -144,7 +144,7 @@
 <pre>
 <code class="language-java">headers: {
   "Sheet1": ["A1", "B1:C1"],
-  0: ["A2", "B2"] // for Sheet with Index 0
+  0: ["A2", "B2"] // für das Sheet mit Index 0
 }</code></pre>
 </div>
 
@@ -168,53 +168,6 @@
 </pre>
 
 <p><strong>Output:</strong></p>
-
-<pre>
-<code class="language-json">[
-  {
-    "A": "",
-    "B": "Verbundene Zellen",
-    "C": "",
-    "D": ""
-  },
-  {
-    "A": "A2",
-    "B": "B2",
-    "C": "C2",
-    "D": "D2"
-  },
-  {
-    "A": "A3",
-    "B": "B3",
-    "C": "C3",
-    "D": "D3"
-  },
-  {
-    "A": "A4",
-    "B": "B4",
-    "C": "C4",
-    "D": "D4"
-  }
-]</code></pre>
-
-<p> </p>
-
-<p>When <code class="hljs inlineCode">$importedData.parseExcel()</code> is called, the first sheet of the Excel file is imported. A list of headers is generated first. The width of the columns corresponds to the longest column name. The entries from the columns are then mapped accordingly, with missing entries being filled with empty strings. For connected cells (here B1 - C1), the value for the smallest column name is entered. Since</p>
-
-<p> </p>
-
-<p> </p>
-
-<h3>Example 2: Importing a specific sheet by index</h3>
-
-<pre>
-<code>{
-    ...
-    $importedData.parseExcel(importSheets: 0);
-}</code>
-</pre>
-
-<p><strong>Output: </strong></p>
 
 <pre>
 <code class="language-json">{
@@ -322,6 +275,51 @@
 
 <p> </p>
 
+<p>When <code class="hljs inlineCode">$importedData.parseExcel()</code> is called, the first sheet of the Excel file is imported. A list of headers is generated first. The width of the columns corresponds to the longest column name. The entries from the columns are then mapped accordingly, with missing entries being filled with empty strings. For connected cells (here B1 - C1), the value for the smallest column name is entered. Since</p>
+
+<p> </p>
+
+<h3>Example 2: Importing a specific sheet by index</h3>
+
+<pre>
+<code>{
+    ...
+    $importedData.parseExcel(importSheets: 1);
+}</code>
+</pre>
+
+<p><strong>Output: </strong></p>
+
+<pre>
+<code class="language-json">[
+  {
+    "A": "",
+    "B": "Verbundene Zellen",
+    "C": "",
+    "D": ""
+  },
+  {
+    "A": "A2",
+    "B": "B2",
+    "C": "C2",
+    "D": "D2"
+  },
+  {
+    "A": "A3",
+    "B": "B3",
+    "C": "C3",
+    "D": "D3"
+  },
+  {
+    "A": "A4",
+    "B": "B4",
+    "C": "C4",
+    "D": "D4"
+  }
+]</code></pre>
+
+<p></p>
+
 <h3>Example 3: Importing several sheets</h3>
 
 <pre>
@@ -333,9 +331,9 @@
 
 <p><strong>Output:</strong> <span style="color:#16a085">{0=</span>[...], <span style="color:#16a085">"0"</span>=[...]}</p>
 
-<p>Here, when <code class="hljs inlineCode">parseExcel()</code> is called, it is specified that the first sheet and the sheet with the name 0 are to be imported.</p>
+<p>When <code class="hljs inlineCode">parseExcel()</code> is called up, it is specified here that the first sheet and the sheet with the name 0 are to be imported.</p>
 
-<p> </p>
+<p></p>
 
 <h3>Example 4: Import with complex header definitions</h3>
 
@@ -417,7 +415,7 @@
 
 <p>Here, when <code class="hljs inlineCode">parseExcel()</code> is called, it is specified that the sheet with the name "Comparison" is to be imported and that the headers in this sheet are to be found in positions C3, D3, E3 (as main header) with subheader E4 and F4, G3 (as main header) with subheaders G4 and H4. Now all rows from the fifth row and only columns C to H are imported and mapped accordingly.</p>
 
-<p> </p>
+<p></p>
 
 <h3>Example 5: Import with header area</h3>
 
@@ -474,7 +472,7 @@
 
 <p>Here, when calling <code class="hljs inlineCode">parseExcel()</code>, it is specified that the sheet with the name "Test" is to be imported and that the headers in this sheet are to be found in positions B2 to F2. Now all rows from the third row and only columns B to F are imported and mapped accordingly.</p>
 
-<p> </p>
+<p></p>
 
 <h3>Example 6: Import with raw data</h3>
 

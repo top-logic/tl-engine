@@ -170,53 +170,6 @@
 <p><strong>Ausgabe:</strong></p>
 
 <pre>
-<code class="language-json">[
-  {
-    "A": "",
-    "B": "Verbundene Zellen",
-    "C": "",
-    "D": ""
-  },
-  {
-    "A": "A2",
-    "B": "B2",
-    "C": "C2",
-    "D": "D2"
-  },
-  {
-    "A": "A3",
-    "B": "B3",
-    "C": "C3",
-    "D": "D3"
-  },
-  {
-    "A": "A4",
-    "B": "B4",
-    "C": "C4",
-    "D": "D4"
-  }
-]</code></pre>
-
-<p> </p>
-
-<p>Beim Aufruf von <code class="hljs inlineCode">$importedData.parseExcel()</code> wird das erste Sheet der Excel-Datei importiert. Hierbei wird zuerst eine Liste von Headern erzeugt. Die Breite der Spalten entsprechen dem längsten Spaltennamen. Anschließend werden die Einträge aus den Spalten entsprechend gemappt, wobei fehlenden Einträge mit leeren Strings aufgefüllt werden. Bei verbundenen Zellen (hier B1 - C1) wird der Wert für den kleinsten Spaltennamen eingetragen. Da</p>
-
-<p> </p>
-
-<p> </p>
-
-<h3>Beispiel 2: Import eines spezifischen Sheets nach Index</h3>
-
-<pre>
-<code>{
-    ...
-    $importedData.parseExcel(importSheets: 0);
-}</code>
-</pre>
-
-<p><strong>Ausgabe: </strong></p>
-
-<pre>
 <code class="language-json">{
   "0": [
     {
@@ -321,6 +274,51 @@
 }</code></pre>
 
 <p> </p>
+
+<p>Beim Aufruf von <code class="hljs inlineCode">$importedData.parseExcel()</code> wird das erste Sheet der Excel-Datei importiert. Hierbei wird zuerst eine Liste von Headern erzeugt. Die Breite der Spalten entsprechen dem längsten Spaltennamen. Anschließend werden die Einträge aus den Spalten entsprechend gemappt, wobei fehlenden Einträge mit leeren Strings aufgefüllt werden. Bei verbundenen Zellen (hier B1 - C1) wird der Wert für den kleinsten Spaltennamen eingetragen. Da</p>
+
+<p> </p>
+
+<h3>Beispiel 2: Import eines spezifischen Sheets nach Index</h3>
+
+<pre>
+<code>{
+    ...
+    $importedData.parseExcel(importSheets: 1);
+}</code>
+</pre>
+
+<p><strong>Ausgabe: </strong></p>
+
+<pre>
+<code class="language-json">[
+  {
+    "A": "",
+    "B": "Verbundene Zellen",
+    "C": "",
+    "D": ""
+  },
+  {
+    "A": "A2",
+    "B": "B2",
+    "C": "C2",
+    "D": "D2"
+  },
+  {
+    "A": "A3",
+    "B": "B3",
+    "C": "C3",
+    "D": "D3"
+  },
+  {
+    "A": "A4",
+    "B": "B4",
+    "C": "C4",
+    "D": "D4"
+  }
+]</code></pre>
+
+<p>​</p>
 
 <h3>Beispiel 3: Import mehrerer Sheets</h3>
 

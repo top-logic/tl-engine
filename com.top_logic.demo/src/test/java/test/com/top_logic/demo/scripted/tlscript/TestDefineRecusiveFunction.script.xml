@@ -198,7 +198,7 @@
 							<named-member name="content"/>
 							<object>
 								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="2"
+									value="3"
 								/>
 							</object>
 							<labeled-member label="Konfiguriertes Skript"/>
@@ -388,7 +388,7 @@
 							<named-member name="content"/>
 							<object>
 								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-									value="2"
+									value="3"
 								/>
 							</object>
 							<labeled-member label="Entfernen"/>

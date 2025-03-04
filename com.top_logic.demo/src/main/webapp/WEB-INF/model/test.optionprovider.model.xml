@@ -171,15 +171,15 @@
 					type="tl.core:Integer"
 				>
 					<annotations>
-						<options>
-							<options-by-expression
-								alphabetic-order="false"
-								function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"
-							/>
-						</options>
 						<format>
 							<decimal pattern="'#'#"/>
 						</format>
+						<options>
+							<options-by-expression
+								alphabetic-order="false"
+								function="x -> $x.withOptionsBaseOptions()"
+							/>
+						</options>
 					</annotations>
 				</property>
 				<property name="min"
@@ -197,7 +197,7 @@
 						<options>
 							<options-by-expression
 								alphabetic-order="false"
-								function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1).map(n -> $n / 10)"
+								function="x -> $x.withOptionsBaseOptions().map(n -> $n / 10)"
 							/>
 						</options>
 					</annotations>
@@ -208,7 +208,7 @@
 					<annotations>
 						<options>
 							<options-by-expression alphabetic-order="false">
-								<function>x -&gt; count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1).map(n -&gt; "Option " + $n)</function>
+								<function>x -&gt; $x.withOptionsBaseOptions().map(n -&gt; "Option " + $n)</function>
 							</options-by-expression>
 						</options>
 					</annotations>
@@ -221,7 +221,7 @@
 						<options>
 							<options-by-expression
 								alphabetic-order="false"
-								function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"
+								function="x -> $x.withOptionsBaseOptions()"
 							/>
 						</options>
 					</annotations>
@@ -265,7 +265,7 @@
 						<options>
 							<options-by-expression
 								alphabetic-order="false"
-								function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1).map(n -> $n / 10)"
+								function="x -> $x.withOptionsBaseOptions().map(n -> $n / 10)"
 							/>
 						</options>
 					</annotations>
@@ -292,7 +292,7 @@
 					<annotations>
 						<classification-display value="pop-up"/>
 						<options>
-							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"/>
+							<options-by-expression function="x -> $x.withOptionsBaseOptions()"/>
 						</options>
 					</annotations>
 				</property>
@@ -302,7 +302,7 @@
 					<annotations>
 						<classification-display value="radio"/>
 						<options>
-							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"/>
+							<options-by-expression function="x -> $x.withOptionsBaseOptions()"/>
 						</options>
 					</annotations>
 				</property>
@@ -312,7 +312,7 @@
 					<annotations>
 						<classification-display value="radio-inline"/>
 						<options>
-							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"/>
+							<options-by-expression function="x -> $x.withOptionsBaseOptions()"/>
 						</options>
 					</annotations>
 				</property>
@@ -322,7 +322,7 @@
 					<annotations>
 						<classification-display value="checklist"/>
 						<options>
-							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"/>
+							<options-by-expression function="x -> $x.withOptionsBaseOptions()"/>
 						</options>
 					</annotations>
 				</property>
@@ -333,7 +333,7 @@
 					<annotations>
 						<classification-display value="pop-up"/>
 						<options>
-							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"/>
+							<options-by-expression function="x -> $x.withOptionsBaseOptions()"/>
 						</options>
 					</annotations>
 				</property>
@@ -344,7 +344,7 @@
 					<annotations>
 						<classification-display value="radio"/>
 						<options>
-							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"/>
+							<options-by-expression function="x -> $x.withOptionsBaseOptions()"/>
 						</options>
 					</annotations>
 				</property>
@@ -355,7 +355,7 @@
 					<annotations>
 						<classification-display value="radio-inline"/>
 						<options>
-							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"/>
+							<options-by-expression function="x -> $x.withOptionsBaseOptions()"/>
 						</options>
 					</annotations>
 				</property>
@@ -366,7 +366,7 @@
 					<annotations>
 						<classification-display value="checklist"/>
 						<options>
-							<options-by-expression function="x -> count($x.get(`test.optionprovider:WithOptions#min`), $x.get(`test.optionprovider:WithOptions#max`) + 1)"/>
+							<options-by-expression function="x -> $x.withOptionsBaseOptions()"/>
 						</options>
 					</annotations>
 				</property>

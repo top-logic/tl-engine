@@ -2010,6 +2010,16 @@ TABLE = {
 		const ctrlID = tableContainer.id;
 		const colgroup = table.querySelector("colgroup");
 		
+		let selectColIdx = -1;
+		const multiLineSelect = table.querySelector(".tl-table__cell-checkbox"),
+			singleLineSelect = table.querySelector(".tl-radio-checkbox-container");
+		if (multiLineSelect) {
+			selectColIdx = multiLineSelect.closest("th").cellIndex;
+		}
+		if (singleLineSelect) {
+			selectColIdx = singleLineSelect.closest("td").cellIndex;
+		}
+		
 		let firstIdx, lastIdx;
 		if (fullTable == true) {
 			firstIdx = 0;
@@ -2022,6 +2032,9 @@ TABLE = {
 		let relevantColumns = [];
 		
 		for (let i = firstIdx; i <= lastIdx; i++) {
+			if (i == selectColIdx) {
+				continue;
+			}
 			let cells = this.getTableColumnCells(tbody, i, numColumns),
 				columnWidth = 0;
 			

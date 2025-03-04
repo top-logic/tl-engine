@@ -20,7 +20,9 @@ import jakarta.activation.MimeType;
 import jakarta.activation.MimeTypeParseException;
 
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellValue;
 import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -93,6 +95,8 @@ public class ParseExcel extends GenericMethod {
 	private String FROM_TO = ":";
 
 	private String FOR_ALL = "all";
+
+	private FormulaEvaluator _evaluator = null;
 
 	/**
 	 * Creates a {@link ParseExcel}.
@@ -185,6 +189,25 @@ public class ParseExcel extends GenericMethod {
 			} else {
 				headersPositionsList = headersPositionsForALL;
 			}
+			Object lastListEntry = headersPositionsList.get(headersPositionsList.size() - 1);
+			ArrayList<String> defaultHeaders = new ArrayList<>();
+			if (lastListEntry instanceof String) {
+				String trimmed = ((String) lastListEntry).replace(" ", "");
+				String[] splitedEntry;
+				String[] multiHeaderEntry = trimmed.split(OVERHEADER);
+				if (multiHeaderEntry.length == 1) {
+					splitedEntry = trimmed.split(FROM_TO);
+				} else {
+					splitedEntry = multiHeaderEntry[1].split(FROM_TO);
+				}
+				int columnNumber = -1;
+				if (splitedEntry.length == 1) {
+					columnNumber = parseCellID(splitedEntry[0])[0];
+				} else {
+					columnNumber = parseCellID(splitedEntry[1])[0];
+				}
+				generateDefaultHeaders(defaultHeaders, columnNumber + 1);
+			}
 			for (int i = 0; i < headersPositionsList.size(); ++i) {
 				Object headObject = headersPositionsList.get(i);
 
@@ -204,8 +227,18 @@ public class ParseExcel extends GenericMethod {
 						} else {
 							setStartRow(headersPositions.get(0), parsedCell, headersPositions);
 						}
-						headers.add((String) value.get(parsedCell[1]).get(parsedCell[0]));
-						headersPositions.add(parsedCell[0]);
+						List<Object> headerList = value.get(parsedCell[1]);
+						int index = parsedCell[0];
+						String header = "";
+						if (index < headerList.size()) {
+							header = (String) headerList.get(index);
+						}
+						if (header != null && !header.isEmpty()) {
+							headers.add(header);
+						} else {
+							headers.add(defaultHeaders.get(index));
+						}
+						headersPositions.add(index);
 					} else {
 						int[] parsedStart = parseCellID(splited[0]);
 						int[] parsedEnd = parseCellID(splited[1]);
@@ -216,15 +249,20 @@ public class ParseExcel extends GenericMethod {
 						}
 						setStartRow(headersPositions.get(0), parsedEnd, headersPositions);
 						for (int j = parsedStart[0]; j <= parsedEnd[0]; ++j) {
+							String header = "";
 							if (j < value.get(parsedStart[1]).size()) {
-								String header = (String) value.get(parsedStart[1]).get(j);
+								header = (String) value.get(parsedStart[1]).get(j);
 								if (multiHeader.length != 1) {
 									int[] parsedCell = parseCellID(multiHeader[0]);
 									header = (String) value.get(parsedCell[1]).get(parsedCell[0]) + OVERHEADER + header;
 								}
-								headers.add(header);
-								headersPositions.add(j);
 							}
+							if (header != null && !header.isEmpty()) {
+								headers.add(header);
+							} else {
+								headers.add(defaultHeaders.get(j));
+							}
+							headersPositions.add(j);
 						}
 					}
 				} else {
@@ -313,7 +351,11 @@ public class ParseExcel extends GenericMethod {
 	}
 
 	private void generateDefaultHeaders(ArrayList<String> headers, List<List<Object>> value) {
-		int neededHeadersCount = getMaxSize(value);
+		generateDefaultHeaders(headers, getMaxSize(value));
+	}
+
+	private void generateDefaultHeaders(ArrayList<String> headers, int headerSize) {
+		int neededHeadersCount = headerSize;
 		String nextHeader = DEFAULT_HEADER;
 		for (int i = 0; i < neededHeadersCount; ++i) {
 			headers.add(nextHeader);
@@ -371,7 +413,7 @@ public class ParseExcel extends GenericMethod {
 
 			InputStream in = data.toData().getStream();
 			Workbook workbook = WorkbookFactory.create(in);
-
+			_evaluator = workbook.getCreationHelper().createFormulaEvaluator();
 
 			Map<Object, List<List<Object>>> importedSheets = new HashMap<>();
 			if (IMPORT_ALL_SHEETS == true) {
@@ -454,7 +496,17 @@ public class ParseExcel extends GenericMethod {
 				case BOOLEAN:
 					return cell.getBooleanCellValue();
 				case FORMULA:
-					return cell.getCellFormula();
+					CellValue result = _evaluator.evaluate(cell);
+					switch (result.getCellType()) {
+						case STRING:
+							return result.getStringValue();
+						case NUMERIC:
+							return result.getNumberValue();
+						case BOOLEAN:
+							return result.getBooleanValue();
+						default:
+							return cell.getCellFormula();
+					}
 				default:
 					return "";
 			}

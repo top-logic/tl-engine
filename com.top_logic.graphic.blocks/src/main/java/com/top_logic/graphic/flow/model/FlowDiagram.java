@@ -36,6 +36,8 @@ public class FlowDiagram implements Drawable {
 	@Override
 	public void draw(SvgWriter out) {
 		out.beginSvg();
+		out.dimensions(Double.toString(_root.getWidth()), Double.toString(_root.getHeight()), 0, 0, _root.getWidth(),
+			_root.getHeight());
 		_root.draw(out);
 		out.endSvg();
 	}

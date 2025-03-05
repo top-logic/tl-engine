@@ -5,6 +5,8 @@
  */
 package com.top_logic.graphic.blocks.svg;
 
+import java.awt.Color;
+
 /**
  * Adapter to an {@link SvgWriter}.
  *
@@ -163,6 +165,46 @@ public class SvgWriterAdapter implements SvgWriter {
 	@Override
 	public void text(double x, double y, String text) {
 		_impl.text(x, y, text);
+	}
+
+	@Override
+	public void setFillOpacity(double value) {
+		_impl.setFillOpacity(value);
+	}
+
+	@Override
+	public void setStrokeOpacity(double value) {
+		_impl.setStrokeOpacity(value);
+	}
+
+	@Override
+	public void setStrokeWidth(double value) {
+		_impl.setStrokeWidth(value);
+	}
+
+	@Override
+	public void setFill(Color color) {
+		_impl.setFill(color);
+	}
+
+	@Override
+	public void setFill(String style) {
+		_impl.setFill(style);
+	}
+
+	@Override
+	public void setStroke(Color color) {
+		_impl.setStroke(color);
+	}
+
+	@Override
+	public void setStroke(String style) {
+		_impl.setStroke(style);
+	}
+
+	@Override
+	public void setStrokeDasharray(double... dashes) {
+		_impl.setStrokeDasharray(dashes);
 	}
 
 }

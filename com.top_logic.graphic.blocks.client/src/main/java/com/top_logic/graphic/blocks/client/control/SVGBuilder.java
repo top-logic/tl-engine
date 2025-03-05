@@ -5,6 +5,8 @@
  */
 package com.top_logic.graphic.blocks.client.control;
 
+import java.awt.Color;
+
 import org.vectomatic.dom.svg.OMSVGDocument;
 import org.vectomatic.dom.svg.OMSVGElement;
 import org.vectomatic.dom.svg.OMSVGGElement;
@@ -16,6 +18,7 @@ import org.vectomatic.dom.svg.OMSVGTransformList;
 import org.vectomatic.dom.svg.itf.ISVGTransformable;
 
 import com.top_logic.graphic.blocks.svg.SvgWriter;
+import com.top_logic.graphic.svg.SvgUtil;
 
 /**
  * {@link SvgWriter} directly creating a SVG DOM tree.
@@ -99,6 +102,46 @@ public class SVGBuilder implements SvgWriter {
 	@Override
 	public void beginPath() {
 		appendChild(_doc.createSVGPathElement());
+	}
+
+	@Override
+	public void setFillOpacity(double value) {
+		_current.setAttribute("fill-opacity", Double.toString(value));
+	}
+
+	@Override
+	public void setStrokeOpacity(double value) {
+		_current.setAttribute("stroke-opacity", Double.toString(value));
+	}
+
+	@Override
+	public void setStrokeWidth(double value) {
+		_current.setAttribute("stroke-width", Double.toString(value));
+	}
+
+	@Override
+	public void setFill(Color color) {
+		setFill(SvgUtil.html(color));
+	}
+
+	@Override
+	public void setFill(String style) {
+		_current.setAttribute("fill", style);
+	}
+
+	@Override
+	public void setStroke(Color color) {
+		setStroke(SvgUtil.html(color));
+	}
+
+	@Override
+	public void setStroke(String style) {
+		_current.setAttribute("stroke", style);
+	}
+
+	@Override
+	public void setStrokeDasharray(double... dashes) {
+		_current.setAttribute("stroke-dasharray", SvgUtil.valueList(dashes));
 	}
 
 	@Override

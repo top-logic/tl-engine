@@ -142,7 +142,11 @@ public class TransientTLObjectImpl extends TransientObject {
 
 	@Override
 	public Set<? extends TLObject> tReferers(TLReference ref) {
-		return Collections.unmodifiableSet(_referers.get(ref));
+		Set<TLObject> result = _referers.get(ref);
+		if (result == null) {
+			return Collections.emptySet();
+		}
+		return Collections.unmodifiableSet(result);
 	}
 
 	/**

@@ -42,6 +42,8 @@ public class TransientTLObjectImpl extends TransientObject {
 
 	private Map<TLStructuredTypePart, Object> _values = new HashMap<>();
 
+	private Map<TLReference, Set<TLObject>> _referers = new HashMap<>();
+
 	private TLObject _context;
 
 	/**
@@ -86,11 +88,18 @@ public class TransientTLObjectImpl extends TransientObject {
 	}
 
 	private Object directValue(TLStructuredTypePart part) {
-		if (part.isDerived() && (part.getModelKind() != ModelKind.REFERENCE || !((TLReference) part).isBackwards())) {
-			if (part.getName().equals(PersistentObject.T_TYPE_ATTR)) {
-				return tType();
+		if (part.isDerived()) {
+			if (part.getModelKind() == ModelKind.REFERENCE && ((TLReference) part).isBackwards()) {
+				// Find forwards reference.
+				TLReference backwards = (TLReference) part;
+				TLReference forwards = backwards.getOppositeEnd().getReference();
+				return tReferers(forwards);
 			} else {
-				return part.getStorageImplementation().getAttributeValue(this, part);
+				if (part.getName().equals(PersistentObject.T_TYPE_ATTR)) {
+					return tType();
+				} else {
+					return part.getStorageImplementation().getAttributeValue(this, part);
+				}
 			}
 		}
 		return _values.get(part.getDefinition());
@@ -102,26 +111,38 @@ public class TransientTLObjectImpl extends TransientObject {
 		newValue = ensureMultiplicity(part, newValue);
 		Object oldValue = directUpdate(part, newValue);
 		if (part.getModelKind() == ModelKind.REFERENCE) {
-			TLAssociationEnd updatedEnd = ((TLReference) part).getEnd();
-			TLAssociationEnd otherEnd = TLModelUtil.getOtherEnd(updatedEnd);
-			TLReference otherRef = otherEnd.getReference();
-			if (otherRef != null) {
-				for (Object oldTarget : collection(oldValue)) {
-					// Note: Non-transient objects may have been assigned to transient ones (the
-					// other way around is not possible).
-					if (oldTarget instanceof TransientTLObjectImpl) {
-						((TransientTLObjectImpl) oldTarget).directRemove(otherRef, this);
-					}
+			TLReference forwards = (TLReference) part;
+			for (Object oldTarget : collection(oldValue)) {
+				// Note: Non-transient objects may have been assigned to transient ones (the
+				// other way around is not possible).
+				if (oldTarget instanceof TransientTLObjectImpl) {
+					((TransientTLObjectImpl) oldTarget).removeReferer(forwards, this);
 				}
-				for (Object newTarget : collection(newValue)) {
-					// Note: Non-transient objects may have been assigned to transient ones (the
-					// other way around is not possible).
-					if (newTarget instanceof TransientTLObjectImpl) {
-						((TransientTLObjectImpl) newTarget).directAdd(otherRef, this);
-					}
+			}
+			for (Object newTarget : collection(newValue)) {
+				// Note: Non-transient objects may have been assigned to transient ones (the
+				// other way around is not possible).
+				if (newTarget instanceof TransientTLObjectImpl) {
+					((TransientTLObjectImpl) newTarget).addReferer(forwards, this);
 				}
 			}
 		}
+	}
+
+	private void addReferer(TLReference ref, TransientTLObjectImpl referer) {
+		_referers.computeIfAbsent(ref, x -> new HashSet<>()).add(referer);
+	}
+
+	private void removeReferer(TLReference ref, TransientTLObjectImpl referer) {
+		Set<TLObject> referers = _referers.get(ref);
+		if (referers != null) {
+			referers.remove(referer);
+		}
+	}
+
+	@Override
+	public Set<? extends TLObject> tReferers(TLReference ref) {
+		return Collections.unmodifiableSet(_referers.get(ref));
 	}
 
 	/**

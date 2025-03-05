@@ -7,11 +7,13 @@ package com.top_logic.graphic.blocks.server.svg;
 
 import static com.top_logic.graphic.blocks.svg.SvgConstants.*;
 
+import java.awt.Color;
 import java.io.IOError;
 import java.io.IOException;
 
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
+import com.top_logic.graphic.svg.SvgUtil;
 
 /**
  * {@link SvgWriter} creating XML output through a {@link TagWriter}.
@@ -319,5 +321,45 @@ public class SvgTagWriter implements SvgWriter {
 	@Override
 	public void close() {
 		// Ignore.
+	}
+
+	@Override
+	public void setFillOpacity(double value) {
+		_out.writeAttribute("fill-opacity", Double.toString(value));
+	}
+
+	@Override
+	public void setStrokeOpacity(double value) {
+		_out.writeAttribute("stroke-opacity", Double.toString(value));
+	}
+
+	@Override
+	public void setStrokeWidth(double value) {
+		_out.writeAttribute("stroke-width", Double.toString(value));
+	}
+
+	@Override
+	public void setFill(Color color) {
+		setFill(SvgUtil.html(color));
+	}
+
+	@Override
+	public void setFill(String style) {
+		_out.writeAttribute("fill", style);
+	}
+
+	@Override
+	public void setStroke(Color color) {
+		setStroke(SvgUtil.html(color));
+	}
+
+	@Override
+	public void setStroke(String style) {
+		_out.writeAttribute("stroke", style);
+	}
+
+	@Override
+	public void setStrokeDasharray(double... dashes) {
+		_out.writeAttribute("stroke-dasharray", SvgUtil.valueList(dashes));
 	}
 }

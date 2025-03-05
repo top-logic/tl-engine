@@ -5,6 +5,8 @@
  */
 package com.top_logic.graphic.blocks.svg;
 
+import java.awt.Color;
+
 import com.top_logic.graphic.blocks.math.Vec;
 
 /**
@@ -230,4 +232,43 @@ public interface SvgWriter extends AutoCloseable {
 	 */
 	void text(double x, double y, String text);
 
+	/**
+	 * Sets the <code>fill-opacity</code> style on the current element.
+	 */
+	void setFillOpacity(double value);
+
+	/**
+	 * Sets the <code>stroke-opacity</code> style on the current element.
+	 */
+	void setStrokeOpacity(double value);
+
+	/**
+	 * Sets the <code>stroke-width</code> style on the current element.
+	 */
+	void setStrokeWidth(double value);
+
+	/**
+	 * Sets the <code>fill</code> style on the current element.
+	 */
+	void setFill(Color color);
+
+	/**
+	 * Sets the <code>fill</code> style on the current element.
+	 */
+	void setFill(String style);
+
+	/**
+	 * Sets the <code>stroke</code> style on the current element.
+	 */
+	void setStroke(Color color);
+
+	/**
+	 * Sets the <code>stroke</code> style on the current element.
+	 */
+	void setStroke(String style);
+
+	/**
+	 * Sets the <code>stroke-dasharray</code> style on the current element.
+	 */
+	void setStrokeDasharray(double... dashes);
 }

@@ -2010,6 +2010,7 @@ TABLE = {
 		const ctrlID = tableContainer.id;
 		const colgroup = table.querySelector("colgroup");
 		
+		// Exclude row selection column
 		let selectColIdx = -1;
 		const multiLineSelect = table.querySelector(".tl-table__cell-checkbox"),
 			singleLineSelect = table.querySelector(".tl-radio-checkbox-container");

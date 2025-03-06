@@ -91,6 +91,12 @@ public abstract class SQLInlineTransformation<A> extends SQLTransformation<A> {
 	}
 
 	@Override
+	protected SQLPart composeSQLLike(SQLLike sql, SQLExpression expr, A arg) {
+		sql.setExpr(expr);
+		return sql;
+	}
+
+	@Override
 	protected SQLPart composeSQLCast(SQLCast sql, SQLExpression expr, A arg) {
 		sql.setExpr(expr);
 		return sql;

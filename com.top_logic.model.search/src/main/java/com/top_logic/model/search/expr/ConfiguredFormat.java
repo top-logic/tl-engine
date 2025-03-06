@@ -7,6 +7,7 @@ package com.top_logic.model.search.expr;
 
 import java.text.Format;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -17,6 +18,7 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * A {@link GenericMethod} implementation that creates and initializes format instances via their
@@ -58,15 +60,21 @@ public class ConfiguredFormat extends GenericMethod {
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		String configuredFormatId = asString(arguments[0]);
 		if (configuredFormatId == null || configuredFormatId.isEmpty()) {
-			return null;
+			throw new TopLogicException(
+				I18NConstants.ERROR_EMPTY_FORMAT_ID);
 		}
 
 		FormatterService formatterService = FormatterService.getInstance();
 		FormatDefinition<?> formatDefinition = formatterService.getFormatDefinition(configuredFormatId);
 
 		if (formatDefinition == null) {
-			// FormatDefinition with given configuredFormatId does not exist
-			return null;
+			Set<String> validFormatIds = formatterService.getFormats();
+
+			String calledFunction = "configuredFormat(\"" + configuredFormatId + "\")";
+			String availableFormats = String.join(", ", validFormatIds);
+
+			throw new TopLogicException(
+				I18NConstants.ERROR_INVALID_FORMAT_ID.fill(calledFunction, availableFormats));
 		}
 
 		Format formatter = formatDefinition.newFormat(formatterService.getConfig(), ThreadContext.getTimeZone(),

@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8" ?>
-
 <action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
@@ -8,7 +7,7 @@
 			user-id="root"
 		>
 			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Administration > Development"
+				tab-path="Administration > Development > Script Konsole"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"

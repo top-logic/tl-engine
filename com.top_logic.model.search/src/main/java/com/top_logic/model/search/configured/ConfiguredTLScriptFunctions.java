@@ -10,12 +10,15 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
@@ -27,10 +30,16 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.treexf.TreeMaterializer.Factory;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.model.TLModel;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.MethodResolver;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
+import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.expr.trace.TracingAccessRewriter;
+import com.top_logic.model.search.expr.visit.Copy;
 import com.top_logic.util.error.TopLogicException;
+import com.top_logic.util.model.ModelService;
 
 /**
  * {@link ConfiguredManagedClass} holding additional TL-Script functions that can be defined within
@@ -68,12 +77,24 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 		 * </p>
 		 */
 		@Name(SCRIPTS)
-		@Key(ConfiguredMethodBuilder.Config.NAME_ATTRIBUTE)
-		Map<String, ConfiguredMethodBuilder.Config<? extends ConfiguredMethodBuilder<?>>> getScripts();
+		@Key(ConfiguredScript.Config.NAME_ATTRIBUTE)
+		Map<String, ConfiguredScript.Config> getScripts();
 
 	}
 
-	private Map<String, ConfiguredMethodBuilder<?>> _builders = Collections.emptyMap();
+	private Map<String, ConfiguredScript> _builders = Collections.emptyMap();
+
+	private Map<String, QueryExecutor> _executors = Collections.emptyMap();
+
+	/**
+	 * Map holding the tracing {@link SearchExpression} for the configured scripts.
+	 * 
+	 * <p>
+	 * This map is filled lazy, because creating tracing search needs the {@link TLModel} and it may
+	 * be that this service is started before the {@link ModelService}.
+	 * </p>
+	 */
+	private final ConcurrentHashMap<String, SearchExpression> _tracingSearches = new ConcurrentHashMap<>();
 
 	private Map<String, Factory> _factories = Collections.emptyMap();
 
@@ -89,17 +110,37 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 		super.startUp();
 		_builders = TypedConfigUtil.createInstanceMap(getConfig().getScripts());
 		initFactoriesFromMethodBuilders();
-		for (Entry<String, ConfiguredMethodBuilder<?>> builder : _builders.entrySet()) {
-			resolveExternals(builder);
+		Map<String, QueryExecutor> executors = new HashMap<>();
+		for (Entry<String, ConfiguredScript> builder : _builders.entrySet()) {
+			executors.put(builder.getKey(), createExecutor(builder));
 		}
+		_executors = executors;
 	}
 
-	private void resolveExternals(Entry<String, ConfiguredMethodBuilder<?>> builder) {
+	private QueryExecutor createExecutor(Entry<String, ConfiguredScript> builder) {
 		try {
-			builder.getValue().resolveExternalRelations();
+			return builder.getValue().createExecutor();
 		} catch (RuntimeException ex) {
 			throw new TopLogicException(I18NConstants.ERROR_RESOLVING_SCRIPT__NAME.fill(builder.getKey()), ex);
 		}
+	}
+
+	private SearchExpression createTracingExecutor(String scriptName, QueryExecutor origExecutor) {
+		try {
+			TLModel model = tlModel();
+			SearchExpression origSearch = origExecutor.getSearch();
+			
+			/* Copy original search to avoid changing original executor. */
+			SearchExpression searchCopy = origSearch.visit(Copy.INSTANCE, null);
+			SearchExpression tracingSearch = searchCopy.visit(TracingAccessRewriter.INSTANCE, null);
+			return QueryExecutor.resolve(model, tracingSearch);
+		} catch (RuntimeException ex) {
+			throw new TopLogicException(I18NConstants.ERROR_RESOLVING_SCRIPT__NAME.fill(scriptName), ex);
+		}
+	}
+
+	private TLModel tlModel() {
+		return ModelService.getApplicationModel();
 	}
 
 	private void initFactoriesFromMethodBuilders() {
@@ -112,6 +153,8 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	protected void shutDown() {
 		_builders.clear();
 		_factories.clear();
+		_executors.clear();
+		_tracingSearches.clear();
 		super.shutDown();
 	}
 
@@ -132,7 +175,7 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 
 	@Override
 	public Optional<String> getDocumentation(DisplayContext context, String functionName) {
-		ConfiguredMethodBuilder<?> script = _builders.get(functionName);
+		ConfiguredScript script = _builders.get(functionName);
 		if (script == null) {
 			return Optional.empty();
 		}
@@ -147,6 +190,40 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 			throw new IOError(ex);
 		}
 		return Optional.of(sw.toString());
+	}
+
+	/**
+	 * Determines the {@link QueryExecutor} for the configured function.
+	 *
+	 * @throws TopLogicException
+	 *         iff there is no executor for the given name.
+	 */
+	QueryExecutor getExecutor(String scriptName) {
+		QueryExecutor queryExecutor = _executors.get(scriptName);
+		if (queryExecutor == null) {
+			throw new TopLogicException(I18NConstants.ERROR_NO_SUCH_SCRIPT__NAME.fill(scriptName));
+		}
+		return queryExecutor;
+	}
+
+	/**
+	 * Determines the tracing {@link QueryExecutor} for the configured function.
+	 *
+	 * @throws TopLogicException
+	 *         iff there is no executor for the given name.
+	 */
+	SearchExpression getTracingExecutor(String scriptName) {
+		SearchExpression tracingSearch = _tracingSearches.get(scriptName);
+		if (tracingSearch != null) {
+			return tracingSearch;
+		}
+		QueryExecutor executor = _executors.get(scriptName);
+		if (executor == null) {
+			throw new TopLogicException(I18NConstants.ERROR_NO_SUCH_SCRIPT__NAME.fill(scriptName));
+		}
+
+		tracingSearch = createTracingExecutor(scriptName, executor);
+		return MapUtil.putIfAbsent(_tracingSearches, scriptName, tracingSearch);
 	}
 
 	/**

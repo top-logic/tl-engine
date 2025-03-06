@@ -62,6 +62,12 @@ public interface ScriptConfiguration extends NamedConfigMandatory {
 	String LABEL = "label";
 
 	/**
+	 * The name of the TL-Script function. The name must unique.
+	 */
+	@Override
+	String getName();
+
+	/**
 	 * The internationalized name of the script.
 	 */
 	@Name(LABEL)

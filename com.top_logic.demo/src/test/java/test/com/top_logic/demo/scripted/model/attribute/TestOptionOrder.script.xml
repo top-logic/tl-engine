@@ -62,400 +62,761 @@
 				value="20"
 			/>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-			comparision="equals"
-			inverted="false"
-			user-id="root"
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test option orders."
 		>
-			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.SelectFieldOptionsNaming$SelectFieldOptionsName">
-				<form-member config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-					label="Value"
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
 				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Anlageformular"
-					/>
-				</form-member>
-			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-				<values>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="1"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="2"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="3"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="4"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="5"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="6"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="7"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="8"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="9"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="10"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="11"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="12"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="13"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="14"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="15"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="16"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="17"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="18"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="19"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="20"
-					/>
-				</values>
-			</expected-value>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.SelectFieldOptionsNaming$SelectFieldOptionsName">
+						<form-member config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Value"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Anlageformular"
+							/>
+						</form-member>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="1"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="2"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="3"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="4"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="5"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="6"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="7"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="8"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="9"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="10"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="11"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="12"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="13"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="14"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="15"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="16"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="17"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="18"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="19"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="20"
+							/>
+						</values>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.SelectFieldOptionsNaming$SelectFieldOptionsName">
+						<form-member config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Values"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Anlageformular"
+							/>
+						</form-member>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="1"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="2"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="3"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="4"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="5"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="6"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="7"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="8"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="9"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="10"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="11"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="12"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="13"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="14"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="15"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="16"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="17"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="18"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="19"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="20"
+							/>
+						</values>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.SelectFieldOptionsNaming$SelectFieldOptionsName">
+						<form-member config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Num"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Anlageformular"
+							/>
+						</form-member>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="0.1"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="0.2"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="0.3"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="0.4"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="0.5"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="0.6"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="0.7"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="0.8"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="0.9"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="1.0"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="1.1"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="1.2"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="1.3"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="1.4"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="1.5"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="1.6"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="1.7"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="1.8"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="1.9"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="2.0"
+							/>
+						</values>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.SelectFieldOptionsNaming$SelectFieldOptionsName">
+						<form-member config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Nums"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Anlageformular"
+							/>
+						</form-member>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="0.1"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="0.2"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="0.3"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="0.4"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="0.5"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="0.6"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="0.7"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="0.8"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="0.9"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="1.0"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="1.1"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="1.2"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="1.3"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="1.4"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="1.5"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="1.6"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="1.7"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="1.8"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="1.9"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="2.0"
+							/>
+						</values>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.SelectFieldOptionsNaming$SelectFieldOptionsName">
+						<form-member config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Str"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Anlageformular"
+							/>
+						</form-member>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 1"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 2"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 3"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 4"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 5"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 6"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 7"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 8"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 9"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 10"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 11"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 12"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 13"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 14"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 15"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 16"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 17"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 18"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 19"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 20"
+							/>
+						</values>
+					</expected-value>
+				</action>
+			</actions>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-			comparision="equals"
-			inverted="false"
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
 			user-id="root"
 		>
-			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.SelectFieldOptionsNaming$SelectFieldOptionsName">
-				<form-member config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-					label="Values"
-				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Anlageformular"
-					/>
-				</form-member>
-			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-				<values>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="1"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="2"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="3"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="4"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="5"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="6"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="7"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="8"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="9"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="10"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="11"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="12"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="13"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="14"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="15"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="16"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="17"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="18"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="19"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-						value="20"
-					/>
-				</values>
-			</expected-value>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Min"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Anlageformular"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="5"
+			/>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-			comparision="equals"
-			inverted="false"
-			user-id="root"
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test the options have updated after changing part used for computation."
 		>
-			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.SelectFieldOptionsNaming$SelectFieldOptionsName">
-				<form-member config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-					label="Num"
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
 				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Anlageformular"
-					/>
-				</form-member>
-			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-				<values>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-						value="0.1"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-						value="0.2"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-						value="0.3"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-						value="0.4"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-						value="0.5"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-						value="0.6"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-						value="0.7"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-						value="0.8"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-						value="0.9"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-						value="1.0"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-						value="1.1"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-						value="1.2"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-						value="1.3"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-						value="1.4"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-						value="1.5"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-						value="1.6"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-						value="1.7"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-						value="1.8"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-						value="1.9"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-						value="2.0"
-					/>
-				</values>
-			</expected-value>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-			comparision="equals"
-			inverted="false"
-			user-id="root"
-		>
-			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.SelectFieldOptionsNaming$SelectFieldOptionsName">
-				<form-member config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-					label="Nums"
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.SelectFieldOptionsNaming$SelectFieldOptionsName">
+						<form-member config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Value"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Anlageformular"
+							/>
+						</form-member>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="5"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="6"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="7"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="8"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="9"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="10"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="11"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="12"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="13"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="14"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="15"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="16"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="17"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="18"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="19"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="20"
+							/>
+						</values>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
 				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Anlageformular"
-					/>
-				</form-member>
-			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-				<values>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
-						value="0.1"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
-						value="0.2"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
-						value="0.3"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
-						value="0.4"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
-						value="0.5"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
-						value="0.6"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
-						value="0.7"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
-						value="0.8"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
-						value="0.9"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
-						value="1.0"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
-						value="1.1"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
-						value="1.2"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
-						value="1.3"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
-						value="1.4"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
-						value="1.5"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
-						value="1.6"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
-						value="1.7"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
-						value="1.8"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
-						value="1.9"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
-						value="2.0"
-					/>
-				</values>
-			</expected-value>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-			comparision="equals"
-			inverted="false"
-			user-id="root"
-		>
-			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.SelectFieldOptionsNaming$SelectFieldOptionsName">
-				<form-member config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-					label="Str"
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.SelectFieldOptionsNaming$SelectFieldOptionsName">
+						<form-member config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Values"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Anlageformular"
+							/>
+						</form-member>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="5"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="6"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="7"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="8"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="9"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="10"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="11"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="12"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="13"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="14"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="15"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="16"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="17"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="18"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="19"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+								value="20"
+							/>
+						</values>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
 				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Anlageformular"
-					/>
-				</form-member>
-			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
-				<values>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Option 1"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Option 2"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Option 3"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Option 4"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Option 5"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Option 6"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Option 7"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Option 8"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Option 9"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Option 10"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Option 11"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Option 12"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Option 13"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Option 14"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Option 15"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Option 16"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Option 17"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Option 18"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Option 19"
-					/>
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Option 20"
-					/>
-				</values>
-			</expected-value>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.SelectFieldOptionsNaming$SelectFieldOptionsName">
+						<form-member config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Num"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Anlageformular"
+							/>
+						</form-member>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="0.5"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="0.6"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="0.7"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="0.8"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="0.9"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="1.0"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="1.1"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="1.2"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="1.3"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="1.4"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="1.5"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="1.6"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="1.7"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="1.8"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="1.9"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+								value="2.0"
+							/>
+						</values>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.SelectFieldOptionsNaming$SelectFieldOptionsName">
+						<form-member config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Nums"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Anlageformular"
+							/>
+						</form-member>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="0.5"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="0.6"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="0.7"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="0.8"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="0.9"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="1.0"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="1.1"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="1.2"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="1.3"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="1.4"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="1.5"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="1.6"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="1.7"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="1.8"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="1.9"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.FloatNaming$Name"
+								value="2.0"
+							/>
+						</values>
+					</expected-value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.SelectFieldOptionsNaming$SelectFieldOptionsName">
+						<form-member config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Str"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Anlageformular"
+							/>
+						</form-member>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 5"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 6"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 7"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 8"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 9"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 10"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 11"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 12"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 13"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 14"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 15"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 16"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 17"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 18"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 19"
+							/>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Option 20"
+							/>
+						</values>
+					</expected-value>
+				</action>
+			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 			command-implementation-comment="com.top_logic.layout.form.component.AbstractCreateComponent$CancelHandler"

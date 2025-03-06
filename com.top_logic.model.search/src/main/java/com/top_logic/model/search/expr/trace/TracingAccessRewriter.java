@@ -11,6 +11,8 @@ import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.col.Sink;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.search.configured.QueryExecutorMethod;
+import com.top_logic.model.search.configured.TracingScriptMethod;
 import com.top_logic.model.search.expr.Access;
 import com.top_logic.model.search.expr.DynamicGet;
 import com.top_logic.model.search.expr.EvalContext;
@@ -23,7 +25,7 @@ import com.top_logic.model.util.Pointer;
  * {@link Rewriter} replacing expressions accessing model properties with those that create an
  * access trace in the context variable {@link TracingAccessRewriter#TRACE}.
  */
-final class TracingAccessRewriter extends Rewriter<Void> {
+public final class TracingAccessRewriter extends Rewriter<Void> {
 
 	/**
 	 * Singleton {@link TracingAccessRewriter} instance.
@@ -52,11 +54,20 @@ final class TracingAccessRewriter extends Rewriter<Void> {
 			List<SearchExpression> argumentsList = descendParts(expr, arg, expr.getArguments());
 			SearchExpression[] arguments = argumentsList.toArray(new SearchExpression[0]);
 			return new TracingDynamicGet(expr.getName(), null, arguments);
+		} else if (expr instanceof QueryExecutorMethod) {
+			List<SearchExpression> argumentsList = descendParts(expr, arg, expr.getArguments());
+			SearchExpression[] arguments = argumentsList.toArray(new SearchExpression[0]);
+
+			return new TracingScriptMethod(expr.getName(), arguments);
 		} else {
 			return super.visitGenericMethod(expr, arg);
 		}
 	}
 
+	/**
+	 * Marks the combination of {@link TLObject self} and {@link TLStructuredTypePart part} as
+	 * relevant for the trace.
+	 */
 	public static void traceAccess(EvalContext definitions, TLObject self, TLStructuredTypePart part) {
 		@SuppressWarnings("unchecked")
 		Sink<Pointer> trace = (Sink<Pointer>) definitions.getVar(TRACE);

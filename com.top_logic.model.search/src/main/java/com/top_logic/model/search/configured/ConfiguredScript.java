@@ -8,23 +8,27 @@ package com.top_logic.model.search.configured;
 import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptorBuilder;
+import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
- * {@link ConfiguredMethodBuilder} that creates {@link SearchExpression} based on a configured
- * {@link Expr}.
+ * {@link MethodBuilder} that creates {@link SearchExpression} based on a configured {@link Expr}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class ConfiguredScript extends AbstractConfiguredMethodBuilder<ConfiguredScript.Config> {
+public class ConfiguredScript extends AbstractConfiguredInstance<ConfiguredScript.Config>
+		implements MethodBuilder<SearchExpression> {
 
 	/**
 	 * Configuration for {@link ConfiguredScript}.
@@ -32,11 +36,9 @@ public class ConfiguredScript extends AbstractConfiguredMethodBuilder<Configured
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
 	@TagName("configured-script")
-	public interface Config extends ConfiguredMethodBuilder.Config<ConfiguredScript>, ScriptConfiguration {
+	public interface Config extends PolymorphicConfiguration<ConfiguredScript>, ScriptConfiguration {
 		// sum interface
 	}
-
-	private QueryExecutor _executor;
 
 	private final ArgumentDescriptor _descriptor;
 
@@ -51,12 +53,6 @@ public class ConfiguredScript extends AbstractConfiguredMethodBuilder<Configured
 	public ConfiguredScript(InstantiationContext context, Config config) {
 		super(context, config);
 		_descriptor = createArgumentDescriptor();
-	}
-
-	@Override
-	public void resolveExternalRelations() {
-		Expr expr = createBaseExpression();
-		_executor = QueryExecutor.compile(expr);
 	}
 
 	private ArgumentDescriptor createArgumentDescriptor() {
@@ -80,6 +76,15 @@ public class ConfiguredScript extends AbstractConfiguredMethodBuilder<Configured
 		}
 	}
 
+	/**
+	 * Creates the {@link QueryExecutor} to call when executing the {@link GenericMethod} returned
+	 * by {@link #build(com.top_logic.model.search.expr.config.dom.Expr, SearchExpression[])}.
+	 */
+	public QueryExecutor createExecutor() {
+		Expr expr = createBaseExpression();
+		return QueryExecutor.compile(expr);
+	}
+
 	private Expr createBaseExpression() {
 		Expr expr = getConfig().getImplementation();
 
@@ -101,8 +106,8 @@ public class ConfiguredScript extends AbstractConfiguredMethodBuilder<Configured
 		return new QueryExecutorMethod(this::getExecutor, getConfig().getName(), args);
 	}
 
-	private QueryExecutor getExecutor() {
-		return _executor;
+	private QueryExecutor getExecutor(String functionName) {
+		return ConfiguredTLScriptFunctions.Module.INSTANCE.getImplementationInstance().getExecutor(functionName);
 	}
 
 	@Override
@@ -115,7 +120,12 @@ public class ConfiguredScript extends AbstractConfiguredMethodBuilder<Configured
 		return _descriptor;
 	}
 
-	@Override
+	/**
+	 * Determines an {@link HTMLFragment} that is offered the user to describe the created
+	 * {@link SearchExpression}.
+	 *
+	 * @return May be <code>null</code>, when no documentation is available.
+	 */
 	public HTMLFragment documentation() {
 		return new ConfiguredScriptDocumentation(getConfig());
 	}

@@ -231,6 +231,14 @@ public class ControlSupport implements AJAXSupport, ControlScope {
 				}
 			}
 
+			// This is a workaround. If ESCAPE or ENTER keys are pressed, do not reload the page!
+			if (arguments.containsValue("keypress")) {
+				if ((Integer) arguments.get("scancode") == 27 ||
+					(Integer) arguments.get("scancode") == 13) {
+					return HandlerResult.DEFAULT_RESULT;
+				}
+			}
+
 			HandlerResult result = new HandlerResult();
 			result.addErrorMessage(I18NConstants.ERROR_TARGET_CONTROL_NOT_FOUND);
 	        getFrameScope().addClientAction(JSSnipplet.createPageReload());

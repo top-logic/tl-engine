@@ -141,6 +141,11 @@ abstract class AbstractStatementBuilder<E extends SimpleSQLBuffer> implements SQ
 		}
 
 		@Override
+		public Boolean visitSQLLike(SQLLike sql, DBHelper arg) {
+			return descend(sql.getExpr(), arg, mayUsePrepStatement);
+		}
+
+		@Override
 		public Boolean visitSQLCast(SQLCast sql, DBHelper arg) {
 			Boolean result = mayUsePrepStatement;
 			result = descend(sql.getExpr(), arg, result);
@@ -976,6 +981,26 @@ abstract class AbstractStatementBuilder<E extends SimpleSQLBuffer> implements SQ
 		if (needRightParenthesis) buffer.append('(');
 		right.visit(this, buffer);
 		if (needRightParenthesis) buffer.append(')');
+
+		return resetContext(oldContext, buffer);
+	}
+
+	@Override
+	public Void visitSQLLike(SQLLike sql, E buffer) {
+		SQLPart oldContext = setContext(sql, buffer);
+
+		sql.getExpr().visit(this, buffer);
+		buffer.append(" LIKE '");
+		String pattern = sql.getPattern();
+		// Escape potential single quotes.
+		for (int i = 0; i < pattern.length(); i++) {
+			char c = pattern.charAt(i);
+			if (c == '\'') {
+				buffer.append(c);
+			}
+			buffer.append(c);
+		}
+		buffer.append('\'');
 
 		return resetContext(oldContext, buffer);
 	}

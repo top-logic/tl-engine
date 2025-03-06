@@ -485,6 +485,13 @@ public class SQLFactory {
 	}
 
 	/**
+	 * Creates a SQL "like" construct.
+	 */
+	public static SQLExpression like(SQLExpression expr, String pattern) {
+		return new SQLLike(expr, pattern);
+	}
+
+	/**
 	 * Creates a {@link SQLCast} expression.
 	 * 
 	 * @param expr

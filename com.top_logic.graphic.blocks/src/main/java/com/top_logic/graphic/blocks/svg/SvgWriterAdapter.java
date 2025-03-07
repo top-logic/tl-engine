@@ -7,6 +7,9 @@ package com.top_logic.graphic.blocks.svg;
 
 import java.awt.Color;
 
+import com.top_logic.graphic.flow.param.ImageAlign;
+import com.top_logic.graphic.flow.param.ImageScale;
+
 /**
  * Adapter to an {@link SvgWriter}.
  *
@@ -150,6 +153,12 @@ public class SvgWriterAdapter implements SvgWriter {
 	@Override
 	public void rect(double x, double y, double w, double h, double rx, double ry) {
 		_impl.rect(x, y, w, h, rx, ry);
+	}
+
+	@Override
+	public void image(double x, double y, double width, double height, String href, ImageAlign align,
+			ImageScale scale) {
+		_impl.image(x, y, width, height, href, align, scale);
 	}
 
 	@Override

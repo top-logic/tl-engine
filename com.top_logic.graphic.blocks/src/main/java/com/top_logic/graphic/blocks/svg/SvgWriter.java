@@ -8,6 +8,8 @@ package com.top_logic.graphic.blocks.svg;
 import java.awt.Color;
 
 import com.top_logic.graphic.blocks.math.Vec;
+import com.top_logic.graphic.flow.param.ImageAlign;
+import com.top_logic.graphic.flow.param.ImageScale;
 
 /**
  * API for stream-based construction of SVG.
@@ -271,4 +273,24 @@ public interface SvgWriter extends AutoCloseable {
 	 * Sets the <code>stroke-dasharray</code> style on the current element.
 	 */
 	void setStrokeDasharray(double... dashes);
+
+	/**
+	 * Writes an embedded image.
+	 *
+	 * @param x
+	 *        The X coordinate of the origin.
+	 * @param y
+	 *        The Y coordinate of the origin.
+	 * @param width
+	 *        The width of the image area.
+	 * @param height
+	 *        The width of the image area.
+	 * @param href
+	 *        The URL from which to load the image data.
+	 * @param align
+	 *        The alignment of the image in its reserved area.
+	 * @param scale
+	 *        The scaling strategy.
+	 */
+	void image(double x, double y, double width, double height, String href, ImageAlign align, ImageScale scale);
 }

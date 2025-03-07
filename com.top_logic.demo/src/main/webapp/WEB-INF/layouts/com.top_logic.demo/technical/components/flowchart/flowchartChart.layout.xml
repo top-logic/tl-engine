@@ -10,9 +10,24 @@
 			<de>Flussdiagramm</de>
 		</name>
 		<modelBuilder class="com.top_logic.graphic.flow.server.ui.ScriptFlowChartBuilder">
-			<create-chart><![CDATA[model -> flowChart(
+			<create-chart><![CDATA[model -> {
+
+// All nodes that are not used to build other nodes.
+roots = [
+    all(`test.flowchart:FlowNode`)
+        .filter(n -> $n.get(`test.flowchart:FlowNode#usedIn`).isEmpty())
+];
+
+// Building levels: Array of level arrays with nodes. 
+// Each node in level N is used to build a node in level N-1.
+levels = 
+    $roots.recursion(level -> [$level.get(`test.flowchart:FlowNode#inputs`)]);
+
+// Chart of building flow.    
+flowChart(
     flowPadding(all: 16, content: 
-        flowVertical(gap: 32, contents: all(`test.flowchart:FlowNode`).map(n -> 
+        flowHorizontal(gap: 64, contents: $levels.map(nodes -> 
+        flowVertical(gap: 32, contents: $nodes.map(n -> 
             flowAlign(hAlign: "CENTER",  content: 
                 flowVertical([
                     {
@@ -61,8 +76,10 @@
                 ]))
             )
         )
+        ))
     )
-)]]></create-chart>
+)
+}]]></create-chart>
 		</modelBuilder>
 	</arguments>
 </config:template-call>

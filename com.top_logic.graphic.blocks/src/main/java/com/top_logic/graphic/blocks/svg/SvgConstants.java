@@ -38,6 +38,46 @@ public interface SvgConstants {
 	String HEIGHT_ATTR = "height";
 
 	/**
+	 * URL of a resource.
+	 */
+	String HREF_ATTR = "href";
+
+	/**
+	 * Image rendering hint.
+	 */
+	String PRESERVE_ASPECT_RATIO_ATTR = "preserveAspectRatio";
+
+	/**
+	 * Fill opacity style.
+	 */
+	String FILL_OPACITY_ATTR = "fill-opacity";
+
+	/**
+	 * Stroke opacity style.
+	 */
+	String STROKE_OPACITY_ATTR = "stroke-opacity";
+
+	/**
+	 * Stroke width style.
+	 */
+	String STROKE_WIDTH_ATTR = "stroke-width";
+
+	/**
+	 * Fill style.
+	 */
+	String FILL_ATTR = "fill";
+
+	/**
+	 * Stroke style.
+	 */
+	String STROKE_ATTR = "stroke";
+
+	/**
+	 * Stroke-dasharray style.
+	 */
+	String STROKE_DASHARRAY_ATTR = "stroke-dasharray";
+
+	/**
 	 * View-box attribute.
 	 */
 	String VIEW_BOX_ATTR = "viewBox";
@@ -106,5 +146,10 @@ public interface SvgConstants {
 	 * Path data attribute.
 	 */
 	String D_ATTR = "d";
+
+	/**
+	 * Image element.
+	 */
+	String IMAGE = "image";
 
 }

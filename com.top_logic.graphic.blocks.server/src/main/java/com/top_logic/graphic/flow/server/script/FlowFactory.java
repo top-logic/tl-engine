@@ -5,13 +5,24 @@
  */
 package com.top_logic.graphic.flow.server.script;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Base64;
+import java.util.Iterator;
 import java.util.List;
 import java.util.OptionalInt;
 
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.DoubleDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.io.StreamUtilities;
+import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.graphic.flow.model.Align;
 import com.top_logic.graphic.flow.model.Border;
 import com.top_logic.graphic.flow.model.Decoration;
@@ -19,6 +30,7 @@ import com.top_logic.graphic.flow.model.DrawElement;
 import com.top_logic.graphic.flow.model.EmptyBlock;
 import com.top_logic.graphic.flow.model.Fill;
 import com.top_logic.graphic.flow.model.FlowDiagram;
+import com.top_logic.graphic.flow.model.Image;
 import com.top_logic.graphic.flow.model.Padding;
 import com.top_logic.graphic.flow.model.TextLine;
 import com.top_logic.graphic.flow.model.layout.CompassLayout;
@@ -26,8 +38,11 @@ import com.top_logic.graphic.flow.model.layout.GridLayout;
 import com.top_logic.graphic.flow.model.layout.HorizontalLayout;
 import com.top_logic.graphic.flow.model.layout.VerticalLayout;
 import com.top_logic.graphic.flow.param.HAlign;
+import com.top_logic.graphic.flow.param.ImageAlign;
+import com.top_logic.graphic.flow.param.ImageScale;
 import com.top_logic.graphic.flow.param.SpaceDistribution;
 import com.top_logic.graphic.flow.param.VAlign;
+import com.top_logic.model.search.expr.ToString;
 
 /**
  * Factory for flow chart diagram elements.
@@ -214,6 +229,65 @@ public class FlowFactory {
 				}
 			}
 			y++;
+		}
+		return result;
+	}
+
+	/**
+	 * Factory for {@link Image}.
+	 */
+	public static DrawElement flowImage(
+			@Mandatory Object data,
+			Double width,
+			Double height,
+			ImageAlign align,
+			ImageScale scale) {
+		if (data == null) {
+			return new EmptyBlock();
+		}
+		String href;
+		try {
+			href = data instanceof BinaryDataSource c
+				? "data:" + c.getContentType() + ";base64,"
+					+ Base64.getEncoder().encodeToString(StreamUtilities.readStreamContents(c.toData()))
+				: ToString.toString(data);
+		} catch (IOException ex) {
+			throw new RuntimeException(ex);
+		}
+		
+		double imgWidth;
+		double imgHeight;
+		findDim:
+		if (width == null || height == null) {
+			if (data instanceof BinaryDataSource c) {
+				try (InputStream in = c.toData().getStream()) {
+					ImageInputStream iis = ImageIO.createImageInputStream(in);
+					Iterator<ImageReader> readers = ImageIO.getImageReaders(iis);
+					if (readers.hasNext()) {
+						ImageReader reader = readers.next();
+						reader.setInput(iis, true);
+
+						imgWidth = Double.valueOf(reader.getWidth(0));
+						imgHeight = Double.valueOf(reader.getHeight(0));
+						break findDim;
+					}
+				} catch (IOException ex) {
+					Logger.debug("Failed to access image.", ex, FlowFactory.class);
+				}
+			}
+			imgWidth = 100;
+			imgHeight = 100;
+		} else {
+			imgWidth = width.doubleValue();
+			imgHeight = height.doubleValue();
+		}
+		
+		Image result = new Image(imgWidth, imgHeight, href);
+		if (align != null) {
+			result.setAlign(align);
+		}
+		if (scale != null) {
+			result.setScale(scale);
 		}
 		return result;
 	}

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tile.template.xml"
+>
+	<arguments
+		helpID="cbab28a7-eae3-4092-a92f-6f58eb6faa5b"
+		tileName="ID_86d0ef49_f7a9_4f16_b5c1_ad1cf340e6a3"
+	>
+		<tileLabel key="dynamic.aff12a97-5b77-4872-80dc-d3f49b8e92af">
+			<en>Parts</en>
+			<de>Teile</de>
+		</tileLabel>
+		<preview class="com.top_logic.mig.html.layout.tiles.component.StaticPreview"
+			icon="css:fa-solid fa-cube"
+		>
+			<description key="dynamic.0ee6203b-4856-406e-a094-660299c8b597">
+				<en>Parts</en>
+				<de>Teile</de>
+			</description>
+		</preview>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/flowchart1/products/parts/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

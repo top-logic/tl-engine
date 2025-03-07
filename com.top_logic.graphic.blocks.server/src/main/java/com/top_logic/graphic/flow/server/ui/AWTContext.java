@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package test.com.top_logic.graphic.blocks.server;
+package com.top_logic.graphic.flow.server.ui;
 
 import java.awt.Font;
 import java.awt.Graphics2D;

@@ -28,10 +28,25 @@ public class HorizontalLayout extends AbstractDrawElement {
 	private SpaceDistribution _fill = SpaceDistribution.NONE;
 
 	/**
+	 * The elements to display in a row.
+	 */
+	public List<DrawElement> getCols() {
+		return _cols;
+	}
+
+	/**
 	 * Adds a new column to this row.
 	 */
 	public HorizontalLayout addCol(DrawElement col) {
 		_cols.add(col);
+		return this;
+	}
+
+	/**
+	 * @see #getCols()
+	 */
+	public HorizontalLayout setCols(List<DrawElement> cols) {
+		_cols = cols;
 		return this;
 	}
 

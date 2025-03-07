@@ -61,6 +61,12 @@ public class SQLCopy implements SQLVisitor<SQLPart, Void> {
 	}
 
 	@Override
+	public SQLPart visitSQLLike(SQLLike sql, Void arg) {
+		SQLExpression expr = sql.getExpr();
+		return like(copy(expr, arg), sql.getPattern());
+	}
+
+	@Override
 	public SQLPart visitSQLCast(SQLCast sql, Void arg) {
 		SQLExpression expr = sql.getExpr();
 		return cast(copy(expr, arg), sql.getDbType(), sql.getSize(), sql.getPrecision(), sql.getBinary());

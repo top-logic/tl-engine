@@ -319,6 +319,73 @@ public class TestCompiledStatement extends BasicTestCase {
 		assertEquals(set(TupleFactory.newTuple(13)), result);
 	}
 
+	public void testLikeExpression() throws SQLException {
+		CompiledStatement insert = query(
+			list(
+				parameterDef(DBType.STRING, "node"),
+				parameterDef(DBType.STRING, "key"),
+				parameterDef(DBType.STRING, "value")),
+			insert(
+				table(TABLE_NAME),
+				list(
+					NODE_COLUMN_NAME,
+					KEY_COLUMN_NAME,
+					VALUE_COLUMN_NAME),
+				expressions(
+					parameter(DBType.STRING, "node"),
+					parameter(DBType.STRING, "key"),
+					parameter(DBType.STRING, "value")))).toSql(_sqlDialect);
+		PooledConnection con = _pool.borrowWriteConnection();
+		try  {
+			try (Batch batch = insert.createBatch(con)) {
+				batch.addBatch("n", "1", "frog");
+				batch.addBatch("n", "2", "dog");
+				batch.addBatch("n", "3", "guns n' roses");
+				batch.addBatch("n", "4", "fox");
+				batch.addBatch("n", "5", "rock 'n' roll");
+				batch.executeBatch();
+			}
+			con.commit();
+		} finally {
+			_pool.releaseWriteConnection(con);
+		}
+		con = _pool.borrowReadConnection();
+		try  {
+			CompiledStatement sql =
+				query(
+					select(
+						columns(columnDef(VALUE_COLUMN_NAME)),
+						table(TABLE_NAME),
+						like(column(VALUE_COLUMN_NAME), "___"),
+						orders(order(false, column(VALUE_COLUMN_NAME))))).toSql(_sqlDialect);
+			try (ResultSet result = sql.executeQuery(con)) {
+				assertTrue(result.next());
+				assertEquals("dog", result.getString(VALUE_COLUMN_NAME));
+				assertTrue(result.next());
+				assertEquals("fox", result.getString(VALUE_COLUMN_NAME));
+				assertFalse(result.next());
+			}
+
+			sql =
+				query(
+					select(
+						columns(columnDef(VALUE_COLUMN_NAME)),
+						table(TABLE_NAME),
+						like(column(VALUE_COLUMN_NAME), "%n'%"),
+						orders(order(false, column(VALUE_COLUMN_NAME))))).toSql(_sqlDialect);
+			try (ResultSet result = sql.executeQuery(con)) {
+				assertTrue(result.next());
+				assertEquals("guns n' roses", result.getString(VALUE_COLUMN_NAME));
+				assertTrue(result.next());
+				assertEquals("rock 'n' roll", result.getString(VALUE_COLUMN_NAME));
+				assertFalse(result.next());
+			}
+		} finally {
+			_pool.releaseReadConnection(con);
+		}
+
+	}
+
 	private HashSet<Tuple> readResult(CompiledStatement sql, DBType... types) throws SQLException {
 		HashSet<Tuple> result = new HashSet<>();
 		PooledConnection connection = _pool.borrowWriteConnection();

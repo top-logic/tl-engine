@@ -58,7 +58,7 @@ public class CompassLayout extends AbstractDrawElement {
 	 * @see #getCenter()
 	 */
 	public CompassLayout setCenter(DrawElement center) {
-		_center = center;
+		_center = center == null ? new EmptyBlock() : center;
 		return this;
 	}
 

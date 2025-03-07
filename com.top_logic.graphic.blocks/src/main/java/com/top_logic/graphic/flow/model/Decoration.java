@@ -26,7 +26,7 @@ public abstract class Decoration extends AbstractDrawElement {
 	 * @see #getContent()
 	 */
 	public Decoration setContent(DrawElement content) {
-		_content = content;
+		_content = content == null ? new EmptyBlock() : content;
 		return this;
 	}
 

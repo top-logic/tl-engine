@@ -13,6 +13,8 @@ import java.io.IOException;
 
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
+import com.top_logic.graphic.flow.param.ImageAlign;
+import com.top_logic.graphic.flow.param.ImageScale;
 import com.top_logic.graphic.svg.SvgUtil;
 
 /**
@@ -238,7 +240,11 @@ public class SvgTagWriter implements SvgWriter {
 	}
 
 	private void writeAttribute(String name, double value) {
-		_out.writeAttribute(name, Double.toString(value));
+		writeAttribute(name, Double.toString(value));
+	}
+
+	private void writeAttribute(String name, String value) {
+		_out.writeAttribute(name, value);
 	}
 
 	@Override
@@ -260,6 +266,19 @@ public class SvgTagWriter implements SvgWriter {
 		endBeginTag();
 		_out.writeText(text);
 		endTag(TEXT);
+	}
+
+	@Override
+	public void image(double x, double y, double width, double height, String href, ImageAlign align,
+			ImageScale scale) {
+		beginBeginTag(IMAGE);
+		writeAttribute(X_ATTR, x);
+		writeAttribute(Y_ATTR, y);
+		writeAttribute(WIDTH_ATTR, width);
+		writeAttribute(HEIGHT_ATTR, height);
+		writeAttribute(HREF_ATTR, href);
+		writeAttribute(PRESERVE_ASPECT_RATIO_ATTR, align + " " + scale);
+		endEmptyTag();
 	}
 
 	private void beginBeginTag(String tagName) {
@@ -325,17 +344,17 @@ public class SvgTagWriter implements SvgWriter {
 
 	@Override
 	public void setFillOpacity(double value) {
-		_out.writeAttribute("fill-opacity", Double.toString(value));
+		_out.writeAttribute(FILL_OPACITY_ATTR, Double.toString(value));
 	}
 
 	@Override
 	public void setStrokeOpacity(double value) {
-		_out.writeAttribute("stroke-opacity", Double.toString(value));
+		_out.writeAttribute(STROKE_OPACITY_ATTR, Double.toString(value));
 	}
 
 	@Override
 	public void setStrokeWidth(double value) {
-		_out.writeAttribute("stroke-width", Double.toString(value));
+		_out.writeAttribute(STROKE_WIDTH_ATTR, Double.toString(value));
 	}
 
 	@Override
@@ -345,7 +364,7 @@ public class SvgTagWriter implements SvgWriter {
 
 	@Override
 	public void setFill(String style) {
-		_out.writeAttribute("fill", style);
+		_out.writeAttribute(FILL_ATTR, style);
 	}
 
 	@Override
@@ -355,11 +374,11 @@ public class SvgTagWriter implements SvgWriter {
 
 	@Override
 	public void setStroke(String style) {
-		_out.writeAttribute("stroke", style);
+		_out.writeAttribute(STROKE_ATTR, style);
 	}
 
 	@Override
 	public void setStrokeDasharray(double... dashes) {
-		_out.writeAttribute("stroke-dasharray", SvgUtil.valueList(dashes));
+		_out.writeAttribute(STROKE_DASHARRAY_ATTR, SvgUtil.valueList(dashes));
 	}
 }

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/grid.template.xml"
+>
+	<arguments
+		defaultColumns="name,inputs,usedIn,image,locations,marker"
+		model="selection(com.top_logic.demo/technical/components/flowchart1/productsContextList.layout.xml#List)"
+		type="test.flowchart:FlowNode"
+	>
+		<name key="dynamic.4246ea09-c7cb-4399-be67-4eb2a787ac2c">
+			<en>Parts</en>
+			<de>Teile</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->$model.get(`test.flowchart:Product#parts`)"
+			supportsElement="element->$element.instanceOf(`test.flowchart:FlowNode`)"
+		/>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+			<button id="createRow"
+				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
+			>
+				<checkScopeProvider/>
+				<type-options
+					include-subtypes="false"
+					type="test.flowchart:FlowNode"
+				/>
+			</button>
+			<button id="deleteRow"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

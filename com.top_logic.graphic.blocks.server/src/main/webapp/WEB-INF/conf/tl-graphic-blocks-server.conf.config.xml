@@ -28,6 +28,7 @@
 				<methods>
 					<java name="flowChart" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowChart"/>
 					<java name="flowText" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowText"/>
+					<java name="flowImage" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowImage"/>
 					<java name="flowAlign" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowAlign"/>
 					<java name="flowBorder" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowBorder"/>
 					<java name="flowFill" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowFill"/>

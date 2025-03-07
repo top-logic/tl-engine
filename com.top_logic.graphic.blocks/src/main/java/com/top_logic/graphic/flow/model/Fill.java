@@ -35,6 +35,7 @@ public class Fill extends Decoration {
 
 	@Override
 	public void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
+		getContent().distributeSize(context, offsetX, offsetY, width, height);
 		setX(offsetX);
 		setY(offsetY);
 		setWidth(width);
@@ -53,9 +54,9 @@ public class Fill extends Decoration {
 		out.setFill(_fillStyle);
 		out.beginData();
 		out.moveToAbs(getX(), getY());
-		out.lineToHorizontalAbs(getWidth());
-		out.lineToVerticalRel(getHeight());
-		out.lineToHorizontalAbs(-getWidth());
+		out.lineToHorizontalAbs(getX() + getWidth());
+		out.lineToVerticalAbs(getY() + getHeight());
+		out.lineToHorizontalAbs(getX());
 		out.closePath();
 		out.endData();
 		out.endPath();

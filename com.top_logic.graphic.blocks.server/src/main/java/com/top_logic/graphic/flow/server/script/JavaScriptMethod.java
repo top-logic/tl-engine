@@ -214,6 +214,11 @@ public class JavaScriptMethod extends GenericMethod {
 		public JavaScriptMethod build(Expr expr, SearchExpression[] args) throws ConfigurationException {
 			return new JavaScriptMethod(getName(), _method, _conversions, args);
 		}
+
+		@Override
+		public Object getId() {
+			return _method;
+		}
 	}
 
 	private static class Converter {

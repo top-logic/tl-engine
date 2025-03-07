@@ -49,7 +49,7 @@ public class FlowChartComponent extends BuilderComponent implements ControlRepre
 	protected boolean doValidateModel(DisplayContext context) {
 		FlowDiagram diagram = (FlowDiagram) getBuilder().getModel(getModel(), this);
 		if (diagram != null) {
-			diagram.layout(new AWTContext(12));
+			diagram.layout(new AWTContext(14));
 
 			_control.setModel(diagram);
 		}

@@ -33,6 +33,8 @@ public abstract class Decoration extends AbstractDrawElement {
 	@Override
 	public void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
 		_content.computeIntrinsicSize(context, offsetX, offsetY);
+		setWidth(_content.getWidth());
+		setHeight(_content.getHeight());
 	}
 
 	@Override

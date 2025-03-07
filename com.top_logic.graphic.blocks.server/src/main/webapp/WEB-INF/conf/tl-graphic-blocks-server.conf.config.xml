@@ -22,6 +22,23 @@
 				</additional-files>
 			</instance>
 		</config>
+		
+		<config service-class="com.top_logic.model.search.expr.config.SearchBuilder">
+			<instance class="com.top_logic.model.search.expr.config.SearchBuilder">
+				<methods>
+					<java name="flowChart" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowChart"/>
+					<java name="flowText" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowText"/>
+					<java name="flowAlign" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowAlign"/>
+					<java name="flowBorder" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowBorder"/>
+					<java name="flowFill" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowFill"/>
+					<java name="flowPadding" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowPadding"/>
+					<java name="flowHorizontal" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowHorizontal"/>
+					<java name="flowVertical" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowVertical"/>
+					<java name="flowCompass" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowCompass"/>
+					<java name="flowGrid" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowGrid"/>
+				</methods>
+			</instance>
+		</config>
 	</services>
 
 	<configs>

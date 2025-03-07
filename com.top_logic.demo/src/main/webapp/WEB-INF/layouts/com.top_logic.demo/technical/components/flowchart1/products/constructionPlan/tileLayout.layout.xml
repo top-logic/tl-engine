@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tile.template.xml"
+>
+	<arguments
+		helpID="cc239873-776c-4c8c-8a4a-4e30ddcbca98"
+		tileName="ID_5fc46afb_f013_4491_8842_7b58ab526ce6"
+	>
+		<tileLabel key="dynamic.1a903184-94fb-4114-8920-658a0d5b2852">
+			<en>Construction plan</en>
+			<de>Bauplan</de>
+		</tileLabel>
+		<preview class="com.top_logic.mig.html.layout.tiles.component.StaticPreview"
+			icon="css:fa-solid fa-trowel-bricks"
+		>
+			<description key="dynamic.6a7fe3cf-98f6-48ea-90b6-aa340056a9ef">
+				<en>Construction plan</en>
+				<de>Bauplan</de>
+			</description>
+		</preview>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/flowchart1/products/constructionPlan/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

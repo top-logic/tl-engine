@@ -5,15 +5,15 @@
 	template="com.top_logic/tab.template.xml"
 >
 	<arguments
-		helpID="ID_e69b7b4e_6214_4593_a31f_96263f656bf0"
+		helpID="ID_8a5eb9c7_cb9e_4980_800f_a1c793590154"
 		tabIcon="css:fa-solid fa-diagram-project"
 	>
-		<tabLabel key="dynamic.e94eda96-c19c-4cf8-a3c3-2b353f55bb89">
+		<tabLabel key="dynamic.b66332eb-b470-493b-a3db-d1aed30773eb">
 			<en>Flowchart</en>
 			<de>Flussdiagramm</de>
 		</tabLabel>
 		<components>
-			<layout-reference resource="com.top_logic.demo/technical/components/flowchart/innerLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/flowchart1/innerLayout.layout.xml"/>
 		</components>
 	</arguments>
 </config:template-call>

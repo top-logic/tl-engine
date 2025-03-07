@@ -147,6 +147,13 @@ public abstract class SQLTransformation<A> implements SQLVisitor<SQLPart, A> {
 	}
 
 	@Override
+	public SQLPart visitSQLLike(SQLLike sql, A arg) {
+		SQLExpression expr = transform(sql.getExpr(), arg);
+
+		return composeSQLLike(sql, expr, arg);
+	}
+
+	@Override
 	public SQLPart visitSQLCast(SQLCast sql, A arg) {
 		SQLExpression expr = transform(sql.getExpr(), arg);
 
@@ -305,6 +312,9 @@ public abstract class SQLTransformation<A> implements SQLVisitor<SQLPart, A> {
 	/** @see #composeSQLQuery(SQLQuery, SQLStatement, Object) */
 	protected abstract SQLPart composeSQLBinaryExpression(SQLBinaryExpression sql, SQLExpression leftExpr,
 			SQLExpression rightExpr, A arg);
+
+	/** @see #composeSQLQuery(SQLQuery, SQLStatement, Object) */
+	protected abstract SQLPart composeSQLLike(SQLLike sql, SQLExpression expr, A arg);
 
 	/** @see #composeSQLQuery(SQLQuery, SQLStatement, Object) */
 	protected abstract SQLPart composeSQLCast(SQLCast sql, SQLExpression expr, A arg);

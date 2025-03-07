@@ -24,6 +24,11 @@ public class DefaultSQLVisitor<R, A> implements SQLVisitor<R, A> {
 	}
 
 	@Override
+	public R visitSQLLike(SQLLike sql, A arg) {
+		return visitSQLExpression(sql, arg);
+	}
+
+	@Override
 	public R visitSQLCast(SQLCast sql, A arg) {
 		return visitSQLExpression(sql, arg);
 	}

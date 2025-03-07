@@ -86,6 +86,11 @@ public interface SQLVisitor<R,A> {
 	R visitSQLBinaryExpression(SQLBinaryExpression sql, A arg);
 	
 	/**
+	 * Visit case for {@link SQLLike}.
+	 */
+	R visitSQLLike(SQLLike sql, A arg);
+
+	/**
 	 * Visit case for {@link SQLCast}.
 	 */
 	R visitSQLCast(SQLCast sql, A arg);

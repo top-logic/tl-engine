@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments buttonbar="true">
+		<name key="dynamic.2f35c33d-c262-44a5-8348-66a660f59d7c">
+			<en>Product form</en>
+			<de>Produktformular</de>
+		</name>
+	</arguments>
+</config:template-call>

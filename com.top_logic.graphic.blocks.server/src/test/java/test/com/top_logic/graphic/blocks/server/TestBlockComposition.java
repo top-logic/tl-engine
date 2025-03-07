@@ -27,6 +27,7 @@ import com.top_logic.graphic.blocks.model.connector.ConnectorTypes;
 import com.top_logic.graphic.blocks.model.factory.BlockFactory;
 import com.top_logic.graphic.blocks.server.svg.SvgTagWriter;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
+import com.top_logic.graphic.flow.server.ui.AWTContext;
 import com.top_logic.mig.html.HTMLConstants;
 
 /**

@@ -36,6 +36,21 @@ public class VerticalLayout extends AbstractDrawElement {
 	}
 
 	/**
+	 * The elements to arrange in a column.
+	 */
+	public List<DrawElement> getRows() {
+		return _rows;
+	}
+
+	/**
+	 * @see #getRows()
+	 */
+	public VerticalLayout setRows(List<DrawElement> rows) {
+		_rows = rows;
+		return this;
+	}
+
+	/**
 	 * Space between elements.
 	 * 
 	 * <p>
@@ -51,6 +66,21 @@ public class VerticalLayout extends AbstractDrawElement {
 	 */
 	public VerticalLayout setGap(double gap) {
 		_gap = gap;
+		return this;
+	}
+
+	/**
+	 * How to distribute additional space.
+	 */
+	public SpaceDistribution getFill() {
+		return _fill;
+	}
+
+	/**
+	 * @see #getFill()
+	 */
+	public VerticalLayout setFill(SpaceDistribution fill) {
+		_fill = fill;
 		return this;
 	}
 

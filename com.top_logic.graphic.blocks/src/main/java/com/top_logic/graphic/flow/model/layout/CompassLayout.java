@@ -28,7 +28,6 @@ import com.top_logic.graphic.flow.model.EmptyBlock;
  * +----------------------+
  * hpadding        hpadding
  * </pre>
- * 
  */
 public class CompassLayout extends AbstractDrawElement {
 
@@ -47,6 +46,81 @@ public class CompassLayout extends AbstractDrawElement {
 	private double _vPadding;
 
 	private double _centerHeight;
+
+	/**
+	 * The content element.
+	 */
+	public DrawElement getCenter() {
+		return _center;
+	}
+
+	/**
+	 * @see #getCenter()
+	 */
+	public CompassLayout setCenter(DrawElement center) {
+		_center = center;
+		return this;
+	}
+
+	/**
+	 * The title element.
+	 */
+	public DrawElement getNorth() {
+		return _north;
+	}
+
+	/**
+	 * @see #getNorth()
+	 */
+	public CompassLayout setNorth(DrawElement north) {
+		_north = north;
+		return this;
+	}
+
+	/**
+	 * The optional left sidebar element.
+	 */
+	public DrawElement getWest() {
+		return _west;
+	}
+
+	/**
+	 * @see #getWest()
+	 */
+	public CompassLayout setWest(DrawElement west) {
+		_west = west;
+		return this;
+	}
+
+	/**
+	 * The optional right sidebar element.
+	 */
+	public DrawElement getEast() {
+		return _east;
+	}
+
+	/**
+	 * @see #getEast()
+	 */
+	public CompassLayout setEast(DrawElement east) {
+		_east = east;
+		return this;
+	}
+
+	/**
+	 * The optional bottom border element.
+	 */
+	public DrawElement getSouth() {
+		return _south;
+	}
+
+	/**
+	 * @see #getSouth()
+	 */
+	public CompassLayout setSouth(DrawElement south) {
+		_south = south;
+		return this;
+	}
 
 	@Override
 	public void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {

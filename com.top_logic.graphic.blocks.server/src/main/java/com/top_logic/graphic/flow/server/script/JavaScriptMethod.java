@@ -221,6 +221,11 @@ public class JavaScriptMethod extends GenericMethod {
 		}
 	}
 
+	@Override
+	public Object getId() {
+		return _java;
+	}
+
 	private static class Converter {
 		private final int _index;
 

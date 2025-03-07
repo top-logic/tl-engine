@@ -11,8 +11,8 @@
 		</name>
 		<modelBuilder class="com.top_logic.graphic.flow.server.ui.ScriptFlowChartBuilder">
 			<create-chart><![CDATA[model -> flowChart(
-    flowPadding(all: 20, content: 
-        flowVertical(gap: 20, contents: all(`test.flowchart:FlowNode`).map(n -> 
+    flowPadding(all: 16, content: 
+        flowVertical(gap: 32, contents: all(`test.flowchart:FlowNode`).map(n -> 
             flowAlign(hAlign: "CENTER",  content: 
                 flowVertical([
                     {
@@ -38,8 +38,11 @@
                                             flowText($count)) : null
                                 },
                                 flowBorder(content:
-                                    flowFill(fill: $l.get(`test.flowchart:Location#part`).get(`test.flowchart:Part#color`), content: 
-                                        flowText($l.get(`test.flowchart:Location#part`))
+                                    flowFill(
+                                        fill: $l.get(`test.flowchart:Location#part`)
+                                            .get(`test.flowchart:Part#color`), 
+                                        content: 
+                                            flowText($l.get(`test.flowchart:Location#part`))
                                     )
                                 ),
                                 {
@@ -51,7 +54,10 @@
                                 }
                             ]
                         )
-                    )
+                    ),
+                    flowPadding(top: 8, content:
+                        flowBorder(
+                            flowImage($n.get(`test.flowchart:FlowNode#image`))))
                 ]))
             )
         )

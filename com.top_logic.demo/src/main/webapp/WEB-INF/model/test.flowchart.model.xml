@@ -92,6 +92,47 @@
 				/>
 			</attributes>
 		</class>
+		<class name="Product">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form columns="ONE">
+						<field
+							attribute="name"
+							fullQualifiedName="test.flowchart:Product#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="image"
+							fullQualifiedName="test.flowchart:Product#image"
+							type="tl.imagegallery:GalleryImage"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="image"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="tl.imagegallery:GalleryImage"
+				/>
+				<reference name="parts"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="FlowNode"
+				/>
+			</attributes>
+		</class>
 		<class name="Usage">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>

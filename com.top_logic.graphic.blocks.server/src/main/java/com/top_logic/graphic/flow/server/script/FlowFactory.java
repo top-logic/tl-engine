@@ -72,7 +72,7 @@ public class FlowFactory {
 			@BooleanDefault(true) boolean right,
 			@BooleanDefault(true) boolean bottom, 
 			@DoubleDefault(1.0) double thickness,
-			@StringDefault("black") String stroke,
+			@StringDefault("black") @ScriptConversion(ToStyle.class) String stroke,
 			double[] dashes) {
 		return new Border().setThickness(thickness).setStrokeStyle(stroke).setTop(top).setLeft(left).setRight(right)
 			.setBottom(bottom).setDashes(dashes).setContent(content);

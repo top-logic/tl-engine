@@ -5,11 +5,14 @@
  */
 package com.top_logic.graphic.blocks.client.control;
 
+import static com.top_logic.graphic.blocks.svg.SvgConstants.*;
+
 import java.awt.Color;
 
 import org.vectomatic.dom.svg.OMSVGDocument;
 import org.vectomatic.dom.svg.OMSVGElement;
 import org.vectomatic.dom.svg.OMSVGGElement;
+import org.vectomatic.dom.svg.OMSVGImageElement;
 import org.vectomatic.dom.svg.OMSVGLength;
 import org.vectomatic.dom.svg.OMSVGPathElement;
 import org.vectomatic.dom.svg.OMSVGSVGElement;
@@ -18,6 +21,8 @@ import org.vectomatic.dom.svg.OMSVGTransformList;
 import org.vectomatic.dom.svg.itf.ISVGTransformable;
 
 import com.top_logic.graphic.blocks.svg.SvgWriter;
+import com.top_logic.graphic.flow.param.ImageAlign;
+import com.top_logic.graphic.flow.param.ImageScale;
 import com.top_logic.graphic.svg.SvgUtil;
 
 /**
@@ -106,17 +111,17 @@ public class SVGBuilder implements SvgWriter {
 
 	@Override
 	public void setFillOpacity(double value) {
-		_current.setAttribute("fill-opacity", Double.toString(value));
+		_current.setAttribute(FILL_OPACITY_ATTR, Double.toString(value));
 	}
 
 	@Override
 	public void setStrokeOpacity(double value) {
-		_current.setAttribute("stroke-opacity", Double.toString(value));
+		_current.setAttribute(STROKE_OPACITY_ATTR, Double.toString(value));
 	}
 
 	@Override
 	public void setStrokeWidth(double value) {
-		_current.setAttribute("stroke-width", Double.toString(value));
+		_current.setAttribute(STROKE_WIDTH_ATTR, Double.toString(value));
 	}
 
 	@Override
@@ -126,7 +131,7 @@ public class SVGBuilder implements SvgWriter {
 
 	@Override
 	public void setFill(String style) {
-		_current.setAttribute("fill", style);
+		_current.setAttribute(FILL_ATTR, style);
 	}
 
 	@Override
@@ -136,12 +141,12 @@ public class SVGBuilder implements SvgWriter {
 
 	@Override
 	public void setStroke(String style) {
-		_current.setAttribute("stroke", style);
+		_current.setAttribute(STROKE_ATTR, style);
 	}
 
 	@Override
 	public void setStrokeDasharray(double... dashes) {
-		_current.setAttribute("stroke-dasharray", SvgUtil.valueList(dashes));
+		_current.setAttribute(STROKE_DASHARRAY_ATTR, SvgUtil.valueList(dashes));
 	}
 
 	@Override
@@ -234,17 +239,25 @@ public class SVGBuilder implements SvgWriter {
 
 	@Override
 	public void writeCssClass(String cssClass) {
-		_current.setAttribute("class", cssClass);
+		_current.setAttribute(CLASS_ATTR, cssClass);
 	}
 
 	@Override
 	public void writeId(String id) {
-		_current.setAttribute("id", id);
+		_current.setAttribute(ID_ATTR, id);
 	}
 
 	@Override
 	public void text(double x, double y, String text) {
 		appendChild(_doc.createSVGTextElement((float) x, (float) y, OMSVGLength.SVG_LENGTHTYPE_PX, text));
+	}
+
+	@Override
+	public void image(double x, double y, double width, double height, String href, ImageAlign align,
+			ImageScale scale) {
+		OMSVGImageElement img = _doc.createSVGImageElement((float) x, (float) y, (float) width, (float) height, href);
+		img.setAttribute(PRESERVE_ASPECT_RATIO_ATTR, align + " " + scale);
+		appendChild(img);
 	}
 
 	private void setParent(OMSVGElement next) {

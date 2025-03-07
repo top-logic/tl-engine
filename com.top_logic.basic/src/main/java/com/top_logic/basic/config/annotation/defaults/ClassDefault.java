@@ -24,7 +24,7 @@ import com.top_logic.basic.config.annotation.TagName;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-@Target({ ElementType.METHOD, ElementType.FIELD })
+@Target({ ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER })
 @Retention(RetentionPolicy.RUNTIME)
 @TagName("class-default")
 public @interface ClassDefault {

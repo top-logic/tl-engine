@@ -5,11 +5,13 @@
  */
 package com.top_logic.graphic.flow.server.script;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
@@ -22,11 +24,13 @@ import com.top_logic.basic.config.annotation.defaults.DoubleDefault;
 import com.top_logic.basic.config.annotation.defaults.FloatDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.SearchExpressionFactory;
+import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
@@ -118,90 +122,140 @@ public class JavaScriptMethod extends GenericMethod {
 				List<Converter> conversions = new ArrayList<>();
 				for (int n = 0; n < parameters.length; n++) {
 					Parameter p = parameters[n];
-					if (p.getAnnotation(Mandatory.class) != null) {
-						descriptor.mandatory(p.getName());
-					} else {
-						Object defaultValue;
-						Class<?> type = p.getType();
-						if (type == double.class) {
-							DoubleDefault defAnnotation = p.getAnnotation(DoubleDefault.class);
-							defaultValue = Double.valueOf(defAnnotation == null ? 0 : defAnnotation.value());
-							conversions.add(new Converter(n,
-								input -> input instanceof Double ? input : ((Number) input).doubleValue()));
-						} else if (type == Double.class) {
-							DoubleDefault defAnnotation = p.getAnnotation(DoubleDefault.class);
-							defaultValue = defAnnotation == null ? null : Double.valueOf(defAnnotation.value());
-							conversions.add(new Converter(n,
-								input -> input instanceof Double ? input
-									: input == null ? null : Double.valueOf(((Number) input).doubleValue())));
-						} else if (type == float.class) {
-							FloatDefault defAnnotation = p.getAnnotation(FloatDefault.class);
-							defaultValue = Float.valueOf(defAnnotation == null ? 0 : defAnnotation.value());
-							conversions.add(new Converter(n,
-								input -> input instanceof Float ? input : ((Number) input).floatValue()));
-						} else if (type == Float.class) {
-							FloatDefault defAnnotation = p.getAnnotation(FloatDefault.class);
-							defaultValue = defAnnotation == null ? null : Float.valueOf(defAnnotation.value());
-							conversions.add(new Converter(n,
-								input -> input instanceof Float ? input
-									: input == null ? null : Float.valueOf(((Number) input).floatValue())));
-						} else if (type == int.class) {
-							IntDefault defAnnotation = p.getAnnotation(IntDefault.class);
-							defaultValue = Integer.valueOf(defAnnotation == null ? 0 : defAnnotation.value());
-							conversions.add(new Converter(n,
-								input -> input instanceof Integer ? input : ((Number) input).intValue()));
-						} else if (type == Integer.class) {
-							IntDefault defAnnotation = p.getAnnotation(IntDefault.class);
-							defaultValue = defAnnotation == null ? null : Integer.valueOf(defAnnotation.value());
-							conversions.add(new Converter(n,
-								input -> input instanceof Integer ? input
-									: input == null ? null : Integer.valueOf(((Number) input).intValue())));
-						} else if (type == long.class) {
-							LongDefault defAnnotation = p.getAnnotation(LongDefault.class);
-							defaultValue = Long.valueOf(defAnnotation == null ? 0 : defAnnotation.value());
-							conversions.add(new Converter(n,
-								input -> input instanceof Long ? input : ((Number) input).longValue()));
-						} else if (type == Long.class) {
-							LongDefault defAnnotation = p.getAnnotation(LongDefault.class);
-							defaultValue = defAnnotation == null ? null : Long.valueOf(defAnnotation.value());
-							conversions.add(new Converter(n,
-								input -> input instanceof Long ? input
-									: input == null ? null : Long.valueOf(((Number) input).longValue())));
-						} else if (type == boolean.class) {
-							BooleanDefault defAnnotation = p.getAnnotation(BooleanDefault.class);
-							defaultValue = Boolean.valueOf(defAnnotation == null ? false : defAnnotation.value());
-							conversions.add(new Converter(n,
-								input -> input instanceof Boolean ? input : SearchExpression.asBoolean(input)));
-						} else if (type == Boolean.class) {
-							BooleanDefault defAnnotation = p.getAnnotation(BooleanDefault.class);
-							defaultValue = defAnnotation == null ? null : Boolean.valueOf(defAnnotation.value());
-							conversions.add(new Converter(n,
-								input -> input instanceof Boolean ? input
-									: input == null ? null : SearchExpression.asBoolean(input)));
-						} else if (type.isEnum()) {
-							defaultValue = type.getEnumConstants()[0];
-							Method valueOf = type.getMethod("valueOf", String.class);
-							conversions.add(new Converter(n, input -> {
-								if (input instanceof String) {
-									try {
-										return valueOf.invoke(null, input);
-									} catch (InvocationTargetException | IllegalAccessException
-											| IllegalArgumentException ex) {
-										throw new RuntimeException(ex);
-									}
-								}
-								return input;
-							}));
-						} else {
-							defaultValue = null;
+					{
+						Function<Object, Object> converter = converter(p.getType());
+
+						if (converter != null) {
+							conversions.add(new Converter(n, converter));
 						}
-						descriptor.optional(p.getName(), () -> SearchExpressionFactory.literal(defaultValue));
+
+						if (p.getAnnotation(Mandatory.class) != null) {
+							descriptor.mandatory(p.getName());
+						} else {
+							Object defaultValue = defaultValue(p);
+							descriptor.optional(p.getName(), () -> SearchExpressionFactory.literal(defaultValue));
+						}
 					}
 				}
 				_descriptor = descriptor.build();
 				_conversions = conversions.toArray(new Converter[0]);
-			} catch (ClassNotFoundException | NoSuchMethodException | SecurityException ex) {
+			} catch (ClassNotFoundException | SecurityException | NoSuchMethodException ex) {
 				throw new RuntimeException(ex);
+			}
+		}
+
+		private Object defaultValue(Parameter p) {
+			Class<?> type = p.getType();
+			if (type == double.class) {
+				DoubleDefault defAnnotation = p.getAnnotation(DoubleDefault.class);
+				return Double.valueOf(defAnnotation == null ? 0 : defAnnotation.value());
+			} else if (type == Double.class) {
+				DoubleDefault defAnnotation = p.getAnnotation(DoubleDefault.class);
+				return defAnnotation == null ? null : Double.valueOf(defAnnotation.value());
+			} else if (type == float.class) {
+				FloatDefault defAnnotation = p.getAnnotation(FloatDefault.class);
+				return Float.valueOf(defAnnotation == null ? 0 : defAnnotation.value());
+			} else if (type == Float.class) {
+				FloatDefault defAnnotation = p.getAnnotation(FloatDefault.class);
+				return defAnnotation == null ? null : Float.valueOf(defAnnotation.value());
+			} else if (type == int.class) {
+				IntDefault defAnnotation = p.getAnnotation(IntDefault.class);
+				return Integer.valueOf(defAnnotation == null ? 0 : defAnnotation.value());
+			} else if (type == Integer.class) {
+				IntDefault defAnnotation = p.getAnnotation(IntDefault.class);
+				return defAnnotation == null ? null : Integer.valueOf(defAnnotation.value());
+			} else if (type == long.class) {
+				LongDefault defAnnotation = p.getAnnotation(LongDefault.class);
+				return Long.valueOf(defAnnotation == null ? 0 : defAnnotation.value());
+			} else if (type == Long.class) {
+				LongDefault defAnnotation = p.getAnnotation(LongDefault.class);
+				return defAnnotation == null ? null : Long.valueOf(defAnnotation.value());
+			} else if (type == boolean.class) {
+				BooleanDefault defAnnotation = p.getAnnotation(BooleanDefault.class);
+				return Boolean.valueOf(defAnnotation == null ? false : defAnnotation.value());
+			} else if (type == Boolean.class) {
+				BooleanDefault defAnnotation = p.getAnnotation(BooleanDefault.class);
+				return defAnnotation == null ? null : Boolean.valueOf(defAnnotation.value());
+			} else if (type == String.class) {
+				StringDefault defAnnotation = p.getAnnotation(StringDefault.class);
+				return defAnnotation == null ? null : defAnnotation.value();
+			} else if (type.isEnum()) {
+				return type.getEnumConstants()[0];
+			} else {
+				return null;
+			}
+		}
+
+		private Function<Object, Object> converter(Class<?> type) throws NoSuchMethodException, SecurityException {
+			if (type == double.class) {
+				return input -> input instanceof Double ? input : ((Number) input).doubleValue();
+			} else if (type == Double.class) {
+				return 
+					input -> input instanceof Double ? input
+						: input == null ? null : Double.valueOf(((Number) input).doubleValue());
+			} else if (type == float.class) {
+				return 
+					input -> input instanceof Float ? input : ((Number) input).floatValue();
+			} else if (type == Float.class) {
+				return 
+					input -> input instanceof Float ? input
+						: input == null ? null : Float.valueOf(((Number) input).floatValue());
+			} else if (type == int.class) {
+				return 
+					input -> input instanceof Integer ? input : ((Number) input).intValue();
+			} else if (type == Integer.class) {
+				return 
+					input -> input instanceof Integer ? input
+						: input == null ? null : Integer.valueOf(((Number) input).intValue());
+			} else if (type == long.class) {
+				return 
+				input -> input instanceof Long ? input : ((Number) input).longValue();
+			} else if (type == Long.class) {
+				return 
+					input -> input instanceof Long ? input
+						: input == null ? null : Long.valueOf(((Number) input).longValue());
+			} else if (type == boolean.class) {
+				return 
+					input -> input instanceof Boolean ? input : SearchExpression.asBoolean(input);
+			} else if (type == Boolean.class) {
+				return 
+					input -> input instanceof Boolean ? input
+						: input == null ? null : SearchExpression.asBoolean(input);
+			} else if (type == String.class) {
+				return 
+					input -> input instanceof String ? 
+						input : 
+							(input == null ? null : ToString.toString(input));
+			} else if (type.isEnum()) {
+				Method valueOf = type.getMethod("valueOf", String.class);
+				return input -> {
+					if (input instanceof String) {
+						try {
+							return valueOf.invoke(null, input);
+						} catch (InvocationTargetException | IllegalAccessException
+								| IllegalArgumentException ex) {
+							throw new RuntimeException(ex);
+						}
+					}
+					return input;
+				};
+			} else if (type.isArray()) {
+				Class<?> componentType = type.componentType();
+				Function<Object, Object> inner = converter(componentType);
+
+				return input -> {
+					if (input instanceof Collection<?> coll) {
+						Object result = Array.newInstance(componentType, coll.size());
+						int index = 0;
+						for (Object x : coll) {
+							Array.set(result, index++, inner.apply(x));
+						}
+						return result;
+					}
+					return input;
+				};
+			} else {
+				return null;
 			}
 		}
 

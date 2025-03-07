@@ -26,6 +26,9 @@ public class SvgUtil {
 		return buffer.toString();
 	}
 
+	/**
+	 * Converts the given {@link Color} to a style value usable in HTML.
+	 */
 	public static String html(Color color) {
 		StringBuilder buffer = new StringBuilder();
 		buffer.append('#');
@@ -43,8 +46,8 @@ public class SvgUtil {
 		String hex = Integer.toHexString(value);
 		if (hex.length() < 2) {
 			buffer.append('0');
-			buffer.append(hex);
 		}
+		buffer.append(hex);
 	}
 
 }

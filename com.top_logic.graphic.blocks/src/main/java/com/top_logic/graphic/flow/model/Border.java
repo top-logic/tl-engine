@@ -28,6 +28,8 @@ public class Border extends Decoration {
 
 	private boolean _right = true;
 
+	private double[] _dashes = null;
+
 	/**
 	 * The stroke width to draw.
 	 */
@@ -55,6 +57,21 @@ public class Border extends Decoration {
 	 */
 	public Border setStrokeStyle(String style) {
 		_strokeStyle = style;
+		return this;
+	}
+
+	/**
+	 * The dash pattern of the border.
+	 */
+	public double[] getDashes() {
+		return _dashes;
+	}
+
+	/**
+	 * @see #getDashes()
+	 */
+	public Border setDashes(double[] dashes) {
+		_dashes = dashes;
 		return this;
 	}
 
@@ -180,6 +197,9 @@ public class Border extends Decoration {
 		out.beginPath();
 		out.setStrokeWidth(_thickness);
 		out.setStroke(_strokeStyle);
+		if (_dashes != null) {
+			out.setStrokeDasharray(_dashes);
+		}
 		out.setFill("none");
 		out.beginData();
 		out.moveToAbs(getX() + (_left ? radius : 0), getY() + radius);
@@ -199,7 +219,7 @@ public class Border extends Decoration {
 			out.moveToAbs(getX() + radius, getY() + getHeight());
 		}
 		if (_left) {
-			if (_top) {
+			if (_top && _right && _bottom) {
 				out.closePath();
 			} else {
 				out.lineToAbs(getX() + radius, getY());

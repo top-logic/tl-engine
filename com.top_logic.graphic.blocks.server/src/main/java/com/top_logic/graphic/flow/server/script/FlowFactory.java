@@ -83,7 +83,7 @@ public class FlowFactory {
 	 */
 	public static Decoration flowFill(
 			@Mandatory DrawElement content,
-			String fill) {
+			@StringDefault("gray") @ScriptConversion(ToStyle.class) String fill) {
 		return new Fill().setFillStyle(fill).setContent(content);
 	}
 

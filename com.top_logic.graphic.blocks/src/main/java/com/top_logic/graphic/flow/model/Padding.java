@@ -23,7 +23,65 @@ public class Padding extends Decoration {
 
 	private double _bottom;
 
-	private DrawElement _content;
+	/**
+	 * The top padding.
+	 */
+	public double getTop() {
+		return _top;
+	}
+
+	/**
+	 * @see #getTop()
+	 */
+	public Padding setTop(double top) {
+		_top = top;
+		return this;
+	}
+
+	/**
+	 * The left padding.
+	 */
+	public double getLeft() {
+		return _left;
+	}
+
+	/**
+	 * @see #getLeft()
+	 */
+	public Padding setLeft(double left) {
+		_left = left;
+		return this;
+	}
+
+	/**
+	 * The right padding.
+	 */
+	public double getRight() {
+		return _right;
+	}
+
+	/**
+	 * @see #getRight()
+	 */
+	public Padding setRight(double right) {
+		_right = right;
+		return this;
+	}
+
+	/**
+	 * The bottom padding.
+	 */
+	public double getBottom() {
+		return _bottom;
+	}
+
+	/**
+	 * @see #getBottom()
+	 */
+	public Padding setBottom(double bottom) {
+		_bottom = bottom;
+		return this;
+	}
 
 	@Override
 	public void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
@@ -33,10 +91,11 @@ public class Padding extends Decoration {
 		double x = offsetX + _left;
 		double y = offsetY + _top;
 
-		_content.computeIntrinsicSize(context, x, y);
+		DrawElement content = getContent();
+		content.computeIntrinsicSize(context, x, y);
 
-		setWidth(_left + _content.getWidth() + _right);
-		setHeight(_top + _content.getHeight() + _bottom);
+		setWidth(_left + content.getWidth() + _right);
+		setHeight(_top + content.getHeight() + _bottom);
 	}
 
 	@Override
@@ -44,7 +103,7 @@ public class Padding extends Decoration {
 		setX(offsetX);
 		setY(offsetY);
 
-		_content.distributeSize(context, offsetX + _left, offsetY + _top, width - _left - _right,
+		getContent().distributeSize(context, offsetX + _left, offsetY + _top, width - _left - _right,
 			height - _top - _bottom);
 
 		setWidth(width);

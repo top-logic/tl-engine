@@ -46,7 +46,7 @@ public class Align extends Decoration {
 	/**
 	 * @see #getVAlign()
 	 */
-	public Align setvAlign(VAlign vAlign) {
+	public Align setVAlign(VAlign vAlign) {
 		_vAlign = vAlign;
 		return this;
 	}

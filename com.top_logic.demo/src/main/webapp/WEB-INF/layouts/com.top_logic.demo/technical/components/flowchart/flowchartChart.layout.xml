@@ -11,11 +11,45 @@
 		</name>
 		<modelBuilder class="com.top_logic.graphic.flow.server.ui.ScriptFlowChartBuilder">
 			<create-chart><![CDATA[model -> flowChart(
-    flowVertical(
-        all(`test.flowchart:FlowNode`)
-        .map(n -> flowBorder(
-            flowPadding(
-                flowText($n.get(`test.flowchart:FlowNode#name`)), all: 2)))
+    flowPadding(all: 20, 
+        content: flowVertical(gap: 20,
+            contents: all(`test.flowchart:FlowNode`)
+            .map(n -> flowAlign(hAlign:"CENTER", 
+                content: flowVertical([
+                    {
+                        marker = $n.get(`test.flowchart:FlowNode#marker`);
+                        $marker ? flowAlign(hAlign: "CENTER",
+                            content: flowBorder(stroke: "red", dashes: [5, 5],
+                                content: flowPadding(all: 4,
+                                    content: flowText($marker))
+                            )
+                        ) : null
+                    },
+                    flowAlign(hAlign: "CENTER",
+                        content: flowPadding(all: 4,
+                            content: flowText($n.get(`test.flowchart:FlowNode#name`))
+                    )),
+                    flowGrid(
+                        gapY: -1,
+                        contents: $n.get(`test.flowchart:FlowNode#locations`).map(l -> 
+                            [
+                                {
+                                    count = $l.get(`test.flowchart:Location#count`);
+                                    $count != null ? 
+                                        flowBorder(right: false, 
+                                            content: flowText($count)) : null
+                                },
+                                flowBorder(
+                                    flowText($l.get(`test.flowchart:Location#part`))),
+                                flowAlign(
+                                    content: flowBorder(left: false,
+                                        content: flowText($l.get(`test.flowchart:Location#usages`))))
+                            ]
+                        )
+                    )
+                ]))
+            )
+        )
     )
 )]]></create-chart>
 		</modelBuilder>

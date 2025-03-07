@@ -13,8 +13,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Function;
 
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -123,7 +124,7 @@ public class JavaScriptMethod extends GenericMethod {
 				for (int n = 0; n < parameters.length; n++) {
 					Parameter p = parameters[n];
 					{
-						Function<Object, Object> converter = converter(p.getType());
+						ValueConverter converter = converter(p);
 
 						if (converter != null) {
 							conversions.add(new Converter(n, converter));
@@ -186,7 +187,21 @@ public class JavaScriptMethod extends GenericMethod {
 			}
 		}
 
-		private Function<Object, Object> converter(Class<?> type) throws NoSuchMethodException, SecurityException {
+		private ValueConverter converter(Parameter param) throws NoSuchMethodException, SecurityException {
+			ScriptConversion annotation = param.getAnnotation(ScriptConversion.class);
+			if (annotation != null) {
+				Class<? extends ValueConverter> implClass = annotation.value();
+				try {
+					ValueConverter result = ConfigUtil.getInstance(implClass);
+					return result;
+				} catch (ConfigurationException ex) {
+					Logger.error("Cannot instantiate converter for: " + param, ex, JavaScriptMethod.class);
+				}
+			}
+			return converter(param.getType());
+		}
+
+		private ValueConverter converter(Class<?> type) throws NoSuchMethodException, SecurityException {
 			if (type == double.class) {
 				return input -> input instanceof Double ? input : ((Number) input).doubleValue();
 			} else if (type == Double.class) {
@@ -241,20 +256,21 @@ public class JavaScriptMethod extends GenericMethod {
 				};
 			} else if (type.isArray()) {
 				Class<?> componentType = type.componentType();
-				Function<Object, Object> inner = converter(componentType);
+				ValueConverter inner = converter(componentType);
 
 				return input -> {
 					if (input instanceof Collection<?> coll) {
 						Object result = Array.newInstance(componentType, coll.size());
 						int index = 0;
 						for (Object x : coll) {
-							Array.set(result, index++, inner.apply(x));
+							Array.set(result, index++, inner.fromScript(x));
 						}
 						return result;
 					}
 					return input;
 				};
 			} else {
+
 				return null;
 			}
 		}
@@ -283,18 +299,18 @@ public class JavaScriptMethod extends GenericMethod {
 	private static class Converter {
 		private final int _index;
 
-		private final Function<Object, Object> _conversion;
+		private final ValueConverter _conversion;
 
 		/**
 		 * Creates a {@link JavaScriptMethod.Converter}.
 		 */
-		public Converter(int index, Function<Object, Object> conversion) {
+		public Converter(int index, ValueConverter converter) {
 			_index = index;
-			_conversion = conversion;
+			_conversion = converter;
 		}
 
 		public void convert(Object[] args) {
-			args[_index] = _conversion.apply(args[_index]);
+			args[_index] = _conversion.fromScript(args[_index]);
 		}
 	}
 }

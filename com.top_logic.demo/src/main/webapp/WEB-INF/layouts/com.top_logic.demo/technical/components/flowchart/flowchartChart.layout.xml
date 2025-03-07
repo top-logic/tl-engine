@@ -2,7 +2,7 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	template="/home/bhu/devel/tl-engine/com.top_logic.graphic.blocks.server/src/main/webapp/WEB-INF/layout/tl-graphic-blocks-server/flowChart.template.xml"
+	template="tl-graphic-blocks-server/flowChart.template.xml"
 >
 	<arguments>
 		<name key="dynamic.d4066e09-7e0b-46d1-b6ee-75ed80cd16b6">
@@ -11,7 +11,12 @@
 		</name>
 		<modelBuilder class="com.top_logic.graphic.flow.server.ui.ScriptFlowChartBuilder">
 			<create-chart><![CDATA[model -> flowChart(
-    flowPadding(flowText("Hello"), all: 20)
+    flowVertical(
+        all(`test.flowchart:FlowNode`)
+        .map(n -> flowBorder(
+            flowPadding(
+                flowText($n.get(`test.flowchart:FlowNode#name`)), all: 2)))
+    )
 )]]></create-chart>
 		</modelBuilder>
 	</arguments>

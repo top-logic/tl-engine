@@ -17,6 +17,11 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
+	 * @en You are not authorized for this processing.
+	 */
+	public static ResKey FINISH_TASK_ACCESS_DENIED;
+
+	/**
 	 * @en The form contains invalid values.
 	 */
 	public static ResKey FINISH_TASK_DISABLED;

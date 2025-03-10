@@ -146,6 +146,9 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 
 		private static final ExecutableState FINISH_TASK_DISABLED_STATE = ExecutableState.createDisabledState(I18NConstants.FINISH_TASK_DISABLED);
 
+		private static final ExecutableState FINISH_TASK_ACCESS_DENIED_STATE =
+			ExecutableState.createDisabledState(I18NConstants.FINISH_TASK_ACCESS_DENIED);
+
 		@Override
 		public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> someValues) {
 			if (!(model instanceof Token)) {
@@ -162,17 +165,30 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 			// Get the current person
 			Person currentPerson = TLContext.currentUser();
 
-			if (GuiEngine.getInstance().isActor(currentPerson, currentLane, currentProcessExecution)
-				|| currentPerson.isAdmin()) {
-				// Only check form validity if user is an actor
-				EditComponent editComponent = (EditComponent) aComponent;
-				if (editComponent.getFormContext().checkAll()) {
-					return ExecutableState.EXECUTABLE;
-				}
+			// Check if the current person has access rights
+			if (!(GuiEngine.getInstance().isActor(currentPerson, currentLane, currentProcessExecution)
+				|| currentPerson.isAdmin())) {
+				return FINISH_TASK_ACCESS_DENIED_STATE;
+			}
+
+			// Only check form validity if user is an actor
+			EditComponent editComponent = (EditComponent) aComponent;
+			if (editComponent.getFormContext().checkAll()) {
+				return ExecutableState.EXECUTABLE;
 			}
 			return FINISH_TASK_DISABLED_STATE;
 		}
 
+	}
+
+	@Override
+	protected boolean receiveModelCreatedEvent(Object aModel, Object someChangedBy) {
+		if (aModel instanceof Token) {
+			Token currentToken = (Token) aModel;
+
+			setModel(currentToken);
+		}
+		return super.receiveModelCreatedEvent(aModel, someChangedBy);
 	}
 
 	/**

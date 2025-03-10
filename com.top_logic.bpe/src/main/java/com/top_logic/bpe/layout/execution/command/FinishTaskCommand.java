@@ -14,9 +14,12 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.bpe.bpml.model.Edge;
@@ -31,16 +34,18 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.basic.check.CheckScopeProvider;
+import com.top_logic.layout.basic.check.SelfCheckProvider;
 import com.top_logic.layout.basic.fragments.Fragments;
-import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
 import com.top_logic.layout.form.component.EditComponent;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.WarningsDialog;
 import com.top_logic.layout.form.component.WithPostCreateActions;
-import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.messagebox.MessageBox.MessageType;
+import com.top_logic.layout.structure.DialogClosedListener;
+import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
@@ -84,6 +89,11 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 		@Override
 		@FormattedDefault("css:ICON_PLAY")
 		ThemeImage getImage();
+
+		@Override
+		@ImplementationClassDefault(SelfCheckProvider.class)
+		@ItemDefault
+		PolymorphicConfiguration<CheckScopeProvider> getCheckScopeProvider();
 	}
 
 	private final List<PostCreateAction> _actions;
@@ -107,19 +117,19 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model, Map<String, Object> someArguments) {
 		Token token = (Token) model;
 
-		HandlerResult store = storeIfNecessary(aContext, aComponent);
-		if (!store.isSuccess()) {
-			return store;
-		}
-
 		Object context = someArguments.get(CONTEXT);
+		EditComponent editComponent = (EditComponent) aComponent;
+
 		if (context == CANCEL) {
-			// Ignore.
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
 		// Handle initial execution without context
 		if (context == null) {
+			// check if there is already a lock otherwise create it
+			if (!editComponent.isInEditMode()) {
+				editComponent.getLockHandler().acquireLock(model);
+			}
 			// Confirm/decide about how to progress.
 			GuiEngine engine = GuiEngine.getInstance();
 			Edge outgoing = GuiEngine.getSingleOutgoingEdge(token);
@@ -148,7 +158,7 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 					return suspended;
 				}
 				// no warnings or warnings are already acknowledged
-				return confirmFinish(aContext, token, warnings);
+				return confirmFinish(aContext, token, warnings, editComponent);
 			} else {
 				// Check for errors when no decision is needed
 				List<ResKey> errors = engine.checkErrors(token, outgoing);
@@ -158,9 +168,10 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 						.buttons(MessageBox.button(ButtonType.OK))
 						.confirm(aContext.getWindowScope());
 				}
-				return confirmFinish(aContext, token, warnings);
+				return confirmFinish(aContext, token, warnings, editComponent);
 			}
 		}
+
 
 		// Decision is already made.
 		Decision decision = (Decision) context;
@@ -174,9 +185,21 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	private HandlerResult confirmFinish(DisplayContext context, Token token, List<ResKey> warnings) {
+	private HandlerResult confirmFinish(DisplayContext context, Token token, List<ResKey> warnings,
+			EditComponent editComponent) {
 		HandlerResult suspended = HandlerResult.suspended();
-		new SelectTransitionDialog(token, suspended).open(context);
+		SelectTransitionDialog selectTransitionDialog = new SelectTransitionDialog(token, suspended);
+		selectTransitionDialog.getDialogModel().addListener(DialogModel.CLOSED_PROPERTY, new DialogClosedListener() {
+
+			@Override
+			public void handleDialogClosed(Object sender, Boolean oldValue, Boolean newValue) {
+				// if transition dialog is closed release lock if not in EditMode
+				if (!editComponent.isInEditMode()) {
+					editComponent.getLockHandler().releaseLock();
+				}
+			}
+		});
+		selectTransitionDialog.open(context);
 		return suspended;
 	}
 
@@ -195,25 +218,6 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 		}
 
 		return super.getResourceKey(component);
-	}
-
-	private HandlerResult storeIfNecessary(DisplayContext aContext, LayoutComponent aComponent) {
-		EditComponent editComponent = (EditComponent) aComponent;
-		FormContext formContext = editComponent.getFormContext();
-		if (formContext.isChanged()) {
-			if (formContext.checkAll()) {
-				if (editComponent.isInEditMode()) {
-					HandlerResult res = editComponent.getApplyClosure().executeCommand(aContext);
-					editComponent.setViewMode();
-					return res;
-				}
-			} else {
-				HandlerResult res = new HandlerResult();
-				AbstractApplyCommandHandler.fillHandlerResultWithErrors(formContext, res);
-				return res;
-			}
-		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

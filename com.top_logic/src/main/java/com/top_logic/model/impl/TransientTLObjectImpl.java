@@ -40,7 +40,7 @@ public class TransientTLObjectImpl extends TransientObject {
 
 	private Map<TLStructuredTypePart, Object> _values = new HashMap<>();
 
-	private Map<TLReference, Set<TLObject>> _referers = new HashMap<>();
+	private Map<TLStructuredTypePart, Set<TLObject>> _referers = new HashMap<>();
 
 	private TLObject _context;
 
@@ -128,11 +128,11 @@ public class TransientTLObjectImpl extends TransientObject {
 	}
 
 	private void addReferer(TLReference ref, TransientTLObjectImpl referer) {
-		_referers.computeIfAbsent(ref, x -> new HashSet<>()).add(referer);
+		_referers.computeIfAbsent(ref.getDefinition(), x -> new HashSet<>()).add(referer);
 	}
 
 	private void removeReferer(TLReference ref, TransientTLObjectImpl referer) {
-		Set<TLObject> referers = _referers.get(ref);
+		Set<TLObject> referers = _referers.get(ref.getDefinition());
 		if (referers != null) {
 			referers.remove(referer);
 		}
@@ -140,7 +140,7 @@ public class TransientTLObjectImpl extends TransientObject {
 
 	@Override
 	public Set<? extends TLObject> tReferers(TLReference ref) {
-		Set<TLObject> result = _referers.get(ref);
+		Set<TLObject> result = _referers.get(ref.getDefinition());
 		if (result == null) {
 			return Collections.emptySet();
 		}

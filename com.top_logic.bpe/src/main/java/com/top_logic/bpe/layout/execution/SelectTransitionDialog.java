@@ -501,8 +501,6 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 			}
 
 		});
-
-		setInitialSelection(field, edges);
 	}
 
 	private List<Decision> getNextEdges(Token token) {
@@ -547,43 +545,6 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 		// Sort decisions based on locale
 		res.sort(new DecisionComparator(TLContext.getLocale()));
 		return res;
-	}
-
-	private void setInitialSelection(SelectField field, List<Decision> options) {
-		if (options.size() == 1) {
-			field.setAsSingleSelection(options.iterator().next());
-			return;
-		}
-		Decision singlePossibleEdge = null;
-		boolean multiplePossibleEdges = false;
-		Decision defaultEdge = null;
-		optionsLoop:
-		for (Decision option : options) {
-			for (Edge edge : option.getPath()) {
-				List<ResKey> errors = GuiEngine.getInstance().checkErrors(_token, edge);
-				if (!errors.isEmpty()) {
-					// Select only possible edges
-					continue optionsLoop;
-				}
-			}
-
-			if (isDefaultEdge(option)) {
-				// Select default edge if exists
-				defaultEdge = option;
-				break;
-			}
-			if (singlePossibleEdge == null) {
-				singlePossibleEdge = option;
-			} else {
-				// Multiple possible edges.
-				multiplePossibleEdges = true;
-			}
-		}
-		if (defaultEdge != null) {
-			field.setAsSingleSelection(defaultEdge);
-		} else if (!multiplePossibleEdges && singlePossibleEdge != null) {
-			field.setAsSingleSelection(singlePossibleEdge);
-		}
 	}
 
 	private boolean isDefaultEdge(Decision option) {

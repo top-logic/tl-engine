@@ -207,7 +207,8 @@ public class WarningsDialog {
 	}
 
 	/**
-	 * Opens the WarningsDialog without using FormContext, taking a list of ResKey warnings instead.
+	 * Opens the {@link WarningsDialog} without using {@link FormContext}, taking a list of
+	 * {@link ResKey} warnings instead.
 	 *
 	 * @param scope
 	 *        The window to open the dialog in.
@@ -284,7 +285,9 @@ public class WarningsDialog {
 			MessageBox.button(ButtonType.CANCEL, expandWarnings));
 	}
 
-	// Inner class to handle warnings directly from the list of ResKey
+	/**
+	 * {@link Command} handling warnings directly from the list of {@link ResKey}.
+	 */
 	public static final class ShowWarningsWithoutFormContext implements Command {
 		private final List<ResKey> warnings;
 

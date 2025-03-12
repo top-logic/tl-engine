@@ -3,6 +3,8 @@
  */
 package com.top_logic.bpe.bpml.display;
 
+import com.top_logic.bpe.bpml.model.SequenceFlow;
+
 /**
  * Defines the types of conditions that can be applied to sequence flows.
  *
@@ -15,7 +17,7 @@ public enum RuleType {
 	DEFAULT,
 
 	/**
-	 * This is a special Condition, where the @Link{SequenceFlow} will be hidden.
+	 * This is a special Condition, where the {@link SequenceFlow} will be hidden.
 	 */
 	HIDDEN,
 

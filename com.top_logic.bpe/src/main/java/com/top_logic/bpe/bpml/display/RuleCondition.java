@@ -8,7 +8,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 
 /**
- * Defines conditions that govern sequence flow transitions
+ * Defines conditions that govern sequence flow transitions.
  *
  * @author <a href="mailto:Jonathan.Hüsing@top-logic.com">Jonathan Hüsing</a>
  */
@@ -21,7 +21,7 @@ public interface RuleCondition {
 	 * Evaluates condition against process state.
 	 *
 	 * @param process
-	 *        Current processExecution
+	 *        Current {@link ProcessExecution}
 	 * @return True if condition is satisfied
 	 */
 	Boolean getCondition(ProcessExecution process);

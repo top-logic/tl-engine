@@ -123,7 +123,7 @@ public class StandardRule extends AbstractConfiguredInstance<StandardRule.Config
 
 		/**
 		 * 
-		 * inner Class to determine the visibility of the Message input.
+		 * {@link Function1} determining the visibility of the Message input.
 		 *
 		 * @author <a href=mailto:Christian.Braun@top-logic.com>Christian Braun</a>
 		 */

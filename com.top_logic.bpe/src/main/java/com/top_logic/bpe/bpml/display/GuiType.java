@@ -9,7 +9,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
 
 /**
- * DO NOT USE.
+ * DO NOT USE. This is deprecated.
  * 
  * @deprecated Legacy annotation no longer in use. Kept for easier migration.
  */

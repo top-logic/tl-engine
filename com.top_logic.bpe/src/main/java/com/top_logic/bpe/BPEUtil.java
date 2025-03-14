@@ -198,7 +198,8 @@ public class BPEUtil {
 	}
 
 	/**
-	 * Creates a new token for the given ProcessExecution which is connected to the given node.
+	 * Creates a new token for the given {@link ProcessExecution} which is connected to the given
+	 * node.
 	 * 
 	 * @param execution
 	 *        The process execution

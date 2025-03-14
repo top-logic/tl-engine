@@ -19,8 +19,8 @@ public interface RuleCondition {
 	 * Tests, whether this condition is satisfied.
 	 *
 	 * @param process
-	 *        Current process execution object representing the state of the workflow to test the
-	 *        condition on.
+	 *        Current {@link ProcessExecution} object representing the state of the workflow to test
+	 *        the condition on.
 	 */
 	boolean getTestCondition(ProcessExecution process);
 

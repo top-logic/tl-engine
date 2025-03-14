@@ -71,7 +71,7 @@ public abstract class CommonStructuredTextAttributeStorage<C extends CommonStruc
 	@Override
 	public void init(TLStructuredTypePart attribute) {
 		super.init(attribute);
-		_imagesQuery = createQuery(getImagesTableName(), attribute, StaticItem.class);
+		_imagesQuery = createQuery(getImagesTableName(), attribute.getDefinition(), StaticItem.class);
 		_imagePreload = new AssociationCachePreload(_imagesQuery);
 	}
 
@@ -220,9 +220,14 @@ public abstract class CommonStructuredTextAttributeStorage<C extends CommonStruc
 		image.setAttributeValue(OBJECT_ATTRIBUTE_NAME, newOwner.tHandle());
 	}
 
-	/** Setter for the attribute in which the given image is stored. */
+	/**
+	 * Setter for the attribute in which the given image is stored.
+	 * <p>
+	 * Note: Not the given attribute itself but its definition is stored.
+	 * </p>
+	 */
 	protected void setAttribute(KnowledgeItem image, TLStructuredTypePart newAttribute) {
-		image.setAttributeValue(META_ATTRIBUTE_ATTRIBUTE_NAME, newAttribute.tHandle());
+		image.setAttributeValue(META_ATTRIBUTE_ATTRIBUTE_NAME, newAttribute.getDefinition().tHandle());
 	}
 
 	/** The file name of the image. */

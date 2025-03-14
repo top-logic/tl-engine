@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28375_replace_concrete_id_by_definition"
+		module="tl-model-wysiwyg"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_28375_replace_concrete_id_by_definition"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28298_add_group_member_options"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_28461_link_contacts_to_accounts"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_27517_Refactoring_User_Management"
+			module="tl-model-wysiwyg"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.element.model.migration.ChangeConcreteToDefinitionId"
+			id-columns="OBJECT_ID, FILENAME"
+			part-column="metaAttribute"
+			table="HTMLAttributeStorage"
+		/>
+		<processor class="com.top_logic.element.model.migration.ChangeConcreteToDefinitionId"
+			id-columns="OBJECT_ID, FILENAME, LANG"
+			part-column="metaAttribute"
+			table="I18NHTMLAttributeStorage"
+		/>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

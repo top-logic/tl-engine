@@ -12,6 +12,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.bpe.BPEUtil;
 import com.top_logic.bpe.bpml.model.Node;
+import com.top_logic.bpe.bpml.model.SequenceFlow;
 import com.top_logic.bpe.bpml.model.Task;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.Token;
@@ -27,12 +28,21 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.TLContext;
 
 /**
- * TODO jhu add comment
+ * A {@link GenericMethod}, that forces a transition in a {@link ProcessExecution} to a specified
+ * target {@link Task}.
+ * 
+ * <p>
+ * This method overrides the normal {@link SequenceFlow} by completing the current active
+ * {@link Token} and creating a new {@link Token} at the specified target {@link Task}. This allows
+ * administrators to move the {@link ProcessExecution} to a different state without following the
+ * regular transition paths.
+ * </p>
  *
  * @author <a href="mailto:Jonathan.Hüsing@top-logic.com">Jonathan Hüsing</a>
  */
 public class ForceTransition extends GenericMethod {
 
+	/** Creates a new {@link ForceTransition}. */
 	protected ForceTransition(String name, SearchExpression[] arguments) {
 		super(name, arguments);
 	}
@@ -47,6 +57,22 @@ public class ForceTransition extends GenericMethod {
 		return TLModelUtil.findType(TypeSpec.BOOLEAN_TYPE); // Return boolean
 	}
 
+	/**
+	 * Executes the forced transition between process {@link Node}s.
+	 * 
+	 * <p>
+	 * Completes the current {@link Token} and creates a new {@link Token} at the target
+	 * {@link Task}.
+	 * </p>
+	 * 
+	 * @param arguments
+	 *        Method arguments where: <code>arguments[0]</code> is the {@link ProcessExecution}
+	 *        instance, <code>arguments[1]</code> is the target {@link Task} to transition to
+	 * @param definitions
+	 *        Evaluation context
+	 * @return <code>true</code> if the transition was successful, <code>false</code> if any
+	 *         required argument is null or missing
+	 */
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		if (arguments.length < 2 || arguments[0] == null || arguments[1] == null) {

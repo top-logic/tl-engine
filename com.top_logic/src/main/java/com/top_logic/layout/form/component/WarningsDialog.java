@@ -207,8 +207,8 @@ public class WarningsDialog {
 	}
 
 	/**
-	 * Opens the {@link WarningsDialog} without using {@link FormContext}, taking a list of ResKey
-	 * warnings instead.
+	 * Opens the {@link WarningsDialog} without using {@link FormContext}, taking a list of
+	 * {@link ResKey} warnings instead.
 	 *
 	 * @param scope
 	 *        The window to open the dialog in.

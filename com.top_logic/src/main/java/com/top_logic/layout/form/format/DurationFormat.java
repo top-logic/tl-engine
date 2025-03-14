@@ -38,7 +38,16 @@ public class DurationFormat extends Format {
 
 	@Override
 	public StringBuffer format(Object obj, StringBuffer toAppendTo, FieldPosition pos) {
-		toAppendTo.append(format().getSpecification(obj));
+		if (obj instanceof Double) {
+			// Cast the Double to a long
+			long longValue = ((Double) obj).longValue();
+
+			// Use format specification with the long value
+			toAppendTo.append(format().getSpecification(longValue));
+		} else {
+			// Original behavior for non-Double objects
+			toAppendTo.append(format().getSpecification(obj));
+		}
 		return toAppendTo;
 	}
 

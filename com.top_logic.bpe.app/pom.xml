@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-core-internal</artifactId>
-		<version>0.0.1-CWS_27514_TL_7.9.1-SNAPSHOT</version>
+		<version>0.0.2-CWS_27514_TL_7.9.1-SNAPSHOT</version>
 		<relativePath>../tl-parent-core/internal</relativePath>
 	</parent>
 

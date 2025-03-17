@@ -467,8 +467,12 @@ public class HTMLTemplateFormProvider
 		@Override
 		public void renderProperty(DisplayContext context, TagWriter out, String propertyName) throws IOException {
 			Object varValue = _args.get(propertyName);
-			// Always render the value directly, even if null, and skip super call
-			render(context, out, varValue);
+			if (varValue != null || _args.containsKey(propertyName)) {
+				render(context, out, varValue);
+				return;
+			}
+
+			super.renderProperty(context, out, propertyName);
 		}
 
 		private void render(DisplayContext context, TagWriter out, Object value) throws IOException {

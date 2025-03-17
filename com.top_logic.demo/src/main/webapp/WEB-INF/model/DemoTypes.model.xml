@@ -216,7 +216,7 @@
 			<attributes>
 				<property name="name"
 					mandatory="true"
-					type="tl.core:String"
+					type="tl.core:Name"
 				/>
 				<reference name="parent"
 					kind="backwards"

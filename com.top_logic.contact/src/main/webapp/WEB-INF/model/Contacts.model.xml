@@ -74,7 +74,7 @@
 				>
 					<annotations>
 						<multi-line value="false"/>
-						<size-constraint upper-bound="40"/>
+						<size-constraint upper-bound="100"/>
 						<sort-order value="110.0"/>
 						<delete-protected/>
 					</annotations>
@@ -85,7 +85,7 @@
 				>
 					<annotations>
 						<multi-line value="false"/>
-						<size-constraint upper-bound="40"/>
+						<size-constraint upper-bound="100"/>
 						<sort-order value="120.0"/>
 						<delete-protected/>
 					</annotations>
@@ -107,7 +107,7 @@
 				>
 					<annotations>
 						<multi-line value="false"/>
-						<size-constraint upper-bound="40"/>
+						<size-constraint upper-bound="100"/>
 						<sort-order value="140.0"/>
 						<delete-protected/>
 					</annotations>
@@ -126,7 +126,7 @@
 				>
 					<annotations>
 						<multi-line value="false"/>
-						<size-constraint upper-bound="40"/>
+						<size-constraint upper-bound="100"/>
 						<sort-order value="160.0"/>
 						<delete-protected/>
 					</annotations>
@@ -152,7 +152,7 @@
 				>
 					<annotations>
 						<multi-line value="false"/>
-						<size-constraint upper-bound="40"/>
+						<size-constraint upper-bound="100"/>
 						<sort-order value="330.0"/>
 						<delete-protected/>
 					</annotations>
@@ -162,7 +162,7 @@
 				>
 					<annotations>
 						<multi-line value="false"/>
-						<size-constraint upper-bound="9"/>
+						<size-constraint upper-bound="100"/>
 						<sort-order value="500.0"/>
 						<delete-protected/>
 					</annotations>
@@ -172,7 +172,7 @@
 				>
 					<annotations>
 						<multi-line value="false"/>
-						<size-constraint upper-bound="10"/>
+						<size-constraint upper-bound="100"/>
 						<sort-order value="510.0"/>
 						<delete-protected/>
 					</annotations>

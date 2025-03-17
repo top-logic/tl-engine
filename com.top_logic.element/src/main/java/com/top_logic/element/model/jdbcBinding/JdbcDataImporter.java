@@ -541,11 +541,19 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 		return (PooledConnection connection) -> {
 			try (ResultSet resultSet = allRows.executeQuery(connection)) {
 				ImportRow cursor = cursor(resultSet);
+				/* Counting the rows explicitly is necessary. There is no method for getting the
+				 * number of rows from a result set. And using 'resultSet.getRow()' after the loop
+				 * always returns 0. The method is "optional" and apparently not supported by every
+				 * driver. */
+				int rowCount = 0;
+				int importCount = 0;
 				while (resultSet.next()) {
+					rowCount += 1;
 					TLClass createType = calcType(typeSelector, cursor);
 					if (createType == null) {
 						continue;
 					}
+					importCount += 1;
 					TLObject object = factory.createObject(createType);
 
 					for (RowReader loader : readers) {
@@ -573,6 +581,8 @@ public class JdbcDataImporter extends AbstractCommandHandler {
 						}
 					}
 				}
+				logInfo("Processed " + rowCount + " rows from table " + tableName + ". Imported " + importCount
+					+ " of these.");
 			}
 
 			for (TypeLoader subLoader : subLoaders) {

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28550_trim_name_typed_attributes"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_28298_polymorphic_groups"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<remove-annotations name="tl.core:Name">
+			<annotation class="com.top_logic.element.config.annotation.ConfigType"/>
+		</remove-annotations>
+		<add-annotations name="tl.core:Name">
+			<annotations>
+				<config-type value="NAME"/>
+			</annotations>
+		</add-annotations>
+	</processors>
+</migration>

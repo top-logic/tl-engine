@@ -117,7 +117,7 @@
 					
 					<annotations>
 						<supports-multiple/>
-						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="STRING"/>
+						<annotation config:interface="com.top_logic.element.config.annotation.ConfigType" value="NAME"/>
 					</annotations>
 				</datatype>
 			

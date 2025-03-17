@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28557_enlarge_contact_attributes"
+		module="tl-contact"
+	/>
+	<dependencies>
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
+			module="tl"
+		/>
+		<dependency name="Ticket_28298_polymorphic_groups"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28298_add_group_member_options"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_28461_link_contacts_to_accounts"
+			module="tl-contact"
+		/>
+	</dependencies>
+	<processors>
+		<remove-annotations name="Contacts:Contact.Company#department">
+			<annotation class="com.top_logic.model.annotate.TLSize"/>
+		</remove-annotations>
+		<remove-annotations name="Contacts:Contact.Company#street">
+			<annotation class="com.top_logic.model.annotate.TLSize"/>
+		</remove-annotations>
+		<remove-annotations name="Contacts:Contact.Company#city">
+			<annotation class="com.top_logic.model.annotate.TLSize"/>
+		</remove-annotations>
+		<remove-annotations name="Contacts:Contact.Company#state">
+			<annotation class="com.top_logic.model.annotate.TLSize"/>
+		</remove-annotations>
+		<remove-annotations name="Contacts:Contact.Company#sector">
+			<annotation class="com.top_logic.model.annotate.TLSize"/>
+		</remove-annotations>
+		<remove-annotations name="Contacts:Contact.Company#FKey">
+			<annotation class="com.top_logic.model.annotate.TLSize"/>
+		</remove-annotations>
+		<remove-annotations name="Contacts:Contact.Company#FKey2">
+			<annotation class="com.top_logic.model.annotate.TLSize"/>
+		</remove-annotations>
+		<add-annotations name="Contacts:Contact.Company#department">
+			<annotations>
+				<size-constraint upper-bound="100"/>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="Contacts:Contact.Company#street">
+			<annotations>
+				<size-constraint upper-bound="100"/>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="Contacts:Contact.Company#city">
+			<annotations>
+				<size-constraint upper-bound="100"/>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="Contacts:Contact.Company#state">
+			<annotations>
+				<size-constraint upper-bound="100"/>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="Contacts:Contact.Company#sector">
+			<annotations>
+				<size-constraint upper-bound="100"/>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="Contacts:Contact.Company#FKey">
+			<annotations>
+				<size-constraint upper-bound="100"/>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="Contacts:Contact.Company#FKey2">
+			<annotations>
+				<size-constraint upper-bound="100"/>
+			</annotations>
+		</add-annotations>
+	</processors>
+</migration>

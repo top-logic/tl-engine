@@ -347,6 +347,7 @@
 					<method name="dateFormat" class="com.top_logic.model.search.expr.DateFormatExpr$Builder"/>
 					<method name="messageFormat" class="com.top_logic.model.search.expr.MessageFormatExpr$Builder"/>
 					<method name="format" class="com.top_logic.model.search.expr.FormatExpr$Builder"/>
+					<method name="configuredFormat" class="com.top_logic.model.search.expr.ConfiguredFormat$Builder"/>
 					<method name="parse" class="com.top_logic.model.search.expr.ParseExpr$Builder"/>
 					<method name="split" class="com.top_logic.model.search.expr.config.operations.string.Split$Builder"/>
 					<method name="join" class="com.top_logic.model.search.expr.config.operations.string.Join$Builder"/>

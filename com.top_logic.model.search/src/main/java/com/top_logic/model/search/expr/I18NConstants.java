@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.search.expr;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
@@ -72,6 +73,10 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en The value "{0}" is not a binary data value in {1}.
 	 */
 	public static ResKey2 ERROR_NOT_A_BINARY_VALUE__VAL_EXPR;
+
+	public static ResKey2 ERROR_INVALID_FORMAT_ID;
+
+	public static ResKey ERROR_EMPTY_FORMAT_ID;
 
 	static {
 		initConstants(I18NConstants.class);

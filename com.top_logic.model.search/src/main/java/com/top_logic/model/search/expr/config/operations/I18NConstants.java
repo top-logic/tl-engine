@@ -86,6 +86,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_UNEXPECTED_ARGUMENT__FUN_CNT;
 
+	public static ResKey2 ERROR_WRONG_TARGET__ISCOMPATIBLEVALUE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

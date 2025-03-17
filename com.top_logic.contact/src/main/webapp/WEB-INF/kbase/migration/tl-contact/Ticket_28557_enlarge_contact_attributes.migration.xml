@@ -69,12 +69,12 @@
 		</add-annotations>
 		<add-annotations name="Contacts:Contact.Company#FKey">
 			<annotations>
-				<size-constraint upper-bound="100"/>
+				<size-constraint upper-bound="150"/>
 			</annotations>
 		</add-annotations>
 		<add-annotations name="Contacts:Contact.Company#FKey2">
 			<annotations>
-				<size-constraint upper-bound="100"/>
+				<size-constraint upper-bound="32"/>
 			</annotations>
 		</add-annotations>
 	</processors>

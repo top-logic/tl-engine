@@ -162,7 +162,7 @@
 				>
 					<annotations>
 						<multi-line value="false"/>
-						<size-constraint upper-bound="100"/>
+						<size-constraint upper-bound="150"/>
 						<sort-order value="500.0"/>
 						<delete-protected/>
 					</annotations>
@@ -172,7 +172,7 @@
 				>
 					<annotations>
 						<multi-line value="false"/>
-						<size-constraint upper-bound="100"/>
+						<size-constraint upper-bound="32"/>
 						<sort-order value="510.0"/>
 						<delete-protected/>
 					</annotations>

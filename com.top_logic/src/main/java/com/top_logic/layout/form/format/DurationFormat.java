@@ -38,7 +38,13 @@ public class DurationFormat extends Format {
 
 	@Override
 	public StringBuffer format(Object obj, StringBuffer toAppendTo, FieldPosition pos) {
+		// Convert any Number that isn't already a Long to a Long
+		if (obj instanceof Number && !(obj instanceof Long)) {
+			obj = Long.valueOf(((Number) obj).longValue());
+		}
+
 		toAppendTo.append(format().getSpecification(obj));
+
 		return toAppendTo;
 	}
 

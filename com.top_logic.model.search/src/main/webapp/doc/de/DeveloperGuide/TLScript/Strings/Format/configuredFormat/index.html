@@ -1,0 +1,68 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>configuredFormat($id)</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Ruft eine Format-Instanz über ihre Konfigurations-ID ab und initialisiert sie. Diese Funktion ermöglicht den Zugriff auf vorkonfigurierte Formatierungen, die im Service Editor unter "Format-Konfigurationen" definiert sind, und kann für <a class="tlObject" data-custom="true" href="?page=parse&amp;uuid=e2e35e56-db87-4f47-95f8-0b2bdc74a07e">parse() </a>oder <a class="tlObject" data-custom="true" href="?page=format&amp;uuid=77351653-ed93-45b5-be52-ab7873f6ec1c">format()</a> Aufrufe verwendet werden.</p>
+
+<p> </p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>id</td>
+			<td>Zeichenkette</td>
+			<td>Die Konfigurations-ID des Formats, das abgerufen werden soll.</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Format</p>
+
+<p>Eine Format-Instanz, die für <a class="tlObject" data-custom="true" href="?page=parse&amp;uuid=e2e35e56-db87-4f47-95f8-0b2bdc74a07e">parse() </a>oder <a class="tlObject" data-custom="true" href="?page=format&amp;uuid=77351653-ed93-45b5-be52-ab7873f6ec1c">format()</a> Aufrufe verwendet werden kann. Wirft eine Fehlermeldung bei ungültigen Eingaben, mit Hinweisen zu verfügbaren Format-Definitionen.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Verwendung eines konfigurierten Datumsformats</h3>
+
+<pre>
+	<code>configuredFormat("short-date").format(date(2012, 11, 31))</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> 31.12.12</p>
+
+<h3>Verwendung eines konfigurierten Währungsformats</h3>
+
+<pre>
+	<code>configuredFormat("euro").format(123456.5)</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> 123.456,50 €</p>
+
+<h3>Parsen einer formatierten Zahl</h3>
+
+<pre>
+	<code>configuredFormat("number").parse("1.234,56")</code>
+</pre>
+
+<p><strong>Ausgabe:</strong> 1.234,56</p>
+
+<p> </p>

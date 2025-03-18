@@ -66,7 +66,7 @@ public class StructuredTextNamingScheme
 			}
 		}
 		StructuredText text = name.getText();
-		return text == null ? null : text.copy();
+		return text == null ? new StructuredText() : text.copy();
 	}
 
 	@Override

@@ -11,7 +11,6 @@ import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.service.openapi.client.authentication.SecurityEnhancer;
 import com.top_logic.service.openapi.client.registry.ServiceMethodRegistry;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
-import com.top_logic.service.openapi.common.authentication.ServerAuthentication;
 
 /**
  * {@link AuthenticationConfig} for services acting as client for an <i>OpenAPI</i> communication.
@@ -21,7 +20,7 @@ import com.top_logic.service.openapi.common.authentication.ServerAuthentication;
 public interface ClientAuthentication<C extends ClientAuthentication.Config<?>> extends ConfiguredInstance<C> {
 
 	/**
-	 * Configuration options for {@link ServerAuthentication}.
+	 * Configuration options for {@link ClientAuthentication}.
 	 */
 	@Abstract
 	public interface Config<I extends ClientAuthentication<?>>

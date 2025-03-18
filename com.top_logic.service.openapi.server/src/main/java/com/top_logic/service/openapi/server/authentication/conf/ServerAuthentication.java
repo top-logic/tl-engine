@@ -3,18 +3,20 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.service.openapi.common.authentication;
+package com.top_logic.service.openapi.server.authentication.conf;
 
 import java.util.List;
 
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
-import com.top_logic.service.openapi.common.authentication.impl.Authenticator;
+import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
+import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
 import com.top_logic.service.openapi.common.document.SecuritySchemeObject;
+import com.top_logic.service.openapi.server.authentication.Authenticator;
 
 /**
- * {@link AuthenticationConfig} for services acting as server in an <i>OpenAPI</i> communication.
+ * Configured factory for {@link Authenticator} implementations in an <i>OpenAPI</i> server.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

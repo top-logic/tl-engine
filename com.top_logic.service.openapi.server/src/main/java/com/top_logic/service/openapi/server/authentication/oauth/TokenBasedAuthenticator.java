@@ -33,10 +33,10 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.service.openapi.common.authentication.impl.AuthenticationFailure;
-import com.top_logic.service.openapi.common.authentication.impl.Authenticator;
 import com.top_logic.service.openapi.common.authentication.oauth.TokenStorage;
-import com.top_logic.service.openapi.server.authentication.I18NConstants;
+import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
+import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.service.openapi.server.authentication.impl.I18NConstants;
 
 /**
  * {@link Authenticator} using a token and checks its validity by delegating to a validation

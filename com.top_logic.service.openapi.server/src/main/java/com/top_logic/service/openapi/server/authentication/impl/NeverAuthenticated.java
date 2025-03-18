@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.service.openapi.common.authentication.impl;
+package com.top_logic.service.openapi.server.authentication.impl;
 
 import java.io.IOException;
 
@@ -12,6 +12,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
+import com.top_logic.service.openapi.server.authentication.Authenticator;
 
 /**
  * {@link Authenticator} that never authenticates the request.

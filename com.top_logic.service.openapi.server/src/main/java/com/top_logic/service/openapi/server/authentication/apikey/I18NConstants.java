@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.service.openapi.common.authentication.apikey;
+package com.top_logic.service.openapi.server.authentication.apikey;
 
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;

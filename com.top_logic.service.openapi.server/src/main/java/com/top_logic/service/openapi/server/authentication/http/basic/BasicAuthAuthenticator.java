@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.service.openapi.common.authentication.http.basic;
+package com.top_logic.service.openapi.server.authentication.http.basic;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -17,8 +17,8 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.common.authentication.http.LoginCredentials;
-import com.top_logic.service.openapi.common.authentication.impl.AuthenticationFailure;
-import com.top_logic.service.openapi.common.authentication.impl.Authenticator;
+import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
+import com.top_logic.service.openapi.server.authentication.Authenticator;
 
 /**
  * Authenticator expecting <i>BasicAuth</i> authorisation.

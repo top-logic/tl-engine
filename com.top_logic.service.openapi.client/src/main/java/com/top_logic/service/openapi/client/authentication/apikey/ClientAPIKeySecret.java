@@ -18,7 +18,6 @@ import com.top_logic.service.openapi.client.authentication.ClientSecret;
 import com.top_logic.service.openapi.client.registry.ServiceMethodRegistry;
 import com.top_logic.service.openapi.client.registry.ServiceMethodRegistry.ServiceRegistryPart;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
-import com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthentication;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeySecret;
 
 /**

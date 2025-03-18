@@ -10,16 +10,13 @@ import java.util.function.Supplier;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.service.openapi.client.authentication.config.ClientAuthentication;
-import com.top_logic.service.openapi.client.authentication.config.ClientAuthenticationVisitor;
 import com.top_logic.service.openapi.client.registry.ServiceMethodRegistry;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
 import com.top_logic.util.Resources;
 
 /**
- * {@link ClientAuthenticationVisitor} to get {@link SecurityEnhancer} for the visited
- * {@link ClientAuthentication}.
+ * Utilities to create {@link SecurityEnhancer}s.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

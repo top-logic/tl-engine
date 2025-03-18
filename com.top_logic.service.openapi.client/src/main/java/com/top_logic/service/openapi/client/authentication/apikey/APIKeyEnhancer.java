@@ -13,7 +13,6 @@ import org.apache.hc.core5.http.Header;
 
 import com.top_logic.service.openapi.client.authentication.SecurityEnhancer;
 import com.top_logic.service.openapi.client.registry.impl.call.uri.UriBuilder;
-import com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthentication;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyPosition;
 
 /**

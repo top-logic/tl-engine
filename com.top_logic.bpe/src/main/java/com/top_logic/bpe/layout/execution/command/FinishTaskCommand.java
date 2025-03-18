@@ -28,6 +28,7 @@ import com.top_logic.bpe.bpml.model.Node;
 import com.top_logic.bpe.execution.engine.ExecutionEngine;
 import com.top_logic.bpe.execution.engine.GuiEngine;
 import com.top_logic.bpe.execution.model.Token;
+import com.top_logic.bpe.layout.execution.ActiveTaskComponent;
 import com.top_logic.bpe.layout.execution.SelectTransitionDialog;
 import com.top_logic.bpe.layout.execution.SelectTransitionDialog.Decision;
 import com.top_logic.knowledge.service.Transaction;
@@ -37,6 +38,7 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.check.CheckScopeProvider;
 import com.top_logic.layout.basic.check.SelfCheckProvider;
 import com.top_logic.layout.basic.fragments.Fragments;
+import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.form.component.EditComponent;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.WarningsDialog;
@@ -115,8 +117,16 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 
 	@Override
 	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model, Map<String, Object> someArguments) {
-		Token token = (Token) model;
+		// Force model validation to ensure latest model data is used.
+		// Without explicit validation, concurrent user modifications
+		// could lead to outdated model being processed, causing data inconsistencies.
+		aComponent.getMainLayout().globallyValidateModel(aContext);
+		if (!ComponentUtil.isValid(model)) {
+			return ComponentUtil.errorObjectDeleted(aContext);
+		}
 
+		Token token = ((ActiveTaskComponent) aComponent).getToken(model);
+		
 		Object context = someArguments.get(CONTEXT);
 		EditComponent editComponent = (EditComponent) aComponent;
 

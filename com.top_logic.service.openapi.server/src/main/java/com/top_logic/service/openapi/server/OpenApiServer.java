@@ -158,6 +158,7 @@ public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?
 		@Name(INFORMATION)
 		@ItemDefault
 		@NonNullable
+		@DisplayMinimized
 		Information getInformation();
 
 		/**

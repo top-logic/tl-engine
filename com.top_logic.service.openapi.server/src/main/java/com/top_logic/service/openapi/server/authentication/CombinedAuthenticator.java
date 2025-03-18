@@ -13,7 +13,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import com.top_logic.knowledge.wrap.person.Person;
 
 /**
- * {@link Authenticator} executing multiple {@link Authenticator}.
+ * {@link Authenticator} executing multiple {@link Authenticator}s and expects all of them to
+ * authenticate a request.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

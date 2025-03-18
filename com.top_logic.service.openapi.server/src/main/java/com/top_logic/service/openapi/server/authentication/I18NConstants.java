@@ -73,6 +73,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 ERROR_MULTIPLE_USERS__USER1_USER2;
 
 	/**
+	 * @en Multiple authentication attempts failed: {0}.
+	 */
+	public static ResKey1 ERROR_AUTH_FAILED__REASONS;
+
+	/**
 	 * @en No account for user ''{0}'' found.
 	 */
 	public static ResKey1 NO_SUCH_ACCOUNT__USER;

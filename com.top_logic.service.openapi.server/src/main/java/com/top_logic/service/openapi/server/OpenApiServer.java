@@ -451,24 +451,28 @@ public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?
 	}
 
 	private Authenticator authenticator(OperationByMethod operation) {
-		Authenticator authenticator = AlwaysAuthenticated.INSTANCE;
-		for (String authentication : operation.getAuthentication()) {
-			Authenticator localAuthenticator;
+		List<String> authentications = operation.getAuthentication();
+		if (authentications.isEmpty()) {
+			return AlwaysAuthenticated.INSTANCE;
+		}
+
+		String path = operation.getEnclosingPathItem().getPath();
+		String method = operation.getMethod().name();
+		Authenticator authenticator = new NeverAuthenticated(
+			I18NConstants.CREATING_AUTHENTICATOR_FAILED__PATH__METHOD.fill(path, method));
+		for (String authentication : authentications) {
+			Authenticator nextAuthenticator;
 			try {
-				localAuthenticator = getConfig()
+				nextAuthenticator = getConfig()
 					.getAuthentications()
 					.get(authentication)
 					.visit(AuthenticateVisitor.INSTANCE, this);
+				authenticator = authenticator.or(nextAuthenticator);
 			} catch (RuntimeException ex) {
-				String path = operation.getEnclosingPathItem().getPath();
-				String method = operation.getMethod().name();
 				Logger.error("Unable to create authenticator for path '" + path + "' and method '" + method + "'.", ex,
 					OpenApiServer.class);
-				localAuthenticator =
-					new NeverAuthenticated(
-						I18NConstants.CREATING_AUTHENTICATOR_FAILED__PATH__METHOD.fill(path, method));
+				// Ignore authenticator, it's "never" by default.
 			}
-			authenticator = authenticator.andThen(localAuthenticator);
 		}
 		return authenticator;
 	}

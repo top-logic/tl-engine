@@ -21,9 +21,9 @@ import com.top_logic.base.accesscontrol.AuthorizationUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
-import com.top_logic.service.openapi.common.authentication.impl.AuthenticationFailure;
 import com.top_logic.service.openapi.common.authentication.oauth.ClientSecret;
 import com.top_logic.service.openapi.common.authentication.oauth.TokenURIProvider;
+import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 
 /**
  * {@link TokenBasedAuthenticator} with fixed token inspection endpoint.

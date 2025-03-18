@@ -3,11 +3,10 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.service.openapi.common.authentication.impl;
+package com.top_logic.service.openapi.server.authentication.http.basic;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
-import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -16,17 +15,19 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * @en Multiple user authentication for different users: {0} vs. {1}.
+	 * @en Missing authentication data.
 	 */
-	public static ResKey2 ERROR_MULTIPLE_USERS__USER1_USER2;
+	public static ResKey AUTH_FAILED_MISSING_AUTHENTICATION_DATA;
 
 	/**
-	 * @en Multiple authentication attempts failed: {0}.
+	 * @en Wrong credentials for user "{0}".
 	 */
-	public static ResKey1 ERROR_AUTH_FAILED__REASONS;
+	public static ResKey1 AUTH_FAILED_WRONG_AUTHENTICATION_DATA__USER;
 
-	/** @en Missing authentication secret. */
-	public static ResKey ERROR_MISSING_AUTHENTICATION_SECRET;
+	/**
+	 * @en Not a BasicAuth authentication.
+	 */
+	public static ResKey AUTH_FAILED_NO_BASIC_AUTH;
 
 	static {
 		initConstants(I18NConstants.class);

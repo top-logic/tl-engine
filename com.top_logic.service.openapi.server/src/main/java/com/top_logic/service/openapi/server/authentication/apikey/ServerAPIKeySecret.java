@@ -16,12 +16,11 @@ import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.initializer.SecretInitializer;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
-import com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthentication;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeySecret;
 import com.top_logic.service.openapi.server.OpenApiServer;
 import com.top_logic.service.openapi.server.OpenApiServer.OpenAPIServerPart;
-import com.top_logic.service.openapi.server.authentication.AllAuthenticationDomains;
-import com.top_logic.service.openapi.server.authentication.ServerSecret;
+import com.top_logic.service.openapi.server.authentication.conf.AllAuthenticationDomains;
+import com.top_logic.service.openapi.server.authentication.conf.ServerSecret;
 
 /**
  * {@link APIKeySecret} for the <i>OpenAPI</i> server.

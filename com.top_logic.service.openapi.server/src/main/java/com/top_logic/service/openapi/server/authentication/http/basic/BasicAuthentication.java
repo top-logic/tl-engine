@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.service.openapi.common.authentication.http.basic;
+package com.top_logic.service.openapi.server.authentication.http.basic;
 
 import java.util.List;
 import java.util.Set;
@@ -15,14 +15,14 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
-import com.top_logic.service.openapi.common.authentication.ServerAuthentication;
 import com.top_logic.service.openapi.common.authentication.http.HTTPAuthentication;
 import com.top_logic.service.openapi.common.authentication.http.HTTPSecret;
 import com.top_logic.service.openapi.common.authentication.http.LoginCredentials;
-import com.top_logic.service.openapi.common.authentication.impl.Authenticator;
-import com.top_logic.service.openapi.common.authentication.impl.NeverAuthenticated;
 import com.top_logic.service.openapi.common.document.SecuritySchemeObject;
 import com.top_logic.service.openapi.common.util.OpenAPIConfigs;
+import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
+import com.top_logic.service.openapi.server.authentication.impl.NeverAuthenticated;
 
 /**
  * Authentication using HTTP <i>BasicAuth</i> mechanism.

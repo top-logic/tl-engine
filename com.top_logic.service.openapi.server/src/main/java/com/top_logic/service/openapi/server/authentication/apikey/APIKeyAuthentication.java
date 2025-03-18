@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.service.openapi.common.authentication.apikey;
+package com.top_logic.service.openapi.server.authentication.apikey;
 
 import java.util.List;
 import java.util.Set;
@@ -16,12 +16,14 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
-import com.top_logic.service.openapi.common.authentication.ServerAuthentication;
-import com.top_logic.service.openapi.common.authentication.impl.Authenticator;
-import com.top_logic.service.openapi.common.authentication.impl.NeverAuthenticated;
+import com.top_logic.service.openapi.common.authentication.apikey.APIKeyConfig;
+import com.top_logic.service.openapi.common.authentication.apikey.APIKeySecret;
 import com.top_logic.service.openapi.common.document.SecuritySchemeObject;
 import com.top_logic.service.openapi.common.document.SecuritySchemeType;
 import com.top_logic.service.openapi.common.util.OpenAPIConfigs;
+import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
+import com.top_logic.service.openapi.server.authentication.impl.NeverAuthenticated;
 
 /**
  * {@link AuthenticationConfig} to authenticate using an API key.

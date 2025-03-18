@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.service.openapi.server.authentication;
+package com.top_logic.service.openapi.server.authentication.conf;
 
 import java.util.List;
 import java.util.Map;
@@ -18,16 +18,14 @@ import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
-import com.top_logic.service.openapi.common.authentication.ServerAuthentication;
-import com.top_logic.service.openapi.common.authentication.ServerAuthentications;
 
 /**
- * All domains of {@link ServerAuthentication} matching a given filter.
+ * Function to look-up all domains of {@link ServerAuthentication}s matching a given filter.
  * 
- * @implNote This is used as {@link Options option provider}. It uses both, a reference path to the
- *           authentications configuration to be informed about changes of the authentications, and
- *           {@link DeclarativeFormOptions} to have authentications when the
- *           {@link ConfigurationItem} using this options is newly created.
+ * @implNote This is used as {@link Options option provider} for configuration properties. It uses
+ *           both, a reference path to the authentications configuration to be informed about
+ *           changes of the authentications, and {@link DeclarativeFormOptions} to have
+ *           authentications when the {@link ConfigurationItem} using this options is newly created.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

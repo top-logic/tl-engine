@@ -24,9 +24,6 @@ import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.element.layout.meta.HideActiveIfNot;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
-import com.top_logic.service.openapi.common.authentication.ServerAuthentication;
-import com.top_logic.service.openapi.common.authentication.impl.Authenticator;
-import com.top_logic.service.openapi.common.authentication.impl.NeverAuthenticated;
 import com.top_logic.service.openapi.common.authentication.oauth.DefaultURIProvider;
 import com.top_logic.service.openapi.common.authentication.oauth.OpenIDURIProvider;
 import com.top_logic.service.openapi.common.authentication.oauth.TokenBasedAuthentication;
@@ -36,6 +33,9 @@ import com.top_logic.service.openapi.common.document.OAuthFlowObject;
 import com.top_logic.service.openapi.common.document.SecuritySchemeObject;
 import com.top_logic.service.openapi.common.document.SecuritySchemeType;
 import com.top_logic.service.openapi.common.util.OpenAPIConfigs;
+import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
+import com.top_logic.service.openapi.server.authentication.impl.NeverAuthenticated;
 import com.top_logic.util.error.TopLogicException;
 
 /**

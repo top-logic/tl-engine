@@ -72,7 +72,24 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 	 * The displayed workflow state.
 	 */
 	public Token getToken() {
-		return (Token) getModel();
+		Object model = getModel();
+		return getToken(model);
+	}
+
+	/**
+	 * The displayed workflow state calculated from the components model. Either the {@link Token}
+	 * itself or a {@link ProcessExecution}. In case of {@link ProcessExecution} get the first
+	 * {@link Token} where the current user is an actor.
+	 */
+	public Token getToken(Object model) {
+		if (model instanceof ProcessExecution pe) {
+			for (Token token : pe.getActiveTokens()) {
+				if (isActor(token)) {
+					return token;
+				}
+			}
+		}
+		return (Token) model;
 	}
 
 	@Override
@@ -83,6 +100,14 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 		TLModelUtil.addPartNames(res, tokenType);
 		res.remove(Token.PROCESS_EXECUTION_ATTR);
 		return res;
+	}
+
+	@Override
+	protected boolean supportsInternalModelNonNull(Object anObject) {
+		if (anObject instanceof ProcessExecution) {
+			return true;
+		}
+		return super.supportsInternalModelNonNull(anObject);
 	}
 
 	@Override
@@ -104,7 +129,7 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 			return;
 		}
 
-		Token token = (Token) someObject;
+		Token token = getToken(someObject);
 
 		Node node = token.getNode();
 		if (node instanceof ManualTask manualTask) {
@@ -131,11 +156,37 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 			// Can happen after editing this component (when opened in a dialog).
 			return null;
 		}
-		ThemeImage icon = ((Iconified) model).getIcon();
-		if (icon == null) {
+		ThemeImage icon = null;
+		if (model instanceof ProcessExecution) {
 			icon = MetaResourceProvider.INSTANCE.getImage(model, Flavor.ENLARGED);
+		} else {
+			icon = ((Iconified) model).getIcon();
+			if (icon == null) {
+				icon = MetaResourceProvider.INSTANCE.getImage(model, Flavor.ENLARGED);
+			}
 		}
 		return icon;
+	}
+	
+	/**
+	 * true if currentUser is an actor for given {@link Token}.
+	 */
+	public static boolean isActor(Token token) {
+		Node currentNode = token.getNode();
+		Lane currentLane = currentNode.getLane();
+
+		// get the processExecution to calculate isActor
+		ProcessExecution currentProcessExecution = token.getProcessExecution();
+
+		// Get the current person
+		Person currentPerson = TLContext.currentUser();
+
+		// Check if the current person has access rights
+		if ((GuiEngine.getInstance().isActor(currentPerson, currentLane, currentProcessExecution)
+			|| currentPerson.isAdmin())) {
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -151,23 +202,8 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 
 		@Override
 		public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> someValues) {
-			if (!(model instanceof Token)) {
-				return FINISH_TASK_DISABLED_STATE;
-			}
-			// Get the current token and its associated node and lane
-			Token currentToken = (Token) model;
-			Node currentNode = currentToken.getNode();
-			Lane currentLane = currentNode.getLane();
-
-			// get the processExecution to calculate isActor
-			ProcessExecution currentProcessExecution = currentToken.getProcessExecution();
-
-			// Get the current person
-			Person currentPerson = TLContext.currentUser();
-
 			// Check if the current person has access rights
-			if (!(GuiEngine.getInstance().isActor(currentPerson, currentLane, currentProcessExecution)
-				|| currentPerson.isAdmin())) {
+			if (!isActor(((ActiveTaskComponent) aComponent).getToken(model))) {
 				return FINISH_TASK_ACCESS_DENIED_STATE;
 			}
 
@@ -179,16 +215,6 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 			return FINISH_TASK_DISABLED_STATE;
 		}
 
-	}
-
-	@Override
-	protected boolean receiveModelCreatedEvent(Object aModel, Object someChangedBy) {
-		if (aModel instanceof Token) {
-			Token currentToken = (Token) aModel;
-
-			setModel(currentToken);
-		}
-		return super.receiveModelCreatedEvent(aModel, someChangedBy);
 	}
 
 	/**

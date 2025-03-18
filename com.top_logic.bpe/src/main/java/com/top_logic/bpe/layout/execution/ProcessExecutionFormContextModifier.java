@@ -34,7 +34,7 @@ public class ProcessExecutionFormContextModifier extends DefaultFormContextModif
 	 */
 	public static final ProcessExecutionFormContextModifier INSTANCE = new ProcessExecutionFormContextModifier();
 
-	private ProcessExecutionFormContextModifier() {
+	protected ProcessExecutionFormContextModifier() {
 		// Singleton constructor.
 	}
 

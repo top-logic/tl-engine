@@ -61,5 +61,15 @@ public class NeverAuthenticated implements Authenticator {
 		throw failure;
 	}
 
+	@Override
+	public Authenticator andThen(Authenticator after) {
+		return this;
+	}
+
+	@Override
+	public Authenticator or(Authenticator fallback) {
+		return fallback;
+	}
+
 }
 

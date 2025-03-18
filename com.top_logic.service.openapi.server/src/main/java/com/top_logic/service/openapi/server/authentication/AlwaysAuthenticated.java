@@ -40,5 +40,10 @@ public class AlwaysAuthenticated implements Authenticator {
 		return after;
 	}
 
+	@Override
+	public Authenticator or(Authenticator after) {
+		return this;
+	}
+
 }
 

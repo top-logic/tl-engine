@@ -14,8 +14,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
-import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.service.openapi.common.authentication.impl.AuthenticationFailure;
+import com.top_logic.service.openapi.common.authentication.impl.Authenticator;
 import com.top_logic.service.openapi.server.impl.ComputationFailure;
 import com.top_logic.service.openapi.server.impl.ServiceMethod;
 import com.top_logic.service.openapi.server.parameter.ConcreteRequestParameter;

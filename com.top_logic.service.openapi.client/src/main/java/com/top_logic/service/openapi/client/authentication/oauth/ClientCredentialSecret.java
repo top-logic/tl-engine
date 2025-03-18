@@ -15,10 +15,10 @@ import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.service.openapi.client.authentication.AllAuthenticationDomains;
 import com.top_logic.service.openapi.client.authentication.ClientSecret;
+import com.top_logic.service.openapi.client.authentication.oauth.user.ClientCredentials;
 import com.top_logic.service.openapi.client.registry.ServiceMethodRegistry;
 import com.top_logic.service.openapi.client.registry.ServiceMethodRegistry.ServiceRegistryPart;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
-import com.top_logic.service.openapi.common.authentication.oauth.ClientCredentials;
 import com.top_logic.service.openapi.common.authentication.oauth.CredentialSecret;
 
 /**

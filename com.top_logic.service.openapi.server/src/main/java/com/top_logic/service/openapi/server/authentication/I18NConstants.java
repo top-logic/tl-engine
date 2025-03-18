@@ -7,7 +7,6 @@ package com.top_logic.service.openapi.server.authentication;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
-import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -15,26 +14,6 @@ import com.top_logic.layout.I18NConstantsBase;
  * Internationalization constants for this package.
  */
 public class I18NConstants extends I18NConstantsBase {
-
-	/**
-	 * @en No cookie with name ''{0}'' found.
-	 */
-	public static ResKey1 AUTH_FAILED_NO_COOKIE__PARAMETER;
-
-	/**
-	 * @en No query parameter with name ''{0}'' found.
-	 */
-	public static ResKey1 AUTH_FAILED_NO_QUERY_PARAM__PARAMETER;
-
-	/**
-	 * @en No header with name ''{0}'' found.
-	 */
-	public static ResKey1 AUTH_FAILED_NO_HEADER__PARAMETER;
-
-	/**
-	 * @en Invalid API key found in parameter ''{0}''.
-	 */
-	public static ResKey1 AUTH_FAILED_INVALID_API_KEY__PARAMETER;
 
 	/**
 	 * @en Unable to get token.
@@ -58,24 +37,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Invalid server response when validating token: {0}
 	 */
 	public static ResKey1 AUTH_FAILED_ILLEGAL_TOKEN_VALIDATION_RESPONSE__MSG;
-
-	/** @en Missing authentication secret. */
-	public static ResKey ERROR_MISSING_AUTHENTICATION_SECRET;
-
-	/**
-	 * @en Multiple Client Credential configurations for domain {0}.
-	 */
-	public static ResKey1 ERROR_MULTIPLE_CLIENT_CREDENTIAL_SECRETS__DOMAIN;
-
-	/**
-	 * @en Multiple user authentication for different users: {0} vs. {1}.
-	 */
-	public static ResKey2 ERROR_MULTIPLE_USERS__USER1_USER2;
-
-	/**
-	 * @en Multiple authentication attempts failed: {0}.
-	 */
-	public static ResKey1 ERROR_AUTH_FAILED__REASONS;
 
 	/**
 	 * @en No account for user ''{0}'' found.

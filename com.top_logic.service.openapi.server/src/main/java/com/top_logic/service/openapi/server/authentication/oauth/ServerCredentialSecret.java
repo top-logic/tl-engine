@@ -15,7 +15,6 @@ import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.authentication.oauth.CredentialSecret;
-import com.top_logic.service.openapi.common.authentication.oauth.ServerCredentials;
 import com.top_logic.service.openapi.server.OpenApiServer;
 import com.top_logic.service.openapi.server.OpenApiServer.OpenAPIServerPart;
 import com.top_logic.service.openapi.server.authentication.AllAuthenticationDomains;

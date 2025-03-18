@@ -13,12 +13,11 @@ import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 
 /**
- * 
  * {@link OAuthAuthentication} that checks the tokens that are sent in the request.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-@DisplayOrder({ ClientCredentials.URI_PROVIDER })
+@DisplayOrder({ TokenBasedAuthentication.URI_PROVIDER })
 public interface TokenBasedAuthentication extends OAuthAuthentication {
 
 	/** Configuration name for {@link #getURIProvider()} */

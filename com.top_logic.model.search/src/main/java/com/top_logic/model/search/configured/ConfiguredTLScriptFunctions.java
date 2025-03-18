@@ -30,6 +30,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.treexf.TreeMaterializer.Factory;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.form.values.edit.annotation.CollapseEntries;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.MethodResolver;
@@ -78,6 +79,7 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 		 */
 		@Name(SCRIPTS)
 		@Key(ConfiguredScript.Config.NAME_ATTRIBUTE)
+		@CollapseEntries
 		Map<String, ConfiguredScript.Config> getScripts();
 
 	}

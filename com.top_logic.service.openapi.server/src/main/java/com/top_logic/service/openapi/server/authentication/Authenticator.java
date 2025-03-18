@@ -13,7 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import com.top_logic.knowledge.wrap.person.Person;
 
 /**
- * Class checking and authenticating the communication in Open API communication.
+ * Class checking and authenticating the communication in <i>OpenAPI</i> communication.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

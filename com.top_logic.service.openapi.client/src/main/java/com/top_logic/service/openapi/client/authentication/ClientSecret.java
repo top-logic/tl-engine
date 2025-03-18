@@ -10,7 +10,7 @@ import com.top_logic.service.openapi.client.registry.ServiceMethodRegistry;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
 
 /**
- * {@link SecretConfiguration} for the client in an Open API communication.
+ * {@link SecretConfiguration} for the client in an <i>OpenAPI</i> communication.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

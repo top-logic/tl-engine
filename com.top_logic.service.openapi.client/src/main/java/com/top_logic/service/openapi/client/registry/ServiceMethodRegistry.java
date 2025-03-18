@@ -121,7 +121,7 @@ public class ServiceMethodRegistry extends ConfiguredManagedClass<ServiceMethodR
 		Map<String, ClientAuthentication> getAuthentications();
 
 		/**
-		 * Configuration of the secrets that can be used to deliver to the Open API server.
+		 * Configuration of the secrets that can be used to deliver to the <i>OpenAPI</i> server.
 		 */
 		@Key(ClientSecret.DOMAIN)
 		@Name(SECRETS)

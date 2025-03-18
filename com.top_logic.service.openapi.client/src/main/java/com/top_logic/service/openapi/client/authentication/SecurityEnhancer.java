@@ -12,14 +12,14 @@ import org.apache.hc.core5.http.ClassicHttpRequest;
 import com.top_logic.service.openapi.client.registry.impl.call.uri.UriBuilder;
 
 /**
- * Modification of the request to allow an Open API server to authenticate the request.
+ * Modification of the request to allow an <i>OpenAPI</i> server to authenticate the request.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public interface SecurityEnhancer {
 
 	/**
-	 * Enhances the request URL with security informations to access an Open API server.
+	 * Enhances the request URL with security informations to access an <i>OpenAPI</i> server.
 	 * 
 	 * @param urlBuilder
 	 *        Builder of the URL.
@@ -27,14 +27,14 @@ public interface SecurityEnhancer {
 	void enhanceUrl(UriBuilder urlBuilder);
 
 	/**
-	 * Enhances the final {@link HttpClient} sending the request to Open API server.
+	 * Enhances the final {@link HttpClient} sending the request to <i>OpenAPI</i> server.
 	 */
 	default HttpClientBuilder enhanceClient(HttpClientBuilder client) {
 		return client;
 	}
 
 	/**
-	 * Enhances the request with security informations before sending to Open API server.
+	 * Enhances the request with security informations before sending to <i>OpenAPI</i> server.
 	 * 
 	 * @param client
 	 *        The {@link HttpClient} sending the request.

@@ -22,7 +22,7 @@ import com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthenti
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeySecret;
 
 /**
- * {@link APIKeySecret} for the Open API client.
+ * {@link APIKeySecret} for the <i>OpenAPI</i> client.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

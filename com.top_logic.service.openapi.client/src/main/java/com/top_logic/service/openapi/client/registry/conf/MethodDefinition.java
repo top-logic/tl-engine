@@ -145,7 +145,7 @@ public interface MethodDefinition extends ParameterContext, NamedConfigMandatory
 	List<ParameterDefinition> getParameters();
 
 	/**
-	 * Name of the {@link AuthenticationConfig}s that are used to access the Open API server.
+	 * Name of the {@link AuthenticationConfig}s that are used to access the <i>OpenAPI</i> server.
 	 */
 	@Name(AUTHENTICATION)
 	@Options(fun = AllAuthenticationDomains.class, args = {

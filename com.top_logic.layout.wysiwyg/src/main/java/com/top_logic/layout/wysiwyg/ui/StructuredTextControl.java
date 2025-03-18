@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -84,6 +85,11 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class StructuredTextControl extends AbstractFormFieldControl implements ContentHandler {
+
+	/**
+	 * Name of the {@link Part} which contains the upload data.
+	 */
+	private static final String MULTIPART_UPLOAD_NAME = "upload";
 
 	private static final char JSON_NODE_SEPARATOR = ',';
 
@@ -836,8 +842,8 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 	private void uploadFile(DisplayContext context) throws IOException, ServletException {
 		var files = getFiles(context);
 
-		if (files.size() == 1) {
-			BinaryData fileItemBinaryData = getBinaryData(files.iterator().next());
+		if (files.hasNext()) {
+			BinaryData fileItemBinaryData = getBinaryData(files.next());
 
 			String imageId = saveFile(fileItemBinaryData);
 			if (Logger.isDebugEnabled(StructuredTextControl.class)) {
@@ -871,8 +877,9 @@ public class StructuredTextControl extends AbstractFormFieldControl implements C
 		return action;
 	}
 
-	private Collection<Part> getFiles(DisplayContext context) throws IOException, ServletException {
-		return context.asRequest().getParts();
+	private Iterator<Part> getFiles(DisplayContext context) throws IOException, ServletException {
+		Collection<Part> allParts = context.asRequest().getParts();
+		return allParts.stream().filter(part -> MULTIPART_UPLOAD_NAME.equals(part.getName())).iterator();
 	}
 
 	private String saveFile(BinaryData data) {

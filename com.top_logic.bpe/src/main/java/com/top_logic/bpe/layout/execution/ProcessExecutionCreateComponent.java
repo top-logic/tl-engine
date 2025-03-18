@@ -31,6 +31,7 @@ import com.top_logic.bpe.layout.execution.start.ModelAsStartEvent;
 import com.top_logic.bpe.layout.execution.start.StartEventSelector;
 import com.top_logic.element.layout.formeditor.FormEditorUtil;
 import com.top_logic.element.meta.form.AttributeFormContext;
+import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.gui.DefaultCreateAttributedComponent;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
@@ -41,6 +42,8 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.model.form.implementation.FormMode;
+import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.providers.MonomorphicCreateFormBuilderByExpression;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.TLContext;
 
@@ -56,7 +59,8 @@ public class ProcessExecutionCreateComponent extends DefaultCreateAttributedComp
 	/**
 	 * Configuration options for {@link ProcessExecutionCreateComponent}.
 	 */
-	public interface Config extends DefaultCreateAttributedComponent.Config, UIOptions {
+	public interface Config extends DefaultCreateAttributedComponent.Config,
+			MonomorphicCreateFormBuilderByExpression.WithInitialization, UIOptions {
 		// Pure sum interface.
 	}
 
@@ -79,6 +83,8 @@ public class ProcessExecutionCreateComponent extends DefaultCreateAttributedComp
 
 	private StartEvent _startEvent;
 
+	private final QueryExecutor _initialization;
+
 	/**
 	 * Creates a {@link ProcessExecutionCreateComponent} from configuration.
 	 * 
@@ -92,6 +98,7 @@ public class ProcessExecutionCreateComponent extends DefaultCreateAttributedComp
 		super(context, config);
 
 		_selector = context.getInstance(config.getStartEvent());
+		_initialization = QueryExecutor.compileOptional(config.getInitialization());
 	}
 
 	@Override
@@ -167,11 +174,17 @@ public class ProcessExecutionCreateComponent extends DefaultCreateAttributedComp
 	}
 
 	@Override
-	protected void addMoreAttributes(TLClass aME, AttributeFormContext aContext) {
-		super.addMoreAttributes(aME, aContext);
+	protected void addMoreAttributes(TLClass tlClass, AttributeFormContext aContext) {
+		super.addMoreAttributes(tlClass, aContext);
 
 		FormDefinition fd = getDisplayDescription();
 		FormEditorUtil.createEditorGroup(aContext, getMetaElement(), fd, null, FormMode.CREATE);
+
+		TLFormObject newCreation = aContext.createObject(tlClass, null, getContextModel());
+
+		if (_initialization != null) {
+			_initialization.execute(newCreation, this.getModel());
+		}
 	}
 
 	private ManualTask nextManualTask() {

@@ -17,7 +17,7 @@ import com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthenti
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyPosition;
 
 /**
- * {@link SecurityEnhancer} to access an Open API server using API key.
+ * {@link SecurityEnhancer} to access an <i>OpenAPI</i> server using API key.
  * 
  * @see APIKeyAuthentication
  * 
@@ -41,7 +41,7 @@ public class APIKeyEnhancer implements SecurityEnhancer {
 	 * @param parameterName
 	 *        Name of the parameter to hold the key.
 	 * @param apiKey
-	 *        The API key to deliver to Open API server.
+	 *        The API key to deliver to <i>OpenAPI</i> server.
 	 */
 	public APIKeyEnhancer(APIKeyPosition location, String parameterName, String apiKey) {
 		_location = location;

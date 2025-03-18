@@ -22,7 +22,7 @@ import com.top_logic.service.openapi.common.authentication.oauth.ClientCredentia
 import com.top_logic.service.openapi.common.authentication.oauth.CredentialSecret;
 
 /**
- * {@link CredentialSecret Authentication data} for an Open API client towards the <i>OpenID</i>
+ * {@link CredentialSecret Authentication data} for an <i>OpenAPI</i> client towards the <i>OpenID</i>
  * server.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>

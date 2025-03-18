@@ -16,7 +16,7 @@ import com.top_logic.service.openapi.server.OpenApiServer;
 import com.top_logic.service.openapi.server.OpenApiServer.OpenAPIServerPart;
 
 /**
- * {@link SecretConfiguration} for the server part in an Open API communication.
+ * {@link SecretConfiguration} for the server part in an <i>OpenAPI</i> communication.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

@@ -22,7 +22,7 @@ import com.top_logic.service.openapi.server.authentication.AllAuthenticationDoma
 import com.top_logic.service.openapi.server.authentication.ServerSecret;
 
 /**
- * {@link HTTPSecret} for the Open API server.
+ * {@link HTTPSecret} for the <i>OpenAPI</i> server.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

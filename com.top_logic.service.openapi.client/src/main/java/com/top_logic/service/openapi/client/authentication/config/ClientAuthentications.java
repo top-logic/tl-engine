@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.service.openapi.common.authentication;
+package com.top_logic.service.openapi.client.authentication.config;
 
 import java.util.Map;
 
@@ -24,9 +24,9 @@ public interface ClientAuthentications extends ConfigurationItem {
 	/**
 	 * All available authentications.
 	 */
-	@Key(ClientAuthentication.DOMAIN)
+	@Key(ClientAuthentication.Config.DOMAIN)
 	@Name(AUTHENTICATIONS)
-	Map<String, ClientAuthentication> getAuthentications();
+	Map<String, ClientAuthentication.Config<?>> getAuthentications();
 
 }
 

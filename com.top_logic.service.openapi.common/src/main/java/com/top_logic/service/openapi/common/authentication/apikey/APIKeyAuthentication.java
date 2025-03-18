@@ -5,58 +5,75 @@
  */
 package com.top_logic.service.openapi.common.authentication.apikey;
 
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.basic.config.annotation.Mandatory;
-import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
-import com.top_logic.service.openapi.common.authentication.ClientAuthentication;
+import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
 import com.top_logic.service.openapi.common.authentication.ServerAuthentication;
+import com.top_logic.service.openapi.common.authentication.impl.Authenticator;
+import com.top_logic.service.openapi.common.authentication.impl.NeverAuthenticated;
+import com.top_logic.service.openapi.common.document.SecuritySchemeObject;
+import com.top_logic.service.openapi.common.document.SecuritySchemeType;
+import com.top_logic.service.openapi.common.util.OpenAPIConfigs;
 
 /**
  * {@link AuthenticationConfig} to authenticate using an API key.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-@DisplayOrder({
-	APIKeyAuthentication.DOMAIN,
-	APIKeyAuthentication.PARAMETER_NAME,
-	APIKeyAuthentication.POSITION
-})
-@TagName("api-key-authentication")
 @Label("API key")
-public interface APIKeyAuthentication extends ServerAuthentication, ClientAuthentication {
-
-	/** Configuration name for {@link #getPosition()}. */
-	String POSITION = "position";
-
-	/** Configuration name for {@link #getParameterName()}. */
-	String PARAMETER_NAME = "parameter-name";
+public class APIKeyAuthentication extends AbstractConfiguredInstance<APIKeyAuthentication.Config<?>>
+		implements ServerAuthentication<APIKeyAuthentication.Config<?>> {
+	
+	/**
+	 * Configuration options for {@link APIKeyAuthentication}.
+	 */
+	@DisplayOrder({
+		Config.DOMAIN,
+		Config.PARAMETER_NAME,
+		Config.POSITION
+	})
+	@TagName("api-key-authentication")
+	public interface Config<I extends APIKeyAuthentication> extends ServerAuthentication.Config<I>, APIKeyConfig {
+		// Pure sum interface.
+	}
 
 	/**
-	 * The position where the API key is found in the request.
+	 * Creates a {@link APIKeyAuthentication}.
 	 */
-	@Mandatory
-	@Name(POSITION)
-	APIKeyPosition getPosition();
+	public APIKeyAuthentication(InstantiationContext context, APIKeyAuthentication.Config<?> config) {
+		super(context, config);
+	}
 
-	/**
-	 * Setter for {@link #getPosition()}.
-	 */
-	void setPosition(APIKeyPosition value);
+	@Override
+	public SecuritySchemeObject createSchemaObject(String schemaName) {
+		APIKeyAuthentication.Config<?> config = getConfig();
+		SecuritySchemeObject securityScheme = OpenAPIConfigs.newSecuritySchema(schemaName);
+		securityScheme.setType(SecuritySchemeType.API_KEY);
+		OpenAPIConfigs.transferIfNotEmpty(config::getParameterName, securityScheme::setName);
+		OpenAPIConfigs.transferIfNotEmpty(config::getPosition, securityScheme::setIn);
+		return securityScheme;
+	}
 
-	/**
-	 * Name of the parameter holding the API key.
-	 */
-	@Mandatory
-	@Name(PARAMETER_NAME)
-	String getParameterName();
+	@Override
+	public Authenticator createAuthenticator(List<? extends SecretConfiguration> availableSecrets) {
+		Config<?> config = getConfig();
+		Set<String> allowedKeys = OpenAPIConfigs.secretsOfType(config, availableSecrets, APIKeySecret.class)
+			.map(APIKeySecret::getAPIKey)
+			.collect(Collectors.toSet());
 
-	/**
-	 * Setter for {@link #getParameterName()}.
-	 */
-	void setParameterName(String value);
+		if (allowedKeys.isEmpty()) {
+			return NeverAuthenticated.missingSecret();
+		}
+		return new APIKeyAuthenticator(config.getPosition(), config.getParameterName(), allowedKeys);
+	}
 
 }
 

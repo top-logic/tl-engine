@@ -64,16 +64,15 @@ import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.authentication.ServerAuthentication;
 import com.top_logic.service.openapi.common.authentication.ServerAuthentications;
+import com.top_logic.service.openapi.common.authentication.impl.AuthenticationFailure;
+import com.top_logic.service.openapi.common.authentication.impl.Authenticator;
+import com.top_logic.service.openapi.common.authentication.impl.NeverAuthenticated;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
 import com.top_logic.service.openapi.common.document.InfoObject;
 import com.top_logic.service.openapi.common.document.SchemaObject;
 import com.top_logic.service.openapi.common.document.TagObject;
 import com.top_logic.service.openapi.server.HandlerForPath.CompareByParts;
 import com.top_logic.service.openapi.server.authentication.AlwaysAuthenticated;
-import com.top_logic.service.openapi.server.authentication.AuthenticateVisitor;
-import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
-import com.top_logic.service.openapi.server.authentication.Authenticator;
-import com.top_logic.service.openapi.server.authentication.NeverAuthenticated;
 import com.top_logic.service.openapi.server.authentication.ServerSecret;
 import com.top_logic.service.openapi.server.conf.OperationByMethod;
 import com.top_logic.service.openapi.server.conf.PathItem;
@@ -171,7 +170,7 @@ public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?
 		 * {@link #getPaths()}.
 		 */
 		@Override
-		Map<String, ServerAuthentication> getAuthentications();
+		Map<String, ServerAuthentication.Config<?>> getAuthentications();
 
 		/**
 		 * Configuration of the secrets that a client must use to access this server.
@@ -463,10 +462,9 @@ public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?
 		for (String authentication : authentications) {
 			Authenticator nextAuthenticator;
 			try {
-				nextAuthenticator = getConfig()
+				nextAuthenticator = TypedConfigUtil.createInstance(getConfig()
 					.getAuthentications()
-					.get(authentication)
-					.visit(AuthenticateVisitor.INSTANCE, this);
+					.get(authentication)).createAuthenticator(getConfig().getSecrets());
 				authenticator = authenticator.or(nextAuthenticator);
 			} catch (RuntimeException ex) {
 				Logger.error("Unable to create authenticator for path '" + path + "' and method '" + method + "'.", ex,

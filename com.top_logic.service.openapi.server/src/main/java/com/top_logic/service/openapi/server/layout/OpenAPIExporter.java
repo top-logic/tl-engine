@@ -5,6 +5,7 @@
  */
 package com.top_logic.service.openapi.server.layout;
 
+import static com.top_logic.basic.config.TypedConfiguration.*;
 import static com.top_logic.service.openapi.common.schema.OpenAPISchemaConstants.*;
 
 import java.io.IOException;
@@ -20,10 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -47,26 +45,18 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.constraint.check.ConstraintChecker;
 import com.top_logic.basic.config.json.JsonConfigurationWriter;
 import com.top_logic.basic.config.json.JsonUtilities;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.binary.ByteArrayStream;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.service.openapi.common.OpenAPIConstants;
 import com.top_logic.service.openapi.common.authentication.ServerAuthentication;
-import com.top_logic.service.openapi.common.authentication.ServerAuthenticationVisitor;
-import com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthentication;
-import com.top_logic.service.openapi.common.authentication.http.basic.BasicAuthentication;
-import com.top_logic.service.openapi.common.authentication.oauth.DefaultURIProvider;
-import com.top_logic.service.openapi.common.authentication.oauth.OpenIDURIProvider;
-import com.top_logic.service.openapi.common.authentication.oauth.ServerCredentials;
-import com.top_logic.service.openapi.common.authentication.oauth.TokenURIProvider;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
 import com.top_logic.service.openapi.common.document.ComponentsObject;
 import com.top_logic.service.openapi.common.document.IParameterObject;
 import com.top_logic.service.openapi.common.document.InfoObject;
 import com.top_logic.service.openapi.common.document.MediaTypeObject;
-import com.top_logic.service.openapi.common.document.OAuthFlow;
-import com.top_logic.service.openapi.common.document.OAuthFlowObject;
 import com.top_logic.service.openapi.common.document.OpenapiDocument;
 import com.top_logic.service.openapi.common.document.OperationObject;
 import com.top_logic.service.openapi.common.document.ParameterObject;
@@ -76,10 +66,9 @@ import com.top_logic.service.openapi.common.document.ReferencingParameterObject;
 import com.top_logic.service.openapi.common.document.RequestBodyObject;
 import com.top_logic.service.openapi.common.document.ResponsesObject;
 import com.top_logic.service.openapi.common.document.SchemaObject;
-import com.top_logic.service.openapi.common.document.SecuritySchemeObject;
-import com.top_logic.service.openapi.common.document.SecuritySchemeType;
 import com.top_logic.service.openapi.common.document.ServerObject;
 import com.top_logic.service.openapi.common.document.TagObject;
+import com.top_logic.service.openapi.common.util.OpenAPIConfigs;
 import com.top_logic.service.openapi.server.DisplayFullPathTemplate;
 import com.top_logic.service.openapi.server.OpenApiServer;
 import com.top_logic.service.openapi.server.OpenApiServer.Config;
@@ -175,12 +164,12 @@ public class OpenAPIExporter {
 
 		doc.setInfo(copyInfoObject(_serverConfig));
 		setTags(doc, _serverConfig);
-		Map<String, ServerAuthentication> authentications = _serverConfig.getAuthentications();
+		Map<String, ServerAuthentication.Config<?>> authentications = _serverConfig.getAuthentications();
 		Map<String, SchemaObject> schemas = _serverConfig.getGlobalSchemas();
 		Map<String, ReferencedParameter> parameters = _serverConfig.getGlobalParameters();
 		if (!authentications.isEmpty() || !schemas.isEmpty() || !parameters.isEmpty()) {
 			ComponentsObject componentsObject = newItem(ComponentsObject.class);
-			for (Entry<String, ServerAuthentication> authentication : authentications.entrySet()) {
+			for (Entry<String, ServerAuthentication.Config<?>> authentication : authentications.entrySet()) {
 				addAuthentication(componentsObject, authentication);
 			}
 			for (Entry<String, SchemaObject> schema : schemas.entrySet()) {
@@ -209,7 +198,7 @@ public class OpenAPIExporter {
 
 	private void addParameters(Map<String, ReferencedParameter> parameters, ComponentsObject componentsObject) {
 		for (Entry<String, ReferencedParameter> entry : parameters.entrySet()) {
-			ReferencableParameterObject target = TypedConfiguration.newConfigItem(ReferencableParameterObject.class);
+			ReferencableParameterObject target = newItem(ReferencableParameterObject.class);
 			ConcreteRequestParameter.Config<? extends ConcreteRequestParameter<?>> source =
 				entry.getValue().getParameterDefinition();
 			exportData(source, target);
@@ -281,12 +270,12 @@ public class OpenAPIExporter {
 	private InfoObject copyInfoObject(OpenApiServer.Config<?> serverConfig) {
 		InfoObject infoObject = newItem(InfoObject.class);
 		InfoObject serverInfo = serverConfig.getInformation();
-		transferIfNotEmpty(serverInfo::getTitle, infoObject::setTitle);
-		transferIfNotEmpty(serverInfo::getVersion, infoObject::setVersion);
-		transferIfNotEmpty(serverInfo::getDescription, infoObject::setDescription);
-		transferIfNotEmpty(serverInfo::getTermsOfService, infoObject::setTermsOfService);
-		transferCopyIfNotNull(serverInfo::getContact, infoObject::setContact);
-		transferCopyIfNotNull(serverInfo::getLicense, infoObject::setLicense);
+		OpenAPIConfigs.transferIfNotEmpty(serverInfo::getTitle, infoObject::setTitle);
+		OpenAPIConfigs.transferIfNotEmpty(serverInfo::getVersion, infoObject::setVersion);
+		OpenAPIConfigs.transferIfNotEmpty(serverInfo::getDescription, infoObject::setDescription);
+		OpenAPIConfigs.transferIfNotEmpty(serverInfo::getTermsOfService, infoObject::setTermsOfService);
+		OpenAPIConfigs.transferCopyIfNotNull(serverInfo::getContact, infoObject::setContact);
+		OpenAPIConfigs.transferCopyIfNotNull(serverInfo::getLicense, infoObject::setLicense);
 		return infoObject;
 	}
 
@@ -296,10 +285,10 @@ public class OpenAPIExporter {
 	}
 
 	private void addAuthentication(ComponentsObject componentsObject,
-			Entry<String, ServerAuthentication> authentication) {
+			Entry<String, ServerAuthentication.Config<?>> authentication) {
 		String authName = authentication.getKey();
 		componentsObject.getSecuritySchemes().put(authName,
-			authentication.getValue().visit(SecuritySchemeObjects.INSTANCE, authName));
+			TypedConfigUtil.createInstance(authentication.getValue()).createSchemaObject(authName));
 	}
 
 	private void addPathItem(OpenapiDocument doc, PathItem path) {
@@ -348,8 +337,8 @@ public class OpenAPIExporter {
 	private OperationObject createOperationObject(OperationByMethod value,
 			MutableObject<RequestBodyObject> requestBody) {
 		OperationObject result = newItem(OperationObject.class);
-		transferIfNotEmpty(value::getSummary, result::setSummary);
-		transferIfNotEmpty(value::getDescription, result::setDescription);
+		OpenAPIConfigs.transferIfNotEmpty(value::getSummary, result::setSummary);
+		OpenAPIConfigs.transferIfNotEmpty(value::getDescription, result::setDescription);
 		result.getParameters().addAll(createParameters(value.getParameters(), requestBody));
 		if (requestBody.getValue() != null) {
 			result.setRequestBody(requestBody.getValue());
@@ -373,7 +362,7 @@ public class OpenAPIExporter {
 			for (OperationResponse resonse : responses.values()) {
 				ResponsesObject response = newResponsesObject(resonse.getResponseCode(), resonse.getDescription());
 				MediaTypeObject content = newMediaTypeObject(resonse.getFormat(), resonse.getSchema());
-				transferIfNotEmpty(resonse::getExample, content::setExample);
+				OpenAPIConfigs.transferIfNotEmpty(resonse::getExample, content::setExample);
 				response.getContent().put(content.getMediaType(), content);
 				result.getResponses().put(response.getStatusCode(), response);
 			}
@@ -418,11 +407,11 @@ public class OpenAPIExporter {
 				}
 				RequestBodyParameter.Config requestBodyParam = (RequestBodyParameter.Config) parameter;
 				RequestBodyObject bodyObject = newItem(RequestBodyObject.class);
-				transferIfNotEmpty(requestBodyParam::getDescription, bodyObject::setDescription);
-				transferIfTrue(requestBodyParam::getRequired, bodyObject::setRequired);
+				OpenAPIConfigs.transferIfNotEmpty(requestBodyParam::getDescription, bodyObject::setDescription);
+				OpenAPIConfigs.transferIfTrue(requestBodyParam::getRequired, bodyObject::setRequired);
 				MediaTypeObject content =
 					newMediaTypeObject(requestBodyParam.getFormat(), requestBodyParam.getSchema());
-				transferIfNotEmpty(requestBodyParam::getExample, content::setExample);
+				OpenAPIConfigs.transferIfNotEmpty(requestBodyParam::getExample, content::setExample);
 				bodyObject.getContent().put(content.getMediaType(), content);
 				requestBody.setValue(bodyObject);
 			} else if (parameter instanceof MultiPartBodyParameter.Config) {
@@ -433,10 +422,10 @@ public class OpenAPIExporter {
 				}
 				MultiPartBodyParameter.Config requestBodyParam = (MultiPartBodyParameter.Config) parameter;
 				RequestBodyObject bodyObject = newItem(RequestBodyObject.class);
-				transferIfNotEmpty(requestBodyParam::getDescription, bodyObject::setDescription);
-				transferIfTrue(requestBodyParam::getRequired, bodyObject::setRequired);
+				OpenAPIConfigs.transferIfNotEmpty(requestBodyParam::getDescription, bodyObject::setDescription);
+				OpenAPIConfigs.transferIfTrue(requestBodyParam::getRequired, bodyObject::setRequired);
 				MediaTypeObject content = newMultipartMediaTypeObject(requestBodyParam);
-				transferIfNotEmpty(requestBodyParam::getExample, content::setExample);
+				OpenAPIConfigs.transferIfNotEmpty(requestBodyParam::getExample, content::setExample);
 				bodyObject.getContent().put(content.getMediaType(), content);
 				requestBody.setValue(bodyObject);
 			} else if (parameter instanceof ConcreteRequestParameter.Config) {
@@ -455,13 +444,13 @@ public class OpenAPIExporter {
 		if (format != null) {
 			target.setSchema(newSchema(format, source.isMultiple(), source.getSchema()));
 			if (format == ParameterFormat.OBJECT) {
-				transferIfNotEmpty(source::getExample, target::setExample);
+				OpenAPIConfigs.transferIfNotEmpty(source::getExample, target::setExample);
 			}
 		}
-		transferIfNotEmpty(source::getName, target::setName);
-		transferIfNotEmpty(source::getDescription, target::setDescription);
-		transferIfTrue(source::getRequired, target::setRequired);
-		transferIfNotEmpty(source::getParameterLocation, target::setIn);
+		OpenAPIConfigs.transferIfNotEmpty(source::getName, target::setName);
+		OpenAPIConfigs.transferIfNotEmpty(source::getDescription, target::setDescription);
+		OpenAPIConfigs.transferIfTrue(source::getRequired, target::setRequired);
+		OpenAPIConfigs.transferIfNotEmpty(source::getParameterLocation, target::setIn);
 		return target;
 	}
 
@@ -614,96 +603,6 @@ public class OpenAPIExporter {
 
 	static <T extends ConfigurationItem> T newItem(Class<T> configInterface) {
 		return TypedConfiguration.newConfigItem(configInterface);
-	}
-
-	static void transferIfTrue(BooleanSupplier supplier, Consumer<Boolean> consumer) {
-		if (supplier.getAsBoolean()) {
-			consumer.accept(Boolean.TRUE);
-		}
-	}
-
-	static <T> void transferIfNotEmpty(Supplier<T> supplier, Consumer<? super T> consumer) {
-		T t = supplier.get();
-		if (!StringServices.isEmpty(t)) {
-			consumer.accept(t);
-		}
-	}
-
-	static <T extends ConfigurationItem> void transferCopyIfNotNull(Supplier<T> supplier,
-			Consumer<? super T> consumer) {
-		T t = supplier.get();
-		if (t != null) {
-			consumer.accept(copy(t));
-		}
-	}
-
-	private static <T extends ConfigurationItem> T copy(T item) {
-		return TypedConfiguration.copy(item);
-	}
-
-	private static class SecuritySchemeObjects implements ServerAuthenticationVisitor<SecuritySchemeObject, String> {
-
-		/** Singleton {@link SecuritySchemeObjects} instance. */
-		public static final SecuritySchemeObjects INSTANCE = new SecuritySchemeObjects();
-
-		/**
-		 * Creates a new {@link SecuritySchemeObjects}.
-		 */
-		protected SecuritySchemeObjects() {
-			// singleton instance
-		}
-
-		@Override
-		public SecuritySchemeObject visitAPIKeyAuthentication(APIKeyAuthentication config, String schemaName) {
-			SecuritySchemeObject securityScheme = newSecuritySchema(schemaName);
-			securityScheme.setType(SecuritySchemeType.API_KEY);
-			transferIfNotEmpty(config::getParameterName, securityScheme::setName);
-			transferIfNotEmpty(config::getPosition, securityScheme::setIn);
-			return securityScheme;
-		}
-
-		@Override
-		public SecuritySchemeObject visitServerCredentials(ServerCredentials config, String schemaName) {
-			SecuritySchemeObject securityScheme = newSecuritySchema(schemaName);
-			PolymorphicConfiguration<? extends TokenURIProvider> uriProvider = config.getURIProvider();
-			if (uriProvider instanceof OpenIDURIProvider.Config) {
-				securityScheme.setType(SecuritySchemeType.OPEN_ID_CONNECT);
-				securityScheme.setOpenIdConnectUrl(((OpenIDURIProvider.Config) uriProvider).getOpenIDIssuer());
-			} else if (uriProvider instanceof DefaultURIProvider.Config) {
-				securityScheme.setType(SecuritySchemeType.OAUTH2);
-				OAuthFlowObject flowObject = newItem(OAuthFlowObject.class);
-				flowObject.setFlow(OAuthFlow.CLIENT_CREDENTIALS);
-				flowObject.setTokenUrl(((DefaultURIProvider.Config) uriProvider).getTokenURL().toExternalForm());
-				flowObject.setScopes(Collections.emptyMap());
-				securityScheme.getFlows().put(flowObject.getFlow(), flowObject);
-			} else {
-				throw new UnsupportedOperationException();
-			}
-			if (config.isInUserContext()) {
-				securityScheme.setUserContext(true, config.getUsernameField());
-			}
-			return securityScheme;
-		}
-
-		@Override
-		public SecuritySchemeObject visitBasicAuthentication(BasicAuthentication config, String schemaName) {
-			SecuritySchemeObject securityScheme = newHTTPAuthentication(schemaName);
-			securityScheme.setScheme("Basic");
-			return securityScheme;
-		}
-
-		private SecuritySchemeObject newHTTPAuthentication(String schemaName) {
-			SecuritySchemeObject securityScheme = newSecuritySchema(schemaName);
-			securityScheme.setType(SecuritySchemeType.HTTP);
-			return securityScheme;
-		}
-
-		private SecuritySchemeObject newSecuritySchema(String schemaName) {
-			SecuritySchemeObject securityScheme = newItem(SecuritySchemeObject.class);
-			securityScheme.setSchemaName(schemaName);
-			return securityScheme;
-		}
-
 	}
 
 }

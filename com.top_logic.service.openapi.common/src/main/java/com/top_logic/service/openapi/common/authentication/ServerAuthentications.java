@@ -24,9 +24,9 @@ public interface ServerAuthentications extends ConfigurationItem {
 	/**
 	 * All available authentications.
 	 */
-	@Key(ServerAuthentication.DOMAIN)
+	@Key(AuthenticationConfig.DOMAIN)
 	@Name(AUTHENTICATIONS)
-	Map<String, ServerAuthentication> getAuthentications();
+	Map<String, ServerAuthentication.Config<?>> getAuthentications();
 
 }
 

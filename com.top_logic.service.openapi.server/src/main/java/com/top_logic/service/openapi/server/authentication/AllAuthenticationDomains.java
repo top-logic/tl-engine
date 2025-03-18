@@ -31,7 +31,7 @@ import com.top_logic.service.openapi.common.authentication.ServerAuthentications
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class AllAuthenticationDomains extends Function1<List<String>, Map<String, ServerAuthentication>> {
+public class AllAuthenticationDomains extends Function1<List<String>, Map<String, ServerAuthentication.Config<?>>> {
 
 	private DeclarativeFormOptions _options;
 
@@ -43,15 +43,15 @@ public class AllAuthenticationDomains extends Function1<List<String>, Map<String
 	}
 
 	@Override
-	public List<String> apply(Map<String, ServerAuthentication> authentications) {
+	public List<String> apply(Map<String, ServerAuthentication.Config<?>> authentications) {
 		return resolveAuthentications(authentications).values().stream()
 			.filter(filter())
 			.map(AuthenticationConfig::getDomain)
 			.collect(Collectors.toList());
 	}
 
-	private Map<String, ServerAuthentication> resolveAuthentications(
-			Map<String, ServerAuthentication> authentications) {
+	private Map<String, ServerAuthentication.Config<?>> resolveAuthentications(
+			Map<String, ServerAuthentication.Config<?>> authentications) {
 		if (authentications != null) {
 			return authentications;
 		}

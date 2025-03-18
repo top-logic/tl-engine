@@ -35,7 +35,8 @@ import com.top_logic.service.openapi.common.OpenAPIConstants;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.authentication.ServerAuthentication;
 import com.top_logic.service.openapi.common.authentication.ServerAuthentications;
-import com.top_logic.service.openapi.common.authentication.oauth.ServerCredentials;
+import com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthentication;
+import com.top_logic.service.openapi.common.authentication.http.basic.BasicAuthentication;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
 import com.top_logic.service.openapi.common.document.ComponentsObject;
 import com.top_logic.service.openapi.common.document.IParameterObject;
@@ -61,8 +62,10 @@ import com.top_logic.service.openapi.common.schema.ObjectSchemaProperty;
 import com.top_logic.service.openapi.common.schema.PrimitiveSchema;
 import com.top_logic.service.openapi.common.schema.Schema;
 import com.top_logic.service.openapi.common.schema.SchemaVisitor;
+import com.top_logic.service.openapi.common.util.OpenAPIConfigs;
 import com.top_logic.service.openapi.server.OpenApiServer;
 import com.top_logic.service.openapi.server.OpenApiServer.Information;
+import com.top_logic.service.openapi.server.authentication.oauth.ServerCredentials;
 import com.top_logic.service.openapi.server.conf.OperationByMethod;
 import com.top_logic.service.openapi.server.conf.OperationResponse;
 import com.top_logic.service.openapi.server.conf.PathItem;
@@ -131,12 +134,12 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 	 *        Log to add potential warnings to.
 	 */
 	private void addAuthentications(OpenapiDocument openAPI, ServerAuthentications auth, List<ResKey> warnings) {
-		Map<String, ServerAuthentication> authentications = auth.getAuthentications();
+		Map<String, ServerAuthentication.Config<?>> authentications = auth.getAuthentications();
 		ComponentsObject components = openAPI.getComponents();
 		if (components != null) {
 			Map<String, SecuritySchemeObject> securitySchemes = components.getSecuritySchemes();
 			for (SecuritySchemeObject schema : securitySchemes.values()) {
-				ServerAuthentication authentication = createAuthentication(schema, warnings);
+				ServerAuthentication.Config<?> authentication = createAuthentication(schema, warnings);
 				if (authentication != null) {
 					authentication.setDomain(schema.getSchemaName());
 					authentications.put(authentication.getDomain(), authentication);
@@ -145,14 +148,15 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 		}
 	}
 
-	private ServerAuthentication createAuthentication(SecuritySchemeObject value, List<ResKey> warnings) {
+	private ServerAuthentication.Config<?> createAuthentication(SecuritySchemeObject value, List<ResKey> warnings) {
 		switch (value.getType()) {
 			case API_KEY:
-				return createAPIKeyAuthentication(value);
+				return createAPIKeyAuthentication(APIKeyAuthentication.Config.class, value);
 			case HTTP:
-				return createHTTPAuthentication(value, warnings);
+				return createHTTPAuthentication(BasicAuthentication.Config.class, value, warnings);
 			case OAUTH2: {
-				ServerCredentials authentication = createOAuth2Authentication(ServerCredentials.class, value, warnings);
+				ServerCredentials.Config<?> authentication =
+					createOAuth2Authentication(ServerCredentials.Config.class, value, warnings);
 				if (value.isInUserContext()) {
 					authentication.setInUserContext(true);
 					String usernameField = value.getUsernameField();
@@ -163,7 +167,8 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 				return authentication;
 			}
 			case OPEN_ID_CONNECT: {
-				ServerCredentials authentication = createOpenIDConnectAuthentication(ServerCredentials.class, value);
+				ServerCredentials.Config<?> authentication =
+					createOpenIDConnectAuthentication(ServerCredentials.Config.class, value);
 				if (value.isInUserContext()) {
 					authentication.setInUserContext(true);
 					String usernameField = value.getUsernameField();
@@ -205,7 +210,7 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 		InfoObject info = openApiDoc.getInfo();
 		target.setTitle(info.getTitle());
 		target.setVersion(info.getVersion());
-		OpenAPIExporter.transferIfNotEmpty(info::getDescription, target::setDescription);
+		OpenAPIConfigs.transferIfNotEmpty(info::getDescription, target::setDescription);
 		target.setTermsOfService(info.getTermsOfService());
 		target.setContact(TypedConfiguration.copy(info.getContact()));
 		target.setLicense(TypedConfiguration.copy(info.getLicense()));
@@ -283,8 +288,8 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 		} else if (!globalSecurity.isEmpty()) {
 			newOperation.setAuthentication(globalSecurity);
 		}
-		OpenAPIExporter.transferIfNotEmpty(operation::getDescription, newOperation::setDescription);
-		OpenAPIExporter.transferIfNotEmpty(operation::getSummary, newOperation::setSummary);
+		OpenAPIConfigs.transferIfNotEmpty(operation::getDescription, newOperation::setDescription);
+		OpenAPIConfigs.transferIfNotEmpty(operation::getSummary, newOperation::setSummary);
 		String[] tags = operation.getTags();
 		if (tags.length > 0) {
 			newOperation.setTags(Arrays.asList(tags));
@@ -299,7 +304,7 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 		for (ResponsesObject response : operation.getResponses().values()) {
 			OperationResponse opResp = TypedConfiguration.newConfigItem(OperationResponse.class);
 			opResp.setResponseCode(response.getStatusCode());
-			OpenAPIExporter.transferIfNotEmpty(response::getDescription, opResp::setDescription);
+			OpenAPIConfigs.transferIfNotEmpty(response::getDescription, opResp::setDescription);
 			MediaTypeObject jsonResponse = response.getContent().get(JsonUtilities.JSON_CONTENT_TYPE);
 			if (jsonResponse != null) {
 				opResp.setFormat(ParameterFormat.OBJECT);
@@ -405,7 +410,7 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 					TypedConfiguration.newConfigItem(MultiPartBodyParameter.BodyPart.class);
 				newPart.setName(property.getName());
 				newPart.setRequired(property.isRequired());
-				OpenAPIExporter.transferIfNotEmpty(propertySchema::getDescription, newPart::setDescription);
+				OpenAPIConfigs.transferIfNotEmpty(propertySchema::getDescription, newPart::setDescription);
 				ResKey problem = propertySchema.visit(applySchema(), newPart);
 				if (problem != ResKey.NONE) {
 					warnings.add(problem);
@@ -421,9 +426,9 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 		bodyParam.setName("requestBody");
 		bodyParam.setRequired(requestBody.isRequired());
 		bodyParam.setFormat(ParameterFormat.OBJECT);
-		OpenAPIExporter.transferIfNotEmpty(requestBody::getDescription, bodyParam::setDescription);
-		OpenAPIExporter.transferIfNotEmpty(mediaType::getExample, bodyParam::setExample);
-		OpenAPIExporter.transferIfNotEmpty(mediaType::getSchema, bodyParam::setSchema);
+		OpenAPIConfigs.transferIfNotEmpty(requestBody::getDescription, bodyParam::setDescription);
+		OpenAPIConfigs.transferIfNotEmpty(mediaType::getExample, bodyParam::setExample);
+		OpenAPIConfigs.transferIfNotEmpty(mediaType::getSchema, bodyParam::setSchema);
 		return bodyParam;
 	}
 
@@ -494,7 +499,7 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 				throw new UnreachableAssertion("No such parameter location: " + paramObject.getIn());
 		}
 		requestParam.setName(paramObject.getName());
-		OpenAPIExporter.transferIfNotEmpty(paramObject::getDescription, requestParam::setDescription);
+		OpenAPIConfigs.transferIfNotEmpty(paramObject::getDescription, requestParam::setDescription);
 		if (paramObject.getIn() != ParameterLocation.PATH) {
 			// Path is always required and can not be set.
 			requestParam.setRequired(paramObject.isRequired());

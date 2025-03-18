@@ -11,7 +11,7 @@ import java.util.List;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * Base class fro {@link ComponentChannel}s that combine inputs of multiple source channels.
+ * Base class for {@link ComponentChannel}s that combine inputs of multiple source channels.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

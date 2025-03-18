@@ -34,7 +34,7 @@ public class ExecutionProcessCreateHandler extends DefaultCreateAttributedComman
 	}
 
 	@Override
-	public Object createObject(LayoutComponent component, Object createContext, FormContainer formContainer,
+	public TLObject createObject(LayoutComponent component, Object createContext, FormContainer formContainer,
 			Map<String, Object> arguments) {
 
 		StartEvent startEvent = ((ProcessExecutionCreateComponent) component).startEvent();

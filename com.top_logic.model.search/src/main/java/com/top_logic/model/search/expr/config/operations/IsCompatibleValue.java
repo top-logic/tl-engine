@@ -59,7 +59,7 @@ public class IsCompatibleValue extends GenericMethod {
 	 * 
 	 * <p>
 	 * First argument is the value to check, second argument is the target type specification
-	 * (TLPrimitive, TLClass, PersistentClassProperty or TLStructuredTypePart).
+	 * ({@link TLPrimitive}, {@link TLClass} or {@link TLStructuredTypePart}).
 	 * </p>
 	 * 
 	 * @param arguments

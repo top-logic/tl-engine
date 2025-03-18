@@ -1063,6 +1063,59 @@ services.AJAXServiceClass = function() {
 		return requestFunction;
 	};
 	
+	/**
+	 * Executes the given command with arguments from the given supplier not yet but when the next "real" request is sent.
+	 * 
+	 * In contract to "executeOrUpdateLazy" the arguments for the command are not detemined when this method is called, 
+	 * but at the time at which the actual server request is created.
+	 * 
+	 * @param {String}
+	 * 		The ID of the request. When there is already a request with the same ID it is replaced by the new request.
+	 * @param {String}
+	 * 		The name of the command to execute.
+	 * @param {Function}
+	 * 		Function that creates the arguments for the given command.
+	 */
+	this.executeOrUpdateWithLazyData = function(requestID, command, argsSupplier, contextInformation) {
+		/*
+		 * read the submit number at the moment at which the function is called.
+		 * The variant to read the submit number directly before sending the
+		 * event is not used as then a problem can occur, e.g. when the
+		 * corresponding component is repainted the data (for example control
+		 * IDs) may be out dated.
+		 */ 
+		var componentId = this.COMPONENT_ID;
+		var submitNumber = this.SUBMIT_NUMBER;
+		if (contextInformation != undefined) {
+			componentId = contextInformation.componentId;
+			submitNumber = contextInformation.submitNumber;
+		}
+		
+		var self = this;
+		var commandArgsSupplier = function() {
+			var args = argsSupplier.call();
+			return self.addSystemCommandProperty(args);
+		}
+		var requ = {
+			command : command,
+			argsSupplier : commandArgsSupplier,
+			componentId : componentId,
+			submitNumber : submitNumber
+		};
+		this.mainLayout.services.ajax.lazyRequests.put(requestID, requ);
+		return false;
+	};
+	
+	/**
+	 * Executes the given command with the given arguments not yet but when the next "real" request is sent.
+	 * 
+	 * @param {String}
+	 * 		The ID of the request. When there is already a request with the same ID it is replaced by the new request.
+	 * @param {String}
+	 * 		The name of the command to execute.
+	 * @param {Object}
+	 * 		Arguments for the commmand.
+	 */
 	this.executeOrUpdateLazy = function(requestID, command, args, contextInformation) {
 		/*
 		 * read the submit number at the moment at which the function is called.
@@ -1097,6 +1150,13 @@ services.AJAXServiceClass = function() {
 	
 	this.createLazyRequestID = function() {
 		return this.mainLayout.services.ajax.lazyRequests.newKey();
+	};
+	
+	/**
+	 * Checks whether a lazy request with the given ID exists.
+	 */
+	this.containsLazyRequest = function(requestID) {
+		return this.mainLayout.services.ajax.lazyRequests.contains(requestID);
 	};
 	
 	this.invokeRead = function(command, args, onError, sequential) {
@@ -1341,7 +1401,14 @@ services.AJAXServiceClass = function() {
 					var lazyComponentId = lazyRequest.componentId;
 					var lazySubmitNumber = lazyRequest.submitNumber;
 					var lazyCommand = lazyRequest.command;
-					var lazyArgs = lazyRequest.args;
+					var lazyArgsSupplier = lazyRequest.argsSupplier;
+					var lazyArgs;
+					if (lazyArgsSupplier != null) {
+						lazyArgs = lazyArgsSupplier.call();
+					} else {
+						lazyArgs = lazyRequest.args;
+					}
+					
 					request += this._getCommandString(lazyComponentId, lazyComponentId, lazySubmitNumber, lazyCommand, lazyArgs); 
 				}
 				this.lazyRequests.clear();

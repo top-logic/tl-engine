@@ -64,16 +64,22 @@ services.wysiwyg = {
 							return;
 						} 
 					}
-					var data = evt.editor.getData();
-					// evt.editor.getData() has turned some spaces into non-breaking spaces. They have to be replaced by normal spaces.
-					data = data.replaceAll(String.fromCharCode(160), ' ');
-					data = data.replaceAll('&nbsp;', ' ');
-					services.ajax.executeOrUpdateLazy(requestID, "dispatchControlCommand", {
-						controlCommand : "valueChanged",
-						controlID : controlId,
-						value : data
-					});
-			
+					
+					if (!services.ajax.containsLazyRequest(requestID)) {
+						var argsSupplier = function() {
+							var data = editor.getData();
+							// editor.getData() has turned some spaces into non-breaking spaces. They have to be replaced by normal spaces.
+							data = data.replaceAll(String.fromCharCode(160), ' ');
+							data = data.replaceAll('&nbsp;', ' ');
+						
+							return {
+								controlCommand : "valueChanged",
+								controlID : controlId,
+								value : data
+							}
+						};
+						services.ajax.executeOrUpdateWithLazyData(requestID, "dispatchControlCommand", argsSupplier);
+					}
 				 });
 				 editor.on('paste', function(evt) {
 				 	// evt.data.dataValue has turned some spaces into non-breaking spaces. They have to be replaced by normal spaces.

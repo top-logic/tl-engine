@@ -111,7 +111,7 @@ public abstract class CreateAttributedComponent extends AbstractCreateComponent 
 			for (TLStructuredTypePart attribute : type.getAllParts()) {
 				this.addAnotherMetaAttribute(formContext, type, creation, attribute);
 			}
-			_modifier.postModify(this, type, null, formContext, formContext);
+			_modifier.postModify(this, type, creation, formContext, formContext);
         }
     }
 

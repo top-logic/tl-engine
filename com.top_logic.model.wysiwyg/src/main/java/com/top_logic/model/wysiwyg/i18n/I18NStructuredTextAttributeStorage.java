@@ -76,7 +76,7 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 	@Override
 	public void init(TLStructuredTypePart attribute) {
 		super.init(attribute);
-		_sourceCodesQuery = this.createQuery(getSourceCodeTableName(), attribute, StaticItem.class);
+		_sourceCodesQuery = this.createQuery(getSourceCodeTableName(), attribute.getDefinition(), StaticItem.class);
 		_sourcePreload = new AssociationCachePreload(_sourceCodesQuery);
 		
 		_supportedLocales = unmodifiableList(list(getSupportedLocales()));

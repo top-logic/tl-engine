@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.wysiwyg.ui.scripting;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.scripting.recorder.ref.ContextDependent;
@@ -28,14 +29,21 @@ public class StructuredTextNamingScheme
 
 		/**
 		 * The literal value.
+		 * 
+		 * @deprecated For compatibility with existing tests. Use {@link #getText()} instead
 		 */
+		@Deprecated
 		String getValue();
 
 		/**
-		 * @see #getValue()
+		 * The represented {@link StructuredText}.
 		 */
-		void setValue(String value);
+		StructuredText getText();
 
+		/**
+		 * Setter for {@link #getText()}.
+		 */
+		void setText(StructuredText text);
 	}
 
 	/**
@@ -47,19 +55,24 @@ public class StructuredTextNamingScheme
 
 	@Override
 	public StructuredText locateModel(ActionContext context, FormField valueContext, Name name) {
-		Object value = valueContext.getValue();
-		if (value == null) {
-			return new StructuredText(name.getValue());
-		} else {
-			StructuredText oldStructuredText = (StructuredText) value;
-			return new StructuredText(name.getValue(), oldStructuredText.getImages());
+		String nameValue = name.getValue();
+		if (!StringServices.isEmpty(nameValue)) {
+			Object value = valueContext.getValue();
+			if (value == null) {
+				return new StructuredText(nameValue);
+			} else {
+				StructuredText oldStructuredText = (StructuredText) value;
+				return new StructuredText(nameValue, oldStructuredText.getImages());
+			}
 		}
+		StructuredText text = name.getText();
+		return text == null ? new StructuredText() : text.copy();
 	}
 
 	@Override
 	protected Maybe<Name> buildName(FormField valueContext, StructuredText model) {
 		Name name = createName();
-		name.setValue(model.getSourceCode());
+		name.setText(model);
 		return Maybe.some(name);
 	}
 }

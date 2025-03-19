@@ -34,7 +34,6 @@ import com.top_logic.element.meta.form.controlprovider.CompositionControlProvide
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.event.Modification;
-import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
@@ -412,7 +411,7 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 			Collection<String> readOnlyColumns = getReadOnlyColumns(_context);
 			for (Object element : collection(defaultValue)) {
 				TLObject overlay =
-					mkEditContext(_context.getOverlay().getScope(), _contentGroup, (Wrapper) element, readOnlyColumns);
+					mkEditContext(_context.getOverlay().getScope(), _contentGroup, (TLObject) element, readOnlyColumns);
 				overlays.add(overlay);
 			}
 			_tableModel.setRowObjects(overlays);
@@ -435,7 +434,7 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 		 *        Name of columns that are read only.
 		 */
 		private TLObject mkEditContext(AttributeUpdateContainer updateContainer, FormContainer contentGroup,
-				Wrapper editedObject, Collection<String> readOnlyColumns) {
+				TLObject editedObject, Collection<String> readOnlyColumns) {
 			TLFormObject overlay = updateContainer.editObject(editedObject);
 			FormContainer rowGroup = updateContainer.getFormContext().createFormContainerForOverlay(overlay);
 			rowGroup.setStableIdSpecialCaseMarker(editedObject);

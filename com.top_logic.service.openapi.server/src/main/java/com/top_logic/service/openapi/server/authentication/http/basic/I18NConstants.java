@@ -6,7 +6,6 @@
 package com.top_logic.service.openapi.server.authentication.http.basic;
 
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -20,12 +19,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey AUTH_FAILED_MISSING_AUTHENTICATION_DATA;
 
 	/**
-	 * @en Wrong credentials for user "{0}".
+	 * @en Invalid user or password.
 	 */
-	public static ResKey1 AUTH_FAILED_WRONG_AUTHENTICATION_DATA__USER;
+	public static ResKey AUTH_FAILED_WRONG_AUTHENTICATION_DATA;
 
 	/**
-	 * @en Not a BasicAuth authentication.
+	 * @en Invalid authentication data for scheme basic.
 	 */
 	public static ResKey AUTH_FAILED_NO_BASIC_AUTH;
 

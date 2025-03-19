@@ -7,6 +7,9 @@ package com.top_logic.element.meta.form.fieldprovider;
 
 import java.util.Comparator;
 
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.format.IdentityFormat;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.form.AbstractFieldProvider;
@@ -18,6 +21,7 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.constraints.GenericMandatoryConstraint;
 import com.top_logic.layout.form.constraints.ListConstraint;
 import com.top_logic.layout.form.constraints.StringLengthConstraint;
+import com.top_logic.layout.form.format.TrimFormat;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.StringField;
@@ -33,6 +37,39 @@ import com.top_logic.model.annotate.ui.MultiLine;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class StringFieldProvider extends AbstractFieldProvider {
+
+	/**
+	 * Configuration options for {@link StringFieldProvider}.
+	 */
+	public interface Config<I extends StringFieldProvider> extends PolymorphicConfiguration<I> {
+		/**
+		 * Whether to trim strings (automatically remove whitespace in front and at the end of
+		 * values).
+		 */
+		boolean getTrim();
+	}
+
+	private final boolean _trim;
+
+	/**
+	 * Creates a {@link StringFieldProvider}.
+	 */
+	public StringFieldProvider() {
+		_trim = false;
+	}
+
+	/**
+	 * Creates a {@link StringFieldProvider} from configuration.
+	 * 
+	 * @param context
+	 *        The context for instantiating sub configurations.
+	 * @param config
+	 *        The configuration.
+	 */
+	@CalledByReflection
+	public StringFieldProvider(InstantiationContext context, Config<?> config) {
+		_trim = config.getTrim();
+	}
 
 	@Override
 	public FormMember createFormField(EditContext editContext, String fieldName) {
@@ -76,6 +113,9 @@ public class StringFieldProvider extends AbstractFieldProvider {
 				LongFieldProvider.collectionFormat(IdentityFormat.INSTANCE, editContext.isOrdered(),
 					editContext.getAnnotation(TLCollectionSeparator.class)),
 				false, isMandatory, isDisabled, constraint);
+		} else if (_trim) {
+			return FormFactory.newComplexField(fieldName, TrimFormat.INSTANCE, StringField.EMPTY_STRING_VALUE, true,
+				isMandatory, isDisabled, constraint);
 		} else {
 			return FormFactory.newStringField(fieldName, StringField.EMPTY_STRING_VALUE, isMandatory, isDisabled,
 				constraint);

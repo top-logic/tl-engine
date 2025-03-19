@@ -17,6 +17,7 @@ import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
@@ -102,16 +103,16 @@ public class IsCompatibleValue extends GenericMethod {
 			}
 			
 			// For multiple references, check for duplicates if not a bag
-	        if (part.isMultiple() && !part.isBag() && hasDuplicates(collection)) {
-	            return false;
-	        }
+			if (part.isMultiple() && !part.isBag() && (part instanceof TLReference) && hasDuplicates(collection)) {
+				return false;
+			}
 
 			if (!part.isMultiple() && collection.size() != 1) {
 				// Non-multiple parts only accept collections with exactly one element
 					return false;
 			}
 
-			// For mandatory multiple references, we need at least one valid entry and no invalid
+			// For mandatory multiple parts, we need at least one valid entry and no invalid
 			// entries
 			if (part.isMandatory() && part.isMultiple()) {
 				boolean hasValidEntry = false;

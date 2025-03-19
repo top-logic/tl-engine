@@ -49,8 +49,7 @@ public class BasicAuthAuthenticator implements Authenticator {
 		LoginCredentials sentCredentials = AuthorizationUtil.retrieveBasicAuthCredentials(authenticationHeader,
 			BasicAuthAuthenticator::createCredentials);
 		if (!_allowedUsers.contains(sentCredentials)) {
-			throw requestAuthentication(
-				I18NConstants.AUTH_FAILED_WRONG_AUTHENTICATION_DATA__USER.fill(sentCredentials.getUser()));
+			throw requestAuthentication(I18NConstants.AUTH_FAILED_WRONG_AUTHENTICATION_DATA);
 		}
 		// Allowed users are technical user and *not* accounts from the application.
 		return null;

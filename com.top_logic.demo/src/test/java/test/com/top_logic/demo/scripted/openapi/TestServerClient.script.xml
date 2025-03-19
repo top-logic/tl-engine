@@ -2101,7 +2101,7 @@
 													<named-member name="content"/>
 													<object>
 														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-															value="1"
+															value="2"
 														/>
 													</object>
 													<labeled-member label="Pfad-Element"/>
@@ -2155,7 +2155,7 @@
 													<named-member name="content"/>
 													<object>
 														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-															value="1"
+															value="2"
 														/>
 													</object>
 													<labeled-member label="Pfad-Element"/>
@@ -2187,7 +2187,7 @@
 													<named-member name="content"/>
 													<object>
 														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-															value="3"
+															value="4"
 														/>
 													</object>
 													<labeled-member label="Pfad-Element"/>
@@ -2218,7 +2218,7 @@
 													<named-member name="content"/>
 													<object>
 														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-															value="3"
+															value="4"
 														/>
 													</object>
 													<labeled-member label="Pfad-Element"/>

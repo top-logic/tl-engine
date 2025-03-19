@@ -170,11 +170,13 @@ public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?
 		 * {@link #getPaths()}.
 		 */
 		@Override
+		@DisplayMinimized
 		Map<String, ServerAuthentication.Config<?>> getAuthentications();
 
 		/**
 		 * Configuration of the secrets that a client must use to access this server.
 		 */
+		@DisplayMinimized
 		@Name(SECRETS)
 		List<ServerSecret> getSecrets();
 

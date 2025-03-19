@@ -12,8 +12,12 @@ import java.util.stream.Collectors;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.func.Not;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
 import com.top_logic.service.openapi.common.authentication.http.HTTPAuthentication;
 import com.top_logic.service.openapi.common.authentication.http.HTTPSecret;
@@ -38,7 +42,37 @@ public class BasicAuthentication extends AbstractConfiguredInstance<BasicAuthent
 	 */
 	@TagName("basic-authentication")
 	public interface Config<I extends BasicAuthentication> extends ServerAuthentication.Config<I>, HTTPAuthentication {
-		// Marker interface.
+
+		/**
+		 * @see #getInUserContext()
+		 */
+		String IN_USER_CONTEXT = "in-user-context";
+
+		/**
+		 * Whether user's can use the API with their login credentials (user name and password).
+		 * 
+		 * <p>
+		 * With this option checked, no additional secrets must be configured for this
+		 * authentication method, since authentication is done against the local password database.
+		 * </p>
+		 * 
+		 * <p>
+		 * With this option checked, the API implementation has access to the authenticated user
+		 * through the <code>currentUser()</code> function.
+		 * </p>
+		 */
+		@Name(IN_USER_CONTEXT)
+		boolean getInUserContext();
+
+		/**
+		 * @see #getInUserContext()
+		 */
+		void setInUserContext(boolean value);
+
+		@Derived(fun = Not.class, args = { @Ref(IN_USER_CONTEXT) })
+		@Override
+		boolean isSeparateSecretNeeded();
+
 	}
 
 	/**
@@ -58,21 +92,26 @@ public class BasicAuthentication extends AbstractConfiguredInstance<BasicAuthent
 	public SecuritySchemeObject createSchemaObject(String schemaName) {
 		SecuritySchemeObject securityScheme = OpenAPIConfigs.newHTTPAuthentication(schemaName);
 		securityScheme.setScheme("Basic");
+		securityScheme.setUserContext(getConfig().getInUserContext(), null);
 		return securityScheme;
 	}
 
 	@Override
 	public Authenticator createAuthenticator(List<? extends SecretConfiguration> availableSecrets) {
 		Config<?> config = getConfig();
-		Set<LoginCredentials> authentications =
-			OpenAPIConfigs.secretsOfType(config, availableSecrets, HTTPSecret.class)
-				.map(HTTPSecret::getLogin)
-				.collect(Collectors.toSet());
-		if (authentications.isEmpty()) {
-			return NeverAuthenticated.missingSecret();
+		if (config.getInUserContext()) {
+			return new BasicUserAuthenticator();
+		} else {
+			Set<LoginCredentials> authentications =
+				OpenAPIConfigs.secretsOfType(config, availableSecrets, HTTPSecret.class)
+					.map(HTTPSecret::getLogin)
+					.collect(Collectors.toSet());
+			if (authentications.isEmpty()) {
+				return NeverAuthenticated.missingSecret();
+			} else {
+				return new BasicTechnicalAuthenticator(authentications);
+			}
 		}
-
-		return new BasicAuthAuthenticator(authentications);
 	}
 
 }

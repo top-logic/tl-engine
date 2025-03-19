@@ -152,8 +152,12 @@ public class ImportOpenAPIServer extends ImportOpenAPIConfiguration {
 		switch (value.getType()) {
 			case API_KEY:
 				return createAPIKeyAuthentication(APIKeyAuthentication.Config.class, value);
-			case HTTP:
-				return createHTTPAuthentication(BasicAuthentication.Config.class, value, warnings);
+			case HTTP: {
+				BasicAuthentication.Config<?> authentication =
+					createHTTPAuthentication(BasicAuthentication.Config.class, value, warnings);
+				authentication.setInUserContext(value.isInUserContext());
+				return authentication;
+			}
 			case OAUTH2: {
 				ServerCredentials.Config<?> authentication =
 					createOAuth2Authentication(ServerCredentials.Config.class, value, warnings);

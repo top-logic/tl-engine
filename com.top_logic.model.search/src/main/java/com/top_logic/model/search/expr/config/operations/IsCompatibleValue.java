@@ -6,7 +6,9 @@
 package com.top_logic.model.search.expr.config.operations;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -93,11 +95,40 @@ public class IsCompatibleValue extends GenericMethod {
 		// First check if target supports collections
 		if (target instanceof TLStructuredTypePart) {
 			TLStructuredTypePart part = (TLStructuredTypePart) target;
-			if (!part.isMultiple()) {
-				// A collection with exactly one element is acceptable for non-multiple parts
-				if (collection.size() != 1) {
+
+			// Check if the empty collection is allowed for mandatory fields
+			if (collection.isEmpty()) {
+				return !part.isMandatory();
+			}
+			
+			// For multiple references, check for duplicates if not a bag
+	        if (part.isMultiple() && !part.isBag() && hasDuplicates(collection)) {
+	            return false;
+	        }
+
+			if (!part.isMultiple() && collection.size() != 1) {
+				// Non-multiple parts only accept collections with exactly one element
 					return false;
+			}
+
+			// For mandatory multiple references, we need at least one valid entry and no invalid
+			// entries
+			if (part.isMandatory() && part.isMultiple()) {
+				boolean hasValidEntry = false;
+
+				for (Object item : collection) {
+					if (item == null) {
+						continue;
+					}
+
+					if (!isCompatible(item, part)) {
+						return false; // Found an invalid entry
+					}
+
+					hasValidEntry = true; // Found at least one valid entry
 				}
+
+				return hasValidEntry;
 			}
 		}
 
@@ -149,8 +180,8 @@ public class IsCompatibleValue extends GenericMethod {
 	 */
 	private boolean handleStructuredTypePart(Object valueToCheck, TLStructuredTypePart part) {
 		// Check mandatory constraint
-		if (part.isMandatory() && IsEmpty.isEmpty(valueToCheck)) {
-			return false;
+		if (IsEmpty.isEmpty(valueToCheck)) {
+			return !part.isMandatory();
 		}
 
 		// Check against the actual type
@@ -197,6 +228,33 @@ public class IsCompatibleValue extends GenericMethod {
 			return false;
 		}
 		return primitive.getStorageMapping().isCompatible(valueToCheck);
+	}
+
+	/**
+	 * Checks if a collection contains duplicate values.
+	 * 
+	 * @param collection
+	 *        the collection to check
+	 * @return true if the collection contains duplicates, false otherwise
+	 */
+	private boolean hasDuplicates(Collection<?> collection) {
+		Set<Object> uniqueItems = new HashSet<>();
+
+		// Count null values separately
+		int nullCount = 0;
+
+		for (Object item : collection) {
+			if (item == null) {
+				nullCount++;
+				if (nullCount > 1) {
+					return true; // Found duplicate null
+				}
+			} else if (!uniqueItems.add(item)) {
+				return true; // Found duplicate non-null
+			}
+		}
+
+		return false;
 	}
 
 	/** {@link MethodBuilder} creating {@link IsCompatibleValue}. */

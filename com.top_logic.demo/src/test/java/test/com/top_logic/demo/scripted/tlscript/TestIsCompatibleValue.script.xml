@@ -4,32 +4,1405 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
 	<actions>
-		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-			user-id="root"
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Setup Model"
 		>
-			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Administration > Development"
-			/>
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Create Module and Types"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="Test"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Neues Modul..."
+							command-name="displayDialog_CreateModuleLayout"
+							component-implementation-comment="com.top_logic.layout.table.tree.TreeTableComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Name"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateModuleForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="test.isCompatibleValue"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.meta.TLModuleCreateHandler"
+							command-label="Anlegen"
+							command-name="createModule"
+							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateModuleForm"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="Test > Is compatible value"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Neuer Fachobjekttyp..."
+							command-name="displayDialog_CreateLayout"
+							component-implementation-comment="com.top_logic.layout.table.tree.TreeTableComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="ID"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="A"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypeCreateHandler"
+							command-label="Anlegen"
+							command-name="createType"
+							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="Test > Is compatible value"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Neuer Fachobjekttyp..."
+							command-name="displayDialog_CreateLayout"
+							component-implementation-comment="com.top_logic.layout.table.tree.TreeTableComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="ID"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="C"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="abstrakt"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypeCreateHandler"
+							command-label="Anlegen"
+							command-name="createType"
+							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="Test > Is compatible value"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Neuer Fachobjekttyp..."
+							command-name="displayDialog_CreateLayout"
+							component-implementation-comment="com.top_logic.layout.table.tree.TreeTableComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="ID"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="B"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Obertypen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+										ref="test.isCompatibleValue:C"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypeCreateHandler"
+							command-label="Anlegen"
+							command-name="createType"
+							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="Test > Is compatible value"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Neuer Fachobjekttyp..."
+							command-name="displayDialog_CreateLayout"
+							component-implementation-comment="com.top_logic.layout.table.tree.TreeTableComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="ID"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="B2"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Obertypen"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+										ref="test.isCompatibleValue:C"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypeCreateHandler"
+							command-label="Anlegen"
+							command-name="createType"
+							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="Test > Is compatible value"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Neuer Fachobjekttyp..."
+							command-name="displayDialog_CreateLayout"
+							component-implementation-comment="com.top_logic.layout.table.tree.TreeTableComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#metaElementTree"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="ID"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="D"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypeCreateHandler"
+							command-label="Anlegen"
+							command-name="createType"
+							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/metaElementTree.layout.xml#CreateForm"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Create Attributes"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="Test > Is compatible value > C > B"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Attribute"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+							command-label="Neue Eigenschaft..."
+							command-name="displayDialog_createPropertyTypePartDialog"
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeTable"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="ID"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="name"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Typ"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+										ref="tl.core:String"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="verpflichtend"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler"
+							command-label="Erstellen"
+							command-name="createPart"
+							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="Test > Is compatible value > A"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Attribute"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+							command-label="Neue Eigenschaft..."
+							command-name="displayDialog_createPropertyTypePartDialog"
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeTable"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="ID"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="nonMandatoryNonMultiplePrimitive"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Typ"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+										ref="tl.core:String"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler"
+							command-label="Erstellen"
+							command-name="createPart"
+							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+							command-label="Neue Eigenschaft..."
+							command-name="displayDialog_createPropertyTypePartDialog"
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeTable"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="ID"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="nonMandatoryMultiplePrimitive"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Typ"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+										ref="tl.core:String"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="mehrere Werte"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler"
+							command-label="Erstellen"
+							command-name="createPart"
+							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+							command-label="Neue Eigenschaft..."
+							command-name="displayDialog_createPropertyTypePartDialog"
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeTable"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="ID"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="mandatoryNonMultiplePrimitive"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Typ"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+										ref="tl.core:String"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="verpflichtend"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler"
+							command-label="Erstellen"
+							command-name="createPart"
+							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+							command-label="Neue Eigenschaft..."
+							command-name="displayDialog_createPropertyTypePartDialog"
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeTable"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="ID"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="mandatoryMultiplePrimitive"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Typ"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+										ref="tl.core:String"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="verpflichtend"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="mehrere Werte"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler"
+							command-label="Erstellen"
+							command-name="createPart"
+							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createPropertyTypePartForm"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+							command-label="Neue Referenz..."
+							command-name="displayDialog_createReferenceTypePartDialog"
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeTable"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="ID"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="nonMandatoryNonMultipleClass"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Typ"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+										ref="test.isCompatibleValue:C"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler"
+							command-label="Erstellen"
+							command-name="createPart"
+							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+							command-label="Neue Referenz..."
+							command-name="displayDialog_createReferenceTypePartDialog"
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeTable"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="ID"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="nonMandatoryMultipleClass"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Typ"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+										ref="test.isCompatibleValue:C"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="mehrere Werte"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler"
+							command-label="Erstellen"
+							command-name="createPart"
+							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+							command-label="Neue Referenz..."
+							command-name="displayDialog_createReferenceTypePartDialog"
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeTable"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="ID"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="mandatoryNonMultipleClass"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Typ"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+										ref="test.isCompatibleValue:C"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="mehrere Werte"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="mehrere Werte"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="false"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="verpflichtend"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler"
+							command-label="Erstellen"
+							command-name="createPart"
+							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.CheckerProxyHandler"
+							command-label="Neue Referenz..."
+							command-name="displayDialog_createReferenceTypePartDialog"
+							component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeTable"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="ID"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="mandatoryMultipleClass"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Typ"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+										ref="test.isCompatibleValue:C"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="verpflichtend"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="mehrere Werte"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+									tab-path=""
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+								value="true"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.meta.TLStructuredTypePartCreateHandler"
+							command-label="Erstellen"
+							command-name="createPart"
+							component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
+							component-name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#createReferenceTypePartForm"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+					</actions>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Create Instances"
+				>
+					<actions>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="Test > Is compatible value"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="Test > Is compatible value > C"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="Test > Is compatible value > C > B"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Modell Editor > Instanzen"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.instances.CreateInstanceHandler"
+							command-label="Neue Instanz anlegen."
+							command-name="newInstance"
+							component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+							component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Name"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="Test"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.grid.DefaultGridSaveCommandHandler"
+							command-label="Speichern"
+							command-name="gridSave"
+							component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+							component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="Test > Is compatible value > C > B2"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.instances.CreateInstanceHandler"
+							command-label="Neue Instanz anlegen."
+							command-name="newInstance"
+							component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+							component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.grid.DefaultGridSaveCommandHandler"
+							command-label="Speichern"
+							command-name="gridSave"
+							component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+							component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="Test > Is compatible value > D"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.instances.CreateInstanceHandler"
+							command-label="Neue Instanz anlegen."
+							command-name="newInstance"
+							component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+							component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.grid.DefaultGridSaveCommandHandler"
+							command-label="Speichern"
+							command-name="gridSave"
+							component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+							component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+							change-kind="ABSOLUTE"
+							user-id="root"
+						>
+							<selection>
+								<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+									path="Test > Is compatible value > A"
+								/>
+								<selection-state boolean="true"/>
+							</selection>
+							<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+								/>
+							</selection-model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.instances.CreateInstanceHandler"
+							command-label="Neue Instanz anlegen."
+							command-name="newInstance"
+							component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+							component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Mandatory non multiple primitive"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="t"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Mandatory non multiple primitive"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="test"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Mandatory multiple primitive"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+								value="test"
+							/>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Mandatory non multiple class"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Test"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+							user-id="root"
+						>
+							<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+								label="Mandatory multiple class"
+							>
+								<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Modell Editor > Instanzen > Instanzen"
+								/>
+							</field>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
+										label="Test"
+									/>
+								</values>
+							</value>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.element.layout.grid.DefaultGridSaveCommandHandler"
+							command-label="Speichern"
+							command-name="gridSave"
+							component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+							component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+							user-id="root"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+							user-id="root"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Strukturen"
+							/>
+						</action>
+					</actions>
+				</action>
+			</actions>
 		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-			user-id="root"
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Test Function using TLScript"
 		>
-			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Administration > Development > Script Konsole"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
-			user-id="root"
-		>
-			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Suchausdruck"
-			>
-				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					tab-path="Administration > Development > Script Konsole > Editor"
-				/>
-			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
-				<value><![CDATA[{
+			<actions>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Suchausdruck"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Script Konsole > Editor"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[{
   test = [
     isCompatibleValue(123, `tl.core:Integer`), 
     isCompatibleValue(123, `tl.core:Long`), 
@@ -40,54 +1413,54 @@
 
   $test.toString()
 }]]></value>
-			</value>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
-			command-label="Script ausführen"
-			command-name="executeSearchConsole"
-			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
-			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
-			user-id="root"
-		>
-			<arguments/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-			comparision="equals"
-			inverted="false"
-			user-id="root"
-		>
-			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-				column-label="Result"
-			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen"
+					command-name="executeSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Result"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
+							/>
+							<path>
+								<named-member name="result"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+							displayed-row-index="0"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="JaJaJaJaNein"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
-				</table>
-				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-					displayed-row-index="0"
-				/>
-			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="JaJaJaJaNein"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
-			user-id="root"
-		>
-			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Suchausdruck"
-			>
-				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					tab-path="Administration > Development > Script Konsole > Editor"
-				/>
-			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
-				<value><![CDATA[{
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Suchausdruck"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Script Konsole > Editor"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[{
   test = [
     isCompatibleValue(123.99, `tl.core:Double`),
     isCompatibleValue(123.99, `tl.core:Float`),
@@ -98,54 +1471,54 @@
   
   $test.toString()
 }]]></value>
-			</value>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
-			command-label="Script ausführen"
-			command-name="executeSearchConsole"
-			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
-			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
-			user-id="root"
-		>
-			<arguments/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-			comparision="equals"
-			inverted="false"
-			user-id="root"
-		>
-			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-				column-label="Result"
-			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen"
+					command-name="executeSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Result"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
+							/>
+							<path>
+								<named-member name="result"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+							displayed-row-index="0"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="JaJaJaJaNein"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
-				</table>
-				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-					displayed-row-index="0"
-				/>
-			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="JaJaJaJaNein"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
-			user-id="root"
-		>
-			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Suchausdruck"
-			>
-				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					tab-path="Administration > Development > Script Konsole > Editor"
-				/>
-			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
-				<value><![CDATA[{
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Suchausdruck"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Script Konsole > Editor"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[{
   test = [
     isCompatibleValue("test", `tl.core:String`),
     isCompatibleValue("123", `tl.core:Integer`),
@@ -157,54 +1530,54 @@
   
   $test.toString()
 }]]></value>
-			</value>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
-			command-label="Script ausführen"
-			command-name="executeSearchConsole"
-			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
-			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
-			user-id="root"
-		>
-			<arguments/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-			comparision="equals"
-			inverted="false"
-			user-id="root"
-		>
-			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-				column-label="Result"
-			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen"
+					command-name="executeSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Result"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
+							/>
+							<path>
+								<named-member name="result"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+							displayed-row-index="0"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="JaNeinNeinNeinNeinNein"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
-				</table>
-				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-					displayed-row-index="0"
-				/>
-			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="JaNeinNeinNeinNeinNein"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
-			user-id="root"
-		>
-			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Suchausdruck"
-			>
-				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					tab-path="Administration > Development > Script Konsole > Editor"
-				/>
-			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
-				<value><![CDATA[{
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Suchausdruck"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Script Konsole > Editor"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[{
   test = [
     isCompatibleValue(true, `tl.core:Boolean`),
     isCompatibleValue(true, `tl.core:Integer`),
@@ -215,54 +1588,54 @@
   
   $test.toString()
 }]]></value>
-			</value>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
-			command-label="Script ausführen"
-			command-name="executeSearchConsole"
-			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
-			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
-			user-id="root"
-		>
-			<arguments/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-			comparision="equals"
-			inverted="false"
-			user-id="root"
-		>
-			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-				column-label="Result"
-			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen"
+					command-name="executeSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Result"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
+							/>
+							<path>
+								<named-member name="result"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+							displayed-row-index="0"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="JaNeinNeinJaNein"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
-				</table>
-				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-					displayed-row-index="0"
-				/>
-			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="JaNeinNeinJaNein"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
-			user-id="root"
-		>
-			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Suchausdruck"
-			>
-				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					tab-path="Administration > Development > Script Konsole > Editor"
-				/>
-			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
-				<value><![CDATA[{
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Suchausdruck"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Script Konsole > Editor"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[{
   test = [
     isCompatibleValue(null, `tl.core:String`),
     isCompatibleValue(null, `tl.core:Integer`),
@@ -274,54 +1647,54 @@
   
   $test.toString()
 }]]></value>
-			</value>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
-			command-label="Script ausführen"
-			command-name="executeSearchConsole"
-			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
-			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
-			user-id="root"
-		>
-			<arguments/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-			comparision="equals"
-			inverted="false"
-			user-id="root"
-		>
-			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-				column-label="Result"
-			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen"
+					command-name="executeSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Result"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
+							/>
+							<path>
+								<named-member name="result"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+							displayed-row-index="0"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="JaJaJaJaJaJa"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
-				</table>
-				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-					displayed-row-index="0"
-				/>
-			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="JaJaJaJaJaJa"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
-			user-id="root"
-		>
-			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Suchausdruck"
-			>
-				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					tab-path="Administration > Development > Script Konsole > Editor"
-				/>
-			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
-				<value><![CDATA[{
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Suchausdruck"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Script Konsole > Editor"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[{
   test = [
     isCompatibleValue([123, 456], `tl.core:Integer`),
     isCompatibleValue([123, 456], `tl.core:Integer`),
@@ -337,188 +1710,557 @@
   
   $test.toString()
 }]]></value>
-			</value>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
-			command-label="Script ausführen"
-			command-name="executeSearchConsole"
-			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
-			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
-			user-id="root"
-		>
-			<arguments/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-			comparision="equals"
-			inverted="false"
-			user-id="root"
-		>
-			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-				column-label="Result"
-			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen"
+					command-name="executeSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Result"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
+							/>
+							<path>
+								<named-member name="result"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+							displayed-row-index="0"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="JaJaNeinJaJaJaJaJaJaJa"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
-				</table>
-				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-					displayed-row-index="0"
-				/>
-			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="JaJaNeinJaJaJaJaJaJaJa"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
-			user-id="root"
-		>
-			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Suchausdruck"
-			>
-				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					tab-path="Administration > Development > Script Konsole > Editor"
-				/>
-			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
-				<value><![CDATA[{
-  person = all(`Contacts:PersonContact`).firstElement();
-  account = all(`tl.accounts:Person`).firstElement();
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Suchausdruck"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Script Konsole > Editor"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[{
+  objectA = all(`test.isCompatibleValue:A`).firstElement();
+  objectB = all(`test.isCompatibleValue:B`).firstElement();
   
   test = [
-    isCompatibleValue($person, `Contacts:PersonContact`),
-    isCompatibleValue($person, `tl.accounts:Person`),
-    isCompatibleValue($account, `tl.accounts:Person`),
-    isCompatibleValue($account, `Contacts:PersonContact`),
-    isCompatibleValue($person, `tl.core:Integer`),
-    isCompatibleValue([$person, $person], `Contacts:PersonContact`),
-    isCompatibleValue([$person, $account], `tl.accounts:Person`)
+    isCompatibleValue($objectA, `test.isCompatibleValue:A`),  // true
+    isCompatibleValue($objectA, `test.isCompatibleValue:B`),  // false
+    isCompatibleValue($objectB, `test.isCompatibleValue:B`),  // true
+    isCompatibleValue($objectB, `test.isCompatibleValue:A`),  // false
+    isCompatibleValue($objectA, `tl.core:Integer`), // false
+    isCompatibleValue([$objectA, $objectA], `test.isCompatibleValue:A`), // true
+    isCompatibleValue([$objectA, $objectB], `test.isCompatibleValue:A`)  // false
   ];
   
   $test.toString()
 }]]></value>
-			</value>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
-			command-label="Script ausführen"
-			command-name="executeSearchConsole"
-			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
-			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
-			user-id="root"
-		>
-			<arguments/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-			comparision="equals"
-			inverted="false"
-			user-id="root"
-		>
-			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-				column-label="Result"
-			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen"
+					command-name="executeSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Result"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
+							/>
+							<path>
+								<named-member name="result"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+							displayed-row-index="0"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="JaNeinJaNeinNeinJaNein"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
-				</table>
-				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-					displayed-row-index="0"
-				/>
-			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="JaNeinJaNeinNeinJaNein"
-			/>
-		</action>
-		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
-			user-id="root"
-		>
-			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Suchausdruck"
-			>
-				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					tab-path="Administration > Development > Script Konsole > Editor"
-				/>
-			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
-				<value><![CDATA[{
-  person = all(`Contacts:PersonContact`).firstElement();
-  account = all(`tl.accounts:Person`).firstElement();
-  
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Suchausdruck"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Script Konsole > Editor"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[{
+  // Testing attributes on class A with primitive types
   test = [
-    isCompatibleValue($person, `Contacts:PersonContact#account`),
-    isCompatibleValue($account, `Contacts:PersonContact#account`),
-    isCompatibleValue(true, `tl.accounts:Person#admin`),
-    isCompatibleValue("String Email", `Contacts:PersonContact#email`),
-    isCompatibleValue([123, "String Email"], `Contacts:PersonContact#email`)
+    // Non-mandatory, non-multiple primitive
+    isCompatibleValue(null, `test.isCompatibleValue:A#nonMandatoryNonMultiplePrimitive`),  // true
+    isCompatibleValue("test", `test.isCompatibleValue:A#nonMandatoryNonMultiplePrimitive`),  // true
+    isCompatibleValue([], `test.isCompatibleValue:A#nonMandatoryNonMultiplePrimitive`),  // true
+    isCompatibleValue(["test"], `test.isCompatibleValue:A#nonMandatoryNonMultiplePrimitive`),  // true
+    isCompatibleValue(["test1", "test2"], `test.isCompatibleValue:A#nonMandatoryNonMultiplePrimitive`),  // false
+    
+    // Non-mandatory, multiple primitive
+    isCompatibleValue(null, `test.isCompatibleValue:A#nonMandatoryMultiplePrimitive`),  // true
+    isCompatibleValue("test", `test.isCompatibleValue:A#nonMandatoryMultiplePrimitive`),  // true
+    isCompatibleValue([], `test.isCompatibleValue:A#nonMandatoryMultiplePrimitive`),  // true
+    isCompatibleValue(["test"], `test.isCompatibleValue:A#nonMandatoryMultiplePrimitive`),  // true
+    isCompatibleValue(["test1", "test2"], `test.isCompatibleValue:A#nonMandatoryMultiplePrimitive`),  // true
+    
+    // Mandatory, non-multiple primitive
+    isCompatibleValue(null, `test.isCompatibleValue:A#mandatoryNonMultiplePrimitive`),  // false
+    isCompatibleValue("test", `test.isCompatibleValue:A#mandatoryNonMultiplePrimitive`),  // true
+    isCompatibleValue([], `test.isCompatibleValue:A#mandatoryNonMultiplePrimitive`),  // false
+    isCompatibleValue(["test"], `test.isCompatibleValue:A#mandatoryNonMultiplePrimitive`),  // true
+    isCompatibleValue(["test1", "test2"], `test.isCompatibleValue:A#mandatoryNonMultiplePrimitive`),  // false
+    
+    // Mandatory, multiple primitive
+    isCompatibleValue(null, `test.isCompatibleValue:A#mandatoryMultiplePrimitive`),  // false
+    isCompatibleValue("test", `test.isCompatibleValue:A#mandatoryMultiplePrimitive`),  // true
+    isCompatibleValue([], `test.isCompatibleValue:A#mandatoryMultiplePrimitive`),  // false
+    isCompatibleValue(["test"], `test.isCompatibleValue:A#mandatoryMultiplePrimitive`),  // true
+    isCompatibleValue(["test1", "test2"], `test.isCompatibleValue:A#mandatoryMultiplePrimitive`)  // true
   ];
   
   $test.toString()
-}
-]]></value>
-			</value>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
-			command-label="Script ausführen"
-			command-name="executeSearchConsole"
-			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
-			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
-			user-id="root"
-		>
-			<arguments/>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-			comparision="equals"
-			inverted="false"
-			user-id="root"
-		>
-			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
-				column-label="Result"
-			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Development > Script Konsole > Ergebnis"
+}]]></value>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen"
+					command-name="executeSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Result"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
+							/>
+							<path>
+								<named-member name="result"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+							displayed-row-index="0"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="JaJaJaJaNeinJaJaJaJaJaNeinJaNeinJaNeinNeinJaNeinJaJa"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
-				</table>
-				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
-					displayed-row-index="0"
-				/>
-			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="NeinJaJaJaNein"
-			/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Suchausdruck"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Script Konsole > Editor"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[{
+  objectA = all(`test.isCompatibleValue:A`).firstElement();
+  objectB = all(`test.isCompatibleValue:B`).firstElement();
+  objectB2 = all(`test.isCompatibleValue:B2`).firstElement();
+  objectD = all(`test.isCompatibleValue:D`).firstElement();
+
+  
+  test = [
+    // Non-mandatory, non-multiple class reference
+    isCompatibleValue(null, `test.isCompatibleValue:A#nonMandatoryNonMultipleClass`),  // true
+    isCompatibleValue($objectB, `test.isCompatibleValue:A#nonMandatoryNonMultipleClass`),  // true
+	isCompatibleValue($objectB2, `test.isCompatibleValue:A#nonMandatoryNonMultipleClass`),  // true
+	isCompatibleValue($objectD, `test.isCompatibleValue:A#nonMandatoryNonMultipleClass`),  // false
+    isCompatibleValue([], `test.isCompatibleValue:A#nonMandatoryNonMultipleClass`),  // true
+    isCompatibleValue([$objectB], `test.isCompatibleValue:A#nonMandatoryNonMultipleClass`),  // true
+    isCompatibleValue([$objectB, $objectB], `test.isCompatibleValue:A#nonMandatoryNonMultipleClass`),  // false
+    
+    // Non-mandatory, multiple class reference
+    isCompatibleValue(null, `test.isCompatibleValue:A#nonMandatoryMultipleClass`),  // true
+    isCompatibleValue($objectB, `test.isCompatibleValue:A#nonMandatoryMultipleClass`),  // true
+    isCompatibleValue([], `test.isCompatibleValue:A#nonMandatoryMultipleClass`),  // true
+    isCompatibleValue([$objectB], `test.isCompatibleValue:A#nonMandatoryMultipleClass`),  // true
+    isCompatibleValue([$objectB, $objectB2], `test.isCompatibleValue:A#nonMandatoryMultipleClass`),  // true
+	isCompatibleValue([$objectB, $objectD], `test.isCompatibleValue:A#nonMandatoryMultipleClass`),  // false
+    
+    // Mandatory, non-multiple class reference
+    isCompatibleValue(null, `test.isCompatibleValue:A#mandatoryNonMultipleClass`),  // false
+    isCompatibleValue($objectB, `test.isCompatibleValue:A#mandatoryNonMultipleClass`),  // true
+    isCompatibleValue([], `test.isCompatibleValue:A#mandatoryNonMultipleClass`),  // false
+    isCompatibleValue([$objectB2], `test.isCompatibleValue:A#mandatoryNonMultipleClass`),  // true
+	isCompatibleValue([$objectD], `test.isCompatibleValue:A#mandatoryNonMultipleClass`),  // false
+    isCompatibleValue([$objectB, $objectB2], `test.isCompatibleValue:A#mandatoryNonMultipleClass`),  // false
+	isCompatibleValue([$objectB, $objectD], `test.isCompatibleValue:A#mandatoryNonMultipleClass`),  // false
+    
+    // Mandatory, multiple class reference
+    isCompatibleValue(null, `test.isCompatibleValue:A#mandatoryMultipleClass`),  // false
+    isCompatibleValue($objectB, `test.isCompatibleValue:A#mandatoryMultipleClass`),  // true
+    isCompatibleValue([], `test.isCompatibleValue:A#mandatoryMultipleClass`),  // false
+    isCompatibleValue([$objectB2], `test.isCompatibleValue:A#mandatoryMultipleClass`),  // true
+    isCompatibleValue([$objectB, $objectB2, null], `test.isCompatibleValue:A#mandatoryMultipleClass`),  // true
+    isCompatibleValue([$objectB, $objectB2, null, $objectB], `test.isCompatibleValue:A#mandatoryMultipleClass`),  // false
+	isCompatibleValue([$objectB, $objectB2, $objectD], `test.isCompatibleValue:A#mandatoryMultipleClass`)  // false
+  ];
+  
+  $test.toString()
+}]]></value>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen"
+					command-name="executeSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Result"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
+							/>
+							<path>
+								<named-member name="result"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+							displayed-row-index="0"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="JaJaJaNeinJaJaNeinJaJaJaJaJaNeinNeinJaNeinJaNeinNeinNeinNeinJaNeinJaJaNeinNein"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Suchausdruck"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Script Konsole > Editor"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value><![CDATA[{
+  objectA = all(`test.isCompatibleValue:A`).firstElement();
+  objectB = all(`test.isCompatibleValue:B`).firstElement();
+  
+  test = [
+    // Testing an empty collection against direct types (not through a part)
+    isCompatibleValue([], `test.isCompatibleValue:A`),  // true
+    isCompatibleValue([], `tl.core:String`),  // true
+    
+    // Testing nested collections
+    isCompatibleValue([["test"]], `test.isCompatibleValue:A#nonMandatoryMultiplePrimitive`),  
+    
+    // Testing mixed types in collections
+    isCompatibleValue([123, "test"], `test.isCompatibleValue:A#nonMandatoryMultiplePrimitive`),  // false
+    
+    // Testing with a TLObject against a primitive type part
+    isCompatibleValue($objectA, `test.isCompatibleValue:A#nonMandatoryNonMultiplePrimitive`)  // false
+  ];
+  
+  $test.toString()
+}]]></value>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+					command-label="Script ausführen"
+					command-name="executeSearchConsole"
+					component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+					component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+						column-label="Result"
+					>
+						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Administration > Development > Script Konsole > Ergebnis"
+							/>
+							<path>
+								<named-member name="result"/>
+							</path>
+						</table>
+						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+							displayed-row-index="0"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="JaJaNeinNeinNein"
+					/>
+				</action>
+			</actions>
 		</action>
-		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
-			user-id="root"
+		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+			comment="Clean Up"
 		>
-			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-				label="Suchausdruck"
-			>
-				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-					tab-path="Administration > Development > Script Konsole > Editor"
-				/>
-			</field>
-			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
-				<value><![CDATA[
-]]></value>
-			</value>
-		</action>
-		<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-			user-id="root"
-		>
-			<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-				tab-path="Strukturen"
-			/>
+			<actions>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Suchausdruck"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Script Konsole > Editor"
+						/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value=""
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Test > Is compatible value"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Test > Is compatible value > A"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Modell Editor > Instanzen"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+					command-label="Löschen..."
+					command-name="deleteInstance"
+					component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+					component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Test > Is compatible value > C"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Test > Is compatible value > C > B"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+					command-label="Löschen..."
+					command-name="deleteInstance"
+					component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+					component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Test > Is compatible value > C > B2"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+					command-label="Löschen..."
+					command-name="deleteInstance"
+					component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+					component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Test > Is compatible value > D"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.component.GenericDeleteCommandHandler"
+					command-label="Löschen..."
+					command-name="deleteInstance"
+					component-implementation-comment="com.top_logic.element.layout.instances.InstanceBrowserGrid"
+					component-name="com.top_logic.element/admin/model/modelEditor/instanceBrowser.layout.xml#Instances"
+					user-id="root"
+				>
+					<arguments/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
+							path="Test > Is compatible value"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Administration > Development > Modell Editor > Fachobjekttypen"
+						/>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.element.layout.meta.TLModelPartDeleteHandler"
+					command-label="Löschen..."
+					command-name="deleteTLModelPart"
+					component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
+					component-name="com.top_logic.element/admin/model/modelEditor/moduleEditor.layout.xml#Editor"
+					user-id="root"
+				>
+					<arguments>
+						<argument name="TARGET_MODEL">
+							<value config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+								ref="test.isCompatibleValue"
+							/>
+						</argument>
+					</arguments>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
+					user-id="root"
+				>
+					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Strukturen"
+					/>
+				</action>
+			</actions>
 		</action>
 	</actions>
 </action>

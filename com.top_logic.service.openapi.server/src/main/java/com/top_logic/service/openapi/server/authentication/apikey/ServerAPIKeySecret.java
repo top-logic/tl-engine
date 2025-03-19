@@ -61,7 +61,7 @@ public interface ServerAPIKeySecret extends ServerSecret, APIKeySecret {
 
 		@Override
 		protected Predicate<? super AuthenticationConfig> filter() {
-			return APIKeyAuthentication.class::isInstance;
+			return APIKeyAuthentication.Config.class::isInstance;
 		}
 
 	}

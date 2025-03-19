@@ -47,9 +47,10 @@ public abstract class BasicAuthenticator implements Authenticator {
 	protected abstract Person authenticateUser(LoginCredentials sentCredentials) throws AuthenticationFailure;
 
 	/**
-	 * Creates an {@link AuthenticationFailure} for a failed authentication.
+	 * Creates an {@link AuthenticationFailure} for a failed authentication that requests the
+	 * browser to provide authentication data.
 	 */
-	protected final AuthenticationFailure authenticationFailure(ResKey message) {
+	private final AuthenticationFailure authenticationFailure(ResKey message) {
 		AuthenticationFailure authenticationFailure = new AuthenticationFailure(message);
 		authenticationFailure.setResponseEnhancer((response, failure, path) -> {
 			AuthorizationUtil.setBasicAuthAuthenticationRequestHeader(response);

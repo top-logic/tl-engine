@@ -22,19 +22,19 @@ public class BasicUserAuthenticator extends BasicAuthenticator {
 		return TLContext.inSystemContext(BasicUserAuthenticator.class, () -> {
 			Person person = Person.byName(login.getUser());
 			if (person == null) {
-				throw authenticationFailure(I18NConstants.AUTH_FAILED_WRONG_AUTHENTICATION_DATA);
+				throw new AuthenticationFailure(I18NConstants.AUTH_FAILED_WRONG_AUTHENTICATION_DATA);
 			}
 			
 			AuthenticationDevice authDevice = person.getAuthenticationDevice();
 			if (authDevice == null) {
-				throw authenticationFailure(I18NConstants.AUTH_FAILED_WRONG_AUTHENTICATION_DATA);
+				throw new AuthenticationFailure(I18NConstants.AUTH_FAILED_WRONG_AUTHENTICATION_DATA);
 			}
 			
 			boolean authenticated = authDevice.authentify(
 				com.top_logic.base.accesscontrol.LoginCredentials.fromUserAndPassword(person,
 					login.getPassword().toCharArray()));
 			if (!authenticated) {
-				throw authenticationFailure(I18NConstants.AUTH_FAILED_WRONG_AUTHENTICATION_DATA);
+				throw new AuthenticationFailure(I18NConstants.AUTH_FAILED_WRONG_AUTHENTICATION_DATA);
 			}
 			
 			return person;

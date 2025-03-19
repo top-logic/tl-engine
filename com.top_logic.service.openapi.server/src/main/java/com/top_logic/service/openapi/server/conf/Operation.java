@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
+import com.top_logic.layout.form.values.edit.annotation.CollapseEntries;
 import com.top_logic.service.openapi.common.document.Described;
 import com.top_logic.service.openapi.server.impl.ServiceMethodBuilder;
 import com.top_logic.service.openapi.server.impl.ServiceMethodBuilderByExpression;
@@ -74,6 +75,7 @@ public interface Operation extends ParametersConfig, Described {
 	 */
 	@Key(OperationResponse.RESPONSE_CODE)
 	@Name(RESPONSES)
+	@CollapseEntries
 	Map<String, OperationResponse> getResponses();
 
 }

@@ -28,7 +28,7 @@ public class BasicTechnicalAuthenticator extends BasicAuthenticator {
 	@Override
 	protected Person authenticateUser(LoginCredentials sentCredentials) throws AuthenticationFailure {
 		if (!_allowedUsers.contains(sentCredentials)) {
-			throw authenticationFailure(I18NConstants.AUTH_FAILED_WRONG_AUTHENTICATION_DATA);
+			throw new AuthenticationFailure(I18NConstants.AUTH_FAILED_WRONG_AUTHENTICATION_DATA);
 		}
 
 		// Allowed users are technical user and *not* accounts from the application.

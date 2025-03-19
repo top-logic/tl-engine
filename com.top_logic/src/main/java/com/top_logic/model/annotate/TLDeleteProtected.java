@@ -6,6 +6,7 @@
 package com.top_logic.model.annotate;
 
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.model.annotate.AnnotationInheritance.Policy;
 
 /**
  * {@link TLAttributeAnnotation} that marks a model part as delete protected.
@@ -18,6 +19,7 @@ import com.top_logic.basic.config.annotation.TagName;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @TagName("delete-protected")
+@AnnotationInheritance(Policy.REDEFINE)
 public interface TLDeleteProtected extends TLAttributeAnnotation {
 
 	// Pure marker annotation.

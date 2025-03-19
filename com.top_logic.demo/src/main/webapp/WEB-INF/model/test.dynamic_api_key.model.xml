@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.dynamic_api_key">
+		<class name="ApiKey">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="owner"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="tl.accounts:Person"
+				/>
+				<property name="secret"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<default-value>
+							<provider class="com.top_logic.model.provider.UuidDefaultProvider"/>
+						</default-value>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

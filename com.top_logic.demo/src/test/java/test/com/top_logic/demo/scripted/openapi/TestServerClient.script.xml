@@ -1960,7 +1960,9 @@
 						>
 							<arguments/>
 						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Globale Parameter"
+						>
 							<actions>
 								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 									command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
@@ -2301,7 +2303,9 @@
 						</action>
 					</actions>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Scipt Funktionen definieren"
+				>
 					<actions>
 						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 							change-kind="ABSOLUTE"
@@ -2739,7 +2743,9 @@
 						</action>
 					</actions>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Testdaten anlegen"
+				>
 					<actions>
 						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 							user-id="root"

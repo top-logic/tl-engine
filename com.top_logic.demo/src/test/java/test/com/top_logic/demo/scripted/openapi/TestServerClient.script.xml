@@ -1151,7 +1151,9 @@
 							comment="Add security"
 						>
 							<actions>
-								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Auth: GetData"
+								>
 									<actions>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
@@ -1307,7 +1309,7 @@
 													<named-member name="content"/>
 													<object>
 														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-															value="1"
+															value="2"
 														/>
 													</object>
 													<labeled-member label="Pfad-Element"/>
@@ -1346,7 +1348,7 @@
 													<named-member name="content"/>
 													<object>
 														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-															value="4"
+															value="5"
 														/>
 													</object>
 													<labeled-member label="Pfad-Element"/>
@@ -1371,7 +1373,9 @@
 										</action>
 									</actions>
 								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Auth: PutData"
+								>
 									<actions>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
@@ -1513,7 +1517,7 @@
 													<named-member name="content"/>
 													<object>
 														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-															value="2"
+															value="3"
 														/>
 													</object>
 													<labeled-member label="Pfad-Element"/>
@@ -1541,7 +1545,9 @@
 										</action>
 									</actions>
 								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Auth: DeleteData"
+								>
 									<actions>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
@@ -1890,7 +1896,7 @@
 													<named-member name="content"/>
 													<object>
 														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-															value="3"
+															value="4"
 														/>
 													</object>
 													<labeled-member label="Pfad-Element"/>
@@ -2384,7 +2390,9 @@
 							comment="Add security"
 						>
 							<actions>
-								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Auth: GetData"
+								>
 									<actions>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
@@ -2445,7 +2453,9 @@
 										/>
 									</actions>
 								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Auth: PutData"
+								>
 									<actions>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
@@ -2546,7 +2556,9 @@
 										</action>
 									</actions>
 								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Auth: DeleteData"
+								>
 									<actions>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
@@ -2658,7 +2670,9 @@
 										/>
 									</actions>
 								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Auth: DeleteData2"
+								>
 									<actions>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"

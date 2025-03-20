@@ -56,7 +56,7 @@ public interface ClientCredentialSecret extends CredentialSecret, ClientSecret {
 
 		@Override
 		protected Predicate<? super AuthenticationConfig> filter() {
-			return ClientCredentials.class::isInstance;
+			return ClientCredentials.Config.class::isInstance;
 		}
 
 	}

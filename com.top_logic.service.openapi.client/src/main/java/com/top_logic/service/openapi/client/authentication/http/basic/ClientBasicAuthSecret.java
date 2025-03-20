@@ -54,7 +54,7 @@ public interface ClientBasicAuthSecret extends ClientSecret, HTTPSecret {
 
 		@Override
 		protected Predicate<? super AuthenticationConfig> filter() {
-			return BasicAuthentication.class::isInstance;
+			return BasicAuthentication.Config.class::isInstance;
 		}
 
 	}

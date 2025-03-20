@@ -55,7 +55,7 @@ public interface ClientAPIKeySecret extends ClientSecret, APIKeySecret {
 
 		@Override
 		protected Predicate<? super AuthenticationConfig> filter() {
-			return APIKeyAuthentication.class::isInstance;
+			return APIKeyAuthentication.Config.class::isInstance;
 		}
 
 	}

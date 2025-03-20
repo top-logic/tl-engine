@@ -1,0 +1,90 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>isCompatibleValue($value, $target)
+</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Prüft ob ein Wert <code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">value</code> mit einem Zieltyp <code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">target</code> kompatibel ist. Dabei kann <code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">target</code> ein Objekttyp (<code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">my.module:MyClass</code>), ein Attributtyp (<code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">my.module:MyClass#attribute</code>) oder ein primitiver Typ (z.B. `tl.core:String`) sein. Bei Attributtypen werden zusätzlich die definierten Bedingungen wie Pflichtfeld (mandatory) und Mehrfachwerte (multiple) berücksichtigt. <code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">Value</code> kann ein einzelner Wert oder eine Sammlung sein. Bei Sammlungen wird überprüft, ob alle enthaltenen Elemente mit dem Zieltyp kompatibel sind.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>value</td>
+			<td>Any</td>
+			<td>Der zu prüfende Wert, kann ein einzelner Wert oder eine Sammlung sein.</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>target</td>
+			<td>Typ</td>
+			<td>Der Zieltyp, mit dem der Wert kompatibel sein soll. Kann ein Objekttyp (z.B. <code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">my.module:MyClass</code>), ein Attributtyp (z.B. <code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">my.module:MyClass#attribute</code>) oder ein primitiver Typ (String, Double, Boolean, etc.) sein.</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Wahrheitswert</p>
+
+<p><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">true</code> wenn der Wert im angegebenen Zieltyp verwendbar ist. Das bedeutet konkret:</p>
+
+<ul>
+	<li>Bei einfachen Typen (wie Zahlen, Text): Der Wert kann in diesem Datentyp gespeichert werden</li>
+	<li>Bei Objekttypen: Das Objekt ist mit dem Zieltyp kompatibel</li>
+	<li>Bei Attributen: Der Wert erfüllt alle Bedingungen des Attributs (z.B. Pflichtfeld) und passt zum Attributtyp</li>
+</ul>
+
+<h2>Beispiele</h2>
+
+<pre>
+<code>// Prüfung von Zahlen mit verschiedenen Typen
+isCompatibleValue(123, `tl.core:Integer`)  // true
+isCompatibleValue(123.99, `tl.core:Double`)  // true
+
+// Prüfung von Text
+isCompatibleValue("test", `tl.core:String`)  // true
+isCompatibleValue("123", `tl.core:Integer`)  // false
+
+// Prüfung von Wahrheitswerten
+isCompatibleValue(true, `tl.core:Boolean`)  // true
+
+// Prüfung von Objekten
+{
+  objektB = all(`test.isCompatibleValue:B`).firstElement();
+  isCompatibleValue($objektB, `test.isCompatibleValue:B`);  // true - Objekt passt zum eigenen Typ
+}
+
+// Prüfung von Listen
+isCompatibleValue([123, 456], `tl.core:Integer`)  // true - alle Elemente sind kompatibel
+
+// Prüfung mit Attributen (nicht-Pflichtfeld, mehrere Werte erlaubt)
+{
+  objektB = all(`test.isCompatibleValue:B`).firstElement();
+  isCompatibleValue([$objektB], `test.isCompatibleValue:A#nonMandatoryMultipleClassB`);  // true
+}
+
+// Prüfung mit Attributen (Pflichtfeld, nur ein Wert erlaubt)
+{
+  objektB = all(`test.isCompatibleValue:B`).firstElement();
+  isCompatibleValue($objektB, `test.isCompatibleValue:A#mandatoryNonMultipleClass`);  // true
+  isCompatibleValue(null, `test.isCompatibleValue:A#mandatoryNonMultipleClass`);  // false - null ist bei Pflichtfeld nicht erlaubt
+}</code></pre>
+
+<p> </p>

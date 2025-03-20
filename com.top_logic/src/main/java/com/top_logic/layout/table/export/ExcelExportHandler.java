@@ -21,8 +21,6 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.Settings;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.order.DisplayInherited;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
 import com.top_logic.basic.config.order.DisplayOrder;
@@ -40,7 +38,6 @@ import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.model.ExportConfig;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.export.ExcelExportSupport;
-import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -72,9 +69,6 @@ public class ExcelExportHandler extends AbstractTableExportHandler {
 	})
 	public interface Config extends AbstractTableExportHandler.Config, ExportConfig {
 
-		/** Configuration name of {@link #getDynamicDownloadName()}. */
-		String DYNAMIC_DOWNLOAD_NAME = "dynamic-download-name";
-
 		@Override
 		@Options(fun = ExportTemplates.class)
 		String getTemplateName();
@@ -100,17 +94,7 @@ public class ExcelExportHandler extends AbstractTableExportHandler {
 				return result;
 			}
 		}
-
-		/**
-		 * 
-		 * @return optional provider for an dynamic download-name. If this is used the
-		 *         {@link Config#getDownloadNameKey()} must contain the placeholder {0}.
-		 */
-		@Name(DYNAMIC_DOWNLOAD_NAME)
-		PolymorphicConfiguration<DownloadNameProvider> getDynamicDownloadName();
 	}
-
-	DownloadNameProvider _dynamicDownloadName = null;
 
 	/**
 	 * Creates a {@link ExcelExportHandler} from configuration.
@@ -123,10 +107,6 @@ public class ExcelExportHandler extends AbstractTableExportHandler {
 	@CalledByReflection
 	public ExcelExportHandler(InstantiationContext context, Config config) {
 		super(context, config);
-
-		if (config.getDynamicDownloadName() != null) {
-			_dynamicDownloadName = context.getInstance(config.getDynamicDownloadName());
-		}
 	}
 
 	@Override
@@ -146,16 +126,9 @@ public class ExcelExportHandler extends AbstractTableExportHandler {
 		doExport(tmpFile, templateName, autofitColumns, tableData);
 
 		log.info(I18NConstants.PREPARING_DOWNLOAD);
-		String downloadName = FileUtilities.removeFileExtension(getFilename(component, config)) + ext;
+		String downloadName =
+			FileUtilities.removeFileExtension(getFilename(component, config.getDownloadNameKey())) + ext;
 		return BinaryDataFactory.createBinaryDataWithName(tmpFile, downloadName);
-	}
-
-	private String getFilename(LayoutComponent component, Config config) {
-		ResKey downloadNameKey = config.getDownloadNameKey();
-		if (_dynamicDownloadName != null) {
-			return _dynamicDownloadName.createDownloadName(component, downloadNameKey);
-		}
-		return Resources.getInstance().getString(downloadNameKey);
 	}
 
 	private String getFileExtension(String templateName) {

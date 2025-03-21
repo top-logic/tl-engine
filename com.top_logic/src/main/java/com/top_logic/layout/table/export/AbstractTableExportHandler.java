@@ -90,11 +90,12 @@ public abstract class AbstractTableExportHandler extends AbstractCommandHandler 
 		}
 
 		/**
+		 * Optional provider for an dynamic download-name. If this is used the default download-key
+		 * (see {@link ExcelExportHandler.Config#getDownloadNameKey()},
+		 * {@link StreamingExcelExportHandler.Config#getExportNameKey()}) must contain the
+		 * placeholder {0}.
 		 * 
-		 * @return optional provider for an dynamic download-name. If this is used the default
-		 *         download-key (see {@link ExcelExportHandler.Config#getDownloadNameKey()},
-		 *         {@link StreamingExcelExportHandler.Config#getExportNameKey()}) must contain the
-		 *         placeholder {0}.
+		 * @return provider for an dynamic download-name, may be null.
 		 */
 		@Name(DYNAMIC_DOWNLOAD_NAME)
 		PolymorphicConfiguration<DownloadNameProvider> getDynamicDownloadName();
@@ -185,6 +186,8 @@ public abstract class AbstractTableExportHandler extends AbstractCommandHandler 
 	}
 
 	/**
+	 * Creates a dynamic filename if configured, otherwise the translated download-key is provided.
+	 * 
 	 * @return the filename for the download using the {@link DownloadNameProvider} if configured.
 	 */
 	protected String getFilename(LayoutComponent component, ResKey downloadNameKey) {

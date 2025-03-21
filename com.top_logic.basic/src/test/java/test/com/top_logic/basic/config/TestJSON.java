@@ -104,6 +104,8 @@ public class TestJSON extends BasicTestCase {
 		assertParse(Double.valueOf(42.13), "4.213e1");
 		assertParse(Double.valueOf(42.13), "4.213E+1");
 		assertParse(Double.valueOf(42.13), "4.213e+1");
+
+		assertParse(Double.valueOf(10000000000000000000d), "10000000000000000000");
 	}
 
 	public void testQuoteControlCharacters() {
@@ -483,14 +485,10 @@ public class TestJSON extends BasicTestCase {
 		}
 	}
 	
-	public void testParseFailureNumber2() {
-		try {
-			JSON.fromString("1234567890123456789012345678901234567890");
-			fail("Invalid format, parsing must fail.");
-		} catch (ParseException ex) {
-			// Expected
-			Logger.debug("Expected failure", ex, TestJSON.class);
-		}
+	public void testParseUltraLargeInteger() throws ParseException {
+		// An integer that exceeds the long range is parsed as double.
+		Object value = JSON.fromString("1234567890123456789012345678901234567890");
+		assertEquals(1234567890123456789012345678901234567890d, value);
 	}
 
     public void testComplexMapContents() throws ParseException { 

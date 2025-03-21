@@ -55,7 +55,7 @@ public class DownloadNameByExpression<C extends DownloadNameByExpression.Config<
 	final QueryExecutor _expr;
 
 	/**
-	 * Creates a new DownloadNameByExpression.
+	 * Creates a new {@link DownloadNameByExpression}.
 	 */
 	public DownloadNameByExpression(InstantiationContext context, C config) {
 		super(context, config);

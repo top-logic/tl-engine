@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.service.openapi.server.authentication;
+package com.top_logic.service.openapi.server.authentication.conf;
 
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Container;
@@ -16,7 +16,7 @@ import com.top_logic.service.openapi.server.OpenApiServer;
 import com.top_logic.service.openapi.server.OpenApiServer.OpenAPIServerPart;
 
 /**
- * {@link SecretConfiguration} for the server part in an Open API communication.
+ * {@link SecretConfiguration} for in an <i>OpenAPI</i> server.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

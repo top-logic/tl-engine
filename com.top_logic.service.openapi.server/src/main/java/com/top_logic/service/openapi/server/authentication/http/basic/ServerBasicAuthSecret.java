@@ -15,14 +15,13 @@ import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.authentication.http.HTTPSecret;
-import com.top_logic.service.openapi.common.authentication.http.basic.BasicAuthentication;
 import com.top_logic.service.openapi.server.OpenApiServer;
 import com.top_logic.service.openapi.server.OpenApiServer.OpenAPIServerPart;
-import com.top_logic.service.openapi.server.authentication.AllAuthenticationDomains;
-import com.top_logic.service.openapi.server.authentication.ServerSecret;
+import com.top_logic.service.openapi.server.authentication.conf.AllAuthenticationDomains;
+import com.top_logic.service.openapi.server.authentication.conf.ServerSecret;
 
 /**
- * {@link HTTPSecret} for the Open API server.
+ * {@link HTTPSecret} for the <i>OpenAPI</i> server.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -55,7 +54,7 @@ public interface ServerBasicAuthSecret extends ServerSecret, HTTPSecret {
 
 		@Override
 		protected Predicate<? super AuthenticationConfig> filter() {
-			return BasicAuthentication.class::isInstance;
+			return BasicAuthentication.Config.class::isInstance;
 		}
 
 	}

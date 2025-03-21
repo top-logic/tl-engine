@@ -17,9 +17,9 @@ import com.top_logic.layout.admin.component.TLServiceConfigEditorFormBuilder;
 import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.service.openapi.client.authentication.config.ClientAuthentication;
+import com.top_logic.service.openapi.client.authentication.config.ClientAuthentications;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
-import com.top_logic.service.openapi.common.authentication.ClientAuthentication;
-import com.top_logic.service.openapi.common.authentication.ClientAuthentications;
 
 /**
  * All domains of {@link ClientAuthentication} matching a given filter.
@@ -31,7 +31,7 @@ import com.top_logic.service.openapi.common.authentication.ClientAuthentications
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class AllAuthenticationDomains extends Function1<List<String>, Map<String, ClientAuthentication>> {
+public class AllAuthenticationDomains extends Function1<List<String>, Map<String, ClientAuthentication.Config<?>>> {
 
 	private DeclarativeFormOptions _options;
 
@@ -43,15 +43,15 @@ public class AllAuthenticationDomains extends Function1<List<String>, Map<String
 	}
 
 	@Override
-	public List<String> apply(Map<String, ClientAuthentication> authentications) {
+	public List<String> apply(Map<String, ClientAuthentication.Config<?>> authentications) {
 		return resolveAuthentications(authentications).values().stream()
 			.filter(filter())
 			.map(AuthenticationConfig::getDomain)
 			.collect(Collectors.toList());
 	}
 
-	private Map<String, ClientAuthentication> resolveAuthentications(
-			Map<String, ClientAuthentication> authentications) {
+	private Map<String, ClientAuthentication.Config<?>> resolveAuthentications(
+			Map<String, ClientAuthentication.Config<?>> authentications) {
 		if (authentications != null) {
 			return authentications;
 		}

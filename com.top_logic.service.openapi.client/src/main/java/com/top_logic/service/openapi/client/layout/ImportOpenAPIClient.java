@@ -38,6 +38,11 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.service.openapi.client.authentication.apikey.APIKeyAuthentication;
+import com.top_logic.service.openapi.client.authentication.config.ClientAuthentication;
+import com.top_logic.service.openapi.client.authentication.config.ClientAuthentications;
+import com.top_logic.service.openapi.client.authentication.http.basic.BasicAuthentication;
+import com.top_logic.service.openapi.client.authentication.oauth.user.ClientCredentials;
 import com.top_logic.service.openapi.client.registry.ServiceMethodRegistry;
 import com.top_logic.service.openapi.client.registry.conf.MethodDefinition;
 import com.top_logic.service.openapi.client.registry.conf.ParameterDefinition;
@@ -57,9 +62,6 @@ import com.top_logic.service.openapi.client.registry.impl.value.ParameterValue;
 import com.top_logic.service.openapi.client.registry.impl.value.ValueProducerFactory;
 import com.top_logic.service.openapi.common.OpenAPIConstants;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
-import com.top_logic.service.openapi.common.authentication.ClientAuthentication;
-import com.top_logic.service.openapi.common.authentication.ClientAuthentications;
-import com.top_logic.service.openapi.common.authentication.oauth.ClientCredentials;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
 import com.top_logic.service.openapi.common.document.ComponentsObject;
 import com.top_logic.service.openapi.common.document.IParameterObject;
@@ -138,12 +140,12 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 	 *        Log to add potential warnings to.
 	 */
 	private void addAuthentications(OpenapiDocument openAPI, ClientAuthentications auth, List<ResKey> warnings) {
-		Map<String, ClientAuthentication> authentications = auth.getAuthentications();
+		Map<String, ClientAuthentication.Config<?>> authentications = auth.getAuthentications();
 		ComponentsObject components = openAPI.getComponents();
 		if (components != null) {
 			Map<String, SecuritySchemeObject> securitySchemes = components.getSecuritySchemes();
 			for (SecuritySchemeObject schema : securitySchemes.values()) {
-				ClientAuthentication authentication = createAuthentication(schema, warnings);
+				ClientAuthentication.Config<?> authentication = createAuthentication(schema, warnings);
 				if (authentication != null) {
 					authentication.setDomain(schema.getSchemaName());
 					authentications.put(authentication.getDomain(), authentication);
@@ -152,16 +154,16 @@ public class ImportOpenAPIClient extends ImportOpenAPIConfiguration {
 		}
 	}
 
-	private ClientAuthentication createAuthentication(SecuritySchemeObject value, List<ResKey> warnings) {
+	private ClientAuthentication.Config<?> createAuthentication(SecuritySchemeObject value, List<ResKey> warnings) {
 		switch (value.getType()) {
 			case API_KEY:
-				return createAPIKeyAuthentication(value);
+				return createAPIKeyAuthentication(APIKeyAuthentication.Config.class, value);
 			case HTTP:
-				return createHTTPAuthentication(value, warnings);
+				return createHTTPAuthentication(BasicAuthentication.Config.class, value, warnings);
 			case OAUTH2:
-				return createOAuth2Authentication(ClientCredentials.class, value, warnings);
+				return createOAuth2Authentication(ClientCredentials.Config.class, value, warnings);
 			case OPEN_ID_CONNECT:
-				return createOpenIDConnectAuthentication(ClientCredentials.class, value);
+				return createOpenIDConnectAuthentication(ClientCredentials.Config.class, value);
 			default:
 				throw new UnreachableAssertion("Unexpected SecuritySchemeType: " + value.getType());
 		}

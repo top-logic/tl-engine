@@ -14,7 +14,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.func.misc.AlwaysTrue;
 
 /**
- * Configuration of the authentication in Open API communication.
+ * Configuration of the authentication in <i>OpenAPI</i> communication.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

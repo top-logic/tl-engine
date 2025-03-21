@@ -14,6 +14,20 @@
 					title="TL-Demo OpenAPI Server"
 					version="1.0"
 				/>
+				<authentications>
+					<basic-authentication
+						domain="BasicAuth"
+						in-user-context="true"
+					/>
+					<authentication class="com.top_logic.demo.api.CustomAuthentication"
+						domain="API-Key DB"
+						header="api-key"
+					>
+						<lookup-user><![CDATA[secret -> all(`test.dynamic_api_key:ApiKey`)
+.filter(key -> $key.get(`test.dynamic_api_key:ApiKey#secret`) == $secret)
+.map(key -> $key.get(`test.dynamic_api_key:ApiKey#owner`))]]></lookup-user>
+					</authentication>
+				</authentications>
 				<paths>
 					<PathItem path="/ping">
 						<parameters>
@@ -59,6 +73,23 @@ A POST request to "/ping/a/b/c?q=q1&q=q2" e.g. delivers the result:
   "q": $q,
   "path": $path,
   "body": $body
+}]]></operation>
+								</implementation>
+							</operation>
+						</operations>
+					</PathItem>
+					<PathItem path="/whoami">
+						<operations>
+							<operation
+								authentication="API-Key DB,BasicAuth"
+								method="GET"
+							>
+								<implementation>
+									<operation><![CDATA[currentUser() == null ? "anonymous" : {
+    "login": currentUser().get(`tl.accounts:Person#name`),
+    "firstName": currentUser().get(`tl.accounts:Person#firstName`),
+    "lastName": currentUser().get(`tl.accounts:Person#lastName`),
+    "email": currentUser().get(`tl.accounts:Person#contact`).get(`Contacts:PersonContact#email`)
 }]]></operation>
 								</implementation>
 							</operation>

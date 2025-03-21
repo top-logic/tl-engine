@@ -11,9 +11,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.service.openapi.server.authentication.impl.CombinedAuthenticator;
+import com.top_logic.service.openapi.server.authentication.impl.DispatchingAuthenticator;
 
 /**
- * Class checking and authenticating the communication in Open API communication.
+ * Class checking and authenticating the communication in <i>OpenAPI</i> communication.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -35,9 +37,13 @@ public interface Authenticator {
 	Person authenticate(HttpServletRequest req, HttpServletResponse resp) throws AuthenticationFailure, IOException;
 
 	/**
-	 * Returns an {@link Authenticator} that first check authentication with this
-	 * {@link Authenticator} and applies the authenticator <code>after</code>. If evaluation of
-	 * either method throws an exception, it is relayed to the caller of the composed authenticator.
+	 * Builds an {@link Authenticator} that authenticates a request if and only if both
+	 * authenticators succeed and do not identify different accounts.
+	 * 
+	 * <p>
+	 * If evaluation of either authentication method throws an exception, it is relayed to the
+	 * caller of the composed authenticator.
+	 * </p>
 	 * 
 	 * @param after
 	 *        The {@link Authenticator} to apply after this authenticator is applied.
@@ -45,10 +51,26 @@ public interface Authenticator {
 	 *         if after is null
 	 */
 	default Authenticator andThen(Authenticator after) {
-		if (after == AlwaysAuthenticated.INSTANCE) {
-			return this;
-		}
+		// Note: Even if (fallback == AlwaysAuthenticated.INSTANCE), do not skip this authenticator,
+		// since this one may identify an account as context.
 		return new CombinedAuthenticator(this, after);
+	}
+
+	/**
+	 * Returns an {@link Authenticator} that first check authentication with this
+	 * {@link Authenticator} if and only if this does not authenticate asks the authenticator
+	 * <code>after</code>. Only if none of them successfully authenticates the request, an error is
+	 * relayed to the caller of the composed authenticator.
+	 * 
+	 * @param fallback
+	 *        The second {@link Authenticator} to apply if this one cannot authenticate the request.
+	 * @throws NullPointerException
+	 *         if after is null
+	 */
+	default Authenticator or(Authenticator fallback) {
+		// Note: Even if (fallback == AlwaysAuthenticated.INSTANCE), do not skip this authenticator,
+		// since this one may identify an account as context.
+		return new DispatchingAuthenticator(this, fallback);
 	}
 
 }

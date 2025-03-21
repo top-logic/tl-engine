@@ -19,7 +19,6 @@ import com.top_logic.service.openapi.client.registry.ServiceMethodRegistry;
 import com.top_logic.service.openapi.client.registry.ServiceMethodRegistry.ServiceRegistryPart;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.authentication.http.HTTPSecret;
-import com.top_logic.service.openapi.common.authentication.http.basic.BasicAuthentication;
 
 /**
  * {@link HTTPSecret} for <i>OpenAPI</i> clients.
@@ -55,7 +54,7 @@ public interface ClientBasicAuthSecret extends ClientSecret, HTTPSecret {
 
 		@Override
 		protected Predicate<? super AuthenticationConfig> filter() {
-			return BasicAuthentication.class::isInstance;
+			return BasicAuthentication.Config.class::isInstance;
 		}
 
 	}

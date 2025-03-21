@@ -3,14 +3,15 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.service.openapi.server.authentication;
+package com.top_logic.service.openapi.server.authentication.impl;
 
 import java.io.IOException;
 
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.service.openapi.server.OpenApiServer;
+import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
+import com.top_logic.service.openapi.server.authentication.ResponseEnhancer;
 
 /**
  * Default implementation of {@link ResponseEnhancer} sending an
@@ -24,7 +25,7 @@ public class DefaultResponseEnhancer implements ResponseEnhancer {
 	public void enhanceResponse(HttpServletResponse response, AuthenticationFailure ex, String requestedPath)
 			throws IOException {
 		String message = "Authentication failure for '" + requestedPath + "': " + ex.getMessage();
-		Logger.info(message, ex, OpenApiServer.class);
+		Logger.info(message, ex, DefaultResponseEnhancer.class);
 
 		response.sendError(HttpServletResponse.SC_UNAUTHORIZED, message);
 	}

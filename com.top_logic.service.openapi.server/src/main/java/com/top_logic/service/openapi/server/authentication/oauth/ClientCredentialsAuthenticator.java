@@ -21,9 +21,7 @@ import com.top_logic.base.accesscontrol.AuthorizationUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
-import com.top_logic.service.openapi.common.authentication.oauth.ClientCredentials;
 import com.top_logic.service.openapi.common.authentication.oauth.ClientSecret;
-import com.top_logic.service.openapi.common.authentication.oauth.ServerCredentials;
 import com.top_logic.service.openapi.common.authentication.oauth.TokenURIProvider;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 
@@ -38,7 +36,7 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 
 	private TokenURIProvider _uriProvider;
 
-	private ServerCredentials _config;
+	private ServerCredentials.Config<?> _config;
 
 	private boolean _inUserContext;
 
@@ -47,7 +45,7 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 	/**
 	 * Creates a new {@link ClientCredentialsAuthenticator}.
 	 */
-	public ClientCredentialsAuthenticator(ServerCredentials config, ServerCredentialSecret secret) {
+	public ClientCredentialsAuthenticator(ServerCredentials.Config<?> config, ServerCredentialSecret secret) {
 		_config = config;
 		_secret = secret;
 		_uriProvider = TypedConfigUtil.createInstance(config.getURIProvider());
@@ -90,7 +88,7 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 				String noUserName = "No username available when accessing API '" + path + "'.";
 				String usernameField = !StringServices.isEmpty(_usernameField) ? _usernameField : "username";
 				Logger.warn(noUserName + " Fieldname: " + usernameField + ". Response: " + jsonString,
-					ClientCredentials.class);
+					ClientCredentialsAuthenticator.class);
 
 				AuthorizationUtil.setBearerAuthenticationRequestHeader(response, "invalid_token", noUserName);
 				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, noUserName);

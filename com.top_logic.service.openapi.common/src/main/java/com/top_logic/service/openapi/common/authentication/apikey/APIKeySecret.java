@@ -15,8 +15,6 @@ import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
 /**
  * {@link SecretConfiguration} for authentication using an API key.
  * 
- * @see APIKeyAuthentication
- * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public interface APIKeySecret extends SecretConfiguration {

@@ -81,7 +81,7 @@
 											<named-member name="content"/>
 											<object>
 												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-													value="1"
+													value="2"
 												/>
 											</object>
 											<labeled-member label="Pfad-Element"/>
@@ -108,7 +108,7 @@
 											<named-member name="content"/>
 											<object>
 												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-													value="1"
+													value="2"
 												/>
 											</object>
 											<labeled-member label="Pfad-Element"/>
@@ -194,7 +194,7 @@
 											<named-member name="content"/>
 											<object>
 												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-													value="1"
+													value="2"
 												/>
 											</object>
 											<labeled-member label="Pfad-Element"/>
@@ -343,7 +343,7 @@
 											<named-member name="content"/>
 											<object>
 												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-													value="2"
+													value="3"
 												/>
 											</object>
 											<labeled-member label="Pfad-Element"/>
@@ -370,7 +370,7 @@
 											<named-member name="content"/>
 											<object>
 												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-													value="2"
+													value="3"
 												/>
 											</object>
 											<labeled-member label="Pfad-Element"/>
@@ -444,7 +444,7 @@
 											<named-member name="content"/>
 											<object>
 												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-													value="2"
+													value="3"
 												/>
 											</object>
 											<labeled-member label="Pfad-Element"/>
@@ -709,7 +709,7 @@
 											<named-member name="content"/>
 											<object>
 												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-													value="3"
+													value="4"
 												/>
 											</object>
 											<labeled-member label="Pfad-Element"/>
@@ -736,7 +736,7 @@
 											<named-member name="content"/>
 											<object>
 												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-													value="3"
+													value="4"
 												/>
 											</object>
 											<labeled-member label="Pfad-Element"/>
@@ -810,7 +810,7 @@
 											<named-member name="content"/>
 											<object>
 												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-													value="3"
+													value="4"
 												/>
 											</object>
 											<labeled-member label="Pfad-Element"/>
@@ -931,7 +931,7 @@
 											<named-member name="content"/>
 											<object>
 												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-													value="4"
+													value="5"
 												/>
 											</object>
 											<labeled-member label="Pfad-Element"/>
@@ -959,7 +959,7 @@
 											<named-member name="content"/>
 											<object>
 												<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-													value="4"
+													value="5"
 												/>
 											</object>
 											<labeled-member label="Pfad-Element"/>
@@ -1151,7 +1151,9 @@
 							comment="Add security"
 						>
 							<actions>
-								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Auth: GetData"
+								>
 									<actions>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
@@ -1172,7 +1174,7 @@
 											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 												<values>
 													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
-														value="com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthentication"
+														value="com.top_logic.service.openapi.server.authentication.apikey.APIKeyAuthentication"
 													/>
 												</values>
 											</value>
@@ -1307,7 +1309,7 @@
 													<named-member name="content"/>
 													<object>
 														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-															value="1"
+															value="2"
 														/>
 													</object>
 													<labeled-member label="Pfad-Element"/>
@@ -1346,7 +1348,7 @@
 													<named-member name="content"/>
 													<object>
 														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-															value="4"
+															value="5"
 														/>
 													</object>
 													<labeled-member label="Pfad-Element"/>
@@ -1371,7 +1373,9 @@
 										</action>
 									</actions>
 								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Auth: PutData"
+								>
 									<actions>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
@@ -1392,7 +1396,7 @@
 											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 												<values>
 													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
-														value="com.top_logic.service.openapi.common.authentication.http.basic.BasicAuthentication"
+														value="com.top_logic.service.openapi.server.authentication.http.basic.BasicAuthentication"
 													/>
 												</values>
 											</value>
@@ -1513,7 +1517,7 @@
 													<named-member name="content"/>
 													<object>
 														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-															value="2"
+															value="3"
 														/>
 													</object>
 													<labeled-member label="Pfad-Element"/>
@@ -1541,7 +1545,9 @@
 										</action>
 									</actions>
 								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Auth: DeleteData"
+								>
 									<actions>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
@@ -1562,7 +1568,7 @@
 											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 												<values>
 													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
-														value="com.top_logic.service.openapi.common.authentication.oauth.ServerCredentials"
+														value="com.top_logic.service.openapi.server.authentication.oauth.ServerCredentials"
 													/>
 												</values>
 											</value>
@@ -1615,7 +1621,7 @@
 											<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
 												<values>
 													<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
-														value="com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthentication"
+														value="com.top_logic.service.openapi.server.authentication.apikey.APIKeyAuthentication"
 													/>
 												</values>
 											</value>
@@ -1890,7 +1896,7 @@
 													<named-member name="content"/>
 													<object>
 														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-															value="3"
+															value="4"
 														/>
 													</object>
 													<labeled-member label="Pfad-Element"/>
@@ -1960,7 +1966,9 @@
 						>
 							<arguments/>
 						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+						<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+							comment="Globale Parameter"
+						>
 							<actions>
 								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 									command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
@@ -2101,7 +2109,7 @@
 													<named-member name="content"/>
 													<object>
 														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-															value="1"
+															value="2"
 														/>
 													</object>
 													<labeled-member label="Pfad-Element"/>
@@ -2155,7 +2163,7 @@
 													<named-member name="content"/>
 													<object>
 														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-															value="1"
+															value="2"
 														/>
 													</object>
 													<labeled-member label="Pfad-Element"/>
@@ -2187,7 +2195,7 @@
 													<named-member name="content"/>
 													<object>
 														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-															value="3"
+															value="4"
 														/>
 													</object>
 													<labeled-member label="Pfad-Element"/>
@@ -2218,7 +2226,7 @@
 													<named-member name="content"/>
 													<object>
 														<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-															value="3"
+															value="4"
 														/>
 													</object>
 													<labeled-member label="Pfad-Element"/>
@@ -2301,7 +2309,9 @@
 						</action>
 					</actions>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Scipt Funktionen definieren"
+				>
 					<actions>
 						<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 							change-kind="ABSOLUTE"
@@ -2380,7 +2390,9 @@
 							comment="Add security"
 						>
 							<actions>
-								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Auth: GetData"
+								>
 									<actions>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
@@ -2441,7 +2453,9 @@
 										/>
 									</actions>
 								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Auth: PutData"
+								>
 									<actions>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
@@ -2542,7 +2556,9 @@
 										</action>
 									</actions>
 								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Auth: DeleteData"
+								>
 									<actions>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
@@ -2654,7 +2670,9 @@
 										/>
 									</actions>
 								</action>
-								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+								<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+									comment="Auth: DeleteData2"
+								>
 									<actions>
 										<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 											user-id="root"
@@ -2739,7 +2757,9 @@
 						</action>
 					</actions>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
+				<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
+					comment="Testdaten anlegen"
+				>
 					<actions>
 						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
 							user-id="root"
@@ -3931,6 +3951,30 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 									<named-member name="content"/>
 									<object>
 										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+											value="5"
+										/>
+									</object>
+									<labeled-member label="Entfernen"/>
+								</path>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+								/>
+								<path>
+									<labeled-member label="Dienst-Konfiguration"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Pfade"/>
+									<named-member name="content"/>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
 											value="4"
 										/>
 									</object>
@@ -3999,30 +4043,6 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 									<named-member name="outerContainer"/>
 									<named-member name="contentContainer"/>
 									<named-member name="content"/>
-									<labeled-member label="Pfade"/>
-									<named-member name="content"/>
-									<object>
-										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-											value="1"
-										/>
-									</object>
-									<labeled-member label="Entfernen"/>
-								</path>
-							</model-name>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
-							failure-expected="false"
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Development > Service Editor > Modul Konfiguration"
-								/>
-								<path>
-									<labeled-member label="Dienst-Konfiguration"/>
-									<named-member name="outerContainer"/>
-									<named-member name="contentContainer"/>
-									<named-member name="content"/>
 									<labeled-member label="Geheimnisse"/>
 									<named-member name="content"/>
 									<object>
@@ -4123,6 +4143,54 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 									<named-member name="content"/>
 									<object>
 										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+											value="5"
+										/>
+									</object>
+									<labeled-member label="Entfernen"/>
+								</path>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+								/>
+								<path>
+									<labeled-member label="Dienst-Konfiguration"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Authentifizierungen"/>
+									<named-member name="content"/>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+											value="4"
+										/>
+									</object>
+									<labeled-member label="Entfernen"/>
+								</path>
+							</model-name>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
+							failure-expected="false"
+							user-id="root"
+						>
+							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+									tab-path="Administration > Development > Service Editor > Modul Konfiguration"
+								/>
+								<path>
+									<labeled-member label="Dienst-Konfiguration"/>
+									<named-member name="outerContainer"/>
+									<named-member name="contentContainer"/>
+									<named-member name="content"/>
+									<labeled-member label="Authentifizierungen"/>
+									<named-member name="content"/>
+									<object>
+										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
 											value="3"
 										/>
 									</object>
@@ -4148,54 +4216,6 @@ result = getAttributeValues(["TestOpenAPI","A0"], ["string","date","long"]);
 									<object>
 										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
 											value="2"
-										/>
-									</object>
-									<labeled-member label="Entfernen"/>
-								</path>
-							</model-name>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
-							failure-expected="false"
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Development > Service Editor > Modul Konfiguration"
-								/>
-								<path>
-									<labeled-member label="Dienst-Konfiguration"/>
-									<named-member name="outerContainer"/>
-									<named-member name="contentContainer"/>
-									<named-member name="content"/>
-									<labeled-member label="Authentifizierungen"/>
-									<named-member name="content"/>
-									<object>
-										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-											value="1"
-										/>
-									</object>
-									<labeled-member label="Entfernen"/>
-								</path>
-							</model-name>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
-							failure-expected="false"
-							user-id="root"
-						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Development > Service Editor > Modul Konfiguration"
-								/>
-								<path>
-									<labeled-member label="Dienst-Konfiguration"/>
-									<named-member name="outerContainer"/>
-									<named-member name="contentContainer"/>
-									<named-member name="content"/>
-									<labeled-member label="Authentifizierungen"/>
-									<named-member name="content"/>
-									<object>
-										<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-											value="0"
 										/>
 									</object>
 									<labeled-member label="Entfernen"/>

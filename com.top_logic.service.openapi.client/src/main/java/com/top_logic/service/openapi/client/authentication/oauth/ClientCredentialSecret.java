@@ -15,14 +15,14 @@ import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.service.openapi.client.authentication.AllAuthenticationDomains;
 import com.top_logic.service.openapi.client.authentication.ClientSecret;
+import com.top_logic.service.openapi.client.authentication.oauth.user.ClientCredentials;
 import com.top_logic.service.openapi.client.registry.ServiceMethodRegistry;
 import com.top_logic.service.openapi.client.registry.ServiceMethodRegistry.ServiceRegistryPart;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
-import com.top_logic.service.openapi.common.authentication.oauth.ClientCredentials;
 import com.top_logic.service.openapi.common.authentication.oauth.CredentialSecret;
 
 /**
- * {@link CredentialSecret Authentication data} for an Open API client towards the <i>OpenID</i>
+ * {@link CredentialSecret Authentication data} for an <i>OpenAPI</i> client towards the <i>OpenID</i>
  * server.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -56,7 +56,7 @@ public interface ClientCredentialSecret extends CredentialSecret, ClientSecret {
 
 		@Override
 		protected Predicate<? super AuthenticationConfig> filter() {
-			return ClientCredentials.class::isInstance;
+			return ClientCredentials.Config.class::isInstance;
 		}
 
 	}

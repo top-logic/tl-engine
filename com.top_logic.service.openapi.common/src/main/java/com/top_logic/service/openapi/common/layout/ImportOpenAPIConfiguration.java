@@ -57,8 +57,8 @@ import com.top_logic.layout.form.values.edit.editor.BinaryDataEditor;
 import com.top_logic.layout.messagebox.CreateConfigurationDialog;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
-import com.top_logic.service.openapi.common.authentication.apikey.APIKeyAuthentication;
-import com.top_logic.service.openapi.common.authentication.http.basic.BasicAuthentication;
+import com.top_logic.service.openapi.common.authentication.apikey.APIKeyConfig;
+import com.top_logic.service.openapi.common.authentication.http.HTTPAuthentication;
 import com.top_logic.service.openapi.common.authentication.oauth.DefaultURIProvider;
 import com.top_logic.service.openapi.common.authentication.oauth.OpenIDURIProvider;
 import com.top_logic.service.openapi.common.authentication.oauth.TokenBasedAuthentication;
@@ -317,7 +317,8 @@ public abstract class ImportOpenAPIConfiguration extends AbstractCommandHandler 
 	 * Creates an {@link AuthenticationConfig} for {@link SecuritySchemeObject} of type
 	 * {@link SecuritySchemeType#HTTP}.
 	 */
-	protected BasicAuthentication createHTTPAuthentication(SecuritySchemeObject value, List<ResKey> warnings) {
+	protected <C extends HTTPAuthentication> C createHTTPAuthentication(Class<C> type, SecuritySchemeObject value,
+			List<ResKey> warnings) {
 		String scheme = value.getScheme();
 		if (scheme == null) {
 			warnings.add(I18NConstants.MISSING_HTTP_SCHEME__SCHEMA.fill(value.getSchemaName()));
@@ -326,7 +327,7 @@ public abstract class ImportOpenAPIConfiguration extends AbstractCommandHandler 
 		switch (scheme.toLowerCase()) {
 			case "basic": {
 				// Actually "Basic" as of https://www.rfc-editor.org/rfc/rfc7617.html
-				return TypedConfiguration.newConfigItem(BasicAuthentication.class);
+				return TypedConfiguration.newConfigItem(type);
 			}
 			default: {
 				warnings.add(I18NConstants.MISSING_UNSUPPORTED_HTTP_SCHEME__SCHEME_SCHEMA.fill(scheme,
@@ -340,9 +341,8 @@ public abstract class ImportOpenAPIConfiguration extends AbstractCommandHandler 
 	 * Creates an {@link AuthenticationConfig} for {@link SecuritySchemeObject} of type
 	 * {@link SecuritySchemeType#API_KEY}.
 	 */
-	protected APIKeyAuthentication createAPIKeyAuthentication(SecuritySchemeObject value) {
-		APIKeyAuthentication apiKeyAuthentication =
-			TypedConfiguration.newConfigItem(APIKeyAuthentication.class);
+	protected <C extends APIKeyConfig> C createAPIKeyAuthentication(Class<C> type, SecuritySchemeObject value) {
+		C apiKeyAuthentication = TypedConfiguration.newConfigItem(type);
 		apiKeyAuthentication.setPosition(value.getIn());
 		apiKeyAuthentication.setParameterName(value.getName());
 		return apiKeyAuthentication;

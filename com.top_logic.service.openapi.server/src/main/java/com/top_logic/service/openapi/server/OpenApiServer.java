@@ -62,19 +62,18 @@ import com.top_logic.layout.form.values.edit.annotation.CollapseEntries;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
-import com.top_logic.service.openapi.common.authentication.ServerAuthentication;
-import com.top_logic.service.openapi.common.authentication.ServerAuthentications;
 import com.top_logic.service.openapi.common.conf.HttpMethod;
 import com.top_logic.service.openapi.common.document.InfoObject;
 import com.top_logic.service.openapi.common.document.SchemaObject;
 import com.top_logic.service.openapi.common.document.TagObject;
 import com.top_logic.service.openapi.server.HandlerForPath.CompareByParts;
-import com.top_logic.service.openapi.server.authentication.AlwaysAuthenticated;
-import com.top_logic.service.openapi.server.authentication.AuthenticateVisitor;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
-import com.top_logic.service.openapi.server.authentication.NeverAuthenticated;
-import com.top_logic.service.openapi.server.authentication.ServerSecret;
+import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
+import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentications;
+import com.top_logic.service.openapi.server.authentication.conf.ServerSecret;
+import com.top_logic.service.openapi.server.authentication.impl.AlwaysAuthenticated;
+import com.top_logic.service.openapi.server.authentication.impl.NeverAuthenticated;
 import com.top_logic.service.openapi.server.conf.OperationByMethod;
 import com.top_logic.service.openapi.server.conf.PathItem;
 import com.top_logic.service.openapi.server.impl.ComputationFailure;
@@ -158,6 +157,7 @@ public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?
 		@Name(INFORMATION)
 		@ItemDefault
 		@NonNullable
+		@DisplayMinimized
 		Information getInformation();
 
 		/**
@@ -170,11 +170,13 @@ public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?
 		 * {@link #getPaths()}.
 		 */
 		@Override
-		Map<String, ServerAuthentication> getAuthentications();
+		@DisplayMinimized
+		Map<String, ServerAuthentication.Config<?>> getAuthentications();
 
 		/**
 		 * Configuration of the secrets that a client must use to access this server.
 		 */
+		@DisplayMinimized
 		@Name(SECRETS)
 		List<ServerSecret> getSecrets();
 
@@ -450,24 +452,27 @@ public class OpenApiServer extends ConfiguredManagedClass<OpenApiServer.Config<?
 	}
 
 	private Authenticator authenticator(OperationByMethod operation) {
-		Authenticator authenticator = AlwaysAuthenticated.INSTANCE;
-		for (String authentication : operation.getAuthentication()) {
-			Authenticator localAuthenticator;
+		List<String> authentications = operation.getAuthentication();
+		if (authentications.isEmpty()) {
+			return AlwaysAuthenticated.INSTANCE;
+		}
+
+		String path = operation.getEnclosingPathItem().getPath();
+		String method = operation.getMethod().name();
+		Authenticator authenticator = new NeverAuthenticated(
+			I18NConstants.CREATING_AUTHENTICATOR_FAILED__PATH__METHOD.fill(path, method));
+		for (String authentication : authentications) {
+			Authenticator nextAuthenticator;
 			try {
-				localAuthenticator = getConfig()
+				nextAuthenticator = TypedConfigUtil.createInstance(getConfig()
 					.getAuthentications()
-					.get(authentication)
-					.visit(AuthenticateVisitor.INSTANCE, this);
+					.get(authentication)).createAuthenticator(getConfig().getSecrets());
+				authenticator = authenticator.or(nextAuthenticator);
 			} catch (RuntimeException ex) {
-				String path = operation.getEnclosingPathItem().getPath();
-				String method = operation.getMethod().name();
 				Logger.error("Unable to create authenticator for path '" + path + "' and method '" + method + "'.", ex,
 					OpenApiServer.class);
-				localAuthenticator =
-					new NeverAuthenticated(
-						I18NConstants.CREATING_AUTHENTICATOR_FAILED__PATH__METHOD.fill(path, method));
+				// Ignore authenticator, it's "never" by default.
 			}
-			authenticator = authenticator.andThen(localAuthenticator);
 		}
 		return authenticator;
 	}

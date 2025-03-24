@@ -14,7 +14,6 @@ import java.util.stream.Stream;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
 import com.top_logic.service.openapi.common.document.SecuritySchemeObject;
 import com.top_logic.service.openapi.common.document.SecuritySchemeType;
@@ -76,12 +75,12 @@ public class OpenAPIConfigs {
 	/**
 	 * The {@link SecretConfiguration}s with the given secret type.
 	 */
-	public static <T extends SecretConfiguration> Stream<T> secretsOfType(AuthenticationConfig authenticationConfig,
+	public static <T extends SecretConfiguration> Stream<T> secretsOfType(String domain,
 			List<? extends SecretConfiguration> secrets, Class<T> secretType) {
 		return secrets
 			.stream()
 			.filter(secretType::isInstance)
 			.map(secretType::cast)
-			.filter(secret -> secret.getDomain().equals(authenticationConfig.getDomain()));
+			.filter(secret -> secret.getDomain().equals(domain));
 	}
 }

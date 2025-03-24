@@ -103,7 +103,7 @@ public class BasicAuthentication extends AbstractConfiguredInstance<BasicAuthent
 			return new BasicUserAuthenticator();
 		} else {
 			Set<LoginCredentials> authentications =
-				OpenAPIConfigs.secretsOfType(config, availableSecrets, HTTPSecret.class)
+				OpenAPIConfigs.secretsOfType(config.getDomain(), availableSecrets, HTTPSecret.class)
 					.map(HTTPSecret::getLogin)
 					.collect(Collectors.toSet());
 			if (authentications.isEmpty()) {

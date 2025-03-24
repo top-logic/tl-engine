@@ -80,6 +80,10 @@ td.tblRight {
 	text-align: right;
 }
 
+td.tblRight .is-control {
+	justify-content: safe flex-end;
+}
+
 td.tblRight .tl-table__cell-container,
 td.tblRight .tl-table__cell-container > * {
 /* 	justify-content: safe flex-end; */

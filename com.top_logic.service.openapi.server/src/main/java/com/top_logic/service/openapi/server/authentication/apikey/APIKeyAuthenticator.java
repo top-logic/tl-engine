@@ -51,35 +51,35 @@ public class APIKeyAuthenticator implements Authenticator {
 	@Override
 	public Person authenticate(HttpServletRequest req, HttpServletResponse resp)
 			throws AuthenticationFailure {
-		switch (_location) {
-			case COOKIE:
+		String apikey = switch (_location) {
+			case COOKIE -> {
 				for (Cookie cookie: req.getCookies()) {
 					if (_parameterName.equals(cookie.getName())) {
-						checkKey(cookie.getValue());
-						return null;
+						yield cookie.getValue();
 					}
 				}
 				throw new AuthenticationFailure(I18NConstants.AUTH_FAILED_NO_COOKIE__PARAMETER.fill(_parameterName));
-			case HEADER:
+			}
+			case HEADER -> {
 				String header = req.getHeader(_parameterName);
 				if (header == null) {
 					throw new AuthenticationFailure(
 						I18NConstants.AUTH_FAILED_NO_HEADER__PARAMETER.fill(_parameterName));
 				}
-				checkKey(header);
-				break;
-			case QUERY:
+				yield header;
+			}
+			case QUERY -> {
 				String parameter = req.getParameter(_parameterName);
 				if (parameter == null) {
 					throw new AuthenticationFailure(
 						I18NConstants.AUTH_FAILED_NO_QUERY_PARAM__PARAMETER.fill(_parameterName));
 				}
-				checkKey(parameter);
-				break;
-			default:
-				throw new RuntimeException("Unkown location: " + _location);
+				yield parameter;
+			}
+		};
 
-		}
+		checkKey(apikey);
+
 		return null;
 	}
 

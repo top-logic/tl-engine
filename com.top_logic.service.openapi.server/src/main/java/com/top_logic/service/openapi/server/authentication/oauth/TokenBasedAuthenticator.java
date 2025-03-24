@@ -85,7 +85,6 @@ public abstract class TokenBasedAuthenticator implements Authenticator {
 			if (expirationTime.getTime() > maxExpirationTime) {
 				expirationTime = new Date(maxExpirationTime);
 			}
-			
 		}
 
 		Person account;

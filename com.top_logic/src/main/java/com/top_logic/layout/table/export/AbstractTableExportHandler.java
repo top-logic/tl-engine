@@ -93,7 +93,7 @@ public abstract class AbstractTableExportHandler extends AbstractCommandHandler 
 		 * Optional provider for an dynamic download-name. If this is used the default download-key
 		 * (see {@link ExcelExportHandler.Config#getDownloadNameKey()},
 		 * {@link StreamingExcelExportHandler.Config#getExportNameKey()}) must contain the
-		 * placeholder {0}.
+		 * placeholder '{0}'.
 		 * 
 		 * @return provider for an dynamic download-name, may be null.
 		 */
@@ -102,7 +102,7 @@ public abstract class AbstractTableExportHandler extends AbstractCommandHandler 
 
 	}
 
-	DownloadNameProvider _dynamicDownloadName = null;
+	private final DownloadNameProvider _dynamicDownloadName;
 
 	/**
 	 * Creates a {@link AbstractTableExportHandler} from configuration.
@@ -115,9 +115,7 @@ public abstract class AbstractTableExportHandler extends AbstractCommandHandler 
 	@CalledByReflection
 	public AbstractTableExportHandler(InstantiationContext context, Config config) {
 		super(context, config);
-		if (config.getDynamicDownloadName() != null) {
-			_dynamicDownloadName = context.getInstance(config.getDynamicDownloadName());
-		}
+		_dynamicDownloadName = context.getInstance(config.getDynamicDownloadName());
 	}
 
 	@Override

@@ -18,6 +18,10 @@ public interface DownloadNameProvider {
 	/**
 	 * Creates a download-name for the given component.
 	 * 
+	 * @param component
+	 *        the context-component where the export is performed.
+	 * @param resKey
+	 *        the key with the placeholder '{0}' to be replaced by the dynamic part of the name.
 	 * @return A filename without extension for the export.
 	 */
 	String createDownloadName(LayoutComponent component, ResKey resKey);

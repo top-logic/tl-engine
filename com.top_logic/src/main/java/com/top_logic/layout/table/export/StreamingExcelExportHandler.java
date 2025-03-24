@@ -75,8 +75,8 @@ public class StreamingExcelExportHandler extends AbstractTableExportHandler {
 		Config.EXECUTABILITY_PROPERTY,
 		Config.CONFIRM_PROPERTY,
 		Config.CONFIRM_MESSAGE,
-		Config.EXPORT_NAME_KEY,
 		Config.EXPORT_SHEET_KEY,
+		Config.EXPORT_NAME_KEY,
 		Config.DYNAMIC_DOWNLOAD_NAME,
 	})
 	public interface Config extends AbstractTableExportHandler.Config {

@@ -9,9 +9,9 @@ import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.ModelSpec;
@@ -21,11 +21,13 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.Resources;
 
 /**
- * {@link DownloadNameProvider} generating filenames based on the model of a component.
+ * {@link DownloadNameProvider} generating filenames where the label of the configured model is
+ * passed to use in res-key placeholder '{0}'.
  * 
  * @author <a href="mailto:cca@top-logic.com">Christian Canterino</a>
  */
-public class ModelDownloadName<C extends ModelDownloadName.Config<?>> extends ConfiguredDownloadNameProvider<C> {
+public class ModelDownloadName<C extends ModelDownloadName.Config<?>> extends AbstractConfiguredInstance<C>
+		implements DownloadNameProvider {
 
 	/**
 	 * Configuration options for {@link ModelDownloadName}.
@@ -34,9 +36,9 @@ public class ModelDownloadName<C extends ModelDownloadName.Config<?>> extends Co
 	public interface Config<I extends ModelDownloadName<?>> extends PolymorphicConfiguration<I> {
 
 		/**
-		 * The {@link ModelSpec} to get the value to render from.
+		 * The {@link ModelSpec} to get the model whose label is used for the dynamic part of the
+		 * filename.
 		 */
-		@Mandatory
 		ModelSpec getModel();
 
 		/** @see #getModel() */

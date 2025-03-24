@@ -6,6 +6,7 @@
 package com.top_logic.service.openapi.server.authentication.oauth;
 
 import java.net.URI;
+import java.util.Map;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -41,12 +42,19 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 
 	private String _usernameField;
 
+	private String _defaultUser;
+
+	private Map<String, String> _userNameByClientId;
+
 	/**
 	 * Creates a new {@link ClientCredentialsAuthenticator}.
 	 */
-	public ClientCredentialsAuthenticator(ServerCredentials.Config<?> config, ServerCredentialSecret secret) {
+	public ClientCredentialsAuthenticator(ServerCredentials.Config<?> config, ServerCredentialSecret secret,
+			String defaultUser, Map<String, String> userNameByClientId) {
 		_config = config;
 		_secret = secret;
+		_defaultUser = defaultUser;
+		_userNameByClientId = userNameByClientId;
 		_uriProvider = TypedConfigUtil.createInstance(config.getURIProvider());
 		_inUserContext = _config.isInUserContext();
 		_usernameField = _config.getUsernameField();
@@ -80,14 +88,21 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 				}
 			}
 		}
+
+		if (StringServices.isEmpty(username)) {
+			// Lookup technical user.
+			String clientID = introspectionResponse.getClientID().toString();
+			username = _userNameByClientId.getOrDefault(clientID, _defaultUser);
+		}
+
 		if (StringServices.isEmpty(username)) {
 			String jsonString = introspectionResponse.toJSONObject().toJSONString();
 			AuthenticationFailure authenticationFailure =
 				new AuthenticationFailure(I18NConstants.NO_USERNAME_IN_INTROSPECTION_RESPONSE);
 			authenticationFailure.setResponseEnhancer((response, failure, path) -> {
-				String noUserName = "No username available when accessing API '" + path + "'.";
+				String noUserName = "No user for API '" + path + "' which requires user context.";
 				String usernameField = !StringServices.isEmpty(_usernameField) ? _usernameField : "username";
-				Logger.warn(noUserName + " Fieldname: " + usernameField + ". Response: " + jsonString,
+				Logger.warn(noUserName + " Fieldname: " + usernameField + ". Introspection response: " + jsonString,
 					ClientCredentialsAuthenticator.class);
 
 				AuthorizationUtil.setBearerAuthenticationRequestHeader(response, "invalid_token", noUserName);

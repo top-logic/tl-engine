@@ -5,8 +5,6 @@
  */
 package com.top_logic.service.openapi.server.authentication.impl;
 
-import java.io.IOException;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -53,8 +51,7 @@ public class NeverAuthenticated implements Authenticator {
 	}
 
 	@Override
-	public Person authenticate(HttpServletRequest req, HttpServletResponse resp)
-			throws AuthenticationFailure, IOException {
+	public Person authenticate(HttpServletRequest req, HttpServletResponse resp) throws AuthenticationFailure {
 		AuthenticationFailure failure = new AuthenticationFailure(_externalReason);
 		failure.setResponseEnhancer((response, authEx, requestedPath) -> {
 			String message = authEx.getMessage();

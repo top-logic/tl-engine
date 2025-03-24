@@ -5,8 +5,6 @@
  */
 package com.top_logic.service.openapi.server.authentication;
 
-import java.io.IOException;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -34,7 +32,7 @@ public interface Authenticator {
 	 * @return The account which was authenticated. May be <code>null</code>, in this case no
 	 *         special account is authenticated.
 	 */
-	Person authenticate(HttpServletRequest req, HttpServletResponse resp) throws AuthenticationFailure, IOException;
+	Person authenticate(HttpServletRequest req, HttpServletResponse resp) throws AuthenticationFailure;
 
 	/**
 	 * Builds an {@link Authenticator} that authenticates a request if and only if both

@@ -5,7 +5,6 @@
  */
 package com.top_logic.service.openapi.server.authentication.oauth;
 
-import java.io.IOException;
 import java.net.URI;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -54,17 +53,18 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 	}
 
 	@Override
-	protected URI getIntrospectionURI() {
+	protected URI getIntrospectionURI() throws AuthenticationFailure {
 		URI introspectionURI = _uriProvider.getIntrospectionEndpointURI();
 		if (introspectionURI == null) {
-			throw new RuntimeException("No Introspection endpoint delivered by '" + _uriProvider + "'.");
+			throw new AuthenticationFailure(
+				I18NConstants.ERROR_NO_INTROSPECTION_ENDPOINT__DOMAIN.fill(_config.getDomain()));
 		}
 		return introspectionURI;
 	}
 
 	@Override
 	protected String findAccountName(TokenIntrospectionSuccessResponse introspectionResponse, HttpServletRequest req,
-			HttpServletResponse resp) throws AuthenticationFailure, IOException {
+			HttpServletResponse resp) throws AuthenticationFailure {
 		if (!_inUserContext) {
 			return null;
 		}

@@ -5,7 +5,6 @@
  */
 package com.top_logic.service.openapi.server.authentication.apikey;
 
-import java.io.IOException;
 import java.util.Objects;
 import java.util.Set;
 
@@ -51,7 +50,7 @@ public class APIKeyAuthenticator implements Authenticator {
 
 	@Override
 	public Person authenticate(HttpServletRequest req, HttpServletResponse resp)
-			throws AuthenticationFailure, IOException {
+			throws AuthenticationFailure {
 		switch (_location) {
 			case COOKIE:
 				for (Cookie cookie: req.getCookies()) {

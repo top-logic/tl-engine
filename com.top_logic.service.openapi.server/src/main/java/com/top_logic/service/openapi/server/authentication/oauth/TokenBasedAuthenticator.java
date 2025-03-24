@@ -52,7 +52,7 @@ public abstract class TokenBasedAuthenticator implements Authenticator {
 
 	@Override
 	public Person authenticate(HttpServletRequest req, HttpServletResponse resp)
-			throws AuthenticationFailure, IOException {
+			throws AuthenticationFailure {
 		AccessToken token = parseAccessToken(req);
 		String tokenString = token.getValue();
 
@@ -126,7 +126,7 @@ public abstract class TokenBasedAuthenticator implements Authenticator {
 	 *         when authentication is not possible.
 	 */
 	protected abstract String findAccountName(TokenIntrospectionSuccessResponse introspectionResponse,
-			HttpServletRequest req, HttpServletResponse resp) throws AuthenticationFailure, IOException;
+			HttpServletRequest req, HttpServletResponse resp) throws AuthenticationFailure;
 
 	private AuthenticationFailure failExpiredToken(Date expirationTime) {
 		AuthenticationFailure ex =
@@ -160,9 +160,14 @@ public abstract class TokenBasedAuthenticator implements Authenticator {
 		}
 	}
 
-	private HTTPResponse sendInspectRequest(AccessToken token) throws IOException {
+	private HTTPResponse sendInspectRequest(AccessToken token) throws AuthenticationFailure {
 		Request request = new TokenIntrospectionRequest(getIntrospectionURI(), getClientAuth(), token);
-		return request.toHTTPRequest().send();
+		try {
+			return request.toHTTPRequest().send();
+		} catch (IOException ex) {
+			throw new AuthenticationFailure(I18NConstants.ERROR_TOKEN_INTROSPECTION_FAILED__MSG.fill(ex.getMessage()),
+				ex);
+		}
 	}
 
 	private AuthenticationFailure handleIntrospectionError(TokenIntrospectionErrorResponse errorResponse)
@@ -200,7 +205,7 @@ public abstract class TokenBasedAuthenticator implements Authenticator {
 	/**
 	 * The {@link URI} of the token introspection endpoint.
 	 */
-	protected abstract URI getIntrospectionURI();
+	protected abstract URI getIntrospectionURI() throws AuthenticationFailure;
 
 	/**
 	 * The client authentication for the introspection endpoint.

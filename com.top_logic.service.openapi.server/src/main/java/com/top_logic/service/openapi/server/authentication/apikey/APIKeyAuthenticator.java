@@ -5,8 +5,8 @@
  */
 package com.top_logic.service.openapi.server.authentication.apikey;
 
+import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,7 +30,7 @@ public class APIKeyAuthenticator implements Authenticator {
 
 	private String _parameterName;
 
-	private Set<String> _allowedKeys;
+	private Map<String, String> _accountByApiKey;
 
 	/**
 	 * Creates a new {@link APIKeyAuthenticator}.
@@ -40,11 +40,12 @@ public class APIKeyAuthenticator implements Authenticator {
 	 * @param parameterName
 	 *        Name of the parameter holding the secret.
 	 * @param allowedKeys
-	 *        The API key that are allowed to be authenticated.
+	 *        The API keys that are allowed to be authenticated mapped to the login name of the
+	 *        system user to process the request with.
 	 */
-	public APIKeyAuthenticator(APIKeyPosition location, String parameterName, Set<String> allowedKeys) {
+	public APIKeyAuthenticator(APIKeyPosition location, String parameterName, Map<String, String> allowedKeys) {
 		_location = location;
-		_allowedKeys = allowedKeys;
+		_accountByApiKey = allowedKeys;
 		_parameterName = Objects.requireNonNull(parameterName);
 	}
 
@@ -78,14 +79,26 @@ public class APIKeyAuthenticator implements Authenticator {
 			}
 		};
 
-		checkKey(apikey);
-
-		return null;
+		return checkKey(apikey);
 	}
 
-	private void checkKey(String headerValue) throws AuthenticationFailure {
-		if (!_allowedKeys.contains(headerValue)) {
-			throw new AuthenticationFailure(I18NConstants.AUTH_FAILED_INVALID_API_KEY__PARAMETER.fill(_parameterName));
+	private Person checkKey(String apikey) throws AuthenticationFailure {
+		String userName = _accountByApiKey.get(apikey);
+		if (userName == null) {
+			if (_accountByApiKey.containsKey(apikey)) {
+				// Not in user context.
+				return null;
+			} else {
+				throw new AuthenticationFailure(
+					I18NConstants.AUTH_FAILED_INVALID_API_KEY__PARAMETER.fill(_parameterName));
+			}
+		} else {
+			Person result = Person.byName(userName);
+			if (result == null) {
+				throw new AuthenticationFailure(
+					I18NConstants.ERROR_REQUEST_USER_DOES_NOT_EXIST__NAME.fill(userName));
+			}
+			return result;
 		}
 	}
 

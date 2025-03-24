@@ -8,6 +8,7 @@ package com.top_logic.service.openapi.server.authentication.apikey;
 import java.util.function.Predicate;
 
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.ValueInitializer;
@@ -21,6 +22,8 @@ import com.top_logic.service.openapi.server.OpenApiServer;
 import com.top_logic.service.openapi.server.OpenApiServer.OpenAPIServerPart;
 import com.top_logic.service.openapi.server.authentication.conf.AllAuthenticationDomains;
 import com.top_logic.service.openapi.server.authentication.conf.ServerSecret;
+import com.top_logic.service.openapi.server.layout.AllUsers;
+import com.top_logic.service.openapi.server.layout.UserNameMapping;
 
 /**
  * {@link APIKeySecret} for the <i>OpenAPI</i> server.
@@ -44,6 +47,17 @@ public interface ServerAPIKeySecret extends ServerSecret, APIKeySecret {
 	@Options(fun = AllAPIKeyDomains.class, args = {
 		@Ref({ OpenAPIServerPart.SERVER_CONFIGURATION, OpenApiServer.Config.AUTHENTICATIONS }) })
 	String getDomain();
+
+	/**
+	 * The login name of the technical user, in which context the request should be executed.
+	 * 
+	 * <p>
+	 * If a value is given, the request processing takes place in the context of the named user.
+	 * </p>
+	 */
+	@Nullable
+	@Options(fun = AllUsers.class, mapping = UserNameMapping.class)
+	String getUserId();
 
 	/**
 	 * All domains of configured {@link APIKeyAuthentication}.

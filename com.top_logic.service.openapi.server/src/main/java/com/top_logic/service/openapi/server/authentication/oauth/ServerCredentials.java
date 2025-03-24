@@ -144,7 +144,7 @@ public class ServerCredentials extends AbstractConfiguredInstance<ServerCredenti
 	public Authenticator createAuthenticator(List<? extends SecretConfiguration> availableSecrets) {
 		Config<?> config = getConfig();
 		Set<ServerCredentialSecret> secrets =
-			OpenAPIConfigs.secretsOfType(config, availableSecrets, ServerCredentialSecret.class)
+			OpenAPIConfigs.secretsOfType(config.getDomain(), availableSecrets, ServerCredentialSecret.class)
 				.collect(Collectors.toSet());
 		switch (secrets.size()) {
 			case 0:

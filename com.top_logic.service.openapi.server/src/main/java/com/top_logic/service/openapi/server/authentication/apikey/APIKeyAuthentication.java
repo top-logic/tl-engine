@@ -67,7 +67,7 @@ public class APIKeyAuthentication extends AbstractConfiguredInstance<APIKeyAuthe
 	@Override
 	public Authenticator createAuthenticator(List<? extends SecretConfiguration> availableSecrets) {
 		Config<?> config = getConfig();
-		Set<String> allowedKeys = OpenAPIConfigs.secretsOfType(config, availableSecrets, APIKeySecret.class)
+		Set<String> allowedKeys = OpenAPIConfigs.secretsOfType(config.getDomain(), availableSecrets, APIKeySecret.class)
 			.map(APIKeySecret::getAPIKey)
 			.collect(Collectors.toSet());
 

@@ -6,7 +6,7 @@
 package com.top_logic.service.openapi.server.authentication.apikey;
 
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -17,7 +17,6 @@ import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.service.openapi.common.authentication.AuthenticationConfig;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyConfig;
-import com.top_logic.service.openapi.common.authentication.apikey.APIKeySecret;
 import com.top_logic.service.openapi.common.document.SecuritySchemeObject;
 import com.top_logic.service.openapi.common.document.SecuritySchemeType;
 import com.top_logic.service.openapi.common.util.OpenAPIConfigs;
@@ -67,9 +66,9 @@ public class APIKeyAuthentication extends AbstractConfiguredInstance<APIKeyAuthe
 	@Override
 	public Authenticator createAuthenticator(List<? extends SecretConfiguration> availableSecrets) {
 		Config<?> config = getConfig();
-		Set<String> allowedKeys = OpenAPIConfigs.secretsOfType(config.getDomain(), availableSecrets, APIKeySecret.class)
-			.map(APIKeySecret::getAPIKey)
-			.collect(Collectors.toSet());
+		Map<String, String> allowedKeys =
+			OpenAPIConfigs.secretsOfType(config.getDomain(), availableSecrets, ServerAPIKeySecret.class)
+				.collect(Collectors.toMap(s -> s.getAPIKey(), s -> s.getUserId()));
 
 		if (allowedKeys.isEmpty()) {
 			return NeverAuthenticated.missingSecret();

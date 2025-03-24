@@ -33,6 +33,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 AUTH_FAILED_INVALID_API_KEY__PARAMETER;
 
+	/**
+	 * @en Technical user ''{0}'' for request processing does not exist..
+	 */
+	public static ResKey1 ERROR_REQUEST_USER_DOES_NOT_EXIST__NAME;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

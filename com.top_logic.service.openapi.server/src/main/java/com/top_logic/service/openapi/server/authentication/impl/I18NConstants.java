@@ -57,6 +57,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 NO_SUCH_ACCOUNT__USER;
 
+	/**
+	 * @en Token introspection failed: {0}
+	 */
+	public static ResKey1 ERROR_TOKEN_INTROSPECTION_FAILED__MSG;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

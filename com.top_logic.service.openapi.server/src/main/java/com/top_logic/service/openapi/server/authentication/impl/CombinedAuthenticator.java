@@ -5,8 +5,6 @@
  */
 package com.top_logic.service.openapi.server.authentication.impl;
 
-import java.io.IOException;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -35,8 +33,7 @@ public class CombinedAuthenticator implements Authenticator {
 	}
 
 	@Override
-	public Person authenticate(HttpServletRequest req, HttpServletResponse resp)
-			throws AuthenticationFailure, IOException {
+	public Person authenticate(HttpServletRequest req, HttpServletResponse resp) throws AuthenticationFailure {
 		Person firstAccount = _first.authenticate(req, resp);
 		Person secondAccount = _second.authenticate(req, resp);
 		if (firstAccount == null) {

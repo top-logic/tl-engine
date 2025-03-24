@@ -5,8 +5,6 @@
  */
 package com.top_logic.service.openapi.server.authentication.http.basic;
 
-import java.io.IOException;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -27,7 +25,7 @@ public abstract class BasicAuthenticator implements Authenticator {
 
 	@Override
 	public Person authenticate(HttpServletRequest req, HttpServletResponse resp)
-			throws AuthenticationFailure, IOException {
+			throws AuthenticationFailure {
 		if (!AuthorizationUtil.authorizationSent(req)) {
 			throw authenticationFailure(I18NConstants.AUTH_FAILED_MISSING_AUTHENTICATION_DATA);
 		}

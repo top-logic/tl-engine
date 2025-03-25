@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
@@ -68,7 +69,7 @@ public class APIKeyAuthentication extends AbstractConfiguredInstance<APIKeyAuthe
 		Config<?> config = getConfig();
 		Map<String, String> allowedKeys =
 			OpenAPIConfigs.secretsOfType(config.getDomain(), availableSecrets, ServerAPIKeySecret.class)
-				.collect(Collectors.toMap(s -> s.getAPIKey(), s -> s.getUserId()));
+				.collect(Collectors.toMap(s -> s.getAPIKey(), s -> StringServices.nonNull(s.getUserId())));
 
 		if (allowedKeys.isEmpty()) {
 			return NeverAuthenticated.missingSecret();

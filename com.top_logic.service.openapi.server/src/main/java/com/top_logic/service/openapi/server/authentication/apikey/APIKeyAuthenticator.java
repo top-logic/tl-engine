@@ -30,6 +30,10 @@ public class APIKeyAuthenticator implements Authenticator {
 
 	private String _parameterName;
 
+	/**
+	 * Map of API key to technical user name for request processing, or the empty string, if request
+	 * processing should happen in system context.
+	 */
 	private Map<String, String> _accountByApiKey;
 
 	/**
@@ -41,7 +45,8 @@ public class APIKeyAuthenticator implements Authenticator {
 	 *        Name of the parameter holding the secret.
 	 * @param allowedKeys
 	 *        The API keys that are allowed to be authenticated mapped to the login name of the
-	 *        system user to process the request with.
+	 *        system user to process the request with. If no technical user should be used for a
+	 *        certain API key, the user name value must be the empty string, not <code>null</code>.
 	 */
 	public APIKeyAuthenticator(APIKeyPosition location, String parameterName, Map<String, String> allowedKeys) {
 		_location = location;
@@ -85,13 +90,11 @@ public class APIKeyAuthenticator implements Authenticator {
 	private Person checkKey(String apikey) throws AuthenticationFailure {
 		String userName = _accountByApiKey.get(apikey);
 		if (userName == null) {
-			if (_accountByApiKey.containsKey(apikey)) {
-				// Not in user context.
-				return null;
-			} else {
-				throw new AuthenticationFailure(
-					I18NConstants.AUTH_FAILED_INVALID_API_KEY__PARAMETER.fill(_parameterName));
-			}
+			throw new AuthenticationFailure(
+				I18NConstants.AUTH_FAILED_INVALID_API_KEY__PARAMETER.fill(_parameterName));
+		} else if (userName.isEmpty()) {
+			// No technical user.
+			return null;
 		} else {
 			Person result = Person.byName(userName);
 			if (result == null) {

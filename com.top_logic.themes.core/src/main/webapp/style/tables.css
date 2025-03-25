@@ -80,7 +80,16 @@ td.tblRight {
 	text-align: right;
 }
 
-td.tblRight .is-control {
+td.tblRight span.cDecoratedCell,
+td.tblRight span.cDateInput,
+td.tblRight span.cTextPopup,
+td.tblRight span.cDatetime,
+td.tblRight span.cDateInput,
+td.tblRight span.cTimeInput,
+td.tblRight span.cTextInput,
+td.tblRight span.cIconChooser,
+td.tblRight span.cIntegerInput,
+td.tblRight span.cExpandableTextInput {
 	justify-content: safe flex-end;
 }
 

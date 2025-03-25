@@ -135,8 +135,14 @@ public class ServerCredentials extends AbstractConfiguredInstance<ServerCredenti
 		 * Assignment of a system user to a client ID.
 		 */
 		interface TechnicalUserSpec extends ConfigurationItem {
+			/**
+			 * @see #getClientId()
+			 */
 			String CLIENT_ID = "client-id";
 
+			/**
+			 * @see #getUserName()
+			 */
 			String USER_NAME = "user-name";
 
 			/**

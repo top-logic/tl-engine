@@ -5,10 +5,8 @@
  */
 package com.top_logic.layout.table.export;
 
-import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.Protocol;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -54,25 +52,36 @@ public class ModelDownloadName<C extends ModelDownloadName.Config<?>> extends Ab
 
 	@Override
 	public String createDownloadName(LayoutComponent component, ResKey resKey) {
-		Protocol log = new LogProtocol(ModelDownloadName.class);
-		ComponentChannel channel = ChannelLinking.resolveChannel(log, component, getConfig().getModel());
-		if (log.hasErrors()) {
-			return StringServices.EMPTY_STRING;
+		Object model = getModel(component);
+		return createDownloadName(model, resKey);
+	}
+
+	private Object getModel(LayoutComponent component) {
+		ModelSpec modelSpec = getConfig().getModel();
+		if (modelSpec != null) {
+			Protocol log = new LogProtocol(ModelDownloadName.class);
+			ComponentChannel channel = ChannelLinking.resolveChannel(log, component, modelSpec);
+			if (log.hasErrors()) {
+				return null;
+			}
+			return channel.get();
+		} else {
+			return component.getModel();
 		}
-		return createDownloadName(channel, resKey);
 	}
 
 	/**
-	 * Creates the download-name for the given channel.
+	 * Creates the download-name for the given model.
 	 * 
-	 * @param channel
-	 *        The channel to derive download-name object for
+	 * @param model
+	 *        The model to create the download-name for
+	 * @param key
+	 *        the key with the placeholder '{0}' to be replaced by the dynamic part of the name.
 	 * 
-	 * @return A {@link HTMLFragment} displaying the download-name for the value of the given channel.
+	 * @return The translated label for the given key using the given model as single parameter.
 	 */
-	protected String createDownloadName(ComponentChannel channel, ResKey key) {
-		Object channelValue = channel.get();
-		return Resources.getInstance().getMessage(key, channelValue);
+	protected String createDownloadName(Object model, ResKey key) {
+		return Resources.getInstance().getMessage(key, model);
 	}
 
 }

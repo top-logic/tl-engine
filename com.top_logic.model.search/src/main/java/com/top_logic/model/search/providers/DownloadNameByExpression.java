@@ -9,7 +9,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.table.export.ModelDownloadName;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -63,9 +62,8 @@ public class DownloadNameByExpression<C extends DownloadNameByExpression.Config<
 	}
 
 	@Override
-	protected String createDownloadName(ComponentChannel channel, ResKey key) {
-		Object channelValue = channel.get();
-		Object res = _expr.execute(channelValue);
+	protected String createDownloadName(Object model, ResKey key) {
+		Object res = _expr.execute(model);
 		return Resources.getInstance().getMessage(key, res);
 	}
 

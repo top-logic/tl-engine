@@ -5,70 +5,40 @@
  */
 package com.top_logic.graphic.flow.model;
 
-import java.io.IOException;
-
-import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
 import com.top_logic.graphic.blocks.svg.TextMetrics;
+import com.top_logic.graphic.flow.data.Text;
 
 /**
  * A single line of text.
  */
-public class TextLine extends AbstractDrawElement {
-
-	private String _value;
-
-	private TextMetrics _metrics;
-
-	/**
-	 * Creates a {@link TextLine}.
-	 */
-	public TextLine(String value) {
-		_value = value;
-	}
-
-	/**
-	 * The displayed text.
-	 */
-	public String getValue() {
-		return _value;
-	}
-
-	/**
-	 * @see #getValue()
-	 */
-	public void setValue(String value) {
-		_value = value;
-	}
+public interface TextLine extends DrawElement {
 
 	@Override
-	public void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
-		_metrics = context.measure(_value);
+	Text self();
+
+	@Override
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+		TextMetrics metrics = context.measure(self().getValue());
 		
-		setX(offsetX);
-		setY(offsetY);
-		setWidth(_metrics.getWidth());
-		setHeight(_metrics.getHeight());
+		self().setX(offsetX);
+		self().setY(offsetY);
+		self().setWidth(metrics.getWidth());
+		self().setHeight(metrics.getHeight());
 	}
 
 	@Override
-	public void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
-		setX(offsetX);
-		setY(offsetY);
-		setWidth(width);
-		setHeight(height);
+	default void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
+		self().setX(offsetX);
+		self().setY(offsetY);
+		self().setWidth(width);
+		self().setHeight(height);
 	}
 
 	@Override
-	public void draw(SvgWriter out) {
-		out.text(getX(), getY() + _metrics.getBaseLine(), _value);
-	}
-
-	@Override
-	public void writePropertiesTo(JsonWriter json) throws IOException {
-		json.name("value");
-		json.value(_value);
+	default void draw(SvgWriter out) {
+		out.text(self().getX(), self().getY() + self().getBaseLine(), self().getValue());
 	}
 
 }

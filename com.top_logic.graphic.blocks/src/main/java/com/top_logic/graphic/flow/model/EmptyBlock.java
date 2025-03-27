@@ -5,39 +5,31 @@
  */
 package com.top_logic.graphic.flow.model;
 
-import java.io.IOException;
-
-import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
 
 /**
  * An empty space.
  */
-public class EmptyBlock extends AbstractDrawElement {
+public interface EmptyBlock extends DrawElement {
 
 	@Override
-	public void draw(SvgWriter out) {
+	default void draw(SvgWriter out) {
 		// No contents.
 	}
 
 	@Override
-	public void writePropertiesTo(JsonWriter json) throws IOException {
-		// No props.
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+		self().setWidth(0);
+		self().setHeight(0);
 	}
 
 	@Override
-	public void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
-		setWidth(0);
-		setHeight(0);
-	}
-
-	@Override
-	public void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
-		setX(offsetX);
-		setY(offsetY);
-		setWidth(width);
-		setHeight(height);
+	default void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
+		self().setX(offsetX);
+		self().setY(offsetY);
+		self().setWidth(width);
+		self().setHeight(height);
 	}
 
 }

@@ -8,8 +8,8 @@ package com.top_logic.graphic.blocks.svg;
 import java.awt.Color;
 
 import com.top_logic.graphic.blocks.math.Vec;
-import com.top_logic.graphic.flow.param.ImageAlign;
-import com.top_logic.graphic.flow.param.ImageScale;
+import com.top_logic.graphic.flow.data.ImageAlign;
+import com.top_logic.graphic.flow.data.ImageScale;
 
 /**
  * API for stream-based construction of SVG.

@@ -5,63 +5,41 @@
  */
 package com.top_logic.graphic.flow.model;
 
-import java.io.IOException;
-
-import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
 
 /**
  * Rectangle with a background color.
  */
-public class Fill extends Decoration {
+public interface Fill extends Decoration {
 
-	private String _fillStyle;
+	@Override
+	com.top_logic.graphic.flow.data.Fill self();
 
-	/**
-	 * The fill style.
-	 */
-	public String getFillStyle() {
-		return _fillStyle;
-	}
-
-	/**
-	 * @see #getFillStyle()
-	 */
-	public Fill setFillStyle(String fillStyle) {
-		_fillStyle = fillStyle;
-		return this;
+	@Override
+	default void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
+		self().getContent().distributeSize(context, offsetX, offsetY, width, height);
+		self().setX(offsetX);
+		self().setY(offsetY);
+		self().setWidth(width);
+		self().setHeight(height);
 	}
 
 	@Override
-	public void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
-		getContent().distributeSize(context, offsetX, offsetY, width, height);
-		setX(offsetX);
-		setY(offsetY);
-		setWidth(width);
-		setHeight(height);
-	}
-
-	@Override
-	public void writePropertiesTo(JsonWriter json) throws IOException {
-		// TODO: Automatically created
-	}
-
-	@Override
-	public void draw(SvgWriter out) {
+	default void draw(SvgWriter out) {
 		out.beginPath();
 		out.setStroke("none");
-		out.setFill(_fillStyle);
+		out.setFill(self().getFillStyle());
 		out.beginData();
-		out.moveToAbs(getX(), getY());
-		out.lineToHorizontalAbs(getX() + getWidth());
-		out.lineToVerticalAbs(getY() + getHeight());
-		out.lineToHorizontalAbs(getX());
+		out.moveToAbs(self().getX(), self().getY());
+		out.lineToHorizontalAbs(self().getX() + self().getWidth());
+		out.lineToVerticalAbs(self().getY() + self().getHeight());
+		out.lineToHorizontalAbs(self().getX());
 		out.closePath();
 		out.endData();
 		out.endPath();
 
-		super.draw(out);
+		Decoration.super.draw(out);
 	}
 
 }

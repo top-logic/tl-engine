@@ -8,9 +8,9 @@ package com.top_logic.graphic.flow.model.connect;
 import com.top_logic.graphic.blocks.math.Vec;
 
 /**
- * 
+ * An anchor point for connections.
  */
-public class Socket {
+public class Connector {
 
 	private double _x;
 

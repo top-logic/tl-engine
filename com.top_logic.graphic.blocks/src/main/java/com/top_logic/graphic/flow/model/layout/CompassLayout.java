@@ -5,14 +5,9 @@
  */
 package com.top_logic.graphic.flow.model.layout;
 
-import java.io.IOException;
-
-import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
-import com.top_logic.graphic.flow.model.AbstractDrawElement;
 import com.top_logic.graphic.flow.model.DrawElement;
-import com.top_logic.graphic.flow.model.EmptyBlock;
 
 /**
  * 
@@ -29,151 +24,62 @@ import com.top_logic.graphic.flow.model.EmptyBlock;
  * hpadding        hpadding
  * </pre>
  */
-public class CompassLayout extends AbstractDrawElement {
+public interface CompassLayout extends DrawElement {
 
-	private DrawElement _north = new EmptyBlock();
+	@Override
+	com.top_logic.graphic.flow.data.CompassLayout self();
 
-	private DrawElement _south = new EmptyBlock();
+	@Override
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+		self().getNorth().computeIntrinsicSize(context, offsetX, offsetY);
+		self().getSouth().computeIntrinsicSize(context, offsetX, offsetY);
+		self().getWest().computeIntrinsicSize(context, offsetX, offsetY);
+		self().getEast().computeIntrinsicSize(context, offsetX, offsetY);
+		self().getCenter().computeIntrinsicSize(context, offsetX, offsetY);
 
-	private DrawElement _west = new EmptyBlock();
+		self().setHPadding(Math.max(self().getWest().getWidth(), self().getEast().getWidth()));
+		self().setVPadding(Math.max(self().getNorth().getHeight(), self().getSouth().getHeight()));
+		self().setCenterHeight(Math.max(Math.max(self().getWest().getHeight(), self().getEast().getHeight()),
+			self().getCenter().getHeight()));
+		double height = 2 * self().getVPadding() + self().getCenterHeight();
+		double width = Math.max(Math.max(self().getNorth().getWidth(), self().getSouth().getWidth()),
+			2 * self().getHPadding() + self().getCenter().getWidth());
 
-	private DrawElement _east = new EmptyBlock();
-
-	private DrawElement _center = new EmptyBlock();
-
-	private double _hPadding;
-
-	private double _vPadding;
-
-	private double _centerHeight;
-
-	/**
-	 * The content element.
-	 */
-	public DrawElement getCenter() {
-		return _center;
-	}
-
-	/**
-	 * @see #getCenter()
-	 */
-	public CompassLayout setCenter(DrawElement center) {
-		_center = center == null ? new EmptyBlock() : center;
-		return this;
-	}
-
-	/**
-	 * The title element.
-	 */
-	public DrawElement getNorth() {
-		return _north;
-	}
-
-	/**
-	 * @see #getNorth()
-	 */
-	public CompassLayout setNorth(DrawElement north) {
-		_north = north;
-		return this;
-	}
-
-	/**
-	 * The optional left sidebar element.
-	 */
-	public DrawElement getWest() {
-		return _west;
-	}
-
-	/**
-	 * @see #getWest()
-	 */
-	public CompassLayout setWest(DrawElement west) {
-		_west = west;
-		return this;
-	}
-
-	/**
-	 * The optional right sidebar element.
-	 */
-	public DrawElement getEast() {
-		return _east;
-	}
-
-	/**
-	 * @see #getEast()
-	 */
-	public CompassLayout setEast(DrawElement east) {
-		_east = east;
-		return this;
-	}
-
-	/**
-	 * The optional bottom border element.
-	 */
-	public DrawElement getSouth() {
-		return _south;
-	}
-
-	/**
-	 * @see #getSouth()
-	 */
-	public CompassLayout setSouth(DrawElement south) {
-		_south = south;
-		return this;
+		self().setWidth(width);
+		self().setHeight(height);
 	}
 
 	@Override
-	public void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
-		_north.computeIntrinsicSize(context, offsetX, offsetY);
-		_south.computeIntrinsicSize(context, offsetX, offsetY);
-		_west.computeIntrinsicSize(context, offsetX, offsetY);
-		_east.computeIntrinsicSize(context, offsetX, offsetY);
-		_center.computeIntrinsicSize(context, offsetX, offsetY);
+	default void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
+		self().setX(offsetX);
+		self().setY(offsetY);
 
-		_hPadding = Math.max(_west.getWidth(), _east.getWidth());
-		_vPadding = Math.max(_north.getHeight(), _south.getHeight());
-		_centerHeight = Math.max(Math.max(_west.getHeight(), _east.getHeight()), _center.getHeight());
-		double height = 2 * _vPadding + _centerHeight;
-		double width = Math.max(Math.max(_north.getWidth(), _south.getWidth()), 2 * _hPadding + _center.getWidth());
+		double centerWidth = width - 2 * self().getHPadding();
+		self().setCenterHeight(height - 2 * self().getVPadding());
 
-		setWidth(width);
-		setHeight(height);
+		double centerX = offsetX + self().getHPadding();
+		double centerY = offsetY + self().getVPadding();
+
+		self().getNorth().distributeSize(context, offsetX, offsetY, width, self().getVPadding());
+		self().getWest().distributeSize(context, offsetX, centerY, self().getHPadding(), self().getCenterHeight());
+		self().getCenter().distributeSize(context, centerX, centerY, centerWidth, self().getCenterHeight());
+		self().getEast().distributeSize(context, centerX + centerWidth, centerY, self().getHPadding(),
+			self().getCenterHeight());
+		self().getSouth().distributeSize(context, offsetX, centerY + self().getCenterHeight(), width,
+			self().getVPadding());
+
+		self().setWidth(width);
+		self().setHeight(height);
 	}
 
 	@Override
-	public void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
-		setX(offsetX);
-		setY(offsetY);
+	default void draw(SvgWriter out) {
+		self().getNorth().draw(out);
+		self().getWest().draw(out);
+		self().getEast().draw(out);
+		self().getSouth().draw(out);
 
-		double centerWidth = width - 2 * _hPadding;
-		_centerHeight = height - 2 * _vPadding;
-
-		double centerX = offsetX + _hPadding;
-		double centerY = offsetY + _vPadding;
-
-		_north.distributeSize(context, offsetX, offsetY, width, _vPadding);
-		_west.distributeSize(context, offsetX, centerY, _hPadding, _centerHeight);
-		_center.distributeSize(context, centerX, centerY, centerWidth, _centerHeight);
-		_east.distributeSize(context, centerX + centerWidth, centerY, _hPadding, _centerHeight);
-		_south.distributeSize(context, offsetX, centerY + _centerHeight, width, _vPadding);
-
-		setWidth(width);
-		setHeight(height);
-	}
-
-	@Override
-	public void draw(SvgWriter out) {
-		_north.draw(out);
-		_west.draw(out);
-		_east.draw(out);
-		_south.draw(out);
-
-		_center.draw(out);
-	}
-
-	@Override
-	public void writePropertiesTo(JsonWriter json) throws IOException {
-		// No properties.
+		self().getCenter().draw(out);
 	}
 
 }

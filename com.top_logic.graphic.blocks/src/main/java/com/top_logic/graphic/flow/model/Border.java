@@ -5,234 +5,120 @@
  */
 package com.top_logic.graphic.flow.model;
 
-import java.io.IOException;
+import java.util.List;
 
-import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
 
 /**
  * A border decoration drawn around an element.
  */
-public class Border extends Decoration {
+public interface Border extends Decoration {
 
-	private String _strokeStyle = "black";
+	@Override
+	com.top_logic.graphic.flow.data.Border self();
 
-	private double _thickness = 1;
+	@Override
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+		Decoration.super.computeIntrinsicSize(context, offsetX, offsetY);
 
-	private boolean _top = true;
+		double width = self().getContent().self().getWidth();
+		double height = self().getContent().self().getHeight();
+		if (self().isTop()) {
+			height += self().getThickness();
+		}
+		if (self().isLeft()) {
+			width += self().getThickness();
+		}
+		if (self().isBottom()) {
+			height += self().getThickness();
+		}
+		if (self().isRight()) {
+			width += self().getThickness();
+		}
 
-	private boolean _left = true;
-
-	private boolean _bottom = true;
-
-	private boolean _right = true;
-
-	private double[] _dashes = null;
-
-	/**
-	 * The stroke width to draw.
-	 */
-	public double getThickness() {
-		return _thickness;
-	}
-
-	/**
-	 * @see #getThickness()
-	 */
-	public Border setThickness(double thickness) {
-		_thickness = thickness;
-		return this;
-	}
-
-	/**
-	 * The border stroke style.
-	 */
-	public String getStrokeStyle() {
-		return _strokeStyle;
-	}
-
-	/**
-	 * @see #getStrokeStyle()
-	 */
-	public Border setStrokeStyle(String style) {
-		_strokeStyle = style;
-		return this;
-	}
-
-	/**
-	 * The dash pattern of the border.
-	 */
-	public double[] getDashes() {
-		return _dashes;
-	}
-
-	/**
-	 * @see #getDashes()
-	 */
-	public Border setDashes(double[] dashes) {
-		_dashes = dashes;
-		return this;
-	}
-
-	/**
-	 * Whether the top border is painted.
-	 */
-	public boolean isTop() {
-		return _top;
-	}
-
-	/**
-	 * @see #isTop()
-	 */
-	public Border setTop(boolean top) {
-		_top = top;
-		return this;
-	}
-
-	/**
-	 * Whether the right border is painted.
-	 */
-	public boolean isRight() {
-		return _right;
-	}
-
-	/**
-	 * @see #isRight()
-	 */
-	public Border setRight(boolean right) {
-		_right = right;
-		return this;
-	}
-
-	/**
-	 * Whether the bottom border is painted.
-	 */
-	public boolean isBottom() {
-		return _bottom;
-	}
-
-	/**
-	 * @see #isBottom()
-	 */
-	public Border setBottom(boolean bottom) {
-		_bottom = bottom;
-		return this;
-	}
-
-	/**
-	 * Whether the left border is painted.
-	 */
-	public boolean isLeft() {
-		return _left;
-	}
-
-	/**
-	 * @see #isLeft()
-	 */
-	public Border setLeft(boolean left) {
-		_left = left;
-		return this;
+		self().setWidth(width);
+		self().setHeight(height);
 	}
 
 	@Override
-	public void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
-		super.computeIntrinsicSize(context, offsetX, offsetY);
-
-		double width = getContent().getWidth();
-		double height = getContent().getHeight();
-		if (_top) {
-			height += _thickness;
-		}
-		if (_left) {
-			width += _thickness;
-		}
-		if (_bottom) {
-			height += _thickness;
-		}
-		if (_right) {
-			width += _thickness;
-		}
-
-		setWidth(width);
-		setHeight(height);
-	}
-
-	@Override
-	public void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
+	default void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
 		double contentX = offsetX;
 		double contentY = offsetY;
 		double contentWidth = width;
 		double contentHeight = height;
 
-		if (_top) {
-			contentY += _thickness;
-			contentHeight -= _thickness;
+		if (self().isTop()) {
+			contentY += self().getThickness();
+			contentHeight -= self().getThickness();
 		}
-		if (_left) {
-			contentX += _thickness;
-			contentWidth -= _thickness;
+		if (self().isLeft()) {
+			contentX += self().getThickness();
+			contentWidth -= self().getThickness();
 		}
-		if (_bottom) {
-			contentHeight -= _thickness;
+		if (self().isBottom()) {
+			contentHeight -= self().getThickness();
 		}
-		if (_right) {
-			contentWidth -= _thickness;
+		if (self().isRight()) {
+			contentWidth -= self().getThickness();
 		}
 
-		getContent().distributeSize(context, contentX, contentY, contentWidth, contentHeight);
+		self().getContent().distributeSize(context, contentX, contentY, contentWidth, contentHeight);
 
-		setX(offsetX);
-		setY(offsetY);
-		setWidth(width);
-		setHeight(height);
+		self().setX(offsetX);
+		self().setY(offsetY);
+		self().setWidth(width);
+		self().setHeight(height);
 	}
 
 	@Override
-	public void draw(SvgWriter out) {
-		super.draw(out);
+	default void draw(SvgWriter out) {
+		Decoration.super.draw(out);
 
-		double radius = _thickness / 2;
+		double radius = self().getThickness() / 2;
 
 		out.beginPath();
-		out.setStrokeWidth(_thickness);
-		out.setStroke(_strokeStyle);
-		if (_dashes != null) {
-			out.setStrokeDasharray(_dashes);
+		out.setStrokeWidth(self().getThickness());
+		out.setStroke(self().getStrokeStyle());
+		if (!self().getDashes().isEmpty()) {
+			out.setStrokeDasharray(doubleArray(self().getDashes()));
 		}
 		out.setFill("none");
 		out.beginData();
-		out.moveToAbs(getX() + (_left ? radius : 0), getY() + radius);
-		if (_top) {
-			out.lineToAbs(getX() + getWidth() - (_right ? radius : 0), getY() + radius);
+		out.moveToAbs(self().getX() + (self().isLeft() ? radius : 0), self().getY() + radius);
+		if (self().isTop()) {
+			out.lineToAbs(self().getX() + self().getWidth() - (self().isRight() ? radius : 0), self().getY() + radius);
 		} else {
-			out.moveToAbs(getX() + getWidth() - radius, getY());
+			out.moveToAbs(self().getX() + self().getWidth() - radius, self().getY());
 		}
-		if (_right) {
-			out.lineToAbs(getX() + getWidth() - radius, getY() + getHeight() - (_bottom ? radius : 0));
+		if (self().isRight()) {
+			out.lineToAbs(self().getX() + self().getWidth() - radius,
+				self().getY() + self().getHeight() - (self().isBottom() ? radius : 0));
 		} else {
-			out.moveToAbs(getX() + getWidth(), getY() + getHeight() - radius);
+			out.moveToAbs(self().getX() + self().getWidth(), self().getY() + self().getHeight() - radius);
 		}
-		if (_bottom) {
-			out.lineToAbs(getX() + (_left ? radius : 0), getY() + getHeight() - radius);
+		if (self().isBottom()) {
+			out.lineToAbs(self().getX() + (self().isLeft() ? radius : 0), self().getY() + self().getHeight() - radius);
 		} else {
-			out.moveToAbs(getX() + radius, getY() + getHeight());
+			out.moveToAbs(self().getX() + radius, self().getY() + self().getHeight());
 		}
-		if (_left) {
-			if (_top && _right && _bottom) {
+		if (self().isLeft()) {
+			if (self().isTop() && self().isRight() && self().isBottom()) {
 				out.closePath();
 			} else {
-				out.lineToAbs(getX() + radius, getY());
+				out.lineToAbs(self().getX() + radius, self().getY());
 			}
 		}
 		out.endData();
 		out.endPath();
 	}
 
-	@Override
-	public void writePropertiesTo(JsonWriter json) throws IOException {
-		// TODO: Automatically created
-
+	private static double[] doubleArray(List<Double> dashes) {
+		double[] result = new double[dashes.size()];
+		for (int n = 0, cnt = dashes.size(); n < cnt; n++) {
+			result[n] = dashes.get(n);
+		}
+		return result;
 	}
 
 }

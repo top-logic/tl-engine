@@ -5,113 +5,43 @@
  */
 package com.top_logic.graphic.flow.model.layout;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
-import com.top_logic.graphic.flow.model.AbstractDrawElement;
+import com.top_logic.graphic.flow.data.Box;
+import com.top_logic.graphic.flow.data.SpaceDistribution;
 import com.top_logic.graphic.flow.model.DrawElement;
-import com.top_logic.graphic.flow.param.SpaceDistribution;
 
 /**
  * A column of elements.
  */
-public class VerticalLayout extends AbstractDrawElement {
-
-	private double _gap;
-
-	private SpaceDistribution _fill = SpaceDistribution.NONE;
-
-	private List<DrawElement> _rows = new ArrayList<>();
-
-	/**
-	 * Adds a new row to this layout.
-	 */
-	public VerticalLayout addRow(DrawElement row) {
-		_rows.add(row);
-		return this;
-	}
-
-	/**
-	 * The elements to arrange in a column.
-	 */
-	public List<DrawElement> getRows() {
-		return _rows;
-	}
-
-	/**
-	 * @see #getRows()
-	 */
-	public VerticalLayout setRows(List<DrawElement> rows) {
-		_rows = rows;
-		return this;
-	}
-
-	/**
-	 * Space between elements.
-	 * 
-	 * <p>
-	 * If negative, elements overlap.
-	 * </p>
-	 */
-	public double getGap() {
-		return _gap;
-	}
-
-	/**
-	 * @see #getGap()
-	 */
-	public VerticalLayout setGap(double gap) {
-		_gap = gap;
-		return this;
-	}
-
-	/**
-	 * How to distribute additional space.
-	 */
-	public SpaceDistribution getFill() {
-		return _fill;
-	}
-
-	/**
-	 * @see #getFill()
-	 */
-	public VerticalLayout setFill(SpaceDistribution fill) {
-		_fill = fill;
-		return this;
-	}
+public interface VerticalLayout extends DrawElement {
 
 	@Override
-	public void draw(SvgWriter out) {
-		for (DrawElement e : _rows) {
+	com.top_logic.graphic.flow.data.VerticalLayout self();
+
+	@Override
+	default void draw(SvgWriter out) {
+		for (DrawElement e : self().getContents()) {
 			e.draw(out);
 		}
 	}
 
 	@Override
-	public void writePropertiesTo(JsonWriter json) throws IOException {
-
-	}
-
-	@Override
-	public void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
 		double height = 0;
 		double maxWidth = 0;
 
-		setX(offsetX);
-		setY(offsetY);
+		self().setX(offsetX);
+		self().setY(offsetY);
 
 		double x = offsetX;
 		double y = offsetY;
 
-		for (int n = 0; n < _rows.size(); n++) {
-			DrawElement row = _rows.get(n);
+		for (int n = 0; n < self().getContents().size(); n++) {
+			Box row = self().getContents().get(n);
 
 			if (n > 0) {
-				height += _gap;
+				height += self().getGap();
 			}
 			y = offsetY + height;
 
@@ -121,24 +51,31 @@ public class VerticalLayout extends AbstractDrawElement {
 			maxWidth = Math.max(maxWidth, row.getWidth());
 		}
 
-		setWidth(maxWidth);
-		setHeight(height);
+		self().setWidth(maxWidth);
+		self().setHeight(height);
 	}
 
 	@Override
-	public void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
-		setX(offsetX);
-		setY(offsetY);
+	default void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
+		self().setX(offsetX);
+		self().setY(offsetY);
 
-		int cnt = _rows.size();
-		double additionalSpace = height - getHeight();
-		double additionalHeight = _fill == SpaceDistribution.STRETCH_CONTENT && cnt > 0 ? additionalSpace / cnt : 0;
-		double gap = _gap + (_fill == SpaceDistribution.STRETCH_GAP && cnt > 1 ? additionalSpace / (cnt - 1) : 0);
+		int cnt = self().getContents().size();
+		double additionalSpace = height - self().getHeight();
+		double additionalHeight =
+			self().getFill() == SpaceDistribution.STRETCH_CONTENT && cnt > 0
+				? additionalSpace / cnt
+				: 0;
+		double gap =
+			self().getGap()
+				+ (self().getFill() == SpaceDistribution.STRETCH_GAP && cnt > 1
+					? additionalSpace / (cnt - 1)
+					: 0);
 
 		double elementY = offsetY;
 
 		for (int n = 0; n < cnt; n++) {
-			DrawElement row = _rows.get(n);
+			Box row = self().getContents().get(n);
 
 			double elementHeight = row.getHeight() + additionalHeight;
 
@@ -148,8 +85,8 @@ public class VerticalLayout extends AbstractDrawElement {
 			elementY += gap;
 		}
 
-		setWidth(width);
-		setHeight(height);
+		self().setWidth(width);
+		self().setHeight(height);
 	}
 
 }

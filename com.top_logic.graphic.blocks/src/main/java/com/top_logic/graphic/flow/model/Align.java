@@ -5,132 +5,90 @@
  */
 package com.top_logic.graphic.flow.model;
 
-import java.io.IOException;
-
-import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.graphic.blocks.svg.RenderContext;
-import com.top_logic.graphic.flow.param.HAlign;
-import com.top_logic.graphic.flow.param.VAlign;
 
 /**
  * Alignment of the contents.
  */
-public class Align extends Decoration {
+public interface Align extends Decoration {
 
-	private HAlign _hAlign = HAlign.CENTER;
+	@Override
+	com.top_logic.graphic.flow.data.Align self();
 
-	private VAlign _vAlign = VAlign.CENTER;
+	@Override
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+		self().setX(offsetX);
+		self().setY(offsetY);
 
-	/**
-	 * The horizontal alignment.
-	 */
-	public HAlign getHAlign() {
-		return _hAlign;
-	}
+		Decoration.super.computeIntrinsicSize(context, offsetX, offsetY);
 
-	/**
-	 * @see #getHAlign()
-	 */
-	public Align setHAlign(HAlign hAlign) {
-		_hAlign = hAlign;
-		return this;
-	}
-
-	/**
-	 * The vertical alignment.
-	 */
-	public VAlign getVAlign() {
-		return _vAlign;
-	}
-
-	/**
-	 * @see #getVAlign()
-	 */
-	public Align setVAlign(VAlign vAlign) {
-		_vAlign = vAlign;
-		return this;
+		DrawElement content = self().getContent();
+		self().setWidth(content.self().getWidth());
+		self().setHeight(content.self().getHeight());
 	}
 
 	@Override
-	public void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
-		setX(offsetX);
-		setY(offsetY);
-
-		super.computeIntrinsicSize(context, offsetX, offsetY);
-
-		DrawElement content = getContent();
-		setWidth(content.getWidth());
-		setHeight(content.getHeight());
-	}
-
-	@Override
-	public void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
-		double additionalWidth = width - getWidth();
-		double additionalHeight = height - getHeight();
+	default void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
+		double additionalWidth = width - self().getWidth();
+		double additionalHeight = height - self().getHeight();
 
 		double top, left, bottom, right;
-		switch (_hAlign) {
-			case LEFT: {
+		switch (self().getXAlign()) {
+			case START: {
 				left = 0;
 				right = additionalWidth;
 				break;
 			}
-			case CENTER: {
+			case MIDDLE: {
 				left = additionalWidth / 2;
 				right = additionalWidth / 2;
 				break;
 			}
-			case RIGHT: {
+			case STOP: {
 				left = additionalWidth;
 				right = 0;
 				break;
 			}
-			case STRETCH: {
+			case STRECH: {
 				left = 0;
 				right = 0;
 				break;
 			}
 			default:
-				throw new IllegalArgumentException("Unexpected value: " + _hAlign);
+				throw new IllegalArgumentException("Unexpected value: " + self().getXAlign());
 		}
-		switch (_vAlign) {
-			case TOP: {
+		switch (self().getYAlign()) {
+			case START: {
 				top = 0;
 				bottom = additionalHeight;
 				break;
 			}
-			case CENTER: {
+			case MIDDLE: {
 				top = additionalHeight / 2;
 				bottom = additionalHeight / 2;
 				break;
 			}
-			case BOTTOM: {
+			case STOP: {
 				top = additionalHeight;
 				bottom = 0;
 				break;
 			}
-			case STRETCH: {
+			case STRECH: {
 				top = 0;
 				bottom = 0;
 				break;
 			}
 			default:
-				throw new IllegalArgumentException("Unexpected value: " + _hAlign);
+				throw new IllegalArgumentException("Unexpected value: " + self().getYAlign());
 		}
 
-		getContent().distributeSize(context, offsetX + left, offsetY + top, width - left - right,
+		self().getContent().distributeSize(context, offsetX + left, offsetY + top, width - left - right,
 			height - top - bottom);
 
-		setX(offsetX);
-		setY(offsetY);
-		setWidth(width);
-		setHeight(height);
-	}
-
-	@Override
-	public void writePropertiesTo(JsonWriter json) throws IOException {
-		// TODO: Automatically created
-
+		self().setX(offsetX);
+		self().setY(offsetY);
+		self().setWidth(width);
+		self().setHeight(height);
 	}
 
 }

@@ -5,22 +5,15 @@
  */
 package com.top_logic.graphic.flow.model;
 
-import com.top_logic.graphic.blocks.json.JsonSerializable;
 import com.top_logic.graphic.blocks.model.Drawable;
 import com.top_logic.graphic.blocks.svg.RenderContext;
 
 /**
  * 
  */
-public interface DrawElement extends Drawable, JsonSerializable<Void> {
+public interface DrawElement extends Drawable {
 
-	double getX();
-
-	double getY();
-
-	double getWidth();
-
-	double getHeight();
+	com.top_logic.graphic.flow.data.Box self();
 
 	void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY);
 

@@ -38,7 +38,6 @@ import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.model.ExportConfig;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.export.ExcelExportSupport;
-import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -66,6 +65,7 @@ public class ExcelExportHandler extends AbstractTableExportHandler {
 		Config.TEMPLATE_NAME,
 		Config.AUTOFIT_COLUMNS,
 		Config.DOWNLOAD_NAME_KEY,
+		Config.DYNAMIC_DOWNLOAD_NAME,
 	})
 	public interface Config extends AbstractTableExportHandler.Config, ExportConfig {
 
@@ -127,7 +127,7 @@ public class ExcelExportHandler extends AbstractTableExportHandler {
 
 		log.info(I18NConstants.PREPARING_DOWNLOAD);
 		String downloadName =
-			FileUtilities.removeFileExtension(Resources.getInstance().getString(config.getDownloadNameKey())) + ext;
+			FileUtilities.removeFileExtension(getFilename(component, config.getDownloadNameKey())) + ext;
 		return BinaryDataFactory.createBinaryDataWithName(tmpFile, downloadName);
 	}
 

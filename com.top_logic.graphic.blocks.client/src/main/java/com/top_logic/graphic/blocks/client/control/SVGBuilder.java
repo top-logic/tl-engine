@@ -21,8 +21,8 @@ import org.vectomatic.dom.svg.OMSVGTransformList;
 import org.vectomatic.dom.svg.itf.ISVGTransformable;
 
 import com.top_logic.graphic.blocks.svg.SvgWriter;
-import com.top_logic.graphic.flow.param.ImageAlign;
-import com.top_logic.graphic.flow.param.ImageScale;
+import com.top_logic.graphic.flow.data.ImageAlign;
+import com.top_logic.graphic.flow.data.ImageScale;
 import com.top_logic.graphic.svg.SvgUtil;
 
 /**

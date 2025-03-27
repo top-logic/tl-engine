@@ -13,8 +13,8 @@ import java.io.IOException;
 
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
-import com.top_logic.graphic.flow.param.ImageAlign;
-import com.top_logic.graphic.flow.param.ImageScale;
+import com.top_logic.graphic.flow.data.ImageAlign;
+import com.top_logic.graphic.flow.data.ImageScale;
 import com.top_logic.graphic.svg.SvgUtil;
 
 /**

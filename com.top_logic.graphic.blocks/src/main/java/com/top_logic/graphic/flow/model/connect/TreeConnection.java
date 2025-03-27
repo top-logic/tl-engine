@@ -14,15 +14,15 @@ import com.top_logic.graphic.blocks.svg.SvgWriter;
 import com.top_logic.graphic.flow.param.Orientation;
 
 /**
- * 
+ * A tree-shaped connector connecting multiple child elements with a parent element.
  */
-public class TreeConnector implements Drawable {
+public class TreeConnection implements Drawable {
 
-	private Socket _parent;
+	private Connector _parent;
 
-	private Socket _bar;
+	private Connector _bar;
 
-	private List<Socket> _children = new ArrayList<>();
+	private List<Connector> _children = new ArrayList<>();
 
 	private Orientation _orientation = Orientation.HORIZONTAL;
 
@@ -40,7 +40,7 @@ public class TreeConnector implements Drawable {
 		double minY = Double.MAX_VALUE;
 		double maxY = Double.MIN_VALUE;
 
-		for (Socket child : _children) {
+		for (Connector child : _children) {
 			double y = child.getY();
 
 			minY = Math.min(minY, y);

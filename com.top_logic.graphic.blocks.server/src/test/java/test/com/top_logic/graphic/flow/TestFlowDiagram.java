@@ -10,15 +10,15 @@ import junit.framework.TestCase;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.graphic.blocks.server.svg.SvgTagWriter;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
-import com.top_logic.graphic.flow.model.Align;
-import com.top_logic.graphic.flow.model.Border;
+import com.top_logic.graphic.flow.data.Align;
+import com.top_logic.graphic.flow.data.Alignment;
+import com.top_logic.graphic.flow.data.Border;
+import com.top_logic.graphic.flow.data.GridLayout;
+import com.top_logic.graphic.flow.data.HorizontalLayout;
+import com.top_logic.graphic.flow.data.SpaceDistribution;
+import com.top_logic.graphic.flow.data.Text;
+import com.top_logic.graphic.flow.data.VerticalLayout;
 import com.top_logic.graphic.flow.model.FlowDiagram;
-import com.top_logic.graphic.flow.model.TextLine;
-import com.top_logic.graphic.flow.model.layout.GridLayout;
-import com.top_logic.graphic.flow.model.layout.HorizontalLayout;
-import com.top_logic.graphic.flow.model.layout.VerticalLayout;
-import com.top_logic.graphic.flow.param.HAlign;
-import com.top_logic.graphic.flow.param.SpaceDistribution;
 
 /**
  * Test case for {@link FlowDiagram}.
@@ -27,74 +27,74 @@ public class TestFlowDiagram extends TestCase {
 
 	public void testCreate() {
 		FlowDiagram diagram = new FlowDiagram()
-			.setRoot(new VerticalLayout()
+			.setRoot(VerticalLayout.create()
 				.setGap(20)
-				.addRow(new VerticalLayout()
-					.addRow(new HorizontalLayout()
+				.addContent(VerticalLayout.create()
+					.addContent(HorizontalLayout.create()
 						.setFill(SpaceDistribution.STRETCH_CONTENT)
-						.addCol(new Border()
-							.setContent(new TextLine("Hello")))
-						.addCol(
-							new Border()
-								.setLeft(false).setStrokeStyle("red").setContent(new TextLine("world!"))))
-					.addRow(new HorizontalLayout()
+						.addContent(Border.create()
+							.setContent(Text.create().setValue("Hello")))
+						.addContent(
+							Border.create()
+								.setLeft(false).setStrokeStyle("red").setContent(Text.create().setValue("world!"))))
+					.addContent(HorizontalLayout.create()
 						.setFill(SpaceDistribution.STRETCH_CONTENT)
-						.addCol(
-							new Border()
-								.setTop(false).setStrokeStyle("blue").setContent(new TextLine("Greetings")))
-						.addCol(
-							new Border()
+						.addContent(
+							Border.create()
+								.setTop(false).setStrokeStyle("blue").setContent(Text.create().setValue("Greetings")))
+						.addContent(
+							Border.create()
 								.setTop(false).setLeft(false).setStrokeStyle("green")
-								.setContent(new TextLine("from Moon to Earth!")))))
-				.addRow(new VerticalLayout()
+								.setContent(Text.create().setValue("from Moon to Earth!")))))
+				.addContent(VerticalLayout.create()
 					.setGap(-1)
-					.addRow(new HorizontalLayout()
-						.addCol(new Border()
-							.setContent(new TextLine("Hello")))
-						.addCol(
-							new Border()
+					.addContent(HorizontalLayout.create()
+						.addContent(Border.create()
+							.setContent(Text.create().setValue("Hello")))
+						.addContent(
+							Border.create()
 								.setLeft(false)
-								.setStrokeStyle("red").setContent(new TextLine("world!"))))
-					.addRow(new HorizontalLayout()
-						.addCol(
-							new Border()
-								.setStrokeStyle("blue").setContent(new TextLine("Greetings")))
-						.addCol(
-							new Border()
+								.setStrokeStyle("red").setContent(Text.create().setValue("world!"))))
+					.addContent(HorizontalLayout.create()
+						.addContent(
+							Border.create()
+								.setStrokeStyle("blue").setContent(Text.create().setValue("Greetings")))
+						.addContent(
+							Border.create()
 								.setLeft(false)
 								.setStrokeStyle("green")
-								.setContent(new TextLine("from Moon to Earth!")))))
-				.addRow(new GridLayout(2, 2)
-					.set(0, 0, new Border()
-						.setContent(new TextLine("Hello")))
-					.set(1, 0, new Border()
+								.setContent(Text.create().setValue("from Moon to Earth!")))))
+				.addContent(GridLayout.create().setRows(2).setCols(2)
+					.set(0, 0, Border.create()
+						.setContent(Text.create().setValue("Hello")))
+					.set(1, 0, Border.create()
 						.setLeft(false)
-						.setStrokeStyle("red").setContent(new TextLine("world!")))
-					.set(0, 1, new Border()
+						.setStrokeStyle("red").setContent(Text.create().setValue("world!")))
+					.set(0, 1, Border.create()
 						.setTop(false)
-						.setStrokeStyle("blue").setContent(new TextLine("Greetings")))
-					.set(1, 1, new Border()
+						.setStrokeStyle("blue").setContent(Text.create().setValue("Greetings")))
+					.set(1, 1, Border.create()
 						.setTop(false)
 						.setLeft(false)
 						.setStrokeStyle("green")
-						.setContent(new TextLine("from Moon to Earth!"))))
-				.addRow(new GridLayout(2, 2)
+						.setContent(Text.create().setValue("from Moon to Earth!"))))
+				.addContent(GridLayout.create().setRows(2).setCols(2)
 					.setGapY(-1)
-					.set(0, 0, new Border()
-						.setContent(new TextLine("Hello")))
-					.set(1, 0, new Align()
-						.setHAlign(HAlign.LEFT)
-						.setContent(new Border()
+					.set(0, 0, Border.create()
+						.setContent(Text.create().setValue("Hello")))
+					.set(1, 0, Align.create()
+						.setXAlign(Alignment.START)
+						.setContent(Border.create()
 							.setLeft(false)
-							.setStrokeStyle("red").setContent(new TextLine("world!"))))
-					.set(0, 1, new Border()
-						.setStrokeStyle("blue").setContent(new TextLine("Greetings")))
-					.set(1, 1, new Align()
-						.setHAlign(HAlign.RIGHT)
-						.setContent(new Border()
+							.setStrokeStyle("red").setContent(Text.create().setValue("world!"))))
+					.set(0, 1, Border.create()
+						.setStrokeStyle("blue").setContent(Text.create().setValue("Greetings")))
+					.set(1, 1, Align.create()
+						.setXAlign(Alignment.STOP)
+						.setContent(Border.create()
 							.setLeft(false)
 							.setStrokeStyle("green")
-							.setContent(new TextLine("from Moon to Earth!"))))));
+							.setContent(Text.create().setValue("from Moon to Earth!"))))));
 
 		diagram.layout(new TestingRenderContext());
 

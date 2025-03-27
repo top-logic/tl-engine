@@ -5,111 +5,41 @@
  */
 package com.top_logic.graphic.flow.model.layout;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
-import com.top_logic.graphic.flow.model.AbstractDrawElement;
+import com.top_logic.graphic.flow.data.Box;
+import com.top_logic.graphic.flow.data.SpaceDistribution;
 import com.top_logic.graphic.flow.model.DrawElement;
-import com.top_logic.graphic.flow.param.SpaceDistribution;
 
 /**
  * A row of elements.
  */
-public class HorizontalLayout extends AbstractDrawElement {
-
-	private double _gap;
-
-	private List<DrawElement> _cols = new ArrayList<>();
-
-	private SpaceDistribution _fill = SpaceDistribution.NONE;
-
-	/**
-	 * The elements to display in a row.
-	 */
-	public List<DrawElement> getCols() {
-		return _cols;
-	}
-
-	/**
-	 * Adds a new column to this row.
-	 */
-	public HorizontalLayout addCol(DrawElement col) {
-		_cols.add(col);
-		return this;
-	}
-
-	/**
-	 * @see #getCols()
-	 */
-	public HorizontalLayout setCols(List<DrawElement> cols) {
-		_cols = cols;
-		return this;
-	}
-
-	/**
-	 * The gap between elements.
-	 * 
-	 * <p>
-	 * If negative, elements overlap.
-	 * </p>
-	 */
-	public double getGap() {
-		return _gap;
-	}
-
-	/**
-	 * @see #getGap()
-	 */
-	public HorizontalLayout setGap(double gap) {
-		_gap = gap;
-		return this;
-	}
-
-	/**
-	 * How additional space is distributed between elements.
-	 */
-	public SpaceDistribution getFill() {
-		return _fill;
-	}
-
-	/**
-	 * @see #getFill()
-	 */
-	public HorizontalLayout setFill(SpaceDistribution fill) {
-		_fill = fill;
-		return this;
-	}
+public interface HorizontalLayout extends DrawElement {
 
 	@Override
-	public void draw(SvgWriter out) {
-		for (DrawElement e : _cols) {
+	com.top_logic.graphic.flow.data.HorizontalLayout self();
+
+	@Override
+	default void draw(SvgWriter out) {
+		for (DrawElement e : self().getContents()) {
 			e.draw(out);
 		}
 	}
 
 	@Override
-	public void writePropertiesTo(JsonWriter json) throws IOException {
-
-	}
-
-	@Override
-	public void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
 		double width = 0;
 		double maxHeight = 0;
 
-		setX(offsetX);
-		setY(offsetY);
+		self().setX(offsetX);
+		self().setY(offsetY);
 
 		double x = offsetX;
 		double y = offsetY;
-		double gap = _gap;
+		double gap = self().getGap();
 
-		for (int n = 0; n < _cols.size(); n++) {
-			DrawElement col = _cols.get(n);
+		for (int n = 0; n < self().getContents().size(); n++) {
+			Box col = self().getContents().get(n);
 
 			if (n > 0) {
 				width += gap;
@@ -122,26 +52,27 @@ public class HorizontalLayout extends AbstractDrawElement {
 			maxHeight = Math.max(maxHeight, col.getHeight());
 		}
 
-		setWidth(width);
-		setHeight(maxHeight);
+		self().setWidth(width);
+		self().setHeight(maxHeight);
 	}
 
 	@Override
-	public void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
-		setX(offsetX);
-		setY(offsetY);
+	default void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
+		self().setX(offsetX);
+		self().setY(offsetY);
 
-		double additionalSpace = width - getWidth();
-		int cnt = _cols.size();
+		double additionalSpace = width - self().getWidth();
+		int cnt = self().getContents().size();
 		double additionalWidth =
-			_fill == SpaceDistribution.STRETCH_CONTENT && cnt > 0 ? additionalSpace / cnt : 0;
-		double gap = _gap
-			+ (_fill == SpaceDistribution.STRETCH_GAP && cnt > 1 ? additionalSpace / (cnt - 1) : 0);
+			self().getFill() == SpaceDistribution.STRETCH_CONTENT && cnt > 0 ? additionalSpace / cnt : 0;
+		double gap = self().getGap()
+			+ (self().getFill() == SpaceDistribution.STRETCH_GAP && cnt > 1 ? additionalSpace / (cnt - 1)
+				: 0);
 		
 		double elementX = offsetX;
 
 		for (int n = 0; n < cnt; n++) {
-			DrawElement col = _cols.get(n);
+			Box col = self().getContents().get(n);
 
 			double elementWidth = col.getWidth() + additionalWidth;
 
@@ -151,8 +82,8 @@ public class HorizontalLayout extends AbstractDrawElement {
 			elementX += gap;
 		}
 
-		setWidth(width);
-		setHeight(height);
+		self().setWidth(width);
+		self().setHeight(height);
 	}
 
 }

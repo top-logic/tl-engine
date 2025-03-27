@@ -12,9 +12,11 @@ import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultValueProvider;
 import com.top_logic.basic.config.annotation.DefaultValueProviderShared;
 import com.top_logic.basic.config.annotation.Hidden;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.i18n.log.I18NLog;
@@ -37,6 +39,7 @@ import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.util.Resources;
 
 /**
  * Base class for {@link TableData} exports.
@@ -47,6 +50,10 @@ public abstract class AbstractTableExportHandler extends AbstractCommandHandler 
 	 * Configuration options for {@link AbstractTableExportHandler}.
 	 */
 	public interface Config extends AbstractCommandHandler.Config {
+
+		/** Configuration name of {@link #getDynamicDownloadName()}. */
+		String DYNAMIC_DOWNLOAD_NAME = "dynamic-download-name";
+
 		@Override
 		@ComplexDefault(DefaultLabel.class)
 		ResKey getResourceKey();
@@ -82,7 +89,20 @@ public abstract class AbstractTableExportHandler extends AbstractCommandHandler 
 			}
 		}
 
+		/**
+		 * Optional provider for an dynamic download-name. If this is used the default download-key
+		 * (see {@link ExcelExportHandler.Config#getDownloadNameKey()},
+		 * {@link StreamingExcelExportHandler.Config#getExportNameKey()}) must contain the
+		 * placeholder '{0}'.
+		 * 
+		 * @return provider for an dynamic download-name, may be null.
+		 */
+		@Name(DYNAMIC_DOWNLOAD_NAME)
+		PolymorphicConfiguration<DownloadNameProvider> getDynamicDownloadName();
+
 	}
+
+	private final DownloadNameProvider _dynamicDownloadName;
 
 	/**
 	 * Creates a {@link AbstractTableExportHandler} from configuration.
@@ -95,6 +115,7 @@ public abstract class AbstractTableExportHandler extends AbstractCommandHandler 
 	@CalledByReflection
 	public AbstractTableExportHandler(InstantiationContext context, Config config) {
 		super(context, config);
+		_dynamicDownloadName = context.getInstance(config.getDynamicDownloadName());
 	}
 
 	@Override
@@ -160,6 +181,18 @@ public abstract class AbstractTableExportHandler extends AbstractCommandHandler 
 	 */
 	protected TableData extractTableData(LayoutComponent component) {
 		return ((TableControl) ((ControlRepresentable) component).getRenderingControl()).getTableData();
+	}
+
+	/**
+	 * Creates a dynamic filename if configured, otherwise the translated download-key is provided.
+	 * 
+	 * @return the filename for the download using the {@link DownloadNameProvider} if configured.
+	 */
+	protected String getFilename(LayoutComponent component, ResKey downloadNameKey) {
+		if (_dynamicDownloadName != null) {
+			return _dynamicDownloadName.createDownloadName(component, downloadNameKey);
+		}
+		return Resources.getInstance().getString(downloadNameKey);
 	}
 
 }

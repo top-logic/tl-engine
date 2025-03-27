@@ -1,0 +1,236 @@
+package com.top_logic.graphic.flow.data;
+
+abstract message Widget {
+
+}
+
+@Operations("com.top_logic.graphic.flow.model.DrawElement")
+abstract message Box extends Widget {
+	double x;
+	double y;
+	double width;
+	double height;
+}
+
+@Operations("com.top_logic.graphic.flow.model.TextLine")
+message Text extends Box {
+	string value;
+	double baseLine;
+}
+
+@Operations("com.top_logic.graphic.flow.model.Image")
+message Image extends Box {
+	string href;
+	double imgWidth;
+	double imgHeight;
+	ImageAlign align;
+	ImageScale scale;
+}
+
+enum ImageAlign {
+
+	/**
+	 * Forces uniform scaling. Align the midpoint X value of the element's viewBox with the midpoint
+	 * X value of the viewport. Align the midpoint Y value of the element's viewBox with the
+	 * midpoint Y value of the viewport. This is the default value.
+	 */
+	xMidYMid;
+
+	/**
+	 * Forces uniform scaling. Align the <code>min-x</code> of the element's viewBox with the
+	 * smallest X value of the viewport. Align the <code>min-y</code> of the element's viewBox with
+	 * the smallest Y value of the viewport.
+	 */
+	xMinYMin;
+
+	/**
+	 * Forces uniform scaling. Align the midpoint X value of the element's viewBox with the midpoint
+	 * X value of the viewport. Align the <code>min-y</code> of the element's viewBox with the
+	 * smallest Y value of the viewport.
+	 */
+	xMidYMin;
+
+	/**
+	 * Forces uniform scaling. Align the <code>min-x</code>+<code>width</code> of the element's
+	 * viewBox with the maximum X value of the viewport. Align the <code>min-y</code> of the
+	 * element's viewBox with the smallest Y value of the viewport.
+	 */
+	xMaxYMin;
+
+	/**
+	 * Forces uniform scaling. Align the <code>min-x</code> of the element's viewBox with the
+	 * smallest X value of the viewport. Align the midpoint Y value of the element's viewBox with
+	 * the midpoint Y value of the viewport.
+	 */
+	xMinYMid;
+
+	/**
+	 * Forces uniform scaling. Align the <code>min-x</code>+<code>width</code> of the element's
+	 * viewBox with the maximum X value of the viewport. Align the midpoint Y value of the element's
+	 * viewBox with the midpoint Y value of the viewport.
+	 */
+	xMaxYMid;
+
+	/**
+	 * Forces uniform scaling. Align the <code>min-x</code> of the element's viewBox with the
+	 * smallest X value of the viewport. Align the <code>min-y</code>+<code>height</code> of the
+	 * element's viewBox with the maximum Y value of the viewport.
+	 */
+	xMinYMax;
+
+	/**
+	 * Forces uniform scaling. Align the midpoint X value of the element's viewBox with the midpoint
+	 * X value of the viewport. Align the <code>min-y</code>+<code>height</code> of the element's
+	 * viewBox with the maximum Y value of the viewport.
+	 */
+	xMidYMax;
+
+	/**
+	 * Forces uniform scaling. Align the <code>min-x</code>+<code>width</code> of the element's
+	 * viewBox with the maximum X value of the viewport. Align the
+	 * <code>min-y</code>+<code>height</code> of the element's viewBox with the maximum Y value of
+	 * the viewport.
+	 */
+	xMaxYMax;
+
+	/**
+	 * Does not force uniform scaling. Scale the graphic content of the given element non-uniformly
+	 * if necessary such that the element's bounding box exactly matches the viewport rectangle.
+	 * Note that if <code>align</code> is none, then the optional <code>meetOrSlice</code> value is
+	 * ignored.
+	 */
+	none;
+
+}
+
+enum ImageScale {
+	/**
+	 * Scales the graphic such that:
+	 * <ul>
+	 * <li>The aspect ratio is preserved.</li>
+	 * <li>The entire viewBox is visible within the viewport.</li>
+	 * <li>The viewBox is scaled up as much as possible, while still meeting the other
+	 * criteria.</li>
+	 * </ul>
+	 * 
+	 * <p>
+	 * In this case, if the aspect ratio of the graphic does not match the viewport, some of the
+	 * viewport will extend beyond the bounds of the viewBox (i.e., the area into which the viewBox
+	 * will draw will be smaller than the viewport). meet
+	 * </p>
+	 */
+	meet;
+
+	/**
+	 * Scales the graphic such that:
+	 * 
+	 * <ul>
+	 * <li>The aspect ratio is preserved.</li>
+	 * <li>The entire viewport is covered by the viewBox.</li>
+	 * <li>The viewBox is scaled down as much as possible, while still meeting the other
+	 * criteria.</li>
+	 * </ul>
+	 * 
+	 * <p>
+	 * In this case, if the aspect ratio of the viewBox does not match the viewport, some of the
+	 * viewBox will extend beyond the bounds of the viewport (i.e., the area into which the viewBox
+	 * will draw is larger than the viewport). slice
+	 * </p>
+	 */
+	slice;
+
+}
+
+@Operations("com.top_logic.graphic.flow.model.EmptyBlock")
+message Empty extends Box {
+}
+
+@Operations("com.top_logic.graphic.flow.model.Decoration")
+abstract message Decoration extends Box {
+	Box content;
+}
+
+@Operations("com.top_logic.graphic.flow.model.Align")
+message Align extends Decoration {
+	Alignment xAlign;
+	Alignment yAlign;
+}
+
+enum Alignment {
+	start;
+	middle;
+	stop;
+	strech;
+}
+
+@Operations("com.top_logic.graphic.flow.model.Border")
+message Border extends Decoration {
+	string strokeStyle;
+	double thickness;
+	bool top;
+	bool left;
+	bool bottom;
+	bool right;
+	
+	repeated double dashes;
+}
+
+@Operations("com.top_logic.graphic.flow.model.Fill")
+message Fill extends Decoration {
+	string fillStyle;
+}
+
+@Operations("com.top_logic.graphic.flow.model.Padding")
+message Padding extends Decoration {
+	double top;
+	double left;
+	double bottom;
+	double right;
+}
+
+@Operations("com.top_logic.graphic.flow.model.layout.CompassLayout")
+message CompassLayout extends Box {
+	Box north;
+	Box west;
+	Box east;
+	Box south;
+	Box center;
+	
+	double centerHeight;
+	double hPadding;
+	double vPadding;
+}
+
+abstract message Layout extends Box {
+	repeated Box contents;
+}
+
+@Operations("com.top_logic.graphic.flow.model.layout.GridLayout")
+message GridLayout extends Layout {
+	int rows;
+	int cols;
+	double gapX;
+	double gapY;
+	repeated double rowHeight;
+	repeated double colWidth;
+}
+
+abstract message RowLayout extends Layout {
+	double gap;
+	SpaceDistribution fill;
+}
+
+@Operations("com.top_logic.graphic.flow.model.layout.HorizontalLayout")
+message HorizontalLayout extends RowLayout {
+}
+
+@Operations("com.top_logic.graphic.flow.model.layout.VerticalLayout")
+message VerticalLayout extends RowLayout {
+}
+
+enum SpaceDistribution {
+	NONE;
+	STRETCH_CONTENT;
+	STRETCH_GAP;
+	STRETCH_ALL;
+}

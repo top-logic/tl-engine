@@ -5,6 +5,12 @@
 		<annotations>
 			<display-inherited value="APPEND"/>
 		</annotations>
+		<property name="modifier"
+			instance-type="com.top_logic.element.layout.meta.FormContextModificator"
+			type="PolymorphicConfiguration"
+		>
+			<hidden/>
+		</property>
 	</properties>
 
 	<component class="com.top_logic.bpe.layout.execution.ActiveTaskComponent"
@@ -16,6 +22,7 @@
 		isSecurityMaster="${isSecurityMaster}"
 		metaElementName="tl.bpe.execution:Token"
 		model="${model}"
+		modifier="${modifier}"
 		name="TaskEdit"
 		page="/jsp/processExecution/EditTask.jsp"
 		resetInvisible="${resetInvisible}"

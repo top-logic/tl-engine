@@ -5,15 +5,12 @@
  */
 package com.top_logic.layout.table.export;
 
-import com.top_logic.basic.LogProtocol;
-import com.top_logic.basic.Protocol;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.ModelSpec;
-import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.Resources;
@@ -52,22 +49,8 @@ public class ModelDownloadName<C extends ModelDownloadName.Config<?>> extends Ab
 
 	@Override
 	public String createDownloadName(LayoutComponent component, ResKey resKey) {
-		Object model = getModel(component);
+		Object model = ChannelLinking.eval(component, getConfig().getModel());
 		return createDownloadName(model, resKey);
-	}
-
-	private Object getModel(LayoutComponent component) {
-		ModelSpec modelSpec = getConfig().getModel();
-		if (modelSpec != null) {
-			Protocol log = new LogProtocol(ModelDownloadName.class);
-			ComponentChannel channel = ChannelLinking.resolveChannel(log, component, modelSpec);
-			if (log.hasErrors()) {
-				return null;
-			}
-			return channel.get();
-		} else {
-			return component.getModel();
-		}
 	}
 
 	/**

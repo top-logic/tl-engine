@@ -80,11 +80,38 @@ public class SimpleEditContext implements EditContext {
 
 	@Override
 	public ResKey getLabelKey() {
+		return getRelevantKey(false);
+	}
+
+	@Override
+	public ResKey getTableTitleKey() {
+		return getRelevantKey(true);
+	}
+
+	/**
+	 * Resolves the appropriate {@link ResKey} based on context.
+	 * 
+	 * <p>
+	 * Determines the label resource key for an attribute, with support for dynamic labels through
+	 * annotations. For table titles, uses the table title key; otherwise uses the standard I18N
+	 * key.
+	 * </p>
+	 * 
+	 * @param isTableTitle
+	 *        Whether to return a table title key (<code>true</code>) or a standard label key
+	 *        (<code>false</code>)
+	 * 
+	 * @return The resource key for the attribute, potentially modified by {@link DynamicLabel}
+	 *         annotations if an object context exists
+	 */
+	private ResKey getRelevantKey(boolean isTableTitle) {
 		TLStructuredTypePart attribute = getAttribute();
-		ResKey defaultLabelKey = TLModelI18N.getI18NKey(attribute);
+		ResKey defaultLabelKey =
+			isTableTitle ? TLModelI18N.getTableTitleKey(attribute) : TLModelI18N.getI18NKey(attribute);
+
 		if (getObject() != null) {
 			DynamicLabel annotation = getAnnotation(DynamicLabel.class);
-			if(annotation != null) {
+			if (annotation != null) {
 				Object dynamicLabel = annotation.getLabel().impl().apply(getObject(), defaultLabelKey, attribute);
 				if (dynamicLabel instanceof ResKey) {
 					return (ResKey) dynamicLabel;
@@ -99,11 +126,6 @@ public class SimpleEditContext implements EditContext {
 			}
 		}
 		return defaultLabelKey;
-	}
-
-	@Override
-	public ResKey getTableTitleKey() {
-		return TLModelI18N.getTableTitleKey(getAttribute());
 	}
 
 	@Override

@@ -5,115 +5,43 @@
  */
 package com.top_logic.graphic.flow.model;
 
-import java.io.IOException;
-
-import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.graphic.blocks.svg.RenderContext;
+import com.top_logic.graphic.flow.data.Box;
 
 /**
  * Inserts some padding around another element.
  */
-public class Padding extends Decoration {
-
-	private double _top;
-
-	private double _left;
-
-	private double _right;
-
-	private double _bottom;
-
-	/**
-	 * The top padding.
-	 */
-	public double getTop() {
-		return _top;
-	}
-
-	/**
-	 * @see #getTop()
-	 */
-	public Padding setTop(double top) {
-		_top = top;
-		return this;
-	}
-
-	/**
-	 * The left padding.
-	 */
-	public double getLeft() {
-		return _left;
-	}
-
-	/**
-	 * @see #getLeft()
-	 */
-	public Padding setLeft(double left) {
-		_left = left;
-		return this;
-	}
-
-	/**
-	 * The right padding.
-	 */
-	public double getRight() {
-		return _right;
-	}
-
-	/**
-	 * @see #getRight()
-	 */
-	public Padding setRight(double right) {
-		_right = right;
-		return this;
-	}
-
-	/**
-	 * The bottom padding.
-	 */
-	public double getBottom() {
-		return _bottom;
-	}
-
-	/**
-	 * @see #getBottom()
-	 */
-	public Padding setBottom(double bottom) {
-		_bottom = bottom;
-		return this;
-	}
+public interface Padding extends Decoration {
 
 	@Override
-	public void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
-		setX(offsetX);
-		setY(offsetY);
+	com.top_logic.graphic.flow.data.Padding self();
 
-		double x = offsetX + _left;
-		double y = offsetY + _top;
+	@Override
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+		self().setX(offsetX);
+		self().setY(offsetY);
 
-		DrawElement content = getContent();
+		double x = offsetX + self().getLeft();
+		double y = offsetY + self().getTop();
+
+		Box content = self().getContent();
 		content.computeIntrinsicSize(context, x, y);
 
-		setWidth(_left + content.getWidth() + _right);
-		setHeight(_top + content.getHeight() + _bottom);
+		self().setWidth(self().getLeft() + content.getWidth() + self().getRight());
+		self().setHeight(self().getTop() + content.getHeight() + self().getBottom());
 	}
 
 	@Override
-	public void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
-		setX(offsetX);
-		setY(offsetY);
+	default void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
+		self().setX(offsetX);
+		self().setY(offsetY);
 
-		getContent().distributeSize(context, offsetX + _left, offsetY + _top, width - _left - _right,
-			height - _top - _bottom);
+		self().getContent().distributeSize(context, offsetX + self().getLeft(), offsetY + self().getTop(),
+			width - self().getLeft() - self().getRight(),
+			height - self().getTop() - self().getBottom());
 
-		setWidth(width);
-		setHeight(height);
-	}
-
-	@Override
-	public void writePropertiesTo(JsonWriter json) throws IOException {
-		// TODO: Automatically created
-
+		self().setWidth(width);
+		self().setHeight(height);
 	}
 
 }

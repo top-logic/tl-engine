@@ -8,13 +8,15 @@ package com.top_logic.graphic.flow.model;
 import com.top_logic.graphic.blocks.model.Drawable;
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
+import com.top_logic.graphic.flow.data.Box;
+import com.top_logic.graphic.flow.data.Empty;
 
 /**
  * Top-level element of a flow chart.
  */
 public class FlowDiagram implements Drawable {
 
-	private DrawElement _root = new EmptyBlock();
+	private Box _root = Empty.create();
 
 	/**
 	 * The root diagram element.
@@ -23,7 +25,7 @@ public class FlowDiagram implements Drawable {
 		return _root;
 	}
 
-	public FlowDiagram setRoot(DrawElement root) {
+	public FlowDiagram setRoot(Box root) {
 		_root = root;
 		return this;
 	}

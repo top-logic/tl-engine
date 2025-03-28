@@ -16,7 +16,7 @@
 		<dependency name="Ticket_28298_add_group_member_options"
 			module="tl-model-search"
 		/>
-		<dependency name="Ticket_28461_link_contacts_to_accounts"
+		<dependency name="Ticket_28557_enlarge_contact_attributes"
 			module="tl-contact"
 		/>
 		<dependency name="Ticket_27517_Refactoring_User_Management"

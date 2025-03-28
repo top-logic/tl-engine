@@ -17,6 +17,13 @@
 				</modules>
 			</instance>
 		</config>
+
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<!-- Enforce explicitly describing migrations for new TL versions. -->
+				<auto-upgrade>prevent</auto-upgrade>
+			</instance>
+		</config>
 	</services>
 
 	<configs>

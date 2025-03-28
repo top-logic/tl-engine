@@ -1,0 +1,6 @@
+2025-03-28 10:31:36.853966+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "SEQUENCE" not found (this database is empty); SQL statement:
+SELECT * FROM "SEQUENCE" WHERE 1=0 [42104-224]
+2025-03-28 10:31:36.873762+01:00 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "TL_PROPERTIES" not found (this database is empty); SQL statement:
+SELECT * FROM "TL_PROPERTIES" WHERE 1=0 [42104-224]

@@ -18,6 +18,7 @@
 	<modules>
 		<module>test-app-7-5-0-M1</module>
 		<module>test-app-7-4-0</module>
+	    <module>test-app-7-9-3</module>
 	    <module>test-app-rewrite</module>
 	</modules>
 	

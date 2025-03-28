@@ -66,13 +66,18 @@ public class InternationalizeHtmlAttributeProcessor extends InternationalizeAttr
 		 * </p>
 		 * 
 		 * <p>
+		 * The default system language can be taken from an attribute explicitly using the name
+		 * <code>default</code> for the language.
+		 * </p>
+		 * 
+		 * <p>
 		 * Only if the source attributes do not store their values in a column with the same name a
 		 * the attribute, {@link #getColumns()} has to be configured separately. The source column
 		 * is not derived from potential attribute annotations.
 		 * </p>
 		 */
-		@Name("columns")
-		@MapBinding(key = "lang", attribute = "name", tag = "column")
+		@Name("source-attributes")
+		@MapBinding(key = "lang", attribute = "name", tag = "attribute")
 		Map<String, QualifiedPartName> getSourceAttributes();
 
 	}
@@ -127,6 +132,9 @@ public class InternationalizeHtmlAttributeProcessor extends InternationalizeAttr
 				TypePart sourceAttr = util.getTLTypePartOrFail(connection, source.getValue());
 				TLID sourceAttrId = sourceAttr.getDefinition();
 				String lang = source.getKey();
+				if (lang.equals(DEFAULT_LANG)) {
+					lang = ResourcesModule.getInstance().getDefaultLocale().getLanguage();
+				}
 
 				CompiledStatement select = query(
 					select(
@@ -248,10 +256,22 @@ public class InternationalizeHtmlAttributeProcessor extends InternationalizeAttr
 		sourceColumns.put(defaultLang, config.getAttribute().getPartName());
 
 		for (Entry<String, QualifiedPartName> source : config.getSourceAttributes().entrySet()) {
-			sourceColumns.put(source.getKey(), source.getValue().getPartName());
+			String lang = source.getKey();
+			if (lang.equals(DEFAULT_LANG)) {
+				lang = ResourcesModule.getInstance().getDefaultLocale().getLanguage();
+			}
+
+			sourceColumns.put(lang, source.getValue().getPartName());
 		}
 
-		sourceColumns.putAll(config.getColumns());
+		Map<String, String> columns = config.getColumns();
+		for (Entry<String, String> column : columns.entrySet()) {
+			String lang = column.getKey();
+			if (lang.equals(DEFAULT_LANG)) {
+				lang = ResourcesModule.getInstance().getDefaultLocale().getLanguage();
+			}
+			sourceColumns.put(lang, column.getValue());
+		}
 		return sourceColumns;
 	}
 

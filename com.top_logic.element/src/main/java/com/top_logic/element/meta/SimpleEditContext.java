@@ -114,7 +114,7 @@ public class SimpleEditContext implements EditContext {
 			if (annotation != null) {
 				Object dynamicLabel = annotation.getLabel().impl().apply(getObject(), defaultLabelKey, attribute);
 				if (dynamicLabel instanceof ResKey dynamicKey) {
-					return ResKey.fallback(dynamicKey.suffix(".title"), dynamicKey);
+					return isTableTitle ? ResKey.fallback(dynamicKey.suffix(".title"), dynamicKey) : dynamicKey;
 				}
 				String labelString;
 				if (dynamicLabel instanceof String) {

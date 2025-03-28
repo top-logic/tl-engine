@@ -1,0 +1,4 @@
+#!/bin/bash
+
+a2ensite 000-default.conf
+systemctl restart apache2

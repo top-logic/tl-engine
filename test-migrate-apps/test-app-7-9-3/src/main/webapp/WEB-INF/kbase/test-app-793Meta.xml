@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objectlist>
+
+	<!-- Put your database schema definitions here, for example: -->
+	<!-- 
+	<metaobject
+		object_name="MyTable"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="name"
+			att_type="String"
+			db_size="255"
+		/>
+		<mo_attribute
+			att_name="x"
+			att_type="Integer"
+		/>
+	</metaobject>
+ 	-->
+	
+</objectlist>

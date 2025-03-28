@@ -132,11 +132,11 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 		String SETTINGS = "settings";
 
 		/**
-		 * Automatically adjusts the persistent application model to changes performed in the static
-		 * model configuration during boot.
+		 * Strategy to follow, if the static model configuration of the current software version
+		 * differs from the persistent model baseline.
 		 */
 		@Name("auto-upgrade")
-		boolean getAutoUpgrade();
+		UpgradeStrategy getAutoUpgrade();
 
 		/**
 		 * List of model file references that together build up the the application model.
@@ -405,7 +405,8 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 	}
 
 	private void upgradeModel(PooledConnection connection, String oldConfigXML) throws SQLException {
-		if (!config().getAutoUpgrade()) {
+		UpgradeStrategy autoUpgrade = config().getAutoUpgrade();
+		if (autoUpgrade == UpgradeStrategy.IGNORE) {
 			// No incremental update.
 			Logger.info("Automatic model upgrade disabled.", DynamicModelService.class);
 			return;
@@ -428,6 +429,23 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 
 		List<DiffElement> patch = patchCreator.getPatch();
 		if (!patch.isEmpty()) {
+			if (autoUpgrade == UpgradeStrategy.PREVENT) {
+				MigrationProcessors processors;
+				try {
+					processors = TypedConfiguration.newConfigItem(MigrationProcessors.class);
+					ApplyModelPatch.applyPatch(log, ModelCopy.copy(getModel()), getFactory(), patch,
+						processors.getProcessors());
+				} catch (RuntimeException ex) {
+					Logger.error("Failed to apply model patch: " + ex.getMessage() + "\n" + patch, ex,
+						DynamicModelService.class);
+					throw ex;
+				}
+
+				throw new IllegalStateException(
+					"Model baseline differs from static model, auto-upgrade diabled, migration required: "
+						+ processors);
+			}
+
 			Logger.info("Started incremental model upgrade.", DynamicModelService.class);
 
 			MigrationProcessors processors;
@@ -451,7 +469,7 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 				DynamicModelService.class);
 
 		} else {
-			Logger.info("No incremental model upgrade necessary.", DynamicModelService.class);
+			Logger.info("Model baseline matches static model, no upgrade required.", DynamicModelService.class);
 		}
 	}
 

@@ -10,7 +10,7 @@
 		<dependency name="Ticket_27906_polymorphic_format_annotations"
 			module="tl"
 		/>
-		<dependency name="Ticket_28298_polymorphic_groups"
+		<dependency name="Ticket_28375_replace_concrete_id_by_definition"
 			module="tl-element"
 		/>
 	</dependencies>

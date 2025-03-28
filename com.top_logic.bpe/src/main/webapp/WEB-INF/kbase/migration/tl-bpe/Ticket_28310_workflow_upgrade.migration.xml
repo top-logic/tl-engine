@@ -235,7 +235,30 @@
 				<sort-order value="1000.0"/>
 			</annotations>
 		</create-property>
-		<!-- TODO: Move data. -->
+		
+		<internationalize-html-attribute
+			table="BPCollaboration"
+			attribute="tl.bpe.bpml:Described#descriptionI18N"
+		>
+			<columns>
+				<column lang="default" name="description"/>
+			</columns>
+			<source-attributes>
+				<attribute lang="default" name="tl.bpe.bpml:Described#description"/>
+			</source-attributes>
+		</internationalize-html-attribute>
+		<internationalize-html-attribute
+			table="BPNode"
+			attribute="tl.bpe.bpml:Described#descriptionI18N"
+		>
+			<columns>
+				<column lang="default" name="description"/>
+			</columns>
+			<source-attributes>
+				<attribute lang="default" name="tl.bpe.bpml:Described#description"/>
+			</source-attributes>
+		</internationalize-html-attribute>
+		
 		<delete-property name="tl.bpe.bpml:Described#description"/>
 
 		<create-property name="tl.bpe.bpml:Collaboration#myTasksTitleI18N"
@@ -246,7 +269,14 @@
 				<sort-order value="2001.0"/>
 			</annotations>
 		</create-property>
-		<!-- TODO: Move data. -->
+		<internationalize-attribute
+			table="BPCollaboration"
+			attribute="tl.bpe.bpml:Collaboration#myTasksTitleI18N"
+		>
+			<columns>
+				<column lang="default" name="myTasksTitle"/>
+			</columns>
+		</internationalize-attribute>
 		<delete-property name="tl.bpe.bpml:Collaboration#myTasksTitle"/>
 
 		<create-property name="tl.bpe.bpml:Collaboration#myTasksDescriptionI18N"
@@ -257,7 +287,17 @@
 				<sort-order value="2002.0"/>
 			</annotations>
 		</create-property>
-		<!-- TODO: Move data. -->
+		<internationalize-html-attribute
+			table="BPCollaboration"
+			attribute="tl.bpe.bpml:Collaboration#myTasksDescriptionI18N"
+		>
+			<columns>
+				<column lang="default" name="myTasksDescription"/>
+			</columns>
+			<source-attributes>
+				<attribute lang="default" name="tl.bpe.bpml:Collaboration#myTasksDescription"/>
+			</source-attributes>
+		</internationalize-html-attribute>
 		<delete-property name="tl.bpe.bpml:Collaboration#myTasksDescription"/>
 
 		<create-property name="tl.bpe.bpml:Collaboration#myProcessesTitleI18N"
@@ -268,7 +308,14 @@
 				<sort-order value="2011.0"/>
 			</annotations>
 		</create-property>
-		<!-- Move data. -->
+		<internationalize-attribute
+			table="BPCollaboration"
+			attribute="tl.bpe.bpml:Collaboration#myProcessesTitleI18N"
+		>
+			<columns>
+				<column lang="default" name="myProcessesTitle"/>
+			</columns>
+		</internationalize-attribute>
 		<delete-property name="tl.bpe.bpml:Collaboration#myProcessesTitle"/>
 
 		<create-property name="tl.bpe.bpml:Collaboration#myProcessesDescriptionI18N"
@@ -279,7 +326,17 @@
 				<sort-order value="2012.0"/>
 			</annotations>
 		</create-property>
-		<!-- TODO: Move data. -->
+		<internationalize-html-attribute
+			table="BPCollaboration"
+			attribute="tl.bpe.bpml:Collaboration#myProcessesDescriptionI18N"
+		>
+			<columns>
+				<column lang="default" name="myProcessesDescription"/>
+			</columns>
+			<source-attributes>
+				<attribute lang="default" name="tl.bpe.bpml:Collaboration#myProcessesDescription"/>
+			</source-attributes>
+		</internationalize-html-attribute>
 		<delete-property name="tl.bpe.bpml:Collaboration#myProcessesDescription"/>
 
 		<create-property name="tl.bpe.bpml:Edge#title"
@@ -360,7 +417,14 @@
 				<sort-order value="500.5"/>
 			</annotations>
 		</create-property>
-		<!-- TODO: Move data. -->
+		<internationalize-attribute
+			table="BPNode"
+			attribute="tl.bpe.bpml:Task#titleI18N"
+		>
+			<columns>
+				<column lang="default" name="title"/>
+			</columns>
+		</internationalize-attribute>
 		<delete-property name="tl.bpe.bpml:Task#title"/>
 
 		<create-property name="tl.bpe.bpml:Task#titleFunction"

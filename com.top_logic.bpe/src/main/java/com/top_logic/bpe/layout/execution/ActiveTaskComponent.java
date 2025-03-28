@@ -169,7 +169,7 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 	}
 	
 	/**
-	 * true if currentUser is an actor for given {@link Token}.
+	 * Whether current user is an actor for given {@link Token}.
 	 */
 	public static boolean isActor(Token token) {
 		Node currentNode = token.getNode();

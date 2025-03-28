@@ -73,6 +73,11 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 		 * By default, the default system language is taken from a column that is named like the
 		 * given {@link #getAttribute() target attribute}.
 		 * </p>
+		 * 
+		 * <p>
+		 * The default system language can be mapped to a column explicitly using the name
+		 * <code>default</code> for the language.
+		 * </p>
 		 */
 		@Name("columns")
 		@MapBinding(key = "lang", attribute = "name", tag = "column")
@@ -85,6 +90,11 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 		@Name("attribute")
 		QualifiedPartName getAttribute();
 	}
+
+	/**
+	 * Language name referencing the system default language.
+	 */
+	protected static final String DEFAULT_LANG = "default";
 
 	/**
 	 * Creates a {@link InternationalizeAttributeProcessor} from configuration.
@@ -272,7 +282,14 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 		Map<String, String> sourceColumns = new HashMap<>();
 		String defaultLang = ResourcesModule.getInstance().getDefaultLocale().getLanguage();
 		sourceColumns.put(defaultLang, config.getAttribute().getPartName());
-		sourceColumns.putAll(config.getColumns());
+		Map<String, String> columns = config.getColumns();
+		for (Entry<String, String> entry : columns.entrySet()) {
+			String lang = entry.getKey();
+			if (lang.equals(DEFAULT_LANG)) {
+				lang = ResourcesModule.getInstance().getDefaultLocale().getLanguage();
+			}
+			sourceColumns.put(lang, entry.getValue());
+		}
 		return sourceColumns;
 	}
 

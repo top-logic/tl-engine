@@ -67,20 +67,19 @@
 			<generalization type="tl.bpe.execution:Named"/>
 		</remove-class-generalizations>
 
-		<update-enum 
-			name="tl5.enum:bpe.execution.state"
+		<update-enum name="tl5.enum:bpe.execution.state"
 			new-name="tl.bpe.execution:ExecutionState"
 		/>
-		<update-property 
-			name="tl.bpe.execution:ExecutionState#bpe.execution.state.running"
+		<remove-annotations name="tl.bpe.execution:ExecutionState">
+			<annotation class="com.top_logic.model.annotate.TLUpdateMode"/>
+		</remove-annotations>
+		<update-property name="tl.bpe.execution:ExecutionState#bpe.execution.state.running"
 			new-name="tl.bpe.execution:ExecutionState#RUNNING"
 		/>
-		<update-property 
-			name="tl.bpe.execution:ExecutionState#bpe.execution.state.finished"
+		<update-property name="tl.bpe.execution:ExecutionState#bpe.execution.state.finished"
 			new-name="tl.bpe.execution:ExecutionState#FINISHED"
 		/>
-		<update-property 
-			name="tl.bpe.execution:ExecutionState#bpe.execution.state.aborted"
+		<update-property name="tl.bpe.execution:ExecutionState#bpe.execution.state.aborted"
 			new-name="tl.bpe.execution:ExecutionState#ABORTED"
 		/>
 
@@ -90,9 +89,9 @@
 		<update-reference name="tl.bpe.execution:ProcessExecution#process"
 			mandatory="false"
 		/>
-		
-		<!-- 
-			Invert reference tl.bpe.execution:Token#processExecution to 
+
+		<!--
+			Invert reference tl.bpe.execution:Token#processExecution to
 			tl.bpe.execution:ProcessExecution#allTokens and make it a multi-composition.
 		-->
 
@@ -113,27 +112,27 @@
 
 		<exchange-model-refs>
 			<table-update
-				table="hasWrapperAttValue"
 				columns="metaAttribute"
+				table="hasWrapperAttValue"
 			/>
-			
+
 			<model-refs>
 				<model-ref
 					source="tl.bpe.execution:Token#processExecution"
 					target="tl.bpe.execution:ProcessExecution#allTokens"
 				/>
-			</model-refs>			
+			</model-refs>
 		</exchange-model-refs>
 
 		<invert-link-table
-			table="hasWrapperAttValue"
 			reference="tl.bpe.execution:ProcessExecution#allTokens"
+			table="hasWrapperAttValue"
 		/>
-		
+
 		<move-links
-			source-table="hasWrapperAttValue"
 			dest-table="hasStructureChild"
 			reference="tl.bpe.execution:ProcessExecution#allTokens"
+			source-table="hasWrapperAttValue"
 		/>
 
 		<delete-reference name="tl.bpe.execution:Token#processExecution"/>
@@ -143,7 +142,7 @@
 			inverse-reference="tl.bpe.execution:ProcessExecution#allTokens"
 			navigate="true"
 		/>
-		
+
 		<add-annotations name="tl.bpe.execution:ProcessExecution#executionState">
 			<annotations>
 				<default-value>
@@ -154,8 +153,7 @@
 
 		<delete-property name="tl.bpe.bpml:TimerEventDefinition#delayInMillis"/>
 
-		<update-property 
-			name="tl.bpe.bpml:TimerEventDefinition#delayInUnit"
+		<update-property name="tl.bpe.bpml:TimerEventDefinition#delayInUnit"
 			new-name="tl.bpe.bpml:TimerEventDefinition#delayInMillis"
 		/>
 
@@ -164,15 +162,21 @@
 			part="tl.bpe.bpml:TimerEventDefinition#delayInMillis"
 			target="tl.core:Duration"
 		/>
+		<remove-annotations name="tl.bpe.bpml:TimerEventDefinition#delayInMillis">
+			<annotation class="com.top_logic.model.annotate.TLRange"/>
+		</remove-annotations>
+		<remove-annotations name="tl.bpe.bpml:TimerEventDefinition#delayInMillis">
+			<annotation class="com.top_logic.model.annotate.TLSortOrder"/>
+		</remove-annotations>
 
 		<delete-property name="tl.bpe.bpml:TimerEventDefinition#timeUnit"/>
-		
+
 		<delete-reference name="tl.bpe.execution:Token#dynamicActors"/>
-		
+
 		<delete-property name="tl.bpe.execution:Token#description"/>
-				
+
 		<delete-property name="tl.bpe.bpml:Participant#taskTitle"/>
-		
+
 		<create-datatype name="tl.bpe.bpml:ProcessFormDefinition"
 			db_type="string"
 			kind="Custom"
@@ -222,14 +226,14 @@
 				</storage-algorithm>
 			</annotations>
 		</create-property>
-		
+
 		<create-property name="tl.bpe.bpml:Described#descriptionI18N"
-		  type="tl.model.i18n:I18NHtml"
+			type="tl.model.i18n:I18NHtml"
 		>
-		  <annotations>
-		    <bpml-extension/>
-		    <sort-order value="1000.0"/>
-		  </annotations>
+			<annotations>
+				<bpml-extension/>
+				<sort-order value="1000.0"/>
+			</annotations>
 		</create-property>
 		<!-- TODO: Move data. -->
 		<delete-property name="tl.bpe.bpml:Described#description"/>
@@ -244,7 +248,7 @@
 		</create-property>
 		<!-- TODO: Move data. -->
 		<delete-property name="tl.bpe.bpml:Collaboration#myTasksTitle"/>
-		
+
 		<create-property name="tl.bpe.bpml:Collaboration#myTasksDescriptionI18N"
 			type="tl.model.i18n:I18NHtml"
 		>
@@ -255,7 +259,7 @@
 		</create-property>
 		<!-- TODO: Move data. -->
 		<delete-property name="tl.bpe.bpml:Collaboration#myTasksDescription"/>
-		
+
 		<create-property name="tl.bpe.bpml:Collaboration#myProcessesTitleI18N"
 			type="tl.model.i18n:I18NString"
 		>
@@ -264,7 +268,7 @@
 				<sort-order value="2011.0"/>
 			</annotations>
 		</create-property>
-		<!-- Move data. -->		
+		<!-- Move data. -->
 		<delete-property name="tl.bpe.bpml:Collaboration#myProcessesTitle"/>
 
 		<create-property name="tl.bpe.bpml:Collaboration#myProcessesDescriptionI18N"
@@ -277,7 +281,7 @@
 		</create-property>
 		<!-- TODO: Move data. -->
 		<delete-property name="tl.bpe.bpml:Collaboration#myProcessesDescription"/>
-		
+
 		<create-property name="tl.bpe.bpml:Edge#title"
 			type="tl.model.i18n:I18NString"
 		>
@@ -309,6 +313,21 @@
 				<bpml-extension/>
 			</annotations>
 		</create-property>
+		<create-property name="tl.bpe.bpml:SequenceFlow#skipStandardOperation"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<bpml-extension/>
+			</annotations>
+		</create-property>
+		<create-reference name="tl.bpe.bpml:SequenceFlow#formType"
+			navigate="true"
+			type="tl.model:TLClass"
+		>
+			<annotations>
+				<bpml-extension/>
+			</annotations>
+		</create-reference>
 		<create-property name="tl.bpe.bpml:Lane#title"
 			type="tl.model.i18n:I18NString"
 		>
@@ -325,6 +344,13 @@
 				<sort-order value="500.5"/>
 			</annotations>
 		</create-property>
+		<create-property name="tl.bpe.bpml:StartEvent#requireReview"
+			type="tl.core:Boolean"
+		>
+			<annotations>
+				<bpml-extension/>
+			</annotations>
+		</create-property>
 
 		<create-property name="tl.bpe.bpml:Task#titleI18N"
 			type="tl.model.i18n:I18NString"
@@ -336,7 +362,7 @@
 		</create-property>
 		<!-- TODO: Move data. -->
 		<delete-property name="tl.bpe.bpml:Task#title"/>
-		
+
 		<create-property name="tl.bpe.bpml:Task#titleFunction"
 			type="tl.model.search:Expr"
 		>
@@ -375,7 +401,7 @@ $t.get(`tl.bpe.bpml:Task#titleI18N`).localize() || $t.get(`tl.bpe.bpml:Task#name
 				<label-position value="hide-label"/>
 			</annotations>
 		</create-property>
-		<!-- TODO: Move data. -->		
+		<!-- TODO: Move data. -->
 		<delete-property name="tl.bpe.bpml:ManualTask#displayDescription"/>
 
 		<create-property name="tl.bpe.bpml:ManualTask#canEdit"
@@ -420,7 +446,7 @@ $t.get(`tl.bpe.bpml:Task#titleI18N`).localize() || $t.get(`tl.bpe.bpml:Task#name
 			</annotations>
 		</add-annotations>
 
-		<!-- Delete and re-create, since it was an override before. -->		
+		<!-- Delete and re-create, since it was an override before. -->
 		<delete-property name="tl.bpe.execution:Token#name"/>
 		<create-property name="tl.bpe.execution:Token#name"
 			type="tl.core:String"
@@ -483,14 +509,6 @@ $t.get(`tl.bpe.bpml:Task#titleI18N`).localize() || $t.get(`tl.bpe.bpml:Task#name
 				</form-templates>
 			</annotations>
 		</add-annotations>
-		<create-reference name="tl.bpe.bpml:SequenceFlow#formType"
-			navigate="true"
-			type="tl.model:TLClass"
-		>
-			<annotations>
-				<bpml-extension/>
-			</annotations>
-		</create-reference>
 		<create-reference name="tl.bpe.bpml:Task#tokenType"
 			type="tl.model:TLClass"
 		>
@@ -555,9 +573,11 @@ $t.get(`tl.bpe.bpml:Task#titleI18N`).localize() || $t.get(`tl.bpe.bpml:Task#name
 			before="process"
 		/>
 		<reorder-part name="tl.bpe.bpml:Edge#weight"/>
+		<reorder-part name="tl.bpe.bpml:SequenceFlow#skipStandardOperation"/>
 		<reorder-part name="tl.bpe.bpml:SequenceFlow#operation"/>
 		<reorder-part name="tl.bpe.bpml:SequenceFlow#formType"/>
 		<reorder-part name="tl.bpe.bpml:Lane#title"/>
+		<reorder-part name="tl.bpe.bpml:StartEvent#requireReview"/>
 		<reorder-part name="tl.bpe.bpml:StartEvent#title"/>
 		<reorder-part name="tl.bpe.bpml:Task#titleI18N"
 			before="boundaryEvents"

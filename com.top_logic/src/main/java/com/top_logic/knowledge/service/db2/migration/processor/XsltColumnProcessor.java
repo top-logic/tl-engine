@@ -21,6 +21,7 @@ import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.xml.XsltUtil;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 
@@ -35,6 +36,7 @@ public class XsltColumnProcessor extends StringColumnTransformProcessor<XsltColu
 	/**
 	 * Configuration options for {@link XsltColumnProcessor}.
 	 */
+	@TagName("xslt-column-transform")
 	public interface Config<I extends XsltColumnProcessor> extends StringColumnTransformProcessor.Config<I> {
 
 		/**
@@ -73,6 +75,7 @@ public class XsltColumnProcessor extends StringColumnTransformProcessor<XsltColu
 		String transform = config.getTransform();
 		log.info("Applying '" + transform + "' to all values in column '" + column + "' of table '" + table + "'.");
 
+		int rowCnt = 0;
 		Transformer transformer = XsltUtil.createTransformer(transform, config.getIndent());
 		while (rows.next()) {
 			String xml = rows.getString(1);
@@ -91,6 +94,7 @@ public class XsltColumnProcessor extends StringColumnTransformProcessor<XsltColu
 				String transformationResult = buffer.toString();
 				rows.updateString(1, transformationResult);
 				rows.updateRow();
+				rowCnt++;
 			} catch (TransformerException ex) {
 				String keySpec;
 				if (keyColumns.isEmpty()) {
@@ -113,6 +117,7 @@ public class XsltColumnProcessor extends StringColumnTransformProcessor<XsltColu
 					+ table + "'" + keySpec + ": " + xml, ex);
 			}
 		}
+		log.info("Transformed column '" + column + "' of " + rowCnt + " rows of table '" + table + "'.");
 	}
 
 }

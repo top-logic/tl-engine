@@ -23,10 +23,12 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.db.sql.CompiledStatement;
+import com.top_logic.basic.db.sql.SQLExpression;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MOAttribute;
@@ -36,11 +38,15 @@ import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MOReference.ReferencePart;
 import com.top_logic.dob.meta.MORepository;
-import com.top_logic.element.meta.kbbased.KBBasedMetaAttribute;
+import com.top_logic.element.meta.kbbased.storage.LinkStorage;
 import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
+import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.migration.Util;
+import com.top_logic.model.migration.data.MigrationException;
+import com.top_logic.model.migration.data.QualifiedPartName;
+import com.top_logic.model.migration.data.TypePart;
 import com.top_logic.util.TLContext;
 
 /**
@@ -62,6 +68,29 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 		String getLinkTable();
 
 		/**
+		 * Name of the reference column in the given {@link #getLinkTable()} that contains the
+		 * reference associated with the link stored in a table row.
+		 * 
+		 * <p>
+		 * The value is only relevant, if {@link #getReference()} is given.
+		 * </p>
+		 */
+		@Name("reference-column")
+		@StringDefault(ApplicationObjectUtil.META_ATTRIBUTE_ATTR)
+		String getReferenceColumn();
+
+		/**
+		 * The reference for which link order should be synthesized.
+		 * 
+		 * <p>
+		 * If not given, all links of the given {@link #getLinkTable()} are considered.
+		 * </p>
+		 */
+		@Nullable
+		@Name("reference")
+		QualifiedPartName getReference();
+
+		/**
 		 * The object table from which the order information is extracted.
 		 */
 		@Mandatory
@@ -71,7 +100,7 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 		/**
 		 * The order column in the link table to fill.
 		 */
-		@StringDefault(KBBasedMetaAttribute.OWNER_REF_ORDER_ATTR)
+		@StringDefault(LinkStorage.SORT_ORDER)
 		@Name("order-column")
 		String getOrderColumn();
 
@@ -126,6 +155,7 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
 		Util util = context.getSQLUtils();
 		Config<?> config = getConfig();
+		QualifiedPartName referenceName = getConfig().getReference();
 		try {
 			MORepository repository = context.getPersistentRepository();
 
@@ -137,6 +167,8 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 			MOReference sourceRef = (MOReference) linkTable.getAttribute(config.getSourceRef());
 			MOAttribute orderAttr = linkTable.getAttribute(config.getOrderColumn());
 			
+			TypePart reference = referenceName == null ? null : util.getTLTypePartOrFail(connection, referenceName);
+
 			for (MetaObject type : repository.getMetaObjects()) {
 				if (!(type instanceof MOClass)) {
 					continue;
@@ -154,6 +186,27 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 				boolean hasBranches = util.hasBranches();
 				String link = "l";
 				String source = "s";
+				
+				SQLExpression selectCondition = eqSQL(
+					column(link, sourceRef.getColumn(ReferencePart.type).getDBName()),
+					literal(DBType.STRING, sourceTable.getName()));
+
+				SQLExpression updateCondition = eqSQL(
+					column(sourceRef.getColumn(ReferencePart.type).getDBName()),
+					literal(DBType.STRING, sourceTable.getName()));
+				
+				if (reference != null) {
+					MOReference metaRef = (MOReference) linkTable.getAttribute(getConfig().getReferenceColumn());
+					selectCondition = and(selectCondition,
+						eqSQL(
+							column(link, metaRef.getColumn(ReferencePart.name).getDBName()),
+							literal(DBType.ID, reference.getDefinition())));
+					updateCondition = and(updateCondition,
+						eqSQL(
+							column(metaRef.getColumn(ReferencePart.name).getDBName()),
+							literal(DBType.ID, reference.getDefinition())));
+				}
+				
 				CompiledStatement select = query(
 					select(
 						Util.listWithoutNull(
@@ -170,14 +223,14 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 								hasBranches ?
 									eqSQL(util.branchColumnRef(link), util.branchColumnRef(source))
 									: literalTrueLogical(),
-								eqSQL(column(link, sourceRef.getColumn(ReferencePart.name).getDBName()), column(source, BasicTypes.IDENTIFIER_DB_NAME)),
+								eqSQL(
+									column(link, sourceRef.getColumn(ReferencePart.name).getDBName()),
+									column(source, BasicTypes.IDENTIFIER_DB_NAME)),
 								le(column(link, BasicTypes.REV_MAX_DB_NAME), column(source, BasicTypes.REV_MAX_DB_NAME)),
 								ge(column(link, BasicTypes.REV_MAX_DB_NAME), column(source, BasicTypes.REV_MIN_DB_NAME))
 							)
 						),
-						eqSQL(
-							literal(DBType.STRING, sourceTable.getName()), 
-							column(link, sourceRef.getColumn(ReferencePart.type).getDBName())),
+						selectCondition,
 						Util.listWithoutNull(
 							util.branchOrderOrNull(link),
 							order(false, column(link, scopeRef.getColumn(ReferencePart.name).getDBName()))
@@ -197,9 +250,7 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 							columnDef(column(orderAttr.getDbMapping()[0].getDBName()))
 						),
 						table(linkTable.getDBMapping().getDBName()),
-						eqSQL(
-							literal(DBType.STRING, sourceTable.getName()), 
-							column(sourceRef.getColumn(ReferencePart.type).getDBName())),
+						updateCondition,
 						Util.listWithoutNull(
 							util.branchOrderOrNull(),
 							order(false, column(scopeRef.getColumn(ReferencePart.name).getDBName()))
@@ -222,7 +273,7 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 				int scopeIndex = util.getBranchIndexInc() + 3;
 				int orderIndex = util.getBranchIndexInc() + 4;
 				try (ResultSet cursor = update.executeQuery(connection)) {
-					// Use additional connection for executing the concurrent join. Databases man
+					// Use additional connection for executing the concurrent join. Databases may
 					// not handle concurrent queries well.
 					PooledConnection additional = connection.getPool().borrowWriteConnection();
 					try (ResultSet result = select.executeQuery(additional)) {
@@ -265,7 +316,7 @@ public class SynthesizeLinkOrderProcessor extends AbstractConfiguredInstance<Syn
 
 				log.info("Done synthesizing " + cnt + " order values in table '" + sourceTable.getName() + "'.");
 			}
-		} catch (SQLException ex) {
+		} catch (SQLException | MigrationException ex) {
 			log.error("Failed to synthesize order of table '" + config.getLinkTable() + "': " + ex.getMessage(), ex);
 		}
 	}

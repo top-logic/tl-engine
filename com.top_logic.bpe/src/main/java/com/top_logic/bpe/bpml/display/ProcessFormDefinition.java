@@ -6,6 +6,7 @@
 package com.top_logic.bpe.bpml.display;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.bpe.bpml.model.ManualTask;
@@ -35,6 +36,7 @@ public interface ProcessFormDefinition extends ConfigPart {
 	 * </p>
 	 */
 	@Label("Display")
+	@DefaultContainer
 	PolymorphicConfiguration<? extends FormProvider> getFormProvider();
 
 	/**

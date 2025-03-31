@@ -19,7 +19,7 @@
 		<dependency name="Ticket_28557_enlarge_contact_attributes"
 			module="tl-contact"
 		/>
-		<dependency name="Ticket_27517_Refactoring_User_Management"
+		<dependency name="Ticket_28375_replace_concrete_id_by_definition"
 			module="tl-model-wysiwyg"
 		/>
 		<dependency name="Ticket_28298_update_account"

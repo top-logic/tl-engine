@@ -465,7 +465,21 @@ $t.get(`tl.bpe.bpml:Task#titleI18N`).localize() || $t.get(`tl.bpe.bpml:Task#name
 				<label-position value="hide-label"/>
 			</annotations>
 		</create-property>
-		<!-- TODO: Move data. -->
+
+		<!-- Move data -->		
+		<alter-column
+			table="BPNode"
+			column="displayDescription"
+			new-name="formDefinition"
+		/>
+		
+		<!-- Adjust data -->		
+		<xslt-column-transform
+			table="BPNode"
+			column="formDefinition"
+			transform="/WEB-INF/kbase/migration/tl-bpe/Ticket_28310_workflow_upgrade-form.xslt"
+		/>
+		
 		<delete-property name="tl.bpe.bpml:ManualTask#displayDescription"/>
 
 		<create-property name="tl.bpe.bpml:ManualTask#canEdit"

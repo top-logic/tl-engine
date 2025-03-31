@@ -70,6 +70,28 @@
 		<update-enum name="tl5.enum:bpe.execution.state"
 			new-name="tl.bpe.execution:ExecutionState"
 		/>
+		<!-- Update references to renamed enum in layout configurations. -->
+		<string-column-transform
+			table="TemplateLayouts"
+			column="arguments"
+		>
+			<target-replacement
+				target="tl5.enum:bpe.execution.state#bpe.execution.state.running"
+				replacement="tl.bpe.execution:ExecutionState#RUNNING"
+			/>
+			<target-replacement
+				target="tl5.enum:bpe.execution.state#bpe.execution.state.finished"
+				replacement="tl.bpe.execution:ExecutionState#FINISHED"
+			/>
+			<target-replacement
+				target="tl5.enum:bpe.execution.state#bpe.execution.state.aborted"
+				replacement="tl.bpe.execution:ExecutionState#ABORTED"
+			/>
+			<target-replacement
+				target="tl5.enum:bpe.execution.state"
+				replacement="tl.bpe.execution:ExecutionState"
+			/>
+		</string-column-transform>
 		<remove-annotations name="tl.bpe.execution:ExecutionState">
 			<annotation class="com.top_logic.model.annotate.TLUpdateMode"/>
 		</remove-annotations>

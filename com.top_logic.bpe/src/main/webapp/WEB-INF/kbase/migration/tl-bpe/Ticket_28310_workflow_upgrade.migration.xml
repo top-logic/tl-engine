@@ -164,6 +164,15 @@
 			inverse-reference="tl.bpe.execution:ProcessExecution#allTokens"
 			navigate="true"
 		/>
+		
+		<synthesize-link-order
+			link-table="hasStructureChild"
+			reference="tl.bpe.execution:ProcessExecution#allTokens"
+			order-column="sortOrder"
+			source-table="BPExecution"
+			source-order-attribute="createRev"
+		>
+		</synthesize-link-order>
 
 		<add-annotations name="tl.bpe.execution:ProcessExecution#executionState">
 			<annotations>

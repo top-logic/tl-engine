@@ -8,6 +8,8 @@ package com.top_logic.security.auth.pac4j.config;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import jakarta.servlet.ServletContext;
+
 import org.pac4j.core.client.Client;
 import org.pac4j.core.context.HttpConstants;
 import org.pac4j.core.util.generator.ValueGenerator;
@@ -33,10 +35,9 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
-
-import jakarta.servlet.ServletContext;
 
 /**
  * Base class for {@link ClientConfigurator}s allowing to configure common properties.
@@ -174,6 +175,7 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		 * @see OidcConfiguration#isWithState()
 		 */
 		@Name("with-state")
+		@BooleanDefault(true)
 		public boolean getWithState();
 
 		/**

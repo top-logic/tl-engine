@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.form.model;
 
-import com.top_logic.basic.Logger;
 import com.top_logic.layout.form.CheckException;
 import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormField;
@@ -110,19 +109,9 @@ public class BooleanField extends AbstractSingleValueField implements Comparable
 			return null;
 		}
 
-		if (result.booleanValue()) {
-			if (result != Boolean.TRUE) {
-				// Hurt greenhorns.
-				Logger.warn("Useless Boolean instantiation.", new IllegalArgumentException("Value must be one of null, Boolean.TRUE, Boolean.FALSE."), BooleanField.class);
-			}
-			return Boolean.TRUE;
-		} else {
-			if (result != Boolean.FALSE) {
-				// Hurt greenhorns.
-				Logger.warn("Useless Boolean instantiation.", new IllegalArgumentException("Value must be one of null, Boolean.TRUE, Boolean.FALSE."), BooleanField.class);
-			}
-			return Boolean.FALSE;
-		}
+		// Normalize. When calling a method with boolean result type by reflection, new Booleans get
+		// instantiated.
+		return Boolean.valueOf(result.booleanValue());
 	}
 	
 	/**

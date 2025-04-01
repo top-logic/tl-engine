@@ -125,7 +125,7 @@ public class FileSelectionComponent extends FolderComponent implements Selectabl
 
 	private FolderControl createFolderControl(FormContext context) {
 		FolderData folderData = getFolderData();
-		return WebFolderUIFactory.createControl(getBreadcrumbRenderer(), folderData, context, null);
+		return WebFolderUIFactory.getInstance().createControl(getBreadcrumbRenderer(), folderData, context, null);
 	}
 
 	private void initializeControl(FolderControl folderControl) {

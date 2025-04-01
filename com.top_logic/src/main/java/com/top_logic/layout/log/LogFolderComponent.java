@@ -34,7 +34,7 @@ public class LogFolderComponent extends FolderComponent {
 
 	@Override
 	protected Control createControlForContext(FormContext context) {
-		return WebFolderUIFactory.createControl(getBreadcrumbRenderer(), getFolderData(), context, null);
+		return WebFolderUIFactory.getInstance().createControl(getBreadcrumbRenderer(), getFolderData(), context, null);
 	}
 
 	@Override

@@ -76,26 +76,29 @@ public class ClientCredentialsAuthenticator extends TokenBasedAuthenticator {
 		if (!_inUserContext) {
 			return null;
 		}
-		String username;
-		if (_usernameField != null) {
-			username = introspectionResponse.getStringParameter(_usernameField);
-		} else {
-			username = introspectionResponse.getUsername();
-			if (StringServices.isEmpty(username)) {
-				Subject subject = introspectionResponse.getSubject();
-				if (subject != null) {
-					username = subject.getValue();
+
+		// Lookup technical user.
+		String clientID = introspectionResponse.getClientID().toString();
+		String username = _userNameByClientId.getOrDefault(clientID, _defaultUser);
+
+		if (StringServices.isEmpty(username)) {
+			// No technical user was associated with the requesting client, take the user from the
+			// authorization token.
+			if (_usernameField != null) {
+				username = introspectionResponse.getStringParameter(_usernameField);
+			} else {
+				username = introspectionResponse.getUsername();
+				if (StringServices.isEmpty(username)) {
+					Subject subject = introspectionResponse.getSubject();
+					if (subject != null) {
+						username = subject.getValue();
+					}
 				}
 			}
 		}
 
 		if (StringServices.isEmpty(username)) {
-			// Lookup technical user.
-			String clientID = introspectionResponse.getClientID().toString();
-			username = _userNameByClientId.getOrDefault(clientID, _defaultUser);
-		}
-
-		if (StringServices.isEmpty(username)) {
+			// No user available, deny request.
 			String jsonString = introspectionResponse.toJSONObject().toJSONString();
 			AuthenticationFailure authenticationFailure =
 				new AuthenticationFailure(I18NConstants.NO_USERNAME_IN_INTROSPECTION_RESPONSE);

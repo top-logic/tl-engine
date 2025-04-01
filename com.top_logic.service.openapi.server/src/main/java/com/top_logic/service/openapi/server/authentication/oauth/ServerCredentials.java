@@ -12,6 +12,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
@@ -120,10 +121,15 @@ public class ServerCredentials extends AbstractConfiguredInstance<ServerCredenti
 		 * Mapping of client IDs to technical users.
 		 * 
 		 * <p>
-		 * If request processing should happen in user context, but no user name was provided in an
-		 * authorization token, this mapping is used to associate a system user with a client ID for
-		 * which a token was issued. In such case, authentication only succeeds, if a technical user
-		 * is associated to the requesting client.
+		 * This mapping is used to associate a system user to a request done with an authorization
+		 * token issued for some client ID. Only, if no technical user is assigned to a requesting
+		 * client ID, the user name is taken from the introspection of the authorization token.
+		 * </p>
+		 * 
+		 * <p>
+		 * In any case, authentication only succeeds, if some user can be associated to the request
+		 * (either a technical user, or an application user with the same login name as the user
+		 * name for which the authorization token was issued).
 		 * </p>
 		 */
 		@Name(TECHNICAL_USERS)
@@ -149,8 +155,8 @@ public class ServerCredentials extends AbstractConfiguredInstance<ServerCredenti
 			 * The client ID for which an authenticated token was issued.
 			 * 
 			 * <p>
-			 * Use <code>*</code> to assign a technical user to all client IDs without special
-			 * configuration.
+			 * Use <code>*</code> to assign a technical user to all client IDs that do not have
+			 * their own configuration.
 			 * </p>
 			 */
 			@Name(CLIENT_ID)
@@ -159,10 +165,16 @@ public class ServerCredentials extends AbstractConfiguredInstance<ServerCredenti
 
 			/**
 			 * The technical user in which context request processing should occur.
+			 * 
+			 * <p>
+			 * If no value is given, this means that the user name is taken from the inspection of
+			 * the authorization token. In that case, the token must be issued for a concrete user,
+			 * not only for a technical client ID, and this muser must have an account in this
+			 * application.
+			 * </p>
 			 */
 			@Name(USER_NAME)
 			@Options(fun = AllUsers.class, mapping = UserNameMapping.class)
-			@Mandatory
 			String getUserName();
 		}
 	}
@@ -211,10 +223,13 @@ public class ServerCredentials extends AbstractConfiguredInstance<ServerCredenti
 			OpenAPIConfigs.secretsOfType(config.getDomain(), availableSecrets, ServerCredentialSecret.class)
 				.collect(Collectors.toSet());
 
-		TechnicalUserSpec defaultUser = config.getTechnicalUsers().get("*");
-		Map<String, String> userNameByClientId =
-			config.getTechnicalUsers().values().stream().filter(u -> !u.getClientId().equals("*"))
-				.collect(Collectors.toMap(u -> u.getClientId(), u -> u.getUserName()));
+		Map<String, TechnicalUserSpec> technicalUsers = config.getTechnicalUsers();
+		TechnicalUserSpec defaultUser = technicalUsers.get("*");
+		Map<String, String> userNameByClientId = technicalUsers.values().stream()
+			.filter(u -> !u.getClientId().equals("*"))
+			.collect(Collectors.toMap(
+				u -> u.getClientId(),
+				u -> StringServices.nonNull(u.getUserName())));
 
 		switch (secrets.size()) {
 			case 0:

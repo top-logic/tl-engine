@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.form.model;
 
+import java.util.List;
+
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.common.folder.FolderDefinition;
@@ -14,12 +16,14 @@ import com.top_logic.common.webfolder.ui.WebFolderColumnDescriptionBuilder;
 import com.top_logic.common.webfolder.ui.WebFolderComponent;
 import com.top_logic.common.webfolder.ui.WebFolderComponent.WebFolderUploadExecutor;
 import com.top_logic.common.webfolder.ui.WebFolderUIFactory;
-import com.top_logic.common.webfolder.ui.commands.UploadDialog.UploadExecutor;
+import com.top_logic.common.webfolder.ui.commands.UploadDialog;
+import com.top_logic.knowledge.analyze.DefaultAnalyzeService;
 import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.layout.ResourceView;
 import com.top_logic.layout.SingleSelectionModel;
 import com.top_logic.layout.folder.FolderData;
 import com.top_logic.layout.folder.FolderDataOwner;
+import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.FormMemberVisitor;
 import com.top_logic.layout.form.ImmutablePropertyListener;
@@ -43,29 +47,55 @@ public class FolderField extends FormGroup implements FolderDataOwner {
 
 	private FolderData data;
 
-	private FolderField(String name, ResourceView aLabelRessource, Object rootUserObject, String rootNodeText,
-			ExecutableState canAddToClipboard, ExecutableState canUpload, ExecutableState canZipDownload,
-			ExecutableState canCreateFolder, ExecutableState canUpdate, ExecutableState canDelete,
-			Mapping<FormMember, String> configNameMapping) {
-		super(name, aLabelRessource);
-		
-		WebFolderUIFactory factory = WebFolderUIFactory.getInstance();
-		boolean manualLocking = factory.getManualLocking();
-		final TableConfiguration aManager =
-			new WebFolderColumnDescriptionBuilder(canAddToClipboard, canUpdate, canDelete, manualLocking).createWebFolderColumns();
-		aManager.setResPrefix(aLabelRessource);
-		_breadcrumbRenderer = factory.createBreadcrumbRenderer(rootNodeText);
-		this.data =
-			WebFolderUIFactory.createFolderData(this, rootUserObject, WebFolderTreeBuilder.INSTANCE, aManager, this,
-				null, ConfigKey.field(configNameMapping, this));
-		SingleSelectionModel selectionModel = data.getSingleSelectionModel();
-		
-		WebFolderUIFactory.addZipDownloadFolderCommand(this, selectionModel, canZipDownload);
-		WebFolderUIFactory.addClipboardCommand(this, selectionModel, canAddToClipboard);
-		UploadExecutor executer = new WebFolderUploadExecutor(selectionModel, factory.getMaxUploadSize());
+	private boolean _withDescription;
 
-		WebFolderUIFactory.addUploadCommand(this, selectionModel, canUpload, executer);
-		WebFolderUIFactory.addNewFolderCommand(this, selectionModel, canCreateFolder);
+	/**
+	 * @param name
+	 *        the name of the {@link FormField}
+	 * @param resourceView
+	 *        used for I18N
+	 * @param folder
+	 *        the WebFolder to display
+	 * @param rootNodeText
+	 *        the text to be shown in the Breadcrumb if the folder is dispalyed in an own tab
+	 * @param canAddToClipboard
+	 *        can the content of the folder be added to the clipboard
+	 * @param canUpload
+	 *        can data be uploaded to the folder
+	 * @param canZipDownload
+	 *        is a zip download offered
+	 * @param canCreateFolder
+	 *        can a subfolder be created
+	 * @param tableConfiguration
+	 *        the configuration for displaying the contents of the folder, i.e. the documents and
+	 *        subfolders
+	 * @param configNameMapping
+	 *        used for storing personal settings
+	 * @param folderColumns
+	 *        the columns to display, redundant to the tableConfiguration
+	 * @param withDescription
+	 *        will a description field be shown in upload dialog
+	 */
+	protected FolderField(String name, ResourceView resourceView, WebFolder folder, String rootNodeText,
+			ExecutableState canAddToClipboard, ExecutableState canUpload, ExecutableState canZipDownload,
+			ExecutableState canCreateFolder, TableConfiguration tableConfiguration,
+			Mapping<FormMember, String> configNameMapping, List<String> allowedFileTypes, String[] folderColumns,
+			boolean withDescription) {
+		super(name, resourceView);
+		
+		_breadcrumbRenderer = getUIFactory().createBreadcrumbRenderer(rootNodeText);
+		_withDescription = withDescription;
+		this.data =
+			getUIFactory().createFolderData(this, folder, WebFolderTreeBuilder.INSTANCE, tableConfiguration,
+				this,
+				folderColumns, ConfigKey.field(configNameMapping, this));
+
+		SingleSelectionModel selectionModel = getFolderSelectionModel();
+
+		getUIFactory().addZipDownloadFolderCommand(this, selectionModel, canZipDownload);
+		getUIFactory().addClipboardCommand(this, selectionModel, canAddToClipboard);
+		getUIFactory().addUploadCommand(this, selectionModel, canUpload, createUploadExecutor(allowedFileTypes));
+		getUIFactory().addNewFolderCommand(this, selectionModel, canCreateFolder);
 
 		addListener(FormMember.IMMUTABLE_PROPERTY, new ImmutablePropertyListener() {
 
@@ -73,11 +103,45 @@ public class FolderField extends FormGroup implements FolderDataOwner {
 			public Bubble handleImmutableChanged(FormMember sender, Boolean oldValue, Boolean newValue) {
 				if (sender == FolderField.this) {
 					// No change in bubbling events
-					WebFolderColumnDescriptionBuilder.applyImmutableProperty(aManager, newValue);
+					WebFolderColumnDescriptionBuilder.applyImmutableProperty(tableConfiguration, newValue);
 				}
 				return Bubble.BUBBLE;
 			}
 		});
+	}
+
+	private SingleSelectionModel getFolderSelectionModel() {
+		return data.getSingleSelectionModel();
+	}
+
+	/**
+	 * @return the Factory for creating the UI
+	 */
+	protected WebFolderUIFactory getUIFactory() {
+		return WebFolderUIFactory.getInstance();
+	}
+
+
+	private WebFolderUploadExecutor createUploadExecutor(List<String> allowedFileTypes) {
+		WebFolderUploadExecutor executor =
+			new WebFolderUploadExecutor(getFolderSelectionModel(), getUIFactory().getMaxUploadSize(), _withDescription);
+		executor.setAllowedFileTypes(allowedFileTypes);
+		return executor;
+	}
+
+
+	public static TableConfiguration createTableConfiguration(ExecutableState canAddToClipboard,
+			ExecutableState canUpdate,
+			ExecutableState canDelete,
+			boolean withAnalysis, ResourceView resources) {
+		WebFolderUIFactory factory = WebFolderUIFactory.getInstance();
+		boolean manualLocking = factory.getManualLocking();
+		WebFolderColumnDescriptionBuilder descriptionBuilder =
+			new WebFolderColumnDescriptionBuilder(canAddToClipboard, canUpdate, canDelete, manualLocking);
+		descriptionBuilder.setAnalysis(withAnalysis);
+		TableConfiguration tableConfiguration = descriptionBuilder.createWebFolderColumns();
+		tableConfiguration.setResPrefix(resources);
+		return tableConfiguration;
 	}
 
 	public BreadcrumbRenderer getBreadcrumbRenderer() {
@@ -113,19 +177,40 @@ public class FolderField extends FormGroup implements FolderDataOwner {
 
 	public static FolderField createFolderField(String name, WebFolder aFolder, String rootNodeText,
 			Mapping<FormMember, String> configNameMapping) {
+
+		ExecutableState defaultClipabilioty = WebFolderComponent.defaultClipability(aFolder);
+		ExecutableState defaultModifyability = WebFolderComponent.defaultModifiability(aFolder);
+
+		ExecutableState canUpload = defaultModifyability;
 		ExecutableState canZipDownload = ExecutableState.EXECUTABLE;
-		ExecutableState canAddToClipboard = WebFolderComponent.defaultClipability(aFolder);
-		ExecutableState defaultModifiability = WebFolderComponent.defaultModifiability(aFolder);
-		return createFolderField(name, aFolder, rootNodeText, canAddToClipboard, defaultModifiability,
-			canZipDownload, defaultModifiability, defaultModifiability, defaultModifiability, configNameMapping);
+		ExecutableState canAddToClipboard = defaultClipabilioty;
+		ExecutableState canCreateFolder = defaultModifyability;
+		List<String> allowedFileTypes = UploadDialog.ALL_TYPES;
+		boolean withAnalysis = DefaultAnalyzeService.isAvailable();
+		ExecutableState canUpdateDocument = defaultModifyability;
+		ExecutableState canDeleteDocument = defaultModifyability;
+		ResourceView resources = WebFolderUtils.DEFAULT_WEBFOLDER_RESOURCES;
+		TableConfiguration tableConfig =
+			createTableConfiguration(canAddToClipboard, canUpdateDocument, canDeleteDocument, withAnalysis, resources);
+		String[] folderColumns = null;
+		boolean withDescription = true;
+		
+		return createFolderField(name, resources, aFolder, rootNodeText, canAddToClipboard, canUpload,
+			canZipDownload, canCreateFolder, tableConfig,
+			configNameMapping, allowedFileTypes, folderColumns, withDescription);
 	}
 
-	public static FolderField createFolderField(String name, WebFolder aFolder, String rootNodeText,
+	public static FolderField createFolderField(String name, ResourceView resources, WebFolder aFolder,
+			String rootNodeText,
 			ExecutableState canAddToClipboard, ExecutableState canUpload, ExecutableState canZipDownload,
-			ExecutableState canCreateFolder, ExecutableState canUpdate, ExecutableState canDelete,
-			Mapping<FormMember, String> configNameMapping) {
-		return new FolderField(name, WebFolderUtils.DEFAULT_WEBFOLDER_RESOURCES, aFolder, rootNodeText,
-			canAddToClipboard, canUpload, canZipDownload, canCreateFolder, canUpdate, canDelete, configNameMapping);
+			ExecutableState canCreateFolder, TableConfiguration tableConfig,
+			Mapping<FormMember, String> configNameMapping, List<String> allowedFileTypes, String[] folderColumns,
+			boolean withDescription) {
+
+
+		return new FolderField(name, resources, aFolder, rootNodeText,
+			canAddToClipboard, canUpload, canZipDownload, canCreateFolder, tableConfig, configNameMapping,
+			allowedFileTypes, folderColumns, withDescription);
 	}
 
 }

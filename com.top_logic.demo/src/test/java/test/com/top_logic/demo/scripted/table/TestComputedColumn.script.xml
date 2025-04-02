@@ -441,16 +441,6 @@
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
-					command-label="Designmodus"
-					command-name="toggleDesignModeCommand"
-					component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
-					component-name="rootLayout#masterFrame"
-					user-id="root"
-				>
-					<arguments/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.editor.commands.AddTabCommand"
 					command-label="Tab hinzufügen"
 					command-name="addTabCommand"
@@ -1447,6 +1437,16 @@
 					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Strukturen"
 					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.layout.editor.commands.ToggleDesignModeCommand"
+					command-label="Designmodus verlassen"
+					command-name="toggleDesignModeCommand"
+					component-implementation-comment="com.top_logic.addons.loginmessages.layout.LoginMessagesMainLayout"
+					component-name="rootLayout#masterFrame"
+					user-id="root"
+				>
+					<arguments/>
 				</action>
 			</actions>
 		</action>

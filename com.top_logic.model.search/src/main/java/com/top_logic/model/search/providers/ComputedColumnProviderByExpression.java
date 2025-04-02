@@ -75,8 +75,8 @@ public class ComputedColumnProviderByExpression
 		Config.COLUMN_TYPE,
 		Config.COLUMN_VISIBILITY,
 		Config.ACCESSOR,
-		Config.CAN_UPDATE,
 		Config.UPDATER,
+		Config.CAN_UPDATE,
 		Config.ANNOTATIONS,
 	})
 	public interface Config<I extends ComputedColumnProviderByExpression>

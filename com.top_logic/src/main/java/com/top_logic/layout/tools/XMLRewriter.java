@@ -9,7 +9,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import org.w3c.dom.CDATASection;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.Text;
 import org.xml.sax.SAXException;
 
 import com.top_logic.basic.xml.DOMUtil;
@@ -37,7 +41,27 @@ public abstract class XMLRewriter extends Rewriter {
 		// Join adjacent text nodes to be able to format them during pretty printing below.
 		document.normalize();
 
+		makeCData(document.getDocumentElement());
+
 		XMLPrettyPrinter.updateIfChanged(prettyPrinterConfig(), file, document);
+	}
+
+	private void makeCData(Element element) {
+		for (Node child = element.getFirstChild(),
+				next = child == null ? null : child.getNextSibling(); child != null; child = next, next =
+					next == null ? null : next.getNextSibling()) {
+			if (child instanceof Text text) {
+				String str = text.getTextContent();
+				if (str.contains("&") || str.contains("<") || str.contains(">") || str.contains("\\n")) {
+					CDATASection cdata = element.getOwnerDocument().createCDATASection(str);
+					element.insertBefore(cdata, text);
+					element.removeChild(text);
+				}
+			}
+			else if (child instanceof Element sub) {
+				makeCData(sub);
+			}
+		}
 	}
 
 	/**

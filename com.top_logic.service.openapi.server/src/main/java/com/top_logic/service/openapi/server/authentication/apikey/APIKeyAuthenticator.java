@@ -5,9 +5,8 @@
  */
 package com.top_logic.service.openapi.server.authentication.apikey;
 
-import java.io.IOException;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,7 +30,11 @@ public class APIKeyAuthenticator implements Authenticator {
 
 	private String _parameterName;
 
-	private Set<String> _allowedKeys;
+	/**
+	 * Map of API key to technical user name for request processing, or the empty string, if request
+	 * processing should happen in system context.
+	 */
+	private Map<String, String> _accountByApiKey;
 
 	/**
 	 * Creates a new {@link APIKeyAuthenticator}.
@@ -41,52 +44,64 @@ public class APIKeyAuthenticator implements Authenticator {
 	 * @param parameterName
 	 *        Name of the parameter holding the secret.
 	 * @param allowedKeys
-	 *        The API key that are allowed to be authenticated.
+	 *        The API keys that are allowed to be authenticated mapped to the login name of the
+	 *        system user to process the request with. If no technical user should be used for a
+	 *        certain API key, the user name value must be the empty string, not <code>null</code>.
 	 */
-	public APIKeyAuthenticator(APIKeyPosition location, String parameterName, Set<String> allowedKeys) {
+	public APIKeyAuthenticator(APIKeyPosition location, String parameterName, Map<String, String> allowedKeys) {
 		_location = location;
-		_allowedKeys = allowedKeys;
+		_accountByApiKey = allowedKeys;
 		_parameterName = Objects.requireNonNull(parameterName);
 	}
 
 	@Override
 	public Person authenticate(HttpServletRequest req, HttpServletResponse resp)
-			throws AuthenticationFailure, IOException {
-		switch (_location) {
-			case COOKIE:
+			throws AuthenticationFailure {
+		String apikey = switch (_location) {
+			case COOKIE -> {
 				for (Cookie cookie: req.getCookies()) {
 					if (_parameterName.equals(cookie.getName())) {
-						checkKey(cookie.getValue());
-						return null;
+						yield cookie.getValue();
 					}
 				}
 				throw new AuthenticationFailure(I18NConstants.AUTH_FAILED_NO_COOKIE__PARAMETER.fill(_parameterName));
-			case HEADER:
+			}
+			case HEADER -> {
 				String header = req.getHeader(_parameterName);
 				if (header == null) {
 					throw new AuthenticationFailure(
 						I18NConstants.AUTH_FAILED_NO_HEADER__PARAMETER.fill(_parameterName));
 				}
-				checkKey(header);
-				break;
-			case QUERY:
+				yield header;
+			}
+			case QUERY -> {
 				String parameter = req.getParameter(_parameterName);
 				if (parameter == null) {
 					throw new AuthenticationFailure(
 						I18NConstants.AUTH_FAILED_NO_QUERY_PARAM__PARAMETER.fill(_parameterName));
 				}
-				checkKey(parameter);
-				break;
-			default:
-				throw new RuntimeException("Unkown location: " + _location);
+				yield parameter;
+			}
+		};
 
-		}
-		return null;
+		return checkKey(apikey);
 	}
 
-	private void checkKey(String headerValue) throws AuthenticationFailure {
-		if (!_allowedKeys.contains(headerValue)) {
-			throw new AuthenticationFailure(I18NConstants.AUTH_FAILED_INVALID_API_KEY__PARAMETER.fill(_parameterName));
+	private Person checkKey(String apikey) throws AuthenticationFailure {
+		String userName = _accountByApiKey.get(apikey);
+		if (userName == null) {
+			throw new AuthenticationFailure(
+				I18NConstants.AUTH_FAILED_INVALID_API_KEY__PARAMETER.fill(_parameterName));
+		} else if (userName.isEmpty()) {
+			// No technical user.
+			return null;
+		} else {
+			Person result = Person.byName(userName);
+			if (result == null) {
+				throw new AuthenticationFailure(
+					I18NConstants.ERROR_REQUEST_USER_DOES_NOT_EXIST__NAME.fill(userName));
+			}
+			return result;
 		}
 	}
 

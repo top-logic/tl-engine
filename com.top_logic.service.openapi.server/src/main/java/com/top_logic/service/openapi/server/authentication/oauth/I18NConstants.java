@@ -24,6 +24,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_MULTIPLE_CLIENT_CREDENTIAL_SECRETS__DOMAIN;
 
+	/**
+	 * @en "No token introspection endpoint for domain {0}.
+	 */
+	public static ResKey1 ERROR_NO_INTROSPECTION_ENDPOINT__DOMAIN;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -5,7 +5,6 @@
  */
 package com.top_logic.demo.api;
 
-import java.io.IOException;
 import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -103,7 +102,7 @@ public class CustomAuthentication extends AbstractConfiguredInstance<CustomAuthe
 
 		@Override
 		public Person authenticate(HttpServletRequest req, HttpServletResponse resp)
-				throws AuthenticationFailure, IOException {
+				throws AuthenticationFailure {
 			return TLContext.inSystemContext(CustomAuthenticator.class, () -> {
 				String header = req.getHeader(_header);
 				Person account =

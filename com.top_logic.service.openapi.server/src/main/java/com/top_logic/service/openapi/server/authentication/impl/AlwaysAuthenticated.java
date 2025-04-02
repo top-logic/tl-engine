@@ -5,8 +5,6 @@
  */
 package com.top_logic.service.openapi.server.authentication.impl;
 
-import java.io.IOException;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -31,7 +29,7 @@ public class AlwaysAuthenticated implements Authenticator {
 	}
 
 	@Override
-	public Person authenticate(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+	public Person authenticate(HttpServletRequest req, HttpServletResponse resp) {
 		// No authentication or person check.
 		return null;
 	}

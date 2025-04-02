@@ -19,6 +19,12 @@ import com.top_logic.layout.ResPrefix;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
+	/** I18N to be used when the file to be uploaded has not an authorized file type extension. */
+	public static ResKey MESSAGE_KEY_FILENAME_MUST_END_WITH;
+
+	/** Used for information for upload. */
+	public static ResKey UPLOAD_INFO;
+
 
 	public static ResPrefix ZIP_DOWNLOAD_FOLDER_DIALOG;
 	public static ResKey ZIP_DOWNLOAD_FOLDER;

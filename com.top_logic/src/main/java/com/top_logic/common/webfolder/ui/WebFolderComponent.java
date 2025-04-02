@@ -257,6 +257,8 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 		private boolean _withDescription;
 
 		/**
+		 * Sets the allowed file types to the given value
+		 * 
 		 * @param allowedFileTypes
 		 *        a list with the allowed suffixes for files to upload
 		 */

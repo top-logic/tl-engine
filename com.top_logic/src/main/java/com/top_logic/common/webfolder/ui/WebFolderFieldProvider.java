@@ -179,6 +179,8 @@ public class WebFolderFieldProvider extends FolderFieldProvider {
     }
 
 	/**
+	 * Get factory for UI
+	 * 
 	 * @return the Factory for creating the UI
 	 */
 	protected WebFolderUIFactory getUIFactory() {

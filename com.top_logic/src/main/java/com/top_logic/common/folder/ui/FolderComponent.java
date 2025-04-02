@@ -420,6 +420,8 @@ public abstract class FolderComponent extends BuilderComponent implements FormHa
 	}
 
 	/**
+	 * Get factory for UI
+	 * 
 	 * @return the Factory for creating the UI
 	 */
 	protected WebFolderUIFactory getUIFactory() {

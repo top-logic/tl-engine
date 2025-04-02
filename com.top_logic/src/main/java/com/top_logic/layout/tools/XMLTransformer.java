@@ -49,6 +49,10 @@ public abstract class XMLTransformer extends XMLRewriter {
 	}
 
 	private void handleFile(File file) throws IOException, TransformerException {
+		if (!file.exists()) {
+			System.err.println("File does not exist: " + file.getPath());
+			return;
+		}
 		if (file.isDirectory()) {
 			descend(file);
 		} else {

@@ -217,6 +217,11 @@ public abstract class UploadDialog extends AbstractFormPageDialog {
 		return Fragments.empty();
 	}
 
+	/**
+	 * Returns the body html with a field for entering a description
+	 * 
+	 * @return the {@link HTMLFragment} for the body of the dialog
+	 */
 	protected HTMLFragment createBodyContentWith() {
 		return div(FormConstants.FORM_BODY_CSS_CLASS,
 			div(ReactiveFormCSS.RF_COLUMNS_LAYOUT + " cols1",
@@ -234,6 +239,11 @@ public abstract class UploadDialog extends AbstractFormPageDialog {
 						input(DocumentVersion.DESCRIPTION)))));
 	}
 
+	/**
+	 * Returns the body html without a field for entering a description
+	 * 
+	 * @return the {@link HTMLFragment} for the body of the dialog
+	 */
 	protected HTMLFragment createBodyContentWithout() {
 		return span(input(SimpleFormDialog.INPUT_FIELD), text(HTMLConstants.NBSP),
 			errorIcon(SimpleFormDialog.INPUT_FIELD), br(), br(),

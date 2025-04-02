@@ -7,15 +7,20 @@ package com.top_logic.service.openapi.server.authentication.oauth;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
@@ -23,6 +28,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.element.layout.meta.HideActiveIfNot;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
 import com.top_logic.service.openapi.common.authentication.oauth.DefaultURIProvider;
 import com.top_logic.service.openapi.common.authentication.oauth.OpenIDURIProvider;
@@ -36,6 +42,9 @@ import com.top_logic.service.openapi.common.util.OpenAPIConfigs;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.service.openapi.server.authentication.impl.NeverAuthenticated;
+import com.top_logic.service.openapi.server.authentication.oauth.ServerCredentials.Config.TechnicalUserSpec;
+import com.top_logic.service.openapi.server.layout.AllUsers;
+import com.top_logic.service.openapi.server.layout.UserNameMapping;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -55,6 +64,7 @@ public class ServerCredentials extends AbstractConfiguredInstance<ServerCredenti
 	@DisplayOrder({
 		Config.IN_USER_CONTEXT,
 		Config.USERNAME_FIELD,
+		Config.TECHNICAL_USERS,
 	})
 	public interface Config<I extends ServerCredentials>
 			extends ServerAuthentication.Config<I>, TokenBasedAuthentication {
@@ -67,6 +77,11 @@ public class ServerCredentials extends AbstractConfiguredInstance<ServerCredenti
 		 * Configuration name for {@link #getUsernameField()}.
 		 */
 		String USERNAME_FIELD = "username-field";
+
+		/**
+		 * @see #getTechnicalUsers()
+		 */
+		String TECHNICAL_USERS = "technical-users";
 
 		/**
 		 * Whether the protected operation must be executed in user context.
@@ -101,6 +116,67 @@ public class ServerCredentials extends AbstractConfiguredInstance<ServerCredenti
 		 * Setter for {@link #getUsernameField()}.
 		 */
 		void setUsernameField(String value);
+
+		/**
+		 * Mapping of client IDs to technical users.
+		 * 
+		 * <p>
+		 * This mapping is used to associate a system user to a request done with an authorization
+		 * token issued for some client ID. Only, if no technical user is assigned to a requesting
+		 * client ID, the user name is taken from the introspection of the authorization token.
+		 * </p>
+		 * 
+		 * <p>
+		 * In any case, authentication only succeeds, if some user can be associated to the request
+		 * (either a technical user, or an application user with the same login name as the user
+		 * name for which the authorization token was issued).
+		 * </p>
+		 */
+		@Name(TECHNICAL_USERS)
+		@Key(TechnicalUserSpec.CLIENT_ID)
+		@DynamicMode(fun = HideActiveIfNot.class, args = @Ref(IN_USER_CONTEXT))
+		Map<String, TechnicalUserSpec> getTechnicalUsers();
+
+		/**
+		 * Assignment of a system user to a client ID.
+		 */
+		interface TechnicalUserSpec extends ConfigurationItem {
+			/**
+			 * @see #getClientId()
+			 */
+			String CLIENT_ID = "client-id";
+
+			/**
+			 * @see #getUserName()
+			 */
+			String USER_NAME = "user-name";
+
+			/**
+			 * The client ID for which an authenticated token was issued.
+			 * 
+			 * <p>
+			 * Use <code>*</code> to assign a technical user to all client IDs that do not have
+			 * their own configuration.
+			 * </p>
+			 */
+			@Name(CLIENT_ID)
+			@Mandatory
+			String getClientId();
+
+			/**
+			 * The technical user in which context request processing should occur.
+			 * 
+			 * <p>
+			 * If no value is given, this means that the user name is taken from the inspection of
+			 * the authorization token. In that case, the token must be issued for a concrete user,
+			 * not only for a technical client ID, and this muser must have an account in this
+			 * application.
+			 * </p>
+			 */
+			@Name(USER_NAME)
+			@Options(fun = AllUsers.class, mapping = UserNameMapping.class)
+			String getUserName();
+		}
 	}
 
 	/**
@@ -144,13 +220,23 @@ public class ServerCredentials extends AbstractConfiguredInstance<ServerCredenti
 	public Authenticator createAuthenticator(List<? extends SecretConfiguration> availableSecrets) {
 		Config<?> config = getConfig();
 		Set<ServerCredentialSecret> secrets =
-			OpenAPIConfigs.secretsOfType(config, availableSecrets, ServerCredentialSecret.class)
+			OpenAPIConfigs.secretsOfType(config.getDomain(), availableSecrets, ServerCredentialSecret.class)
 				.collect(Collectors.toSet());
+
+		Map<String, TechnicalUserSpec> technicalUsers = config.getTechnicalUsers();
+		TechnicalUserSpec defaultUser = technicalUsers.get("*");
+		Map<String, String> userNameByClientId = technicalUsers.values().stream()
+			.filter(u -> !u.getClientId().equals("*"))
+			.collect(Collectors.toMap(
+				u -> u.getClientId(),
+				u -> StringServices.nonNull(u.getUserName())));
+
 		switch (secrets.size()) {
 			case 0:
 				return NeverAuthenticated.missingSecret();
 			case 1:
-				return new ClientCredentialsAuthenticator(config, secrets.iterator().next());
+				return new ClientCredentialsAuthenticator(config, secrets.iterator().next(),
+					defaultUser == null ? null : defaultUser.getUserName(), userNameByClientId);
 			default:
 				throw new TopLogicException(
 					I18NConstants.ERROR_MULTIPLE_CLIENT_CREDENTIAL_SECRETS__DOMAIN.fill(config.getDomain()));

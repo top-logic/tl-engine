@@ -5,7 +5,6 @@
  */
 package com.top_logic.service.openapi.server.authentication.impl;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -37,8 +36,7 @@ public class DispatchingAuthenticator implements Authenticator {
 	}
 
 	@Override
-	public Person authenticate(HttpServletRequest req, HttpServletResponse resp)
-			throws AuthenticationFailure, IOException {
+	public Person authenticate(HttpServletRequest req, HttpServletResponse resp) throws AuthenticationFailure {
 		try {
 			return _first.authenticate(req, resp);
 		} catch (AuthenticationFailure ex1) {

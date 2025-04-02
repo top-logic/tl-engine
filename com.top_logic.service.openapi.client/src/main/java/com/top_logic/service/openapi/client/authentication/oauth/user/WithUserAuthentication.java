@@ -9,6 +9,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Derived;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.func.misc.AlwaysFalse;
 import com.top_logic.service.openapi.client.authentication.SecurityEnhancer;
 import com.top_logic.service.openapi.client.authentication.config.ClientAuthentication;
@@ -26,6 +27,7 @@ public class WithUserAuthentication extends AbstractConfiguredInstance<WithUserA
 	/**
 	 * Configuration options for {@link WithUserAuthentication}.
 	 */
+	@TagName("user-token-authentication")
 	public interface Config<I extends WithUserAuthentication> extends ClientAuthentication.Config<I> {
 
 		@Override

@@ -16,8 +16,8 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 public interface CommandConfirmation {
 
 	/**
-	 * Creates the confirm message that should be displayed, before a command be executed on the
-	 * given model.
+	 * Creates the confirm message that should be displayed, before a command is executed on a given
+	 * model.
 	 *
 	 * @param component
 	 *        The context component.

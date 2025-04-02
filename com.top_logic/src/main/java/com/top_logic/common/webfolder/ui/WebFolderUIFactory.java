@@ -225,7 +225,7 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 	 * @param canCreate
 	 *        whether the command should be executable
 	 */
-	public static CommandField addClipboardCommand(FormContainer container, SingleSelectionModel selectionModel,
+	public CommandField addClipboardCommand(FormContainer container, SingleSelectionModel selectionModel,
 			ExecutableState canCreate) {
 		CommandField theField;
 
@@ -258,7 +258,7 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 	 * @param canCreate
 	 *        whether the command should be executable
 	 */
-	public static CommandField addNewFolderCommand(FormContainer container, SingleSelectionModel selectionModel,
+	public CommandField addNewFolderCommand(FormContainer container, SingleSelectionModel selectionModel,
 			ExecutableState canCreate) {
 		CommandField theField;
         
@@ -282,7 +282,7 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
         return theField;
 	}
 
-	public static CommandField addZipDownloadFolderCommand(FormContainer container,
+	public CommandField addZipDownloadFolderCommand(FormContainer container,
 			SingleSelectionModel selectionModel,
 			ExecutableState executability) {
 		CommandField theField;
@@ -318,7 +318,7 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 	 * @param disabledImage
 	 *        A {@link ThemeImage} to display, when download is not possible.
 	 */
-	public static CommandField createZipDownloadField(SingleSelectionModel selectionModel, String fieldName,
+	public CommandField createZipDownloadField(SingleSelectionModel selectionModel, String fieldName,
 			ThemeImage executableImage, ThemeImage disabledImage) {
 		ZipDownloadExecutable executable = new ZipDownloadExecutable(selectionModel);
 		CommandField field =
@@ -343,7 +343,7 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 	 * @param canCreate
 	 *        whether the command should be executable
 	 */
-	public static CommandField addUploadCommand(FormContainer container, SingleSelectionModel selectionModel,
+	public CommandField addUploadCommand(FormContainer container, SingleSelectionModel selectionModel,
 			ExecutableState canCreate, UploadExecutor executer) {
 		CommandField theField;
 
@@ -375,7 +375,7 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 	 * @param configKey
 	 *        The key to store personal folder configuration with.
 	 */
-	public static FolderData createFolderData(FolderDataOwner owner, Object rootUserObject,
+	public FolderData createFolderData(FolderDataOwner owner, Object rootUserObject,
 			TreeBuilder<FolderNode> treeBuilder, TableConfiguration tableConfiguration,
 			FormContainer formContext, String[] folderColumns, ConfigKey configKey) {
 
@@ -387,7 +387,7 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 		return new FolderData(owner, rootUserObject, treeBuilder, formTable, configKey);
 	}
 
-	private static String[] applyDefaultColumns(String[] someColumns) {
+	private String[] applyDefaultColumns(String[] someColumns) {
 		if (someColumns == null) {
 			return defaultColumns();
 		} else {
@@ -398,7 +398,7 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 	/**
 	 * Creates the full columns list.
 	 */
-	public static String[] defaultColumns() {
+	public String[] defaultColumns() {
 		boolean withAnalyze = DefaultAnalyzeService.isAvailable();
 		boolean withClipboard = true;
 		boolean withUpdate = true;
@@ -409,7 +409,7 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 	/**
 	 * Creates a customized columns list.
 	 */
-	public static String[] defaultColumns(boolean withUpdate, boolean withDelete, boolean withClipboard,
+	public String[] defaultColumns(boolean withUpdate, boolean withDelete, boolean withClipboard,
 			boolean withAnalyze) {
 		if (withAnalyze && withClipboard && withDelete) {
 			return WebFolderAccessor.DEFAULT_COLUMNS;
@@ -451,7 +451,7 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 	 * 
 	 * @return a control representing the folder of the given data on the client
 	 */
-	public static FolderControl createControl(BreadcrumbRenderer breadcrumbRenderer, FolderData data,
+	public FolderControl createControl(BreadcrumbRenderer breadcrumbRenderer, FolderData data,
 			FormContainer aContext, FileDropHandler fileDropHandler) {
 		FolderControl theControl = 
 			new FolderControl(data, breadcrumbRenderer, createTableRenderer(data), fileDropHandler);
@@ -462,11 +462,11 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 		return theControl;
 	}
 
-	private static ITableRenderer createTableRenderer(FolderData folderData) {
+	private ITableRenderer createTableRenderer(FolderData folderData) {
 		return FolderTableRenderer.newInstance();
 	}
 
-	private static void addButtonControl(FolderControl folderControl, FormContainer formContainer, String memberName) {
+	private void addButtonControl(FolderControl folderControl, FormContainer formContainer, String memberName) {
 		if (formContainer.hasMember(memberName)) {
 			folderControl.addTitleBarControl(
 				new ButtonControl((CommandModel) formContainer.getMember(memberName)));
@@ -507,7 +507,7 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 	 * @param field
 	 *        The {@link FolderField} to display.
 	 */
-	public static FolderControl createControl(final FolderField field) {
+	public FolderControl createControl(final FolderField field) {
 		FileDropHandler fileDropHandler =
 			new FolderFileDropHandler(false, !field.isImmutable(), WebFolderUIFactory.getInstance().getMaxUploadSize());
 		final FolderControl control =

@@ -50,12 +50,14 @@ public class FolderField extends FormGroup implements FolderDataOwner {
 	private boolean _withDescription;
 
 	/**
+	 * Creates a new instance which will behave according to the given parameters.
+	 * 
 	 * @param name
 	 *        the name of the {@link FormField}
 	 * @param resourceView
 	 *        used for I18N
 	 * @param folder
-	 *        the WebFolder to display
+	 *        the {@link WebFolder} to display
 	 * @param rootNodeText
 	 *        the text to be shown in the Breadcrumb if the folder is dispalyed in an own tab
 	 * @param canAddToClipboard
@@ -72,7 +74,8 @@ public class FolderField extends FormGroup implements FolderDataOwner {
 	 * @param configNameMapping
 	 *        used for storing personal settings
 	 * @param folderColumns
-	 *        the columns to display, redundant to the tableConfiguration
+	 *        the columns to display, redundant to the table configuration. If not set all default
+	 *        columns for a folder will be added.
 	 * @param withDescription
 	 *        will a description field be shown in upload dialog
 	 */
@@ -115,6 +118,8 @@ public class FolderField extends FormGroup implements FolderDataOwner {
 	}
 
 	/**
+	 * Get factory for UI
+	 * 
 	 * @return the Factory for creating the UI
 	 */
 	protected WebFolderUIFactory getUIFactory() {
@@ -129,7 +134,21 @@ public class FolderField extends FormGroup implements FolderDataOwner {
 		return executor;
 	}
 
-
+	/**
+	 * Creates and returns a {@link TableConfiguration} for displaying documents
+	 * 
+	 * @param canAddToClipboard
+	 *        can the document be added to the clipboard
+	 * @param canUpdate
+	 *        can the document be updated
+	 * @param canDelete
+	 *        can the document be deleted
+	 * @param withAnalysis
+	 *        will analysis fields (similar documents and keywords) be shown
+	 * @param resources
+	 *        bas for the I18N
+	 * @return the requested {@link TableConfiguration}
+	 */
 	public static TableConfiguration createTableConfiguration(ExecutableState canAddToClipboard,
 			ExecutableState canUpdate,
 			ExecutableState canDelete,

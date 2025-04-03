@@ -14,11 +14,12 @@
 			<buttons>
 				<button id="Ticket2725_Confirm_Progress"
 					class="com.top_logic.demo.layout.form.demo.TestLayoutProblems$Ticket2725_Command"
-					confirm="true"
-				/>
+				>
+					<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
+				</button>
 				<button id="Ticket2725_NoConfirm_Progress"
 					class="com.top_logic.demo.layout.form.demo.TestLayoutProblems$Ticket2725_Command"
-					confirm="false"
+					confirmation=""
 				/>
 			</buttons>
 		</component>

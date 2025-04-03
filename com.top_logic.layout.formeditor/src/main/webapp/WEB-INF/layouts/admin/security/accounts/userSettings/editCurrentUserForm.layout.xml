@@ -37,10 +37,12 @@
 					function="contact -> $contact.get(`Contacts:PersonContact#account`).singleElement()"
 					input="model(self())"
 				/>
-				<confirmMessage key="dynamic.8baeb646-37f2-428c-b8e7-4fd4bfcc766d">
-					<en>Are you sure they want to delete your personal settings?</en>
-					<de>Sind Sie sicher, dass Sie Ihre persönlichen Einstellungen löschen wollen?</de>
-				</confirmMessage>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation">
+					<confirmMessage key="dynamic.8baeb646-37f2-428c-b8e7-4fd4bfcc766d">
+						<en>Are you sure they want to delete your personal settings?</en>
+						<de>Sind Sie sicher, dass Sie Ihre persönlichen Einstellungen löschen wollen?</de>
+					</confirmMessage>
+				</confirmation>
 			</button>
 			<button id="resetStartPage"
 				class="com.top_logic.contact.layout.person.related.ResetStartPageCommandHandler"

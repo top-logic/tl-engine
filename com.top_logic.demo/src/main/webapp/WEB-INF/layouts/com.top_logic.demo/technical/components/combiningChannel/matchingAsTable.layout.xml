@@ -25,7 +25,7 @@
 			<elements><![CDATA[model->all(`DemoTypes:A`)
   .filter(x->$x.get(`DemoTypes:A#checklistMulti`).containsElement($model[0]))
   .filter(x->$x.get(`DemoTypes:A#checklistSingle`) == $model[1])]]></elements>
-			<supportsElement>element-&gt;$element.instanceOf(`DemoTypes:A`)</supportsElement>
+			<supportsElement><![CDATA[element->$element.instanceOf(`DemoTypes:A`)]]></supportsElement>
 			<modelForElement>null</modelForElement>
 			<supportsModel>true</supportsModel>
 		</modelBuilder>

@@ -226,8 +226,8 @@
 				<button id="deleteThemeVariable"
 					class="com.top_logic.layout.themeedit.browser.providers.DeleteThemeVariableHandler"
 					clique="delete"
-					confirm="true"
 				>
+					<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
 					<executability>
 						<rule class="com.top_logic.layout.themeedit.browser.providers.theme.ThemeIsNotProtectedRule"/>
 						<rule class="com.top_logic.layout.themeedit.browser.providers.NotInheritedThemeVariableRule"/>

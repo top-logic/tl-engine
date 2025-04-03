@@ -30,7 +30,7 @@
 			<button id="ID_248b2b03_dd6d_4de8_bc25_3b7e8ef061b2"
 				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
 				clique=""
-				confirm="false"
+				confirmation=""
 				disabledImage=""
 				group=""
 				image="css:fas fa-plus"
@@ -56,7 +56,6 @@
 			<button id="ID_8ee64c6a_7d45_4027_941a_1f77af0b2d67"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
 				clique="delete"
-				confirm="true"
 				disabledImage=""
 				group="Delete"
 				image=""
@@ -68,10 +67,12 @@
 						show-disabled="false"
 					/>
 				</executability>
-				<confirmMessage key="dynamic.3f91978e-be29-4fb9-ae76-99a007af42db">
-					<en>Should the thing "{0}" including all its uses be removed from its world?</en>
-					<de>Soll das Ding "{0}" inklusive all seiner Nutzungen von seiner Welt entfernt werden?</de>
-				</confirmMessage>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation">
+					<confirmMessage key="dynamic.3f91978e-be29-4fb9-ae76-99a007af42db">
+						<en>Should the thing "{0}" including all its uses be removed from its world?</en>
+						<de>Soll das Ding "{0}" inklusive all seiner Nutzungen von seiner Welt entfernt werden?</de>
+					</confirmMessage>
+				</confirmation>
 				<resourceKey key="dynamic.10ac1082-edbc-41df-b8b9-9efee5261bd4">
 					<en>Delete thing</en>
 					<de>Ding löschen</de>

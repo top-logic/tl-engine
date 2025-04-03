@@ -5,8 +5,8 @@
 	titleKey="layouts.layoutdemo.table.DemoTableComponentCustom.title"
 >
 	<renderer class="com.top_logic.layout.table.renderer.ConfiguredTableRenderer">
-		<template>
-		<![CDATA[
+		<template><![CDATA[
+		
 			<table id="{id}">
 				<tbody>
 					<tr>
@@ -25,11 +25,11 @@
 					{foreach(row : rows, '', $row)}
 				</tbody>
 			</table>
-		]]>
-		</template>
+		
+		]]></template>
 
-		<row-template>
-		<![CDATA[
+		<row-template><![CDATA[
+		
 			<tr id="{id}" onclick="{selectAction}">
 				{foreach(col : cols, '', {
 					<td>
@@ -41,7 +41,7 @@
 					</td>
 				})}
 			</tr>
-		]]>
-		</row-template>
+		
+		]]></row-template>
 	</renderer>
 </include>

@@ -83,10 +83,11 @@
 			<button id="delete"
 				class="com.top_logic.base.locking.ui.ReleaseLockCommand"
 				clique="delete"
-				confirm="true"
 				resourceKey="${resPrefix}.releaseLock"
 				target="selection(self())"
-			/>
+			>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
+			</button>
 		</buttons>
 	</tree-table>
 </template>

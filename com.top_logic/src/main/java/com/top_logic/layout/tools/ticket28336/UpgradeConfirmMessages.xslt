@@ -5,7 +5,7 @@
 	version="1.0"
 >
 	<xsl:template match="//*[@confirm='true']/confirmMessage">
-		<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation">
+		<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation">
 			<xsl:copy>
 				<xsl:apply-templates select="node()|@*"/>
 			</xsl:copy>

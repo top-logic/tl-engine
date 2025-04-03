@@ -7,71 +7,47 @@ package com.top_logic.tool.boundsec.confirm;
 
 import java.util.Map;
 
-import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
-import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.util.ResKey1;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.tool.boundsec.CommandHandler.TargetConfig;
 import com.top_logic.tool.boundsec.I18NConstants;
 
 /**
- * {@link CommandConfirmation} with a custom message.
+ * {@link CommandConfirmation} that shows a generic confirm message.
+ * 
+ * @implNote This class is used as annotated default and therefore must not have any configurable
+ *           options. Changing values of default items is not supported by the layout editor.
  */
 @InApp
-public class DefaultConfirmation extends AbstractConfiguredInstance<DefaultConfirmation.Config<?>>
-		implements CommandConfirmation {
+public class DefaultConfirmation implements CommandConfirmation {
 
 	/**
-	 * Configuration options for {@link DefaultConfirmation}.
+	 * Singleton {@link DefaultConfirmation} instance.
 	 */
-	public interface Config<I extends DefaultConfirmation> extends PolymorphicConfiguration<I> {
-		/**
-		 * @see #getConfirmMessage()
-		 */
-		String CONFIRM_MESSAGE = "confirmMessage";
-
-		/**
-		 * The message to display to the user requesting for confirmation that the command should
-		 * really be executed.
-		 * 
-		 * <p>
-		 * The message can refer to the {@link TargetConfig#getTarget() target model} of the command
-		 * using the <code>{0}</code> placeholder.
-		 * </p>
-		 * 
-		 * <p>
-		 * If no message is specified, a default confirmation message is shown.
-		 * </p>
-		 */
-		@Name(CONFIRM_MESSAGE)
-		ResKey1 getConfirmMessage();
-	}
+	public static final DefaultConfirmation INSTANCE = new DefaultConfirmation();
 
 	/**
-	 * Creates a {@link DefaultConfirmation} from configuration.
-	 * 
-	 * @param context
-	 *        The context for instantiating sub configurations.
-	 * @param config
-	 *        The configuration.
+	 * Creates a {@link DefaultConfirmation}.
 	 */
-	@CalledByReflection
-	public DefaultConfirmation(InstantiationContext context, Config<?> config) {
-		super(context, config);
+	protected DefaultConfirmation() {
+		// Singleton constructor.
 	}
 
 	@Override
 	public ResKey getConfirmation(LayoutComponent component, ResKey commandLabel, Object model, Map<String, Object> arguments) {
-		ResKey1 customConfirm = getConfig().getConfirmMessage();
-		if (customConfirm != null) {
-			return customConfirm.fill(model);
-		}
+		return getDefaultConfirmation(component, commandLabel, model, arguments);
+	}
 
+	/**
+	 * Provides a default confirmation message, if there is none configured.
+	 * 
+	 * @param component
+	 *        See {@link #getConfirmation(LayoutComponent, ResKey, Object, Map)}
+	 * @param arguments
+	 *        See {@link #getConfirmation(LayoutComponent, ResKey, Object, Map)}
+	 */
+	protected ResKey getDefaultConfirmation(LayoutComponent component, ResKey commandLabel, Object model,
+			Map<String, Object> arguments) {
 		return model == null ? I18NConstants.DEFAULT_CONFIRM_MESSAGE__COMMAND.fill(commandLabel)
 			: I18NConstants.DEFAULT_CONFIRM_MESSAGE__COMMAND_MODEL.fill(commandLabel, model);
 	}

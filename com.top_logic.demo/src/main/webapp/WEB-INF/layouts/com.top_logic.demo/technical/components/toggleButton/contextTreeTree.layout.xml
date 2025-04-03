@@ -39,7 +39,7 @@
 				</resourceKey>
 				<executability>
 					<rule-by-expression show-disabled="true">
-						<decision>input -&gt; $input[1] != null || #("Es ist nichts selektiert."@de, "Nothing selected."@en)</decision>
+						<decision><![CDATA[input -> $input[1] != null || #("Es ist nichts selektiert."@de, "Nothing selected."@en)]]></decision>
 					</rule-by-expression>
 				</executability>
 				<activeResourceKey key="dynamic.70b4fa4b-3094-4620-9114-fbf003920ca1">
@@ -88,7 +88,7 @@
 				</resourceKey>
 				<executability>
 					<rule-by-expression show-disabled="true">
-						<decision>model -&gt; $model.instanceOf(`DemoTypes:A`) || #("Nur für Objekte vom Typ A möglich"@de, "Only possible for objects of type A"@en)</decision>
+						<decision><![CDATA[model -> $model.instanceOf(`DemoTypes:A`) || #("Nur für Objekte vom Typ A möglich"@de, "Only possible for objects of type A"@en)]]></decision>
 					</rule-by-expression>
 				</executability>
 				<activeResourceKey key="dynamic.188b913a-6f62-47ba-bc9f-f432f8aea39d">

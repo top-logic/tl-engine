@@ -20,7 +20,7 @@
 			modelForElement="candidate -> model -> $model"
 		/>
 		<defaultSelectionProvider class="com.top_logic.model.search.providers.ListSelectionProviderByExpression">
-			<function>options -&gt; $options.filter(x -&gt; $x.get(`DemoTypes:DemoTypes.All#name`).stringContains("1"))</function>
+			<function><![CDATA[options -> $options.filter(x -> $x.get(`DemoTypes:DemoTypes.All#name`).stringContains("1"))]]></function>
 		</defaultSelectionProvider>
 		<selectionOnModelChange class="com.top_logic.model.search.providers.SelectionUpdaterByExpression">
 			<algorithm><![CDATA[model -> currentSelection -> {

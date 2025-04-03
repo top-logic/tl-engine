@@ -22,7 +22,7 @@
 			</resourceKey>
 			<executability>
 				<rule-by-expression show-disabled="true">
-					<decision>x -&gt; $x != null || #("Kein Parent-Knoten gewählt"@de, "No parent node selected"@en)</decision>
+					<decision><![CDATA[x -> $x != null || #("Kein Parent-Knoten gewählt"@de, "No parent node selected"@en)]]></decision>
 				</rule-by-expression>
 			</executability>
 			<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"

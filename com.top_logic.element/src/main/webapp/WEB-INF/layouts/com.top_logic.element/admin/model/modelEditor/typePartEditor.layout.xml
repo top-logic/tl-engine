@@ -171,10 +171,10 @@
 						<button id="deleteAttribute"
 							class="com.top_logic.element.layout.meta.TLModelPartDeleteHandler"
 							clique="delete"
-							confirm="true"
 							group="Delete"
 							resourceKey="element.meta.attribute.edit.attRemove"
 						>
+							<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
 							<executability>
 								<reference rule-id="GeneralDelete"/>
 								<rule class="com.top_logic.element.layout.meta.DisableIfDeleteProtected"/>

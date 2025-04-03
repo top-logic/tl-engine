@@ -17,7 +17,7 @@
 		<open-handler id="ID_66601067_fb85_4723_945a_b3ff7e1eb679"
 			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
 			clique="create"
-			confirm="false"
+			confirmation=""
 			disabledImage=""
 			group="Create"
 			image="css:fas fa-link"
@@ -41,7 +41,7 @@
 		/>
 		<create-handler id="ID_45d1997b_286d_4aa0_8035_bf0f8efbb625"
 			clique="save"
-			confirm="false"
+			confirmation=""
 			disabledImage=""
 			group="Create"
 			ignoreWarnings="default"

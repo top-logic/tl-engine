@@ -35,7 +35,7 @@
 			<button id="ID_1a592b61_9297_4b7e_95aa_996b2f5c4d41"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
 				clique="delete"
-				confirm="false"
+				confirmation=""
 				disabledImage=""
 				group="Delete"
 				image=""
@@ -43,7 +43,7 @@
 			>
 				<executability>
 					<rule-by-expression>
-						<decision>x -&gt; !$x.containsElement(`tl.demo.graph#ROOT`) || #("Der Wurzelknoten kann nicht gelöscht werden"@de, "The root node cannot be deleted"@en)</decision>
+						<decision><![CDATA[x -> !$x.containsElement(`tl.demo.graph#ROOT`) || #("Der Wurzelknoten kann nicht gelöscht werden"@de, "The root node cannot be deleted"@en)]]></decision>
 						<show-disabled>true</show-disabled>
 					</rule-by-expression>
 				</executability>

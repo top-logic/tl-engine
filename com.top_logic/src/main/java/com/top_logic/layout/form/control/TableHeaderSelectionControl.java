@@ -202,7 +202,9 @@ public class TableHeaderSelectionControl extends AbstractControlBase implements 
 	private void writeOnChange(TagWriter out) throws IOException {
 		out.beginAttribute(ONCHANGE_ATTR);
 		out.append(FormConstants.SELECTION_PART_CONTROL_CLASS);
-		out.append(".handleOnChange(this, true);");
+		out.append(".handleOnChange(this, ");
+		writeIdJsString(out);
+		out.append(", true);");
 		out.append("return true;");
 		out.endAttribute();
 	}

@@ -30,7 +30,7 @@
 						clique="delete" 
 						resourceKey="tl.command.delete" 
 						group="Delete" 
-						confirm="true"
+						confirmation="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"
 					>
 						<executability>
 							<reference rule-id="GeneralDelete"/>

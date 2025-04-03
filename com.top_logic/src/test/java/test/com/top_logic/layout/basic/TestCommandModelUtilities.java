@@ -12,6 +12,8 @@ import junit.framework.Test;
 import test.com.top_logic.basic.BasicTestCase;
 
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.AbstractCommandModel;
@@ -21,6 +23,8 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
+import com.top_logic.tool.boundsec.confirm.DefaultConfirmation;
 
 /**
  * The class {@link TestCommandModelUtilities} tests methods in
@@ -34,6 +38,18 @@ public class TestCommandModelUtilities extends BasicTestCase {
 
 	public static final class TestingConfirmCommand extends AbstractCommandHandler {
 
+		/**
+		 * Configuration options for {@link TestCommandModelUtilities.TestingConfirmCommand}.
+		 */
+		public interface Config extends AbstractCommandHandler.Config {
+
+			@Override
+			@ItemDefault(DefaultConfirmation.class)
+			PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
+
+		}
+
+
 		public TestingConfirmCommand(InstantiationContext context, Config config) {
 			super(context, config);
 		}
@@ -44,9 +60,8 @@ public class TestCommandModelUtilities extends BasicTestCase {
 		}
 
 		public static AbstractCommandHandler newInstance(String commandId, boolean needsConfirm) {
-			return newInstance(updateConfirm(
-					AbstractCommandHandler.<Config> createConfig(TestingConfirmCommand.class, commandId),
-				needsConfirm));
+			return newInstance(
+				AbstractCommandHandler.<Config> createConfig(TestingConfirmCommand.class, commandId));
 		}
 
 	}

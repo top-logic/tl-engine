@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.form.CustomEditContext;
 import com.top_logic.element.meta.form.EditContext;
@@ -28,10 +29,11 @@ import com.top_logic.element.meta.form.FieldProvider;
 import com.top_logic.element.meta.form.FieldProviderAnnotation;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.model.utility.SimplePartAnnotationOptions;
 import com.top_logic.layout.form.values.ItemOptionMapping;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.table.filter.AllCellsExist;
 import com.top_logic.layout.table.model.AbstractFieldProvider;
 import com.top_logic.layout.table.model.ColumnConfiguration;
@@ -46,6 +48,8 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
+import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.AllTypes;
@@ -189,6 +193,7 @@ public class ComputedColumnProviderByExpression
 		 * </p>
 		 */
 		@Name(CAN_UPDATE)
+		@DynamicMode(fun = ShowIfUpdater.class, args = @Ref(UPDATER))
 		Expr getCanUpdate();
 
 		/**
@@ -225,6 +230,16 @@ public class ComputedColumnProviderByExpression
 		@Override
 		@Options(fun = SimplePartAnnotationOptions.ForTypeRef.class, args = @Ref(COLUMN_TYPE), mapping = ItemOptionMapping.class)
 		Collection<TLAttributeAnnotation> getAnnotations();
+
+		/**
+		 * Function that shows the field only if an updater is specified.
+		 */
+		class ShowIfUpdater extends Function1<FieldMode, Expr> {
+			@Override
+			public FieldMode apply(Expr updater) {
+				return updater != null ? FieldMode.ACTIVE : FieldMode.INVISIBLE;
+			}
+		}
 	}
 
 	private final QueryExecutor _accessor;
@@ -255,9 +270,8 @@ public class ComputedColumnProviderByExpression
 		_accessor = QueryExecutor.compile(config.getAccessor());
 		_updater = QueryExecutor.compileOptional(config.getUpdater());
 		_columnType = config.getColumnType().resolveType();
-		_canUpdate = config.getCanUpdate() == null ? null : QueryExecutor.compile(config.getCanUpdate());
-		_dynamicColumnLabel =
-			config.getDynamicColumnLabel() == null ? null : QueryExecutor.compile(config.getDynamicColumnLabel());
+		_canUpdate = QueryExecutor.compileOptional(config.getCanUpdate());
+		_dynamicColumnLabel = QueryExecutor.compileOptional(config.getDynamicColumnLabel());
 		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, c -> _component = c);
 	}
 
@@ -313,7 +327,7 @@ public class ComputedColumnProviderByExpression
 			if (label instanceof ResKey) {
 				return (ResKey) label;
 			}
-			return ResKey.text(MetaLabelProvider.INSTANCE.getLabel(label));
+			return ResKey.text(ToString.toString(label));
 		}
 		return config.getColumnLabel();
 	}
@@ -323,7 +337,7 @@ public class ComputedColumnProviderByExpression
 			return true;
 		}
 		Object result = _canUpdate.execute(row, _component.getModel());
-		return result instanceof Boolean && (Boolean) result;
+		return SearchExpression.asBoolean(result);
 	}
 
 	private TLTypeContext createTypeContext(Config<?> config) {

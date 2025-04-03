@@ -17,8 +17,9 @@ import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.FormField;
@@ -34,6 +35,8 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CloseModalDialogCommandHandler;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
+import com.top_logic.tool.boundsec.confirm.DefaultConfirmation;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.util.error.TopLogicException;
@@ -259,8 +262,8 @@ public class MaintenanceWindowComponent extends FormComponent {
 		public interface Config extends AbstractCommandHandler.Config {
 
 			@Override
-			@BooleanDefault(true)
-			boolean getConfirm();
+			@ItemDefault(DefaultConfirmation.class)
+			PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
 
 			@Override
 			@FormattedDefault(SimpleBoundCommandGroup.WRITE_NAME)
@@ -348,8 +351,8 @@ public class MaintenanceWindowComponent extends FormComponent {
 		public interface Config extends AbstractCommandHandler.Config {
 
 			@Override
-			@BooleanDefault(true)
-			boolean getConfirm();
+			@ItemDefault(DefaultConfirmation.class)
+			PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
 
 			@Override
 			@FormattedDefault(SimpleBoundCommandGroup.WRITE_NAME)

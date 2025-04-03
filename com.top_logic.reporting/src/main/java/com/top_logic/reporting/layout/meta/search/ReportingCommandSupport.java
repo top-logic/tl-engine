@@ -13,8 +13,9 @@ import javax.xml.stream.XMLStreamException;
 import com.top_logic.base.services.simpleajax.AJAXCommandHandler;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.meta.expression.SaveExpressionCommand;
 import com.top_logic.element.layout.meta.search.DeleteQueryCommandHandler;
@@ -42,6 +43,8 @@ import com.top_logic.reporting.report.wrap.StoredReport;
 import com.top_logic.reporting.report.xmlutilities.ReportWriter;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
+import com.top_logic.tool.boundsec.confirm.DefaultConfirmation;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.tool.execution.CombinedExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRule;
@@ -187,8 +190,8 @@ public class ReportingCommandSupport implements ReportConstants{
 		public interface Config extends AJAXCommandHandler.Config {
 
 			@Override
-			@BooleanDefault(true)
-			boolean getConfirm();
+			@ItemDefault(DefaultConfirmation.class)
+			PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
 
 		}
     	

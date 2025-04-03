@@ -19,8 +19,8 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.CommandModel;
@@ -36,6 +36,8 @@ import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
+import com.top_logic.tool.boundsec.confirm.DefaultConfirmation;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
@@ -92,8 +94,8 @@ public class TestAbstractCommandHandler extends AbstractLayoutTest {
 		public interface Config extends AbstractCommandHandler.Config {
 
 			@Override
-			@BooleanDefault(true)
-			boolean getConfirm();
+			@ItemDefault(DefaultConfirmation.class)
+			PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
 
 			@Override
 			@FormattedDefault(SimpleBoundCommandGroup.WRITE_NAME)

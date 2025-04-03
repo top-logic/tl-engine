@@ -71,9 +71,8 @@ public class CommandHandlerByExpression extends AbstractCommandHandler {
 		Config.TRANSACTION,
 		Config.POST_CREATE_ACTIONS,
 		Config.FORM_APPLY,
-		Config.CONFIRM_PROPERTY,
 		Config.CLOSE_DIALOG,
-		Config.CONFIRM_MESSAGE,
+		Config.CONFIRMATION,
 		Config.SECURITY_OBJECT,
 	})
 	public interface Config extends AbstractCommandHandler.Config, WithPostCreateActions.Config {

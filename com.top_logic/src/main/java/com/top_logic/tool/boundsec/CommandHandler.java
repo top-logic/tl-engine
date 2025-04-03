@@ -43,7 +43,6 @@ import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.func.IFunction0;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ModelSpec;
@@ -61,7 +60,6 @@ import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.form.values.edit.annotation.CollapseEntries;
-import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
 import com.top_logic.layout.form.values.edit.initializer.UUIDInitializer;
@@ -294,49 +292,9 @@ public interface CommandHandler
 	public interface ConfirmConfig extends ConfigurationItem {
 
 		/**
-		 * @see #getConfirm()
-		 */
-		String CONFIRM_PROPERTY = "confirm";
-
-		/**
-		 * @see #getConfirmMessage()
-		 */
-		String CONFIRM_MESSAGE = "confirmMessage";
-
-		/**
 		 * @see #getConfirmation()
 		 */
 		String CONFIRMATION = "confirmation";
-
-		/**
-		 * Whether the user is asked for confirmation before the command is actually executed.
-		 * 
-		 * @deprecated Configure {@link #getConfirmation()}
-		 */
-		@Deprecated
-		@Name(CONFIRM_PROPERTY)
-		boolean getConfirm();
-
-		/**
-		 * The message to display to the user requesting for confirmation that the command should
-		 * really be executed.
-		 * 
-		 * <p>
-		 * The message can refer to the {@link TargetConfig#getTarget() target model} of the command
-		 * using the <code>{0}</code> placeholder.
-		 * </p>
-		 * 
-		 * <p>
-		 * The message is only displayed, if {@link #getConfirm()} is set. If no value is set, but
-		 * {@link #getConfirm()} is checked, a generic confirmation message is displayed.
-		 * </p>
-		 * 
-		 * @deprecated Configure {@link #getConfirmation()}
-		 */
-		@Deprecated
-		@Name(CONFIRM_MESSAGE)
-		@DynamicMode(fun = VisibleIf.class, args = @Ref(CONFIRM_PROPERTY))
-		ResKey1 getConfirmMessage();
 
 		/**
 		 * The algorithm to compute a confirm message before a command is executed.

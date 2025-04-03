@@ -58,7 +58,7 @@ public class CommandDispatcher {
 
 	/**
 	 * Command argument that prevents a user confirmation even for commands that have the
-	 * {@link com.top_logic.tool.boundsec.CommandHandler.Config#getConfirm()} option set.
+	 * {@link com.top_logic.tool.boundsec.CommandHandler.Config#getConfirmation()} option set.
 	 */
 	private static final TypedAnnotatable.Property<Boolean> COMMAND_APPROVED =
 		TypedAnnotatable.property(Boolean.class, "commandApproved", Boolean.FALSE);
@@ -234,7 +234,7 @@ public class CommandDispatcher {
 	 * When passing a command with approved arguments to the
 	 * {@link #dispatchCommand(CommandHandler, DisplayContext, LayoutComponent, Map)} method, no
 	 * user confirmation is requested, even if the command has the
-	 * {@link com.top_logic.tool.boundsec.CommandHandler.Config#getConfirm()} option set.
+	 * {@link com.top_logic.tool.boundsec.CommandHandler.Config#getConfirmation()} option set.
 	 * </p>
 	 * 
 	 * @param context

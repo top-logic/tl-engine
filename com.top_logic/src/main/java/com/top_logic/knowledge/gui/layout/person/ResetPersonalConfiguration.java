@@ -8,8 +8,9 @@ package com.top_logic.knowledge.gui.layout.person;
 import java.util.Map;
 
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonalConfigurationWrapper;
@@ -20,6 +21,8 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.DefaultHandlerResult;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
+import com.top_logic.tool.boundsec.confirm.DefaultConfirmation;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.InViewModeExecutable;
@@ -50,9 +53,9 @@ public class ResetPersonalConfiguration extends AbstractCommandHandler {
 		@FormattedDefault(SimpleBoundCommandGroup.WRITE_NAME)
 		CommandGroupReference getGroup();
 
-		@BooleanDefault(true)
 		@Override
-		boolean getConfirm();
+		@ItemDefault(DefaultConfirmation.class)
+		PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
 
 	}
 

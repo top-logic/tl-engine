@@ -21,7 +21,7 @@ import com.top_logic.layout.form.component.AbstractDeleteCommandHandler;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
-import com.top_logic.tool.boundsec.confirm.DefaultConfirmation;
+import com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.error.TopLogicException;
 
@@ -39,7 +39,7 @@ public class StructuredElementRemoveHandler extends AbstractDeleteCommandHandler
 	public interface Config extends AbstractDeleteCommandHandler.Config {
 
 		@Override
-		@ItemDefault(DefaultConfirmation.class)
+		@ItemDefault(DefaultDeleteConfirmation.class)
 		PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
 
 		@Override

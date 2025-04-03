@@ -28,7 +28,7 @@ import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
-import com.top_logic.tool.boundsec.confirm.DefaultConfirmation;
+import com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
@@ -56,7 +56,7 @@ public class DeleteHandler extends AbstractCommandHandler {
 		CommandGroupReference getGroup();
 
 		@Override
-		@ItemDefault(DefaultConfirmation.class)
+		@ItemDefault(DefaultDeleteConfirmation.class)
 		PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
 
 	}

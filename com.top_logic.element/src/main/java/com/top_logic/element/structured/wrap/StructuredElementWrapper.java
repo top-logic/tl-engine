@@ -72,9 +72,9 @@ public abstract class StructuredElementWrapper extends WrapperTLElement {
      *
      * @return    The factory for wrapper elements. 
      */
-	protected StructuredElementWrapperFactory getFactory() {
+	protected StructuredElementWrapperFactory tGetFactory() {
 		return (StructuredElementWrapperFactory) DynamicModelService.getFactoryFor(getStructureName());
-    }
+	}
 
     /**
      * @param    aVisitor    The visitor to be used for visiting.

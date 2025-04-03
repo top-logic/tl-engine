@@ -30,7 +30,7 @@ import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
-import com.top_logic.tool.boundsec.confirm.DefaultConfirmation;
+import com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRuleManager;
@@ -68,7 +68,7 @@ public abstract class AbstractDeleteCommandHandler extends AbstractCommandHandle
 	public interface Config extends AbstractCommandHandler.Config {
 
 		@Override
-		@ItemDefault(DefaultConfirmation.class)
+		@ItemDefault(DefaultDeleteConfirmation.class)
 		PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
 
 		@Override

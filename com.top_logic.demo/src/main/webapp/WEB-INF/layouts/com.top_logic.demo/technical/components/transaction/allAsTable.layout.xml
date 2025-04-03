@@ -26,12 +26,12 @@
 			<button id="ID_0d203940_1fc0_4d57_bd9e_7f2e94f73697"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
 				clique="delete"
-				confirm="true"
 				disabledImage=""
 				group="Delete"
 				image=""
 				target="selection(self())"
 			>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
 				<resourceKey key="dynamic.69b378a6-8ee3-41b7-b5ee-c8cdd01e837b">
 					<en>Delete selected row</en>
 					<de>Selektierte Zeile Löschen</de>

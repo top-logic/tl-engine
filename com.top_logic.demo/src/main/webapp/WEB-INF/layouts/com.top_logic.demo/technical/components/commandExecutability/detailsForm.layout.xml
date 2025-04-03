@@ -10,13 +10,13 @@
 			<de>Details</de>
 		</name>
 		<buttons>
-			<button class="com.top_logic.model.search.providers.ApplyCommandByExpression"
-				confirm="true"
-			>
-				<confirmMessage key="dynamic.33571ff3-4df7-47b3-a053-3a5b823cb06b">
-					<en>Do you really want to save the changes?</en>
-					<de>Wollen Sie die Änderungen wirklich speichern?</de>
-				</confirmMessage>
+			<button class="com.top_logic.model.search.providers.ApplyCommandByExpression">
+				<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation">
+					<confirmMessage key="dynamic.33571ff3-4df7-47b3-a053-3a5b823cb06b">
+						<en>Do you really want to save the changes?</en>
+						<de>Wollen Sie die Änderungen wirklich speichern?</de>
+					</confirmMessage>
+				</confirmation>
 				<additional-operation><![CDATA[model -> if ($model.get(`test.commandApproval:StatefulElement#stop`), {
     $model.set(`test.commandApproval:StatefulElement#state`, `test.commandApproval:OperationState#CANCLED`)
 })]]></additional-operation>

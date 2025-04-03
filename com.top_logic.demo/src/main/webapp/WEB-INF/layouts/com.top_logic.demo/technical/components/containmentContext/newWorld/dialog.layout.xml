@@ -16,7 +16,7 @@
 		<open-handler id="ID_c35e3b4b_1f73_47cf_b5b2_af7cb9f2fd51"
 			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
 			clique="create"
-			confirm="false"
+			confirmation=""
 			disabledImage=""
 			group="Create"
 			image="colored:fas fa-globe-americas overlay-add"
@@ -44,7 +44,7 @@
 		/>
 		<create-handler id="ID_09042898_81a7_411a_8084_c3ce2e6fbe7e"
 			clique="save"
-			confirm="false"
+			confirmation=""
 			disabledImage=""
 			group="Create"
 			ignoreWarnings="default"

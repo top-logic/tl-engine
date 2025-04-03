@@ -16,7 +16,7 @@
 		<open-handler id="ID_acfaaaa4_22fc_480c_ba1b_01f53432e571"
 			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
 			clique=""
-			confirm="false"
+			confirmation=""
 			disabledImage=""
 			group=""
 			image=""

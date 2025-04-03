@@ -37,7 +37,6 @@
 			class="com.top_logic.model.search.providers.TransactionHandlerByExpression"
 			clique="main"
 			closeDialog="true"
-			confirm="false"
 			disabledImage=""
 			group="Write"
 			ignoreWarnings="default"
@@ -47,9 +46,11 @@
 				<en>Duplicate</en>
 				<de>Duplizieren</de>
 			</resourceKey>
-			<confirmMessage key="dynamic.709ca113-9f48-402d-bda6-f585ac2031f5">
-				<de>Soll wirklich eine Kopie angelegt werden?</de>
-			</confirmMessage>
+			<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation">
+				<confirmMessage key="dynamic.709ca113-9f48-402d-bda6-f585ac2031f5">
+					<de>Soll wirklich eine Kopie angelegt werden?</de>
+				</confirmMessage>
+			</confirmation>
 			<postCreateActions>
 				<setModel target="selection(com.top_logic.demo/technical/components/transaction/allAsTable.layout.xml#Table)"/>
 			</postCreateActions>

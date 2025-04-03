@@ -33,12 +33,12 @@
 			<button id="ID_0b405059_1d29_408f_a0c2_c76834419f70"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
 				clique="delete"
-				confirm="true"
 				disabledImage=""
 				group="Delete"
 				image=""
 				target="selection(self())"
 			>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
 				<resourceKey key="dynamic.d46a8b1a-3a5b-49f6-adff-7b118f6b1bb8">
 					<en>Delete object</en>
 					<de>Objekt löschen</de>

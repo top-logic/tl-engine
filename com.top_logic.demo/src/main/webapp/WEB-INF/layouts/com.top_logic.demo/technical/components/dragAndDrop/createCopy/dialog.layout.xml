@@ -33,8 +33,6 @@
 			class="com.top_logic.model.search.providers.TransactionHandlerByExpression"
 			clique="apply"
 			closeDialog="true"
-			confirm="false"
-			confirmMessage=""
 			group="Write"
 			image="theme:ICONS_BUTTON_OK"
 		>

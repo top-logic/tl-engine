@@ -856,7 +856,9 @@
 			
 				<handlers>
 					<handler id="deleteTLModelPart" class="com.top_logic.element.layout.meta.TLModelPartDeleteHandler" 
-						clique="delete" resourceKey="tl.command.delete" group="Delete" confirm="true" />
+						clique="delete" resourceKey="tl.command.delete" group="Delete" 
+						confirmation="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"
+					/>
 					<handler id="createAttributed" class="com.top_logic.element.meta.gui.DefaultCreateAttributedCommandHandler"
 						clique="create"/>
 		            <handler id="createElement" class="com.top_logic.element.layout.structured.CreateAttributedStructuredElementComponent$CreateAttributedStructuredElementCommandHandler"
@@ -1027,7 +1029,7 @@
 						image="theme:com.top_logic.layout.Icons.DELETE_FORM_DEFINITION_COMMAND"
 						disabledImage="theme:com.top_logic.element.layout.formeditor.DeleteFormDefinitionCommand.disabledImage"
 						clique="layout-editor-reset"
-						confirm="true"
+						confirmation="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"
 						group="System"
 						resourceKey="tl.command.deleteFormDefinitionCommand"
 		            >
@@ -1040,7 +1042,7 @@
 						image="theme:com.top_logic.layout.Icons.DELETE_FORM_DEFINITION_COMMAND"
 						disabledImage="theme:com.top_logic.element.layout.formeditor.DeleteFormDefinitionCommand.disabledImage"
 						clique="layout-editor-reset"
-						confirm="true"
+						confirmation="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"
 						group="System"
 						resourceKey="tl.command.deleteFormDefinitionCommand"
 		            >

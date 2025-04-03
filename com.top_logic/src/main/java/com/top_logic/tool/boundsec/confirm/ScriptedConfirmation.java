@@ -63,16 +63,22 @@ public class ScriptedConfirmation extends AbstractConfiguredInstance<ScriptedCon
 		 * </p>
 		 * 
 		 * <p>
-		 * The following arguments can be used: <code>message -> model -> command -> ...</code>
+		 * The following arguments can be used:
 		 * </p>
 		 * 
-		 * <ul>
-		 * <li>The static message with placeholders configured above.
-		 * <li>The target model of the command being executed.
-		 * <li>The label of the command being executed.
-		 * </ul>
+		 * <pre>
+		 * <code>message -> model -> command -> $message.fill($model, $command)</code>
+		 * </pre>
+		 * 
+		 * <dl>
+		 * <dt><code>message</code></dt>
+		 * <dd>The static message configured above (may contain placeholders such as '{0}').</dd>
+		 * <dt><code>model</code></dt>
+		 * <dd>The target model of the command being executed.</dd>
+		 * <dt><code>command</code></dt>
+		 * <dd>The label of the command being executed.</dd>
+		 * </dl>
 		 */
-//		@FormattedDefault("message -> model -> command -> $message.fill($model, $command)")
 		@Name(FUNCTION)
 		ScriptFunction3<ResKey, ResKeyN, Object, ResKey> getFunction();
 

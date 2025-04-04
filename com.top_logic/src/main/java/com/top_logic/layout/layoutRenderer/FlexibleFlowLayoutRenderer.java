@@ -102,7 +102,7 @@ public class FlexibleFlowLayoutRenderer extends FlowLayoutRenderer {
 	public static void writeLayoutCollapsedProperty(TagWriter out, int collapsedSize) throws IOException {
 		out.beginAttribute(CollapsibleControl.DATA_COLLAPSED_SIZE_ATTR);
 		{
-			writeConstraint(out, collapsedSize, 0, DisplayUnit.PIXEL);
+			writeConstraint(out, collapsedSize, LayoutControlRenderer.MIN_SIZE, DisplayUnit.PIXEL);
 		}
 		out.endAttribute();
 	}

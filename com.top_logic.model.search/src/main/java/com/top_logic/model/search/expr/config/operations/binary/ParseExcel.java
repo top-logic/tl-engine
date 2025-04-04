@@ -496,16 +496,21 @@ public class ParseExcel extends GenericMethod {
 				case BOOLEAN:
 					return cell.getBooleanCellValue();
 				case FORMULA:
-					CellValue result = _evaluator.evaluate(cell);
-					switch (result.getCellType()) {
-						case STRING:
-							return result.getStringValue();
-						case NUMERIC:
-							return result.getNumberValue();
-						case BOOLEAN:
-							return result.getBooleanValue();
-						default:
-							return cell.getCellFormula();
+					try {
+						CellValue result = _evaluator.evaluate(cell);
+						switch (result.getCellType()) {
+							case STRING:
+								return result.getStringValue();
+							case NUMERIC:
+								return result.getNumberValue();
+							case BOOLEAN:
+								return result.getBooleanValue();
+							default:
+								return cell.getCellFormula();
+						}
+					} catch (Exception ex) {
+						// Return empty string for any formula evaluation error
+						return "";
 					}
 				default:
 					return "";

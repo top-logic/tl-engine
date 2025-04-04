@@ -13,6 +13,7 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.form.values.edit.DefaultLayoutInfoOptions;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.layoutRenderer.LayoutControlRenderer;
 
 /**
  * Component-local information to the layout algorithm.
@@ -49,7 +50,7 @@ public interface LayoutInfo extends ConfigurationItem {
 	 * The minimum size the component can be resized to.
 	 */
 	@Name(MIN_SIZE)
-	@IntDefault(0)
+	@IntDefault(LayoutControlRenderer.MIN_SIZE)
 	@Hidden
 	int getMinSize();
 

@@ -391,7 +391,7 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 	@TemplateVariable("collapsedSize")
 	public void writeCollapsedSize(TagWriter out) throws IOException {
 		LayoutControlRenderer.writeConstraint(out,
-			com.top_logic.layout.structure.Icons.COLLAPSIBLE_IMAGE_WIDTH.get(), 0);
+			com.top_logic.layout.structure.Icons.COLLAPSIBLE_IMAGE_WIDTH.get(), LayoutControlRenderer.MIN_SIZE);
 	}
 
 	/**
@@ -406,7 +406,7 @@ public class CollapsibleControl extends AbstractMaximizableControl<CollapsibleCo
 		} else {
 			size = com.top_logic.layout.structure.Icons.COLLAPSIBLE_IMAGE_HEIGHT.get();
 		}
-		LayoutControlRenderer.writeConstraint(out, size.getValue(), 0, size.getUnit());
+		LayoutControlRenderer.writeConstraint(out, size.getValue(), LayoutControlRenderer.MIN_SIZE, size.getUnit());
 	}
 
 	/**

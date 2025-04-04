@@ -38,6 +38,11 @@ public abstract class LayoutControlRenderer<T extends AbstractLayoutControl<?>> 
 	 */
 	public static final String LAYOUT_SIZE_DATA_ATTRIBUTE = HTMLConstants.DATA_ATTRIBUTE_PREFIX + "layout-size";
 
+	/**
+	 * Min size has to be at least 1.
+	 */
+	public static final int MIN_SIZE = 1;
+
 	private static final String RESIZE_DATA_ATTRIBUTE = HTMLConstants.DATA_ATTRIBUTE_PREFIX + "resize";
 
 	/**
@@ -123,7 +128,7 @@ public abstract class LayoutControlRenderer<T extends AbstractLayoutControl<?>> 
 		try {
 			TagWriter out = new TagWriter(buffer);
 			out.setState(State.START_TAG);
-			writeLayoutConstraintInformation(aSize, 0, aUnit, out);
+			writeLayoutConstraintInformation(aSize, MIN_SIZE, aUnit, out);
 		} catch (IOException e) {
 			throw new UnreachableAssertion(e);
 		}
@@ -140,7 +145,7 @@ public abstract class LayoutControlRenderer<T extends AbstractLayoutControl<?>> 
 	 *        The size description.
 	 */
 	public static void writeLayoutConstraintInformation(TagWriter out, DisplayDimension dimension) throws IOException {
-		writeLayoutConstraintInformation(dimension.getValue(), 0, dimension.getUnit(), out);
+		writeLayoutConstraintInformation(dimension.getValue(), MIN_SIZE, dimension.getUnit(), out);
 	}
 	
 	/**
@@ -155,7 +160,7 @@ public abstract class LayoutControlRenderer<T extends AbstractLayoutControl<?>> 
 	 */
 	public static void writeLayoutConstraintInformation(float aSize, DisplayUnit aUnit, TagWriter aTagWriter)
 			throws IOException {
-		writeLayoutConstraintInformation(aSize, 0, aUnit, aTagWriter);
+		writeLayoutConstraintInformation(aSize, MIN_SIZE, aUnit, aTagWriter);
 	}
 
 	/**

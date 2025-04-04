@@ -50,7 +50,8 @@ public class GanttChartDisplay implements HTMLFragment, HTMLConstants {
 	}
 
 	private void writeLayoutingInformation(TagWriter out, String imageControlId) throws IOException {
-		LayoutControlRenderer.writeLayoutConstraintInformation(100, 0, DisplayUnit.PERCENT, out);
+		LayoutControlRenderer.writeLayoutConstraintInformation(100, LayoutControlRenderer.MIN_SIZE, DisplayUnit.PERCENT,
+			out);
 		LayoutControlRenderer.writeLayoutResizeFunction(out,
 			"(function(){var imageControlNode = document.getElementById('" + imageControlId
 				+ "'); if(imageControlNode != null) {var resizeFunction = imageControlNode.resizeFunction; if(resizeFunction != null) {resizeFunction();}}})();");

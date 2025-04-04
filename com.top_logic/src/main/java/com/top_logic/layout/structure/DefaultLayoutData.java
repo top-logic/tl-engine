@@ -8,6 +8,7 @@ package com.top_logic.layout.structure;
 import com.top_logic.knowledge.gui.layout.SizeInfo;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
+import com.top_logic.layout.layoutRenderer.LayoutControlRenderer;
 
 /**
  * The class {@link DefaultLayoutData} is the default immutable holder for the values provided by {@link LayoutData}. 
@@ -59,7 +60,7 @@ public class DefaultLayoutData implements LayoutData {
 	 */
 	public DefaultLayoutData(DisplayDimension aWidth, int aMaxWidth, DisplayDimension aHeight, int aMaxHeight,
 			Scrolling aScrollable) {
-		this(aWidth, 0, aMaxWidth, aHeight, 0, aMaxHeight, aScrollable);
+		this(aWidth, LayoutControlRenderer.MIN_SIZE, aMaxWidth, aHeight, LayoutControlRenderer.MIN_SIZE, aMaxHeight, aScrollable);
 	}
 
 	/**

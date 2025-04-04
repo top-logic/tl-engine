@@ -4690,7 +4690,7 @@ services.form = {
 	},
 	
 	FlexibleFlowLayout: {
-		MINIMUM_SIZE: 20, //px, randomely choosen
+		MINIMUM_SIZE: 25, //px, randomely choosen
 		
 		initLayoutAdjustment: function(event, ctrlID, separatorID, adjustmentBar, resizeMode, isArrangedHorizontal) {
 			if(!services.layout.isCollapsed(adjustmentBar)) {

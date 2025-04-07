@@ -21,7 +21,7 @@
 			supportsModel="true"
 		/>
 		<optionLabelProvider class="com.top_logic.model.search.providers.LabelProviderByExpression">
-			<label><![CDATA[x -> toString($x, " (", $x.get(`DemoTypes:DemoTypes.All#parent`), ")")]]></label>
+			<label>x -&gt; toString($x, " (", $x.get(`DemoTypes:DemoTypes.All#parent`), ")")</label>
 		</optionLabelProvider>
 		<buttons>
 			<button id="ID_d7c2768d_c265_4a73_ab8b_45ca8fc9ca5e"

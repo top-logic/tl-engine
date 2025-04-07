@@ -11,11 +11,9 @@
 		</titleKey>
 		<model class="com.top_logic.layout.channel.linking.impl.ProviderLinking">
 			<script>
-				<expr>
-					[
-					currentRevision()
-					]
-				</expr>
+				<expr><![CDATA[[
+    currentRevision()
+]]]></expr>
 			</script>
 		</model>
 		<optionBuilder class="com.top_logic.model.search.providers.ListModelByExpression"

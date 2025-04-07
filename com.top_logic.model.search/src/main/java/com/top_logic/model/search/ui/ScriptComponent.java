@@ -7,7 +7,6 @@ package com.top_logic.model.search.ui;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +30,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.impl.TransientModelFactory;
 import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundLayout;
@@ -134,13 +134,10 @@ public class ScriptComponent extends BoundLayout {
 	private Collection<?> getResults(SearchExpression expression) {
 		KnowledgeBase defaultKnowledgeBase = kb();
 		TLModel defaultTLModel = ModelService.getApplicationModel();
-		Object result = QueryExecutor.compile(defaultKnowledgeBase, defaultTLModel, expression).execute();
+		QueryExecutor executor = QueryExecutor.compile(defaultKnowledgeBase, defaultTLModel, expression);
+		Object result = executor.executeWith(executor.context(true, null, null), Args.none());
 
-		if (result instanceof Collection) {
-			return (Collection<?>) result;
-		} else {
-			return Collections.singleton(result);
-		}
+		return SearchExpression.asCollection(result);
 	}
 
 	private KnowledgeBase kb() {

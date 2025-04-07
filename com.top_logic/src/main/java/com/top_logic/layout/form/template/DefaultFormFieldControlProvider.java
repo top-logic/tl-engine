@@ -196,7 +196,7 @@ public class DefaultFormFieldControlProvider extends AbstractFormFieldControlPro
 	
 	@Override
 	public Control visitFolderField(FolderField member, Void arg) {
-		return WebFolderUIFactory.createControl(member);
+		return WebFolderUIFactory.getInstance().createControl(member);
 	}
 
 	@Override

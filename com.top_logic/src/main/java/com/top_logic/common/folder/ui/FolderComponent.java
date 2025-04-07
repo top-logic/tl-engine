@@ -324,25 +324,26 @@ public abstract class FolderComponent extends BuilderComponent implements FormHa
 		_data = createFolderData(newFormContext, folder, getTreeBuilder(), columnDescriptions);
 
 		SingleSelectionModel selectionModel = _data.getSingleSelectionModel();
+		WebFolderUIFactory factory = getUIFactory();
 		if (hasClipboardCommand()) {
-			WebFolderUIFactory.addClipboardCommand(newFormContext, selectionModel, canCreate);
+			factory.addClipboardCommand(newFormContext, selectionModel, canCreate);
 		}
 		if (hasAddNewFolderCommand()) {
-			WebFolderUIFactory.addNewFolderCommand(newFormContext, selectionModel, canCreate);
+			factory.addNewFolderCommand(newFormContext, selectionModel, canCreate);
 		}
 		UploadExecutor executer = getUploadExecuter(_data);
 		if (executer != null) {
-			WebFolderUIFactory.addUploadCommand(newFormContext, selectionModel, canCreate, executer);
+			factory.addUploadCommand(newFormContext, selectionModel, canCreate, executer);
 		}
 		if (hasZipDownloadCommand()) {
 			ExecutableState canRead = permissionExecutability(this.allow(SimpleBoundCommandGroup.READ));
-			WebFolderUIFactory.addZipDownloadFolderCommand(newFormContext, selectionModel, canRead);
+			factory.addZipDownloadFolderCommand(newFormContext, selectionModel, canRead);
 		}
 		return newFormContext;
 	}
 
 	public BreadcrumbRenderer getBreadcrumbRenderer() {
-		return WebFolderUIFactory.getInstance().createBreadcrumbRenderer(getRootLabel());
+		return getUIFactory().createBreadcrumbRenderer(getRootLabel());
 	}
 
 	/**
@@ -377,7 +378,7 @@ public abstract class FolderComponent extends BuilderComponent implements FormHa
 
 	private FolderData createFolderData(FormContext newFormContext, Object rootUserObject,
 			TreeBuilder<FolderNode> treeBuilder, TableConfiguration columnDescriptions) {
-		return WebFolderUIFactory.createFolderData(this, rootUserObject, treeBuilder, columnDescriptions,
+		return getUIFactory().createFolderData(this, rootUserObject, treeBuilder, columnDescriptions,
 			newFormContext, getColumns(), ConfigKey.component(this));
 	}
 
@@ -415,7 +416,16 @@ public abstract class FolderComponent extends BuilderComponent implements FormHa
 		boolean withClipboard = config.getHasClipboardCommand();
 		boolean withAnalyze = config.analyzeDocuments() && DefaultAnalyzeService.isAvailable();
 
-		return WebFolderUIFactory.defaultColumns(withUpdate, withDelete, withClipboard, withAnalyze);
+		return getUIFactory().defaultColumns(withUpdate, withDelete, withClipboard, withAnalyze);
+	}
+
+	/**
+	 * Get factory for UI
+	 * 
+	 * @return the Factory for creating the UI
+	 */
+	protected WebFolderUIFactory getUIFactory() {
+		return WebFolderUIFactory.getInstance();
 	}
 
 	@Override

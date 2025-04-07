@@ -28,9 +28,9 @@ public class CustomConfirmation extends DefaultConfirmation
 	private Config<?> _config;
 
 	/**
-	 * Configuration options for {@link DefaultConfirmation}.
+	 * Configuration options for {@link CustomConfirmation}.
 	 */
-	public interface Config<I extends DefaultConfirmation> extends PolymorphicConfiguration<I> {
+	public interface Config<I extends CustomConfirmation> extends PolymorphicConfiguration<I> {
 		/**
 		 * @see #getConfirmMessage()
 		 */

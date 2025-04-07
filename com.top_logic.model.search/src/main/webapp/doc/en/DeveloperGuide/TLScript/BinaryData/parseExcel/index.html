@@ -79,17 +79,26 @@
 			<td>No</td>
 			<td>false</td>
 		</tr>
+		<tr>
+			<td>evaluateFormulas</td>
+			<td>Boolean</td>
+			<td>
+			<p>Whether formulas in the Excel file should be evaluated. If <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">evaluateFormulas:true</code></strong> (default), the formulas are evaluated and the result is returned. If <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">evaluateFormulas:false</code></strong>the formula itself is returned as text.</p>
+			</td>
+			<td>No</td>
+			<td>true</td>
+		</tr>
 	</tbody>
 </table>
 
 <h2>Return value</h2>
 
-<p><strong>Type:</strong> Map&lt;Object, List&gt; / one list</p>
+<p><strong>Type:</strong> Map&lt;Object, List&gt; / a list</p>
 
 <ol>
 	<li>One list (for <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">raw:true</code></strong>) or a map (with <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">raw:false</code></strong>) with column values is generated</li>
 	<li>These row objects are summarized per sheet in a list</li>
-	<li>A map entry with sheet name/sheet number as key and the list as value is created for each sheet</li>
+	<li>A map entry with sheet name/sheet number as the key and the list as the value is created for each sheet</li>
 	<li>If only one sheet is parsed, then only the corresponding list is returned (no map with an entry)</li>
 </ol>
 
@@ -331,7 +340,7 @@
 
 <p><strong>Output:</strong> <span style="color:#16a085">{0=</span>[...], <span style="color:#16a085">"0"</span>=[...]}</p>
 
-<p>When <code class="hljs inlineCode">parseExcel()</code> is called up, it is specified here that the first sheet and the sheet with the name 0 are to be imported.</p>
+<p>Here, when <code class="hljs inlineCode">parseExcel()</code> is called, it is specified that the first sheet and the sheet with the name 0 are to be imported.</p>
 
 <p></p>
 
@@ -557,4 +566,83 @@
   ]
 }</code></pre>
 
-<p>The call to <code class="hljs inlineCode">parseExcel(importSheers: "Test", raw:true)</code> returns a map of lists of lists for the "Test" sheet.</p>
+<p>Calling <code class="hljs inlineCode">parseExcel(importSheers: "Test", raw:true)</code> returns a map of lists of lists for the "Test" sheet.</p>
+
+<h3>Example 7: Import with formula evaluation</h3>
+
+<p>In this example, the Excel file shows a simple table with three columns:</p>
+
+<ul>
+	<li>Column A contains fixed values (10, 15, 20)</li>
+	<li>Column B contains formulas that double the value from column A (=A2*2, =A3*2, =A4*2)</li>
+	<li>Column C contains formulas that add the values from columns A and B (=A2+B2, =A3+B3, =A4+B4)</li>
+</ul>
+
+<pre>
+<code>{
+	// Mit Formelauswertung (Standard)
+	$importedData.parseExcel(importSheets: "Formeln",
+	headers:{"Formeln": ["A1", "B1", "C1"]});
+}</code>
+</pre>
+
+<p><strong>Output:</strong></p>
+
+<pre>
+<code class="language-json">{
+	"Formeln": [
+	{
+	"Wert": 10,
+	"Formel": 20,
+	"Summe": 30
+	},
+	{
+	"Wert": 15,
+	"Formel": 30,
+	"Summe": 45
+	},
+	{
+	"Wert": 20,
+	"Formel": 40,
+	"Summe": 60
+	}
+	]
+}</code>
+</pre>
+
+<p>The formulas are evaluated with <code>evaluateFormulas:true</code> and the calculated results are returned.</p>
+
+<pre>
+<code>{
+	// Ohne Formelauswertung
+	$importedData.parseExcel(importSheets: "Formeln",
+	headers:{"Formeln": ["A1", "B1", "C1"]},
+	evaluateFormulas: false);
+}</code>
+</pre>
+
+<p><strong>Output:</strong></p>
+
+<pre>
+<code class="language-json">{
+	"Formeln": [
+	{
+	"Wert": 10,
+	"Formel": "=A2*2",
+	"Summe": "=A2+B2"
+	},
+	{
+	"Wert": 15,
+	"Formel": "=A3*2",
+	"Summe": "=A3+B3"
+	},
+	{
+	"Wert": 20,
+	"Formel": "=A4*2",
+	"Summe": "=A4+B4"
+	}
+	]
+}</code>
+</pre>
+
+<p>With <code>evaluateFormulas:false</code> the formulas themselves are returned as text.</p>

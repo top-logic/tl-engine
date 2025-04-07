@@ -21,12 +21,11 @@ import com.top_logic.tool.boundsec.I18NConstants;
  *           options. Changing values of default items is not supported by the layout editor.
  */
 @InApp
-public class DefaultDeleteConfirmation extends DefaultConfirmation {
+public class DefaultDeleteConfirmation implements CommandConfirmation {
 
 	/**
 	 * Singleton {@link DefaultDeleteConfirmation} instance.
 	 */
-	@SuppressWarnings("hiding")
 	public static final DefaultDeleteConfirmation INSTANCE = new DefaultDeleteConfirmation();
 
 	private DefaultDeleteConfirmation() {
@@ -34,7 +33,7 @@ public class DefaultDeleteConfirmation extends DefaultConfirmation {
 	}
 
 	@Override
-	protected ResKey getDefaultConfirmation(LayoutComponent component, ResKey commandLabel, Object model,
+	public ResKey getConfirmation(LayoutComponent component, ResKey commandLabel, Object model,
 			Map<String, Object> arguments) {
 		if (model instanceof Collection<?>) {
 			Collection<?> elements = (Collection<?>) model;

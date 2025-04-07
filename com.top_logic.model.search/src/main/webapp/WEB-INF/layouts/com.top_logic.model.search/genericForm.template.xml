@@ -72,7 +72,7 @@
 
 	<!-- Note: A settings component is used here instead of a general form, since this provides an edit-mode channel that allows to switch modes from UI actions. -->
 	<settings name="Form"
-	    buttonbar="${buttonbar}"
+		buttonbar="${buttonbar}"
 		defaultFor="${defaultFor}"
 		dialogs="${dialogs}"
 		isSecurityMaster="${isSecurityMaster}"

@@ -874,14 +874,172 @@
 				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
 					user-id="root"
 				>
-					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
-						label="Kann aktualisieren"
-					>
-						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+						<path>
+							<named-member name="modelBox0"/>
+							<named-member name="modelContent0"/>
+							<labeled-member label="Spaltenkonfigurationen"/>
+							<named-member name="content"/>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+									value="0"
+								/>
+							</object>
+							<labeled-member label="Berechnete Spalte"/>
+							<labeled-member label="Bearbeitbarkeit"/>
+						</path>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 						value="r -> m -> $r.get(`test.computedColumn:TestComputed#a`) == 1"
 					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+						<path>
+							<named-member name="modelBox0"/>
+							<named-member name="modelContent0"/>
+							<labeled-member label="Spaltenkonfigurationen"/>
+							<named-member name="add"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+								value="com.top_logic.model.search.providers.DynamicColumnProviderByExpression"
+							/>
+						</values>
+					</value>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Spalten"
+					>
+						<component config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="m -> [`tl.core:Double`]"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+						<path>
+							<named-member name="modelBox0"/>
+							<named-member name="modelContent0"/>
+							<labeled-member label="Spaltenkonfigurationen"/>
+							<named-member name="content"/>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+									value="1"
+								/>
+							</object>
+							<labeled-member label="Dynamische Menge an Spalten"/>
+							<labeled-member label="Spaltentyp"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="c -> m -> `tl.core:Double`"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+						<path>
+							<named-member name="modelBox0"/>
+							<named-member name="modelContent0"/>
+							<labeled-member label="Spaltenkonfigurationen"/>
+							<named-member name="content"/>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+									value="1"
+								/>
+							</object>
+							<labeled-member label="Dynamische Menge an Spalten"/>
+							<labeled-member label="Spaltenwert"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="r -> c -> m -> $r.get(`test.computedColumn:TestComputed#c`)"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+						<path>
+							<named-member name="modelBox0"/>
+							<named-member name="modelContent0"/>
+							<labeled-member label="Spaltenkonfigurationen"/>
+							<named-member name="content"/>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+									value="1"
+								/>
+							</object>
+							<labeled-member label="Dynamische Menge an Spalten"/>
+							<labeled-member label="Speicheroperation"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="r -> v -> m -> $r.set(`test.computedColumn:TestComputed#c`, $v)"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+						<path>
+							<named-member name="modelBox0"/>
+							<named-member name="modelContent0"/>
+							<labeled-member label="Spaltenkonfigurationen"/>
+							<named-member name="content"/>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+									value="1"
+								/>
+							</object>
+							<labeled-member label="Dynamische Menge an Spalten"/>
+							<labeled-member label="Bearbeitbarkeit"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value="r -> m -> $r.get(`test.computedColumn:TestComputed#a`) == 1"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+					user-id="root"
+				>
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
+						<path>
+							<named-member name="modelBox0"/>
+							<named-member name="modelContent0"/>
+							<labeled-member label="Spaltenkonfigurationen"/>
+							<named-member name="content"/>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
+									value="1"
+								/>
+							</object>
+							<labeled-member label="Dynamische Menge an Spalten"/>
+							<labeled-member label="Spaltenbezeichnung"/>
+						</path>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+						<value>"Dynamic Column Test"</value>
+					</value>
 				</action>
 				<action class="com.top_logic.layout.editor.scripting.CreateComponentButtonAction$CreateComponentButtonActionOp"
 					component-name="rootLayout#masterFrame"
@@ -1174,6 +1332,32 @@
 								</business-object>
 							</object>
 							<named-member name="ID_d23193b7_3b1f_44ab_b88b_5ba5767cc07b"/>
+						</path>
+					</model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
+					mode="ACTIVE"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Tabellen > ComputedColumnGridTest > test"
+						/>
+						<path>
+							<object>
+								<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.NamedModelRef">
+									<model-name config:interface="com.top_logic.element.layout.scripting.TLObjectByLabelNaming$TLObjectByLabelName"
+										class-name="test.computedColumn:TestComputed"
+									>
+										<object-label>Unbenanntes Objekt vom Typ "Test computed"</object-label>
+									</model-name>
+								</business-object>
+							</object>
+							<object>
+								<business-object config:interface="com.top_logic.model.util.scripting.TLModelPartNaming$Name"
+									ref="tl.core:Double"
+								/>
+							</object>
 						</path>
 					</model-name>
 				</action>

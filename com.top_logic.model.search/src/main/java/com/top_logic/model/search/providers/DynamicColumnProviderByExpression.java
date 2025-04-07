@@ -19,9 +19,11 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.ValueInitializer;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.element.meta.form.CustomEditContext;
@@ -32,7 +34,9 @@ import com.top_logic.knowledge.service.Revision;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.initializer.UUIDInitializer;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.table.filter.AllCellsExist;
@@ -78,6 +82,7 @@ public class DynamicColumnProviderByExpression
 		Config.COLUMN_VISIBILITY,
 		Config.ACCESSOR,
 		Config.UPDATER,
+		Config.CAN_UPDATE,
 		Config.GROUP_LABEL,
 		Config.ANNOTATIONS,
 	})
@@ -118,6 +123,11 @@ public class DynamicColumnProviderByExpression
 		 * @see #getUpdater()
 		 */
 		String UPDATER = "updater";
+
+		/**
+		 * @see #getCanUpdate()
+		 */
+		String CAN_UPDATE = "canUpdate";
 
 		/**
 		 * @see #getGroupLabel()
@@ -267,6 +277,34 @@ public class DynamicColumnProviderByExpression
 		Expr getUpdater();
 
 		/**
+		 * Optional function to control field creation for editing in specific rows.
+		 * 
+		 * <p>
+		 * The function takes the row object as first argument, the column object as second
+		 * argument, and optionally the component's model as third argument:
+		 * <code>row -> column -> model -> ...</code>
+		 * </p>
+		 * 
+		 * <p>
+		 * The function must return a boolean value indicating whether a field should be created for
+		 * the given row.
+		 * </p>
+		 * 
+		 * <p>
+		 * Only relevant if {@link #getUpdater()} is specified. In that case:
+		 * <ul>
+		 * <li>If no function is provided, fields are created for all rows</li>
+		 * <li>If a function is provided, it determines per row whether a field should be
+		 * created</li>
+		 * </ul>
+		 * If no updater is specified, this function is ignored and no fields are created.
+		 * </p>
+		 */
+		@Name(CAN_UPDATE)
+		@DynamicMode(fun = ShowIfUpdater.class, args = @Ref(UPDATER))
+		Expr getCanUpdate();
+
+		/**
 		 * The visibility of the created columns.
 		 */
 		@Name(COLUMN_VISIBILITY)
@@ -283,6 +321,16 @@ public class DynamicColumnProviderByExpression
 		@DisplayMinimized
 		ResKey getGroupLabel();
 
+		/**
+		 * Function that shows the field only if an updater is specified.
+		 */
+		class ShowIfUpdater extends Function1<FieldMode, Expr> {
+			@Override
+			public FieldMode apply(Expr updater) {
+				return updater != null ? FieldMode.ACTIVE : FieldMode.INVISIBLE;
+			}
+		}
+
 	}
 
 	private static final Property<Object> COLUMN_MODEL = TypedAnnotatable.property(Object.class, "columnModel");
@@ -298,6 +346,8 @@ public class DynamicColumnProviderByExpression
 	private QueryExecutor _accessor;
 
 	private QueryExecutor _updater;
+
+	private final QueryExecutor _canUpdate;
 
 	/**
 	 * Creates a {@link DynamicColumnProviderByExpression} from configuration.
@@ -316,6 +366,7 @@ public class DynamicColumnProviderByExpression
 		_columnLabel = config.getColumnLabel() == null ? null : QueryExecutor.compile(config.getColumnLabel());
 		_accessor = QueryExecutor.compile(config.getAccessor());
 		_updater = config.getUpdater() == null ? null : QueryExecutor.compile(config.getUpdater());
+		_canUpdate = QueryExecutor.compileOptional(config.getCanUpdate());
 		_columnType = QueryExecutor.compile(config.getColumnType());
 	}
 
@@ -391,6 +442,10 @@ public class DynamicColumnProviderByExpression
 							return null;
 						}
 
+						if (!canUpdate(row, columnModel)) {
+							return null;
+						}
+
 						EditContext editContext = new CustomEditContext(type)
 							.setLabel(labelKey)
 							.setValue(accessor.getValue(row, columnName))
@@ -408,6 +463,14 @@ public class DynamicColumnProviderByExpression
 			dynamicColumnNames.removeAll(table.getDefaultColumns());
 			table.setDefaultColumns(CollectionUtil.concat(table.getDefaultColumns(), dynamicColumnNames));
 		}
+	}
+
+	private boolean canUpdate(Object row, Object columnModel) {
+		if (_canUpdate == null) {
+			return true;
+		}
+		Object result = _canUpdate.execute(row, columnModel, _component.getModel());
+		return SearchExpression.asBoolean(result);
 	}
 
 	private boolean withColumnGroup() {

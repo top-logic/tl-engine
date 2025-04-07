@@ -1,8 +1,8 @@
 /*
- * SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
- * 
- * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
- */
+* SPDX-FileCopyrightText: 2024 (c) Business Operation Systems GmbH <info@top-logic.com>
+* 
+* SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+*/
 package com.top_logic.model.search.expr.config.operations.binary;
 
 import java.io.IOException;
@@ -78,6 +78,8 @@ public class ParseExcel extends GenericMethod {
 	 */
 	private static final int RAW_INDEX = 5;
 
+	private static final int EVALUATE_FORMULAS_INDEX = 6;
+
 	private int NUMBER_OF_SHEETS_FOR_IMPORT = 1;
 
 	private List<Object> IMPORT_SELECTED_SHEETS = Collections.emptyList();
@@ -87,6 +89,8 @@ public class ParseExcel extends GenericMethod {
 	private Boolean IMPORT_ALL_SHEETS = false;
 
 	private Boolean IMPORT_ACTIVE_SHEET = false;
+
+	private Boolean EVALUATE_FORMULAS = true;
 
 	private String DEFAULT_HEADER = "A";
 
@@ -126,6 +130,7 @@ public class ParseExcel extends GenericMethod {
 		IMPORT_ALL_SHEETS = asBoolean(arguments[IMPORT_ALL_SHEETS_INDEX]);
 		IMPORT_ACTIVE_SHEET = asBoolean(arguments[IMPORT_ACTIVE_SHEET_INDEX]);
 		IMPORT_SELECTED_SHEETS = (List<Object>) asList(arguments[IMPORT_SELECTED_SHEETS_INDEX]);
+		EVALUATE_FORMULAS = asBoolean(arguments[EVALUATE_FORMULAS_INDEX]);
 		fixSelectedSheetsEntries();
 		HEADERS_AT = getHeaderMap(arguments);
 
@@ -496,16 +501,20 @@ public class ParseExcel extends GenericMethod {
 				case BOOLEAN:
 					return cell.getBooleanCellValue();
 				case FORMULA:
-					CellValue result = _evaluator.evaluate(cell);
-					switch (result.getCellType()) {
-						case STRING:
-							return result.getStringValue();
-						case NUMERIC:
-							return result.getNumberValue();
-						case BOOLEAN:
-							return result.getBooleanValue();
-						default:
-							return cell.getCellFormula();
+					if (EVALUATE_FORMULAS) {
+						CellValue result = _evaluator.evaluate(cell);
+						switch (result.getCellType()) {
+							case STRING:
+								return result.getStringValue();
+							case NUMERIC:
+								return result.getNumberValue();
+							case BOOLEAN:
+								return result.getBooleanValue();
+							default:
+								return cell.getCellFormula();
+						}
+					} else {
+						return cell.getCellFormula();
 					}
 				default:
 					return "";
@@ -553,6 +562,7 @@ public class ParseExcel extends GenericMethod {
 			.optional("headers")
 			.optional("importActiveSheet", false)
 			.optional("raw", false)
+			.optional("evaluateFormulas", true)
 			.build();
 
 		/**

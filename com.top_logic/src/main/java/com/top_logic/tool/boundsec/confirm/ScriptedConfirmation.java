@@ -59,7 +59,7 @@ public class ScriptedConfirmation extends AbstractConfiguredInstance<ScriptedCon
 		 * A function filling the given message with arguments.
 		 * 
 		 * <p>
-		 * The function can also decide not to return a confirmation method on certain conditions.
+		 * The function can also decide not to return a confirmation key on certain conditions.
 		 * </p>
 		 * 
 		 * <p>

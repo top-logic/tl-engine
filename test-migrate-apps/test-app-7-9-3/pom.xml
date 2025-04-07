@@ -9,7 +9,6 @@
 	</parent>
 	
 	<artifactId>test-app-7-9-3</artifactId>
-	<version>1.0-SNAPSHOT</version>
 	
 	<licenses>
         <license>

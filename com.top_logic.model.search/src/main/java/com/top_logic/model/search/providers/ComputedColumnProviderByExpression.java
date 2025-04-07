@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.form.CustomEditContext;
 import com.top_logic.element.meta.form.EditContext;
@@ -28,8 +29,10 @@ import com.top_logic.element.meta.form.FieldProvider;
 import com.top_logic.element.meta.form.FieldProviderAnnotation;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.model.utility.SimplePartAnnotationOptions;
 import com.top_logic.layout.form.values.ItemOptionMapping;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.table.filter.AllCellsExist;
 import com.top_logic.layout.table.model.AbstractFieldProvider;
@@ -45,6 +48,8 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
+import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.AllTypes;
@@ -70,10 +75,12 @@ public class ComputedColumnProviderByExpression
 	 */
 	@DisplayOrder({
 		Config.COLUMN_LABEL,
+		Config.DYNAMIC_COLUMN_LABEL,
 		Config.COLUMN_TYPE,
 		Config.COLUMN_VISIBILITY,
 		Config.ACCESSOR,
 		Config.UPDATER,
+		Config.CAN_UPDATE,
 		Config.ANNOTATIONS,
 	})
 	public interface Config<I extends ComputedColumnProviderByExpression>
@@ -83,6 +90,11 @@ public class ComputedColumnProviderByExpression
 		 * @see #getColumnType()
 		 */
 		String COLUMN_TYPE = "columnType";
+
+		/**
+		 * @see #getDynamicColumnLabel()
+		 */
+		String DYNAMIC_COLUMN_LABEL = "dynamicColumnLabel";
 
 		/**
 		 * @see #getColumnVisibility()
@@ -98,6 +110,11 @@ public class ComputedColumnProviderByExpression
 		 * @see #getUpdater()
 		 */
 		String UPDATER = "updater";
+
+		/**
+		 * @see #getCanUpdate()
+		 */
+		String CAN_UPDATE = "canUpdate";
 
 		/**
 		 * Type of the values displayed in this column.
@@ -153,14 +170,76 @@ public class ComputedColumnProviderByExpression
 		Expr getUpdater();
 
 		/**
+		 * Optional function to control field creation for editing in specific rows.
+		 * 
+		 * <p>
+		 * The function takes the row object and optionally the component's model as arguments:
+		 * <code>row -> model -> ...</code>
+		 * </p>
+		 * 
+		 * <p>
+		 * The function must return a boolean value indicating whether a field should be created for
+		 * the given row.
+		 * </p>
+		 * 
+		 * <p>
+		 * Only relevant if {@link #getUpdater()} is specified. In that case:
+		 * <ul>
+		 * <li>If no function is provided, fields are created for all rows</li>
+		 * <li>If a function is provided, it determines per row whether a field should be
+		 * created</li>
+		 * </ul>
+		 * If no updater is specified, this function is ignored and no fields are created.
+		 * </p>
+		 */
+		@Name(CAN_UPDATE)
+		@DynamicMode(fun = ShowIfUpdater.class, args = @Ref(UPDATER))
+		Expr getCanUpdate();
+
+		/**
 		 * The visibility of the created column.
 		 */
 		@Name(COLUMN_VISIBILITY)
 		DisplayMode getColumnVisibility();
 
+		/**
+		 * Optional function computing the column label.
+		 * 
+		 * <p>
+		 * The function expects the component's model as single argument.
+		 * </p>
+		 * 
+		 * <pre>
+		 * <code>model -> ...</code>
+		 * </pre>
+		 * 
+		 * <p>
+		 * The column name is expected as result. The result can either be an internationalization
+		 * resource, a string, or any other object whose textual representation can be shown in the
+		 * column header.
+		 * </p>
+		 * 
+		 * <p>
+		 * If no label function is specified, the static label from
+		 * {@link ColumnProviderConfig#getColumnLabel()} is used.
+		 * </p>
+		 */
+		@Name(DYNAMIC_COLUMN_LABEL)
+		Expr getDynamicColumnLabel();
+
 		@Override
 		@Options(fun = SimplePartAnnotationOptions.ForTypeRef.class, args = @Ref(COLUMN_TYPE), mapping = ItemOptionMapping.class)
 		Collection<TLAttributeAnnotation> getAnnotations();
+
+		/**
+		 * Function that shows the field only if an updater is specified.
+		 */
+		class ShowIfUpdater extends Function1<FieldMode, Expr> {
+			@Override
+			public FieldMode apply(Expr updater) {
+				return updater != null ? FieldMode.ACTIVE : FieldMode.INVISIBLE;
+			}
+		}
 	}
 
 	private final QueryExecutor _accessor;
@@ -170,6 +249,10 @@ public class ComputedColumnProviderByExpression
 	private final TLType _columnType;
 
 	private LayoutComponent _component;
+
+	private final QueryExecutor _canUpdate;
+
+	private final QueryExecutor _dynamicColumnLabel;
 
 	/**
 	 * Creates a {@link ComputedColumnProviderByExpression} from configuration.
@@ -187,6 +270,8 @@ public class ComputedColumnProviderByExpression
 		_accessor = QueryExecutor.compile(config.getAccessor());
 		_updater = QueryExecutor.compileOptional(config.getUpdater());
 		_columnType = config.getColumnType().resolveType();
+		_canUpdate = QueryExecutor.compileOptional(config.getCanUpdate());
+		_dynamicColumnLabel = QueryExecutor.compileOptional(config.getDynamicColumnLabel());
 		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, c -> _component = c);
 	}
 
@@ -198,7 +283,7 @@ public class ComputedColumnProviderByExpression
 		String columnName = config.getColumnId();
 		ColumnConfiguration column = table.declareColumn(columnName);
 
-		ResKey labelKey = config.getColumnLabel();
+		ResKey labelKey = getLabelKey(config);
 		TLTypeContext type = createTypeContext(config);
 
 		ColumnInfo columnInfo = new ColumnInfoFactory().createColumnInfo(type, labelKey);
@@ -219,6 +304,9 @@ public class ComputedColumnProviderByExpression
 			AbstractFieldProvider columnFieldProvider = new AbstractFieldProvider() {
 				@Override
 				public FormMember createField(Object row, Accessor uselessAccessor, String columnName) {
+					if (!canUpdate(row)) {
+						return null;
+					}
 					EditContext editContext = new CustomEditContext(type)
 						.setLabel(labelKey)
 						.setValue(accessor.getValue(row, columnName))
@@ -231,6 +319,25 @@ public class ComputedColumnProviderByExpression
 		if (displayMode.isDisplayed() && !table.getDefaultColumns().contains(columnName)) {
 			table.setDefaultColumns(append(table.getDefaultColumns(), columnName));
 		}
+	}
+
+	private ResKey getLabelKey(Config<?> config) {
+		if (_dynamicColumnLabel != null) {
+			Object label = _dynamicColumnLabel.execute(_component.getModel());
+			if (label instanceof ResKey) {
+				return (ResKey) label;
+			}
+			return ResKey.text(ToString.toString(label));
+		}
+		return config.getColumnLabel();
+	}
+
+	private boolean canUpdate(Object row) {
+		if (_canUpdate == null) {
+			return true;
+		}
+		Object result = _canUpdate.execute(row, _component.getModel());
+		return SearchExpression.asBoolean(result);
 	}
 
 	private TLTypeContext createTypeContext(Config<?> config) {

@@ -104,7 +104,7 @@ public class ScriptTracer {
 	}
 
 	private static EvalContext tracingContext(KnowledgeBase kb, TLModel model, Sink<Pointer> trace) {
-		EvalContext context = new EvalContext(kb, model, null, null);
+		EvalContext context = new EvalContext(false, kb, model, null, null);
 		context.defineVar(TracingAccessRewriter.TRACE, trace);
 		return context;
 	}

@@ -6,7 +6,9 @@
 package com.top_logic.model.search.ui;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -137,7 +139,17 @@ public class ScriptComponent extends BoundLayout {
 		QueryExecutor executor = QueryExecutor.compile(defaultKnowledgeBase, defaultTLModel, expression);
 		Object result = executor.executeWith(executor.context(true, null, null), Args.none());
 
-		return SearchExpression.asCollection(result);
+		// Note: Do not use SearchExpression.asCollection(result), since this decomposes maps into
+		// entry sets, which makes results hard to interpret.
+		if (result instanceof Collection<?> collection) {
+			return collection;
+		} else if (result == null) {
+			return Collections.emptyList();
+		} else if (result.getClass().isArray()) {
+			return Arrays.asList((Object[]) result);
+		} else {
+			return Collections.singleton(result);
+		}
 	}
 
 	private KnowledgeBase kb() {

@@ -32,7 +32,7 @@
 			/>
 			<executability>
 				<rule-by-expression show-disabled="true">
-					<decision><![CDATA[account -> $account.get(`tl.accounts:Person#authDeviceID`) != "dbSecurity" ? #("Ein Passwort kann nur für lokale Zugänge gesetzt werden"@de, "Passwords can be managed only for local accounts."@en) : null]]></decision>
+					<decision>account -&gt; $account.get(`tl.accounts:Person#authDeviceID`) != "dbSecurity" ? #("Ein Passwort kann nur für lokale Zugänge gesetzt werden"@de, "Passwords can be managed only for local accounts."@en) : null</decision>
 				</rule-by-expression>
 			</executability>
 		</open-handler>

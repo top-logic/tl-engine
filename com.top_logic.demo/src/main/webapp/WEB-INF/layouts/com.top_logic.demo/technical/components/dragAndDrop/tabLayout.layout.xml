@@ -10,8 +10,8 @@
 		tabIcon=""
 	>
 		<tabLabel key="dynamic.6a5cfbc4-c01b-4c95-82f0-9b0da12afbe2">
-			<en><![CDATA[Drag & Drop]]></en>
-			<de><![CDATA[Drag & Drop]]></de>
+			<en>Drag &amp; Drop</en>
+			<de>Drag &amp; Drop</de>
 		</tabLabel>
 		<components>
 			<layout-reference resource="com.top_logic.demo/technical/components/dragAndDrop/innerLayout.layout.xml"/>

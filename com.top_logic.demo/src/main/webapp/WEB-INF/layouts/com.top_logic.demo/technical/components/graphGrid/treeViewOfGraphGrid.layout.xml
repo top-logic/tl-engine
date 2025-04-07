@@ -43,7 +43,7 @@
 			>
 				<executability>
 					<rule-by-expression>
-						<decision><![CDATA[x -> !$x.containsElement(`tl.demo.graph#ROOT`) || #("Der Wurzelknoten kann nicht gelöscht werden"@de, "The root node cannot be deleted"@en)]]></decision>
+						<decision>x -&gt; !$x.containsElement(`tl.demo.graph#ROOT`) || #("Der Wurzelknoten kann nicht gelöscht werden"@de, "The root node cannot be deleted"@en)</decision>
 						<show-disabled>true</show-disabled>
 					</rule-by-expression>
 				</executability>

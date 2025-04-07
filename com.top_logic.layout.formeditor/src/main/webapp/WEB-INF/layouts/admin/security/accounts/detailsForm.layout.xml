@@ -47,7 +47,7 @@
 				</resourceKey>
 				<executability>
 					<rule-by-expression show-disabled="true">
-						<decision><![CDATA[contact -> if ($contact.get(`Contacts:PersonContact#account`) == null, null, #("Der Benutzer kann nicht gelöscht werden, weil sein Zugang noch aktiv ist."@de,"The user cannot be deleted because their account is still active."@en))]]></decision>
+						<decision>contact -&gt; if ($contact.get(`Contacts:PersonContact#account`) == null, null, #("Der Benutzer kann nicht gelöscht werden, weil sein Zugang noch aktiv ist."@de,"The user cannot be deleted because their account is still active."@en))</decision>
 					</rule-by-expression>
 				</executability>
 			</button>
@@ -69,10 +69,10 @@
 				<executability>
 					<rule-by-expression decision="account -> $account != null"/>
 					<rule-by-expression show-disabled="true">
-						<decision><![CDATA[account -> if ($account != currentUser(), null, #("Ein Benutzer kann sich nicht selber löschen."@de, "A user cannot delete himself."@en))]]></decision>
+						<decision>account -&gt; if ($account != currentUser(), null, #("Ein Benutzer kann sich nicht selber löschen."@de, "A user cannot delete himself."@en))</decision>
 					</rule-by-expression>
 					<rule-by-expression show-disabled="true">
-						<decision><![CDATA[account -> if ($account.get(`tl.accounts:Person#admin`) == true, #("Ein Administrator kann nicht gelöscht werden."@de, "An administrator cannot be deleted."@en), null)]]></decision>
+						<decision>account -&gt; if ($account.get(`tl.accounts:Person#admin`) == true, #("Ein Administrator kann nicht gelöscht werden."@de, "An administrator cannot be deleted."@en), null)</decision>
 					</rule-by-expression>
 				</executability>
 				<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation">

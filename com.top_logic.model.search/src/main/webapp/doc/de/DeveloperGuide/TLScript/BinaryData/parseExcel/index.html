@@ -79,6 +79,15 @@
 			<td>Nein</td>
 			<td>false</td>
 		</tr>
+		<tr>
+			<td>evaluateFormulas</td>
+			<td>Boolean</td>
+			<td>
+			<p>Ob Formeln in der Excel-Datei ausgewertet werden sollen. Wenn <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">evaluateFormulas:true</code></strong> (Standard), werden die Formeln ausgewertet und das Ergebnis zurückgegeben. Wenn <strong><code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.3rem] px-1 py-px text-[0.9rem]">evaluateFormulas:false</code></strong>, wird die Formel selbst als Text zurückgegeben.</p>
+			</td>
+			<td>Nein</td>
+			<td>true</td>
+		</tr>
 	</tbody>
 </table>
 
@@ -558,3 +567,82 @@
 }</code></pre>
 
 <p>Der Aufruf von <code class="hljs inlineCode">parseExcel(importSheers: "Test", raw:true)</code> liefert eine Map von Listen von Listen für das Sheet "Test".</p>
+
+<h3>Beispiel 7: Import mit Formelauswertung</h3>
+
+<p>In diesem Beispiel zeigt die Excel-Datei eine einfache Tabelle mit drei Spalten:</p>
+
+<ul>
+	<li>Spalte A enthält feste Werte (10, 15, 20)</li>
+	<li>Spalte B enthält Formeln, die den Wert aus Spalte A verdoppeln (=A2*2, =A3*2, =A4*2)</li>
+	<li>Spalte C enthält Formeln, die die Werte aus Spalte A und B addieren (=A2+B2, =A3+B3, =A4+B4)</li>
+</ul>
+
+<pre>
+<code>{
+	// Mit Formelauswertung (Standard)
+	$importedData.parseExcel(importSheets: "Formeln",
+	headers:{"Formeln": ["A1", "B1", "C1"]});
+}</code>
+</pre>
+
+<p><strong>Ausgabe:</strong></p>
+
+<pre>
+<code class="language-json">{
+	"Formeln": [
+	{
+	"Wert": 10,
+	"Formel": 20,
+	"Summe": 30
+	},
+	{
+	"Wert": 15,
+	"Formel": 30,
+	"Summe": 45
+	},
+	{
+	"Wert": 20,
+	"Formel": 40,
+	"Summe": 60
+	}
+	]
+}</code>
+</pre>
+
+<p>Mit <code>evaluateFormulas:true</code> werden die Formeln ausgewertet und die berechneten Ergebnisse zurückgegeben.</p>
+
+<pre>
+<code>{
+	// Ohne Formelauswertung
+	$importedData.parseExcel(importSheets: "Formeln",
+	headers:{"Formeln": ["A1", "B1", "C1"]},
+	evaluateFormulas: false);
+}</code>
+</pre>
+
+<p><strong>Ausgabe:</strong></p>
+
+<pre>
+<code class="language-json">{
+	"Formeln": [
+	{
+	"Wert": 10,
+	"Formel": "=A2*2",
+	"Summe": "=A2+B2"
+	},
+	{
+	"Wert": 15,
+	"Formel": "=A3*2",
+	"Summe": "=A3+B3"
+	},
+	{
+	"Wert": 20,
+	"Formel": "=A4*2",
+	"Summe": "=A4+B4"
+	}
+	]
+}</code>
+</pre>
+
+<p>Mit <code>evaluateFormulas:false</code> werden die Formeln selbst als Text zurückgegeben.</p>

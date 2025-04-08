@@ -2,20 +2,17 @@
 
 <component class="com.top_logic.model.search.ui.SearchResultTable"
 	model="result(SearchComponent)"
+	modelBuilder="com.top_logic.model.search.ui.SearchResultTable$Builder"
 	name="SearchResultTable"
+	securityObject="securityRoot"
 	titleKey="layouts.model.search.modelSearch.SearchResultTable.title"
 >
-	<componentControlProvider class="com.top_logic.layout.structure.SeparateTableControlProvider"
-		showMinimize="true"
-		tableName="result"
-	/>
+	<table fixedColumns="1"/>
 
-	<tables>
-		<table name="result"
-			fixedColumns="1"
-			titleKey="layouts.model.search.modelSearch.SearchResultTable.title"
-		>
-			<exporter downloadNameKey="layouts.model.search.modelSearch.SearchResultTable.title"/>
-		</table>
-	</tables>
+	<buttons>
+		<button id="exportExcel"
+			class="com.top_logic.layout.table.export.ExcelExportHandler"
+			downloadNameKey="layouts.model.search.modelSearch.SearchResultTable.title"
+		/>
+	</buttons>
 </component>

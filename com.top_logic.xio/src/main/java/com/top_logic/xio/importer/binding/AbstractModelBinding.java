@@ -5,7 +5,6 @@
  */
 package com.top_logic.xio.importer.binding;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -100,7 +99,7 @@ public abstract class AbstractModelBinding implements ModelBinding {
 	@Override
 	public boolean isInstanceOf(Object obj, String type) {
 		try {
-			return TLModelUtil.isCompatibleInstance(resolveType(type), (TLObject) obj);
+			return TLModelUtil.isCompatibleInstance(resolveType(type), obj);
 		} catch (ConfigurationException ex) {
 			throw new ConfigurationError(ex);
 		}
@@ -139,14 +138,6 @@ public abstract class AbstractModelBinding implements ModelBinding {
 	protected void setValue(Object obj, String partName, Object value) {
 		TLObject self = (TLObject) obj;
 		TLStructuredTypePart part = self.tType().getPartOrFail(partName);
-		Object oldValue = self.tValue(part);
-		if (oldValue != null
-			&& (!(oldValue instanceof Collection<?>) || !((Collection<?>) oldValue).isEmpty())) {
-			// Assuming that null and empty are potential default values.
-
-			Logger.warn("Overriding value of part '" + part + "' with value '" + value + "', old value was '"
-				+ oldValue + "'.", ApplicationModelBinding.class);
-		}
 		self.tUpdate(part, value);
 	}
 

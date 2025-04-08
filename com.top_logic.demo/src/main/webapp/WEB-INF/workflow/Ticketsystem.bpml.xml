@@ -186,7 +186,7 @@
 				<tl:titleI18N>
 					<resource>
 						<en>Query raised</en>
-						<de>RÃ¼ckfrage gestellt</de>
+						<de>Rückfrage gestellt</de>
 					</resource>
 				</tl:titleI18N>
 				<tl:titleFunction/>
@@ -336,12 +336,12 @@
 				<tl:title>
 					<resource>
 						<en>Ask a question</en>
-						<de>RÃ¼ckfrage stellen</de>
+						<de>Rückfrage stellen</de>
 					</resource>
 				</tl:title>
 				<tl:tooltip>
 					<de>
-						<text img-count="0"><![CDATA[<p>Das Ticket enthÃ¤lt Unklarheiten, die eine direkte Umsetzung nicht mÃ¶glich machen. Das Ticket wird an den Ersteller zur KlÃ¤rung zurÃ¼ckgegeben.</p>
+						<text img-count="0"><![CDATA[<p>Das Ticket enthält Unklarheiten, die eine direkte Umsetzung nicht möglich machen. Das Ticket wird an den Ersteller zur Klärung zurückgegeben.</p>
 ]]></text>
 					</de>
 					<en>
@@ -383,7 +383,7 @@
 				<tl:title>
 					<resource>
 						<en>Ask a question</en>
-						<de>RÃ¼ckfrage stellen</de>
+						<de>Rückfrage stellen</de>
 					</resource>
 				</tl:title>
 				<tl:tooltip/>
@@ -407,7 +407,7 @@
 				</tl:title>
 				<tl:tooltip>
 					<de>
-						<text img-count="0"><![CDATA[<p>Das Ticket is offensichtlich unbegrÃ¼ndet. Die Bearbeitung des Tickets wird direkt beendet.</p>
+						<text img-count="0"><![CDATA[<p>Das Ticket is offensichtlich unbegründet. Die Bearbeitung des Tickets wird direkt beendet.</p>
 ]]></text>
 					</de>
 					<en>
@@ -435,7 +435,7 @@
 				</tl:title>
 				<tl:tooltip>
 					<de>
-						<text img-count="0"><![CDATA[<p>Ãber die weitere Bearbeitung dieses Tickets entscheiden. Das Ticket kann entweder an den Ersteller zur KlÃ¤rung von RÃ¼ckfragen zurÃ¼ckgegeben, an die Implementierung Ã¼bergeben, oder final abgelehnt werden.</p>
+						<text img-count="0"><![CDATA[<p>Über die weitere Bearbeitung dieses Tickets entscheiden. Das Ticket kann entweder an den Ersteller zur Klärung von Rückfragen zurückgegeben, an die Implementierung übergeben, oder final abgelehnt werden.</p>
 ]]></text>
 					</de>
 					<en>
@@ -458,7 +458,7 @@
 				<tl:title>
 					<resource>
 						<en>Finalize</en>
-						<de>AbschlieÃen</de>
+						<de>Abschließen</de>
 					</resource>
 				</tl:title>
 				<tl:tooltip/>
@@ -477,7 +477,7 @@
 				<tl:title>
 					<resource>
 						<en>Reject solution</en>
-						<de>LÃ¶sung ablehnen</de>
+						<de>Lösung ablehnen</de>
 					</resource>
 				</tl:title>
 				<tl:tooltip/>
@@ -496,7 +496,7 @@
 				<tl:title>
 					<resource>
 						<en>Query to creator</en>
-						<de>RÃ¼ckfrage an Ersteller</de>
+						<de>Rückfrage an Ersteller</de>
 					</resource>
 				</tl:title>
 				<tl:tooltip/>
@@ -589,7 +589,7 @@
 				<tl:title>
 					<resource>
 						<en>Accept solution</en>
-						<de>LÃ¶sung akzeptieren</de>
+						<de>Lösung akzeptieren</de>
 					</resource>
 				</tl:title>
 				<tl:tooltip/>
@@ -658,7 +658,7 @@
 				</tl:title>
 				<tl:tooltip>
 					<de>
-						<text img-count="0"><![CDATA[<p>Das Ticket wird zur LÃ¶sung an einen Bearbeiter zugewiesen.</p>
+						<text img-count="0"><![CDATA[<p>Das Ticket wird zur Lösung an einen Bearbeiter zugewiesen.</p>
 ]]></text>
 					</de>
 					<en>

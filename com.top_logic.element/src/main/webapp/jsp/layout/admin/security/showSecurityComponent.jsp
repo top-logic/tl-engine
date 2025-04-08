@@ -9,10 +9,6 @@ ShowSecurityComponent component = (ShowSecurityComponent) MainLayout.getComponen
 	<layout:head/>
 	<layout:body>
 		<form:form>
-			<p>
-				<form:resource key="pageMessage"/>
-			</p>
-
 			<form:columns count="4">
 				<form:descriptionCell>
 					<form:description>

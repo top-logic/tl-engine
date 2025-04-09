@@ -260,6 +260,9 @@ public class XMLConfigReplacer {
 		}
 	}
 	
+	/**
+	 * Entry-point for the {@link XMLConfigReplacer} tool.
+	 */
 	public static void main(String[] args) throws IOException, SAXException, ParserConfigurationException {
 		new XMLConfigReplacer(args[0], new File(args[1])).run();
 	}

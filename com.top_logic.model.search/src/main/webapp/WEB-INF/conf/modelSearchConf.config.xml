@@ -366,6 +366,7 @@
 					<method name="parseCSV" class="com.top_logic.model.search.expr.config.operations.binary.ParseCSV$Builder"/>
 					<method name="parseExcel" class="com.top_logic.model.search.expr.config.operations.binary.ParseExcel$Builder"/>
 					<method name="parseJson" class="com.top_logic.model.search.expr.config.operations.binary.ParseJson$Builder"/>
+					<method name="toConfig" class="com.top_logic.model.search.expr.config.operations.struct.ToConfig$Builder"/>
 					
 					<method name="regex" class="com.top_logic.model.search.expr.config.operations.regex.Regex$Builder"/>
 					<method name="regexSearch" class="com.top_logic.model.search.expr.config.operations.regex.RegexSearch$Builder"/>
@@ -640,6 +641,8 @@
 					<method name="currentRevision" class="com.top_logic.model.search.expr.config.operations.revision.CurrentRevision$Builder"/>
 					<method name="equalsUnversioned" class="com.top_logic.model.search.expr.config.operations.EqualsUnversioned$Builder"/>
 					<method name="filterPermission" class="com.top_logic.model.search.expr.config.operations.security.FilterPermission$Builder"/>
+					<method name="dbConfig" class="com.top_logic.model.search.expr.config.operations.app.GetDBConfig$Builder"/>
+					<method name="appConfig" class="com.top_logic.model.search.expr.config.operations.app.GetAppConfig$Builder"/>
 				</methods>
 				<method-resolvers>
 					<method-resolver class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions$Module"/>

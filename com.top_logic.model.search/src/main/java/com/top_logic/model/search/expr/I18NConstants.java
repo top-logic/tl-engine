@@ -78,7 +78,13 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey ERROR_EMPTY_FORMAT_ID;
 
+	/**
+	 * @en Operation not allowed in interactive context for non-admin users: {0}
+	 */
+	public static ResKey1 PERMISSION_DENIED__NAME;
+
 	static {
 		initConstants(I18NConstants.class);
 	}
+
 }

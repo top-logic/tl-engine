@@ -207,15 +207,28 @@ public abstract class QueryExecutor {
 		return new DirectQueryExecutor(knowledgeBase, tlModel, expr);
 	}
 
-	private EvalContext context() {
+	/**
+	 * Creates a default {@link EvalContext} without {@link DisplayContext} and output.
+	 */
+	public EvalContext context() {
 		return context(null, null);
 	}
 
 	/**
 	 * Creates a default rendering {@link EvalContext}.
 	 */
-	private EvalContext context(DisplayContext displayContext, TagWriter out) {
-		return new EvalContext(getKnowledgeBase(), getTLModel(), displayContext, out);
+	public EvalContext context(DisplayContext displayContext, TagWriter out) {
+		return context(false, displayContext, out);
+	}
+
+	/**
+	 * Creates a default rendering {@link EvalContext}.
+	 * 
+	 * @param interactive
+	 *        See {@link EvalContext#isInteractive()}.
+	 */
+	public EvalContext context(boolean interactive, DisplayContext displayContext, TagWriter out) {
+		return new EvalContext(interactive, getKnowledgeBase(), getTLModel(), displayContext, out);
 	}
 
 	/** The default {@link TLModel}. */
@@ -305,6 +318,6 @@ public abstract class QueryExecutor {
 	 *        The arguments to pass to the expression evaluation.
 	 * @return The result of the expression.
 	 */
-	protected abstract Object executeWith(EvalContext definitions, Args args);
+	public abstract Object executeWith(EvalContext definitions, Args args);
 
 }

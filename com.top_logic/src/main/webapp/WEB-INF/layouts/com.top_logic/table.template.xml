@@ -18,6 +18,7 @@
 
 					<property name="defaultSelection"/>
 					<property name="multiSelection"/>
+					<property name="resetInvisible"/>
 					<property name="isSecurityMaster"/>
 
 					<property name="showMaximize"/>
@@ -31,7 +32,6 @@
 					<property name="buttons"/>
 					<property name="onSelectionChange"/>
 					<property name="goto-targets"/>
-					<property name="resetInvisible"/>
 				</value>
 			</display-order>
 		</annotations>

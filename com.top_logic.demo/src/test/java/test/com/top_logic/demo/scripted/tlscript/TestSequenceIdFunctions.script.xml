@@ -50,13 +50,10 @@
 			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 				column-label="Result"
 			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Administration > Development > Script Konsole > Ergebnis"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
 				</table>
 				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
 					displayed-row-index="0"
@@ -84,13 +81,10 @@
 			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 				column-label="Result"
 			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Administration > Development > Script Konsole > Ergebnis"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
 				</table>
 				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
 					displayed-row-index="0"
@@ -118,13 +112,10 @@
 			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 				column-label="Result"
 			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Administration > Development > Script Konsole > Ergebnis"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
 				</table>
 				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
 					displayed-row-index="0"
@@ -152,13 +143,10 @@
 			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 				column-label="Result"
 			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Administration > Development > Script Konsole > Ergebnis"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
 				</table>
 				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
 					displayed-row-index="0"
@@ -186,13 +174,10 @@
 			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 				column-label="Result"
 			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Administration > Development > Script Konsole > Ergebnis"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
 				</table>
 				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
 					displayed-row-index="0"
@@ -234,13 +219,10 @@
 			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 				column-label="Result"
 			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Administration > Development > Script Konsole > Ergebnis"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
 				</table>
 				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
 					displayed-row-index="0"
@@ -282,13 +264,10 @@
 			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 				column-label="Result"
 			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Administration > Development > Script Konsole > Ergebnis"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
 				</table>
 				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
 					displayed-row-index="0"
@@ -330,13 +309,10 @@
 			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 				column-label="Result"
 			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Administration > Development > Script Konsole > Ergebnis"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
 				</table>
 				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
 					displayed-row-index="0"
@@ -378,13 +354,10 @@
 			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 				column-label="Result"
 			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Administration > Development > Script Konsole > Ergebnis"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
 				</table>
 				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
 					displayed-row-index="0"
@@ -426,13 +399,10 @@
 			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 				column-label="Result"
 			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Administration > Development > Script Konsole > Ergebnis"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
 				</table>
 				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
 					displayed-row-index="0"

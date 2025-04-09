@@ -144,7 +144,7 @@
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
 						<context-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Modellbasierte Suche"
+								tab-path="Modellbasierte Suche > Ergebnis"
 							/>
 						</context-name>
 						<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
@@ -190,7 +190,7 @@
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
 						<context-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Modellbasierte Suche"
+								tab-path="Modellbasierte Suche > Ergebnis"
 							/>
 						</context-name>
 						<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"

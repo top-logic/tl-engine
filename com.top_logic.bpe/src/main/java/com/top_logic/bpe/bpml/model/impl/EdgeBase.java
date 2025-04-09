@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2022 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -45,6 +45,33 @@ public interface EdgeBase extends com.top_logic.bpe.bpml.model.Named, com.top_lo
 	String TARGET_ATTR = "target";
 
 	/**
+	 * Part <code>title</code> of <code>Edge</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model.i18n:I18NString</code> in configuration.
+	 * </p>
+	 */
+	String TITLE_ATTR = "title";
+
+	/**
+	 * Part <code>tooltip</code> of <code>Edge</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model.i18n:I18NHtml</code> in configuration.
+	 * </p>
+	 */
+	String TOOLTIP_ATTR = "tooltip";
+
+	/**
+	 * Part <code>weight</code> of <code>Edge</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Double</code> in configuration.
+	 * </p>
+	 */
+	String WEIGHT_ATTR = "weight";
+
+	/**
 	 * Getter for part {@link #PROCESS_ATTR}.
 	 */
 	default com.top_logic.bpe.bpml.model.Process getProcess() {
@@ -77,6 +104,48 @@ public interface EdgeBase extends com.top_logic.bpe.bpml.model.Named, com.top_lo
 	 */
 	default void setTarget(com.top_logic.bpe.bpml.model.Node newValue) {
 		tUpdateByName(TARGET_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #TITLE_ATTR}.
+	 */
+	default com.top_logic.basic.util.ResKey getTitle() {
+		return (com.top_logic.basic.util.ResKey) tValueByName(TITLE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #TITLE_ATTR}.
+	 */
+	default void setTitle(com.top_logic.basic.util.ResKey newValue) {
+		tUpdateByName(TITLE_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #TOOLTIP_ATTR}.
+	 */
+	default com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText getTooltip() {
+		return (com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText) tValueByName(TOOLTIP_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #TOOLTIP_ATTR}.
+	 */
+	default void setTooltip(com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText newValue) {
+		tUpdateByName(TOOLTIP_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #WEIGHT_ATTR}.
+	 */
+	default Double getWeight() {
+		return (Double) tValueByName(WEIGHT_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #WEIGHT_ATTR}.
+	 */
+	default void setWeight(Double newValue) {
+		tUpdateByName(WEIGHT_ATTR, newValue);
 	}
 
 }

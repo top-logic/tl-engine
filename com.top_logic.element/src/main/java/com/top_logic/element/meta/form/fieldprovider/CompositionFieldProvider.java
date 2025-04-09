@@ -216,6 +216,29 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 		}
 	}
 
+	/**
+	 * Creates the fields for one row in the result table for a new row object.
+	 * 
+	 * @param owner
+	 *        The owner for the new object.
+	 * @param type
+	 *        The type for the new object.
+	 */
+	public static TLObject mkCreateContext(EditContext editContext, FormContainer contentGroup,
+			TLObject owner, TLClass type) {
+		AttributeUpdateContainer updateContainer = editContext.getOverlay().getScope();
+		AttributeFormContext formContext = updateContainer.getFormContext();
+
+		TLFormObject newObject = updateContainer.newObject(type, owner);
+		FormContainer rowGroup = formContext.createFormContainerForOverlay(newObject);
+		contentGroup.addMember(rowGroup);
+		Collection<String> readOnlyColumns = getReadOnlyColumns(editContext);
+		for (TLStructuredTypePart attribute : type.getAllParts()) {
+			addFieldForCreateContext(formContext, rowGroup, newObject, attribute, readOnlyColumns);
+		}
+		return newObject;
+	}
+
 	private static final class FieldAccessProvider implements TableConfigurationProvider {
 		final AttributeUpdateContainer _updateContainer;
 
@@ -683,59 +706,9 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 
 		final TLObject createRow(Control aControl, TLClass valueType) {
 			TableField tableField = (TableField) ((TableControl) aControl).getModel();
-			TLObject newRow = mkCreateContext(_context.getOverlay().getScope(), _contentGroup, _owner, valueType);
+			TLObject newRow = mkCreateContext(_context, _contentGroup, _owner, valueType);
 			addValue(tableField, newRow);
 			return newRow;
-		}
-
-		/**
-		 * Creates the fields for one row in the result table for a new row object.
-		 * 
-		 * @param owner
-		 *        The owner for the new object.
-		 * @param type
-		 *        The type for the new object.
-		 */
-		private TLObject mkCreateContext(AttributeUpdateContainer updateContainer, FormContainer contentGroup,
-				TLObject owner, TLClass type) {
-			AttributeFormContext formContext = updateContainer.getFormContext();
-
-			TLFormObject newObject = updateContainer.newObject(type, owner);
-			FormContainer rowGroup = formContext.createFormContainerForOverlay(newObject);
-			contentGroup.addMember(rowGroup);
-			Collection<String> readOnlyColumns = getReadOnlyColumns(_context);
-			for (TLStructuredTypePart attribute : type.getAllParts()) {
-				addFieldForCreateContext(formContext, rowGroup, newObject, attribute, readOnlyColumns);
-			}
-			return newObject;
-		}
-
-		/**
-		 * Adds a field for the given attribute to the form context.
-		 * 
-		 * <p>
-		 * This is used for new row objects.
-		 * </p>
-		 * 
-		 * @param contentGroup
-		 *        {@link FormContainer} for created fields.
-		 * @param newObject
-		 *        The new object being created.
-		 * @param attribute
-		 *        The {@link TLStructuredTypePart} to create member for.
-		 * @param readOnlyColumns
-		 *        Name of columns that are read only.
-		 * 
-		 * @return The created {@link FormMember}. May be <code>null</code>.
-		 */
-		private FormMember addFieldForCreateContext(AttributeFormContext formContext, FormContainer contentGroup,
-				TLFormObject newObject, TLStructuredTypePart attribute, Collection<String> readOnlyColumns) {
-			if (DisplayAnnotations.isHiddenInCreate(attribute)) {
-				return null;
-			}
-			AttributeUpdate update = newObject.newCreateUpdate(attribute);
-			update.setInTableContext(true);
-			return createFieldForUpdate(contentGroup, attribute, readOnlyColumns, formContext, update);
 		}
 
 		private void addValue(TableField table, TLObject row) {
@@ -781,7 +754,7 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 		return true;
 	}
 
-	Collection<String> getReadOnlyColumns(EditContext context) {
+	static Collection<String> getReadOnlyColumns(EditContext context) {
 		TLReadOnlyColumns annotation = context.getAnnotation(TLReadOnlyColumns.class);
 
 		if (annotation != null) {
@@ -791,7 +764,35 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 		return Collections.emptySet();
 	}
 
-	FormMember createFieldForUpdate(FormContainer contentGroup, TLStructuredTypePart attribute,
+	/**
+	 * Adds a field for the given attribute to the form context.
+	 * 
+	 * <p>
+	 * This is used for new row objects.
+	 * </p>
+	 * 
+	 * @param contentGroup
+	 *        {@link FormContainer} for created fields.
+	 * @param newObject
+	 *        The new object being created.
+	 * @param attribute
+	 *        The {@link TLStructuredTypePart} to create member for.
+	 * @param readOnlyColumns
+	 *        Name of columns that are read only.
+	 * 
+	 * @return The created {@link FormMember}. May be <code>null</code>.
+	 */
+	private static FormMember addFieldForCreateContext(AttributeFormContext formContext, FormContainer contentGroup,
+			TLFormObject newObject, TLStructuredTypePart attribute, Collection<String> readOnlyColumns) {
+		if (DisplayAnnotations.isHiddenInCreate(attribute)) {
+			return null;
+		}
+		AttributeUpdate update = newObject.newCreateUpdate(attribute);
+		update.setInTableContext(true);
+		return createFieldForUpdate(contentGroup, attribute, readOnlyColumns, formContext, update);
+	}
+
+	static FormMember createFieldForUpdate(FormContainer contentGroup, TLStructuredTypePart attribute,
 			Collection<String> readOnlyColumns, AttributeFormContext formContext, AttributeUpdate update) {
 		FormMember field = formContext.createFormMemberForUpdate(update);
 		if (field != null) {

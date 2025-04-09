@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="_actions,name,description,executionState,userRelevantTokens,createdBy"
+		model="selection(com.top_logic.demo/technical/components/workflow/projectsTable.layout.xml#Table)"
+		type="test.process:Ticket"
+	>
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/workflow/properties/dialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/workflow/createTicket/dialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.2f86c575-a373-44b4-997f-2204421b6ffe">
+			<en>Tickets</en>
+			<de>Tickets</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->$model.get(`test.process:Project#tickets`)"
+			supportsElement="element->$element.instanceOf(`test.process:Ticket`)"
+		/>
+		<configurationProviders>
+			<configurationProvider class="com.top_logic.layout.table.provider.ButtonColumnProvider"
+				columnId="_actions"
+				columnLabel="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.buttonColumn"
+				width="40px"
+			>
+				<buttons>
+					<button id="ID_446e0085_d338_4e70_a527_e0d61257691b"
+						class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+						image="css:fas fa-pencil-alt"
+						operation="ticket -> $ticket.get(`test.process:Ticket#activeTokens`).firstElement()"
+						transaction="false"
+					>
+						<resourceKey key="dynamic.b62cba8f-d3a4-46bc-995e-3dd3c6b5bebc">
+							<en>Edit</en>
+							<de>Bearbeiten</de>
+						</resourceKey>
+						<executability>
+							<rule-by-expression decision="ticket -> !$ticket.get(`test.process:Ticket#activeTokens`).isEmpty()"/>
+						</executability>
+						<postCreateActions>
+							<showComponent>
+								<input/>
+								<global-target name="com.top_logic.demo/technical/components/workflow/properties/dialog.layout.xml#Dialog"/>
+							</showComponent>
+						</postCreateActions>
+					</button>
+				</buttons>
+			</configurationProvider>
+		</configurationProviders>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="deleteRow"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<properties extends="com.top_logic.mig.html.layout.LayoutComponentUIOptions, com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent$UIOptions, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.structure.ButtonbarOptions, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.model.search.providers.MonomorphicCreateFormBuilderByExpression$WithInitialization">
+		<annotations>
+			<display-inherited value="APPEND"/>
+		</annotations>
+		<property name="modifier"
+			instance-type="com.top_logic.element.layout.meta.FormContextModificator"
+			type="PolymorphicConfiguration"
+		>
+			<item-default value="com.top_logic.bpe.layout.execution.ProcessExecutionFormContextModifier"/>
+			<non-nullable/>
+			<hidden/>
+		</property>
+	</properties>
+
+	<!-- component to create attributed objects -->
+	<component class="com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent"
+		buttonbar="${buttonbar}"
+		element=""
+		initialization="${initialization}"
+		isSecurityMaster="${isSecurityMaster}"
+		model="${model}"
+		modifier="${modifier}"
+		name="Form"
+		newModelAction="no-action"
+		page="/jsp/processExecution/StartProcess.jsp"
+		securityObject="${securityObject}"
+		showMaximize="${showMaximize}"
+		showMinimize="${showMinimize}"
+		showPopOut="${showPopOut}"
+		startEvent="${startEvent}"
+		structure=""
+		titleKey="${titleKey}"
+		toolbar="${toolbar}"
+		type="tl.bpe.execution:ProcessExecution"
+	>
+		<buttons>
+			${buttons}
+			<include name="templates/editComponentCommands.xml"/>
+		</buttons>
+	</component>
+</config:template>

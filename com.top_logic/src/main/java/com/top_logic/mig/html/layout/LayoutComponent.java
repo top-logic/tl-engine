@@ -122,6 +122,7 @@ import com.top_logic.layout.scripting.recorder.DynamicRecordable;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.scripting.recorder.ref.NamedModel;
+import com.top_logic.layout.structure.ButtonbarOptions;
 import com.top_logic.layout.structure.ContentLayouting;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.layout.structure.Expandable;
@@ -212,7 +213,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 */
 	public interface Config
 			extends PolymorphicConfiguration<LayoutComponent>, LayoutComponentUIOptions, IComponent.ComponentConfig,
-			OptionalToolbarOptions,
+			OptionalToolbarOptions, ButtonbarOptions,
 			ExpandableConfig, WithGotoConfiguration, WithDefaultFor {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
@@ -251,20 +252,12 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		String COMPONENT = "component";
 
 		/**
-		 * @see #hasButtonbar()
-		 */
-		String BUTTONBAR = "buttonbar";
-
-		/**
 		 * @see #getMaximizeRoot()
 		 */
 		String MAXIMIZE_ROOT = "maximizeRoot";
 
 		/** @see #getHelpId() */
 		String HELP_ID = "helpID";
-
-		/** @see #getResetInvisible() */
-		String RESET_INVISIBLE = "resetInvisible";
 
 		/** @see #getDropTarget() */
 		String DROP_TARGET = "dropTarget";
@@ -515,17 +508,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		boolean hasToolbar();
 
 		/**
-		 * Whether to automatically allocate a button bar at the bottom border of this component.
-		 * 
-		 * <p>
-		 * An allocated button bar is used for displaying commands of this component and all nested
-		 * components that have no own button bar.
-		 * </p>
-		 */
-		@Name(BUTTONBAR)
-		boolean hasButtonbar();
-
-		/**
 		 * Name of the ancestor component that is maximized, if the maximize button in this
 		 * component's {@link #hasToolbar() toolbar} is pressed.
 		 */
@@ -560,17 +542,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		 * @see #getHelpId()
 		 */
 		void setHelpId(String value);
-
-		/**
-		 * Whether the component is {@link LayoutComponent#invalidate() invalidated}, when the it
-		 * becomes invisible.
-		 * 
-		 * <p>
-		 * This allows to release resources when this component is no longer visible.
-		 * </p>
-		 */
-		@Name(RESET_INVISIBLE)
-		boolean getResetInvisible();
 
 		/**
 		 * {@link ComponentDropTarget} that handles drop operations over the configured component.

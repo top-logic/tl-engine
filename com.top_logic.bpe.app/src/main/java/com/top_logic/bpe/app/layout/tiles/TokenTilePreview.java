@@ -10,6 +10,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.bpe.execution.model.impl.TokenImpl;
+import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.mig.html.layout.tiles.component.TilePreview;
 
 /**
@@ -35,12 +36,7 @@ public class TokenTilePreview<C extends BPMLTilePreview.Config<?>> extends BPMLT
 	@Override
 	protected HTMLFragment specificLabelContent(Object model) {
 		TokenImpl token = (TokenImpl) model;
-
-		HTMLFragment fragment = token.calculateLabelFragment();
-		if (fragment != null) {
-			return fragment;
-		}
-		return super.specificLabelContent(model);
+		return Fragments.text(token.getName());
 	}
 
 }

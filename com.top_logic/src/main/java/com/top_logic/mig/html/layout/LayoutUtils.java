@@ -820,10 +820,21 @@ public class LayoutUtils {
 			throw new IllegalArgumentException("Path " + relativeOverlayPath + " is not a regular file.");
 		}
 		String fileName = file.toString();
-		String overlayedName = fileName.substring(0,
-			fileName.length() - LayoutModelConstants.LAYOUT_XML_OVERLAY_FILE_SUFFIX.length())
-			+ LayoutModelConstants.LAYOUT_XML_FILE_SUFFIX;
+		String overlayedName = baseName(fileName);
 		return normalizeFileName(relativeOverlayPath.resolveSibling(overlayedName)).toString();
+	}
+
+	/**
+	 * Computes from the resource name that represents an
+	 * {@link LayoutModelConstants#LAYOUT_XML_OVERLAY_FILE_SUFFIX layout overlay} the name of the
+	 * {@link LayoutModelConstants#LAYOUT_XML_FILE_SUFFIX layout file} for which the given one is an
+	 * overlay.
+	 */
+	public static String baseName(String overlayName) {
+		String overlayedName = overlayName.substring(0,
+			overlayName.length() - LayoutModelConstants.LAYOUT_XML_OVERLAY_FILE_SUFFIX.length())
+			+ LayoutModelConstants.LAYOUT_XML_FILE_SUFFIX;
+		return overlayedName;
 	}
 
 	/**

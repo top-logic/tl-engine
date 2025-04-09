@@ -6,6 +6,7 @@
 package com.top_logic.bpe.execution.engine;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -17,6 +18,16 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey SELECTION_NOT_ALLOWED;
+
+	/**
+	 * @en Import failed: {0}
+	 */
+	public static ResKey1 ERROR_IMPORT_FAILED__DETAILS;
+
+	/**
+	 * @en Import failed.
+	 */
+	public static ResKey ERROR_IMPORT_FAILED;
 
     static {
         initConstants(I18NConstants.class);

@@ -33,6 +33,36 @@
 			</annotations>
 			<configuration-storage config-interface="com.top_logic.model.form.definition.FormDefinition"/>
 		</datatype>
+		<datatype name="ProcessFormDefinition"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="CONFIGURATION"/>
+				<export-binding>
+					<store-config
+						root-tag="process-form"
+						root-type="com.top_logic.bpe.bpml.display.ProcessFormDefinition"
+					/>
+				</export-binding>
+			</annotations>
+			<configuration-storage config-interface="com.top_logic.bpe.bpml.display.ProcessFormDefinition"/>
+		</datatype>
+		<datatype name="SequenceFlowRule"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="CONFIGURATION"/>
+				<export-binding>
+					<store-config
+						root-tag="sequence-flow"
+						root-type="com.top_logic.bpe.bpml.display.SequenceFlowRule"
+					/>
+				</export-binding>
+			</annotations>
+			<configuration-storage config-interface="com.top_logic.bpe.bpml.display.SequenceFlowRule"/>
+		</datatype>
 		<enum name="ApprovalState">
 			<annotations>
 				<system-enum/>
@@ -63,8 +93,8 @@
 				<generalization type="tl.model:TLObject"/>
 			</generalizations>
 			<attributes>
-				<property name="description"
-					type="tl.model.wysiwyg:Html"
+				<property name="descriptionI18N"
+					type="tl.model.i18n:I18NHtml"
 				>
 					<annotations>
 						<bpml-extension/>
@@ -85,7 +115,7 @@
 					type="Event"
 				>
 					<annotations>
-						<visibility value="read-only"/>
+						<visibility value="hidden"/>
 					</annotations>
 				</reference>
 			</attributes>
@@ -182,35 +212,10 @@
 			</annotations>
 			<attributes>
 				<property name="delayInMillis"
-					type="tl.core:Long"
+					type="tl.core:Duration"
 				>
 					<annotations>
 						<bpml-extension/>
-						<storage-algorithm>
-							<derived-storage>
-								<expression-evaluation>
-									<method-call method="com.top_logic.bpe.bpml.model.impl.TimerEventDefinitionImpl#calculateDelayInMillis()"/>
-								</expression-evaluation>
-							</derived-storage>
-						</storage-algorithm>
-						<visibility value="hidden"/>
-					</annotations>
-				</property>
-				<property name="delayInUnit"
-					type="tl.core:Integer"
-				>
-					<annotations>
-						<bpml-extension/>
-						<value-range min="1.0"/>
-						<sort-order value="11.0"/>
-					</annotations>
-				</property>
-				<property name="timeUnit"
-					type="BPTimeGranularity"
-				>
-					<annotations>
-						<bpml-extension/>
-						<sort-order value="12.0"/>
 					</annotations>
 				</property>
 			</attributes>
@@ -339,16 +344,16 @@
 						<sort-order value="2000.0"/>
 					</annotations>
 				</property>
-				<property name="myTasksTitle"
-					type="tl.core:String"
+				<property name="myTasksTitleI18N"
+					type="tl.model.i18n:I18NString"
 				>
 					<annotations>
 						<bpml-extension/>
 						<sort-order value="2001.0"/>
 					</annotations>
 				</property>
-				<property name="myTasksDescription"
-					type="tl.model.wysiwyg:Html"
+				<property name="myTasksDescriptionI18N"
+					type="tl.model.i18n:I18NHtml"
 				>
 					<annotations>
 						<bpml-extension/>
@@ -363,16 +368,16 @@
 						<sort-order value="2010.0"/>
 					</annotations>
 				</property>
-				<property name="myProcessesTitle"
-					type="tl.core:String"
+				<property name="myProcessesTitleI18N"
+					type="tl.model.i18n:I18NString"
 				>
 					<annotations>
 						<bpml-extension/>
 						<sort-order value="2011.0"/>
 					</annotations>
 				</property>
-				<property name="myProcessesDescription"
-					type="tl.model.wysiwyg:Html"
+				<property name="myProcessesDescriptionI18N"
+					type="tl.model.i18n:I18NHtml"
 				>
 					<annotations>
 						<bpml-extension/>
@@ -440,6 +445,22 @@
 				<generalization type="Annotated"/>
 			</generalizations>
 			<attributes>
+				<property name="title"
+					type="tl.model.i18n:I18NString"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="500.5"/>
+					</annotations>
+				</property>
+				<property name="tooltip"
+					type="tl.model.i18n:I18NHtml"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="500.7"/>
+					</annotations>
+				</property>
 				<reference name="process"
 					aggregate="true"
 					inverse-reference="edges"
@@ -482,6 +503,14 @@
 						</storage-algorithm>
 					</annotations>
 				</reference>
+				<property name="weight"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="1000.0"/>
+					</annotations>
+				</property>
 			</attributes>
 		</interface>
 		<class name="SequenceFlow">
@@ -494,12 +523,35 @@
 			</annotations>
 			<attributes>
 				<property name="rule"
+					type="SequenceFlowRule"
+				>
+					<annotations>
+						<bpml-extension/>
+					</annotations>
+				</property>
+				<property name="skipStandardOperation"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<bpml-extension/>
+					</annotations>
+				</property>
+				<property name="operation"
 					type="tl.model.search:Expr"
 				>
 					<annotations>
 						<bpml-extension/>
 					</annotations>
 				</property>
+				<reference name="formType"
+					kind="forwards"
+					navigate="true"
+					type="tl.model:TLClass"
+				>
+					<annotations>
+						<bpml-extension/>
+					</annotations>
+				</reference>
 			</attributes>
 		</class>
 		<class name="Lane">
@@ -533,6 +585,14 @@
 						<visibility value="hidden"/>
 					</annotations>
 				</reference>
+				<property name="title"
+					type="tl.model.i18n:I18NString"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="500.5"/>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 		<class name="MessageFlow">
@@ -744,6 +804,23 @@
 				<table name="BPNode"/>
 				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.StartEventImpl"/>
 			</annotations>
+			<attributes>
+			    <property name="requireReview"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<bpml-extension/>
+					</annotations>
+				</property>
+				<property name="title"
+					type="tl.model.i18n:I18NString"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="500.5"/>
+					</annotations>
+				</property>
+			</attributes>
 		</class>
 		<interface name="Gateway">
 			<generalizations>
@@ -830,10 +907,19 @@
 			<annotations>
 				<table name="BPNode"/>
 				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.TaskImpl"/>
+				<id-column value="label"/>
 			</annotations>
 			<attributes>
-				<property name="title"
-					type="tl.model.search:Template"
+				<property name="titleI18N"
+					type="tl.model.i18n:I18NString"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="500.5"/>
+					</annotations>
+				</property>
+				<property name="titleFunction"
+					type="tl.model.search:Expr"
 				>
 					<annotations>
 						<bpml-extension/>
@@ -850,6 +936,38 @@
 						<visibility value="hidden"/>
 					</annotations>
 				</reference>
+				<reference name="tokenType"
+					kind="forwards"
+					type="tl.model:TLClass"
+				>
+					<annotations>
+						<options>
+							<options-by-expression>
+								<function><![CDATA[task -> ($task
+    .get(`tl.bpe.bpml:Task#process`)
+    .get(`tl.bpe.bpml:Process#participant`)
+    .get(`tl.bpe.bpml:Participant#tokenType`) 
+    || `tl.bpe.execution:Token`)
+    .recursion(t -> $t.get(`tl.model:TLClass#specializations`))]]></function>
+							</options-by-expression>
+						</options>
+						<bpml-extension/>
+					</annotations>
+				</reference>
+				<property name="label"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[t -> {
+$t.get(`tl.bpe.bpml:Task#titleI18N`).localize() || $t.get(`tl.bpe.bpml:Task#name`)
+}]]></expr>
+							</query>
+						</storage-algorithm>
+						<visibility value="hidden"/>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 		<class name="BusinessRuleTask">
@@ -879,16 +997,29 @@
 				<implementation-binding class-name="com.top_logic.bpe.bpml.model.impl.ManualTaskImpl"/>
 			</annotations>
 			<attributes>
-				<property name="displayDescription"
-					type="DisplayDescription"
+				<property name="formDefinition"
+					type="ProcessFormDefinition"
 				>
 					<annotations>
-						<gui-type expr="task -> $task.get(`tl.bpe.bpml:Node#process`).get(`tl.bpe.bpml:Process#participant`).get(`tl.bpe.bpml:Participant#modelType`)"/>
-						<template-builder>
+						<form-type>
+							<script function="task -> $task.get(`tl.bpe.bpml:Node#process`).get(`tl.bpe.bpml:Process#participant`).get(`tl.bpe.bpml:Participant#modelType`)"/>
+						</form-type>
+						<form-templates>
 							<function class="com.top_logic.bpe.layout.execution.ManualTaskTemplateBuilder"/>
-						</template-builder>
+						</form-templates>
 						<bpml-extension/>
-						<sort-order value="800.0"/>
+						<sort-order value="800.1"/>
+						<label-position value="hide-label"/>
+					</annotations>
+				</property>
+				<property name="canEdit"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<default-value>
+							<boolean value="true"/>
+						</default-value>
+						<bpml-extension/>
 					</annotations>
 				</property>
 			</attributes>
@@ -1037,14 +1168,6 @@
 						<sort-order value="3.0"/>
 					</annotations>
 				</reference>
-				<property name="taskTitle"
-					type="tl.model.search:Template"
-				>
-					<annotations>
-						<bpml-extension/>
-						<sort-order value="501.0"/>
-					</annotations>
-				</property>
 				<reference name="collaboration"
 					aggregate="true"
 					inverse-reference="participants"
@@ -1059,17 +1182,19 @@
 					type="tl.model.search:Expr"
 				>
 					<annotations>
-						<sort-order value="500.0"/>
+						<sort-order value="5000.0"/>
 					</annotations>
 				</property>
 				<property name="displayDescription"
 					type="DisplayDescription"
 				>
 					<annotations>
-						<gui-type expr="model -> $model.get(`tl.bpe.bpml:Participant#modelType`)"/>
-						<template-builder>
+						<form-type>
+							<script function="model -> $model.get(`tl.bpe.bpml:Participant#modelType`)"/>
+						</form-type>
+						<form-templates>
 							<function class="com.top_logic.bpe.layout.execution.ParticipantTemplateBuilder"/>
-						</template-builder>
+						</form-templates>
 						<bpml-extension/>
 						<sort-order value="800.0"/>
 					</annotations>
@@ -1078,14 +1203,45 @@
 					type="DisplayDescription"
 				>
 					<annotations>
-						<gui-type expr="model -> $model.get(`tl.bpe.bpml:Participant#modelType`)"/>
-						<template-builder>
+						<form-type>
+							<script function="model -> $model.get(`tl.bpe.bpml:Participant#modelType`)"/>
+						</form-type>
+						<form-templates>
 							<function class="com.top_logic.bpe.layout.execution.ParticipantTemplateBuilder"/>
-						</template-builder>
+						</form-templates>
 						<bpml-extension/>
 						<sort-order value="801.0"/>
 					</annotations>
 				</property>
+				<reference name="tokenType"
+					kind="forwards"
+					navigate="true"
+					type="tl.model:TLClass"
+				>
+					<annotations>
+						<sort-order value="4.0"/>
+						<options>
+							<options-by-expression function="`tl.bpe.execution:Token`.recursion(t -> $t.get(`tl.model:TLClass#specializations`))"/>
+						</options>
+						<bpml-extension/>
+					</annotations>
+				</reference>
+				<property name="defaultOperation"
+					type="tl.model.search:Expr"
+				>
+					<annotations>
+						<bpml-extension/>
+					</annotations>
+				</property>
+				<reference name="edgeFormType"
+					kind="forwards"
+					navigate="true"
+					type="tl.model:TLClass"
+				>
+					<annotations>
+						<bpml-extension/>
+					</annotations>
+				</reference>
 			</attributes>
 		</class>
 		<class name="Process">

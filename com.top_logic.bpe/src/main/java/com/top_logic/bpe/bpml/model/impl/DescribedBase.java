@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2022 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -18,26 +18,26 @@ public interface DescribedBase extends com.top_logic.model.TLObject {
 	String DESCRIBED_TYPE = "Described";
 
 	/**
-	 * Part <code>description</code> of <code>Described</code>
+	 * Part <code>descriptionI18N</code> of <code>Described</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.model.wysiwyg:Html</code> in configuration.
+	 * Declared as <code>tl.model.i18n:I18NHtml</code> in configuration.
 	 * </p>
 	 */
-	String DESCRIPTION_ATTR = "description";
+	String DESCRIPTION_I18N_ATTR = "descriptionI18N";
 
 	/**
-	 * Getter for part {@link #DESCRIPTION_ATTR}.
+	 * Getter for part {@link #DESCRIPTION_I18N_ATTR}.
 	 */
-	default com.top_logic.layout.wysiwyg.ui.StructuredText getDescription() {
-		return (com.top_logic.layout.wysiwyg.ui.StructuredText) tValueByName(DESCRIPTION_ATTR);
+	default com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText getDescriptionI18N() {
+		return (com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText) tValueByName(DESCRIPTION_I18N_ATTR);
 	}
 
 	/**
-	 * Setter for part {@link #DESCRIPTION_ATTR}.
+	 * Setter for part {@link #DESCRIPTION_I18N_ATTR}.
 	 */
-	default void setDescription(com.top_logic.layout.wysiwyg.ui.StructuredText newValue) {
-		tUpdateByName(DESCRIPTION_ATTR, newValue);
+	default void setDescriptionI18N(com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText newValue) {
+		tUpdateByName(DESCRIPTION_I18N_ATTR, newValue);
 	}
 
 }

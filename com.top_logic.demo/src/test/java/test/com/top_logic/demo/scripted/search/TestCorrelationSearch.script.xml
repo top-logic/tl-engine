@@ -1474,14 +1474,10 @@
 					label="true"
 					user-id="root"
 				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchResultTable"
+					<model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							tab-path="Modellbasierte Suche"
 						/>
-						<path>
-							<named-member name="result"/>
-						</path>
 					</model-name>
 					<sort-orders>
 						<sort-order

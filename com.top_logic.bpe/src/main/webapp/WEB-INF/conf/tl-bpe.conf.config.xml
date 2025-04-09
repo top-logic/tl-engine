@@ -2,6 +2,15 @@
 
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
+	
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance>
+				<modules>
+				   <module key="com.top_logic.bpe.execution.engine.InitialProcessSetupService$Module" value="true"/>
+				</modules>
+			</instance>
+		</config>
+	
 		<config service-class="com.top_logic.util.sched.Scheduler">
 			<instance>
 				<task class="com.top_logic.bpe.execution.engine.BPETimeoutTask"
@@ -35,9 +44,6 @@
 					<declaration file="/WEB-INF/model/tl.bpe.bpml.model.xml"/>
 					<declaration file="/WEB-INF/model/tl.bpe.execution.model.xml"/>
 				</declarations>
-				<classifications>
-					<classification name="bpe.execution.state" mode="use" />
-				</classifications>
 			</instance>
 		</config>
 
@@ -69,34 +75,22 @@
 			</instance>
 		</config>
 
-        <config service-class="com.top_logic.layout.provider.LabelProviderService">
-            <instance>
-                <resource-providers>
-	    	        <provider kind="MODEL" type="tl.bpe.execution:Token" implementation="com.top_logic.bpe.layout.execution.TokenResourceProvider" />
-    	    	    <provider kind="MODEL" type="tl.bpe.execution:ProcessExecution" implementation="com.top_logic.bpe.layout.execution.ProcessExecutionResourceProvider" />
-                </resource-providers>
-            </instance>
-        </config>		
-		
 		<config service-class="com.top_logic.tool.boundsec.CommandHandlerFactory">
 			<instance>
 				<handlers>
-				</handlers>
+		            <handler id="createProcessExecution" class="com.top_logic.bpe.execution.engine.ExecutionProcessCreateHandler" /> 								
+				</handlers>	
 			</instance>
 		</config>
-
-		<config service-class="com.top_logic.model.annotate.util.AttributeSettings">
+		
+		<config service-class="com.top_logic.model.search.expr.config.SearchBuilder">
 			<instance>
-				<attribute-settings>
-					<attribute-setting
-						config-name="FORM_DEFINITION"
-						legacy-type-code="1"
-					>
-						<field-provider impl="com.top_logic.bpe.bpml.display.DisplayDescriptionFieldProvider"/>
-						<tag-provider impl="com.top_logic.element.meta.form.tag.CustomInputTagProvider"/>
-						<export-binding impl="com.top_logic.model.io.bindings.ConfigurationAttributeValueBinding"/>
-					</attribute-setting>
-				</attribute-settings>
+				<methods>
+					<method name="createProcessInstance" class="com.top_logic.bpe.execution.script.CreateProcessInstance$Builder"/>					
+					<method name="executeTransition" class="com.top_logic.bpe.execution.script.ExecuteTransition$Builder"/>
+					<method name="reachableNodes" class="com.top_logic.bpe.execution.script.ReachableNodes$Builder"/>
+					<method name="forceTransition" class="com.top_logic.bpe.execution.script.ForceTransition$Builder"/>
+				</methods>
 			</instance>
 		</config>
 	</services>

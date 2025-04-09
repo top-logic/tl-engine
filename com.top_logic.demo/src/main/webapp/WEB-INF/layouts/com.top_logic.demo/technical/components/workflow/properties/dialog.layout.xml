@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments
+		createOpenerButtons="false"
+		helpID="ID_befdaeee_271c_4205_9d48_85479b9aa712"
+	>
+		<title title="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.editDialogTitle"/>
+		<open-handler id="editRow"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			image="theme:ICONS_BUTTON_EDIT"
+			resourceKey="class.com.top_logic.layout.editor.I18NConstants.DYNAMIC_COMPONENT.com.top_logic.model.search.tableWithDialogs.template.defaults.editButton"
+			targetComponent="com.top_logic.demo/technical/components/workflow/properties/advanceTicketTaskEdit.layout.xml#TaskEdit"
+		>
+			<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+				function="ticket -> $ticket.get(`test.process:Ticket#activeTokens`).firstElement()"
+				input="selection(self())"
+			/>
+		</open-handler>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/workflow/properties/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

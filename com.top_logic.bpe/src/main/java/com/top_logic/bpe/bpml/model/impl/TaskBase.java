@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2022 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -27,13 +27,40 @@ public interface TaskBase extends com.top_logic.bpe.bpml.model.Node, com.top_log
 	String BOUNDARY_EVENTS_ATTR = "boundaryEvents";
 
 	/**
-	 * Part <code>title</code> of <code>Task</code>
+	 * Part <code>label</code> of <code>Task</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.model.search:Template</code> in configuration.
+	 * Declared as <code>tl.core:String</code> in configuration.
 	 * </p>
 	 */
-	String TITLE_ATTR = "title";
+	String LABEL_ATTR = "label";
+
+	/**
+	 * Part <code>titleFunction</code> of <code>Task</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model.search:Expr</code> in configuration.
+	 * </p>
+	 */
+	String TITLE_FUNCTION_ATTR = "titleFunction";
+
+	/**
+	 * Part <code>titleI18N</code> of <code>Task</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model.i18n:I18NString</code> in configuration.
+	 * </p>
+	 */
+	String TITLE_I18N_ATTR = "titleI18N";
+
+	/**
+	 * Part <code>tokenType</code> of <code>Task</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model:TLClass</code> in configuration.
+	 * </p>
+	 */
+	String TOKEN_TYPE_ATTR = "tokenType";
 
 	/**
 	 * Getter for part {@link #BOUNDARY_EVENTS_ATTR}.
@@ -44,17 +71,52 @@ public interface TaskBase extends com.top_logic.bpe.bpml.model.Node, com.top_log
 	}
 
 	/**
-	 * Getter for part {@link #TITLE_ATTR}.
+	 * Getter for part {@link #LABEL_ATTR}.
 	 */
-	default com.top_logic.model.search.expr.SearchExpression getTitle() {
-		return (com.top_logic.model.search.expr.SearchExpression) tValueByName(TITLE_ATTR);
+	default String getLabel() {
+		return (String) tValueByName(LABEL_ATTR);
 	}
 
 	/**
-	 * Setter for part {@link #TITLE_ATTR}.
+	 * Getter for part {@link #TITLE_FUNCTION_ATTR}.
 	 */
-	default void setTitle(com.top_logic.model.search.expr.SearchExpression newValue) {
-		tUpdateByName(TITLE_ATTR, newValue);
+	default com.top_logic.model.search.expr.SearchExpression getTitleFunction() {
+		return (com.top_logic.model.search.expr.SearchExpression) tValueByName(TITLE_FUNCTION_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #TITLE_FUNCTION_ATTR}.
+	 */
+	default void setTitleFunction(com.top_logic.model.search.expr.SearchExpression newValue) {
+		tUpdateByName(TITLE_FUNCTION_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #TITLE_I18N_ATTR}.
+	 */
+	default com.top_logic.basic.util.ResKey getTitleI18N() {
+		return (com.top_logic.basic.util.ResKey) tValueByName(TITLE_I18N_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #TITLE_I18N_ATTR}.
+	 */
+	default void setTitleI18N(com.top_logic.basic.util.ResKey newValue) {
+		tUpdateByName(TITLE_I18N_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #TOKEN_TYPE_ATTR}.
+	 */
+	default com.top_logic.model.TLClass getTokenType() {
+		return (com.top_logic.model.TLClass) tValueByName(TOKEN_TYPE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #TOKEN_TYPE_ATTR}.
+	 */
+	default void setTokenType(com.top_logic.model.TLClass newValue) {
+		tUpdateByName(TOKEN_TYPE_ATTR, newValue);
 	}
 
 }

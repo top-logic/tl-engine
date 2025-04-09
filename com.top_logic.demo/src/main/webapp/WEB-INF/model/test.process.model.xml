@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.process">
+		<class name="Project">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form columns="ONE">
+						<field
+							attribute="name"
+							fullQualifiedName="test.process:Project#name"
+							type="tl.core:String"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="tickets"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Ticket"
+				/>
+				<reference name="responsibles"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="tl.accounts:Person"
+				/>
+			</attributes>
+		</class>
+		<class name="Ticket">
+			<generalizations>
+				<generalization type="tl.bpe.execution:ProcessExecution"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form columns="ONE">
+						<field
+							attribute="name"
+							fullQualifiedName="test.process:Ticket#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="description"
+							fullQualifiedName="test.process:Ticket#description"
+							type="tl.model.wysiwyg:Html"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="description"
+					type="tl.model.wysiwyg:Html"
+				/>
+				<property name="reworkCnt"
+					mandatory="true"
+					type="tl.core:Integer"
+				>
+					<annotations>
+						<default-value>
+							<int value="0"/>
+						</default-value>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+		<interface name="TicketChangeProperties">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field
+							attribute="comment"
+							fullQualifiedName="test.process:TicketChangeProperties#comment"
+							type="tl.model.wysiwyg:Html"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="comment"
+					type="tl.model.wysiwyg:Html"
+				/>
+			</attributes>
+		</interface>
+		<class name="TicketChange">
+			<generalizations>
+				<generalization type="tl.bpe.execution:Token"/>
+				<generalization type="TicketChangeProperties"/>
+			</generalizations>
+		</class>
+		<class name="TicketChangeUI">
+			<generalizations>
+				<generalization type="TicketChangeProperties"/>
+			</generalizations>
+		</class>
+	</module>
+</model>

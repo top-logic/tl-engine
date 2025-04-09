@@ -7,16 +7,17 @@ package com.top_logic.bpe.app.layout.tiles;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.bpe.app.layout.ActiveTaskComponent.ActiveTasksListModelBuilder;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.bpe.app.layout.ActiveTasksListModelBuilder;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.fragments.Fragments;
-import com.top_logic.layout.wysiwyg.ui.StructuredText;
+import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText;
 import com.top_logic.mig.html.layout.tiles.component.ComponentTile;
 import com.top_logic.mig.html.layout.tiles.component.TilePreview;
 
 /**
- * {@link TilePreview} for the "active tasks" using the {@link Collaboration#getMyTasksTitle()
+ * {@link TilePreview} for the "active tasks" using the {@link Collaboration#getMyTasksTitleI18N()
  * configured title} from the {@link Collaboration}.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -41,18 +42,18 @@ public class ActiveTasksTilePreview extends ModelBasedPreview<ModelBasedPreview.
 
 	@Override
 	protected HTMLFragment labelContent(ComponentTile tile) {
-		String result = collaboration(tile).getMyTasksTitle();
-		if (result != null && !result.isEmpty()) {
-			return Fragments.text(result);
+		ResKey result = collaboration(tile).getMyTasksTitleI18N();
+		if (result != null) {
+			return Fragments.message(result);
 		}
 		return super.labelContent(tile);
 	}
 
 	@Override
 	protected HTMLFragment descriptionContent(ComponentTile tile) {
-		StructuredText result = collaboration(tile).getMyTasksDescription();
-		if (result != null && !result.getSourceCode().isEmpty()) {
-			return Fragments.htmlSource(result.getSourceCode());
+		I18NStructuredText result = collaboration(tile).getMyTasksDescriptionI18N();
+		if (result != null) {
+			return Fragments.htmlSource(result.localizeSourceCode());
 		}
 		return super.descriptionContent(tile);
 	}

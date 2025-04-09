@@ -9,7 +9,6 @@ import java.util.Map;
 
 import com.top_logic.base.services.simpleajax.AJAXCommandHandler;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.model.CommandField;
 import com.top_logic.layout.form.model.ExecutabilityModel;
@@ -67,23 +66,11 @@ public class CommandModelFactory {
 	 * @param arguments
 	 *        The arguments to pass to the given {@link CommandHandler}, see
 	 *        {@link CommandHandler#handleCommand(com.top_logic.layout.DisplayContext, LayoutComponent, Object, Map)}
-	 * @see ComponentCommandModel#ComponentCommandModel(CommandHandler, LayoutComponent, Map,
-	 *      ResKey)
+	 * @see ComponentCommandModel#ComponentCommandModel(CommandHandler, LayoutComponent, Map)
 	 */
 	public static CommandModel commandModel(CommandHandler command, LayoutComponent component,
 			Map<String, Object> arguments) {
 		return command.createCommandModel(component, arguments);
-	}
-
-	/**
-	 * Creates a {@link ComponentCommandModel} for a command which does not need any arguments. The
-	 * label of this {@link ComponentCommandModel} is the given label.
-	 * 
-	 * @see ComponentCommandModel#ComponentCommandModel(CommandHandler, LayoutComponent, Map,
-	 *      ResKey)
-	 */
-	public static CommandModel commandModel(CommandHandler command, LayoutComponent component, ResKey label) {
-		return new ComponentCommandModel(command, component, CommandHandler.NO_ARGS, label);
 	}
 
 	/**

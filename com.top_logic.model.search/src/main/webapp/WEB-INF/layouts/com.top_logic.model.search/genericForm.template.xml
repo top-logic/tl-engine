@@ -4,7 +4,7 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	groups="commons"
 >
-	<properties extends="com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.mig.html.layout.WithDefaultFor, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.layout.editor.config.ButtonTemplateParameters">
+	<properties extends="com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.mig.html.layout.WithDefaultFor, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.structure.ButtonbarOptions">
 		<annotations>
 			<display-order>
 				<value>
@@ -16,6 +16,7 @@
 					<property name="isSecurityMaster"/>
 
 					<property name="toolbar"/>
+					<property name="buttonbar"/>
 					<property name="showMaximize"/>
 					<property name="showMinimize"/>
 					<property name="showPopOut"/>
@@ -71,6 +72,7 @@
 
 	<!-- Note: A settings component is used here instead of a general form, since this provides an edit-mode channel that allows to switch modes from UI actions. -->
 	<settings name="Form"
+		buttonbar="${buttonbar}"
 		defaultFor="${defaultFor}"
 		dialogs="${dialogs}"
 		isSecurityMaster="${isSecurityMaster}"

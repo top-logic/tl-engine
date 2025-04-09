@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2022 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
@@ -52,6 +52,16 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	public static final String DISPLAY_DESCRIPTION_TYPE = "DisplayDescription";
 
 	/**
+	 * Name of the data type <code>ProcessFormDefinition</code> in module {@value #TL_BPE_BPML_STRUCTURE}.
+	 */
+	public static final String PROCESS_FORM_DEFINITION_TYPE = "ProcessFormDefinition";
+
+	/**
+	 * Name of the data type <code>SequenceFlowRule</code> in module {@value #TL_BPE_BPML_STRUCTURE}.
+	 */
+	public static final String SEQUENCE_FLOW_RULE_TYPE = "SequenceFlowRule";
+
+	/**
 	 * Lookup {@link AnnotationContainer} type.
 	 */
 	public static com.top_logic.model.TLClass getAnnotationContainerType() {
@@ -73,10 +83,10 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
-	 * Lookup {@link Described#DESCRIPTION_ATTR} of {@link Described}.
+	 * Lookup {@link Described#DESCRIPTION_I18N_ATTR} of {@link Described}.
 	 */
-	public static com.top_logic.model.TLProperty getDescriptionDescribedAttr() {
-		return (com.top_logic.model.TLProperty) getDescribedType().getPart(Described.DESCRIPTION_ATTR);
+	public static com.top_logic.model.TLProperty getDescriptionI18NDescribedAttr() {
+		return (com.top_logic.model.TLProperty) getDescribedType().getPart(Described.DESCRIPTION_I18N_ATTR);
 	}
 
 	/**
@@ -161,20 +171,6 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 */
 	public static com.top_logic.model.TLProperty getDelayInMillisTimerEventDefinitionAttr() {
 		return (com.top_logic.model.TLProperty) getTimerEventDefinitionType().getPart(TimerEventDefinition.DELAY_IN_MILLIS_ATTR);
-	}
-
-	/**
-	 * Lookup {@link TimerEventDefinition#DELAY_IN_UNIT_ATTR} of {@link TimerEventDefinition}.
-	 */
-	public static com.top_logic.model.TLProperty getDelayInUnitTimerEventDefinitionAttr() {
-		return (com.top_logic.model.TLProperty) getTimerEventDefinitionType().getPart(TimerEventDefinition.DELAY_IN_UNIT_ATTR);
-	}
-
-	/**
-	 * Lookup {@link TimerEventDefinition#TIME_UNIT_ATTR} of {@link TimerEventDefinition}.
-	 */
-	public static com.top_logic.model.TLProperty getTimeUnitTimerEventDefinitionAttr() {
-		return (com.top_logic.model.TLProperty) getTimerEventDefinitionType().getPart(TimerEventDefinition.TIME_UNIT_ATTR);
 	}
 
 	/**
@@ -276,10 +272,10 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
-	 * Lookup {@link Collaboration#MY_PROCESSES_DESCRIPTION_ATTR} of {@link Collaboration}.
+	 * Lookup {@link Collaboration#MY_PROCESSES_DESCRIPTION_I18N_ATTR} of {@link Collaboration}.
 	 */
-	public static com.top_logic.model.TLProperty getMyProcessesDescriptionCollaborationAttr() {
-		return (com.top_logic.model.TLProperty) getCollaborationType().getPart(Collaboration.MY_PROCESSES_DESCRIPTION_ATTR);
+	public static com.top_logic.model.TLProperty getMyProcessesDescriptionI18NCollaborationAttr() {
+		return (com.top_logic.model.TLProperty) getCollaborationType().getPart(Collaboration.MY_PROCESSES_DESCRIPTION_I18N_ATTR);
 	}
 
 	/**
@@ -290,17 +286,17 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
-	 * Lookup {@link Collaboration#MY_PROCESSES_TITLE_ATTR} of {@link Collaboration}.
+	 * Lookup {@link Collaboration#MY_PROCESSES_TITLE_I18N_ATTR} of {@link Collaboration}.
 	 */
-	public static com.top_logic.model.TLProperty getMyProcessesTitleCollaborationAttr() {
-		return (com.top_logic.model.TLProperty) getCollaborationType().getPart(Collaboration.MY_PROCESSES_TITLE_ATTR);
+	public static com.top_logic.model.TLProperty getMyProcessesTitleI18NCollaborationAttr() {
+		return (com.top_logic.model.TLProperty) getCollaborationType().getPart(Collaboration.MY_PROCESSES_TITLE_I18N_ATTR);
 	}
 
 	/**
-	 * Lookup {@link Collaboration#MY_TASKS_DESCRIPTION_ATTR} of {@link Collaboration}.
+	 * Lookup {@link Collaboration#MY_TASKS_DESCRIPTION_I18N_ATTR} of {@link Collaboration}.
 	 */
-	public static com.top_logic.model.TLProperty getMyTasksDescriptionCollaborationAttr() {
-		return (com.top_logic.model.TLProperty) getCollaborationType().getPart(Collaboration.MY_TASKS_DESCRIPTION_ATTR);
+	public static com.top_logic.model.TLProperty getMyTasksDescriptionI18NCollaborationAttr() {
+		return (com.top_logic.model.TLProperty) getCollaborationType().getPart(Collaboration.MY_TASKS_DESCRIPTION_I18N_ATTR);
 	}
 
 	/**
@@ -311,10 +307,10 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
-	 * Lookup {@link Collaboration#MY_TASKS_TITLE_ATTR} of {@link Collaboration}.
+	 * Lookup {@link Collaboration#MY_TASKS_TITLE_I18N_ATTR} of {@link Collaboration}.
 	 */
-	public static com.top_logic.model.TLProperty getMyTasksTitleCollaborationAttr() {
-		return (com.top_logic.model.TLProperty) getCollaborationType().getPart(Collaboration.MY_TASKS_TITLE_ATTR);
+	public static com.top_logic.model.TLProperty getMyTasksTitleI18NCollaborationAttr() {
+		return (com.top_logic.model.TLProperty) getCollaborationType().getPart(Collaboration.MY_TASKS_TITLE_I18N_ATTR);
 	}
 
 	/**
@@ -374,6 +370,27 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
+	 * Lookup {@link Edge#TITLE_ATTR} of {@link Edge}.
+	 */
+	public static com.top_logic.model.TLProperty getTitleEdgeAttr() {
+		return (com.top_logic.model.TLProperty) getEdgeType().getPart(Edge.TITLE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Edge#TOOLTIP_ATTR} of {@link Edge}.
+	 */
+	public static com.top_logic.model.TLProperty getTooltipEdgeAttr() {
+		return (com.top_logic.model.TLProperty) getEdgeType().getPart(Edge.TOOLTIP_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Edge#WEIGHT_ATTR} of {@link Edge}.
+	 */
+	public static com.top_logic.model.TLProperty getWeightEdgeAttr() {
+		return (com.top_logic.model.TLProperty) getEdgeType().getPart(Edge.WEIGHT_ATTR);
+	}
+
+	/**
 	 * Lookup {@link SequenceFlow} type.
 	 */
 	public static com.top_logic.model.TLClass getSequenceFlowType() {
@@ -381,10 +398,31 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
+	 * Lookup {@link SequenceFlow#FORM_TYPE_ATTR} of {@link SequenceFlow}.
+	 */
+	public static com.top_logic.model.TLReference getFormTypeSequenceFlowAttr() {
+		return (com.top_logic.model.TLReference) getSequenceFlowType().getPart(SequenceFlow.FORM_TYPE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link SequenceFlow#OPERATION_ATTR} of {@link SequenceFlow}.
+	 */
+	public static com.top_logic.model.TLProperty getOperationSequenceFlowAttr() {
+		return (com.top_logic.model.TLProperty) getSequenceFlowType().getPart(SequenceFlow.OPERATION_ATTR);
+	}
+
+	/**
 	 * Lookup {@link SequenceFlow#RULE_ATTR} of {@link SequenceFlow}.
 	 */
 	public static com.top_logic.model.TLProperty getRuleSequenceFlowAttr() {
 		return (com.top_logic.model.TLProperty) getSequenceFlowType().getPart(SequenceFlow.RULE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link SequenceFlow#SKIP_STANDARD_OPERATION_ATTR} of {@link SequenceFlow}.
+	 */
+	public static com.top_logic.model.TLProperty getSkipStandardOperationSequenceFlowAttr() {
+		return (com.top_logic.model.TLProperty) getSequenceFlowType().getPart(SequenceFlow.SKIP_STANDARD_OPERATION_ATTR);
 	}
 
 	/**
@@ -406,6 +444,13 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 */
 	public static com.top_logic.model.TLReference getOwnerLaneAttr() {
 		return (com.top_logic.model.TLReference) getLaneType().getPart(Lane.OWNER_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Lane#TITLE_ATTR} of {@link Lane}.
+	 */
+	public static com.top_logic.model.TLProperty getTitleLaneAttr() {
+		return (com.top_logic.model.TLProperty) getLaneType().getPart(Lane.TITLE_ATTR);
 	}
 
 	/**
@@ -556,6 +601,20 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
+	 * Lookup {@link StartEvent#REQUIRE_REVIEW_ATTR} of {@link StartEvent}.
+	 */
+	public static com.top_logic.model.TLProperty getRequireReviewStartEventAttr() {
+		return (com.top_logic.model.TLProperty) getStartEventType().getPart(StartEvent.REQUIRE_REVIEW_ATTR);
+	}
+
+	/**
+	 * Lookup {@link StartEvent#TITLE_ATTR} of {@link StartEvent}.
+	 */
+	public static com.top_logic.model.TLProperty getTitleStartEventAttr() {
+		return (com.top_logic.model.TLProperty) getStartEventType().getPart(StartEvent.TITLE_ATTR);
+	}
+
+	/**
 	 * Lookup {@link Gateway} type.
 	 */
 	public static com.top_logic.model.TLClass getGatewayType() {
@@ -633,10 +692,31 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
-	 * Lookup {@link Task#TITLE_ATTR} of {@link Task}.
+	 * Lookup {@link Task#LABEL_ATTR} of {@link Task}.
 	 */
-	public static com.top_logic.model.TLProperty getTitleTaskAttr() {
-		return (com.top_logic.model.TLProperty) getTaskType().getPart(Task.TITLE_ATTR);
+	public static com.top_logic.model.TLProperty getLabelTaskAttr() {
+		return (com.top_logic.model.TLProperty) getTaskType().getPart(Task.LABEL_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Task#TITLE_FUNCTION_ATTR} of {@link Task}.
+	 */
+	public static com.top_logic.model.TLProperty getTitleFunctionTaskAttr() {
+		return (com.top_logic.model.TLProperty) getTaskType().getPart(Task.TITLE_FUNCTION_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Task#TITLE_I18N_ATTR} of {@link Task}.
+	 */
+	public static com.top_logic.model.TLProperty getTitleI18NTaskAttr() {
+		return (com.top_logic.model.TLProperty) getTaskType().getPart(Task.TITLE_I18N_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Task#TOKEN_TYPE_ATTR} of {@link Task}.
+	 */
+	public static com.top_logic.model.TLReference getTokenTypeTaskAttr() {
+		return (com.top_logic.model.TLReference) getTaskType().getPart(Task.TOKEN_TYPE_ATTR);
 	}
 
 	/**
@@ -661,10 +741,17 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
-	 * Lookup {@link ManualTask#DISPLAY_DESCRIPTION_ATTR} of {@link ManualTask}.
+	 * Lookup {@link ManualTask#CAN_EDIT_ATTR} of {@link ManualTask}.
 	 */
-	public static com.top_logic.model.TLProperty getDisplayDescriptionManualTaskAttr() {
-		return (com.top_logic.model.TLProperty) getManualTaskType().getPart(ManualTask.DISPLAY_DESCRIPTION_ATTR);
+	public static com.top_logic.model.TLProperty getCanEditManualTaskAttr() {
+		return (com.top_logic.model.TLProperty) getManualTaskType().getPart(ManualTask.CAN_EDIT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link ManualTask#FORM_DEFINITION_ATTR} of {@link ManualTask}.
+	 */
+	public static com.top_logic.model.TLProperty getFormDefinitionManualTaskAttr() {
+		return (com.top_logic.model.TLProperty) getManualTaskType().getPart(ManualTask.FORM_DEFINITION_ATTR);
 	}
 
 	/**
@@ -759,6 +846,13 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
+	 * Lookup {@link Participant#DEFAULT_OPERATION_ATTR} of {@link Participant}.
+	 */
+	public static com.top_logic.model.TLProperty getDefaultOperationParticipantAttr() {
+		return (com.top_logic.model.TLProperty) getParticipantType().getPart(Participant.DEFAULT_OPERATION_ATTR);
+	}
+
+	/**
 	 * Lookup {@link Participant#DISPLAY_DESCRIPTION_ATTR} of {@link Participant}.
 	 */
 	public static com.top_logic.model.TLProperty getDisplayDescriptionParticipantAttr() {
@@ -770,6 +864,13 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 */
 	public static com.top_logic.model.TLProperty getDynamicNameParticipantAttr() {
 		return (com.top_logic.model.TLProperty) getParticipantType().getPart(Participant.DYNAMIC_NAME_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Participant#EDGE_FORM_TYPE_ATTR} of {@link Participant}.
+	 */
+	public static com.top_logic.model.TLReference getEdgeFormTypeParticipantAttr() {
+		return (com.top_logic.model.TLReference) getParticipantType().getPart(Participant.EDGE_FORM_TYPE_ATTR);
 	}
 
 	/**
@@ -794,10 +895,10 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	}
 
 	/**
-	 * Lookup {@link Participant#TASK_TITLE_ATTR} of {@link Participant}.
+	 * Lookup {@link Participant#TOKEN_TYPE_ATTR} of {@link Participant}.
 	 */
-	public static com.top_logic.model.TLProperty getTaskTitleParticipantAttr() {
-		return (com.top_logic.model.TLProperty) getParticipantType().getPart(Participant.TASK_TITLE_ATTR);
+	public static com.top_logic.model.TLReference getTokenTypeParticipantAttr() {
+		return (com.top_logic.model.TLReference) getParticipantType().getPart(Participant.TOKEN_TYPE_ATTR);
 	}
 
 	/**
@@ -945,6 +1046,20 @@ public class TlBpeBpmlFactory extends com.top_logic.element.meta.kbbased.Abstrac
 	 */
 	public static com.top_logic.model.TLPrimitive getDisplayDescriptionType() {
 		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(DISPLAY_DESCRIPTION_TYPE);
+	}
+
+	/**
+	 * Lookup {@value #PROCESS_FORM_DEFINITION_TYPE} data type.
+	 */
+	public static com.top_logic.model.TLPrimitive getProcessFormDefinitionType() {
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(PROCESS_FORM_DEFINITION_TYPE);
+	}
+
+	/**
+	 * Lookup {@value #SEQUENCE_FLOW_RULE_TYPE} data type.
+	 */
+	public static com.top_logic.model.TLPrimitive getSequenceFlowRuleType() {
+		return (com.top_logic.model.TLPrimitive) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_BPE_BPML_STRUCTURE).getType(SEQUENCE_FLOW_RULE_TYPE);
 	}
 
 	/**

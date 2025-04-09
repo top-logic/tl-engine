@@ -10,17 +10,18 @@ import java.util.Map;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.bpe.bpml.model.Participant;
-import com.top_logic.bpe.bpml.model.Process;
 import com.top_logic.bpe.bpml.model.StartEvent;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
+import com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent;
+import com.top_logic.element.meta.form.AttributeFormContext;
+import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.gui.DefaultCreateAttributedCommandHandler;
-import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -33,31 +34,35 @@ public class ExecutionProcessCreateHandler extends DefaultCreateAttributedComman
 	}
 
 	@Override
-	public Object createObject(LayoutComponent component, Object createContext, FormContainer formContainer,
-			@SuppressWarnings("rawtypes") Map someValues) {
+	public TLObject createObject(LayoutComponent component, Object createContext, FormContainer formContainer,
+			Map<String, Object> arguments) {
 
-		Object newObject = super.createObject(component, createContext, formContainer, someValues);
-		StartEvent startEvent = (StartEvent) createContext;
+		StartEvent startEvent = ((ProcessExecutionCreateComponent) component).startEvent();
+
+		// use store instead of extractValues
+		AttributeFormContext formContext = (AttributeFormContext) formContainer.getFormContext();
+		formContext.store();
+
+		TLFormObject creation = formContext.getAttributeUpdateContainer().getOverlay(null, null);
+		TLObject newObject = creation.getEditedObject();
+
 		ExecutionEngine.getInstance().init((ProcessExecution) newObject, startEvent);
 
 		return newObject;
 	}
 
-	@Override
-	public Wrapper createNewObject(Map<String, Object> someValues, Wrapper aModel) {
-		StartEvent startEvent = (StartEvent) aModel;
-		return (Wrapper) newProcessExecution(startEvent);
+	/**
+	 * Allocates an instance of the model type of the process being started.
+	 */
+	public static ProcessExecution createProcessModel(StartEvent startEvent) {
+		return (ProcessExecution) ModelService.getInstance().getFactory().createObject(getModelType(startEvent));
 	}
 
-	public static ProcessExecution newProcessExecution(StartEvent startEvent) {
-		TLClass modelType = getTypeForStartEvent(startEvent);
-		return (ProcessExecution) ModelService.getInstance().getFactory().createObject(modelType);
-	}
-
-	public static TLClass getTypeForStartEvent(StartEvent startEvent) {
-		Process process = startEvent.getProcess();
-		Participant participant = process.getParticipant();
-		TLClass modelType = (TLClass) participant.getModelType();
+	/**
+	 * The model type to allocate for a given {@link StartEvent}.
+	 */
+	public static TLClass getModelType(StartEvent startEvent) {
+		TLClass modelType = startEvent.getProcess().getParticipant().getModelType();
 		if (modelType == null) {
 			modelType = TlBpeExecutionFactory.getProcessExecutionType();
 		}
@@ -65,7 +70,7 @@ public class ExecutionProcessCreateHandler extends DefaultCreateAttributedComman
 	}
 
 	@Override
-	protected Map<String, Object> extractValues(FormContainer aContainer, Wrapper anAttributed) {
+	protected Map<String, Object> extractValues(FormContainer aContainer, TLObject anAttributed) {
 		Map<String, Object> res = super.extractValues(aContainer, anAttributed);
 		Iterator<? extends FormMember> members = aContainer.getMembers();
 		while (members.hasNext()) {

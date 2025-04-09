@@ -7,7 +7,6 @@ package com.top_logic.layout.basic;
 
 import java.util.Map;
 
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.check.CheckScope;
 import com.top_logic.layout.basic.check.DefaultCheckScope;
@@ -39,22 +38,44 @@ public class ComponentCommandModel extends DynamicDelegatingCommandModel {
 	 * @param someArguments
 	 *        The arguments to pass to the given handler, see
 	 *        {@link CommandHandler#handleCommand(DisplayContext, LayoutComponent, Object, Map)}.
-	 * @param label
-	 *        The label of the button.
 	 */
 	public ComponentCommandModel(CommandHandler command, LayoutComponent component,
-			Map<String, Object> someArguments, ResKey label) {
+			Map<String, Object> someArguments) {
 		super(ComponentCommand.newInstance(command, component, someArguments));
-		if (label == null) {
-			throw new IllegalArgumentException("'label' must not be 'null'.");
-		}
-		Resources resources = Resources.getInstance();
-		setLabel(resources.getString(label));
-		setTooltip(resources.getString(label.tooltipOptional()));
-		setImage(command.getImage(component));
 		setNotExecutableImage(command.getNotExecutableImage(component));
 		setCssClasses(command.getCssClasses(component));
 		setShowProgress(true);
+	}
+
+	@Override
+	public String getLabel() {
+		String labelOverride = super.getLabel();
+		if (labelOverride != null) {
+			return labelOverride;
+		}
+
+		Resources resources = Resources.getInstance();
+		return resources.getString(getCommandHandler().getResourceKey(getComponent()), null);
+	}
+
+	@Override
+	public String getTooltip() {
+		String tooltipOverride = super.getTooltip();
+		if (tooltipOverride != null) {
+			return tooltipOverride;
+		}
+
+		Resources resources = Resources.getInstance();
+		return resources.getString(getCommandHandler().getResourceKey(getComponent()).tooltipOptional());
+	}
+
+	@Override
+	public ThemeImage getImage() {
+		ThemeImage imageOverride = super.getImage();
+		if (imageOverride != null) {
+			return imageOverride;
+		}
+		return getCommandHandler().getImage(getComponent());
 	}
 
 	/**

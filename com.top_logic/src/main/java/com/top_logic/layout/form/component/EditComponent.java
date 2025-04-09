@@ -8,6 +8,7 @@ package com.top_logic.layout.form.component;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import com.top_logic.base.locking.handler.LockHandler;
@@ -15,7 +16,11 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -34,6 +39,7 @@ import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.form.component.edit.CanLock;
 import com.top_logic.layout.form.component.edit.EditMode;
 import com.top_logic.layout.form.model.FormContext;
+import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.mig.html.layout.CommandRegistry;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutUtils;
@@ -43,6 +49,7 @@ import com.top_logic.tool.boundsec.BoundCommand;
 import com.top_logic.tool.boundsec.ChangeCheckDialogCloser;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandler.ExecutabilityConfig.SimplifiedFormat;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -130,9 +137,43 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 				registry.registerButton(theDelete);
 			}
 		}
-
 	}
 
+	/**
+	 * Options for the switch-to-edit-mode command for direct configuration in the layout editor.
+	 */
+	public interface UIOptions extends ConfigurationItem {
+		/**
+		 * @see #getEditGroup()
+		 */
+		String EDIT_GROUP = "edit-group";
+
+		/**
+		 * @see #getEditExecutability()
+		 */
+		String EDIT_EXECUTABILITY_PROPERTY = "editExecutability";
+
+		/**
+		 * Command group to use for the switch to edit mode.
+		 */
+		@Name(EDIT_GROUP)
+		@FormattedDefault(SimpleBoundCommandGroup.WRITE_NAME)
+		CommandGroupReference getEditGroup();
+
+		/**
+		 * Rule that decides, whether this editor can be switched to edit mode.
+		 * 
+		 * @implNote Entry tag produces compatibility with
+		 *           {@link com.top_logic.tool.boundsec.CommandHandler.Config#getExecutability()}.
+		 * @see CommandHandler#isExecutable(LayoutComponent, Object, Map)
+		 */
+		@Name(EDIT_EXECUTABILITY_PROPERTY)
+		@EntryTag("rule")
+		@Format(SimplifiedFormat.class)
+		@DisplayMinimized
+		List<PolymorphicConfiguration<? extends ExecutabilityRule>> getEditExecutability();
+	}
+	
 	/** I18N of data appliance error */
 	public static final String DATA_APPLIANCE_ERROR =
 		"error_code_com.top_logic.layout.form.component.EditComponent.saveError";

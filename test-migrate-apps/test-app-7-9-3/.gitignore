@@ -1,0 +1,8 @@
+.apt_generated
+.apt_generated_tests
+target
+TEST-*.xml
+test-time.txt
+jacoco.exec
+dist
+report

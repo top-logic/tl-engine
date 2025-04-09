@@ -710,7 +710,7 @@ public class DynamicComponentDefinition {
 		try {
 			document = DOMUtil.newDocumentBuilderNamespaceAware().parse(in);
 		} catch (SAXException | ParserConfigurationException ex) {
-			log.error("Invalid XML content in '" + templateName + "'.", ex);
+			log.info("Invalid XML content in '" + templateName + "': " + ex.getMessage(), Log.WARN);
 			return null;
 		}
 		Element documentElement = document.getDocumentElement();

@@ -1,0 +1,27 @@
+<h2>Syntax</h2>
+
+<pre>
+<code>dbConfig()</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Liefert die XML-Konfiguration des Datenbankschemas.</p>
+
+<h2>Rückgabewert</h2>
+
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Konfigurationsobjekt</p>
+
+<p>Die Konfiguration des Datenbankschemas. Der Konfigurationstyp des Ergebnisses ist <code class="hljs inlineCode">com.top_logic.basic.db.schema.setup.config.SchemaConfiguration</code>.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Die Namen aller Tabellentypen</h3>
+
+<pre>
+<code>dbConfig()["meta-objects"]["metaobjects"].keySet()</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> Menge von (logischen) Tabellennamen.</p>
+
+<p> </p>

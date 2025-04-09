@@ -41,9 +41,13 @@ public final class EvalContext {
 
 	private Renderer<Object> _renderer = ResourceRenderer.INSTANCE;
 
+	private boolean _interactive;
+
 	/**
 	 * Creates a {@link EvalContext}.
 	 * 
+	 * @param interactive
+	 *        See {@link #isInteractive()}
 	 * @param kb
 	 *        See {@link #getKnowledgeBase()}.
 	 * @param displayContext
@@ -51,11 +55,25 @@ public final class EvalContext {
 	 * @param out
 	 *        See {@link #getOut()}.
 	 */
-	public EvalContext(KnowledgeBase kb, TLModel model, DisplayContext displayContext, TagWriter out) {
+	public EvalContext(boolean interactive, KnowledgeBase kb, TLModel model, DisplayContext displayContext, TagWriter out) {
+		_interactive = interactive;
 		_kb = kb;
 		_model = model;
 		_displayContext = displayContext;
 		_out = out;
+	}
+
+	/**
+	 * Whether evaluation occurs in an interactive context (where the user has entered the script
+	 * being executed).
+	 * 
+	 * <p>
+	 * In an interactive context, additional security constraints apply for certain script
+	 * functions.
+	 * </p>
+	 */
+	public boolean isInteractive() {
+		return _interactive;
 	}
 
 	/**
@@ -196,7 +214,7 @@ public final class EvalContext {
 	 */
 	@FrameworkInternal
 	public final EvalContext snapshot() {
-		EvalContext result = new EvalContext(_kb, _model, null, null);
+		EvalContext result = new EvalContext(_interactive, _kb, _model, null, null);
 		result._vars.putAll(_vars);
 		result._renderer = _renderer;
 		return result;

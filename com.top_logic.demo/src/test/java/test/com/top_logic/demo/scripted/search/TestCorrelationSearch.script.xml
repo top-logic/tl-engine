@@ -1476,7 +1476,7 @@
 				>
 					<model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
 						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Modellbasierte Suche"
+							tab-path="Modellbasierte Suche > Ergebnis"
 						/>
 					</model-name>
 					<sort-orders>

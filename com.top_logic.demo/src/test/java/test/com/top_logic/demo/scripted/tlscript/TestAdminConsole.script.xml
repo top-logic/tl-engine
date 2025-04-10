@@ -53,13 +53,10 @@
 			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 				column-label="Name"
 			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Administration > Development > Script Konsole > Ergebnis"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
 				</table>
 				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 					name="Test TL-Script console"
@@ -133,13 +130,10 @@ $item;
 					user-id="root"
 				>
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
-						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
-							<path>
-								<named-member name="result"/>
-							</path>
 						</table>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
@@ -208,13 +202,10 @@ $item;
 					user-id="root"
 				>
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
-						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
-							<path>
-								<named-member name="result"/>
-							</path>
 						</table>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
@@ -280,13 +271,10 @@ $item.delete();
 			user-id="root"
 		>
 			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						tab-path="Administration > Development > Script Konsole > Ergebnis"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
 				</table>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"

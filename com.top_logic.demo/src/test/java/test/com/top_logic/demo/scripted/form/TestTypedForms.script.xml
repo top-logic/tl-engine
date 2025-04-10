@@ -838,13 +838,13 @@
 							label="Ok"
 							user-id="root"
 						>
-								<identifiers>
-									<component-keys>
-										<component-key value="d46dc30b-4136-4f08-accb-684e7baecb26.layout.xml"/>
-										<component-key value="5cf27332-24d4-445d-b215-34827a4a6a1f.layout.xml"/>
-										<component-key value="2a17244c-16f4-4af3-a302-4bd2e1cbfe57.layout.xml"/>
-									</component-keys>
-								</identifiers>
+							<identifiers>
+								<component-keys>
+									<component-key value="d46dc30b-4136-4f08-accb-684e7baecb26.layout.xml"/>
+									<component-key value="5cf27332-24d4-445d-b215-34827a4a6a1f.layout.xml"/>
+									<component-key value="2a17244c-16f4-4af3-a302-4bd2e1cbfe57.layout.xml"/>
+								</component-keys>
+							</identifiers>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 							command-implementation-comment="com.top_logic.layout.editor.commands.EditLayoutCommand"

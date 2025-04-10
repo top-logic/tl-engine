@@ -50,14 +50,11 @@
 			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
 				column-label="Result"
 			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchResultTable"
 						tab-path="Modellbasierte Suche"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
 				</table>
 				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
 					displayed-row-index="0"
@@ -99,14 +96,11 @@
 			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
 				column-label="Result"
 			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchResultTable"
 						tab-path="Modellbasierte Suche"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
 				</table>
 				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
 					displayed-row-index="0"
@@ -124,14 +118,11 @@
 			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
 				column-label="Result"
 			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchResultTable"
 						tab-path="Modellbasierte Suche"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
 				</table>
 				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
 					displayed-row-index="1"
@@ -149,14 +140,11 @@
 			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.table.TableCellFullText"
 				column-label="Result"
 			>
-				<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						name="com.top_logic.model.search/search/modelSearch.layout.xml#SearchResultTable"
 						tab-path="Modellbasierte Suche"
 					/>
-					<path>
-						<named-member name="result"/>
-					</path>
 				</table>
 				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
 					displayed-row-index="2"

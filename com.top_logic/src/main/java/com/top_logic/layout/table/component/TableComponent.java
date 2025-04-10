@@ -1049,7 +1049,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	 * If this table displays non-TLObjects, the {@link Set} is empty.
 	 * </p>
 	 */
-	protected Set<TLType> getTypes() {
+	protected Set<? extends TLType> getTypes() {
 		return _types;
 	}
 

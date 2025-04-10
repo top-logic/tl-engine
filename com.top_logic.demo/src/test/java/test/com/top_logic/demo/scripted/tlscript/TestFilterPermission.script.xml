@@ -779,13 +779,10 @@
 					label="true"
 					user-id="root"
 				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-						<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					<model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 							tab-path="Administration > Development > Script Konsole > Ergebnis"
 						/>
-						<path>
-							<named-member name="result"/>
-						</path>
 					</model-name>
 					<sort-orders>
 						<sort-order
@@ -802,13 +799,10 @@
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 						column-label="Name"
 					>
-						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
-							<path>
-								<named-member name="result"/>
-							</path>
 						</table>
 						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 							name="TestFilterPermission_A0"
@@ -826,13 +820,10 @@
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 						column-label="Name"
 					>
-						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
-							<path>
-								<named-member name="result"/>
-							</path>
 						</table>
 						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 							name="TestFilterPermission_A1"
@@ -850,13 +841,10 @@
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 						column-label="Name"
 					>
-						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
-							<path>
-								<named-member name="result"/>
-							</path>
 						</table>
 						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 							name="TestFilterPermission_A2"
@@ -874,13 +862,10 @@
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 						column-label="Name"
 					>
-						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
-							<path>
-								<named-member name="result"/>
-							</path>
 						</table>
 						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 							name="TestFilterPermission_A3"
@@ -896,13 +881,10 @@
 					user-id="root"
 				>
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
-						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
-							<path>
-								<named-member name="result"/>
-							</path>
 						</table>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
@@ -944,13 +926,10 @@
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 						column-label="Name"
 					>
-						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
-							<path>
-								<named-member name="result"/>
-							</path>
 						</table>
 						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 							name="TestFilterPermission_A0"
@@ -968,13 +947,10 @@
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 						column-label="Name"
 					>
-						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
-							<path>
-								<named-member name="result"/>
-							</path>
 						</table>
 						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 							name="TestFilterPermission_A1"
@@ -992,13 +968,10 @@
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 						column-label="Name"
 					>
-						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
-							<path>
-								<named-member name="result"/>
-							</path>
 						</table>
 						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 							name="TestFilterPermission_A4"
@@ -1016,13 +989,10 @@
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 						column-label="Name"
 					>
-						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
-							<path>
-								<named-member name="result"/>
-							</path>
 						</table>
 						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 							name="TestFilterPermission_A5"
@@ -1038,13 +1008,10 @@
 					user-id="root"
 				>
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
-						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
-							<path>
-								<named-member name="result"/>
-							</path>
 						</table>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
@@ -1086,13 +1053,10 @@
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 						column-label="Name"
 					>
-						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
-							<path>
-								<named-member name="result"/>
-							</path>
 						</table>
 						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 							name="TestFilterPermission_A0"
@@ -1110,13 +1074,10 @@
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 						column-label="Name"
 					>
-						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
-							<path>
-								<named-member name="result"/>
-							</path>
 						</table>
 						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 							name="TestFilterPermission_A1"
@@ -1134,13 +1095,10 @@
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 						column-label="Name"
 					>
-						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
-							<path>
-								<named-member name="result"/>
-							</path>
 						</table>
 						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 							name="TestFilterPermission_A2"
@@ -1158,13 +1116,10 @@
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 						column-label="Name"
 					>
-						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
-							<path>
-								<named-member name="result"/>
-							</path>
 						</table>
 						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 							name="TestFilterPermission_A3"
@@ -1182,13 +1137,10 @@
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 						column-label="Name"
 					>
-						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
-							<path>
-								<named-member name="result"/>
-							</path>
 						</table>
 						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 							name="TestFilterPermission_A4"
@@ -1206,13 +1158,10 @@
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 						column-label="Name"
 					>
-						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
-							<path>
-								<named-member name="result"/>
-							</path>
 						</table>
 						<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 							name="TestFilterPermission_A5"
@@ -1228,13 +1177,10 @@
 					user-id="root"
 				>
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
-						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
-							<path>
-								<named-member name="result"/>
-							</path>
 						</table>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
@@ -1274,13 +1220,10 @@
 					user-id="root"
 				>
 					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
-						<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								tab-path="Administration > Development > Script Konsole > Ergebnis"
 							/>
-							<path>
-								<named-member name="result"/>
-							</path>
 						</table>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
@@ -1350,13 +1293,10 @@
 							label="true"
 							user-id="TestFilterPermission"
 						>
-							<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							<model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+								<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 									tab-path="Administration > Development > Script Konsole > Ergebnis"
 								/>
-								<path>
-									<named-member name="result"/>
-								</path>
 							</model-name>
 							<sort-orders>
 								<sort-order
@@ -1373,13 +1313,10 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 								column-label="Name"
 							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
-									<path>
-										<named-member name="result"/>
-									</path>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 									name="TestFilterPermission_A0"
@@ -1397,13 +1334,10 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 								column-label="Name"
 							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
-									<path>
-										<named-member name="result"/>
-									</path>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 									name="TestFilterPermission_A1"
@@ -1421,13 +1355,10 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 								column-label="Name"
 							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
-									<path>
-										<named-member name="result"/>
-									</path>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 									name="TestFilterPermission_A2"
@@ -1445,13 +1376,10 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 								column-label="Name"
 							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
-									<path>
-										<named-member name="result"/>
-									</path>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 									name="TestFilterPermission_A3"
@@ -1467,13 +1395,10 @@
 							user-id="TestFilterPermission"
 						>
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
-									<path>
-										<named-member name="result"/>
-									</path>
 								</table>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
@@ -1512,13 +1437,10 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 								column-label="Name"
 							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
-									<path>
-										<named-member name="result"/>
-									</path>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 									name="TestFilterPermission_A0"
@@ -1536,13 +1458,10 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 								column-label="Name"
 							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
-									<path>
-										<named-member name="result"/>
-									</path>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 									name="TestFilterPermission_A1"
@@ -1560,13 +1479,10 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 								column-label="Name"
 							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
-									<path>
-										<named-member name="result"/>
-									</path>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 									name="TestFilterPermission_A4"
@@ -1584,13 +1500,10 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 								column-label="Name"
 							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
-									<path>
-										<named-member name="result"/>
-									</path>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 									name="TestFilterPermission_A5"
@@ -1606,13 +1519,10 @@
 							user-id="TestFilterPermission"
 						>
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
-									<path>
-										<named-member name="result"/>
-									</path>
 								</table>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
@@ -1651,13 +1561,10 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 								column-label="Name"
 							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
-									<path>
-										<named-member name="result"/>
-									</path>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 									name="TestFilterPermission_A0"
@@ -1675,13 +1582,10 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 								column-label="Name"
 							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
-									<path>
-										<named-member name="result"/>
-									</path>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 									name="TestFilterPermission_A1"
@@ -1699,13 +1603,10 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 								column-label="Name"
 							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
-									<path>
-										<named-member name="result"/>
-									</path>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 									name="TestFilterPermission_A2"
@@ -1723,13 +1624,10 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 								column-label="Name"
 							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
-									<path>
-										<named-member name="result"/>
-									</path>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 									name="TestFilterPermission_A3"
@@ -1747,13 +1645,10 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 								column-label="Name"
 							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
-									<path>
-										<named-member name="result"/>
-									</path>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 									name="TestFilterPermission_A4"
@@ -1771,13 +1666,10 @@
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
 								column-label="Name"
 							>
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
-									<path>
-										<named-member name="result"/>
-									</path>
 								</table>
 								<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.ui.table.LabeledTableRowNaming$Name"
 									name="TestFilterPermission_A5"
@@ -1793,13 +1685,10 @@
 							user-id="TestFilterPermission"
 						>
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
-									<path>
-										<named-member name="result"/>
-									</path>
 								</table>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
@@ -1836,13 +1725,10 @@
 							user-id="TestFilterPermission"
 						>
 							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+									<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 										tab-path="Administration > Development > Script Konsole > Ergebnis"
 									/>
-									<path>
-										<named-member name="result"/>
-									</path>
 								</table>
 							</actual-value>
 							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"

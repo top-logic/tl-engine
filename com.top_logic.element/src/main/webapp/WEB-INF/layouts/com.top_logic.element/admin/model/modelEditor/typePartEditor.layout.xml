@@ -22,6 +22,11 @@
 					class="com.top_logic.element.layout.meta.ShowAllAttributesCommand"
 					clique="settings"
 				/>
+				<button id="exportExcel"
+					class="com.top_logic.layout.table.export.ExcelExportHandler"
+					downloadNameKey="element.meta.attribute.table.exportName"
+					templateName="defaultTemplate.xlsx"
+				/>
 			</buttons>
 
 			<dialogs>
@@ -110,10 +115,6 @@
 				fixedColumns="0"
 				rowStyle="%FROZEN_TABLE_ROW_SMALL_STYLE%"
 			>
-				<exporter
-					downloadNameKey="element.meta.attribute.table.exportName"
-					templateName="defaultTemplate.xlsx"
-				/>
 				<columns>
 					<column name="name"
 						accessor="com.top_logic.model.resources.ModelPartLabelAccessor"

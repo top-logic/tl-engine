@@ -31,7 +31,9 @@
 	<properties>
 		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
 		
-		<tl.deb.skip>false</tl.deb.skip>
+		<!-- Enable for Debian package deployment. -->
+		<tl.deb.skip>true</tl.deb.skip>
+		
 		<tl.deb.attach>false</tl.deb.attach>
 		<tl.deb.maintainer>info@\${project.groupId}</tl.deb.maintainer>
 		<tl.deb.section>misc</tl.deb.section>

@@ -13,9 +13,6 @@
 	
 	<properties>
 		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
-		
-		<!-- Only for test, never deploy. -->
-		<tl.app.skip>true</tl.app.skip>
 	</properties>
 
 	<dependencies>

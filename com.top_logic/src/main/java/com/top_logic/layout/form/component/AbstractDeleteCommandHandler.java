@@ -11,8 +11,9 @@ import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Transaction;
@@ -28,6 +29,8 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
+import com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRuleManager;
@@ -65,8 +68,8 @@ public abstract class AbstractDeleteCommandHandler extends AbstractCommandHandle
 	public interface Config extends AbstractCommandHandler.Config {
 
 		@Override
-		@BooleanDefault(true)
-		boolean getConfirm();
+		@ItemDefault(DefaultDeleteConfirmation.class)
+		PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
 
 		@Override
 		@FormattedDefault(SimpleBoundCommandGroup.DELETE_NAME)

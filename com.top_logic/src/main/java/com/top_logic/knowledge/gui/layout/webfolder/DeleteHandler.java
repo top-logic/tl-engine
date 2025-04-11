@@ -10,7 +10,9 @@ import java.util.Map;
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.event.ModelTrackingService;
 import com.top_logic.knowledge.objects.KnowledgeObject;
@@ -25,6 +27,8 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
+import com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
@@ -50,6 +54,10 @@ public class DeleteHandler extends AbstractCommandHandler {
 		@FormattedDefault(SimpleBoundCommandGroup.DELETE_NAME)
 		@Override
 		CommandGroupReference getGroup();
+
+		@Override
+		@ItemDefault(DefaultDeleteConfirmation.class)
+		PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
 
 	}
 
@@ -146,10 +154,4 @@ public class DeleteHandler extends AbstractCommandHandler {
 	public String[] getAttributeNames() {
         return (new String[] {OBJECT_ID, TYPE, CONTAINER_ID});
     }
-
-    @Override
-	public boolean needsConfirm() {
-        return (true);
-    }
-    
 }

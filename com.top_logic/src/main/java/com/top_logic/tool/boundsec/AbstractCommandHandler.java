@@ -47,6 +47,7 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.conditional.PreconditionCommandHandler;
+import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.AlwaysExecutable;
 import com.top_logic.tool.execution.ExecutabilityRule;
@@ -97,9 +98,6 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 
 	private String _clique;
 
-    /** Flag, if this command needs special confirmation by user. */
-    private boolean confirm;
-
     private String commandID;
 
 	private ThemeImage _image;
@@ -134,6 +132,8 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 	private final SecurityObjectProvider _securityObjectProvider;
 
 	private final ChannelLinking _target;
+
+	private final CommandConfirmation _confirmation;
     
 	/**
 	 * Creates a {@link AbstractCommandHandler} from typed configuration.
@@ -149,7 +149,7 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 		this.commandID = id(config);
 		this.commandGroup = group(context, config);
 		_clique = config.getClique();
-		this.confirm = confirm(config);
+		_confirmation = confirmation(context, config);
 		_image = config.getImage();
 		_disabledImage = getImage(config.getDisabledImage(), _image);
 		_resourceKey = resourceKey(config);
@@ -161,6 +161,15 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 
 		assert _rule != null : "No executablity rule in handler '" + getID() + "'.";
 		assert _checkScopeProvider != null : "No check scope provider in handler '" + getID() + "'.";
+	}
+
+	private CommandConfirmation confirmation(InstantiationContext context, Config config) {
+		var confirmation = context.getInstance(config.getConfirmation());
+		if (confirmation != null) {
+			return confirmation;
+		} else {
+			return null;
+		}
 	}
 
 	@Override
@@ -234,58 +243,15 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 		return _clique;
 	}
 
-	/**
-	 * Whether the configured or default confirmation message is shown.
-	 */
-	protected boolean needsConfirm() {
-        return this.confirm;
-    }
-    
     @Override
     public ResKey getConfirmKey(LayoutComponent component, Map<String, Object> arguments) {
-		if (!needsConfirm()) {
-			return null;
+		if (_confirmation != null) {
+			ResKey commandLabel = getResourceKey(component);
+			Object targetModel = CommandHandlerUtil.getTargetModel(this, component, arguments);
+			return _confirmation.getConfirmation(component, commandLabel, targetModel, arguments);
 		}
-    	Object targetModel = arguments == null ? null : CommandHandlerUtil.getTargetModel(this, component, arguments);
-    	
-    	ResKey customKey = getConfig().getConfirmMessage();
-    	if (customKey != null) {
-			return ResKey.message(customKey, targetModel);
-    	}
-    	
-		return getDefaultConfirmKey(component, arguments, targetModel);
-	}
 
-	/**
-	 * Determines the {@link #getConfirmKey(LayoutComponent, Map) confirmation resource key} if no
-	 * special {@link Config#getConfirmMessage() confirm message} is set.
-	 * 
-	 * @param component
-	 *        The {@link LayoutComponent} the command is executed on.
-	 * @param arguments
-	 *        The command arguments, see
-	 *        {@link #handleCommand(DisplayContext, LayoutComponent, Object, Map)}.
-	 * @param targetModel
-	 *        The model on which this handler operates.
-	 * 
-	 * @return The internationalized text to display in the confirmation dialog.
-	 */
-	protected ResKey getDefaultConfirmKey(LayoutComponent component, Map<String, Object> arguments,
-			Object targetModel) {
-		ResKey commandKey = getResourceKey(component);
-
-		ResKey componentKey;
-		if (commandKey != null) {
-			componentKey = ResKey.message(commandKey.suffix(".confirm"), targetModel);
-		} else {
-			componentKey = null;
-		}
-	
-		ResKey genericKey = targetModel == null ? 
-			I18NConstants.DEFAULT_CONFIRM_MESSAGE__COMMAND.fill(commandKey) : 
-				I18NConstants.DEFAULT_CONFIRM_MESSAGE__COMMAND_MODEL.fill(commandKey, targetModel);
-    	
-		return componentKey == null ? genericKey : componentKey.fallback(genericKey);
+		return null;
 	}
 
     @Override
@@ -374,7 +340,6 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 	public String toString() {
         return (this.getClass().getName() + " [" +
                 "command: '" + this.getID() +
-                "', confirm: " + this.confirm +
                 ", group: " + this.commandGroup +
                 ']');
     }
@@ -573,10 +538,6 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 		}
 	}
 
-	private static boolean confirm(CommandHandler.Config config) {
-		return config.getConfirm();
-	}
-
 	public static CheckScopeProvider getCheckScopeProvider(BoundCommand command) {
 		if (command instanceof CommandHandler) {
 			return ((CommandHandler) command).checkScopeProvider();
@@ -603,18 +564,6 @@ public abstract class AbstractCommandHandler implements CommandHandler {
 		} catch (ConfigurationException ex) {
 			throw new ConfigurationError("Wrong handler configuration.", ex);
 		}
-	}
-
-	/**
-	 * Sets {@link CommandHandler.Config#getConfirm()} to the given value in the given config
-	 * interface.
-	 * 
-	 * @param config
-	 *        Is not allowed to be <code>null</code>.
-	 * @return The given configuration, returned for convenience.
-	 */
-	public static <C extends CommandHandler.Config> C updateConfirm(C config, boolean value) {
-		return update(config, Config.CONFIRM_PROPERTY, value);
 	}
 
 	/**

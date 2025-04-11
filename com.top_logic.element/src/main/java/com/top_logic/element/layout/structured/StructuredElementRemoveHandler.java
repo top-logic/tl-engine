@@ -10,8 +10,9 @@ import java.util.Optional;
 
 import com.top_logic.base.bus.MonitorEvent;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.core.util.ElementEventUtil;
 import com.top_logic.element.structured.StructuredElement;
@@ -19,6 +20,8 @@ import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.layout.form.component.AbstractDeleteCommandHandler;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandGroupReference;
+import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
+import com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.error.TopLogicException;
 
@@ -36,8 +39,8 @@ public class StructuredElementRemoveHandler extends AbstractDeleteCommandHandler
 	public interface Config extends AbstractDeleteCommandHandler.Config {
 
 		@Override
-		@BooleanDefault(true)
-		boolean getConfirm();
+		@ItemDefault(DefaultDeleteConfirmation.class)
+		PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
 
 		@Override
 		@FormattedDefault(SimpleBoundCommandGroup.DELETE_NAME)

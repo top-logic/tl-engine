@@ -33,8 +33,8 @@
 				<button id="deleteFolder"
 					class="com.top_logic.layout.themeedit.browser.providers.resources.DeleteResourceFolderHandler"
 					clique="delete"
-					confirm="true"
 				>
+					<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
 					<executability>
 						<rule class="com.top_logic.layout.themeedit.browser.providers.resources.NoInheritedResourceFileRule"/>
 						<rule class="com.top_logic.layout.themeedit.browser.providers.theme.ThemeIsNotProtectedRule"/>
@@ -124,9 +124,9 @@
 				<button id="deleteResource"
 					class="com.top_logic.layout.themeedit.browser.providers.resources.DeleteResourceHandler"
 					clique="delete"
-					confirm="true"
 					target="provider(com.top_logic.layout.themeedit.browser.providers.resources.ThemeConfigByResourceProvider)"
 				>
+					<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
 					<executability>
 						<rule class="com.top_logic.tool.execution.EmptyTableModelDisabledRule"/>
 						<rule class="com.top_logic.layout.themeedit.browser.providers.theme.ThemeIsNotProtectedRule"/>

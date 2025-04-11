@@ -1153,7 +1153,7 @@
 					<handler id="genericDelete" class="com.top_logic.layout.component.GenericDeleteCommandHandler"
 						clique="delete"/>
 					<handler id="dispatchingDelete" class="com.top_logic.layout.form.component.DispatchingDeleteHandler"
-						confirm="true"
+						confirmation="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"
 						group="Delete"
 						resourceKey="tl.command.delete"
 						clique="delete"/>
@@ -1201,9 +1201,11 @@
 					<handler id="setHomepage" class="com.top_logic.tool.boundsec.commandhandlers.SetHomepageHandler"
 						image="theme:HEAD_HOME"
 						resourceKey="menu.Home"
-						confirm="true"
-						confirmMessage="main.homepageQuestion"
-					/>
+					>
+						<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation"
+							confirmMessage="main.homepageQuestion"
+						/>
+					</handler>
 					<handler id="logout" class="com.top_logic.layout.component.configuration.LogoutCommandHandler"
 						group="System"
 						image="theme:IMAGE_BUTTONS_LOGOUT22"
@@ -1348,7 +1350,7 @@
 					/>
 					<handler id="releaseTaskClusterLock" class="com.top_logic.util.sched.layout.ReleaseTaskClusterLockCommand"
 						group="Write" 
-						confirm="true"
+						confirmation="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"
 						image="theme:ICONS_BUTTON_CLEAR"
 						target="selection(self())"
 					/>

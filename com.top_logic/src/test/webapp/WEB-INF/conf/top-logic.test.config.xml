@@ -335,7 +335,7 @@
 					<handler id="TestAbstractCommandHandlerConfigured" 
 						class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingCommand"
 						group="System"
-						confirm="true"
+						confirmation="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"
 						resourceKey="my.resource.key" 
 						image="/my-image.png" 
 						disabledImage="/my-disabled-image.png" 
@@ -345,7 +345,7 @@
 					<handler id="TestAbstractCommandHandlerLegacyConfigured" 
 						class="test.com.top_logic.tool.boundsec.TestAbstractCommandHandler$TestingCommandLegacy"
 						group="System"
-						confirm="false"
+						confirmation=""
 						resourceKey="my.resource.key" 
 					>
 						<executability>

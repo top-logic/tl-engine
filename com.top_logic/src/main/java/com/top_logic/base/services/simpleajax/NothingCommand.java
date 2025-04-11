@@ -37,17 +37,6 @@ public final class NothingCommand extends AbstractCommandHandler {
 	}
 
 	/**
-	 * Never need confirm to do nothing.
-	 * 
-	 * @return <code>false</code>
-	 * @see com.top_logic.tool.boundsec.AbstractCommandHandler#needsConfirm()
-	 */
-	@Override
-	public boolean needsConfirm() {
-		return false;
-	}
-
-	/**
 	 * This method writes the client side call for this command. The sender of this call will be the
 	 * given {@link LayoutComponent}, so it must be a {@link LayoutComponent} where this command
 	 * was registered.

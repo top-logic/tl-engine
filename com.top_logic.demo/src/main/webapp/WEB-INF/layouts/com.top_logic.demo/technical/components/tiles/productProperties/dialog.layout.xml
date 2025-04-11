@@ -16,7 +16,7 @@
 		<open-handler id="ID_ad3f71d3_a19b_4928_b3be_100ce1315fef"
 			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
 			clique=""
-			confirm="false"
+			confirmation=""
 			disabledImage=""
 			group=""
 			image="theme:TILES_CONFIGURE_GROUP_ICON"

@@ -165,8 +165,7 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 		Config.OPERATION,
 		Config.POST_CREATE_ACTIONS,
 		Config.CLOSE_DIALOG,
-		Config.CONFIRM_PROPERTY,
-		Config.CONFIRM_MESSAGE,
+		Config.CONFIRMATION,
 		Config.SECURITY_OBJECT,
 	})
 	public interface Config extends AbstractFormCommandHandler.Config, UIOptions {

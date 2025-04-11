@@ -34,9 +34,6 @@ public abstract class XMLRewriter extends Rewriter {
 	 * Dumps the given {@link Document} to the given file.
 	 */
 	protected final void dump(Document document, File file) throws FileNotFoundException, IOException {
-		// Join adjacent text nodes to be able to format them during pretty printing below.
-		document.normalize();
-
 		XMLPrettyPrinter.updateIfChanged(prettyPrinterConfig(), file, document);
 	}
 

@@ -74,11 +74,11 @@
 				<button id="deleteTheme"
 					class="com.top_logic.layout.themeedit.browser.providers.theme.DeleteThemeHandler"
 					clique="delete"
-					confirm="true"
 					group="Delete"
 					resourceKey="${resPrefix}.themes.delete"
 					target="selection(self())"
 				>
+					<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
 					<executability>
 						<rule class="com.top_logic.tool.execution.EmptyTableModelDisabledRule"/>
 						<rule class="com.top_logic.layout.themeedit.browser.providers.theme.ThemeIsNotExtendedRule"/>

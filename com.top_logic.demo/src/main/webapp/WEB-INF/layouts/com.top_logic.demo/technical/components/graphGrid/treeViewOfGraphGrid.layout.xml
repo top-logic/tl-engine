@@ -35,7 +35,7 @@
 			<button id="ID_1a592b61_9297_4b7e_95aa_996b2f5c4d41"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
 				clique="delete"
-				confirm="false"
+				confirmation=""
 				disabledImage=""
 				group="Delete"
 				image=""

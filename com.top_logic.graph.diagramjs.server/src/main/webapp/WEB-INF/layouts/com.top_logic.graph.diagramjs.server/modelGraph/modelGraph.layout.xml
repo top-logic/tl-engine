@@ -174,9 +174,9 @@
 							<button id="deleteDisplayType"
 								class="com.top_logic.tool.boundsec.CommandSequence"
 								clique="delete"
-								confirm="true"
 								group="Delete"
 							>
+								<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
 								<executability>
 									<reference rule-id="ComponentIsVisible"/>
 								</executability>
@@ -251,10 +251,10 @@
 							<button id="deleteAttribute"
 								class="com.top_logic.tool.boundsec.CommandSequence"
 								clique="delete"
-								confirm="true"
 								group="Delete"
 								resourceKey="element.meta.attribute.edit.attRemove"
 							>
+								<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
 								<executability>
 									<reference rule-id="ComponentIsVisible"/>
 								</executability>
@@ -298,9 +298,9 @@
 							<button id="deleteModule"
 								class="com.top_logic.tool.boundsec.CommandSequence"
 								clique="delete"
-								confirm="true"
 								group="Delete"
 							>
+								<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
 								<executability>
 									<reference rule-id="ComponentIsVisible"/>
 								</executability>
@@ -340,9 +340,9 @@
 							<button id="deleteEnumeration"
 								class="com.top_logic.tool.boundsec.CommandSequence"
 								clique="delete"
-								confirm="true"
 								group="Delete"
 							>
+								<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
 								<executability>
 									<reference rule-id="ComponentIsVisible"/>
 								</executability>
@@ -373,9 +373,9 @@
 							<button id="deleteInheritance"
 								class="com.top_logic.tool.boundsec.CommandSequence"
 								clique="delete"
-								confirm="true"
 								group="Delete"
 							>
+								<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
 								<executability>
 									<reference rule-id="ComponentIsVisible"/>
 								</executability>

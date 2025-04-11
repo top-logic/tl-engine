@@ -188,7 +188,7 @@
 									<buttons>
 										<button id="ID_cf5446ed_7e27_4ef7_b43e_90779b94109c"
 											class="com.top_logic.layout.component.GenericDeleteCommandHandler"
-											confirm="false"
+											confirmation=""
 										>
 											<resourceKey key="dynamic.7dd96c62-aa74-4392-9c64-543fec1cce5d">
 												<en>Remove candle</en>

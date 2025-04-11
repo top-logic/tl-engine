@@ -29,14 +29,16 @@
 				<executability>
 					<rule-by-expression decision="account -> $account != null"/>
 				</executability>
-				<confirmMessage key="dynamic.8baeb646-37f2-428c-b8e7-4fd4bfcc766d">
-					<en>Are you sure they want to delete {0}'s personal settings?</en>
-					<de>Sind Sie sicher, dass Sie die persönlichen Einstellungen von {0} löschen wollen?</de>
-				</confirmMessage>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation">
+					<confirmMessage key="dynamic.8baeb646-37f2-428c-b8e7-4fd4bfcc766d">
+						<en>Are you sure they want to delete {0}'s personal settings?</en>
+						<de>Sind Sie sicher, dass Sie die persönlichen Einstellungen von {0} löschen wollen?</de>
+					</confirmMessage>
+				</confirmation>
 			</button>
 			<button id="ID_d9a27df8_9c83_4318_9d56_53c2185a9543"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
-				confirm="false"
+				confirmation=""
 				target="model(self())"
 			>
 				<resourceKey key="dynamic.5ef11993-7c72-4b2d-b8fb-24ffbea6e619">
@@ -73,10 +75,12 @@
 						<decision>account -&gt; if ($account.get(`tl.accounts:Person#admin`) == true, #("Ein Administrator kann nicht gelöscht werden."@de, "An administrator cannot be deleted."@en), null)</decision>
 					</rule-by-expression>
 				</executability>
-				<confirmMessage key="dynamic.68a3e9b3-08ee-4821-8dc7-457c78ef32f5">
-					<en>Do you really want to delete the account "{0}"? "{0}" will then no longer be able to log in.</en>
-					<de>Möchten Sie den Zugang "{0}" wirklich löschen? "{0}" kann sich dann nicht mehr einloggen.</de>
-				</confirmMessage>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation">
+					<confirmMessage key="dynamic.68a3e9b3-08ee-4821-8dc7-457c78ef32f5">
+						<en>Do you really want to delete the account "{0}"? "{0}" will then no longer be able to log in.</en>
+						<de>Möchten Sie den Zugang "{0}" wirklich löschen? "{0}" kann sich dann nicht mehr einloggen.</de>
+					</confirmMessage>
+				</confirmation>
 			</button>
 		</buttons>
 		<dialogs>

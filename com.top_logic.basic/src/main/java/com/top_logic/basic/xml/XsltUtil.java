@@ -125,7 +125,13 @@ public class XsltUtil {
 	 */
 	public static Transformer createTransformer(String resource, boolean indent) {
 		try {
-			return createTransformer(new StreamSource(FileManager.getInstance().getStream(resource)), indent);
+			Source tx;
+			if (resource.startsWith("classpath:")) {
+				tx = new StreamSource(XsltUtil.class.getResourceAsStream(resource.substring("classpath:".length())));
+			} else {
+				tx = new StreamSource(FileManager.getInstance().getStream(resource));
+			}
+			return createTransformer(tx, indent);
 		} catch (TransformerConfigurationException ex) {
 			throw new IllegalArgumentException("Invalid transformation '" + resource + "'.", ex);
 		} catch (TransformerFactoryConfigurationError ex) {

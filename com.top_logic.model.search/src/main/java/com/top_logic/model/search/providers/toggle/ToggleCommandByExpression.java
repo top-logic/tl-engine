@@ -62,8 +62,7 @@ public class ToggleCommandByExpression extends ToggleCommandHandler implements W
 		Config.TRANSACTION,
 		Config.STATE_HANDLER,
 		Config.POST_CREATE_ACTIONS,
-		Config.CONFIRM_PROPERTY,
-		Config.CONFIRM_MESSAGE,
+		Config.CONFIRMATION,
 		Config.SECURITY_OBJECT,
 	})
 	public interface Config extends ToggleCommandHandler.Config, WithPostCreateActions.Config {

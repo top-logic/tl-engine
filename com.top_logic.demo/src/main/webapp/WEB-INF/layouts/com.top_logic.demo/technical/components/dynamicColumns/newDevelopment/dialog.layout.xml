@@ -16,7 +16,7 @@
 		<open-handler id="ID_69e11d7a_ef6f_44e8_8aea_3872604ffe44"
 			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
 			clique="create"
-			confirm="false"
+			confirmation=""
 			disabledImage=""
 			group="Create"
 			image=""
@@ -39,7 +39,7 @@
 		/>
 		<create-handler id="ID_037fb7e8_75b9_498e_a659_fc902be17eb7"
 			clique="save"
-			confirm="false"
+			confirmation=""
 			disabledImage=""
 			group="Create"
 			ignoreWarnings="default"

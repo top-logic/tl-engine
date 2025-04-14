@@ -13,6 +13,7 @@
     
     <inherits name="com.top_logic.graph.diagramjs.client.TLGraphClientDiagramJS"/>
     <inherits name="com.top_logic.graphic.blocks.TLBlocks"/>
+    <inherits name="com.top_logic.graphic.flow.TLFlow"/>
     
     <inherits name="org.vectomatic.libgwtsvg"/>
 

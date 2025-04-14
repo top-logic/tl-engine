@@ -165,19 +165,19 @@ enum Alignment {
 
 @Operations("com.top_logic.graphic.flow.model.Border")
 message Border extends Decoration {
-	string strokeStyle;
-	double thickness;
-	bool top;
-	bool left;
-	bool bottom;
-	bool right;
+	string strokeStyle = "black";
+	double thickness = 1.0;
+	bool top = true;
+	bool left = true;
+	bool bottom = true;
+	bool right = true;
 	
 	repeated double dashes;
 }
 
 @Operations("com.top_logic.graphic.flow.model.Fill")
 message Fill extends Decoration {
-	string fillStyle;
+	string fillStyle = "black";
 }
 
 @Operations("com.top_logic.graphic.flow.model.Padding")

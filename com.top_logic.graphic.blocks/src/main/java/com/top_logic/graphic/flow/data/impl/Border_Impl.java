@@ -5,17 +5,17 @@ package com.top_logic.graphic.flow.data.impl;
  */
 public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_Impl implements com.top_logic.graphic.flow.data.Border {
 
-	private String _strokeStyle = "";
+	private String _strokeStyle = "black";
 
-	private double _thickness = 0.0d;
+	private double _thickness = 1.0;
 
-	private boolean _top = false;
+	private boolean _top = true;
 
-	private boolean _left = false;
+	private boolean _left = true;
 
-	private boolean _bottom = false;
+	private boolean _bottom = true;
 
-	private boolean _right = false;
+	private boolean _right = true;
 
 	private final java.util.List<Double> _dashes = new de.haumacher.msgbuf.util.ReferenceList<>() {
 		@Override
@@ -289,11 +289,13 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 			case BOTTOM__PROP: setBottom(in.nextBoolean()); break;
 			case RIGHT__PROP: setRight(in.nextBoolean()); break;
 			case DASHES__PROP: {
+				java.util.List<Double> newValue = new java.util.ArrayList<>();
 				in.beginArray();
 				while (in.hasNext()) {
-					addDashe(in.nextDouble());
+					newValue.add(in.nextDouble());
 				}
 				in.endArray();
+				setDashes(newValue);
 			}
 			break;
 			default: super.readField(in, field);

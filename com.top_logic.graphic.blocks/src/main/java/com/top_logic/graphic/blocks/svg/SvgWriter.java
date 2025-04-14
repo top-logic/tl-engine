@@ -5,8 +5,6 @@
  */
 package com.top_logic.graphic.blocks.svg;
 
-import java.awt.Color;
-
 import com.top_logic.graphic.blocks.math.Vec;
 import com.top_logic.graphic.flow.data.ImageAlign;
 import com.top_logic.graphic.flow.data.ImageScale;
@@ -252,7 +250,7 @@ public interface SvgWriter extends AutoCloseable {
 	/**
 	 * Sets the <code>fill</code> style on the current element.
 	 */
-	void setFill(Color color);
+	void setFill(SVGColor color);
 
 	/**
 	 * Sets the <code>fill</code> style on the current element.
@@ -262,7 +260,7 @@ public interface SvgWriter extends AutoCloseable {
 	/**
 	 * Sets the <code>stroke</code> style on the current element.
 	 */
-	void setStroke(Color color);
+	void setStroke(SVGColor color);
 
 	/**
 	 * Sets the <code>stroke</code> style on the current element.

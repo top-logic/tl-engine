@@ -7,15 +7,15 @@ package com.top_logic.graphic.blocks.server.svg;
 
 import static com.top_logic.graphic.blocks.svg.SvgConstants.*;
 
-import java.awt.Color;
 import java.io.IOError;
 import java.io.IOException;
 
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.graphic.blocks.svg.SVGColor;
+import com.top_logic.graphic.blocks.svg.SvgUtil;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
 import com.top_logic.graphic.flow.data.ImageAlign;
 import com.top_logic.graphic.flow.data.ImageScale;
-import com.top_logic.graphic.svg.SvgUtil;
 
 /**
  * {@link SvgWriter} creating XML output through a {@link TagWriter}.
@@ -358,7 +358,7 @@ public class SvgTagWriter implements SvgWriter {
 	}
 
 	@Override
-	public void setFill(Color color) {
+	public void setFill(SVGColor color) {
 		setFill(SvgUtil.html(color));
 	}
 
@@ -368,7 +368,7 @@ public class SvgTagWriter implements SvgWriter {
 	}
 
 	@Override
-	public void setStroke(Color color) {
+	public void setStroke(SVGColor color) {
 		setStroke(SvgUtil.html(color));
 	}
 

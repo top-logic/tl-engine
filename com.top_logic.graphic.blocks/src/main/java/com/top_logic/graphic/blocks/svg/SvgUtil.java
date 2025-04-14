@@ -3,9 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.graphic.svg;
-
-import java.awt.Color;
+package com.top_logic.graphic.blocks.svg;
 
 /**
  * Utility methods for SVG creation.
@@ -27,9 +25,9 @@ public class SvgUtil {
 	}
 
 	/**
-	 * Converts the given {@link Color} to a style value usable in HTML.
+	 * Converts the given {@link SVGColor} to a style value usable in HTML.
 	 */
-	public static String html(Color color) {
+	public static String html(SVGColor color) {
 		StringBuilder buffer = new StringBuilder();
 		buffer.append('#');
 		appendHex2(buffer, color.getRed());

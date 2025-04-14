@@ -5,19 +5,18 @@
  */
 package com.top_logic.graphic.flow.server.script;
 
-import java.awt.Color;
-
-import com.top_logic.graphic.svg.SvgUtil;
+import com.top_logic.graphic.blocks.svg.SVGColor;
+import com.top_logic.graphic.blocks.svg.SvgUtil;
 import com.top_logic.model.search.expr.ToString;
 
 /**
- * Converts {@link Color} values to HTML color strings.
+ * Converts {@link SVGColor} values to HTML color strings.
  */
 public class ToStyle implements ValueConverter {
 
 	@Override
 	public Object fromScript(Object javaValue) {
-		if (javaValue instanceof Color color) {
+		if (javaValue instanceof SVGColor color) {
 			return SvgUtil.html(color);
 		}
 		return ToString.toString(javaValue);

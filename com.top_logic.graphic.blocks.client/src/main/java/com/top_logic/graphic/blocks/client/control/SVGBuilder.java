@@ -7,8 +7,6 @@ package com.top_logic.graphic.blocks.client.control;
 
 import static com.top_logic.graphic.blocks.svg.SvgConstants.*;
 
-import java.awt.Color;
-
 import org.vectomatic.dom.svg.OMSVGDocument;
 import org.vectomatic.dom.svg.OMSVGElement;
 import org.vectomatic.dom.svg.OMSVGGElement;
@@ -20,10 +18,11 @@ import org.vectomatic.dom.svg.OMSVGTransform;
 import org.vectomatic.dom.svg.OMSVGTransformList;
 import org.vectomatic.dom.svg.itf.ISVGTransformable;
 
+import com.top_logic.graphic.blocks.svg.SVGColor;
+import com.top_logic.graphic.blocks.svg.SvgUtil;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
 import com.top_logic.graphic.flow.data.ImageAlign;
 import com.top_logic.graphic.flow.data.ImageScale;
-import com.top_logic.graphic.svg.SvgUtil;
 
 /**
  * {@link SvgWriter} directly creating a SVG DOM tree.
@@ -125,7 +124,7 @@ public class SVGBuilder implements SvgWriter {
 	}
 
 	@Override
-	public void setFill(Color color) {
+	public void setFill(SVGColor color) {
 		setFill(SvgUtil.html(color));
 	}
 
@@ -135,7 +134,7 @@ public class SVGBuilder implements SvgWriter {
 	}
 
 	@Override
-	public void setStroke(Color color) {
+	public void setStroke(SVGColor color) {
 		setStroke(SvgUtil.html(color));
 	}
 

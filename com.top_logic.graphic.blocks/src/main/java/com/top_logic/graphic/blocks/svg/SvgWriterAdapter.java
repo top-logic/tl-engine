@@ -5,8 +5,6 @@
  */
 package com.top_logic.graphic.blocks.svg;
 
-import java.awt.Color;
-
 import com.top_logic.graphic.flow.data.ImageAlign;
 import com.top_logic.graphic.flow.data.ImageScale;
 
@@ -192,7 +190,7 @@ public class SvgWriterAdapter implements SvgWriter {
 	}
 
 	@Override
-	public void setFill(Color color) {
+	public void setFill(SVGColor color) {
 		_impl.setFill(color);
 	}
 
@@ -202,7 +200,7 @@ public class SvgWriterAdapter implements SvgWriter {
 	}
 
 	@Override
-	public void setStroke(Color color) {
+	public void setStroke(SVGColor color) {
 		_impl.setStroke(color);
 	}
 

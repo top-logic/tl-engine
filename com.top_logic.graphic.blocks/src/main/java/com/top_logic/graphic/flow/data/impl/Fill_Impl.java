@@ -5,7 +5,7 @@ package com.top_logic.graphic.flow.data.impl;
  */
 public class Fill_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_Impl implements com.top_logic.graphic.flow.data.Fill {
 
-	private String _fillStyle = "";
+	private String _fillStyle = "black";
 
 	/**
 	 * Creates a {@link Fill_Impl} instance.

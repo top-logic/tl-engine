@@ -22,6 +22,8 @@ public interface TextLine extends DrawElement {
 	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
 		TextMetrics metrics = context.measure(self().getValue());
 		
+		self().setBaseLine(metrics.getBaseLine());
+
 		self().setX(offsetX);
 		self().setY(offsetY);
 		self().setWidth(metrics.getWidth());

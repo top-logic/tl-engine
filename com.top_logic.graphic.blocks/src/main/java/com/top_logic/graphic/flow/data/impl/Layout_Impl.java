@@ -122,11 +122,13 @@ public abstract class Layout_Impl extends com.top_logic.graphic.flow.data.impl.B
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case CONTENTS__PROP: {
+				java.util.List<com.top_logic.graphic.flow.data.Box> newValue = new java.util.ArrayList<>();
 				in.beginArray();
 				while (in.hasNext()) {
-					addContent(com.top_logic.graphic.flow.data.Box.readBox(in));
+					newValue.add(com.top_logic.graphic.flow.data.Box.readBox(in));
 				}
 				in.endArray();
+				setContents(newValue);
 			}
 			break;
 			default: super.readField(in, field);

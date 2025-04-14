@@ -299,19 +299,23 @@ public class GridLayout_Impl extends com.top_logic.graphic.flow.data.impl.Layout
 			case GAP_X__PROP: setGapX(in.nextDouble()); break;
 			case GAP_Y__PROP: setGapY(in.nextDouble()); break;
 			case ROW_HEIGHT__PROP: {
+				java.util.List<Double> newValue = new java.util.ArrayList<>();
 				in.beginArray();
 				while (in.hasNext()) {
-					addRowHeight(in.nextDouble());
+					newValue.add(in.nextDouble());
 				}
 				in.endArray();
+				setRowHeight(newValue);
 			}
 			break;
 			case COL_WIDTH__PROP: {
+				java.util.List<Double> newValue = new java.util.ArrayList<>();
 				in.beginArray();
 				while (in.hasNext()) {
-					addColWidth(in.nextDouble());
+					newValue.add(in.nextDouble());
 				}
 				in.endArray();
+				setColWidth(newValue);
 			}
 			break;
 			default: super.readField(in, field);

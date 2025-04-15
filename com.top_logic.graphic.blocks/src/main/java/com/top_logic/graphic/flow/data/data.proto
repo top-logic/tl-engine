@@ -4,7 +4,7 @@ abstract message Widget {
 
 }
 
-@Operations("com.top_logic.graphic.flow.model.DrawElement")
+@Operations("com.top_logic.graphic.flow.model.BoxOperations")
 abstract message Box extends Widget {
 	double x;
 	double y;
@@ -12,13 +12,13 @@ abstract message Box extends Widget {
 	double height;
 }
 
-@Operations("com.top_logic.graphic.flow.model.TextLine")
+@Operations("com.top_logic.graphic.flow.model.TextOperations")
 message Text extends Box {
 	string value;
 	double baseLine;
 }
 
-@Operations("com.top_logic.graphic.flow.model.Image")
+@Operations("com.top_logic.graphic.flow.model.ImageOperations")
 message Image extends Box {
 	string href;
 	double imgWidth;
@@ -141,16 +141,16 @@ enum ImageScale {
 
 }
 
-@Operations("com.top_logic.graphic.flow.model.EmptyBlock")
+@Operations("com.top_logic.graphic.flow.model.EmptyOperations")
 message Empty extends Box {
 }
 
-@Operations("com.top_logic.graphic.flow.model.Decoration")
+@Operations("com.top_logic.graphic.flow.model.DecorationOperations")
 abstract message Decoration extends Box {
 	Box content;
 }
 
-@Operations("com.top_logic.graphic.flow.model.Align")
+@Operations("com.top_logic.graphic.flow.model.AlignOperations")
 message Align extends Decoration {
 	Alignment xAlign;
 	Alignment yAlign;
@@ -163,7 +163,7 @@ enum Alignment {
 	strech;
 }
 
-@Operations("com.top_logic.graphic.flow.model.Border")
+@Operations("com.top_logic.graphic.flow.model.BorderOperations")
 message Border extends Decoration {
 	string strokeStyle = "black";
 	double thickness = 1.0;
@@ -175,12 +175,12 @@ message Border extends Decoration {
 	repeated double dashes;
 }
 
-@Operations("com.top_logic.graphic.flow.model.Fill")
+@Operations("com.top_logic.graphic.flow.model.FillOperations")
 message Fill extends Decoration {
 	string fillStyle = "black";
 }
 
-@Operations("com.top_logic.graphic.flow.model.Padding")
+@Operations("com.top_logic.graphic.flow.model.PaddingOperations")
 message Padding extends Decoration {
 	double top;
 	double left;
@@ -188,7 +188,7 @@ message Padding extends Decoration {
 	double right;
 }
 
-@Operations("com.top_logic.graphic.flow.model.layout.CompassLayout")
+@Operations("com.top_logic.graphic.flow.model.layout.CompassLayoutOperations")
 message CompassLayout extends Box {
 	Box north;
 	Box west;
@@ -205,7 +205,7 @@ abstract message Layout extends Box {
 	repeated Box contents;
 }
 
-@Operations("com.top_logic.graphic.flow.model.layout.GridLayout")
+@Operations("com.top_logic.graphic.flow.model.layout.GridLayoutOperations")
 message GridLayout extends Layout {
 	int rows;
 	int cols;
@@ -220,11 +220,11 @@ abstract message RowLayout extends Layout {
 	SpaceDistribution fill;
 }
 
-@Operations("com.top_logic.graphic.flow.model.layout.HorizontalLayout")
+@Operations("com.top_logic.graphic.flow.model.layout.HorizontalLayoutOperations")
 message HorizontalLayout extends RowLayout {
 }
 
-@Operations("com.top_logic.graphic.flow.model.layout.VerticalLayout")
+@Operations("com.top_logic.graphic.flow.model.layout.VerticalLayoutOperations")
 message VerticalLayout extends RowLayout {
 }
 

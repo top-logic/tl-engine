@@ -9,19 +9,19 @@ import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
 import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.data.SpaceDistribution;
-import com.top_logic.graphic.flow.model.DrawElement;
+import com.top_logic.graphic.flow.model.BoxOperations;
 
 /**
  * A column of elements.
  */
-public interface VerticalLayout extends DrawElement {
+public interface VerticalLayoutOperations extends BoxOperations {
 
 	@Override
 	com.top_logic.graphic.flow.data.VerticalLayout self();
 
 	@Override
 	default void draw(SvgWriter out) {
-		for (DrawElement e : self().getContents()) {
+		for (BoxOperations e : self().getContents()) {
 			e.draw(out);
 		}
 	}

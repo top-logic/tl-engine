@@ -11,7 +11,7 @@ import com.top_logic.graphic.flow.data.Box;
 /**
  * Inserts some padding around another element.
  */
-public interface Padding extends Decoration {
+public interface PaddingOperations extends DecorationOperations {
 
 	@Override
 	com.top_logic.graphic.flow.data.Padding self();

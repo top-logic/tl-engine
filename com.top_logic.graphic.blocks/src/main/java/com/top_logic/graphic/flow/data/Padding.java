@@ -24,21 +24,6 @@ public interface Padding extends Decoration, com.top_logic.graphic.flow.model.Pa
 	/** @see #getRight() */
 	String RIGHT__PROP = "right";
 
-	/** Identifier for the {@link com.top_logic.graphic.flow.data.Padding} type in binary format. */
-	static final int PADDING__TYPE_ID = 7;
-
-	/** Identifier for the property {@link #getTop()} in binary format. */
-	static final int TOP__ID = 6;
-
-	/** Identifier for the property {@link #getLeft()} in binary format. */
-	static final int LEFT__ID = 7;
-
-	/** Identifier for the property {@link #getBottom()} in binary format. */
-	static final int BOTTOM__ID = 8;
-
-	/** Identifier for the property {@link #getRight()} in binary format. */
-	static final int RIGHT__ID = 9;
-
 	double getTop();
 
 	/**
@@ -83,17 +68,17 @@ public interface Padding extends Decoration, com.top_logic.graphic.flow.model.Pa
 	com.top_logic.graphic.flow.data.Padding setHeight(double value);
 
 	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.Padding readPadding(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+	static com.top_logic.graphic.flow.data.Padding readPadding(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
+			return (com.top_logic.graphic.flow.data.Padding) scope.resolveOrFail(in.nextInt());
+		}
+		in.beginArray();
+		String type = in.nextString();
+		assert PADDING__TYPE.equals(type);
+		int id = in.nextInt();
 		com.top_logic.graphic.flow.data.impl.Padding_Impl result = new com.top_logic.graphic.flow.data.impl.Padding_Impl();
-		result.readContent(in);
-		return result;
-	}
-
-	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.Padding readPadding(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		in.beginObject();
-		com.top_logic.graphic.flow.data.Padding result = com.top_logic.graphic.flow.data.impl.Padding_Impl.readPadding_Content(in);
-		in.endObject();
+		scope.readData(result, id, in);
+		in.endArray();
 		return result;
 	}
 

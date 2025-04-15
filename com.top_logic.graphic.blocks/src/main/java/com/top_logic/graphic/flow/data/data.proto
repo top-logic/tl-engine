@@ -1,15 +1,108 @@
 package com.top_logic.graphic.flow.data;
 
-abstract message Widget {
+option SharedGraph;
 
+abstract message Widget {
 }
 
+/** Top-level element that can be rendered. */
+@Operations("com.top_logic.graphic.flow.model.DiagramOperations")
+message Diagram extends Widget {
+}
+
+/** A rectangular region of a {@link Diagram} that can adjust its size to external requests and to its content. */
 @Operations("com.top_logic.graphic.flow.model.BoxOperations")
 abstract message Box extends Widget {
+	/** The widget that contains/renders this widget. */
+	@Container
+	Box parent;
+
 	double x;
 	double y;
 	double width;
 	double height;
+}
+
+/** A layout that allows to freely place boxes at arbitrary positions. The layout does not impose any restrictions to the positions and sizes of the placed boxes. */
+@Operations("com.top_logic.graphic.flow.model.layout.FloatingLayoutOperations")
+message FloatingLayout extends Box {
+	repeated Box nodes;
+}
+
+/** A layout that connects placed nodes with one-to-many connectors forming a tree. */
+@Operations("com.top_logic.graphic.flow.model.tree.TreeLayoutOperations")
+message TreeLayout extends FloatingLayout {
+	DiagramDirection direction;
+	
+	/** Horizontal gap between columns of tree nodes. */
+	double gapX = 30;
+	
+	/** Vertical gap between nodes in a tree column. */
+	double gapY = 30;
+
+	/** Stroke style of tree connections. */	
+	string strokeStyle = "black";
+	
+	/** Stroke width of tree connections. */	
+	double thickness = 1.0;
+	
+	repeated TreeConnection connections;
+}
+
+/** A layout direction for a structured diagram. */
+enum DiagramDirection {
+	/** Diagram contents is layouted from left to right. */
+	ltr;
+	
+	/** Diagram contents is layouted from right to left. */
+	rtl; 
+	
+	/** Diagram contents is layouted from top to bottom. */
+	topdown; 
+	
+	/** Diagram contents is layouted from bottom to top. */
+	bottomup;
+}
+
+/** A connection in a {@link TreeLayout} that links contents of the diagram with one-to-many edges. */
+@Operations("com.top_logic.graphic.flow.model.tree.TreeConnectionOperations")
+message TreeConnection extends Widget {
+	/** The {@link TreeLayout} that is responsible for this connection. */
+	@Container
+	TreeLayout owner;
+	
+	/** The connector that is anchored to the parent node of the connection. */
+	TreeConnector parent;
+
+	/** The connectors that are anchored to the children nodes of the connection. */
+	repeated TreeConnector children;
+	
+	/**
+	 * The placement of the connection bar that represents the fan-out from the one parent to its many children. 
+	 * The bar is rendered perpendicular to the line connecting the nodes with the bar. 
+	 * The position of the bar is given as absolute coordinate (X or Y depending on the layout direction) within 
+	 * the coordinate system of the {@link TreeLayout}.
+	 */
+	double barPosition;
+}
+
+@Operations("com.top_logic.graphic.flow.model.tree.TreeConnectorOperations")
+message TreeConnector extends Widget {
+	@Container
+	TreeConnection connection;
+
+	/** The connected box. The box is expected to be part of some top-level node of the owning {@link TreeLayout}. */
+	@Ref
+	Box anchor;
+	
+	/** 
+	 * The starting point of the connection within the {@link #anchor} box. 
+	 * <p>
+	 * The position describes the starting point by giving a percentage (0..1) of the length of the side of the {@link #anchor} box, where this connection is placed. 
+	 * The side of the {@link #anchor} box where the connection starts depends on the {@link DiagramDirection} of the owning {@link TreeLayout}.
+	 * </p>
+	 */
+	double connectPosition;
 }
 
 @Operations("com.top_logic.graphic.flow.model.TextOperations")

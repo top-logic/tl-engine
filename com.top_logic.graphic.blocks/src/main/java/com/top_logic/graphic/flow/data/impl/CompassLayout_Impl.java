@@ -48,8 +48,22 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 
 	/** Internal setter for {@link #getNorth()} without chain call utility. */
 	protected final void internalSetNorth(com.top_logic.graphic.flow.data.Box value) {
+		com.top_logic.graphic.flow.data.impl.Box_Impl before = (com.top_logic.graphic.flow.data.impl.Box_Impl) _north;
+		com.top_logic.graphic.flow.data.impl.Box_Impl after = (com.top_logic.graphic.flow.data.impl.Box_Impl) value;
+		if (after != null) {
+			com.top_logic.graphic.flow.data.Box oldContainer = after.getParent();
+			if (oldContainer != null && oldContainer != this) {
+				throw new IllegalStateException("Object may not be part of two different containers.");
+			}
+		}
 		_listener.beforeSet(this, NORTH__PROP, value);
+		if (before != null) {
+			before.internalSetParent(null);
+		}
 		_north = value;
+		if (after != null) {
+			after.internalSetParent(this);
+		}
 	}
 
 	@Override
@@ -70,8 +84,22 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 
 	/** Internal setter for {@link #getWest()} without chain call utility. */
 	protected final void internalSetWest(com.top_logic.graphic.flow.data.Box value) {
+		com.top_logic.graphic.flow.data.impl.Box_Impl before = (com.top_logic.graphic.flow.data.impl.Box_Impl) _west;
+		com.top_logic.graphic.flow.data.impl.Box_Impl after = (com.top_logic.graphic.flow.data.impl.Box_Impl) value;
+		if (after != null) {
+			com.top_logic.graphic.flow.data.Box oldContainer = after.getParent();
+			if (oldContainer != null && oldContainer != this) {
+				throw new IllegalStateException("Object may not be part of two different containers.");
+			}
+		}
 		_listener.beforeSet(this, WEST__PROP, value);
+		if (before != null) {
+			before.internalSetParent(null);
+		}
 		_west = value;
+		if (after != null) {
+			after.internalSetParent(this);
+		}
 	}
 
 	@Override
@@ -92,8 +120,22 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 
 	/** Internal setter for {@link #getEast()} without chain call utility. */
 	protected final void internalSetEast(com.top_logic.graphic.flow.data.Box value) {
+		com.top_logic.graphic.flow.data.impl.Box_Impl before = (com.top_logic.graphic.flow.data.impl.Box_Impl) _east;
+		com.top_logic.graphic.flow.data.impl.Box_Impl after = (com.top_logic.graphic.flow.data.impl.Box_Impl) value;
+		if (after != null) {
+			com.top_logic.graphic.flow.data.Box oldContainer = after.getParent();
+			if (oldContainer != null && oldContainer != this) {
+				throw new IllegalStateException("Object may not be part of two different containers.");
+			}
+		}
 		_listener.beforeSet(this, EAST__PROP, value);
+		if (before != null) {
+			before.internalSetParent(null);
+		}
 		_east = value;
+		if (after != null) {
+			after.internalSetParent(this);
+		}
 	}
 
 	@Override
@@ -114,8 +156,22 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 
 	/** Internal setter for {@link #getSouth()} without chain call utility. */
 	protected final void internalSetSouth(com.top_logic.graphic.flow.data.Box value) {
+		com.top_logic.graphic.flow.data.impl.Box_Impl before = (com.top_logic.graphic.flow.data.impl.Box_Impl) _south;
+		com.top_logic.graphic.flow.data.impl.Box_Impl after = (com.top_logic.graphic.flow.data.impl.Box_Impl) value;
+		if (after != null) {
+			com.top_logic.graphic.flow.data.Box oldContainer = after.getParent();
+			if (oldContainer != null && oldContainer != this) {
+				throw new IllegalStateException("Object may not be part of two different containers.");
+			}
+		}
 		_listener.beforeSet(this, SOUTH__PROP, value);
+		if (before != null) {
+			before.internalSetParent(null);
+		}
 		_south = value;
+		if (after != null) {
+			after.internalSetParent(this);
+		}
 	}
 
 	@Override
@@ -136,8 +192,22 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 
 	/** Internal setter for {@link #getCenter()} without chain call utility. */
 	protected final void internalSetCenter(com.top_logic.graphic.flow.data.Box value) {
+		com.top_logic.graphic.flow.data.impl.Box_Impl before = (com.top_logic.graphic.flow.data.impl.Box_Impl) _center;
+		com.top_logic.graphic.flow.data.impl.Box_Impl after = (com.top_logic.graphic.flow.data.impl.Box_Impl) value;
+		if (after != null) {
+			com.top_logic.graphic.flow.data.Box oldContainer = after.getParent();
+			if (oldContainer != null && oldContainer != this) {
+				throw new IllegalStateException("Object may not be part of two different containers.");
+			}
+		}
 		_listener.beforeSet(this, CENTER__PROP, value);
+		if (before != null) {
+			before.internalSetParent(null);
+		}
 		_center = value;
+		if (after != null) {
+			after.internalSetParent(this);
+		}
 	}
 
 	@Override
@@ -272,27 +342,27 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 	}
 
 	@Override
-	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
-		super.writeFields(out);
+	protected void writeFields(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
+		super.writeFields(scope, out);
 		if (hasNorth()) {
 			out.name(NORTH__PROP);
-			getNorth().writeTo(out);
+			getNorth().writeTo(scope, out);
 		}
 		if (hasWest()) {
 			out.name(WEST__PROP);
-			getWest().writeTo(out);
+			getWest().writeTo(scope, out);
 		}
 		if (hasEast()) {
 			out.name(EAST__PROP);
-			getEast().writeTo(out);
+			getEast().writeTo(scope, out);
 		}
 		if (hasSouth()) {
 			out.name(SOUTH__PROP);
-			getSouth().writeTo(out);
+			getSouth().writeTo(scope, out);
 		}
 		if (hasCenter()) {
 			out.name(CENTER__PROP);
-			getCenter().writeTo(out);
+			getCenter().writeTo(scope, out);
 		}
 		out.name(CENTER_HEIGHT__PROP);
 		out.value(getCenterHeight());
@@ -303,75 +373,76 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 	}
 
 	@Override
-	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+	public void writeFieldValue(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field) throws java.io.IOException {
 		switch (field) {
-			case NORTH__PROP: setNorth(com.top_logic.graphic.flow.data.Box.readBox(in)); break;
-			case WEST__PROP: setWest(com.top_logic.graphic.flow.data.Box.readBox(in)); break;
-			case EAST__PROP: setEast(com.top_logic.graphic.flow.data.Box.readBox(in)); break;
-			case SOUTH__PROP: setSouth(com.top_logic.graphic.flow.data.Box.readBox(in)); break;
-			case CENTER__PROP: setCenter(com.top_logic.graphic.flow.data.Box.readBox(in)); break;
+			case NORTH__PROP: {
+				if (hasNorth()) {
+					getNorth().writeTo(scope, out);
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case WEST__PROP: {
+				if (hasWest()) {
+					getWest().writeTo(scope, out);
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case EAST__PROP: {
+				if (hasEast()) {
+					getEast().writeTo(scope, out);
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case SOUTH__PROP: {
+				if (hasSouth()) {
+					getSouth().writeTo(scope, out);
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case CENTER__PROP: {
+				if (hasCenter()) {
+					getCenter().writeTo(scope, out);
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case CENTER_HEIGHT__PROP: {
+				out.value(getCenterHeight());
+				break;
+			}
+			case H_PADDING__PROP: {
+				out.value(getHPadding());
+				break;
+			}
+			case V_PADDING__PROP: {
+				out.value(getVPadding());
+				break;
+			}
+			default: super.writeFieldValue(scope, out, field);
+		}
+	}
+
+	@Override
+	public void readField(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+		switch (field) {
+			case NORTH__PROP: setNorth(com.top_logic.graphic.flow.data.Box.readBox(scope, in)); break;
+			case WEST__PROP: setWest(com.top_logic.graphic.flow.data.Box.readBox(scope, in)); break;
+			case EAST__PROP: setEast(com.top_logic.graphic.flow.data.Box.readBox(scope, in)); break;
+			case SOUTH__PROP: setSouth(com.top_logic.graphic.flow.data.Box.readBox(scope, in)); break;
+			case CENTER__PROP: setCenter(com.top_logic.graphic.flow.data.Box.readBox(scope, in)); break;
 			case CENTER_HEIGHT__PROP: setCenterHeight(in.nextDouble()); break;
 			case H_PADDING__PROP: setHPadding(in.nextDouble()); break;
 			case V_PADDING__PROP: setVPadding(in.nextDouble()); break;
-			default: super.readField(in, field);
-		}
-	}
-
-	@Override
-	public int typeId() {
-		return COMPASS_LAYOUT__TYPE_ID;
-	}
-
-	@Override
-	protected void writeFields(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-		super.writeFields(out);
-		if (hasNorth()) {
-			out.name(NORTH__ID);
-			getNorth().writeTo(out);
-		}
-		if (hasWest()) {
-			out.name(WEST__ID);
-			getWest().writeTo(out);
-		}
-		if (hasEast()) {
-			out.name(EAST__ID);
-			getEast().writeTo(out);
-		}
-		if (hasSouth()) {
-			out.name(SOUTH__ID);
-			getSouth().writeTo(out);
-		}
-		if (hasCenter()) {
-			out.name(CENTER__ID);
-			getCenter().writeTo(out);
-		}
-		out.name(CENTER_HEIGHT__ID);
-		out.value(getCenterHeight());
-		out.name(H_PADDING__ID);
-		out.value(getHPadding());
-		out.name(V_PADDING__ID);
-		out.value(getVPadding());
-	}
-
-	/** Helper for creating an object of type {@link com.top_logic.graphic.flow.data.CompassLayout} from a polymorphic composition. */
-	public static com.top_logic.graphic.flow.data.CompassLayout readCompassLayout_Content(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		com.top_logic.graphic.flow.data.impl.CompassLayout_Impl result = new CompassLayout_Impl();
-		result.readContent(in);
-		return result;
-	}
-
-	@Override
-	protected void readField(de.haumacher.msgbuf.binary.DataReader in, int field) throws java.io.IOException {
-		switch (field) {
-			case NORTH__ID: setNorth(com.top_logic.graphic.flow.data.Box.readBox(in)); break;
-			case WEST__ID: setWest(com.top_logic.graphic.flow.data.Box.readBox(in)); break;
-			case EAST__ID: setEast(com.top_logic.graphic.flow.data.Box.readBox(in)); break;
-			case SOUTH__ID: setSouth(com.top_logic.graphic.flow.data.Box.readBox(in)); break;
-			case CENTER__ID: setCenter(com.top_logic.graphic.flow.data.Box.readBox(in)); break;
-			case CENTER_HEIGHT__ID: setCenterHeight(in.nextDouble()); break;
-			case H_PADDING__ID: setHPadding(in.nextDouble()); break;
-			case V_PADDING__ID: setVPadding(in.nextDouble()); break;
-			default: super.readField(in, field);
+			default: super.readField(scope, in, field);
 		}
 	}
 

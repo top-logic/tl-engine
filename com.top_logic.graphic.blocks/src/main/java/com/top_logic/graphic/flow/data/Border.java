@@ -33,30 +33,6 @@ public interface Border extends Decoration, com.top_logic.graphic.flow.model.Bor
 	/** @see #getDashes() */
 	String DASHES__PROP = "dashes";
 
-	/** Identifier for the {@link com.top_logic.graphic.flow.data.Border} type in binary format. */
-	static final int BORDER__TYPE_ID = 5;
-
-	/** Identifier for the property {@link #getStrokeStyle()} in binary format. */
-	static final int STROKE_STYLE__ID = 6;
-
-	/** Identifier for the property {@link #getThickness()} in binary format. */
-	static final int THICKNESS__ID = 7;
-
-	/** Identifier for the property {@link #isTop()} in binary format. */
-	static final int TOP__ID = 8;
-
-	/** Identifier for the property {@link #isLeft()} in binary format. */
-	static final int LEFT__ID = 9;
-
-	/** Identifier for the property {@link #isBottom()} in binary format. */
-	static final int BOTTOM__ID = 10;
-
-	/** Identifier for the property {@link #isRight()} in binary format. */
-	static final int RIGHT__ID = 11;
-
-	/** Identifier for the property {@link #getDashes()} in binary format. */
-	static final int DASHES__ID = 12;
-
 	String getStrokeStyle();
 
 	/**
@@ -132,17 +108,17 @@ public interface Border extends Decoration, com.top_logic.graphic.flow.model.Bor
 	com.top_logic.graphic.flow.data.Border setHeight(double value);
 
 	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.Border readBorder(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+	static com.top_logic.graphic.flow.data.Border readBorder(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
+			return (com.top_logic.graphic.flow.data.Border) scope.resolveOrFail(in.nextInt());
+		}
+		in.beginArray();
+		String type = in.nextString();
+		assert BORDER__TYPE.equals(type);
+		int id = in.nextInt();
 		com.top_logic.graphic.flow.data.impl.Border_Impl result = new com.top_logic.graphic.flow.data.impl.Border_Impl();
-		result.readContent(in);
-		return result;
-	}
-
-	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.Border readBorder(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		in.beginObject();
-		com.top_logic.graphic.flow.data.Border result = com.top_logic.graphic.flow.data.impl.Border_Impl.readBorder_Content(in);
-		in.endObject();
+		scope.readData(result, id, in);
+		in.endArray();
 		return result;
 	}
 

@@ -1975,6 +1975,11 @@ input[type="checkbox"]:checked::before {
 	font-weight: 900;
 }
 
+input[type="checkbox"]:indeterminate::before {
+	content: "\f146";
+	font-weight: 900;
+}
+
 /*
 ****										****
 ****	ChoiceControl, bbc-option styles	****

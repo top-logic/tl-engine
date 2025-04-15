@@ -1,6 +1,6 @@
 package com.top_logic.graphic.flow.data;
 
-public interface GridLayout extends Layout, com.top_logic.graphic.flow.model.layout.GridLayout {
+public interface GridLayout extends Layout, com.top_logic.graphic.flow.model.layout.GridLayoutOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.GridLayout} instance.

@@ -41,7 +41,6 @@ import com.top_logic.graphic.flow.data.SpaceDistribution;
 import com.top_logic.graphic.flow.data.Text;
 import com.top_logic.graphic.flow.data.VerticalLayout;
 import com.top_logic.graphic.flow.model.FlowDiagram;
-import com.top_logic.graphic.flow.model.TextLine;
 import com.top_logic.model.search.expr.ToString;
 
 /**
@@ -50,14 +49,14 @@ import com.top_logic.model.search.expr.ToString;
 public class FlowFactory {
 	
 	/**
-	 * Factory for {@link TextLine}.
+	 * Factory for Diagrams.
 	 */
 	public static FlowDiagram flowChart(Box root) {
 		return new FlowDiagram().setRoot(root == null ? Empty.create() : root);
 	}
 
 	/**
-	 * Factory for {@link TextLine}.
+	 * Factory for {@link Box}.
 	 */
 	public static Box flowText(
 			@Mandatory String text) {

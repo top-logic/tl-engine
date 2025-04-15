@@ -11,7 +11,7 @@ import com.top_logic.graphic.blocks.svg.SvgWriter;
 /**
  * Rectangle with a background color.
  */
-public interface Fill extends Decoration {
+public interface FillOperations extends DecorationOperations {
 
 	@Override
 	com.top_logic.graphic.flow.data.Fill self();
@@ -39,7 +39,7 @@ public interface Fill extends Decoration {
 		out.endData();
 		out.endPath();
 
-		Decoration.super.draw(out);
+		DecorationOperations.super.draw(out);
 	}
 
 }

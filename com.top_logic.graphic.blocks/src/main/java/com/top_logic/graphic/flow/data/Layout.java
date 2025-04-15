@@ -13,9 +13,6 @@ public interface Layout extends Box {
 	/** @see #getContents() */
 	String CONTENTS__PROP = "contents";
 
-	/** Identifier for the property {@link #getContents()} in binary format. */
-	static final int CONTENTS__ID = 5;
-
 	java.util.List<com.top_logic.graphic.flow.data.Box> getContents();
 
 	/**
@@ -46,34 +43,24 @@ public interface Layout extends Box {
 	com.top_logic.graphic.flow.data.Layout setHeight(double value);
 
 	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.Layout readLayout(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+	static com.top_logic.graphic.flow.data.Layout readLayout(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
+			return (com.top_logic.graphic.flow.data.Layout) scope.resolveOrFail(in.nextInt());
+		}
 		com.top_logic.graphic.flow.data.Layout result;
 		in.beginArray();
 		String type = in.nextString();
+		int id = in.nextInt();
 		switch (type) {
-			case GridLayout.GRID_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.GridLayout.readGridLayout(in); break;
-			case HorizontalLayout.HORIZONTAL_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.HorizontalLayout.readHorizontalLayout(in); break;
-			case VerticalLayout.VERTICAL_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.VerticalLayout.readVerticalLayout(in); break;
+			case GridLayout.GRID_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.GridLayout.create(); break;
+			case HorizontalLayout.HORIZONTAL_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.HorizontalLayout.create(); break;
+			case VerticalLayout.VERTICAL_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.VerticalLayout.create(); break;
 			default: in.skipValue(); result = null; break;
 		}
-		in.endArray();
-		return result;
-	}
-
-	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.Layout readLayout(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		in.beginObject();
-		int typeField = in.nextName();
-		assert typeField == 0;
-		int type = in.nextInt();
-		com.top_logic.graphic.flow.data.Layout result;
-		switch (type) {
-			case com.top_logic.graphic.flow.data.GridLayout.GRID_LAYOUT__TYPE_ID: result = com.top_logic.graphic.flow.data.impl.GridLayout_Impl.readGridLayout_Content(in); break;
-			case com.top_logic.graphic.flow.data.HorizontalLayout.HORIZONTAL_LAYOUT__TYPE_ID: result = com.top_logic.graphic.flow.data.impl.HorizontalLayout_Impl.readHorizontalLayout_Content(in); break;
-			case com.top_logic.graphic.flow.data.VerticalLayout.VERTICAL_LAYOUT__TYPE_ID: result = com.top_logic.graphic.flow.data.impl.VerticalLayout_Impl.readVerticalLayout_Content(in); break;
-			default: result = null; while (in.hasNext()) {in.skipValue(); }
+		if (result != null) {
+			scope.readData(result, id, in);
 		}
-		in.endObject();
+		in.endArray();
 		return result;
 	}
 

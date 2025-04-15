@@ -116,8 +116,8 @@ public abstract class RowLayout_Impl extends com.top_logic.graphic.flow.data.imp
 	}
 
 	@Override
-	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
-		super.writeFields(out);
+	protected void writeFields(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
+		super.writeFields(scope, out);
 		out.name(GAP__PROP);
 		out.value(getGap());
 		out.name(FILL__PROP);
@@ -125,29 +125,26 @@ public abstract class RowLayout_Impl extends com.top_logic.graphic.flow.data.imp
 	}
 
 	@Override
-	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+	public void writeFieldValue(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field) throws java.io.IOException {
 		switch (field) {
-			case GAP__PROP: setGap(in.nextDouble()); break;
-			case FILL__PROP: setFill(com.top_logic.graphic.flow.data.SpaceDistribution.readSpaceDistribution(in)); break;
-			default: super.readField(in, field);
+			case GAP__PROP: {
+				out.value(getGap());
+				break;
+			}
+			case FILL__PROP: {
+				getFill().writeTo(out);
+				break;
+			}
+			default: super.writeFieldValue(scope, out, field);
 		}
 	}
 
 	@Override
-	protected void writeFields(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-		super.writeFields(out);
-		out.name(GAP__ID);
-		out.value(getGap());
-		out.name(FILL__ID);
-		getFill().writeTo(out);
-	}
-
-	@Override
-	protected void readField(de.haumacher.msgbuf.binary.DataReader in, int field) throws java.io.IOException {
+	public void readField(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
-			case GAP__ID: setGap(in.nextDouble()); break;
-			case FILL__ID: setFill(com.top_logic.graphic.flow.data.SpaceDistribution.readSpaceDistribution(in)); break;
-			default: super.readField(in, field);
+			case GAP__PROP: setGap(in.nextDouble()); break;
+			case FILL__PROP: setFill(com.top_logic.graphic.flow.data.SpaceDistribution.readSpaceDistribution(in)); break;
+			default: super.readField(scope, in, field);
 		}
 	}
 

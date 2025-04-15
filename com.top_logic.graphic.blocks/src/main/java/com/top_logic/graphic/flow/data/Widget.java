@@ -1,9 +1,18 @@
 package com.top_logic.graphic.flow.data;
 
-public interface Widget extends de.haumacher.msgbuf.data.DataObject, de.haumacher.msgbuf.binary.BinaryDataObject, de.haumacher.msgbuf.observer.Observable, de.haumacher.msgbuf.xml.XmlSerializable {
+public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, de.haumacher.msgbuf.xml.XmlSerializable {
 
 	/** Type codes for the {@link com.top_logic.graphic.flow.data.Widget} hierarchy. */
 	public enum TypeKind {
+
+		/** Type literal for {@link com.top_logic.graphic.flow.data.Diagram}. */
+		DIAGRAM,
+
+		/** Type literal for {@link com.top_logic.graphic.flow.data.FloatingLayout}. */
+		FLOATING_LAYOUT,
+
+		/** Type literal for {@link com.top_logic.graphic.flow.data.TreeLayout}. */
+		TREE_LAYOUT,
 
 		/** Type literal for {@link com.top_logic.graphic.flow.data.Text}. */
 		TEXT,
@@ -37,6 +46,12 @@ public interface Widget extends de.haumacher.msgbuf.data.DataObject, de.haumache
 
 		/** Type literal for {@link com.top_logic.graphic.flow.data.VerticalLayout}. */
 		VERTICAL_LAYOUT,
+
+		/** Type literal for {@link com.top_logic.graphic.flow.data.TreeConnection}. */
+		TREE_CONNECTION,
+
+		/** Type literal for {@link com.top_logic.graphic.flow.data.TreeConnector}. */
+		TREE_CONNECTOR,
 		;
 
 	}
@@ -44,67 +59,52 @@ public interface Widget extends de.haumacher.msgbuf.data.DataObject, de.haumache
 	/** Visitor interface for the {@link com.top_logic.graphic.flow.data.Widget} hierarchy.*/
 	public interface Visitor<R,A,E extends Throwable> extends com.top_logic.graphic.flow.data.Box.Visitor<R,A,E> {
 
-		// Pure sum interface.
+		/** Visit case for {@link com.top_logic.graphic.flow.data.Diagram}.*/
+		R visit(com.top_logic.graphic.flow.data.Diagram self, A arg) throws E;
+
+		/** Visit case for {@link com.top_logic.graphic.flow.data.TreeConnection}.*/
+		R visit(com.top_logic.graphic.flow.data.TreeConnection self, A arg) throws E;
+
+		/** Visit case for {@link com.top_logic.graphic.flow.data.TreeConnector}.*/
+		R visit(com.top_logic.graphic.flow.data.TreeConnector self, A arg) throws E;
 
 	}
 
 	/** The type code of this instance. */
 	TypeKind kind();
 
-	@Override
-	public com.top_logic.graphic.flow.data.Widget registerListener(de.haumacher.msgbuf.observer.Listener l);
-
-	@Override
-	public com.top_logic.graphic.flow.data.Widget unregisterListener(de.haumacher.msgbuf.observer.Listener l);
-
 	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.Widget readWidget(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+	static com.top_logic.graphic.flow.data.Widget readWidget(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
+			return (com.top_logic.graphic.flow.data.Widget) scope.resolveOrFail(in.nextInt());
+		}
 		com.top_logic.graphic.flow.data.Widget result;
 		in.beginArray();
 		String type = in.nextString();
+		int id = in.nextInt();
 		switch (type) {
-			case Text.TEXT__TYPE: result = com.top_logic.graphic.flow.data.Text.readText(in); break;
-			case Image.IMAGE__TYPE: result = com.top_logic.graphic.flow.data.Image.readImage(in); break;
-			case Empty.EMPTY__TYPE: result = com.top_logic.graphic.flow.data.Empty.readEmpty(in); break;
-			case CompassLayout.COMPASS_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.CompassLayout.readCompassLayout(in); break;
-			case Align.ALIGN__TYPE: result = com.top_logic.graphic.flow.data.Align.readAlign(in); break;
-			case Border.BORDER__TYPE: result = com.top_logic.graphic.flow.data.Border.readBorder(in); break;
-			case Fill.FILL__TYPE: result = com.top_logic.graphic.flow.data.Fill.readFill(in); break;
-			case Padding.PADDING__TYPE: result = com.top_logic.graphic.flow.data.Padding.readPadding(in); break;
-			case GridLayout.GRID_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.GridLayout.readGridLayout(in); break;
-			case HorizontalLayout.HORIZONTAL_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.HorizontalLayout.readHorizontalLayout(in); break;
-			case VerticalLayout.VERTICAL_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.VerticalLayout.readVerticalLayout(in); break;
+			case Diagram.DIAGRAM__TYPE: result = com.top_logic.graphic.flow.data.Diagram.create(); break;
+			case TreeConnection.TREE_CONNECTION__TYPE: result = com.top_logic.graphic.flow.data.TreeConnection.create(); break;
+			case TreeConnector.TREE_CONNECTOR__TYPE: result = com.top_logic.graphic.flow.data.TreeConnector.create(); break;
+			case FloatingLayout.FLOATING_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.FloatingLayout.create(); break;
+			case Text.TEXT__TYPE: result = com.top_logic.graphic.flow.data.Text.create(); break;
+			case Image.IMAGE__TYPE: result = com.top_logic.graphic.flow.data.Image.create(); break;
+			case Empty.EMPTY__TYPE: result = com.top_logic.graphic.flow.data.Empty.create(); break;
+			case CompassLayout.COMPASS_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.CompassLayout.create(); break;
+			case TreeLayout.TREE_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.TreeLayout.create(); break;
+			case Align.ALIGN__TYPE: result = com.top_logic.graphic.flow.data.Align.create(); break;
+			case Border.BORDER__TYPE: result = com.top_logic.graphic.flow.data.Border.create(); break;
+			case Fill.FILL__TYPE: result = com.top_logic.graphic.flow.data.Fill.create(); break;
+			case Padding.PADDING__TYPE: result = com.top_logic.graphic.flow.data.Padding.create(); break;
+			case GridLayout.GRID_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.GridLayout.create(); break;
+			case HorizontalLayout.HORIZONTAL_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.HorizontalLayout.create(); break;
+			case VerticalLayout.VERTICAL_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.VerticalLayout.create(); break;
 			default: in.skipValue(); result = null; break;
 		}
-		in.endArray();
-		return result;
-	}
-
-	/** The binary identifier for this concrete type in the polymorphic {@link com.top_logic.graphic.flow.data.Widget} hierarchy. */
-	abstract int typeId();
-
-	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.Widget readWidget(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		in.beginObject();
-		int typeField = in.nextName();
-		assert typeField == 0;
-		int type = in.nextInt();
-		com.top_logic.graphic.flow.data.Widget result;
-		switch (type) {
-			case com.top_logic.graphic.flow.data.Text.TEXT__TYPE_ID: result = com.top_logic.graphic.flow.data.impl.Text_Impl.readText_Content(in); break;
-			case com.top_logic.graphic.flow.data.Image.IMAGE__TYPE_ID: result = com.top_logic.graphic.flow.data.impl.Image_Impl.readImage_Content(in); break;
-			case com.top_logic.graphic.flow.data.Empty.EMPTY__TYPE_ID: result = com.top_logic.graphic.flow.data.impl.Empty_Impl.readEmpty_Content(in); break;
-			case com.top_logic.graphic.flow.data.CompassLayout.COMPASS_LAYOUT__TYPE_ID: result = com.top_logic.graphic.flow.data.impl.CompassLayout_Impl.readCompassLayout_Content(in); break;
-			case com.top_logic.graphic.flow.data.Align.ALIGN__TYPE_ID: result = com.top_logic.graphic.flow.data.impl.Align_Impl.readAlign_Content(in); break;
-			case com.top_logic.graphic.flow.data.Border.BORDER__TYPE_ID: result = com.top_logic.graphic.flow.data.impl.Border_Impl.readBorder_Content(in); break;
-			case com.top_logic.graphic.flow.data.Fill.FILL__TYPE_ID: result = com.top_logic.graphic.flow.data.impl.Fill_Impl.readFill_Content(in); break;
-			case com.top_logic.graphic.flow.data.Padding.PADDING__TYPE_ID: result = com.top_logic.graphic.flow.data.impl.Padding_Impl.readPadding_Content(in); break;
-			case com.top_logic.graphic.flow.data.GridLayout.GRID_LAYOUT__TYPE_ID: result = com.top_logic.graphic.flow.data.impl.GridLayout_Impl.readGridLayout_Content(in); break;
-			case com.top_logic.graphic.flow.data.HorizontalLayout.HORIZONTAL_LAYOUT__TYPE_ID: result = com.top_logic.graphic.flow.data.impl.HorizontalLayout_Impl.readHorizontalLayout_Content(in); break;
-			case com.top_logic.graphic.flow.data.VerticalLayout.VERTICAL_LAYOUT__TYPE_ID: result = com.top_logic.graphic.flow.data.impl.VerticalLayout_Impl.readVerticalLayout_Content(in); break;
-			default: result = null; while (in.hasNext()) {in.skipValue(); }
+		if (result != null) {
+			scope.readData(result, id, in);
 		}
-		in.endObject();
+		in.endArray();
 		return result;
 	}
 

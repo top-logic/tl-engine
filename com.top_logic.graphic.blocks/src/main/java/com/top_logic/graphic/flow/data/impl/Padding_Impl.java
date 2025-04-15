@@ -165,8 +165,8 @@ public class Padding_Impl extends com.top_logic.graphic.flow.data.impl.Decoratio
 	}
 
 	@Override
-	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
-		super.writeFields(out);
+	protected void writeFields(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
+		super.writeFields(scope, out);
 		out.name(TOP__PROP);
 		out.value(getTop());
 		out.name(LEFT__PROP);
@@ -178,49 +178,36 @@ public class Padding_Impl extends com.top_logic.graphic.flow.data.impl.Decoratio
 	}
 
 	@Override
-	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+	public void writeFieldValue(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field) throws java.io.IOException {
+		switch (field) {
+			case TOP__PROP: {
+				out.value(getTop());
+				break;
+			}
+			case LEFT__PROP: {
+				out.value(getLeft());
+				break;
+			}
+			case BOTTOM__PROP: {
+				out.value(getBottom());
+				break;
+			}
+			case RIGHT__PROP: {
+				out.value(getRight());
+				break;
+			}
+			default: super.writeFieldValue(scope, out, field);
+		}
+	}
+
+	@Override
+	public void readField(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case TOP__PROP: setTop(in.nextDouble()); break;
 			case LEFT__PROP: setLeft(in.nextDouble()); break;
 			case BOTTOM__PROP: setBottom(in.nextDouble()); break;
 			case RIGHT__PROP: setRight(in.nextDouble()); break;
-			default: super.readField(in, field);
-		}
-	}
-
-	@Override
-	public int typeId() {
-		return PADDING__TYPE_ID;
-	}
-
-	@Override
-	protected void writeFields(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-		super.writeFields(out);
-		out.name(TOP__ID);
-		out.value(getTop());
-		out.name(LEFT__ID);
-		out.value(getLeft());
-		out.name(BOTTOM__ID);
-		out.value(getBottom());
-		out.name(RIGHT__ID);
-		out.value(getRight());
-	}
-
-	/** Helper for creating an object of type {@link com.top_logic.graphic.flow.data.Padding} from a polymorphic composition. */
-	public static com.top_logic.graphic.flow.data.Padding readPadding_Content(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		com.top_logic.graphic.flow.data.impl.Padding_Impl result = new Padding_Impl();
-		result.readContent(in);
-		return result;
-	}
-
-	@Override
-	protected void readField(de.haumacher.msgbuf.binary.DataReader in, int field) throws java.io.IOException {
-		switch (field) {
-			case TOP__ID: setTop(in.nextDouble()); break;
-			case LEFT__ID: setLeft(in.nextDouble()); break;
-			case BOTTOM__ID: setBottom(in.nextDouble()); break;
-			case RIGHT__ID: setRight(in.nextDouble()); break;
-			default: super.readField(in, field);
+			default: super.readField(scope, in, field);
 		}
 	}
 

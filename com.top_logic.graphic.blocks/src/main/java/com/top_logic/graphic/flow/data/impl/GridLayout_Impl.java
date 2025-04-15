@@ -267,8 +267,8 @@ public class GridLayout_Impl extends com.top_logic.graphic.flow.data.impl.Layout
 	}
 
 	@Override
-	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
-		super.writeFields(out);
+	protected void writeFields(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
+		super.writeFields(scope, out);
 		out.name(ROWS__PROP);
 		out.value(getRows());
 		out.name(COLS__PROP);
@@ -292,7 +292,46 @@ public class GridLayout_Impl extends com.top_logic.graphic.flow.data.impl.Layout
 	}
 
 	@Override
-	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+	public void writeFieldValue(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field) throws java.io.IOException {
+		switch (field) {
+			case ROWS__PROP: {
+				out.value(getRows());
+				break;
+			}
+			case COLS__PROP: {
+				out.value(getCols());
+				break;
+			}
+			case GAP_X__PROP: {
+				out.value(getGapX());
+				break;
+			}
+			case GAP_Y__PROP: {
+				out.value(getGapY());
+				break;
+			}
+			case ROW_HEIGHT__PROP: {
+				out.beginArray();
+				for (double x : getRowHeight()) {
+					out.value(x);
+				}
+				out.endArray();
+				break;
+			}
+			case COL_WIDTH__PROP: {
+				out.beginArray();
+				for (double x : getColWidth()) {
+					out.value(x);
+				}
+				out.endArray();
+				break;
+			}
+			default: super.writeFieldValue(scope, out, field);
+		}
+	}
+
+	@Override
+	public void readField(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case ROWS__PROP: setRows(in.nextInt()); break;
 			case COLS__PROP: setCols(in.nextInt()); break;
@@ -318,77 +357,35 @@ public class GridLayout_Impl extends com.top_logic.graphic.flow.data.impl.Layout
 				setColWidth(newValue);
 			}
 			break;
-			default: super.readField(in, field);
+			default: super.readField(scope, in, field);
 		}
 	}
 
 	@Override
-	public int typeId() {
-		return GRID_LAYOUT__TYPE_ID;
-	}
-
-	@Override
-	protected void writeFields(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-		super.writeFields(out);
-		out.name(ROWS__ID);
-		out.value(getRows());
-		out.name(COLS__ID);
-		out.value(getCols());
-		out.name(GAP_X__ID);
-		out.value(getGapX());
-		out.name(GAP_Y__ID);
-		out.value(getGapY());
-		out.name(ROW_HEIGHT__ID);
-		{
-			java.util.List<Double> values = getRowHeight();
-			out.beginArray(de.haumacher.msgbuf.binary.DataType.DOUBLE, values.size());
-			for (double x : values) {
-				out.value(x);
-			}
-			out.endArray();
-		}
-		out.name(COL_WIDTH__ID);
-		{
-			java.util.List<Double> values = getColWidth();
-			out.beginArray(de.haumacher.msgbuf.binary.DataType.DOUBLE, values.size());
-			for (double x : values) {
-				out.value(x);
-			}
-			out.endArray();
-		}
-	}
-
-	/** Helper for creating an object of type {@link com.top_logic.graphic.flow.data.GridLayout} from a polymorphic composition. */
-	public static com.top_logic.graphic.flow.data.GridLayout readGridLayout_Content(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		com.top_logic.graphic.flow.data.impl.GridLayout_Impl result = new GridLayout_Impl();
-		result.readContent(in);
-		return result;
-	}
-
-	@Override
-	protected void readField(de.haumacher.msgbuf.binary.DataReader in, int field) throws java.io.IOException {
+	public void writeElement(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field, Object element) throws java.io.IOException {
 		switch (field) {
-			case ROWS__ID: setRows(in.nextInt()); break;
-			case COLS__ID: setCols(in.nextInt()); break;
-			case GAP_X__ID: setGapX(in.nextDouble()); break;
-			case GAP_Y__ID: setGapY(in.nextDouble()); break;
-			case ROW_HEIGHT__ID: {
-				in.beginArray();
-				while (in.hasNext()) {
-					addRowHeight(in.nextDouble());
-				}
-				in.endArray();
+			case ROW_HEIGHT__PROP: {
+				out.value(((double) element));
+				break;
 			}
-			break;
-			case COL_WIDTH__ID: {
-				in.beginArray();
-				while (in.hasNext()) {
-					addColWidth(in.nextDouble());
-				}
-				in.endArray();
+			case COL_WIDTH__PROP: {
+				out.value(((double) element));
+				break;
 			}
-			break;
-			default: super.readField(in, field);
+			default: super.writeElement(scope, out, field, element);
+		}
+	}
+
+	@Override
+	public Object readElement(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+		switch (field) {
+			case ROW_HEIGHT__PROP: {
+				return in.nextDouble();
+			}
+			case COL_WIDTH__PROP: {
+				return in.nextDouble();
+			}
+			default: return super.readElement(scope, in, field);
 		}
 	}
 

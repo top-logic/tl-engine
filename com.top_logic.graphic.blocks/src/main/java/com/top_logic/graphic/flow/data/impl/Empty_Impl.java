@@ -48,18 +48,6 @@ public class Empty_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 		return EMPTY__TYPE;
 	}
 
-	@Override
-	public int typeId() {
-		return EMPTY__TYPE_ID;
-	}
-
-	/** Helper for creating an object of type {@link com.top_logic.graphic.flow.data.Empty} from a polymorphic composition. */
-	public static com.top_logic.graphic.flow.data.Empty readEmpty_Content(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		com.top_logic.graphic.flow.data.impl.Empty_Impl result = new Empty_Impl();
-		result.readContent(in);
-		return result;
-	}
-
 	/** XML element name representing a {@link com.top_logic.graphic.flow.data.Empty} type. */
 	public static final String EMPTY__XML_ELEMENT = "empty";
 

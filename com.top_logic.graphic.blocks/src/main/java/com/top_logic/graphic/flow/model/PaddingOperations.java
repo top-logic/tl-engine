@@ -7,6 +7,7 @@ package com.top_logic.graphic.flow.model;
 
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.flow.data.Box;
+import com.top_logic.graphic.flow.data.Padding;
 
 /**
  * Inserts some padding around another element.
@@ -15,6 +16,18 @@ public interface PaddingOperations extends DecorationOperations {
 
 	@Override
 	com.top_logic.graphic.flow.data.Padding self();
+
+	default Padding setAll(double padding) {
+		return setHorizontal(padding).setVertical(padding);
+	}
+
+	default Padding setHorizontal(double padding) {
+		return self().setLeft(padding).setRight(padding);
+	}
+
+	default Padding setVertical(double padding) {
+		return self().setTop(padding).setBottom(padding);
+	}
 
 	@Override
 	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {

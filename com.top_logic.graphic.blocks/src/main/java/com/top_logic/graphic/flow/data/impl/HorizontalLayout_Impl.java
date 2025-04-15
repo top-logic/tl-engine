@@ -72,18 +72,6 @@ public class HorizontalLayout_Impl extends com.top_logic.graphic.flow.data.impl.
 		return HORIZONTAL_LAYOUT__TYPE;
 	}
 
-	@Override
-	public int typeId() {
-		return HORIZONTAL_LAYOUT__TYPE_ID;
-	}
-
-	/** Helper for creating an object of type {@link com.top_logic.graphic.flow.data.HorizontalLayout} from a polymorphic composition. */
-	public static com.top_logic.graphic.flow.data.HorizontalLayout readHorizontalLayout_Content(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		com.top_logic.graphic.flow.data.impl.HorizontalLayout_Impl result = new HorizontalLayout_Impl();
-		result.readContent(in);
-		return result;
-	}
-
 	/** XML element name representing a {@link com.top_logic.graphic.flow.data.HorizontalLayout} type. */
 	public static final String HORIZONTAL_LAYOUT__XML_ELEMENT = "horizontal-layout";
 

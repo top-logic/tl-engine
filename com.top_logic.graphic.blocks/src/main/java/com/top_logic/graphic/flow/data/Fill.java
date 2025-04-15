@@ -15,12 +15,6 @@ public interface Fill extends Decoration, com.top_logic.graphic.flow.model.FillO
 	/** @see #getFillStyle() */
 	String FILL_STYLE__PROP = "fillStyle";
 
-	/** Identifier for the {@link com.top_logic.graphic.flow.data.Fill} type in binary format. */
-	static final int FILL__TYPE_ID = 6;
-
-	/** Identifier for the property {@link #getFillStyle()} in binary format. */
-	static final int FILL_STYLE__ID = 6;
-
 	String getFillStyle();
 
 	/**
@@ -44,17 +38,17 @@ public interface Fill extends Decoration, com.top_logic.graphic.flow.model.FillO
 	com.top_logic.graphic.flow.data.Fill setHeight(double value);
 
 	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.Fill readFill(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+	static com.top_logic.graphic.flow.data.Fill readFill(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
+			return (com.top_logic.graphic.flow.data.Fill) scope.resolveOrFail(in.nextInt());
+		}
+		in.beginArray();
+		String type = in.nextString();
+		assert FILL__TYPE.equals(type);
+		int id = in.nextInt();
 		com.top_logic.graphic.flow.data.impl.Fill_Impl result = new com.top_logic.graphic.flow.data.impl.Fill_Impl();
-		result.readContent(in);
-		return result;
-	}
-
-	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.Fill readFill(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		in.beginObject();
-		com.top_logic.graphic.flow.data.Fill result = com.top_logic.graphic.flow.data.impl.Fill_Impl.readFill_Content(in);
-		in.endObject();
+		scope.readData(result, id, in);
+		in.endArray();
 		return result;
 	}
 

@@ -5,6 +5,8 @@ package com.top_logic.graphic.flow.data.impl;
  */
 public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Impl implements com.top_logic.graphic.flow.data.Box {
 
+	private com.top_logic.graphic.flow.data.Box _parent = null;
+
 	private double _x = 0.0d;
 
 	private double _y = 0.0d;
@@ -18,6 +20,33 @@ public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widg
 	 */
 	public Box_Impl() {
 		super();
+	}
+
+	@Override
+	public final com.top_logic.graphic.flow.data.Box getParent() {
+		return _parent;
+	}
+
+	/**
+	 * Internal setter for updating derived field.
+	 */
+	com.top_logic.graphic.flow.data.Box setParent(com.top_logic.graphic.flow.data.Box value) {
+		internalSetParent(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getParent()} without chain call utility. */
+	protected final void internalSetParent(com.top_logic.graphic.flow.data.Box value) {
+		_listener.beforeSet(this, PARENT__PROP, value);
+		if (value != null && _parent != null) {
+			throw new IllegalStateException("Object may not be part of two different containers.");
+		}
+		_parent = value;
+	}
+
+	@Override
+	public final boolean hasParent() {
+		return _parent != null;
 	}
 
 	@Override
@@ -90,6 +119,7 @@ public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widg
 
 	private static java.util.List<String> PROPERTIES = java.util.Collections.unmodifiableList(
 		java.util.Arrays.asList(
+			PARENT__PROP, 
 			X__PROP, 
 			Y__PROP, 
 			WIDTH__PROP, 
@@ -103,6 +133,7 @@ public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widg
 	@Override
 	public Object get(String field) {
 		switch (field) {
+			case PARENT__PROP: return getParent();
 			case X__PROP: return getX();
 			case Y__PROP: return getY();
 			case WIDTH__PROP: return getWidth();
@@ -123,8 +154,8 @@ public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widg
 	}
 
 	@Override
-	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
-		super.writeFields(out);
+	protected void writeFields(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
+		super.writeFields(scope, out);
 		out.name(X__PROP);
 		out.value(getX());
 		out.name(Y__PROP);
@@ -136,42 +167,52 @@ public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widg
 	}
 
 	@Override
-	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+	public void writeFieldValue(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field) throws java.io.IOException {
+		switch (field) {
+			case PARENT__PROP: {
+				if (hasParent()) {
+					getParent().writeTo(scope, out);
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case X__PROP: {
+				out.value(getX());
+				break;
+			}
+			case Y__PROP: {
+				out.value(getY());
+				break;
+			}
+			case WIDTH__PROP: {
+				out.value(getWidth());
+				break;
+			}
+			case HEIGHT__PROP: {
+				out.value(getHeight());
+				break;
+			}
+			default: super.writeFieldValue(scope, out, field);
+		}
+	}
+
+	@Override
+	public void readField(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case X__PROP: setX(in.nextDouble()); break;
 			case Y__PROP: setY(in.nextDouble()); break;
 			case WIDTH__PROP: setWidth(in.nextDouble()); break;
 			case HEIGHT__PROP: setHeight(in.nextDouble()); break;
-			default: super.readField(in, field);
-		}
-	}
-
-	@Override
-	protected void writeFields(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-		super.writeFields(out);
-		out.name(X__ID);
-		out.value(getX());
-		out.name(Y__ID);
-		out.value(getY());
-		out.name(WIDTH__ID);
-		out.value(getWidth());
-		out.name(HEIGHT__ID);
-		out.value(getHeight());
-	}
-
-	@Override
-	protected void readField(de.haumacher.msgbuf.binary.DataReader in, int field) throws java.io.IOException {
-		switch (field) {
-			case X__ID: setX(in.nextDouble()); break;
-			case Y__ID: setY(in.nextDouble()); break;
-			case WIDTH__ID: setWidth(in.nextDouble()); break;
-			case HEIGHT__ID: setHeight(in.nextDouble()); break;
-			default: super.readField(in, field);
+			default: super.readField(scope, in, field);
 		}
 	}
 
 	/** XML element name representing a {@link com.top_logic.graphic.flow.data.Box} type. */
 	public static final String BOX__XML_ELEMENT = "box";
+
+	/** XML attribute or element name of a {@link #getParent} property. */
+	private static final String PARENT__XML_ATTR = "parent";
 
 	/** XML attribute or element name of a {@link #getX} property. */
 	private static final String X__XML_ATTR = "x";
@@ -199,12 +240,24 @@ public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widg
 	@Override
 	protected void writeElements(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
 		super.writeElements(out);
-		// No element fields.
+		if (hasParent()) {
+			out.writeStartElement(PARENT__XML_ATTR);
+			getParent().writeTo(out);
+			out.writeEndElement();
+		}
 	}
 
 	/** Creates a new {@link com.top_logic.graphic.flow.data.Box} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
 	public static Box_Impl readBox_XmlContent(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
 		switch (in.getLocalName()) {
+			case FloatingLayout_Impl.FLOATING_LAYOUT__XML_ELEMENT: {
+				return com.top_logic.graphic.flow.data.impl.FloatingLayout_Impl.readFloatingLayout_XmlContent(in);
+			}
+
+			case TreeLayout_Impl.TREE_LAYOUT__XML_ELEMENT: {
+				return com.top_logic.graphic.flow.data.impl.TreeLayout_Impl.readTreeLayout_XmlContent(in);
+			}
+
 			case Text_Impl.TEXT__XML_ELEMENT: {
 				return com.top_logic.graphic.flow.data.impl.Text_Impl.readText_XmlContent(in);
 			}
@@ -284,6 +337,12 @@ public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widg
 	@Override
 	protected void readFieldXmlElement(javax.xml.stream.XMLStreamReader in, String localName) throws javax.xml.stream.XMLStreamException {
 		switch (localName) {
+			case PARENT__XML_ATTR: {
+				in.nextTag();
+				setParent(com.top_logic.graphic.flow.data.impl.Box_Impl.readBox_XmlContent(in));
+				internalSkipUntilMatchingEndElement(in);
+				break;
+			}
 			case X__XML_ATTR: {
 				setX(Double.parseDouble(in.getElementText()));
 				break;

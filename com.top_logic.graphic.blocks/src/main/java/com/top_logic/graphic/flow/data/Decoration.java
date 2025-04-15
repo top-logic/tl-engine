@@ -22,9 +22,6 @@ public interface Decoration extends Box, com.top_logic.graphic.flow.model.Decora
 	/** @see #getContent() */
 	String CONTENT__PROP = "content";
 
-	/** Identifier for the property {@link #getContent()} in binary format. */
-	static final int CONTENT__ID = 5;
-
 	com.top_logic.graphic.flow.data.Box getContent();
 
 	/**
@@ -50,36 +47,25 @@ public interface Decoration extends Box, com.top_logic.graphic.flow.model.Decora
 	com.top_logic.graphic.flow.data.Decoration setHeight(double value);
 
 	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.Decoration readDecoration(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+	static com.top_logic.graphic.flow.data.Decoration readDecoration(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
+			return (com.top_logic.graphic.flow.data.Decoration) scope.resolveOrFail(in.nextInt());
+		}
 		com.top_logic.graphic.flow.data.Decoration result;
 		in.beginArray();
 		String type = in.nextString();
+		int id = in.nextInt();
 		switch (type) {
-			case Align.ALIGN__TYPE: result = com.top_logic.graphic.flow.data.Align.readAlign(in); break;
-			case Border.BORDER__TYPE: result = com.top_logic.graphic.flow.data.Border.readBorder(in); break;
-			case Fill.FILL__TYPE: result = com.top_logic.graphic.flow.data.Fill.readFill(in); break;
-			case Padding.PADDING__TYPE: result = com.top_logic.graphic.flow.data.Padding.readPadding(in); break;
+			case Align.ALIGN__TYPE: result = com.top_logic.graphic.flow.data.Align.create(); break;
+			case Border.BORDER__TYPE: result = com.top_logic.graphic.flow.data.Border.create(); break;
+			case Fill.FILL__TYPE: result = com.top_logic.graphic.flow.data.Fill.create(); break;
+			case Padding.PADDING__TYPE: result = com.top_logic.graphic.flow.data.Padding.create(); break;
 			default: in.skipValue(); result = null; break;
 		}
-		in.endArray();
-		return result;
-	}
-
-	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.Decoration readDecoration(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		in.beginObject();
-		int typeField = in.nextName();
-		assert typeField == 0;
-		int type = in.nextInt();
-		com.top_logic.graphic.flow.data.Decoration result;
-		switch (type) {
-			case com.top_logic.graphic.flow.data.Align.ALIGN__TYPE_ID: result = com.top_logic.graphic.flow.data.impl.Align_Impl.readAlign_Content(in); break;
-			case com.top_logic.graphic.flow.data.Border.BORDER__TYPE_ID: result = com.top_logic.graphic.flow.data.impl.Border_Impl.readBorder_Content(in); break;
-			case com.top_logic.graphic.flow.data.Fill.FILL__TYPE_ID: result = com.top_logic.graphic.flow.data.impl.Fill_Impl.readFill_Content(in); break;
-			case com.top_logic.graphic.flow.data.Padding.PADDING__TYPE_ID: result = com.top_logic.graphic.flow.data.impl.Padding_Impl.readPadding_Content(in); break;
-			default: result = null; while (in.hasNext()) {in.skipValue(); }
+		if (result != null) {
+			scope.readData(result, id, in);
 		}
-		in.endObject();
+		in.endArray();
 		return result;
 	}
 

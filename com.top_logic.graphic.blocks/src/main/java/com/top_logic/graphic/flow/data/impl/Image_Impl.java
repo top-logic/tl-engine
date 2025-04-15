@@ -183,8 +183,8 @@ public class Image_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 	}
 
 	@Override
-	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
-		super.writeFields(out);
+	protected void writeFields(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
+		super.writeFields(scope, out);
 		out.name(HREF__PROP);
 		out.value(getHref());
 		out.name(IMG_WIDTH__PROP);
@@ -198,53 +198,41 @@ public class Image_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 	}
 
 	@Override
-	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+	public void writeFieldValue(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field) throws java.io.IOException {
+		switch (field) {
+			case HREF__PROP: {
+				out.value(getHref());
+				break;
+			}
+			case IMG_WIDTH__PROP: {
+				out.value(getImgWidth());
+				break;
+			}
+			case IMG_HEIGHT__PROP: {
+				out.value(getImgHeight());
+				break;
+			}
+			case ALIGN__PROP: {
+				getAlign().writeTo(out);
+				break;
+			}
+			case SCALE__PROP: {
+				getScale().writeTo(out);
+				break;
+			}
+			default: super.writeFieldValue(scope, out, field);
+		}
+	}
+
+	@Override
+	public void readField(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case HREF__PROP: setHref(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case IMG_WIDTH__PROP: setImgWidth(in.nextDouble()); break;
 			case IMG_HEIGHT__PROP: setImgHeight(in.nextDouble()); break;
 			case ALIGN__PROP: setAlign(com.top_logic.graphic.flow.data.ImageAlign.readImageAlign(in)); break;
 			case SCALE__PROP: setScale(com.top_logic.graphic.flow.data.ImageScale.readImageScale(in)); break;
-			default: super.readField(in, field);
-		}
-	}
-
-	@Override
-	public int typeId() {
-		return IMAGE__TYPE_ID;
-	}
-
-	@Override
-	protected void writeFields(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-		super.writeFields(out);
-		out.name(HREF__ID);
-		out.value(getHref());
-		out.name(IMG_WIDTH__ID);
-		out.value(getImgWidth());
-		out.name(IMG_HEIGHT__ID);
-		out.value(getImgHeight());
-		out.name(ALIGN__ID);
-		getAlign().writeTo(out);
-		out.name(SCALE__ID);
-		getScale().writeTo(out);
-	}
-
-	/** Helper for creating an object of type {@link com.top_logic.graphic.flow.data.Image} from a polymorphic composition. */
-	public static com.top_logic.graphic.flow.data.Image readImage_Content(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		com.top_logic.graphic.flow.data.impl.Image_Impl result = new Image_Impl();
-		result.readContent(in);
-		return result;
-	}
-
-	@Override
-	protected void readField(de.haumacher.msgbuf.binary.DataReader in, int field) throws java.io.IOException {
-		switch (field) {
-			case HREF__ID: setHref(in.nextString()); break;
-			case IMG_WIDTH__ID: setImgWidth(in.nextDouble()); break;
-			case IMG_HEIGHT__ID: setImgHeight(in.nextDouble()); break;
-			case ALIGN__ID: setAlign(com.top_logic.graphic.flow.data.ImageAlign.readImageAlign(in)); break;
-			case SCALE__ID: setScale(com.top_logic.graphic.flow.data.ImageScale.readImageScale(in)); break;
-			default: super.readField(in, field);
+			default: super.readField(scope, in, field);
 		}
 	}
 

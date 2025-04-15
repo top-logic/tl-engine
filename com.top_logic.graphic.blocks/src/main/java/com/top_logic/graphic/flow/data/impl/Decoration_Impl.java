@@ -27,8 +27,22 @@ public abstract class Decoration_Impl extends com.top_logic.graphic.flow.data.im
 
 	/** Internal setter for {@link #getContent()} without chain call utility. */
 	protected final void internalSetContent(com.top_logic.graphic.flow.data.Box value) {
+		com.top_logic.graphic.flow.data.impl.Box_Impl before = (com.top_logic.graphic.flow.data.impl.Box_Impl) _content;
+		com.top_logic.graphic.flow.data.impl.Box_Impl after = (com.top_logic.graphic.flow.data.impl.Box_Impl) value;
+		if (after != null) {
+			com.top_logic.graphic.flow.data.Box oldContainer = after.getParent();
+			if (oldContainer != null && oldContainer != this) {
+				throw new IllegalStateException("Object may not be part of two different containers.");
+			}
+		}
 		_listener.beforeSet(this, CONTENT__PROP, value);
+		if (before != null) {
+			before.internalSetParent(null);
+		}
 		_content = value;
+		if (after != null) {
+			after.internalSetParent(this);
+		}
 	}
 
 	@Override
@@ -86,36 +100,34 @@ public abstract class Decoration_Impl extends com.top_logic.graphic.flow.data.im
 	}
 
 	@Override
-	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
-		super.writeFields(out);
+	protected void writeFields(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
+		super.writeFields(scope, out);
 		if (hasContent()) {
 			out.name(CONTENT__PROP);
-			getContent().writeTo(out);
+			getContent().writeTo(scope, out);
 		}
 	}
 
 	@Override
-	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+	public void writeFieldValue(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field) throws java.io.IOException {
 		switch (field) {
-			case CONTENT__PROP: setContent(com.top_logic.graphic.flow.data.Box.readBox(in)); break;
-			default: super.readField(in, field);
+			case CONTENT__PROP: {
+				if (hasContent()) {
+					getContent().writeTo(scope, out);
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			default: super.writeFieldValue(scope, out, field);
 		}
 	}
 
 	@Override
-	protected void writeFields(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-		super.writeFields(out);
-		if (hasContent()) {
-			out.name(CONTENT__ID);
-			getContent().writeTo(out);
-		}
-	}
-
-	@Override
-	protected void readField(de.haumacher.msgbuf.binary.DataReader in, int field) throws java.io.IOException {
+	public void readField(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
-			case CONTENT__ID: setContent(com.top_logic.graphic.flow.data.Box.readBox(in)); break;
-			default: super.readField(in, field);
+			case CONTENT__PROP: setContent(com.top_logic.graphic.flow.data.Box.readBox(scope, in)); break;
+			default: super.readField(scope, in, field);
 		}
 	}
 

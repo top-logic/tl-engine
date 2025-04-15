@@ -27,24 +27,6 @@ public interface Image extends Box, com.top_logic.graphic.flow.model.ImageOperat
 	/** @see #getScale() */
 	String SCALE__PROP = "scale";
 
-	/** Identifier for the {@link com.top_logic.graphic.flow.data.Image} type in binary format. */
-	static final int IMAGE__TYPE_ID = 2;
-
-	/** Identifier for the property {@link #getHref()} in binary format. */
-	static final int HREF__ID = 5;
-
-	/** Identifier for the property {@link #getImgWidth()} in binary format. */
-	static final int IMG_WIDTH__ID = 6;
-
-	/** Identifier for the property {@link #getImgHeight()} in binary format. */
-	static final int IMG_HEIGHT__ID = 7;
-
-	/** Identifier for the property {@link #getAlign()} in binary format. */
-	static final int ALIGN__ID = 8;
-
-	/** Identifier for the property {@link #getScale()} in binary format. */
-	static final int SCALE__ID = 9;
-
 	String getHref();
 
 	/**
@@ -93,17 +75,17 @@ public interface Image extends Box, com.top_logic.graphic.flow.model.ImageOperat
 	com.top_logic.graphic.flow.data.Image setHeight(double value);
 
 	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.Image readImage(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+	static com.top_logic.graphic.flow.data.Image readImage(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
+			return (com.top_logic.graphic.flow.data.Image) scope.resolveOrFail(in.nextInt());
+		}
+		in.beginArray();
+		String type = in.nextString();
+		assert IMAGE__TYPE.equals(type);
+		int id = in.nextInt();
 		com.top_logic.graphic.flow.data.impl.Image_Impl result = new com.top_logic.graphic.flow.data.impl.Image_Impl();
-		result.readContent(in);
-		return result;
-	}
-
-	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.Image readImage(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		in.beginObject();
-		com.top_logic.graphic.flow.data.Image result = com.top_logic.graphic.flow.data.impl.Image_Impl.readImage_Content(in);
-		in.endObject();
+		scope.readData(result, id, in);
+		in.endArray();
 		return result;
 	}
 

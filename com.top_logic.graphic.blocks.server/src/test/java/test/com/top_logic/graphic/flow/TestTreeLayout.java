@@ -48,7 +48,69 @@ public class TestTreeLayout extends TestCase {
 				.addChildren(connector(n2))
 				.addChildren(connector(n3))));
 
-		writeToFile(diagram, "./target/TestTreeLayout-mini.svg");
+		String svg = writeToFile(diagram, "./target/TestTreeLayout-mini.svg");
+		
+		assertEquals(
+			"""
+			<?xml version="1.0" encoding="utf-8" ?>
+			
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				height="132.0"
+				version="1.1"
+				viewBox="0.0 0.0 126.0 132.0"
+				width="126.0"
+			>
+				<g transform="translate(0.0,0.0)">
+					<text
+						x="6.0"
+						y="70.0"
+					>Root</text>
+					<path
+						d="M 0.5,54.5 L 59.5,54.5 L 59.5,77.5 L 0.5,77.5 z"
+						fill="none"
+						stroke="black"
+						stroke-width="1.0"
+					/>
+					<text
+						x="96.0"
+						y="16.0"
+					>N1</text>
+					<path
+						d="M 90.5,0.5 L 125.5,0.5 L 125.5,23.5 L 90.5,23.5 z"
+						fill="none"
+						stroke="black"
+						stroke-width="1.0"
+					/>
+					<text
+						x="96.0"
+						y="70.0"
+					>N2</text>
+					<path
+						d="M 90.5,54.5 L 125.5,54.5 L 125.5,77.5 L 90.5,77.5 z"
+						fill="none"
+						stroke="black"
+						stroke-width="1.0"
+					/>
+					<text
+						x="96.0"
+						y="124.0"
+					>N3</text>
+					<path
+						d="M 90.5,108.5 L 125.5,108.5 L 125.5,131.5 L 90.5,131.5 z"
+						fill="none"
+						stroke="black"
+						stroke-width="1.0"
+					/>
+				</g>
+				<path
+					d="M 60.0,66.0 H 75.0 M 90.0,12.0 L 75.0,12.0 L 75.0,66.0 M 90.0,66.0 L 75.0,66.0 L 75.0,66.0 M 90.0,120.0 L 75.0,120.0 L 75.0,66.0"
+					fill="none"
+					stroke="black"
+					stroke-width="1.0"
+				/>
+			</svg>""", svg);
+
 	}
 
 	public void testRandomTree() throws IOException {
@@ -90,7 +152,7 @@ public class TestTreeLayout extends TestCase {
 		}
 	}
 
-	private void writeToFile(FlowDiagram diagram, String fileName) throws IOException {
+	private String writeToFile(FlowDiagram diagram, String fileName) throws IOException {
 		diagram.layout(new TestingRenderContext());
 
 		TagWriter out = new TagWriter();
@@ -103,6 +165,8 @@ public class TestTreeLayout extends TestCase {
 		try (FileWriter w = new FileWriter(new File(fileName), StandardCharsets.UTF_8)) {
 			w.write(svg);
 		}
+		
+		return svg;
 	}
 
 	private TreeConnector connector(Box root) {

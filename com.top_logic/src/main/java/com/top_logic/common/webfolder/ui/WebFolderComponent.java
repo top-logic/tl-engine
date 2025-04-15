@@ -132,7 +132,7 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 		_hasUploadCommand = config.getHasUploadCommand();
 
 		long customSize = config.getMaxUploadSize();
-		_maxUploadSize = (customSize > 0) ? customSize : WebFolderUIFactory.getInstance().getMaxUploadSize();
+		_maxUploadSize = (customSize > 0) ? customSize : getUIFactory().getMaxUploadSize();
 	}
 
     @Override
@@ -140,7 +140,8 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 		long maxUploadSize = getMaxUploadSize();
 		FileDropHandler fileDropHandler =
 			new FolderFileDropHandler(getManualLocking(), !context.isImmutable(), maxUploadSize);
-		return WebFolderUIFactory.createControl(getBreadcrumbRenderer(), getFolderData(), context, fileDropHandler);
+		return getUIFactory().createControl(getBreadcrumbRenderer(), getFolderData(), context,
+			fileDropHandler);
     }
     
 	/**
@@ -251,14 +252,39 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 
 		private long _maxUploadSize;
 
-		public WebFolderUploadExecutor(SingleSelectionModel folderSelection, long maxUploadSize) {
-			this(folderSelection, IGNORE, maxUploadSize);
+		private List<String> _allowedFileTypes;
+
+		private boolean _withDescription;
+
+		/**
+		 * Sets the allowed file types to the given value
+		 * 
+		 * @param allowedFileTypes
+		 *        a list with the allowed suffixes for files to upload
+		 */
+		public void setAllowedFileTypes(List<String> allowedFileTypes) {
+			_allowedFileTypes = allowedFileTypes;
 		}
 
-		public WebFolderUploadExecutor(SingleSelectionModel folderSelection, Consumer<? super Document> continuation, long maxUploadSize) {
+		public WebFolderUploadExecutor(SingleSelectionModel folderSelection, long maxUploadSize) {
+			this(folderSelection, maxUploadSize, true);
+		}
+		public WebFolderUploadExecutor(SingleSelectionModel folderSelection, long maxUploadSize,
+				boolean withDescription) {
+			this(folderSelection, IGNORE, maxUploadSize, withDescription);
+		}
+
+		public WebFolderUploadExecutor(SingleSelectionModel folderSelection, Consumer<? super Document> continuation,
+				long maxUploadSize) {
+			this(folderSelection, continuation, maxUploadSize, true);
+		}
+
+		public WebFolderUploadExecutor(SingleSelectionModel folderSelection, Consumer<? super Document> continuation,
+				long maxUploadSize, boolean withDescription) {
 			_folderSelection = folderSelection;
 			_continuation = continuation;
 			_maxUploadSize = maxUploadSize;
+			_withDescription = withDescription;
 		}
 
 		public SingleSelectionModel getFolderSelection() {
@@ -268,7 +294,7 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 		@Override
 		public UploadDialog createUploadDialog(ResPrefix resourcePrefix, FolderDefinition folderDefinition) {
 			return new UploadDialog(resourcePrefix, folderDefinition, getUploadWidth(), getUploadHeight(),
-				_maxUploadSize) {
+				_maxUploadSize, _allowedFileTypes, _withDescription) {
 				@Override
 				protected UploadCommand createUploadCommand(final UploadDialog dialog) {
 					return new WebfolderUpload(dialog, getFolderSelection(), _continuation);
@@ -407,7 +433,7 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 	 * configuration of this component.
 	 */
 	protected boolean getManualLockingDefault() {
-		return WebFolderUIFactory.getInstance().getManualLocking();
+		return getUIFactory().getManualLocking();
 	}
 
 	/**

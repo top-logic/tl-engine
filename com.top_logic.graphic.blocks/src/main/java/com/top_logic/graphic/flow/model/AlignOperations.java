@@ -10,7 +10,7 @@ import com.top_logic.graphic.blocks.svg.RenderContext;
 /**
  * Alignment of the contents.
  */
-public interface Align extends Decoration {
+public interface AlignOperations extends DecorationOperations {
 
 	@Override
 	com.top_logic.graphic.flow.data.Align self();
@@ -20,9 +20,9 @@ public interface Align extends Decoration {
 		self().setX(offsetX);
 		self().setY(offsetY);
 
-		Decoration.super.computeIntrinsicSize(context, offsetX, offsetY);
+		DecorationOperations.super.computeIntrinsicSize(context, offsetX, offsetY);
 
-		DrawElement content = self().getContent();
+		BoxOperations content = self().getContent();
 		self().setWidth(content.self().getWidth());
 		self().setHeight(content.self().getHeight());
 	}

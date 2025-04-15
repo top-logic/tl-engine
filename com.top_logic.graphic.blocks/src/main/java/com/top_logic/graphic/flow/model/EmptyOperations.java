@@ -7,27 +7,29 @@ package com.top_logic.graphic.flow.model;
 
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
-import com.top_logic.graphic.flow.data.Box;
 
 /**
- * {@link DrawElement} that wraps a single other {@link DrawElement}.
+ * An empty space.
  */
-public interface Decoration extends DrawElement {
-
-	@Override
-	com.top_logic.graphic.flow.data.Decoration self();
-
-	@Override
-	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
-		Box content = self().getContent();
-		content.computeIntrinsicSize(context, offsetX, offsetY);
-		self().setWidth(content.getWidth());
-		self().setHeight(content.getHeight());
-	}
+public interface EmptyOperations extends BoxOperations {
 
 	@Override
 	default void draw(SvgWriter out) {
-		self().getContent().draw(out);
+		// No contents.
+	}
+
+	@Override
+	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+		self().setWidth(0);
+		self().setHeight(0);
+	}
+
+	@Override
+	default void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
+		self().setX(offsetX);
+		self().setY(offsetY);
+		self().setWidth(width);
+		self().setHeight(height);
 	}
 
 }

@@ -1,6 +1,6 @@
 package com.top_logic.graphic.flow.data;
 
-public interface Empty extends Box, com.top_logic.graphic.flow.model.EmptyBlock {
+public interface Empty extends Box, com.top_logic.graphic.flow.model.EmptyOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.Empty} instance.

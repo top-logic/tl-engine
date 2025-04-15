@@ -1,6 +1,6 @@
 package com.top_logic.graphic.flow.data;
 
-public interface Decoration extends Box, com.top_logic.graphic.flow.model.Decoration {
+public interface Decoration extends Box, com.top_logic.graphic.flow.model.DecorationOperations {
 
 	/** Visitor interface for the {@link com.top_logic.graphic.flow.data.Decoration} hierarchy.*/
 	public interface Visitor<R,A,E extends Throwable> {

@@ -1,6 +1,6 @@
 package com.top_logic.graphic.flow.data;
 
-public interface HorizontalLayout extends RowLayout, com.top_logic.graphic.flow.model.layout.HorizontalLayout {
+public interface HorizontalLayout extends RowLayout, com.top_logic.graphic.flow.model.layout.HorizontalLayoutOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.HorizontalLayout} instance.

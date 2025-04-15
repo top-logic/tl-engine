@@ -7,27 +7,19 @@ package com.top_logic.graphic.flow.model;
 
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
-import com.top_logic.graphic.blocks.svg.TextMetrics;
-import com.top_logic.graphic.flow.data.Text;
 
 /**
- * A single line of text.
+ * Embeds another image.
  */
-public interface TextLine extends DrawElement {
+public interface ImageOperations extends BoxOperations {
 
 	@Override
-	Text self();
+	com.top_logic.graphic.flow.data.Image self();
 
 	@Override
 	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
-		TextMetrics metrics = context.measure(self().getValue());
-		
-		self().setBaseLine(metrics.getBaseLine());
-
-		self().setX(offsetX);
-		self().setY(offsetY);
-		self().setWidth(metrics.getWidth());
-		self().setHeight(metrics.getHeight());
+		self().setWidth(self().getImgWidth());
+		self().setHeight(self().getImgHeight());
 	}
 
 	@Override
@@ -40,7 +32,8 @@ public interface TextLine extends DrawElement {
 
 	@Override
 	default void draw(SvgWriter out) {
-		out.text(self().getX(), self().getY() + self().getBaseLine(), self().getValue());
+		out.image(self().getX(), self().getY(), self().getWidth(), self().getHeight(), self().getHref(),
+			self().getAlign(), self().getScale());
 	}
 
 }

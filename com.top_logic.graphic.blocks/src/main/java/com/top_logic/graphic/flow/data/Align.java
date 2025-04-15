@@ -1,6 +1,6 @@
 package com.top_logic.graphic.flow.data;
 
-public interface Align extends Decoration, com.top_logic.graphic.flow.model.Align {
+public interface Align extends Decoration, com.top_logic.graphic.flow.model.AlignOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.Align} instance.

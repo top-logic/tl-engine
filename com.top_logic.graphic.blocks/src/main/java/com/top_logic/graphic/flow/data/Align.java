@@ -18,15 +18,6 @@ public interface Align extends Decoration, com.top_logic.graphic.flow.model.Alig
 	/** @see #getYAlign() */
 	String Y_ALIGN__PROP = "yAlign";
 
-	/** Identifier for the {@link com.top_logic.graphic.flow.data.Align} type in binary format. */
-	static final int ALIGN__TYPE_ID = 4;
-
-	/** Identifier for the property {@link #getXAlign()} in binary format. */
-	static final int X_ALIGN__ID = 6;
-
-	/** Identifier for the property {@link #getYAlign()} in binary format. */
-	static final int Y_ALIGN__ID = 7;
-
 	com.top_logic.graphic.flow.data.Alignment getXAlign();
 
 	/**
@@ -57,17 +48,17 @@ public interface Align extends Decoration, com.top_logic.graphic.flow.model.Alig
 	com.top_logic.graphic.flow.data.Align setHeight(double value);
 
 	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.Align readAlign(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+	static com.top_logic.graphic.flow.data.Align readAlign(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
+			return (com.top_logic.graphic.flow.data.Align) scope.resolveOrFail(in.nextInt());
+		}
+		in.beginArray();
+		String type = in.nextString();
+		assert ALIGN__TYPE.equals(type);
+		int id = in.nextInt();
 		com.top_logic.graphic.flow.data.impl.Align_Impl result = new com.top_logic.graphic.flow.data.impl.Align_Impl();
-		result.readContent(in);
-		return result;
-	}
-
-	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.Align readAlign(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		in.beginObject();
-		com.top_logic.graphic.flow.data.Align result = com.top_logic.graphic.flow.data.impl.Align_Impl.readAlign_Content(in);
-		in.endObject();
+		scope.readData(result, id, in);
+		in.endArray();
 		return result;
 	}
 

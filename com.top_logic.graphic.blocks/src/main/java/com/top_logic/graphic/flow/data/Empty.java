@@ -12,9 +12,6 @@ public interface Empty extends Box, com.top_logic.graphic.flow.model.EmptyOperat
 	/** Identifier for the {@link com.top_logic.graphic.flow.data.Empty} type in JSON format. */
 	String EMPTY__TYPE = "Empty";
 
-	/** Identifier for the {@link com.top_logic.graphic.flow.data.Empty} type in binary format. */
-	static final int EMPTY__TYPE_ID = 3;
-
 	@Override
 	com.top_logic.graphic.flow.data.Empty setX(double value);
 
@@ -28,17 +25,17 @@ public interface Empty extends Box, com.top_logic.graphic.flow.model.EmptyOperat
 	com.top_logic.graphic.flow.data.Empty setHeight(double value);
 
 	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.Empty readEmpty(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+	static com.top_logic.graphic.flow.data.Empty readEmpty(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
+			return (com.top_logic.graphic.flow.data.Empty) scope.resolveOrFail(in.nextInt());
+		}
+		in.beginArray();
+		String type = in.nextString();
+		assert EMPTY__TYPE.equals(type);
+		int id = in.nextInt();
 		com.top_logic.graphic.flow.data.impl.Empty_Impl result = new com.top_logic.graphic.flow.data.impl.Empty_Impl();
-		result.readContent(in);
-		return result;
-	}
-
-	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.Empty readEmpty(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		in.beginObject();
-		com.top_logic.graphic.flow.data.Empty result = com.top_logic.graphic.flow.data.impl.Empty_Impl.readEmpty_Content(in);
-		in.endObject();
+		scope.readData(result, id, in);
+		in.endArray();
 		return result;
 	}
 

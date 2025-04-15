@@ -1,6 +1,6 @@
 package com.top_logic.graphic.flow.data;
 
-public interface Box extends Widget, com.top_logic.graphic.flow.model.DrawElement {
+public interface Box extends Widget, com.top_logic.graphic.flow.model.BoxOperations {
 
 	/** Visitor interface for the {@link com.top_logic.graphic.flow.data.Box} hierarchy.*/
 	public interface Visitor<R,A,E extends Throwable> extends com.top_logic.graphic.flow.data.Decoration.Visitor<R,A,E>, com.top_logic.graphic.flow.data.Layout.Visitor<R,A,E> {

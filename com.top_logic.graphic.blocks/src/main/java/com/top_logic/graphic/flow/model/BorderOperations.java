@@ -13,14 +13,14 @@ import com.top_logic.graphic.blocks.svg.SvgWriter;
 /**
  * A border decoration drawn around an element.
  */
-public interface Border extends Decoration {
+public interface BorderOperations extends DecorationOperations {
 
 	@Override
 	com.top_logic.graphic.flow.data.Border self();
 
 	@Override
 	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
-		Decoration.super.computeIntrinsicSize(context, offsetX, offsetY);
+		DecorationOperations.super.computeIntrinsicSize(context, offsetX, offsetY);
 
 		double width = self().getContent().self().getWidth();
 		double height = self().getContent().self().getHeight();
@@ -73,7 +73,7 @@ public interface Border extends Decoration {
 
 	@Override
 	default void draw(SvgWriter out) {
-		Decoration.super.draw(out);
+		DecorationOperations.super.draw(out);
 
 		double radius = self().getThickness() / 2;
 

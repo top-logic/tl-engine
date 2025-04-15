@@ -30,27 +30,6 @@ public interface GridLayout extends Layout, com.top_logic.graphic.flow.model.lay
 	/** @see #getColWidth() */
 	String COL_WIDTH__PROP = "colWidth";
 
-	/** Identifier for the {@link com.top_logic.graphic.flow.data.GridLayout} type in binary format. */
-	static final int GRID_LAYOUT__TYPE_ID = 9;
-
-	/** Identifier for the property {@link #getRows()} in binary format. */
-	static final int ROWS__ID = 6;
-
-	/** Identifier for the property {@link #getCols()} in binary format. */
-	static final int COLS__ID = 7;
-
-	/** Identifier for the property {@link #getGapX()} in binary format. */
-	static final int GAP_X__ID = 8;
-
-	/** Identifier for the property {@link #getGapY()} in binary format. */
-	static final int GAP_Y__ID = 9;
-
-	/** Identifier for the property {@link #getRowHeight()} in binary format. */
-	static final int ROW_HEIGHT__ID = 10;
-
-	/** Identifier for the property {@link #getColWidth()} in binary format. */
-	static final int COL_WIDTH__ID = 11;
-
 	int getRows();
 
 	/**
@@ -132,17 +111,17 @@ public interface GridLayout extends Layout, com.top_logic.graphic.flow.model.lay
 	com.top_logic.graphic.flow.data.GridLayout setHeight(double value);
 
 	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.GridLayout readGridLayout(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+	static com.top_logic.graphic.flow.data.GridLayout readGridLayout(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
+			return (com.top_logic.graphic.flow.data.GridLayout) scope.resolveOrFail(in.nextInt());
+		}
+		in.beginArray();
+		String type = in.nextString();
+		assert GRID_LAYOUT__TYPE.equals(type);
+		int id = in.nextInt();
 		com.top_logic.graphic.flow.data.impl.GridLayout_Impl result = new com.top_logic.graphic.flow.data.impl.GridLayout_Impl();
-		result.readContent(in);
-		return result;
-	}
-
-	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.GridLayout readGridLayout(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		in.beginObject();
-		com.top_logic.graphic.flow.data.GridLayout result = com.top_logic.graphic.flow.data.impl.GridLayout_Impl.readGridLayout_Content(in);
-		in.endObject();
+		scope.readData(result, id, in);
+		in.endArray();
 		return result;
 	}
 

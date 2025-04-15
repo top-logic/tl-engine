@@ -19,12 +19,6 @@ public interface RowLayout extends Layout {
 	/** @see #getFill() */
 	String FILL__PROP = "fill";
 
-	/** Identifier for the property {@link #getGap()} in binary format. */
-	static final int GAP__ID = 6;
-
-	/** Identifier for the property {@link #getFill()} in binary format. */
-	static final int FILL__ID = 7;
-
 	double getGap();
 
 	/**
@@ -58,32 +52,23 @@ public interface RowLayout extends Layout {
 	com.top_logic.graphic.flow.data.RowLayout setHeight(double value);
 
 	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.RowLayout readRowLayout(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+	static com.top_logic.graphic.flow.data.RowLayout readRowLayout(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
+			return (com.top_logic.graphic.flow.data.RowLayout) scope.resolveOrFail(in.nextInt());
+		}
 		com.top_logic.graphic.flow.data.RowLayout result;
 		in.beginArray();
 		String type = in.nextString();
+		int id = in.nextInt();
 		switch (type) {
-			case HorizontalLayout.HORIZONTAL_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.HorizontalLayout.readHorizontalLayout(in); break;
-			case VerticalLayout.VERTICAL_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.VerticalLayout.readVerticalLayout(in); break;
+			case HorizontalLayout.HORIZONTAL_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.HorizontalLayout.create(); break;
+			case VerticalLayout.VERTICAL_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.VerticalLayout.create(); break;
 			default: in.skipValue(); result = null; break;
 		}
-		in.endArray();
-		return result;
-	}
-
-	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.RowLayout readRowLayout(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		in.beginObject();
-		int typeField = in.nextName();
-		assert typeField == 0;
-		int type = in.nextInt();
-		com.top_logic.graphic.flow.data.RowLayout result;
-		switch (type) {
-			case com.top_logic.graphic.flow.data.HorizontalLayout.HORIZONTAL_LAYOUT__TYPE_ID: result = com.top_logic.graphic.flow.data.impl.HorizontalLayout_Impl.readHorizontalLayout_Content(in); break;
-			case com.top_logic.graphic.flow.data.VerticalLayout.VERTICAL_LAYOUT__TYPE_ID: result = com.top_logic.graphic.flow.data.impl.VerticalLayout_Impl.readVerticalLayout_Content(in); break;
-			default: result = null; while (in.hasNext()) {in.skipValue(); }
+		if (result != null) {
+			scope.readData(result, id, in);
 		}
-		in.endObject();
+		in.endArray();
 		return result;
 	}
 

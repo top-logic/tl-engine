@@ -12,9 +12,6 @@ public interface HorizontalLayout extends RowLayout, com.top_logic.graphic.flow.
 	/** Identifier for the {@link com.top_logic.graphic.flow.data.HorizontalLayout} type in JSON format. */
 	String HORIZONTAL_LAYOUT__TYPE = "HorizontalLayout";
 
-	/** Identifier for the {@link com.top_logic.graphic.flow.data.HorizontalLayout} type in binary format. */
-	static final int HORIZONTAL_LAYOUT__TYPE_ID = 10;
-
 	@Override
 	com.top_logic.graphic.flow.data.HorizontalLayout setGap(double value);
 
@@ -40,17 +37,17 @@ public interface HorizontalLayout extends RowLayout, com.top_logic.graphic.flow.
 	com.top_logic.graphic.flow.data.HorizontalLayout setHeight(double value);
 
 	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.HorizontalLayout readHorizontalLayout(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+	static com.top_logic.graphic.flow.data.HorizontalLayout readHorizontalLayout(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
+			return (com.top_logic.graphic.flow.data.HorizontalLayout) scope.resolveOrFail(in.nextInt());
+		}
+		in.beginArray();
+		String type = in.nextString();
+		assert HORIZONTAL_LAYOUT__TYPE.equals(type);
+		int id = in.nextInt();
 		com.top_logic.graphic.flow.data.impl.HorizontalLayout_Impl result = new com.top_logic.graphic.flow.data.impl.HorizontalLayout_Impl();
-		result.readContent(in);
-		return result;
-	}
-
-	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.HorizontalLayout readHorizontalLayout(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		in.beginObject();
-		com.top_logic.graphic.flow.data.HorizontalLayout result = com.top_logic.graphic.flow.data.impl.HorizontalLayout_Impl.readHorizontalLayout_Content(in);
-		in.endObject();
+		scope.readData(result, id, in);
+		in.endArray();
 		return result;
 	}
 

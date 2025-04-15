@@ -7,7 +7,7 @@ package com.top_logic.graphic.flow.model.layout;
 
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
-import com.top_logic.graphic.flow.model.DrawElement;
+import com.top_logic.graphic.flow.model.BoxOperations;
 
 /**
  * 
@@ -24,7 +24,7 @@ import com.top_logic.graphic.flow.model.DrawElement;
  * hpadding        hpadding
  * </pre>
  */
-public interface CompassLayout extends DrawElement {
+public interface CompassLayoutOperations extends BoxOperations {
 
 	@Override
 	com.top_logic.graphic.flow.data.CompassLayout self();

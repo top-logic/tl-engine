@@ -12,12 +12,12 @@ import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
 import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.data.Empty;
-import com.top_logic.graphic.flow.model.DrawElement;
+import com.top_logic.graphic.flow.model.BoxOperations;
 
 /**
  * 
  */
-public interface GridLayout extends DrawElement {
+public interface GridLayoutOperations extends BoxOperations {
 
 	@Override
 	com.top_logic.graphic.flow.data.GridLayout self();
@@ -114,7 +114,7 @@ public interface GridLayout extends DrawElement {
 		for (int r = 0; r < self().getRows(); r++) {
 			double x = offsetX;
 			for (int c = 0; c < self().getCols(); c++) {
-				DrawElement element = get(c, r);
+				BoxOperations element = get(c, r);
 				element.distributeSize(context, x, y, self().getColWidth().get(c), self().getRowHeight().get(r));
 				x += self().getColWidth().get(c) + self().getGapX();
 			}

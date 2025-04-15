@@ -1,0 +1,114 @@
+package com.top_logic.graphic.flow.data;
+
+/**
+ * A connection in a {@link TreeLayout} that links contents of the diagram with one-to-many edges.
+ */
+public interface TreeConnection extends Widget, com.top_logic.graphic.flow.model.tree.TreeConnectionOperations {
+
+	/**
+	 * Creates a {@link com.top_logic.graphic.flow.data.TreeConnection} instance.
+	 */
+	static com.top_logic.graphic.flow.data.TreeConnection create() {
+		return new com.top_logic.graphic.flow.data.impl.TreeConnection_Impl();
+	}
+
+	/** Identifier for the {@link com.top_logic.graphic.flow.data.TreeConnection} type in JSON format. */
+	String TREE_CONNECTION__TYPE = "TreeConnection";
+
+	/** @see #getOwner() */
+	String OWNER__PROP = "owner";
+
+	/** @see #getParent() */
+	String PARENT__PROP = "parent";
+
+	/** @see #getChildren() */
+	String CHILDREN__PROP = "children";
+
+	/** @see #getBarPosition() */
+	String BAR_POSITION__PROP = "barPosition";
+
+	/**
+	 * The {@link TreeLayout} that is responsible for this connection.
+	 */
+	com.top_logic.graphic.flow.data.TreeLayout getOwner();
+
+	/**
+	 * Checks, whether {@link #getOwner()} has a value.
+	 */
+	boolean hasOwner();
+
+	/**
+	 * The connector that is anchored to the parent node of the connection.
+	 */
+	com.top_logic.graphic.flow.data.TreeConnector getParent();
+
+	/**
+	 * @see #getParent()
+	 */
+	com.top_logic.graphic.flow.data.TreeConnection setParent(com.top_logic.graphic.flow.data.TreeConnector value);
+
+	/**
+	 * Checks, whether {@link #getParent()} has a value.
+	 */
+	boolean hasParent();
+
+	/**
+	 * The connectors that are anchored to the children nodes of the connection.
+	 */
+	java.util.List<com.top_logic.graphic.flow.data.TreeConnector> getChildren();
+
+	/**
+	 * @see #getChildren()
+	 */
+	com.top_logic.graphic.flow.data.TreeConnection setChildren(java.util.List<? extends com.top_logic.graphic.flow.data.TreeConnector> value);
+
+	/**
+	 * Adds a value to the {@link #getChildren()} list.
+	 */
+	com.top_logic.graphic.flow.data.TreeConnection addChildren(com.top_logic.graphic.flow.data.TreeConnector value);
+
+	/**
+	 * Removes a value from the {@link #getChildren()} list.
+	 */
+	void removeChildren(com.top_logic.graphic.flow.data.TreeConnector value);
+
+	/**
+	 * The placement of the connection bar that represents the fan-out from the one parent to its many children. 
+	 * The bar is rendered perpendicular to the line connecting the nodes with the bar. 
+	 * The position of the bar is given as absolute coordinate (X or Y depending on the layout direction) within 
+	 * the coordinate system of the {@link TreeLayout}.
+	 */
+	double getBarPosition();
+
+	/**
+	 * @see #getBarPosition()
+	 */
+	com.top_logic.graphic.flow.data.TreeConnection setBarPosition(double value);
+
+	/** Reads a new instance from the given reader. */
+	static com.top_logic.graphic.flow.data.TreeConnection readTreeConnection(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
+			return (com.top_logic.graphic.flow.data.TreeConnection) scope.resolveOrFail(in.nextInt());
+		}
+		in.beginArray();
+		String type = in.nextString();
+		assert TREE_CONNECTION__TYPE.equals(type);
+		int id = in.nextInt();
+		com.top_logic.graphic.flow.data.impl.TreeConnection_Impl result = new com.top_logic.graphic.flow.data.impl.TreeConnection_Impl();
+		scope.readData(result, id, in);
+		in.endArray();
+		return result;
+	}
+
+	@Override
+	default TreeConnection self() {
+		return this;
+	}
+
+	/** Creates a new {@link TreeConnection} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
+	public static TreeConnection readTreeConnection(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
+		in.nextTag();
+		return com.top_logic.graphic.flow.data.impl.TreeConnection_Impl.readTreeConnection_XmlContent(in);
+	}
+
+}

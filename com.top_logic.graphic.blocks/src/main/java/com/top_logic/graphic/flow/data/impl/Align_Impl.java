@@ -123,8 +123,8 @@ public class Align_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 	}
 
 	@Override
-	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
-		super.writeFields(out);
+	protected void writeFields(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
+		super.writeFields(scope, out);
 		out.name(X_ALIGN__PROP);
 		getXAlign().writeTo(out);
 		out.name(Y_ALIGN__PROP);
@@ -132,41 +132,26 @@ public class Align_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 	}
 
 	@Override
-	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+	public void writeFieldValue(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field) throws java.io.IOException {
 		switch (field) {
-			case X_ALIGN__PROP: setXAlign(com.top_logic.graphic.flow.data.Alignment.readAlignment(in)); break;
-			case Y_ALIGN__PROP: setYAlign(com.top_logic.graphic.flow.data.Alignment.readAlignment(in)); break;
-			default: super.readField(in, field);
+			case X_ALIGN__PROP: {
+				getXAlign().writeTo(out);
+				break;
+			}
+			case Y_ALIGN__PROP: {
+				getYAlign().writeTo(out);
+				break;
+			}
+			default: super.writeFieldValue(scope, out, field);
 		}
 	}
 
 	@Override
-	public int typeId() {
-		return ALIGN__TYPE_ID;
-	}
-
-	@Override
-	protected void writeFields(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-		super.writeFields(out);
-		out.name(X_ALIGN__ID);
-		getXAlign().writeTo(out);
-		out.name(Y_ALIGN__ID);
-		getYAlign().writeTo(out);
-	}
-
-	/** Helper for creating an object of type {@link com.top_logic.graphic.flow.data.Align} from a polymorphic composition. */
-	public static com.top_logic.graphic.flow.data.Align readAlign_Content(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		com.top_logic.graphic.flow.data.impl.Align_Impl result = new Align_Impl();
-		result.readContent(in);
-		return result;
-	}
-
-	@Override
-	protected void readField(de.haumacher.msgbuf.binary.DataReader in, int field) throws java.io.IOException {
+	public void readField(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
-			case X_ALIGN__ID: setXAlign(com.top_logic.graphic.flow.data.Alignment.readAlignment(in)); break;
-			case Y_ALIGN__ID: setYAlign(com.top_logic.graphic.flow.data.Alignment.readAlignment(in)); break;
-			default: super.readField(in, field);
+			case X_ALIGN__PROP: setXAlign(com.top_logic.graphic.flow.data.Alignment.readAlignment(in)); break;
+			case Y_ALIGN__PROP: setYAlign(com.top_logic.graphic.flow.data.Alignment.readAlignment(in)); break;
+			default: super.readField(scope, in, field);
 		}
 	}
 

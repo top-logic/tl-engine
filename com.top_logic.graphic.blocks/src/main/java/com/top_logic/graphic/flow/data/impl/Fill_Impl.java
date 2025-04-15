@@ -99,44 +99,28 @@ public class Fill_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_I
 	}
 
 	@Override
-	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
-		super.writeFields(out);
+	protected void writeFields(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
+		super.writeFields(scope, out);
 		out.name(FILL_STYLE__PROP);
 		out.value(getFillStyle());
 	}
 
 	@Override
-	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+	public void writeFieldValue(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field) throws java.io.IOException {
 		switch (field) {
-			case FILL_STYLE__PROP: setFillStyle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			default: super.readField(in, field);
+			case FILL_STYLE__PROP: {
+				out.value(getFillStyle());
+				break;
+			}
+			default: super.writeFieldValue(scope, out, field);
 		}
 	}
 
 	@Override
-	public int typeId() {
-		return FILL__TYPE_ID;
-	}
-
-	@Override
-	protected void writeFields(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-		super.writeFields(out);
-		out.name(FILL_STYLE__ID);
-		out.value(getFillStyle());
-	}
-
-	/** Helper for creating an object of type {@link com.top_logic.graphic.flow.data.Fill} from a polymorphic composition. */
-	public static com.top_logic.graphic.flow.data.Fill readFill_Content(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		com.top_logic.graphic.flow.data.impl.Fill_Impl result = new Fill_Impl();
-		result.readContent(in);
-		return result;
-	}
-
-	@Override
-	protected void readField(de.haumacher.msgbuf.binary.DataReader in, int field) throws java.io.IOException {
+	public void readField(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
-			case FILL_STYLE__ID: setFillStyle(in.nextString()); break;
-			default: super.readField(in, field);
+			case FILL_STYLE__PROP: setFillStyle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			default: super.readField(scope, in, field);
 		}
 	}
 

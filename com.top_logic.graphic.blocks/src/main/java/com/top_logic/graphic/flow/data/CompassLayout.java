@@ -36,33 +36,6 @@ public interface CompassLayout extends Box, com.top_logic.graphic.flow.model.lay
 	/** @see #getVPadding() */
 	String V_PADDING__PROP = "vPadding";
 
-	/** Identifier for the {@link com.top_logic.graphic.flow.data.CompassLayout} type in binary format. */
-	static final int COMPASS_LAYOUT__TYPE_ID = 8;
-
-	/** Identifier for the property {@link #getNorth()} in binary format. */
-	static final int NORTH__ID = 5;
-
-	/** Identifier for the property {@link #getWest()} in binary format. */
-	static final int WEST__ID = 6;
-
-	/** Identifier for the property {@link #getEast()} in binary format. */
-	static final int EAST__ID = 7;
-
-	/** Identifier for the property {@link #getSouth()} in binary format. */
-	static final int SOUTH__ID = 8;
-
-	/** Identifier for the property {@link #getCenter()} in binary format. */
-	static final int CENTER__ID = 9;
-
-	/** Identifier for the property {@link #getCenterHeight()} in binary format. */
-	static final int CENTER_HEIGHT__ID = 10;
-
-	/** Identifier for the property {@link #getHPadding()} in binary format. */
-	static final int H_PADDING__ID = 11;
-
-	/** Identifier for the property {@link #getVPadding()} in binary format. */
-	static final int V_PADDING__ID = 12;
-
 	com.top_logic.graphic.flow.data.Box getNorth();
 
 	/**
@@ -157,17 +130,17 @@ public interface CompassLayout extends Box, com.top_logic.graphic.flow.model.lay
 	com.top_logic.graphic.flow.data.CompassLayout setHeight(double value);
 
 	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.CompassLayout readCompassLayout(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+	static com.top_logic.graphic.flow.data.CompassLayout readCompassLayout(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
+			return (com.top_logic.graphic.flow.data.CompassLayout) scope.resolveOrFail(in.nextInt());
+		}
+		in.beginArray();
+		String type = in.nextString();
+		assert COMPASS_LAYOUT__TYPE.equals(type);
+		int id = in.nextInt();
 		com.top_logic.graphic.flow.data.impl.CompassLayout_Impl result = new com.top_logic.graphic.flow.data.impl.CompassLayout_Impl();
-		result.readContent(in);
-		return result;
-	}
-
-	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.CompassLayout readCompassLayout(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		in.beginObject();
-		com.top_logic.graphic.flow.data.CompassLayout result = com.top_logic.graphic.flow.data.impl.CompassLayout_Impl.readCompassLayout_Content(in);
-		in.endObject();
+		scope.readData(result, id, in);
+		in.endArray();
 		return result;
 	}
 

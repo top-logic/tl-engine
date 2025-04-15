@@ -115,8 +115,8 @@ public class Text_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl imp
 	}
 
 	@Override
-	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
-		super.writeFields(out);
+	protected void writeFields(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
+		super.writeFields(scope, out);
 		out.name(VALUE__PROP);
 		out.value(getValue());
 		out.name(BASE_LINE__PROP);
@@ -124,41 +124,26 @@ public class Text_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl imp
 	}
 
 	@Override
-	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+	public void writeFieldValue(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field) throws java.io.IOException {
 		switch (field) {
-			case VALUE__PROP: setValue(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case BASE_LINE__PROP: setBaseLine(in.nextDouble()); break;
-			default: super.readField(in, field);
+			case VALUE__PROP: {
+				out.value(getValue());
+				break;
+			}
+			case BASE_LINE__PROP: {
+				out.value(getBaseLine());
+				break;
+			}
+			default: super.writeFieldValue(scope, out, field);
 		}
 	}
 
 	@Override
-	public int typeId() {
-		return TEXT__TYPE_ID;
-	}
-
-	@Override
-	protected void writeFields(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-		super.writeFields(out);
-		out.name(VALUE__ID);
-		out.value(getValue());
-		out.name(BASE_LINE__ID);
-		out.value(getBaseLine());
-	}
-
-	/** Helper for creating an object of type {@link com.top_logic.graphic.flow.data.Text} from a polymorphic composition. */
-	public static com.top_logic.graphic.flow.data.Text readText_Content(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		com.top_logic.graphic.flow.data.impl.Text_Impl result = new Text_Impl();
-		result.readContent(in);
-		return result;
-	}
-
-	@Override
-	protected void readField(de.haumacher.msgbuf.binary.DataReader in, int field) throws java.io.IOException {
+	public void readField(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
-			case VALUE__ID: setValue(in.nextString()); break;
-			case BASE_LINE__ID: setBaseLine(in.nextDouble()); break;
-			default: super.readField(in, field);
+			case VALUE__PROP: setValue(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case BASE_LINE__PROP: setBaseLine(in.nextDouble()); break;
+			default: super.readField(scope, in, field);
 		}
 	}
 

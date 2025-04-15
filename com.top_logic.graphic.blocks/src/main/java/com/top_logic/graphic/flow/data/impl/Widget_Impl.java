@@ -3,78 +3,13 @@ package com.top_logic.graphic.flow.data.impl;
 /**
  * Implementation of {@link com.top_logic.graphic.flow.data.Widget}.
  */
-public abstract class Widget_Impl extends de.haumacher.msgbuf.data.AbstractDataObject implements com.top_logic.graphic.flow.data.Widget {
+public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraphNode implements com.top_logic.graphic.flow.data.Widget {
 
 	/**
 	 * Creates a {@link Widget_Impl} instance.
 	 */
 	public Widget_Impl() {
 		super();
-	}
-
-	protected de.haumacher.msgbuf.observer.Listener _listener = de.haumacher.msgbuf.observer.Listener.NONE;
-
-	@Override
-	public com.top_logic.graphic.flow.data.Widget registerListener(de.haumacher.msgbuf.observer.Listener l) {
-		internalRegisterListener(l);
-		return this;
-	}
-
-	protected final void internalRegisterListener(de.haumacher.msgbuf.observer.Listener l) {
-		_listener = de.haumacher.msgbuf.observer.Listener.register(_listener, l);
-	}
-
-	@Override
-	public com.top_logic.graphic.flow.data.Widget unregisterListener(de.haumacher.msgbuf.observer.Listener l) {
-		internalUnregisterListener(l);
-		return this;
-	}
-
-	protected final void internalUnregisterListener(de.haumacher.msgbuf.observer.Listener l) {
-		_listener = de.haumacher.msgbuf.observer.Listener.unregister(_listener, l);
-	}
-
-	@Override
-	public final void writeTo(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
-		out.beginArray();
-		out.value(jsonType());
-		writeContent(out);
-		out.endArray();
-	}
-
-	@Override
-	public final void writeTo(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-		out.beginObject();
-		out.name(0);
-		out.value(typeId());
-		writeFields(out);
-		out.endObject();
-	}
-
-	/**
-	 * Serializes all fields of this instance to the given binary output.
-	 *
-	 * @param out
-	 *        The binary output to write to.
-	 * @throws java.io.IOException If writing fails.
-	 */
-	protected void writeFields(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-		// No fields to write, hook for subclasses.
-	}
-
-	/** Helper for reading all fields of this instance. */
-	protected final void readContent(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		while (in.hasNext()) {
-			int field = in.nextName();
-			readField(in, field);
-		}
-	}
-
-	/** Consumes the value for the field with the given ID and assigns its value. */
-	protected void readField(de.haumacher.msgbuf.binary.DataReader in, int field) throws java.io.IOException {
-		switch (field) {
-			default: in.skipValue(); 
-		}
 	}
 
 	/** XML element name representing a {@link com.top_logic.graphic.flow.data.Widget} type. */
@@ -98,6 +33,18 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.data.AbstractDataO
 	/** Creates a new {@link com.top_logic.graphic.flow.data.Widget} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
 	public static Widget_Impl readWidget_XmlContent(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
 		switch (in.getLocalName()) {
+			case Diagram_Impl.DIAGRAM__XML_ELEMENT: {
+				return com.top_logic.graphic.flow.data.impl.Diagram_Impl.readDiagram_XmlContent(in);
+			}
+
+			case FloatingLayout_Impl.FLOATING_LAYOUT__XML_ELEMENT: {
+				return com.top_logic.graphic.flow.data.impl.FloatingLayout_Impl.readFloatingLayout_XmlContent(in);
+			}
+
+			case TreeLayout_Impl.TREE_LAYOUT__XML_ELEMENT: {
+				return com.top_logic.graphic.flow.data.impl.TreeLayout_Impl.readTreeLayout_XmlContent(in);
+			}
+
 			case Text_Impl.TEXT__XML_ELEMENT: {
 				return com.top_logic.graphic.flow.data.impl.Text_Impl.readText_XmlContent(in);
 			}
@@ -140,6 +87,14 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.data.AbstractDataO
 
 			case VerticalLayout_Impl.VERTICAL_LAYOUT__XML_ELEMENT: {
 				return com.top_logic.graphic.flow.data.impl.VerticalLayout_Impl.readVerticalLayout_XmlContent(in);
+			}
+
+			case TreeConnection_Impl.TREE_CONNECTION__XML_ELEMENT: {
+				return com.top_logic.graphic.flow.data.impl.TreeConnection_Impl.readTreeConnection_XmlContent(in);
+			}
+
+			case TreeConnector_Impl.TREE_CONNECTOR__XML_ELEMENT: {
+				return com.top_logic.graphic.flow.data.impl.TreeConnector_Impl.readTreeConnector_XmlContent(in);
 			}
 
 			default: {

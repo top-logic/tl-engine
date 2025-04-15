@@ -18,15 +18,6 @@ public interface Text extends Box, com.top_logic.graphic.flow.model.TextOperatio
 	/** @see #getBaseLine() */
 	String BASE_LINE__PROP = "baseLine";
 
-	/** Identifier for the {@link com.top_logic.graphic.flow.data.Text} type in binary format. */
-	static final int TEXT__TYPE_ID = 1;
-
-	/** Identifier for the property {@link #getValue()} in binary format. */
-	static final int VALUE__ID = 5;
-
-	/** Identifier for the property {@link #getBaseLine()} in binary format. */
-	static final int BASE_LINE__ID = 6;
-
 	String getValue();
 
 	/**
@@ -54,17 +45,17 @@ public interface Text extends Box, com.top_logic.graphic.flow.model.TextOperatio
 	com.top_logic.graphic.flow.data.Text setHeight(double value);
 
 	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.Text readText(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+	static com.top_logic.graphic.flow.data.Text readText(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
+			return (com.top_logic.graphic.flow.data.Text) scope.resolveOrFail(in.nextInt());
+		}
+		in.beginArray();
+		String type = in.nextString();
+		assert TEXT__TYPE.equals(type);
+		int id = in.nextInt();
 		com.top_logic.graphic.flow.data.impl.Text_Impl result = new com.top_logic.graphic.flow.data.impl.Text_Impl();
-		result.readContent(in);
-		return result;
-	}
-
-	/** Reads a new instance from the given reader. */
-	static com.top_logic.graphic.flow.data.Text readText(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		in.beginObject();
-		com.top_logic.graphic.flow.data.Text result = com.top_logic.graphic.flow.data.impl.Text_Impl.readText_Content(in);
-		in.endObject();
+		scope.readData(result, id, in);
+		in.endArray();
 		return result;
 	}
 

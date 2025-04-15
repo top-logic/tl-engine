@@ -21,7 +21,7 @@ public class FlowDiagram implements Drawable {
 	/**
 	 * The root diagram element.
 	 */
-	public DrawElement getRoot() {
+	public BoxOperations getRoot() {
 		return _root;
 	}
 

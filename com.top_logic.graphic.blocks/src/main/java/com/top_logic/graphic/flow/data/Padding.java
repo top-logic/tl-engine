@@ -1,6 +1,6 @@
 package com.top_logic.graphic.flow.data;
 
-public interface Padding extends Decoration, com.top_logic.graphic.flow.model.Padding {
+public interface Padding extends Decoration, com.top_logic.graphic.flow.model.PaddingOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.Padding} instance.

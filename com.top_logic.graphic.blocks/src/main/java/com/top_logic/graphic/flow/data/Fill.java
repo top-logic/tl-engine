@@ -1,6 +1,6 @@
 package com.top_logic.graphic.flow.data;
 
-public interface Fill extends Decoration, com.top_logic.graphic.flow.model.Fill {
+public interface Fill extends Decoration, com.top_logic.graphic.flow.model.FillOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.Fill} instance.

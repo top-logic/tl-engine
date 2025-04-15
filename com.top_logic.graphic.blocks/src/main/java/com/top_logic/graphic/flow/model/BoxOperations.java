@@ -11,7 +11,7 @@ import com.top_logic.graphic.blocks.svg.RenderContext;
 /**
  * 
  */
-public interface DrawElement extends Drawable {
+public interface BoxOperations extends Drawable {
 
 	com.top_logic.graphic.flow.data.Box self();
 

@@ -257,8 +257,8 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 	}
 
 	@Override
-	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
-		super.writeFields(out);
+	protected void writeFields(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
+		super.writeFields(scope, out);
 		out.name(STROKE_STYLE__PROP);
 		out.value(getStrokeStyle());
 		out.name(THICKNESS__PROP);
@@ -280,7 +280,46 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 	}
 
 	@Override
-	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+	public void writeFieldValue(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field) throws java.io.IOException {
+		switch (field) {
+			case STROKE_STYLE__PROP: {
+				out.value(getStrokeStyle());
+				break;
+			}
+			case THICKNESS__PROP: {
+				out.value(getThickness());
+				break;
+			}
+			case TOP__PROP: {
+				out.value(isTop());
+				break;
+			}
+			case LEFT__PROP: {
+				out.value(isLeft());
+				break;
+			}
+			case BOTTOM__PROP: {
+				out.value(isBottom());
+				break;
+			}
+			case RIGHT__PROP: {
+				out.value(isRight());
+				break;
+			}
+			case DASHES__PROP: {
+				out.beginArray();
+				for (double x : getDashes()) {
+					out.value(x);
+				}
+				out.endArray();
+				break;
+			}
+			default: super.writeFieldValue(scope, out, field);
+		}
+	}
+
+	@Override
+	public void readField(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case STROKE_STYLE__PROP: setStrokeStyle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case THICKNESS__PROP: setThickness(in.nextDouble()); break;
@@ -298,66 +337,28 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 				setDashes(newValue);
 			}
 			break;
-			default: super.readField(in, field);
+			default: super.readField(scope, in, field);
 		}
 	}
 
 	@Override
-	public int typeId() {
-		return BORDER__TYPE_ID;
-	}
-
-	@Override
-	protected void writeFields(de.haumacher.msgbuf.binary.DataWriter out) throws java.io.IOException {
-		super.writeFields(out);
-		out.name(STROKE_STYLE__ID);
-		out.value(getStrokeStyle());
-		out.name(THICKNESS__ID);
-		out.value(getThickness());
-		out.name(TOP__ID);
-		out.value(isTop());
-		out.name(LEFT__ID);
-		out.value(isLeft());
-		out.name(BOTTOM__ID);
-		out.value(isBottom());
-		out.name(RIGHT__ID);
-		out.value(isRight());
-		out.name(DASHES__ID);
-		{
-			java.util.List<Double> values = getDashes();
-			out.beginArray(de.haumacher.msgbuf.binary.DataType.DOUBLE, values.size());
-			for (double x : values) {
-				out.value(x);
-			}
-			out.endArray();
-		}
-	}
-
-	/** Helper for creating an object of type {@link com.top_logic.graphic.flow.data.Border} from a polymorphic composition. */
-	public static com.top_logic.graphic.flow.data.Border readBorder_Content(de.haumacher.msgbuf.binary.DataReader in) throws java.io.IOException {
-		com.top_logic.graphic.flow.data.impl.Border_Impl result = new Border_Impl();
-		result.readContent(in);
-		return result;
-	}
-
-	@Override
-	protected void readField(de.haumacher.msgbuf.binary.DataReader in, int field) throws java.io.IOException {
+	public void writeElement(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field, Object element) throws java.io.IOException {
 		switch (field) {
-			case STROKE_STYLE__ID: setStrokeStyle(in.nextString()); break;
-			case THICKNESS__ID: setThickness(in.nextDouble()); break;
-			case TOP__ID: setTop(in.nextBoolean()); break;
-			case LEFT__ID: setLeft(in.nextBoolean()); break;
-			case BOTTOM__ID: setBottom(in.nextBoolean()); break;
-			case RIGHT__ID: setRight(in.nextBoolean()); break;
-			case DASHES__ID: {
-				in.beginArray();
-				while (in.hasNext()) {
-					addDashe(in.nextDouble());
-				}
-				in.endArray();
+			case DASHES__PROP: {
+				out.value(((double) element));
+				break;
 			}
-			break;
-			default: super.readField(in, field);
+			default: super.writeElement(scope, out, field, element);
+		}
+	}
+
+	@Override
+	public Object readElement(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+		switch (field) {
+			case DASHES__PROP: {
+				return in.nextDouble();
+			}
+			default: return super.readElement(scope, in, field);
 		}
 	}
 

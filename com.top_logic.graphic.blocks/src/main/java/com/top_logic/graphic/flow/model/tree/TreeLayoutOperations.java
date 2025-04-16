@@ -97,9 +97,9 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		List<List<Box>> columns = new ArrayList<>();
 
 		// Enter tree nodes in columns and assign reasonable Y coordinates to nodes.
-		double minY = 0;
+		double bottomY = -self().getGapY();
 		for (Box root : roots) {
-			minY = layoutTree(columns, childrenForParentNode, 0, root, minY);
+			bottomY = layoutTree(columns, childrenForParentNode, 0, root, bottomY);
 		}
 
 		// Assign X coordinates to all nodes.
@@ -117,44 +117,90 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		}
 
 		self().setWidth(minX - (columns.isEmpty() ? 0.0 : self().getGapX()));
-		self().setHeight(minY - (roots.isEmpty() ? 0.0 : self().getGapY()));
+		self().setHeight(bottomY);
 	}
 
-	private double layoutTree(List<List<Box>> columns, Map<Box, List<Box>> children, int level, Box node, double minY) {
+	private double layoutTree(List<List<Box>> columns, Map<Box, List<Box>> children, int level, Box node,
+			double parentBottomY) {
 		while (columns.size() <= level) {
 			columns.add(new ArrayList<>());
 		}
 		List<Box> column = columns.get(level);
 
+		// The minimum Y coordinate, where the current node can be placed in its column.
+		double minY;
 		if (column.size() > 0) {
 			Box last = column.get(column.size() - 1);
-			double lastY = last.getY() + last.getHeight() + self().getGapY();
-			minY = Math.max(minY, lastY);
+			minY = last.getY() + last.getHeight() + self().getGapY();
+		} else {
+			minY = 0.0;
+		}
+
+		if (!self().isCompact()) {
+			minY = Math.max(parentBottomY, minY);
 		}
 
 		column.add(node);
 
+		double bottomY;
+
 		List<Box> nextLevel = children.getOrDefault(node, Collections.emptyList());
 		if (nextLevel.isEmpty()) {
-			node.setY(minY);
-
-			minY += node.getHeight() + self().getGapY();
-		} else {
-			for (Box child : nextLevel) {
-				minY = layoutTree(columns, children, level + 1, child, minY);
+			if (!self().isCompact()) {
+				for (int l = level + 1; l < columns.size(); l++) {
+					List<Box> down = columns.get(l);
+					if (down.size() > 0) {
+						Box bottom = down.get(down.size() - 1);
+						minY = Math.max(minY, bottom.getY() + bottom.getHeight() + self().getGapY());
+					}
+				}
 			}
 
-			double firstY = nextLevel.get(0).getY();
+			node.setY(minY);
+			bottomY = minY + self().getHeight();
+		} else {
+			double childBottomY = minY;
+			for (Box child : nextLevel) {
+				childBottomY = layoutTree(columns, children, level + 1, child, childBottomY);
+			}
+
+			Box first = nextLevel.get(0);
 			Box last = nextLevel.get(nextLevel.size() - 1);
+
+			double firstY = first.getY();
 			double lastY = last.getY() + last.getHeight();
 
 			// Place node vertically in the middle of its direct children.
-			node.setY((firstY + lastY - node.getHeight()) / 2);
+			double centerY = (firstY + lastY - node.getHeight()) / 2;
 
-			minY = Math.max(minY, lastY + self().getGapY());
+			if (minY <= centerY) {
+				// Current node must be moved to the bottom to align with its children.
+				minY = centerY;
+			} else {
+				// Children must be moved to the bottom to align with the current node.
+				// Length to shift the subtree to the bottom.
+				double shiftY = minY - centerY;
+				for (Box child : nextLevel) {
+					shiftY(children, child, shiftY);
+				}
+				childBottomY += shiftY;
+			}
+			node.setY(minY);
+
+			bottomY = Math.max(minY + self().getHeight(), childBottomY);
 		}
 
-		return minY;
+		return bottomY;
+	}
+
+	/**
+	 * Shifts the subtree rooted at the given node to the bottom.
+	 */
+	default void shiftY(Map<Box, List<Box>> children, Box node, double shiftY) {
+		node.setY(node.getY() + shiftY);
+		for (Box child : children.getOrDefault(node, Collections.emptyList())) {
+			shiftY(children, child, shiftY);
+		}
 	}
 
 	private void enterAnchor(Set<Box> nodes, Map<Box, Box> nodeForAnchor, TreeConnector connector) {
@@ -180,7 +226,7 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 				toX = Math.min(toX, toX(child.getAnchor()));
 			}
 
-			double barX = (fromX + toX) / 2;
+			double barX = self().isCompact() ? toX - self().getGapX() / 2 : (fromX + toX) / 2;
 
 			connection.setBarPosition(barX);
 		}

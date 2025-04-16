@@ -84,5 +84,10 @@ flowChart(
 
 }]]></create-chart>
 		</modelBuilder>
+		<buttons>
+			<button id="ID_6e8ce086_9a2c_4deb_9570_8ef943486a8c"
+				class="com.top_logic.layout.form.component.InvalidateCommand"
+			/>
+		</buttons>
 	</arguments>
 </config:template-call>

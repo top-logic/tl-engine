@@ -11,7 +11,7 @@
 
 	<!-- Specify the paths for translatable code                    -->
 	<source path='data'/>
-	<source path='model'/>
+	<source path='operations'/>
 	<source path='param'/>
 	
 	<!-- allow Super Dev Mode -->

@@ -7,13 +7,35 @@ package com.top_logic.graphic.flow.operations;
 
 import com.top_logic.graphic.blocks.model.Drawable;
 import com.top_logic.graphic.blocks.svg.RenderContext;
+import com.top_logic.graphic.flow.data.Box;
 
 /**
  * 
  */
 public interface BoxOperations extends Drawable {
 
-	com.top_logic.graphic.flow.data.Box self();
+	/**
+	 * The {@link Box} data.
+	 */
+	Box self();
+
+	/**
+	 * The X coordinate of the right border of this box.
+	 * 
+	 * @see Box#getX()
+	 */
+	default double getRightX() {
+		return self().getX() + self().getWidth();
+	}
+
+	/**
+	 * The Y coordinate of the bottom border of this box.
+	 * 
+	 * @see Box#getY()
+	 */
+	default double getBottomY() {
+		return self().getY() + self().getHeight();
+	}
 
 	void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY);
 

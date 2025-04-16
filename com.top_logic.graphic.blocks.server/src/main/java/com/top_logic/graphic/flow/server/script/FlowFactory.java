@@ -153,18 +153,13 @@ public class FlowFactory {
 	) {
 		Padding result = Padding.create();
 		if (all != null) {
-			result.setTop(all);
-			result.setLeft(all);
-			result.setRight(all);
-			result.setBottom(all);
+			result.setAll(all);
 		}
 		if (horizontal != null) {
-			result.setLeft(horizontal);
-			result.setRight(horizontal);
+			result.setHorizontal(horizontal);
 		}
 		if (vertical != null) {
-			result.setTop(vertical);
-			result.setBottom(vertical);
+			result.setVertical(vertical);
 		}
 		if (top != null) {
 			result.setTop(top);

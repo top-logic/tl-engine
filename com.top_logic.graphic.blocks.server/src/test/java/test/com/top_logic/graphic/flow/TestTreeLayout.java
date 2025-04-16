@@ -24,8 +24,8 @@ import com.top_logic.graphic.flow.data.Text;
 import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
 import com.top_logic.graphic.flow.data.TreeLayout;
-import com.top_logic.graphic.flow.model.FlowDiagram;
-import com.top_logic.graphic.flow.model.tree.TreeLayoutOperations;
+import com.top_logic.graphic.flow.operations.FlowDiagram;
+import com.top_logic.graphic.flow.operations.tree.TreeLayoutOperations;
 
 /**
  * Test case for {@link TreeLayoutOperations}.

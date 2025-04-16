@@ -3,25 +3,31 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.graphic.flow.model;
+package com.top_logic.graphic.flow.operations;
 
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
+import com.top_logic.graphic.blocks.svg.TextMetrics;
+import com.top_logic.graphic.flow.data.Text;
 
 /**
- * An empty space.
+ * A single line of text.
  */
-public interface EmptyOperations extends BoxOperations {
+public interface TextOperations extends BoxOperations {
 
 	@Override
-	default void draw(SvgWriter out) {
-		// No contents.
-	}
+	Text self();
 
 	@Override
 	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
-		self().setWidth(0);
-		self().setHeight(0);
+		TextMetrics metrics = context.measure(self().getValue());
+		
+		self().setBaseLine(metrics.getBaseLine());
+
+		self().setX(offsetX);
+		self().setY(offsetY);
+		self().setWidth(metrics.getWidth());
+		self().setHeight(metrics.getHeight());
 	}
 
 	@Override
@@ -30,6 +36,11 @@ public interface EmptyOperations extends BoxOperations {
 		self().setY(offsetY);
 		self().setWidth(width);
 		self().setHeight(height);
+	}
+
+	@Override
+	default void draw(SvgWriter out) {
+		out.text(self().getX(), self().getY() + self().getBaseLine(), self().getValue());
 	}
 
 }

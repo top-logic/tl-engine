@@ -9,6 +9,9 @@
 			<layout-reference resource="com.top_logic.demo/technical/components/flowchart1/products/parts/partsGrid.layout.xml">
 				<layoutInfo/>
 			</layout-reference>
+			<layout-reference resource="com.top_logic.demo/technical/components/flowchart1/products/parts/viewForm.layout.xml">
+				<layoutInfo size="400px"/>
+			</layout-reference>
 		</components>
 	</arguments>
 </config:template-call>

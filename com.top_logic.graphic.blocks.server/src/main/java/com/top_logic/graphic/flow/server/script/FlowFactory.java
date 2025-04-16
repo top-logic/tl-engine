@@ -40,7 +40,7 @@ import com.top_logic.graphic.flow.data.Padding;
 import com.top_logic.graphic.flow.data.SpaceDistribution;
 import com.top_logic.graphic.flow.data.Text;
 import com.top_logic.graphic.flow.data.VerticalLayout;
-import com.top_logic.graphic.flow.model.FlowDiagram;
+import com.top_logic.graphic.flow.operations.FlowDiagram;
 import com.top_logic.model.search.expr.ToString;
 
 /**

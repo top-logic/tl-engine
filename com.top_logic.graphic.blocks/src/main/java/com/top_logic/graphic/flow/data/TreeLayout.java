@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * A layout that connects placed nodes with one-to-many connectors forming a tree.
  */
-public interface TreeLayout extends FloatingLayout, com.top_logic.graphic.flow.model.tree.TreeLayoutOperations {
+public interface TreeLayout extends FloatingLayout, com.top_logic.graphic.flow.operations.tree.TreeLayoutOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.TreeLayout} instance.

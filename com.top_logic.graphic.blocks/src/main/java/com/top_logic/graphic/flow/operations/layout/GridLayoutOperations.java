@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.graphic.flow.model.layout;
+package com.top_logic.graphic.flow.operations.layout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +12,7 @@ import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
 import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.data.Empty;
-import com.top_logic.graphic.flow.model.BoxOperations;
+import com.top_logic.graphic.flow.operations.BoxOperations;
 
 /**
  * 

@@ -32,6 +32,9 @@ message FloatingLayout extends Box {
 /** A layout that connects placed nodes with one-to-many connectors forming a tree. */
 @Operations("com.top_logic.graphic.flow.model.tree.TreeLayoutOperations")
 message TreeLayout extends FloatingLayout {
+	/** Whether to minimize vertical space required to layout the tree. */
+	boolean compact;
+	
 	DiagramDirection direction;
 	
 	/** Horizontal gap between columns of tree nodes. */

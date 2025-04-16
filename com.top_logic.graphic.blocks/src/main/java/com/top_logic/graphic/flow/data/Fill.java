@@ -37,6 +37,9 @@ public interface Fill extends Decoration, com.top_logic.graphic.flow.operations.
 	@Override
 	com.top_logic.graphic.flow.data.Fill setHeight(double value);
 
+	@Override
+	com.top_logic.graphic.flow.data.Fill setUserObject(java.lang.Object value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.Fill readFill(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
@@ -55,12 +58,6 @@ public interface Fill extends Decoration, com.top_logic.graphic.flow.operations.
 	@Override
 	default Fill self() {
 		return this;
-	}
-
-	/** Creates a new {@link Fill} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static Fill readFill(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		in.nextTag();
-		return com.top_logic.graphic.flow.data.impl.Fill_Impl.readFill_XmlContent(in);
 	}
 
 }

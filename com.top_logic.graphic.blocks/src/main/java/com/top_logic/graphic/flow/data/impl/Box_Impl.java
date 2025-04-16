@@ -5,7 +5,7 @@ package com.top_logic.graphic.flow.data.impl;
  */
 public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Impl implements com.top_logic.graphic.flow.data.Box {
 
-	private com.top_logic.graphic.flow.data.Box _parent = null;
+	private com.top_logic.graphic.flow.data.Widget _parent = null;
 
 	private double _x = 0.0d;
 
@@ -23,20 +23,20 @@ public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widg
 	}
 
 	@Override
-	public final com.top_logic.graphic.flow.data.Box getParent() {
+	public final com.top_logic.graphic.flow.data.Widget getParent() {
 		return _parent;
 	}
 
 	/**
 	 * Internal setter for updating derived field.
 	 */
-	com.top_logic.graphic.flow.data.Box setParent(com.top_logic.graphic.flow.data.Box value) {
+	com.top_logic.graphic.flow.data.Box setParent(com.top_logic.graphic.flow.data.Widget value) {
 		internalSetParent(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getParent()} without chain call utility. */
-	protected final void internalSetParent(com.top_logic.graphic.flow.data.Box value) {
+	protected final void internalSetParent(com.top_logic.graphic.flow.data.Widget value) {
 		_listener.beforeSet(this, PARENT__PROP, value);
 		if (value != null && _parent != null) {
 			throw new IllegalStateException("Object may not be part of two different containers.");
@@ -115,6 +115,12 @@ public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widg
 	protected final void internalSetHeight(double value) {
 		_listener.beforeSet(this, HEIGHT__PROP, value);
 		_height = value;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Box setUserObject(java.lang.Object value) {
+		internalSetUserObject(value);
+		return this;
 	}
 
 	private static java.util.List<String> PROPERTIES = java.util.Collections.unmodifiableList(
@@ -205,163 +211,6 @@ public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widg
 			case WIDTH__PROP: setWidth(in.nextDouble()); break;
 			case HEIGHT__PROP: setHeight(in.nextDouble()); break;
 			default: super.readField(scope, in, field);
-		}
-	}
-
-	/** XML element name representing a {@link com.top_logic.graphic.flow.data.Box} type. */
-	public static final String BOX__XML_ELEMENT = "box";
-
-	/** XML attribute or element name of a {@link #getParent} property. */
-	private static final String PARENT__XML_ATTR = "parent";
-
-	/** XML attribute or element name of a {@link #getX} property. */
-	private static final String X__XML_ATTR = "x";
-
-	/** XML attribute or element name of a {@link #getY} property. */
-	private static final String Y__XML_ATTR = "y";
-
-	/** XML attribute or element name of a {@link #getWidth} property. */
-	private static final String WIDTH__XML_ATTR = "width";
-
-	/** XML attribute or element name of a {@link #getHeight} property. */
-	private static final String HEIGHT__XML_ATTR = "height";
-
-	/** Serializes all fields that are written as XML attributes. */
-	@Override
-	protected void writeAttributes(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeAttributes(out);
-		out.writeAttribute(X__XML_ATTR, Double.toString(getX()));
-		out.writeAttribute(Y__XML_ATTR, Double.toString(getY()));
-		out.writeAttribute(WIDTH__XML_ATTR, Double.toString(getWidth()));
-		out.writeAttribute(HEIGHT__XML_ATTR, Double.toString(getHeight()));
-	}
-
-	/** Serializes all fields that are written as XML elements. */
-	@Override
-	protected void writeElements(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeElements(out);
-		if (hasParent()) {
-			out.writeStartElement(PARENT__XML_ATTR);
-			getParent().writeTo(out);
-			out.writeEndElement();
-		}
-	}
-
-	/** Creates a new {@link com.top_logic.graphic.flow.data.Box} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static Box_Impl readBox_XmlContent(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		switch (in.getLocalName()) {
-			case FloatingLayout_Impl.FLOATING_LAYOUT__XML_ELEMENT: {
-				return com.top_logic.graphic.flow.data.impl.FloatingLayout_Impl.readFloatingLayout_XmlContent(in);
-			}
-
-			case TreeLayout_Impl.TREE_LAYOUT__XML_ELEMENT: {
-				return com.top_logic.graphic.flow.data.impl.TreeLayout_Impl.readTreeLayout_XmlContent(in);
-			}
-
-			case Text_Impl.TEXT__XML_ELEMENT: {
-				return com.top_logic.graphic.flow.data.impl.Text_Impl.readText_XmlContent(in);
-			}
-
-			case Image_Impl.IMAGE__XML_ELEMENT: {
-				return com.top_logic.graphic.flow.data.impl.Image_Impl.readImage_XmlContent(in);
-			}
-
-			case Empty_Impl.EMPTY__XML_ELEMENT: {
-				return com.top_logic.graphic.flow.data.impl.Empty_Impl.readEmpty_XmlContent(in);
-			}
-
-			case Align_Impl.ALIGN__XML_ELEMENT: {
-				return com.top_logic.graphic.flow.data.impl.Align_Impl.readAlign_XmlContent(in);
-			}
-
-			case Border_Impl.BORDER__XML_ELEMENT: {
-				return com.top_logic.graphic.flow.data.impl.Border_Impl.readBorder_XmlContent(in);
-			}
-
-			case Fill_Impl.FILL__XML_ELEMENT: {
-				return com.top_logic.graphic.flow.data.impl.Fill_Impl.readFill_XmlContent(in);
-			}
-
-			case Padding_Impl.PADDING__XML_ELEMENT: {
-				return com.top_logic.graphic.flow.data.impl.Padding_Impl.readPadding_XmlContent(in);
-			}
-
-			case CompassLayout_Impl.COMPASS_LAYOUT__XML_ELEMENT: {
-				return com.top_logic.graphic.flow.data.impl.CompassLayout_Impl.readCompassLayout_XmlContent(in);
-			}
-
-			case GridLayout_Impl.GRID_LAYOUT__XML_ELEMENT: {
-				return com.top_logic.graphic.flow.data.impl.GridLayout_Impl.readGridLayout_XmlContent(in);
-			}
-
-			case HorizontalLayout_Impl.HORIZONTAL_LAYOUT__XML_ELEMENT: {
-				return com.top_logic.graphic.flow.data.impl.HorizontalLayout_Impl.readHorizontalLayout_XmlContent(in);
-			}
-
-			case VerticalLayout_Impl.VERTICAL_LAYOUT__XML_ELEMENT: {
-				return com.top_logic.graphic.flow.data.impl.VerticalLayout_Impl.readVerticalLayout_XmlContent(in);
-			}
-
-			default: {
-				internalSkipUntilMatchingEndElement(in);
-				return null;
-			}
-		}
-	}
-
-	@Override
-	protected void readFieldXmlAttribute(String name, String value) {
-		switch (name) {
-			case X__XML_ATTR: {
-				setX(Double.parseDouble(value));
-				break;
-			}
-			case Y__XML_ATTR: {
-				setY(Double.parseDouble(value));
-				break;
-			}
-			case WIDTH__XML_ATTR: {
-				setWidth(Double.parseDouble(value));
-				break;
-			}
-			case HEIGHT__XML_ATTR: {
-				setHeight(Double.parseDouble(value));
-				break;
-			}
-			default: {
-				super.readFieldXmlAttribute(name, value);
-			}
-		}
-	}
-
-	@Override
-	protected void readFieldXmlElement(javax.xml.stream.XMLStreamReader in, String localName) throws javax.xml.stream.XMLStreamException {
-		switch (localName) {
-			case PARENT__XML_ATTR: {
-				in.nextTag();
-				setParent(com.top_logic.graphic.flow.data.impl.Box_Impl.readBox_XmlContent(in));
-				internalSkipUntilMatchingEndElement(in);
-				break;
-			}
-			case X__XML_ATTR: {
-				setX(Double.parseDouble(in.getElementText()));
-				break;
-			}
-			case Y__XML_ATTR: {
-				setY(Double.parseDouble(in.getElementText()));
-				break;
-			}
-			case WIDTH__XML_ATTR: {
-				setWidth(Double.parseDouble(in.getElementText()));
-				break;
-			}
-			case HEIGHT__XML_ATTR: {
-				setHeight(Double.parseDouble(in.getElementText()));
-				break;
-			}
-			default: {
-				super.readFieldXmlElement(in, localName);
-			}
 		}
 	}
 

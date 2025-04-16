@@ -9,7 +9,7 @@ import java.io.IOException;
 
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.graphic.blocks.server.svg.SvgTagWriter;
-import com.top_logic.graphic.flow.model.FlowDiagram;
+import com.top_logic.graphic.flow.operations.FlowDiagram;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.AbstractVisibleControl;
 

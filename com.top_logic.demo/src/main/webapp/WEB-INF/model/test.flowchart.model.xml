@@ -23,6 +23,12 @@
 						<constraints>
 							<constraint class="com.top_logic.model.util.NoAttributeCycle"/>
 						</constraints>
+						<options>
+							<options-by-expression>
+								<function><![CDATA[node -> $node.container()
+    .get(`test.flowchart:Product#parts`)]]></function>
+							</options-by-expression>
+						</options>
 					</annotations>
 				</reference>
 				<reference name="usedIn"
@@ -57,7 +63,16 @@
 					mandatory="true"
 					navigate="true"
 					type="Part"
-				/>
+				>
+					<annotations>
+						<options>
+							<options-by-expression>
+								<function><![CDATA[l -> $l.container().container()
+    .get(`test.flowchart:Product#parts`)]]></function>
+							</options-by-expression>
+						</options>
+					</annotations>
+				</reference>
 				<reference name="usages"
 					kind="forwards"
 					multiple="true"

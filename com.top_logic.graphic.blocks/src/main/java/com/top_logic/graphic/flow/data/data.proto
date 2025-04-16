@@ -1,13 +1,21 @@
 package com.top_logic.graphic.flow.data;
 
 option SharedGraph;
+option NoXml;
+option NoBinary;
 
 abstract message Widget {
+	transient java.lang.Object userObject;
 }
 
 /** Top-level element that can be rendered. */
 @Operations("com.top_logic.graphic.flow.operations.DiagramOperations")
 message Diagram extends Widget {
+	/** The top-level diagram element. */
+	Box root;
+	
+	@Ref
+	repeated Widget selection;
 }
 
 /** A rectangular region of a {@link Diagram} that can adjust its size to external requests and to its content. */
@@ -15,7 +23,7 @@ message Diagram extends Widget {
 abstract message Box extends Widget {
 	/** The widget that contains/renders this widget. */
 	@Container
-	Box parent;
+	Widget parent;
 
 	double x;
 	double y;
@@ -105,7 +113,7 @@ message TreeConnector extends Widget {
 	 * The side of the {@link #anchor} box where the connection starts depends on the {@link DiagramDirection} of the owning {@link TreeLayout}.
 	 * </p>
 	 */
-	double connectPosition;
+	double connectPosition = 0.5;
 }
 
 @Operations("com.top_logic.graphic.flow.operations.TextOperations")

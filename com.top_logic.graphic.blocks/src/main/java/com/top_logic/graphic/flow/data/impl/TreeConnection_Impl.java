@@ -9,12 +9,12 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 
 	private com.top_logic.graphic.flow.data.TreeConnector _parent = null;
 
-	private final java.util.List<com.top_logic.graphic.flow.data.TreeConnector> _children = new de.haumacher.msgbuf.util.ReferenceList<>() {
+	private final java.util.List<com.top_logic.graphic.flow.data.TreeConnector> _children = new de.haumacher.msgbuf.util.ReferenceList<com.top_logic.graphic.flow.data.TreeConnector>() {
 		@Override
 		protected void beforeAdd(int index, com.top_logic.graphic.flow.data.TreeConnector element) {
 			com.top_logic.graphic.flow.data.impl.TreeConnector_Impl added = (com.top_logic.graphic.flow.data.impl.TreeConnector_Impl) element;
 			com.top_logic.graphic.flow.data.TreeConnection oldContainer = added.getConnection();
-			if (oldContainer != null && oldContainer != this) {
+			if (oldContainer != null && oldContainer != TreeConnection_Impl.this) {
 				throw new IllegalStateException("Object may not be part of two different containers.");
 			}
 			_listener.beforeAdd(TreeConnection_Impl.this, CHILDREN__PROP, index, element);
@@ -160,6 +160,12 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.TreeConnection setUserObject(java.lang.Object value) {
+		internalSetUserObject(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return TREE_CONNECTION__TYPE;
 	}
@@ -286,110 +292,6 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 				return com.top_logic.graphic.flow.data.TreeConnector.readTreeConnector(scope, in);
 			}
 			default: return super.readElement(scope, in, field);
-		}
-	}
-
-	/** XML element name representing a {@link com.top_logic.graphic.flow.data.TreeConnection} type. */
-	public static final String TREE_CONNECTION__XML_ELEMENT = "tree-connection";
-
-	/** XML attribute or element name of a {@link #getOwner} property. */
-	private static final String OWNER__XML_ATTR = "owner";
-
-	/** XML attribute or element name of a {@link #getParent} property. */
-	private static final String PARENT__XML_ATTR = "parent";
-
-	/** XML attribute or element name of a {@link #getChildren} property. */
-	private static final String CHILDREN__XML_ATTR = "children";
-
-	/** XML attribute or element name of a {@link #getBarPosition} property. */
-	private static final String BAR_POSITION__XML_ATTR = "bar-position";
-
-	@Override
-	public String getXmlTagName() {
-		return TREE_CONNECTION__XML_ELEMENT;
-	}
-
-	/** Serializes all fields that are written as XML attributes. */
-	@Override
-	protected void writeAttributes(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeAttributes(out);
-		out.writeAttribute(BAR_POSITION__XML_ATTR, Double.toString(getBarPosition()));
-	}
-
-	/** Serializes all fields that are written as XML elements. */
-	@Override
-	protected void writeElements(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeElements(out);
-		if (hasOwner()) {
-			out.writeStartElement(OWNER__XML_ATTR);
-			getOwner().writeContent(out);
-			out.writeEndElement();
-		}
-		if (hasParent()) {
-			out.writeStartElement(PARENT__XML_ATTR);
-			getParent().writeContent(out);
-			out.writeEndElement();
-		}
-		out.writeStartElement(CHILDREN__XML_ATTR);
-		for (com.top_logic.graphic.flow.data.TreeConnector element : getChildren()) {
-			element.writeTo(out);
-		}
-		out.writeEndElement();
-	}
-
-	/** Creates a new {@link com.top_logic.graphic.flow.data.TreeConnection} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static TreeConnection_Impl readTreeConnection_XmlContent(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		TreeConnection_Impl result = new TreeConnection_Impl();
-		result.readContentXml(in);
-		return result;
-	}
-
-	@Override
-	protected void readFieldXmlAttribute(String name, String value) {
-		switch (name) {
-			case BAR_POSITION__XML_ATTR: {
-				setBarPosition(Double.parseDouble(value));
-				break;
-			}
-			default: {
-				super.readFieldXmlAttribute(name, value);
-			}
-		}
-	}
-
-	@Override
-	protected void readFieldXmlElement(javax.xml.stream.XMLStreamReader in, String localName) throws javax.xml.stream.XMLStreamException {
-		switch (localName) {
-			case OWNER__XML_ATTR: {
-				setOwner(com.top_logic.graphic.flow.data.impl.TreeLayout_Impl.readTreeLayout_XmlContent(in));
-				break;
-			}
-			case PARENT__XML_ATTR: {
-				setParent(com.top_logic.graphic.flow.data.impl.TreeConnector_Impl.readTreeConnector_XmlContent(in));
-				break;
-			}
-			case CHILDREN__XML_ATTR: {
-				internalReadChildrenListXml(in);
-				break;
-			}
-			case BAR_POSITION__XML_ATTR: {
-				setBarPosition(Double.parseDouble(in.getElementText()));
-				break;
-			}
-			default: {
-				super.readFieldXmlElement(in, localName);
-			}
-		}
-	}
-
-	private void internalReadChildrenListXml(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		while (true) {
-			int event = in.nextTag();
-			if (event == javax.xml.stream.XMLStreamConstants.END_ELEMENT) {
-				break;
-			}
-
-			addChildren(com.top_logic.graphic.flow.data.impl.TreeConnector_Impl.readTreeConnector_XmlContent(in));
 		}
 	}
 

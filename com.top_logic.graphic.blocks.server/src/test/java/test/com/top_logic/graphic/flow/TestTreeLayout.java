@@ -19,12 +19,12 @@ import com.top_logic.graphic.blocks.server.svg.SvgTagWriter;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
 import com.top_logic.graphic.flow.data.Border;
 import com.top_logic.graphic.flow.data.Box;
+import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.graphic.flow.data.Padding;
 import com.top_logic.graphic.flow.data.Text;
 import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
 import com.top_logic.graphic.flow.data.TreeLayout;
-import com.top_logic.graphic.flow.operations.FlowDiagram;
 import com.top_logic.graphic.flow.operations.tree.TreeLayoutOperations;
 
 /**
@@ -33,23 +33,23 @@ import com.top_logic.graphic.flow.operations.tree.TreeLayoutOperations;
 public class TestTreeLayout extends TestCase {
 
 	public void testMiniTreeCompact() throws IOException {
-		FlowDiagram diagram = createMini(true);
+		Diagram diagram = createMini(true);
 		String svg = writeToFile(diagram, "./target/TestTreeLayout-mini-compact.svg");
 		assertMini(svg);
 	}
 
 	public void testMiniTreeComfort() throws IOException {
-		FlowDiagram diagram = createMini(false);
+		Diagram diagram = createMini(false);
 		String svg = writeToFile(diagram, "./target/TestTreeLayout-mini-comfort.svg");
 		assertMini(svg);
 	}
 
-	private FlowDiagram createMini(boolean compact) {
+	private Diagram createMini(boolean compact) {
 		Box root;
 		Box n1;
 		Box n2;
 		Box n3;
-		FlowDiagram diagram = new FlowDiagram().setRoot(Padding.create().setAll(20).setContent(
+		Diagram diagram = Diagram.create().setRoot(Padding.create().setAll(20).setContent(
 			TreeLayout.create()
 				.setCompact(compact)
 				.addNode(root = node("Root"))
@@ -128,12 +128,12 @@ public class TestTreeLayout extends TestCase {
 	}
 
 	public void testRandomTree() throws IOException {
-		FlowDiagram diagramCompfort =
-			new FlowDiagram().setRoot(Padding.create().setAll(20).setContent(createRandomTree().setCompact(false)));
+		Diagram diagramCompfort =
+			Diagram.create().setRoot(Padding.create().setAll(20).setContent(createRandomTree().setCompact(false)));
 		writeToFile(diagramCompfort, "./target/TestTreeLayout-random-compfort.svg");
 
-		FlowDiagram diagramCompact =
-			new FlowDiagram().setRoot(Padding.create().setAll(20).setContent(createRandomTree().setCompact(true)));
+		Diagram diagramCompact =
+			Diagram.create().setRoot(Padding.create().setAll(20).setContent(createRandomTree().setCompact(true)));
 		writeToFile(diagramCompact, "./target/TestTreeLayout-random-compact.svg");
 	}
 
@@ -173,7 +173,7 @@ public class TestTreeLayout extends TestCase {
 		}
 	}
 
-	private String writeToFile(FlowDiagram diagram, String fileName) throws IOException {
+	private String writeToFile(Diagram diagram, String fileName) throws IOException {
 		diagram.layout(new TestingRenderContext());
 
 		TagWriter out = new TagWriter();

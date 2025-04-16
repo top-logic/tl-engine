@@ -69,17 +69,25 @@ public class SVGBuilder implements SvgWriter {
 
 	@Override
 	public void beginSvg() {
-		beginGroup();
+		if (_parent != _root) {
+			beginGroup();
+		}
 	}
 
 	@Override
 	public void dimensions(String width, String height, double x1, double y1, double x2, double y2) {
-		throw new UnsupportedOperationException();
+		if (_parent == _root) {
+			_root.setAttribute(WIDTH_ATTR, width);
+			_root.setAttribute(HEIGHT_ATTR, height);
+			_root.setAttribute(VIEW_BOX_ATTR, x1 + " " + y1 + " " + x2 + " " + y2);
+		}
 	}
 
 	@Override
 	public void endSvg() {
-		endGroup();
+		if (_parent != _root) {
+			beginGroup();
+		}
 	}
 
 	@Override

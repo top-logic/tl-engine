@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
@@ -75,7 +76,8 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		for (TreeConnection connection : self().getConnections()) {
 			Box parentNode = nodeForAnchor.get(connection.getParent().getAnchor());
 			List<Box> childNodes =
-				connection.getChildren().stream().map(TreeConnector::getAnchor).map(nodeForAnchor::get).toList();
+				connection.getChildren().stream().map(TreeConnector::getAnchor).map(nodeForAnchor::get)
+					.collect(Collectors.toList());
 			for (Box childNode : childNodes) {
 				parentForChildNode.put(childNode, parentNode);
 			}
@@ -120,7 +122,7 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		self().setHeight(bottomY);
 	}
 
-	private double layoutTree(List<List<Box>> columns, Map<Box, List<Box>> children, int level, Box node,
+	default double layoutTree(List<List<Box>> columns, Map<Box, List<Box>> children, int level, Box node,
 			double parentBottomY) {
 		while (columns.size() <= level) {
 			columns.add(new ArrayList<>());
@@ -203,7 +205,7 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		}
 	}
 
-	private void enterAnchor(Set<Box> nodes, Map<Box, Box> nodeForAnchor, TreeConnector connector) {
+	default void enterAnchor(Set<Box> nodes, Map<Box, Box> nodeForAnchor, TreeConnector connector) {
 		Box anchor = connector.getAnchor();
 		Box ancestor = anchor;
 		while (ancestor != null) {

@@ -5,7 +5,6 @@
  */
 package com.top_logic.graphic.flow.operations.layout;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.graphic.blocks.svg.RenderContext;
@@ -13,6 +12,7 @@ import com.top_logic.graphic.blocks.svg.SvgWriter;
 import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.data.Empty;
 import com.top_logic.graphic.flow.operations.BoxOperations;
+import com.top_logic.graphic.flow.operations.util.DiagramUtil;
 
 /**
  * 
@@ -41,7 +41,8 @@ public interface GridLayoutOperations extends BoxOperations {
 		return self();
 	}
 
-	private int index(int col, int row) {
+	// private
+	default int index(int col, int row) {
 		if (col < 0 || col >= self().getCols() || row < 0 || row >= self().getRows()) {
 			throw new IllegalArgumentException("No such element: " + col + ", " + row);
 		}
@@ -53,8 +54,8 @@ public interface GridLayoutOperations extends BoxOperations {
 		self().setX(offsetX);
 		self().setY(offsetY);
 
-		self().setRowHeight(doubleList(self().getRows()));
-		self().setColWidth(doubleList(self().getCols()));
+		self().setRowHeight(DiagramUtil.doubleList(self().getRows()));
+		self().setColWidth(DiagramUtil.doubleList(self().getCols()));
 
 		for (int r = 0; r < self().getRows(); r++) {
 			for (int c = 0; c < self().getCols(); c++) {
@@ -84,14 +85,6 @@ public interface GridLayoutOperations extends BoxOperations {
 
 		self().setWidth(width);
 		self().setHeight(height);
-	}
-
-	private static List<Double> doubleList(int size) {
-		List<Double> result = new ArrayList<>(size);
-		for (int n = 0; n < size; n++) {
-			result.add(Double.valueOf(0));
-		}
-		return result;
 	}
 
 	@Override

@@ -5,7 +5,7 @@
  */
 package com.top_logic.graphic.flow.server.ui;
 
-import com.top_logic.graphic.flow.model.FlowDiagram;
+import com.top_logic.graphic.flow.operations.FlowDiagram;
 import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 

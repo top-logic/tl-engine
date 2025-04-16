@@ -32,8 +32,8 @@ public interface FillOperations extends DecorationOperations {
 		out.setFill(self().getFillStyle());
 		out.beginData();
 		out.moveToAbs(self().getX(), self().getY());
-		out.lineToHorizontalAbs(self().getX() + self().getWidth());
-		out.lineToVerticalAbs(self().getY() + self().getHeight());
+		out.lineToHorizontalAbs(self().getRightX());
+		out.lineToVerticalAbs(self().getBottomY());
 		out.lineToHorizontalAbs(self().getX());
 		out.closePath();
 		out.endData();

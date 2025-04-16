@@ -32,13 +32,26 @@ import com.top_logic.graphic.flow.model.tree.TreeLayoutOperations;
  */
 public class TestTreeLayout extends TestCase {
 
-	public void testMiniTree() throws IOException {
+	public void testMiniTreeCompact() throws IOException {
+		FlowDiagram diagram = createMini(true);
+		String svg = writeToFile(diagram, "./target/TestTreeLayout-mini-compact.svg");
+		assertMini(svg);
+	}
+
+	public void testMiniTreeComfort() throws IOException {
+		FlowDiagram diagram = createMini(false);
+		String svg = writeToFile(diagram, "./target/TestTreeLayout-mini-comfort.svg");
+		assertMini(svg);
+	}
+
+	private FlowDiagram createMini(boolean compact) {
 		Box root;
 		Box n1;
 		Box n2;
 		Box n3;
 		FlowDiagram diagram = new FlowDiagram().setRoot(Padding.create().setAll(20).setContent(
 			TreeLayout.create()
+				.setCompact(compact)
 				.addNode(root = node("Root"))
 				.addNode(n1 = node("N1"))
 				.addNode(n2 = node("N2"))
@@ -48,9 +61,10 @@ public class TestTreeLayout extends TestCase {
 					.addChildren(connector(n1))
 					.addChildren(connector(n2))
 					.addChildren(connector(n3)))));
+		return diagram;
+	}
 
-		String svg = writeToFile(diagram, "./target/TestTreeLayout-mini.svg");
-		
+	private void assertMini(String svg) {
 		assertEquals(
 			"""
 			<?xml version="1.0" encoding="utf-8" ?>
@@ -111,10 +125,19 @@ public class TestTreeLayout extends TestCase {
 					/>
 				</g>
 			</svg>""", svg);
-
 	}
 
 	public void testRandomTree() throws IOException {
+		FlowDiagram diagramCompfort =
+			new FlowDiagram().setRoot(Padding.create().setAll(20).setContent(createRandomTree().setCompact(false)));
+		writeToFile(diagramCompfort, "./target/TestTreeLayout-random-compfort.svg");
+
+		FlowDiagram diagramCompact =
+			new FlowDiagram().setRoot(Padding.create().setAll(20).setContent(createRandomTree().setCompact(true)));
+		writeToFile(diagramCompact, "./target/TestTreeLayout-random-compact.svg");
+	}
+
+	private TreeLayout createRandomTree() {
 		TreeLayout tree = TreeLayout.create();
 
 		Random rnd = new Random(42);
@@ -125,10 +148,7 @@ public class TestTreeLayout extends TestCase {
 			tree.addNode(root);
 			buildTree(tree, 0, root, rnd);
 		}
-
-		FlowDiagram diagram = new FlowDiagram().setRoot(Padding.create().setAll(20).setContent(tree));
-
-		writeToFile(diagram, "./target/TestTreeLayout-random.svg");
+		return tree;
 	}
 
 	private Box randomNode(Random rnd) {

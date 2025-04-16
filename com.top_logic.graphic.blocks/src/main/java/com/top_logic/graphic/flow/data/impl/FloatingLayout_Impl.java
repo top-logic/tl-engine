@@ -5,12 +5,12 @@ package com.top_logic.graphic.flow.data.impl;
  */
 public class FloatingLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl implements com.top_logic.graphic.flow.data.FloatingLayout {
 
-	private final java.util.List<com.top_logic.graphic.flow.data.Box> _nodes = new de.haumacher.msgbuf.util.ReferenceList<>() {
+	private final java.util.List<com.top_logic.graphic.flow.data.Box> _nodes = new de.haumacher.msgbuf.util.ReferenceList<com.top_logic.graphic.flow.data.Box>() {
 		@Override
 		protected void beforeAdd(int index, com.top_logic.graphic.flow.data.Box element) {
 			com.top_logic.graphic.flow.data.impl.Box_Impl added = (com.top_logic.graphic.flow.data.impl.Box_Impl) element;
-			com.top_logic.graphic.flow.data.Box oldContainer = added.getParent();
-			if (oldContainer != null && oldContainer != this) {
+			com.top_logic.graphic.flow.data.Widget oldContainer = added.getParent();
+			if (oldContainer != null && oldContainer != FloatingLayout_Impl.this) {
 				throw new IllegalStateException("Object may not be part of two different containers.");
 			}
 			_listener.beforeAdd(FloatingLayout_Impl.this, NODES__PROP, index, element);
@@ -94,6 +94,12 @@ public class FloatingLayout_Impl extends com.top_logic.graphic.flow.data.impl.Bo
 	@Override
 	public com.top_logic.graphic.flow.data.FloatingLayout setHeight(double value) {
 		internalSetHeight(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.FloatingLayout setUserObject(java.lang.Object value) {
+		internalSetUserObject(value);
 		return this;
 	}
 
@@ -188,74 +194,6 @@ public class FloatingLayout_Impl extends com.top_logic.graphic.flow.data.impl.Bo
 				return com.top_logic.graphic.flow.data.Box.readBox(scope, in);
 			}
 			default: return super.readElement(scope, in, field);
-		}
-	}
-
-	/** XML element name representing a {@link com.top_logic.graphic.flow.data.FloatingLayout} type. */
-	public static final String FLOATING_LAYOUT__XML_ELEMENT = "floating-layout";
-
-	/** XML attribute or element name of a {@link #getNodes} property. */
-	private static final String NODES__XML_ATTR = "nodes";
-
-	@Override
-	public String getXmlTagName() {
-		return FLOATING_LAYOUT__XML_ELEMENT;
-	}
-
-	/** Serializes all fields that are written as XML attributes. */
-	@Override
-	protected void writeAttributes(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeAttributes(out);
-	}
-
-	/** Serializes all fields that are written as XML elements. */
-	@Override
-	protected void writeElements(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeElements(out);
-		out.writeStartElement(NODES__XML_ATTR);
-		for (com.top_logic.graphic.flow.data.Box element : getNodes()) {
-			element.writeTo(out);
-		}
-		out.writeEndElement();
-	}
-
-	/** Creates a new {@link com.top_logic.graphic.flow.data.FloatingLayout} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static FloatingLayout_Impl readFloatingLayout_XmlContent(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		FloatingLayout_Impl result = new FloatingLayout_Impl();
-		result.readContentXml(in);
-		return result;
-	}
-
-	@Override
-	protected void readFieldXmlAttribute(String name, String value) {
-		switch (name) {
-			default: {
-				super.readFieldXmlAttribute(name, value);
-			}
-		}
-	}
-
-	@Override
-	protected void readFieldXmlElement(javax.xml.stream.XMLStreamReader in, String localName) throws javax.xml.stream.XMLStreamException {
-		switch (localName) {
-			case NODES__XML_ATTR: {
-				internalReadNodesListXml(in);
-				break;
-			}
-			default: {
-				super.readFieldXmlElement(in, localName);
-			}
-		}
-	}
-
-	private void internalReadNodesListXml(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		while (true) {
-			int event = in.nextTag();
-			if (event == javax.xml.stream.XMLStreamConstants.END_ELEMENT) {
-				break;
-			}
-
-			addNode(com.top_logic.graphic.flow.data.impl.Box_Impl.readBox_XmlContent(in));
 		}
 	}
 

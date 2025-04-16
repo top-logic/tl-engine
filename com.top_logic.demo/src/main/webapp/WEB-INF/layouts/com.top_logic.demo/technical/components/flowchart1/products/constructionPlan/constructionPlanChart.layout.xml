@@ -12,49 +12,37 @@
 		<modelBuilder class="com.top_logic.graphic.flow.server.ui.ScriptFlowChartBuilder">
 			<create-chart><![CDATA[model -> {
 
-// All nodes that are not used to build other nodes.
-roots = [
-    $model.get(`test.flowchart:Product#parts`)
-        .filter(n -> $n.get(`test.flowchart:FlowNode#usedIn`).isEmpty())
-];
+// All parts.
+parts = $model.get(`test.flowchart:Product#parts`);
 
-// Building levels: Array of level arrays with nodes. 
-// Each node in level N is used to build a node in level N-1.
-levels = 
-    $roots.recursion(level -> [$level.get(`test.flowchart:FlowNode#inputs`)]);
-
-// Chart of building flow.    
-flowChart(
-    flowPadding(all: 16, content: 
-        flowHorizontal(gap: 64, contents: $levels.map(nodes -> 
-        flowAlign(vAlign: "CENTER", content: 
-        flowVertical(gap: 32, contents: $nodes.map(n -> 
-            flowAlign(hAlign: "CENTER",  content: 
-                flowVertical([
+nodes = $parts.map(p -> 
+    flowVertical(
+        userObject: $p,
+        contents: [
                     {
-                        marker = $n.get(`test.flowchart:FlowNode#marker`);
-                        $marker ? flowAlign(hAlign: "CENTER", content: 
+                        marker = $p.get(`test.flowchart:FlowNode#marker`);
+                        $marker ? flowAlign(hAlign: "middle", content: 
                             flowBorder(stroke: "red", dashes: [5, 5], content: 
                                 flowPadding(all: 4, content: 
                                     flowText($marker))
                             )
                         ) : null
                     },
-                    flowAlign(hAlign: "CENTER", content: 
-                        flowPadding(all: 4, content: 
-                            flowText($n.get(`test.flowchart:FlowNode#name`))
+                    flowAlign(hAlign: "middle", 
+                        content: flowPadding(all: 4, 
+                            content: flowText($p.get(`test.flowchart:FlowNode#name`))
                     )),
-                    flowGrid(gapY: -1, contents: 
-                        $n.get(`test.flowchart:FlowNode#locations`).map(l -> 
+                    flowGrid(gapY: -1, 
+                        contents: $p.get(`test.flowchart:FlowNode#locations`).map(l -> 
                             [
                                 {
                                     count = $l.get(`test.flowchart:Location#count`);
                                     $count != null ? 
-                                        flowBorder(right: false,  content: 
-                                            flowText($count)) : null
+                                        flowBorder(right: false,  
+                                            content: flowText($count)) : null
                                 },
-                                flowBorder(content:
-                                    flowFill(
+                                flowBorder(
+                                    content: flowFill(
                                         fill: $l.get(`test.flowchart:Location#part`)
                                             .get(`test.flowchart:Part#color`), 
                                         content: 
@@ -64,22 +52,36 @@ flowChart(
                                 {
                                     usages = $l.get(`test.flowchart:Location#usages`);
                                     $usages ? 
-                                        flowAlign(content: 
-                                            flowBorder(left: false, content: 
-                                                flowText($usages))) : null
+                                        flowAlign(
+                                            content: flowBorder(left: false, 
+                                                content: flowText($usages))) : null
                                 }
                             ]
                         )
                     ),
-                    flowPadding(top: 8, content:
-                        flowBorder(
-                            flowImage($n.get(`test.flowchart:FlowNode#image`))))
-                ]))
-            )
+                    flowPadding(top: 8, 
+                        content: flowBorder(
+                            flowImage($p.get(`test.flowchart:FlowNode#image`))))
+                ])
+    );
+
+nodeByPart = $nodes.indexBy(n -> $n["userObject"]);
+
+flowChart(
+    root: flowPadding(all: 16, 
+        content: flowTree(
+            nodes: $nodes,
+            connections: $parts
+                .filter(p -> !$p.get(`test.flowchart:FlowNode#inputs`).isEmpty())
+                .map(p -> flowConnection(
+                    parent: $nodeByPart[$p],
+                    children: $p.get(`test.flowchart:FlowNode#inputs`)
+                        .map(p -> $nodeByPart[$p])
+                ))
         )
-        )))
     )
-)
+);
+
 }]]></create-chart>
 		</modelBuilder>
 	</arguments>

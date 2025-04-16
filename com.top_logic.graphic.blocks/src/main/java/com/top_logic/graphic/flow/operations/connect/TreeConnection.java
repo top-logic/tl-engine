@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.graphic.flow.model.connect;
+package com.top_logic.graphic.flow.operations.connect;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,6 +1,6 @@
 package com.top_logic.graphic.flow.data;
 
-public interface Image extends Box, com.top_logic.graphic.flow.model.ImageOperations {
+public interface Image extends Box, com.top_logic.graphic.flow.operations.ImageOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.Image} instance.

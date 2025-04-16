@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.graphic.flow.model.tree;
+package com.top_logic.graphic.flow.operations.tree;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,7 +21,7 @@ import com.top_logic.graphic.flow.data.DiagramDirection;
 import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
 import com.top_logic.graphic.flow.data.TreeLayout;
-import com.top_logic.graphic.flow.model.layout.FloatingLayoutOperations;
+import com.top_logic.graphic.flow.operations.layout.FloatingLayoutOperations;
 
 /**
  * Operations for a {@link TreeLayout}.

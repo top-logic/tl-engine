@@ -1,6 +1,6 @@
 package com.top_logic.graphic.flow.data;
 
-public interface CompassLayout extends Box, com.top_logic.graphic.flow.model.layout.CompassLayoutOperations {
+public interface CompassLayout extends Box, com.top_logic.graphic.flow.operations.layout.CompassLayoutOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.CompassLayout} instance.

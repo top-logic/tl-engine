@@ -1,6 +1,6 @@
 package com.top_logic.graphic.flow.data;
 
-public interface Border extends Decoration, com.top_logic.graphic.flow.model.BorderOperations {
+public interface Border extends Decoration, com.top_logic.graphic.flow.operations.BorderOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.Border} instance.

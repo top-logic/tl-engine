@@ -1,6 +1,6 @@
 package com.top_logic.graphic.flow.data;
 
-public interface Text extends Box, com.top_logic.graphic.flow.model.TextOperations {
+public interface Text extends Box, com.top_logic.graphic.flow.operations.TextOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.Text} instance.

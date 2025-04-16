@@ -5,6 +5,8 @@ package com.top_logic.graphic.flow.data.impl;
  */
 public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.FloatingLayout_Impl implements com.top_logic.graphic.flow.data.TreeLayout {
 
+	private boolean _compact = false;
+
 	private com.top_logic.graphic.flow.data.DiagramDirection _direction = com.top_logic.graphic.flow.data.DiagramDirection.LTR;
 
 	private double _gapX = 30;
@@ -47,6 +49,23 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	@Override
 	public TypeKind kind() {
 		return TypeKind.TREE_LAYOUT;
+	}
+
+	@Override
+	public final boolean isCompact() {
+		return _compact;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.TreeLayout setCompact(boolean value) {
+		internalSetCompact(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isCompact()} without chain call utility. */
+	protected final void internalSetCompact(boolean value) {
+		_listener.beforeSet(this, COMPACT__PROP, value);
+		_compact = value;
 	}
 
 	@Override
@@ -212,6 +231,7 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 
 	private static java.util.List<String> PROPERTIES = java.util.Collections.unmodifiableList(
 		java.util.Arrays.asList(
+			COMPACT__PROP, 
 			DIRECTION__PROP, 
 			GAP_X__PROP, 
 			GAP_Y__PROP, 
@@ -227,6 +247,7 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	@Override
 	public Object get(String field) {
 		switch (field) {
+			case COMPACT__PROP: return isCompact();
 			case DIRECTION__PROP: return getDirection();
 			case GAP_X__PROP: return getGapX();
 			case GAP_Y__PROP: return getGapY();
@@ -240,6 +261,7 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	@Override
 	public void set(String field, Object value) {
 		switch (field) {
+			case COMPACT__PROP: internalSetCompact((boolean) value); break;
 			case DIRECTION__PROP: internalSetDirection((com.top_logic.graphic.flow.data.DiagramDirection) value); break;
 			case GAP_X__PROP: internalSetGapX((double) value); break;
 			case GAP_Y__PROP: internalSetGapY((double) value); break;
@@ -253,6 +275,8 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	@Override
 	protected void writeFields(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
 		super.writeFields(scope, out);
+		out.name(COMPACT__PROP);
+		out.value(isCompact());
 		out.name(DIRECTION__PROP);
 		getDirection().writeTo(out);
 		out.name(GAP_X__PROP);
@@ -274,6 +298,10 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	@Override
 	public void writeFieldValue(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field) throws java.io.IOException {
 		switch (field) {
+			case COMPACT__PROP: {
+				out.value(isCompact());
+				break;
+			}
 			case DIRECTION__PROP: {
 				getDirection().writeTo(out);
 				break;
@@ -309,6 +337,7 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	@Override
 	public void readField(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
+			case COMPACT__PROP: setCompact(in.nextBoolean()); break;
 			case DIRECTION__PROP: setDirection(com.top_logic.graphic.flow.data.DiagramDirection.readDiagramDirection(in)); break;
 			case GAP_X__PROP: setGapX(in.nextDouble()); break;
 			case GAP_Y__PROP: setGapY(in.nextDouble()); break;
@@ -352,6 +381,9 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	/** XML element name representing a {@link com.top_logic.graphic.flow.data.TreeLayout} type. */
 	public static final String TREE_LAYOUT__XML_ELEMENT = "tree-layout";
 
+	/** XML attribute or element name of a {@link #isCompact} property. */
+	private static final String COMPACT__XML_ATTR = "compact";
+
 	/** XML attribute or element name of a {@link #getDirection} property. */
 	private static final String DIRECTION__XML_ATTR = "direction";
 
@@ -379,6 +411,7 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	@Override
 	protected void writeAttributes(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
 		super.writeAttributes(out);
+		out.writeAttribute(COMPACT__XML_ATTR, Boolean.toString(isCompact()));
 		out.writeAttribute(DIRECTION__XML_ATTR, getDirection().protocolName());
 		out.writeAttribute(GAP_X__XML_ATTR, Double.toString(getGapX()));
 		out.writeAttribute(GAP_Y__XML_ATTR, Double.toString(getGapY()));
@@ -407,6 +440,10 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	@Override
 	protected void readFieldXmlAttribute(String name, String value) {
 		switch (name) {
+			case COMPACT__XML_ATTR: {
+				setCompact(Boolean.parseBoolean(value));
+				break;
+			}
 			case DIRECTION__XML_ATTR: {
 				setDirection(com.top_logic.graphic.flow.data.DiagramDirection.valueOfProtocol(value));
 				break;
@@ -436,6 +473,10 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	@Override
 	protected void readFieldXmlElement(javax.xml.stream.XMLStreamReader in, String localName) throws javax.xml.stream.XMLStreamException {
 		switch (localName) {
+			case COMPACT__XML_ATTR: {
+				setCompact(Boolean.parseBoolean(in.getElementText()));
+				break;
+			}
 			case DIRECTION__XML_ATTR: {
 				setDirection(com.top_logic.graphic.flow.data.DiagramDirection.valueOfProtocol(in.getElementText()));
 				break;

@@ -1,6 +1,6 @@
 package com.top_logic.graphic.flow.data;
 
-public interface VerticalLayout extends RowLayout, com.top_logic.graphic.flow.model.layout.VerticalLayoutOperations {
+public interface VerticalLayout extends RowLayout, com.top_logic.graphic.flow.operations.layout.VerticalLayoutOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.VerticalLayout} instance.

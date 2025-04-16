@@ -141,6 +141,12 @@ public class Image_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Image setUserObject(java.lang.Object value) {
+		internalSetUserObject(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return IMAGE__TYPE;
 	}
@@ -233,112 +239,6 @@ public class Image_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 			case ALIGN__PROP: setAlign(com.top_logic.graphic.flow.data.ImageAlign.readImageAlign(in)); break;
 			case SCALE__PROP: setScale(com.top_logic.graphic.flow.data.ImageScale.readImageScale(in)); break;
 			default: super.readField(scope, in, field);
-		}
-	}
-
-	/** XML element name representing a {@link com.top_logic.graphic.flow.data.Image} type. */
-	public static final String IMAGE__XML_ELEMENT = "image";
-
-	/** XML attribute or element name of a {@link #getHref} property. */
-	private static final String HREF__XML_ATTR = "href";
-
-	/** XML attribute or element name of a {@link #getImgWidth} property. */
-	private static final String IMG_WIDTH__XML_ATTR = "img-width";
-
-	/** XML attribute or element name of a {@link #getImgHeight} property. */
-	private static final String IMG_HEIGHT__XML_ATTR = "img-height";
-
-	/** XML attribute or element name of a {@link #getAlign} property. */
-	private static final String ALIGN__XML_ATTR = "align";
-
-	/** XML attribute or element name of a {@link #getScale} property. */
-	private static final String SCALE__XML_ATTR = "scale";
-
-	@Override
-	public String getXmlTagName() {
-		return IMAGE__XML_ELEMENT;
-	}
-
-	/** Serializes all fields that are written as XML attributes. */
-	@Override
-	protected void writeAttributes(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeAttributes(out);
-		out.writeAttribute(HREF__XML_ATTR, getHref());
-		out.writeAttribute(IMG_WIDTH__XML_ATTR, Double.toString(getImgWidth()));
-		out.writeAttribute(IMG_HEIGHT__XML_ATTR, Double.toString(getImgHeight()));
-		out.writeAttribute(ALIGN__XML_ATTR, getAlign().protocolName());
-		out.writeAttribute(SCALE__XML_ATTR, getScale().protocolName());
-	}
-
-	/** Serializes all fields that are written as XML elements. */
-	@Override
-	protected void writeElements(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeElements(out);
-		// No element fields.
-	}
-
-	/** Creates a new {@link com.top_logic.graphic.flow.data.Image} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static Image_Impl readImage_XmlContent(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		Image_Impl result = new Image_Impl();
-		result.readContentXml(in);
-		return result;
-	}
-
-	@Override
-	protected void readFieldXmlAttribute(String name, String value) {
-		switch (name) {
-			case HREF__XML_ATTR: {
-				setHref(value);
-				break;
-			}
-			case IMG_WIDTH__XML_ATTR: {
-				setImgWidth(Double.parseDouble(value));
-				break;
-			}
-			case IMG_HEIGHT__XML_ATTR: {
-				setImgHeight(Double.parseDouble(value));
-				break;
-			}
-			case ALIGN__XML_ATTR: {
-				setAlign(com.top_logic.graphic.flow.data.ImageAlign.valueOfProtocol(value));
-				break;
-			}
-			case SCALE__XML_ATTR: {
-				setScale(com.top_logic.graphic.flow.data.ImageScale.valueOfProtocol(value));
-				break;
-			}
-			default: {
-				super.readFieldXmlAttribute(name, value);
-			}
-		}
-	}
-
-	@Override
-	protected void readFieldXmlElement(javax.xml.stream.XMLStreamReader in, String localName) throws javax.xml.stream.XMLStreamException {
-		switch (localName) {
-			case HREF__XML_ATTR: {
-				setHref(in.getElementText());
-				break;
-			}
-			case IMG_WIDTH__XML_ATTR: {
-				setImgWidth(Double.parseDouble(in.getElementText()));
-				break;
-			}
-			case IMG_HEIGHT__XML_ATTR: {
-				setImgHeight(Double.parseDouble(in.getElementText()));
-				break;
-			}
-			case ALIGN__XML_ATTR: {
-				setAlign(com.top_logic.graphic.flow.data.ImageAlign.valueOfProtocol(in.getElementText()));
-				break;
-			}
-			case SCALE__XML_ATTR: {
-				setScale(com.top_logic.graphic.flow.data.ImageScale.valueOfProtocol(in.getElementText()));
-				break;
-			}
-			default: {
-				super.readFieldXmlElement(in, localName);
-			}
 		}
 	}
 

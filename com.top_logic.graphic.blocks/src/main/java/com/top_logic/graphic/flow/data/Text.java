@@ -44,6 +44,9 @@ public interface Text extends Box, com.top_logic.graphic.flow.operations.TextOpe
 	@Override
 	com.top_logic.graphic.flow.data.Text setHeight(double value);
 
+	@Override
+	com.top_logic.graphic.flow.data.Text setUserObject(java.lang.Object value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.Text readText(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
@@ -62,12 +65,6 @@ public interface Text extends Box, com.top_logic.graphic.flow.operations.TextOpe
 	@Override
 	default Text self() {
 		return this;
-	}
-
-	/** Creates a new {@link Text} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static Text readText(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		in.nextTag();
-		return com.top_logic.graphic.flow.data.impl.Text_Impl.readText_XmlContent(in);
 	}
 
 }

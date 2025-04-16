@@ -47,6 +47,9 @@ public interface Align extends Decoration, com.top_logic.graphic.flow.operations
 	@Override
 	com.top_logic.graphic.flow.data.Align setHeight(double value);
 
+	@Override
+	com.top_logic.graphic.flow.data.Align setUserObject(java.lang.Object value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.Align readAlign(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
@@ -65,12 +68,6 @@ public interface Align extends Decoration, com.top_logic.graphic.flow.operations
 	@Override
 	default Align self() {
 		return this;
-	}
-
-	/** Creates a new {@link Align} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static Align readAlign(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		in.nextTag();
-		return com.top_logic.graphic.flow.data.impl.Align_Impl.readAlign_XmlContent(in);
 	}
 
 }

@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * A connection in a {@link TreeLayout} that links contents of the diagram with one-to-many edges.
  */
-public interface TreeConnection extends Widget, com.top_logic.graphic.flow.model.tree.TreeConnectionOperations {
+public interface TreeConnection extends Widget, com.top_logic.graphic.flow.operations.tree.TreeConnectionOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.TreeConnection} instance.

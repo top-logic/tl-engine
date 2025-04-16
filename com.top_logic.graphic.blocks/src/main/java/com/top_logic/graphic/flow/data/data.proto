@@ -6,12 +6,12 @@ abstract message Widget {
 }
 
 /** Top-level element that can be rendered. */
-@Operations("com.top_logic.graphic.flow.model.DiagramOperations")
+@Operations("com.top_logic.graphic.flow.operations.DiagramOperations")
 message Diagram extends Widget {
 }
 
 /** A rectangular region of a {@link Diagram} that can adjust its size to external requests and to its content. */
-@Operations("com.top_logic.graphic.flow.model.BoxOperations")
+@Operations("com.top_logic.graphic.flow.operations.BoxOperations")
 abstract message Box extends Widget {
 	/** The widget that contains/renders this widget. */
 	@Container
@@ -24,13 +24,13 @@ abstract message Box extends Widget {
 }
 
 /** A layout that allows to freely place boxes at arbitrary positions. The layout does not impose any restrictions to the positions and sizes of the placed boxes. */
-@Operations("com.top_logic.graphic.flow.model.layout.FloatingLayoutOperations")
+@Operations("com.top_logic.graphic.flow.operations.layout.FloatingLayoutOperations")
 message FloatingLayout extends Box {
 	repeated Box nodes;
 }
 
 /** A layout that connects placed nodes with one-to-many connectors forming a tree. */
-@Operations("com.top_logic.graphic.flow.model.tree.TreeLayoutOperations")
+@Operations("com.top_logic.graphic.flow.operations.tree.TreeLayoutOperations")
 message TreeLayout extends FloatingLayout {
 	/** Whether to minimize vertical space required to layout the tree. */
 	boolean compact;
@@ -68,7 +68,7 @@ enum DiagramDirection {
 }
 
 /** A connection in a {@link TreeLayout} that links contents of the diagram with one-to-many edges. */
-@Operations("com.top_logic.graphic.flow.model.tree.TreeConnectionOperations")
+@Operations("com.top_logic.graphic.flow.operations.tree.TreeConnectionOperations")
 message TreeConnection extends Widget {
 	/** The {@link TreeLayout} that is responsible for this connection. */
 	@Container
@@ -89,7 +89,7 @@ message TreeConnection extends Widget {
 	double barPosition;
 }
 
-@Operations("com.top_logic.graphic.flow.model.tree.TreeConnectorOperations")
+@Operations("com.top_logic.graphic.flow.operations.tree.TreeConnectorOperations")
 message TreeConnector extends Widget {
 	@Container
 	TreeConnection connection;
@@ -108,13 +108,13 @@ message TreeConnector extends Widget {
 	double connectPosition;
 }
 
-@Operations("com.top_logic.graphic.flow.model.TextOperations")
+@Operations("com.top_logic.graphic.flow.operations.TextOperations")
 message Text extends Box {
 	string value;
 	double baseLine;
 }
 
-@Operations("com.top_logic.graphic.flow.model.ImageOperations")
+@Operations("com.top_logic.graphic.flow.operations.ImageOperations")
 message Image extends Box {
 	string href;
 	double imgWidth;
@@ -237,16 +237,16 @@ enum ImageScale {
 
 }
 
-@Operations("com.top_logic.graphic.flow.model.EmptyOperations")
+@Operations("com.top_logic.graphic.flow.operations.EmptyOperations")
 message Empty extends Box {
 }
 
-@Operations("com.top_logic.graphic.flow.model.DecorationOperations")
+@Operations("com.top_logic.graphic.flow.operations.DecorationOperations")
 abstract message Decoration extends Box {
 	Box content;
 }
 
-@Operations("com.top_logic.graphic.flow.model.AlignOperations")
+@Operations("com.top_logic.graphic.flow.operations.AlignOperations")
 message Align extends Decoration {
 	Alignment xAlign;
 	Alignment yAlign;
@@ -259,7 +259,7 @@ enum Alignment {
 	strech;
 }
 
-@Operations("com.top_logic.graphic.flow.model.BorderOperations")
+@Operations("com.top_logic.graphic.flow.operations.BorderOperations")
 message Border extends Decoration {
 	string strokeStyle = "black";
 	double thickness = 1.0;
@@ -271,12 +271,12 @@ message Border extends Decoration {
 	repeated double dashes;
 }
 
-@Operations("com.top_logic.graphic.flow.model.FillOperations")
+@Operations("com.top_logic.graphic.flow.operations.FillOperations")
 message Fill extends Decoration {
 	string fillStyle = "black";
 }
 
-@Operations("com.top_logic.graphic.flow.model.PaddingOperations")
+@Operations("com.top_logic.graphic.flow.operations.PaddingOperations")
 message Padding extends Decoration {
 	double top;
 	double left;
@@ -284,7 +284,7 @@ message Padding extends Decoration {
 	double right;
 }
 
-@Operations("com.top_logic.graphic.flow.model.layout.CompassLayoutOperations")
+@Operations("com.top_logic.graphic.flow.operations.layout.CompassLayoutOperations")
 message CompassLayout extends Box {
 	Box north;
 	Box west;
@@ -301,7 +301,7 @@ abstract message Layout extends Box {
 	repeated Box contents;
 }
 
-@Operations("com.top_logic.graphic.flow.model.layout.GridLayoutOperations")
+@Operations("com.top_logic.graphic.flow.operations.layout.GridLayoutOperations")
 message GridLayout extends Layout {
 	int rows;
 	int cols;
@@ -316,11 +316,11 @@ abstract message RowLayout extends Layout {
 	SpaceDistribution fill;
 }
 
-@Operations("com.top_logic.graphic.flow.model.layout.HorizontalLayoutOperations")
+@Operations("com.top_logic.graphic.flow.operations.layout.HorizontalLayoutOperations")
 message HorizontalLayout extends RowLayout {
 }
 
-@Operations("com.top_logic.graphic.flow.model.layout.VerticalLayoutOperations")
+@Operations("com.top_logic.graphic.flow.operations.layout.VerticalLayoutOperations")
 message VerticalLayout extends RowLayout {
 }
 

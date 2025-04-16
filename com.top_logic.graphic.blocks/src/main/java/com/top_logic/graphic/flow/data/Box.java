@@ -3,7 +3,7 @@ package com.top_logic.graphic.flow.data;
 /**
  * A rectangular region of a {@link Diagram} that can adjust its size to external requests and to its content.
  */
-public interface Box extends Widget, com.top_logic.graphic.flow.model.BoxOperations {
+public interface Box extends Widget, com.top_logic.graphic.flow.operations.BoxOperations {
 
 	/** Visitor interface for the {@link com.top_logic.graphic.flow.data.Box} hierarchy.*/
 	public interface Visitor<R,A,E extends Throwable> extends com.top_logic.graphic.flow.data.Decoration.Visitor<R,A,E>, com.top_logic.graphic.flow.data.Layout.Visitor<R,A,E> {

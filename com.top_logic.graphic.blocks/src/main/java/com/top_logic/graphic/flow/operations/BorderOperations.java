@@ -5,10 +5,9 @@
  */
 package com.top_logic.graphic.flow.operations;
 
-import java.util.List;
-
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
+import com.top_logic.graphic.flow.operations.util.DiagramUtil;
 
 /**
  * A border decoration drawn around an element.
@@ -81,7 +80,7 @@ public interface BorderOperations extends DecorationOperations {
 		out.setStrokeWidth(self().getThickness());
 		out.setStroke(self().getStrokeStyle());
 		if (!self().getDashes().isEmpty()) {
-			out.setStrokeDasharray(doubleArray(self().getDashes()));
+			out.setStrokeDasharray(DiagramUtil.doubleArray(self().getDashes()));
 		}
 		out.setFill("none");
 		out.beginData();
@@ -111,14 +110,6 @@ public interface BorderOperations extends DecorationOperations {
 		}
 		out.endData();
 		out.endPath();
-	}
-
-	private static double[] doubleArray(List<Double> dashes) {
-		double[] result = new double[dashes.size()];
-		for (int n = 0, cnt = dashes.size(); n < cnt; n++) {
-			result[n] = dashes.get(n);
-		}
-		return result;
 	}
 
 }

@@ -12,7 +12,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
-import com.top_logic.graphic.flow.operations.FlowDiagram;
+import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -69,8 +69,8 @@ public class ScriptFlowChartBuilder extends AbstractConfiguredInstance<ScriptFlo
 	}
 
 	@Override
-	public FlowDiagram getModel(Object businessModel, LayoutComponent aComponent) {
-		return (FlowDiagram) _createChart.execute(businessModel);
+	public Diagram getModel(Object businessModel, LayoutComponent aComponent) {
+		return (Diagram) _createChart.execute(businessModel);
 	}
 
 }

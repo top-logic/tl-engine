@@ -90,6 +90,12 @@ public class Align_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Align setUserObject(java.lang.Object value) {
+		internalSetUserObject(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return ALIGN__TYPE;
 	}
@@ -152,76 +158,6 @@ public class Align_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 			case X_ALIGN__PROP: setXAlign(com.top_logic.graphic.flow.data.Alignment.readAlignment(in)); break;
 			case Y_ALIGN__PROP: setYAlign(com.top_logic.graphic.flow.data.Alignment.readAlignment(in)); break;
 			default: super.readField(scope, in, field);
-		}
-	}
-
-	/** XML element name representing a {@link com.top_logic.graphic.flow.data.Align} type. */
-	public static final String ALIGN__XML_ELEMENT = "align";
-
-	/** XML attribute or element name of a {@link #getXAlign} property. */
-	private static final String X_ALIGN__XML_ATTR = "x-align";
-
-	/** XML attribute or element name of a {@link #getYAlign} property. */
-	private static final String Y_ALIGN__XML_ATTR = "y-align";
-
-	@Override
-	public String getXmlTagName() {
-		return ALIGN__XML_ELEMENT;
-	}
-
-	/** Serializes all fields that are written as XML attributes. */
-	@Override
-	protected void writeAttributes(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeAttributes(out);
-		out.writeAttribute(X_ALIGN__XML_ATTR, getXAlign().protocolName());
-		out.writeAttribute(Y_ALIGN__XML_ATTR, getYAlign().protocolName());
-	}
-
-	/** Serializes all fields that are written as XML elements. */
-	@Override
-	protected void writeElements(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeElements(out);
-		// No element fields.
-	}
-
-	/** Creates a new {@link com.top_logic.graphic.flow.data.Align} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static Align_Impl readAlign_XmlContent(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		Align_Impl result = new Align_Impl();
-		result.readContentXml(in);
-		return result;
-	}
-
-	@Override
-	protected void readFieldXmlAttribute(String name, String value) {
-		switch (name) {
-			case X_ALIGN__XML_ATTR: {
-				setXAlign(com.top_logic.graphic.flow.data.Alignment.valueOfProtocol(value));
-				break;
-			}
-			case Y_ALIGN__XML_ATTR: {
-				setYAlign(com.top_logic.graphic.flow.data.Alignment.valueOfProtocol(value));
-				break;
-			}
-			default: {
-				super.readFieldXmlAttribute(name, value);
-			}
-		}
-	}
-
-	@Override
-	protected void readFieldXmlElement(javax.xml.stream.XMLStreamReader in, String localName) throws javax.xml.stream.XMLStreamException {
-		switch (localName) {
-			case X_ALIGN__XML_ATTR: {
-				setXAlign(com.top_logic.graphic.flow.data.Alignment.valueOfProtocol(in.getElementText()));
-				break;
-			}
-			case Y_ALIGN__XML_ATTR: {
-				setYAlign(com.top_logic.graphic.flow.data.Alignment.valueOfProtocol(in.getElementText()));
-				break;
-			}
-			default: {
-				super.readFieldXmlElement(in, localName);
-			}
 		}
 	}
 

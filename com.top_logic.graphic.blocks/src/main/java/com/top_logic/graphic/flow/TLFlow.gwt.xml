@@ -10,9 +10,9 @@
     <inherits name="com.top_logic.common.json.TLCommonJson"/>
 
 	<!-- Specify the paths for translatable code                    -->
+	<source path='control'/>
 	<source path='data'/>
 	<source path='operations'/>
-	<source path='param'/>
 	
 	<!-- allow Super Dev Mode -->
 	<add-linker name="xsiframe"/>

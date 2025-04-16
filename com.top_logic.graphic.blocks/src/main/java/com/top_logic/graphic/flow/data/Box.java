@@ -43,7 +43,7 @@ public interface Box extends Widget, com.top_logic.graphic.flow.operations.BoxOp
 	/**
 	 * The widget that contains/renders this widget.
 	 */
-	com.top_logic.graphic.flow.data.Box getParent();
+	com.top_logic.graphic.flow.data.Widget getParent();
 
 	/**
 	 * Checks, whether {@link #getParent()} has a value.
@@ -77,6 +77,9 @@ public interface Box extends Widget, com.top_logic.graphic.flow.operations.BoxOp
 	 * @see #getHeight()
 	 */
 	com.top_logic.graphic.flow.data.Box setHeight(double value);
+
+	@Override
+	com.top_logic.graphic.flow.data.Box setUserObject(java.lang.Object value);
 
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.Box readBox(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
@@ -113,12 +116,6 @@ public interface Box extends Widget, com.top_logic.graphic.flow.operations.BoxOp
 	@Override
 	default Box self() {
 		return this;
-	}
-
-	/** Creates a new {@link Box} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static Box readBox(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		in.nextTag();
-		return com.top_logic.graphic.flow.data.impl.Box_Impl.readBox_XmlContent(in);
 	}
 
 	/** Accepts the given visitor. */

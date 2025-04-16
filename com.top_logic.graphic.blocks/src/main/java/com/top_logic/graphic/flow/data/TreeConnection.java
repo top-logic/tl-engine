@@ -85,6 +85,9 @@ public interface TreeConnection extends Widget, com.top_logic.graphic.flow.opera
 	 */
 	com.top_logic.graphic.flow.data.TreeConnection setBarPosition(double value);
 
+	@Override
+	com.top_logic.graphic.flow.data.TreeConnection setUserObject(java.lang.Object value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.TreeConnection readTreeConnection(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
@@ -103,12 +106,6 @@ public interface TreeConnection extends Widget, com.top_logic.graphic.flow.opera
 	@Override
 	default TreeConnection self() {
 		return this;
-	}
-
-	/** Creates a new {@link TreeConnection} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static TreeConnection readTreeConnection(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		in.nextTag();
-		return com.top_logic.graphic.flow.data.impl.TreeConnection_Impl.readTreeConnection_XmlContent(in);
 	}
 
 }

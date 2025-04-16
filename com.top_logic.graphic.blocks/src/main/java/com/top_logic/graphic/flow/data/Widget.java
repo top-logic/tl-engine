@@ -1,6 +1,6 @@
 package com.top_logic.graphic.flow.data;
 
-public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, de.haumacher.msgbuf.xml.XmlSerializable {
+public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode {
 
 	/** Type codes for the {@link com.top_logic.graphic.flow.data.Widget} hierarchy. */
 	public enum TypeKind {
@@ -70,8 +70,23 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, de.ha
 
 	}
 
+	/** @see #getUserObject() */
+	String USER_OBJECT__PROP = "userObject";
+
 	/** The type code of this instance. */
 	TypeKind kind();
+
+	java.lang.Object getUserObject();
+
+	/**
+	 * @see #getUserObject()
+	 */
+	com.top_logic.graphic.flow.data.Widget setUserObject(java.lang.Object value);
+
+	/**
+	 * Checks, whether {@link #getUserObject()} has a value.
+	 */
+	boolean hasUserObject();
 
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.Widget readWidget(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
@@ -106,12 +121,6 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, de.ha
 		}
 		in.endArray();
 		return result;
-	}
-
-	/** Creates a new {@link Widget} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static Widget readWidget(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		in.nextTag();
-		return com.top_logic.graphic.flow.data.impl.Widget_Impl.readWidget_XmlContent(in);
 	}
 
 	/** Accepts the given visitor. */

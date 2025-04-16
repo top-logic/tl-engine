@@ -12,11 +12,12 @@ import com.top_logic.graphic.flow.data.Box;
 /**
  * 
  */
-public interface BoxOperations extends Drawable {
+public interface BoxOperations extends Drawable, MapLike {
 
 	/**
 	 * The {@link Box} data.
 	 */
+	@Override
 	Box self();
 
 	/**

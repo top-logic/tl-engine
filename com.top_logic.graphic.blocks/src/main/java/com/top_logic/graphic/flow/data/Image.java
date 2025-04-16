@@ -74,6 +74,9 @@ public interface Image extends Box, com.top_logic.graphic.flow.operations.ImageO
 	@Override
 	com.top_logic.graphic.flow.data.Image setHeight(double value);
 
+	@Override
+	com.top_logic.graphic.flow.data.Image setUserObject(java.lang.Object value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.Image readImage(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
@@ -92,12 +95,6 @@ public interface Image extends Box, com.top_logic.graphic.flow.operations.ImageO
 	@Override
 	default Image self() {
 		return this;
-	}
-
-	/** Creates a new {@link Image} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static Image readImage(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		in.nextTag();
-		return com.top_logic.graphic.flow.data.impl.Image_Impl.readImage_XmlContent(in);
 	}
 
 }

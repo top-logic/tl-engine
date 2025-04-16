@@ -36,6 +36,9 @@ public interface HorizontalLayout extends RowLayout, com.top_logic.graphic.flow.
 	@Override
 	com.top_logic.graphic.flow.data.HorizontalLayout setHeight(double value);
 
+	@Override
+	com.top_logic.graphic.flow.data.HorizontalLayout setUserObject(java.lang.Object value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.HorizontalLayout readHorizontalLayout(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
@@ -54,12 +57,6 @@ public interface HorizontalLayout extends RowLayout, com.top_logic.graphic.flow.
 	@Override
 	default HorizontalLayout self() {
 		return this;
-	}
-
-	/** Creates a new {@link HorizontalLayout} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static HorizontalLayout readHorizontalLayout(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		in.nextTag();
-		return com.top_logic.graphic.flow.data.impl.HorizontalLayout_Impl.readHorizontalLayout_XmlContent(in);
 	}
 
 }

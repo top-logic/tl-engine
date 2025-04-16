@@ -51,6 +51,9 @@ public interface RowLayout extends Layout {
 	@Override
 	com.top_logic.graphic.flow.data.RowLayout setHeight(double value);
 
+	@Override
+	com.top_logic.graphic.flow.data.RowLayout setUserObject(java.lang.Object value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.RowLayout readRowLayout(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
@@ -70,12 +73,6 @@ public interface RowLayout extends Layout {
 		}
 		in.endArray();
 		return result;
-	}
-
-	/** Creates a new {@link RowLayout} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static RowLayout readRowLayout(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		in.nextTag();
-		return com.top_logic.graphic.flow.data.impl.RowLayout_Impl.readRowLayout_XmlContent(in);
 	}
 
 	/** Accepts the given visitor. */

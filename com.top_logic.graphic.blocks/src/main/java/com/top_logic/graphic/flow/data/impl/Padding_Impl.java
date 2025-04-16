@@ -126,6 +126,12 @@ public class Padding_Impl extends com.top_logic.graphic.flow.data.impl.Decoratio
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Padding setUserObject(java.lang.Object value) {
+		internalSetUserObject(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return PADDING__TYPE;
 	}
@@ -208,100 +214,6 @@ public class Padding_Impl extends com.top_logic.graphic.flow.data.impl.Decoratio
 			case BOTTOM__PROP: setBottom(in.nextDouble()); break;
 			case RIGHT__PROP: setRight(in.nextDouble()); break;
 			default: super.readField(scope, in, field);
-		}
-	}
-
-	/** XML element name representing a {@link com.top_logic.graphic.flow.data.Padding} type. */
-	public static final String PADDING__XML_ELEMENT = "padding";
-
-	/** XML attribute or element name of a {@link #getTop} property. */
-	private static final String TOP__XML_ATTR = "top";
-
-	/** XML attribute or element name of a {@link #getLeft} property. */
-	private static final String LEFT__XML_ATTR = "left";
-
-	/** XML attribute or element name of a {@link #getBottom} property. */
-	private static final String BOTTOM__XML_ATTR = "bottom";
-
-	/** XML attribute or element name of a {@link #getRight} property. */
-	private static final String RIGHT__XML_ATTR = "right";
-
-	@Override
-	public String getXmlTagName() {
-		return PADDING__XML_ELEMENT;
-	}
-
-	/** Serializes all fields that are written as XML attributes. */
-	@Override
-	protected void writeAttributes(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeAttributes(out);
-		out.writeAttribute(TOP__XML_ATTR, Double.toString(getTop()));
-		out.writeAttribute(LEFT__XML_ATTR, Double.toString(getLeft()));
-		out.writeAttribute(BOTTOM__XML_ATTR, Double.toString(getBottom()));
-		out.writeAttribute(RIGHT__XML_ATTR, Double.toString(getRight()));
-	}
-
-	/** Serializes all fields that are written as XML elements. */
-	@Override
-	protected void writeElements(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeElements(out);
-		// No element fields.
-	}
-
-	/** Creates a new {@link com.top_logic.graphic.flow.data.Padding} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static Padding_Impl readPadding_XmlContent(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		Padding_Impl result = new Padding_Impl();
-		result.readContentXml(in);
-		return result;
-	}
-
-	@Override
-	protected void readFieldXmlAttribute(String name, String value) {
-		switch (name) {
-			case TOP__XML_ATTR: {
-				setTop(Double.parseDouble(value));
-				break;
-			}
-			case LEFT__XML_ATTR: {
-				setLeft(Double.parseDouble(value));
-				break;
-			}
-			case BOTTOM__XML_ATTR: {
-				setBottom(Double.parseDouble(value));
-				break;
-			}
-			case RIGHT__XML_ATTR: {
-				setRight(Double.parseDouble(value));
-				break;
-			}
-			default: {
-				super.readFieldXmlAttribute(name, value);
-			}
-		}
-	}
-
-	@Override
-	protected void readFieldXmlElement(javax.xml.stream.XMLStreamReader in, String localName) throws javax.xml.stream.XMLStreamException {
-		switch (localName) {
-			case TOP__XML_ATTR: {
-				setTop(Double.parseDouble(in.getElementText()));
-				break;
-			}
-			case LEFT__XML_ATTR: {
-				setLeft(Double.parseDouble(in.getElementText()));
-				break;
-			}
-			case BOTTOM__XML_ATTR: {
-				setBottom(Double.parseDouble(in.getElementText()));
-				break;
-			}
-			case RIGHT__XML_ATTR: {
-				setRight(Double.parseDouble(in.getElementText()));
-				break;
-			}
-			default: {
-				super.readFieldXmlElement(in, localName);
-			}
 		}
 	}
 

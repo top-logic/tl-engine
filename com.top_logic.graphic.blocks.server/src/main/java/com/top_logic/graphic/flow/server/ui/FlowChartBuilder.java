@@ -5,16 +5,16 @@
  */
 package com.top_logic.graphic.flow.server.ui;
 
-import com.top_logic.graphic.flow.operations.FlowDiagram;
+import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * {@link ModelBuilder} creating a {@link FlowDiagram}.
+ * {@link ModelBuilder} creating a {@link Diagram}.
  */
 public interface FlowChartBuilder extends ModelBuilder {
 
 	@Override
-	FlowDiagram getModel(Object businessModel, LayoutComponent aComponent);
+	Diagram getModel(Object businessModel, LayoutComponent aComponent);
 
 }

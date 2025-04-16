@@ -9,7 +9,7 @@ public class TreeConnector_Impl extends com.top_logic.graphic.flow.data.impl.Wid
 
 	private com.top_logic.graphic.flow.data.Box _anchor = null;
 
-	private double _connectPosition = 0.0d;
+	private double _connectPosition = 0.5;
 
 	/**
 	 * Creates a {@link TreeConnector_Impl} instance.
@@ -92,6 +92,12 @@ public class TreeConnector_Impl extends com.top_logic.graphic.flow.data.impl.Wid
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.TreeConnector setUserObject(java.lang.Object value) {
+		internalSetUserObject(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return TREE_CONNECTOR__TYPE;
 	}
@@ -170,89 +176,6 @@ public class TreeConnector_Impl extends com.top_logic.graphic.flow.data.impl.Wid
 			case ANCHOR__PROP: setAnchor(com.top_logic.graphic.flow.data.Box.readBox(scope, in)); break;
 			case CONNECT_POSITION__PROP: setConnectPosition(in.nextDouble()); break;
 			default: super.readField(scope, in, field);
-		}
-	}
-
-	/** XML element name representing a {@link com.top_logic.graphic.flow.data.TreeConnector} type. */
-	public static final String TREE_CONNECTOR__XML_ELEMENT = "tree-connector";
-
-	/** XML attribute or element name of a {@link #getConnection} property. */
-	private static final String CONNECTION__XML_ATTR = "connection";
-
-	/** XML attribute or element name of a {@link #getAnchor} property. */
-	private static final String ANCHOR__XML_ATTR = "anchor";
-
-	/** XML attribute or element name of a {@link #getConnectPosition} property. */
-	private static final String CONNECT_POSITION__XML_ATTR = "connect-position";
-
-	@Override
-	public String getXmlTagName() {
-		return TREE_CONNECTOR__XML_ELEMENT;
-	}
-
-	/** Serializes all fields that are written as XML attributes. */
-	@Override
-	protected void writeAttributes(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeAttributes(out);
-		out.writeAttribute(CONNECT_POSITION__XML_ATTR, Double.toString(getConnectPosition()));
-	}
-
-	/** Serializes all fields that are written as XML elements. */
-	@Override
-	protected void writeElements(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeElements(out);
-		if (hasConnection()) {
-			out.writeStartElement(CONNECTION__XML_ATTR);
-			getConnection().writeContent(out);
-			out.writeEndElement();
-		}
-		if (hasAnchor()) {
-			out.writeStartElement(ANCHOR__XML_ATTR);
-			getAnchor().writeTo(out);
-			out.writeEndElement();
-		}
-	}
-
-	/** Creates a new {@link com.top_logic.graphic.flow.data.TreeConnector} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static TreeConnector_Impl readTreeConnector_XmlContent(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		TreeConnector_Impl result = new TreeConnector_Impl();
-		result.readContentXml(in);
-		return result;
-	}
-
-	@Override
-	protected void readFieldXmlAttribute(String name, String value) {
-		switch (name) {
-			case CONNECT_POSITION__XML_ATTR: {
-				setConnectPosition(Double.parseDouble(value));
-				break;
-			}
-			default: {
-				super.readFieldXmlAttribute(name, value);
-			}
-		}
-	}
-
-	@Override
-	protected void readFieldXmlElement(javax.xml.stream.XMLStreamReader in, String localName) throws javax.xml.stream.XMLStreamException {
-		switch (localName) {
-			case CONNECTION__XML_ATTR: {
-				setConnection(com.top_logic.graphic.flow.data.impl.TreeConnection_Impl.readTreeConnection_XmlContent(in));
-				break;
-			}
-			case ANCHOR__XML_ATTR: {
-				in.nextTag();
-				setAnchor(com.top_logic.graphic.flow.data.impl.Box_Impl.readBox_XmlContent(in));
-				internalSkipUntilMatchingEndElement(in);
-				break;
-			}
-			case CONNECT_POSITION__XML_ATTR: {
-				setConnectPosition(Double.parseDouble(in.getElementText()));
-				break;
-			}
-			default: {
-				super.readFieldXmlElement(in, localName);
-			}
 		}
 	}
 

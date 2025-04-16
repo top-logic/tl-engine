@@ -10,7 +10,8 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.graphic.flow.operations.FlowDiagram;
+import com.top_logic.graphic.flow.data.Diagram;
+import com.top_logic.graphic.flow.server.control.DiagramControl;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.structure.ControlRepresentable;
@@ -22,7 +23,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  */
 public class FlowChartComponent extends BuilderComponent implements ControlRepresentable {
 
-	private FlowChartControl _control = new FlowChartControl();
+	private DiagramControl _control = new DiagramControl();
 
 	/**
 	 * Configuration options for {@link FlowChartComponent}.
@@ -47,12 +48,8 @@ public class FlowChartComponent extends BuilderComponent implements ControlRepre
 
 	@Override
 	protected boolean doValidateModel(DisplayContext context) {
-		FlowDiagram diagram = (FlowDiagram) getBuilder().getModel(getModel(), this);
-		if (diagram != null) {
-			diagram.layout(new AWTContext(14));
-
-			_control.setModel(diagram);
-		}
+		Diagram diagram = (Diagram) getBuilder().getModel(getModel(), this);
+		_control.setModel(diagram);
 		return super.doValidateModel(context);
 	}
 

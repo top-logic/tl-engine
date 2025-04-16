@@ -14,20 +14,20 @@ import com.top_logic.graphic.blocks.svg.SvgWriter;
 import com.top_logic.graphic.flow.data.Align;
 import com.top_logic.graphic.flow.data.Alignment;
 import com.top_logic.graphic.flow.data.Border;
+import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.graphic.flow.data.GridLayout;
 import com.top_logic.graphic.flow.data.HorizontalLayout;
 import com.top_logic.graphic.flow.data.SpaceDistribution;
 import com.top_logic.graphic.flow.data.Text;
 import com.top_logic.graphic.flow.data.VerticalLayout;
-import com.top_logic.graphic.flow.operations.FlowDiagram;
 
 /**
- * Test case for {@link FlowDiagram}.
+ * Test case for {@link Diagram}.
  */
 public class TestFlowDiagram extends TestCase {
 
 	public void testCreate() {
-		FlowDiagram diagram = new FlowDiagram()
+		Diagram diagram = Diagram.create()
 			.setRoot(VerticalLayout.create()
 				.setGap(20)
 				.addContent(VerticalLayout.create()

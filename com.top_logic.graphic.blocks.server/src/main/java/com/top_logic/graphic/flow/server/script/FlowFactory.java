@@ -8,6 +8,7 @@ package com.top_logic.graphic.flow.server.script;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.OptionalInt;
@@ -29,6 +30,8 @@ import com.top_logic.graphic.flow.data.Border;
 import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.data.CompassLayout;
 import com.top_logic.graphic.flow.data.Decoration;
+import com.top_logic.graphic.flow.data.Diagram;
+import com.top_logic.graphic.flow.data.DiagramDirection;
 import com.top_logic.graphic.flow.data.Empty;
 import com.top_logic.graphic.flow.data.Fill;
 import com.top_logic.graphic.flow.data.GridLayout;
@@ -39,8 +42,10 @@ import com.top_logic.graphic.flow.data.ImageScale;
 import com.top_logic.graphic.flow.data.Padding;
 import com.top_logic.graphic.flow.data.SpaceDistribution;
 import com.top_logic.graphic.flow.data.Text;
+import com.top_logic.graphic.flow.data.TreeConnection;
+import com.top_logic.graphic.flow.data.TreeConnector;
+import com.top_logic.graphic.flow.data.TreeLayout;
 import com.top_logic.graphic.flow.data.VerticalLayout;
-import com.top_logic.graphic.flow.operations.FlowDiagram;
 import com.top_logic.model.search.expr.ToString;
 
 /**
@@ -51,69 +56,101 @@ public class FlowFactory {
 	/**
 	 * Factory for Diagrams.
 	 */
-	public static FlowDiagram flowChart(Box root) {
-		return new FlowDiagram().setRoot(root == null ? Empty.create() : root);
+	public static Diagram flowChart(
+		Box root,
+		Object userObject
+	) {
+		return Diagram.create()
+			.setRoot(root == null ? Empty.create() : root)
+			.setUserObject(userObject);
 	}
 
 	/**
 	 * Factory for {@link Box}.
 	 */
 	public static Box flowText(
-			@Mandatory String text) {
+		@Mandatory String text,
+		Object userObject
+	) {
 		if (text == null) {
-			return Empty.create();
+			return Empty.create().setUserObject(userObject);
 		}
-		return Text.create().setValue(text);
+		return Text.create()
+			.setValue(text)
+			.setUserObject(userObject);
 	}
 
 	/**
 	 * Factory for {@link Align}.
 	 */
 	public static Decoration flowAlign(
-			@Mandatory Box content,
-			Alignment hAlign,
-			Alignment vAlign) {
-		return Align.create().setXAlign(hAlign).setYAlign(vAlign).setContent(content);
+		@Mandatory Box content,
+		Alignment hAlign,
+		Alignment vAlign,
+		Object userObject
+	) {
+		return Align.create()
+			.setXAlign(hAlign)
+			.setYAlign(vAlign)
+			.setContent(content)
+			.setUserObject(userObject);
 	}
 
 	/**
 	 * Factory for {@link Border}.
 	 */
 	public static Decoration flowBorder(
-			@Mandatory Box content,
-			@BooleanDefault(true) boolean top,
-			@BooleanDefault(true) boolean left,
-			@BooleanDefault(true) boolean right,
-			@BooleanDefault(true) boolean bottom, 
-			@DoubleDefault(1.0) double thickness,
-			@StringDefault("black") @ScriptConversion(ToStyle.class) String stroke,
-			List<Double> dashes) {
+		@Mandatory Box content,
+		@BooleanDefault(true) boolean top,
+		@BooleanDefault(true) boolean left,
+		@BooleanDefault(true) boolean right,
+		@BooleanDefault(true) boolean bottom, 
+		@DoubleDefault(1.0) double thickness,
+		@StringDefault("black") @ScriptConversion(ToStyle.class) String stroke,
+		List<Double> dashes,
+		Object userObject
+	) {
+		if (dashes == null) {
+			dashes = Collections.emptyList();
+		}
 		return com.top_logic.graphic.flow.data.Border.create().setThickness(thickness).setStrokeStyle(stroke)
-			.setTop(top).setLeft(left).setRight(right)
-			.setBottom(bottom).setDashes(dashes).setContent(content);
+			.setTop(top)
+			.setLeft(left)
+			.setRight(right)
+			.setBottom(bottom)
+			.setDashes(dashes)
+			.setContent(content)
+			.setUserObject(userObject);
 	}
 
 	/**
 	 * Factory for {@link Fill}.
 	 */
 	public static Decoration flowFill(
-			@Mandatory Box content,
-			@StringDefault("gray") @ScriptConversion(ToStyle.class) String fill) {
-		return Fill.create().setFillStyle(fill).setContent(content);
+		@Mandatory Box content,
+		@StringDefault("gray") @ScriptConversion(ToStyle.class) String fill,
+		Object userObject
+	) {
+		return Fill.create()
+			.setFillStyle(fill)
+			.setContent(content)
+			.setUserObject(userObject);
 	}
 
 	/**
 	 * Factory for {@link Padding}.
 	 */
 	public static Box flowPadding(
-			@Mandatory Box content,
-			Double all,
-			Double horizontal,
-			Double vertical,
-			Double top,
-			Double left,
-			Double right,
-			Double bottom) {
+		@Mandatory Box content,
+		Double all,
+		Double horizontal,
+		Double vertical,
+		Double top,
+		Double left,
+		Double right,
+		Double bottom,
+		Object userObject
+	) {
 		Padding result = Padding.create();
 		if (all != null) {
 			result.setTop(all);
@@ -142,6 +179,7 @@ public class FlowFactory {
 			result.setBottom(bottom);
 		}
 		result.setContent(content);
+		result.setUserObject(userObject);
 		return result;
 	}
 
@@ -149,11 +187,13 @@ public class FlowFactory {
 	 * Factory for {@link HorizontalLayout}.
 	 */
 	public static Box flowHorizontal(
-			@Mandatory List<Box> contents,
-			double gap,
-			SpaceDistribution distribution) {
+		@Mandatory List<Box> contents,
+		double gap,
+		SpaceDistribution distribution,
+		Object userObject
+	) {
 		if (contents.isEmpty()) {
-			return Empty.create();
+			return Empty.create().setUserObject(userObject);
 		}
 
 		for (int i = 0; i < contents.size(); i++) {
@@ -163,19 +203,24 @@ public class FlowFactory {
 			}
 		}
 
-		return HorizontalLayout.create().setGap(gap).setFill(distribution).setContents(contents);
+		return HorizontalLayout.create()
+			.setGap(gap)
+			.setFill(distribution)
+			.setContents(contents)
+			.setUserObject(userObject);
 	}
 
 	/**
 	 * Factory for {@link VerticalLayout}.
 	 */
 	public static Box flowVertical(
-			@Mandatory List<Box> contents,
-			double gap,
-			SpaceDistribution distribution) {
-
+		@Mandatory List<Box> contents,
+		double gap,
+		SpaceDistribution distribution,
+		Object userObject
+	) {
 		if (contents.isEmpty()) {
-			return Empty.create();
+			return Empty.create().setUserObject(userObject);
 		}
 
 		for (int i = 0; i < contents.size(); i++) {
@@ -185,33 +230,44 @@ public class FlowFactory {
 			}
 		}
 
-		return VerticalLayout.create().setGap(gap).setFill(distribution).setContents(contents);
+		return VerticalLayout.create().setGap(gap).setFill(distribution).setContents(contents)
+			.setUserObject(userObject);
 	}
 
 	/**
 	 * Factory for {@link CompassLayout}.
 	 */
 	public static CompassLayout flowCompass(
-			@Mandatory Box center,
-			Box north,
-			Box west,
-			Box east,
-			Box south) {
-		return CompassLayout.create().setCenter(center).setNorth(north).setWest(west).setEast(east).setSouth(south);
+		@Mandatory Box center,
+		Box north,
+		Box west,
+		Box east,
+		Box south,
+		Object userObject
+	) {
+		return CompassLayout.create()
+			.setCenter(center)
+			.setNorth(north)
+			.setWest(west)
+			.setEast(east)
+			.setSouth(south)
+			.setUserObject(userObject);
 	}
 
 	/**
 	 * Factory for {@link GridLayout}.
 	 */
 	public static Box flowGrid(
-			@Mandatory List<List<Box>> contents,
-			double gapX,
-			double gapY) {
+		@Mandatory List<List<Box>> contents,
+		double gapX,
+		double gapY,
+		Object userObject
+	) {
 		int rows = contents.size();
 		OptionalInt colsSearch = contents.stream().mapToInt(row -> row.size()).max();
 
 		if (rows == 0 || colsSearch.isEmpty()) {
-			return Empty.create();
+			return Empty.create().setUserObject(userObject);
 		}
 
 		int cols = colsSearch.getAsInt();
@@ -230,20 +286,22 @@ public class FlowFactory {
 			}
 			y++;
 		}
-		return result;
+		return result.setUserObject(userObject);
 	}
 
 	/**
 	 * Factory for {@link Image}.
 	 */
 	public static Box flowImage(
-			@Mandatory Object data,
-			Double width,
-			Double height,
-			ImageAlign align,
-			ImageScale scale) {
+		@Mandatory Object data,
+		Double width,
+		Double height,
+		ImageAlign align,
+		ImageScale scale,
+		Object userObject
+	) {
 		if (data == null) {
-			return Empty.create();
+			return Empty.create().setUserObject(userObject);
 		}
 		String href;
 		try {
@@ -289,37 +347,87 @@ public class FlowFactory {
 		if (scale != null) {
 			result.setScale(scale);
 		}
-		return result;
+		return result.setUserObject(userObject);
 	}
 
-//	public static DrawElement flowTree(
-//			EvalContext context,
-//			Object root,
-//			SearchExpression getChildren,
-//			SearchExpression createDisplay) {
-//		FlowNode rootDisplay = (FlowNode) createDisplay.eval(context, root);
-//		List<List<DrawElement>> levels = new ArrayList<>();
-//		List<FlowNode> currentLevel = Collections.singletonList(rootDisplay);
-//		while (!currentLevel.isEmpty()) {
-//			if (!levels.isEmpty()) {
-//
-//			}
-//			levels.add(currentLevel.stream().map(FlowNode::getDisplay).toList());
-//			List<FlowNode> nextLevel = new ArrayList<>();
-//
-//			for (FlowNode current : currentLevel) {
-//				List<?> children = (List<?>) getChildren.eval(context, current.getBusinessObject());
-//				
-//				List<FlowNode> childNodes =
-//					children.stream().map(c -> (FlowNode) createDisplay.eval(context, c)).toList();
-//				
-//				Connector source = current.getBox().getRight();
-//				List<Connector> target = childNodes.stream().map(n -> n.getBox().getLeft()).toList();
-//				
-//				new TreeConnection();
-//			}
-//
-//			currentLevel = nextLevel;
-//		}
-//	}
+	/**
+	 * Creates a tree layout.
+	 *
+	 * @param nodes
+	 *        The nodes to layout.
+	 * @param connections
+	 *        Connections between nodes.
+	 * @param gapX
+	 *        Gap between columns of tree nodes.
+	 * @param gapY
+	 *        Vertical gap between children.
+	 * @param stroke
+	 *        The stroke style for connections.
+	 * @param strokeWidth
+	 *        The stroke width used for connections.
+	 * @param direction
+	 *        The layout direction.
+	 * @param compact
+	 *        Whether a compact layout is preferred.
+	 * @param userObject
+	 *        An arbitrary object to associate with the graphics element.
+	 */
+	public static Box flowTree(
+		@Mandatory List<? extends Box> nodes, 
+		@Mandatory List<? extends TreeConnection> connections,
+		@DoubleDefault(30) double gapX, 
+		@DoubleDefault(30) double gapY, 
+		DiagramDirection direction,
+		@StringDefault("black") String stroke, 
+		@DoubleDefault(1) double strokeWidth, 
+		boolean compact,
+		Object userObject 
+	) {
+		return TreeLayout.create()
+			.setNodes(nodes)
+			.setConnections(connections)
+			.setGapX(gapX)
+			.setGapY(gapY)
+			.setDirection(direction)
+			.setStrokeStyle(stroke)
+			.setThickness(strokeWidth)
+			.setCompact(compact)
+			.setUserObject(userObject);
+	}
+
+	/**
+	 * Creates a connection for a tree layout.
+	 * 
+	 * @param parent
+	 *        The parent node or connector that should be connected to children.
+	 * @param children
+	 *        The children nodes or connectors to connect to the given parent.
+	 */
+	public static TreeConnection flowConnection(
+			@Mandatory Object parent,
+			@Mandatory List<?> children
+	) {
+		return TreeConnection.create()
+			.setParent(asConnector(parent))
+			.setChildren(children.stream().map(FlowFactory::asConnector).toList());
+	}
+
+	private static TreeConnector asConnector(Object node) {
+		return node instanceof TreeConnector connector ? connector : TreeConnector.create().setAnchor((Box) node);
+	}
+
+	/**
+	 * A connector to attach to a node to connect.
+	 */
+	public static TreeConnector flowConnector(
+		@Mandatory Box anchor,
+		@DoubleDefault(0.5) double pos,
+		Object userObject
+	) {
+		return TreeConnector.create()
+			.setAnchor(anchor)
+			.setConnectPosition(pos)
+			.setUserObject(userObject);
+	}
+
 }

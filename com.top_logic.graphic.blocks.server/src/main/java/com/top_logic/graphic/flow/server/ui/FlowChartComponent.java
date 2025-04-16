@@ -13,7 +13,6 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.graphic.flow.server.control.DiagramControl;
 import com.top_logic.layout.Control;
-import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.structure.ControlRepresentable;
 import com.top_logic.layout.table.component.BuilderComponent;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -47,10 +46,11 @@ public class FlowChartComponent extends BuilderComponent implements ControlRepre
 	}
 
 	@Override
-	protected boolean doValidateModel(DisplayContext context) {
+	protected void handleNewModel(Object newModel) {
+		super.handleNewModel(newModel);
+
 		Diagram diagram = (Diagram) getBuilder().getModel(getModel(), this);
 		_control.setModel(diagram);
-		return super.doValidateModel(context);
 	}
 
 	@Override

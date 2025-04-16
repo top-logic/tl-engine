@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments model="selection(com.top_logic.demo/technical/components/flowchart1/products/parts/partsGrid.layout.xml#Grid)">
+		<name key="dynamic.3a8dbe1b-b657-4fd5-b66d-9389016b90b0">
+			<en>View</en>
+			<de>Ansicht</de>
+		</name>
+		<forms>
+			<form type="test.flowchart:FlowNode">
+				<formDefinition>
+					<field
+						attribute="name"
+						fullQualifiedName="test.flowchart:FlowNode#name"
+						type="tl.core:String"
+					/>
+					<field
+						attribute="usedIn"
+						fullQualifiedName="test.flowchart:FlowNode#usedIn"
+						type="test.flowchart:FlowNode"
+					/>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

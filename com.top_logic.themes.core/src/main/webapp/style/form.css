@@ -1976,8 +1976,14 @@ input[type="checkbox"]:checked::before {
 }
 
 input[type="checkbox"]:indeterminate::before {
-	content: "\f146";
 	font-weight: 900;
+	color: var(--text-disabled);
+}
+
+input[type="checkbox"]:indeterminate::after { 
+	font-family: 'Font Awesome 6 Free';
+	content: "\f0c8";
+	margin-left: calc(-1em + 2px);
 }
 
 /*

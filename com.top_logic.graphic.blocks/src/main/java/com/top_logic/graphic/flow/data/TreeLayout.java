@@ -15,6 +15,9 @@ public interface TreeLayout extends FloatingLayout, com.top_logic.graphic.flow.m
 	/** Identifier for the {@link com.top_logic.graphic.flow.data.TreeLayout} type in JSON format. */
 	String TREE_LAYOUT__TYPE = "TreeLayout";
 
+	/** @see #isCompact() */
+	String COMPACT__PROP = "compact";
+
 	/** @see #getDirection() */
 	String DIRECTION__PROP = "direction";
 
@@ -32,6 +35,16 @@ public interface TreeLayout extends FloatingLayout, com.top_logic.graphic.flow.m
 
 	/** @see #getConnections() */
 	String CONNECTIONS__PROP = "connections";
+
+	/**
+	 * Whether to minimize vertical space required to layout the tree.
+	 */
+	boolean isCompact();
+
+	/**
+	 * @see #isCompact()
+	 */
+	com.top_logic.graphic.flow.data.TreeLayout setCompact(boolean value);
 
 	com.top_logic.graphic.flow.data.DiagramDirection getDirection();
 

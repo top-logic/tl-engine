@@ -42,6 +42,9 @@ public interface Layout extends Box {
 	@Override
 	com.top_logic.graphic.flow.data.Layout setHeight(double value);
 
+	@Override
+	com.top_logic.graphic.flow.data.Layout setUserObject(java.lang.Object value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.Layout readLayout(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
@@ -62,12 +65,6 @@ public interface Layout extends Box {
 		}
 		in.endArray();
 		return result;
-	}
-
-	/** Creates a new {@link Layout} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static Layout readLayout(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		in.nextTag();
-		return com.top_logic.graphic.flow.data.impl.Layout_Impl.readLayout_XmlContent(in);
 	}
 
 	/** Accepts the given visitor. */

@@ -7,10 +7,11 @@ package com.top_logic.graphic.blocks.client.boot;
 
 import com.google.gwt.core.client.EntryPoint;
 
-import com.top_logic.ajax.client.service.JSControlFactory;
 import com.top_logic.ajax.client.service.UIService;
 import com.top_logic.graphic.blocks.client.control.JSBlocksControl;
+import com.top_logic.graphic.blocks.client.control.JSDiagramControl;
 import com.top_logic.graphic.blocks.control.JSBlocksControlCommon;
+import com.top_logic.graphic.flow.control.JSDiagramControlCommon;
 
 /**
  * {@link EntryPoint} that initializes this client-side diagramJS module.
@@ -21,11 +22,8 @@ public class ModuleEntry implements EntryPoint {
 
 	@Override
 	public void onModuleLoad() {
-		UIService.registerFactory(JSBlocksControlCommon.BLOCKS_CONTROL_TYPE, getDiagramJSGraphControlFactory());
-	}
-
-	private JSControlFactory getDiagramJSGraphControlFactory() {
-		return controlId -> new JSBlocksControl(controlId);
+		UIService.registerFactory(JSBlocksControlCommon.BLOCKS_CONTROL_TYPE, controlId -> new JSBlocksControl(controlId));
+		UIService.registerFactory(JSDiagramControlCommon.CONTROL_TYPE, controlId1 -> new JSDiagramControl(controlId1));
 	}
 
 }

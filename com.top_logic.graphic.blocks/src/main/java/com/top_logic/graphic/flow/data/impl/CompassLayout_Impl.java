@@ -51,7 +51,7 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 		com.top_logic.graphic.flow.data.impl.Box_Impl before = (com.top_logic.graphic.flow.data.impl.Box_Impl) _north;
 		com.top_logic.graphic.flow.data.impl.Box_Impl after = (com.top_logic.graphic.flow.data.impl.Box_Impl) value;
 		if (after != null) {
-			com.top_logic.graphic.flow.data.Box oldContainer = after.getParent();
+			com.top_logic.graphic.flow.data.Widget oldContainer = after.getParent();
 			if (oldContainer != null && oldContainer != this) {
 				throw new IllegalStateException("Object may not be part of two different containers.");
 			}
@@ -87,7 +87,7 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 		com.top_logic.graphic.flow.data.impl.Box_Impl before = (com.top_logic.graphic.flow.data.impl.Box_Impl) _west;
 		com.top_logic.graphic.flow.data.impl.Box_Impl after = (com.top_logic.graphic.flow.data.impl.Box_Impl) value;
 		if (after != null) {
-			com.top_logic.graphic.flow.data.Box oldContainer = after.getParent();
+			com.top_logic.graphic.flow.data.Widget oldContainer = after.getParent();
 			if (oldContainer != null && oldContainer != this) {
 				throw new IllegalStateException("Object may not be part of two different containers.");
 			}
@@ -123,7 +123,7 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 		com.top_logic.graphic.flow.data.impl.Box_Impl before = (com.top_logic.graphic.flow.data.impl.Box_Impl) _east;
 		com.top_logic.graphic.flow.data.impl.Box_Impl after = (com.top_logic.graphic.flow.data.impl.Box_Impl) value;
 		if (after != null) {
-			com.top_logic.graphic.flow.data.Box oldContainer = after.getParent();
+			com.top_logic.graphic.flow.data.Widget oldContainer = after.getParent();
 			if (oldContainer != null && oldContainer != this) {
 				throw new IllegalStateException("Object may not be part of two different containers.");
 			}
@@ -159,7 +159,7 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 		com.top_logic.graphic.flow.data.impl.Box_Impl before = (com.top_logic.graphic.flow.data.impl.Box_Impl) _south;
 		com.top_logic.graphic.flow.data.impl.Box_Impl after = (com.top_logic.graphic.flow.data.impl.Box_Impl) value;
 		if (after != null) {
-			com.top_logic.graphic.flow.data.Box oldContainer = after.getParent();
+			com.top_logic.graphic.flow.data.Widget oldContainer = after.getParent();
 			if (oldContainer != null && oldContainer != this) {
 				throw new IllegalStateException("Object may not be part of two different containers.");
 			}
@@ -195,7 +195,7 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 		com.top_logic.graphic.flow.data.impl.Box_Impl before = (com.top_logic.graphic.flow.data.impl.Box_Impl) _center;
 		com.top_logic.graphic.flow.data.impl.Box_Impl after = (com.top_logic.graphic.flow.data.impl.Box_Impl) value;
 		if (after != null) {
-			com.top_logic.graphic.flow.data.Box oldContainer = after.getParent();
+			com.top_logic.graphic.flow.data.Widget oldContainer = after.getParent();
 			if (oldContainer != null && oldContainer != this) {
 				throw new IllegalStateException("Object may not be part of two different containers.");
 			}
@@ -287,6 +287,12 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 	@Override
 	public com.top_logic.graphic.flow.data.CompassLayout setHeight(double value) {
 		internalSetHeight(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.CompassLayout setUserObject(java.lang.Object value) {
+		internalSetUserObject(value);
 		return this;
 	}
 
@@ -443,157 +449,6 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 			case H_PADDING__PROP: setHPadding(in.nextDouble()); break;
 			case V_PADDING__PROP: setVPadding(in.nextDouble()); break;
 			default: super.readField(scope, in, field);
-		}
-	}
-
-	/** XML element name representing a {@link com.top_logic.graphic.flow.data.CompassLayout} type. */
-	public static final String COMPASS_LAYOUT__XML_ELEMENT = "compass-layout";
-
-	/** XML attribute or element name of a {@link #getNorth} property. */
-	private static final String NORTH__XML_ATTR = "north";
-
-	/** XML attribute or element name of a {@link #getWest} property. */
-	private static final String WEST__XML_ATTR = "west";
-
-	/** XML attribute or element name of a {@link #getEast} property. */
-	private static final String EAST__XML_ATTR = "east";
-
-	/** XML attribute or element name of a {@link #getSouth} property. */
-	private static final String SOUTH__XML_ATTR = "south";
-
-	/** XML attribute or element name of a {@link #getCenter} property. */
-	private static final String CENTER__XML_ATTR = "center";
-
-	/** XML attribute or element name of a {@link #getCenterHeight} property. */
-	private static final String CENTER_HEIGHT__XML_ATTR = "center-height";
-
-	/** XML attribute or element name of a {@link #getHPadding} property. */
-	private static final String H_PADDING__XML_ATTR = "h-padding";
-
-	/** XML attribute or element name of a {@link #getVPadding} property. */
-	private static final String V_PADDING__XML_ATTR = "v-padding";
-
-	@Override
-	public String getXmlTagName() {
-		return COMPASS_LAYOUT__XML_ELEMENT;
-	}
-
-	/** Serializes all fields that are written as XML attributes. */
-	@Override
-	protected void writeAttributes(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeAttributes(out);
-		out.writeAttribute(CENTER_HEIGHT__XML_ATTR, Double.toString(getCenterHeight()));
-		out.writeAttribute(H_PADDING__XML_ATTR, Double.toString(getHPadding()));
-		out.writeAttribute(V_PADDING__XML_ATTR, Double.toString(getVPadding()));
-	}
-
-	/** Serializes all fields that are written as XML elements. */
-	@Override
-	protected void writeElements(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeElements(out);
-		if (hasNorth()) {
-			out.writeStartElement(NORTH__XML_ATTR);
-			getNorth().writeTo(out);
-			out.writeEndElement();
-		}
-		if (hasWest()) {
-			out.writeStartElement(WEST__XML_ATTR);
-			getWest().writeTo(out);
-			out.writeEndElement();
-		}
-		if (hasEast()) {
-			out.writeStartElement(EAST__XML_ATTR);
-			getEast().writeTo(out);
-			out.writeEndElement();
-		}
-		if (hasSouth()) {
-			out.writeStartElement(SOUTH__XML_ATTR);
-			getSouth().writeTo(out);
-			out.writeEndElement();
-		}
-		if (hasCenter()) {
-			out.writeStartElement(CENTER__XML_ATTR);
-			getCenter().writeTo(out);
-			out.writeEndElement();
-		}
-	}
-
-	/** Creates a new {@link com.top_logic.graphic.flow.data.CompassLayout} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static CompassLayout_Impl readCompassLayout_XmlContent(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		CompassLayout_Impl result = new CompassLayout_Impl();
-		result.readContentXml(in);
-		return result;
-	}
-
-	@Override
-	protected void readFieldXmlAttribute(String name, String value) {
-		switch (name) {
-			case CENTER_HEIGHT__XML_ATTR: {
-				setCenterHeight(Double.parseDouble(value));
-				break;
-			}
-			case H_PADDING__XML_ATTR: {
-				setHPadding(Double.parseDouble(value));
-				break;
-			}
-			case V_PADDING__XML_ATTR: {
-				setVPadding(Double.parseDouble(value));
-				break;
-			}
-			default: {
-				super.readFieldXmlAttribute(name, value);
-			}
-		}
-	}
-
-	@Override
-	protected void readFieldXmlElement(javax.xml.stream.XMLStreamReader in, String localName) throws javax.xml.stream.XMLStreamException {
-		switch (localName) {
-			case NORTH__XML_ATTR: {
-				in.nextTag();
-				setNorth(com.top_logic.graphic.flow.data.impl.Box_Impl.readBox_XmlContent(in));
-				internalSkipUntilMatchingEndElement(in);
-				break;
-			}
-			case WEST__XML_ATTR: {
-				in.nextTag();
-				setWest(com.top_logic.graphic.flow.data.impl.Box_Impl.readBox_XmlContent(in));
-				internalSkipUntilMatchingEndElement(in);
-				break;
-			}
-			case EAST__XML_ATTR: {
-				in.nextTag();
-				setEast(com.top_logic.graphic.flow.data.impl.Box_Impl.readBox_XmlContent(in));
-				internalSkipUntilMatchingEndElement(in);
-				break;
-			}
-			case SOUTH__XML_ATTR: {
-				in.nextTag();
-				setSouth(com.top_logic.graphic.flow.data.impl.Box_Impl.readBox_XmlContent(in));
-				internalSkipUntilMatchingEndElement(in);
-				break;
-			}
-			case CENTER__XML_ATTR: {
-				in.nextTag();
-				setCenter(com.top_logic.graphic.flow.data.impl.Box_Impl.readBox_XmlContent(in));
-				internalSkipUntilMatchingEndElement(in);
-				break;
-			}
-			case CENTER_HEIGHT__XML_ATTR: {
-				setCenterHeight(Double.parseDouble(in.getElementText()));
-				break;
-			}
-			case H_PADDING__XML_ATTR: {
-				setHPadding(Double.parseDouble(in.getElementText()));
-				break;
-			}
-			case V_PADDING__XML_ATTR: {
-				setVPadding(Double.parseDouble(in.getElementText()));
-				break;
-			}
-			default: {
-				super.readFieldXmlElement(in, localName);
-			}
 		}
 	}
 

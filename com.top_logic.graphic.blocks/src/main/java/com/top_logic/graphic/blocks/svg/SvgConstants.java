@@ -28,6 +28,11 @@ public interface SvgConstants {
 	String VERSION_ATTR = "version";
 
 	/**
+	 * View-box attribute.
+	 */
+	String VIEWBOX_ATTR = "viewBox";
+
+	/**
 	 * With of the viewport.
 	 */
 	String WIDTH_ATTR = "width";

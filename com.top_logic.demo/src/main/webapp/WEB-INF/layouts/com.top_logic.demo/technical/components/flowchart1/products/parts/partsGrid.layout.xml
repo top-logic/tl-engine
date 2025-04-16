@@ -23,6 +23,7 @@
 			/>
 			<button id="createRow"
 				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
+				initOperation="product -> part -> $product.add(`test.flowchart:Product#parts`, $part)"
 			>
 				<checkScopeProvider/>
 				<type-options
@@ -33,7 +34,9 @@
 			<button id="deleteRow"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
 				target="selection(self())"
-			/>
+			>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation"/>
+			</button>
 		</buttons>
 	</arguments>
 </config:template-call>

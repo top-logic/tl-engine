@@ -13,7 +13,7 @@ public class GridLayout_Impl extends com.top_logic.graphic.flow.data.impl.Layout
 
 	private double _gapY = 0.0d;
 
-	private final java.util.List<Double> _rowHeight = new de.haumacher.msgbuf.util.ReferenceList<>() {
+	private final java.util.List<Double> _rowHeight = new de.haumacher.msgbuf.util.ReferenceList<Double>() {
 		@Override
 		protected void beforeAdd(int index, Double element) {
 			_listener.beforeAdd(GridLayout_Impl.this, ROW_HEIGHT__PROP, index, element);
@@ -25,7 +25,7 @@ public class GridLayout_Impl extends com.top_logic.graphic.flow.data.impl.Layout
 		}
 	};
 
-	private final java.util.List<Double> _colWidth = new de.haumacher.msgbuf.util.ReferenceList<>() {
+	private final java.util.List<Double> _colWidth = new de.haumacher.msgbuf.util.ReferenceList<Double>() {
 		@Override
 		protected void beforeAdd(int index, Double element) {
 			_listener.beforeAdd(GridLayout_Impl.this, COL_WIDTH__PROP, index, element);
@@ -222,6 +222,12 @@ public class GridLayout_Impl extends com.top_logic.graphic.flow.data.impl.Layout
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.GridLayout setUserObject(java.lang.Object value) {
+		internalSetUserObject(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return GRID_LAYOUT__TYPE;
 	}
@@ -386,124 +392,6 @@ public class GridLayout_Impl extends com.top_logic.graphic.flow.data.impl.Layout
 				return in.nextDouble();
 			}
 			default: return super.readElement(scope, in, field);
-		}
-	}
-
-	/** XML element name representing a {@link com.top_logic.graphic.flow.data.GridLayout} type. */
-	public static final String GRID_LAYOUT__XML_ELEMENT = "grid-layout";
-
-	/** XML attribute or element name of a {@link #getRows} property. */
-	private static final String ROWS__XML_ATTR = "rows";
-
-	/** XML attribute or element name of a {@link #getCols} property. */
-	private static final String COLS__XML_ATTR = "cols";
-
-	/** XML attribute or element name of a {@link #getGapX} property. */
-	private static final String GAP_X__XML_ATTR = "gap-x";
-
-	/** XML attribute or element name of a {@link #getGapY} property. */
-	private static final String GAP_Y__XML_ATTR = "gap-y";
-
-	/** XML attribute or element name of a {@link #getRowHeight} property. */
-	private static final String ROW_HEIGHT__XML_ATTR = "row-height";
-
-	/** XML attribute or element name of a {@link #getColWidth} property. */
-	private static final String COL_WIDTH__XML_ATTR = "col-width";
-
-	@Override
-	public String getXmlTagName() {
-		return GRID_LAYOUT__XML_ELEMENT;
-	}
-
-	/** Serializes all fields that are written as XML attributes. */
-	@Override
-	protected void writeAttributes(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeAttributes(out);
-		out.writeAttribute(ROWS__XML_ATTR, Integer.toString(getRows()));
-		out.writeAttribute(COLS__XML_ATTR, Integer.toString(getCols()));
-		out.writeAttribute(GAP_X__XML_ATTR, Double.toString(getGapX()));
-		out.writeAttribute(GAP_Y__XML_ATTR, Double.toString(getGapY()));
-		out.writeAttribute(ROW_HEIGHT__XML_ATTR, getRowHeight().stream().map(x -> Double.toString(x)).collect(java.util.stream.Collectors.joining(", ")));
-		out.writeAttribute(COL_WIDTH__XML_ATTR, getColWidth().stream().map(x -> Double.toString(x)).collect(java.util.stream.Collectors.joining(", ")));
-	}
-
-	/** Serializes all fields that are written as XML elements. */
-	@Override
-	protected void writeElements(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeElements(out);
-		// No element fields.
-	}
-
-	/** Creates a new {@link com.top_logic.graphic.flow.data.GridLayout} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static GridLayout_Impl readGridLayout_XmlContent(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		GridLayout_Impl result = new GridLayout_Impl();
-		result.readContentXml(in);
-		return result;
-	}
-
-	@Override
-	protected void readFieldXmlAttribute(String name, String value) {
-		switch (name) {
-			case ROWS__XML_ATTR: {
-				setRows(Integer.parseInt(value));
-				break;
-			}
-			case COLS__XML_ATTR: {
-				setCols(Integer.parseInt(value));
-				break;
-			}
-			case GAP_X__XML_ATTR: {
-				setGapX(Double.parseDouble(value));
-				break;
-			}
-			case GAP_Y__XML_ATTR: {
-				setGapY(Double.parseDouble(value));
-				break;
-			}
-			case ROW_HEIGHT__XML_ATTR: {
-				setRowHeight(java.util.Arrays.stream(value.split("\\s*,\\s*")).map(x -> Double.parseDouble(x)).collect(java.util.stream.Collectors.toList()));
-				break;
-			}
-			case COL_WIDTH__XML_ATTR: {
-				setColWidth(java.util.Arrays.stream(value.split("\\s*,\\s*")).map(x -> Double.parseDouble(x)).collect(java.util.stream.Collectors.toList()));
-				break;
-			}
-			default: {
-				super.readFieldXmlAttribute(name, value);
-			}
-		}
-	}
-
-	@Override
-	protected void readFieldXmlElement(javax.xml.stream.XMLStreamReader in, String localName) throws javax.xml.stream.XMLStreamException {
-		switch (localName) {
-			case ROWS__XML_ATTR: {
-				setRows(Integer.parseInt(in.getElementText()));
-				break;
-			}
-			case COLS__XML_ATTR: {
-				setCols(Integer.parseInt(in.getElementText()));
-				break;
-			}
-			case GAP_X__XML_ATTR: {
-				setGapX(Double.parseDouble(in.getElementText()));
-				break;
-			}
-			case GAP_Y__XML_ATTR: {
-				setGapY(Double.parseDouble(in.getElementText()));
-				break;
-			}
-			case ROW_HEIGHT__XML_ATTR: {
-				setRowHeight(java.util.Arrays.stream(in.getElementText().split("\\s*,\\s*")).map(x -> Double.parseDouble(x)).collect(java.util.stream.Collectors.toList()));
-				break;
-			}
-			case COL_WIDTH__XML_ATTR: {
-				setColWidth(java.util.Arrays.stream(in.getElementText().split("\\s*,\\s*")).map(x -> Double.parseDouble(x)).collect(java.util.stream.Collectors.toList()));
-				break;
-			}
-			default: {
-				super.readFieldXmlElement(in, localName);
-			}
 		}
 	}
 

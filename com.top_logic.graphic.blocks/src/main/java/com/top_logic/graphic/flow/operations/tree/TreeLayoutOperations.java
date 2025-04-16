@@ -131,7 +131,7 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		double minY;
 		if (column.size() > 0) {
 			Box last = column.get(column.size() - 1);
-			minY = last.getY() + last.getHeight() + self().getGapY();
+			minY = last.getBottomY() + self().getGapY();
 		} else {
 			minY = 0.0;
 		}
@@ -151,7 +151,7 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 					List<Box> down = columns.get(l);
 					if (down.size() > 0) {
 						Box bottom = down.get(down.size() - 1);
-						minY = Math.max(minY, bottom.getY() + bottom.getHeight() + self().getGapY());
+						minY = Math.max(minY, bottom.getBottomY() + self().getGapY());
 					}
 				}
 			}
@@ -168,7 +168,7 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 			Box last = nextLevel.get(nextLevel.size() - 1);
 
 			double firstY = first.getY();
-			double lastY = last.getY() + last.getHeight();
+			double lastY = last.getBottomY();
 
 			// Place node vertically in the middle of its direct children.
 			double centerY = (firstY + lastY - node.getHeight()) / 2;
@@ -243,7 +243,7 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 
 	default double fromX(Box box) {
 		// TODO: Depends on self().getDirection() - formulated for LTR:
-		return box.getX() + box.getWidth();
+		return box.getRightX();
 	}
 
 	default double toX(Box box) {

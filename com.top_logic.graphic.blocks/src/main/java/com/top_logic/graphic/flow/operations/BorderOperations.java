@@ -87,20 +87,20 @@ public interface BorderOperations extends DecorationOperations {
 		out.beginData();
 		out.moveToAbs(self().getX() + (self().isLeft() ? radius : 0), self().getY() + radius);
 		if (self().isTop()) {
-			out.lineToAbs(self().getX() + self().getWidth() - (self().isRight() ? radius : 0), self().getY() + radius);
+			out.lineToAbs(self().getRightX() - (self().isRight() ? radius : 0), self().getY() + radius);
 		} else {
-			out.moveToAbs(self().getX() + self().getWidth() - radius, self().getY());
+			out.moveToAbs(self().getRightX() - radius, self().getY());
 		}
 		if (self().isRight()) {
-			out.lineToAbs(self().getX() + self().getWidth() - radius,
-				self().getY() + self().getHeight() - (self().isBottom() ? radius : 0));
+			out.lineToAbs(self().getRightX() - radius,
+				self().getBottomY() - (self().isBottom() ? radius : 0));
 		} else {
-			out.moveToAbs(self().getX() + self().getWidth(), self().getY() + self().getHeight() - radius);
+			out.moveToAbs(self().getRightX(), self().getBottomY() - radius);
 		}
 		if (self().isBottom()) {
-			out.lineToAbs(self().getX() + (self().isLeft() ? radius : 0), self().getY() + self().getHeight() - radius);
+			out.lineToAbs(self().getX() + (self().isLeft() ? radius : 0), self().getBottomY() - radius);
 		} else {
-			out.moveToAbs(self().getX() + radius, self().getY() + self().getHeight());
+			out.moveToAbs(self().getX() + radius, self().getBottomY());
 		}
 		if (self().isLeft()) {
 			if (self().isTop() && self().isRight() && self().isBottom()) {

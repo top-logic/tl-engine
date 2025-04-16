@@ -59,11 +59,18 @@ public interface FloatingLayoutOperations extends BoxOperations {
 		out.beginGroup();
 		out.translate(self().getX(), self().getY());
 
+		drawContents(out);
+
+		out.endGroup();
+	}
+
+	/**
+	 * Draws all tree contents within the group that introduces the tree-local coordinate system.
+	 */
+	default void drawContents(SvgWriter out) {
 		for (Box node : self().getNodes()) {
 			node.draw(out);
 		}
-
-		out.endGroup();
 	}
 
 }

@@ -1,6 +1,6 @@
 package com.top_logic.graphic.flow.data;
 
-public interface TreeConnector extends Widget, com.top_logic.graphic.flow.model.tree.TreeConnectorOperations {
+public interface TreeConnector extends Widget, com.top_logic.graphic.flow.operations.tree.TreeConnectorOperations {
 
 	/**
 	 * Creates a {@link com.top_logic.graphic.flow.data.TreeConnector} instance.

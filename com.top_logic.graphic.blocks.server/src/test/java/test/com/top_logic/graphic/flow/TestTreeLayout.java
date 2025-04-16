@@ -37,16 +37,17 @@ public class TestTreeLayout extends TestCase {
 		Box n1;
 		Box n2;
 		Box n3;
-		FlowDiagram diagram = new FlowDiagram().setRoot(TreeLayout.create()
-			.addNode(root = node("Root"))
-			.addNode(n1 = node("N1"))
-			.addNode(n2 = node("N2"))
-			.addNode(n3 = node("N3"))
-			.addConnection(TreeConnection.create()
-				.setParent(connector(root))
-				.addChildren(connector(n1))
-				.addChildren(connector(n2))
-				.addChildren(connector(n3))));
+		FlowDiagram diagram = new FlowDiagram().setRoot(Padding.create().setAll(20).setContent(
+			TreeLayout.create()
+				.addNode(root = node("Root"))
+				.addNode(n1 = node("N1"))
+				.addNode(n2 = node("N2"))
+				.addNode(n3 = node("N3"))
+				.addConnection(TreeConnection.create()
+					.setParent(connector(root))
+					.addChildren(connector(n1))
+					.addChildren(connector(n2))
+					.addChildren(connector(n3)))));
 
 		String svg = writeToFile(diagram, "./target/TestTreeLayout-mini.svg");
 		
@@ -56,12 +57,12 @@ public class TestTreeLayout extends TestCase {
 			
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
-				height="132.0"
+				height="172.0"
 				version="1.1"
-				viewBox="0.0 0.0 126.0 132.0"
-				width="126.0"
+				viewBox="0.0 0.0 166.0 172.0"
+				width="166.0"
 			>
-				<g transform="translate(0.0,0.0)">
+				<g transform="translate(20.0,20.0)">
 					<text
 						x="6.0"
 						y="70.0"
@@ -102,13 +103,13 @@ public class TestTreeLayout extends TestCase {
 						stroke="black"
 						stroke-width="1.0"
 					/>
+					<path
+						d="M 60.0,66.0 H 75.0 M 90.0,12.0 L 75.0,12.0 L 75.0,66.0 M 90.0,66.0 L 75.0,66.0 L 75.0,66.0 M 90.0,120.0 L 75.0,120.0 L 75.0,66.0"
+						fill="none"
+						stroke="black"
+						stroke-width="1.0"
+					/>
 				</g>
-				<path
-					d="M 60.0,66.0 H 75.0 M 90.0,12.0 L 75.0,12.0 L 75.0,66.0 M 90.0,66.0 L 75.0,66.0 L 75.0,66.0 M 90.0,120.0 L 75.0,120.0 L 75.0,66.0"
-					fill="none"
-					stroke="black"
-					stroke-width="1.0"
-				/>
 			</svg>""", svg);
 
 	}
@@ -125,7 +126,7 @@ public class TestTreeLayout extends TestCase {
 			buildTree(tree, 0, root, rnd);
 		}
 
-		FlowDiagram diagram = new FlowDiagram().setRoot(tree);
+		FlowDiagram diagram = new FlowDiagram().setRoot(Padding.create().setAll(20).setContent(tree));
 
 		writeToFile(diagram, "./target/TestTreeLayout-random.svg");
 	}

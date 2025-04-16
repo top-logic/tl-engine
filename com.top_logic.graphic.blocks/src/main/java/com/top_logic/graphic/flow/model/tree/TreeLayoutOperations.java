@@ -187,8 +187,8 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 	}
 
 	@Override
-	default void draw(SvgWriter out) {
-		FloatingLayoutOperations.super.draw(out);
+	default void drawContents(SvgWriter out) {
+		FloatingLayoutOperations.super.drawContents(out);
 
 		for (TreeConnection connection : self().getConnections()) {
 			connection.draw(out);

@@ -242,7 +242,7 @@ public class JavaScriptMethod extends GenericMethod {
 						input : 
 							(input == null ? null : ToString.toString(input));
 			} else if (type.isEnum()) {
-				Method valueOf = type.getMethod("valueOf", String.class);
+				Method valueOf = lookupValueOf(type);
 				return input -> {
 					if (input instanceof String) {
 						try {
@@ -272,6 +272,14 @@ public class JavaScriptMethod extends GenericMethod {
 			} else {
 
 				return null;
+			}
+		}
+
+		private Method lookupValueOf(Class<?> type) throws NoSuchMethodException {
+			try {
+				return type.getMethod("valueOfProtocol", String.class);
+			} catch (NoSuchMethodException ex) {
+				return type.getMethod("valueOf", String.class);
 			}
 		}
 

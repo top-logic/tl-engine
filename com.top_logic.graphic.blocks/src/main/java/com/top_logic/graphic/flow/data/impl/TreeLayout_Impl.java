@@ -17,12 +17,12 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 
 	private double _thickness = 1.0;
 
-	private final java.util.List<com.top_logic.graphic.flow.data.TreeConnection> _connections = new de.haumacher.msgbuf.util.ReferenceList<>() {
+	private final java.util.List<com.top_logic.graphic.flow.data.TreeConnection> _connections = new de.haumacher.msgbuf.util.ReferenceList<com.top_logic.graphic.flow.data.TreeConnection>() {
 		@Override
 		protected void beforeAdd(int index, com.top_logic.graphic.flow.data.TreeConnection element) {
 			com.top_logic.graphic.flow.data.impl.TreeConnection_Impl added = (com.top_logic.graphic.flow.data.impl.TreeConnection_Impl) element;
 			com.top_logic.graphic.flow.data.TreeLayout oldContainer = added.getOwner();
-			if (oldContainer != null && oldContainer != this) {
+			if (oldContainer != null && oldContainer != TreeLayout_Impl.this) {
 				throw new IllegalStateException("Object may not be part of two different containers.");
 			}
 			_listener.beforeAdd(TreeLayout_Impl.this, CONNECTIONS__PROP, index, element);
@@ -225,6 +225,12 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.TreeLayout setUserObject(java.lang.Object value) {
+		internalSetUserObject(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return TREE_LAYOUT__TYPE;
 	}
@@ -375,146 +381,6 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 				return com.top_logic.graphic.flow.data.TreeConnection.readTreeConnection(scope, in);
 			}
 			default: return super.readElement(scope, in, field);
-		}
-	}
-
-	/** XML element name representing a {@link com.top_logic.graphic.flow.data.TreeLayout} type. */
-	public static final String TREE_LAYOUT__XML_ELEMENT = "tree-layout";
-
-	/** XML attribute or element name of a {@link #isCompact} property. */
-	private static final String COMPACT__XML_ATTR = "compact";
-
-	/** XML attribute or element name of a {@link #getDirection} property. */
-	private static final String DIRECTION__XML_ATTR = "direction";
-
-	/** XML attribute or element name of a {@link #getGapX} property. */
-	private static final String GAP_X__XML_ATTR = "gap-x";
-
-	/** XML attribute or element name of a {@link #getGapY} property. */
-	private static final String GAP_Y__XML_ATTR = "gap-y";
-
-	/** XML attribute or element name of a {@link #getStrokeStyle} property. */
-	private static final String STROKE_STYLE__XML_ATTR = "stroke-style";
-
-	/** XML attribute or element name of a {@link #getThickness} property. */
-	private static final String THICKNESS__XML_ATTR = "thickness";
-
-	/** XML attribute or element name of a {@link #getConnections} property. */
-	private static final String CONNECTIONS__XML_ATTR = "connections";
-
-	@Override
-	public String getXmlTagName() {
-		return TREE_LAYOUT__XML_ELEMENT;
-	}
-
-	/** Serializes all fields that are written as XML attributes. */
-	@Override
-	protected void writeAttributes(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeAttributes(out);
-		out.writeAttribute(COMPACT__XML_ATTR, Boolean.toString(isCompact()));
-		out.writeAttribute(DIRECTION__XML_ATTR, getDirection().protocolName());
-		out.writeAttribute(GAP_X__XML_ATTR, Double.toString(getGapX()));
-		out.writeAttribute(GAP_Y__XML_ATTR, Double.toString(getGapY()));
-		out.writeAttribute(STROKE_STYLE__XML_ATTR, getStrokeStyle());
-		out.writeAttribute(THICKNESS__XML_ATTR, Double.toString(getThickness()));
-	}
-
-	/** Serializes all fields that are written as XML elements. */
-	@Override
-	protected void writeElements(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeElements(out);
-		out.writeStartElement(CONNECTIONS__XML_ATTR);
-		for (com.top_logic.graphic.flow.data.TreeConnection element : getConnections()) {
-			element.writeTo(out);
-		}
-		out.writeEndElement();
-	}
-
-	/** Creates a new {@link com.top_logic.graphic.flow.data.TreeLayout} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static TreeLayout_Impl readTreeLayout_XmlContent(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		TreeLayout_Impl result = new TreeLayout_Impl();
-		result.readContentXml(in);
-		return result;
-	}
-
-	@Override
-	protected void readFieldXmlAttribute(String name, String value) {
-		switch (name) {
-			case COMPACT__XML_ATTR: {
-				setCompact(Boolean.parseBoolean(value));
-				break;
-			}
-			case DIRECTION__XML_ATTR: {
-				setDirection(com.top_logic.graphic.flow.data.DiagramDirection.valueOfProtocol(value));
-				break;
-			}
-			case GAP_X__XML_ATTR: {
-				setGapX(Double.parseDouble(value));
-				break;
-			}
-			case GAP_Y__XML_ATTR: {
-				setGapY(Double.parseDouble(value));
-				break;
-			}
-			case STROKE_STYLE__XML_ATTR: {
-				setStrokeStyle(value);
-				break;
-			}
-			case THICKNESS__XML_ATTR: {
-				setThickness(Double.parseDouble(value));
-				break;
-			}
-			default: {
-				super.readFieldXmlAttribute(name, value);
-			}
-		}
-	}
-
-	@Override
-	protected void readFieldXmlElement(javax.xml.stream.XMLStreamReader in, String localName) throws javax.xml.stream.XMLStreamException {
-		switch (localName) {
-			case COMPACT__XML_ATTR: {
-				setCompact(Boolean.parseBoolean(in.getElementText()));
-				break;
-			}
-			case DIRECTION__XML_ATTR: {
-				setDirection(com.top_logic.graphic.flow.data.DiagramDirection.valueOfProtocol(in.getElementText()));
-				break;
-			}
-			case GAP_X__XML_ATTR: {
-				setGapX(Double.parseDouble(in.getElementText()));
-				break;
-			}
-			case GAP_Y__XML_ATTR: {
-				setGapY(Double.parseDouble(in.getElementText()));
-				break;
-			}
-			case STROKE_STYLE__XML_ATTR: {
-				setStrokeStyle(in.getElementText());
-				break;
-			}
-			case THICKNESS__XML_ATTR: {
-				setThickness(Double.parseDouble(in.getElementText()));
-				break;
-			}
-			case CONNECTIONS__XML_ATTR: {
-				internalReadConnectionsListXml(in);
-				break;
-			}
-			default: {
-				super.readFieldXmlElement(in, localName);
-			}
-		}
-	}
-
-	private void internalReadConnectionsListXml(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		while (true) {
-			int event = in.nextTag();
-			if (event == javax.xml.stream.XMLStreamConstants.END_ELEMENT) {
-				break;
-			}
-
-			addConnection(com.top_logic.graphic.flow.data.impl.TreeConnection_Impl.readTreeConnection_XmlContent(in));
 		}
 	}
 

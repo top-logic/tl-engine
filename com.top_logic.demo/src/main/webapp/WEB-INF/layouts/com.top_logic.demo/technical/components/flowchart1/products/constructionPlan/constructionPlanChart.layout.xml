@@ -19,50 +19,65 @@ nodes = $parts.map(p ->
     flowVertical(
         userObject: $p,
         contents: [
+            {
+                marker = $p.get(`test.flowchart:FlowNode#marker`);
+                $marker.isEmpty()
+                    ? null
+                    : flowAlign(
+                        hAlign: "middle", 
+                        content: 
+                            flowBorder(
+                                stroke: "red", 
+                                dashes: [5, 5], 
+                                content: flowPadding(
+                                    all: 4, 
+                                    content: flowText($marker))))
+            },
+            flowAlign(
+                hAlign: "middle", 
+                content: flowPadding(
+                    all: 4, 
+                    content: flowText($p.get(`test.flowchart:FlowNode#name`))
+            )),
+            flowGrid(
+                gapY: -1, 
+                contents: $p.get(`test.flowchart:FlowNode#locations`).map(l -> [
                     {
-                        marker = $p.get(`test.flowchart:FlowNode#marker`);
-                        $marker ? flowAlign(hAlign: "middle", content: 
-                            flowBorder(stroke: "red", dashes: [5, 5], content: 
-                                flowPadding(all: 4, content: 
-                                    flowText($marker))
-                            )
-                        ) : null
+                        count = $l.get(`test.flowchart:Location#count`);
+                        $count == null 
+                            ? null
+                            : flowBorder(
+                                right: false,  
+                                content: flowText($count))
                     },
-                    flowAlign(hAlign: "middle", 
-                        content: flowPadding(all: 4, 
-                            content: flowText($p.get(`test.flowchart:FlowNode#name`))
-                    )),
-                    flowGrid(gapY: -1, 
-                        contents: $p.get(`test.flowchart:FlowNode#locations`).map(l -> 
-                            [
-                                {
-                                    count = $l.get(`test.flowchart:Location#count`);
-                                    $count != null ? 
-                                        flowBorder(right: false,  
-                                            content: flowText($count)) : null
-                                },
-                                flowBorder(
-                                    content: flowFill(
-                                        fill: $l.get(`test.flowchart:Location#part`)
-                                            .get(`test.flowchart:Part#color`), 
-                                        content: 
-                                            flowText($l.get(`test.flowchart:Location#part`))
-                                    )
-                                ),
-                                {
-                                    usages = $l.get(`test.flowchart:Location#usages`);
-                                    $usages ? 
-                                        flowAlign(
-                                            content: flowBorder(left: false, 
-                                                content: flowText($usages))) : null
-                                }
-                            ]
+                    flowBorder(
+                        content: flowFill(
+                            fill: $l.get(`test.flowchart:Location#part`)
+                                .get(`test.flowchart:Part#color`), 
+                            content: 
+                                flowText($l.get(`test.flowchart:Location#part`))
                         )
                     ),
-                    flowPadding(top: 8, 
-                        content: flowBorder(
-                            flowImage($p.get(`test.flowchart:FlowNode#image`))))
+                    {
+                        usages = $l.get(`test.flowchart:Location#usages`);
+                        $usages.isEmpty() 
+                            ? null 
+                            : flowAlign(
+                                content: flowBorder(
+                                    left: false, 
+                                    content: flowText($usages)))
+                    }
                 ])
+            ),
+            {
+                image = $p.get(`test.flowchart:FlowNode#image`);
+                $image == null
+                    ? null
+                    : flowPadding(
+                        top: 8, 
+                        content: flowBorder(flowImage($image)))
+            }
+        ])
     );
 
 nodeByPart = $nodes.indexBy(n -> $n["userObject"]);

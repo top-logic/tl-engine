@@ -5,12 +5,12 @@ package com.top_logic.graphic.flow.data.impl;
  */
 public abstract class Layout_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl implements com.top_logic.graphic.flow.data.Layout {
 
-	private final java.util.List<com.top_logic.graphic.flow.data.Box> _contents = new de.haumacher.msgbuf.util.ReferenceList<>() {
+	private final java.util.List<com.top_logic.graphic.flow.data.Box> _contents = new de.haumacher.msgbuf.util.ReferenceList<com.top_logic.graphic.flow.data.Box>() {
 		@Override
 		protected void beforeAdd(int index, com.top_logic.graphic.flow.data.Box element) {
 			com.top_logic.graphic.flow.data.impl.Box_Impl added = (com.top_logic.graphic.flow.data.impl.Box_Impl) element;
-			com.top_logic.graphic.flow.data.Box oldContainer = added.getParent();
-			if (oldContainer != null && oldContainer != this) {
+			com.top_logic.graphic.flow.data.Widget oldContainer = added.getParent();
+			if (oldContainer != null && oldContainer != Layout_Impl.this) {
 				throw new IllegalStateException("Object may not be part of two different containers.");
 			}
 			_listener.beforeAdd(Layout_Impl.this, CONTENTS__PROP, index, element);
@@ -87,6 +87,12 @@ public abstract class Layout_Impl extends com.top_logic.graphic.flow.data.impl.B
 	@Override
 	public com.top_logic.graphic.flow.data.Layout setHeight(double value) {
 		internalSetHeight(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Layout setUserObject(java.lang.Object value) {
+		internalSetUserObject(value);
 		return this;
 	}
 
@@ -176,84 +182,6 @@ public abstract class Layout_Impl extends com.top_logic.graphic.flow.data.impl.B
 				return com.top_logic.graphic.flow.data.Box.readBox(scope, in);
 			}
 			default: return super.readElement(scope, in, field);
-		}
-	}
-
-	/** XML element name representing a {@link com.top_logic.graphic.flow.data.Layout} type. */
-	public static final String LAYOUT__XML_ELEMENT = "layout";
-
-	/** XML attribute or element name of a {@link #getContents} property. */
-	private static final String CONTENTS__XML_ATTR = "contents";
-
-	/** Serializes all fields that are written as XML attributes. */
-	@Override
-	protected void writeAttributes(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeAttributes(out);
-	}
-
-	/** Serializes all fields that are written as XML elements. */
-	@Override
-	protected void writeElements(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeElements(out);
-		out.writeStartElement(CONTENTS__XML_ATTR);
-		for (com.top_logic.graphic.flow.data.Box element : getContents()) {
-			element.writeTo(out);
-		}
-		out.writeEndElement();
-	}
-
-	/** Creates a new {@link com.top_logic.graphic.flow.data.Layout} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static Layout_Impl readLayout_XmlContent(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		switch (in.getLocalName()) {
-			case GridLayout_Impl.GRID_LAYOUT__XML_ELEMENT: {
-				return com.top_logic.graphic.flow.data.impl.GridLayout_Impl.readGridLayout_XmlContent(in);
-			}
-
-			case HorizontalLayout_Impl.HORIZONTAL_LAYOUT__XML_ELEMENT: {
-				return com.top_logic.graphic.flow.data.impl.HorizontalLayout_Impl.readHorizontalLayout_XmlContent(in);
-			}
-
-			case VerticalLayout_Impl.VERTICAL_LAYOUT__XML_ELEMENT: {
-				return com.top_logic.graphic.flow.data.impl.VerticalLayout_Impl.readVerticalLayout_XmlContent(in);
-			}
-
-			default: {
-				internalSkipUntilMatchingEndElement(in);
-				return null;
-			}
-		}
-	}
-
-	@Override
-	protected void readFieldXmlAttribute(String name, String value) {
-		switch (name) {
-			default: {
-				super.readFieldXmlAttribute(name, value);
-			}
-		}
-	}
-
-	@Override
-	protected void readFieldXmlElement(javax.xml.stream.XMLStreamReader in, String localName) throws javax.xml.stream.XMLStreamException {
-		switch (localName) {
-			case CONTENTS__XML_ATTR: {
-				internalReadContentsListXml(in);
-				break;
-			}
-			default: {
-				super.readFieldXmlElement(in, localName);
-			}
-		}
-	}
-
-	private void internalReadContentsListXml(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		while (true) {
-			int event = in.nextTag();
-			if (event == javax.xml.stream.XMLStreamConstants.END_ELEMENT) {
-				break;
-			}
-
-			addContent(com.top_logic.graphic.flow.data.impl.Box_Impl.readBox_XmlContent(in));
 		}
 	}
 

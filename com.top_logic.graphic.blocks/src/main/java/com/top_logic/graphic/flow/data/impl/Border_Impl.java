@@ -17,7 +17,7 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 
 	private boolean _right = true;
 
-	private final java.util.List<Double> _dashes = new de.haumacher.msgbuf.util.ReferenceList<>() {
+	private final java.util.List<Double> _dashes = new de.haumacher.msgbuf.util.ReferenceList<Double>() {
 		@Override
 		protected void beforeAdd(int index, Double element) {
 			_listener.beforeAdd(Border_Impl.this, DASHES__PROP, index, element);
@@ -209,6 +209,12 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Border setUserObject(java.lang.Object value) {
+		internalSetUserObject(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return BORDER__TYPE;
 	}
@@ -359,136 +365,6 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 				return in.nextDouble();
 			}
 			default: return super.readElement(scope, in, field);
-		}
-	}
-
-	/** XML element name representing a {@link com.top_logic.graphic.flow.data.Border} type. */
-	public static final String BORDER__XML_ELEMENT = "border";
-
-	/** XML attribute or element name of a {@link #getStrokeStyle} property. */
-	private static final String STROKE_STYLE__XML_ATTR = "stroke-style";
-
-	/** XML attribute or element name of a {@link #getThickness} property. */
-	private static final String THICKNESS__XML_ATTR = "thickness";
-
-	/** XML attribute or element name of a {@link #isTop} property. */
-	private static final String TOP__XML_ATTR = "top";
-
-	/** XML attribute or element name of a {@link #isLeft} property. */
-	private static final String LEFT__XML_ATTR = "left";
-
-	/** XML attribute or element name of a {@link #isBottom} property. */
-	private static final String BOTTOM__XML_ATTR = "bottom";
-
-	/** XML attribute or element name of a {@link #isRight} property. */
-	private static final String RIGHT__XML_ATTR = "right";
-
-	/** XML attribute or element name of a {@link #getDashes} property. */
-	private static final String DASHES__XML_ATTR = "dashes";
-
-	@Override
-	public String getXmlTagName() {
-		return BORDER__XML_ELEMENT;
-	}
-
-	/** Serializes all fields that are written as XML attributes. */
-	@Override
-	protected void writeAttributes(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeAttributes(out);
-		out.writeAttribute(STROKE_STYLE__XML_ATTR, getStrokeStyle());
-		out.writeAttribute(THICKNESS__XML_ATTR, Double.toString(getThickness()));
-		out.writeAttribute(TOP__XML_ATTR, Boolean.toString(isTop()));
-		out.writeAttribute(LEFT__XML_ATTR, Boolean.toString(isLeft()));
-		out.writeAttribute(BOTTOM__XML_ATTR, Boolean.toString(isBottom()));
-		out.writeAttribute(RIGHT__XML_ATTR, Boolean.toString(isRight()));
-		out.writeAttribute(DASHES__XML_ATTR, getDashes().stream().map(x -> Double.toString(x)).collect(java.util.stream.Collectors.joining(", ")));
-	}
-
-	/** Serializes all fields that are written as XML elements. */
-	@Override
-	protected void writeElements(javax.xml.stream.XMLStreamWriter out) throws javax.xml.stream.XMLStreamException {
-		super.writeElements(out);
-		// No element fields.
-	}
-
-	/** Creates a new {@link com.top_logic.graphic.flow.data.Border} and reads properties from the content (attributes and inner tags) of the currently open element in the given {@link javax.xml.stream.XMLStreamReader}. */
-	public static Border_Impl readBorder_XmlContent(javax.xml.stream.XMLStreamReader in) throws javax.xml.stream.XMLStreamException {
-		Border_Impl result = new Border_Impl();
-		result.readContentXml(in);
-		return result;
-	}
-
-	@Override
-	protected void readFieldXmlAttribute(String name, String value) {
-		switch (name) {
-			case STROKE_STYLE__XML_ATTR: {
-				setStrokeStyle(value);
-				break;
-			}
-			case THICKNESS__XML_ATTR: {
-				setThickness(Double.parseDouble(value));
-				break;
-			}
-			case TOP__XML_ATTR: {
-				setTop(Boolean.parseBoolean(value));
-				break;
-			}
-			case LEFT__XML_ATTR: {
-				setLeft(Boolean.parseBoolean(value));
-				break;
-			}
-			case BOTTOM__XML_ATTR: {
-				setBottom(Boolean.parseBoolean(value));
-				break;
-			}
-			case RIGHT__XML_ATTR: {
-				setRight(Boolean.parseBoolean(value));
-				break;
-			}
-			case DASHES__XML_ATTR: {
-				setDashes(java.util.Arrays.stream(value.split("\\s*,\\s*")).map(x -> Double.parseDouble(x)).collect(java.util.stream.Collectors.toList()));
-				break;
-			}
-			default: {
-				super.readFieldXmlAttribute(name, value);
-			}
-		}
-	}
-
-	@Override
-	protected void readFieldXmlElement(javax.xml.stream.XMLStreamReader in, String localName) throws javax.xml.stream.XMLStreamException {
-		switch (localName) {
-			case STROKE_STYLE__XML_ATTR: {
-				setStrokeStyle(in.getElementText());
-				break;
-			}
-			case THICKNESS__XML_ATTR: {
-				setThickness(Double.parseDouble(in.getElementText()));
-				break;
-			}
-			case TOP__XML_ATTR: {
-				setTop(Boolean.parseBoolean(in.getElementText()));
-				break;
-			}
-			case LEFT__XML_ATTR: {
-				setLeft(Boolean.parseBoolean(in.getElementText()));
-				break;
-			}
-			case BOTTOM__XML_ATTR: {
-				setBottom(Boolean.parseBoolean(in.getElementText()));
-				break;
-			}
-			case RIGHT__XML_ATTR: {
-				setRight(Boolean.parseBoolean(in.getElementText()));
-				break;
-			}
-			case DASHES__XML_ATTR: {
-				setDashes(java.util.Arrays.stream(in.getElementText().split("\\s*,\\s*")).map(x -> Double.parseDouble(x)).collect(java.util.stream.Collectors.toList()));
-				break;
-			}
-			default: {
-				super.readFieldXmlElement(in, localName);
-			}
 		}
 	}
 

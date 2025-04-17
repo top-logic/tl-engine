@@ -34,6 +34,7 @@
 					<java name="flowBorder" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowBorder"/>
 					<java name="flowFill" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowFill"/>
 					<java name="flowPadding" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowPadding"/>
+					<java name="flowSelection" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowSelection"/>
 					<java name="flowHorizontal" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowHorizontal"/>
 					<java name="flowVertical" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowVertical"/>
 					<java name="flowCompass" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowCompass"/>

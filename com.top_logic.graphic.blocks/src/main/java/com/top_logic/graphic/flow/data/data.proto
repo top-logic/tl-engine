@@ -259,6 +259,14 @@ abstract message Decoration extends Box {
 	Box content;
 }
 
+@Operations("com.top_logic.graphic.flow.operations.SelectableBoxOperations")
+message SelectableBox extends Decoration {
+
+	/** Whether this element is currently selected. */
+	bool selected;
+	
+}
+
 @Operations("com.top_logic.graphic.flow.operations.AlignOperations")
 message Align extends Decoration {
 	Alignment xAlign;

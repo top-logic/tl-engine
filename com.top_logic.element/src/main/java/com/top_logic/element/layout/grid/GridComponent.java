@@ -185,13 +185,10 @@ import com.top_logic.layout.tree.component.TreeModelBuilder;
 import com.top_logic.layout.tree.component.WithSelectionPath;
 import com.top_logic.layout.tree.model.TreeViewConfig;
 import com.top_logic.mig.html.AbstractRestrainedSelectionModel;
-import com.top_logic.mig.html.DefaultMultiSelectionModel;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelConfig;
-import com.top_logic.mig.html.SelectionModelFactory;
-import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.mig.html.layout.CommandRegistry;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.DialogInfo;
@@ -3971,23 +3968,6 @@ public class GridComponent extends EditComponent implements
 			return new GridComponent.GridContentRenderer(controlProvider, customRenderer);
 		}
     }
-
-	/**
-	 * {@link SelectionModelFactory} creating {@link DefaultMultiSelectionModel}.
-	 * 
-	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
-	 */
-	public static class DefaultMultiSelectionModelFactory extends SelectionModelFactory {
-
-		/** Singleton {@link GridComponent.DefaultMultiSelectionModelFactory} instance. */
-		public static final DefaultMultiSelectionModelFactory INSTANCE = new DefaultMultiSelectionModelFactory();
-
-		@Override
-		public SelectionModel newSelectionModel(SelectionModelOwner owner) {
-			return new DefaultMultiSelectionModel(owner);
-		}
-
-	}
 
     /**
      * Whether the given row model is a (still transient) object being created.

@@ -40,6 +40,7 @@ import com.top_logic.graphic.flow.data.Image;
 import com.top_logic.graphic.flow.data.ImageAlign;
 import com.top_logic.graphic.flow.data.ImageScale;
 import com.top_logic.graphic.flow.data.Padding;
+import com.top_logic.graphic.flow.data.SelectableBox;
 import com.top_logic.graphic.flow.data.SpaceDistribution;
 import com.top_logic.graphic.flow.data.Text;
 import com.top_logic.graphic.flow.data.TreeConnection;
@@ -288,9 +289,9 @@ public class FlowFactory {
 	 * Factory for {@link Empty} boxes that produce gaps.
 	 */
 	public static Box flowEmpty(
-			Double width,
-			Double height,
-			Object userObject
+		Double width,
+		Double height,
+		Object userObject
 	) {
 		return Empty.create()
 			.setMinWidth(width)
@@ -359,6 +360,18 @@ public class FlowFactory {
 		return result.setUserObject(userObject);
 	}
 
+	/**
+	 * Creates an are that is user-selectable.
+	 */
+	public static Box flowSelection(
+		Box content,
+		Object userObject
+	) {
+		return SelectableBox.create()
+			.setContent(content)
+			.setUserObject(userObject);
+	}
+	
 	/**
 	 * Creates a tree layout.
 	 *

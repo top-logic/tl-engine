@@ -19,10 +19,7 @@ public interface FillOperations extends DecorationOperations {
 	@Override
 	default void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
 		self().getContent().distributeSize(context, offsetX, offsetY, width, height);
-		self().setX(offsetX);
-		self().setY(offsetY);
-		self().setWidth(width);
-		self().setHeight(height);
+		self().setX(offsetX).setY(offsetY).setWidth(width).setHeight(height);
 	}
 
 	@Override
@@ -31,11 +28,13 @@ public interface FillOperations extends DecorationOperations {
 		out.setStroke("none");
 		out.setFill(self().getFillStyle());
 		out.beginData();
-		out.moveToAbs(self().getX(), self().getY());
-		out.lineToHorizontalAbs(self().getRightX());
-		out.lineToVerticalAbs(self().getBottomY());
-		out.lineToHorizontalAbs(self().getX());
-		out.closePath();
+		{
+			out.moveToAbs(self().getX(), self().getY());
+			out.lineToHorizontalAbs(self().getRightX());
+			out.lineToVerticalAbs(self().getBottomY());
+			out.lineToHorizontalAbs(self().getX());
+			out.closePath();
+		}
 		out.endData();
 		out.endPath();
 

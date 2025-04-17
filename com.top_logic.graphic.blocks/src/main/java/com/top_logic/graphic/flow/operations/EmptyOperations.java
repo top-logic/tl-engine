@@ -7,11 +7,15 @@ package com.top_logic.graphic.flow.operations;
 
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
+import com.top_logic.graphic.flow.data.Empty;
 
 /**
  * An empty space.
  */
 public interface EmptyOperations extends BoxOperations {
+
+	@Override
+	Empty self();
 
 	@Override
 	default void draw(SvgWriter out) {
@@ -20,8 +24,8 @@ public interface EmptyOperations extends BoxOperations {
 
 	@Override
 	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
-		self().setWidth(0);
-		self().setHeight(0);
+		self().setWidth(self().getMinWidth());
+		self().setHeight(self().getMinHeight());
 	}
 
 	@Override

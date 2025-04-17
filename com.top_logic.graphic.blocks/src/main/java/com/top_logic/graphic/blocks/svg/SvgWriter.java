@@ -6,6 +6,8 @@
 package com.top_logic.graphic.blocks.svg;
 
 import com.top_logic.graphic.blocks.math.Vec;
+import com.top_logic.graphic.blocks.svg.event.SVGClickEvent;
+import com.top_logic.graphic.blocks.svg.event.SVGClickHandler;
 import com.top_logic.graphic.flow.data.ImageAlign;
 import com.top_logic.graphic.flow.data.ImageScale;
 
@@ -291,4 +293,24 @@ public interface SvgWriter extends AutoCloseable {
 	 *        The scaling strategy.
 	 */
 	void image(double x, double y, double width, double height, String href, ImageAlign align, ImageScale scale);
+
+	/**
+	 * Attaches a callback to the created SVG document that is called, if the user clicks on the
+	 * currently created element.
+	 * 
+	 * <p>
+	 * This is an optional method that is only supported, for special writers that construct
+	 * interactive documents. In all other cases, calls to this method are ignored.
+	 * </p>
+	 *
+	 * @param handler
+	 *        The callback that is invoked upon click.
+	 * @param sender
+	 *        The user object to pass to the invoked callback. See
+	 *        {@link SVGClickEvent#getSender()}.
+	 */
+	default void attachOnClick(SVGClickHandler handler, Object sender) {
+		// Ignore by default. This is only supported in specialized writers that build interactive
+		// DOM trees.
+	}
 }

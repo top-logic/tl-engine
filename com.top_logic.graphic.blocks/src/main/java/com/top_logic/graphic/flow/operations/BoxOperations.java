@@ -8,6 +8,8 @@ package com.top_logic.graphic.flow.operations;
 import com.top_logic.graphic.blocks.model.Drawable;
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.flow.data.Box;
+import com.top_logic.graphic.flow.data.Diagram;
+import com.top_logic.graphic.flow.data.Widget;
 
 /**
  * 
@@ -36,6 +38,17 @@ public interface BoxOperations extends Drawable, MapLike {
 	 */
 	default double getBottomY() {
 		return self().getY() + self().getHeight();
+	}
+
+	/**
+	 * The top-level {@link Diagram}, this box is part of.
+	 */
+	default Diagram getDiagram() {
+		Widget ancestor = self().getParent();
+		while (ancestor instanceof Box box) {
+			ancestor = box.getParent();
+		}
+		return (Diagram) ancestor;
 	}
 
 	void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY);

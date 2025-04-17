@@ -12,6 +12,32 @@ public interface Empty extends Box, com.top_logic.graphic.flow.operations.EmptyO
 	/** Identifier for the {@link com.top_logic.graphic.flow.data.Empty} type in JSON format. */
 	String EMPTY__TYPE = "Empty";
 
+	/** @see #getMinWidth() */
+	String MIN_WIDTH__PROP = "minWidth";
+
+	/** @see #getMinHeight() */
+	String MIN_HEIGHT__PROP = "minHeight";
+
+	/**
+	 * The minimum width of the element to allow to reserve some space.
+	 */
+	double getMinWidth();
+
+	/**
+	 * @see #getMinWidth()
+	 */
+	com.top_logic.graphic.flow.data.Empty setMinWidth(double value);
+
+	/**
+	 * The minimum height of the element to allow to reserve some space.
+	 */
+	double getMinHeight();
+
+	/**
+	 * @see #getMinHeight()
+	 */
+	com.top_logic.graphic.flow.data.Empty setMinHeight(double value);
+
 	@Override
 	com.top_logic.graphic.flow.data.Empty setX(double value);
 

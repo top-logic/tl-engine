@@ -285,6 +285,20 @@ public class FlowFactory {
 	}
 
 	/**
+	 * Factory for {@link Empty} boxes that produce gaps.
+	 */
+	public static Box flowEmpty(
+			Double width,
+			Double height,
+			Object userObject
+	) {
+		return Empty.create()
+			.setMinWidth(width)
+			.setMinHeight(height)
+			.setUserObject(userObject);
+	}
+
+	/**
 	 * Factory for {@link Image}.
 	 */
 	public static Box flowImage(

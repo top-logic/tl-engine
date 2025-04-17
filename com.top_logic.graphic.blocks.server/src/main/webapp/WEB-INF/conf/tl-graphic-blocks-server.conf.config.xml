@@ -27,6 +27,7 @@
 			<instance class="com.top_logic.model.search.expr.config.SearchBuilder">
 				<methods>
 					<java name="flowChart" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowChart"/>
+					<java name="flowEmpty" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowEmpty"/>
 					<java name="flowText" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowText"/>
 					<java name="flowImage" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowImage"/>
 					<java name="flowAlign" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowAlign"/>

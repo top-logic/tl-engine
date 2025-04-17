@@ -10,10 +10,6 @@
 
   <artifactId>tl-graphic-blocks</artifactId>
 
-  <properties>
-    <msgbuf.version>1.1.8-SNAPSHOT</msgbuf.version>
-  </properties>
-
   <dependencies>
   	<dependency>
 		<groupId>com.top-logic</groupId>

@@ -247,6 +247,11 @@ enum ImageScale {
 
 @Operations("com.top_logic.graphic.flow.operations.EmptyOperations")
 message Empty extends Box {
+	/** The minimum width of the element to allow to reserve some space. */
+	double minWidth;
+	
+	/** The minimum height of the element to allow to reserve some space. */
+	double minHeight;
 }
 
 @Operations("com.top_logic.graphic.flow.operations.DecorationOperations")

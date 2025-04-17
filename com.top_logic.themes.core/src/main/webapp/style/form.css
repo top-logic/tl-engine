@@ -1975,6 +1975,17 @@ input[type="checkbox"]:checked::before {
 	font-weight: 900;
 }
 
+input[type="checkbox"]:indeterminate::before {
+	font-weight: 900;
+	color: var(--text-disabled);
+}
+
+input[type="checkbox"]:indeterminate::after { 
+	font-family: 'Font Awesome 6 Free';
+	content: "\f0c8";
+	margin-left: calc(-1em + 2px);
+}
+
 /*
 ****										****
 ****	ChoiceControl, bbc-option styles	****

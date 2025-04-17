@@ -18,9 +18,14 @@ import org.vectomatic.dom.svg.OMSVGTransform;
 import org.vectomatic.dom.svg.OMSVGTransformList;
 import org.vectomatic.dom.svg.itf.ISVGTransformable;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+
 import com.top_logic.graphic.blocks.svg.SVGColor;
 import com.top_logic.graphic.blocks.svg.SvgUtil;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
+import com.top_logic.graphic.blocks.svg.event.SVGClickEvent;
+import com.top_logic.graphic.blocks.svg.event.SVGClickHandler;
 import com.top_logic.graphic.flow.data.ImageAlign;
 import com.top_logic.graphic.flow.data.ImageScale;
 
@@ -265,6 +270,21 @@ public class SVGBuilder implements SvgWriter {
 		OMSVGImageElement img = _doc.createSVGImageElement((float) x, (float) y, (float) width, (float) height, href);
 		img.setAttribute(PRESERVE_ASPECT_RATIO_ATTR, align + " " + scale);
 		appendChild(img);
+	}
+
+	@Override
+	public void attachOnClick(SVGClickHandler handler, Object sender) {
+		_current.addHandler(new ClickHandler() {
+			@Override
+			public void onClick(ClickEvent event) {
+				handler.onClick(new SVGClickEvent() {
+					@Override
+					public Object getSender() {
+						return sender;
+					}
+				});
+			}
+		}, ClickEvent.getType());
 	}
 
 	private void setParent(OMSVGElement next) {

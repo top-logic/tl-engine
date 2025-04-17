@@ -36,9 +36,10 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptorBuilder;
+import com.top_logic.util.error.TopLogicException;
 
 /**
- * Reflection-based {@link GenericMethod} calling static Java utilities.
+ * Reflection-based {@link GenericMethod TL-Script method} calling a static Java utility.
  */
 public class JavaScriptMethod extends GenericMethod {
 
@@ -198,37 +199,38 @@ public class JavaScriptMethod extends GenericMethod {
 					Logger.error("Cannot instantiate converter for: " + param, ex, JavaScriptMethod.class);
 				}
 			}
-			return converter(param.getType());
+			return defaultConverter(param, param.getType());
 		}
 
-		private ValueConverter converter(Class<?> type) throws NoSuchMethodException, SecurityException {
+		private ValueConverter defaultConverter(Parameter param, Class<?> type)
+				throws NoSuchMethodException, SecurityException {
 			if (type == double.class) {
-				return input -> input instanceof Double ? input : ((Number) input).doubleValue();
+				return input -> input instanceof Double ? input : asNumber(param, input).doubleValue();
 			} else if (type == Double.class) {
 				return 
 					input -> input instanceof Double ? input
-						: input == null ? null : Double.valueOf(((Number) input).doubleValue());
+						: input == null ? null : Double.valueOf(asNumber(param, input).doubleValue());
 			} else if (type == float.class) {
 				return 
-					input -> input instanceof Float ? input : ((Number) input).floatValue();
+				input -> input instanceof Float ? input : asNumber(param, input).floatValue();
 			} else if (type == Float.class) {
 				return 
 					input -> input instanceof Float ? input
-						: input == null ? null : Float.valueOf(((Number) input).floatValue());
+						: input == null ? null : Float.valueOf(asNumber(param, input).floatValue());
 			} else if (type == int.class) {
 				return 
-					input -> input instanceof Integer ? input : ((Number) input).intValue();
+				input -> input instanceof Integer ? input : asNumber(param, input).intValue();
 			} else if (type == Integer.class) {
 				return 
 					input -> input instanceof Integer ? input
-						: input == null ? null : Integer.valueOf(((Number) input).intValue());
+						: input == null ? null : Integer.valueOf(asNumber(param, input).intValue());
 			} else if (type == long.class) {
 				return 
-				input -> input instanceof Long ? input : ((Number) input).longValue();
+				input -> input instanceof Long ? input : asNumber(param, input).longValue();
 			} else if (type == Long.class) {
 				return 
 					input -> input instanceof Long ? input
-						: input == null ? null : Long.valueOf(((Number) input).longValue());
+						: input == null ? null : Long.valueOf(asNumber(param, input).longValue());
 			} else if (type == boolean.class) {
 				return 
 					input -> input instanceof Boolean ? input : SearchExpression.asBoolean(input);
@@ -256,7 +258,7 @@ public class JavaScriptMethod extends GenericMethod {
 				};
 			} else if (type.isArray()) {
 				Class<?> componentType = type.componentType();
-				ValueConverter inner = converter(componentType);
+				ValueConverter inner = defaultConverter(param, componentType);
 
 				return input -> {
 					if (input instanceof Collection<?> coll) {
@@ -269,9 +271,31 @@ public class JavaScriptMethod extends GenericMethod {
 					}
 					return input;
 				};
-			} else {
-
+			} else if (type == Object.class) {
+				// No conversion necessary.
 				return null;
+			} else {
+				return input -> asType(param, type, input);
+			}
+		}
+
+		private Object asType(Parameter param, Class<?> type, Object input) {
+			if (input == null) {
+				return null;
+			}
+			if (type.isInstance(input)) {
+				return input;
+			}
+			throw new TopLogicException(I18NConstants.ERROR_WRONG_ARGUMENT__FUN_ARG_EXPECTED_VAL.fill(getName(),
+				param.getName(), type.getSimpleName(), input));
+		}
+
+		private Number asNumber(Parameter param, Object input) {
+			if (input instanceof Number number) {
+				return number;
+			} else {
+				throw new TopLogicException(I18NConstants.ERROR_WRONG_ARGUMENT__FUN_ARG_EXPECTED_VAL.fill(getName(),
+					param.getName(), "Number", input));
 			}
 		}
 

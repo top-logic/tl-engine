@@ -15,7 +15,7 @@
 			value="true"
 		/>
 		<param name="selectionModelFactory">
-			<selectionModelFactory class="com.top_logic.element.layout.grid.GridComponent$DefaultMultiSelectionModelFactory"/>
+			<selectionModelFactory multiple="true"/>
 		</param>
 		<param name="defaultColumns"
 			value="name,date,float,long,string,structure"

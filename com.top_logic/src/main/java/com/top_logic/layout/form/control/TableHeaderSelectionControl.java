@@ -129,12 +129,24 @@ public class TableHeaderSelectionControl extends AbstractControlBase implements 
 		Set<?> selection = selectionModel().getSelection();
 
 		if (selection.isEmpty()) {
-			return createCheckboxUpdate(false, false);
+			return createNotCheckedUpdate();
 		} else if (selection.containsAll(options())) {
-			return createCheckboxUpdate(true, false);
+			return createCheckedUpdate();
 		} else {
-			return createCheckboxUpdate(false, true);
+			return createIndeterminateUpdate();
 		}
+	}
+
+	private DynamicText createIndeterminateUpdate() {
+		return createCheckboxUpdate(false, true);
+	}
+
+	private DynamicText createCheckedUpdate() {
+		return createCheckboxUpdate(true, false);
+	}
+
+	private DynamicText createNotCheckedUpdate() {
+		return createCheckboxUpdate(false, false);
 	}
 
 	private DynamicText createCheckboxUpdate(boolean checked, boolean indeterminate) {
@@ -154,6 +166,7 @@ public class TableHeaderSelectionControl extends AbstractControlBase implements 
 
 	@Override
 	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
+		boolean indeterminate = false;
 		out.beginBeginTag(SPAN);
 		writeControlAttributes(context, out);
 		out.endBeginTag();
@@ -163,6 +176,18 @@ public class TableHeaderSelectionControl extends AbstractControlBase implements 
 			out.writeAttribute(TYPE_ATTR, CHECKBOX_TYPE_VALUE);
 			out.writeAttribute(CLASS_ATTR, FormConstants.IS_CHECKBOX_CSS_CLASS);
 
+			Set<?> selection = selectionModel().getSelection();
+
+			if (selection.isEmpty()) {
+				// empty checkbox.
+			} else if (selection.containsAll(options())) {
+				// checked checkbox.
+				out.writeAttribute(CHECKED_ATTR, CHECKED_CHECKED_VALUE);
+			} else {
+				// indeterminate checkbox.
+				indeterminate = true;
+			}
+
 			writeOnChange(out);
 			writeOnMouseDown(out);
 
@@ -170,17 +195,17 @@ public class TableHeaderSelectionControl extends AbstractControlBase implements 
 		}
 		out.endTag(SPAN);
 
-		/* 
-		 * Is necessary to set the initial state of the checkbox.
-		 * 
-		 * Although it is possible to check or uncheck the checkbox by the html boolean attribute checked
-		 * of the input element, it is not possible to set the checkbox state to
-		 * indeterminate. This is only possible using javascript by setting the indeterminate
-		 * property of the dom node. 
-		 */
-		HTMLUtil.beginScriptAfterRendering(out);
-		createCheckboxUpdate().append(context, out);
-		HTMLUtil.endScriptAfterRendering(out);
+		if (indeterminate) {
+			/* Is necessary to set the initial state of the checkbox.
+			 * 
+			 * Although it is possible to check or uncheck the checkbox by the html boolean
+			 * attribute checked of the input element, it is not possible to set the checkbox state
+			 * to indeterminate. This is only possible using javascript by setting the indeterminate
+			 * property of the dom node. */
+			HTMLUtil.beginScriptAfterRendering(out);
+			createIndeterminateUpdate().append(context, out);
+			HTMLUtil.endScriptAfterRendering(out);
+		}
 	}
 
 	@Override

@@ -68,7 +68,7 @@ public interface MapLike extends Map<String, Object> {
 
 	@Override
 	default Collection<Object> values() {
-		return self().properties().stream().map(k -> self().get(k)).toList();
+		return self().properties().stream().map(k -> self().get(k)).collect(Collectors.toList());
 	}
 
 	@Override

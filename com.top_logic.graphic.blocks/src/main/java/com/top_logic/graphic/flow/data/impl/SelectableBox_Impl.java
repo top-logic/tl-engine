@@ -93,6 +93,12 @@ public class SelectableBox_Impl extends com.top_logic.graphic.flow.data.impl.Dec
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.SelectableBox setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.SelectableBox setUserObject(java.lang.Object value) {
 		internalSetUserObject(value);
 		return this;

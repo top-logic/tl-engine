@@ -132,6 +132,12 @@ public class Padding_Impl extends com.top_logic.graphic.flow.data.impl.Decoratio
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Padding setClientId(String value) {
+		internalSetClientId(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return PADDING__TYPE;
 	}

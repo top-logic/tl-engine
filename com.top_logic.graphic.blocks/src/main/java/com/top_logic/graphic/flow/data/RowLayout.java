@@ -52,6 +52,9 @@ public interface RowLayout extends Layout {
 	com.top_logic.graphic.flow.data.RowLayout setHeight(double value);
 
 	@Override
+	com.top_logic.graphic.flow.data.RowLayout setCssClass(String value);
+
+	@Override
 	com.top_logic.graphic.flow.data.RowLayout setUserObject(java.lang.Object value);
 
 	@Override

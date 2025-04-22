@@ -77,6 +77,7 @@ public interface BorderOperations extends DecorationOperations {
 		double radius = self().getThickness() / 2;
 
 		out.beginPath(self());
+		out.writeCssClass(self().getCssClass());
 		out.setStrokeWidth(self().getThickness());
 		out.setStroke(self().getStrokeStyle());
 		if (!self().getDashes().isEmpty()) {

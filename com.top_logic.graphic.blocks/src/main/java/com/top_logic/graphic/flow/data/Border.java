@@ -108,6 +108,9 @@ public interface Border extends Decoration, com.top_logic.graphic.flow.operation
 	com.top_logic.graphic.flow.data.Border setHeight(double value);
 
 	@Override
+	com.top_logic.graphic.flow.data.Border setCssClass(String value);
+
+	@Override
 	com.top_logic.graphic.flow.data.Border setUserObject(java.lang.Object value);
 
 	@Override

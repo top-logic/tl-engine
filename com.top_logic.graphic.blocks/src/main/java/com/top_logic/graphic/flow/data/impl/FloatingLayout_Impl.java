@@ -98,6 +98,12 @@ public class FloatingLayout_Impl extends com.top_logic.graphic.flow.data.impl.Bo
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.FloatingLayout setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.FloatingLayout setUserObject(java.lang.Object value) {
 		internalSetUserObject(value);
 		return this;

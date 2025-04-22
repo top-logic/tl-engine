@@ -22,6 +22,7 @@
 					<property name="defaultSelection"/>
 					<property name="expandSelected"/>
 					<property name="multiSelection"/>
+					<property name="tree-selection"/>
 					<property name="adjustSelectionWhenCollapsing"/>
 					<property name="isSecurityMaster"/>
 
@@ -58,6 +59,9 @@
 			<mandatory/>
 			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>
 		</property>
+		<property name="tree-selection"
+			type="boolean"
+		/>
 		<property name="adjustSelectionWhenCollapsing"
 			default="false"
 			type="boolean"
@@ -130,6 +134,7 @@
 		<selectionModelFactory class="com.top_logic.mig.html.TreeSelectionModelFactory"
 			filter="${selectionFilter}"
 			multiple="${multiSelection}"
+			tree-selection="${tree-selection}"
 		/>
 		<treeBuilder class="com.top_logic.layout.table.tree.TreeBuilderAdaptor"
 			treeModelBuilder="${modelBuilder}"

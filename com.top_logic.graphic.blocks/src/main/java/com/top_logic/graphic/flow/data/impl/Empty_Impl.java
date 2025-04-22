@@ -88,6 +88,12 @@ public class Empty_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Empty setClientId(String value) {
+		internalSetClientId(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return EMPTY__TYPE;
 	}

@@ -75,6 +75,12 @@ public class Fill_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_I
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Fill setClientId(String value) {
+		internalSetClientId(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return FILL__TYPE;
 	}

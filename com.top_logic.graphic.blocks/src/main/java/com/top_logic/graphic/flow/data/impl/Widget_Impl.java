@@ -7,6 +7,8 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 
 	private transient java.lang.Object _userObject = null;
 
+	private transient String _clientId = null;
+
 	/**
 	 * Creates a {@link Widget_Impl} instance.
 	 */
@@ -36,9 +38,32 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 		return _userObject != null;
 	}
 
+	@Override
+	public final String getClientId() {
+		return _clientId;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Widget setClientId(String value) {
+		internalSetClientId(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getClientId()} without chain call utility. */
+	protected final void internalSetClientId(String value) {
+		_listener.beforeSet(this, CLIENT_ID__PROP, value);
+		_clientId = value;
+	}
+
+	@Override
+	public final boolean hasClientId() {
+		return _clientId != null;
+	}
+
 	private static java.util.List<String> PROPERTIES = java.util.Collections.unmodifiableList(
 		java.util.Arrays.asList(
-			USER_OBJECT__PROP));
+			USER_OBJECT__PROP, 
+			CLIENT_ID__PROP));
 
 	@Override
 	public java.util.List<String> properties() {
@@ -49,6 +74,7 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 	public Object get(String field) {
 		switch (field) {
 			case USER_OBJECT__PROP: return getUserObject();
+			case CLIENT_ID__PROP: return getClientId();
 			default: return super.get(field);
 		}
 	}
@@ -57,6 +83,7 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 	public void set(String field, Object value) {
 		switch (field) {
 			case USER_OBJECT__PROP: internalSetUserObject((java.lang.Object) value); break;
+			case CLIENT_ID__PROP: internalSetClientId((String) value); break;
 		}
 	}
 
@@ -70,6 +97,14 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 		switch (field) {
 			case USER_OBJECT__PROP: {
 				if (hasUserObject()) {
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case CLIENT_ID__PROP: {
+				if (hasClientId()) {
+					out.value(getClientId());
 				} else {
 					out.nullValue();
 				}

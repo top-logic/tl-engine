@@ -36,7 +36,7 @@ public class SvgWriterAdapter implements SvgWriter {
 	}
 
 	@Override
-	public void beginGroup() {
+	public void beginGroup(Object model) {
 		_impl.beginGroup();
 	}
 
@@ -51,7 +51,7 @@ public class SvgWriterAdapter implements SvgWriter {
 	}
 
 	@Override
-	public void beginPath() {
+	public void beginPath(Object model) {
 		_impl.beginPath();
 	}
 
@@ -139,18 +139,13 @@ public class SvgWriterAdapter implements SvgWriter {
 	}
 
 	@Override
-	public void rect(double x, double y, double w, double h) {
-		_impl.rect(x, y, w, h);
+	public void beginRect(double x, double y, double w, double h, double rx, double ry) {
+		_impl.beginRect(x, y, w, h);
 	}
 
 	@Override
-	public void rect(double x, double y, double w, double h, double radius) {
-		_impl.rect(x, y, w, h, radius);
-	}
-
-	@Override
-	public void rect(double x, double y, double w, double h, double rx, double ry) {
-		_impl.rect(x, y, w, h, rx, ry);
+	public void endRect() {
+		_impl.endRect();
 	}
 
 	@Override

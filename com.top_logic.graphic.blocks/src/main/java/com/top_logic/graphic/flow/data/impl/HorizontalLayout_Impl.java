@@ -74,6 +74,12 @@ public class HorizontalLayout_Impl extends com.top_logic.graphic.flow.data.impl.
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.HorizontalLayout setClientId(String value) {
+		internalSetClientId(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return HORIZONTAL_LAYOUT__TYPE;
 	}

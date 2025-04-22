@@ -98,6 +98,12 @@ public class TreeConnector_Impl extends com.top_logic.graphic.flow.data.impl.Wid
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.TreeConnector setClientId(String value) {
+		internalSetClientId(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return TREE_CONNECTOR__TYPE;
 	}

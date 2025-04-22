@@ -96,6 +96,12 @@ public abstract class Layout_Impl extends com.top_logic.graphic.flow.data.impl.B
 		return this;
 	}
 
+	@Override
+	public com.top_logic.graphic.flow.data.Layout setClientId(String value) {
+		internalSetClientId(value);
+		return this;
+	}
+
 	private static java.util.List<String> PROPERTIES = java.util.Collections.unmodifiableList(
 		java.util.Arrays.asList(
 			CONTENTS__PROP));

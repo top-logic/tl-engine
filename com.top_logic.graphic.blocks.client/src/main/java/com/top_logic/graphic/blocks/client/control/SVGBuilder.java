@@ -13,17 +13,22 @@ import org.vectomatic.dom.svg.OMSVGGElement;
 import org.vectomatic.dom.svg.OMSVGImageElement;
 import org.vectomatic.dom.svg.OMSVGLength;
 import org.vectomatic.dom.svg.OMSVGPathElement;
+import org.vectomatic.dom.svg.OMSVGRectElement;
 import org.vectomatic.dom.svg.OMSVGSVGElement;
 import org.vectomatic.dom.svg.OMSVGTransform;
 import org.vectomatic.dom.svg.OMSVGTransformList;
 import org.vectomatic.dom.svg.itf.ISVGTransformable;
 
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 
 import com.top_logic.graphic.blocks.svg.SVGColor;
 import com.top_logic.graphic.blocks.svg.SvgUtil;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
+import com.top_logic.graphic.blocks.svg.event.MouseButton;
+import com.top_logic.graphic.blocks.svg.event.Registration;
 import com.top_logic.graphic.blocks.svg.event.SVGClickEvent;
 import com.top_logic.graphic.blocks.svg.event.SVGClickHandler;
 import com.top_logic.graphic.flow.data.ImageAlign;
@@ -72,6 +77,13 @@ public class SVGBuilder implements SvgWriter {
 		_current = parent;
 	}
 
+	/**
+	 * The currently created document.
+	 */
+	protected final OMSVGDocument getDoc() {
+		return _doc;
+	}
+
 	@Override
 	public void beginSvg() {
 		if (_parent != _root) {
@@ -91,15 +103,17 @@ public class SVGBuilder implements SvgWriter {
 	@Override
 	public void endSvg() {
 		if (_parent != _root) {
-			beginGroup();
+			endGroup();
 		}
 	}
 
 	@Override
-	public void beginGroup() {
+	public void beginGroup(Object model) {
 		OMSVGGElement next = _doc.createSVGGElement();
 		_parent.appendChild(next);
 		setParent(next);
+
+		created(next, model);
 	}
 
 	@Override
@@ -117,8 +131,11 @@ public class SVGBuilder implements SvgWriter {
 	}
 
 	@Override
-	public void beginPath() {
-		appendChild(_doc.createSVGPathElement());
+	public void beginPath(Object model) {
+		OMSVGPathElement path = _doc.createSVGPathElement();
+		appendChild(path);
+
+		created(path, model);
 	}
 
 	@Override
@@ -245,8 +262,15 @@ public class SVGBuilder implements SvgWriter {
 	}
 
 	@Override
-	public void rect(double x, double y, double w, double h, double rx, double ry) {
-		appendChild(_doc.createSVGRectElement((float) x, (float) y, (float) w, (float) h, (float) rx, (float) ry));
+	public void beginRect(double x, double y, double w, double h, double rx, double ry) {
+		OMSVGRectElement rect = _doc.createSVGRectElement((float) x, (float) y, (float) w, (float) h, (float) rx, (float) ry);
+		appendChild(rect);
+		_current = rect;
+	}
+
+	@Override
+	public void endRect() {
+		_current = null;
 	}
 
 	@Override
@@ -273,8 +297,8 @@ public class SVGBuilder implements SvgWriter {
 	}
 
 	@Override
-	public void attachOnClick(SVGClickHandler handler, Object sender) {
-		_current.addHandler(new ClickHandler() {
+	public Registration attachOnClick(SVGClickHandler handler, Object sender) {
+		HandlerRegistration registration = _current.addDomHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
 				handler.onClick(new SVGClickEvent() {
@@ -282,12 +306,75 @@ public class SVGBuilder implements SvgWriter {
 					public Object getSender() {
 						return sender;
 					}
+
+					@Override
+					public boolean getButton(MouseButton button) {
+						int nativeButton = event.getNativeButton();
+						switch (button) {
+							case LEFT:
+								return (nativeButton & NativeEvent.BUTTON_LEFT) != 0;
+							case RIGHT:
+								return (nativeButton & NativeEvent.BUTTON_RIGHT) != 0;
+							case MIDDLE:
+								return (nativeButton & NativeEvent.BUTTON_MIDDLE) != 0;
+						}
+						return false;
+					}
+
+					@Override
+					public boolean isMetaKey() {
+						return event.getNativeEvent().getMetaKey();
+					}
+
+					@Override
+					public boolean isShiftKey() {
+						return event.getNativeEvent().getShiftKey();
+					}
+
+					@Override
+					public boolean isAltKey() {
+						return event.getNativeEvent().getAltKey();
+					}
+
+					@Override
+					public boolean isCtrlKey() {
+						return event.getNativeEvent().getCtrlKey();
+					}
+
+					@Override
+					public void stopPropagation() {
+						event.getNativeEvent().stopPropagation();
+					}
 				});
 			}
 		}, ClickEvent.getType());
+
+		return () -> registration.removeHandler();
 	}
 
-	private void setParent(OMSVGElement next) {
+	private void created(OMSVGElement svgElement, Object model) {
+		if (model != null) {
+			linkModel(svgElement, model);
+		}
+	}
+
+	/**
+	 * Hook that is called, whenever a SVG element is created that is associated to some model
+	 * object.
+	 * 
+	 * @param svgElement
+	 *        The created element.
+	 * @param model
+	 *        the associated model object.
+	 */
+	protected void linkModel(OMSVGElement svgElement, Object model) {
+		// Hook for subclasses.
+	}
+
+	/**
+	 * Updates the parent and current pointers to the given newly created element.
+	 */
+	protected final void setParent(OMSVGElement next) {
 		_parent = next;
 		_current = next;
 	}

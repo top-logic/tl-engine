@@ -74,12 +74,12 @@ public interface CompassLayoutOperations extends BoxOperations {
 
 	@Override
 	default void draw(SvgWriter out) {
-		self().getNorth().draw(out);
-		self().getWest().draw(out);
-		self().getEast().draw(out);
-		self().getSouth().draw(out);
+		out.write(self().getNorth());
+		out.write(self().getWest());
+		out.write(self().getEast());
+		out.write(self().getSouth());
 
-		self().getCenter().draw(out);
+		out.write(self().getCenter());
 	}
 
 }

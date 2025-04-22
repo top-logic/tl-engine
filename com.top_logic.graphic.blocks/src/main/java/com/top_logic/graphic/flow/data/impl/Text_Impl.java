@@ -88,6 +88,12 @@ public class Text_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl imp
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Text setClientId(String value) {
+		internalSetClientId(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return TEXT__TYPE;
 	}

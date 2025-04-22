@@ -93,6 +93,12 @@ public abstract class RowLayout_Impl extends com.top_logic.graphic.flow.data.imp
 		return this;
 	}
 
+	@Override
+	public com.top_logic.graphic.flow.data.RowLayout setClientId(String value) {
+		internalSetClientId(value);
+		return this;
+	}
+
 	private static java.util.List<String> PROPERTIES = java.util.Collections.unmodifiableList(
 		java.util.Arrays.asList(
 			GAP__PROP, 

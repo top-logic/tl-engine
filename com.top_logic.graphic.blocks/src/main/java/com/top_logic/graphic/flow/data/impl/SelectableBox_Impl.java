@@ -7,6 +7,8 @@ public class SelectableBox_Impl extends com.top_logic.graphic.flow.data.impl.Dec
 
 	private boolean _selected = false;
 
+	private transient com.top_logic.graphic.blocks.svg.event.Registration _clickHandler = null;
+
 	/**
 	 * Creates a {@link SelectableBox_Impl} instance.
 	 *
@@ -36,6 +38,28 @@ public class SelectableBox_Impl extends com.top_logic.graphic.flow.data.impl.Dec
 	protected final void internalSetSelected(boolean value) {
 		_listener.beforeSet(this, SELECTED__PROP, value);
 		_selected = value;
+	}
+
+	@Override
+	public final com.top_logic.graphic.blocks.svg.event.Registration getClickHandler() {
+		return _clickHandler;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.SelectableBox setClickHandler(com.top_logic.graphic.blocks.svg.event.Registration value) {
+		internalSetClickHandler(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getClickHandler()} without chain call utility. */
+	protected final void internalSetClickHandler(com.top_logic.graphic.blocks.svg.event.Registration value) {
+		_listener.beforeSet(this, CLICK_HANDLER__PROP, value);
+		_clickHandler = value;
+	}
+
+	@Override
+	public final boolean hasClickHandler() {
+		return _clickHandler != null;
 	}
 
 	@Override
@@ -75,13 +99,20 @@ public class SelectableBox_Impl extends com.top_logic.graphic.flow.data.impl.Dec
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.SelectableBox setClientId(String value) {
+		internalSetClientId(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return SELECTABLE_BOX__TYPE;
 	}
 
 	private static java.util.List<String> PROPERTIES = java.util.Collections.unmodifiableList(
 		java.util.Arrays.asList(
-			SELECTED__PROP));
+			SELECTED__PROP, 
+			CLICK_HANDLER__PROP));
 
 	@Override
 	public java.util.List<String> properties() {
@@ -92,6 +123,7 @@ public class SelectableBox_Impl extends com.top_logic.graphic.flow.data.impl.Dec
 	public Object get(String field) {
 		switch (field) {
 			case SELECTED__PROP: return isSelected();
+			case CLICK_HANDLER__PROP: return getClickHandler();
 			default: return super.get(field);
 		}
 	}
@@ -100,6 +132,7 @@ public class SelectableBox_Impl extends com.top_logic.graphic.flow.data.impl.Dec
 	public void set(String field, Object value) {
 		switch (field) {
 			case SELECTED__PROP: internalSetSelected((boolean) value); break;
+			case CLICK_HANDLER__PROP: internalSetClickHandler((com.top_logic.graphic.blocks.svg.event.Registration) value); break;
 			default: super.set(field, value); break;
 		}
 	}
@@ -116,6 +149,13 @@ public class SelectableBox_Impl extends com.top_logic.graphic.flow.data.impl.Dec
 		switch (field) {
 			case SELECTED__PROP: {
 				out.value(isSelected());
+				break;
+			}
+			case CLICK_HANDLER__PROP: {
+				if (hasClickHandler()) {
+				} else {
+					out.nullValue();
+				}
 				break;
 			}
 			default: super.writeFieldValue(scope, out, field);

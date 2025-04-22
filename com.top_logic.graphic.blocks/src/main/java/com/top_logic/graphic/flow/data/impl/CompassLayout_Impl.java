@@ -297,6 +297,12 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.CompassLayout setClientId(String value) {
+		internalSetClientId(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return COMPASS_LAYOUT__TYPE;
 	}

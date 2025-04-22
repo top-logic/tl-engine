@@ -4,8 +4,18 @@ option SharedGraph;
 option NoXml;
 option NoBinary;
 
+@Operations("com.top_logic.graphic.flow.operations.WidgetOperations")
 abstract message Widget {
+	/**
+	 * An arbitrary object that can be associated with this graphics elements.
+	 */
 	transient java.lang.Object userObject;
+	
+	/**
+	 * Identifier to associate this graphics element to the client DOM.
+	 */
+	@Nullable
+	transient string clientId;
 }
 
 /** Top-level element that can be rendered. */
@@ -15,7 +25,10 @@ message Diagram extends Widget {
 	Box root;
 	
 	@Ref
-	repeated Widget selection;
+	repeated SelectableBox selection;
+	
+	transient com.top_logic.graphic.blocks.svg.event.Registration clickHandler;
+	
 }
 
 /** A rectangular region of a {@link Diagram} that can adjust its size to external requests and to its content. */
@@ -264,6 +277,8 @@ message SelectableBox extends Decoration {
 
 	/** Whether this element is currently selected. */
 	bool selected;
+	
+	transient com.top_logic.graphic.blocks.svg.event.Registration clickHandler;
 	
 }
 

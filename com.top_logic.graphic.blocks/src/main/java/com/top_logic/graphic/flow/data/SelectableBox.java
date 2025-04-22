@@ -15,6 +15,9 @@ public interface SelectableBox extends Decoration, com.top_logic.graphic.flow.op
 	/** @see #isSelected() */
 	String SELECTED__PROP = "selected";
 
+	/** @see #getClickHandler() */
+	String CLICK_HANDLER__PROP = "clickHandler";
+
 	/**
 	 * Whether this element is currently selected.
 	 */
@@ -24,6 +27,18 @@ public interface SelectableBox extends Decoration, com.top_logic.graphic.flow.op
 	 * @see #isSelected()
 	 */
 	com.top_logic.graphic.flow.data.SelectableBox setSelected(boolean value);
+
+	com.top_logic.graphic.blocks.svg.event.Registration getClickHandler();
+
+	/**
+	 * @see #getClickHandler()
+	 */
+	com.top_logic.graphic.flow.data.SelectableBox setClickHandler(com.top_logic.graphic.blocks.svg.event.Registration value);
+
+	/**
+	 * Checks, whether {@link #getClickHandler()} has a value.
+	 */
+	boolean hasClickHandler();
 
 	@Override
 	com.top_logic.graphic.flow.data.SelectableBox setContent(com.top_logic.graphic.flow.data.Box value);
@@ -42,6 +57,9 @@ public interface SelectableBox extends Decoration, com.top_logic.graphic.flow.op
 
 	@Override
 	com.top_logic.graphic.flow.data.SelectableBox setUserObject(java.lang.Object value);
+
+	@Override
+	com.top_logic.graphic.flow.data.SelectableBox setClientId(String value);
 
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.SelectableBox readSelectableBox(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {

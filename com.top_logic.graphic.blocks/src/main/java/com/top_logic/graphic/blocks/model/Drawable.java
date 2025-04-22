@@ -16,6 +16,11 @@ public interface Drawable {
 
 	/**
 	 * Renders this instance to the given {@link SvgWriter}.
+	 * 
+	 * <p>
+	 * Note: This method must not be called from within another draw method. Use
+	 * {@link SvgWriter#write(Drawable)} instead to render direct contents.
+	 * </p>
 	 */
 	void draw(SvgWriter out);
 

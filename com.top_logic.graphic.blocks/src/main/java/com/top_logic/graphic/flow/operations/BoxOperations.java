@@ -5,7 +5,6 @@
  */
 package com.top_logic.graphic.flow.operations;
 
-import com.top_logic.graphic.blocks.model.Drawable;
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.data.Diagram;
@@ -14,7 +13,7 @@ import com.top_logic.graphic.flow.data.Widget;
 /**
  * 
  */
-public interface BoxOperations extends Drawable, MapLike {
+public interface BoxOperations extends WidgetOperations {
 
 	/**
 	 * The {@link Box} data.
@@ -45,7 +44,8 @@ public interface BoxOperations extends Drawable, MapLike {
 	 */
 	default Diagram getDiagram() {
 		Widget ancestor = self().getParent();
-		while (ancestor instanceof Box box) {
+		while (ancestor instanceof Box) {
+			Box box = (Box) ancestor;
 			ancestor = box.getParent();
 		}
 		return (Diagram) ancestor;

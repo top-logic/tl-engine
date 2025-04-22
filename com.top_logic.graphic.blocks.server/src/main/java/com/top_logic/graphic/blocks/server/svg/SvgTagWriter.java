@@ -60,7 +60,7 @@ public class SvgTagWriter implements SvgWriter {
 	}
 
 	@Override
-	public void beginGroup() {
+	public void beginGroup(Object model) {
 		beginBeginTag(G);
 	}
 
@@ -92,7 +92,7 @@ public class SvgTagWriter implements SvgWriter {
 	}
 
 	@Override
-	public void beginPath() {
+	public void beginPath(Object model) {
 		beginBeginTag(PATH);
 	}
 
@@ -218,24 +218,23 @@ public class SvgTagWriter implements SvgWriter {
 	}
 
 	@Override
-	public void rect(double x, double y, double w, double h) {
+	public void beginRect(double x, double y, double w, double h) {
 		beginBeginTag(RECT);
 		writeAttribute(X_ATTR, x);
 		writeAttribute(Y_ATTR, y);
 		writeAttribute(WIDTH_ATTR, w);
 		writeAttribute(HEIGHT_ATTR, h);
-		endEmptyTag();
 	}
 
 	@Override
-	public void rect(double x, double y, double w, double h, double rx, double ry) {
-		beginBeginTag(RECT);
-		writeAttribute(X_ATTR, x);
-		writeAttribute(Y_ATTR, y);
-		writeAttribute(WIDTH_ATTR, w);
-		writeAttribute(HEIGHT_ATTR, h);
+	public void beginRect(double x, double y, double w, double h, double rx, double ry) {
+		beginRect(x, y, w, h);
 		writeAttribute(RX_ATTR, rx);
 		writeAttribute(RY_ATTR, ry);
+	}
+
+	@Override
+	public void endRect() {
 		endEmptyTag();
 	}
 

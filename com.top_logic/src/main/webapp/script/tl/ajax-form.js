@@ -4768,9 +4768,9 @@ services.form = {
 				var layoutConstraint = layoutChild.layoutConstraint;
 				if(layoutConstraint.unit != "px") {
 					if(adjustmentDataContainer.isArrangedHorizontal) {
-						layoutConstraint.size = layoutChild.layoutResult._width;
+						layoutConstraint.size = Math.max(layoutConstraint.minSize, layoutChild.layoutResult._width);
 					} else {
-						layoutConstraint.size = layoutChild.layoutResult._height;
+						layoutConstraint.size = Math.max(layoutConstraint.minSize, layoutChild.layoutResult._height);
 					}
 					layoutChild.layoutConstraint.unit = "px";
 				}
@@ -4811,6 +4811,7 @@ services.form = {
 					// Only space, that exceeds minimum size, will be distributed in percent (see layouting in layout.js)
 					layoutConstraint.size = Math.round((pixelSize - services.form.FlexibleFlowLayout.getNodeMinSizeInPx(layoutChild)) / sumPixelOfPercentLayouts * 100);
 				}
+				layoutConstraint.size = Math.max(layoutConstraint.minSize, layoutConstraint.size);
 				layoutSizes[layoutChild.id] = layoutConstraint.size;
 				services.layout.setSizeAnnotation(layoutChild, layoutConstraint);
 				layoutChild = BAL.DOM.getNextElementSibling(layoutChild);
@@ -4944,7 +4945,7 @@ services.form = {
 		adjustNodeSize: function(node, oldSize, newSize, adjustmentDataContainer) {
 			var layoutConstraint = node.layoutConstraint;
 			var effectiveNewSize = newSize - adjustmentDataContainer.effectiveSizeDelta;
-			layoutConstraint.size = effectiveNewSize;
+			layoutConstraint.size = Math.max(layoutConstraint.minSize, effectiveNewSize);
 		},
 		
 		renderLayout: function (node) {

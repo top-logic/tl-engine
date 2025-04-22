@@ -6,6 +6,11 @@ option NoBinary;
 
 @Operations("com.top_logic.graphic.flow.operations.WidgetOperations")
 abstract message Widget {
+
+	/** Custom CSS class to add to the SVG element. */
+	@Nullable
+	string cssClass;
+
 	/**
 	 * An arbitrary object that can be associated with this graphics elements.
 	 */

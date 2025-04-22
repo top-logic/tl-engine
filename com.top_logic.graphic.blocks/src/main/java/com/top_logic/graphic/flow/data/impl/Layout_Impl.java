@@ -91,6 +91,12 @@ public abstract class Layout_Impl extends com.top_logic.graphic.flow.data.impl.B
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Layout setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.Layout setUserObject(java.lang.Object value) {
 		internalSetUserObject(value);
 		return this;

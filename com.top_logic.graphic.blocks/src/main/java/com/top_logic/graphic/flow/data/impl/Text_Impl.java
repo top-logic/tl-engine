@@ -82,6 +82,12 @@ public class Text_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl imp
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Text setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.Text setUserObject(java.lang.Object value) {
 		internalSetUserObject(value);
 		return this;

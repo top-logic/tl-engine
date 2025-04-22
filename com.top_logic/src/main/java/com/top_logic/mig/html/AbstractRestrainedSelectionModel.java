@@ -58,18 +58,18 @@ public abstract class AbstractRestrainedSelectionModel extends AbstractSelection
 	}
 
 	/**
-	 * A setter for a deselection filter
+	 * Setter for {@link #getDeselectionFilter()}
 	 * 
 	 * @param deselectionFilter
-	 *        - the {@link Filter filter}, which defines, if an object can be removed from
-	 *        selection, or not. If the filter is null, then every object is deselectable.
+	 *        May be <code>null</code>. In that case {@link FilterFactory#trueFilter()} is used.
 	 */
 	public void setDeselectionFilter(Filter<?> deselectionFilter) {
 		_deselectionFilter = nonNull(deselectionFilter);
 	}
 
 	/**
-	 * @set {@link #setDeselectionFilter(Filter)}
+	 * The {@link Filter filter}, which defines whether an object can be removed from the selection
+	 * or not.
 	 */
 	public Filter<Object> getDeselectionFilter() {
 		return _deselectionFilter;

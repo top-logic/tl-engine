@@ -109,9 +109,18 @@ public class Empty_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 			MIN_WIDTH__PROP, 
 			MIN_HEIGHT__PROP));
 
+	private static java.util.Set<String> TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(new java.util.HashSet<>(
+			java.util.Arrays.asList(
+				)));
+
 	@Override
 	public java.util.List<String> properties() {
 		return PROPERTIES;
+	}
+
+	@Override
+	public java.util.Set<String> transientProperties() {
+		return TRANSIENT_PROPERTIES;
 	}
 
 	@Override

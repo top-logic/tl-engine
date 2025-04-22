@@ -27,7 +27,14 @@ public interface DecorationOperations extends BoxOperations {
 
 	@Override
 	default void draw(SvgWriter out) {
-		self().getContent().draw(out);
+		drawContent(out);
+	}
+
+	/**
+	 * Writes the decorated content.
+	 */
+	default void drawContent(SvgWriter out) {
+		out.write(self().getContent());
 	}
 
 }

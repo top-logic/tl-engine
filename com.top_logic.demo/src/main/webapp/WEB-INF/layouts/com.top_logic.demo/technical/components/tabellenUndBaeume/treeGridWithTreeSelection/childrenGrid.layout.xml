@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/treegrid.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		defaultSelection="false"
+		multiSelection="true"
+		tree-selection="true"
+		type="DemoTypes:DemoTypes.All"
+	>
+		<name key="dynamic.f4c8be14-1b95-428b-b234-b37c500019c1">
+			<en>Children</en>
+			<de>Kinder</de>
+		</name>
+		<model class="com.top_logic.layout.channel.linking.impl.CombineLinking">
+			<channel name="selection">
+				<target name="com.top_logic.demo/technical/components/tabellenUndBaeume/versionSelector.layout.xml#Selector"/>
+			</channel>
+			<channel name="selection">
+				<target name="com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree"/>
+			</channel>
+		</model>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			children="node->$node.get(`tl.element:StructuredElementContainer#children`)"
+			nodePredicate="node->$node.instanceOf(`DemoTypes:DemoTypes.All`)"
+			parents="node->$node.referers(`tl.element:StructuredElementContainer#children`)"
+			rootNode="x -> $x[1].inRevision($x[0])"
+		/>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			/>
+			<button id="createNewRow"
+				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
+				createContext="model -> $model"
+				initOperation="createContext -> newObject -> target -> $createContext.add(`tl.element:StructuredElementContainer#children`, $newObject)"
+				target="selection(self())"
+			>
+				<checkScopeProvider/>
+				<type-options class="com.top_logic.element.layout.create.AttributeBasedCreateTypeOptions"
+					attribute="tl.element:StructuredElementContainer#children"
+					owner="DemoTypes:DemoTypes.All"
+				/>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

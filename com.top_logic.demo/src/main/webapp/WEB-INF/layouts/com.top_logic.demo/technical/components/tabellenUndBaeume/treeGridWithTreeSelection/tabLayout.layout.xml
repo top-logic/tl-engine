@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_fb2a3573_3459_4385_b985_8219c657160c">
+		<tabLabel key="dynamic.3d0bb7a7-dc03-4a85-baad-7bf80674b39c">
+			<en>TreeGrid with tree selection</en>
+			<de>Baumgrid mit Baumauswahl</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

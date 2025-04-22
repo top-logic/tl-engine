@@ -228,6 +228,12 @@ public class GridLayout_Impl extends com.top_logic.graphic.flow.data.impl.Layout
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.GridLayout setClientId(String value) {
+		internalSetClientId(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return GRID_LAYOUT__TYPE;
 	}

@@ -69,7 +69,7 @@ public interface FloatingLayoutOperations extends BoxOperations {
 	 */
 	default void drawContents(SvgWriter out) {
 		for (Box node : self().getNodes()) {
-			node.draw(out);
+			out.write(node);
 		}
 	}
 

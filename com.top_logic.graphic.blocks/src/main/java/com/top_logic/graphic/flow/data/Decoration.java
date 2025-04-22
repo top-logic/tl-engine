@@ -52,6 +52,9 @@ public interface Decoration extends Box, com.top_logic.graphic.flow.operations.D
 	@Override
 	com.top_logic.graphic.flow.data.Decoration setUserObject(java.lang.Object value);
 
+	@Override
+	com.top_logic.graphic.flow.data.Decoration setClientId(String value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.Decoration readDecoration(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {

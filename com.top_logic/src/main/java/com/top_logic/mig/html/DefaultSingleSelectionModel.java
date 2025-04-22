@@ -12,7 +12,6 @@ import java.util.Set;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.layout.SingleSelectionModel;
-import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.component.model.SingleSelectionListener;
 import com.top_logic.util.Utils;
@@ -49,13 +48,10 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 		return false;
 	}
 
-	/**
-	 * @see com.top_logic.layout.SingleSelectionModel#isSelectable(java.lang.Object)
-	 */
 	@Override
 	public boolean isSelectable(Object obj) {
-		return getSelectionFilter().accept(obj)
-			&& (_selected != null ? getDeselectionFilter().accept(_selected) : true);
+		return super.isSelectable(obj)
+				&& (_selected != null ? isDeselectable(_selected) : true);
 	}
 	
 	/**
@@ -146,11 +142,7 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 	}
 
 	private boolean isSelectionFixed() {
-		// A deleted object must be removable from selection. A filter must not be evaluated on a
-		// deleted object.
-		return _selected != null
-			? ComponentUtil.isValid(_selected) && !getDeselectionFilter().accept(_selected)
-			: false;
+		return _selected != null ? !isDeselectable(_selected) : false;
 	}
 
 	/**

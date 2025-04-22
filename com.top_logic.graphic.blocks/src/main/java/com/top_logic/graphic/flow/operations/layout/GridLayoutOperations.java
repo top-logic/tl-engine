@@ -123,7 +123,7 @@ public interface GridLayoutOperations extends BoxOperations {
 		for (int r = 0; r < self().getRows(); r++) {
 			for (int c = 0; c < self().getCols(); c++) {
 				Box element = get(c, r);
-				element.draw(out);
+				out.write(element);
 			}
 		}
 	}

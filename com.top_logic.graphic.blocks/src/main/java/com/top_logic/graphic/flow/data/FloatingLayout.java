@@ -50,6 +50,9 @@ public interface FloatingLayout extends Box, com.top_logic.graphic.flow.operatio
 	@Override
 	com.top_logic.graphic.flow.data.FloatingLayout setUserObject(java.lang.Object value);
 
+	@Override
+	com.top_logic.graphic.flow.data.FloatingLayout setClientId(String value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.FloatingLayout readFloatingLayout(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {

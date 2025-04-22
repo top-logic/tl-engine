@@ -7,6 +7,7 @@ package com.top_logic.mig.html;
 
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.filter.FilterFactory;
+import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.component.model.AbstractSelectionModel;
 
 /**
@@ -27,14 +28,27 @@ public abstract class AbstractRestrainedSelectionModel extends AbstractSelection
 		_selectionFilter = _deselectionFilter = FilterFactory.trueFilter();
 	}
 
+	@Override
+	public boolean isSelectable(Object obj) {
+		return getSelectionFilter().accept(obj);
+	}
+
+	/**
+	 * Whether the given object can be selected.
+	 */
+	public boolean isDeselectable(Object obj) {
+		return !ComponentUtil.isValid(obj) || getDeselectionFilter().accept(obj);
+	}
+
 	/**
 	 * A setter for a selection filter
 	 * 
-	 * @param selectionFilter - the {@link Filter filter}, which defines, if an object is selectable, or not.
-	 * If the filter is null, then every object is selectable.
+	 * @param selectionFilter
+	 *        The {@link Filter filter}, which defines, whether an object is selectable or not. If
+	 *        the filter is <code>null</code>, then every object is selectable.
 	 */
 	public void setSelectionFilter(Filter<?> selectionFilter) {
-		this._selectionFilter = nonNull(selectionFilter);
+		_selectionFilter = nonNull(selectionFilter);
 	}
 
 	/**
@@ -63,8 +77,7 @@ public abstract class AbstractRestrainedSelectionModel extends AbstractSelection
 	}
 
 	/**
-	 * given filter, if it is not <code>null</code>, {@link FilterFactory#trueFilter()}
-	 *         otherwise.
+	 * Given filter, if it is not <code>null</code>, {@link FilterFactory#trueFilter()} otherwise.
 	 */
 	@SuppressWarnings("unchecked")
 	protected final Filter<Object> nonNull(Filter<?> selectionFilter) {

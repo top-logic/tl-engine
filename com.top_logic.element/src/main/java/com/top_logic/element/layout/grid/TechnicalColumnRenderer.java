@@ -8,14 +8,17 @@ package com.top_logic.element.layout.grid;
 import static com.top_logic.mig.html.HTMLConstants.*;
 
 import java.io.IOException;
+import java.util.Collection;
 
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.form.control.ButtonControl;
-import com.top_logic.layout.form.control.SelectionPartControl;
 import com.top_logic.layout.form.model.FormGroup;
+import com.top_logic.layout.table.control.SelectionVetoListener;
+import com.top_logic.layout.table.control.TableSelectionColumnRenderer;
 import com.top_logic.mig.html.SelectionModel;
 
 /**
@@ -76,9 +79,10 @@ public class TechnicalColumnRenderer implements Renderer<FormGroup> {
 		SelectionModel selectionModel = grid.getSelectionModel();
 		Object tableRow = grid.getHandler().getFirstTableRow(row);
 
-		SelectionPartControl partControl = new SelectionPartControl(selectionModel, tableRow);
-		grid.getTableField(grid.getFormContext()).getSelectionVetoListeners()
-			.forEach(partControl::addSelectionVetoListener);
+		Collection<SelectionVetoListener> vetoListeners =
+			grid.getTableField(grid.getFormContext()).getSelectionVetoListeners();
+		Control partControl =
+			TableSelectionColumnRenderer.createSelectionPartControl(selectionModel, tableRow, vetoListeners);
 		if (isDrawDisabledCheckboxes() || selectionModel.isSelectable(tableRow)) {
 			partControl.write(context, out);
 		} else {

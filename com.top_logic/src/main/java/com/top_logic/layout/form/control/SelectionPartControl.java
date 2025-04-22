@@ -52,8 +52,6 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 
 	private SelectionPartModel _selectionPartModel;
 
-	private int _tabIndex = -1;
-
 	private String _inputStyle;
 
 	private boolean _selectionValid = true;
@@ -134,9 +132,6 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 				out.writeAttribute(CLASS_ATTR, FormConstants.IS_CHECKBOX_CSS_CLASS);
 			}
 			out.writeAttribute(STYLE_ATTR, getInputStyle());
-			if (hasTabIndex()) {
-				out.writeAttribute(TABINDEX_ATTR, getTabIndex());
-			}
 
 			writeOnChange(context, out);
 
@@ -177,14 +172,6 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 
 	private String getInputId() {
 		return getID() + "-input";
-	}
-
-	private int getTabIndex() {
-		return _tabIndex;
-	}
-
-	private boolean hasTabIndex() {
-		return _tabIndex >= 0;
 	}
 
 	private String getInputStyle() {

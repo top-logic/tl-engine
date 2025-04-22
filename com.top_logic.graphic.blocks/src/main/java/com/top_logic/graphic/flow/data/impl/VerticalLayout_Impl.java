@@ -74,6 +74,12 @@ public class VerticalLayout_Impl extends com.top_logic.graphic.flow.data.impl.Ro
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.VerticalLayout setClientId(String value) {
+		internalSetClientId(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return VERTICAL_LAYOUT__TYPE;
 	}

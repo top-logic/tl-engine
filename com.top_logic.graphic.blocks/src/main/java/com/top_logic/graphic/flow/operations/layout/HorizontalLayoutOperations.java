@@ -22,7 +22,7 @@ public interface HorizontalLayoutOperations extends BoxOperations {
 	@Override
 	default void draw(SvgWriter out) {
 		for (BoxOperations e : self().getContents()) {
-			e.draw(out);
+			out.write(e);
 		}
 	}
 

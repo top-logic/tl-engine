@@ -18,6 +18,8 @@
 			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTable_priorityTable_/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/formTable/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/syntheticRootNode/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithTreeSelection/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/tabLayout.layout.xml"/>
 		</components>
 	</arguments>
 </config:template-call>

@@ -925,9 +925,9 @@ public class TreeTableComponent extends BoundComponent
 
 	private void clearTreeTableField() {
 		if (hasTreeTableData()) {
+			_selectionModel.clear();
 			removeToolbarButtons(_treeTableData);
 			_treeTableData = null;
-			_selectionModel.clear();
 
 			if (_control != null) {
 				_control.detach();

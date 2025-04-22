@@ -90,9 +90,19 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 			USER_OBJECT__PROP, 
 			CLIENT_ID__PROP));
 
+	private static java.util.Set<String> TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(new java.util.HashSet<>(
+			java.util.Arrays.asList(
+				USER_OBJECT__PROP, 
+				CLIENT_ID__PROP)));
+
 	@Override
 	public java.util.List<String> properties() {
 		return PROPERTIES;
+	}
+
+	@Override
+	public java.util.Set<String> transientProperties() {
+		return TRANSIENT_PROPERTIES;
 	}
 
 	@Override

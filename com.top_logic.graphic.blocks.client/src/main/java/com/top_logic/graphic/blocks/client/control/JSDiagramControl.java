@@ -59,6 +59,8 @@ public class JSDiagramControl extends AbstractJSControl
 
 	final SubIdGenerator _nextId;
 
+	protected double _changeTimeout;
+
 	/**
 	 * Creates a {@link JSDiagramControl}.
 	 *
@@ -92,7 +94,10 @@ public class JSDiagramControl extends AbstractJSControl
 					_scope = new DefaultScope(2, 1) {
 						@Override
 						protected void beforeChange() {
-							DomGlobal.setTimeout(JSDiagramControl.this::onChange, 10);
+							if (_changeTimeout != 0) {
+								DomGlobal.clearTimeout(_changeTimeout);
+							}
+							_changeTimeout = DomGlobal.setTimeout(JSDiagramControl.this::onChange, 10);
 						}
 					};
 					Diagram diagram = Diagram.readDiagram(_scope, new JsonReader(new StringR(json)));
@@ -114,6 +119,12 @@ public class JSDiagramControl extends AbstractJSControl
 	 * Called after some user-initiated changes occurred in the UI.
 	 */
 	void onChange(Object... args) {
+		_changeTimeout = 0;
+
+		if (_scope.getDirty().isEmpty()) {
+			return;
+		}
+
 		SvgWriter updateWriter = new SVGBuilder(_svgDoc, _svg) {
 			@Override
 			public void write(Drawable element) {
@@ -149,11 +160,22 @@ public class JSDiagramControl extends AbstractJSControl
 			StringW buffer = new StringW();
 			_scope.createPatch(new de.haumacher.msgbuf.json.JsonWriter(buffer));
 
-			DomGlobal.console.info("Sending updates: ", buffer.toString());
+			String patch = buffer.toString();
+			DomGlobal.console.info("Sending updates: ", patch);
+
+			sendUpdate(getId(), patch, true);
 		} catch (IOException ex) {
 			DomGlobal.console.error("Faild to write updates.", ex);
 		}
 	}
+
+	private native void sendUpdate(String id, String patch, boolean showWait) /*-{
+		$wnd.services.ajax.execute("dispatchControlCommand", {
+			controlCommand : "update",
+			controlID : id,
+			patch : patch
+		}, showWait)
+	}-*/;
 
 	private SVGBuilder svgBuilder() {
 		return new SVGBuilder(_svgDoc, _svg) {

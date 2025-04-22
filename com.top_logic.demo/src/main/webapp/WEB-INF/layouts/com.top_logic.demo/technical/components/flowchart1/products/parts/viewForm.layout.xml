@@ -25,5 +25,8 @@
 				</formDefinition>
 			</form>
 		</forms>
+		<editExecutability>
+			<rule-by-expression decision="false"/>
+		</editExecutability>
 	</arguments>
 </config:template-call>

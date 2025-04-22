@@ -20,11 +20,8 @@ import com.top_logic.basic.col.filter.FilterFactory;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class DefaultMultiSelectionModel extends AbstractRestrainedSelectionModel {
+public class DefaultMultiSelectionModel extends AbstractMultiSelectionModel {
 	
-	private static final Object NO_LEAD = new Object();
-
-	private Object _lastSelected = NO_LEAD;
 	private final Set selected = new HashSet();
 	private final Set selectedView = Collections.unmodifiableSet(selected);
 	/**
@@ -46,21 +43,6 @@ public class DefaultMultiSelectionModel extends AbstractRestrainedSelectionModel
 		setDeselectionFilter(FilterFactory.trueFilter());
 	}
 	
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public boolean isSelectable(Object obj) {
-		return getSelectionFilter().accept(obj);
-	}
-	
-	/**
-	 * true, if the given object can be removed from set of selected objects.
-	 */
-	public boolean isDeselectable(Object obj) {
-		return getDeselectionFilter().accept(obj);
-	}
-
 	/**
 	 * {@inheritDoc}
 	 */
@@ -221,27 +203,14 @@ public class DefaultMultiSelectionModel extends AbstractRestrainedSelectionModel
 	private Set<Object> getFixedSelection() {
 		HashSet<Object> fixedSelection = new HashSet<>();
 		for (Object item : selected) {
-			if (!getDeselectionFilter().accept(item)) {
+			if (!isDeselectable(item)) {
 				fixedSelection.add(item);
 			}
 		}
 		return fixedSelection;
 	}
 
-	/**
-	 * Same as {@link #setSelected(Object, boolean)}, but without specifying a lead object.
-	 * 
-	 * @see com.top_logic.mig.html.SelectionModel#setSelection(Set)
-	 */
 	@Override
-	public void setSelection(Set<?> newSelection) {
-		setSelection(newSelection, NO_LEAD);
-	}
-
-	/**
-	 * Sets the new overall selection, whereby lead object specifies the selection item, that shall
-	 * mark the most important part (e.g. scrolling to according table row).
-	 */
 	@SuppressWarnings("unchecked")
 	public void setSelection(Set<?> newSelection, Object leadObject) {
 		if (newSelection == null) {
@@ -269,25 +238,6 @@ public class DefaultMultiSelectionModel extends AbstractRestrainedSelectionModel
 	@Override
 	public Set<?> getSelection() {
 		return selectedView;
-	}
-
-	/**
-	 * object, that has been (de-)selected at last time of modification of this selection model.
-	 * 
-	 * <p>
-	 * Returns null if the selection has no lead object.
-	 * </p>
-	 */
-	public Object getLastSelected() {
-		if (_lastSelected == NO_LEAD) {
-			return null;
-		}
-
-		return _lastSelected;
-	}
-
-	private void setLastSelected(Object lastSelected) {
-		_lastSelected = lastSelected;
 	}
 
 }

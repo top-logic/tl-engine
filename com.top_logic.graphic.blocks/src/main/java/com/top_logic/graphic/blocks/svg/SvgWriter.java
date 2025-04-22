@@ -6,6 +6,8 @@
 package com.top_logic.graphic.blocks.svg;
 
 import com.top_logic.graphic.blocks.math.Vec;
+import com.top_logic.graphic.blocks.model.Drawable;
+import com.top_logic.graphic.blocks.svg.event.Registration;
 import com.top_logic.graphic.blocks.svg.event.SVGClickEvent;
 import com.top_logic.graphic.blocks.svg.event.SVGClickHandler;
 import com.top_logic.graphic.flow.data.ImageAlign;
@@ -47,7 +49,14 @@ public interface SvgWriter extends AutoCloseable {
 	/**
 	 * Starts a <code>g</code> tag.
 	 */
-	void beginGroup();
+	void beginGroup(Object model);
+
+	/**
+	 * Starts an anonymous <code>g</code> tag.
+	 */
+	default void beginGroup() {
+		beginGroup(null);
+	}
 
 	/**
 	 * Writes a <code>translate</code> <code>transform</code> attribute.
@@ -65,9 +74,16 @@ public interface SvgWriter extends AutoCloseable {
 	void endGroup();
 
 	/**
+	 * Starts an anonymous <code>path</code> tag.
+	 */
+	default void beginPath() {
+		beginPath(null);
+	}
+
+	/**
 	 * Starts a <code>path</code> tag.
 	 */
-	void beginPath();
+	void beginPath(Object model);
 
 	/**
 	 * Starts a <code>data</code> attribute.
@@ -217,7 +233,27 @@ public interface SvgWriter extends AutoCloseable {
 	/**
 	 * Creates a <code>rect</code> element.
 	 */
-	void rect(double x, double y, double w, double h, double rx, double ry);
+	default void rect(double x, double y, double w, double h, double rx, double ry) {
+		beginRect(x, y, w, h, rx, ry);
+		endRect();
+	}
+
+	/**
+	 * Opens a <code>rect</code> element.
+	 */
+	default void beginRect(double x, double y, double w, double h) {
+		beginRect(x, y, w, h, 0, 0);
+	}
+
+	/**
+	 * Opens a <code>rect</code> element.
+	 */
+	void beginRect(double x, double y, double w, double h, double rx, double ry);
+
+	/**
+	 * Ends a <code>rect</code> element.
+	 */
+	void endRect();
 
 	/**
 	 * Writes a <code>id</code> attribute.
@@ -295,6 +331,18 @@ public interface SvgWriter extends AutoCloseable {
 	void image(double x, double y, double width, double height, String href, ImageAlign align, ImageScale scale);
 
 	/**
+	 * Callback for writing contents that have their own {@link Drawable} representation.
+	 * 
+	 * <p>
+	 * Use this method instead of directly invoking {@link Drawable#draw(SvgWriter)} to allow the
+	 * system to short-cut writing contents during local updates.
+	 * </p>
+	 */
+	default void write(Drawable element) {
+		element.draw(this);
+	}
+
+	/**
 	 * Attaches a callback to the created SVG document that is called, if the user clicks on the
 	 * currently created element.
 	 * 
@@ -309,8 +357,9 @@ public interface SvgWriter extends AutoCloseable {
 	 *        The user object to pass to the invoked callback. See
 	 *        {@link SVGClickEvent#getSender()}.
 	 */
-	default void attachOnClick(SVGClickHandler handler, Object sender) {
+	default Registration attachOnClick(SVGClickHandler handler, Object sender) {
 		// Ignore by default. This is only supported in specialized writers that build interactive
 		// DOM trees.
+		return Registration.NONE;
 	}
 }

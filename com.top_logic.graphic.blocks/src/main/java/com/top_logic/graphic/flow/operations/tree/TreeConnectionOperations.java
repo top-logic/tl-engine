@@ -7,10 +7,8 @@ package com.top_logic.graphic.flow.operations.tree;
 
 import com.top_logic.graphic.blocks.model.Drawable;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
-import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
-import com.top_logic.graphic.flow.data.TreeLayout;
 
 /**
  * 
@@ -21,12 +19,10 @@ public interface TreeConnectionOperations extends Drawable {
 
 	@Override
 	default void draw(SvgWriter out) {
-		TreeLayout layout = self().getOwner();
 		TreeConnector parent = self().getParent();
-		Box parentAnchor = parent.getAnchor();
 
-		double fromX = layout.fromX(parentAnchor);
-		double fromY = parentAnchor.getY() + parent.getConnectPosition() * parentAnchor.getHeight();
+		double fromX = parent.getX();
+		double fromY = parent.getY();
 
 		double barX = self().getBarPosition();
 
@@ -42,10 +38,8 @@ public interface TreeConnectionOperations extends Drawable {
 		double maxY = Double.MIN_VALUE;
 
 		for (TreeConnector child : self().getChildren()) {
-			Box childAnchor = child.getAnchor();
-
-			double childX = childAnchor.getX();
-			double childY = childAnchor.getY() + child.getConnectPosition() * childAnchor.getHeight();
+			double childX = child.getX();
+			double childY = child.getY();
 
 			out.moveToAbs(childX, childY);
 			out.lineToAbs(barX, childY);
@@ -57,5 +51,12 @@ public interface TreeConnectionOperations extends Drawable {
 
 		out.endData();
 		out.endPath();
+
+		// Optionally show connectors
+//		parent.draw(out);
+//		for (TreeConnector child : self().getChildren()) {
+//			child.draw(out);
+//		}
+
 	}
 }

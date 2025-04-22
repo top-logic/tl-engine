@@ -123,6 +123,12 @@ public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widg
 		return this;
 	}
 
+	@Override
+	public com.top_logic.graphic.flow.data.Box setClientId(String value) {
+		internalSetClientId(value);
+		return this;
+	}
+
 	private static java.util.List<String> PROPERTIES = java.util.Collections.unmodifiableList(
 		java.util.Arrays.asList(
 			PARENT__PROP, 

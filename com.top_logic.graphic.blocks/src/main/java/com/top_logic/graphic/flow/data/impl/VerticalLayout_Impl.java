@@ -68,6 +68,12 @@ public class VerticalLayout_Impl extends com.top_logic.graphic.flow.data.impl.Ro
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.VerticalLayout setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.VerticalLayout setUserObject(java.lang.Object value) {
 		internalSetUserObject(value);
 		return this;

@@ -69,6 +69,9 @@ public interface Diagram extends Widget, com.top_logic.graphic.flow.operations.D
 	boolean hasClickHandler();
 
 	@Override
+	com.top_logic.graphic.flow.data.Diagram setCssClass(String value);
+
+	@Override
 	com.top_logic.graphic.flow.data.Diagram setUserObject(java.lang.Object value);
 
 	@Override

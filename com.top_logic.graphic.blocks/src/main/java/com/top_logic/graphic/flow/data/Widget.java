@@ -1,6 +1,6 @@
 package com.top_logic.graphic.flow.data;
 
-public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode {
+public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.top_logic.graphic.flow.operations.WidgetOperations {
 
 	/** Type codes for the {@link com.top_logic.graphic.flow.data.Widget} hierarchy. */
 	public enum TypeKind {
@@ -76,9 +76,15 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	/** @see #getUserObject() */
 	String USER_OBJECT__PROP = "userObject";
 
+	/** @see #getClientId() */
+	String CLIENT_ID__PROP = "clientId";
+
 	/** The type code of this instance. */
 	TypeKind kind();
 
+	/**
+	 * An arbitrary object that can be associated with this graphics elements.
+	 */
 	java.lang.Object getUserObject();
 
 	/**
@@ -90,6 +96,21 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 * Checks, whether {@link #getUserObject()} has a value.
 	 */
 	boolean hasUserObject();
+
+	/**
+	 * Identifier to associate this graphics element to the client DOM.
+	 */
+	String getClientId();
+
+	/**
+	 * @see #getClientId()
+	 */
+	com.top_logic.graphic.flow.data.Widget setClientId(String value);
+
+	/**
+	 * Checks, whether {@link #getClientId()} has a value.
+	 */
+	boolean hasClientId();
 
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.Widget readWidget(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
@@ -125,6 +146,11 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode {
 		}
 		in.endArray();
 		return result;
+	}
+
+	@Override
+	default Widget self() {
+		return this;
 	}
 
 	/** Accepts the given visitor. */

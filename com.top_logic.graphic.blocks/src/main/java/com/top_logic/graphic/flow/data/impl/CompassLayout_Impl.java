@@ -291,6 +291,12 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.CompassLayout setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.CompassLayout setUserObject(java.lang.Object value) {
 		internalSetUserObject(value);
 		return this;

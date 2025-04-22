@@ -75,6 +75,9 @@ public interface Image extends Box, com.top_logic.graphic.flow.operations.ImageO
 	com.top_logic.graphic.flow.data.Image setHeight(double value);
 
 	@Override
+	com.top_logic.graphic.flow.data.Image setCssClass(String value);
+
+	@Override
 	com.top_logic.graphic.flow.data.Image setUserObject(java.lang.Object value);
 
 	@Override

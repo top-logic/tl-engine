@@ -69,6 +69,12 @@ public class Fill_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_I
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Fill setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.Fill setUserObject(java.lang.Object value) {
 		internalSetUserObject(value);
 		return this;

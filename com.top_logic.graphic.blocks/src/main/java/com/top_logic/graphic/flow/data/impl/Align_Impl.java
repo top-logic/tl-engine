@@ -90,6 +90,12 @@ public class Align_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Align setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.Align setUserObject(java.lang.Object value) {
 		internalSetUserObject(value);
 		return this;

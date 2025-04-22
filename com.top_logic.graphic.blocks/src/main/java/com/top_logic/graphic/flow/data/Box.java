@@ -79,6 +79,9 @@ public interface Box extends Widget, com.top_logic.graphic.flow.operations.BoxOp
 	com.top_logic.graphic.flow.data.Box setHeight(double value);
 
 	@Override
+	com.top_logic.graphic.flow.data.Box setCssClass(String value);
+
+	@Override
 	com.top_logic.graphic.flow.data.Box setUserObject(java.lang.Object value);
 
 	@Override

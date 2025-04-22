@@ -111,6 +111,9 @@ public interface GridLayout extends Layout, com.top_logic.graphic.flow.operation
 	com.top_logic.graphic.flow.data.GridLayout setHeight(double value);
 
 	@Override
+	com.top_logic.graphic.flow.data.GridLayout setCssClass(String value);
+
+	@Override
 	com.top_logic.graphic.flow.data.GridLayout setUserObject(java.lang.Object value);
 
 	@Override

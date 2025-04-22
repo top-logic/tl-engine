@@ -68,6 +68,12 @@ public class HorizontalLayout_Impl extends com.top_logic.graphic.flow.data.impl.
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.HorizontalLayout setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.HorizontalLayout setUserObject(java.lang.Object value) {
 		internalSetUserObject(value);
 		return this;

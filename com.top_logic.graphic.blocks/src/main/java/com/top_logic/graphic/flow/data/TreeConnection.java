@@ -86,6 +86,9 @@ public interface TreeConnection extends Widget, com.top_logic.graphic.flow.opera
 	com.top_logic.graphic.flow.data.TreeConnection setBarPosition(double value);
 
 	@Override
+	com.top_logic.graphic.flow.data.TreeConnection setCssClass(String value);
+
+	@Override
 	com.top_logic.graphic.flow.data.TreeConnection setUserObject(java.lang.Object value);
 
 	@Override

@@ -43,6 +43,9 @@ public interface Layout extends Box {
 	com.top_logic.graphic.flow.data.Layout setHeight(double value);
 
 	@Override
+	com.top_logic.graphic.flow.data.Layout setCssClass(String value);
+
+	@Override
 	com.top_logic.graphic.flow.data.Layout setUserObject(java.lang.Object value);
 
 	@Override

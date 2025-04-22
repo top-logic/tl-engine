@@ -75,6 +75,12 @@ public abstract class Decoration_Impl extends com.top_logic.graphic.flow.data.im
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Decoration setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.Decoration setUserObject(java.lang.Object value) {
 		internalSetUserObject(value);
 		return this;

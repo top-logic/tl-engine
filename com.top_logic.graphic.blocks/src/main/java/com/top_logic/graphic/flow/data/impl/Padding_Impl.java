@@ -126,6 +126,12 @@ public class Padding_Impl extends com.top_logic.graphic.flow.data.impl.Decoratio
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Padding setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.Padding setUserObject(java.lang.Object value) {
 		internalSetUserObject(value);
 		return this;

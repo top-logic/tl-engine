@@ -48,6 +48,9 @@ public interface Align extends Decoration, com.top_logic.graphic.flow.operations
 	com.top_logic.graphic.flow.data.Align setHeight(double value);
 
 	@Override
+	com.top_logic.graphic.flow.data.Align setCssClass(String value);
+
+	@Override
 	com.top_logic.graphic.flow.data.Align setUserObject(java.lang.Object value);
 
 	@Override

@@ -51,6 +51,9 @@ public interface Empty extends Box, com.top_logic.graphic.flow.operations.EmptyO
 	com.top_logic.graphic.flow.data.Empty setHeight(double value);
 
 	@Override
+	com.top_logic.graphic.flow.data.Empty setCssClass(String value);
+
+	@Override
 	com.top_logic.graphic.flow.data.Empty setUserObject(java.lang.Object value);
 
 	@Override

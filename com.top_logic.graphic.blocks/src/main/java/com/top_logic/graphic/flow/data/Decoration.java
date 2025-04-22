@@ -50,6 +50,9 @@ public interface Decoration extends Box, com.top_logic.graphic.flow.operations.D
 	com.top_logic.graphic.flow.data.Decoration setHeight(double value);
 
 	@Override
+	com.top_logic.graphic.flow.data.Decoration setCssClass(String value);
+
+	@Override
 	com.top_logic.graphic.flow.data.Decoration setUserObject(java.lang.Object value);
 
 	@Override

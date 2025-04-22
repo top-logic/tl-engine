@@ -225,6 +225,12 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.TreeLayout setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.TreeLayout setUserObject(java.lang.Object value) {
 		internalSetUserObject(value);
 		return this;

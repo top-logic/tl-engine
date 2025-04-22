@@ -118,6 +118,12 @@ public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widg
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Box setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.Box setUserObject(java.lang.Object value) {
 		internalSetUserObject(value);
 		return this;

@@ -56,6 +56,9 @@ public interface SelectableBox extends Decoration, com.top_logic.graphic.flow.op
 	com.top_logic.graphic.flow.data.SelectableBox setHeight(double value);
 
 	@Override
+	com.top_logic.graphic.flow.data.SelectableBox setCssClass(String value);
+
+	@Override
 	com.top_logic.graphic.flow.data.SelectableBox setUserObject(java.lang.Object value);
 
 	@Override

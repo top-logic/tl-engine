@@ -148,7 +148,7 @@ import com.top_logic.layout.table.renderer.DefaultTableRenderer;
 import com.top_logic.layout.table.renderer.Icons;
 import com.top_logic.layout.table.renderer.TableButtons;
 import com.top_logic.layout.toolbar.ToolBar;
-import com.top_logic.mig.html.DefaultMultiSelectionModel;
+import com.top_logic.mig.html.AbstractMultiSelectionModel;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.SelectionModel;
@@ -792,7 +792,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	private int getLastClickedRow() {
 		int lastClickedRow = -1;
 
-		if (getSelectionModel() instanceof DefaultMultiSelectionModel multiselectionModel) {
+		if (getSelectionModel() instanceof AbstractMultiSelectionModel multiselectionModel) {
 			Object lastSelectedRowObject = multiselectionModel.getLastSelected();
 
 			if (lastSelectedRowObject != null) {
@@ -810,8 +810,9 @@ public class TableControl extends AbstractControl implements TableModelListener,
 				Object rowObject = getRowObject(newSelectedRow);
 				Set<Object> newSelection = Collections.singleton(rowObject);
 				recordAbsoluteSelection(newSelection);
-				if (globalSelectionModel instanceof DefaultMultiSelectionModel) {
-					DefaultMultiSelectionModel multiSelectionModel = (DefaultMultiSelectionModel) globalSelectionModel;
+				if (globalSelectionModel instanceof AbstractMultiSelectionModel) {
+					AbstractMultiSelectionModel multiSelectionModel =
+						(AbstractMultiSelectionModel) globalSelectionModel;
 					multiSelectionModel.setSelection(newSelection, rowObject);
 				} else {
 					globalSelectionModel.setSelection(newSelection);
@@ -852,7 +853,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 			}
 		}
 		recordAbsoluteSelection(selection);
-		((DefaultMultiSelectionModel) selectionModel).setSelection(selection,
+		((AbstractMultiSelectionModel) selectionModel).setSelection(selection,
 			getViewModel().getRowObject(newSelectedRow));
 	}
 
@@ -1165,7 +1166,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		if (selectionModel instanceof DefaultSingleSelectionModel) {
 			row = viewModel.getRowOfObject(((DefaultSingleSelectionModel) selectionModel).getSingleSelection());
 		} else {
-			DefaultMultiSelectionModel multiselectionModel = (DefaultMultiSelectionModel) selectionModel;
+			AbstractMultiSelectionModel multiselectionModel = (AbstractMultiSelectionModel) selectionModel;
 			Object selected = multiselectionModel.getLastSelected();
 			if (selected == null) {
 				selected = CollectionUtilShared.getFirst(multiselectionModel.getSelection());

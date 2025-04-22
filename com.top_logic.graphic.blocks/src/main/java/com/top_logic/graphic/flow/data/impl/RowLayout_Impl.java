@@ -88,6 +88,12 @@ public abstract class RowLayout_Impl extends com.top_logic.graphic.flow.data.imp
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.RowLayout setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.RowLayout setUserObject(java.lang.Object value) {
 		internalSetUserObject(value);
 		return this;

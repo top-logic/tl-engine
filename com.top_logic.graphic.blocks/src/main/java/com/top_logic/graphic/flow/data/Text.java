@@ -45,6 +45,9 @@ public interface Text extends Box, com.top_logic.graphic.flow.operations.TextOpe
 	com.top_logic.graphic.flow.data.Text setHeight(double value);
 
 	@Override
+	com.top_logic.graphic.flow.data.Text setCssClass(String value);
+
+	@Override
 	com.top_logic.graphic.flow.data.Text setUserObject(java.lang.Object value);
 
 	@Override

@@ -27,3 +27,11 @@ path.tlbConnector {
 	stroke-width: 3;
 	stroke: #ffe635; 
 }
+
+.tlSelectionMarker {
+	display: none;
+}
+
+.tlSelected .tlSelectionMarker {
+	display: initial;
+}

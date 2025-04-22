@@ -113,6 +113,9 @@ public interface GridLayout extends Layout, com.top_logic.graphic.flow.operation
 	@Override
 	com.top_logic.graphic.flow.data.GridLayout setUserObject(java.lang.Object value);
 
+	@Override
+	com.top_logic.graphic.flow.data.GridLayout setClientId(String value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.GridLayout readGridLayout(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {

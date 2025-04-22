@@ -46,8 +46,7 @@ import com.top_logic.graphic.flow.operations.layout.FloatingLayoutOperations;
  *             +->| C3  |      
  *                +-----+
  * </code>
- * 
- * <pre>
+ * </pre>
  */
 public interface TreeLayoutOperations extends FloatingLayoutOperations {
 
@@ -239,7 +238,7 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		FloatingLayoutOperations.super.drawContents(out);
 
 		for (TreeConnection connection : self().getConnections()) {
-			connection.draw(out);
+			out.write(connection);
 		}
 	}
 
@@ -249,6 +248,7 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 	}
 
 	default double toX(Box box) {
+		// TODO: Depends on self().getDirection() - formulated for LTR:
 		return box.getX();
 	}
 }

@@ -179,6 +179,8 @@ import com.top_logic.layout.table.model.TableModelEvent;
 import com.top_logic.layout.table.model.TableModelListener;
 import com.top_logic.layout.table.model.TableUtil;
 import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
+import com.top_logic.layout.table.tree.TreeTableData;
+import com.top_logic.layout.table.tree.TreeTableDataOwner;
 import com.top_logic.layout.toolbar.ToolBar;
 import com.top_logic.layout.tree.component.StructureModelBuilder;
 import com.top_logic.layout.tree.component.TreeModelBuilder;
@@ -230,7 +232,7 @@ import com.top_logic.util.model.TL5Types;
 public class GridComponent extends EditComponent implements
 		SelectableWithSelectionModel, InAppSelectable,
 		ControlRepresentable, SelectionVetoListener, CompareAlgorithmHolder,
-		ComponentRowSource, WithSelectionPath {
+		ComponentRowSource, WithSelectionPath, TreeTableDataOwner {
 
 	/**
 	 * Configuration options for {@link GridComponent}.
@@ -773,6 +775,11 @@ public class GridComponent extends EditComponent implements
 		selectionModel
 			.setSelectionFilter(FilterFactory.or(selectionModel.getSelectionFilter(), GridComponent::isTransient));
 		return selectionModel;
+	}
+
+	@Override
+	public TreeTableData getTableData() {
+		return ((AbstractTreeGridBuilder<?>.TreeGridHandler) _handler).table;
 	}
 
 	/**

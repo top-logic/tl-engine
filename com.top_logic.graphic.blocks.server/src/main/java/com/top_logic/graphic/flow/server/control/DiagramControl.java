@@ -13,6 +13,7 @@ import java.util.Map;
 
 import com.top_logic.ajax.server.util.JSControlUtil;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.graphic.flow.control.JSDiagramControlCommon;
 import com.top_logic.graphic.flow.data.Diagram;
@@ -22,11 +23,14 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.URLParser;
 import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.basic.AbstractControlBase;
+import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.tool.boundsec.HandlerResult;
 
 import de.haumacher.msgbuf.graph.DefaultScope;
-import de.haumacher.msgbuf.graph.Scope;
 import de.haumacher.msgbuf.graph.SharedGraphNode;
+import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
+import de.haumacher.msgbuf.json.JsonReader;
 import de.haumacher.msgbuf.json.JsonWriter;
 import de.haumacher.msgbuf.server.io.WriterAdapter;
 import jakarta.servlet.ServletException;
@@ -37,15 +41,17 @@ import jakarta.servlet.http.HttpServletResponse;
  */
 public class DiagramControl extends AbstractControlBase implements JSDiagramControlCommon, ContentHandler {
 
+	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(UpdateCommand.INSTANCE);
+
 	private Diagram _diagram;
 
-	private Scope _graphScope;
+	private DefaultScope _graphScope;
 
 	/**
 	 * Creates a {@link DiagramControl}.
 	 */
 	public DiagramControl() {
-		super();
+		super(COMMANDS);
 	}
 
 	@Override
@@ -133,6 +139,44 @@ public class DiagramControl extends AbstractControlBase implements JSDiagramCont
 		StringW buffer = new StringW();
 		_diagram.writeTo(graphScope, new JsonWriter(buffer));
 		Logger.info("Diagram: \n" + buffer.toString(), DiagramControl.class);
+	}
+
+	void processUpdate(String patch) throws IOException {
+		Logger.info("Diagram update: " + patch, DiagramControl.class);
+		JsonReader json = new JsonReader(new StringR(patch));
+		_graphScope.applyChanges(json);
+	}
+
+	static final class UpdateCommand extends ControlCommand {
+
+		/**
+		 * Singleton {@link UpdateCommand} instance.
+		 */
+		public static final UpdateCommand INSTANCE = new UpdateCommand();
+
+		/**
+		 * Creates a {@link UpdateCommand}.
+		 */
+		private UpdateCommand() {
+			super("update");
+		}
+
+		@Override
+		public ResKey getI18NKey() {
+			return ResKey.text("Update DiagramControl");
+		}
+
+		@Override
+		protected HandlerResult execute(DisplayContext commandContext, Control control, Map<String, Object> arguments) {
+			String patch = (String) arguments.get("patch");
+			try {
+				((DiagramControl) control).processUpdate(patch);
+			} catch (IOException ex) {
+				Logger.error("Faild to update diagram.", ex, DiagramControl.class);
+			}
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
 	}
 
 }

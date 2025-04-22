@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_e60887b4_eaf6_4021_bf30_e1cbcb7a839f">
+		<tabLabel key="dynamic.5cde1192-c651-459b-b346-dd84cabd63f1">
+			<en>Tree table with tree selection</en>
+			<de>Baumtabelle mit Baumauswahl</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/treeTableWithTreeSelection/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

@@ -976,13 +976,7 @@ public class ValueResolver implements ValueRefVisitor<Object, ActionContext> {
 		} else {
 			TableData table = (TableData) treeNodeContext;
 			TableViewModel viewModel = table.getViewModel();
-			Set<?> selection = table.getSelectionModel().getSelection();
-			Object selectedRow = CollectionUtil.getSingleValueFromCollection(selection);
-			if (selectedRow != null) {
-				return Utils.equals(selectedRow, node);
-			}
-
-			return false;
+			return table.getSelectionModel().isSelected(node);
 		}
 	}
 

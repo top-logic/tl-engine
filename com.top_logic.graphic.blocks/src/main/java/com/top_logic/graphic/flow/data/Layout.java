@@ -45,6 +45,9 @@ public interface Layout extends Box {
 	@Override
 	com.top_logic.graphic.flow.data.Layout setUserObject(java.lang.Object value);
 
+	@Override
+	com.top_logic.graphic.flow.data.Layout setClientId(String value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.Layout readLayout(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {

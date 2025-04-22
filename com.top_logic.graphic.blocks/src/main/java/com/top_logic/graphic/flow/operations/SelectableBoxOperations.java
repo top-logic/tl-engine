@@ -5,15 +5,16 @@
  */
 package com.top_logic.graphic.flow.operations;
 
-import java.util.List;
+import java.util.Collections;
 
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
+import com.top_logic.graphic.blocks.svg.event.MouseButton;
+import com.top_logic.graphic.blocks.svg.event.Registration;
 import com.top_logic.graphic.blocks.svg.event.SVGClickEvent;
 import com.top_logic.graphic.blocks.svg.event.SVGClickHandler;
 import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.graphic.flow.data.SelectableBox;
-import com.top_logic.graphic.flow.data.Widget;
 
 /**
  * 
@@ -39,27 +40,61 @@ public interface SelectableBoxOperations extends DecorationOperations, SVGClickH
 
 	@Override
 	default void draw(SvgWriter out) {
-		out.beginGroup();
+		Registration clickHandler = self().getClickHandler();
+		if (clickHandler != null) {
+			clickHandler.cancel();
+		}
+
+		out.beginGroup(self());
 		out.translate(self().getX(), self().getY());
 		out.writeCssClass(self().isSelected() ? "tlSelected" : "tlCanSelect");
-		out.attachOnClick(this, this);
+		self().setClickHandler(out.attachOnClick(this, self()));
 
-		DecorationOperations.super.draw(out);
+		drawContent(out);
 
 		out.endGroup();
 	}
 
 	@Override
 	default void onClick(SVGClickEvent event) {
+		if (!event.getButton(MouseButton.LEFT)) {
+			return;
+		}
+
 		Diagram diagram = self().getDiagram();
-		List<Widget> selection = diagram.getSelection();
 		if (self().isSelected()) {
-			selection.remove(self());
-			self().setSelected(false);
+			if (event.isCtrlKey()) {
+				// Toggle
+				diagram.getSelection().remove(self());
+				self().setSelected(false);
+			} else if (event.isShiftKey()) {
+				// Ignore.
+			} else {
+				// Make unique.
+				for (SelectableBox selected : diagram.getSelection()) {
+					if (selected == self()) {
+						continue;
+					}
+					selected.setSelected(false);
+				}
+				diagram.setSelection(Collections.singletonList(self()));
+			}
 		} else {
-			selection.add(self());
+			if (event.isShiftKey() || event.isCtrlKey()) {
+				diagram.getSelection().add(self());
+			} else {
+				// Make unique.
+				for (SelectableBox selected : diagram.getSelection()) {
+					if (selected == self()) {
+						continue;
+					}
+					selected.setSelected(false);
+				}
+				diagram.setSelection(Collections.singletonList(self()));
+			}
 			self().setSelected(true);
 		}
+		event.stopPropagation();
 	}
 
 }

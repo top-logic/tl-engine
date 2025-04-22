@@ -68,6 +68,9 @@ public interface Padding extends Decoration, com.top_logic.graphic.flow.operatio
 	com.top_logic.graphic.flow.data.Padding setHeight(double value);
 
 	@Override
+	com.top_logic.graphic.flow.data.Padding setCssClass(String value);
+
+	@Override
 	com.top_logic.graphic.flow.data.Padding setUserObject(java.lang.Object value);
 
 	@Override

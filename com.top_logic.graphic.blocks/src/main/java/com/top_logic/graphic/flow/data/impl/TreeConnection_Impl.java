@@ -160,6 +160,12 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.TreeConnection setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.TreeConnection setUserObject(java.lang.Object value) {
 		internalSetUserObject(value);
 		return this;

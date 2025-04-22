@@ -38,6 +38,9 @@ public interface Fill extends Decoration, com.top_logic.graphic.flow.operations.
 	com.top_logic.graphic.flow.data.Fill setHeight(double value);
 
 	@Override
+	com.top_logic.graphic.flow.data.Fill setCssClass(String value);
+
+	@Override
 	com.top_logic.graphic.flow.data.Fill setUserObject(java.lang.Object value);
 
 	@Override

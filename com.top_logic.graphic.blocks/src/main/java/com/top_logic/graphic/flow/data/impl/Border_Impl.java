@@ -209,6 +209,12 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Border setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.Border setUserObject(java.lang.Object value) {
 		internalSetUserObject(value);
 		return this;

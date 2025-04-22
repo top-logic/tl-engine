@@ -37,6 +37,9 @@ public interface HorizontalLayout extends RowLayout, com.top_logic.graphic.flow.
 	com.top_logic.graphic.flow.data.HorizontalLayout setHeight(double value);
 
 	@Override
+	com.top_logic.graphic.flow.data.HorizontalLayout setCssClass(String value);
+
+	@Override
 	com.top_logic.graphic.flow.data.HorizontalLayout setUserObject(java.lang.Object value);
 
 	@Override

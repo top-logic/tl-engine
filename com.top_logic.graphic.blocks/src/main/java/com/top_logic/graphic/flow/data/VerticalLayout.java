@@ -37,6 +37,9 @@ public interface VerticalLayout extends RowLayout, com.top_logic.graphic.flow.op
 	com.top_logic.graphic.flow.data.VerticalLayout setHeight(double value);
 
 	@Override
+	com.top_logic.graphic.flow.data.VerticalLayout setCssClass(String value);
+
+	@Override
 	com.top_logic.graphic.flow.data.VerticalLayout setUserObject(java.lang.Object value);
 
 	@Override

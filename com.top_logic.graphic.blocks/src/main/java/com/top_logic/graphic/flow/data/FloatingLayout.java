@@ -48,6 +48,9 @@ public interface FloatingLayout extends Box, com.top_logic.graphic.flow.operatio
 	com.top_logic.graphic.flow.data.FloatingLayout setHeight(double value);
 
 	@Override
+	com.top_logic.graphic.flow.data.FloatingLayout setCssClass(String value);
+
+	@Override
 	com.top_logic.graphic.flow.data.FloatingLayout setUserObject(java.lang.Object value);
 
 	@Override

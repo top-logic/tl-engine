@@ -11,8 +11,11 @@ import com.top_logic.basic.col.InlineList;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.VetoException;
 import com.top_logic.layout.basic.Command;
+import com.top_logic.layout.scripting.action.SelectAction.SelectionChangeKind;
+import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.table.control.SelectionVetoListener;
 import com.top_logic.layout.table.control.TableControl.SelectionType;
+import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.TreeSelectionModel;
 import com.top_logic.mig.html.TreeSelectionModel.StateChanged;
 import com.top_logic.mig.html.TreeSelectionModel.TreeSelectionListener;
@@ -94,14 +97,14 @@ public class TreeSelectionPartControl<N> extends TriStateCheckboxControl impleme
 	@Override
 	protected void updateSelection(boolean select) {
 		if (InlineList.isEmpty(_vetoListeners)) {
-			getModel().setSelected(_node, select);
+			internalUpdateSelection(select);
 		} else {
 			try {
 				for (Iterator<SelectionVetoListener> it =
 					InlineList.iterator(SelectionVetoListener.class, _vetoListeners); it.hasNext();) {
 					it.next().checkVeto(getModel(), _node, SelectionType.TOGGLE_SINGLE);
 				}
-				getModel().setSelected(_node, select);
+				internalUpdateSelection(select);
 			} catch (VetoException ex) {
 				ex.setContinuationCommand(new Command() {
 
@@ -114,6 +117,15 @@ public class TreeSelectionPartControl<N> extends TriStateCheckboxControl impleme
 				ex.process(getWindowScope());
 			}
 		}
+	}
+
+	private void internalUpdateSelection(boolean select) {
+		SelectionModel selectionModel = getModel();
+		if (ScriptingRecorder.isRecordingActive()) {
+			ScriptingRecorder.recordSelection(selectionModel, _node, select, SelectionChangeKind.INCREMENTAL);
+		}
+
+		selectionModel.setSelected(_node, select);
 	}
 
 	@Override

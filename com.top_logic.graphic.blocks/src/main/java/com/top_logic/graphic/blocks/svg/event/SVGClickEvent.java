@@ -12,4 +12,40 @@ public interface SVGClickEvent {
 
 	Object getSender();
 
+	boolean getButton(MouseButton button);
+
+	/**
+	 * TODO
+	 *
+	 * @return
+	 */
+	boolean isMetaKey();
+
+	/**
+	 * TODO
+	 *
+	 * @return
+	 */
+	boolean isShiftKey();
+
+	/**
+	 * TODO
+	 *
+	 * @return
+	 */
+	boolean isAltKey();
+
+	/**
+	 * TODO
+	 *
+	 * @return
+	 */
+	boolean isCtrlKey();
+
+	/**
+	 * TODO
+	 *
+	 */
+	void stopPropagation();
+
 }

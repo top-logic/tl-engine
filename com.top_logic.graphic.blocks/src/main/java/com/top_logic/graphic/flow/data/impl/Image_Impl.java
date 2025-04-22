@@ -147,6 +147,12 @@ public class Image_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Image setClientId(String value) {
+		internalSetClientId(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return IMAGE__TYPE;
 	}

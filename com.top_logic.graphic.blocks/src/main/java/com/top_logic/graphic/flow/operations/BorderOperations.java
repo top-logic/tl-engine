@@ -72,11 +72,11 @@ public interface BorderOperations extends DecorationOperations {
 
 	@Override
 	default void draw(SvgWriter out) {
-		DecorationOperations.super.draw(out);
+		drawContent(out);
 
 		double radius = self().getThickness() / 2;
 
-		out.beginPath();
+		out.beginPath(self());
 		out.setStrokeWidth(self().getThickness());
 		out.setStroke(self().getStrokeStyle());
 		if (!self().getDashes().isEmpty()) {

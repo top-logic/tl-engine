@@ -53,6 +53,9 @@ public interface Empty extends Box, com.top_logic.graphic.flow.operations.EmptyO
 	@Override
 	com.top_logic.graphic.flow.data.Empty setUserObject(java.lang.Object value);
 
+	@Override
+	com.top_logic.graphic.flow.data.Empty setClientId(String value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.Empty readEmpty(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {

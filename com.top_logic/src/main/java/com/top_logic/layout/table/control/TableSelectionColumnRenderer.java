@@ -8,13 +8,16 @@ package com.top_logic.layout.table.control;
 import java.io.IOException;
 
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.control.SelectionPartControl;
+import com.top_logic.layout.form.control.TreeSelectionPartControl;
 import com.top_logic.layout.table.AbstractCellRenderer;
 import com.top_logic.layout.table.CellRenderer;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableRenderer.Cell;
 import com.top_logic.mig.html.SelectionModel;
+import com.top_logic.mig.html.TreeSelectionModel;
 
 /**
  * {@link CellRenderer} creating the technical column for keyboard row selection.
@@ -43,9 +46,32 @@ public class TableSelectionColumnRenderer extends AbstractCellRenderer {
 			return;
 		}
 		Object rowObject = tableData.getViewModel().getRowObject(row);
-		SelectionPartControl selectionPartControl = new SelectionPartControl(selectionModel, rowObject);
-		tableData.getSelectionVetoListeners().forEach(selectionPartControl::addSelectionVetoListener);
-		selectionPartControl.write(context, out);
+		Control ctrl = createSelectionPartControl(selectionModel, rowObject, tableData.getSelectionVetoListeners());
+		ctrl.write(context, out);
+	}
+
+	/**
+	 * Creates a {@link Control} handling the selection of the given row object in the given
+	 * {@link SelectionModel}.
+	 *
+	 * @param vetoListeners
+	 *        Optional listeners to prevent selecting or de-selecting the given object.
+	 */
+	public static Control createSelectionPartControl(SelectionModel selectionModel, Object rowObject,
+			Iterable<SelectionVetoListener> vetoListeners) {
+		Control ctrl;
+		if (selectionModel instanceof TreeSelectionModel) {
+			@SuppressWarnings({ "rawtypes", "unchecked" })
+			TreeSelectionPartControl<?> selectionPartControl =
+				new TreeSelectionPartControl((TreeSelectionModel) selectionModel, rowObject);
+			vetoListeners.forEach(selectionPartControl::addSelectionVetoListener);
+			ctrl = selectionPartControl;
+		} else {
+			SelectionPartControl selectionPartControl = new SelectionPartControl(selectionModel, rowObject);
+			vetoListeners.forEach(selectionPartControl::addSelectionVetoListener);
+			ctrl = selectionPartControl;
+		}
+		return ctrl;
 	}
 
 }

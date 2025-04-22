@@ -5,15 +5,22 @@
  */
 package com.top_logic.graphic.flow.operations;
 
+import java.util.Collections;
+
 import com.top_logic.graphic.blocks.model.Drawable;
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
+import com.top_logic.graphic.blocks.svg.event.MouseButton;
+import com.top_logic.graphic.blocks.svg.event.Registration;
+import com.top_logic.graphic.blocks.svg.event.SVGClickEvent;
+import com.top_logic.graphic.blocks.svg.event.SVGClickHandler;
 import com.top_logic.graphic.flow.data.Diagram;
+import com.top_logic.graphic.flow.data.SelectableBox;
 
 /**
  * 
  */
-public interface DiagramOperations extends Drawable {
+public interface DiagramOperations extends Drawable, SVGClickHandler {
 
 	Diagram self();
 
@@ -24,12 +31,34 @@ public interface DiagramOperations extends Drawable {
 
 	@Override
 	default void draw(SvgWriter out) {
+		Registration clickHandler = self().getClickHandler();
+		if (clickHandler != null) {
+			clickHandler.cancel();
+		}
+
 		out.beginSvg();
 		out.dimensions(Double.toString(self().getRoot().getWidth()), Double.toString(self().getRoot().getHeight()), 0,
 			0, self().getRoot().getWidth(),
 			self().getRoot().getHeight());
-		self().getRoot().draw(out);
+		out.write(self().getRoot());
+		self().setClickHandler(out.attachOnClick(this, self()));
 		out.endSvg();
 	}
 
+	@Override
+	default void onClick(SVGClickEvent event) {
+		if (!event.getButton(MouseButton.LEFT)) {
+			return;
+		}
+
+		if (event.isShiftKey() || event.isCtrlKey()) {
+			// Ignore.
+		} else {
+			for (SelectableBox selected : self().getSelection()) {
+				selected.setSelected(false);
+			}
+			self().setSelection(Collections.emptyList());
+		}
+		event.stopPropagation();
+	}
 }

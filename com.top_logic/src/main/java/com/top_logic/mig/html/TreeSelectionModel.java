@@ -281,7 +281,7 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 
 	@Override
 	public Set<?> getSelection() {
-		return calculateSelected();
+		return calculateAllSelected();
 	}
 
 	@Override

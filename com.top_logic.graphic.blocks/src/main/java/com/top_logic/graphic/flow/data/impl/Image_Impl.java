@@ -141,6 +141,12 @@ public class Image_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Image setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.Image setUserObject(java.lang.Object value) {
 		internalSetUserObject(value);
 		return this;

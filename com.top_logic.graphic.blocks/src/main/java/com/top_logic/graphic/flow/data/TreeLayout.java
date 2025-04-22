@@ -129,6 +129,9 @@ public interface TreeLayout extends FloatingLayout, com.top_logic.graphic.flow.o
 	com.top_logic.graphic.flow.data.TreeLayout setHeight(double value);
 
 	@Override
+	com.top_logic.graphic.flow.data.TreeLayout setCssClass(String value);
+
+	@Override
 	com.top_logic.graphic.flow.data.TreeLayout setUserObject(java.lang.Object value);
 
 	@Override

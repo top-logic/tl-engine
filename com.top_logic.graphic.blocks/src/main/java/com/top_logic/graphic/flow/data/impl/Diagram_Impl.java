@@ -128,6 +128,12 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Diagram setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.Diagram setUserObject(java.lang.Object value) {
 		internalSetUserObject(value);
 		return this;

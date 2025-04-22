@@ -201,6 +201,9 @@ public class DefaultMultiSelectionModel extends AbstractMultiSelectionModel {
 	}
 
 	private Set<Object> getFixedSelection() {
+		if (FilterFactory.isTrue(getDeselectionFilter())) {
+			return Collections.emptySet();
+		}
 		HashSet<Object> fixedSelection = new HashSet<>();
 		for (Object item : selected) {
 			if (!isDeselectable(item)) {
@@ -217,8 +220,14 @@ public class DefaultMultiSelectionModel extends AbstractMultiSelectionModel {
 			throw new IllegalArgumentException("Selection must not be null");
 		}
 		HashSet<Object> oldSelection = new HashSet<>(selected);
-		Set<Object> retainedSelection = getFixedSelection();
-		retainedSelection.addAll(newSelection);
+		Set<Object> fixedSelection = getFixedSelection();
+		Set<?> retainedSelection;
+		if (fixedSelection.isEmpty()) {
+			retainedSelection = newSelection;
+		} else {
+			fixedSelection.addAll(newSelection);
+			retainedSelection = fixedSelection;
+		}
 		boolean modified = selected.retainAll(retainedSelection);
 		for (Object newSelected : newSelection) {
 			if (isSelectable(newSelected)) {

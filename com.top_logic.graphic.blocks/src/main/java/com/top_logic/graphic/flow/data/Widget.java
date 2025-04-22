@@ -73,6 +73,9 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 
 	}
 
+	/** @see #getCssClass() */
+	String CSS_CLASS__PROP = "cssClass";
+
 	/** @see #getUserObject() */
 	String USER_OBJECT__PROP = "userObject";
 
@@ -81,6 +84,21 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 
 	/** The type code of this instance. */
 	TypeKind kind();
+
+	/**
+	 * Custom CSS class to add to the SVG element.
+	 */
+	String getCssClass();
+
+	/**
+	 * @see #getCssClass()
+	 */
+	com.top_logic.graphic.flow.data.Widget setCssClass(String value);
+
+	/**
+	 * Checks, whether {@link #getCssClass()} has a value.
+	 */
+	boolean hasCssClass();
 
 	/**
 	 * An arbitrary object that can be associated with this graphics elements.

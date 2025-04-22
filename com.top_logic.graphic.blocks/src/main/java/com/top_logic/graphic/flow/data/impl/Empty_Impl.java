@@ -82,6 +82,12 @@ public class Empty_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Empty setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.Empty setUserObject(java.lang.Object value) {
 		internalSetUserObject(value);
 		return this;

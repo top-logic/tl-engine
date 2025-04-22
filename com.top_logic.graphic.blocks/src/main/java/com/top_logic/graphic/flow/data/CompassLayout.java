@@ -130,6 +130,9 @@ public interface CompassLayout extends Box, com.top_logic.graphic.flow.operation
 	com.top_logic.graphic.flow.data.CompassLayout setHeight(double value);
 
 	@Override
+	com.top_logic.graphic.flow.data.CompassLayout setCssClass(String value);
+
+	@Override
 	com.top_logic.graphic.flow.data.CompassLayout setUserObject(java.lang.Object value);
 
 	@Override

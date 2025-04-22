@@ -15,9 +15,10 @@
 // All parts.
 parts = $model.get(`test.flowchart:Product#parts`);
 
-nodes = $parts.map(p -> 
-    flowVertical(
-        userObject: $p,
+nodes = $parts.map(p -> flowSelection(
+    userObject: $p,
+    content: flowBorder(stroke: "#eccf33", thickness: 2, cssClass:"tlSelectionMarker", content: flowFill(fill: "#eccf3340", cssClass:"tlSelectionMarker", content: flowPadding(all: 3, 
+    content: flowVertical(
         contents: [
             {
                 marker = $p.get(`test.flowchart:FlowNode#marker`);
@@ -77,7 +78,8 @@ nodes = $parts.map(p ->
                         top: 8, 
                         content: flowBorder(flowImage($image)))
             }
-        ])
+        ]))))
+        )
     );
 
 nodeByPart = $nodes.indexBy(n -> $n["userObject"]);

@@ -59,10 +59,12 @@ public class FlowFactory {
 	 */
 	public static Diagram flowChart(
 		Box root,
+		String cssClass,
 		Object userObject
 	) {
 		return Diagram.create()
 			.setRoot(root == null ? Empty.create() : root)
+			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}
 
@@ -71,6 +73,7 @@ public class FlowFactory {
 	 */
 	public static Box flowText(
 		@Mandatory String text,
+		String cssClass,
 		Object userObject
 	) {
 		if (text == null) {
@@ -78,6 +81,7 @@ public class FlowFactory {
 		}
 		return Text.create()
 			.setValue(text)
+			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}
 
@@ -88,12 +92,14 @@ public class FlowFactory {
 		@Mandatory Box content,
 		Alignment hAlign,
 		Alignment vAlign,
+		String cssClass,
 		Object userObject
 	) {
 		return Align.create()
 			.setXAlign(hAlign)
 			.setYAlign(vAlign)
 			.setContent(content)
+			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}
 
@@ -109,6 +115,7 @@ public class FlowFactory {
 		@DoubleDefault(1.0) double thickness,
 		@StringDefault("black") @ScriptConversion(ToStyle.class) String stroke,
 		List<Double> dashes,
+		String cssClass,
 		Object userObject
 	) {
 		if (dashes == null) {
@@ -121,6 +128,7 @@ public class FlowFactory {
 			.setBottom(bottom)
 			.setDashes(dashes)
 			.setContent(content)
+			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}
 
@@ -130,11 +138,13 @@ public class FlowFactory {
 	public static Decoration flowFill(
 		@Mandatory Box content,
 		@StringDefault("gray") @ScriptConversion(ToStyle.class) String fill,
+		String cssClass,
 		Object userObject
 	) {
 		return Fill.create()
 			.setFillStyle(fill)
 			.setContent(content)
+			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}
 
@@ -150,6 +160,7 @@ public class FlowFactory {
 		Double left,
 		Double right,
 		Double bottom,
+		String cssClass,
 		Object userObject
 	) {
 		Padding result = Padding.create();
@@ -175,6 +186,7 @@ public class FlowFactory {
 			result.setBottom(bottom);
 		}
 		result.setContent(content);
+		result.setCssClass(cssClass);
 		result.setUserObject(userObject);
 		return result;
 	}
@@ -186,6 +198,7 @@ public class FlowFactory {
 		@Mandatory List<Box> contents,
 		double gap,
 		SpaceDistribution distribution,
+		String cssClass,
 		Object userObject
 	) {
 		if (contents.isEmpty()) {
@@ -203,6 +216,7 @@ public class FlowFactory {
 			.setGap(gap)
 			.setFill(distribution)
 			.setContents(contents)
+			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}
 
@@ -213,6 +227,7 @@ public class FlowFactory {
 		@Mandatory List<Box> contents,
 		double gap,
 		SpaceDistribution distribution,
+		String cssClass,
 		Object userObject
 	) {
 		if (contents.isEmpty()) {
@@ -227,6 +242,7 @@ public class FlowFactory {
 		}
 
 		return VerticalLayout.create().setGap(gap).setFill(distribution).setContents(contents)
+			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}
 
@@ -239,6 +255,7 @@ public class FlowFactory {
 		Box west,
 		Box east,
 		Box south,
+		String cssClass,
 		Object userObject
 	) {
 		return CompassLayout.create()
@@ -247,6 +264,7 @@ public class FlowFactory {
 			.setWest(west)
 			.setEast(east)
 			.setSouth(south)
+			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}
 
@@ -257,6 +275,7 @@ public class FlowFactory {
 		@Mandatory List<List<Box>> contents,
 		double gapX,
 		double gapY,
+		String cssClass,
 		Object userObject
 	) {
 		int rows = contents.size();
@@ -282,7 +301,9 @@ public class FlowFactory {
 			}
 			y++;
 		}
-		return result.setUserObject(userObject);
+		return result
+			.setCssClass(cssClass)
+			.setUserObject(userObject);
 	}
 
 	/**
@@ -291,11 +312,13 @@ public class FlowFactory {
 	public static Box flowEmpty(
 		Double width,
 		Double height,
+		String cssClass,
 		Object userObject
 	) {
 		return Empty.create()
 			.setMinWidth(width)
 			.setMinHeight(height)
+			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}
 
@@ -308,6 +331,7 @@ public class FlowFactory {
 		Double height,
 		ImageAlign align,
 		ImageScale scale,
+		String cssClass,
 		Object userObject
 	) {
 		if (data == null) {
@@ -357,7 +381,9 @@ public class FlowFactory {
 		if (scale != null) {
 			result.setScale(scale);
 		}
-		return result.setUserObject(userObject);
+		return result
+			.setCssClass(cssClass)
+			.setUserObject(userObject);
 	}
 
 	/**
@@ -365,10 +391,12 @@ public class FlowFactory {
 	 */
 	public static Box flowSelection(
 		Box content,
+		String cssClass,
 		Object userObject
 	) {
 		return SelectableBox.create()
 			.setContent(content)
+			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}
 	
@@ -403,6 +431,7 @@ public class FlowFactory {
 		@StringDefault("black") String stroke, 
 		@DoubleDefault(1) double strokeWidth, 
 		boolean compact,
+		String cssClass,
 		Object userObject 
 	) {
 		return TreeLayout.create()
@@ -414,6 +443,7 @@ public class FlowFactory {
 			.setStrokeStyle(stroke)
 			.setThickness(strokeWidth)
 			.setCompact(compact)
+			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}
 
@@ -444,11 +474,13 @@ public class FlowFactory {
 	public static TreeConnector flowConnector(
 		@Mandatory Box anchor,
 		@DoubleDefault(0.5) double pos,
+		String cssClass,
 		Object userObject
 	) {
 		return TreeConnector.create()
 			.setAnchor(anchor)
 			.setConnectPosition(pos)
+			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}
 

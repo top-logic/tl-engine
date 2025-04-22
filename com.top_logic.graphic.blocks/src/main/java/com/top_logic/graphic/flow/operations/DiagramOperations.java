@@ -37,6 +37,7 @@ public interface DiagramOperations extends Drawable, SVGClickHandler {
 		}
 
 		out.beginSvg();
+		out.writeCssClass(self().getCssClass());
 		out.dimensions(Double.toString(self().getRoot().getWidth()), Double.toString(self().getRoot().getHeight()), 0,
 			0, self().getRoot().getWidth(),
 			self().getRoot().getHeight());

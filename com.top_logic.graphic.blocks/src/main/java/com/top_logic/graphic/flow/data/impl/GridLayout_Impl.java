@@ -222,6 +222,12 @@ public class GridLayout_Impl extends com.top_logic.graphic.flow.data.impl.Layout
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.GridLayout setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.GridLayout setUserObject(java.lang.Object value) {
 		internalSetUserObject(value);
 		return this;

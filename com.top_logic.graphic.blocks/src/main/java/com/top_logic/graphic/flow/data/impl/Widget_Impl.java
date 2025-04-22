@@ -5,6 +5,8 @@ package com.top_logic.graphic.flow.data.impl;
  */
 public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraphNode implements com.top_logic.graphic.flow.data.Widget {
 
+	private String _cssClass = null;
+
 	private transient java.lang.Object _userObject = null;
 
 	private transient String _clientId = null;
@@ -14,6 +16,28 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 	 */
 	public Widget_Impl() {
 		super();
+	}
+
+	@Override
+	public final String getCssClass() {
+		return _cssClass;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Widget setCssClass(String value) {
+		internalSetCssClass(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getCssClass()} without chain call utility. */
+	protected final void internalSetCssClass(String value) {
+		_listener.beforeSet(this, CSS_CLASS__PROP, value);
+		_cssClass = value;
+	}
+
+	@Override
+	public final boolean hasCssClass() {
+		return _cssClass != null;
 	}
 
 	@Override
@@ -62,6 +86,7 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 
 	private static java.util.List<String> PROPERTIES = java.util.Collections.unmodifiableList(
 		java.util.Arrays.asList(
+			CSS_CLASS__PROP, 
 			USER_OBJECT__PROP, 
 			CLIENT_ID__PROP));
 
@@ -73,6 +98,7 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 	@Override
 	public Object get(String field) {
 		switch (field) {
+			case CSS_CLASS__PROP: return getCssClass();
 			case USER_OBJECT__PROP: return getUserObject();
 			case CLIENT_ID__PROP: return getClientId();
 			default: return super.get(field);
@@ -82,6 +108,7 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 	@Override
 	public void set(String field, Object value) {
 		switch (field) {
+			case CSS_CLASS__PROP: internalSetCssClass((String) value); break;
 			case USER_OBJECT__PROP: internalSetUserObject((java.lang.Object) value); break;
 			case CLIENT_ID__PROP: internalSetClientId((String) value); break;
 		}
@@ -90,11 +117,23 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 	@Override
 	protected void writeFields(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
 		super.writeFields(scope, out);
+		if (hasCssClass()) {
+			out.name(CSS_CLASS__PROP);
+			out.value(getCssClass());
+		}
 	}
 
 	@Override
 	public void writeFieldValue(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field) throws java.io.IOException {
 		switch (field) {
+			case CSS_CLASS__PROP: {
+				if (hasCssClass()) {
+					out.value(getCssClass());
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
 			case USER_OBJECT__PROP: {
 				if (hasUserObject()) {
 				} else {
@@ -117,6 +156,7 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 	@Override
 	public void readField(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
+			case CSS_CLASS__PROP: setCssClass(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(scope, in, field);
 		}
 	}

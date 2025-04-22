@@ -15,6 +15,7 @@
 					<property name="expandRoot"/>
 					<property name="expandSelected"/>
 					<property name="multiSelection"/>
+					<property name="tree-selection"/>
 					<property name="adjustSelectionWhenCollapsing"/>
 					<property name="isSecurityMaster"/>
 
@@ -61,6 +62,9 @@
 			type="boolean"
 		/>
 		<property name="multiSelection"
+			type="boolean"
+		/>
+		<property name="tree-selection"
 			type="boolean"
 		/>
 		<property name="securityObject"
@@ -129,7 +133,10 @@
 		titleKey="${name}"
 		toolbar="${toolbar}"
 	>
-		<selectionModelFactory multiple="${multiSelection}"/>
+		<selectionModelFactory
+			multiple="${multiSelection}"
+			tree-selection="${tree-selection}"
+		/>
 		<buttons>
 			${buttons}
 			<include name="templates/editComponentCommands.xml"/>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tile.template.xml"
+>
+	<arguments
+		helpID="ID_ab3fd765_035c_49e3_8a9b_d85d397c647f"
+		tileName="ID_a4fddf3b_0a91_47ab_a9ca_76afb5df08c8"
+	>
+		<tileLabel key="dynamic.0ed98f25-be0a-4fbd-bf9c-a02ca5e04d38">
+			<en>Series</en>
+			<de>Baureihen</de>
+		</tileLabel>
+		<preview class="com.top_logic.mig.html.layout.tiles.component.StaticPreview"
+			icon="css:fa-solid fa-cubes-stacked"
+		/>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/flowchart1/products/series/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

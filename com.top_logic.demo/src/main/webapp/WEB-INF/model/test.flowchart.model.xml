@@ -26,7 +26,7 @@
 						<options>
 							<options-by-expression>
 								<function><![CDATA[node -> $node.container()
-    .get(`test.flowchart:Product#parts`)]]></function>
+    .get(`test.flowchart:Product#buildInstructions`)]]></function>
 							</options-by-expression>
 						</options>
 					</annotations>
@@ -73,12 +73,6 @@
 						</options>
 					</annotations>
 				</reference>
-				<reference name="usages"
-					kind="forwards"
-					multiple="true"
-					navigate="true"
-					type="Usage"
-				/>
 				<property name="count"
 					type="tl.core:Integer"
 				/>
@@ -91,6 +85,14 @@
 						</storage-algorithm>
 					</annotations>
 				</property>
+				<reference name="usages"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="Usage"
+				/>
 			</attributes>
 		</class>
 		<class name="Part">
@@ -139,12 +141,19 @@
 					navigate="true"
 					type="tl.imagegallery:GalleryImage"
 				/>
-				<reference name="parts"
+				<reference name="buildInstructions"
 					composite="true"
 					kind="forwards"
 					multiple="true"
 					navigate="true"
 					type="FlowNode"
+				/>
+				<reference name="parts"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Part"
 				/>
 			</attributes>
 		</class>

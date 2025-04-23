@@ -268,7 +268,27 @@ public interface SvgWriter extends AutoCloseable {
 	/**
 	 * Writes a <code>text</code> element.
 	 */
-	void text(double x, double y, String text);
+	default void text(double x, double y, String text) {
+		beginText(x, y, text);
+		endText();
+	}
+
+	/**
+	 * Starts a <code>text</code> element.
+	 */
+	void beginText(double x, double y, String text);
+
+	/**
+	 * Adds text tyle properties to a text element.
+	 */
+	void setTextStyle(String fontFamily, String fontSize, String fontWeight);
+
+	/**
+	 * Ends a text element.
+	 * 
+	 * @see #beginText(double, double, String)
+	 */
+	void endText();
 
 	/**
 	 * Sets the <code>fill-opacity</code> style on the current element.

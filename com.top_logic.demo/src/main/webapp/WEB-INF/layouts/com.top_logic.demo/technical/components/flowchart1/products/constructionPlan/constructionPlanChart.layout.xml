@@ -13,7 +13,7 @@
 			<create-chart><![CDATA[model -> {
 
 // All parts.
-parts = $model.get(`test.flowchart:Product#parts`);
+parts = $model.get(`test.flowchart:Product#buildInstructions`);
 
 nodes = $parts.map(p -> flowSelection(
     userObject: $p,
@@ -24,7 +24,7 @@ nodes = $parts.map(p -> flowSelection(
                 marker = $p.get(`test.flowchart:FlowNode#marker`);
                 $marker.isEmpty()
                     ? null
-                    : flowAlign(
+                    : flowPadding(bottom: 5, content: flowAlign(
                         hAlign: "middle", 
                         content: 
                             flowBorder(
@@ -32,7 +32,7 @@ nodes = $parts.map(p -> flowSelection(
                                 dashes: [5, 5], 
                                 content: flowPadding(
                                     all: 4, 
-                                    content: flowText($marker))))
+                                    content: flowText($marker)))))
             },
             flowAlign(
                 hAlign: "middle", 
@@ -40,7 +40,8 @@ nodes = $parts.map(p -> flowSelection(
                     all: 4, 
                     content: flowText($p.get(`test.flowchart:FlowNode#name`))
             )),
-            flowGrid(
+            flowAlign(
+                hAlign: "middle",  content: flowGrid(
                 gapY: -1, 
                 contents: $p.get(`test.flowchart:FlowNode#locations`).map(l -> [
                     {
@@ -49,14 +50,14 @@ nodes = $parts.map(p -> flowSelection(
                             ? null
                             : flowBorder(
                                 right: false,  
-                                content: flowText($count))
+                                content: flowPadding(all: 3, content: flowText($count)))
                     },
                     flowBorder(
                         content: flowFill(
                             fill: $l.get(`test.flowchart:Location#part`)
                                 .get(`test.flowchart:Part#color`), 
                             content: 
-                                flowText($l.get(`test.flowchart:Location#part`))
+                                flowPadding(all: 3, content: flowText($l.get(`test.flowchart:Location#part`)))
                         )
                     ),
                     {
@@ -66,10 +67,10 @@ nodes = $parts.map(p -> flowSelection(
                             : flowAlign(
                                 content: flowBorder(
                                     left: false, 
-                                    content: flowText($usages)))
+                                    content: flowPadding(all: 3, content: flowText($usages))))
                     }
                 ])
-            ),
+            )),
             {
                 image = $p.get(`test.flowchart:FlowNode#image`);
                 $image == null

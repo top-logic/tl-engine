@@ -24,7 +24,7 @@ nodes = $parts.map(p -> flowSelection(
                 marker = $p.get(`test.flowchart:FlowNode#marker`);
                 $marker.isEmpty()
                     ? null
-                    : flowPadding(bottom: 5, content: flowAlign(
+                    : flowPadding(bottom: 8, content: flowAlign(
                         hAlign: "middle", 
                         content: 
                             flowBorder(
@@ -38,7 +38,9 @@ nodes = $parts.map(p -> flowSelection(
                 hAlign: "middle", 
                 content: flowPadding(
                     all: 4, 
-                    content: flowText($p.get(`test.flowchart:FlowNode#name`))
+                    content: flowText(
+                        fontWeight: "bold",
+                        text: $p.get(`test.flowchart:FlowNode#name`))
             )),
             flowAlign(
                 hAlign: "middle",  content: flowGrid(

@@ -137,6 +137,22 @@ message TreeConnector extends Widget {
 @Operations("com.top_logic.graphic.flow.operations.TextOperations")
 message Text extends Box {
 	string value;
+	
+	@Nullable
+	string fontWeight;
+
+	@Nullable
+	string fontSize;
+
+	@Nullable
+	string fontFamily;
+	
+	@Nullable
+	string strokeStyle;
+
+	@Nullable
+	string fillStyle;
+	
 	double baseLine;
 }
 

@@ -16,6 +16,9 @@ public class ToStyle implements ValueConverter {
 
 	@Override
 	public Object fromScript(Object javaValue) {
+		if (javaValue instanceof java.awt.Color color) {
+			return SvgUtil.html(new SVGColor(color.getRGB()));
+		}
 		if (javaValue instanceof SVGColor color) {
 			return SvgUtil.html(color);
 		}

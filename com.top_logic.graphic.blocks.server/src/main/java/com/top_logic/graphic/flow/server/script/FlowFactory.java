@@ -69,18 +69,28 @@ public class FlowFactory {
 	}
 
 	/**
-	 * Factory for {@link Box}.
+	 * Creates a text element.
 	 */
 	public static Box flowText(
 		@Mandatory String text,
+		String strokeStyle, 
+		String fillStyle, 
+		String fontFamily, 
+		String fontSize, 
+		String fontWeight,
 		String cssClass,
-		Object userObject
+		Object userObject 
 	) {
 		if (text == null) {
 			return Empty.create().setUserObject(userObject);
 		}
 		return Text.create()
 			.setValue(text)
+			.setStrokeStyle(strokeStyle)
+			.setFillStyle(fillStyle)
+			.setFontFamily(fontFamily)
+			.setFontSize(fontSize)
+			.setFontWeight(fontWeight)
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}

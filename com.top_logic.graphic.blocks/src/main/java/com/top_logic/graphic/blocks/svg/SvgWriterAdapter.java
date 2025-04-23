@@ -165,8 +165,18 @@ public class SvgWriterAdapter implements SvgWriter {
 	}
 
 	@Override
-	public void text(double x, double y, String text) {
-		_impl.text(x, y, text);
+	public void beginText(double x, double y, String text) {
+		_impl.beginText(x, y, text);
+	}
+
+	@Override
+	public void setTextStyle(String fontFamily, String fontSize, String fontWeight) {
+		_impl.setTextStyle(fontFamily, fontSize, fontWeight);
+	}
+
+	@Override
+	public void endText() {
+		_impl.endText();
 	}
 
 	@Override

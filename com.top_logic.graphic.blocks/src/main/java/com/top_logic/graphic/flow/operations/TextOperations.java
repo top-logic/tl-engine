@@ -40,7 +40,12 @@ public interface TextOperations extends BoxOperations {
 
 	@Override
 	default void draw(SvgWriter out) {
-		out.text(self().getX(), self().getY() + self().getBaseLine(), self().getValue());
+		out.beginText(self().getX(), self().getY() + self().getBaseLine(), self().getValue());
+		out.writeCssClass(self().getCssClass());
+		out.setStroke(self().getStrokeStyle());
+		out.setFill(self().getFillStyle());
+		out.setTextStyle(self().getFontFamily(), self().getFontSize(), self().getFontWeight());
+		out.endText();
 	}
 
 }

@@ -27,6 +27,11 @@
 						fullQualifiedName="test.flowchart:FlowNode#locations"
 						type="test.flowchart:Location"
 					/>
+					<field
+						attribute="image"
+						fullQualifiedName="test.flowchart:FlowNode#image"
+						type="tl.core:Binary"
+					/>
 				</formDefinition>
 			</form>
 		</forms>

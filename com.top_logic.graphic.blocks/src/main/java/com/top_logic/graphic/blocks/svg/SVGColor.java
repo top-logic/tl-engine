@@ -26,28 +26,28 @@ public class SVGColor {
 	 * The red color component.
 	 */
 	public int getRed() {
-		return _value & 0xFF0000 >> 16;
+		return (_value & 0xFF0000) >>> 16;
 	}
 
 	/**
 	 * The green color component.
 	 */
 	public int getGreen() {
-		return _value & 0x00FF00 >> 8;
+		return (_value & 0x00FF00) >>> 8;
 	}
 
 	/**
 	 * The blue color component.
 	 */
 	public int getBlue() {
-		return _value & 0x0000FF >> 0;
+		return (_value & 0x0000FF) >>> 0;
 	}
 
 	/**
 	 * The alpha channel.
 	 */
 	public int getAlpha() {
-		return _value & 0xFF000000 >> 24;
+		return (_value & 0xFF000000) >>> 24;
 	}
 
 }

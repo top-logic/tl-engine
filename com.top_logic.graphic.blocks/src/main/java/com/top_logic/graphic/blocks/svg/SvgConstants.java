@@ -78,6 +78,21 @@ public interface SvgConstants {
 	String STROKE_ATTR = "stroke";
 
 	/**
+	 * Font family.
+	 */
+	String FONT_FAMILY_ATTR = "font-family";
+
+	/**
+	 * Font size.
+	 */
+	String FONT_SIZE_ATTR = "font-size";
+
+	/**
+	 * Font weight.
+	 */
+	String FONT_WEIGHT_ATTR = "font-weight";
+
+	/**
 	 * Stroke-dasharray style.
 	 */
 	String STROKE_DASHARRAY_ATTR = "stroke-dasharray";

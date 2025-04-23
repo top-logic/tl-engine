@@ -15,6 +15,21 @@ public interface Text extends Box, com.top_logic.graphic.flow.operations.TextOpe
 	/** @see #getValue() */
 	String VALUE__PROP = "value";
 
+	/** @see #getFontWeight() */
+	String FONT_WEIGHT__PROP = "fontWeight";
+
+	/** @see #getFontSize() */
+	String FONT_SIZE__PROP = "fontSize";
+
+	/** @see #getFontFamily() */
+	String FONT_FAMILY__PROP = "fontFamily";
+
+	/** @see #getStrokeStyle() */
+	String STROKE_STYLE__PROP = "strokeStyle";
+
+	/** @see #getFillStyle() */
+	String FILL_STYLE__PROP = "fillStyle";
+
 	/** @see #getBaseLine() */
 	String BASE_LINE__PROP = "baseLine";
 
@@ -24,6 +39,66 @@ public interface Text extends Box, com.top_logic.graphic.flow.operations.TextOpe
 	 * @see #getValue()
 	 */
 	com.top_logic.graphic.flow.data.Text setValue(String value);
+
+	String getFontWeight();
+
+	/**
+	 * @see #getFontWeight()
+	 */
+	com.top_logic.graphic.flow.data.Text setFontWeight(String value);
+
+	/**
+	 * Checks, whether {@link #getFontWeight()} has a value.
+	 */
+	boolean hasFontWeight();
+
+	String getFontSize();
+
+	/**
+	 * @see #getFontSize()
+	 */
+	com.top_logic.graphic.flow.data.Text setFontSize(String value);
+
+	/**
+	 * Checks, whether {@link #getFontSize()} has a value.
+	 */
+	boolean hasFontSize();
+
+	String getFontFamily();
+
+	/**
+	 * @see #getFontFamily()
+	 */
+	com.top_logic.graphic.flow.data.Text setFontFamily(String value);
+
+	/**
+	 * Checks, whether {@link #getFontFamily()} has a value.
+	 */
+	boolean hasFontFamily();
+
+	String getStrokeStyle();
+
+	/**
+	 * @see #getStrokeStyle()
+	 */
+	com.top_logic.graphic.flow.data.Text setStrokeStyle(String value);
+
+	/**
+	 * Checks, whether {@link #getStrokeStyle()} has a value.
+	 */
+	boolean hasStrokeStyle();
+
+	String getFillStyle();
+
+	/**
+	 * @see #getFillStyle()
+	 */
+	com.top_logic.graphic.flow.data.Text setFillStyle(String value);
+
+	/**
+	 * Checks, whether {@link #getFillStyle()} has a value.
+	 */
+	boolean hasFillStyle();
 
 	double getBaseLine();
 

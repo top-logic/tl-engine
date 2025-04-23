@@ -155,22 +155,30 @@ public class SVGBuilder implements SvgWriter {
 
 	@Override
 	public void setFill(SVGColor color) {
-		setFill(SvgUtil.html(color));
+		if (color != null) {
+			setFill(SvgUtil.html(color));
+		}
 	}
 
 	@Override
 	public void setFill(String style) {
-		_current.setAttribute(FILL_ATTR, style);
+		if (style != null) {
+			_current.setAttribute(FILL_ATTR, style);
+		}
 	}
 
 	@Override
 	public void setStroke(SVGColor color) {
-		setStroke(SvgUtil.html(color));
+		if (color != null) {
+			setStroke(SvgUtil.html(color));
+		}
 	}
 
 	@Override
 	public void setStroke(String style) {
-		_current.setAttribute(STROKE_ATTR, style);
+		if (style != null) {
+			_current.setAttribute(STROKE_ATTR, style);
+		}
 	}
 
 	@Override
@@ -275,17 +283,39 @@ public class SVGBuilder implements SvgWriter {
 
 	@Override
 	public void writeCssClass(String cssClass) {
-		_current.setAttribute(CLASS_ATTR, cssClass);
+		if (cssClass != null) {
+			_current.setAttribute(CLASS_ATTR, cssClass);
+		}
 	}
 
 	@Override
 	public void writeId(String id) {
-		_current.setAttribute(ID_ATTR, id);
+		if (id != null) {
+			_current.setAttribute(ID_ATTR, id);
+		}
 	}
 
 	@Override
-	public void text(double x, double y, String text) {
+	public void beginText(double x, double y, String text) {
 		appendChild(_doc.createSVGTextElement((float) x, (float) y, OMSVGLength.SVG_LENGTHTYPE_PX, text));
+	}
+
+	@Override
+	public void setTextStyle(String fontFamily, String fontSize, String fontWeight) {
+		if (fontFamily != null) {
+			_current.setAttribute(FONT_FAMILY_ATTR, fontFamily);
+		}
+		if (fontSize != null) {
+			_current.setAttribute(FONT_SIZE_ATTR, fontSize);
+		}
+		if (fontWeight != null) {
+			_current.setAttribute(FONT_WEIGHT_ATTR, fontWeight);
+		}
+	}
+
+	@Override
+	public void endText() {
+		_current = null;
 	}
 
 	@Override

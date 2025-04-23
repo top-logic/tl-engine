@@ -32,6 +32,8 @@ public class SvgTagWriter implements SvgWriter {
 
 	private boolean _firstData;
 
+	private String _textContent;
+
 	/**
 	 * Creates a {@link SvgTagWriter}.
 	 *
@@ -258,13 +260,27 @@ public class SvgTagWriter implements SvgWriter {
 	}
 
 	@Override
-	public void text(double x, double y, String text) {
+	public void beginText(double x, double y, String text) {
 		beginBeginTag(TEXT);
 		writeAttribute(X_ATTR, x);
 		writeAttribute(Y_ATTR, y);
+		_textContent = text;
+	}
+	
+	@Override
+	public void setTextStyle(String fontFamily, String fontSize, String fontWeight) {
+		writeAttribute(FONT_FAMILY_ATTR, fontFamily);
+		writeAttribute(FONT_SIZE_ATTR, fontSize);
+		writeAttribute(FONT_WEIGHT_ATTR, fontWeight);
+	}
+
+	@Override
+	public void endText() {
 		endBeginTag();
-		_out.writeText(text);
+		_out.writeText(_textContent);
 		endTag(TEXT);
+
+		_textContent = null;
 	}
 
 	@Override

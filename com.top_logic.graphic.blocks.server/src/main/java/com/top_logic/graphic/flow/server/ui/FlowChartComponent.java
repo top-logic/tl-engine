@@ -18,11 +18,15 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.graphic.flow.data.SelectableBox;
 import com.top_logic.graphic.flow.data.Widget;
 import com.top_logic.graphic.flow.server.control.DiagramControl;
 import com.top_logic.layout.Control;
+import com.top_logic.layout.basic.contextmenu.component.ContextMenuFactory;
+import com.top_logic.layout.basic.contextmenu.component.factory.SelectableContextMenuFactory;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.component.Selectable;
@@ -33,6 +37,7 @@ import com.top_logic.layout.table.component.BuilderComponent;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelConfig;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.TLObject;
 
 import de.haumacher.msgbuf.observer.Listener;
 import de.haumacher.msgbuf.observer.Observable;
@@ -143,6 +148,13 @@ public class FlowChartComponent extends BuilderComponent
 		@Override
 		PolymorphicConfiguration<? extends FlowChartBuilder> getModelBuilder();
 
+		/**
+		 * The provider for the diagram elemnt's context menu.
+		 */
+		@ItemDefault(SelectableContextMenuFactory.class)
+		@ImplementationClassDefault(SelectableContextMenuFactory.class)
+		PolymorphicConfiguration<? extends ContextMenuFactory> getContextMenuFactory();
+
 		@Override
 		@ClassDefault(FlowChartComponent.class)
 		Class<? extends LayoutComponent> getImplementationClass();
@@ -155,6 +167,9 @@ public class FlowChartComponent extends BuilderComponent
 		super(context, config);
 
 		_selectionModel = createSelectionModel(config);
+
+		ContextMenuFactory contextMenuFactory = context.getInstance(config.getContextMenuFactory());
+		_control.setContextMenuProvider(contextMenuFactory.createContextMenuProvider(this));
 	}
 
 	private SelectionModel createSelectionModel(Config config) {
@@ -198,5 +213,30 @@ public class FlowChartComponent extends BuilderComponent
 		linkSelectionChannel(log);
 
 		selectionChannel().addListener(_processChannelSelection);
+	}
+
+	@Override
+	protected boolean receiveModelDeletedEvent(Set<TLObject> aModel, Object changedBy) {
+		boolean result = super.receiveModelDeletedEvent(aModel, changedBy);
+
+		Object selected = getSelected();
+		if (selected instanceof Collection<?> multiSelection) {
+			List<?> newSelection = multiSelection.stream().filter(x -> !aModel.contains(x)).toList();
+			if (newSelection.size() != multiSelection.size()) {
+				if (newSelection.isEmpty()) {
+					setSelected(null);
+				} else if (newSelection.size() == 1) {
+					setSelected(newSelection.get(0));
+				} else {
+					setSelected(newSelection);
+				}
+			}
+		} else {
+			if (aModel.contains(selected)) {
+				setSelected(null);
+			}
+		}
+
+		return result;
 	}
 }

@@ -382,4 +382,14 @@ public interface SvgWriter extends AutoCloseable {
 		// DOM trees.
 		return Registration.NONE;
 	}
+
+	/**
+	 * Writes a custom SVG attribute.
+	 *
+	 * @param name
+	 *        The attribute name.
+	 * @param value
+	 *        The attribute value.
+	 */
+	void writeAttribute(String name, String value);
 }

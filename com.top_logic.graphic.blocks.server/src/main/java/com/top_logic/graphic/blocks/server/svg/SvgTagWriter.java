@@ -244,7 +244,8 @@ public class SvgTagWriter implements SvgWriter {
 		writeAttribute(name, Double.toString(value));
 	}
 
-	private void writeAttribute(String name, String value) {
+	@Override
+	public void writeAttribute(String name, String value) {
 		_out.writeAttribute(name, value);
 	}
 

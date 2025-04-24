@@ -11,7 +11,7 @@ import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.graphic.flow.data.Widget;
 
 /**
- * 
+ * Custom operations defined for a {@link Box}.
  */
 public interface BoxOperations extends WidgetOperations {
 
@@ -51,8 +51,20 @@ public interface BoxOperations extends WidgetOperations {
 		return (Diagram) ancestor;
 	}
 
+	/**
+	 * Computes the preferred size of this element and all of its children.
+	 * 
+	 * <p>
+	 * After this method completes, the properties {@link Box#getWidth()} and
+	 * {@link Box#getHeight()} must be set to the preferred size of this {@link Box}.
+	 * </p>
+	 */
 	void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY);
 
+	/**
+	 * Places this diagram element and its children at the given coordinates and adjust its
+	 * dimensions to the given maximum width and height.
+	 */
 	void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height);
 
 }

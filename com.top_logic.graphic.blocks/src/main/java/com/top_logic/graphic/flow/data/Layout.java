@@ -1,5 +1,8 @@
 package com.top_logic.graphic.flow.data;
 
+/**
+ * A box that computes the size and position of multiple content boxes.
+ */
 public interface Layout extends Box {
 
 	/** Visitor interface for the {@link com.top_logic.graphic.flow.data.Layout} hierarchy.*/
@@ -13,6 +16,9 @@ public interface Layout extends Box {
 	/** @see #getContents() */
 	String CONTENTS__PROP = "contents";
 
+	/**
+	 * The content boxes to be layouted.
+	 */
 	java.util.List<com.top_logic.graphic.flow.data.Box> getContents();
 
 	/**

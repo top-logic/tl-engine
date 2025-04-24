@@ -121,6 +121,7 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		self().setHeight(bottomY);
 	}
 
+	/** Helper method to layout a single tree within a forest. */
 	default double layoutTree(List<List<Box>> columns, Map<Box, List<Box>> children, int level, Box node,
 			double parentBottomY) {
 		while (columns.size() <= level) {
@@ -204,6 +205,10 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		}
 	}
 
+	/**
+	 * Helper method to build the mapping from nodes (that are layouted) for anchor boxes (that are
+	 * visually connected).
+	 */
 	default void enterAnchor(Set<Box> nodes, Map<Box, Box> nodeForAnchor, TreeConnector connector) {
 		Box anchor = connector.getAnchor();
 		Box ancestor = anchor;
@@ -242,11 +247,13 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		}
 	}
 
+	/** The X coordinate to place a parent connector. */
 	default double fromX(Box box) {
 		// TODO: Depends on self().getDirection() - formulated for LTR:
 		return box.getRightX();
 	}
 
+	/** The X coordinate to place a child connector. */
 	default double toX(Box box) {
 		// TODO: Depends on self().getDirection() - formulated for LTR:
 		return box.getX();

@@ -4,6 +4,7 @@ option SharedGraph;
 option NoXml;
 option NoBinary;
 
+/** Common base class for all diagram elements that can be rendered to SVG. */
 @Operations("com.top_logic.graphic.flow.operations.WidgetOperations")
 abstract message Widget {
 
@@ -23,44 +24,55 @@ abstract message Widget {
 	transient string clientId;
 }
 
-/** Top-level element that can be rendered. */
+/** Top-level diagram element that can be layouted and rendered. */
 @Operations("com.top_logic.graphic.flow.operations.DiagramOperations")
 message Diagram extends Widget {
 	/** The top-level diagram element. */
 	Box root;
-	
+
+	/** The list of currently selected diagram elements. */	
 	@Ref
 	repeated SelectableBox selection;
 	
+	/** Internal field for storing the current click handler registration (client-side only). */
 	transient com.top_logic.graphic.blocks.svg.event.Registration clickHandler;
 	
 }
 
-/** A rectangular region of a {@link Diagram} that can adjust its size to external requests and to its content. */
+/** A rectangular region of a {@link Diagram}. */
 @Operations("com.top_logic.graphic.flow.operations.BoxOperations")
 abstract message Box extends Widget {
 	/** The widget that contains/renders this widget. */
 	@Container
 	Widget parent;
 
+	/** The X coordinate of the top-left edge of the rectangular region of this box. */
 	double x;
+	
+	/** The Y coordinate of the top-left edge of the rectangular region of this box. */
 	double y;
+	
+	/** The width of the rectangular region of this box. */
 	double width;
+	
+	/** The height of the rectangular region of this box. */
 	double height;
 }
 
 /** A layout that allows to freely place boxes at arbitrary positions. The layout does not impose any restrictions to the positions and sizes of the placed boxes. */
 @Operations("com.top_logic.graphic.flow.operations.layout.FloatingLayoutOperations")
 message FloatingLayout extends Box {
+	/** Top-level floating elements. */
 	repeated Box nodes;
 }
 
-/** A layout that connects placed nodes with one-to-many connectors forming a tree. */
+/** A layout that connects nodes with one-to-many connectors forming a tree. */
 @Operations("com.top_logic.graphic.flow.operations.tree.TreeLayoutOperations")
 message TreeLayout extends FloatingLayout {
 	/** Whether to minimize vertical space required to layout the tree. */
 	boolean compact;
 	
+	/** The layout direction of nodes (from top/parent to bottom/children) */
 	DiagramDirection direction;
 	
 	/** Horizontal gap between columns of tree nodes. */
@@ -75,6 +87,7 @@ message TreeLayout extends FloatingLayout {
 	/** Stroke width of tree connections. */	
 	double thickness = 1.0;
 	
+	/** The connections connecting the {@link #nodes} of the tree. */
 	repeated TreeConnection connections;
 }
 
@@ -115,8 +128,10 @@ message TreeConnection extends Widget {
 	double barPosition;
 }
 
+/** An anchor point of a connection to a node of the diagram. */
 @Operations("com.top_logic.graphic.flow.operations.tree.TreeConnectorOperations")
 message TreeConnector extends Widget {
+	/** The connection that owns this connector. */
 	@Container
 	TreeConnection connection;
 
@@ -134,37 +149,56 @@ message TreeConnector extends Widget {
 	double connectPosition = 0.5;
 }
 
+/** A line of text. */
 @Operations("com.top_logic.graphic.flow.operations.TextOperations")
 message Text extends Box {
+	/** The text to render. */
 	string value;
 	
+	/** The SVG <code>font-weight</code> style. */
 	@Nullable
 	string fontWeight;
 
+	/** The SVG <code>font-size</code> style. */
 	@Nullable
 	string fontSize;
 
+	/** The SVG <code>font-family</code> style. */
 	@Nullable
 	string fontFamily;
 	
+	/** The SVG <code>stroke</code> style. */
 	@Nullable
 	string strokeStyle;
 
+	/** The SVG <code>fill</code> style. */
 	@Nullable
 	string fillStyle;
 	
+	/** The Y offset from the top-left corner of the text box, where the text is rendered. */
 	double baseLine;
 }
 
+/** An embedded image. */
 @Operations("com.top_logic.graphic.flow.operations.ImageOperations")
 message Image extends Box {
+	/** The URL where the image data resides. */
 	string href;
+	
+	/** The width of the image data. */
 	double imgWidth;
+	
+	/** The height of the image data. */
 	double imgHeight;
+	
+	/** The alignment of the image data to the displayed image box. */	
 	ImageAlign align;
+	
+	/** The scaling of the image data within the image box. */	
 	ImageScale scale;
 }
 
+/** Alignment of an image within a box. */
 enum ImageAlign {
 
 	/**
@@ -241,6 +275,7 @@ enum ImageAlign {
 
 }
 
+/** Scaling instruction for an image within a box. */
 enum ImageScale {
 	/**
 	 * Scales the graphic such that:
@@ -279,6 +314,7 @@ enum ImageScale {
 
 }
 
+/** An empty region. */
 @Operations("com.top_logic.graphic.flow.operations.EmptyOperations")
 message Empty extends Box {
 	/** The minimum width of the element to allow to reserve some space. */
@@ -288,102 +324,184 @@ message Empty extends Box {
 	double minHeight;
 }
 
+/** A box that draws some decoration around another box. */
 @Operations("com.top_logic.graphic.flow.operations.DecorationOperations")
 abstract message Decoration extends Box {
+	/** The content box that is decorated. */
 	Box content;
 }
 
+/** A box that can be interactively selected by the user. */
 @Operations("com.top_logic.graphic.flow.operations.SelectableBoxOperations")
 message SelectableBox extends Decoration {
 
 	/** Whether this element is currently selected. */
 	bool selected;
 	
+	/** Internal field to store the click handler registration (client-side only). */
 	transient com.top_logic.graphic.blocks.svg.event.Registration clickHandler;
 	
 }
 
+/** An alignment of some box within a potentially larger content box.  */
 @Operations("com.top_logic.graphic.flow.operations.AlignOperations")
 message Align extends Decoration {
+	/** Instruction for horizontal alignment. */
 	Alignment xAlign;
+	
+	/** Instruction for vertical alignment. */
 	Alignment yAlign;
 }
 
+/** An alignment instruction. */
 enum Alignment {
+	/** The content is aligned to the start coordinate of the container (left-to-right and top-to-bottom). */
 	start;
+	
+	/** The content is centered within the available space of the container. */
 	middle;
+	
+	/** The content is aligned to the end coordinate of the container (left-to-right and top-to-bottom). */
 	stop;
+	
+	/** The content is stretched to fit the size of the container. */
 	strech;
 }
 
+/** A border drawn around some content.  */
 @Operations("com.top_logic.graphic.flow.operations.BorderOperations")
 message Border extends Decoration {
+	/** The SVG <code>stroke</code> style. */
 	string strokeStyle = "black";
+	
+	/** The thicknes of the drawn border. */
 	double thickness = 1.0;
+	
+	/** Whether the border is drawn above the content. */
 	bool top = true;
+	
+	/** Whether the border is drawn on the left side of the content. */
 	bool left = true;
+	
+	/** Whether the border is drawn below the content. */
 	bool bottom = true;
+	
+	/** Whether the border is drawn on the right side of the content. */
 	bool right = true;
 	
+	/** Length of dashes for a dashed border. */
 	repeated double dashes;
 }
 
+/** A background drawn below some content. */
 @Operations("com.top_logic.graphic.flow.operations.FillOperations")
 message Fill extends Decoration {
+	/** The SVG <code>fill</code> style. */
 	string fillStyle = "black";
 }
 
+/** Padding around some content. */
 @Operations("com.top_logic.graphic.flow.operations.PaddingOperations")
 message Padding extends Decoration {
+	/** The padding on top of the content. */
 	double top;
+	
+	/** The padding at the left side of the content. */
 	double left;
+	
+	/** The padding below the content. */
 	double bottom;
+	
+	/** The padding at the right side of the content. */
 	double right;
 }
 
+/** A layout that places boxes around some centerd content box. */
 @Operations("com.top_logic.graphic.flow.operations.layout.CompassLayoutOperations")
 message CompassLayout extends Box {
+	/** The heading placed on top of the content. */
 	Box north;
+	
+	/** Sidebar placed left to the content. */
 	Box west;
+	
+	/** Sidebar placed right to the content. */
 	Box east;
+	
+	/** Footer placed below th content. */
 	Box south;
+	
+	/** The main content. */
 	Box center;
 	
+	/** The height of the main content. */
 	double centerHeight;
+	
+	/** The horizontal padding around the center where the sidebars are placed. */
 	double hPadding;
+	
+	/** The vertical padding around the center, where the header and footer is placed. */
 	double vPadding;
 }
 
+/** A box that computes the size and position of multiple content boxes. */
 abstract message Layout extends Box {
+	/** The content boxes to be layouted. */
 	repeated Box contents;
 }
 
+/** A tabular layout consisting of rows and columns. */
 @Operations("com.top_logic.graphic.flow.operations.layout.GridLayoutOperations")
 message GridLayout extends Layout {
+	/** The number of rows. */
 	int rows;
+	
+	/** The number of columns. */
 	int cols;
+	
+	/** The gap between columns. */
 	double gapX;
+	
+	/** The gap between rows. */
 	double gapY;
+	
+	/** The height of the rows. */
 	repeated double rowHeight;
+	
+	/** The width of the columns. */
 	repeated double colWidth;
 }
 
+/** A layout of a row of boxes. */
 abstract message RowLayout extends Layout {
+	/** The gap between boxes in the row. */
 	double gap;
+	
+	/** Instruction how to use extra space available.  */
 	SpaceDistribution fill;
 }
 
+/** A horizontal row of boxes. */
 @Operations("com.top_logic.graphic.flow.operations.layout.HorizontalLayoutOperations")
 message HorizontalLayout extends RowLayout {
 }
 
+/** A vertical column of boxes. */
 @Operations("com.top_logic.graphic.flow.operations.layout.VerticalLayoutOperations")
 message VerticalLayout extends RowLayout {
 }
 
+/** Instruction how to use exta space in a row layout. */
 enum SpaceDistribution {
+	/** Do not use extra space, allow to {@link Align} the row within its container. */
 	NONE;
+	
+	/** Stretch the content boxes but keep the gap constant. */
 	STRETCH_CONTENT;
+	
+	/** Stretch the gap between boxes. */
 	STRETCH_GAP;
+	
+	/** Evenly distribute extra space among the content and the gap between boxes. */
 	STRETCH_ALL;
 }

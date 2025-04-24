@@ -1,5 +1,8 @@
 package com.top_logic.graphic.flow.data;
 
+/**
+ * A box that can be interactively selected by the user.
+ */
 public interface SelectableBox extends Decoration, com.top_logic.graphic.flow.operations.SelectableBoxOperations {
 
 	/**
@@ -28,6 +31,9 @@ public interface SelectableBox extends Decoration, com.top_logic.graphic.flow.op
 	 */
 	com.top_logic.graphic.flow.data.SelectableBox setSelected(boolean value);
 
+	/**
+	 * Internal field to store the click handler registration (client-side only).
+	 */
 	com.top_logic.graphic.blocks.svg.event.Registration getClickHandler();
 
 	/**

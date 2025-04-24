@@ -1,13 +1,28 @@
 package com.top_logic.graphic.flow.data;
 
+/**
+ * Instruction how to use exta space in a row layout.
+ */
 public enum SpaceDistribution implements de.haumacher.msgbuf.data.ProtocolEnum {
 
+	/**
+	 * Do not use extra space, allow to {@link Align} the row within its container.
+	 */
 	NONE("NONE"),
 
+	/**
+	 * Stretch the content boxes but keep the gap constant.
+	 */
 	STRETCH_CONTENT("STRETCH_CONTENT"),
 
+	/**
+	 * Stretch the gap between boxes.
+	 */
 	STRETCH_GAP("STRETCH_GAP"),
 
+	/**
+	 * Evenly distribute extra space among the content and the gap between boxes.
+	 */
 	STRETCH_ALL("STRETCH_ALL"),
 
 	;

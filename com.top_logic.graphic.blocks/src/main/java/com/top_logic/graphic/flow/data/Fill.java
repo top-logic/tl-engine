@@ -1,5 +1,8 @@
 package com.top_logic.graphic.flow.data;
 
+/**
+ * A background drawn below some content.
+ */
 public interface Fill extends Decoration, com.top_logic.graphic.flow.operations.FillOperations {
 
 	/**
@@ -15,6 +18,9 @@ public interface Fill extends Decoration, com.top_logic.graphic.flow.operations.
 	/** @see #getFillStyle() */
 	String FILL_STYLE__PROP = "fillStyle";
 
+	/**
+	 * The SVG <code>fill</code> style.
+	 */
 	String getFillStyle();
 
 	/**

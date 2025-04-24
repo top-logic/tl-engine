@@ -1,7 +1,7 @@
 package com.top_logic.graphic.flow.data;
 
 /**
- * A rectangular region of a {@link Diagram} that can adjust its size to external requests and to its content.
+ * A rectangular region of a {@link Diagram}.
  */
 public interface Box extends Widget, com.top_logic.graphic.flow.operations.BoxOperations {
 
@@ -50,6 +50,9 @@ public interface Box extends Widget, com.top_logic.graphic.flow.operations.BoxOp
 	 */
 	boolean hasParent();
 
+	/**
+	 * The X coordinate of the top-left edge of the rectangular region of this box.
+	 */
 	double getX();
 
 	/**
@@ -57,6 +60,9 @@ public interface Box extends Widget, com.top_logic.graphic.flow.operations.BoxOp
 	 */
 	com.top_logic.graphic.flow.data.Box setX(double value);
 
+	/**
+	 * The Y coordinate of the top-left edge of the rectangular region of this box.
+	 */
 	double getY();
 
 	/**
@@ -64,6 +70,9 @@ public interface Box extends Widget, com.top_logic.graphic.flow.operations.BoxOp
 	 */
 	com.top_logic.graphic.flow.data.Box setY(double value);
 
+	/**
+	 * The width of the rectangular region of this box.
+	 */
 	double getWidth();
 
 	/**
@@ -71,6 +80,9 @@ public interface Box extends Widget, com.top_logic.graphic.flow.operations.BoxOp
 	 */
 	com.top_logic.graphic.flow.data.Box setWidth(double value);
 
+	/**
+	 * The height of the rectangular region of this box.
+	 */
 	double getHeight();
 
 	/**

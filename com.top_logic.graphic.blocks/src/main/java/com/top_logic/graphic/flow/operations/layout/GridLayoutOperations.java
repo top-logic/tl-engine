@@ -11,17 +11,21 @@ import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
 import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.data.Empty;
+import com.top_logic.graphic.flow.data.GridLayout;
 import com.top_logic.graphic.flow.operations.BoxOperations;
 import com.top_logic.graphic.flow.operations.util.DiagramUtil;
 
 /**
- * 
+ * Custom operations for {@link GridLayout}.
  */
 public interface GridLayoutOperations extends BoxOperations {
 
 	@Override
-	com.top_logic.graphic.flow.data.GridLayout self();
+	GridLayout self();
 
+	/**
+	 * The box a the given row and column.
+	 */
 	default Box get(int col, int row) {
 		int index = index(col, row);
 		List<Box> contents = self().getContents();
@@ -31,7 +35,10 @@ public interface GridLayoutOperations extends BoxOperations {
 		return contents.get(index);
 	}
 
-	default com.top_logic.graphic.flow.data.GridLayout set(int col, int row, Box content) {
+	/**
+	 * Replaces the box at the given row and column with the given one.
+	 */
+	default GridLayout set(int col, int row, Box content) {
 		int index = index(col, row);
 		List<Box> contents = self().getContents();
 		while (contents.size() < index + 1) {
@@ -41,6 +48,9 @@ public interface GridLayoutOperations extends BoxOperations {
 		return self();
 	}
 
+	/**
+	 * Internal index for the box with the given row and column coordinates.
+	 */
 	// private
 	default int index(int col, int row) {
 		if (col < 0 || col >= self().getCols() || row < 0 || row >= self().getRows()) {

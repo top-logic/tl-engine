@@ -1,5 +1,8 @@
 package com.top_logic.graphic.flow.data;
 
+/**
+ * A border drawn around some content.
+ */
 public interface Border extends Decoration, com.top_logic.graphic.flow.operations.BorderOperations {
 
 	/**
@@ -33,6 +36,9 @@ public interface Border extends Decoration, com.top_logic.graphic.flow.operation
 	/** @see #getDashes() */
 	String DASHES__PROP = "dashes";
 
+	/**
+	 * The SVG <code>stroke</code> style.
+	 */
 	String getStrokeStyle();
 
 	/**
@@ -40,6 +46,9 @@ public interface Border extends Decoration, com.top_logic.graphic.flow.operation
 	 */
 	com.top_logic.graphic.flow.data.Border setStrokeStyle(String value);
 
+	/**
+	 * The thicknes of the drawn border.
+	 */
 	double getThickness();
 
 	/**
@@ -47,6 +56,9 @@ public interface Border extends Decoration, com.top_logic.graphic.flow.operation
 	 */
 	com.top_logic.graphic.flow.data.Border setThickness(double value);
 
+	/**
+	 * Whether the border is drawn above the content.
+	 */
 	boolean isTop();
 
 	/**
@@ -54,6 +66,9 @@ public interface Border extends Decoration, com.top_logic.graphic.flow.operation
 	 */
 	com.top_logic.graphic.flow.data.Border setTop(boolean value);
 
+	/**
+	 * Whether the border is drawn on the left side of the content.
+	 */
 	boolean isLeft();
 
 	/**
@@ -61,6 +76,9 @@ public interface Border extends Decoration, com.top_logic.graphic.flow.operation
 	 */
 	com.top_logic.graphic.flow.data.Border setLeft(boolean value);
 
+	/**
+	 * Whether the border is drawn below the content.
+	 */
 	boolean isBottom();
 
 	/**
@@ -68,6 +86,9 @@ public interface Border extends Decoration, com.top_logic.graphic.flow.operation
 	 */
 	com.top_logic.graphic.flow.data.Border setBottom(boolean value);
 
+	/**
+	 * Whether the border is drawn on the right side of the content.
+	 */
 	boolean isRight();
 
 	/**
@@ -75,6 +96,9 @@ public interface Border extends Decoration, com.top_logic.graphic.flow.operation
 	 */
 	com.top_logic.graphic.flow.data.Border setRight(boolean value);
 
+	/**
+	 * Length of dashes for a dashed border.
+	 */
 	java.util.List<Double> getDashes();
 
 	/**

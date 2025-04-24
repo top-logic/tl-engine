@@ -1,7 +1,7 @@
 package com.top_logic.graphic.flow.data;
 
 /**
- * Top-level element that can be rendered.
+ * Top-level diagram element that can be layouted and rendered.
  */
 public interface Diagram extends Widget, com.top_logic.graphic.flow.operations.DiagramOperations {
 
@@ -39,6 +39,9 @@ public interface Diagram extends Widget, com.top_logic.graphic.flow.operations.D
 	 */
 	boolean hasRoot();
 
+	/**
+	 * The list of currently selected diagram elements.
+	 */
 	java.util.List<com.top_logic.graphic.flow.data.SelectableBox> getSelection();
 
 	/**
@@ -56,6 +59,9 @@ public interface Diagram extends Widget, com.top_logic.graphic.flow.operations.D
 	 */
 	void removeSelection(com.top_logic.graphic.flow.data.SelectableBox value);
 
+	/**
+	 * Internal field for storing the current click handler registration (client-side only).
+	 */
 	com.top_logic.graphic.blocks.svg.event.Registration getClickHandler();
 
 	/**

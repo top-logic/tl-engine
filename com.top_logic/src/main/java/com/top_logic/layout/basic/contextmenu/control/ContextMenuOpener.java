@@ -25,6 +25,10 @@ import com.top_logic.tool.boundsec.HandlerResult;
 /**
  * {@link ControlCommand} for {@link Control}s providing context menu content.
  * 
+ * <p>
+ * A {@link Control} using this command is expected to implement {@link ContextMenuOwner} interface.
+ * </p>
+ * 
  * @see ContextMenuOwner
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>

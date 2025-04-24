@@ -43,7 +43,7 @@
 		</title>
 		<open-handler id="ID_5ea86c96_0f5f_405d_913d_d3090f063784"
 			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
-			image="theme:ICONS_ADD_BUTTON"
+			image="css:fa-solid fa-turn-down"
 			target="selection(self())"
 			targetComponent="com.top_logic.demo/technical/components/flowchart1/products/constructionPlan/addPart/dialog.layout.xml#Editor"
 		>

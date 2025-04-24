@@ -1,5 +1,8 @@
 package com.top_logic.graphic.flow.data;
 
+/**
+ * Common base class for all diagram elements that can be rendered to SVG.
+ */
 public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.top_logic.graphic.flow.operations.WidgetOperations {
 
 	/** Type codes for the {@link com.top_logic.graphic.flow.data.Widget} hierarchy. */

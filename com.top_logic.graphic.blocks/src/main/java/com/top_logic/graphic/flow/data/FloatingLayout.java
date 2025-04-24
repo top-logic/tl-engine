@@ -18,6 +18,9 @@ public interface FloatingLayout extends Box, com.top_logic.graphic.flow.operatio
 	/** @see #getNodes() */
 	String NODES__PROP = "nodes";
 
+	/**
+	 * Top-level floating elements.
+	 */
 	java.util.List<com.top_logic.graphic.flow.data.Box> getNodes();
 
 	/**

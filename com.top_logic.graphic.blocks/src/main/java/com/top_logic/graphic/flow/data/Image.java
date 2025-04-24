@@ -1,5 +1,8 @@
 package com.top_logic.graphic.flow.data;
 
+/**
+ * An embedded image.
+ */
 public interface Image extends Box, com.top_logic.graphic.flow.operations.ImageOperations {
 
 	/**
@@ -27,6 +30,9 @@ public interface Image extends Box, com.top_logic.graphic.flow.operations.ImageO
 	/** @see #getScale() */
 	String SCALE__PROP = "scale";
 
+	/**
+	 * The URL where the image data resides.
+	 */
 	String getHref();
 
 	/**
@@ -34,6 +40,9 @@ public interface Image extends Box, com.top_logic.graphic.flow.operations.ImageO
 	 */
 	com.top_logic.graphic.flow.data.Image setHref(String value);
 
+	/**
+	 * The width of the image data.
+	 */
 	double getImgWidth();
 
 	/**
@@ -41,6 +50,9 @@ public interface Image extends Box, com.top_logic.graphic.flow.operations.ImageO
 	 */
 	com.top_logic.graphic.flow.data.Image setImgWidth(double value);
 
+	/**
+	 * The height of the image data.
+	 */
 	double getImgHeight();
 
 	/**
@@ -48,6 +60,9 @@ public interface Image extends Box, com.top_logic.graphic.flow.operations.ImageO
 	 */
 	com.top_logic.graphic.flow.data.Image setImgHeight(double value);
 
+	/**
+	 * The alignment of the image data to the displayed image box.
+	 */
 	com.top_logic.graphic.flow.data.ImageAlign getAlign();
 
 	/**
@@ -55,6 +70,9 @@ public interface Image extends Box, com.top_logic.graphic.flow.operations.ImageO
 	 */
 	com.top_logic.graphic.flow.data.Image setAlign(com.top_logic.graphic.flow.data.ImageAlign value);
 
+	/**
+	 * The scaling of the image data within the image box.
+	 */
 	com.top_logic.graphic.flow.data.ImageScale getScale();
 
 	/**

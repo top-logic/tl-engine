@@ -1,5 +1,8 @@
 package com.top_logic.graphic.flow.data;
 
+/**
+ * A layout of a row of boxes.
+ */
 public interface RowLayout extends Layout {
 
 	/** Visitor interface for the {@link com.top_logic.graphic.flow.data.RowLayout} hierarchy.*/
@@ -19,6 +22,9 @@ public interface RowLayout extends Layout {
 	/** @see #getFill() */
 	String FILL__PROP = "fill";
 
+	/**
+	 * The gap between boxes in the row.
+	 */
 	double getGap();
 
 	/**
@@ -26,6 +32,9 @@ public interface RowLayout extends Layout {
 	 */
 	com.top_logic.graphic.flow.data.RowLayout setGap(double value);
 
+	/**
+	 * Instruction how to use extra space available.
+	 */
 	com.top_logic.graphic.flow.data.SpaceDistribution getFill();
 
 	/**

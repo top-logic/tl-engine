@@ -1,5 +1,8 @@
 package com.top_logic.graphic.flow.data;
 
+/**
+ * A line of text.
+ */
 public interface Text extends Box, com.top_logic.graphic.flow.operations.TextOperations {
 
 	/**
@@ -33,6 +36,9 @@ public interface Text extends Box, com.top_logic.graphic.flow.operations.TextOpe
 	/** @see #getBaseLine() */
 	String BASE_LINE__PROP = "baseLine";
 
+	/**
+	 * The text to render.
+	 */
 	String getValue();
 
 	/**
@@ -40,6 +46,9 @@ public interface Text extends Box, com.top_logic.graphic.flow.operations.TextOpe
 	 */
 	com.top_logic.graphic.flow.data.Text setValue(String value);
 
+	/**
+	 * The SVG <code>font-weight</code> style.
+	 */
 	String getFontWeight();
 
 	/**
@@ -52,6 +61,9 @@ public interface Text extends Box, com.top_logic.graphic.flow.operations.TextOpe
 	 */
 	boolean hasFontWeight();
 
+	/**
+	 * The SVG <code>font-size</code> style.
+	 */
 	String getFontSize();
 
 	/**
@@ -64,6 +76,9 @@ public interface Text extends Box, com.top_logic.graphic.flow.operations.TextOpe
 	 */
 	boolean hasFontSize();
 
+	/**
+	 * The SVG <code>font-family</code> style.
+	 */
 	String getFontFamily();
 
 	/**
@@ -76,6 +91,9 @@ public interface Text extends Box, com.top_logic.graphic.flow.operations.TextOpe
 	 */
 	boolean hasFontFamily();
 
+	/**
+	 * The SVG <code>stroke</code> style.
+	 */
 	String getStrokeStyle();
 
 	/**
@@ -88,6 +106,9 @@ public interface Text extends Box, com.top_logic.graphic.flow.operations.TextOpe
 	 */
 	boolean hasStrokeStyle();
 
+	/**
+	 * The SVG <code>fill</code> style.
+	 */
 	String getFillStyle();
 
 	/**
@@ -100,6 +121,9 @@ public interface Text extends Box, com.top_logic.graphic.flow.operations.TextOpe
 	 */
 	boolean hasFillStyle();
 
+	/**
+	 * The Y offset from the top-left corner of the text box, where the text is rendered.
+	 */
 	double getBaseLine();
 
 	/**

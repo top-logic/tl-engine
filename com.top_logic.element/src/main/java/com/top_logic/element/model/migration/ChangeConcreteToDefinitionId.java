@@ -189,6 +189,9 @@ public class ChangeConcreteToDefinitionId extends AbstractConfiguredInstance<Cha
 				columns.add(columnDef(idCol));
 			}
 			List<SQLOrder> orders = new ArrayList<>();
+			if (branchCol != null) {
+				orders.add(order(false, sqlUtils.branchColumnRef()));
+			}
 			orders.add(order(true, column(BasicTypes.REV_MIN_DB_NAME)));
 			for (String idCol : getConfig().getIDColumns()) {
 				orders.add(order(false, column(idCol)));

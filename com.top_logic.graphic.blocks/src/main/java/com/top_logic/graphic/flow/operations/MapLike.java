@@ -19,6 +19,9 @@ import de.haumacher.msgbuf.data.ReflectiveDataObject;
  */
 public interface MapLike extends Map<String, Object> {
 
+	/**
+	 * The data values.
+	 */
 	ReflectiveDataObject self();
 
 	@Override

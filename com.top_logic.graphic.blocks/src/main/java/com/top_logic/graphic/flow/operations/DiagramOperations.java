@@ -18,12 +18,22 @@ import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.graphic.flow.data.SelectableBox;
 
 /**
- * 
+ * Custom operations for {@link Diagram} elements.
  */
 public interface DiagramOperations extends Drawable, SVGClickHandler {
 
+	/**
+	 * The {@link Diagram} data.
+	 */
 	Diagram self();
 
+	/**
+	 * Entry point for the diagram layout.
+	 * 
+	 * <p>
+	 * This method computes the size and positions of all diagram elements.
+	 * </p>
+	 */
 	default void layout(RenderContext context) {
 		self().getRoot().computeIntrinsicSize(context, 0, 0);
 		self().getRoot().distributeSize(context, 0, 0, self().getRoot().getWidth(), self().getRoot().getHeight());

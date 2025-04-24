@@ -1,5 +1,8 @@
 package com.top_logic.graphic.flow.data;
 
+/**
+ * A horizontal row of boxes.
+ */
 public interface HorizontalLayout extends RowLayout, com.top_logic.graphic.flow.operations.layout.HorizontalLayoutOperations {
 
 	/**

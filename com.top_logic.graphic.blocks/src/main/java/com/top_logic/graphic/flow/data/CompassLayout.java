@@ -1,5 +1,8 @@
 package com.top_logic.graphic.flow.data;
 
+/**
+ * A layout that places boxes around some centerd content box.
+ */
 public interface CompassLayout extends Box, com.top_logic.graphic.flow.operations.layout.CompassLayoutOperations {
 
 	/**
@@ -36,6 +39,9 @@ public interface CompassLayout extends Box, com.top_logic.graphic.flow.operation
 	/** @see #getVPadding() */
 	String V_PADDING__PROP = "vPadding";
 
+	/**
+	 * The heading placed on top of the content.
+	 */
 	com.top_logic.graphic.flow.data.Box getNorth();
 
 	/**
@@ -48,6 +54,9 @@ public interface CompassLayout extends Box, com.top_logic.graphic.flow.operation
 	 */
 	boolean hasNorth();
 
+	/**
+	 * Sidebar placed left to the content.
+	 */
 	com.top_logic.graphic.flow.data.Box getWest();
 
 	/**
@@ -60,6 +69,9 @@ public interface CompassLayout extends Box, com.top_logic.graphic.flow.operation
 	 */
 	boolean hasWest();
 
+	/**
+	 * Sidebar placed right to the content.
+	 */
 	com.top_logic.graphic.flow.data.Box getEast();
 
 	/**
@@ -72,6 +84,9 @@ public interface CompassLayout extends Box, com.top_logic.graphic.flow.operation
 	 */
 	boolean hasEast();
 
+	/**
+	 * Footer placed below th content.
+	 */
 	com.top_logic.graphic.flow.data.Box getSouth();
 
 	/**
@@ -84,6 +99,9 @@ public interface CompassLayout extends Box, com.top_logic.graphic.flow.operation
 	 */
 	boolean hasSouth();
 
+	/**
+	 * The main content.
+	 */
 	com.top_logic.graphic.flow.data.Box getCenter();
 
 	/**
@@ -96,6 +114,9 @@ public interface CompassLayout extends Box, com.top_logic.graphic.flow.operation
 	 */
 	boolean hasCenter();
 
+	/**
+	 * The height of the main content.
+	 */
 	double getCenterHeight();
 
 	/**
@@ -103,6 +124,9 @@ public interface CompassLayout extends Box, com.top_logic.graphic.flow.operation
 	 */
 	com.top_logic.graphic.flow.data.CompassLayout setCenterHeight(double value);
 
+	/**
+	 * The horizontal padding around the center where the sidebars are placed.
+	 */
 	double getHPadding();
 
 	/**
@@ -110,6 +134,9 @@ public interface CompassLayout extends Box, com.top_logic.graphic.flow.operation
 	 */
 	com.top_logic.graphic.flow.data.CompassLayout setHPadding(double value);
 
+	/**
+	 * The vertical padding around the center, where the header and footer is placed.
+	 */
 	double getVPadding();
 
 	/**

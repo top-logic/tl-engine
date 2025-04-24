@@ -1,5 +1,8 @@
 package com.top_logic.graphic.flow.data;
 
+/**
+ * Alignment of an image within a box.
+ */
 public enum ImageAlign implements de.haumacher.msgbuf.data.ProtocolEnum {
 
 	/**

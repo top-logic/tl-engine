@@ -11,10 +11,13 @@ import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
 
 /**
- * 
+ * Custom operations for {@link TreeConnection}s.
  */
 public interface TreeConnectionOperations extends Drawable {
 
+	/**
+	 * The {@link TreeConnection} data.
+	 */
 	TreeConnection self();
 
 	@Override

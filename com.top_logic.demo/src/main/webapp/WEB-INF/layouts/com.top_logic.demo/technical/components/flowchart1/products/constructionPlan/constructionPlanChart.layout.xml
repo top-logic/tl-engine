@@ -5,6 +5,9 @@
 	template="tl-graphic-blocks-server/flowChart.template.xml"
 >
 	<arguments model="selection(com.top_logic.demo/technical/components/flowchart1/productsContextList.layout.xml#List)">
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/flowchart1/products/constructionPlan/addPart/dialog.layout.xml"/>
+		</dialogs>
 		<name key="dynamic.90e02e7f-5528-47f0-bfaf-ffc41a982587">
 			<en>Construction plan</en>
 			<de>Bauplan</de>
@@ -108,6 +111,16 @@ flowChart(
 			<button id="ID_6e8ce086_9a2c_4deb_9570_8ef943486a8c"
 				class="com.top_logic.layout.form.component.InvalidateCommand"
 			/>
+			<button id="ID_cf346e3d_eacf_410a_8ee4_ede994013f70"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.d7f1be23-a60a-4f01-9be0-75189c27bc39">
+					<en>Delete selected component</en>
+					<de>Selektiertes Bauteil löschen</de>
+				</resourceKey>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation"/>
+			</button>
 		</buttons>
 	</arguments>
 </config:template-call>

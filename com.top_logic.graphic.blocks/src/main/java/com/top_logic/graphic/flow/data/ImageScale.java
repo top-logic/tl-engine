@@ -1,5 +1,8 @@
 package com.top_logic.graphic.flow.data;
 
+/**
+ * Scaling instruction for an image within a box.
+ */
 public enum ImageScale implements de.haumacher.msgbuf.data.ProtocolEnum {
 
 	/**

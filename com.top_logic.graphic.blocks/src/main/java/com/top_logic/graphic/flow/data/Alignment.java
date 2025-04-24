@@ -1,13 +1,28 @@
 package com.top_logic.graphic.flow.data;
 
+/**
+ * An alignment instruction.
+ */
 public enum Alignment implements de.haumacher.msgbuf.data.ProtocolEnum {
 
+	/**
+	 * The content is aligned to the start coordinate of the container (left-to-right and top-to-bottom).
+	 */
 	START("start"),
 
+	/**
+	 * The content is centered within the available space of the container.
+	 */
 	MIDDLE("middle"),
 
+	/**
+	 * The content is aligned to the end coordinate of the container (left-to-right and top-to-bottom).
+	 */
 	STOP("stop"),
 
+	/**
+	 * The content is stretched to fit the size of the container.
+	 */
 	STRECH("strech"),
 
 	;

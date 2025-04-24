@@ -1,5 +1,8 @@
 package com.top_logic.graphic.flow.data;
 
+/**
+ * An alignment of some box within a potentially larger content box.
+ */
 public interface Align extends Decoration, com.top_logic.graphic.flow.operations.AlignOperations {
 
 	/**
@@ -18,6 +21,9 @@ public interface Align extends Decoration, com.top_logic.graphic.flow.operations
 	/** @see #getYAlign() */
 	String Y_ALIGN__PROP = "yAlign";
 
+	/**
+	 * Instruction for horizontal alignment.
+	 */
 	com.top_logic.graphic.flow.data.Alignment getXAlign();
 
 	/**
@@ -25,6 +31,9 @@ public interface Align extends Decoration, com.top_logic.graphic.flow.operations
 	 */
 	com.top_logic.graphic.flow.data.Align setXAlign(com.top_logic.graphic.flow.data.Alignment value);
 
+	/**
+	 * Instruction for vertical alignment.
+	 */
 	com.top_logic.graphic.flow.data.Alignment getYAlign();
 
 	/**

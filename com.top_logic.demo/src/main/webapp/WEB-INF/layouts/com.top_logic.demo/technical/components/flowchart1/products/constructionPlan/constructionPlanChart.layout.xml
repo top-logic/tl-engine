@@ -7,6 +7,8 @@
 	<arguments model="selection(com.top_logic.demo/technical/components/flowchart1/productsContextList.layout.xml#List)">
 		<dialogs>
 			<layout-reference resource="com.top_logic.demo/technical/components/flowchart1/products/constructionPlan/addPart/dialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/flowchart1/products/constructionPlan/componentProperties/dialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/flowchart1/products/constructionPlan/createUsage/dialog.layout.xml"/>
 		</dialogs>
 		<name key="dynamic.90e02e7f-5528-47f0-bfaf-ffc41a982587">
 			<en>Construction plan</en>

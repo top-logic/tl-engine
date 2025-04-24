@@ -46,6 +46,7 @@ import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.migration.Util;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link MigrationProcessor} that replaces the ids of {@link TLStructuredTypePart} by the id of
@@ -176,7 +177,10 @@ public class ChangeConcreteToDefinitionId extends AbstractConfiguredInstance<Cha
 			List<TLID> chunk = chunks.next();
 
 			List<SQLColumnDefinition> columns = new ArrayList<>();
-			columns.add(sqlUtils.branchColumnDef());
+			SQLColumnDefinition branchCol = sqlUtils.branchColumnDefOrNull();
+			if (branchCol != null) {
+				columns.add(branchCol);
+			}
 			columns.add(columnDef(BasicTypes.IDENTIFIER_DB_NAME));
 			columns.add(columnDef(BasicTypes.REV_MAX_DB_NAME));
 			columns.add(columnDef(BasicTypes.REV_MIN_DB_NAME));
@@ -201,21 +205,30 @@ public class ChangeConcreteToDefinitionId extends AbstractConfiguredInstance<Cha
 			try (ResultSet result = query.executeQuery(connection)) {
 				while (result.next()) {
 					boolean changed = false;
-					long branch = result.getLong(1);
-					long revMax = result.getLong(3);
-					long revMin = result.getLong(4);
-					TLID attributeID = IdentifierUtil.getId(result, 5);
+
+					int branchInc;
+					long branch;
+					if (branchCol != null) {
+						branch = result.getLong(1);
+						branchInc = 0;
+					} else {
+						branch = TLContext.TRUNK_ID;
+						branchInc = -1;
+					}
+					long revMax = result.getLong(3 + branchInc);
+					long revMin = result.getLong(4 + branchInc);
+					TLID attributeID = IdentifierUtil.getId(result, 5 + branchInc);
 					TLID definition = definitionIds.get(attributeID);
 					List<Object> rowID = new ArrayList<>();
 					rowID.add(branch);
 					rowID.add(definition);
-					int base = 6;
+					int base = 6 + branchInc;
 					for (int i = 0; i < getConfig().getIDColumns().size(); i++) {
 						rowID.add(result.getObject(base + i));
 					}
 
 					if (!definition.equals(attributeID)) {
-						IdentifierUtil.setId(result, 5, definition);
+						IdentifierUtil.setId(result, 5 + branchInc, definition);
 						changed = true;
 					}
 
@@ -225,7 +238,7 @@ public class ChangeConcreteToDefinitionId extends AbstractConfiguredInstance<Cha
 					} else {
 						assert revMin < lastRow;
 						if (revMax >= lastRow) {
-							result.updateLong(3, lastRow - 1);
+							result.updateLong(3 + branchInc, lastRow - 1);
 							changed = true;
 						}
 						lastRows.put(rowID, revMin);

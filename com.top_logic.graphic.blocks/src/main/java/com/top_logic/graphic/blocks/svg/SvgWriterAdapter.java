@@ -219,4 +219,9 @@ public class SvgWriterAdapter implements SvgWriter {
 		_impl.setStrokeDasharray(dashes);
 	}
 
+	@Override
+	public void writeAttribute(String name, String value) {
+		_impl.writeAttribute(name, value);
+	}
+
 }

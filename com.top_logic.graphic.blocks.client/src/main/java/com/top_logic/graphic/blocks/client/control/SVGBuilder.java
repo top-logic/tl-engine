@@ -327,6 +327,11 @@ public class SVGBuilder implements SvgWriter {
 	}
 
 	@Override
+	public void writeAttribute(String name, String value) {
+		_current.setAttribute(name, value);
+	}
+
+	@Override
 	public Registration attachOnClick(SVGClickHandler handler, Object sender) {
 		HandlerRegistration registration = _current.addDomHandler(new ClickHandler() {
 			@Override

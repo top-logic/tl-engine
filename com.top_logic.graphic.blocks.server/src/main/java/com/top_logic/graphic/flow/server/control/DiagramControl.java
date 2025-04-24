@@ -17,6 +17,8 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.graphic.flow.control.JSDiagramControlCommon;
 import com.top_logic.graphic.flow.data.Diagram;
+import com.top_logic.graphic.flow.data.SelectableBox;
+import com.top_logic.graphic.flow.data.Widget;
 import com.top_logic.layout.ContentHandler;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
@@ -24,6 +26,11 @@ import com.top_logic.layout.URLParser;
 import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
+import com.top_logic.layout.basic.contextmenu.NoContextMenuProvider;
+import com.top_logic.layout.basic.contextmenu.control.ContextMenuOpener;
+import com.top_logic.layout.basic.contextmenu.control.ContextMenuOwner;
+import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 import de.haumacher.msgbuf.graph.DefaultScope;
@@ -39,13 +46,19 @@ import jakarta.servlet.http.HttpServletResponse;
 /**
  * {@link Control} for displaying diagrams.
  */
-public class DiagramControl extends AbstractControlBase implements JSDiagramControlCommon, ContentHandler {
+public class DiagramControl extends AbstractControlBase
+		implements JSDiagramControlCommon, ContentHandler, ContextMenuOwner {
 
-	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(UpdateCommand.INSTANCE);
+	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
+		ContextMenuOpener.INSTANCE,
+		UpdateCommand.INSTANCE);
 
 	private Diagram _diagram;
 
 	private DefaultScope _graphScope;
+
+	private ContextMenuProvider _contextMenuProvider = NoContextMenuProvider.INSTANCE;
+
 
 	/**
 	 * Creates a {@link DiagramControl}.
@@ -106,6 +119,31 @@ public class DiagramControl extends AbstractControlBase implements JSDiagramCont
 		out.endTag(SVG);
 
 		JSControlUtil.writeCreateJSControlScript(out, JSDiagramControlCommon.CONTROL_TYPE, getID());
+	}
+
+	/**
+	 * The provider for a context menu for user objects of {@link SelectableBox} nodes.
+	 */
+	public ContextMenuProvider getContextMenuProvider() {
+		return _contextMenuProvider;
+	}
+
+	/**
+	 * @see #getContextMenuProvider()
+	 */
+	public void setContextMenuProvider(ContextMenuProvider contextMenuProvider) {
+		_contextMenuProvider = contextMenuProvider;
+	}
+
+	@Override
+	public Menu createContextMenu(String contextInfo) {
+		Widget node = (Widget) _graphScope.resolveOrFail(Integer.parseInt(contextInfo));
+		Object userObject = node.getUserObject();
+		if (userObject == null) {
+			return null;
+		}
+
+		return _contextMenuProvider.getContextMenu(userObject);
 	}
 
 	@Override

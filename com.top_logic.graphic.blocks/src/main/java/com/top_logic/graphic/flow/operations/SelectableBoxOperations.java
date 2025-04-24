@@ -16,6 +16,8 @@ import com.top_logic.graphic.blocks.svg.event.SVGClickHandler;
 import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.graphic.flow.data.SelectableBox;
 
+import de.haumacher.msgbuf.graph.AbstractSharedGraphNode;
+
 /**
  * 
  */
@@ -48,6 +50,13 @@ public interface SelectableBoxOperations extends DecorationOperations, SVGClickH
 		out.beginGroup(self());
 		out.translate(self().getX(), self().getY());
 		out.writeCssClass(self().isSelected() ? "tlSelected" : "tlCanSelect");
+
+		int id = ((AbstractSharedGraphNode) self()).id();
+		if (id != 0) {
+			// See HTMLConstants#TL_CONTEXT_MENU_ATTR, which is not available here.
+			out.writeAttribute("data-context-menu", Integer.toString(id));
+		}
+
 		self().setClickHandler(out.attachOnClick(this, self()));
 
 		drawContent(out);

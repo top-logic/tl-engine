@@ -4,8 +4,8 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	template="com.top_logic.element/form.template.xml"
 >
-	<arguments model="selection(com.top_logic.demo/technical/components/flowchart1/products/constructionPlan/constructionPlanChart.layout.xml#Chart)">
-		<name key="dynamic.6f9d5e71-82f1-4e72-b428-70747804b9d4">
+	<arguments buttonbar="true">
+		<name key="dynamic.1cb073ef-b11b-4952-a0bc-9d8e58c59307">
 			<en>Properties</en>
 			<de>Eigenschaften</de>
 		</name>
@@ -23,14 +23,14 @@
 						type="tl.core:String"
 					/>
 					<field
-						attribute="locations"
-						fullQualifiedName="test.flowchart:FlowNode#locations"
-						type="test.flowchart:Location"
-					/>
-					<field
 						attribute="image"
 						fullQualifiedName="test.flowchart:FlowNode#image"
 						type="tl.core:Binary"
+					/>
+					<field
+						attribute="locations"
+						fullQualifiedName="test.flowchart:FlowNode#locations"
+						type="test.flowchart:Location"
 					/>
 				</formDefinition>
 			</form>

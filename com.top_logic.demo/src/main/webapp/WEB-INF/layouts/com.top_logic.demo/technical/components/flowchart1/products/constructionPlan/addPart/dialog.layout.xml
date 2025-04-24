@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.model.search/create/genericCreateDialog.template.xml"
+>
+	<arguments>
+		<forms>
+			<form type="test.flowchart:FlowNode">
+				<formDefinition>
+					<field
+						attribute="name"
+						fullQualifiedName="test.flowchart:FlowNode#name"
+						type="tl.core:String"
+					/>
+					<field
+						attribute="marker"
+						fullQualifiedName="test.flowchart:FlowNode#marker"
+						type="tl.core:String"
+					/>
+					<field
+						attribute="image"
+						fullQualifiedName="test.flowchart:FlowNode#image"
+						type="tl.core:Binary"
+					/>
+					<field
+						attribute="locations"
+						fullQualifiedName="test.flowchart:FlowNode#locations"
+						type="test.flowchart:Location"
+					/>
+				</formDefinition>
+			</form>
+		</forms>
+		<title>
+			<title key="dynamic.e7adcf1f-74a7-4e81-92b2-511bde7dbaa4">
+				<en>Add part</en>
+				<de>Teil hinzufügen</de>
+				<tooltip>
+					<en>Adds a wide part to the construction plan of the selected part.</en>
+					<de>Fügt ein weites Teil zu dem Bauplan des selektierten Teils hinzu.</de>
+				</tooltip>
+			</title>
+		</title>
+		<open-handler id="ID_5ea86c96_0f5f_405d_913d_d3090f063784"
+			config:interface="com.top_logic.layout.editor.config.CreateDialogOpenHandlerConfig"
+			image="theme:ICONS_ADD_BUTTON"
+			target="selection(self())"
+			targetComponent="com.top_logic.demo/technical/components/flowchart1/products/constructionPlan/addPart/dialog.layout.xml#Editor"
+		>
+			<resourceKey key="dynamic.e7adcf1f-74a7-4e81-92b2-511bde7dbaa4">
+				<en>Add part</en>
+				<de>Teil hinzufügen</de>
+				<tooltip>
+					<en>Adds a wide part to the construction plan of the selected part.</en>
+					<de>Fügt ein weites Teil zu dem Bauplan des selektierten Teils hinzu.</de>
+				</tooltip>
+			</resourceKey>
+			<executability>
+				<rule-by-expression decision="context -> $context != null"/>
+			</executability>
+		</open-handler>
+		<typeOptions type="test.flowchart:FlowNode"/>
+		<create-handler id="ID_c38593f5_7a42_4a89_a60c_a12e6a10d691">
+			<linkOperation><![CDATA[x -> newNode -> output -> {
+    $output.container().add(`test.flowchart:Product#buildInstructions`, $newNode);
+    $output.add(`test.flowchart:FlowNode#inputs`, $newNode);
+}]]></linkOperation>
+		</create-handler>
+	</arguments>
+</config:template-call>

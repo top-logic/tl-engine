@@ -107,7 +107,7 @@ public class JSDiagramControl extends AbstractJSControl
 
 					_diagram = diagram;
 				} catch (IOException ex) {
-					DomGlobal.console.error("Failed to fetch diagram data: " + ex.getMessage());
+					DomGlobal.console.error("Failed to fetch diagram data: ", ex.getMessage());
 				}
 				return null;
 			});

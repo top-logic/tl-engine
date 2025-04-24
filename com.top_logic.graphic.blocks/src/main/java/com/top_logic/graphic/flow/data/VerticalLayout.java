@@ -1,5 +1,8 @@
 package com.top_logic.graphic.flow.data;
 
+/**
+ * A vertical column of boxes.
+ */
 public interface VerticalLayout extends RowLayout, com.top_logic.graphic.flow.operations.layout.VerticalLayoutOperations {
 
 	/**

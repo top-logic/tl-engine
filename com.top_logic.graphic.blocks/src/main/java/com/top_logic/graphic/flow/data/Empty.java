@@ -1,5 +1,8 @@
 package com.top_logic.graphic.flow.data;
 
+/**
+ * An empty region.
+ */
 public interface Empty extends Box, com.top_logic.graphic.flow.operations.EmptyOperations {
 
 	/**

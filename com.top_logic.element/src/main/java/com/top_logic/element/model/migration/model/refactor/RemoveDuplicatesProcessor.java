@@ -182,8 +182,11 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 
 			boolean globallyUnique = getConfig().getGloballyUnique();
 
-			List<SQLColumnDefinition> columnDefs = columns(
-				util.branchColumnDef(),
+			/* Note: util().branchColumnDef() may return constant column. It is important (at least
+			 * in H2) that no constant column is contained in the result list, otherwise the row can
+			 * not be updated, even if the branch column is not updated at all. */
+			List<SQLColumnDefinition> columnDefs = Util.listWithoutNull(
+				util.branchColumnDefOrNull(),
 				columnDef(BasicTypes.IDENTIFIER_DB_NAME),
 				columnDef(BasicTypes.REV_MIN_DB_NAME),
 				columnDef(BasicTypes.REV_MAX_DB_NAME),

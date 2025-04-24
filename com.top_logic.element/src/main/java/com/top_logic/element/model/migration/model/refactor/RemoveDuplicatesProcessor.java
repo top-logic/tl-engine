@@ -41,6 +41,7 @@ import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.MigrationException;
 import com.top_logic.model.migration.data.QualifiedPartName;
 import com.top_logic.model.migration.data.TypePart;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link MigrationProcessor} removing duplicate assignments of an object in the same association.
@@ -185,8 +186,10 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 			/* Note: util().branchColumnDef() may return constant column. It is important (at least
 			 * in H2) that no constant column is contained in the result list, otherwise the row can
 			 * not be updated, even if the branch column is not updated at all. */
+			SQLColumnDefinition branchColumnDef = util.branchColumnDefOrNull();
+			int branchColInc = branchColumnDef != null ? 0 : -1;
 			List<SQLColumnDefinition> columnDefs = Util.listWithoutNull(
-				util.branchColumnDefOrNull(),
+				branchColumnDef,
 				columnDef(BasicTypes.IDENTIFIER_DB_NAME),
 				columnDef(BasicTypes.REV_MIN_DB_NAME),
 				columnDef(BasicTypes.REV_MAX_DB_NAME),
@@ -217,11 +220,16 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 			int deleted = 0;
 			try (ResultSet resultSet = links.executeQuery(connection)) {
 				while (resultSet.next()) {
-					long branch = resultSet.getLong(1);
-					long owner = resultSet.getLong(5);
-					long value = resultSet.getLong(6);
-					long revMin = resultSet.getLong(3);
-					long revMax = resultSet.getLong(4);
+					long branch;
+					if (branchColumnDef != null) {
+						branch = resultSet.getLong(1);
+					} else {
+						branch = TLContext.TRUNK_ID;
+					}
+					long owner = resultSet.getLong(5 + branchColInc);
+					long value = resultSet.getLong(6 + branchColInc);
+					long revMin = resultSet.getLong(3 + branchColInc);
+					long revMax = resultSet.getLong(4 + branchColInc);
 
 					if (currentBranch != branch || (!globallyUnique && currentOwner != owner)) {
 						values.clear();
@@ -248,7 +256,7 @@ public class RemoveDuplicatesProcessor extends AbstractConfiguredInstance<Remove
 							} else {
 								// Update revMin of link.
 								long newRevMin = oldRevMax + 1;
-								resultSet.updateLong(3, newRevMin);
+								resultSet.updateLong(3 + branchColInc, newRevMin);
 								resultSet.updateRow();
 								updated++;
 

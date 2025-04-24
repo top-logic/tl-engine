@@ -1,7 +1,7 @@
 package com.top_logic.graphic.flow.data;
 
 /**
- * A layout that connects placed nodes with one-to-many connectors forming a tree.
+ * A layout that connects nodes with one-to-many connectors forming a tree.
  */
 public interface TreeLayout extends FloatingLayout, com.top_logic.graphic.flow.operations.tree.TreeLayoutOperations {
 
@@ -46,6 +46,9 @@ public interface TreeLayout extends FloatingLayout, com.top_logic.graphic.flow.o
 	 */
 	com.top_logic.graphic.flow.data.TreeLayout setCompact(boolean value);
 
+	/**
+	 * The layout direction of nodes (from top/parent to bottom/children)
+	 */
 	com.top_logic.graphic.flow.data.DiagramDirection getDirection();
 
 	/**
@@ -93,6 +96,9 @@ public interface TreeLayout extends FloatingLayout, com.top_logic.graphic.flow.o
 	 */
 	com.top_logic.graphic.flow.data.TreeLayout setThickness(double value);
 
+	/**
+	 * The connections connecting the {@link #getNodes()} of the tree.
+	 */
 	java.util.List<com.top_logic.graphic.flow.data.TreeConnection> getConnections();
 
 	/**

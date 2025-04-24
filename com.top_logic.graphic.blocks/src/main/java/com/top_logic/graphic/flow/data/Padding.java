@@ -1,5 +1,8 @@
 package com.top_logic.graphic.flow.data;
 
+/**
+ * Padding around some content.
+ */
 public interface Padding extends Decoration, com.top_logic.graphic.flow.operations.PaddingOperations {
 
 	/**
@@ -24,6 +27,9 @@ public interface Padding extends Decoration, com.top_logic.graphic.flow.operatio
 	/** @see #getRight() */
 	String RIGHT__PROP = "right";
 
+	/**
+	 * The padding on top of the content.
+	 */
 	double getTop();
 
 	/**
@@ -31,6 +37,9 @@ public interface Padding extends Decoration, com.top_logic.graphic.flow.operatio
 	 */
 	com.top_logic.graphic.flow.data.Padding setTop(double value);
 
+	/**
+	 * The padding at the left side of the content.
+	 */
 	double getLeft();
 
 	/**
@@ -38,6 +47,9 @@ public interface Padding extends Decoration, com.top_logic.graphic.flow.operatio
 	 */
 	com.top_logic.graphic.flow.data.Padding setLeft(double value);
 
+	/**
+	 * The padding below the content.
+	 */
 	double getBottom();
 
 	/**
@@ -45,6 +57,9 @@ public interface Padding extends Decoration, com.top_logic.graphic.flow.operatio
 	 */
 	com.top_logic.graphic.flow.data.Padding setBottom(double value);
 
+	/**
+	 * The padding at the right side of the content.
+	 */
 	double getRight();
 
 	/**

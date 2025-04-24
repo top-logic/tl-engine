@@ -10,21 +10,30 @@ import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.data.Padding;
 
 /**
- * Inserts some padding around another element.
+ * Custom operations for the {@link Padding} diagram element.
  */
 public interface PaddingOperations extends DecorationOperations {
 
 	@Override
 	com.top_logic.graphic.flow.data.Padding self();
 
+	/**
+	 * Updates all paddings to the same value.
+	 */
 	default Padding setAll(double padding) {
 		return setHorizontal(padding).setVertical(padding);
 	}
 
+	/**
+	 * Updates horizontal paddings to the given value.
+	 */
 	default Padding setHorizontal(double padding) {
 		return self().setLeft(padding).setRight(padding);
 	}
 
+	/**
+	 * Updates vertical paddings to the given value.
+	 */
 	default Padding setVertical(double padding) {
 		return self().setTop(padding).setBottom(padding);
 	}

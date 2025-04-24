@@ -1,5 +1,8 @@
 package com.top_logic.graphic.flow.data;
 
+/**
+ * A tabular layout consisting of rows and columns.
+ */
 public interface GridLayout extends Layout, com.top_logic.graphic.flow.operations.layout.GridLayoutOperations {
 
 	/**
@@ -30,6 +33,9 @@ public interface GridLayout extends Layout, com.top_logic.graphic.flow.operation
 	/** @see #getColWidth() */
 	String COL_WIDTH__PROP = "colWidth";
 
+	/**
+	 * The number of rows.
+	 */
 	int getRows();
 
 	/**
@@ -37,6 +43,9 @@ public interface GridLayout extends Layout, com.top_logic.graphic.flow.operation
 	 */
 	com.top_logic.graphic.flow.data.GridLayout setRows(int value);
 
+	/**
+	 * The number of columns.
+	 */
 	int getCols();
 
 	/**
@@ -44,6 +53,9 @@ public interface GridLayout extends Layout, com.top_logic.graphic.flow.operation
 	 */
 	com.top_logic.graphic.flow.data.GridLayout setCols(int value);
 
+	/**
+	 * The gap between columns.
+	 */
 	double getGapX();
 
 	/**
@@ -51,6 +63,9 @@ public interface GridLayout extends Layout, com.top_logic.graphic.flow.operation
 	 */
 	com.top_logic.graphic.flow.data.GridLayout setGapX(double value);
 
+	/**
+	 * The gap between rows.
+	 */
 	double getGapY();
 
 	/**
@@ -58,6 +73,9 @@ public interface GridLayout extends Layout, com.top_logic.graphic.flow.operation
 	 */
 	com.top_logic.graphic.flow.data.GridLayout setGapY(double value);
 
+	/**
+	 * The height of the rows.
+	 */
 	java.util.List<Double> getRowHeight();
 
 	/**
@@ -75,6 +93,9 @@ public interface GridLayout extends Layout, com.top_logic.graphic.flow.operation
 	 */
 	void removeRowHeight(double value);
 
+	/**
+	 * The width of the columns.
+	 */
 	java.util.List<Double> getColWidth();
 
 	/**

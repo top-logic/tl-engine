@@ -1,5 +1,8 @@
 package com.top_logic.graphic.flow.data;
 
+/**
+ * An anchor point of a connection to a node of the diagram.
+ */
 public interface TreeConnector extends Widget, com.top_logic.graphic.flow.operations.tree.TreeConnectorOperations {
 
 	/**
@@ -21,6 +24,9 @@ public interface TreeConnector extends Widget, com.top_logic.graphic.flow.operat
 	/** @see #getConnectPosition() */
 	String CONNECT_POSITION__PROP = "connectPosition";
 
+	/**
+	 * The connection that owns this connector.
+	 */
 	com.top_logic.graphic.flow.data.TreeConnection getConnection();
 
 	/**

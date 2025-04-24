@@ -1,5 +1,8 @@
 package com.top_logic.graphic.flow.data;
 
+/**
+ * A box that draws some decoration around another box.
+ */
 public interface Decoration extends Box, com.top_logic.graphic.flow.operations.DecorationOperations {
 
 	/** Visitor interface for the {@link com.top_logic.graphic.flow.data.Decoration} hierarchy.*/
@@ -25,6 +28,9 @@ public interface Decoration extends Box, com.top_logic.graphic.flow.operations.D
 	/** @see #getContent() */
 	String CONTENT__PROP = "content";
 
+	/**
+	 * The content box that is decorated.
+	 */
 	com.top_logic.graphic.flow.data.Box getContent();
 
 	/**

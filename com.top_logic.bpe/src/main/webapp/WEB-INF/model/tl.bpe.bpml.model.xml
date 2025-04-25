@@ -1087,12 +1087,7 @@ $t.get(`tl.bpe.bpml:Task#titleI18N`).localize() || $t.get(`tl.bpe.bpml:Task#name
 						<bpml-extension/>
 						<sort-order value="400.0"/>
 						<export-binding>
-							<impl class="com.top_logic.model.search.providers.AttributeValueBindingByExpression"
-								key-attributes="name"
-								key-fun="g -> $g.get(`tl.accounts:Group#name`)"
-								reference-tag="group"
-								resolver-fun="name -> all(`tl.accounts:Group`).filter(g -> $g.get(`tl.accounts:Group#name`) == $name)"
-							/>
+							<impl class="com.top_logic.bpe.execution.export.GroupByNameBinding"/>
 						</export-binding>
 					</annotations>
 				</reference>
@@ -1375,12 +1370,7 @@ $t.get(`tl.bpe.bpml:Task#titleI18N`).localize() || $t.get(`tl.bpe.bpml:Task#name
 					<annotations>
 						<bpml-extension/>
 						<export-binding>
-							<impl class="com.top_logic.model.search.providers.AttributeValueBindingByExpression"
-								key-attributes="name"
-								key-fun="g -> $g.get(`tl.accounts:Group#name`)"
-								reference-tag="group"
-								resolver-fun="name -> all(`tl.accounts:Group`).filter(g -> $g.get(`tl.accounts:Group#name`) == $name)"
-							/>
+							<impl class="com.top_logic.bpe.execution.export.GroupByNameBinding"/>
 						</export-binding>
 					</annotations>
 				</reference>

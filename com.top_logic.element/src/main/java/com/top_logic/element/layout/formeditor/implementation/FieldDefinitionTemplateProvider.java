@@ -43,8 +43,10 @@ import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.TLCreateVisibility;
+import com.top_logic.model.annotate.TLDynamicVisibility;
 import com.top_logic.model.annotate.TLVisibility;
 import com.top_logic.model.annotate.Visibility;
+import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.form.definition.FormVisibility;
 import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
@@ -301,6 +303,12 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 	}
 
 	private static FormVisibility editFormVisibility(TLStructuredTypePart part) {
+		TLDynamicVisibility dynamicAnotation = TLAnnotations.getAnnotation(part, TLDynamicVisibility.class);
+		if (dynamicAnotation != null) {
+			// Do not change, the visibility is completely controlled by the model.
+			return null;
+		}
+
 		TLVisibility visibility = DisplayAnnotations.getVisibilityAnnotation(part);
 		if (visibility != null) {
 			return formVisiblity(part, visibility.getValue());

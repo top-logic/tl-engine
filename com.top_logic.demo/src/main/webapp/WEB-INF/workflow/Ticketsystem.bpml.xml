@@ -49,7 +49,9 @@
 				<bpmn:flowNodeRef>Task_1f5o1hp</bpmn:flowNodeRef>
 				<bpmn:extensionElements>
 					<tl:title/>
-					<tl:actorGroups/>
+					<tl:actorGroups>
+						<group name="demoTypeAdministrators"/>
+					</tl:actorGroups>
 					<tl:actorRule/>
 				</bpmn:extensionElements>
 			</bpmn:lane>
@@ -60,7 +62,9 @@
 				<bpmn:flowNodeRef>Task_1uw425j</bpmn:flowNodeRef>
 				<bpmn:extensionElements>
 					<tl:title/>
-					<tl:actorGroups/>
+					<tl:actorGroups>
+						<group name="securityOwner"/>
+					</tl:actorGroups>
 					<tl:actorRule/>
 				</bpmn:extensionElements>
 			</bpmn:lane>
@@ -77,7 +81,9 @@
 				<bpmn:flowNodeRef>Task_1gh83yo</bpmn:flowNodeRef>
 				<bpmn:extensionElements>
 					<tl:title/>
-					<tl:actorGroups/>
+					<tl:actorGroups>
+						<group name="users"/>
+					</tl:actorGroups>
 					<tl:actorRule/>
 				</bpmn:extensionElements>
 			</bpmn:lane>
@@ -154,6 +160,7 @@
 				<tl:icon/>
 				<tl:title/>
 				<tl:descriptionI18N/>
+				<tl:requireReview value="false"/>
 			</bpmn:extensionElements>
 		</bpmn:startEvent>
 		<bpmn:manualTask id="Task_02mdyhg"
@@ -237,11 +244,9 @@
 				<tl:titleFunction/>
 				<tl:formDefinition>
 					<process-form>
-						<form-provider class="com.top_logic.bpe.bpml.display.StandardForm"
-							default-visibility="read-only"
-						>
+						<standard-form default-visibility="read-only">
 							<overlays/>
-						</form-provider>
+						</standard-form>
 					</process-form>
 				</tl:formDefinition>
 				<tl:descriptionI18N/>
@@ -291,16 +296,14 @@
         .fill($i18n)]]></tl:titleFunction>
 				<tl:formDefinition>
 					<process-form>
-						<form-provider class="com.top_logic.bpe.bpml.display.StandardForm"
-							source-task="Task_1f5o1hp"
-						>
+						<standard-form source-task="Task_1f5o1hp">
 							<overlays>
 								<overlay
 									attribute="description"
 									visibility="editable"
 								/>
 							</overlays>
-						</form-provider>
+						</standard-form>
 					</process-form>
 				</tl:formDefinition>
 				<tl:descriptionI18N/>
@@ -323,6 +326,7 @@
 				<tl:tooltip/>
 				<tl:weight/>
 				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
 				<tl:operation/>
 				<tl:formType/>
 			</bpmn:extensionElements>
@@ -351,6 +355,7 @@
 				</tl:tooltip>
 				<tl:weight/>
 				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
 				<tl:operation/>
 				<tl:formType/>
 			</bpmn:extensionElements>
@@ -370,6 +375,7 @@
 				<tl:tooltip/>
 				<tl:weight/>
 				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
 				<tl:operation/>
 				<tl:formType/>
 			</bpmn:extensionElements>
@@ -389,6 +395,7 @@
 				<tl:tooltip/>
 				<tl:weight/>
 				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
 				<tl:operation/>
 				<tl:formType/>
 			</bpmn:extensionElements>
@@ -417,6 +424,7 @@
 				</tl:tooltip>
 				<tl:weight/>
 				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
 				<tl:operation/>
 				<tl:formType/>
 			</bpmn:extensionElements>
@@ -445,6 +453,7 @@
 				</tl:tooltip>
 				<tl:weight/>
 				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
 				<tl:operation/>
 				<tl:formType/>
 			</bpmn:extensionElements>
@@ -464,6 +473,7 @@
 				<tl:tooltip/>
 				<tl:weight/>
 				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
 				<tl:operation/>
 				<tl:formType/>
 			</bpmn:extensionElements>
@@ -483,6 +493,7 @@
 				<tl:tooltip/>
 				<tl:weight/>
 				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
 				<tl:operation><![CDATA[ticket -> $ticket.set(`test.process:Ticket#reworkCnt`, $ticket.get(`test.process:Ticket#reworkCnt`) + 1)]]></tl:operation>
 				<tl:formType/>
 			</bpmn:extensionElements>
@@ -502,6 +513,7 @@
 				<tl:tooltip/>
 				<tl:weight/>
 				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
 				<tl:operation/>
 				<tl:formType/>
 			</bpmn:extensionElements>
@@ -521,6 +533,7 @@
 				<tl:tooltip/>
 				<tl:weight/>
 				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
 				<tl:operation/>
 				<tl:formType/>
 			</bpmn:extensionElements>
@@ -534,6 +547,7 @@
 				<tl:tooltip/>
 				<tl:weight/>
 				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
 				<tl:operation/>
 				<tl:formType/>
 			</bpmn:extensionElements>
@@ -557,6 +571,7 @@
 				</tl:tooltip>
 				<tl:weight/>
 				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
 				<tl:operation/>
 				<tl:formType/>
 			</bpmn:extensionElements>
@@ -576,6 +591,7 @@
 				<tl:tooltip/>
 				<tl:weight/>
 				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
 				<tl:operation/>
 				<tl:formType/>
 			</bpmn:extensionElements>
@@ -595,6 +611,7 @@
 				<tl:tooltip/>
 				<tl:weight/>
 				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
 				<tl:operation/>
 				<tl:formType/>
 			</bpmn:extensionElements>
@@ -614,6 +631,7 @@
 				<tl:tooltip/>
 				<tl:weight/>
 				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
 				<tl:operation/>
 				<tl:formType/>
 			</bpmn:extensionElements>
@@ -627,6 +645,7 @@
 				<tl:tooltip/>
 				<tl:weight/>
 				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
 				<tl:operation/>
 				<tl:formType/>
 			</bpmn:extensionElements>
@@ -640,6 +659,7 @@
 				<tl:tooltip/>
 				<tl:weight/>
 				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
 				<tl:operation/>
 				<tl:formType/>
 			</bpmn:extensionElements>
@@ -668,6 +688,7 @@
 				</tl:tooltip>
 				<tl:weight/>
 				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
 				<tl:operation/>
 				<tl:formType/>
 			</bpmn:extensionElements>
@@ -681,6 +702,7 @@
 				<tl:tooltip/>
 				<tl:weight/>
 				<tl:rule/>
+				<tl:skipStandardOperation value="false"/>
 				<tl:operation/>
 				<tl:formType/>
 			</bpmn:extensionElements>

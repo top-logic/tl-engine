@@ -35,6 +35,7 @@ import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
+import com.top_logic.basic.util.StopWatch;
 import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOReference;
@@ -46,6 +47,7 @@ import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.migration.Util;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link MigrationProcessor} that replaces the ids of {@link TLStructuredTypePart} by the id of
@@ -99,7 +101,7 @@ public class ChangeConcreteToDefinitionId extends AbstractConfiguredInstance<Cha
 		try {
 			tryMigrate(context, log, connection);
 		} catch (SQLException ex) {
-			log.error("Failed to update folder references: " + ex.getMessage(), ex);
+			log.error("Failed to update attribute ids: " + ex.getMessage(), ex);
 		}
 	}
 
@@ -173,10 +175,16 @@ public class ChangeConcreteToDefinitionId extends AbstractConfiguredInstance<Cha
 		int updatedRows = 0;
 		chunks = CollectionUtilShared.chunk(sqlDialect.getMaxSetSize(), definitionIds.keySet().iterator());
 		while (chunks.hasNext()) {
+
+			log.info("Fetch rows to update.");
+
 			List<TLID> chunk = chunks.next();
 
 			List<SQLColumnDefinition> columns = new ArrayList<>();
-			columns.add(sqlUtils.branchColumnDef());
+			SQLColumnDefinition branchCol = sqlUtils.branchColumnDefOrNull();
+			if (branchCol != null) {
+				columns.add(branchCol);
+			}
 			columns.add(columnDef(BasicTypes.IDENTIFIER_DB_NAME));
 			columns.add(columnDef(BasicTypes.REV_MAX_DB_NAME));
 			columns.add(columnDef(BasicTypes.REV_MIN_DB_NAME));
@@ -185,10 +193,13 @@ public class ChangeConcreteToDefinitionId extends AbstractConfiguredInstance<Cha
 				columns.add(columnDef(idCol));
 			}
 			List<SQLOrder> orders = new ArrayList<>();
-			orders.add(order(true, column(BasicTypes.REV_MIN_DB_NAME)));
+			if (branchCol != null) {
+				orders.add(order(false, sqlUtils.branchColumnRef()));
+			}
 			for (String idCol : getConfig().getIDColumns()) {
 				orders.add(order(false, column(idCol)));
 			}
+			orders.add(order(true, column(BasicTypes.REV_MIN_DB_NAME)));
 
 			query = query(select(
 				columns,
@@ -197,43 +208,65 @@ public class ChangeConcreteToDefinitionId extends AbstractConfiguredInstance<Cha
 				orders).forUpdate()).toSql(sqlDialect);
 			query.setResultSetConfiguration(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
 
-			Map<Object, Long> lastRows = new HashMap<>();
+			Map<TLID, Long> lastRows = new HashMap<>();
 			try (ResultSet result = query.executeQuery(connection)) {
+				log.info("Update ids by definition id.");
+
+				StopWatch sw = StopWatch.createStartedWatch();
+				List<Object> lastObjectId = null;
 				while (result.next()) {
 					boolean changed = false;
-					long branch = result.getLong(1);
-					long revMax = result.getLong(3);
-					long revMin = result.getLong(4);
-					TLID attributeID = IdentifierUtil.getId(result, 5);
+
+					int branchInc;
+					long branch;
+					if (branchCol != null) {
+						branch = result.getLong(1);
+						branchInc = 0;
+					} else {
+						branch = TLContext.TRUNK_ID;
+						branchInc = -1;
+					}
+					// TLID linkID = IdentifierUtil.getId(result, 2 + branchInc);
+					long revMax = result.getLong(3 + branchInc);
+					long revMin = result.getLong(4 + branchInc);
+					TLID attributeID = IdentifierUtil.getId(result, 5 + branchInc);
 					TLID definition = definitionIds.get(attributeID);
 					List<Object> rowID = new ArrayList<>();
 					rowID.add(branch);
-					rowID.add(definition);
-					int base = 6;
+					int base = 6 + branchInc;
 					for (int i = 0; i < getConfig().getIDColumns().size(); i++) {
 						rowID.add(result.getObject(base + i));
 					}
 
 					if (!definition.equals(attributeID)) {
-						IdentifierUtil.setId(result, 5, definition);
+						IdentifierUtil.setId(result, 5 + branchInc, definition);
 						changed = true;
 					}
+					if (!rowID.equals(lastObjectId)) {
+						lastObjectId = rowID;
+						// new Object: clear values for former objects.
+						lastRows.clear();
+					}
 
-					Long lastRow = lastRows.get(rowID);
+					Long lastRow = lastRows.get(definition);
 					if (lastRow == null) {
-						lastRows.put(rowID, revMin);
+						lastRows.put(definition, revMin);
 					} else {
 						assert revMin < lastRow;
 						if (revMax >= lastRow) {
-							result.updateLong(3, lastRow - 1);
+							result.updateLong(3 + branchInc, lastRow - 1);
 							changed = true;
 						}
-						lastRows.put(rowID, revMin);
+						lastRows.put(definition, revMin);
 					}
 
 					if (changed) {
 						updatedRows++;
 						result.updateRow();
+						if (updatedRows % 1000 == 0) {
+							log.info("Intermediate info: Updated 1000 rows in " + sw + ".");
+							sw.restart();
+						}
 					}
 
 				}

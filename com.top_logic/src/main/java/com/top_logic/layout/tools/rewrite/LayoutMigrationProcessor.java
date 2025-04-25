@@ -26,6 +26,7 @@ import com.top_logic.basic.sql.SQLH;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.knowledge.service.BasicTypes;
 import com.top_logic.mig.html.layout.PersistentTemplateLayoutWrapper;
+import com.top_logic.model.migration.Util;
 
 /**
  * Migrates the layout template arguments using the configured {@link DocumentRewrite}.
@@ -53,9 +54,12 @@ public class LayoutMigrationProcessor extends RewriteMigrationProcessor<RewriteM
 		String templateColumn = SQLH.mangleDBName(PersistentTemplateLayoutWrapper.TEMPLATE_ATTR);
 		String argumentsColumn = SQLH.mangleDBName(PersistentTemplateLayoutWrapper.ARGUMENTS_ATTR);
 
+		/* Note: util().branchColumnDef() may return constant column. It is important (at least in
+		 * H2) that no constant column is contained in the result list, otherwise the row can not be
+		 * updated, even if the branch column is not updated at all. */
 		SQLSelect select = select(
-			columns(
-				util().branchColumnDef(),
+			Util.listWithoutNull(
+				util().branchColumnDefOrNull(),
 				columnDef(column(null, BasicTypes.IDENTIFIER_DB_NAME)),
 				columnDef(column(null, BasicTypes.REV_MAX_DB_NAME)),
 				columnDef(column(null, layoutKeyColumn)),

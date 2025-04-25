@@ -13,6 +13,13 @@
 			elements="model->all(`test.flowchart:Product`)"
 			supportsElement="element->$element.instanceOf(`test.flowchart:Product`)"
 		/>
+		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview">
+			<content-preview class="com.top_logic.model.search.form.GalleryPreview"
+				gallery-attribute="image"
+				icon="css:fa-solid fa-shapes"
+				type="test.flowchart:Product"
+			/>
+		</preview>
 		<contextMenuButtons>
 			<contextMenuButton id="ID_2bc65bc9_b808_44d9_a449_e585ffa0b9fc"
 				class="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"

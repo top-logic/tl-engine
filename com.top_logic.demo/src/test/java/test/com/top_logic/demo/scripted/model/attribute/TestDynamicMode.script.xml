@@ -53,6 +53,18 @@
 						value="1000"
 					/>
 				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
+					mode="INVISIBLE"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Summe Positionen"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Anlageformular"
+						/>
+					</model-name>
+				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
 					component-name="rootLayout#masterFrame"
 					label="Zeile hinzufügen"
@@ -65,6 +77,18 @@
 							tab-path="Anlageformular"
 						/>
 					</business-object>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.FieldModeAssertionOp"
+					mode="IMMUTABLE"
+					user-id="root"
+				>
+					<model-name config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+						label="Summe Positionen"
+					>
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Anlageformular"
+						/>
+					</model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"

@@ -222,13 +222,21 @@ public class MegaMenuTabConfig
 				ScriptingRecorder.annotateAsDontRecord(this);
 			}
 
+			private LayoutComponent findParentTabComponent(LayoutComponent comp) {
+				LayoutComponent parent = comp.getParent();
+				if (parent instanceof TabComponent) {
+					return parent;
+				}
+				return findParentTabComponent(parent);
+			}
+
 			@Override
 			protected HandlerResult internalExecuteCommand(DisplayContext context) {
 				ButtonControl openSelectListButton = context.get(Command.EXECUTING_CONTROL);
 				String openSelectListButtonID = openSelectListButton.getID();
 
 				TabSwitchVetoListener vetoListener = DefaultTabSwitchVetoListener.INSTANCE;
-				TabComponent tabComponent = (TabComponent) layoutComponent.getParent().getParent();
+				TabComponent tabComponent = (TabComponent) findParentTabComponent(layoutComponent);
 				TabBarModel tabBar = tabComponent.getTabBarModel();
 				int index = tabComponent.getIndexOfChild(layoutComponent);
 				try {

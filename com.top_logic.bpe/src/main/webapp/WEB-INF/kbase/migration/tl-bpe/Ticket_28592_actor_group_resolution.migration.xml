@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28592_actor_group_resolution"
+		module="tl-bpe"
+	/>
+	<dependencies>
+		<dependency name="Ticket_28336_migrate_command_confirmation"
+			module="tl"
+		/>
+		<dependency name="Ticket_28338_create_duration"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28298_add_group_member_options"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_28557_enlarge_contact_attributes"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_28375_replace_concrete_id_by_definition"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_28298_update_account"
+			module="tl-layout-formeditor"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+		<dependency name="Ticket_28310_workflow_upgrade"
+			module="tl-bpe"
+		/>
+	</dependencies>
+	<processors>
+		<remove-annotations name="tl.bpe.bpml:SendTask#receiverGroups">
+			<annotation class="com.top_logic.model.io.annotation.TLExportBinding"/>
+		</remove-annotations>
+		<remove-annotations name="tl.bpe.bpml:LaneSet#actorGroups">
+			<annotation class="com.top_logic.model.io.annotation.TLExportBinding"/>
+		</remove-annotations>
+		<add-annotations name="tl.bpe.bpml:SendTask#receiverGroups">
+			<annotations>
+				<export-binding>
+					<impl class="com.top_logic.bpe.execution.export.GroupByNameBinding"/>
+				</export-binding>
+			</annotations>
+		</add-annotations>
+		<add-annotations name="tl.bpe.bpml:LaneSet#actorGroups">
+			<annotations>
+				<export-binding>
+					<impl class="com.top_logic.bpe.execution.export.GroupByNameBinding"/>
+				</export-binding>
+			</annotations>
+		</add-annotations>
+	</processors>
+</migration>

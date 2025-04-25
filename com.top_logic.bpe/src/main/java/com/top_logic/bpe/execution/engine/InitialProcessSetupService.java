@@ -15,6 +15,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 
+import com.top_logic.base.services.InitialGroupManager;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.Logger;
@@ -54,6 +55,9 @@ import com.top_logic.xio.importer.binding.ModelBinding;
  */
 @ServiceDependencies({
 	ModelService.Module.class,
+
+	// Workflows may refer to groups, therefore, those must be created first.
+	InitialGroupManager.Module.class,
 })
 public class InitialProcessSetupService extends ManagedClass {
 

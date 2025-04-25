@@ -10,9 +10,7 @@ import java.util.Map;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
-import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
@@ -28,8 +26,6 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.tool.boundsec.confirm.CommandConfirmation;
-import com.top_logic.tool.boundsec.confirm.DefaultConfirmation;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
@@ -43,10 +39,6 @@ public abstract class DeclarativeApplyHandler<E extends ConfigurationItem, M> ex
 
 	/** Config interface for {@link DeclarativeApplyHandler}. */
 	public interface Config extends AbstractCommandHandler.Config {
-
-		@Override
-		@ItemDefault(DefaultConfirmation.class)
-		PolymorphicConfiguration<? extends CommandConfirmation> getConfirmation();
 
 		@Override
 		@FormattedDefault(SimpleBoundCommandGroup.WRITE_NAME)

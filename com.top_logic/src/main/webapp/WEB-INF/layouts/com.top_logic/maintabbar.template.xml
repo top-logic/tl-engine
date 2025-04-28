@@ -25,7 +25,6 @@
 						height="80%"
 						width="80%"
 					>
-						<title title="util.maintenance.displayDialog_externalLibs.title"/>
 						<open-handler id="openLicenseDialog"
 							image="css:tl-icon logo-tl-small"
 							resourceKey="util.maintenance.displayDialog_externalLibs"

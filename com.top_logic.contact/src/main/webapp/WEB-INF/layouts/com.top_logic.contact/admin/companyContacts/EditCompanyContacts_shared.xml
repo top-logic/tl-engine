@@ -99,6 +99,9 @@
 						<column name="city"/>
 					</columns>
 				</table>
+				<buttons>
+					<reference command-id="exportExcel"/>
+				</buttons>
 			</component>
 			<component class="${editComponentClass}"
 				commandGroups="${editCommandGroups}"

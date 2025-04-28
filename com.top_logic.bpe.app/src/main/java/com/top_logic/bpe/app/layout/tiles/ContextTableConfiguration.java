@@ -16,7 +16,8 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
-import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.table.export.DownloadNameProvider;
+import com.top_logic.layout.table.model.ExportConfig;
 import com.top_logic.layout.table.model.NoDefaultColumnAdaption;
 import com.top_logic.layout.table.model.SimpleTableDataExport;
 import com.top_logic.layout.table.model.TableConfiguration;
@@ -36,10 +37,7 @@ public class ContextTableConfiguration extends NoDefaultColumnAdaption
 	 * 
 	 * @author <a href="mailto:dbu@top-logic.com">dbu</a>
 	 */
-	public interface Config extends PolymorphicConfiguration<ContextTableConfiguration> {
-
-		/** Configuration name of {@link #getNameOfExportFile()}. */
-		String NAME_OF_EXPORT_FILE = "name-of-export-file";
+	public interface Config extends PolymorphicConfiguration<ContextTableConfiguration>, ExportConfig {
 
 		/** Configuration name of {@link #getRowStyle()}. */
 		String ROW_STYLE = "row-style";
@@ -51,12 +49,6 @@ public class ContextTableConfiguration extends NoDefaultColumnAdaption
 		@Nullable
 		@Name(ROW_STYLE)
 		String getRowStyle();
-
-		/**
-		 * Name of the excel export file. If not set, no export is offered.
-		 */
-		@Name(NAME_OF_EXPORT_FILE)
-		ResKey getNameOfExportFile();
 
 	}
 
@@ -85,8 +77,8 @@ public class ContextTableConfiguration extends NoDefaultColumnAdaption
 		}
 		table.setTableRenderer(TypedConfigUtil.newConfiguredInstance(TileCockpitTableRenderer.class));
 
-		ResKey downloadNameKey = getConfig().getNameOfExportFile();
-		if (downloadNameKey != null) {
+		PolymorphicConfiguration<? extends DownloadNameProvider> downloadName = getConfig().getDownloadNameProvider();
+		if (downloadName != null) {
 			SimpleTableDataExport.Config exporter;
 			try {
 				exporter = (SimpleTableDataExport.Config) TypedConfiguration
@@ -95,7 +87,7 @@ public class ContextTableConfiguration extends NoDefaultColumnAdaption
 				throw new ConfigurationError(ex);
 			}
 			exporter.setTemplateName("defaultTemplate.xlsx");
-			exporter.setDownloadNameKey(downloadNameKey);
+			exporter.setDownloadNameProvider(downloadName);
 			table.setExporter(TypedConfigUtil.createInstance(exporter));
 		}
 	}

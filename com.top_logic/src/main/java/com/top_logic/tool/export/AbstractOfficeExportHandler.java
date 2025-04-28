@@ -18,10 +18,8 @@ import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.layout.progress.DefaultProgressInfo;
-import com.top_logic.layout.table.model.ExportConfig;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractDownloadHandler;
-import com.top_logic.util.Resources;
 
 /**
  * Common superclass for Donwloading office-files.
@@ -166,11 +164,6 @@ public abstract class AbstractOfficeExportHandler extends AbstractDownloadHandle
 
         /** Flag whether to use layout of given template instead of target template in slide replacement in Powerpoint. */
         public boolean useTemplateLayout = true;
-
-		public OfficeExportValueHolder(ExportConfig exportConfig, Object exportData) {
-			this(exportConfig.getTemplateName(), Resources.getInstance().getString(exportConfig.getDownloadNameKey()),
-				exportData, exportConfig.getAutofitColumns());
-		}
 
         /**
          * Create a new OfficeExportValueHolder ...

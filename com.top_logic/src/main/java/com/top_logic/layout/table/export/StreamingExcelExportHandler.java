@@ -75,13 +75,9 @@ public class StreamingExcelExportHandler extends AbstractTableExportHandler {
 		Config.EXECUTABILITY_PROPERTY,
 		Config.CONFIRMATION,
 		Config.EXPORT_SHEET_KEY,
-		Config.EXPORT_NAME_KEY,
-		Config.DYNAMIC_DOWNLOAD_NAME,
+		Config.DOWNLOAD_NAME_PROVIDER,
 	})
 	public interface Config extends AbstractTableExportHandler.Config {
-		/** @see #getExportNameKey() */
-		String EXPORT_NAME_KEY = "exportNameKey";
-
 		/** I18N key for the export sheet name. */
 		String EXPORT_SHEET_KEY = "exportSheetKey";
 
@@ -94,24 +90,7 @@ public class StreamingExcelExportHandler extends AbstractTableExportHandler {
 		@InstanceFormat
 		ResKey getExportSheetKey();
 
-		/**
-		 * File name of the created download.
-		 */
-		@Label("Download name")
-		@Name(Config.EXPORT_NAME_KEY)
-		@ComplexDefault(ExportNameKeyDefault.class)
-		@InstanceFormat
-		ResKey getExportNameKey();
-
-		/** {@link DefaultValueProvider} for {@link Config#getExportNameKey()}. */
-		class ExportNameKeyDefault extends DefaultValueProviderShared {
-			@Override
-			public Object getDefaultValue(ConfigurationDescriptor descriptor, String propertyName) {
-				return com.top_logic.layout.table.model.I18NConstants.DOWNLOAD_FILE_KEY;
-			}
-		}
-
-		/** {@link DefaultValueProvider} for {@link Config#getExportNameKey()}. */
+		/** {@link DefaultValueProvider} for {@link Config#getExportSheetKey()}. */
 		class ExportSheetKeyDefault extends DefaultValueProviderShared {
 			@Override
 			public Object getDefaultValue(ConfigurationDescriptor descriptor, String propertyName) {
@@ -124,29 +103,28 @@ public class StreamingExcelExportHandler extends AbstractTableExportHandler {
 	/** I18N key for the export sheet name. */
 	private ResKey _exportSheetKey;
 
-	/** I18N key for the name of export file. */
-	private final ResKey _exportNameKey;
-
 	/**
 	 * Creates a {@link StreamingExcelExportHandler}.
 	 */
 	public StreamingExcelExportHandler(InstantiationContext context, Config config) {
 		super(context, config);
 
-		_exportNameKey = config.getExportNameKey();
 		_exportSheetKey = config.getExportSheetKey();
 	}
 
 	@Override
-	protected BinaryData createDownloadData(Runnable progressIncrementer, I18NLog log, LayoutComponent component) {
-		return createExporter(progressIncrementer, log, component).createData();
+	protected BinaryData createDownloadData(Runnable progressIncrementer, I18NLog log, LayoutComponent component, Object model) {
+		return createExporter(progressIncrementer, log, component, model).createData();
 	}
 
 	/**
 	 * Creates the export algorithm.
+	 * 
+	 * @param model
+	 *        The base model, for which the export is created.
 	 */
-	protected Exporter createExporter(Runnable progressIncrementer, I18NLog log, LayoutComponent component) {
-		return new Exporter(progressIncrementer, log, component);
+	protected Exporter createExporter(Runnable progressIncrementer, I18NLog log, LayoutComponent component, Object model) {
+		return new Exporter(progressIncrementer, log, component, model);
 	}
 
 	/**
@@ -166,12 +144,15 @@ public class StreamingExcelExportHandler extends AbstractTableExportHandler {
 
 		private final Runnable _progressIncrementer;
 
+		private Object _model;
+
 		/**
 		 * Creates a {@link Exporter}.
 		 */
-		public Exporter(Runnable progressIncrementer, I18NLog log, LayoutComponent component) {
+		public Exporter(Runnable progressIncrementer, I18NLog log, LayoutComponent component, Object model) {
 			_log = log;
 			_component = component;
+			_model = model;
 			_progressIncrementer = progressIncrementer;
 			_tableData = extractTableData(getComponent());
 		}
@@ -202,7 +183,7 @@ public class StreamingExcelExportHandler extends AbstractTableExportHandler {
 		 */
 		public BinaryData createData() {
 			try {
-				String downloadName = getFilename(_component, _exportNameKey);
+				String downloadName = getFilename(_component, _model);
 				boolean xFormat = !downloadName.endsWith(POIUtil.XLS_SUFFIX);
 				if (xFormat && !downloadName.endsWith(POIUtil.XLSX_SUFFIX)) {
 					downloadName += POIUtil.XLSX_SUFFIX;

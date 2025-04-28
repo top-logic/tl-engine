@@ -9,7 +9,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * Creates a dynamic download-name for the excel-export.
+ * Creates a download-name for some export.
  * 
  * @author <a href="mailto:cca@top-logic.com">Christian Canterino</a>
  */
@@ -20,10 +20,11 @@ public interface DownloadNameProvider {
 	 * 
 	 * @param component
 	 *        the context-component where the export is performed.
-	 * @param resKey
-	 *        the key with the placeholder '{0}' to be replaced by the dynamic part of the name.
+	 * @param model
+	 *        The model object, for which the download was produced. Typically the model of the
+	 *        context component.
 	 * @return A filename without extension for the export.
 	 */
-	String createDownloadName(LayoutComponent component, ResKey resKey);
+	ResKey createDownloadName(LayoutComponent component, Object model);
 
 }

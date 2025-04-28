@@ -12,7 +12,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.table.export.ModelDownloadName;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.util.Resources;
 
 /**
  * {@link ModelDownloadName} computing the filename for the component by applying an {@link Expr} on
@@ -39,11 +38,7 @@ public class DownloadNameByExpression<C extends DownloadNameByExpression.Config<
 		 * 
 		 * <p>
 		 * The computed label is passed as single argument value to the configured
-		 * {@link com.top_logic.layout.table.export.ExcelExportHandler.Config#getDownloadNameKey()}
-		 * for dynamic embedding. The text in
-		 * {@link com.top_logic.layout.table.export.ExcelExportHandler.Config#getDownloadNameKey()}
-		 * is expected to contain a placeholder <code>{0}</code> where the computed name is to be
-		 * inserted.
+		 * {@link #getDownloadNameTemplate()}.
 		 * </p>
 		 */
 		@Mandatory
@@ -62,9 +57,9 @@ public class DownloadNameByExpression<C extends DownloadNameByExpression.Config<
 	}
 
 	@Override
-	protected String createDownloadName(Object model, ResKey key) {
-		Object res = _expr.execute(model);
-		return Resources.getInstance().getMessage(key, res);
+	protected ResKey createDownloadName(Object model) {
+		Object result = _expr.execute(model);
+		return getConfig().getDownloadNameTemplate().fill(result);
 	}
 
 }

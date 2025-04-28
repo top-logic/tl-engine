@@ -8,12 +8,17 @@ package com.top_logic.layout.table.export;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.util.Resources;
 
 /**
- * {@link DownloadNameProvider} that creates a download name derived from the component title.
+ * {@link DownloadNameProvider} that creates a download name derived from the component and
+ * application title.
  */
+@InApp
 public class ComponentDownloadName implements DownloadNameProvider {
 
 	/**
@@ -27,10 +32,32 @@ public class ComponentDownloadName implements DownloadNameProvider {
 
 	@Override
 	public ResKey createDownloadName(LayoutComponent component, Object model) {
-		ResKey titleKey = component.getTitleKey();
+		ResKey titleKey = componentTitle(component);
 		ResKey app = com.top_logic.layout.I18NConstants.APPLICATION_TITLE;
 		String today = new SimpleDateFormat("yyyy-dd-MM").format(new Date());
-		return I18NConstants.COMPONENT_DOWNLOAD_NAME__DATE_TITLE_APP.fill(today, titleKey, app);
+		if (model != null) {
+			String modelLabel = MetaLabelProvider.INSTANCE.getLabel(model);
+
+			return I18NConstants.COMPONENT_DOWNLOAD_NAME__DATE_TITLE_APP_MODEL.fill(today, titleKey, app, modelLabel);
+		} else {
+			return I18NConstants.COMPONENT_DOWNLOAD_NAME__DATE_TITLE_APP.fill(today, titleKey, app);
+		}
+	}
+
+	private ResKey componentTitle(LayoutComponent component) {
+		LayoutComponent titleComponent = component;
+		while (true) {
+			if (titleComponent == null) {
+				return com.top_logic.layout.table.export.I18NConstants.DEFAULT_EXPORT_NAME;
+			}
+
+			ResKey titleKey = titleComponent.getTitleKey();
+			if (Resources.getInstance().getString(titleKey, null) != null) {
+				return titleKey;
+			}
+
+			titleComponent = titleComponent.getParent();
+		}
 	}
 
 }

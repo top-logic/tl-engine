@@ -46,6 +46,11 @@ public class ModelDownloadName<C extends ModelDownloadName.Config<?>> extends Ab
 		/**
 		 * The {@link ModelSpec} to get the model whose label is used for the dynamic part of the
 		 * filename.
+		 * 
+		 * <p>
+		 * If not set, the target model of the export command is used instead. This is typically the
+		 * model of the underlying component.
+		 * </p>
 		 */
 		ModelSpec getModel();
 

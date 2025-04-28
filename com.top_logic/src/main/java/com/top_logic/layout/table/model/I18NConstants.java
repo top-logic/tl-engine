@@ -19,15 +19,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en There is no column with name {0}.
 	 */
 	public static ResKey1 NO_SUCH_COLUMN__COLUMN;
-
-	/**
-	 * {@link ResKey} for the default name of the download file.
-	 * 
-	 * @see ExportConfig#getDownloadNameKey()
-	 * 
-	 * @en Table data
-	 */
-	public static ResKey DOWNLOAD_FILE_KEY;
 	
 	/**
 	 * {@link ResKey} when table could not be exported.

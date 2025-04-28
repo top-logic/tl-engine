@@ -1213,8 +1213,9 @@
 					/>
 					<handler id="exportPowerpoint" class="com.top_logic.tool.export.PowerpointExportHandler"
 						clique="exportButtons"/>
-					<handler id="exportExcel" class="com.top_logic.tool.export.ExcelExportHandler"
-						clique="exportButtons"/>
+					<handler id="exportExcel"
+						class="com.top_logic.layout.table.export.ExcelExportHandler"
+					/>
 					<handler id="exportWord" class="com.top_logic.tool.export.WordExportHandler"
 						clique="exportButtons"/>
 					

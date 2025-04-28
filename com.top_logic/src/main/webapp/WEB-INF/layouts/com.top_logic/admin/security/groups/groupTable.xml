@@ -57,5 +57,8 @@
 				/>
 			</columns>
 		</table>
+		<buttons>
+			<reference command-id="exportExcel"/>
+		</buttons>
 	</component>
 </template>

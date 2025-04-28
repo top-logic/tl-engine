@@ -163,8 +163,11 @@
 		/>
 		<button id="exportExcel"
 			class="com.top_logic.layout.table.export.ExcelExportHandler"
-			downloadNameKey="layouts.element.meta.metaElementTree.exportName"
 			templateName="defaultTemplate.xlsx"
-		/>
+		>
+			<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+				downloadName="layouts.element.meta.metaElementTree.exportName"
+			/>
+		</button>
 	</buttons>
 </tree-table>

@@ -162,8 +162,11 @@
 				<buttons>
 					<button id="exportExcelGrid"
 						class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
-						exportNameKey="${exportNameKey}"
-					/>
+					>
+						<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+							downloadName="${exportNameKey}"
+						/>
+					</button>
 					${createButton}
 					${buttons}
 				</buttons>

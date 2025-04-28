@@ -26,7 +26,10 @@
 	<buttons>
 		<button id="exportExcel"
 			class="com.top_logic.layout.table.export.ExcelExportHandler"
-			downloadNameKey="admin.sys.memoryObserver.export.download.name"
-		/>
+		>
+			<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+				downloadName="admin.sys.memoryObserver.export.download.name"
+			/>
+		</button>
 	</buttons>
 </component>

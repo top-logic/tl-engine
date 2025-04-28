@@ -66,9 +66,12 @@
 		<buttons>
 			<button id="exportExcel"
 				class="com.top_logic.layout.table.export.ExcelExportHandler"
-				downloadNameKey="${exportDownloadNameKey}"
 				templateName="${exportTemplateName}"
-			/>
+			>
+				<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+					downloadName="${exportDownloadNameKey}"
+				/>
+			</button>
 			${buttons}
 		</buttons>
 	</component>

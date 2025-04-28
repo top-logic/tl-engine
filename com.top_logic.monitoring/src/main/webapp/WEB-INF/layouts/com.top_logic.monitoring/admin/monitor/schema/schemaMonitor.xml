@@ -50,8 +50,11 @@
 				<buttons>
 					<button id="exportExcel"
 						class="com.top_logic.layout.table.export.ExcelExportHandler"
-						downloadNameKey="/stables.xls"
-					/>
+					>
+						<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+							downloadName="/stables.xls"
+						/>
+					</button>
 				</buttons>
 			</tableView>
 			<tableView name="${namePrefix}Attributes"
@@ -100,8 +103,11 @@
 				<buttons>
 					<button id="exportExcel"
 						class="com.top_logic.layout.table.export.ExcelExportHandler"
-						downloadNameKey="/scolumns.xls"
-					/>
+					>
+						<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+							downloadName="/scolumns.xls"
+						/>
+					</button>
 				</buttons>
 			</tableView>
 		</components>

@@ -73,8 +73,11 @@
 	<buttons>
 		<button id="exportExcel"
 			class="com.top_logic.layout.table.export.ExcelExportHandler"
-			downloadNameKey="/sAllA.xls"
-		/>
+		>
+			<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+				downloadName="/sAllA.xls"
+			/>
+		</button>
 	</buttons>
 
 	<dialogs>

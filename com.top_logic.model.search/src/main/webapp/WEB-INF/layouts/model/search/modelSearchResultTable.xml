@@ -12,7 +12,10 @@
 	<buttons>
 		<button id="exportExcel"
 			class="com.top_logic.layout.table.export.ExcelExportHandler"
-			downloadNameKey="layouts.model.search.modelSearch.SearchResultTable.title"
-		/>
+		>
+			<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+				downloadName="layouts.model.search.modelSearch.SearchResultTable.title"
+			/>
+		</button>
 	</buttons>
 </component>

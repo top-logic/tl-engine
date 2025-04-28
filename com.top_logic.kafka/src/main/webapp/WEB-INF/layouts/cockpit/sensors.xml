@@ -64,8 +64,11 @@
 						<buttons>
 							<button id="exportExcel"
 								class="com.top_logic.layout.table.export.ExcelExportHandler"
-								downloadNameKey="layout.cockpit.sensors.export"
-							/>
+							>
+								<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+									downloadName="layout.cockpit.sensors.export"
+								/>
+							</button>
 						</buttons>
 					</component>
 				</components>

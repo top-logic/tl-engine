@@ -168,8 +168,11 @@
 			<button id="exportExcelGrid"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
 				exportName="${exportName}"
-				exportNameKey="${exportNameKey}"
-			/>
+			>
+				<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+					downloadName="${exportNameKey}"
+				/>
+			</button>
 		</buttons>
 		<createButton>${createButton}</createButton>
 		<dialogs>

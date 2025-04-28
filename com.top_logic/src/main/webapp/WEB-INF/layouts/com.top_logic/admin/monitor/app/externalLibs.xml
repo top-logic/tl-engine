@@ -43,7 +43,10 @@
 	<buttons>
 		<button id="exportExcel"
 			class="com.top_logic.layout.table.export.ExcelExportHandler"
-			downloadNameKey="external.library.exportFileName"
-		/>
+		>
+			<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+				downloadName="external.library.exportFileName"
+			/>
+		</button>
 	</buttons>
 </tableView>

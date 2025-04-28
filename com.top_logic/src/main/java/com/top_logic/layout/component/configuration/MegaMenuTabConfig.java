@@ -24,6 +24,7 @@ import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.SingleSelectionModel;
+import com.top_logic.layout.VetoException;
 import com.top_logic.layout.basic.AbstractCommandModel;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.Command;
@@ -45,9 +46,11 @@ import com.top_logic.layout.scripting.recorder.ref.ui.LayoutComponentResolver;
 import com.top_logic.layout.structure.PopupDialogControl;
 import com.top_logic.layout.structure.PopupDialogControl.HorizontalPopupPosition;
 import com.top_logic.layout.structure.PopupDialogControl.VerticalPopupPosition;
+import com.top_logic.layout.tabbar.DefaultTabSwitchVetoListener;
 import com.top_logic.layout.tabbar.TabBarModel;
 import com.top_logic.layout.tabbar.TabBarModel.TabBarListener;
 import com.top_logic.layout.tabbar.TabInfo.TabConfig;
+import com.top_logic.layout.tabbar.TabSwitchVetoListener;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.Card;
 import com.top_logic.mig.html.layout.ComponentName;
@@ -219,11 +222,37 @@ public class MegaMenuTabConfig
 				ScriptingRecorder.annotateAsDontRecord(this);
 			}
 
+			private LayoutComponent findParentTabComponent(LayoutComponent comp) {
+				LayoutComponent parent = comp.getParent();
+				if (parent instanceof TabComponent) {
+					return parent;
+				}
+				return findParentTabComponent(parent);
+			}
+
 			@Override
 			protected HandlerResult internalExecuteCommand(DisplayContext context) {
 				ButtonControl openSelectListButton = context.get(Command.EXECUTING_CONTROL);
 				String openSelectListButtonID = openSelectListButton.getID();
 
+				TabSwitchVetoListener vetoListener = DefaultTabSwitchVetoListener.INSTANCE;
+				TabComponent tabComponent = (TabComponent) findParentTabComponent(layoutComponent);
+				TabBarModel tabBar = tabComponent.getTabBarModel();
+				int index = tabComponent.getIndexOfChild(layoutComponent);
+				try {
+					vetoListener.checkVeto(tabBar, index);
+				} catch (VetoException ex) {
+					ex.setContinuationCommand(new Command() {
+						@Override
+						public HandlerResult executeCommand(DisplayContext callbackContext) {
+							internalExecuteCommand(context);
+							return HandlerResult.DEFAULT_RESULT;
+						}
+					});
+					ex.process(context.getWindowScope());
+					return HandlerResult.DEFAULT_RESULT;
+				}
+				
 				int nbrOfOptionElements = tabList.size();
 
 				boolean isGridNeeded = nbrOfOptionElements > 4;

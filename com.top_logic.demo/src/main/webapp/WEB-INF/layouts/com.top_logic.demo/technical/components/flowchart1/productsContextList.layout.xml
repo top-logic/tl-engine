@@ -14,6 +14,9 @@
 			supportsElement="element->$element.instanceOf(`test.flowchart:Product`)"
 		/>
 		<preview class="com.top_logic.model.search.tiles.ModelBasedTilePreview">
+			<label class="com.top_logic.model.search.tiles.DynamicTilePreviewText"
+				text="x -> $x"
+			/>
 			<content-preview class="com.top_logic.model.search.form.GalleryPreview"
 				gallery-attribute="image"
 				icon="css:fa-solid fa-shapes"

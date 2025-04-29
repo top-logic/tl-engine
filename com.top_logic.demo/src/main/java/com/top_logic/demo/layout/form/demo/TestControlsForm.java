@@ -1229,7 +1229,10 @@ public class TestControlsForm extends FormComponent {
 			}
 		});
 		controlsGroup.addMember(coloredSelectControl);
-		controlsGroup.addMember(FormFactory.newSelectField("selectControl", abcdOptions()));
+		SelectField field = FormFactory.newSelectField("selectControl", abcdOptions());
+		field.setEmptyLabel("Choose or leave it!");
+		field.setEmptyLabelImmutable("You didn't choose!");
+		controlsGroup.addMember(field);
 		addSelectControlWithContextMenu(controlsGroup);
 		controlsGroup.addMember(FormFactory.newSelectField("selectControlAsList", abcdOptions()));
 		controlsGroup.addMember(FormFactory.newSelectField("selectControlAsListMandatory",
@@ -3537,7 +3540,10 @@ public class TestControlsForm extends FormComponent {
 	}
 
 	private void addTestSelectionControl(FormGroup controlsGroup) {
-		controlsGroup.addMember(FormFactory.newSelectField("selectionControl", createOptionList()));
+		SelectField field = FormFactory.newSelectField("selectionControl", createOptionList());
+		field.setEmptyLabel("Choose or leave it!");
+		field.setEmptyLabelImmutable("You didn't choose!");
+		controlsGroup.addMember(field);
 	}
 
 	private void addDelayedDblClickTestSelectionControl(FormGroup controlsGroup) {

@@ -13,7 +13,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.grid.GridComponent;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandHandler;
@@ -21,7 +20,12 @@ import com.top_logic.tool.boundsec.ConfirmCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * A {@link CommandHandler} for reseting a {@link Person}'s confirmation of a {@link LoginMessage}.
+ * {@link CommandHandler} that resets the confirmation state of the selected message for all
+ * accounts.
+ * 
+ * <p>
+ * After a reset, each account must acknowledge the selected login message again after login.
+ * </p>
  *
  * @author <a href=mailto:Dmitry.Ivanizki@top-logic.com>Dmitry Ivanizki</a>
  */

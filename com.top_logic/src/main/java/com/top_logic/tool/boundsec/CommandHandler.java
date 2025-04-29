@@ -79,6 +79,7 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
+@Label("Command")
 public interface CommandHandler
 		extends ConfiguredInstance<CommandHandler.ConfigBase<? extends CommandHandler>>, BoundCommand,
 		ExecutabilityRuleSPI {

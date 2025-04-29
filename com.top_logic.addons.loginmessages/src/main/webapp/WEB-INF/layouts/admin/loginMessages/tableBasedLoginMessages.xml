@@ -85,6 +85,9 @@
 						</buttons>
 					</toolbar-group>
 				</toolbar-groups>
+				<dialogs>
+					<layout-reference resource="admin/loginMessageDialog.layout.xml"/>
+				</dialogs>
 			</component>
 		</components>
 	</layout>

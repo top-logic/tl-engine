@@ -159,7 +159,7 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 			}
 
 			node.setY(minY);
-			bottomY = minY + self().getHeight();
+			bottomY = minY + node.getHeight();
 		} else {
 			double childBottomY = minY;
 			for (Box child : nextLevel) {
@@ -189,7 +189,7 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 			}
 			node.setY(minY);
 
-			bottomY = Math.max(minY + self().getHeight(), childBottomY);
+			bottomY = Math.max(minY + node.getHeight(), childBottomY);
 		}
 
 		return bottomY;

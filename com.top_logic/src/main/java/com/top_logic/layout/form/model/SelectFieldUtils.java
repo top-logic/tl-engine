@@ -606,20 +606,33 @@ public class SelectFieldUtils {
 		Renderer<Object> nonNullRenderer = optionRenderer != null ? optionRenderer : getOptionRenderer(field);
 		String separator = SelectFieldUtils.getCollectionSeparator(field);
 		List<?> selection = getSelectionList(field);
-		int position = 0;
-		int last = selection.size() - 1;
-		for (Object value : selection) {
-			out.beginBeginTag(SPAN);
-			if (!StringServices.isEmpty(entriesCssClass)) {
-				out.writeAttribute(CLASS_ATTR, entriesCssClass);
+		if (selection.isEmpty()) {
+			String emptySelectionLabelImmutable = getEmptySelectionLabelImmutable(field);
+			if (!StringServices.isEmpty(emptySelectionLabelImmutable)) {
+				out.beginBeginTag(SPAN);
+				if (!StringServices.isEmpty(entriesCssClass)) {
+					out.writeAttribute(CLASS_ATTR, entriesCssClass);
+				}
+				out.endBeginTag();
+				out.writeText(emptySelectionLabelImmutable);
+				out.endTag(SPAN);
 			}
-			out.endBeginTag();
-			nonNullRenderer.write(context, out, value);
-			if (position < last) {
-				out.writeText(separator);
+		} else {
+			int position = 0;
+			int last = selection.size() - 1;
+			for (Object value : selection) {
+				out.beginBeginTag(SPAN);
+				if (!StringServices.isEmpty(entriesCssClass)) {
+					out.writeAttribute(CLASS_ATTR, entriesCssClass);
+				}
+				out.endBeginTag();
+				nonNullRenderer.write(context, out, value);
+				if (position < last) {
+					out.writeText(separator);
+				}
+				position += 1;
+				out.endTag(SPAN);
 			}
-			position += 1;
-			out.endTag(SPAN);
 		}
 	}
 

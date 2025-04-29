@@ -13,6 +13,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.Resources;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link DownloadNameProvider} that creates a download name derived from the component and
@@ -34,7 +35,9 @@ public class ComponentDownloadName implements DownloadNameProvider {
 	public ResKey createDownloadName(LayoutComponent component, Object model) {
 		ResKey titleKey = componentTitle(component);
 		ResKey app = com.top_logic.layout.I18NConstants.APPLICATION_TITLE;
-		String today = new SimpleDateFormat("yyyy-dd-MM").format(new Date());
+		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", TLContext.getLocale());
+		format.setTimeZone(TLContext.getTimeZone());
+		String today = format.format(new Date());
 		if (model != null) {
 			String modelLabel = MetaLabelProvider.INSTANCE.getLabel(model);
 

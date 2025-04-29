@@ -58,14 +58,6 @@ public class MemoryObserverTableComponent extends TableComponent {
         super(context, aAtts);
     }
 
-    @Override
-	public boolean validateModel(DisplayContext context) {
-		if (getModel() == null) {
-			setModel(MemoryObserverThread.getInstance());
-		}
-		return super.validateModel(context);
-    }
-
 	public static class RunGarbargeCollectionCommand extends InvalidateCommand {
         
         public static final String COMMAND_ID = "runGarbageCollection";

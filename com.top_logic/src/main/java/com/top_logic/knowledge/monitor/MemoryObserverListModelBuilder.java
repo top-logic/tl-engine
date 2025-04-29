@@ -43,7 +43,7 @@ public class MemoryObserverListModelBuilder implements ListModelBuilder {
 
     @Override
 	public boolean supportsModel(Object aModel, LayoutComponent aComponent) {
-		return aModel instanceof MemoryObserverThread || aModel == null;
+		return aModel == null;
     }
 
 	/**

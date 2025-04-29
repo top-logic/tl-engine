@@ -11,6 +11,9 @@
 			<factory value="com.top_logic.addons.loginmessages.model.LoginMessagesWrapperFactory"/>
 		</annotations>
 		<class name="LoginMessage">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
 			<annotations>
 				<table name="LoginMessage"/>
 				<implementation-binding class-name="com.top_logic.addons.loginmessages.model.LoginMessageImpl"/>
@@ -62,7 +65,7 @@
 				>
 					<annotations>
 						<delete-protected/>
-						<value-range min="0"/>
+						<value-range min="0.0"/>
 					</annotations>
 				</property>
 				<property name="confirmExpirationDate"
@@ -79,8 +82,8 @@
 					<annotations>
 						<delete-protected/>
 						<value-range
-							max="1200"
-							min="100"
+							max="1200.0"
+							min="100.0"
 						/>
 					</annotations>
 				</property>
@@ -90,8 +93,8 @@
 					<annotations>
 						<delete-protected/>
 						<value-range
-							max="1000"
-							min="100"
+							max="1000.0"
+							min="100.0"
 						/>
 					</annotations>
 				</property>

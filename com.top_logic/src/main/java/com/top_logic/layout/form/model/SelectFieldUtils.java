@@ -61,6 +61,22 @@ public class SelectFieldUtils {
 	 */
 	private static final Property<List<?>> OPTIONS_KEY = TypedAnnotatable.propertyList("options");
 
+	/**
+	 * Key for storing an explicit empty label.
+	 * 
+	 * @see SelectField#setEmptyLabel(String)
+	 */
+	private static final Property<String> EMPTY_SELECTION_LABEL_PROPERTY =
+		TypedAnnotatable.property(String.class, "emptyLabel");
+
+	/**
+	 * Key for storing the empty label set for immutable mode.
+	 * 
+	 * @see SelectField#setEmptyLabelImmutable(String)
+	 */
+	private static final Property<String> EMPTY_SELECTION_LABEL_IMMUTABLE_PROPERTY =
+		TypedAnnotatable.property(String.class, "emptyLabelImmutable");
+
 	static {
 		Config selectFieldConfiguration = getSelectFieldConfiguration();
 		String configuredSeparator = selectFieldConfiguration.getMultiSelectionSeparator();
@@ -247,7 +263,7 @@ public class SelectFieldUtils {
 		if (self.isImmutable()) {
 			return getEmptySelectionLabelImmutable(self);
 		} else {
-			String noOptionLabel = internalGetEmptyLabel(self);
+			String noOptionLabel = self.get(EMPTY_SELECTION_LABEL_PROPERTY);
 			if (noOptionLabel != null) {
 				return noOptionLabel;
 			}
@@ -270,7 +286,7 @@ public class SelectFieldUtils {
 	 * @see #getEmptySelectionLabel(FormField)
 	 */
 	public static void setEmptySelectionLabel(FormField field, String aLabel) {
-		field.set(SelectField.EMPTY_LABEL_PROPERTY, aLabel);
+		field.set(EMPTY_SELECTION_LABEL_PROPERTY, aLabel);
 	}
 
 	/**
@@ -302,7 +318,7 @@ public class SelectFieldUtils {
 	 * immutable state.
 	 */
 	public static String getEmptySelectionLabelImmutable(FormField self) {
-		String noOptionLabelImmutable = internalGetEmptyLabelImmutable(self);
+		String noOptionLabelImmutable = self.get(EMPTY_SELECTION_LABEL_IMMUTABLE_PROPERTY);
 		if (noOptionLabelImmutable != null) {
 			return noOptionLabelImmutable;
 		}
@@ -315,15 +331,7 @@ public class SelectFieldUtils {
 	 * @see #getEmptySelectionLabel(FormField)
 	 */
 	public static void setEmptySelectionLabelImmutable(FormField selectField, String aLabel) {
-		selectField.set(SelectField.EMPTY_LABEL_IMMUTABLE_PROPERTY, aLabel);
-	}
-
-	private static String internalGetEmptyLabelImmutable(FormField self) {
-		return self.get(SelectField.EMPTY_LABEL_IMMUTABLE_PROPERTY);
-	}
-
-	private static String internalGetEmptyLabel(FormField self) {
-		return self.get(SelectField.EMPTY_LABEL_PROPERTY);
+		selectField.set(EMPTY_SELECTION_LABEL_IMMUTABLE_PROPERTY, aLabel);
 	}
 
 	/**

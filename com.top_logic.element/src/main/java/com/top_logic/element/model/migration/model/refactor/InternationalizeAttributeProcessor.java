@@ -26,6 +26,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.db.sql.Batch;
 import com.top_logic.basic.db.sql.CompiledStatement;
+import com.top_logic.basic.db.sql.SQLSelect;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
@@ -148,6 +149,10 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 				DBHelper sqlDialect = connection.getSQLDialect();
 				if (objColumn == null) {
 					flex = true;
+					SQLSelect typeSelect = selectDistinct(
+						columns(columnDef(BasicTypes.IDENTIFIER_DB_NAME)),
+						table(table.getDBMapping().getDBName()),
+						inSet(column(tTypeColumn), implIds, DBType.ID));
 					select = query(
 						select(
 							columns(
@@ -160,6 +165,7 @@ public class InternationalizeAttributeProcessor extends AbstractConfiguredInstan
 								columnDef(AbstractFlexDataManager.CLOB_DATA_DBNAME)),
 							table(AbstractFlexDataManager.FLEX_DATA_DB_NAME),
 							and(
+								inSetSelect(column(AbstractFlexDataManager.IDENTIFIER_DBNAME), typeSelect),
 								eqSQL(column(AbstractFlexDataManager.TYPE_DBNAME), literal(DBType.STRING, objType)),
 								eqSQL(column(AbstractFlexDataManager.ATTRIBUTE_DBNAME),
 									literal(DBType.STRING, column))),

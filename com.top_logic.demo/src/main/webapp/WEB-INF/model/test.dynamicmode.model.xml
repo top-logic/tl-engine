@@ -38,6 +38,11 @@
 							type="tl.core:Double"
 						/>
 						<field
+							attribute="totalPositions"
+							fullQualifiedName="test.dynamicmode:Acquisition#totalPositions"
+							type="tl.core:Double"
+						/>
+						<field
 							attribute="positions"
 							fullQualifiedName="test.dynamicmode:Acquisition#positions"
 							type="test.dynamicmode:Position"
@@ -95,6 +100,24 @@
 				<property name="critical"
 					type="tl.core:Boolean"
 				/>
+				<property name="totalPositions"
+					type="tl.core:Double"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[x -> $x.get(`test.dynamicmode:Acquisition#positions`)
+    .map(p -> $p.get(`test.dynamicmode:Position#value`))
+    .sum()]]></expr>
+							</query>
+						</storage-algorithm>
+						<dynamic-visibility>
+							<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression">
+								<function>x -&gt; $x.get(`test.dynamicmode:Acquisition#positions`).isEmpty() ? "hidden" : "read-only"</function>
+							</mode-selector>
+						</dynamic-visibility>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 		<class name="Position">

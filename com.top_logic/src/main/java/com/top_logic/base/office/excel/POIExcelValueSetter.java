@@ -57,7 +57,7 @@ public class POIExcelValueSetter implements POITypeSupporter {
 	private Drawing patriarch;
 
 	/** The type provider for setting values. */
-	private POITypeProvider typeProvider;
+	private final POITypeProvider typeProvider = POITypeProvider.getInstance();
 
 	/** Drawing manager for images in the excel file. */
 	private POIDrawingManager drawingMgr;
@@ -275,20 +275,7 @@ public class POIExcelValueSetter implements POITypeSupporter {
 		return this.resolveCell(aRef.getSheet(), aRef.getRow(), aRef.getColumn());
 	}
 
-	/** 
-	 * Create the type provider to be used by this setter.
-	 * 
-	 * @return    The requested type provider, never <code>null</code>.
-	 */
-	protected POITypeProvider createTypeProvider() {
-		return new POITypeProvider();
-	}
-
 	private POITypeProvider getTypeProvider() {
-		if (this.typeProvider == null) {
-			this.typeProvider = this.createTypeProvider();
-		}
-
 		return this.typeProvider;
 	}
 

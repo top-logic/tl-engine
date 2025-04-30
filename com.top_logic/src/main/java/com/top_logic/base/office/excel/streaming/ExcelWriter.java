@@ -52,13 +52,6 @@ public class ExcelWriter extends AbstractCellStreamWriter implements POITypeSupp
 	private POIDrawingManager _drawingMgr;
 
 	/**
-	 * Creates a new {@link ExcelWriter} using "xlsx" format.
-	 */
-	public ExcelWriter() {
-		this(true);
-	}
-
-	/**
 	 * Creates a new {@link ExcelWriter}.
 	 * 
 	 * @param useXFormat
@@ -82,14 +75,6 @@ public class ExcelWriter extends AbstractCellStreamWriter implements POITypeSupp
 		_dateStyle = POIExcelValueSetter.createDateStyle(workbook);
 		_templates = POIExcelValueSetter.parseTemplate(workbook);
 		_handlerProvider = new POITypeProvider();
-	}
-
-	/**
-	 * Mapping holds the column widths for all sheets, i.e. a mapping from the name of a sheet to
-	 * the mapping of the column numbers to the widths of that column.
-	 */
-	protected Map<String, Map<Integer, Integer>> getSheetMap() {
-		return _sheetMap;
 	}
 
 	@Override
@@ -144,39 +129,6 @@ public class ExcelWriter extends AbstractCellStreamWriter implements POITypeSupp
 		} else {
 			addValue(_workbook, currentTable(), currentRow(), currentColumn(), cellvalue, _sheetMap);
 		}
-	}
-
-	/**
-	 * Resolves the {@link Cell} for the given row and column.
-	 */
-	public Cell resolveCell(int row, int col) {
-		return resolveCell(_workbook, currentTable(), row, col);
-	}
-
-	/**
-	 * Writes an {@link ExcelValue} to the {@link CellPosition} described by table, row and col.
-	 */
-	public void writeAt(Object cellvalue, String table, int row, int col) {
-		String sheet = table == null ? currentTable() : table;
-		if (cellvalue instanceof ExcelValue) {
-			CellPosition position = new CellPosition(sheet, row, col);
-			_valueSetter.setValue(position, (ExcelValue) cellvalue);
-		} else {
-			addValue(_workbook, sheet, row, col, cellvalue, _sheetMap);
-		}
-	}
-
-	/**
-	 * Writes the given value and applies the given {@link CellStyle}.
-	 */
-	public void write(Object cellvalue, CellStyle style) throws IOException {
-		internalWrite(cellvalue);
-
-		if (style != null) {
-			Cell cell = resolveCell(currentRow(), currentColumn());
-			cell.setCellStyle(style);
-		}
-		newColumn();
 	}
 
 	@Override

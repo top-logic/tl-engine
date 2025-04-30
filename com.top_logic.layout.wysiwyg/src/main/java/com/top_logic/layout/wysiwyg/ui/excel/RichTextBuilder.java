@@ -123,6 +123,12 @@ public class RichTextBuilder {
 					nl();
 					break;
 				}
+				case "h1":
+				case "h2":
+				case "h3":
+				case "h4":
+				case "h5":
+				case "h6":
 				case "p": {
 					cr();
 					if (_text.length() > 0) {
@@ -130,12 +136,6 @@ public class RichTextBuilder {
 					}
 					break;
 				}
-				case "h1":
-				case "h2":
-				case "h3":
-				case "h4":
-				case "h5":
-				case "h6":
 				case "div":
 				case "li": {
 					if (_lineWidth > 0) {

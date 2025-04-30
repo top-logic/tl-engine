@@ -571,7 +571,7 @@ public class ExcelValue extends StyledValue {
      * @return <code>true</code>, if the given excel value use the same style like an
      *         other excel value, <code>false</code> otherwise.
      */
-    protected boolean hasReferenceStyle() {
+	public boolean hasReferenceStyle() {
         return getCellStyleFrom() != null;
     }
 

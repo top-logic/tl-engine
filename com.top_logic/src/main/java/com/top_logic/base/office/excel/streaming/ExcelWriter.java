@@ -31,11 +31,11 @@ import com.top_logic.basic.Settings;
  */
 public class ExcelWriter extends AbstractCellStreamWriter {
 
-	private final Workbook workbook;
+	private final Workbook _workbook;
 
-	private final Map<String, Map<Integer, Integer>> sheetMap;
+	private final Map<String, Map<Integer, Integer>> _sheetMap;
 
-	private final POIExportHelper exportHelper;
+	private final POIExportHelper _exportHelper;
 
 	private final POIExcelValueSetter _valueSetter;
 
@@ -63,10 +63,10 @@ public class ExcelWriter extends AbstractCellStreamWriter {
 	 *        The workbook to use by this {@link ExcelWriter}.
 	 */
 	public ExcelWriter(Workbook workbook) {
-		this.workbook = Objects.requireNonNull(workbook);
-		this.sheetMap = new HashMap<>();
-		this.exportHelper = new POIExportHelper(this.workbook);
-		_valueSetter = new POIExcelValueSetter(workbook, sheetMap);
+		_workbook = Objects.requireNonNull(workbook);
+		_sheetMap = new HashMap<>();
+		_exportHelper = new POIExportHelper(_workbook);
+		_valueSetter = new POIExcelValueSetter(workbook, _sheetMap);
 	}
 
 	/**
@@ -74,33 +74,33 @@ public class ExcelWriter extends AbstractCellStreamWriter {
 	 * the mapping of the column numbers to the widths of that column.
 	 */
 	protected Map<String, Map<Integer, Integer>> getSheetMap() {
-		return sheetMap;
+		return _sheetMap;
 	}
 
 	/**
 	 * {@link POIExportHelper} used by this {@link ExcelWriter}.
 	 */
 	protected POIExportHelper getExportHelper() {
-		return exportHelper;
+		return _exportHelper;
 	}
 
 	@Override
 	public void setFreezePane(int col, int row) {
-		Sheet sheet = workbook.getSheet(currentTable);
+		Sheet sheet = _workbook.getSheet(currentTable);
 		if (sheet == null) {
-			sheet = workbook.createSheet(currentTable);
+			sheet = _workbook.createSheet(currentTable);
 		}
 		sheet.createFreezePane(col, row);
 	}
 
 	@Override
 	protected File internalClose() throws IOException {
-		POIUtil.setAutoFitWidths(workbook, sheetMap);
+		POIUtil.setAutoFitWidths(_workbook, _sheetMap);
 
-		String fileSuffix = POIUtil.getFileSuffix(workbook);
+		String fileSuffix = POIUtil.getFileSuffix(_workbook);
 		File   theResult  = File.createTempFile("ExcelWriter", fileSuffix, Settings.getInstance().getTempDir());
 
-		POIUtil.doWriteWorkbook(theResult, workbook);
+		POIUtil.doWriteWorkbook(theResult, _workbook);
 
 		return theResult;
 	}
@@ -111,7 +111,7 @@ public class ExcelWriter extends AbstractCellStreamWriter {
 	 * @return The inner workbook, never <code>null</code>.
 	 */
 	public Workbook getWorkbook() {
-		return workbook;
+		return _workbook;
 	}
 
 	@Override
@@ -134,7 +134,7 @@ public class ExcelWriter extends AbstractCellStreamWriter {
 				currentColumnIndex += (mergeRegion.getToCol() - mergeRegion.getFromCol());
 			}
 		} else {
-			exportHelper.addValue(workbook, currentTable, currentRowIndex, currentColumnIndex, cellvalue, sheetMap);
+			_exportHelper.addValue(_workbook, currentTable, currentRowIndex, currentColumnIndex, cellvalue, _sheetMap);
 		}
 	}
 
@@ -151,7 +151,7 @@ public class ExcelWriter extends AbstractCellStreamWriter {
 	 * @see POIExportHelper#resolveCell(Workbook, String, int, int)
 	 */
 	public Cell resolveCell(int row, int col) {
-		return exportHelper.resolveCell(workbook, currentTable, row, col);
+		return _exportHelper.resolveCell(_workbook, currentTable, row, col);
 	}
 
 	/**
@@ -163,7 +163,7 @@ public class ExcelWriter extends AbstractCellStreamWriter {
 			CellPosition position = new CellPosition(sheet, row, col);
 			_valueSetter.setValue(position, (ExcelValue) cellvalue);
 		} else {
-			exportHelper.addValue(workbook, sheet, row, col, cellvalue, sheetMap);
+			_exportHelper.addValue(_workbook, sheet, row, col, cellvalue, _sheetMap);
 		}
 	}
 

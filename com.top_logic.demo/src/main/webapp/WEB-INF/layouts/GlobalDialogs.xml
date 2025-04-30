@@ -48,5 +48,4 @@
 		/>
 	</securityLayout>
 	<layout-reference resource="reporting/flex/chart/chartDetailsDialog.layout.xml"/>
-	<layout-reference resource="admin/loginMessageDialog.layout.xml"/>
 </template>

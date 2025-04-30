@@ -17,9 +17,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
-import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFFormulaEvaluator;
-import org.apache.poi.hssf.usermodel.HSSFRichTextString;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
@@ -38,13 +36,10 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.util.LocaleUtil;
-import org.apache.poi.xssf.streaming.SXSSFCell;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
-import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFFormulaEvaluator;
-import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.top_logic.base.office.excel.ExcelAccess;
@@ -1040,17 +1035,7 @@ public class POIUtil {
 		if (text != null) {
 			text = shortenTextSize(workbook, text);
 		}
-		if (workbook instanceof HSSFWorkbook) {
-			return new HSSFRichTextString(text);
-		} else if (workbook instanceof XSSFWorkbook) {
-			return new XSSFRichTextString(text);
-		} else if (workbook instanceof SXSSFWorkbook) {
-			return new XSSFRichTextString(text);
-		} else {
-			throw new UnsupportedOperationException("Can not produce rich text string for workbook of class '"
-				+ workbook.getClass().getCanonicalName() + "': " + workbook);
-		}
-	
+		return workbook.getCreationHelper().createRichTextString(text);
 	}
 
 	/**
@@ -1088,20 +1073,7 @@ public class POIUtil {
 		if (cell == null) {
 			throw new IllegalArgumentException("Can not create rich text string for 'null' cell.");
 		}
-		if (text != null) {
-			text = shortenTextSize(cell.getSheet().getWorkbook(), text);
-		}
-
-		if (cell instanceof HSSFCell) {
-			return new HSSFRichTextString(text);
-		} else if (cell instanceof XSSFCell) {
-			return new XSSFRichTextString(text);
-		} else if (cell instanceof SXSSFCell) {
-			return new XSSFRichTextString(text);
-		} else {
-			throw new UnsupportedOperationException("Can not produce rich text string for cell of class '"
-				+ cell.getClass().getCanonicalName() + "': " + cell);
-		}
+		return newRichTextString(cell.getSheet().getWorkbook(), text);
 	}
 
 	/**

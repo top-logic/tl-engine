@@ -6,12 +6,19 @@
 package com.top_logic.base.office.excel.handler;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.top_logic.base.office.PoiTypeHandler;
 import com.top_logic.base.office.excel.CellSizeFormular;
 import com.top_logic.base.office.excel.ExcelLocalLink;
 import com.top_logic.base.office.excel.Formula;
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.module.ManagedClass;
+import com.top_logic.basic.module.TypedRuntimeModule;
 
 /**
  * Manage {@link PoiTypeHandler} for different kinds of objects.
@@ -20,7 +27,20 @@ import com.top_logic.base.office.excel.Formula;
  * 
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
-public class POITypeProvider {
+public class POITypeProvider extends ManagedClass {
+
+	/**
+	 * Configuration options for {@link POITypeProvider}.
+	 */
+	public interface Config<I extends POITypeProvider> extends ServiceConfiguration<I> {
+
+		/**
+		 * Custom {@link PoiTypeHandler}s for exporting values of application-defined types.
+		 */
+		@Name("type-handlers")
+		List<PolymorphicConfiguration<? extends PoiTypeHandler>> getTypeHandlers();
+
+	}
 
 	/** Cache for the helper when setting values to the POI cell. */
 	private final Map<Class<?>, PoiTypeHandler> typeHandlerMap;
@@ -28,10 +48,18 @@ public class POITypeProvider {
 	/** Default {@link PoiTypeHandler}. */
 	private final DefaultPOIType _defaultType;
 
-	/** 
-	 * Creates a {@link POITypeProvider}.
+	/**
+	 * Creates a {@link POITypeProvider} from configuration.
+	 * 
+	 * @param context
+	 *        The context for instantiating sub configurations.
+	 * @param config
+	 *        The configuration.
 	 */
-	public POITypeProvider() {
+	@CalledByReflection
+	public POITypeProvider(InstantiationContext context, Config<?> config) {
+		super(context, config);
+
         this.typeHandlerMap = new HashMap<>();
 		_defaultType = this.createDefaultType();
 
@@ -51,6 +79,10 @@ public class POITypeProvider {
         this.registerTypeHandler(new NumberPOIType());
         this.registerTypeHandler(new RichTextStringPOIType());
         this.registerTypeHandler(new StringPOIType());
+
+		for (PolymorphicConfiguration<? extends PoiTypeHandler> handlerConf : config.getTypeHandlers()) {
+			registerTypeHandler(context.getInstance(handlerConf));
+		}
 
 		this.registerTypeHandler(_defaultType);
 	}
@@ -135,5 +167,32 @@ public class POITypeProvider {
 
 		return null;
 	}
+
+	/**
+	 * The singleton {@link POITypeProvider}.
+	 */
+	public static POITypeProvider getInstance() {
+		return Module.INSTANCE.getImplementationInstance();
+	}
+
+	/**
+	 * Module for {@link POITypeProvider}.
+	 */
+	public static final class Module extends TypedRuntimeModule<POITypeProvider> {
+
+		/** Singleton {@link POITypeProvider.Module} instance. */
+		public static final Module INSTANCE = new Module();
+
+		private Module() {
+			// singleton instance
+		}
+
+		@Override
+		public Class<POITypeProvider> getImplementation() {
+			return POITypeProvider.class;
+		}
+
+	}
+
 }
 

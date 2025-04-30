@@ -74,7 +74,7 @@ public class ExcelWriter extends AbstractCellStreamWriter implements POITypeSupp
 
 		_dateStyle = POIExcelValueSetter.createDateStyle(workbook);
 		_templates = POIExcelValueSetter.parseTemplate(workbook);
-		_handlerProvider = new POITypeProvider();
+		_handlerProvider = POITypeProvider.getInstance();
 	}
 
 	@Override
@@ -119,10 +119,10 @@ public class ExcelWriter extends AbstractCellStreamWriter implements POITypeSupp
 
 	@Override
 	protected void internalWrite(Object cellvalue) throws IOException {
-		if (cellvalue instanceof ExcelValue) {
+		if (cellvalue instanceof ExcelValue excelValue) {
 			CellPosition position = new CellPosition(currentTable(), currentRow(), currentColumn());
-			_valueSetter.setValue(position, (ExcelValue) cellvalue);
-			MergeRegion mergeRegion = ((ExcelValue) cellvalue).getMergeRegion();
+			_valueSetter.setValue(position, excelValue);
+			MergeRegion mergeRegion = (excelValue).getMergeRegion();
 			if (mergeRegion != null) {
 				incColumn((mergeRegion.getToCol() - mergeRegion.getFromCol()));
 			}

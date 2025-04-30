@@ -86,9 +86,9 @@ public class ExcelWriter extends AbstractCellStreamWriter {
 
 	@Override
 	public void setFreezePane(int col, int row) {
-		Sheet sheet = _workbook.getSheet(currentTable);
+		Sheet sheet = _workbook.getSheet(currentTable());
 		if (sheet == null) {
-			sheet = _workbook.createSheet(currentTable);
+			sheet = _workbook.createSheet(currentTable());
 		}
 		sheet.createFreezePane(col, row);
 	}
@@ -127,22 +127,15 @@ public class ExcelWriter extends AbstractCellStreamWriter {
 	@Override
 	protected void internalWrite(Object cellvalue) throws IOException {
 		if (cellvalue instanceof ExcelValue) {
-			CellPosition position = new CellPosition(currentTable, currentRowIndex, currentColumnIndex);
+			CellPosition position = new CellPosition(currentTable(), currentRow(), currentColumn());
 			_valueSetter.setValue(position, (ExcelValue) cellvalue);
 			MergeRegion mergeRegion = ((ExcelValue) cellvalue).getMergeRegion();
 			if (mergeRegion != null) {
-				currentColumnIndex += (mergeRegion.getToCol() - mergeRegion.getFromCol());
+				incColumn((mergeRegion.getToCol() - mergeRegion.getFromCol()));
 			}
 		} else {
-			_exportHelper.addValue(_workbook, currentTable, currentRowIndex, currentColumnIndex, cellvalue, _sheetMap);
+			_exportHelper.addValue(_workbook, currentTable(), currentRow(), currentColumn(), cellvalue, _sheetMap);
 		}
-	}
-
-	/**
-	 * Increments the column index.
-	 */
-	public void newColumn() {
-		currentColumnIndex++;
 	}
 
 	/**
@@ -151,14 +144,14 @@ public class ExcelWriter extends AbstractCellStreamWriter {
 	 * @see POIExportHelper#resolveCell(Workbook, String, int, int)
 	 */
 	public Cell resolveCell(int row, int col) {
-		return _exportHelper.resolveCell(_workbook, currentTable, row, col);
+		return _exportHelper.resolveCell(_workbook, currentTable(), row, col);
 	}
 
 	/**
 	 * Writes an {@link ExcelValue} to the {@link CellPosition} described by table, row and col.
 	 */
 	public void writeAt(Object cellvalue, String table, int row, int col) {
-		String sheet = table == null ? currentTable : table;
+		String sheet = table == null ? currentTable() : table;
 		if (cellvalue instanceof ExcelValue) {
 			CellPosition position = new CellPosition(sheet, row, col);
 			_valueSetter.setValue(position, (ExcelValue) cellvalue);
@@ -174,7 +167,7 @@ public class ExcelWriter extends AbstractCellStreamWriter {
 		internalWrite(cellvalue);
 
 		if (style != null) {
-			Cell cell = resolveCell(currentRowIndex, currentColumnIndex);
+			Cell cell = resolveCell(currentRow(), currentColumn());
 			cell.setCellStyle(style);
 		}
 		newColumn();

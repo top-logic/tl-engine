@@ -50,6 +50,7 @@ import com.top_logic.base.office.excel.POIColumnWidthDescription;
 import com.top_logic.base.office.excel.POIExcelAccess;
 import com.top_logic.base.office.excel.POIExcelUtil;
 import com.top_logic.base.office.excel.POIRowGroupDescription;
+import com.top_logic.base.office.excel.handler.POITypeProvider;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.col.MapBuilder;
 import com.top_logic.basic.col.MapUtil;
@@ -634,16 +635,9 @@ public class TestPOIExcel extends AbstractPOIExcelTest {
 		return new File("./test/temp/" + aName + this.dateFormat.format(new Date()) + POIUtil.XLSX_SUFFIX);
     }
 
-	@SuppressWarnings({ "unused" })
     public static Test suite() {
-		Test test;
-		if (true) {
-			test = new TestSuite(TestPOIExcel.class);
-		} else {
-			test = TestSuite.createTest(TestPOIExcel.class, "testColumnAutoFilter");
-		}
-		test = ServiceTestSetup.createSetup(test, MimeTypes.Module.INSTANCE, DataAccessService.Module.INSTANCE);
-		return TLTestSetup.createTLTestSetup(test);
+		return TLTestSetup.createTLTestSetup(ServiceTestSetup.createSetup(new TestSuite(TestPOIExcel.class),
+			MimeTypes.Module.INSTANCE, DataAccessService.Module.INSTANCE, POITypeProvider.Module.INSTANCE));
     }
 
 }

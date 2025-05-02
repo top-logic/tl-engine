@@ -43,6 +43,7 @@
 				<buttons>
 					<button id="exportExcelGrid"
 						class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+						streaming="false"
 					>
 						<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
 							downloadName="/sTypes_Demo.xlsx"

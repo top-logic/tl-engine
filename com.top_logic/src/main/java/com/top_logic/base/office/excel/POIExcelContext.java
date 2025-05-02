@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellPropertyType;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DateUtil;
@@ -132,7 +133,7 @@ public class POIExcelContext extends ExcelContext {
 				final Workbook workbook = cell.getSheet().getWorkbook();
 				final short formatIndex = workbook.createDataFormat().getFormat(getDateFormatString());
 	            
-				CellUtil.setCellStyleProperty(cell, CellUtil.DATA_FORMAT, formatIndex);
+				CellUtil.setCellStyleProperty(cell, CellPropertyType.DATA_FORMAT, formatIndex);
 	        }
 	        
 	        // apply the cell value

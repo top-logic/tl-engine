@@ -26,6 +26,7 @@ import com.top_logic.basic.config.annotation.DefaultValueProviderShared;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.config.order.DisplayInherited;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
@@ -89,6 +90,17 @@ public class StreamingExcelExportHandler extends AbstractTableExportHandler {
 		@ComplexDefault(ExportSheetKeyDefault.class)
 		@InstanceFormat
 		ResKey getExportSheetKey();
+
+		/**
+		 * Whether to use streaming export.
+		 * 
+		 * <p>
+		 * Streaming export uses less memory, but does not support rich text formatting within
+		 * cells.
+		 * </p>
+		 */
+		@BooleanDefault(true)
+		boolean getStreaming();
 
 		/** {@link DefaultValueProvider} for {@link Config#getExportSheetKey()}. */
 		class ExportSheetKeyDefault extends DefaultValueProviderShared {
@@ -188,7 +200,11 @@ public class StreamingExcelExportHandler extends AbstractTableExportHandler {
 				if (xFormat && !downloadName.endsWith(POIUtil.XLSX_SUFFIX)) {
 					downloadName += POIUtil.XLSX_SUFFIX;
 				}
-				ExcelWriter writer = new ExcelWriter(xFormat);
+				ExcelWriter writer = xFormat
+					? (((Config) getConfig()).getStreaming()
+						? ExcelWriter.createStreamingWriter()
+						: ExcelWriter.createWriter())
+					: ExcelWriter.createLegacyWriter();
 				writer.newTable(Resources.getInstance().getString(_exportSheetKey));
 
 				exportHeaders(writer);

@@ -18,6 +18,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import com.top_logic.base.office.POIUtil;
 import com.top_logic.base.office.PoiTypeHandler;
@@ -37,6 +38,31 @@ import com.top_logic.basic.Settings;
  */
 public class ExcelWriter extends AbstractCellStreamWriter implements POITypeSupporter {
 
+	/**
+	 * Creates a standard {@link ExcelWriter} for XLSX format.
+	 */
+	public static ExcelWriter createWriter() {
+		return new ExcelWriter(new XSSFWorkbook());
+	}
+
+	/**
+	 * Creates a streaming {@link ExcelWriter}.
+	 * 
+	 * <p>
+	 * Note: A streaming writer does not support exporting structured text with formatting.
+	 * </p>
+	 */
+	public static ExcelWriter createStreamingWriter() {
+		return new ExcelWriter(new SXSSFWorkbook(10));
+	}
+
+	/**
+	 * Creates a {@link ExcelWriter} that uses the legacy XLS format.
+	 */
+	public static ExcelWriter createLegacyWriter() {
+		return new ExcelWriter(new HSSFWorkbook());
+	}
+
 	private final Workbook _workbook;
 
 	private final Map<String, Map<Integer, Integer>> _sheetMap;
@@ -50,16 +76,6 @@ public class ExcelWriter extends AbstractCellStreamWriter implements POITypeSupp
 	private final POITypeProvider _handlerProvider;
 
 	private POIDrawingManager _drawingMgr;
-
-	/**
-	 * Creates a new {@link ExcelWriter}.
-	 * 
-	 * @param useXFormat
-	 *        Flag indicating whether to use "xlsx" (true) or "xls" (false) format.
-	 */
-	public ExcelWriter(boolean useXFormat) {
-		this(useXFormat ? new SXSSFWorkbook(10) : new HSSFWorkbook());
-	}
 
 	/**
 	 * Creates a new {@link ExcelWriter}.

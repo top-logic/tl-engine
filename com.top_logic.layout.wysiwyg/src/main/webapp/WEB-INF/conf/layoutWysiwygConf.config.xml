@@ -370,6 +370,14 @@
 			</instance>
 		</config>
 
+		<config service-class="com.top_logic.base.office.excel.handler.POITypeProvider">
+			<instance>
+				<type-handlers>
+					<type-handler class="com.top_logic.layout.wysiwyg.ui.excel.StructuredTextExcelHandler"/>
+				</type-handlers>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.model.search.expr.config.SearchBuilder">
 			<instance>
 				<methods>

@@ -25,6 +25,11 @@ import org.jsoup.nodes.TextNode;
 public class RichTextBuilder {
 
 	/**
+	 * The maximum width in characters of the produced output.
+	 */
+	private static final int MAX_WIDTH = 80;
+
+	/**
 	 * Buffer of plain text that is extracted from the HTMl.
 	 */
 	private StringBuilder _text = new StringBuilder();
@@ -33,11 +38,6 @@ public class RichTextBuilder {
 	 * The context workbook.
 	 */
 	private final Workbook _workbook;
-
-	/**
-	 * The maximum width in characters of the produced output.
-	 */
-	private static final int MAX_WIDTH = 80;
 
 	/**
 	 * The number of characters in the currently written line.
@@ -80,6 +80,12 @@ public class RichTextBuilder {
 	 * Appends the given HTML node to this builder.
 	 */
 	public RichTextBuilder append(Node node) {
+		appendNode(node);
+		trimTrailing();
+		return this;
+	}
+
+	private void appendNode(Node node) {
 		if (node instanceof TextNode text) {
 			String content = text.text();
 			appendText(content);
@@ -94,9 +100,9 @@ public class RichTextBuilder {
 					case "u" -> makeFont(_font.getBold(), _font.getColor(), _font.getFontHeightInPoints(),
 						_font.getFontName(),
 						_font.getItalic(), _font.getStrikeout(), _font.getTypeOffset(), Font.U_SINGLE);
-					case "s" -> makeFont(_font.getBold(), _font.getColor(), _font.getFontHeightInPoints(),
-						_font.getFontName(),
-						_font.getItalic(), true, _font.getTypeOffset(), _font.getUnderline());
+					case "strike", "s", "del" -> makeFont(_font.getBold(), _font.getColor(),
+						_font.getFontHeightInPoints(), _font.getFontName(), _font.getItalic(), true,
+						_font.getTypeOffset(), _font.getUnderline());
 					case "sub" -> makeFont(_font.getBold(), _font.getColor(), _font.getFontHeightInPoints(),
 						_font.getFontName(), _font.getItalic(), _font.getStrikeout(), Font.SS_SUB,
 						_font.getUnderline());
@@ -176,12 +182,11 @@ public class RichTextBuilder {
 		} else {
 			descend(node);
 		}
-		return this;
 	}
 
 	private void descend(Node node) {
 		for (Node child : node.childNodes()) {
-			append(child);
+			appendNode(child);
 		}
 	}
 
@@ -255,6 +260,15 @@ public class RichTextBuilder {
 			_lineWidth = 0;
 		} else {
 			nl();
+		}
+	}
+
+	/**
+	 * Removes trailing white space and newline characters at the end.
+	 */
+	private void trimTrailing() {
+		while (_text.length() > 0 && Character.isWhitespace(_text.charAt(_text.length() - 1))) {
+			_text.setLength(_text.length() - 1);
 		}
 	}
 

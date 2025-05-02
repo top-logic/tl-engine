@@ -11,15 +11,20 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.LongID;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.identifier.DefaultObjectKey;
+import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.element.changelog.model.trans.TransientChangeSet;
 import com.top_logic.element.changelog.model.trans.TransientCreation;
+import com.top_logic.element.changelog.model.trans.TransientDeletion;
 import com.top_logic.knowledge.event.ChangeSet;
 import com.top_logic.knowledge.event.ChangeSetReader;
+import com.top_logic.knowledge.event.ItemDeletion;
 import com.top_logic.knowledge.event.ObjectCreation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.HistoryManager;
@@ -104,6 +109,9 @@ public class ChangeLogBuilder implements ListModelBuilder {
 			entry.setAuthor(author);
 
 			List<ObjectCreation> creations = changeSet.getCreations();
+
+			Set<ObjectKey> createdKeys = creations.stream().map(c -> c.getOriginalObject()).collect(Collectors.toSet());
+
 			for (ObjectCreation creation : creations) {
 				MetaObject table = creation.getObjectType();
 
@@ -115,7 +123,42 @@ public class ChangeLogBuilder implements ListModelBuilder {
 				KnowledgeItem item = kb.resolveObjectKey(creation.getOriginalObject());
 				TLObject object = item.getWrapper();
 
+				TLObject container = object.tContainer();
+				if (container != null && createdKeys.contains(container.tId())) {
+					// Only a part of some other object, ignore.
+					continue;
+				}
+
 				TransientCreation change = new TransientCreation();
+				change.setObject(object);
+
+				entry.addChange(change);
+			}
+
+			List<ItemDeletion> deletions = changeSet.getDeletions();
+
+			Set<ObjectKey> deletedKeys = deletions.stream()
+				.map(c -> c.getObjectId().toObjectKey(changeSet.getRevision() - 1)).collect(Collectors.toSet());
+
+			for (ItemDeletion deletion : deletions) {
+				MetaObject table = deletion.getObjectType();
+
+				List<TLClass> classes = classesByTable.get(table);
+				if (classes == null) {
+					continue;
+				}
+
+				KnowledgeItem item =
+					kb.resolveObjectKey(deletion.getObjectId().toObjectKey(changeSet.getRevision() - 1));
+				TLObject object = item.getWrapper();
+
+				TLObject container = object.tContainer();
+				if (container != null && deletedKeys.contains(container.tId())) {
+					// Only a part of some other object, ignore.
+					continue;
+				}
+
+				TransientDeletion change = new TransientDeletion();
 				change.setObject(object);
 
 				entry.addChange(change);

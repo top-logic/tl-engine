@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="revision,message,author"
+		type="tl.changelog:ChangeSet"
+	>
+		<name key="dynamic.bb58db20-c677-4062-89e0-0588ab3f0df8">
+			<en>Change-Log</en>
+			<de>Change-Log</de>
+		</name>
+		<modelBuilder class="com.top_logic.element.changelog.ChangeLogBuilder"/>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="ID_155aea09_4941_4ca5_ae52_2a71551f9749"
+				class="com.top_logic.layout.form.component.InvalidateCommand"
+			/>
+		</buttons>
+	</arguments>
+</config:template-call>

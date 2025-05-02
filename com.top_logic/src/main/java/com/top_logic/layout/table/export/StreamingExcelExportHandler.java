@@ -76,11 +76,17 @@ public class StreamingExcelExportHandler extends AbstractTableExportHandler {
 		Config.EXECUTABILITY_PROPERTY,
 		Config.CONFIRMATION,
 		Config.EXPORT_SHEET_KEY,
+		Config.STREAMING,
 		Config.DOWNLOAD_NAME_PROVIDER,
 	})
 	public interface Config extends AbstractTableExportHandler.Config {
 		/** I18N key for the export sheet name. */
 		String EXPORT_SHEET_KEY = "exportSheetKey";
+
+		/**
+		 * @see #getStreaming()
+		 */
+		String STREAMING = "streaming";
 
 		/**
 		 * Name of the Excel sheet that is filled with data.
@@ -99,6 +105,7 @@ public class StreamingExcelExportHandler extends AbstractTableExportHandler {
 		 * cells.
 		 * </p>
 		 */
+		@Name(STREAMING)
 		@BooleanDefault(true)
 		boolean getStreaming();
 

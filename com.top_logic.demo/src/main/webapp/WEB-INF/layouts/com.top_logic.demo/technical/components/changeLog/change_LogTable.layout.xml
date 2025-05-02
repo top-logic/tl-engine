@@ -5,7 +5,7 @@
 	template="com.top_logic/table.template.xml"
 >
 	<arguments
-		defaultColumns="revision,message,author"
+		defaultColumns="date,author,message"
 		type="tl.changelog:ChangeSet"
 	>
 		<name key="dynamic.bb58db20-c677-4062-89e0-0588ab3f0df8">

@@ -5,9 +5,6 @@
  */
 package com.top_logic.layout.wysiwyg.ui;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-
 import com.top_logic.base.office.excel.ExcelValue;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText;
 import com.top_logic.tool.export.AbstractExcelCellRenderer;
@@ -22,20 +19,11 @@ public class I18NStructuredTextExcelRenderer extends AbstractExcelCellRenderer {
 
 	@Override
 	protected ExcelValue renderValue(RenderContext context, Object cellValue, int excelRow, int excelColumn) {
-		if (cellValue instanceof I18NStructuredText) {
-			StructuredText localizedText = ((I18NStructuredText) cellValue).localize();
+		if (cellValue instanceof I18NStructuredText i18nHtml) {
+			StructuredText localizedText = i18nHtml.localize();
 
-			if (localizedText != null) {
-				try {
-					String codeWithInlinedImages = StructuredTextUtil.getCodeWithInlinedImages(localizedText);
-
-					return new ExcelValue(excelRow, excelColumn, codeWithInlinedImages);
-				} catch (IOException exception) {
-					throw new UncheckedIOException(exception);
-				}
-			} else {
-				return new ExcelValue(excelRow, excelColumn, null);
-			}
+			// Processing is done by StructuredTextExcelHandler
+			return new ExcelValue(excelRow, excelColumn, localizedText);
 		} else {
 			return new ExcelValue(excelRow, excelColumn, cellValue);
 		}

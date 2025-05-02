@@ -28,7 +28,7 @@ public class MemoryObserverListModelBuilder implements ListModelBuilder {
 
 	@Override
 	public Object retrieveModelFromListElement(LayoutComponent aComponent, Object anObject) {
-        return MemoryObserverThread.getInstance();
+		return null;
     }
 
 	@Override

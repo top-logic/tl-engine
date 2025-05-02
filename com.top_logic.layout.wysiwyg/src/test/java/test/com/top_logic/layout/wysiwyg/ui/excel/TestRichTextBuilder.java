@@ -48,7 +48,7 @@ public class TestRichTextBuilder extends TestCase {
 		//                 v    v  v     v   
 		//            000000000011111111113333333
 		//            012345678901234567890123456 7 8901234567890012345678
-		assertEquals("Some bold and funny words.\n\nAnd another paragraph.\n", text.toString());
+		assertEquals("Some bold and funny words.\n\nAnd another paragraph.", text.toString());
 		assertEquals(Arrays.asList(0, 5, 10, 13, 19), runs(text));
 
 		save(workbook, text, "target/TestRichTextBuilder-simple.xlsx", builder.getWidth());
@@ -57,7 +57,7 @@ public class TestRichTextBuilder extends TestCase {
 			XSSFCell cell = checkWorkbook.getSheetAt(0).getRow(0).getCell(0);
 			Assert.assertEquals(CellType.STRING, cell.getCellType());
 			XSSFRichTextString value = cell.getRichStringCellValue();
-			Assert.assertEquals("Some bold and funny words.\n\nAnd another paragraph.\n", value.getString());
+			Assert.assertEquals("Some bold and funny words.\n\nAnd another paragraph.", value.getString());
 			Assert.assertEquals(5, value.numFormattingRuns());
 			Assert.assertTrue(value.getFontOfFormattingRun(1).getBold());
 		}
@@ -70,6 +70,8 @@ public class TestRichTextBuilder extends TestCase {
 			"<h1>Heading 1</h1> <p>Some <b>bold</b> content.</p> <h2>Sub-Heading</h2> <p>Some <i>italics</i> content.</p>");
 		builder.append(document);
 		RichTextString text = builder.getText();
+
+		assertEquals("Heading 1\n\nSome bold content.\n\nSub-Heading\n\nSome italics content.", text.toString());
 
 		save(workbook, text, "target/TestRichTextBuilder-heading.xlsx", builder.getWidth());
 	}

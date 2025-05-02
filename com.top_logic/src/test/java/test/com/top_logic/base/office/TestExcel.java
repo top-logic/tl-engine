@@ -18,15 +18,15 @@ import java.util.Map;
 import java.util.Set;
 
 import junit.framework.Test;
-import junit.framework.TestSuite;
 
-import test.com.top_logic.TLTestSetup;
+import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.BasicTestCase;
+import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.base.office.AbstractOffice;
 import com.top_logic.base.office.excel.ExcelAccess;
+import com.top_logic.base.office.excel.handler.POITypeProvider;
 import com.top_logic.basic.DateUtil;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.time.CalendarUtil;
@@ -203,11 +203,8 @@ public class TestExcel extends BasicTestCase {
     }
 
     public static Test suite () {
-		return TLTestSetup.createTLTestSetup(new TestSuite(TestExcel.class));
-    }
-
-    public static void main(String[] args) {
-        Logger.configureStdout("WARN");
-        junit.textui.TestRunner.run(suite ());
+		return ModuleLicenceTestSetup.setupModule(
+			ServiceTestSetup.createSetup(TestExcel.class,
+				POITypeProvider.Module.INSTANCE));
     }
 }

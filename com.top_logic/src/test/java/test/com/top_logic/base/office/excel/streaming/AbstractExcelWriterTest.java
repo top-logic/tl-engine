@@ -23,12 +23,13 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
-import test.com.top_logic.TLTestSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.base.office.POIUtil;
 import com.top_logic.base.office.excel.ExcelValue;
+import com.top_logic.base.office.excel.handler.POITypeProvider;
 import com.top_logic.base.office.excel.streaming.ExcelWriter;
 import com.top_logic.basic.DateUtil;
 import com.top_logic.basic.time.CalendarUtil;
@@ -222,8 +223,10 @@ public abstract class AbstractExcelWriterTest extends BasicTestCase {
 	/**
 	 * a cumulative {@link Test} for all Tests in {@link AbstractExcelWriterTest}.
 	 */
-	protected static Test suite(Class<? extends AbstractExcelWriterTest> testClass) {
-		return TLTestSetup
-			.createTLTestSetup(ServiceTestSetup.createSetup(testClass, LabelProviderService.Module.INSTANCE));
+	public static Test suite(Class<? extends AbstractExcelWriterTest> testClass) {
+		return KBSetup.getSingleKBTest(
+			ServiceTestSetup.createSetup(testClass,
+				LabelProviderService.Module.INSTANCE,
+				POITypeProvider.Module.INSTANCE));
 	}
 }

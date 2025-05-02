@@ -185,11 +185,7 @@
 			<include name="templates/editComponentCommands.xml"/>
 			<button id="exportExcelGrid"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
-			>
-				<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
-					downloadName="/sExport.xlsx"
-				/>
-			</button>
+			/>
 			<button id="customEdit"
 				class="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 				clique="edit"

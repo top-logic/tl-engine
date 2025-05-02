@@ -54,7 +54,7 @@ public class TransientTLObjectImpl extends TransientObject {
 	 * 
 	 * @see TransientObjectFactory
 	 */
-	TransientTLObjectImpl(TLStructuredType type, TLObject context) {
+	protected TransientTLObjectImpl(TLStructuredType type, TLObject context) {
 		_type = type;
 		_context = context;
 	}

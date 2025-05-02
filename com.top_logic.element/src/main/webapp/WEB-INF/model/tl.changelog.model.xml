@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.changelog">
+		<annotations>
+			<package-binding
+				implementation-package="com.top_logic.element.changelog.model.impl"
+				interface-package="com.top_logic.element.changelog.model"
+			/>
+		</annotations>
+		<class name="Change">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="object"
+					history-type="historic"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="tl.model:TLObject"
+				/>
+			</attributes>
+		</class>
+		<class name="Creation">
+			<generalizations>
+				<generalization type="Change"/>
+			</generalizations>
+		</class>
+		<class name="Deletion">
+			<generalizations>
+				<generalization type="Change"/>
+			</generalizations>
+		</class>
+		<class name="Update">
+			<generalizations>
+				<generalization type="Change"/>
+			</generalizations>
+			<attributes>
+				<reference name="modifications"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Modification"
+				/>
+			</attributes>
+		</class>
+		<class name="ChangeSet">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="changes"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Change"
+				/>
+				<reference name="revision"
+					kind="forwards"
+					mandatory="true"
+					type="tl.core:Revision"
+				/>
+				<property name="message"
+					type="tl.core:Text"
+				/>
+				<reference name="author"
+					history-type="historic"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="tl.accounts:Person"
+				/>
+				<property name="date"
+					mandatory="true"
+					type="tl.core:DateTime"
+				/>
+			</attributes>
+		</class>
+		<interface name="Modification">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="part"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="tl.model:TLStructuredTypePart"
+				/>
+				<property name="oldValue"
+					type="tl.util:Any"
+				/>
+				<property name="newValue"
+					type="tl.util:Any"
+				/>
+			</attributes>
+		</interface>
+	</module>
+</model>

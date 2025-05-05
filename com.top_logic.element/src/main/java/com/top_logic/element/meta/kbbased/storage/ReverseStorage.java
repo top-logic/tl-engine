@@ -6,6 +6,7 @@
 package com.top_logic.element.meta.kbbased.storage;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
@@ -15,6 +16,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.dob.ex.NoSuchAttributeException;
+import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.element.meta.AbstractStorageBase;
 import com.top_logic.element.meta.AssociationStorage;
 import com.top_logic.element.meta.AttributeException;
@@ -86,6 +88,16 @@ public class ReverseStorage<C extends ReverseStorage.Config<?>> extends Abstract
 	@Override
 	public boolean isReadOnly() {
 		return true;
+	}
+
+	@Override
+	public ObjectKey getBaseObjectId(Map<String, Object> row) {
+		throw new UnsupportedOperationException("Derived attribute.");
+	}
+
+	@Override
+	public ObjectKey getPartId(Map<String, Object> row) {
+		throw new UnsupportedOperationException("Derived attribute.");
 	}
 
 	@Override

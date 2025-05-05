@@ -12,7 +12,7 @@
 			<en>Change-Log</en>
 			<de>Change-Log</de>
 		</name>
-		<modelBuilder class="com.top_logic.element.changelog.ChangeLogBuilder"/>
+		<modelBuilder class="com.top_logic.element.changelog.ChangeLogListModelBuilder"/>
 		<buttons>
 			<button id="exportExcel"
 				class="com.top_logic.layout.table.export.ExcelExportHandler"

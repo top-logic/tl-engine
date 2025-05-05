@@ -288,7 +288,7 @@ public class ListStorage<C extends ListStorage.Config<?>> extends LinkStorage<C>
 		String associationEndName = DBKnowledgeAssociation.REFERENCE_SOURCE_NAME;
 		String orderAttributeName = getConfig().getOrderAttribute();
 		Map<String, ?> filter;
-		if (getConfig().isMonomorphicTable()) {
+		if (monomophicTable()) {
 			filter = Collections.emptyMap();
 		} else {
 			filter = Collections.singletonMap(WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR,

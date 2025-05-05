@@ -48,7 +48,8 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class PrimitiveStorage<C extends PrimitiveStorage.Config<?>> extends AbstractStorage<C> {
+public class PrimitiveStorage<C extends PrimitiveStorage.Config<?>> extends AbstractStorage<C>
+		implements ColumnStorage {
 
 	/**
 	 * Configuration options for {@link PrimitiveStorage}.
@@ -135,6 +136,11 @@ public class PrimitiveStorage<C extends PrimitiveStorage.Config<?>> extends Abst
 	@Override
 	public PreloadContribution getPreload() {
 		return _preload;
+	}
+
+	@Override
+	public String getStorageAttribute() {
+		return _storageAttribute;
 	}
 
 	@Override

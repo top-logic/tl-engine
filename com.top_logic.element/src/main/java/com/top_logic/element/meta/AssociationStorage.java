@@ -6,8 +6,10 @@
 package com.top_logic.element.meta;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.service.db2.AbstractAssociationQuery;
 import com.top_logic.model.TLStructuredTypePart;
@@ -29,7 +31,7 @@ public interface AssociationStorage extends ReferenceStorage {
 	String getTable();
 
 	/**
-	 * Whether the {@link #getTable() table} stores the date for only one
+	 * Whether the {@link #getTable() table} stores attribute data for only one
 	 * {@link TLStructuredTypePart} or for many.
 	 */
 	boolean monomophicTable();
@@ -49,5 +51,19 @@ public interface AssociationStorage extends ReferenceStorage {
 	 * @see #getIncomingQuery()
 	 */
 	AbstractAssociationQuery<KnowledgeAssociation, ? extends Collection<KnowledgeAssociation>> getOutgoingQuery();
+
+	/**
+	 * The ID of the base objects to which the attribute data from the given row belongs.
+	 *
+	 * @param row
+	 *        Values of a {@link #getTable() table} row.
+	 * @return ID of the object for which a value is stored in the given row.
+	 */
+	ObjectKey getBaseObjectId(Map<String, Object> row);
+
+	/**
+	 * The ID of the attribute for which values are stored in the given row.
+	 */
+	ObjectKey getPartId(Map<String, Object> row);
 
 }

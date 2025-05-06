@@ -87,7 +87,7 @@ public class CurrencySystem extends ManagedClass {
 
 		List<Currency> createdCurrencies = Collections.emptyList();
 		if (!confCodes.isEmpty()) {
-			Transaction tx = theBase.beginTransaction();
+			Transaction tx = theBase.beginTransaction(I18NConstants.STARTED_CURRENCY_SYSTEM);
 			try {
 				createdCurrencies = createCurrencies(theBase, confCodes);
 

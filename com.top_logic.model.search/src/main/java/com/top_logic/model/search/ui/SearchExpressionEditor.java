@@ -5,8 +5,9 @@
  */
 package com.top_logic.model.search.ui;
 
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
+import com.top_logic.basic.col.Provider;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.persistency.expressions.SearchExpressionImpl;
 import com.top_logic.model.search.ui.selector.SearchAndReportConfig;
@@ -29,7 +30,7 @@ public interface SearchExpressionEditor {
 	 * @return Result of the search: When creating {@link SearchExpression} failed, the
 	 *         {@link HandlerResult} holds the errors. Otherwise it is the result of the algorithm.
 	 */
-	HandlerResult search(Function<SearchExpression, HandlerResult> algorithm);
+	HandlerResult search(BiFunction<SearchExpression, Provider<String>, HandlerResult> algorithm);
 
 	/**
 	 * Normal, if its a GUI Editor, otherwise expert.

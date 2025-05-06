@@ -147,7 +147,8 @@ public class TableCommandProviderByExpression<C extends TableCommandProviderByEx
 		return new Success() {
 			@Override
 			protected void doExecute(DisplayContext executionContext) {
-				try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+				ResKey message = I18NConstants.EXECUTED_TABLE_COMMAND__LABEL.fill(getConfig().getLabel());
+				try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(message)) {
 					implementation.execute(table.getTableModel().getAllRows(),
 						table.getSelectionModel().getSelection());
 					tx.commit();

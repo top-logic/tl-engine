@@ -124,7 +124,8 @@ public class DBAuthenticationAccessDevice extends AbstractConfiguredInstance<Sec
 
 		if (result.success()) {
 			if (result.hasUpdatedHash()) {
-				try (Transaction tx = _kb.beginTransaction()) {
+				try (Transaction tx =
+					_kb.beginTransaction(I18NConstants.UPDATED_PASSWORD_HASH__USER.fill(account.getName()))) {
 					row.setAttributeValue(PASSWORD_ATTR, result.newHash());
 					tx.commit();
 				}

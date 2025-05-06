@@ -17,6 +17,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.LongID;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.dob.MetaObject;
@@ -196,8 +197,10 @@ public class ChangeLogBuilder {
 					TransientModification modification = new TransientModification();
 					modification.setPart(part);
 
-					modification.setOldValue(oldObject.tValue(part));
-					modification.setNewValue(newObject.tValue(part));
+					// Cast should not be necessary, since a setter of a multiple property should
+					// not expect modifyable collections.
+					modification.setOldValue((Collection<Object>) CollectionUtil.asList(oldObject.tValue(part)));
+					modification.setNewValue((Collection<Object>) CollectionUtil.asList(newObject.tValue(part)));
 
 					change.addModification(modification);
 				}

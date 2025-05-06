@@ -21,6 +21,7 @@
 					<property name="initialization"/>
 					<property name="operation"/>
 					<property name="closeDialog"/>
+					<property name="commitMessage"/>
 					<property name="confirmation"/>
 					<property name="postCreateActions"/>
 				</value>
@@ -68,6 +69,7 @@
 			class="com.top_logic.model.search.providers.TransactionHandlerByExpression"
 			clique="apply"
 			closeDialog="${closeDialog}"
+			commitMessage="${commitMessage}"
 			confirmation="${confirmation}"
 			group="Write"
 			image="theme:ICONS_BUTTON_OK"

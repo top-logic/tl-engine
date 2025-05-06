@@ -49,7 +49,12 @@ public final class RevisionType {
 
 		@Override
 		public Object getCacheValue(MOAttribute attribute, DataObject item, Object[] storage) {
-			return ResKey.encode(((Revision) item).getLog());
+			String encoded = ResKey.encode(((Revision) item).getLog());
+			int maxSize = attribute.getDbMapping()[0].getSQLSize();
+			if (encoded.length() > maxSize) {
+				encoded = encoded.substring(0, maxSize);
+			}
+			return encoded;
 		}
 	}
 

@@ -10,9 +10,10 @@ import static com.top_logic.layout.form.values.Fields.*;
 
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 import com.top_logic.basic.Log;
+import com.top_logic.basic.col.Provider;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
@@ -167,10 +168,6 @@ public class GUISearchExpressionEditor extends DeclarativeFormComponent implemen
 		membersCopy.forEach(parent::removeMember);
 	}
 
-	private SearchExpression createSearch() {
-		return resolveSearchExpression(createRawSearchExpression());
-	}
-
 	private SearchExpression resolveSearchExpression(SearchExpression expression) {
 		if (expression == null) {
 			throw new TopLogicException(I18NConstants.ERROR_NO_SEARCH_EXPRESSION).initSeverity(ErrorSeverity.INFO);
@@ -209,14 +206,16 @@ public class GUISearchExpressionEditor extends DeclarativeFormComponent implemen
 	}
 
 	@Override
-	public HandlerResult search(Function<SearchExpression, HandlerResult> algorithm) {
+	public HandlerResult search(BiFunction<SearchExpression, Provider<String>, HandlerResult> algorithm) {
 		FormContext formContext = getFormContext();
 		if (!formContext.checkAll()) {
 			HandlerResult result = new HandlerResult();
 			AbstractApplyCommandHandler.fillHandlerResultWithErrors(formContext, result);
 			return result;
 		}
-		return algorithm.apply(createSearch());
+		SearchExpression expr = createRawSearchExpression();
+		SearchExpression search = resolveSearchExpression(expr);
+		return algorithm.apply(search, () -> search.toString());
 	}
 
 	@Override

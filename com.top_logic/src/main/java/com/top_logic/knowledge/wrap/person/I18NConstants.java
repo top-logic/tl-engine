@@ -28,6 +28,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey UPDATED_ACCOUNT_LIST;
 
+	/**
+	 * @en Stored personal configuration for user "{0}".
+	 */
+	public static ResKey STORED_PERSONAL_CONFIGURATION__USER;
+
+	/**
+	 * @en Created root account.
+	 */
+	public static ResKey CREATED_ROOT_ACCOUNT;
+
+	/**
+	 * @en Resetting password of root account.
+	 */
+	public static ResKey RESETTING_ROOT_PASSWORD;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

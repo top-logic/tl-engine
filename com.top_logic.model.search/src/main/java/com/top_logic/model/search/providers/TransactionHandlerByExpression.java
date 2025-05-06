@@ -17,15 +17,19 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.component.WithCloseDialog;
 import com.top_logic.layout.form.component.AbstractFormCommandHandler;
+import com.top_logic.layout.form.component.I18NConstants;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.TransactionHandler;
 import com.top_logic.layout.form.component.WithPostCreateActions;
 import com.top_logic.layout.form.model.FormContext;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -145,6 +149,21 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 		@Mandatory
 		Expr getOperation();
 
+		/**
+		 * The message to annotate to the performed change with.
+		 * 
+		 * <p>
+		 * If not set, a default commit message is derived from the command label and the target
+		 * model.
+		 * </p>
+		 * 
+		 * <p>
+		 * A message may contain the placeholder '{0}' that is replaced with the label of the target
+		 * model.
+		 * </p>
+		 */
+		ResKey1 getCommitMessage();
+
 	}
 
 	/**
@@ -196,9 +215,22 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 	protected final HandlerResult applyChanges(LayoutComponent component, FormContext formContext, Object model,
 			Map<String, Object> arguments) {
 
+		ResKey message;
+		ResKey1 customMessage = ((Config) getConfig()).getCommitMessage();
+		if (customMessage == null) {
+			if (model == null) {
+				message = I18NConstants.PERFORMED__OPERATION.fill(getResourceKey(component));
+			} else {
+				message = I18NConstants.PERFORMED__OPERATION_MODEL.fill(getResourceKey(component),
+					MetaLabelProvider.INSTANCE.getLabel(model));
+			}
+		} else {
+			message = customMessage.fill(MetaLabelProvider.INSTANCE.getLabel(model));
+		}
+
 		Object result;
 		if (config().isInTransaction()) {
-			try (Transaction tx = beginTransaction(model)) {
+			try (Transaction tx = beginTransaction(model, message)) {
 				result = performTransaction(component, formContext, model);
 				commit(tx, model);
 			}

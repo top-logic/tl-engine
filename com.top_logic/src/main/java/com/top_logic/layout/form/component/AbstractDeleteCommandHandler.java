@@ -23,6 +23,7 @@ import com.top_logic.layout.form.FormHandler;
 import com.top_logic.layout.form.component.edit.CanLock;
 import com.top_logic.layout.form.component.edit.EditMode;
 import com.top_logic.layout.form.model.FormContext;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
@@ -54,7 +55,7 @@ import com.top_logic.util.error.TopLogicException;
  *           <ul>
  *           <li>Update or acquire a lock for the deletion, see {@link LockHandler#updateLock()}, if
  *           the component supports locking.</li>
- *           <li>{@link #beginTransaction(Object)}</li>
+ *           <li>{@link #beginTransaction(Object, ResKey)}</li>
  *           <li>{@link #deleteObject(LayoutComponent, Object, Map)}</li>
  *           <li>{@link #commit(Transaction, Object)}</li>
  *           <li>{@link #updateComponent(LayoutComponent, Object)}</li>
@@ -171,7 +172,11 @@ public abstract class AbstractDeleteCommandHandler extends AbstractCommandHandle
 	}
 
 	private void doApplyChanges(LayoutComponent component, Object model, Map<String, Object> arguments) {
-		try (Transaction tx = beginTransaction(model)) {
+		ResKey customMessage = getCustomCommitMessage(arguments);
+		ResKey message = customMessage == null
+			? I18NConstants.DELETED__MODEL.fill(MetaLabelProvider.INSTANCE.getLabel(model))
+			: customMessage;
+		try (Transaction tx = beginTransaction(model, message)) {
 			if (model instanceof Iterable) {
 				deleteObjects(component, (Iterable<?>) model, arguments);
 			} else {

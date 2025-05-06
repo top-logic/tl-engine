@@ -36,7 +36,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 NO_SUCH_GENERATOR__NAME;
 
 	/**
-	 * Started wrapper resolver ({0}).
+	 * @en Started wrapper resolver ({0}).
 	 */
 	public static ResKey1 START_UP_WRAPPER_RESOLVER__IMPLCLASS;
 

@@ -5,7 +5,7 @@
  */
 package com.top_logic.knowledge.service;
 
-import com.top_logic.basic.message.Message;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * {@link Transaction} dummy that does not perform a transaction.
@@ -24,7 +24,7 @@ public final class NoTransaction extends AbstractTransaction {
 	}
 
 	@Override
-	protected void internalRollback(Message message, Throwable cause) {
+	protected void internalRollback(ResKey message, Throwable cause) {
 		// Ignore.
 	}
 

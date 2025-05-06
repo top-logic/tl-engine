@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.Set;
 
 import com.top_logic.basic.config.XmlDateTimeFormat;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.MOClass;
@@ -68,7 +69,7 @@ public class ChangeSetDumper extends AbstractDumpWriter {
 		CommitEvent commit = cs.getCommit();
 		_out.writeAttribute(AUTHOR_ATTR, commit.getAuthor());
 		_out.writeAttribute(DATE_ATTR, XmlDateTimeFormat.INSTANCE.format(new Date(commit.getDate())));
-		_out.writeAttribute(MESSAGE_ATTR, commit.getLog());
+		_out.writeAttribute(MESSAGE_ATTR, ResKey.encode(commit.getLog()));
 		_out.endBeginTag();
 		for (BranchEvent branch : cs.getBranchEvents()) {
 			dumpBranch(branch);

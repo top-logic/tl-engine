@@ -138,24 +138,25 @@ public class ChangeLogBuilder {
 		analyzeModel();
 
 		ReaderConfig readerConfig = ReaderConfigBuilder.createConfig(_startRev, _stopRev);
-		ChangeSetReader reader = _kb.getChangeSetReader(readerConfig);
-		while (true) {
-			ChangeSet changeSet = reader.read();
-			if (changeSet == null) {
-				break;
+		try (ChangeSetReader reader = _kb.getChangeSetReader(readerConfig)) {
+			while (true) {
+				ChangeSet changeSet = reader.read();
+				if (changeSet == null) {
+					break;
+				}
+
+				Revision revision = _hm.getRevision(changeSet.getRevision());
+
+				TransientChangeSet entry = new TransientChangeSet();
+				entry.setDate(new Date(revision.getDate()));
+				entry.setRevision(revision);
+				entry.setMessage(revision.getLog());
+				entry.setAuthor(resolveAuthor(revision));
+
+				new ChangeSetAnalyzer(changeSet, entry).analyze();
+
+				log.add(entry);
 			}
-
-			Revision revision = _hm.getRevision(changeSet.getRevision());
-
-			TransientChangeSet entry = new TransientChangeSet();
-			entry.setDate(new Date(revision.getDate()));
-			entry.setRevision(revision);
-			entry.setMessage(revision.getLog());
-			entry.setAuthor(resolveAuthor(revision));
-
-			new ChangeSetAnalyzer(changeSet, entry).analyze();
-
-			log.add(entry);
 		}
 
 		return log;

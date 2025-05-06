@@ -8,6 +8,8 @@ package com.top_logic.element.meta;
 import java.util.Map;
 
 import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.element.changelog.ChangeLogBuilder;
+import com.top_logic.element.meta.kbbased.storage.ColumnStorage;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
@@ -15,8 +17,14 @@ import com.top_logic.model.TLStructuredTypePart;
  * 
  * <p>
  * The object table defines the identity of the base object that defines the attributes. Besides the
- * identity the object table may store values of other attributes of the base object.
+ * identity the object table may store values of other attributes of the base object. Attributes
+ * that are stored in the base table must use a storage that implements {@link ColumnStorage}. All
+ * other attributes whose values are not stored in the base table must use a storage that implements
+ * this interface to allow finding changes of those attributes when computing a change log.
  * </p>
+ * 
+ * @see ColumnStorage
+ * @see ChangeLogBuilder
  */
 public interface SeparateTableStorage extends StorageImplementation {
 

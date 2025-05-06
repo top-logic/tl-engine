@@ -101,6 +101,11 @@ public class ReverseStorage<C extends ReverseStorage.Config<?>> extends Abstract
 	}
 
 	@Override
+	public String getStorageColumn() {
+		throw new UnsupportedOperationException("Derived attribute.");
+	}
+
+	@Override
 	public Object getAttributeValue(TLObject object, TLStructuredTypePart attribute)
 			throws AttributeException {
 		TLAssociationEnd sourceEnd = ((TLReference) attribute).getEnd();

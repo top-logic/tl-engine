@@ -275,7 +275,7 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 			throw new IOError(ex);
 		}
 
-		Transaction tx = kb().beginTransaction(Messages.CREATING_CLASSIFICATIONS);
+		Transaction tx = kb().beginTransaction(I18NConstants.CREATING_CLASSIFICATIONS);
 		initEnums(enumScope);
 		tx.commit();
 	}

@@ -35,7 +35,6 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.util.Messages;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
 
@@ -141,9 +140,7 @@ public class Setup extends ThreadContextSetup {
 
 	private void removeModule() {
 		KnowledgeBase kb = _module.tKnowledgeBase();
-		Transaction tx =
-			kb.beginTransaction(
-				Messages.DELETED_MODEL_PART_RECURSIVELY__PART_NAME.fill(TLModelUtil.qualifiedName(_module)));
+		Transaction tx = kb.beginTransaction();
 		try {
 			TLModelUtil.deleteRecursive(_module);
 

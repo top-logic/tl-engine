@@ -48,6 +48,7 @@ import com.top_logic.knowledge.objects.identifier.ObjectBranchId;
 import com.top_logic.knowledge.service.BasicTypes;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.ReaderConfigBuilder;
@@ -533,7 +534,7 @@ public class TestRevisionModificator extends AbstractDBKnowledgeBaseMigrationTes
 					update.getValues().put(A2_NAME, newA2Value);
 					CommitEvent commit =
 						new CommitEvent(revision, TestRevisionModificator.class.getName(), lastRevDate,
-							"Updated values");
+							I18NConstants.NO_COMMIT_MESSAGE);
 					ChangeSet fakeCS = new ChangeSet(revision).add(update).setCommit(commit);
 					revisionModificator.rewrite(fakeCS, replayWriter);
 					revisionModificator.setModus(Modus.replay);
@@ -553,7 +554,7 @@ public class TestRevisionModificator extends AbstractDBKnowledgeBaseMigrationTes
 					update.getValues().put(A1_NAME, newA1Value);
 					CommitEvent commit =
 						new CommitEvent(revision, TestRevisionModificator.class.getName(), lastRevDate,
-							"Updated values");
+							I18NConstants.NO_COMMIT_MESSAGE);
 					ChangeSet fakeCs = new ChangeSet(revision).add(update).setCommit(commit);
 					revisionModificator.rewrite(fakeCs, replayWriter);
 					revisionModificator.setModus(Modus.replay);

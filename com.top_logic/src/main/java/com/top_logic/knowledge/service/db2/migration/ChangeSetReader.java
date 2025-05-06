@@ -17,6 +17,7 @@ import javax.xml.stream.XMLStreamReader;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.XmlDateTimeFormat;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.XMLStreamUtil;
 import com.top_logic.knowledge.event.BranchEvent;
 import com.top_logic.knowledge.event.ChangeSet;
@@ -25,8 +26,7 @@ import com.top_logic.knowledge.event.ItemDeletion;
 import com.top_logic.knowledge.event.ItemUpdate;
 import com.top_logic.knowledge.event.ObjectCreation;
 import com.top_logic.knowledge.objects.identifier.ObjectBranchId;
-import com.top_logic.knowledge.service.Messages;
-import com.top_logic.util.message.MessageStoreFormat;
+import com.top_logic.knowledge.service.I18NConstants;
 
 /**
  * Reads a {@link ChangeSet} from the underlying reader.
@@ -55,10 +55,12 @@ public class ChangeSetReader extends AbstractDumpReader implements com.top_logic
 
 			String author = readAttribute(AUTHOR_ATTR);
 			long commitTimeMillis = toDate(readAttribute(DATE_ATTR)).getTime();
-			String logMessage = readAttribute(MESSAGE_ATTR);
-			if (StringServices.isEmpty(logMessage)) {// may happen for older revisions
-				// default log message as it is mandatory now
-				logMessage = MessageStoreFormat.toString(Messages.NO_COMMIT_MESSAGE);
+			String encodedLogMessage = readAttribute(MESSAGE_ATTR);
+			ResKey logMessage;
+			if (StringServices.isEmpty(encodedLogMessage)) {// may happen for older revisions
+				logMessage = I18NConstants.NO_COMMIT_MESSAGE;
+			} else {
+				logMessage = ResKey.decode(encodedLogMessage);
 			}
 			cs.setCommit(new CommitEvent(revision, author, commitTimeMillis, logMessage));
 

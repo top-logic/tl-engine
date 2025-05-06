@@ -23,7 +23,6 @@ import com.top_logic.knowledge.service.DropTablesContext;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.KnowledgeBaseSetup;
-import com.top_logic.knowledge.service.Messages;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.TypeSystemConfiguration;
@@ -53,7 +52,7 @@ public class InitialKBDataSetup extends KnowledgeBaseSetup {
 	@FrameworkInternal
 	public void setupInitialData(Protocol protocol, DBKnowledgeBase kb) {
 		createTrunk(protocol, kb);
-		try (Transaction tx = kb.beginTransaction(Messages.INITIAL_IMPORT)) {
+		try (Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.INITIAL_IMPORT)) {
 			protocol.info("Importing initial data.");
 			importInitialData(protocol, kb);
 			tx.commit();

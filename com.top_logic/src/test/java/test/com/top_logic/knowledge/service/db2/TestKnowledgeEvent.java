@@ -61,6 +61,7 @@ import com.top_logic.knowledge.service.BasicTypes;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
@@ -200,7 +201,8 @@ public class TestKnowledgeEvent extends AbstractDBKnowledgeBaseMigrationTest imp
 
 	public void testModifyInitialRevision() throws DataObjectException {
 		try (EventWriter writer = KBUtils.getReplayWriter(kbNode2())) {
-			write(writer, new ChangeSet(1).setCommit(new CommitEvent(1, "author", System.currentTimeMillis(), "migration")));
+			write(writer, new ChangeSet(1)
+				.setCommit(new CommitEvent(1, "author", System.currentTimeMillis(), I18NConstants.NO_COMMIT_MESSAGE)));
 			
 			Revision r1 = kbNode2().getRevision(1L);
 			
@@ -245,8 +247,8 @@ public class TestKnowledgeEvent extends AbstractDBKnowledgeBaseMigrationTest imp
 	 *        Uses to synthesise {@link CommitEvent#getAuthor()} and {@link CommitEvent#getLog()}.
 	 */
 	public static CommitEvent newCommit(long rev, Class<?> testClass) {
-		String log = "Commit created for test class " + testClass.getName();
-		return new CommitEvent(rev, testClass.getSimpleName(), System.currentTimeMillis(), log);
+		return new CommitEvent(rev, testClass.getSimpleName(), System.currentTimeMillis(),
+			I18NConstants.NO_COMMIT_MESSAGE);
 	}
 
 	public void testOutOfOrderEvent() {
@@ -959,14 +961,14 @@ public class TestKnowledgeEvent extends AbstractDBKnowledgeBaseMigrationTest imp
 		}
 		final BObj b1;
 		{
-			Transaction tx = begin(Messages.SETUP_TEST);
+			Transaction tx = begin();
 			b1 = newBObj("b1");
 			commit(tx);
 		}
 
 		final Revision r0;
 		{
-			Transaction tx = begin(Messages.SOME_MODIFICATION);
+			Transaction tx = begin();
 			b1.setB2("3");
 			commit(tx);
 			r0 = tx.getCommitRevision();
@@ -1214,7 +1216,7 @@ public class TestKnowledgeEvent extends AbstractDBKnowledgeBaseMigrationTest imp
 
 		long r1;
 		{
-			Transaction tx = begin(Messages.SETUP_TEST);
+			Transaction tx = begin();
 			b1 = newBObj("b1");
 			c1 = newCObj("c1");
 			b1.setA2("b1.a2");
@@ -1231,7 +1233,7 @@ public class TestKnowledgeEvent extends AbstractDBKnowledgeBaseMigrationTest imp
 		assertNotNull(c1_branch1);
 
 		{
-			Transaction tx = begin(Messages.MULTI_BRANCH_MODIFICATION);
+			Transaction tx = begin();
 			b2 = newBObj("b2");
 			c2 = newCObj("c2");
 
@@ -1440,7 +1442,7 @@ public class TestKnowledgeEvent extends AbstractDBKnowledgeBaseMigrationTest imp
 		BObj b2;
 		BObj b3;
 		{
-			Transaction tx = begin(Messages.SETUP_TEST);
+			Transaction tx = begin();
 			b1 = newBObj("b1");
 			b2 = newBObj("b2");
 			b3 = newBObj("b3");
@@ -1452,7 +1454,7 @@ public class TestKnowledgeEvent extends AbstractDBKnowledgeBaseMigrationTest imp
 		}
 
 		{
-			Transaction tx = begin(Messages.SOME_MODIFICATION);
+			Transaction tx = begin();
 			b1.setF1("new flex f1");
 			commit(tx);
 		}
@@ -2010,7 +2012,7 @@ public class TestKnowledgeEvent extends AbstractDBKnowledgeBaseMigrationTest imp
 		KnowledgeAssociation b1b2;
 		KnowledgeAssociation b2b3;
 		{
-			Transaction tx = begin(Messages.SETUP_TEST);
+			Transaction tx = begin();
 			b1 = newB("b1");
 			b2 = newB("b2");
 			b3 = newB("b3");
@@ -2018,7 +2020,7 @@ public class TestKnowledgeEvent extends AbstractDBKnowledgeBaseMigrationTest imp
 		}
 
 		{
-			Transaction tx = begin(Messages.SOME_MODIFICATION);
+			Transaction tx = begin();
 			setB1(b1, "v1");
 			setB1(b2, "v2");
 			setB1(b3, "v3");

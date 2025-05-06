@@ -5,7 +5,7 @@
  */
 package com.top_logic.knowledge.service;
 
-import com.top_logic.basic.message.Message;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * Base class for {@link Transaction}s implementing the general live cycle.
@@ -43,12 +43,12 @@ public abstract class AbstractTransaction implements Transaction {
 	}
 
 	@Override
-	public final void rollback(Message failureMessage) {
+	public final void rollback(ResKey failureMessage) {
 		rollback(failureMessage, null);
 	}
 	
 	@Override
-	public final void rollback(Message failureMessage, Throwable cause) {
+	public final void rollback(ResKey failureMessage, Throwable cause) {
 		if (! isOpen()) {
 			// Rollback after commit or rollback is a noop.
 			return;
@@ -59,9 +59,9 @@ public abstract class AbstractTransaction implements Transaction {
 	}
 
 	/**
-	 * Implementation of {@link #rollback(Message, Throwable)}.
+	 * Implementation of {@link #rollback(ResKey, Throwable)}.
 	 */
-	protected abstract void internalRollback(Message message, Throwable cause);
+	protected abstract void internalRollback(ResKey message, Throwable cause);
 
 	@Override
 	public final void commit() throws KnowledgeBaseException {

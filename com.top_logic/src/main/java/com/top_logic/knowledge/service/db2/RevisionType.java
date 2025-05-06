@@ -6,6 +6,7 @@
 package com.top_logic.knowledge.service.db2;
 
 import com.top_logic.basic.annotation.FrameworkInternal;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.DataObject;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.attr.MOAttributeImpl;
@@ -43,12 +44,12 @@ public final class RevisionType {
 
 		@Override
 		public void initCacheValue(MOAttribute attribute, DataObject item, Object[] storage, Object cacheValue) {
-			((RevisionImpl) item).initLog((String) cacheValue);
+			((RevisionImpl) item).initLog(ResKey.decode((String) cacheValue));
 		}
 
 		@Override
 		public Object getCacheValue(MOAttribute attribute, DataObject item, Object[] storage) {
-			return ((Revision) item).getLog();
+			return ResKey.encode(((Revision) item).getLog());
 		}
 	}
 

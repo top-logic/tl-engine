@@ -18,9 +18,11 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.component.WithCommitMessage;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -52,7 +54,7 @@ public class StateBasedHandler extends PreconditionCommandHandler {
 	/**
 	 * Configuration options for {@link StateBasedHandler}.
 	 */
-	public interface Config extends PreconditionCommandHandler.Config {
+	public interface Config extends PreconditionCommandHandler.Config, WithCommitMessage {
 		/**
 		 * The supported model type.
 		 */
@@ -145,7 +147,8 @@ public class StateBasedHandler extends PreconditionCommandHandler {
 		return new Success() {
 			@Override
 			protected void doExecute(DisplayContext context) {
-				try (Transaction tx = obj.tKnowledgeBase().beginTransaction()) {
+				ResKey message = ((Config) getConfig()).buildCommandMessage(component, StateBasedHandler.this, model);
+				try (Transaction tx = obj.tKnowledgeBase().beginTransaction(message)) {
 					updateState(obj, newState);
 
 					tx.commit();

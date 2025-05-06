@@ -222,7 +222,7 @@ public class PersonManager extends ManagedClass {
 		String loginName = getSuperUserName();
 		Person existingAccount = Person.byName(loginName);
 		if (existingAccount == null) {
-			try (Transaction tx = kb.beginTransaction()) {
+			try (Transaction tx = kb.beginTransaction(I18NConstants.CREATED_ROOT_ACCOUNT)) {
 				AuthenticationDevice device = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice();
 				String deviceID = device.getDeviceID();
 				Person root = Person.create(kb, loginName, deviceID);
@@ -236,7 +236,7 @@ public class PersonManager extends ManagedClass {
 			boolean passwordReset =
 				Environment.getSystemPropertyOrEnvironmentVariable("tl_reset_password", null) != null;
 			if (passwordReset) {
-				try (Transaction tx = kb.beginTransaction()) {
+				try (Transaction tx = kb.beginTransaction(I18NConstants.RESETTING_ROOT_PASSWORD)) {
 					setupRootPassword(existingAccount, loginName);
 					tx.commit();
 				}

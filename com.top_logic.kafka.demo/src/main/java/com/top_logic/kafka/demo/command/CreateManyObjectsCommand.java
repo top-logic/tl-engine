@@ -22,7 +22,7 @@ import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.Positive;
-import com.top_logic.basic.message.Message;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.StopWatch;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.kafka.demo.model.types.KafkaDemoFactory;
@@ -102,7 +102,7 @@ public class CreateManyObjectsCommand extends AbstractCommandHandler {
 	}
 
 	private void createAndCommit(int objectCount) {
-		Message commitMessage = Messages.KAFKA_DEMO_CREATE_MANY_OBJECTS__COUNT.fill(objectCount);
+		ResKey commitMessage = I18NConstants.KAFKA_DEMO_CREATE_MANY_OBJECTS__COUNT.fill(objectCount);
 		try (Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction(commitMessage)) {
 			createAllNodes(objectCount);
 			transaction.commit();

@@ -5,6 +5,7 @@
  */
 package com.top_logic.mail.base;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
@@ -24,6 +25,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_FOLDER_CREATE_CONNECT;
 
 	public static ResKey1 ERROR_FOLDER_CREATE_OTHER;
+
+	/**
+	 * @en Initialized mail root folder.
+	 */
+	public static ResKey INITIALISING_ROOT_FOLDER;
 
 	static {
 		initConstants(I18NConstants.class);

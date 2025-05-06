@@ -64,7 +64,7 @@
 					type="tl.core:Revision"
 				/>
 				<property name="message"
-					type="tl.core:Text"
+					type="tl.model.i18n:I18NString"
 				/>
 				<reference name="author"
 					history-type="historic"

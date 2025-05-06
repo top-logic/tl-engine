@@ -18,6 +18,7 @@ import com.top_logic.knowledge.event.CachingEventWriter;
 import com.top_logic.knowledge.event.ChangeSet;
 import com.top_logic.knowledge.event.CommitEvent;
 import com.top_logic.knowledge.objects.KnowledgeObject;
+import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.db2.migration.rewriters.Indexer;
 import com.top_logic.knowledge.service.db2.migration.rewriters.Indexer.Index;
@@ -83,7 +84,7 @@ public class TestIndexerImpl extends AbstractDBKnowledgeBaseMigrationTest {
 	private void flushDeletions() {
 		int rev = -1;
 		ChangeSet changeSet = new ChangeSet(rev);
-		changeSet.setCommit(new CommitEvent(rev, "", System.currentTimeMillis(), "No MSG"));
+		changeSet.setCommit(new CommitEvent(rev, "", System.currentTimeMillis(), I18NConstants.NO_COMMIT_MESSAGE));
 		_indexer.rewrite(changeSet, new CachingEventWriter());
 	}
 

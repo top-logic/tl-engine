@@ -31,8 +31,11 @@
 			<buttons>
 				<button id="exportExcel"
 					class="com.top_logic.layout.table.export.ExcelExportHandler"
-					downloadNameKey="chart.details.table.dialog.export.filename"
-				/>
+				>
+					<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+						downloadName="chart.details.table.dialog.export.filename"
+					/>
+				</button>
 			</buttons>
 		</component>
 	</components>

@@ -11,7 +11,6 @@ import java.util.Map;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ListDefault;
@@ -20,6 +19,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.component.configuration.ComponentContextInstantiationContext;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
@@ -134,7 +134,8 @@ public abstract class AbstractOpenCompareViewCommand extends AbstractCommandHand
 			private TableDataExport newSimpleTableDataExport() {
 				SimpleTableDataExport.Config exporterConfig =
 					TypedConfiguration.newConfigItem(SimpleTableDataExport.Config.class);
-				return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(exporterConfig);
+				InstantiationContext context = new ComponentContextInstantiationContext(AbstractOpenCompareViewCommand.class, component);
+				return context.getInstance(exporterConfig);
 			}
 
 			private TableDataExport ensureCorrectExecutability(final TableDataExport exporter) {

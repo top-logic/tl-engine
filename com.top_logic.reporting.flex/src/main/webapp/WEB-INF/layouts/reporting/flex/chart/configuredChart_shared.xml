@@ -147,8 +147,11 @@
 						<buttons>
 							<button id="exportExcel"
 								class="com.top_logic.layout.table.export.ExcelExportHandler"
-								downloadNameKey="${dialogExportFilename}"
-							/>
+							>
+								<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+									downloadName="${dialogExportFilename}"
+								/>
+							</button>
 						</buttons>
 					</component>
 				</components>

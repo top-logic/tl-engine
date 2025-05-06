@@ -9,14 +9,13 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.table.export.DownloadNameProvider;
 import com.top_logic.layout.table.export.ModelDownloadName;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.util.Resources;
 
 /**
- * {@link ModelDownloadName} computing the filename for the component by applying an {@link Expr} on
- * the channel of the component.
+ * {@link DownloadNameProvider} computing an export file name with TL-Script.
  * 
  * @author <a href="mailto:cca@top-logic.com">Christian Canterino</a>
  */
@@ -29,21 +28,17 @@ public class DownloadNameByExpression<C extends DownloadNameByExpression.Config<
 	public interface Config<I extends DownloadNameByExpression<?>> extends ModelDownloadName.Config<I> {
 
 		/**
-		 * Function computing the download-name for the {@link #getModel()} object.
+		 * Function computing the download-name for a {@link #getModel()} object.
 		 * 
 		 * <p>
 		 * The function is expected to take the {@link #getModel()} object as argument and return a
-		 * filename for the given object. The computed name can either be a literal {@link String}
+		 * file name for the given object. The computed name can either be a literal {@link String}
 		 * value or a {@link ResKey} for internationalization.
 		 * </p>
 		 * 
 		 * <p>
-		 * The computed label is passed as single argument value to the configured
-		 * {@link com.top_logic.layout.table.export.ExcelExportHandler.Config#getDownloadNameKey()}
-		 * for dynamic embedding. The text in
-		 * {@link com.top_logic.layout.table.export.ExcelExportHandler.Config#getDownloadNameKey()}
-		 * is expected to contain a placeholder <code>{0}</code> where the computed name is to be
-		 * inserted.
+		 * The computed value is passed as single argument value to the configured
+		 * {@link #getDownloadNameTemplate()}.
 		 * </p>
 		 */
 		@Mandatory
@@ -62,9 +57,9 @@ public class DownloadNameByExpression<C extends DownloadNameByExpression.Config<
 	}
 
 	@Override
-	protected String createDownloadName(Object model, ResKey key) {
-		Object res = _expr.execute(model);
-		return Resources.getInstance().getMessage(key, res);
+	protected ResKey createDownloadName(Object model) {
+		Object result = _expr.execute(model);
+		return getConfig().getDownloadNameTemplate().fill(result);
 	}
 
 }

@@ -42,9 +42,12 @@
 		<buttons>
 			<button id="exportExcel"
 				class="com.top_logic.layout.table.export.ExcelExportHandler"
-				downloadNameKey="${flDownloadNameKey}"
 				templateName="${flTemplateFile}"
-			/>
+			>
+				<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+					downloadName="${flDownloadNameKey}"
+				/>
+			</button>
 		</buttons>
 	</tableView>
 </template>

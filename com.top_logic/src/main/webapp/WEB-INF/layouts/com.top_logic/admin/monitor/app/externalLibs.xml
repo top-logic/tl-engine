@@ -9,6 +9,7 @@
 	resPrefix="external.library"
 	securityProviderClass="path:opener.currentobject"
 	selectable="true"
+	titleKey="util.maintenance.displayDialog_externalLibs.title"
 >
 	<modelBuilder class="com.top_logic.layout.version.ExternalLibrariesBuilder"/>
 	<table
@@ -43,7 +44,6 @@
 	<buttons>
 		<button id="exportExcel"
 			class="com.top_logic.layout.table.export.ExcelExportHandler"
-			downloadNameKey="external.library.exportFileName"
 		/>
 	</buttons>
 </tableView>

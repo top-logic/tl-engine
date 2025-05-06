@@ -29,10 +29,13 @@
 					filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
 				/>
 				<exporter
-					downloadNameKey="/sSecurity"
 					executability="com.top_logic.element.layout.admin.component.ShowSecurityComponent$ShowSecurityExecutability"
 					templateName="showSecurityTemplate.xls"
-				/>
+				>
+					<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+						downloadName="/sSecurity"
+					/>
+				</exporter>
 			</table>
 		</tables>
 	</component>

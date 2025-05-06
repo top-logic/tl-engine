@@ -130,7 +130,7 @@
 					>
 						<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Berechtigungen > Rollenprofile > Berechtigungen für Sichten einstellen"
+								tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"
 							/>
 							<path>
 								<named-member name="tree"/>
@@ -150,7 +150,7 @@
 					>
 						<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Berechtigungen > Rollenprofile > Berechtigungen für Sichten einstellen"
+								tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"
 							/>
 							<path>
 								<named-member name="tree"/>
@@ -271,7 +271,7 @@
 						>
 							<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Berechtigungen > Rollenprofile > Berechtigungen für Sichten einstellen"
+									tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"
 								/>
 								<path>
 									<named-member name="tree"/>
@@ -343,7 +343,7 @@
 					>
 						<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Berechtigungen > Rollenprofile > Berechtigungen für Sichten einstellen"
+								tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"
 							/>
 							<path>
 								<named-member name="tree"/>
@@ -363,7 +363,7 @@
 					>
 						<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								tab-path="Administration > Berechtigungen > Rollenprofile > Berechtigungen für Sichten einstellen"
+								tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"
 							/>
 							<path>
 								<named-member name="tree"/>
@@ -466,7 +466,7 @@
 						>
 							<context-model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 								<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-									tab-path="Administration > Berechtigungen > Rollenprofile > Berechtigungen für Sichten einstellen"
+									tab-path="Administration > Berechtigungen > Rollenprofile > Zugriffsberechtigungen"
 								/>
 								<path>
 									<named-member name="tree"/>

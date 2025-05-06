@@ -7,12 +7,29 @@ package com.top_logic.layout.table.export;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey3;
+import com.top_logic.basic.util.ResKey4;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
  * Internationalization constants for this package.
  */
 public class I18NConstants extends I18NConstantsBase {
+
+	/**
+	 * @en {0} {1} ({2})
+	 */
+	public static ResKey3 COMPONENT_DOWNLOAD_NAME__DATE_TITLE_APP;
+
+	/**
+	 * @en {0} {1} - {3} ({2})
+	 */
+	public static ResKey4 COMPONENT_DOWNLOAD_NAME__DATE_TITLE_APP_MODEL;
+
+	/**
+	 * @en Export data
+	 */
+	public static ResKey DEFAULT_EXPORT_NAME;
 
 	/**
 	 * @en Data

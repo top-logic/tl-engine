@@ -63,8 +63,11 @@
 				<buttons>
 					<button id="exportExcelGrid"
 						class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
-						exportNameKey="/sTypes_Demo.xls"
-					/>
+					>
+						<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+							downloadName="/sTypes_Demo.xls"
+						/>
+					</button>
 					<button id="toggleRootVisibility"
 						class="com.top_logic.demo.table.ToggleRootVisibilityCommand"
 						image="theme:ICON_GLOBE"

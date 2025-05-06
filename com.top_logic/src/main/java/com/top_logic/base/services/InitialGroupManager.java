@@ -19,7 +19,7 @@ import com.top_logic.basic.util.Utils;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.tool.boundsec.wrap.Group;
-import com.top_logic.util.Messages;
+import com.top_logic.util.I18NConstants;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -99,7 +99,7 @@ public class InitialGroupManager extends KBBasedManagedClass<InitialGroupManager
 	protected void startUp() {
 		super.startUp();
 
-		Transaction tx = kb().beginTransaction(Messages.CREATING_INITIAL_GROUPS_AND_ROLES.fill());
+		Transaction tx = kb().beginTransaction(I18NConstants.CREATING_INITIAL_GROUPS_AND_ROLES);
 		try {
 			init();
 			tx.commit();

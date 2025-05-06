@@ -21,8 +21,8 @@ import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.basic.col.EmptyClosableIterator;
 import com.top_logic.basic.col.LongRange;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
-import com.top_logic.basic.message.Message;
 import com.top_logic.basic.util.ComputationEx2;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.DataObject;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.ex.NoSuchAttributeException;
@@ -133,14 +133,15 @@ public class DummyKnowledgeBase extends AbstractKnowledgeBase {
 	}
 	
 	@Override
-	public Transaction beginTransaction(Message commitMessage) {
+	public Transaction beginTransaction(ResKey commitMessage) {
 		return new NoTransaction(this);
 	}
 	
 	/**
-     * TODO #2829: Delete TL 6 deprecation 
-     * @deprecated Use {@link #beginTransaction(Message)}.
-     */
+	 * TODO #2829: Delete TL 6 deprecation
+	 * 
+	 * @deprecated Use {@link #beginTransaction(ResKey)}.
+	 */
     @Override
 	@Deprecated
     public boolean begin() {
@@ -148,9 +149,10 @@ public class DummyKnowledgeBase extends AbstractKnowledgeBase {
     }
 
     /**
-     * TODO #2829: Delete TL 6 deprecation 
-     * @deprecated Use {@link #beginTransaction(Message)}.
-     */
+	 * TODO #2829: Delete TL 6 deprecation
+	 * 
+	 * @deprecated Use {@link #beginTransaction(ResKey)}.
+	 */
     @Override
 	@Deprecated
     public boolean commit() {
@@ -258,9 +260,10 @@ public class DummyKnowledgeBase extends AbstractKnowledgeBase {
 	}
 
     /**
-     * TODO #2829: Delete TL 6 deprecation 
-     * @deprecated Use {@link #beginTransaction(Message)}.
-     */
+	 * TODO #2829: Delete TL 6 deprecation
+	 * 
+	 * @deprecated Use {@link #beginTransaction(ResKey)}.
+	 */
     @Override
 	@Deprecated
     public boolean rollback() {

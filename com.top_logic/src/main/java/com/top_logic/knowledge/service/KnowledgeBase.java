@@ -16,10 +16,10 @@ import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.basic.col.LongRange;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
-import com.top_logic.basic.message.Message;
 import com.top_logic.basic.sql.ObjectNameSource;
 import com.top_logic.basic.util.Computation;
 import com.top_logic.basic.util.ComputationEx2;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.DataObject;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.MetaObject;
@@ -234,15 +234,15 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
     public Collection<KnowledgeAssociation> getAllKnowledgeAssociations();
 
     /**
-     * Begin a (potentially nested) transaction in this {@link KnowledgeBase}.
-     * 
-     * @return the new transaction.
-     * 
-     * @see KnowledgeBase#beginTransaction(Message) Starting a named transaction.
-     * @see Transaction#commit() Committing a transaction.
-     * 
-     * @since TL 5.7
-     */
+	 * Begin a (potentially nested) transaction in this {@link KnowledgeBase}.
+	 * 
+	 * @return the new transaction.
+	 * 
+	 * @see KnowledgeBase#beginTransaction(ResKey) Starting a named transaction.
+	 * @see Transaction#commit() Committing a transaction.
+	 * 
+	 * @since TL 5.7
+	 */
 	public Transaction beginTransaction();
 	
 	/**
@@ -258,46 +258,50 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 	 * 
 	 * @since TL 5.7
 	 */
-    public Transaction beginTransaction(Message commitMessage);
+	public Transaction beginTransaction(ResKey commitMessage);
     
-    /** 
-     * Explicitly begin a (nested) Transaction in the KnowledgeBase.
-     * <p>
-     * For older KBases this is actually a noop. As of now
-     * only the new DBKnolwedgeBase will actually support this.
-     * </p>
-     * @return true when Transactions are ok.
+    /**
+	 * Explicitly begin a (nested) Transaction in the KnowledgeBase.
+	 * <p>
+	 * For older KBases this is actually a noop. As of now only the new DBKnolwedgeBase will
+	 * actually support this.
+	 * </p>
+	 * 
+	 * @return true when Transactions are ok.
 	 *
-     * TODO #2829: Delete TL 6 deprecation 
-     * @deprecated Use {@link #beginTransaction(Message)}.
-     */
+	 *         TODO #2829: Delete TL 6 deprecation
+	 * @deprecated Use {@link #beginTransaction(ResKey)}.
+	 */
     @Deprecated
     public boolean begin(); 
 
     /**
-     * Permanently saves the changes of the KnowledgeBase.
-     *<p>
-     *  It can be assumed that by this call any changed data
-     *  (for some context) will be saved. Anything else is up to
-     *  the actual implementation. In case the commit fails, 
-     *  this is equivalent to a rollback.
-     *</p>
-     * @return  true if the commit was successful false otherwise.
-     *
-     * TODO #2829: Delete TL 6 deprecation 
-     * @deprecated Use {@link Transaction#commit()}, see {@link #beginTransaction(Message)}.
-     */
+	 * Permanently saves the changes of the KnowledgeBase.
+	 * <p>
+	 * It can be assumed that by this call any changed data (for some context) will be saved.
+	 * Anything else is up to the actual implementation. In case the commit fails, this is
+	 * equivalent to a rollback.
+	 * </p>
+	 * 
+	 * @return true if the commit was successful false otherwise.
+	 *
+	 *         TODO #2829: Delete TL 6 deprecation
+	 * @deprecated Use {@link Transaction#commit()}, see {@link #beginTransaction(ResKey)}.
+	 */
     @Deprecated
     public boolean commit();
 
-    /** Rollback any changes made in the current context.
-     *<p>
-     *  A implementation may choose not to implement this function at all.
-     *</p>
-     * 
-     * TODO #2829: Delete TL 6 deprecation 
-     * @deprecated Use {@link Transaction#rollback(Message, Throwable)}, see {@link #beginTransaction(Message)}.
-     */
+    /**
+	 * Rollback any changes made in the current context.
+	 * <p>
+	 * A implementation may choose not to implement this function at all.
+	 * </p>
+	 * 
+	 * TODO #2829: Delete TL 6 deprecation
+	 * 
+	 * @deprecated Use {@link Transaction#rollback(ResKey, Throwable)}, see
+	 *             {@link #beginTransaction(ResKey)}.
+	 */
     @Deprecated
     public boolean rollback();
 

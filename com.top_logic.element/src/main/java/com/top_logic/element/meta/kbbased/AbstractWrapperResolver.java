@@ -340,7 +340,7 @@ public abstract class AbstractWrapperResolver extends ModelFactory {
 		protected final E newImplementationInstance() throws ModuleException {
 			Transaction tx =
 				PersistencyLayer.getKnowledgeBase().beginTransaction(
-					Messages.START_UP_WRAPPER_RESOLVER__IMPLCLASS.fill(getImplementation()));
+					I18NConstants.START_UP_WRAPPER_RESOLVER__IMPLCLASS.fill(getImplementation().getSimpleName()));
 			E impl = createImplementation();
 			try {
 				tx.commit();

@@ -11,7 +11,10 @@
 	<buttons>
 		<button id="exportExcel"
 			class="com.top_logic.layout.table.export.ExcelExportHandler"
-			downloadNameKey="/sAllA.xlsx"
-		/>
+		>
+			<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+				downloadName="/sAllA.xlsx"
+			/>
+		</button>
 	</buttons>
 </tableView>

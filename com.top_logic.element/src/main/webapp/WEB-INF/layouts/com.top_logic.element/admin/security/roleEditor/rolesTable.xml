@@ -59,5 +59,10 @@
 				/>
 			</columns>
 		</table>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+		</buttons>
 	</tableView>
 </template>

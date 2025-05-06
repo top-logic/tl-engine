@@ -84,9 +84,15 @@
 
 			<tables>
 				<table name="priorityTable"
-					exporter="com.top_logic.layout.table.model.SimpleTableDataExport"
 					titleKey="layouts.demo.editStructureDetail.priorityTable"
 				>
+					<!-- Name is tested in test case. -->
+					<exporter class="com.top_logic.layout.table.model.SimpleTableDataExport">
+						<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+							downloadName="class.com.top_logic.layout.table.export.I18NConstants.DEFAULT_EXPORT_NAME"
+						/>
+					</exporter>
+
 					<column-default>
 						<additionalHeaders>
 							<nullCount/>

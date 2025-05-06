@@ -24,9 +24,12 @@
 				/>
 				<button id="exportExcel"
 					class="com.top_logic.layout.table.export.ExcelExportHandler"
-					downloadNameKey="element.meta.attribute.table.exportName"
 					templateName="defaultTemplate.xlsx"
-				/>
+				>
+					<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+						downloadName="element.meta.attribute.table.exportName"
+					/>
+				</button>
 			</buttons>
 
 			<dialogs>

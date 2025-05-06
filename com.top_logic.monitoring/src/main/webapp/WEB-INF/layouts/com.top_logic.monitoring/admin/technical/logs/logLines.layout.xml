@@ -23,8 +23,11 @@
 		<param name="exportExcelCommand">
 			<button id="exportExcel"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
-				exportNameKey="/s${exportExcelFileName}"
-			/>
+			>
+				<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+					downloadName="/s${exportExcelFileName}"
+				/>
+			</button>
 		</param>
 		<param name="buttons">
 			${dumpLogLineToConsoleCommand}

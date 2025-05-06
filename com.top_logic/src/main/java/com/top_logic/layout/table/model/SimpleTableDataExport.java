@@ -25,11 +25,14 @@ import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.knowledge.gui.layout.upload.DefaultDataItem;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.table.TableData;
+import com.top_logic.layout.table.export.DownloadNameProvider;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.tool.export.ExcelExportSupport;
@@ -47,7 +50,7 @@ public class SimpleTableDataExport extends AbstractConfiguredInstance<SimpleTabl
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
-	public interface Config extends PolymorphicConfiguration<SimpleTableDataExport>, ExportConfig {
+	public interface Config extends PolymorphicConfiguration<SimpleTableDataExport>, ExcelTemplateExportConfig {
 
 		/**
 		 * Number of the first row (zero based) in the template file in which application data are
@@ -93,6 +96,10 @@ public class SimpleTableDataExport extends AbstractConfiguredInstance<SimpleTabl
 
 	private Function<TableData, ExecutableState> _executability;
 
+	private DownloadNameProvider _downloadName;
+
+	private LayoutComponent _component;
+
 	/**
 	 * Creates a new {@link SimpleTableDataExport} from the given configuration.
 	 * 
@@ -104,7 +111,8 @@ public class SimpleTableDataExport extends AbstractConfiguredInstance<SimpleTabl
 	public SimpleTableDataExport(InstantiationContext context, Config config) {
 		super(context, config);
 		_executability = createExecutability(context, getConfig());
-
+		_downloadName = context.getInstance(getConfig().getDownloadNameProvider());
+		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, c -> _component = c);
 	}
 
 	private static Function<TableData, ExecutableState> createExecutability(InstantiationContext ctx, Config config) {
@@ -123,7 +131,9 @@ public class SimpleTableDataExport extends AbstractConfiguredInstance<SimpleTabl
 	@Override
 	public HandlerResult exportTableData(DisplayContext context, TableData table) {
 		String ending = excelExtension(templateFilename());
-		String downloadFileName = context.getResources().getString(getConfig().getDownloadNameKey()) + ending;
+		Object model = _component != null ? _component.getModel() : null;
+		ResKey downloadName = _downloadName.createDownloadName(_component, model);
+		String downloadFileName = context.getResources().getString(downloadName) + ending;
 		BinaryData downloadItem;
 		try {
 			downloadItem = createExportData(table, downloadFileName);

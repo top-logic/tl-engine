@@ -35,7 +35,7 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.structure.ControlRepresentable;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.control.TableControl;
-import com.top_logic.layout.table.model.ExportConfig;
+import com.top_logic.layout.table.model.ExcelTemplateExportConfig;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.export.ExcelExportSupport;
 import com.top_logic.util.error.TopLogicException;
@@ -63,10 +63,9 @@ public class ExcelExportHandler extends AbstractTableExportHandler {
 		Config.CONFIRMATION,
 		Config.TEMPLATE_NAME,
 		Config.AUTOFIT_COLUMNS,
-		Config.DOWNLOAD_NAME_KEY,
-		Config.DYNAMIC_DOWNLOAD_NAME,
+		Config.DOWNLOAD_NAME_PROVIDER,
 	})
-	public interface Config extends AbstractTableExportHandler.Config, ExportConfig {
+	public interface Config extends AbstractTableExportHandler.Config, ExcelTemplateExportConfig {
 
 		@Override
 		@Options(fun = ExportTemplates.class)
@@ -109,7 +108,7 @@ public class ExcelExportHandler extends AbstractTableExportHandler {
 	}
 
 	@Override
-	protected BinaryData createDownloadData(Runnable progressIncrementer, I18NLog log, LayoutComponent component) {
+	protected BinaryData createDownloadData(Runnable progressIncrementer, I18NLog log, LayoutComponent component, Object model) {
 		log.info(I18NConstants.STARTING_EXPORT);
 		Config config = (Config) getConfig();
 
@@ -126,7 +125,7 @@ public class ExcelExportHandler extends AbstractTableExportHandler {
 
 		log.info(I18NConstants.PREPARING_DOWNLOAD);
 		String downloadName =
-			FileUtilities.removeFileExtension(getFilename(component, config.getDownloadNameKey())) + ext;
+			FileUtilities.removeFileExtension(getFilename(component, model)) + ext;
 		return BinaryDataFactory.createBinaryDataWithName(tmpFile, downloadName);
 	}
 

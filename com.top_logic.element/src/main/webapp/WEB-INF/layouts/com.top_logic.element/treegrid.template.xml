@@ -185,7 +185,6 @@
 			<include name="templates/editComponentCommands.xml"/>
 			<button id="exportExcelGrid"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
-				exportNameKey="/sExport.xlsx"
 			/>
 			<button id="customEdit"
 				class="com.top_logic.layout.form.component.SwitchEditCommandHandler"

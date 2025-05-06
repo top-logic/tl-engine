@@ -98,8 +98,11 @@
 	<buttons>
 		<button id="exportExcel"
 			class="com.top_logic.layout.table.export.ExcelExportHandler"
-			downloadNameKey="/sstatement-log.xls"
-		/>
+		>
+			<downloadNameProvider class="com.top_logic.layout.table.export.ConstantDownloadName"
+				downloadName="/sstatement-log.xls"
+			/>
+		</button>
 		<button id="clearMonitoring"
 			class="com.top_logic.util.monitor.db.ClearCommand"
 			disabledImage="theme:ICONS_BUTTON_CLEAR_DISABLED"

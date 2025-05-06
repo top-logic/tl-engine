@@ -31,6 +31,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey FOLDER_GET;
 
+	/**
+	 * @en Stored received mail: {0}
+	 */
+	public static ResKey1 STORED_RECEIVED_MAIL__ID;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

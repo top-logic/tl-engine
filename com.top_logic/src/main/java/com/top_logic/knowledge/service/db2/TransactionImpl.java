@@ -6,7 +6,6 @@
 package com.top_logic.knowledge.service.db2;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.thread.StackTrace;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.AbstractTransaction;
 import com.top_logic.knowledge.service.I18NConstants;
@@ -248,9 +247,6 @@ class TransactionImpl extends AbstractTransaction {
 	 */
 	private void initCommitMessage(ResKey message) {
 		if (message == null) {
-			if (getOuter() == null) {
-				Logger.warn("Started transaction without commit message.", new StackTrace(), TransactionImpl.class);
-			}
 			this.commitMessageNonNull = I18NConstants.NO_COMMIT_MESSAGE;
 		} else {
 			this.commitMessageNonNull = message;

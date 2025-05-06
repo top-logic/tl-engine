@@ -63,6 +63,11 @@ public final class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey TASK_STOP_SIGNALED = legacyKey("tl.task.stop.signaled");
 
+	/**
+	 * @en Released cluster lock for task: {0}
+	 */
+	public static ResKey1 RELEASED_CLUSTER_LOCK__TASK;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

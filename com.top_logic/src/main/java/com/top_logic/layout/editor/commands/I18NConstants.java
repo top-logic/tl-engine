@@ -50,6 +50,11 @@ public class I18NConstants extends I18NConstantsBase {
 	
 	public static ResKey1 RESOLVE_COMPONENT_ERROR__LAYOUT_KEY;
 
+	/**
+	 * @en Created component: {0}
+	 */
+	public static ResKey1 CREATED_COMPONENT__NAME;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

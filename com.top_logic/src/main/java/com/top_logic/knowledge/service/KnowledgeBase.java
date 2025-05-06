@@ -242,7 +242,9 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 	 * @see Transaction#commit() Committing a transaction.
 	 * 
 	 * @since TL 5.7
+	 * @deprecated Use {@link #beginTransaction(ResKey)}.
 	 */
+	@Deprecated
 	public Transaction beginTransaction();
 	
 	/**

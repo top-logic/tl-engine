@@ -6,6 +6,7 @@
 package com.top_logic.common.webfolder.ui.clipboard;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
 
@@ -41,6 +42,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey NO_ROW_SELECTED;
 
 	public static ResKey CLIPBOARD_DIALOG_TITLE;
+
+	/**
+	 * @en Added to clipboard: {0}
+	 */
+	public static ResKey1 ADDED_TO_CLIPBOARD__MODEL;
+
+	/**
+	 * @en Removed from clipboard: {0}
+	 */
+	public static ResKey1 REMOVED_FROM_CLIPBOARD__MODEL;
 	
 	static {
 		initConstants(I18NConstants.class);

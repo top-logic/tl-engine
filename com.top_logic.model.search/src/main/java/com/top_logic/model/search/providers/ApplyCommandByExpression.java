@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.annotation.InApp;
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
@@ -20,6 +19,8 @@ import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.component.AbstractApplyAttributedCommandHandler;
 import com.top_logic.element.meta.form.component.DefaultApplyAttributedCommandHandler;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
+import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.component.WithCommitMessage;
 import com.top_logic.layout.form.FormHandler;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.WithPostCreateActions;
@@ -30,6 +31,7 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tool.boundsec.CommandHandlerUtil;
+import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Apply command handler that can be extended with an operation in TL-Script.
@@ -52,7 +54,7 @@ public class ApplyCommandByExpression extends DefaultApplyAttributedCommandHandl
 	 * Options for {@link ApplyCommandByExpression} that can be directly configured from wihin the
 	 * layout template.
 	 */
-	public interface UIOptions extends ConfigurationItem {
+	public interface UIOptions extends WithCommitMessage {
 		/**
 		 * Operation that is executed in the same transaction that stores the edited attribute
 		 * values.
@@ -108,6 +110,14 @@ public class ApplyCommandByExpression extends DefaultApplyAttributedCommandHandl
 		_actions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
 		_operation = QueryExecutor.compileOptional(config.getAdditionalOperation());
 		_confirm = QueryExecutor.compileOptional(config.getDynamicConfirm());
+	}
+
+	@Override
+	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent component, Object model,
+			Map<String, Object> someArguments) {
+
+		return super.handleCommand(aContext, component, model,
+			((Config) getConfig()).addCommitMessage(someArguments, model));
 	}
 
 	@Override

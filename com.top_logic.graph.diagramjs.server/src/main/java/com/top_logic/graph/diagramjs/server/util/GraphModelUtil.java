@@ -40,6 +40,7 @@ import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSClassNode;
 import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSEdge;
 import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSGraphModel;
 import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSLabel;
+import com.top_logic.graph.diagramjs.server.I18NConstants;
 import com.top_logic.graph.diagramjs.server.handler.CreateInheritanceHandler;
 import com.top_logic.graph.diagramjs.server.util.layout.Bounds;
 import com.top_logic.graph.diagramjs.server.util.layout.Dimension;
@@ -820,8 +821,10 @@ public class GraphModelUtil implements GraphLayoutConstants {
 	 * Deletes the persistent inheritance.
 	 */
 	public static void deleteInheritance(TLInheritance inheritance, CreateInheritanceHandler createHandler) {
-		try (Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			TLClass source = inheritance.getSpecialization();
+		TLClass source = inheritance.getSpecialization();
+		try (Transaction transaction =
+			PersistencyLayer.getKnowledgeBase()
+				.beginTransaction(I18NConstants.CHANGED_INHERITANCE__CLASS.fill(TLModelUtil.qualifiedName(source)))) {
 			List<TLClass> generalizations = source.getGeneralizations();
 			generalizations.remove(inheritance.getGeneralization());
 			if (generalizations.isEmpty()) {

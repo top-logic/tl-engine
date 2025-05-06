@@ -65,6 +65,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_NO_TLOBJECT_FORM_MODEL__FORM;
 
+	/**
+	 * @en Executed table command: {0}
+	 */
+	public static ResKey1 EXECUTED_TABLE_COMMAND__LABEL;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

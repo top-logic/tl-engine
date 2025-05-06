@@ -6,6 +6,7 @@
 package com.top_logic.graph.diagramjs.server;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.graph.diagramjs.server.commands.CreateClassCommand;
 import com.top_logic.graph.diagramjs.server.commands.CreateConnectionGraphCommand;
 import com.top_logic.graph.diagramjs.server.commands.DeleteGraphPartCommand;
@@ -124,6 +125,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @see ElementsVisibilityCommand
 	 */
 	public static ResKey ELEMENTS_VISIBILITY_COMMAND;
+
+	/**
+	 * @en Changed inheritance hierarchy of "{0}".
+	 */
+	public static ResKey1 CHANGED_INHERITANCE__CLASS;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -80,7 +80,9 @@ public class DeleteSearchCommand extends AJAXCommandHandler {
 
 	private void delete(SearchExpression expression) {
 		String searchName = expression.getName();
-		Transaction transaction = WrapperUtil.getKnowledgeBase(expression).beginTransaction();
+		Transaction transaction =
+			WrapperUtil.getKnowledgeBase(expression)
+				.beginTransaction(I18NConstants.DELETED_STORED_SEARCH__NAME.fill(searchName));
 		try {
 			expression.tDelete();
 			transaction.commit();

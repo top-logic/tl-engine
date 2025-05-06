@@ -136,6 +136,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 DUPLICATE_CHANNEL_NAME__NAME;
 
+	/**
+	 * @en Configured component "{0}".
+	 */
+	public static ResKey1 CONFIGURED_COMPONENT__NAME;
+
+	/**
+	 * @en Deleted form of "{0}".
+	 */
+	public static ResKey1 DELETED_FORM__COMPONENT;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

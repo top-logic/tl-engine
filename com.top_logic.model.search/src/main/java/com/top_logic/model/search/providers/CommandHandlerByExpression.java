@@ -11,11 +11,13 @@ import java.util.Map;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.FormHandler;
@@ -23,6 +25,7 @@ import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.WithPostCreateActions;
 import com.top_logic.layout.form.model.FormContext;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -66,6 +69,7 @@ public class CommandHandlerByExpression extends AbstractCommandHandler implement
 		Config.EXECUTABILITY_PROPERTY,
 		Config.OPERATION,
 		Config.TRANSACTION,
+		Config.COMMIT_MESSAGE,
 		Config.POST_CREATE_ACTIONS,
 		Config.FORM_APPLY,
 		Config.CLOSE_DIALOG,
@@ -117,6 +121,10 @@ public class CommandHandlerByExpression extends AbstractCommandHandler implement
 		@Name(OPERATION)
 		Expr getOperation();
 
+		@Override
+		@DynamicMode(fun = VisibleIf.class, args = @Ref(TRANSACTION))
+		ResKey1 getCommitMessage();
+
 		/**
 		 * Whether to close an active dialog, this {@link CommandHandler} is executed in.
 		 * 
@@ -153,7 +161,7 @@ public class CommandHandlerByExpression extends AbstractCommandHandler implement
 		Config config = (Config) getConfig();
 
 		if (_operation != null) {
-			try (Transaction tx = beginTransaction(_transaction)) {
+			try (Transaction tx = beginTransaction(aComponent, model)) {
 				if (aComponent instanceof FormHandler && config.getFormApply()) {
 					FormContext formContext = ((FormHandler) aComponent).getFormContext();
 					if (formContext != null) {

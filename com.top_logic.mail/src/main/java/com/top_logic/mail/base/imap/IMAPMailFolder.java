@@ -208,7 +208,8 @@ public class IMAPMailFolder extends AbstractContainerWrapper implements MailFold
 	public Mail createMail(MailMessage aMail) {
         if (aMail != null) {
         	String      theMailID = aMail.getID();
-			Transaction theTX     = this.tHandle().getKnowledgeBase().beginTransaction();
+			Transaction theTX = this.tHandle().getKnowledgeBase()
+				.beginTransaction(I18NConstants.STORED_RECEIVED_MAIL__ID.fill(theMailID));
 
             try {
 				Mail theMail = MailFactory.createMail(aMail);

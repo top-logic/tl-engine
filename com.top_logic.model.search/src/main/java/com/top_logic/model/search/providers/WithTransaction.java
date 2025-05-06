@@ -5,25 +5,28 @@
  */
 package com.top_logic.model.search.providers;
 
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.NoTransaction;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.layout.component.WithCommitMessage;
+import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.boundsec.CommandHandler;
 
 /**
  * Mix-in interface for commands that can be configured to operate in transaction context.
  */
-public interface WithTransaction {
+public interface WithTransaction extends CommandHandler {
 
 	/**
 	 * Configuration plugin for {@link WithTransaction} implementations.
 	 */
 	@Abstract
-	public interface Config extends ConfigurationItem {
+	public interface Config extends WithCommitMessage {
 
 		/**
 		 * @see #isInTransaction()
@@ -48,9 +51,15 @@ public interface WithTransaction {
 	/**
 	 * Starts a (real) transaction, if the argument given is <code>true</code>.
 	 */
-	default Transaction beginTransaction(boolean inTransaction) {
+	default Transaction beginTransaction(LayoutComponent component, Object model) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		return inTransaction ? kb.beginTransaction() : new NoTransaction(kb);
+		Config config = (Config) getConfig();
+		if (config.isInTransaction()) {
+			ResKey message = config.buildCommandMessage(component, this, model);
+			return kb.beginTransaction(message);
+		} else {
+			return new NoTransaction(kb);
+		}
 	}
 
 }

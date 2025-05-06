@@ -85,6 +85,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 CLEARED_CLUSTER_LOCK__TASK;
 
+	/**
+	 * @en Cleaned up died custer-global tasks.
+	 */
+	public static ResKey CLUSER_TASK_CLEANUP;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

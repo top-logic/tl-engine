@@ -112,7 +112,8 @@ public class EditComponentCommand extends AbstractCommandHandler {
 			DynamicComponentDefinition definition) {
 		return (arguments) -> {
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-			try (Transaction tx = kb.beginTransaction()) {
+			try (Transaction tx =
+				kb.beginTransaction(I18NConstants.CONFIGURED_COMPONENT__NAME.fill(component.getTitleKey()))) {
 				LayoutTemplateUtils.createComponent(component, definition, arguments, Collections.emptyList());
 
 				tx.commit();

@@ -264,20 +264,6 @@ public class SelectField extends AbstractFormField implements TableDataOwner, Op
 	private static final Property<TableConfigurationProvider> TABLE_CONFIGURATION_PROVIDER =
 		TypedAnnotatable.property(TableConfigurationProvider.class, "TABLE_CONFIGURATION_PROVIDER");
 
-	/**
-	 * Key for storing an explicit empty label.
-	 * 
-	 * @see #setEmptyLabel(String)
-	 */
-	static final Property<String> EMPTY_LABEL_PROPERTY = TypedAnnotatable.property(String.class, "emptyLabel");
-
-	/**
-	 * Key for storing the empty label set for immutable mode.
-	 * 
-	 * @see #setEmptyLabelImmutable(String)
-	 */
-	static final Property<String> EMPTY_LABEL_IMMUTABLE_PROPERTY = TypedAnnotatable.property(String.class, "emptyLabelImmutable");
-
 	private static final Property<Boolean> MATCH_SUBSTRING = TypedAnnotatable.property(Boolean.class, "matchSubstring");
 
 	private static final Property<TableData> TABLE_DATA = TypedAnnotatable.property(TableData.class, "tableData");
@@ -1103,13 +1089,6 @@ public class SelectField extends AbstractFormField implements TableDataOwner, Op
 	public String getOptionLabel(Object option) {
 		return SelectFieldUtils.getOptionLabel(this, option);
 	}
-
-	/**
-	 * The label for the {@link #NO_OPTION}.
-	 */
-	private String getEmptyLabel() {
-		return SelectFieldUtils.getEmptySelectionLabel(this);
-    }
 
 	/**
 	 * Sets the label for the value that represents the empty selection.

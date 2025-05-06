@@ -30,7 +30,8 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class StringSetStorage<C extends StringSetStorage.Config<?>> extends CollectionStorage<C> {
+public class StringSetStorage<C extends StringSetStorage.Config<?>> extends CollectionStorage<C>
+		implements ColumnStorage {
 
 	/**
 	 * Configuration options for {@link StringSetStorage}.
@@ -54,6 +55,11 @@ public class StringSetStorage<C extends StringSetStorage.Config<?>> extends Coll
 	@CalledByReflection
 	public StringSetStorage(InstantiationContext context, C config) {
 		super(context, config);
+	}
+
+	@Override
+	public String getStorageAttribute() {
+		return getAttribute().getName();
 	}
 
 	@Override

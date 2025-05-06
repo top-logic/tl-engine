@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.col.Provider;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.exception.ErrorSeverity;
@@ -80,12 +81,15 @@ public class ScriptComponent extends BoundLayout {
 	 * @param withCommit
 	 *        Whether data changes made by the expression are allowed. If changes are made, they are
 	 *        stored. Otherwise executing the expression fails.
+	 * @param src
+	 *        The script source code.
 	 */
-	public HandlerResult execute(SearchExpression expression, boolean withCommit) {
+	public HandlerResult execute(SearchExpression expression, boolean withCommit, Provider<String> src) {
 		Collection<?> results;
 		try {
 			if (withCommit) {
-				try (Transaction tx = kb().beginTransaction()) {
+				try (Transaction tx =
+					kb().beginTransaction(I18NConstants.EXECUTED_CUSTOM_SCRIPT__SCRIPT.fill(src.get()))) {
 					results = getResults(expression);
 					tx.commit();
 				}

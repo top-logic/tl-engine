@@ -203,7 +203,7 @@ public class UserMonitor extends AbstractReceiver {
 		if (isExcluded(userName)) {
 			return;
 		}
-		try (Transaction tx = kBase.beginTransaction()) {
+		try (Transaction tx = kBase.beginTransaction(I18NConstants.LOGGED_IN_USER__USER.fill(userName))) {
 			UserSession.startSession(kBase, userName, anEvent.getSessionID(), anEvent.getMachine(), theDate);
             // This should happen in the (TL-/DB-)context of the user logging in.
 			tx.commit();
@@ -228,7 +228,8 @@ public class UserMonitor extends AbstractReceiver {
 		UserSession   theSession = this.findSessionOnServer(userName,
                                                             anEvent.getSessionID());
 		boolean theResult;
-		try (Transaction tx = theSession.getKnowledgeBase().beginTransaction()) {
+		try (Transaction tx =
+			theSession.getKnowledgeBase().beginTransaction(I18NConstants.LOGGED_OUT_USER__USER.fill(userName))) {
 			theResult = theSession.endSession(theDate);
 
 			if (theResult) {

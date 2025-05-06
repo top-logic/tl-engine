@@ -77,7 +77,7 @@ public class InlineSetStorage<C extends InlineSetStorage.Config<?>> extends Inli
 	}
 
 	@Override
-	protected String getTable() {
+	public String getTable() {
 		return _outgoingQuery.getAssociationTypeName();
 	}
 

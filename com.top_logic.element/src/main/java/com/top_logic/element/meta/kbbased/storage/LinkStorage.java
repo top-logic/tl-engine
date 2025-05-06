@@ -231,6 +231,11 @@ public abstract class LinkStorage<C extends LinkStorage.Config<?>> extends Colle
 	}
 
 	@Override
+	public String getStorageColumn() {
+		return DBKnowledgeAssociation.REFERENCE_DEST_NAME;
+	}
+
+	@Override
 	public ObjectKey getPartId(Map<String, Object> row) {
 		if (monomophicTable()) {
 			return getAttribute().tId();

@@ -28,7 +28,7 @@ import com.top_logic.element.changelog.model.trans.TransientCreation;
 import com.top_logic.element.changelog.model.trans.TransientDeletion;
 import com.top_logic.element.changelog.model.trans.TransientModification;
 import com.top_logic.element.changelog.model.trans.TransientUpdate;
-import com.top_logic.element.meta.AssociationStorage;
+import com.top_logic.element.meta.SeparateTableStorage;
 import com.top_logic.element.meta.kbbased.storage.ColumnStorage;
 import com.top_logic.knowledge.event.ChangeSet;
 import com.top_logic.knowledge.event.ChangeSetReader;
@@ -55,7 +55,8 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
- * 
+ * Algorithm to analyze technical changes reported by a {@link KnowledgeBase} an build a model
+ * change log.
  */
 public class ChangeLogBuilder {
 
@@ -77,7 +78,7 @@ public class ChangeLogBuilder {
 	 */
 	private Map<TLStructuredType, Map<String, TLStructuredTypePart>> _columnBindingByType = new HashMap<>();
 
-	private Map<MOStructure, AssociationStorage> _storageByTable = new HashMap<>();
+	private Map<MOStructure, Map<String, SeparateTableStorage>> _storagesByTable = new HashMap<>();
 
 	/**
 	 * Creates a {@link ChangeLogBuilder}.
@@ -209,11 +210,11 @@ public class ChangeLogBuilder {
 		
 			for (ObjectCreation creation : creations) {
 				MetaObject table = creation.getObjectType();
+				analyzeTechnicalUpdate(_changeSet, table, createdKeys, creation);
 		
 				List<TLClass> classes = _classesByTable.get(table);
 				if (classes == null) {
-					// A technical object.
-					analyzeTechnicalUpdate(_changeSet, table, createdKeys, creation);
+					// A pure technical object.
 					continue;
 				}
 		
@@ -238,11 +239,11 @@ public class ChangeLogBuilder {
 		
 			for (ItemUpdate update : updates) {
 				MetaObject table = update.getObjectType();
+				analyzeTechnicalUpdate(_changeSet, table, Collections.emptySet(), update);
 		
 				List<TLClass> classes = _classesByTable.get(table);
 				if (classes == null) {
-					// A technical object.
-					analyzeTechnicalUpdate(_changeSet, table, Collections.emptySet(), update);
+					// A pure technical object.
 					continue;
 				}
 		
@@ -294,11 +295,11 @@ public class ChangeLogBuilder {
 		
 			for (ItemDeletion deletion : deletions) {
 				MetaObject table = deletion.getObjectType();
+				analyzeTechnicalUpdate(_changeSet, table, deletedKeys, deletion);
 		
 				List<TLClass> classes = _classesByTable.get(table);
 				if (classes == null) {
-					// A technical object.
-					analyzeTechnicalUpdate(_changeSet, table, deletedKeys, deletion);
+					// A pure technical object.
 					continue;
 				}
 		
@@ -326,23 +327,34 @@ public class ChangeLogBuilder {
 
 		private void analyzeTechnicalUpdate(ChangeSet changeSet, MetaObject table, Set<ObjectKey> createdDeletedKeys,
 				ItemChange change) {
-			AssociationStorage storage = _storageByTable.get(table);
-			if (storage != null) {
+			Map<String, SeparateTableStorage> storages = _storagesByTable.get(table);
+			if (storages == null) {
+				// Table is not used to store value of foreign objects.
+				return;
+			}
+
+			for (SeparateTableStorage storage : storages.values()) {
 				// A row that stores (part of) an attribute value of some object.
 				ObjectKey objId = storage.getBaseObjectId(change.getValues());
-		
-				ObjectKey oldId = inRevision(objId, changeSet.getRevision() - 1);
-				ObjectKey newId = inRevision(objId, changeSet.getRevision());
-				if (createdDeletedKeys.contains(oldId) || createdDeletedKeys.contains(newId)) {
-					// Part of a created or deleted object, no additional change.
-					return;
-				}
-		
-				TLObject newObject = _kb.resolveObjectKey(newId).getWrapper();
-				ObjectKey partId = storage.getPartId(change.getValues());
-				TLStructuredTypePart part = _kb.resolveObjectKey(partId).getWrapper();
+				if (objId != null) {
+					// Note: A table storing values for other objects is not required to do so for
+					// every row. An example is the inline collection storage, which may optionally
+					// associate value objects with container objects by storing a foreign key value
+					// in the table of the value object.
 
-				enter(newObject).add(part);
+					ObjectKey oldId = inRevision(objId, changeSet.getRevision() - 1);
+					ObjectKey newId = inRevision(objId, changeSet.getRevision());
+					if (createdDeletedKeys.contains(oldId) || createdDeletedKeys.contains(newId)) {
+						// Part of a created or deleted object, no additional change.
+						return;
+					}
+
+					TLObject newObject = _kb.resolveObjectKey(newId).getWrapper();
+					ObjectKey partId = storage.getPartId(change.getValues());
+					TLStructuredTypePart part = _kb.resolveObjectKey(partId).getWrapper();
+
+					enter(newObject).add(part);
+				}
 			}
 		}
 	}
@@ -394,7 +406,7 @@ public class ChangeLogBuilder {
 	 */
 	private void analyzeModel() {
 		_classesByTable = new HashMap<>();
-		_storageByTable = new HashMap<>();
+		_storagesByTable = new HashMap<>();
 
 		for (TLModule module : _model.getModules()) {
 			for (TLType type : module.getTypes()) {
@@ -410,12 +422,15 @@ public class ChangeLogBuilder {
 							// Skip derived storages.
 							continue;
 						}
-						if (storage instanceof AssociationStorage associationStorage) {
+						if (storage instanceof SeparateTableStorage associationStorage) {
 							String storageTable = associationStorage.getTable();
+							String storageColumn = associationStorage.getStorageColumn();
 
-							_storageByTable.putIfAbsent(
-								(MOStructure) _kb.getMORepository().getType(storageTable),
-								associationStorage);
+							MOStructure storageType = (MOStructure) _kb.getMORepository().getType(storageTable);
+							Map<String, SeparateTableStorage> storageByColumn =
+								_storagesByTable.computeIfAbsent(storageType, x -> new HashMap<>());
+
+							storageByColumn.putIfAbsent(storageColumn, associationStorage);
 						}
 					}
 				}

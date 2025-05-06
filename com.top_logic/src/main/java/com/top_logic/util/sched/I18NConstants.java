@@ -41,9 +41,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey MEMORY_CHART_TITLE = legacyKey("admin.sys.memoryObserver.chart.title");
 
 	/**
-	 * @en Cleaned task log.
+	 * @en Cleaned task log: {0}
 	 */
-	public static ResKey CLEANED_TASK_LOG;
+	public static ResKey1 CLEANED_TASK_LOG__TASK;
 
 	/**
 	 * @en Cleaned task log of global task: {0}.

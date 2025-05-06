@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -17,6 +18,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.LongID;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
@@ -57,11 +59,11 @@ import com.top_logic.model.util.TLModelUtil;
  */
 public class ChangeLogBuilder {
 
-	private KnowledgeBase _kb;
+	private final KnowledgeBase _kb;
 
-	private HistoryManager _hm;
+	private final HistoryManager _hm;
 
-	private TLModel _model;
+	private final TLModel _model;
 
 	private Revision _startRev;
 
@@ -143,9 +145,7 @@ public class ChangeLogBuilder {
 			entry.setMessage(revision.getLog());
 			entry.setAuthor(resolveAuthor(revision));
 
-			analyzeCreations(changeSet, entry);
-			analyzeUpdates(changeSet, entry);
-			analyzeDeletions(changeSet, entry);
+			new ChangeSetAnalyzer(changeSet, entry).analyze();
 
 			log.add(entry);
 		}
@@ -153,129 +153,202 @@ public class ChangeLogBuilder {
 		return log;
 	}
 
-	/**
-	 * Analyzes creations in the given {@link ChangeSet} and transfer them to the given model change
-	 * set.
-	 */
-	private void analyzeCreations(ChangeSet changeSet, TransientChangeSet entry) {
-		List<ObjectCreation> creations = changeSet.getCreations();
+	private class ChangeSetAnalyzer {
 
-		// All object IDs of objects created in the current change set.
-		Set<ObjectKey> createdKeys = creations.stream().map(c -> c.getOriginalObject()).collect(Collectors.toSet());
+		private final ChangeSet _changeSet;
 
-		for (ObjectCreation creation : creations) {
-			MetaObject table = creation.getObjectType();
+		private final TransientChangeSet _entry;
 
-			List<TLClass> classes = _classesByTable.get(table);
-			if (classes == null) {
-				// A technical object.
-				analyzeTechnicalUpdate(changeSet, entry, table, createdKeys, creation);
-				continue;
-			}
+		private final Map<TLObject, Set<TLStructuredTypePart>> _updates = new HashMap<>();
 
-			TLObject object = _kb.resolveObjectKey(creation.getOriginalObject()).getWrapper();
-
-			TLObject container = object.tContainer();
-			if (container != null && createdKeys.contains(container.tId())) {
-				// Only a part of some other object, ignore.
-				continue;
-			}
-
-			// Record a creation.
-			TransientCreation change = new TransientCreation();
-			change.setObject(object);
-
-			entry.addChange(change);
+		/**
+		 * Creates a {@link ChangeSetAnalyzer}.
+		 */
+		public ChangeSetAnalyzer(ChangeSet changeSet, TransientChangeSet entry) {
+			_changeSet = changeSet;
+			_entry = entry;
 		}
-	}
 
-	private void analyzeUpdates(ChangeSet changeSet, TransientChangeSet entry) {
-		List<ItemUpdate> updates = changeSet.getUpdates();
+		public void analyze() {
+			analyzeCreations();
+			analyzeUpdates();
+			analyzeDeletions();
 
-		for (ItemUpdate update : updates) {
-			MetaObject table = update.getObjectType();
+			for (Entry<TLObject, Set<TLStructuredTypePart>> entry : _updates.entrySet()) {
+				TransientUpdate change = new TransientUpdate();
 
-			List<TLClass> classes = _classesByTable.get(table);
-			if (classes == null) {
-				// A technical object.
-				analyzeTechnicalUpdate(changeSet, entry, table, Collections.emptySet(), update);
-				continue;
-			}
+				TLObject newObject = entry.getKey();
+				change.setObject(newObject);
 
-			TLObject newObject = _kb.resolveObjectKey(update.getOriginalObject()).getWrapper();
+				TLObject oldObject =
+					_kb.resolveObjectKey(inRevision(newObject.tId(), _changeSet.getRevision() - 1)).getWrapper();
 
-			TLObject oldObject =
-				_kb.resolveObjectKey(update.getObjectId().toObjectKey(changeSet.getRevision() - 1)).getWrapper();
+				for (TLStructuredTypePart part : entry.getValue()) {
+					TransientModification modification = new TransientModification();
+					modification.setPart(part);
 
-			// Record an update.
-			TransientUpdate change = new TransientUpdate();
-			change.setObject(newObject);
+					modification.setOldValue(oldObject.tValue(part));
+					modification.setNewValue(newObject.tValue(part));
 
-			Map<String, Object> valueUpdates = update.getValues();
-			TLStructuredType type = newObject.tType();
-
-			Map<String, TLStructuredTypePart> partByColumn = lookupColumnBinding(type);
-			for (Entry<String, Object> valueUpdate : valueUpdates.entrySet()) {
-				String storageAttribute = valueUpdate.getKey();
-				TLStructuredTypePart part = partByColumn.get(storageAttribute);
-				if (part == null) {
-					// A change that has no model representation, ignore.
-					continue;
+					change.addModification(modification);
 				}
 
-				TransientModification modification = new TransientModification();
-				modification.setPart(part);
-
-				modification.setOldValue(oldObject.tValue(part));
-				modification.setNewValue(newObject.tValue(part));
-
-				change.addModification(modification);
+				_entry.addChange(change);
 			}
-
-			entry.addChange(change);
 		}
-	}
 
-	private void analyzeTechnicalUpdate(ChangeSet changeSet, TransientChangeSet entry, MetaObject table,
-			Set<ObjectKey> createdDeletedKeys,
-			ItemChange update) {
-		AssociationStorage storage = _storageByTable.get(table);
-		if (storage != null) {
-			// A row that stores (part of) an attribute value of some object.
-			ObjectKey objId = storage.getBaseObjectId(update.getValues());
-			ObjectKey oldId = inRevision(objId, changeSet.getRevision() - 1);
-			ObjectKey newId = inRevision(objId, changeSet.getRevision());
-			if (createdDeletedKeys.contains(oldId) || createdDeletedKeys.contains(newId)) {
-				// Part of a created or deleted object, no additional change.
-				return;
+		/**
+		 * Analyzes creations in the given {@link ChangeSet} and transfer them to the given model change
+		 * set.
+		 */
+		private void analyzeCreations() {
+			List<ObjectCreation> creations = _changeSet.getCreations();
+		
+			// All object IDs of objects created in the current change set.
+			Set<ObjectKey> createdKeys = creations.stream().map(c -> c.getOriginalObject()).collect(Collectors.toSet());
+		
+			for (ObjectCreation creation : creations) {
+				MetaObject table = creation.getObjectType();
+		
+				List<TLClass> classes = _classesByTable.get(table);
+				if (classes == null) {
+					// A technical object.
+					analyzeTechnicalUpdate(_changeSet, table, createdKeys, creation);
+					continue;
+				}
+		
+				TLObject object = _kb.resolveObjectKey(creation.getOriginalObject()).getWrapper();
+		
+				TLObject container = object.tContainer();
+				if (container != null && createdKeys.contains(container.tId())) {
+					// Only a part of some other object, ignore.
+					continue;
+				}
+		
+				// Record a creation.
+				TransientCreation change = new TransientCreation();
+				change.setObject(object);
+		
+				_entry.addChange(change);
 			}
+		}
 
-			ObjectKey partId = storage.getPartId(update.getValues());
+		private void analyzeUpdates() {
+			List<ItemUpdate> updates = _changeSet.getUpdates();
+		
+			for (ItemUpdate update : updates) {
+				MetaObject table = update.getObjectType();
+		
+				List<TLClass> classes = _classesByTable.get(table);
+				if (classes == null) {
+					// A technical object.
+					analyzeTechnicalUpdate(_changeSet, table, Collections.emptySet(), update);
+					continue;
+				}
+		
+				TLObject newObject = _kb.resolveObjectKey(update.getOriginalObject()).getWrapper();
+		
+				// Record an update.
+				Set<TLStructuredTypePart> changedParts = enter(newObject);
+		
+				Map<String, Object> valueUpdates = update.getValues();
+				Map<String, Object> oldValues = update.getOldValues();
+				TLStructuredType type = newObject.tType();
+		
+				Map<String, TLStructuredTypePart> partByColumn = lookupColumnBinding(type);
+				for (Entry<String, Object> valueUpdate : valueUpdates.entrySet()) {
+					String storageAttribute = valueUpdate.getKey();
 
-			TLObject oldObject = _kb.resolveObjectKey(oldId).getWrapper();
-			TLObject newObject = _kb.resolveObjectKey(newId).getWrapper();
+					Object newValue = valueUpdate.getValue();
+					Object oldValue = oldValues.get(storageAttribute);
 
-			TLStructuredTypePart part = _kb.resolveObjectKey(partId).getWrapper();
+					if (Utils.equals(newValue, oldValue)) {
+						// A value was provided in an update event for technical reasons, without
+						// the value being changed.
+						continue;
+					}
 
-			TransientUpdate change = new TransientUpdate();
-			change.setObject(newObject);
+					TLStructuredTypePart part = partByColumn.get(storageAttribute);
+					if (part == null) {
+						// A change that has no model representation, ignore.
+						continue;
+					}
 
-			TransientModification modification = new TransientModification();
-			modification.setPart(part);
+					changedParts.add(part);
+				}
+			}
+		}
 
-			modification.setOldValue(oldObject.tValue(part));
-			modification.setNewValue(newObject.tValue(part));
+		/**
+		 * Marks the given object as changed and retrieves the set of changed parts.
+		 */
+		private Set<TLStructuredTypePart> enter(TLObject newObject) {
+			return _updates.computeIfAbsent(newObject, x -> new HashSet<>());
+		}
 
-			change.addModification(modification);
+		private void analyzeDeletions() {
+			List<ItemDeletion> deletions = _changeSet.getDeletions();
+		
+			Set<ObjectKey> deletedKeys = deletions.stream()
+				.map(c -> c.getObjectId().toObjectKey(_changeSet.getRevision() - 1)).collect(Collectors.toSet());
+		
+			for (ItemDeletion deletion : deletions) {
+				MetaObject table = deletion.getObjectType();
+		
+				List<TLClass> classes = _classesByTable.get(table);
+				if (classes == null) {
+					// A technical object.
+					analyzeTechnicalUpdate(_changeSet, table, deletedKeys, deletion);
+					continue;
+				}
+		
+				KnowledgeItem item =
+					_kb.resolveObjectKey(deletion.getObjectId().toObjectKey(_changeSet.getRevision() - 1));
+				TLObject object = item.getWrapper();
+		
+				TLObject container = object.tContainer();
+				if (container != null && deletedKeys.contains(container.tId())) {
+					// Only a part of some other object, ignore.
+					continue;
+				}
+		
+				// TODO: There might be surviving parts of the deleted object, if composition references
+				// of the deleted object were modified in the same transaction immediately before
+				// deletion.
+		
+				// Record a deletion.
+				TransientDeletion change = new TransientDeletion();
+				change.setObject(object);
+		
+				_entry.addChange(change);
+			}
+		}
 
-			entry.addChange(change);
+		private void analyzeTechnicalUpdate(ChangeSet changeSet, MetaObject table, Set<ObjectKey> createdDeletedKeys,
+				ItemChange change) {
+			AssociationStorage storage = _storageByTable.get(table);
+			if (storage != null) {
+				// A row that stores (part of) an attribute value of some object.
+				ObjectKey objId = storage.getBaseObjectId(change.getValues());
+		
+				ObjectKey oldId = inRevision(objId, changeSet.getRevision() - 1);
+				ObjectKey newId = inRevision(objId, changeSet.getRevision());
+				if (createdDeletedKeys.contains(oldId) || createdDeletedKeys.contains(newId)) {
+					// Part of a created or deleted object, no additional change.
+					return;
+				}
+		
+				TLObject newObject = _kb.resolveObjectKey(newId).getWrapper();
+				ObjectKey partId = storage.getPartId(change.getValues());
+				TLStructuredTypePart part = _kb.resolveObjectKey(partId).getWrapper();
+
+				enter(newObject).add(part);
+			}
 		}
 	}
 
 	private static ObjectKey inRevision(ObjectKey objId, long rev) {
-		return objId.getHistoryContext() == Revision.CURRENT_REV
-			? new DefaultObjectKey(objId.getBranchContext(), rev, objId.getObjectType(), objId.getObjectName())
-			: objId;
+		return new DefaultObjectKey(objId.getBranchContext(), rev, objId.getObjectType(), objId.getObjectName());
 	}
 
 	private Map<String, TLStructuredTypePart> lookupColumnBinding(TLStructuredType type) {
@@ -294,44 +367,6 @@ public class ChangeLogBuilder {
 		}
 
 		return partByColumn;
-	}
-
-	private void analyzeDeletions(ChangeSet changeSet, TransientChangeSet entry) {
-		List<ItemDeletion> deletions = changeSet.getDeletions();
-
-		Set<ObjectKey> deletedKeys = deletions.stream()
-			.map(c -> c.getObjectId().toObjectKey(changeSet.getRevision() - 1)).collect(Collectors.toSet());
-
-		for (ItemDeletion deletion : deletions) {
-			MetaObject table = deletion.getObjectType();
-
-			List<TLClass> classes = _classesByTable.get(table);
-			if (classes == null) {
-				// A technical object.
-				analyzeTechnicalUpdate(changeSet, entry, table, deletedKeys, deletion);
-				continue;
-			}
-
-			KnowledgeItem item =
-				_kb.resolveObjectKey(deletion.getObjectId().toObjectKey(changeSet.getRevision() - 1));
-			TLObject object = item.getWrapper();
-
-			TLObject container = object.tContainer();
-			if (container != null && deletedKeys.contains(container.tId())) {
-				// Only a part of some other object, ignore.
-				continue;
-			}
-
-			// TODO: There might be surviving parts of the deleted object, if composition references
-			// of the deleted object were modified in the same transaction immediately before
-			// deletion.
-
-			// Record a deletion.
-			TransientDeletion change = new TransientDeletion();
-			change.setObject(object);
-
-			entry.addChange(change);
-		}
 	}
 
 	/**

@@ -75,7 +75,6 @@ import com.top_logic.basic.db.sql.SQLOrder;
 import com.top_logic.basic.db.sql.SQLPart;
 import com.top_logic.basic.db.sql.SQLQuery;
 import com.top_logic.basic.exception.I18NRuntimeException;
-import com.top_logic.basic.message.Message;
 import com.top_logic.basic.sched.SchedulerServiceHandle;
 import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.basic.sql.ConnectionPool;
@@ -85,6 +84,7 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.ResultSetReader;
 import com.top_logic.basic.thread.UnboundListener;
 import com.top_logic.basic.util.ComputationEx2;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.StopWatch;
 import com.top_logic.dob.DataObject;
 import com.top_logic.dob.DataObjectException;
@@ -165,7 +165,6 @@ import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.KnowledgeBaseRefetch;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
-import com.top_logic.knowledge.service.Messages;
 import com.top_logic.knowledge.service.ReaderConfig;
 import com.top_logic.knowledge.service.RefetchTimeout;
 import com.top_logic.knowledge.service.Revision;
@@ -203,7 +202,6 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLObject;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
-import com.top_logic.util.message.MessageStoreFormat;
 
 
 /**
@@ -2300,7 +2298,8 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 			long newBranchId =
 				sequenceManager.nextSequenceNumber(dbHelper, commitConnection, dbHelper.retryCount(), BRANCH_SEQUENCE);
 			RevisionImpl createRevision =
-				createRevision(commitConnection, Messages.BRANCH_CREATED__ID.fill(Long.valueOf(newBranchId)));
+				createRevision(commitConnection,
+					com.top_logic.knowledge.service.I18NConstants.BRANCH_CREATED__ID.fill(Long.valueOf(newBranchId)));
 			long createRev = createRevision.getCommitNumber();
         	
 			UpdateChainLink link = null;
@@ -2795,14 +2794,15 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	}
 
     @Override
-	public Transaction beginTransaction(Message commitMessage) {
+	public Transaction beginTransaction(ResKey commitMessage) {
     	return internalCreateDBContext().begin(false, commitMessage);
     }
     
     /**
-     * TODO #2829: Delete TL 6 deprecation 
-     * @deprecated Use {@link #beginTransaction(Message)}.
-     */
+	 * TODO #2829: Delete TL 6 deprecation
+	 * 
+	 * @deprecated Use {@link #beginTransaction(ResKey)}.
+	 */
     @Override
 	@Deprecated
     public boolean begin() {
@@ -2811,9 +2811,10 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
     }
 
     /**
-     * TODO #2829: Delete TL 6 deprecation 
-     * @deprecated Use {@link #beginTransaction(Message)}.
-     */
+	 * TODO #2829: Delete TL 6 deprecation
+	 * 
+	 * @deprecated Use {@link #beginTransaction(ResKey)}.
+	 */
     @Override
 	@Deprecated
     public boolean commit() {
@@ -2845,9 +2846,10 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	}
 
 	/**
-     * TODO #2829: Delete TL 6 deprecation 
-     * @deprecated Use {@link #beginTransaction(Message)}.
-     */
+	 * TODO #2829: Delete TL 6 deprecation
+	 * 
+	 * @deprecated Use {@link #beginTransaction(ResKey)}.
+	 */
     @Override
 	@Deprecated
 	public boolean rollback() {
@@ -3420,7 +3422,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		return currentInteraction().set(_localDBContext, (DBContext) o1);
 	}
 
-	/* package protected */RevisionImpl createRevision(PooledConnection commitConnection, Message logMessage)
+	/* package protected */RevisionImpl createRevision(PooledConnection commitConnection, ResKey logMessage)
 			throws SQLException, MergeConflictException, RefetchTimeout {
 		
 		SubSessionContext subsession = currentInteraction().getSubSessionContext();
@@ -3463,11 +3465,10 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	}
 
 	/* package protected */ RevisionImpl internalCreateRevision(long commitNumber, String author, long date,
-			Message logMessage) {
+			ResKey logMessage) {
 		// Create commit message
 		RevisionImpl newRevision = (RevisionImpl) newImmutableItem(getRevisionType());
-        String serializedMessage = MessageStoreFormat.toString(logMessage);
-        newRevision.initNew(commitNumber, author, date, serializedMessage);
+		newRevision.initNew(commitNumber, author, date, logMessage);
 
 		return newRevision;
 	}

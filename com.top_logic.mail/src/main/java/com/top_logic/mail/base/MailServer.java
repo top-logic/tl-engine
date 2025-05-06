@@ -193,7 +193,7 @@ public class MailServer extends KBBasedManagedClass<MailServer.Config> implement
 		if (!_actived) {
 			return;
 		}
-		Transaction tx = kb().beginTransaction(Messages.INITIALISING_ROOT_FOLDER);
+		Transaction tx = kb().beginTransaction(I18NConstants.INITIALISING_ROOT_FOLDER);
 		try {
 			getRootFolder();
 		} catch (Exception ex) {

@@ -17,6 +17,7 @@ import com.top_logic.knowledge.event.CommitEvent;
 import com.top_logic.knowledge.event.EventWriter;
 import com.top_logic.knowledge.event.KnowledgeEvent;
 import com.top_logic.knowledge.event.convert.EventRewriter;
+import com.top_logic.knowledge.service.I18NConstants;
 
 /**
  * {@link EventRewriter} merging all revision between given revisions (including those revisions)
@@ -66,8 +67,6 @@ public class RevisionMerge extends AbstractKnowledgeEventVisitor<Object, Void> i
 
 	private List<KnowledgeEvent> _events = null;
 
-	private List<String> _comments = null;
-
 	/**
 	 * Creates a {@link RevisionMerge} from configuration.
 	 * 
@@ -95,14 +94,12 @@ public class RevisionMerge extends AbstractKnowledgeEventVisitor<Object, Void> i
 		long revision = cs.getRevision();
 		if (_startRevision == revision) {
 			_events = new ArrayList<>();
-			_comments = new ArrayList<>();
 		}
 		if (_events != null) {
 			mergeAll(cs);
 			if (_stopRevision == revision) {
 				writeMergedCS(out, cs);
 				_events = null;
-				_comments = null;
 			} else {
 				writeEmptyChangeSet(out, cs);
 			}
@@ -119,26 +116,19 @@ public class RevisionMerge extends AbstractKnowledgeEventVisitor<Object, Void> i
 			additionalEvent.setRevision(revision);
 			cs.merge(additionalEvent);
 		}
-		StringBuilder logMessage = new StringBuilder();
-		for (String msg : _comments) {
-			if (logMessage.length() > 0) {
-				logMessage.append(",");
-			}
-			logMessage.append(msg);
-		}
-		cs.setCommit(newCommitEvent(orig, logMessage.toString()));
+		cs.setCommit(newCommitEvent(orig));
 		out.write(cs);
 	}
 
 	private void writeEmptyChangeSet(EventWriter out, ChangeSet orig) {
 		ChangeSet cs = new ChangeSet(orig.getRevision());
-		cs.setCommit(newCommitEvent(orig, "Produced to merge revisions " + _startRevision + " to " + _stopRevision));
+		cs.setCommit(newCommitEvent(orig));
 		out.write(cs);
 	}
 
-	private CommitEvent newCommitEvent(ChangeSet orig, String logMessage) {
+	private CommitEvent newCommitEvent(ChangeSet orig) {
 		return new CommitEvent(orig.getRevision(), MIGRATION_AUTHOR, orig.getCommit().getDate(),
-			logMessage);
+			I18NConstants.SYNTHESIZED_COMMIT_DURING_REPLAY);
 	}
 
 	private void mergeAll(ChangeSet cs) {
@@ -146,7 +136,6 @@ public class RevisionMerge extends AbstractKnowledgeEventVisitor<Object, Void> i
 		_events.addAll(cs.getBranchEvents());
 		_events.addAll(cs.getCreations());
 		_events.addAll(cs.getDeletions());
-		_comments.add(cs.getCommit().getLog());
 	}
 
 }

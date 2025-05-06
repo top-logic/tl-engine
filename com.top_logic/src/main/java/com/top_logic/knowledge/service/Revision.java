@@ -8,8 +8,8 @@ package com.top_logic.knowledge.service;
 import java.util.Date;
 import java.util.Set;
 
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.compare.AbstractAuthorAccessor;
 import com.top_logic.model.TLStructuredType;
@@ -87,8 +87,8 @@ public interface Revision extends RevisionBase, Comparable<Revision> {
 		}
 
 		@Override
-		public String getLog() {
-			return StringServices.EMPTY_STRING;
+		public ResKey getLog() {
+			return I18NConstants.NO_COMMIT_MESSAGE;
 		}
 
 		@Override
@@ -136,8 +136,8 @@ public interface Revision extends RevisionBase, Comparable<Revision> {
 		}
 
 		@Override
-		public String getLog() {
-			return StringServices.EMPTY_STRING;
+		public ResKey getLog() {
+			return I18NConstants.NO_COMMIT_MESSAGE;
 		}
 
 		@Override
@@ -200,7 +200,7 @@ public interface Revision extends RevisionBase, Comparable<Revision> {
 	/**
 	 * A log message that was created for the commit of this revision. 
 	 */
-	public String getLog();
+	public ResKey getLog();
 
 	/**
 	 * The date and time when this revision was created.

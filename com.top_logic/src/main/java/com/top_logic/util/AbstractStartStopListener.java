@@ -319,7 +319,7 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 
         KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
         Transaction tx = kb.beginTransaction(
-        	Messages.APPLICATION_STARTUP__NAME_VERSION.fill(theVersion.getName(), theVersion.getVersionString()));
+			I18NConstants.APPLICATION_STARTUP__NAME_VERSION.fill(theVersion.getName(), theVersion.getVersionString()));
         {
         	this.initSubClassHook(aContext);
 
@@ -608,7 +608,7 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 		
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		Transaction tx = kb.beginTransaction(
-			Messages.APPLICATION_STARTUP__NAME_VERSION.fill(theVersion.getName(), theVersion.getVersionString()));
+			I18NConstants.APPLICATION_STARTUP__NAME_VERSION.fill(theVersion.getName(), theVersion.getVersionString()));
 		{
 			ModuleUtil.INSTANCE.startConfiguredModules();
 

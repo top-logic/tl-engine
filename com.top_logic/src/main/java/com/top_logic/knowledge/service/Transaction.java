@@ -5,7 +5,7 @@
  */
 package com.top_logic.knowledge.service;
 
-import com.top_logic.basic.message.Message;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * A transaction in a {@link KnowledgeBase}.
@@ -17,17 +17,17 @@ import com.top_logic.basic.message.Message;
  * <pre>
  * Transaction tx = kb.beginTx("Saving changes.");
  * try {
- *    // Code that manipulates the knowledge base.
- *   
- *    // Commit changes in this transaction.
- *    tx.commit();
+ * 	// Code that manipulates the knowledge base.
+ * 
+ * 	// Commit changes in this transaction.
+ * 	tx.commit();
  * } finally {
- *    // Roll back, if control flow did not reach commit. Noop otherwise.
- *    tx.rollback("Invalid state.");
+ * 	// Roll back, if control flow did not reach commit. Noop otherwise.
+ * 	tx.rollback("Invalid state.");
  * }
  * </pre>
  * 
- * @see KnowledgeBase#beginTransaction(Message)
+ * @see KnowledgeBase#beginTransaction(ResKey)
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -48,8 +48,8 @@ public interface Transaction extends AutoCloseable {
 	int STATE_COMMITTED = 1;
 
 	/**
-	 * {@link Transaction} has been {@link #rollback(Message, Throwable) rolled
-	 * back}, or {@link #commit()} has failed.
+	 * {@link Transaction} has been {@link #rollback(ResKey, Throwable) rolled back}, or
+	 * {@link #commit()} has failed.
 	 * 
 	 * @see #getState()
 	 */
@@ -88,7 +88,7 @@ public interface Transaction extends AutoCloseable {
 	 * @param failureMessage
 	 *        Message describing the failure that caused the rollback.
 	 */
-	void rollback(Message failureMessage);
+	void rollback(ResKey failureMessage);
 
 	/**
 	 * Closes this transaction, rolling back uncommitted changes.
@@ -98,7 +98,7 @@ public interface Transaction extends AutoCloseable {
 	 * @param cause
 	 *        an optional cause for this rollback. May be <code>null</code>.
 	 */
-	void rollback(Message failureMessage, Throwable cause);
+	void rollback(ResKey failureMessage, Throwable cause);
 
 	/**
 	 * The revision that was created during the preceding call to

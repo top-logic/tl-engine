@@ -64,7 +64,6 @@ import com.top_logic.knowledge.service.db2.DBObjectKey;
 import com.top_logic.knowledge.service.db2.MOKnowledgeItem;
 import com.top_logic.model.TLObject;
 import com.top_logic.util.Utils;
-import com.top_logic.util.message.MessageStoreFormat;
 
 /**
  * Utilities for abstracting features not declared at the {@link KnowledgeBase}
@@ -420,7 +419,7 @@ public class KBUtils {
 		CommitEvent commit = new CommitEvent(newRevision,
 			ThreadContextManager.getSubSession().getContextId(),
 			System.currentTimeMillis(),
-			MessageStoreFormat.toString(Messages.NO_COMMIT_MESSAGE));
+			I18NConstants.NO_COMMIT_MESSAGE);
 		cs.setCommit(commit);
 		writer.write(cs);
 	}

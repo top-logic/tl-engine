@@ -23,6 +23,7 @@ import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.component.edit.CanLock;
 import com.top_logic.layout.form.model.FormContext;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
@@ -39,7 +40,7 @@ import com.top_logic.tool.execution.ExecutabilityRuleManager;
  *           <p>
  *           The code that implementors write in
  *           {@link #storeChanges(LayoutComponent, FormContext, Object)} is
- *           {@link #beginTransaction(Object) nested in a transaction} being
+ *           {@link #beginTransaction(Object, ResKey) nested in a transaction} being
  *           {@link #commit(Transaction, Object) committed} before the command terminates.
  *           </p>
  * 
@@ -49,7 +50,7 @@ import com.top_logic.tool.execution.ExecutabilityRuleManager;
  * 
  *           <ul>
  *           <li>{@link #updateLock(LayoutComponent, FormContext, Object)}</li>
- *           <li>{@link #beginTransaction(Object)}</li>
+ *           <li>{@link #beginTransaction(Object, ResKey)}</li>
  *           <li>{@link #storeChanges(LayoutComponent, FormContext, Object)}</li>
  *           <li>{@link #commit(Transaction, Object)} if
  *           {@link #storeChanges(LayoutComponent, FormContext, Object)} returns
@@ -161,7 +162,7 @@ public abstract class AbstractApplyCommandHandler extends AbstractFormCommandHan
 	 * 
 	 * <p>
 	 * Note: Transaction handling is done externally by the methods
-	 * {@link #beginTransaction(Object)} and {@link #commit(Transaction, Object)}.
+	 * {@link #beginTransaction(Object, ResKey)} and {@link #commit(Transaction, Object)}.
 	 * </p>
      * @param component
 	 *        The component the command executed on.
@@ -175,7 +176,7 @@ public abstract class AbstractApplyCommandHandler extends AbstractFormCommandHan
 	 *         {@link #commit(Transaction, Object)} is only called, if the result was
 	 *         <code>true</code>.
 	 * 
-	 * @see #beginTransaction(Object)
+	 * @see #beginTransaction(Object, ResKey)
 	 * @see #commit(Transaction, Object)
 	 */
 	protected boolean storeChanges(LayoutComponent component, FormContext formContext, Object model) {
@@ -192,7 +193,11 @@ public abstract class AbstractApplyCommandHandler extends AbstractFormCommandHan
 			Map<String, Object> arguments) {
 		updateLock(component, formContext, model);
 
-		try (Transaction tx = beginTransaction(model)) {
+		ResKey customMessage = getCustomCommitMessage(arguments);
+		ResKey message = customMessage == null
+			? I18NConstants.UPDATED__MODEL.fill(MetaLabelProvider.INSTANCE.getLabel(model))
+			: customMessage;
+		try (Transaction tx = beginTransaction(model, message)) {
 			if (storeChanges(component, formContext, model)) {
 				commit(tx, model);
 			}

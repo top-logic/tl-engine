@@ -23,6 +23,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey ERROR_NO_MORE_USERS;
 
+	/**
+	 * @en Updated account list.
+	 */
+	public static ResKey UPDATED_ACCOUNT_LIST;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

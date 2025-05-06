@@ -308,7 +308,7 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 
 		InstantiationContext context = ApplicationConfig.getInstance().getServiceStartupContext();
 		
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(I18NConstants.MODEL_SERVIVE_STARTUP);
 		try {
 			_modelConfig = new ModelConfigLoader().load(context, config());
 			if (_modelConfig == null) {

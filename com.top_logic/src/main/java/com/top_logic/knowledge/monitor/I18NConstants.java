@@ -6,6 +6,7 @@
 package com.top_logic.knowledge.monitor;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
 
@@ -21,6 +22,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResPrefix FAILED_LOGIN_REASONS = legacyPrefix("admin.sys.failedLogins.reason.");
 
 	public static ResKey DELETED_USER = legacyKey("personHistory.deleted");
+
+	/**
+	 * @en Logged in user: {0}
+	 */
+	public static ResKey1 LOGGED_IN_USER__USER;
+
+	/**
+	 * @en Logged out user: {0}
+	 */
+	public static ResKey1 LOGGED_OUT_USER__USER;
 
 	static {
 		initConstants(I18NConstants.class);

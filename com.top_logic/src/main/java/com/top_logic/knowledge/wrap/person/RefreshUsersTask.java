@@ -72,7 +72,7 @@ public class RefreshUsersTask<C extends RefreshUsersTask.Config<?>> extends Stat
 	@Override
 	protected void runHook() {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(I18NConstants.UPDATED_ACCOUNT_LIST);
 		try {
 			TLSecurityDeviceManager deviceManager = TLSecurityDeviceManager.getInstance();
 			List<PersonDataAccessDevice> devices =

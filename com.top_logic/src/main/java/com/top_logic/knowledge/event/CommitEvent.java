@@ -6,6 +6,7 @@
 package com.top_logic.knowledge.event;
 
 import com.top_logic.basic.config.XmlDateTimeFormat;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.util.Utils;
 
@@ -18,7 +19,9 @@ import com.top_logic.util.Utils;
 public class CommitEvent extends KnowledgeEvent {
 
 	private String author;
-	private String logMessage;
+
+	private ResKey logMessage;
+
 	private long commitTimeMillis;
 
 	/**
@@ -33,7 +36,7 @@ public class CommitEvent extends KnowledgeEvent {
 	 * @param logMessage
 	 *        See {@link #getLog()}
 	 */
-	public CommitEvent(long revision, String author, long commitTimeMillis, String logMessage) {
+	public CommitEvent(long revision, String author, long commitTimeMillis, ResKey logMessage) {
 		super(revision);
 		
 		this.author = author;
@@ -63,14 +66,14 @@ public class CommitEvent extends KnowledgeEvent {
 	/**
 	 * A log message that was created for the commit of this revision. 
 	 */
-	public String getLog() {
+	public ResKey getLog() {
 		return this.logMessage;
 	}
 	
 	/**
 	 * @see #getLog()
 	 */
-	public void setLog(String logMessage) {
+	public void setLog(ResKey logMessage) {
 		this.logMessage = logMessage;
 	}
 

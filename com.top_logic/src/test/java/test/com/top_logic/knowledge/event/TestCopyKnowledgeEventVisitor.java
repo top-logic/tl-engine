@@ -22,6 +22,7 @@ import com.top_logic.knowledge.event.ItemDeletion;
 import com.top_logic.knowledge.event.ItemUpdate;
 import com.top_logic.knowledge.event.ObjectCreation;
 import com.top_logic.knowledge.objects.identifier.ObjectBranchId;
+import com.top_logic.knowledge.service.I18NConstants;
 
 /**
  * Test for {@link CopyKnowledgeEventVisitor}.
@@ -65,7 +66,7 @@ public class TestCopyKnowledgeEventVisitor extends BasicTestCase {
 
 	public void testCopyCommit() {
 		CommitEvent event = new CommitEvent(rev(), TestCopyKnowledgeEventVisitor.class.getName(),
-			System.currentTimeMillis(), "some log message");
+			System.currentTimeMillis(), I18NConstants.NO_COMMIT_MESSAGE);
 		assertEquals(event, CopyKnowledgeEventVisitor.INSTANCE.copy(event));
 	}
 

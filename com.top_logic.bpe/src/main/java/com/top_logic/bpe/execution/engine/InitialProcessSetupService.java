@@ -38,7 +38,6 @@ import com.top_logic.bpe.bpml.importer.BPMLImporter;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.Messages;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
@@ -101,7 +100,7 @@ public class InitialProcessSetupService extends ManagedClass {
 		}
 
 		if (!resourceNames.isEmpty()) {
-			try (Transaction tx = kb.beginTransaction(Messages.INITIAL_IMPORT)) {
+			try (Transaction tx = kb.beginTransaction(I18NConstants.IMPORTED_WORKFLOWS)) {
 				CommitContext commitContext = KBUtils.getCurrentContext(kb);
 				PooledConnection commitCon = commitContext.getConnection();
 

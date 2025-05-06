@@ -12,7 +12,7 @@ import junit.framework.Test;
 
 import test.com.top_logic.LocalTestSetup;
 
-import com.top_logic.basic.message.Message;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.UnknownTypeException;
@@ -138,7 +138,7 @@ public abstract class AbstractDBKnowledgeBaseClusterTest extends AbstractDBKnowl
 		return beginNode2(null);
 	}
 	
-	protected Transaction beginNode2(Message modificationDescription) {
+	protected Transaction beginNode2(ResKey modificationDescription) {
 		return kbNode2().beginTransaction(modificationDescription);
 	}
 	

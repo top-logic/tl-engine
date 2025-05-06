@@ -84,7 +84,7 @@ public class LayoutBasedSecurity extends KBBasedManagedClass<LayoutBasedSecurity
 	 * Initialises the {@link PersBoundComp}s within a new {@link Transaction}.
 	 */
 	protected final List<LayoutComponent.Config> initPersBoundComps() {
-		try (Transaction tx = kb().beginTransaction(Messages.INITIALIZING_LAYOUT_BASED_SECURITY.fill())) {
+		try (Transaction tx = kb().beginTransaction(I18NConstants.INITIALIZING_LAYOUT_BASED_SECURITY)) {
 			List<LayoutComponent.Config> result = initPersBoundComps(tx);
 			tx.commit();
 			return result;

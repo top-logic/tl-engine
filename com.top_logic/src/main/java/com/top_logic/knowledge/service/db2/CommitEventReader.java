@@ -14,6 +14,7 @@ import java.util.List;
 
 import com.top_logic.basic.db.sql.SQLExpression;
 import com.top_logic.basic.db.sql.SQLOrder;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.knowledge.event.CommitEvent;
@@ -94,7 +95,7 @@ public class CommitEventReader extends AbstractKnowledgeEventReader<CommitEvent>
 			long nextRev = revisions.getLongValue(_revisionAttr);
 			String nextAuthor = revisions.getStringValue(_authorAttr);
 			long nextDate = revisions.getLongValue(_dateAttr);
-			String nextLog = revisions.getStringValue(_logAttr);
+			ResKey nextLog = ResKey.decode(revisions.getStringValue(_logAttr));
 			
 			return new CommitEvent(nextRev, nextAuthor, nextDate, nextLog);
 		} else {

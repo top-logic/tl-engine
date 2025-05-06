@@ -36,7 +36,7 @@ import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.util.model.Messages;
+import com.top_logic.util.model.I18NConstants;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -89,7 +89,7 @@ public class ElementModelService extends ModelService {
 			}
 			return applicationModel;
 		}
-		Transaction tx = kb.beginTransaction(Messages.CREATING_TL_MODEL);
+		Transaction tx = kb.beginTransaction(I18NConstants.CREATING_TL_MODEL);
 		try {
 			KnowledgeObject newModel = kb.createKnowledgeItem(PersistentTLModel.OBJECT_TYPE, KnowledgeObject.class);
 			ObjectLabel.createLabel(APPLICATION_MODEL_NAME, newModel);

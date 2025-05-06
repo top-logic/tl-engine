@@ -11,13 +11,13 @@ import com.top_logic.base.context.DefaultSessionContext;
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.StringID;
 import com.top_logic.basic.TLID;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.event.ChangeSet;
 import com.top_logic.knowledge.event.CommitEvent;
 import com.top_logic.knowledge.event.EventWriter;
 import com.top_logic.knowledge.event.convert.EventRewriter;
-import com.top_logic.knowledge.service.Messages;
+import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.db2.migration.rewriters.IdMapper;
-import com.top_logic.util.message.MessageStoreFormat;
 
 /**
  * {@link EventRewriter} migrating the author and commit message of {@link ChangeSet}s.
@@ -31,13 +31,13 @@ public class RevisionUpgrade implements EventRewriter {
 
 	private IdMapper _idMapper;
 
-	private final String _noCommitMessage;
+	private final ResKey _noCommitMessage;
 
 	/**
 	 * Creates a new {@link RevisionUpgrade}.
 	 */
 	public RevisionUpgrade() {
-		_noCommitMessage = MessageStoreFormat.toString(Messages.NO_COMMIT_MESSAGE);
+		_noCommitMessage = I18NConstants.NO_COMMIT_MESSAGE;
 	}
 
 	@Inject

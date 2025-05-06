@@ -6,11 +6,11 @@
 package com.top_logic.knowledge.service.db2;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.message.Message;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.AbstractTransaction;
+import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.Messages;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 
@@ -50,7 +50,7 @@ class TransactionImpl extends AbstractTransaction {
 	/**
 	 * @see #getCommitMessage()
 	 */
-	private Message commitMessageNonNull;
+	private ResKey commitMessageNonNull;
 
 	/**
 	 * The failure message of an invalidated transaction.
@@ -61,7 +61,7 @@ class TransactionImpl extends AbstractTransaction {
 	 * nested transaction.
 	 * </p>
 	 */
-	private Message failureMessage;
+	private ResKey failureMessage;
 
 	/**
 	 * @see #internalGetCommitRevision()
@@ -79,7 +79,7 @@ class TransactionImpl extends AbstractTransaction {
 		this.context = context;
 		this.outer = null;
 		this.anonymous = true;
-		this.initCommitMessage(null);
+		this.initCommitMessage(I18NConstants.NO_COMMIT_MESSAGE);
 		this.autoBegin = true;
 	}
 
@@ -92,7 +92,7 @@ class TransactionImpl extends AbstractTransaction {
 	 * @param commitMessage
 	 *        The commit message for the corresponding {@link #commit()}.
 	 */
-	public TransactionImpl(DefaultDBContext context, boolean anonymous, Message commitMessage) {
+	public TransactionImpl(DefaultDBContext context, boolean anonymous, ResKey commitMessage) {
 		super(context.kb);
 
 		this.context = context;
@@ -110,7 +110,7 @@ class TransactionImpl extends AbstractTransaction {
 	 * @param commitMessage
 	 *        The commit message for the corresponding {@link #commit()}.
 	 */
-	public TransactionImpl(DefaultDBContext context, TransactionImpl outer, boolean anonymous, Message commitMessage) {
+	public TransactionImpl(DefaultDBContext context, TransactionImpl outer, boolean anonymous, ResKey commitMessage) {
 		super(context.kb);
 
 		this.context = context;
@@ -145,12 +145,11 @@ class TransactionImpl extends AbstractTransaction {
 	/**
 	 * The commit message of this transaction.
 	 * 
-	 * @return The {@link Message} to identify the current transaction, never
-	 *         <code>null</code>.
-	 *         
+	 * @return The {@link ResKey} to identify the current transaction, never <code>null</code>.
+	 * 
 	 * @see #commit()
 	 */
-	public Message getCommitMessage() {
+	public ResKey getCommitMessage() {
 		return commitMessageNonNull;
 	}
 
@@ -165,7 +164,7 @@ class TransactionImpl extends AbstractTransaction {
 	}
 
 	@Override
-	protected void internalRollback(Message message, Throwable cause) {
+	protected void internalRollback(ResKey message, Throwable cause) {
 		context.rollbackTransaction(this, message, cause);
 	}
 
@@ -174,7 +173,7 @@ class TransactionImpl extends AbstractTransaction {
 		return revision;
 	}
 	
-	public TransactionImpl nest(boolean nestedAnonymous, Message nestedCommitMessage) {
+	public TransactionImpl nest(boolean nestedAnonymous, ResKey nestedCommitMessage) {
     	if (autoBegin) {
     		// Fix auto-begin.
     		
@@ -209,7 +208,7 @@ class TransactionImpl extends AbstractTransaction {
 	 * The error message of an invalidated transaction, or <code>null</code>, if
 	 * this transaction is still valid.
 	 */
-	public Message getError() {
+	public ResKey getError() {
 		return failureMessage;
 	}
 
@@ -219,14 +218,14 @@ class TransactionImpl extends AbstractTransaction {
 	 * @param failureMessage
 	 *        The reason of the invalidation of this transaction.
 	 */
-	public void setError(Message failureMessage) {
+	public void setError(ResKey failureMessage) {
 		assert failureMessage != null;
 		this.failureMessage = failureMessage;
 		this.failureStacktrace = new Exception("Failure stack trace");
 	}
 	
 	/**
-	 * Exception with stack trace of the caller to {@link #setError(Message)}.
+	 * Exception with stack trace of the caller to {@link #setError(ResKey)}.
 	 */
 	public Exception getFailureStacktrace() {
 		return failureStacktrace;
@@ -241,31 +240,29 @@ class TransactionImpl extends AbstractTransaction {
 	}
 
 	/**
-	 * Sets the {@link #getCommitMessage()} property ensuring that it is never
-	 * <code>null</code>.
+	 * Sets the {@link #getCommitMessage()} property ensuring that it is never <code>null</code>.
 	 * 
 	 * @param message
-	 *        The {@link Message} to use. A default message is used, if
-	 *        <code>null</code>.
+	 *        The {@link ResKey} to use. A default message is used, if <code>null</code>.
 	 */
-	private void initCommitMessage(Message message) {
+	private void initCommitMessage(ResKey message) {
 		if (message == null) {
-			this.commitMessageNonNull = Messages.NO_COMMIT_MESSAGE;
+			this.commitMessageNonNull = I18NConstants.NO_COMMIT_MESSAGE;
 		} else {
 			this.commitMessageNonNull = message;
 		}
 	}
 	
 	private static class ErrorMessage {
-		private final Message message;
+		private final ResKey message;
 		private final Throwable cause;
 		
-		public ErrorMessage(Message message, Throwable cause) {
+		public ErrorMessage(ResKey message, Throwable cause) {
 			this.message = message;
 			this.cause = cause;
 		}
 
-		public Message getMessage() {
+		public ResKey getMessage() {
 			return message;
 		}
 		

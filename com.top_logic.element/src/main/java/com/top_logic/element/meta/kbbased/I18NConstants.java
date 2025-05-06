@@ -35,6 +35,11 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en There is no generator with name ''{0}''. */
 	public static ResKey1 NO_SUCH_GENERATOR__NAME;
 
+	/**
+	 * Started wrapper resolver ({0}).
+	 */
+	public static ResKey1 START_UP_WRAPPER_RESOLVER__IMPLCLASS;
+
     static {
         initConstants(I18NConstants.class);
     }

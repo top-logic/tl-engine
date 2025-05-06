@@ -13,7 +13,7 @@ import test.com.top_logic.basic.ReflectionUtils;
 
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.NameValueBuffer;
-import com.top_logic.basic.message.Message;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.identifier.DefaultObjectKey;
@@ -50,7 +50,7 @@ public abstract class AbstractKnowledgeBaseTest extends BasicTestCase {
 		return begin(null);
 	}
 	
-	public Transaction begin(Message modificationDescription) {
+	public Transaction begin(ResKey modificationDescription) {
 		return kb().beginTransaction(modificationDescription);
 	}
 

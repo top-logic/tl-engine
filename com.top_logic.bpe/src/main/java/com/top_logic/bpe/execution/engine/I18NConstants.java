@@ -29,6 +29,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_IMPORT_FAILED;
 
+	/**
+	 * @en Imported workflows.
+	 */
+	public static ResKey IMPORTED_WORKFLOWS;
+
     static {
         initConstants(I18NConstants.class);
     }

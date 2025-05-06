@@ -69,6 +69,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_PART_WITH_NAME_EXISTS__NAME_GENERALIZATION;
 
+	/**
+	 * @en Created global display description.
+	 */
+	public static ResKey CREATE_GLOBAL_DISPLAY_DESCRIPTION;
+
+	/**
+	 * @en Deleted global display description.
+	 */
+	public static ResKey DELETE_GLOBAL_DISPLAY_DESCRIPTION;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

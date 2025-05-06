@@ -48,7 +48,7 @@ public interface ChangeSetBase extends com.top_logic.model.TLObject {
 	 * Part <code>message</code> of <code>ChangeSet</code>
 	 * 
 	 * <p>
-	 * Declared as <code>tl.core:Text</code> in configuration.
+	 * Declared as <code>tl.model.i18n:I18NString</code> in configuration.
 	 * </p>
 	 */
 	String MESSAGE_ATTR = "message";
@@ -136,14 +136,14 @@ public interface ChangeSetBase extends com.top_logic.model.TLObject {
 	/**
 	 * Getter for part {@link #MESSAGE_ATTR}.
 	 */
-	default String getMessage() {
-		return (String) tValueByName(MESSAGE_ATTR);
+	default com.top_logic.basic.util.ResKey getMessage() {
+		return (com.top_logic.basic.util.ResKey) tValueByName(MESSAGE_ATTR);
 	}
 
 	/**
 	 * Setter for part {@link #MESSAGE_ATTR}.
 	 */
-	default void setMessage(String newValue) {
+	default void setMessage(com.top_logic.basic.util.ResKey newValue) {
 		tUpdateByName(MESSAGE_ATTR, newValue);
 	}
 

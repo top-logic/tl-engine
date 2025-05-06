@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28604_Upgrade_commit_messages"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="Ticket_28336_migrate_command_confirmation"
+			module="tl"
+		/>
+	</dependencies>
+	<processors>
+		<string-column-transform
+			table="REVISION"
+			column="log"
+			raw-table-names="true"
+		>
+			<reg-exp-replacement
+				search-pattern="(com\.(?:[^\.]+\.)*)([^.]+)"
+				replacement="class.$1I18NConstants.$2"
+			/>
+		</string-column-transform>
+	</processors>
+</migration>

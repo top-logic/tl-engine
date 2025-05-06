@@ -30,9 +30,9 @@ import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.col.IdentityHashSet;
 import com.top_logic.basic.col.InlineList;
 import com.top_logic.basic.col.InlineSet;
-import com.top_logic.basic.message.Message;
 import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MetaObject;
@@ -75,7 +75,6 @@ import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.TLContext;
-import com.top_logic.util.message.MessageStoreFormat;
 
 /**
  * For every Transaction in Progress in the DBKB there is a DBContext.
@@ -479,20 +478,24 @@ class DefaultDBContext extends DBContext {
         internalRollback(canceledTransaction, remainingTransaction, null, null);
     }
 
-    /*package protected*/ final void rollbackTransaction(TransactionImpl canceledTransaction, Message message, Throwable cause) {
+	/* package protected */ final void rollbackTransaction(TransactionImpl canceledTransaction, ResKey message,
+			Throwable cause) {
     	checkActive(canceledTransaction);
     	
     	internalRollback(canceledTransaction, canceledTransaction.getOuter(), message, cause);
     }
     
-	private void internalRollback(TransactionImpl canceledTransaction, TransactionImpl remainingTransaction, Message rollbackMessage, Throwable cause) {
+	private void internalRollback(TransactionImpl canceledTransaction, TransactionImpl remainingTransaction,
+			ResKey rollbackMessage, Throwable cause) {
 		if (remainingTransaction != null) {
-			Logger.info("Rollback of pseudo nested transaction '" + canceledTransaction + "': " + MessageStoreFormat.toString(rollbackMessage), cause, DefaultDBContext.class);
+			Logger.info("Rollback of pseudo nested transaction '" + canceledTransaction + "': "
+				+ ResKey.encode(rollbackMessage), cause, DefaultDBContext.class);
 			
         	// Mark parent transaction as failed since nested transaction are not supported.
-			Message canceledMessage = canceledTransaction.getCommitMessage();
+			ResKey canceledMessage = canceledTransaction.getCommitMessage();
 			if (! remainingTransaction.hasError()) {
-				remainingTransaction.setError(Messages.NESTED_TRANSACTION_ROLLED_BACK__COMMIT_REASON.fill(canceledMessage, rollbackMessage));
+				remainingTransaction.setError(
+					I18NConstants.NESTED_TRANSACTION_ROLLED_BACK__COMMIT_REASON.fill(canceledMessage, rollbackMessage));
 			}
 			
         	this.innermostTransaction = remainingTransaction;
@@ -689,7 +692,7 @@ class DefaultDBContext extends DBContext {
     }
 
     @Override
-	/*package protected*/ Transaction begin(boolean anonymous, Message commitMessage) {
+	/* package protected */ Transaction begin(boolean anonymous, ResKey commitMessage) {
     	if (innermostTransaction == null) {
 			innermostTransaction = initFirstTX(false, anonymous, commitMessage);
     	} else {
@@ -698,7 +701,7 @@ class DefaultDBContext extends DBContext {
     	return innermostTransaction;
     }
 
-	protected TransactionImpl initFirstTX(boolean autoBegin, boolean anonymous, Message commitMessage) {
+	protected TransactionImpl initFirstTX(boolean autoBegin, boolean anonymous, ResKey commitMessage) {
 		TransactionImpl firstTx;
 		if (autoBegin) {
 			firstTx = new TransactionImpl(this);
@@ -733,8 +736,8 @@ class DefaultDBContext extends DBContext {
 
 		try {
 			if (commitTransaction.hasError()) {
-				Message error = commitTransaction.getError();
-				String messageString = "msg:" + MessageStoreFormat.toString(error);
+				ResKey error = commitTransaction.getError();
+				String messageString = "msg:" + ResKey.encode(error);
 				throw new KnowledgeBaseException(messageString, commitTransaction.getFailureStacktrace());
 			}
 	    	

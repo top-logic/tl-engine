@@ -31,7 +31,6 @@ import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.StopWatch;
 import com.top_logic.basic.xml.DOMUtil;
-import com.top_logic.demo.Messages;
 import com.top_logic.demo.edit.DemoFormContextModificator;
 import com.top_logic.demo.model.types.A;
 import com.top_logic.demo.model.types.B;
@@ -165,7 +164,7 @@ public class TypeGenerator {
 	static boolean generate(StructuredElement parent, String rootName, int numberOfChildren) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
-		Transaction tx = kb.beginTransaction(Messages.GENERATED_DEMO_TYPES.fill());
+		Transaction tx = kb.beginTransaction(com.top_logic.demo.I18NConstants.GENERATED_DEMO_TYPES);
 		
 		String parentType = parent.getElementType();
 		assert ! StringServices.isEmpty(parentType);
@@ -260,7 +259,8 @@ public class TypeGenerator {
 				}
 			}
 			tx.commit();
-			Transaction structureReferenceUpdate = kb.beginTransaction(Messages.GENERATED_DEMO_TYPES.fill());
+			Transaction structureReferenceUpdate =
+				kb.beginTransaction(com.top_logic.demo.I18NConstants.GENERATED_DEMO_TYPES);
 			if (!generatedRootType.equals(A.A_TYPE)) {
 				for (StructuredElement child : generatedRoot.getChildren()) {
 					DemoTypesA ANode = (DemoTypesA) child;

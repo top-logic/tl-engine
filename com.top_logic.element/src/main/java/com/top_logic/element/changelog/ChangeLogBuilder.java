@@ -70,6 +70,9 @@ public class ChangeLogBuilder {
 
 	private Revision _stopRev;
 
+	/**
+	 * The classes that store their instances in a certain table.
+	 */
 	private Map<MOStructure, List<TLClass>> _classesByTable;
 
 	/**
@@ -78,6 +81,10 @@ public class ChangeLogBuilder {
 	 */
 	private Map<TLStructuredType, Map<String, TLStructuredTypePart>> _columnBindingByType = new HashMap<>();
 
+	/**
+	 * For each table and column, the storage that uses that column to store values for foreign
+	 * objects (if any).
+	 */
 	private Map<MOStructure, Map<String, SeparateTableStorage>> _storagesByTable = new HashMap<>();
 
 	/**

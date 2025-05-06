@@ -803,7 +803,9 @@ public final class TaskLogWrapper extends AbstractWrapper implements TaskLog {
 	}
 
 	private RetryResult<Void, Throwable> startupNodeCleanLocal(Task task) {
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.CLEANED_TASK_LOG);
+		Transaction transaction =
+			PersistencyLayer.getKnowledgeBase()
+				.beginTransaction(I18NConstants.CLEANED_TASK_LOG__TASK.fill(task.getName()));
 		try {
 			// Update the node id, which changes with every startup.
 			setClusterLock();

@@ -5,6 +5,9 @@
  */
 package com.top_logic.layout.form.component;
 
+import java.util.Map;
+
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -20,11 +23,19 @@ import com.top_logic.tool.boundsec.CommandHandler;
 public interface TransactionHandler {
 
 	/**
+	 * Command argument to pass a custom commit message of type {@link ResKey}.
+	 */
+	String CUSTOM_COMMIT_MESSAGE = "customCommitMessage";
+
+	/**
 	 * Starts a {@link Transaction} for the given model object.
+	 * 
+	 * @param message
+	 *        The commit message to mark the change with.
 	 * 
 	 * @see KnowledgeBase#beginTransaction()
 	 */
-	default Transaction beginTransaction(Object model) {
+	default Transaction beginTransaction(Object model, ResKey message) {
 		KnowledgeBase kb;
 		if (model instanceof TLObject object) {
 			kb = object.tKnowledgeBase();
@@ -34,7 +45,7 @@ public interface TransactionHandler {
 		if (kb == null) {
 			return null;
 		} else {
-			return kb.beginTransaction();
+			return kb.beginTransaction(message);
 		}
 	}
 
@@ -46,7 +57,7 @@ public interface TransactionHandler {
 	 * </p>
 	 * 
 	 * @param model
-	 *        The model object also passed to {@link #beginTransaction(Object)}.
+	 *        The model object also passed to {@link #beginTransaction(Object, ResKey)}.
 	 * 
 	 * @see Transaction#commit()
 	 * 
@@ -57,6 +68,19 @@ public interface TransactionHandler {
 		if (tx != null) {
 			tx.commit();
 		}
+	}
+
+	/**
+	 * Retrieves an optional custom commit message from the command's arguments.
+	 *
+	 * @param arguments
+	 *        The arguments of
+	 *        {@link CommandHandler#handleCommand(com.top_logic.layout.DisplayContext, com.top_logic.mig.html.layout.LayoutComponent, Object, Map)}.
+	 * @return A custom commit message to use, or <code>null</code> to choose a generic default
+	 *         commit message.
+	 */
+	default ResKey getCustomCommitMessage(Map<String, Object> arguments) {
+		return (ResKey) arguments.get(TransactionHandler.CUSTOM_COMMIT_MESSAGE);
 	}
 
 }

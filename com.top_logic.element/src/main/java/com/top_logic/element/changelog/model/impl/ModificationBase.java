@@ -47,29 +47,59 @@ public interface ModificationBase extends com.top_logic.model.TLObject {
 	/**
 	 * Getter for part {@link #NEW_VALUE_ATTR}.
 	 */
-	default Object getNewValue() {
-		return tValueByName(NEW_VALUE_ATTR);
+	@SuppressWarnings("unchecked")
+	default java.util.Collection<Object> getNewValue() {
+		return (java.util.Collection<Object>) tValueByName(NEW_VALUE_ATTR);
 	}
 
 	/**
 	 * Setter for part {@link #NEW_VALUE_ATTR}.
 	 */
-	default void setNewValue(Object newValue) {
+	default void setNewValue(java.util.Collection<Object> newValue) {
 		tUpdateByName(NEW_VALUE_ATTR, newValue);
+	}
+
+	/**
+	 * Adds a value to the {@link #NEW_VALUE_ATTR} reference.
+	 */
+	default void addNewValue(Object newValue) {
+		tAddByName(NEW_VALUE_ATTR, newValue);
+	}
+
+	/**
+	 * Removes the given value from the {@link #NEW_VALUE_ATTR} reference.
+	 */
+	default void removeNewValue(Object oldValue) {
+		tRemoveByName(NEW_VALUE_ATTR, oldValue);
 	}
 
 	/**
 	 * Getter for part {@link #OLD_VALUE_ATTR}.
 	 */
-	default Object getOldValue() {
-		return tValueByName(OLD_VALUE_ATTR);
+	@SuppressWarnings("unchecked")
+	default java.util.Collection<Object> getOldValue() {
+		return (java.util.Collection<Object>) tValueByName(OLD_VALUE_ATTR);
 	}
 
 	/**
 	 * Setter for part {@link #OLD_VALUE_ATTR}.
 	 */
-	default void setOldValue(Object newValue) {
+	default void setOldValue(java.util.Collection<Object> newValue) {
 		tUpdateByName(OLD_VALUE_ATTR, newValue);
+	}
+
+	/**
+	 * Adds a value to the {@link #OLD_VALUE_ATTR} reference.
+	 */
+	default void addOldValue(Object newValue) {
+		tAddByName(OLD_VALUE_ATTR, newValue);
+	}
+
+	/**
+	 * Removes the given value from the {@link #OLD_VALUE_ATTR} reference.
+	 */
+	default void removeOldValue(Object oldValue) {
+		tRemoveByName(OLD_VALUE_ATTR, oldValue);
 	}
 
 	/**

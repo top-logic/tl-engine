@@ -91,9 +91,13 @@
 					type="tl.model:TLStructuredTypePart"
 				/>
 				<property name="oldValue"
+					multiple="true"
+					bag="true"
 					type="tl.util:Any"
 				/>
 				<property name="newValue"
+					multiple="true"
+					bag="true"
 					type="tl.util:Any"
 				/>
 			</attributes>

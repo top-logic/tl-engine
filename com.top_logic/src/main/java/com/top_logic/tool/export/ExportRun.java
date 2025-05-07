@@ -81,7 +81,7 @@ public class ExportRun /*implements Runnable*/ {
                     KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
                     
 					Document theDocument;
-					try (Transaction theTrans = theKB.beginTransaction()) {
+					try (Transaction theTrans = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 						WebFolder theFolder = this.getOrCreateWebfolder(theKB);
 						theDocument = this.export.getDocument();
 

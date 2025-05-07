@@ -46,13 +46,13 @@ public class TestPersistentClass extends TestWithModelExtension {
 	}
 
 	private void testModifiableGeneralizations(boolean withinTx) throws KnowledgeBaseException {
-		Transaction tx = _kb.beginTransaction();
+		Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TLClass subClass = TLModelUtil.addClass(_newModule, "newClass");
 		TLClass superClass1 = TLModelUtil.addClass(_newModule, "newClass2");
 		TLClass superClass2 = TLModelUtil.addClass(_newModule, "newClass3");
 		if (withinTx) {
 			tx.commit();
-			tx = _kb.beginTransaction();
+			tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		}
 		subClass.getGeneralizations().add(superClass1);
 		assertEquals(list(superClass1), subClass.getGeneralizations());
@@ -66,7 +66,7 @@ public class TestPersistentClass extends TestWithModelExtension {
 				toSet(superClass1.getSpecializations()));
 			assertEquals("Generalizations does not change after commit.", set(),
 				toSet(superClass2.getSpecializations()));
-			tx = _kb.beginTransaction();
+			tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		}
 
 		subClass.getGeneralizations().add(0, superClass2);
@@ -81,7 +81,7 @@ public class TestPersistentClass extends TestWithModelExtension {
 				toSet(superClass1.getSpecializations()));
 			assertEquals("Generalizations does not change after commit.", set(subClass),
 				toSet(superClass2.getSpecializations()));
-			tx = _kb.beginTransaction();
+			tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		}
 
 		subClass.getGeneralizations().remove(superClass1);
@@ -96,7 +96,7 @@ public class TestPersistentClass extends TestWithModelExtension {
 				toSet(superClass1.getSpecializations()));
 			assertEquals("Generalizations does not change after commit.", set(subClass),
 				toSet(superClass2.getSpecializations()));
-			tx = _kb.beginTransaction();
+			tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		}
 		tx.commit();
 	}

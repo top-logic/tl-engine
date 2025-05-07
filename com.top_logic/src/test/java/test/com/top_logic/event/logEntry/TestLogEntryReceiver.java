@@ -47,7 +47,7 @@ public class TestLogEntryReceiver extends TestLogHelper{
         theBus.subscribe (receiver, ModelTrackingService.getTrackingService());
         try {
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-			Transaction tx = kb.beginTransaction();
+			Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			Wrapper trigger = createTrigger(kb, "testReceiver-T");
 			Wrapper source = createSource(kb, "testReceiver-S");
         	

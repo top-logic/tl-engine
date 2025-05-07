@@ -51,17 +51,17 @@ public class TestWrapperValueAnalyzer extends BasicTestCase {
 			/* Test with historic items is useless if no history is suported. */
 			return;
 		}
-		Transaction tx1 = kb.beginTransaction();
+		Transaction tx1 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject ko = kb.createKnowledgeObject(KBTestMeta.TEST_B);
 		tx1.commit();
-		Transaction tx2 = kb.beginTransaction();
+		Transaction tx2 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		ko.setAttributeValue(KBTestMeta.TEST_B_NAME, "name");
 		tx2.commit();
 		HistoryManager hm = kb.getHistoryManager();
 		Branch newBranch = hm.createBranch(hm.getTrunk(), hm.getRevision(hm.getLastRevision()),
 			Collections.singleton(KBTestMeta.getMetaObject(KBTestMeta.TEST_B)));
 		KnowledgeObject koOnBranch = (KnowledgeObject) HistoryUtils.getKnowledgeItem(newBranch, ko);
-		Transaction tx3 = kb.beginTransaction();
+		Transaction tx3 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		koOnBranch.setAttributeValue(KBTestMeta.TEST_B_NAME, "nameOnBranch");
 		tx3.commit();
 
@@ -84,7 +84,7 @@ public class TestWrapperValueAnalyzer extends BasicTestCase {
 		List<Wrapper> wrapperList = new ArrayList<>();
 		Map<String, Wrapper> wrapperMap = new HashMap<>();
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		Transaction tx1 = kb.beginTransaction();
+		Transaction tx1 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		for (int i = 0; i < 10; i++) {
 			Wrapper wrapper = WrapperFactory.getWrapper(kb.createKnowledgeObject(KBTestMeta.TEST_B));
 			wrapperList.add(wrapper);

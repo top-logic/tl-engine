@@ -332,7 +332,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 				TLClass localType;
 				TLClassProperty propertyX;
 				KnowledgeBase kb = kb();
-				try (Transaction tx = kb.beginTransaction()) {
+				try (Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 					TLModel model = ModelService.getInstance().getModel();
 					TLModule module = model.getModule("TestSearchExpression");
 					localType = MetaElementFactory.getInstance().createMetaElement(module, context, "Local", kb);
@@ -350,7 +350,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 				}
 
 				TLObject local;
-				try (Transaction tx = kb.beginTransaction()) {
+				try (Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 					local = ModelService.getInstance().getFactory().createObject(localType);
 					local.tUpdateByName("name", "local");
 					local.tUpdateByName("x", 42);
@@ -641,7 +641,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	private Object update(String expr, Object... args) throws ParseException {
-		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			Object result = execute(search(expr), args);
 			tx.commit();
 			return result;
@@ -2179,7 +2179,7 @@ public class TestSearchExpression extends AbstractSearchExpressionTest {
 	}
 
 	private void drop(XMLInstanceImporter scenario) {
-		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			for (TLObject x : scenario.getAllImportedObjects()) {
 				x.tDelete();
 			}

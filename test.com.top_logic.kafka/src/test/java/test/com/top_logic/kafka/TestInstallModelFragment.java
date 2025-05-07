@@ -33,7 +33,7 @@ import com.top_logic.util.model.ModelService;
 public class TestInstallModelFragment extends BasicTestCase {
 
 	public void testInstallFragment() {
-		try (Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+		try (Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			DynamicModelService.getInstance().installFragment(readFragmentConfig());
 			transaction.commit();
 		}

@@ -69,7 +69,7 @@ public abstract class TestWithModelExtension extends BasicTestCase {
 	
 		@Override
 		protected void doTearDown() throws Exception {
-			Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction();
+			Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			TLModule module = ModelService.getApplicationModel().getModule(_moduleName);
 			for (TLModuleSingleton singleton : module.getSingletons()) {
 				// Must delete instances of classes before the TLClass can be deleted.
@@ -89,21 +89,21 @@ public abstract class TestWithModelExtension extends BasicTestCase {
 	}
 
 	protected TLModule addModule(String name) {
-		Transaction tx = _kb.beginTransaction();
+		Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TLModule module = TLModelUtil.addModule(ModelService.getApplicationModel(), name);
 		tx.commit();
 		return module;
 	}
 
 	protected TLClass addClass(TLModule module, String name) {
-		Transaction tx = _kb.beginTransaction();
+		Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TLClass clazz = TLModelUtil.addClass(module, name);
 		tx.commit();
 		return clazz;
 	}
 
 	protected void delete(TLObject... elements) {
-		Transaction tx = _kb.beginTransaction();
+		Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		ArrayUtil.forEach(elements,TLObject::tDelete);
 		tx.commit();
 	}
@@ -118,7 +118,7 @@ public abstract class TestWithModelExtension extends BasicTestCase {
 		TLModel model = DynamicModelService.getApplicationModel();
 		BinaryContent modelXml = ClassRelativeBinaryContent.withSuffix(testClass, suffix);
 	
-		try (Transaction tx = kb.beginTransaction()) {
+		try (Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			DynamicModelService.extendModel(log, model, ModelService.getInstance().getFactory(), modelXml);
 			tx.commit();
 		}

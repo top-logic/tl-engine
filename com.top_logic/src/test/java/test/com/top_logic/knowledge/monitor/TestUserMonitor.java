@@ -68,7 +68,7 @@ public class TestUserMonitor extends BasicTestCase {
     
     @Override
     protected void tearDown() throws Exception {
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		for (KnowledgeObject userSession : getAllUserSessions()) {
 			if (sessionsBefore.contains(KBUtils.getObjectKeyString(userSession))) {
 				continue;
@@ -89,7 +89,7 @@ public class TestUserMonitor extends BasicTestCase {
         Date              start  = new Date(1083575486623L);    // 03.05.2004 11:11:26 
         Date              end    = new Date(1083576548662L);    // 03.05.2004 11:29:08
         String            server = UserSession.getServerName();
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		UserSession us = UserSession.startSession(kb, "TestUserSession", "xxxxx", "127.0.0.1", start);
 		tx.commit();
         
@@ -109,7 +109,7 @@ public class TestUserMonitor extends BasicTestCase {
 	}
 
 	private void endSession(UserSession us, Date end) throws KnowledgeBaseException {
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		us.endSession(end);
 		tx.commit();
 	}
@@ -121,7 +121,7 @@ public class TestUserMonitor extends BasicTestCase {
         Date              start  = new Date(now - 1000*60*60*10);
         Date              end    = new Date(now - 1000*60*60* 5);
         String            server = UserSession.getServerName();
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
         UserSession       us     = UserSession.startSession(kb, 
             "TestUserSession", "xxxxx",  "127.0.0.1", start); 
 		String testUserName = TestPersonSetup.USER_ID;
@@ -174,7 +174,7 @@ public class TestUserMonitor extends BasicTestCase {
 		for (int i = 0; i < COUNT; i++) {
 			start = new Date(now);
 			end = new Date(now + rand.nextInt(delta1));
-			Transaction tx = kb.beginTransaction();
+			Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			String session = "S" + i;
 			UserSession us = UserSession.startSession(kb,
 				"TestUserSession", session, "127.0.0.1", start);

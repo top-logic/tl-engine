@@ -114,7 +114,7 @@ public class TestAbstractBoundWrapper extends BasicTestCase {
     public void testSerializable() throws Exception {
         
         KnowledgeBase  theKB   = KBSetup.getKnowledgeBase();
-		Transaction tx = theKB.beginTransaction();
+		Transaction tx = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject doc = theKB.createKnowledgeObject("Document");
         try {
 			doc.setAttributeValue(AbstractBoundWrapper.NAME_ATTRIBUTE, "testSerializable");

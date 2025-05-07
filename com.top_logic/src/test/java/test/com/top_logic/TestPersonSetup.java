@@ -48,7 +48,7 @@ public class TestPersonSetup extends ThreadContextSetup {
 
 	@Override
 	protected void doSetUp() throws Exception {
-		Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		{
 			PersonManager r = PersonManager.getManager();
 			_testPerson = Person.create(PersistencyLayer.getKnowledgeBase(), USER_ID, "dbSecurity");
@@ -59,7 +59,7 @@ public class TestPersonSetup extends ThreadContextSetup {
 
 	@Override
 	protected void doTearDown() throws Exception {
-		Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		{
 			PersonManager r = PersonManager.getManager();
 			_testPerson.tDelete();

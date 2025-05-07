@@ -46,7 +46,7 @@ public class TestAssociationNavigationPreload extends AbstractDBKnowledgeBaseClu
 		// Setup large scenario in node 2: source --> b0...b1000
 		KnowledgeObject source;
 
-		Transaction tx = kbNode2().beginTransaction();
+		Transaction tx = kbNode2().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
 			source = newBNode2("source");
 
@@ -86,7 +86,7 @@ public class TestAssociationNavigationPreload extends AbstractDBKnowledgeBaseClu
 		BObj[] sources = new BObj[cnt];
 		BObj[] targets = new BObj[cnt];
 		{
-			Transaction tx = kbNode2().beginTransaction();
+			Transaction tx = kbNode2().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			try {
 				for (int n = 0; n < cnt; n++) {
 					sources[n] = BObj.newBObj(kbNode2(), "bs" + n);
@@ -104,7 +104,7 @@ public class TestAssociationNavigationPreload extends AbstractDBKnowledgeBaseClu
 		int changesPerRev = cnt / 3;
 		List<Revision> revisions = new ArrayList<>();
 		for (int r = 0; r < revs; r++) {
-			Transaction tx = kbNode2().beginTransaction();
+			Transaction tx = kbNode2().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			try {
 				for (int n = 0; n < changesPerRev; n++) {
 					BObj source = sources[rnd.nextInt(cnt)];

@@ -31,7 +31,7 @@ import com.top_logic.knowledge.service.db2.migration.rewriters.AssociationInline
 public class TestAssociationInline extends AbstractDBKnowledgeBaseMigrationTest {
 
 	public void testInlineAssociation() throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 
 		KnowledgeObject source = newE("e1");
 		KnowledgeObject dest = newE("e2");
@@ -61,7 +61,7 @@ public class TestAssociationInline extends AbstractDBKnowledgeBaseMigrationTest 
 			node2Dest.getAttributeValue(KnowledgeBaseTestScenarioConstants.UNTYPED_POLY_CUR_GLOBAL_NAME));
 		assertNotNull("Association has not to be skipped", node2Item(untouchedAssociation));
 
-		tx = kb().beginTransaction();
+		tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		association.delete();
 		tx.commit();
 

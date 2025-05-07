@@ -39,7 +39,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 	public void testMultipleCompositionReferenceModifiable() throws KnowledgeBaseException {
 		ANode root;
 		CNode cReferrer;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			TestTypesFactory factory = TestTypesFactory.getInstance();
 			root = factory.getRootSingleton();
 			cReferrer = newC(root, "referrer");
@@ -49,7 +49,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 		List<CContent> referenceList = cReferrer.getCompositeReferenceMultiModifiable();
 		List<CContent> expectedReferences = new ArrayList<>();
 
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			for (int i = 0; i < 100; i++) {
 				CContent ref = newCContent();
 				referenceList.add(ref);
@@ -61,7 +61,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 
 		assertEquals(expectedReferences, referenceList);
 
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			cReferrer.tDelete();
 			tx.commit();
 		}
@@ -73,7 +73,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 	public void testMultipleCompositionReferenceModifiableRandomOrder() throws KnowledgeBaseException {
 		ANode root;
 		CNode cReferrer;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			TestTypesFactory factory = TestTypesFactory.getInstance();
 			root = factory.getRootSingleton();
 			cReferrer = newC(root, "referrer");
@@ -84,7 +84,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 		List<CContent> expectedReferences = new ArrayList<>();
 
 
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			Random r = new Random(2786);
 			for (int i = 0; i < 100; i++) {
 				CContent ref = newCContent();
@@ -104,7 +104,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 		Part p2;
 		Part p3;
 		Part p4;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			aNode = newANode();
 			p1 = newPart("p1");
 			p2 = newPart("p2");
@@ -114,7 +114,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 		}
 		
 		assertEquals(list(), aNode.getCompositeList1());
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			aNode.addCompositeList1(p1);
 			assertEquals(list(p1), aNode.getCompositeList1());
 			aNode.addCompositeList1(p2);
@@ -143,7 +143,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 		assertEquals(set(), p3.tReferers(TestTypesFactory.getCompositeList1ANodeAttr()));
 
 		List<Part> compositeList1 = aNode.getCompositeList1Modifiable();
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			compositeList1.clear();
 			assertEquals(list(), aNode.getCompositeList1());
 			compositeList1.add(p2);
@@ -158,7 +158,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 			tx.commit();
 		}
 		assertEquals(list(p1, p3), aNode.getCompositeList1());
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			aNode.tDelete();
 			assertFalse(aNode.tValid());
 			assertFalse(p1.tValid());
@@ -173,7 +173,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 		assertTrue(p2.tValid());
 		assertTrue(p4.tValid());
 		assertEquals(list(p1, p3), aNode.getCompositeList1());
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			aNode.tDelete();
 			tx.commit();
 		}
@@ -190,7 +190,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 		Part p2;
 		Part p3;
 		Part p4;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			aNode = newANode();
 			p1 = newPart("p1");
 			p2 = newPart("p2");
@@ -200,7 +200,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 		}
 		assertEquals(list(), aNode.getCompositeList1());
 		assertEquals(list(), aNode.getCompositeList2());
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			aNode.setCompositeList1(list(p1, p2));
 			aNode.setCompositeList2(list(p3, p4));
 			tx.commit();
@@ -209,7 +209,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 		List<Part> comp2 = aNode.getCompositeList2Modifiable();
 		assertEquals(list(p1, p2), comp1);
 		assertEquals(list(p3, p4), comp2);
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			try {
 				aNode.addCompositeList2(p1);
 				fail(p1 + " already contained in a different composite attribute");
@@ -246,7 +246,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 		Part p2;
 		Part p3;
 		Part p4;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			aNode = newANode();
 			p1 = newPart("p1");
 			p2 = newPart("p2");
@@ -256,7 +256,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 		}
 
 		assertEquals(set(), aNode.getCompositeSet1());
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			aNode.addCompositeSet1(p1);
 			assertEquals(set(p1), aNode.getCompositeSet1());
 			aNode.addCompositeSet1(p2);
@@ -281,7 +281,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 		assertEquals(set(), p3.tReferers(TestTypesFactory.getCompositeSet1ANodeAttr()));
 
 		Set<Part> compositeSet1 = aNode.getCompositeSet1Modifiable();
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			compositeSet1.clear();
 			assertEquals(set(), aNode.getCompositeSet1());
 			compositeSet1.addAll(list(p1, p2));
@@ -299,7 +299,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 			tx.commit();
 		}
 		assertEquals(set(p1, p3), aNode.getCompositeSet1());
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			aNode.tDelete();
 			assertFalse(aNode.tValid());
 			assertFalse(p1.tValid());
@@ -314,7 +314,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 		assertTrue(p2.tValid());
 		assertTrue(p4.tValid());
 		assertEquals(set(p1, p3), aNode.getCompositeSet1());
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			aNode.tDelete();
 			tx.commit();
 		}
@@ -331,7 +331,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 		Part p2;
 		Part p3;
 		Part p4;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			aNode = newANode();
 			p1 = newPart("p1");
 			p2 = newPart("p2");
@@ -341,7 +341,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 		}
 		assertEquals(set(), aNode.getCompositeSet1());
 		assertEquals(set(), aNode.getCompositeSet2());
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			aNode.setCompositeSet1(set(p1, p2));
 			aNode.setCompositeSet2(set(p3, p4));
 			tx.commit();
@@ -350,7 +350,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 		Set<Part> comp2 = aNode.getCompositeSet2Modifiable();
 		assertEquals(set(p1, p2), comp1);
 		assertEquals(set(p3, p4), comp2);
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			try {
 				aNode.addCompositeSet2(p1);
 				fail(p1 + " already contained in a different composite attribute");
@@ -386,7 +386,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 		ANode aNode;
 		Part p1;
 		Part p3;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			aNode = newANode();
 			p1 = newPart("p1");
 			p3 = newPart("p3");
@@ -394,14 +394,14 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 		}
 		assertEquals(null, aNode.getComposite1());
 		assertEquals(null, aNode.getComposite2());
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			aNode.setComposite1(p1);
 			aNode.setComposite2(p3);
 			tx.commit();
 		}
 		assertEquals(p1, aNode.getComposite1());
 		assertEquals(p3, aNode.getComposite2());
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			try {
 				aNode.setComposite2(p1);
 				fail(p1 + " already contained in a different composite attribute");
@@ -426,7 +426,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 		ANode aNode;
 		Part p1;
 		Part p3;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			aNode = newANode();
 			p1 = newPart("p1");
 			p3 = newPart("p3");
@@ -435,7 +435,7 @@ public class TestCompositeMetaAttribute extends BasicTestCase {
 		assertEquals(null, aNode.getComposite());
 		assertEquals(null, p1.tContainer());
 		assertEquals(null, p1.tContainerReference());
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			aNode.setComposite(p1);
 			tx.commit();
 		}

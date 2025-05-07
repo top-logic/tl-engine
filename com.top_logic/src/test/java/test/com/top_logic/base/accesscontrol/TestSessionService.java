@@ -66,7 +66,7 @@ public class TestSessionService extends BasicTestCase {
 				LoginCredentials.fromUserAndPassword(PersonManager.getManager().getRoot(),
 					SecureRandomService.getInstance().getRandomString().toCharArray())) {
 
-				try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+				try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 					login.getPerson().getAuthenticationDevice().setPassword(login.getPerson(), login.getPassword());
 					tx.commit();
 				}

@@ -61,13 +61,13 @@ public class TestElementTypeKeyProvider extends BasicTestCase {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
 		TLObject a1;
-		try (Transaction tx = kb.beginTransaction()) {
+		try (Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			a1 = BenchmarkFactory.getInstance().createA();
 			tx.commit();
 		}
 		Key key1 = provider.lookupTypeKey(a1);
 
-		try (Transaction tx = kb.beginTransaction()) {
+		try (Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			a1.tDelete();
 			tx.commit();
 		}

@@ -158,7 +158,7 @@ public class TestLuceneThread extends BasicTestCase {
 
 		int i = 0;
 		while (i < NUM_CONTENT) {
-			Transaction tx = kBase.beginTransaction();
+			Transaction tx = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			int numberCreations = 1 + random.nextInt(5);
 			i += numberCreations;
 			for (int j = 0; j < numberCreations; j++) {
@@ -177,7 +177,7 @@ public class TestLuceneThread extends BasicTestCase {
 			}
 		}
 
-		Transaction tx = kBase.beginTransaction();
+		Transaction tx = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		for (KnowledgeObject delObject : contents) {
 			delObject.delete();
 		}

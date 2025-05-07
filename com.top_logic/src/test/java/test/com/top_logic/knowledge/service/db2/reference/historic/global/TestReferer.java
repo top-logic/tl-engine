@@ -29,11 +29,11 @@ import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 public class TestReferer extends AbstractDBKnowledgeBaseTest {
 
 	public void testGetReferer0() throws DataObjectException {
-		Transaction createTX = kb().beginTransaction();
+		Transaction createTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject reference = newD("d1");
 		createTX.commit();
 
-		Transaction createRefTX = kb().beginTransaction();
+		Transaction createRefTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject referer = newE("e1");
 		referer.setAttributeValue(REFERENCE_POLY_HIST_GLOBAL_NAME, reference);
 		createRefTX.commit();
@@ -46,17 +46,17 @@ public class TestReferer extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testGetReferer2() throws DataObjectException {
-		Transaction createTX = kb().beginTransaction();
+		Transaction createTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject reference = newD("d1");
 		createTX.commit();
 
-		Transaction createRef1TX = kb().beginTransaction();
+		Transaction createRef1TX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject referer1 = newF("f1");
 		referer1.setAttributeValue(REFERENCE_POLY_HIST_GLOBAL_NAME, reference);
 		createRef1TX.commit();
 		KnowledgeItem historicReference = HistoryUtils.getKnowledgeItem(createRef1TX.getCommitRevision(), reference);
 
-		Transaction createRef2TX = kb().beginTransaction();
+		Transaction createRef2TX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject referer2 = newE("e1");
 		setReference(referer2, historicReference, !MONOMORPHIC, HistoryType.HISTORIC, BRANCH_GLOBAL);
 		createRef2TX.commit();
@@ -68,7 +68,7 @@ public class TestReferer extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testGetReferer1() throws DataObjectException {
-		Transaction createTX = kb().beginTransaction();
+		Transaction createTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject reference = newD("d1");
 		KnowledgeObject referer = newE("e1");
 		setReference(referer, reference, !MONOMORPHIC, HistoryType.HISTORIC, BRANCH_GLOBAL);

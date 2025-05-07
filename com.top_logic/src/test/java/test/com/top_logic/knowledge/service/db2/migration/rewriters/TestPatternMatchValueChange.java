@@ -28,7 +28,7 @@ import com.top_logic.knowledge.service.db2.migration.rewriters.PatternMatchValue
 public class TestPatternMatchValueChange extends AbstractDBKnowledgeBaseMigrationTest {
 
 	public void testAttributeFilter() throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 
 		KnowledgeObject b1 = newB("b1");
 		b1.setAttributeValue(B1_NAME, "value1");

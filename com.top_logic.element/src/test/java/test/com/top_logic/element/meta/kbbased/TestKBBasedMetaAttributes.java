@@ -127,7 +127,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 			KnowledgeBaseException, NoSuchAttributeException {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
-		Transaction tx1 = kb.beginTransaction();
+		Transaction tx1 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TLModel tlModel = ModelService.getApplicationModel();
 		TLModule module =
 			TLModelUtil.makeModule(tlModel, TestKBBasedMetaAttributes.class.getName() + ".testChangeConfiguration");
@@ -135,7 +135,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 		thisME.setAbstract(true);
 		tx1.commit();
 
-		Transaction tx2 = kb.beginTransaction();
+		Transaction tx2 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 
 		AttributeConfig config = TypedConfiguration.newConfigItem(AttributeConfig.class);
 		config.setName("s1");
@@ -146,7 +146,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 		createAttribute(kb, thisME, config);
 		tx2.commit();
 		
-		Transaction tx3 = kb.beginTransaction();
+		Transaction tx3 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TLStructuredTypePart metaAttribute = MetaElementUtil.getLocalMetaAttribute(thisME, "s1");
 		assertTrue(DisplayAnnotations.isHidden(metaAttribute));
 		metaAttribute.setAnnotation(DisplayAnnotations.readOnly());
@@ -155,7 +155,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 		assertFalse(DisplayAnnotations.isEditable(metaAttribute));
 		assertFalse(DisplayAnnotations.isHidden(metaAttribute));
 
-		Transaction tx4 = kb.beginTransaction();
+		Transaction tx4 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		metaAttribute.setAnnotation(DisplayAnnotations.newVisibility(Visibility.EDITABLE));
 		metaAttribute.setAnnotation(DisplayAnnotations.newCreateVisibility(Visibility.READ_ONLY));
 		tx4.commit();
@@ -167,7 +167,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 	public void testRevert() throws DuplicateAttributeException, KnowledgeBaseException, NoSuchAttributeException {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
-		Transaction tx1 = kb.beginTransaction();
+		Transaction tx1 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TLModel tlModel = ModelService.getApplicationModel();
 		TLModule module = TLModelUtil.makeModule(tlModel, TestKBBasedMetaAttributes.class.getName() + ".testRevert");
 		TLClass superME = TestMetaElementFactory.addME(module, "Foo.Super");
@@ -177,11 +177,11 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 		MetaElementUtil.setSuperMetaElement(thisME, superME);
 		tx1.commit();
 
-		Transaction tx2 = kb.beginTransaction();
+		Transaction tx2 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		createAttribute(kb, superME, "s1", TypeSpec.STRING_TYPE, 6.0, false);
 		tx2.commit();
 
-		Transaction tx3 = kb.beginTransaction();
+		Transaction tx3 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		createAttribute(kb, thisME, "s2", TypeSpec.STRING_TYPE, 6.0, false);
 		tx3.commit();
 
@@ -190,7 +190,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 		assertNotNull(MetaElementUtil.getMetaAttributeOrNull(thisME, "s2"));
 
 		// Revert creation of attribute in thisME
-		Transaction tx4 = kb.beginTransaction();
+		Transaction tx4 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KBUtils.revert(kb, tx2.getCommitRevision(), kb.getHistoryManager().getTrunk());
 		tx4.commit();
 
@@ -198,7 +198,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 		assertNull(MetaElementUtil.getMetaAttributeOrNull(thisME, "s2"));
 
 		// Revert creation of attribute in superME
-		Transaction tx5 = kb.beginTransaction();
+		Transaction tx5 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KBUtils.revert(kb, tx1.getCommitRevision(), kb.getHistoryManager().getTrunk());
 		tx5.commit();
 
@@ -206,7 +206,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
 		assertNull(MetaElementUtil.getMetaAttributeOrNull(thisME, "s2"));
 
 		// Revert deletions of attributes
-		Transaction tx6 = kb.beginTransaction();
+		Transaction tx6 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KBUtils.revert(kb, tx1.getCommitRevision(), kb.getHistoryManager().getTrunk(), tx3.getCommitRevision(), kb
 			.getHistoryManager().getTrunk());
 		tx6.commit();
@@ -232,7 +232,7 @@ public class TestKBBasedMetaAttributes extends BasicTestCase {
         
         // SETUP
         
-        Transaction tx = theKB.beginTransaction();
+        Transaction tx = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
         
         // Create a three step hierarchy MetaElements and add them to the list (holder)
 		TLModel tlModel = ModelService.getApplicationModel();

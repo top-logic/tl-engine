@@ -54,7 +54,7 @@ public class TestDocument extends AbstractDocumentTest {
 
 	@Override
 	protected void tearDown() throws Exception {
-		Transaction deleteTx = _testDocument.getKnowledgeBase().beginTransaction();
+		Transaction deleteTx = _testDocument.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		boolean succeeded = this._folder.remove(_testDocument);
 		deleteTx.commit();
 		assertTrue("Error removing document " + _testDocument, succeeded);
@@ -94,7 +94,7 @@ public class TestDocument extends AbstractDocumentTest {
 		}
 
 
-		Transaction updateTx = _testDocument.getKnowledgeBase().beginTransaction();
+		Transaction updateTx = _testDocument.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		assertFalse("Error in sending null to update method within " +
 			"document " + _testDocument, _testDocument.update((BinaryData) null));
 
@@ -145,7 +145,7 @@ public class TestDocument extends AbstractDocumentTest {
 	public void testExtraction() throws Exception {
 		_testDocument = getOrCreateChildDocument(HTML_NAME);
 
-		Transaction updateTx = _testDocument.getKnowledgeBase().beginTransaction();
+		Transaction updateTx = _testDocument.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		_testDocument.update(this.getData(HTML_FILE));
 		updateTx.commit();
 
@@ -175,7 +175,7 @@ public class TestDocument extends AbstractDocumentTest {
 			"for Document " + _testDocument,
 			_testDocument.getDAP());
 
-		Transaction updateTx = _testDocument.getKnowledgeBase().beginTransaction();
+		Transaction updateTx = _testDocument.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		assertTrue("Error in uploading new content to document " + _testDocument,
 			_testDocument.update(this.getData(TEST_FILE)));
 		updateTx.commit();

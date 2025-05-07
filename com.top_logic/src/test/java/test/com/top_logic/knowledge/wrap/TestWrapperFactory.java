@@ -67,7 +67,7 @@ public class TestWrapperFactory extends BasicTestCase {
 		KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
 		int numberObjects = 1000;
 		ArrayList<KnowledgeObject> kos = new ArrayList<>(numberObjects);
-		Transaction createTX = theKB.beginTransaction();
+		Transaction createTX = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		for (int i = 0; i < numberObjects; i++) {
 			kos.add(theKB.createKnowledgeObject(SUPER_KO));
 		}
@@ -91,7 +91,7 @@ public class TestWrapperFactory extends BasicTestCase {
 		KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
 		int numberObjects = 1000;
 		ArrayList<KnowledgeObject> kos = new ArrayList<>(numberObjects);
-		Transaction createTX = theKB.beginTransaction();
+		Transaction createTX = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		for (int i = 0; i < numberObjects; i++) {
 			kos.add(theKB.createKnowledgeObject(SUPER_KO));
 		}
@@ -244,7 +244,7 @@ public class TestWrapperFactory extends BasicTestCase {
      */
     public void addAdressKOs() throws Exception {
         KnowledgeBase theKB = KBSetup.getKnowledgeBase();
-		try (Transaction theTX = theKB.beginTransaction()) {
+		try (Transaction theTX = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			for (int adrNo = 0; adrNo < ADR_COUNT; adrNo++) {
 				KnowledgeObject theKO = theKB.createKnowledgeObject(Address.OBJECT_NAME);
 				id[adrNo] = theKO.getObjectName();

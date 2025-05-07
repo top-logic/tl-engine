@@ -64,7 +64,7 @@ public class TestMetaElementFactory extends BasicTestCase {
 	}
 
     public void testMetaElementLookup() throws Exception {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TLModel tlModel = ModelService.getApplicationModel();
 		TLModule module = TLModelUtil.makeModule(tlModel, "testMetaElementLookup");
 
@@ -115,7 +115,7 @@ public class TestMetaElementFactory extends BasicTestCase {
 	}
 
     public void testGlobalMetaElementCache() throws Exception {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 
 		TLModel tlModel = ModelService.getApplicationModel();
 		TLModule module = TLModelUtil.makeModule(tlModel, "testGlobalMetaElementCache");
@@ -158,7 +158,7 @@ public class TestMetaElementFactory extends BasicTestCase {
 
 		// Now test the deleting of this type
         if (theME instanceof Wrapper) {
-			Transaction tx2 = kb().beginTransaction();
+			Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 
             Wrapper theWrapper = (Wrapper) theME;
 

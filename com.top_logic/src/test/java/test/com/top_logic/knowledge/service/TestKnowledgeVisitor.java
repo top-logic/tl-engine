@@ -30,7 +30,7 @@ public class TestKnowledgeVisitor extends AbstractDBKnowledgeBaseClusterTest {
         KnowledgeObject treeKOs[] = new KnowledgeObject[10];
         KnowledgeObject found;
         try {
-			Transaction tx = kb.beginTransaction();
+			Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			treeKOs[0] = newB("0");
 			treeKOs[1] = newB("1");
 			treeKOs[2] = newB("2");
@@ -129,7 +129,7 @@ public class TestKnowledgeVisitor extends AbstractDBKnowledgeBaseClusterTest {
 			assertNull("No object has any flex atribute set", found);
         }
         finally {
-			Transaction deleteTx = kb.beginTransaction();
+			Transaction deleteTx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
             for (int i = 0; i < treeKOs.length; i++) {
                 KnowledgeObject ko = treeKOs[i];
                 if (ko != null) {

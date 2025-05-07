@@ -95,13 +95,13 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 
 		KnowledgeBase kBase = PersistencyLayer.getKnowledgeBase();
 		BoundMainLayout m = (BoundMainLayout) ((TestedApplicationSession) session).getMasterFrame();
-		Transaction t = kBase.beginTransaction();
+		Transaction t = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		m.initBoundComponents(kBase);
 		t.commit();
 
 		session.invalidate();
 
-		Transaction tx = kBase.beginTransaction();
+		Transaction tx = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		// Create a test roles on root
 		testRole = BoundedRole.createBoundedRole("testSec", kBase);
 		String authenticationDeviceID =
@@ -142,7 +142,7 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 		session.invalidate();
 		session = null;
 		KnowledgeBase kb = testRole.getKnowledgeBase();
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		testRole.tDelete();
 		TestPerson.deletePersonAndUser(test1Person);
 		tx.commit();
@@ -177,7 +177,7 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 			CompoundSecurityLayout thePL3 =
 				(CompoundSecurityLayout) theMain.getComponentByName(toComponentName("testPL3"));
 	
-			Transaction tx1 = kBase.beginTransaction();
+			Transaction tx1 = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 	        // Set the role profiles so that testRole has
 	        //  - read access for: nothing
 	        //  - write acces for: nothing
@@ -205,7 +205,7 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 	        assertFalse(theHelper.allowView(dummy3, theMain));
 	        
 	        // 5. View: role without profile -> no view
-			Transaction tx2 = kBase.beginTransaction();
+			Transaction tx2 = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 	        BoundedRole.assignRole(dummy1, test1Person, testRole);
 	        BoundedRole.assignRole(dummy2, test1Person, testRole);
 	        BoundedRole.assignRole(dummy3, test1Person, testRole);
@@ -214,7 +214,7 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 	        assertFalse(theHelper.allowView(dummy2, theMain));
 	        assertFalse(theHelper.allowView(dummy3, theMain));
 	        
-			Transaction tx3 = kBase.beginTransaction();
+			Transaction tx3 = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 	        // 6. View: role with READ -> view
 	        setAccess(testRole,  thePL1, SimpleBoundCommandGroup.READ,  true);          
 			tx3.commit();
@@ -222,14 +222,14 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 	        assertFalse(theHelper.allowView(dummy2, theMain));
 	        assertFalse(theHelper.allowView(dummy3, theMain));
 	        
-			Transaction tx4 = kBase.beginTransaction();
+			Transaction tx4 = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 	        setAccess(testRole,  thePL2, SimpleBoundCommandGroup.READ,  true);
 			tx4.commit();
 	        assertTrue(theHelper.allowView(dummy1, theMain));
 	        assertFalse(theHelper.allowView(dummy2, theMain));
 	        assertTrue(theHelper.allowView(dummy3, theMain));
 	
-			Transaction tx5 = kBase.beginTransaction();
+			Transaction tx5 = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 	        setAccess(testRole,  thePL1, SimpleBoundCommandGroup.READ,  false);          
 	        setAccess(testRole,  thePL2, SimpleBoundCommandGroup.READ,  false);          
 	        setAccess(testRole,  thePL3, SimpleBoundCommandGroup.READ,  true);
@@ -260,7 +260,7 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 	//        assertFalse(theHelper.allowView(dummy2, theMain));
 	//        assertTrue(theHelper.allowView(dummy3, theMain));
 	        
-			Transaction tx6 = kBase.beginTransaction();
+			Transaction tx6 = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 	        // 8. View: role with both -> view
 	        setAccess(testRole,  thePL3, SimpleBoundCommandGroup.READ,  true);
 	        setAccess(testRole,  thePL3, SimpleBoundCommandGroup.WRITE, true);
@@ -281,7 +281,7 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 		public void performTest(ActionContext context) throws Exception {
 			KnowledgeBase kBase = PersistencyLayer.getKnowledgeBase();
 
-			Transaction tx1 = kBase.beginTransaction();
+			Transaction tx1 = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			StructuredElementWrapper theProject = DummyType1.newDummyType1("Project");
 			BoundedRole.assignRole(theProject, test1Person, testRole);
 			tx1.commit();
@@ -317,7 +317,7 @@ public class TestLayoutBasedSecurity extends BasicTestCase {
 			theRoles = thePL3.getRolesForCommandGroup(SimpleBoundCommandGroup.READ);
 			assertTrue(theRoles.isEmpty());
 
-			Transaction tx2 = kBase.beginTransaction();
+			Transaction tx2 = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			// Setup role profiles
 			setAccess(testRole, thePLD, SimpleBoundCommandGroup.READ, true);
 			setAccess(testRole, thePL1, SimpleBoundCommandGroup.READ, true);

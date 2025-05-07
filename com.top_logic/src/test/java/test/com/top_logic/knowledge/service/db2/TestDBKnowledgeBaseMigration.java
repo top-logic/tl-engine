@@ -31,7 +31,7 @@ public class TestDBKnowledgeBaseMigration extends AbstractDBKnowledgeBaseMigrati
 		assertNotEquals("Expected first revision of node 1 and node 2 are not created in same millisecond.",
 			firstNode1Revision.getDate(), firstNode2Revision.getDate());
 
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		newB("b1");
 		tx.commit();
 

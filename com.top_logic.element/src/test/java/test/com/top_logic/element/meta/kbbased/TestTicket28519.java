@@ -40,7 +40,7 @@ public class TestTicket28519 extends BasicTestCase {
 		Ticket28519Factory factory = Ticket28519Factory.getInstance();
 		A a1, a2, a3, a4;
 		B b1, b2, b3, b4;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			a1 = factory.createA();
 			a2 = factory.createA();
 			a3 = factory.createA();

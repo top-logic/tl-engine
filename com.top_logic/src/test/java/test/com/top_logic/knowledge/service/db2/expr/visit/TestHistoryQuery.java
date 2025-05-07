@@ -558,41 +558,41 @@ public class TestHistoryQuery extends AbstractHistoryQueryTest {
 		KnowledgeItem _b2;
 
 		Setup() {
-			_tx1 = kb().beginTransaction();
+			_tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			BObj bObj1 = BObj.newBObj("b1");
 			BObj bObj2 = BObj.newBObj("b2");
 			_tx1.commit();
 			
-			_tx2 = kb().beginTransaction();
+			_tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			bObj1.setA2("a2value");
 			bObj1.setA1("b1_new");
 			_tx2.commit();
 
-			_tx3 = kb().beginTransaction();
+			_tx3 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			bObj1.setF1("f1value");
 			bObj2.setF1("f1value");
 			_tx3.commit();
 
-			_tx4 = kb().beginTransaction();
+			_tx4 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			bObj1.setF2("f2value");
 			_tx4.commit();
 
-			_tx5 = kb().beginTransaction();
+			_tx5 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			bObj1.setF2(null);
 			bObj1.setA2(null);
 			bObj1.setA1("b1");
 			_tx5.commit();
 
-			_tx6 = kb().beginTransaction();
+			_tx6 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			bObj1.setF2("f2new");
 			_tx6.commit();
 
-			_tx7 = kb().beginTransaction();
+			_tx7 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			bObj1.setF1("f1new");
 			bObj2.setF1("f1new");
 			_tx7.commit();
 			
-			_tx8 = kb().beginTransaction();
+			_tx8 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			bObj1.setF1("f1value");
 			_tx8.commit();
 			

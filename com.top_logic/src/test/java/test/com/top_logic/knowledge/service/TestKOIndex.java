@@ -88,7 +88,7 @@ public class TestKOIndex extends BasicTestCase {
 		 * Delete all KOs of type {@link KBTestMeta#IDX_TEST}.
 		 */
 		private static void deleteAllIdxTest(KnowledgeBase kb) throws DataObjectException {
-			try (Transaction tx = kb.beginTransaction()) {
+			try (Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 				kb.deleteAll(kb.getAllKnowledgeObjects(KBTestMeta.IDX_TEST));
 				tx.commit();
 			}

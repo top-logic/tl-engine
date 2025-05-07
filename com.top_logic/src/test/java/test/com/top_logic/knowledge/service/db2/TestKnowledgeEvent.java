@@ -116,7 +116,7 @@ public class TestKnowledgeEvent extends AbstractDBKnowledgeBaseMigrationTest imp
 		// Must be smaller than com.top_logic.knowledge.service.db2.RevisionImpl.TypeXref._treshold.
 		int revisionCnt = 2;
 		for (int n = 0; n < revisionCnt; n++) {
-			Transaction tx = kb().beginTransaction();
+			Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			{
 				// Note: This test depends on the sort order of the type names "C" and "bc", which
 				// is ["C", "bc"] in binary order and ["bc", "C"] in natuaral order.
@@ -489,24 +489,24 @@ public class TestKnowledgeEvent extends AbstractDBKnowledgeBaseMigrationTest imp
 						long startRev = kb().getLastRevision();
 
 						// Construct 3 B's
-						Transaction tx = kb().beginTransaction();
+						Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 						newB("b1");
 						tx.commit();
 
-						tx = kb().beginTransaction();
+						tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 						newB("b2");
 						tx.commit();
 
-						tx = kb().beginTransaction();
+						tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 						newB("b3");
 						tx.commit();
 
 						// Construct 2 C's
-						tx = kb().beginTransaction();
+						tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 						KnowledgeObject newC1 = newC("c1");
 						tx.commit();
 
-						tx = kb().beginTransaction();
+						tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 						KnowledgeObject newC2 = newC("c2");
 						tx.commit();
 

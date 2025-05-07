@@ -63,7 +63,7 @@ public class TestCreateFolderHandler extends AbstractFolderTest {
 		int numberChildrenBefore = parent.getContent().size();
 
 		KnowledgeBase kb = WebFolder.getDefaultKnowledgeBase();
-		Transaction createSubFolderTX = kb.beginTransaction();
+		Transaction createSubFolderTX = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		WebFolder subFolder = theHandler.createFolder(FOLDER_NAME, parent);
 		assertNotNull("Created no folder for parent " + parent, subFolder);
 		try {
@@ -73,7 +73,7 @@ public class TestCreateFolderHandler extends AbstractFolderTest {
 			assertEquals("Unexpected number of children in " + parent, numberChildrenBefore + 1,
 				numberChildrenAfterCreation);
 		} finally {
-			Transaction delSubFolderTX = subFolder.getKnowledgeBase().beginTransaction();
+			Transaction delSubFolderTX = subFolder.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			assertTrue("Unable to delete folder (KO)", WebFolder.deleteRecursively(subFolder));
 			delSubFolderTX.commit();
 		}
@@ -104,7 +104,7 @@ public class TestCreateFolderHandler extends AbstractFolderTest {
 					@Override
 					public void run() throws Exception {
 						KnowledgeBase kb = WebFolder.getDefaultKnowledgeBase();
-						Transaction createSubFolderTX = kb.beginTransaction();
+						Transaction createSubFolderTX = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 						TestingBinaryData newData = new TestingBinaryData(12345678, 2048);
 						webFolder.createOrUpdateDocument("TestDocument" + id, newData);
 						barrier.enter(0);
@@ -125,7 +125,7 @@ public class TestCreateFolderHandler extends AbstractFolderTest {
 		assertNotNull("Unable to get parent folder", parent);
 
 		KnowledgeBase kb = WebFolder.getDefaultKnowledgeBase();
-		Transaction createSubFolderTX = kb.beginTransaction();
+		Transaction createSubFolderTX = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		WebFolder subFolder = theHandler.createFolder(FOLDER_NAME, parent);
 		assertNotNull("Created no folder for parent " + parent, subFolder);
 		createSubFolderTX.commit();

@@ -36,7 +36,7 @@ import com.top_logic.util.model.ModelService;
 public class TestReverseMetaAttribute extends BasicTestCase {
 
 	public void testDoubleReverse() throws KnowledgeBaseException, ConfigurationException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TestTypesFactory factory = TestTypesFactory.getInstance();
 		ANode root = factory.getRootSingleton();
 		BNode b1 = (BNode) root.createChild("child1", BNode.B_NODE_TYPE);

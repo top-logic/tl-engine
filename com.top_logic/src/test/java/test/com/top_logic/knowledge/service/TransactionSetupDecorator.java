@@ -31,14 +31,14 @@ public class TransactionSetupDecorator implements TestSetupDecorator {
 	
 	@Override
 	public void setup(SetupAction innerSetup) throws Exception {
-		Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		innerSetup.setUpDecorated();
 		tx.commit();
 	}
 
 	@Override
 	public void tearDown(SetupAction innerSetup) throws Exception {
-		Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		innerSetup.tearDownDecorated();
 		tx.commit();
 	}

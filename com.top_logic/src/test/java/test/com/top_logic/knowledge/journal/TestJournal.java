@@ -145,7 +145,7 @@ public class TestJournal extends BasicTestCase {
         KnowledgeAssociation link;
 		ObjectKey linkKey;
         {
-        	Transaction tx = kb.beginTransaction();
+        	Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			WebFolderFactory wfFactory = WebFolderFactory.getInstance();
 			WebFolder folder =
 				wfFactory.createNewWebFolder("webFolder", wfFactory.getAllowedFolderTypes().iterator().next());
@@ -173,7 +173,7 @@ public class TestJournal extends BasicTestCase {
 
         // Delete target document.
         {
-        	Transaction tx = kb.beginTransaction();
+        	Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 
         	link.delete();
 			
@@ -727,7 +727,7 @@ public class TestJournal extends BasicTestCase {
 				JournallableDocument theWrapper2;
 				JournallableDocument theWrapper3;
 				{
-					final Transaction tx = theKB.beginTransaction();
+					final Transaction tx = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 
 					KnowledgeObject theTicketKO1 = createObject(theKB, "prepare0");
 					PREPARE_0_ID = theTicketKO1.getObjectName();
@@ -750,7 +750,7 @@ public class TestJournal extends BasicTestCase {
 					tx.commit();
 				}
 				{
-					final Transaction tx = theKB.beginTransaction();
+					final Transaction tx = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 					theWrapper1.setValue("definitionId", "t1");
 					theWrapper2.setValue("definitionId", "t2");
 					theWrapper3.setValue("definitionId", "t3");
@@ -764,7 +764,7 @@ public class TestJournal extends BasicTestCase {
 				}
 		    	Thread.sleep(SLEEP);
 				{
-					final Transaction tx = theKB.beginTransaction();
+					final Transaction tx = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 					// TODO TSA/KHA this is not actually checked in checkGetJournalEntry
 					theWrapper1.setValue("att1", "a1"); // add some new values
 					theWrapper2.setValue("att1", "a2");

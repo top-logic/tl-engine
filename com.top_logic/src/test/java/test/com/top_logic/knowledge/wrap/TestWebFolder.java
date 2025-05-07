@@ -140,7 +140,7 @@ public class TestWebFolder extends BasicTestCase {
 
 		private Document doCreate() {
 			Document document;
-			Transaction tx1 = _kb.beginTransaction();
+			Transaction tx1 = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			try {
 				_root = WebFolder.createFolder(_kb, ROOT, TestWebFolder.TEST_KNOWLEDGE);
 				{
@@ -156,7 +156,7 @@ public class TestWebFolder extends BasicTestCase {
 				tx1.rollback();
 			}
 
-			Transaction tx2 = _kb.beginTransaction();
+			Transaction tx2 = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			try {
 				document.update(_data2);
 				tx2.commit();
@@ -168,7 +168,7 @@ public class TestWebFolder extends BasicTestCase {
 
 		private WebFolder doCopy() {
 			WebFolder clone;
-			Transaction tx2 = _kb.beginTransaction();
+			Transaction tx2 = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			try {
 				clone =
 					WebFolder.createFolder(_kb, "clone-" + _useSoftLinks + "-" + _useVersionLinks,
@@ -182,7 +182,7 @@ public class TestWebFolder extends BasicTestCase {
 		}
 
 		private void doUpdate(Document document) {
-			Transaction tx = _kb.beginTransaction();
+			Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			try {
 				document.update(_data3);
 
@@ -248,7 +248,7 @@ public class TestWebFolder extends BasicTestCase {
 	/** Test Creation of Documents inside a Webfolder */
 	public void testCreate() throws Exception {
 		KnowledgeBase kb = kb();
-		Transaction tx1 = kb.beginTransaction();
+		Transaction tx1 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 
 		WebFolder theFolder = WebFolder.createFolder(kb, "ERNA", TEST_BASE);
 		assertNotNull(theFolder);
@@ -265,7 +265,7 @@ public class TestWebFolder extends BasicTestCase {
 		String dsn = (String) theFolder.tHandle().getAttributeValue(KOAttributes.PHYSICAL_RESOURCE);
 		assertTrue("DSN was not saved correctly : " + dsn, dsn.startsWith(TEST_BASE));
 
-		Transaction tx2 = kb.beginTransaction();
+		Transaction tx2 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		createChildFolder(theFolder, "SUBFOLDER ERNA");
 		try {
 			tx2.commit();
@@ -330,14 +330,14 @@ public class TestWebFolder extends BasicTestCase {
 	 */
 	public void doTestUpload(String aName, String aFolderBase) throws Exception {
 		KnowledgeBase theBase = kb();
-		Transaction tx1 = theBase.beginTransaction();
+		Transaction tx1 = theBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		WebFolder theFolder1 = WebFolder.createFolder(theBase, aName, aFolderBase);
 		tx1.commit();
 		{
 			aName = theFolder1.getName(); // may use different name ...
 			assertNotNull("WebFolder has no Name", aName);
 
-			Transaction tx2 = theBase.beginTransaction();
+			Transaction tx2 = theBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			WebFolder theFolder2 = createChildFolder(theFolder1, "Upload");
 			tx2.commit();
 			{
@@ -345,12 +345,12 @@ public class TestWebFolder extends BasicTestCase {
 
 				assertNotNull("Folder not created!", this.getFolder(theFolder2.getDSN()));
 
-				Transaction tx3 = theBase.beginTransaction();
+				Transaction tx3 = theBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 				Document theDocument = createDocument(theFolder2, aName + ".txt", this.getTestFile());
 				tx3.commit();
 				{
 					// create a second version
-					Transaction updateTx = theBase.beginTransaction();
+					Transaction updateTx = theBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 					theDocument.update(this.getTestFile());
 					updateTx.commit();
 
@@ -365,33 +365,33 @@ public class TestWebFolder extends BasicTestCase {
 
 					this.validateDocument(theDocument);
 
-					Transaction removeDocTx = theBase.beginTransaction();
+					Transaction removeDocTx = theBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 					assertTrue(theFolder2.remove(theDocument));
 					removeDocTx.commit();
 
-					Transaction removeFolderTx = theBase.beginTransaction();
+					Transaction removeFolderTx = theBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 					assertTrue(theFolder1.remove(theFolder2));
 					removeFolderTx.commit();
 
-					Transaction removeRecTx = theBase.beginTransaction();
+					Transaction removeRecTx = theBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 					assertTrue(WebFolder.deleteRecursively(theFolder1));
 					removeRecTx.commit();
 				}
 				/* finally */ {
-					Transaction txDel = theBase.beginTransaction();
+					Transaction txDel = theBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 					theDocument.tDelete();
 					txDel.commit();
 
 				}
 			}
 			/* finally */ {
-				Transaction txDel = theBase.beginTransaction();
+				Transaction txDel = theBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 				theFolder2.tDelete();
 				txDel.commit();
 			}
 		}
 		/* finally */ {
-			Transaction txDel = theBase.beginTransaction();
+			Transaction txDel = theBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			theFolder1.tDelete();
 			txDel.commit();
 		}
@@ -467,13 +467,13 @@ public class TestWebFolder extends BasicTestCase {
 
 		assertTrue(TEST_KNOWLEDGE + " does not exists", new DataAccessProxy(TEST_KNOWLEDGE).exists());
 
-		Transaction createFolderTx = theBase.beginTransaction();
+		Transaction createFolderTx = theBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		WebFolder folder = WebFolder.createFolder(theBase, folderName, TEST_KNOWLEDGE);
 		createFolderTx.commit();
 		try {
 			assertNotNull("Failed to create folder in " + theBase, folder);
 
-			Transaction createDocTx = theBase.beginTransaction();
+			Transaction createDocTx = theBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			Document document = createDocument(folder, folderName + ".txt", this.getTestFile());
 			createDocTx.commit();
 			try {
@@ -483,7 +483,7 @@ public class TestWebFolder extends BasicTestCase {
 
 				this.validateDocument(document);
 
-				Transaction renameTx = theBase.beginTransaction();
+				Transaction renameTx = theBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 				assertTrue("Cannot rename document in Repository", !document.rename("test01.txt"));
 				renameTx.commit();
 
@@ -491,19 +491,19 @@ public class TestWebFolder extends BasicTestCase {
 
 				Integer documentVersion = document.getVersionNumber();
 
-				Transaction updateTx = theBase.beginTransaction();
+				Transaction updateTx = theBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 				document.update(this.getTestFile());
 				updateTx.commit();
 
 				Integer theVersion2 = document.getVersionNumber();
 				assertTrue("Version not changed!", !documentVersion.equals(theVersion2));
 			} finally {
-				Transaction delTx = theBase.beginTransaction();
+				Transaction delTx = theBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 				document.tDelete();
 				delTx.commit();
 			}
 		} finally {
-			Transaction delTx = theBase.beginTransaction();
+			Transaction delTx = theBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			folder.tDelete();
 			delTx.commit();
 		}

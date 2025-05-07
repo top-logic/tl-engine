@@ -210,7 +210,7 @@ public class TestDBKnowledgeBaseLoad extends AbstractDBKnowledgeBaseClusterTest 
 	}
 
 	private Set<AObj> normalSetup() throws KnowledgeBaseException, RefetchTimeout {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		AObj b1 = newBObj("b1", "fa");
 		AObj b2 = newBObj("b2", "fb");
 		commitRefetch(tx);
@@ -221,7 +221,7 @@ public class TestDBKnowledgeBaseLoad extends AbstractDBKnowledgeBaseClusterTest 
 	}
 
 	private List<AObj> normalOrderedSetup() throws KnowledgeBaseException, RefetchTimeout {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		AObj b1 = newBObj("b1", "fa");
 		AObj b2 = newBObj("b2", "fb");
 		AObj b3 = newBObj("b3", "fa");
@@ -235,7 +235,7 @@ public class TestDBKnowledgeBaseLoad extends AbstractDBKnowledgeBaseClusterTest 
 	}
 
 	private Set<AObj> normalBranchSetup() throws KnowledgeBaseException, RefetchTimeout {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		AObj b1 = newBObj("b1", "fa");
 		AObj b2 = newBObj("b2", "fb");
 		tx.commit();
@@ -367,7 +367,7 @@ public class TestDBKnowledgeBaseLoad extends AbstractDBKnowledgeBaseClusterTest 
 	}
 
 	private Set<AObj> hiddenClobSetup() throws KnowledgeBaseException, RefetchTimeout {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		AObj c1 = newHiddenClobObj("c1", "c1-clob", "fa");
 		AObj c2 = newHiddenClobObj("c2", "c1-clob", "fb");
 		commitRefetch(tx);
@@ -378,7 +378,7 @@ public class TestDBKnowledgeBaseLoad extends AbstractDBKnowledgeBaseClusterTest 
 	}
 
 	private List<AObj> hiddenClobOrderedSetup() throws KnowledgeBaseException, RefetchTimeout {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		AObj b1 = newHiddenClobObj("b1", "clob1", "fa");
 		AObj b2 = newHiddenClobObj("b2", "clob2", "fb");
 		AObj b3 = newHiddenClobObj("b3", "clob3", "fa");
@@ -392,7 +392,7 @@ public class TestDBKnowledgeBaseLoad extends AbstractDBKnowledgeBaseClusterTest 
 	}
 
 	private Set<AObj> hiddenClobBranchSetup() throws KnowledgeBaseException, RefetchTimeout {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		AObj b1 = newHiddenClobObj("b1", "clob1", "fa");
 		AObj b2 = newHiddenClobObj("b2", "clob2", "fb");
 		tx.commit();
@@ -484,7 +484,7 @@ public class TestDBKnowledgeBaseLoad extends AbstractDBKnowledgeBaseClusterTest 
 	}
 
 	private Set<AObj> clobSetup() throws KnowledgeBaseException, RefetchTimeout {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		AObj c1 = newCCObj("c1", "c1-clob", "fa");
 		AObj c2 = newCCObj("c2", "c1-clob", "fb");
 		commitRefetch(tx);
@@ -495,7 +495,7 @@ public class TestDBKnowledgeBaseLoad extends AbstractDBKnowledgeBaseClusterTest 
 	}
 
 	private List<AObj> clobOrderedSetup() throws KnowledgeBaseException, RefetchTimeout {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		AObj b1 = newCCObj("b1", "clob1", "fa");
 		AObj b2 = newCCObj("b2", "clob2", "fb");
 		AObj b3 = newCCObj("b3", "clob3", "fa");
@@ -509,7 +509,7 @@ public class TestDBKnowledgeBaseLoad extends AbstractDBKnowledgeBaseClusterTest 
 	}
 
 	private Set<AObj> clobBranchSetup() throws KnowledgeBaseException, RefetchTimeout {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		AObj b1 = newCCObj("b1", "clob1", "fa");
 		AObj b2 = newCCObj("b2", "clob2", "fb");
 		tx.commit();

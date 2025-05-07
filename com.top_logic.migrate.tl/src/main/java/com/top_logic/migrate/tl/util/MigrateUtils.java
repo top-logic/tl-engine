@@ -67,6 +67,7 @@ import com.top_logic.knowledge.event.convert.StackedEventWriter;
 import com.top_logic.knowledge.gui.layout.upload.DefaultDataItem;
 import com.top_logic.knowledge.service.CreateTablesContext;
 import com.top_logic.knowledge.service.DBSetupActions;
+import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseConfiguration;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
@@ -335,8 +336,8 @@ public class MigrateUtils {
 		migrateParam.protocol.info("KnowledgeBase source: " + srcKB.getName());
 		migrateParam.protocol.info("KnowledgeBase destination: " + kb.getName());
 		{
-			Transaction targetKBTA = kb.beginTransaction();
-			Transaction sourceKBTA = srcKB.beginTransaction();
+			Transaction targetKBTA = kb.beginTransaction(I18NConstants.SYNTHESIZED_COMMIT_DURING_REPLAY);
+			Transaction sourceKBTA = srcKB.beginTransaction(I18NConstants.SYNTHESIZED_COMMIT_DURING_REPLAY);
 			try {
 				restartMetaAttributeFactory();
 			} catch (IllegalArgumentException e) {

@@ -42,7 +42,8 @@ public class LoginMessageResetHandler extends ConfirmCommandHandler {
 	protected HandlerResult internalHandleCommand(DisplayContext context, LayoutComponent component, Object model,
 			Map<String, Object> someArguments) {
 		final LoginMessage loginMessage = (LoginMessage) ((GridComponent) component).getSelected();
-		try (Transaction transaction = loginMessage.tKnowledgeBase().beginTransaction()) {
+		try (Transaction transaction =
+			loginMessage.tKnowledgeBase().beginTransaction(I18NConstants.RESET_LOGIN_MESSAGE)) {
 			loginMessage.setConfirmExpirationDate(new Date());
 			transaction.commit();
 		}

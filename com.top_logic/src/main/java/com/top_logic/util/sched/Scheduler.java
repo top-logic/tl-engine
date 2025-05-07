@@ -1529,7 +1529,8 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 
 	private void forceUncheckedMarkTaskAsInactive(Task task) {
 		TaskLogWrapper logWrapper = (TaskLogWrapper) task.getLog();
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction transaction = PersistencyLayer.getKnowledgeBase()
+			.beginTransaction(I18NConstants.COMPLETED_TASK__TASK.fill(task.getName()));
 		try {
 			logWrapper.forceUncheckedMarkTaskAsInactive(task, I18NConstants.TASK_MARKED_AS_DONE_BY_SCHEDULER);
 			transaction.commit();

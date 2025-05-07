@@ -146,6 +146,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 DELETED_FORM__COMPONENT;
 
+	/**
+	 * @en Deleted component "{0}".
+	 */
+	public static ResKey1 DELETED_COMPONENT__NAME;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

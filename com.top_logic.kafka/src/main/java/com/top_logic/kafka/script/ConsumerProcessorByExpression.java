@@ -160,7 +160,8 @@ public class ConsumerProcessorByExpression extends AbstractConfiguredInstance<Co
 	public void process(ConsumerRecords<String, String> records) {
 		for (ConsumerRecord<String, String> record : records) {
 			if (_transaction) {
-				try (Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+				try (Transaction transaction =
+					PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.PROCESSED_KAFKA_MESSAGE)) {
 					boolean doCommit = processMessage(record);
 					if (doCommit) {
 						transaction.commit();

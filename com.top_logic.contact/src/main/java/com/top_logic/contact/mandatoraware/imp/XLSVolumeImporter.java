@@ -181,7 +181,8 @@ public class XLSVolumeImporter extends POIExcelImporter {
 	    super.endSheetImport(numSheet, sheetName);
 	    
 	    if (this.mandator != null) {
-			try (Transaction t = this.mandator.getKnowledgeBase().beginTransaction()) {
+			try (Transaction t =
+				this.mandator.getKnowledgeBase().beginTransaction(I18NConstants.IMPORTED_SHEET__NAME.fill(sheetName))) {
                 this.mandator.setValue(COSContactConstants.VOLUME_IMPORT_DATE, this.date);
                 
                 try {

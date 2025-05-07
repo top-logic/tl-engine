@@ -95,7 +95,7 @@ public class DeleteMailsCommand extends AbstractCommandHandler {
 
 		{
 			KnowledgeBase kb = mailfolderAware.getKnowledgeBase();
-			try (Transaction tx = kb.beginTransaction()) {
+			try (Transaction tx = kb.beginTransaction(I18NConstants.DELETED_MAILS)) {
 				Collection<? extends TLObject> content = folder.getContent();
 				for (TLObject mail : content) {
 					deleteMail((IMAPMail) mail);

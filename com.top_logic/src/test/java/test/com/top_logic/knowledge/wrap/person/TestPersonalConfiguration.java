@@ -50,7 +50,7 @@ public class TestPersonalConfiguration extends BasicTestCase {
 		PersonalConfigurationWrapper persistentPC =
 			PersonalConfigurationWrapper.getPersonalConfiguration(currentPerson);
 		if (persistentPC != null) {
-			Transaction tx = persistentPC.getKnowledgeBase().beginTransaction();
+			Transaction tx = persistentPC.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			persistentPC.tDelete();
 			tx.commit();
 			return true;

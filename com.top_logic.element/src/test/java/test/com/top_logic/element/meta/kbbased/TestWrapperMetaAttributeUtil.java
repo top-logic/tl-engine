@@ -48,7 +48,7 @@ public class TestWrapperMetaAttributeUtil extends BasicTestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		object = Setup.newStructuredElementObject("o");
 		object2 = Setup.newStructuredElementObject("o2");
 		object3 = Setup.newStructuredElementObject("o3");
@@ -60,7 +60,7 @@ public class TestWrapperMetaAttributeUtil extends BasicTestCase {
 
 	@Override
 	protected void tearDown() throws Exception {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		object.tDelete();
 		object2.tDelete();
 		object3.tDelete();
@@ -112,13 +112,13 @@ public class TestWrapperMetaAttributeUtil extends BasicTestCase {
 	}
 
 	private void setList1Value(Wrapper target, List<?> newValue) throws KnowledgeBaseException {
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		target.setValue(Setup.LIST_1_ATTR, newValue);
 		tx2.commit();
 	}
 
 	private void setList2Value(Wrapper target, List<?> newValue) throws KnowledgeBaseException {
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		target.setValue(Setup.LIST_2_ATTR, newValue);
 		tx2.commit();
 	}

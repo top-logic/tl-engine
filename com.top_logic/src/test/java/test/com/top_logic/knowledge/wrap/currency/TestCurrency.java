@@ -177,7 +177,7 @@ public class TestCurrency extends BasicTestCase {
         assertNotNull(         usd.getFormat());
         assertNotNull(         usd.getFormat(Locale.US));
 
-		Transaction tx = theKBase.beginTransaction();
+		Transaction tx = theKBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		usd.saveExchangeRatio(new Date(), Double.valueOf(0.9462));
 		assertEquals(1, usd.getExchangeRateKAs().size());
         assertEquals(0.9462   , usd.getConversionFactor(), EPSILON);
@@ -238,7 +238,7 @@ public class TestCurrency extends BasicTestCase {
         Currency massive = Currency.getCurrencyInstance(theKBase,"BRK$");
 		assertEquals(0, massive.getExchangeRateKAs().size());
 
-		Transaction tx = theKBase.beginTransaction();
+		Transaction tx = theKBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		long start = System.currentTimeMillis();
 		long now = start;
 		Random rand = new Random(0x9865423L);
@@ -259,7 +259,7 @@ public class TestCurrency extends BasicTestCase {
 
 	private void dropExchanges(Currency currency) {
 		KnowledgeObject ko = currency.tHandle();
-		try (Transaction cleanUpTX = ko.getKnowledgeBase().beginTransaction()) {
+		try (Transaction cleanUpTX = ko.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			KBUtils.deleteAllKI(ko.getOutgoingAssociations(Currency.HAS_EXCHANGE));
 			cleanUpTX.commit();
 		}

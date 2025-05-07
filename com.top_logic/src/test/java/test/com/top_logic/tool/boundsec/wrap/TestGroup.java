@@ -41,7 +41,7 @@ public class TestGroup extends BasicTestCase {
 	protected void tearDown() throws Exception {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		for (int usedId = startId; usedId < nextId; usedId++) {
 			String name = getName(usedId);
 			
@@ -63,7 +63,7 @@ public class TestGroup extends BasicTestCase {
 	public void testCreate() {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		Person p1 = mkPerson();
 		Group g1 = mkGroup(p1);
 		Person p2 = mkPerson();
@@ -84,7 +84,7 @@ public class TestGroup extends BasicTestCase {
 	public void testContainmentSafety() {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		Person p1 = mkPerson();
 		Group g1 = mkGroup(p1);
 		Person p2 = mkPerson();
@@ -104,7 +104,7 @@ public class TestGroup extends BasicTestCase {
 	public void testPreventRecursion0() {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		Person p1 = mkPerson();
 		Group g1 = mkGroup(p1);
 		try {
@@ -121,7 +121,7 @@ public class TestGroup extends BasicTestCase {
 	public void testPreventRecursion1() {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		Person p1 = mkPerson();
 		Group g1 = mkGroup(p1);
 		Person p2 = mkPerson();
@@ -142,7 +142,7 @@ public class TestGroup extends BasicTestCase {
 	public void testPreventRecursion2() {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		Person p1 = mkPerson();
 		Group g1 = mkGroup(p1);
 		Person p2 = mkPerson();

@@ -275,7 +275,7 @@ public abstract class AbstractImportPerformer<C extends AbstractImportPerformer.
     protected Transaction intermediateCommit(Transaction aTX) throws KnowledgeBaseException {
         aTX.commit();
 
-        return PersistencyLayer.getKnowledgeBase().beginTransaction();
+        return PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
     }
 
     /**

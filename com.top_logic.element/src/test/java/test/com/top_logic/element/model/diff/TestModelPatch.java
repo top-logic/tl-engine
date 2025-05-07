@@ -110,7 +110,7 @@ public class TestModelPatch extends AbstractModelPatchTest {
 
 	private TLModel setupModel(String configResource) {
 		TLModel left;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			left = loadModel(configResource);
 			tx.commit();
 		}

@@ -253,14 +253,13 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 	 * Begin a (potentially nested) transaction in this {@link KnowledgeBase}.
 	 * 
 	 * @param commitMessage
-	 *        The commit message that will be associated with a commit of the
-	 *        new transaction.
+	 *        The commit message that will be associated with a commit of the new transaction.
 	 * 
 	 * @return the new transaction.
 	 * 
 	 * @see Transaction#commit() Committing a transaction.
 	 * 
-	 * @since TL 5.7
+	 * @since TL 7.10
 	 */
 	public Transaction beginTransaction(ResKey commitMessage);
     

@@ -78,7 +78,7 @@ public class TestFlexWrapper extends BasicTestCase {
 		FlexTestC c1;
 		Revision createRevision;
 		{
-			Transaction createTX = theKB.beginTransaction();
+			Transaction createTX = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			KnowledgeObject theKO = theKB.createKnowledgeObject(KBTestMeta.TEST_C);
 			c1 = (FlexTestC) WrapperFactory.getWrapper(theKO);
 			c1.setValue("flexAttr", "value1");
@@ -88,13 +88,13 @@ public class TestFlexWrapper extends BasicTestCase {
 
 		Revision trafficRevision;
 		{
-			Transaction createTrafficTX = theKB.beginTransaction();
+			Transaction createTrafficTX = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			theKB.createKnowledgeObject(KBTestMeta.TEST_C);
 			createTrafficTX.commit();
 			trafficRevision = createTrafficTX.getCommitRevision();
 		}
 
-		Transaction changeTX = theKB.beginTransaction();
+		Transaction changeTX = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		c1.setValue("flexAttr", "value2");
 		changeTX.commit();
 
@@ -105,7 +105,7 @@ public class TestFlexWrapper extends BasicTestCase {
 
 			assertEquals("value1", historicWrapper.getValue("flexAttr"));
 			try {
-				Transaction historicChangeTX = theKB.beginTransaction();
+				Transaction historicChangeTX = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 				historicWrapper.setValue("flexAttr", "value3");
 				historicChangeTX.commit();
 				assertEquals("Historic value changed", "value1", historicWrapper.getValue("flexAttr"));
@@ -121,7 +121,7 @@ public class TestFlexWrapper extends BasicTestCase {
 
 			assertEquals("value1", historicWrapper.getValue("flexAttr"));
 			try {
-				Transaction historicChangeTX = theKB.beginTransaction();
+				Transaction historicChangeTX = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 				historicWrapper.setValue("flexAttr", "value3");
 				historicChangeTX.commit();
 				assertEquals("Historic value changed", "value1", historicWrapper.getValue("flexAttr"));
@@ -147,7 +147,7 @@ public class TestFlexWrapper extends BasicTestCase {
 			Wrapper historicWrapper = WrapperHistoryUtils.getWrapper(trafficRevision, c1);
 			assertNull(historicWrapper.getValue("newFlexAttr"));
 			try {
-				Transaction historicChangeTX = theKB.beginTransaction();
+				Transaction historicChangeTX = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 				historicWrapper.setValue("newFlexAttr", "value");
 				historicChangeTX.commit();
 				assertNull("Historic value changed", historicWrapper.getValue("newFlexAttr"));
@@ -161,7 +161,7 @@ public class TestFlexWrapper extends BasicTestCase {
 			Wrapper historicWrapper = WrapperHistoryUtils.getWrapper(trafficRevision, c1);
 			assertNull(historicWrapper.getValue(KBTestMeta.TEST_C_NAME));
 			try {
-				Transaction historicChangeTX = theKB.beginTransaction();
+				Transaction historicChangeTX = theKB.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 				historicWrapper.setValue(KBTestMeta.TEST_C_NAME, "value");
 				historicChangeTX.commit();
 				assertNull("Historic value changed", historicWrapper.getValue(KBTestMeta.TEST_C_NAME));

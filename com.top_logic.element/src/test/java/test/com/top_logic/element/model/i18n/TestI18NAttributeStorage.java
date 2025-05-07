@@ -98,7 +98,7 @@ public class TestI18NAttributeStorage extends BasicTestCase {
 
 	/** Test for Ticket #24969: Getting the value ignored changes in the current transaction. */
 	public void testReadTransactionValue() {
-		try (Transaction transaction = getKnowledgeBase().beginTransaction()) {
+		try (Transaction transaction = getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			String originalText = "example";
 			ResKey newValue = createResKey(_fallbackLocale, originalText);
 			setTitle(newValue);

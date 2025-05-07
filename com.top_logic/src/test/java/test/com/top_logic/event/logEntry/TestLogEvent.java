@@ -45,7 +45,7 @@ public class TestLogEvent extends TestLogHelper {
         sender = new Sender(ModelTrackingService.getTrackingService());
         type   = MonitorEvent.MODIFIED;
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		source = createSource(kb, "testConstructor-S");
 		tx.commit();
         MonitorEvent event = new MonitorEvent(sender, trigger, source, user, type);
@@ -66,7 +66,7 @@ public class TestLogEvent extends TestLogHelper {
             Sender sender   = new Sender(ModelTrackingService.getTrackingService());
             Wrapper trigger = null;        
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-			Transaction tx = kb.beginTransaction();
+			Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			Wrapper source = createSource(kb, "testSendEvent-S");
 			tx.commit();
             String type     = MonitorEvent.MODIFIED;

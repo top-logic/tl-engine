@@ -13,6 +13,9 @@
 			<de>Change-Log</de>
 		</name>
 		<modelBuilder class="com.top_logic.element.changelog.ChangeLogListModelBuilder"/>
+		<configurationProviders>
+			<sort-columns order="date:descending"/>
+		</configurationProviders>
 		<buttons>
 			<button id="exportExcel"
 				class="com.top_logic.layout.table.export.ExcelExportHandler"

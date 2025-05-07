@@ -111,7 +111,7 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * @en Deleted document "{0}".
 	 */
-	protected static ResKey1 DELETED_DOCUMENT__NAME;
+	public static ResKey1 DELETED_DOCUMENT__NAME;
 
 	static {
 		initConstants(I18NConstants.class);

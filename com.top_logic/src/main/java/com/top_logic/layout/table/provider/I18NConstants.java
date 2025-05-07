@@ -16,7 +16,7 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * @en Updated document description.
 	 */
-	protected static ResKey UPDATED_DOCUMENT_DESCRIPTION;
+	public static ResKey UPDATED_DOCUMENT_DESCRIPTION;
 
 	static {
 		initConstants(I18NConstants.class);

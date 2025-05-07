@@ -20,7 +20,7 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * @en Copied workflow from "{0}" to "{1}".
 	 */
-	protected static ResKey2 COPIED_WORKFLOW__FROM_TO;
+	public static ResKey2 COPIED_WORKFLOW__FROM_TO;
 
 	static {
 		initConstants(I18NConstants.class);

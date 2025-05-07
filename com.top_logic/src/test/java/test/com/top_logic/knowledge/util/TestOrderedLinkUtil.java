@@ -173,7 +173,7 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testSetOrderedSet() throws Exception {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
@@ -186,7 +186,7 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testSetOrderedBag() throws Exception {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
@@ -199,7 +199,7 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testSetSingle() throws Exception {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
@@ -208,7 +208,7 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testSetConstantBag() throws Exception {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
@@ -217,19 +217,19 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testResetSingle() throws Exception {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
 
 		check(tx, b1, list(c1));
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		check(tx2, b1, EMPTY);
 	}
 
 	public void testRemoveFromConstantBag() throws Exception {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
@@ -237,14 +237,14 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 		check(tx, b1, list(c1, c1, c1));
 		StabilizeCheck unchanged = StabilizeCheck.create(b1).links(0);
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		check(tx2, b1, list(c1));
 
 		unchanged.check();
 	}
 
 	public void testAddToSingle() throws Exception {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
@@ -252,7 +252,7 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 		check(tx, b1, list(c1));
 		StabilizeCheck unchanged = StabilizeCheck.create(b1).links(c1);
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		CObj c2 = CObj.newCObj("c2");
 		CObj c3 = CObj.newCObj("c3");
 		CObj c4 = CObj.newCObj("c4");
@@ -262,14 +262,14 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testSetEmpty() throws Exception {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		check(tx, b1, EMPTY);
 	}
 
 	public void testRemoveSingle() throws Exception {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
@@ -280,14 +280,14 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 
 		StabilizeCheck unchanged = StabilizeCheck.create(b1).links(c1, c3);
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		check(tx2, b1, list(c1, c3));
 
 		unchanged.check();
 	}
 
 	public void testRemoveSingleBag() throws Exception {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
@@ -298,14 +298,14 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 
 		StabilizeCheck unchanged = StabilizeCheck.create(b1).links(c1, c3).links(1);
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		check(tx2, b1, list(c1, c2, c3));
 
 		unchanged.check();
 	}
 
 	public void testRemoveAtBeginning() throws Exception {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
@@ -316,14 +316,14 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 
 		StabilizeCheck unchanged = StabilizeCheck.create(b1).links(c3);
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		check(tx2, b1, list(c3));
 
 		unchanged.check();
 	}
 
 	public void testRemoveAtBeginningBag() throws Exception {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
@@ -334,14 +334,14 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 
 		StabilizeCheck unchanged = StabilizeCheck.create(b1).links(c3).links(4);
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		check(tx2, b1, list(c3, c2));
 
 		unchanged.check();
 	}
 
 	public void testRemoveAtEnd() throws Exception {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
@@ -352,14 +352,14 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 
 		StabilizeCheck unchanged = StabilizeCheck.create(b1).links(c1);
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		check(tx2, b1, list(c1));
 
 		unchanged.check();
 	}
 
 	public void testRemoveAtEndBag() throws Exception {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
@@ -370,14 +370,14 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 
 		StabilizeCheck unchanged = StabilizeCheck.create(b1).links(c1).links(1);
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		check(tx2, b1, list(c1, c2));
 
 		unchanged.check();
 	}
 
 	public void testMoveToEnd() throws Exception {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
@@ -388,14 +388,14 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 
 		StabilizeCheck unchanged = StabilizeCheck.create(b1).links(c1, c3);
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		check(tx2, b1, list(c1, c3, c2));
 
 		unchanged.check();
 	}
 
 	public void testMoveToBegin() throws Exception {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
@@ -406,14 +406,14 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 
 		StabilizeCheck unchanged = StabilizeCheck.create(b1).links(c2, c3);
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		check(tx2, b1, list(c2, c1, c3));
 
 		unchanged.check();
 	}
 
 	public void testInsertAtBeginning() throws Exception {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
@@ -424,7 +424,7 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 
 		StabilizeCheck unchanged = StabilizeCheck.create(b1).links(c1, c2, c3);
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		CObj c4 = CObj.newCObj("c4");
 		CObj c5 = CObj.newCObj("c5");
 		check(tx2, b1, list(c4, c5, c1, c2, c3));
@@ -433,7 +433,7 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testInsertInBetween() throws Exception {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
@@ -444,7 +444,7 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 
 		StabilizeCheck unchanged = StabilizeCheck.create(b1).links(c1, c2, c3);
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		CObj c4 = CObj.newCObj("c4");
 		CObj c5 = CObj.newCObj("c5");
 		check(tx2, b1, list(c1, c2, c4, c5, c3));
@@ -453,7 +453,7 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testInsertAtTheEnd() throws Exception {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
@@ -464,7 +464,7 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 
 		StabilizeCheck unchanged = StabilizeCheck.create(b1).links(c1, c2, c3);
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		CObj c4 = CObj.newCObj("c4");
 		CObj c5 = CObj.newCObj("c5");
 		check(tx2, b1, list(c1, c2, c3, c4, c5));
@@ -473,7 +473,7 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testInsertDuplicateInBag() throws Exception {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
@@ -484,14 +484,14 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 
 		StabilizeCheck unchanged = StabilizeCheck.create(b1).links(c1, c3);
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		check(tx2, b1, list(c1, c1, c3, c2, c3, c1));
 
 		unchanged.check();
 	}
 
 	public void testInsertMany() throws Exception {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c0 = CObj.newCObj("c0");
@@ -504,14 +504,14 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 
 		StabilizeCheck unchanged = StabilizeCheck.create(b1).links(c1, c2, c3, c4);
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		check(tx2, b1, list(c0, c0, c0, c0, c0, c1, c2, c3, c4));
 
 		unchanged.check();
 	}
 
 	public void testDeleteManyAccepted() throws Exception {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c0 = CObj.newCObj("c0");
@@ -524,14 +524,14 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 
 		StabilizeCheck unchanged = StabilizeCheck.create(b1).links(c1, c2, c3, c4);
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		check(tx2, b1, list(c1, c2, c3, c4));
 
 		unchanged.check();
 	}
 
 	public void testDeleteTooMuch() throws Exception {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c0 = CObj.newCObj("c0");
@@ -544,14 +544,14 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 
 		StabilizeCheck unchanged = StabilizeCheck.create(b1);
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		check(tx2, b1, list(c1, c2, c3, c4));
 
 		unchanged.check();
 	}
 
 	public void testMinimalUpdate() throws Exception {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 	
 		CObj c1 = CObj.newCObj("c1");
@@ -562,7 +562,7 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 
 		StabilizeCheck unchanged = StabilizeCheck.create(b1).links(c1, c2, c3);
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		CObj c4 = CObj.newCObj("c4");
 		CObj c5 = CObj.newCObj("c5");
 		check(tx2, b1, list(c1, c4, c5, c2, c3));
@@ -571,7 +571,7 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testReindexBegin() throws Exception {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
@@ -582,7 +582,7 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 		for (int n = 0; n < INCREMENTAL_INSERT_CNT; n++) {
 			StabilizeCheck unchanged = StabilizeCheck.create(b1).links(c1);
 
-			Transaction tx2 = kb().beginTransaction();
+			Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			CObj cNew = CObj.newCObj("cNew" + n);
 			check(tx2, b1, list(cNew, c1));
 
@@ -595,7 +595,7 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testReindexMiddle() throws Exception {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
@@ -606,7 +606,7 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 		for (int n = 0; n < INCREMENTAL_INSERT_CNT; n++) {
 			StabilizeCheck unchanged = StabilizeCheck.create(b1).links(c1, c2);
 
-			Transaction tx2 = kb().beginTransaction();
+			Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			CObj cNew = CObj.newCObj("cNew" + n);
 			check(tx2, b1, list(c1, cNew, c2));
 
@@ -619,7 +619,7 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testReindexEnd() throws Exception {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b1 = BObj.newBObj("b1");
 
 		CObj c1 = CObj.newCObj("c1");
@@ -630,7 +630,7 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 		for (int n = 0; n < INCREMENTAL_INSERT_CNT; n++) {
 			StabilizeCheck unchanged = StabilizeCheck.create(b1).links(c1, c2);
 
-			Transaction tx2 = kb().beginTransaction();
+			Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			CObj cNew = CObj.newCObj("cNew" + n);
 			check(tx2, b1, list(c1, c2, cNew));
 
@@ -650,7 +650,7 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 		CObj c1 = CObj.newCObj("c1");
 		CObj c2 = CObj.newCObj("c2");
 
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		
 		check(tx1, b1, list(c1, c2));
 		List<KnowledgeAssociation> links = AbstractWrapper.resolveLinks(b1, ABOrdered.ORDER_QUERY);
@@ -679,7 +679,7 @@ public class TestOrderedLinkUtil extends AbstractDBKnowledgeBaseTest {
 		CObj c1 = CObj.newCObj("c1");
 		CObj c2 = CObj.newCObj("c2");
 
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 
 		check(tx1, b1, list(c1, c2));
 

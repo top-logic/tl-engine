@@ -178,7 +178,7 @@ public class TestStructuredElementTreeModel extends BasicTestCase {
 
 	private void createStructuredElementHierarchy() throws KnowledgeBaseException {
 		KnowledgeBase knowledgeBase = PersistencyLayer.getKnowledgeBase();
-		Transaction transaction = knowledgeBase.beginTransaction();
+		Transaction transaction = knowledgeBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
 			root = ((StructuredElementFactory) DynamicModelService.getFactoryFor("projElement")).getRoot();
 			projects = new ArrayList<>();
@@ -207,7 +207,7 @@ public class TestStructuredElementTreeModel extends BasicTestCase {
 
 	private void removeStructuredElementHierarchy() throws KnowledgeBaseException {
 		KnowledgeBase knowledgeBase = PersistencyLayer.getKnowledgeBase();
-		Transaction transaction = knowledgeBase.beginTransaction();
+		Transaction transaction = knowledgeBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
 			for (StructuredElement project : projects) {
 				removeSubProjectStructure(project);

@@ -140,7 +140,7 @@ public class TestBoundComponent extends BasicTestCase {
 		assertNotNull(cmp.hideReason());
 
 		BoundedRole role;
-		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			role = BoundedRole.createBoundedRole("Schuhzubinder");
 			// Allow "Schuhzubinder"s to VIEW the BoundComponent
 			cmp.getPersBoundComp().addAccess(cmd.getCommandGroup(), role);
@@ -161,7 +161,7 @@ public class TestBoundComponent extends BasicTestCase {
 
 		assertTrue(isEmptyOrNull(cmp.getChildCheckers()));
 
-		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			assertTrue(cmp.getPersBoundComp().removeAccess(cmd.getCommandGroup(), role));
 			tx.commit();
 		}
@@ -174,7 +174,7 @@ public class TestBoundComponent extends BasicTestCase {
 		PersBoundComp pbc = SecurityComponentCache.getSecurityComponent(name);
 		if (pbc == null) {
 			KnowledgeBase kBase = PersistencyLayer.getKnowledgeBase();
-			try (Transaction tx = kBase.beginTransaction()) {
+			try (Transaction tx = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 				pbc = PersBoundComp.createInstance(kBase, name);
 				tx.commit();
 			}

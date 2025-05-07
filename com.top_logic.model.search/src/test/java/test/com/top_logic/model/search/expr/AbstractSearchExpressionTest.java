@@ -139,7 +139,7 @@ public abstract class AbstractSearchExpressionTest extends BasicTestCase {
 
 	protected XMLInstanceImporter scenario(String name) throws ConfigurationException {
 		XMLInstanceImporter importer;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			ObjectsConf config = XMLInstanceImporter.loadConfig(resource(name));
 			importer = new XMLInstanceImporter(model(), ModelService.getInstance().getFactory());
 			importer.setLog(new AssertProtocol());

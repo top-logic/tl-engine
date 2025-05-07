@@ -62,7 +62,7 @@ public class TestKABasedCacheOrdered extends AbstractDBKnowledgeBaseTest {
 	protected void setUp() throws Exception {
 		super.setUp();
 
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		b1 = BObjExtended.newBObjExtended("b1");
 
 		r1 = RObj.newRObj("r1");
@@ -119,7 +119,7 @@ public class TestKABasedCacheOrdered extends AbstractDBKnowledgeBaseTest {
 	}
 
 	private Revision setXY(List<RObj> xs, List<RObj> ys) throws KnowledgeBaseException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
 			b1.setX(xs);
 			b1.setY(ys);

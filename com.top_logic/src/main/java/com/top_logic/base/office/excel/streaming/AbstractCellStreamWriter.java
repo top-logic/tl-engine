@@ -13,18 +13,18 @@ import java.io.IOException;
  */
 public abstract class AbstractCellStreamWriter implements CellStreamWriter {
 
-	private int _currentColumn = 0;
+	protected int currentColumnIndex = 0;
 
-	private int _currentRow = 0;
+	protected int currentRowIndex = 0;
 
-	private String _currentTable = null;
+	protected String currentTable = null;
 
 	@Override
 	public void newRow() throws IOException {
 		checkReady();
 		internalNewRow();
-		_currentColumn = 0;
-		_currentRow++;
+		currentColumnIndex = 0;
+		currentRowIndex++;
 	}
 
 	@Override
@@ -35,16 +35,31 @@ public abstract class AbstractCellStreamWriter implements CellStreamWriter {
 	@Override
 	public void newTable(String tablename) throws IOException {
 		internalNewTable(tablename);
-		_currentColumn = 0;
-		_currentRow = 0;
-		_currentTable = tablename;
+		currentColumnIndex = 0;
+		currentRowIndex = 0;
+		currentTable = tablename;
 	}
 
 	@Override
 	public void write(Object cellvalue) throws IOException {
 		checkReady();
 		internalWrite(cellvalue);
-		_currentColumn++;
+		currentColumnIndex++;
+	}
+
+	@Override
+	public int currentColumn() {
+		return currentColumnIndex;
+	}
+
+	@Override
+	public int currentRow() {
+		return currentRowIndex;
+	}
+
+	@Override
+	public String currentTable() {
+		return currentTable;
 	}
 
 	/**
@@ -58,26 +73,11 @@ public abstract class AbstractCellStreamWriter implements CellStreamWriter {
 	 * Increments the column index by the given value.
 	 */
 	public void incColumn(int cnt) {
-		_currentColumn += cnt;
-	}
-
-	@Override
-	public int currentColumn() {
-		return _currentColumn;
-	}
-
-	@Override
-	public int currentRow() {
-		return _currentRow;
-	}
-
-	@Override
-	public String currentTable() {
-		return _currentTable;
+		currentColumnIndex += cnt;
 	}
 
 	private void checkReady() throws IOException {
-		if (_currentTable == null) {
+		if (currentTable == null) {
 			throw new IllegalStateException("Writer is not ready for write access yet! No current table given.");
 		}
 	}

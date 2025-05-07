@@ -38,7 +38,7 @@ public class FormEditActionOp extends AbstractApplicationActionOp<FormEditAction
 		ManualTask manualTask = getManualTask(context);
 		FormDefinition formDefinition = InternationalizedUtil.storeI18N(copyFormDefinition());
 
-		try (Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+		try (Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			ProcessFormDefinition form = TypedConfiguration.newConfigItem(ProcessFormDefinition.class);
 			Config<?> specializedForm = TypedConfiguration.newConfigItem(SpecializedForm.Config.class);
 			specializedForm.setForm(formDefinition);

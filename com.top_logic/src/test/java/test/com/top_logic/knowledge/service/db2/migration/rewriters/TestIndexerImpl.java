@@ -44,7 +44,7 @@ public class TestIndexerImpl extends AbstractDBKnowledgeBaseMigrationTest {
 	}
 
 	public void testIndexer() throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 
 		KnowledgeObject b1 = newB("b1");
 		KnowledgeObject b2 = newB("b2");
@@ -64,7 +64,7 @@ public class TestIndexerImpl extends AbstractDBKnowledgeBaseMigrationTest {
 		List<Object[]> multiValues = cIndex.getMultiValues("c1");
 		assertEquals(set("val1", "val2"), set(multiValues.get(0)[0], multiValues.get(1)[0]));
 
-		tx = kb().beginTransaction();
+		tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		b1.delete();
 		b2.setAttributeValue(A1_NAME, "b3");
 		c1.setAttributeValue(A1_NAME, "c2");

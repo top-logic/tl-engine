@@ -29,7 +29,7 @@ import com.top_logic.knowledge.service.Transaction;
 public class TestRevisionQuery extends AbstractDBKnowledgeBaseClusterTest {
 
 	public void testFlexAttributeQuery() {
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		BObj b0 = BObj.newBObj("b1");
 		BObj b1 = BObj.newBObj("b1");
 		BObj b2 = BObj.newBObj("b2");
@@ -37,19 +37,19 @@ public class TestRevisionQuery extends AbstractDBKnowledgeBaseClusterTest {
 		BObj b4 = BObj.newBObj("b4");
 		tx1.commit();
 		
-		Transaction tx3 = kb().beginTransaction();
+		Transaction tx3 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		b1.setF1("value");
 		b2.setF1("value");
 		b4.setF1("value");
 		tx3.commit();
 
-		Transaction tx4 = kb().beginTransaction();
+		Transaction tx4 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		b1.setF2("value");
 		b3.setF2("value");
 		b4.setF2("value");
 		tx4.commit();
 
-		Transaction tx5 = kb().beginTransaction();
+		Transaction tx5 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		b4.setF1("othervalue");
 		b4.setF2("othervalue");
 		tx5.commit();

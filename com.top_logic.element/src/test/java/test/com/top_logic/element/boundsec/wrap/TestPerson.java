@@ -40,7 +40,7 @@ public class TestPerson extends BasicTestCase {
 	protected void tearDown() throws Exception {
 		KnowledgeBase kb = kb();
 
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		for (int usedId = _startId; usedId < _nextId; usedId++) {
 			String name = getName(usedId);
 
@@ -66,7 +66,7 @@ public class TestPerson extends BasicTestCase {
 	public void testRepresentativeGroup() {
 		Person p1;
 		{
-			try (Transaction tx = kb().beginTransaction()) {
+			try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 				p1 = mkPerson();
 				tx.commit();
 			}
@@ -80,7 +80,7 @@ public class TestPerson extends BasicTestCase {
 
 		// Delete representative group.
 		{
-			try (Transaction tx = kb().beginTransaction()) {
+			try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 				p1.getRepresentativeGroup().tDelete();
 				tx.commit();
 			}
@@ -99,7 +99,7 @@ public class TestPerson extends BasicTestCase {
 	 */
 	public void testIsInRepresentativeGroup() {
 		Person p1;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			p1 = mkPerson();
 			tx.commit();
 		}
@@ -112,14 +112,14 @@ public class TestPerson extends BasicTestCase {
 	public void testCreatePersonWithGroupName() {
 		String groupName = mkName();
 
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			Group group = Group.createGroup(groupName);
 			assertNotNull("Creating of group with name " + groupName + " should work.", group);
 			tx.commit();
 		}
 
 		try {
-			try (Transaction tx = kb().beginTransaction()) {
+			try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 				mkPerson(groupName);
 				tx.commit();
 			}

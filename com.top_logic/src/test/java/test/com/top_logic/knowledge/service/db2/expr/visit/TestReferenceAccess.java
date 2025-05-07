@@ -35,7 +35,7 @@ public class TestReferenceAccess extends AbstractDBKnowledgeBaseTest {
 	 * Search items pointing to another item with a certain attribute value.
 	 */
 	public void testMonomorphicReferenceAttribute() throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		DObj d1 = DObj.newDObj("d1");
 		d1.setMonoCurLocal(newDObj("dd1", "foo"));
 
@@ -68,7 +68,7 @@ public class TestReferenceAccess extends AbstractDBKnowledgeBaseTest {
 	 * Search items pointing to another item with a certain attribute value.
 	 */
 	public void testPolymorphicReferenceAttribute() throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		EObj e1 = EObj.newEObj("e1");
 		e1.setPolyCurLocal(newD("d1", "foo"));
 
@@ -104,7 +104,7 @@ public class TestReferenceAccess extends AbstractDBKnowledgeBaseTest {
 	 * Alternative formulation of {@link #testPolymorphicReferenceAttribute()}.
 	 */
 	public void testPolymorphicReferenceAttributeAlternative() throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		EObj e1 = EObj.newEObj("e1");
 		e1.setPolyCurLocal(newD("d1", "foo"));
 
@@ -140,7 +140,7 @@ public class TestReferenceAccess extends AbstractDBKnowledgeBaseTest {
 	 * Search items pointing to an item pointing to another item with a certain attribute value.
 	 */
 	public void testMonomorphicReferenceOfReferenceAttribute() throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		DObj d1 =
 			DObj.newDObj("d1").setMonoCurLocal(newDObj("d1.d", "foo").setMonoCurLocal(newDObj("d1.d.d", "matched")));
 
@@ -193,7 +193,7 @@ public class TestReferenceAccess extends AbstractDBKnowledgeBaseTest {
 	 * Search items pointing to an item pointing to another item with a certain attribute value.
 	 */
 	public void testPolymorphicReferenceOfReferenceAttribute() throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 
 		DObj d1 =
 			DObj.newDObj("d1").setPolyCurLocal(newDObj("d1.d", "foo").setPolyCurLocal(newDObj("d1.d.d", "matched")));
@@ -288,7 +288,7 @@ public class TestReferenceAccess extends AbstractDBKnowledgeBaseTest {
 	 * Search items pointing to two other items with the same attribute value.
 	 */
 	public void testMonomorphicReferenceAttributeCompare() throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		DObj d1 =
 			DObj.newDObj("d1").setMonoCurLocal(newDObj("d1.d1", "foo")).setMonoCurGlobal(newDObj("d1.d2", "bar"));
 
@@ -367,7 +367,7 @@ public class TestReferenceAccess extends AbstractDBKnowledgeBaseTest {
 	 * Search items pointing to two other items with the same attribute value.
 	 */
 	public void testPolymorphicReferenceAttributeCompare() throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		DObj d1 =
 			DObj.newDObj("d1").setPolyCurLocal(newDObj("d1.d1", "foo")).setPolyCurGlobal(newDObj("d1.d2", "bar"));
 
@@ -462,7 +462,7 @@ public class TestReferenceAccess extends AbstractDBKnowledgeBaseTest {
 	 * Search items pointing to another item with two attributes having the same value.
 	 */
 	public void testMonomorphicReferenceAttributesCompare() throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		DObj d1 =
 			newDObj("d1", "x").setMonoCurLocal(newDObj("d1.d1", "bar", "foo"));
 
@@ -531,7 +531,7 @@ public class TestReferenceAccess extends AbstractDBKnowledgeBaseTest {
 	 * Search items pointing to another item with two attributes having the same value.
 	 */
 	public void testPolymorphicReferenceAttributesCompare() throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		DObj d1 =
 			newDObj("d1", "x").setPolyCurLocal(newDObj("d1.d1", "bar", "foo"));
 

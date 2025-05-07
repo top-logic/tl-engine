@@ -243,7 +243,7 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
-		try (Transaction tx = kb.beginTransaction()) {
+		try (Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			Map<TLModelPartRef, TypedFormDefinition> forms = getFormDefinitions(layout);
 
 			TypedFormDefinition typedForm = TypedConfiguration.newConfigItem(TypedFormDefinition.class);

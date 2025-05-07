@@ -369,7 +369,7 @@ public class SAPSupplierImporter extends DataObjectImportTask  {
 					if (i % this.commit == 0) {
 						try {
 							t.commit();
-							t = this.kBase.beginTransaction();
+							t = this.kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 						} catch (KnowledgeBaseException e) {
 							logError("Failed to commit deleted contacts at " + i, e);
 						}

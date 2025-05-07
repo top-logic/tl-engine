@@ -117,14 +117,14 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 			return;
 		}
 
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TestTypesFactory factory = TestTypesFactory.getInstance();
 		ANode root = factory.getRootSingleton();
 		BNode b1 = newB(root, "b1");
 		tx1.commit();
 		Revision rev1 = tx1.getCommitRevision();
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		b1.setRevision(rev1);
 		assertEquals(rev1, b1.getRevision());
 		tx2.commit();
@@ -141,7 +141,7 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 			rev1.tValue(TlCoreFactory.getLogRevisionAttr()));
 
 
-		Transaction tx3 = kb().beginTransaction();
+		Transaction tx3 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		String revisionType = TLModelUtil.qualifiedName(TlCoreFactory.getRevisionType());
 		ReferenceConfig setConfig = TestKBBasedMetaAttributes.referenceConfig("revSet", revisionType, 0.0, true);
 		TLReference revisionSet = TestKBBasedMetaAttributes.createReference(TestTypesFactory.getBType(), setConfig);
@@ -154,7 +154,7 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 		assertEquals(list(), b1.tValue(revisionList));
 		assertEquals(set(), b1.tValue(revisionSet));
 
-		Transaction tx4 = kb().beginTransaction();
+		Transaction tx4 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		b1.tUpdate(revisionList, list(rev2, rev2));
 		b1.tUpdate(revisionSet, set(rev2, rev1));
 		assertEquals(list(rev2, rev2), b1.tValue(revisionList));
@@ -163,7 +163,7 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 		assertEquals(list(rev2, rev2), b1.tValue(revisionList));
 		assertEquals(set(rev1, rev2), b1.tValue(revisionSet));
 
-		Transaction tx5 = kb().beginTransaction();
+		Transaction tx5 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		b1.tAdd(revisionList, rev1);
 		b1.tAdd(revisionList, rev3);
 		b1.tAdd(revisionSet, rev1);
@@ -174,7 +174,7 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 		assertEquals(list(rev2, rev2, rev1, rev3), b1.tValue(revisionList));
 		assertEquals(set(rev1, rev3, rev2), b1.tValue(revisionSet));
 
-		Transaction tx6 = kb().beginTransaction();
+		Transaction tx6 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		b1.tAdd(revisionList, rev2);
 		b1.tRemove(revisionList, rev2);
 		b1.tRemove(revisionList, rev3);
@@ -189,7 +189,7 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 	}
 
 	public void testModifiableSet() throws ConfigurationException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TestTypesFactory factory = TestTypesFactory.getInstance();
 		ANode root = factory.getRootSingleton();
 		ANode a1 = newA(root, "a1", "val1");
@@ -200,7 +200,7 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 		Set<TLObject> modifiableSet = b1.getCollectionModifiable();
 		assertEquals(set(), modifiableSet);
 
-		tx = kb().beginTransaction();
+		tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		modifiableSet.add(a1);
 		assertEquals(set(a1), modifiableSet);
 		assertEquals(set(a1), b1.getCollection());
@@ -208,7 +208,7 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 		assertEquals(set(a1), modifiableSet);
 		assertEquals(set(a1), b1.getCollection());
 		
-		tx = kb().beginTransaction();
+		tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		// No-Op
 		modifiableSet.add(a1);
 		assertEquals(set(a1), modifiableSet);
@@ -232,7 +232,7 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 	}
 
 	public void testModifiableList() throws ConfigurationException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TestTypesFactory factory = TestTypesFactory.getInstance();
 		ANode root = factory.getRootSingleton();
 		ANode a1 = newA(root, "a1", "val1");
@@ -243,7 +243,7 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 		List<StructuredElement> modifiableList = b1.getListModifiable();
 		assertEquals(list(), modifiableList);
 
-		tx = kb().beginTransaction();
+		tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		modifiableList.add(a1);
 		assertEquals(list(a1), modifiableList);
 		assertEquals(list(a1), b1.getList());
@@ -251,7 +251,7 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 		assertEquals(list(a1), modifiableList);
 		assertEquals(list(a1), b1.getList());
 
-		tx = kb().beginTransaction();
+		tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		modifiableList.add(a2);
 		assertEquals(list(a1, a2), modifiableList);
 		assertEquals(list(a1, a2), b1.getList());
@@ -295,7 +295,7 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 			return;
 		}
 
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TestTypesFactory factory = TestTypesFactory.getInstance();
 		ANode root = factory.getRootSingleton();
 		ANode a1 = newA(root, "a1", "val1");
@@ -303,7 +303,7 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 		CNode c1 = newC(root, "c1", "val1");
 		tx.commit();
 
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		c1.setHistoricReferenceMulti(list(a1, a2));
 		c1.setHistoricReferenceSingle(a1);
 		assertEquals(list(a1, a2), c1.getHistoricReferenceMulti());
@@ -313,7 +313,7 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 		assertEquals(list(inRevision(tx1, a1), inRevision(tx1, a2)), c1.getHistoricReferenceMulti());
 		assertEquals(inRevision(tx1, a1), c1.getHistoricReferenceSingle());
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		a1.setAs1("val2");
 		a2.setAs1("val2");
 		tx2.commit();
@@ -321,7 +321,7 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 		assertEquals(list(inRevision(tx1, a1), inRevision(tx1, a2)), c1.getHistoricReferenceMulti());
 		assertEquals(inRevision(tx1, a1), c1.getHistoricReferenceSingle());
 
-		Transaction tx3 = kb().beginTransaction();
+		Transaction tx3 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		c1.getHistoricReferenceMultiModifiable().add(0, inRevision(tx, a1));
 		c1.getHistoricReferenceMultiModifiable().add(0, a1);
 		assertEquals("Current and historic object added.",
@@ -339,7 +339,7 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 			return;
 		}
 
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TestTypesFactory factory = TestTypesFactory.getInstance();
 		ANode root = factory.getRootSingleton();
 		ANode a1 = newA(root, "a1", "val1");
@@ -347,14 +347,14 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 		CNode c1 = newC(root, "c1", "val1");
 		tx.commit();
 
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		c1.setMixedReferenceMulti(set(a1, a2));
 		c1.setMixedReferenceSingle(a1);
 		assertEquals(set(a1, a2), c1.getMixedReferenceMulti());
 		assertEquals(a1, c1.getMixedReferenceSingle());
 		tx1.commit();
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		a1.setAs1("val2");
 		a2.setAs1("val2");
 		tx2.commit();
@@ -362,7 +362,7 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 		assertEquals(set(a1, a2), c1.getMixedReferenceMulti());
 		assertEquals(a1, c1.getMixedReferenceSingle());
 
-		Transaction tx3 = kb().beginTransaction();
+		Transaction tx3 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		c1.getMixedReferenceMultiModifiable().add(inRevision(tx1, a1));
 		assertEquals("Historic object added", set(a1, a2, inRevision(tx1, a1)), c1.getMixedReferenceMulti());
 		c1.setMixedReferenceSingle(inRevision(tx2, a1));
@@ -376,7 +376,7 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 			return;
 		}
 
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		ANode root = TestTypesFactory.getInstance().getRootSingleton();
 		ANode a1 = newA(root, "a1", "val1");
 		ANode a2 = newA(root, "a2", "val1");
@@ -394,7 +394,7 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 		assertEquals(set(c3), a1.tReferers(TestTypesFactory.getMixedReferenceMultiCNodeAttr()));
 		assertEquals(set(c3, c2), a2.tReferers(TestTypesFactory.getMixedReferenceMultiCNodeAttr()));
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		c1.setMixedReferenceSingle(inRevision(tx, a1));
 		c2.setMixedReferenceMulti(set(a2, inRevision(tx, a2)));
 		tx2.commit();
@@ -413,7 +413,7 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 		}
 
 		Transaction tx;
-		tx = kb().beginTransaction();
+		tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TestTypesFactory factory = TestTypesFactory.getInstance();
 		ANode root = factory.getRootSingleton();
 		ANode a1 = newA(root, "a1", "val1");
@@ -422,11 +422,11 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 		tx.commit();
 		A historicA1 = inRevision(tx, a1);
 
-		tx = kb().beginTransaction();
+		tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		a1.setAs1("val2");
 		tx.commit();
 
-		tx = kb().beginTransaction();
+		tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		assertTrue(WrapperHistoryUtils.isCurrent(a1));
 		b1.setHistoricInlineReference(a1);
 		tx.commit();
@@ -435,7 +435,7 @@ public class TestReferenceMetaAttribute extends BasicTestCase {
 		assertEquals(tx.getCommitRevision(), WrapperHistoryUtils.getRevision(historicValue));
 		assertEquals("val2", historicValue.getAs1());
 
-		tx = kb().beginTransaction();
+		tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		b1.setHistoricInlineReference(historicA1);
 		tx.commit();
 		A newHistoricValue = b1.getHistoricInlineReference();

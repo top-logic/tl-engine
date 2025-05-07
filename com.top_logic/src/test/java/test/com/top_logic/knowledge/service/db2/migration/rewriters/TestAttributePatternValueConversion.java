@@ -44,7 +44,7 @@ public class TestAttributePatternValueConversion extends AbstractDBKnowledgeBase
 	}
 
 	public void testAttributeFilter() throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 
 		KnowledgeObject b = newB("b1");
 		b.setAttributeValue(B1_NAME, "b1Val");

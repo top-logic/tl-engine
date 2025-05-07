@@ -263,7 +263,7 @@ public class TestQueryLanguage extends AbstractDBKnowledgeBaseClusterTest {
 	}
 
 	public void testRedundantUnionSearch() throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject b1 = newB("b1");
 		KnowledgeObject c1 = newC("c1");
 		KnowledgeObject d1 = newD("d1");
@@ -620,23 +620,23 @@ public class TestQueryLanguage extends AbstractDBKnowledgeBaseClusterTest {
 			reference(E_NAME, REFERENCE_MONO_CUR_LOCAL_NAME),
 			param("ref"))), null);
 
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject e1 = newE("e1");
 		KnowledgeObject e2 = newE("e2");
 
 		KnowledgeObject d1 = newD("d1");
 		tx1.commit();
 
-		Transaction tx2 = kb().beginTransaction();
+		Transaction tx2 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		e1.setAttributeValue(REFERENCE_MONO_CUR_LOCAL_NAME, d1);
 		tx2.commit();
 
-		Transaction tx3 = kb().beginTransaction();
+		Transaction tx3 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		e2.setAttributeValue(REFERENCE_MONO_CUR_LOCAL_NAME, d1);
 		tx3.commit();
 		Long r3 = tx3.getCommitRevision().getCommitNumber();
 
-		Transaction tx4 = kb().beginTransaction();
+		Transaction tx4 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		e1.setAttributeValue(REFERENCE_MONO_CUR_LOCAL_NAME, null);
 		tx4.commit();
 
@@ -814,7 +814,7 @@ public class TestQueryLanguage extends AbstractDBKnowledgeBaseClusterTest {
 			unaryOperation(Operator.TYPE_NAME, reference(E_NAME, attr)),
 			setLiteral(Arrays.asList(E_NAME, G_NAME)))));
 
-		Transaction tx1 = kb().beginTransaction();
+		Transaction tx1 = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject e1 = newE("e1");
 		KnowledgeObject e2 = newE("e2");
 		KnowledgeObject e3 = newE("e3");

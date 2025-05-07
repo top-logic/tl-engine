@@ -57,7 +57,7 @@ public class TestReferencePreload extends BasicTestCase {
 		PreloadTest p5;
 		PreloadTest p6;
 		Revision r1;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			p1 = factory().createPreloadTest();
 			p2 = factory().createPreloadTest();
 			p3 = factory().createPreloadTest();
@@ -69,7 +69,7 @@ public class TestReferencePreload extends BasicTestCase {
 			tx.commit();
 			r1 = tx.getCommitRevision();
 		}
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			// Dummy revision.
 			factory().createANode();
 			tx.commit();
@@ -110,7 +110,7 @@ public class TestReferencePreload extends BasicTestCase {
 		PreloadTest p5;
 		PreloadTest p6;
 		Revision r1;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			p1 = factory().createPreloadTest();
 			p2 = factory().createPreloadTest();
 			p3 = factory().createPreloadTest();
@@ -122,7 +122,7 @@ public class TestReferencePreload extends BasicTestCase {
 			tx.commit();
 			r1 = tx.getCommitRevision();
 		}
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			// Dummy revision.
 			factory().createANode();
 			tx.commit();
@@ -160,7 +160,7 @@ public class TestReferencePreload extends BasicTestCase {
 		PreloadTest p5;
 		PreloadTest p6;
 		Revision r1;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			p1 = factory().createPreloadTest();
 			p2 = factory().createPreloadTest();
 			p3 = factory().createPreloadTest();
@@ -172,7 +172,7 @@ public class TestReferencePreload extends BasicTestCase {
 			tx.commit();
 			r1 = tx.getCommitRevision();
 		}
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			// Dummy revision.
 			factory().createANode();
 			tx.commit();
@@ -213,7 +213,7 @@ public class TestReferencePreload extends BasicTestCase {
 		PreloadTest p5;
 		PreloadTest p6;
 		Revision r1;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			p1 = factory().createPreloadTest();
 			p2 = factory().createPreloadTest();
 			p3 = factory().createPreloadTest();
@@ -225,7 +225,7 @@ public class TestReferencePreload extends BasicTestCase {
 			tx.commit();
 			r1 = tx.getCommitRevision();
 		}
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			// Dummy revision.
 			factory().createANode();
 			tx.commit();
@@ -263,7 +263,7 @@ public class TestReferencePreload extends BasicTestCase {
 		PreloadTest p5;
 		PreloadTest p6;
 		Revision r1;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			p1 = factory().createPreloadTest();
 			p2 = factory().createPreloadTest();
 			p3 = factory().createPreloadTest();
@@ -275,7 +275,7 @@ public class TestReferencePreload extends BasicTestCase {
 			tx.commit();
 			r1 = tx.getCommitRevision();
 		}
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			// Dummy revision.
 			factory().createANode();
 			tx.commit();
@@ -317,7 +317,7 @@ public class TestReferencePreload extends BasicTestCase {
 		PreloadTest p5;
 		PreloadTest p6;
 		Revision r1;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			p1 = factory().createPreloadTest();
 			p2 = factory().createPreloadTest();
 			p3 = factory().createPreloadTest();
@@ -329,7 +329,7 @@ public class TestReferencePreload extends BasicTestCase {
 			tx.commit();
 			r1 = tx.getCommitRevision();
 		}
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			// Dummy revision.
 			factory().createANode();
 			tx.commit();
@@ -367,7 +367,7 @@ public class TestReferencePreload extends BasicTestCase {
 		PreloadTest p5;
 		PreloadTest p6;
 		Revision r1;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			p1 = factory().createPreloadTest();
 			p2 = factory().createPreloadTest();
 			p3 = factory().createPreloadTest();
@@ -379,7 +379,7 @@ public class TestReferencePreload extends BasicTestCase {
 			tx.commit();
 			r1 = tx.getCommitRevision();
 		}
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			// Dummy revision.
 			factory().createANode();
 			tx.commit();
@@ -421,7 +421,7 @@ public class TestReferencePreload extends BasicTestCase {
 		PreloadTest p5;
 		PreloadTest p6;
 		Revision r1;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			p1 = factory().createPreloadTest();
 			p2 = factory().createPreloadTest();
 			p3 = factory().createPreloadTest();
@@ -433,7 +433,7 @@ public class TestReferencePreload extends BasicTestCase {
 			tx.commit();
 			r1 = tx.getCommitRevision();
 		}
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			// Dummy revision.
 			factory().createANode();
 			tx.commit();
@@ -469,7 +469,7 @@ public class TestReferencePreload extends BasicTestCase {
 		PreloadTest p3;
 		PreloadTest p4;
 		Revision r1;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			p1 = factory().createPreloadTest();
 			p2 = factory().createPreloadTest();
 			p3 = factory().createPreloadTest();
@@ -479,7 +479,7 @@ public class TestReferencePreload extends BasicTestCase {
 			tx.commit();
 			r1 = tx.getCommitRevision();
 		}
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			// Dummy revision.
 			factory().createANode();
 			tx.commit();
@@ -514,7 +514,7 @@ public class TestReferencePreload extends BasicTestCase {
 		PreloadTest p4;
 		PreloadTest p5;
 		Revision r1;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			p1 = factory().createPreloadTest();
 			p2 = factory().createPreloadTest();
 			p3 = factory().createPreloadTest();
@@ -526,7 +526,7 @@ public class TestReferencePreload extends BasicTestCase {
 			tx.commit();
 			r1 = tx.getCommitRevision();
 		}
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			// Dummy revision.
 			factory().createANode();
 			tx.commit();
@@ -564,7 +564,7 @@ public class TestReferencePreload extends BasicTestCase {
 		PreloadTest p3;
 		PreloadTest p4;
 		Revision r1;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			p1 = factory().createPreloadTest();
 			p2 = factory().createPreloadTest();
 			p3 = factory().createPreloadTest();
@@ -574,7 +574,7 @@ public class TestReferencePreload extends BasicTestCase {
 			tx.commit();
 			r1 = tx.getCommitRevision();
 		}
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			// Dummy revision.
 			factory().createANode();
 			tx.commit();
@@ -608,7 +608,7 @@ public class TestReferencePreload extends BasicTestCase {
 		PreloadTest p3;
 		PreloadTest p4;
 		Revision r1;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			p1 = factory().createPreloadTest();
 			p2 = factory().createPreloadTest();
 			p3 = factory().createPreloadTest();
@@ -618,7 +618,7 @@ public class TestReferencePreload extends BasicTestCase {
 			tx.commit();
 			r1 = tx.getCommitRevision();
 		}
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			// Dummy revision.
 			factory().createANode();
 			tx.commit();
@@ -653,7 +653,7 @@ public class TestReferencePreload extends BasicTestCase {
 		PreloadTest p3;
 		PreloadTest p4;
 		Revision r1;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			p1 = factory().createPreloadTest();
 			p2 = factory().createPreloadTest();
 			p3 = factory().createPreloadTest();
@@ -663,7 +663,7 @@ public class TestReferencePreload extends BasicTestCase {
 			tx.commit();
 			r1 = tx.getCommitRevision();
 		}
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			// Dummy revision.
 			factory().createANode();
 			tx.commit();
@@ -699,7 +699,7 @@ public class TestReferencePreload extends BasicTestCase {
 		PreloadTest p5;
 		PreloadTest p6;
 		Revision r1;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			p1 = factory().createPreloadTest();
 			p2 = factory().createPreloadTest();
 			p3 = factory().createPreloadTest();
@@ -713,7 +713,7 @@ public class TestReferencePreload extends BasicTestCase {
 			tx.commit();
 			r1 = tx.getCommitRevision();
 		}
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			// Dummy revision.
 			factory().createANode();
 			tx.commit();

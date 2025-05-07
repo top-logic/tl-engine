@@ -29,7 +29,7 @@ public class TLModelTestUtil {
 	}
 
 	private static TLModel createTLModelKO(KnowledgeBase knowledgeBase) {
-		Transaction transaction = knowledgeBase.beginTransaction();
+		Transaction transaction = knowledgeBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
 			TLModel tlModel = PersistentTLModel.newInstance(knowledgeBase);
 			transaction.commit();

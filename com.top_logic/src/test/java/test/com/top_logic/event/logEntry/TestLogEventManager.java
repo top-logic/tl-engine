@@ -31,7 +31,7 @@ public class TestLogEventManager extends TestLogHelper {
 	public void testDisplayGroup() throws DataObjectException {
         LogEntryConfiguration theConf  = LogEntryConfiguration.getInstance();
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		Wrapper theTrigger = createTrigger(kb, "testDisplayGroup-T");
 		tx.commit();
 

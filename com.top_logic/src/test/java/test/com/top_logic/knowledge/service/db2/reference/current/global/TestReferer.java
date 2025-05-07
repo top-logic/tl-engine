@@ -71,7 +71,7 @@ public class TestReferer extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testNavigateHistoric() throws DataObjectException {
-		Transaction createReferenceTX = kb().beginTransaction();
+		Transaction createReferenceTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject referee = newE("e1");
 		KnowledgeObject reference = newD("d1");
 		referee.setAttributeValue(REFERENCE_POLY_CUR_GLOBAL_NAME, reference);
@@ -87,11 +87,11 @@ public class TestReferer extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testChangeRefererInTx() throws DataObjectException {
-		Transaction createReferenceTX = kb().beginTransaction();
+		Transaction createReferenceTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject referer = newE("e1");
 		createReferenceTX.commit();
 
-		Transaction changeTX = kb().beginTransaction();
+		Transaction changeTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject reference = newD("d1");
 		referer.setAttributeValue(REFERENCE_POLY_CUR_GLOBAL_NAME, reference);
 		// reference changed within the transaction
@@ -102,7 +102,7 @@ public class TestReferer extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testRefererToSelf() throws DataObjectException {
-		Transaction createReferenceTX = kb().beginTransaction();
+		Transaction createReferenceTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject referer = newE("e1");
 		KnowledgeObject reference = referer;
 		referer.setAttributeValue(REFERENCE_POLY_CUR_GLOBAL_NAME, reference);
@@ -112,7 +112,7 @@ public class TestReferer extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testRefererToSelfInTransaction() throws DataObjectException {
-		Transaction createReferenceTX = kb().beginTransaction();
+		Transaction createReferenceTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject referer = newE("e1");
 		KnowledgeObject reference = referer;
 		referer.setAttributeValue(REFERENCE_POLY_CUR_GLOBAL_NAME, reference);
@@ -123,14 +123,14 @@ public class TestReferer extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testReferenceSetInTransaction() throws DataObjectException {
-		Transaction createReferenceTX = kb().beginTransaction();
+		Transaction createReferenceTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject reference = newD("d1");
 		KnowledgeObject referer = newE("e1");
 		createReferenceTX.commit();
 
 		assertEquals(list(), kb().getAnyReferer(reference));
 
-		Transaction deleteTX = kb().beginTransaction();
+		Transaction deleteTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		referer.setAttributeValue(REFERENCE_POLY_CUR_GLOBAL_NAME, reference);
 		// reference deleted within the transaction
 		assertEquals(list(referer), kb().getAnyReferer(reference));
@@ -140,7 +140,7 @@ public class TestReferer extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testReferenceDeletedInTransaction() throws DataObjectException {
-		Transaction createReferenceTX = kb().beginTransaction();
+		Transaction createReferenceTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject reference = newD("d1");
 		KnowledgeObject referer = newE("e1");
 		referer.setAttributeValue(REFERENCE_POLY_CUR_GLOBAL_NAME, reference);
@@ -148,7 +148,7 @@ public class TestReferer extends AbstractDBKnowledgeBaseTest {
 
 		assertEquals(list(referer), kb().getAnyReferer(reference));
 
-		Transaction deleteTX = kb().beginTransaction();
+		Transaction deleteTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		referer.setAttributeValue(REFERENCE_POLY_CUR_GLOBAL_NAME, null);
 		// reference deleted within the transaction
 		assertEquals(list(), kb().getAnyReferer(reference));
@@ -158,7 +158,7 @@ public class TestReferer extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testRefererDeletedInTransaction() throws DataObjectException {
-		Transaction createReferenceTX = kb().beginTransaction();
+		Transaction createReferenceTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject reference = newD("d1");
 		KnowledgeObject referer = newE("e1");
 		referer.setAttributeValue(REFERENCE_POLY_CUR_GLOBAL_NAME, reference);
@@ -166,7 +166,7 @@ public class TestReferer extends AbstractDBKnowledgeBaseTest {
 
 		assertEquals(list(referer), kb().getAnyReferer(reference));
 
-		Transaction deleteTX = kb().beginTransaction();
+		Transaction deleteTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		referer.delete();
 		// referer deleted within the transaction
 		assertEquals(list(), kb().getAnyReferer(reference));
@@ -176,11 +176,11 @@ public class TestReferer extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testRefererCreatedInTransaction() throws DataObjectException {
-		Transaction createReferenceTX = kb().beginTransaction();
+		Transaction createReferenceTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject reference = newD("d1");
 		createReferenceTX.commit();
 
-		Transaction createRefererTX = kb().beginTransaction();
+		Transaction createRefererTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject referer = newE("e1");
 		referer.setAttributeValue(REFERENCE_POLY_CUR_GLOBAL_NAME, reference);
 		// receive refers within the transaction
@@ -198,7 +198,7 @@ public class TestReferer extends AbstractDBKnowledgeBaseTest {
 			// This test uses branches, but there is no multiple branch support.
 			return;
 		}
-		Transaction createReferenceTX = kb().beginTransaction();
+		Transaction createReferenceTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject reference = newD("d1");
 		createReferenceTX.commit();
 
@@ -207,7 +207,7 @@ public class TestReferer extends AbstractDBKnowledgeBaseTest {
 		KnowledgeObject referer;
 		Branch previousBranch = HistoryUtils.setContextBranch(branch);
 		try {
-			Transaction createRefererOnOtherBranchTX = kb().beginTransaction();
+			Transaction createRefererOnOtherBranchTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			referer = newE("e1_branch");
 			referer.setAttributeValue(REFERENCE_POLY_CUR_GLOBAL_NAME, reference);
 			createRefererOnOtherBranchTX.commit();
@@ -222,18 +222,18 @@ public class TestReferer extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testGetRefererComplex() throws DataObjectException {
-		Transaction createTX = kb().beginTransaction();
+		Transaction createTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject reference = newD("d1");
 		KnowledgeObject referer = newE("e1");
 		setReference(referer, reference, !MONOMORPHIC, HistoryType.CURRENT, BRANCH_GLOBAL);
 		createTX.commit();
 
-		Transaction createRef2TX = kb().beginTransaction();
+		Transaction createRef2TX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject referer2 = newE("e2");
 		setReference(referer2, reference, !MONOMORPHIC, HistoryType.CURRENT, !BRANCH_GLOBAL);
 		createRef2TX.commit();
 
-		Transaction createRef3TX = kb().beginTransaction();
+		Transaction createRef3TX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject referer3 = newF("f1");
 		referer3.setAttributeValue(REFERENCE_POLY_CUR_GLOBAL_NAME, reference);
 		createRef3TX.commit();
@@ -245,7 +245,7 @@ public class TestReferer extends AbstractDBKnowledgeBaseTest {
 	}
 
 	public void testGetRefererSimple() throws DataObjectException {
-		Transaction createTX = kb().beginTransaction();
+		Transaction createTX = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject reference = newD("d1");
 		KnowledgeObject referer = newE("e1");
 		setReference(referer, reference, !MONOMORPHIC, HistoryType.CURRENT, BRANCH_GLOBAL);

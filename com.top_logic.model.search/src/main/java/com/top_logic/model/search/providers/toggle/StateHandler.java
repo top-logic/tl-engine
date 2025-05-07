@@ -6,6 +6,7 @@
 package com.top_logic.model.search.providers.toggle;
 
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.boundsec.CommandHandler;
 
 /**
  * Algorithm specifying how to read the state of a {@link ToggleCommandByExpression} and how to
@@ -32,9 +33,11 @@ public interface StateHandler {
 	 *        The context component.
 	 * @param model
 	 *        The command's model of the toggle button.
+	 * @param command
+	 *        The executing command.
 	 * @param state
 	 *        The new state value (<code>true</code> for active, <code>false</code> for inactive).
 	 */
-	void setState(LayoutComponent component, Object model, boolean state);
+	void setState(LayoutComponent component, Object model, CommandHandler command, boolean state);
 
 }

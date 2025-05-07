@@ -73,6 +73,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_TEMPLATE_WITHOUT_FORMS__LAYOUT;
 
+	/**
+	 * @en Updated standard form: {0}
+	 */
+	public static ResKey1 UPDATED_STANDARD_FORM__COMP;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

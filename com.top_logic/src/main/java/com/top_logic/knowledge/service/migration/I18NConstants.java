@@ -18,6 +18,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 PERFORMED_STARTUP_ACTION__NAME;
 
+	/**
+	 * @en Performed migration: {0}
+	 */
+	public static ResKey1 PERFORMED_MIGRATION__NAME;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

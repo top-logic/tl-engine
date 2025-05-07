@@ -14,18 +14,22 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.component.WithCommitMessage;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.WithPostCreateActions;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -60,12 +64,13 @@ public class ToggleCommandByExpression extends ToggleCommandHandler implements W
 		Config.EXECUTABILITY_PROPERTY,
 		Config.OPERATION,
 		Config.TRANSACTION,
+		Config.COMMIT_MESSAGE,
 		Config.STATE_HANDLER,
 		Config.POST_CREATE_ACTIONS,
 		Config.CONFIRMATION,
 		Config.SECURITY_OBJECT,
 	})
-	public interface Config extends ToggleCommandHandler.Config, WithPostCreateActions.Config {
+	public interface Config extends ToggleCommandHandler.Config, WithPostCreateActions.Config, WithCommitMessage {
 
 		/**
 		 * @see #getStateHandler()
@@ -122,6 +127,10 @@ public class ToggleCommandByExpression extends ToggleCommandHandler implements W
 		@Name(TRANSACTION)
 		@BooleanDefault(true)
 		boolean isInTransaction();
+		
+		@Override
+		@DynamicMode(fun = VisibleIf.class, args=@Ref(TRANSACTION))
+		ResKey1 getCommitMessage();
 
 		@NullDefault
 		@Override
@@ -161,16 +170,17 @@ public class ToggleCommandByExpression extends ToggleCommandHandler implements W
 		Object result;
 		QueryExecutor operation = _operation;
 		if (_transaction && operation != null) {
-			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			try (Transaction tx = PersistencyLayer.getKnowledgeBase()
+				.beginTransaction(((Config) getConfig()).buildCommandMessage(component, this, model))) {
 				// Note the state handler may perform its own transaction. Therefore it must be
 				// nested in the operation transaction to prevent two commits for the same command.
-				_stateHandler.setState(component, model, newValue);
+				_stateHandler.setState(component, model, this, newValue);
 
 				result = operation.execute(model, newValue);
 				tx.commit();
 			}
 		} else {
-			_stateHandler.setState(component, model, newValue);
+			_stateHandler.setState(component, model, this, newValue);
 			if (operation != null) {
 				result = operation.execute(model, newValue);
 			} else {

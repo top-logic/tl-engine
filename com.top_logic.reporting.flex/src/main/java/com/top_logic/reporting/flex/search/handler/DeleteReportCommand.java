@@ -80,7 +80,7 @@ public class DeleteReportCommand extends AbstractCommandHandler {
 		if (report != null) {
 			try {
 				KnowledgeBase kb = report.getKnowledgeBase();
-				try (Transaction tx = kb.beginTransaction()) {
+				try (Transaction tx = kb.beginTransaction(I18NConstants.DELETED_SEARCH_REPORT)) {
 					report.tDelete();
 					tx.commit();
 				}

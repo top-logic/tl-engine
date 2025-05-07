@@ -8,6 +8,7 @@ package com.top_logic.common.webfolder.ui;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.Decision;
@@ -358,7 +359,9 @@ public class WebFolderComponent extends FolderComponent implements WebFolderAwar
 			 * Upload into the given folder.
 			 */
 			protected HandlerResult executeUpload(DisplayContext aContext, WebFolder folder, List<BinaryData> files) {
-				Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction();
+				Transaction tx =
+					PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.UPLOADED_DOCUMENT__NAME
+						.fill(files.stream().map(f -> f.getName()).collect(Collectors.joining(", "))));
 				try {
 					List<Document> documents = new ArrayList<>();
 					for (BinaryData file : files) {

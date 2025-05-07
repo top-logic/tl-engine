@@ -253,7 +253,7 @@ public class TestSetModelPartAnnotation extends TLModelTest {
 	}
 
 	private Transaction begin() {
-		return getKnowledgeBase().beginTransaction();
+		return getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 	}
 
 	private void commit(Transaction tx) {

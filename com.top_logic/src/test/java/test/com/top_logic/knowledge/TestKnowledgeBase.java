@@ -57,11 +57,11 @@ public class TestKnowledgeBase extends BasicTestCase {
     /** Test creation of KnowledgeObjects */
 	public void testCreateKO() throws Exception {
 		KnowledgeBase kb = KBSetup.getKnowledgeBase();
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject ko = kb.createKnowledgeObject(KBTestMeta.TEST_B);
         ko.setAttributeValue(KBTestMeta.TEST_B_NAME, "New Person");
 		tx.commit();
-		tx = kb.beginTransaction();
+		tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
         kb.delete(ko);
 		tx.commit();
     }
@@ -69,14 +69,14 @@ public class TestKnowledgeBase extends BasicTestCase {
 	public void testDeleteObjectWithComputedAttribute() throws Exception {
 		KnowledgeBase kb = KBSetup.getKnowledgeBase();
 		KnowledgeObject ko;
-		try (Transaction tx = kb.beginTransaction()) {
+		try (Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			ko = kb.createKnowledgeObject("TestDeleteObjectWithComputedAttribute");
 			ko.setAttributeValue("name", "testDelete");
 			assertEquals("testDelete-appended", ko.getAttributeValue("computed"));
 			tx.commit();
 		}
 
-		try (Transaction tx = kb.beginTransaction()) {
+		try (Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			assertEquals("testDelete-appended", ko.getAttributeValue("computed"));
 
 			BooleanFlag found = new BooleanFlag(false);
@@ -259,17 +259,17 @@ public class TestKnowledgeBase extends BasicTestCase {
      */
     public void testPartialAssoc() throws Exception  {
 		KnowledgeBase kb = KBSetup.getKnowledgeBase();
-		Transaction tx1 = kb.beginTransaction();
+		Transaction tx1 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject doc1 = kb.createKnowledgeObject(KBTestMeta.TEST_D);
 		tx1.commit();
 
-		Transaction tx2 = kb.beginTransaction();
+		Transaction tx2 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject doc3 = kb.createKnowledgeObject(KBTestMeta.TEST_D);
 		TLID doc3Id = doc3.getObjectName();
 		kb.delete(doc3);
 		tx2.commit();
 
-		Transaction tx3 = kb.beginTransaction();
+		Transaction tx3 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject doc4 = kb.createKnowledgeObject(doc3Id, KBTestMeta.TEST_D);
 		tx3.rollback();
 
@@ -753,11 +753,11 @@ public class TestKnowledgeBase extends BasicTestCase {
 	public void testCustomIndex() throws DataObjectException {
 		KnowledgeBase kb = KBSetup.getKnowledgeBase();
 
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		newCustomIndexTestObject(kb);
 		tx.commit();
 
-		Transaction tx2 = kb.beginTransaction();
+		Transaction tx2 = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		newCustomIndexTestObject(kb);
 		try {
 			tx2.commit();

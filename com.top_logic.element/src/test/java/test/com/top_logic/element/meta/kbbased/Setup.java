@@ -96,7 +96,7 @@ public class Setup extends ThreadContextSetup {
 	}
 
 	private void createMetaElement() throws DuplicateAttributeException, ConfigurationException, KnowledgeBaseException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TLModel tlModel = ModelService.getApplicationModel();
 		_module = TLModelUtil.makeModule(tlModel, STRUCTURE_NAME);
 		metaElement = TLModelUtil.addClass(_module, NODE_NAME);
@@ -140,7 +140,7 @@ public class Setup extends ThreadContextSetup {
 
 	private void removeModule() {
 		KnowledgeBase kb = _module.tKnowledgeBase();
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
 			TLModelUtil.deleteRecursive(_module);
 

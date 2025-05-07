@@ -57,7 +57,7 @@ public class TestPerson extends BasicTestCase {
 
 		// delete the person without using PersonManager
 		KnowledgeBase kb = newPerson.getKnowledgeBase();
-		Transaction deleteTx = kb.beginTransaction();
+		Transaction deleteTx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		newPerson.tDelete();
 		deleteTx.commit();
 
@@ -149,12 +149,12 @@ public class TestPerson extends BasicTestCase {
     	
 		Locale previousLocale = root.getLocale();
     	// Modify back and forth.
-		Transaction modifyTx = kb.beginTransaction();
+		Transaction modifyTx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		setLanguageAndCountry(root, Locale.TRADITIONAL_CHINESE);
 		modifyTx.commit();
 		assertNotEquals(previousLocale, root.getLocale());
     	
-		Transaction modifyBackTx = kb.beginTransaction();
+		Transaction modifyBackTx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		setLanguageAndCountry(root, previousLocale);
 		modifyBackTx.commit();
 		assertEquals(previousLocale, root.getLocale());
@@ -194,11 +194,11 @@ public class TestPerson extends BasicTestCase {
 		String personName = "testToStringForDeletedKO";
 
 		KnowledgeBase kb = KBSetup.getKnowledgeBase();
-		Transaction createTx = kb.beginTransaction();
+		Transaction createTx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		Person p = Person.create(kb, personName, null);
 		createTx.commit();
 
-		Transaction delTx = kb.beginTransaction();
+		Transaction delTx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		p.tDelete();
 		delTx.commit();
 		try {
@@ -247,7 +247,7 @@ public class TestPerson extends BasicTestCase {
 	 */
 	private void deleteTestPersonKO(KnowledgeObject testPerson) throws DataObjectException {
 		KnowledgeBase kb = testPerson.getKnowledgeBase();
-		Transaction deleteTX = kb.beginTransaction();
+		Transaction deleteTX = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		testPerson.delete();
 		deleteTX.commit();
 	}
@@ -258,7 +258,7 @@ public class TestPerson extends BasicTestCase {
 	 */
 	private KnowledgeObject createTestPersonKO(String testPersonName) throws DataObjectException {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		Transaction createTX = kb.beginTransaction();
+		Transaction createTX = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject testPerson = kb.createKnowledgeObject(Person.OBJECT_NAME);
 		testPerson.setAttributeValue(Person.NAME_ATTRIBUTE, testPersonName);
 		createTX.commit();
@@ -289,7 +289,7 @@ public class TestPerson extends BasicTestCase {
 	}
 
 	private void deletePersonNotUser(Person person) throws Throwable {
-		Transaction transactionDeletePerson = person.getKnowledgeBase().beginTransaction();
+		Transaction transactionDeletePerson = person.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
 			// If the user of the person is deleted, the tests cannot reproduce the problem in #6255
 			// PersonManager.getManager().deleteUser(person);
@@ -308,7 +308,7 @@ public class TestPerson extends BasicTestCase {
 	public static Person createPerson(String personName) {
 		PersonManager personManager = PersonManager.getManager();
 		Person root = personManager.getRoot();
-		Transaction transactionCreatePerson = root.getKnowledgeBase().beginTransaction();
+		Transaction transactionCreatePerson = root.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
 			String authenticationDeviceID = root.getAuthenticationDeviceID();
 			Person testPerson =
@@ -324,7 +324,7 @@ public class TestPerson extends BasicTestCase {
 	 * Deletes the given {@link Person} formerly created with {@link #createPerson(String)}.
 	 */
 	public static void deletePersonAndUser(Person person) {
-		Transaction deleteTx = person.getKnowledgeBase().beginTransaction();
+		Transaction deleteTx = person.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		PersonManager r = PersonManager.getManager();
 		person.tDelete();
 		person.tDelete();

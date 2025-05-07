@@ -57,14 +57,14 @@ public class TestMailMultipart extends BasicTestCase {
 
 	public void testMultipartRelated()
 			throws MessagingException, IOException, DataObjectException, InterruptedException {
-		Transaction createTx = _kb.beginTransaction();
+		Transaction createTx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		TestMailFolderAwareWrapper wrapper = TestMailFolderAwareWrapper.newInstance(_kb, TestMailAttachment.class);
 		createTx.commit();
 
 		try {
 			checkMultipartRelated(wrapper);
 		} finally {
-			Transaction deleteTx = _kb.beginTransaction();
+			Transaction deleteTx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			wrapper.deleteWrapperAndFolder();
 			deleteTx.commit();
 		}

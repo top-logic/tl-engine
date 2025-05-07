@@ -38,7 +38,7 @@ public class TestReferenceAccess2 extends AbstractDBKnowledgeBaseTest {
 	 * different types for the base object and the referenced object.
 	 */
 	public void testNavigate() throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		KnowledgeObject a1 = newA("a", newB("x"));
 		KnowledgeObject a2 = newA("a", newB("y"));
 		KnowledgeObject a3 = newA("b", newB("x"));

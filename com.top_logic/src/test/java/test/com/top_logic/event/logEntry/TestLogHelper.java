@@ -82,7 +82,7 @@ public abstract class TestLogHelper extends BasicTestCase {
         String           dd = StringServices.getIso8601Format().format(aDate);
         
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		Wrapper trigger = createTrigger(kb, dd);
 		Wrapper source = createSource(kb, dd);
 		tx.commit();

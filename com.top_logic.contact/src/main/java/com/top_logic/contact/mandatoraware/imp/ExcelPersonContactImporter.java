@@ -150,7 +150,7 @@ public class ExcelPersonContactImporter extends POIExcelImporter {
         short i = 0;
                     
         if (this.currentTransaction == null) {
-            this.currentTransaction = this.kBase.beginTransaction();
+            this.currentTransaction = this.kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
         }
         
         i++; /* String mandator = aRow.getCell(i++).getStringCellValue(); */ // ignored as of now 

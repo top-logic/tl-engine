@@ -690,7 +690,7 @@ public class KBUtils {
 	 * @return The result of the given action. Is null when the action returns null.
 	 */
 	public static <T> T inTransaction(KnowledgeBase knowledgeBase, Supplier<T> action) {
-		try (Transaction transaction = knowledgeBase.beginTransaction()) {
+		try (Transaction transaction = knowledgeBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			T result = action.get();
 			transaction.commit();
 			return result;
@@ -727,7 +727,7 @@ public class KBUtils {
 	 *        Is not allowed to be null;
 	 */
 	public static void inTransaction(KnowledgeBase knowledgeBase, Runnable action) {
-		try (Transaction transaction = knowledgeBase.beginTransaction()) {
+		try (Transaction transaction = knowledgeBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			action.run();
 			transaction.commit();
 		}

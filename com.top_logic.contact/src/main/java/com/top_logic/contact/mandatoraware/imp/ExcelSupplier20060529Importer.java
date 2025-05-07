@@ -198,7 +198,7 @@ public class ExcelSupplier20060529Importer extends POIExcelImporter {
 	protected void importRow(int aSheetNum, String aSheetname, Row aRow) throws Exception {
         
         if (this.currentTransaction == null) {
-            this.currentTransaction = this.kBase.beginTransaction();
+            this.currentTransaction = this.kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
         }
         
         short i = 0;
@@ -371,7 +371,7 @@ public class ExcelSupplier20060529Importer extends POIExcelImporter {
 	        					if (!StringServices.isEmpty(theCompany.getValue(CompanyContact.FKEY2_ATTRIBUTE))) {
 		        					// Do not delete the referenced ones
 		        					if (CompanyContactDeleteRule.INSTANCE.isExecutable(theCompany).isExecutable()) {
-		        					    this.currentTransaction = this.kBase.beginTransaction();
+		        					    this.currentTransaction = this.kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 	                                    // Delete the remaining
 	                                    logInfo("Delete Contact for LIFNR: " + theCompany.getForeignKey2() + " name: " + theName, null);
 	                                    theCompany.tDelete();

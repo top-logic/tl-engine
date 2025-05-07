@@ -21,7 +21,8 @@
 		>
 			<children><![CDATA[node -> switch {
     $node.instanceOf(`tl.changelog:ChangeSet`): 
-        $node.get(`tl.changelog:ChangeSet#changes`);
+        $node.get(`tl.changelog:ChangeSet#changes`)
+            .filter(c -> !$c.get(`tl.changelog:Change#implicit`));
     default:
         $node.get(`tl.changelog:Update#modifications`);
 }]]></children>

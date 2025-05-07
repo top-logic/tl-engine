@@ -29,10 +29,24 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	}
 
 	/**
+	 * Lookup {@link Change#IMPLICIT_ATTR} of {@link Change}.
+	 */
+	public static com.top_logic.model.TLProperty getImplicitChangeAttr() {
+		return (com.top_logic.model.TLProperty) getChangeType().getPart(Change.IMPLICIT_ATTR);
+	}
+
+	/**
 	 * Lookup {@link Change#OBJECT_ATTR} of {@link Change}.
 	 */
 	public static com.top_logic.model.TLReference getObjectChangeAttr() {
 		return (com.top_logic.model.TLReference) getChangeType().getPart(Change.OBJECT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Change#OLD_OBJECT_ATTR} of {@link Change}.
+	 */
+	public static com.top_logic.model.TLReference getOldObjectChangeAttr() {
+		return (com.top_logic.model.TLReference) getChangeType().getPart(Change.OLD_OBJECT_ATTR);
 	}
 
 	/**

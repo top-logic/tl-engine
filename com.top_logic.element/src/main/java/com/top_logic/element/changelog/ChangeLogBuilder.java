@@ -192,6 +192,7 @@ public class ChangeLogBuilder {
 
 				TLObject oldObject =
 					_kb.resolveObjectKey(inRevision(newObject.tId(), _changeSet.getRevision() - 1)).getWrapper();
+				change.setOldObject(oldObject);
 
 				for (TLStructuredTypePart part : entry.getValue()) {
 					TransientModification modification = new TransientModification();
@@ -231,15 +232,12 @@ public class ChangeLogBuilder {
 		
 				TLObject object = _kb.resolveObjectKey(creation.getOriginalObject()).getWrapper();
 		
-				TLObject container = object.tContainer();
-				if (container != null && createdKeys.contains(container.tId())) {
-					// Only a part of some other object, ignore.
-					continue;
-				}
-		
 				// Record a creation.
 				TransientCreation change = new TransientCreation();
 				change.setObject(object);
+
+				TLObject container = object.tContainer();
+				change.setImplicit(container != null && createdKeys.contains(container.tId()));
 		
 				_entry.addChange(change);
 			}
@@ -318,19 +316,12 @@ public class ChangeLogBuilder {
 					_kb.resolveObjectKey(deletion.getObjectId().toObjectKey(_changeSet.getRevision() - 1));
 				TLObject object = item.getWrapper();
 		
-				TLObject container = object.tContainer();
-				if (container != null && deletedKeys.contains(container.tId())) {
-					// Only a part of some other object, ignore.
-					continue;
-				}
-		
-				// TODO: There might be surviving parts of the deleted object, if composition references
-				// of the deleted object were modified in the same transaction immediately before
-				// deletion.
-		
 				// Record a deletion.
 				TransientDeletion change = new TransientDeletion();
 				change.setObject(object);
+
+				TLObject container = object.tContainer();
+				change.setImplicit(container != null && deletedKeys.contains(container.tId()));
 		
 				_entry.addChange(change);
 			}

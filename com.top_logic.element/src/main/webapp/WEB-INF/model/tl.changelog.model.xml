@@ -20,6 +20,23 @@
 					navigate="true"
 					type="tl.model:TLObject"
 				/>
+				<reference name="oldObject"
+					history-type="historic"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="tl.model:TLObject"
+				/>
+				<property name="implicit"
+					mandatory="true"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<default-value>
+							<boolean/>
+						</default-value>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 		<class name="Creation">

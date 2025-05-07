@@ -563,7 +563,9 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 
 						if (kb == null) {
 							kb = createKB(log);
-							tx = kb.beginTransaction();
+							tx = kb.beginTransaction(
+								I18NConstants.PERFORMED_MIGRATION__NAME.fill(migration.getVersion().getModule() + ": "
+									+ migration.getVersion().getName()));
 						}
 
 						processor.afterMigration(log, kb);

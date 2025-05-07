@@ -84,7 +84,7 @@ public class CreateReportCommand extends NewExpressionCommand {
 		if (context.checkAll()) {
 			try {
 				KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-				try (Transaction tx = kb.beginTransaction()) {
+				try (Transaction tx = kb.beginTransaction(I18NConstants.CREATED_SEARCH_REPORT)) {
 					report = createNewReport(kb, context, aComponent);
 					if (report != null) {
 						tx.commit();

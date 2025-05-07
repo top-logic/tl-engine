@@ -103,7 +103,8 @@ public class RolesProfileImportDialog extends SimpleFormDialog {
 	 * Import the given uploaded file.
 	 */
 	protected boolean importRolesProfile(DisplayContext context, BinaryContent uploadedItem) {
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction transaction =
+			PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.IMPORT_ROLES_PROFILE);
 		try {
 			boolean importOk = importRolesProfileInternal(context, uploadedItem);
 			if (importOk) {

@@ -25,6 +25,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.component.edit.EditMode;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
@@ -118,7 +119,8 @@ public class GenericDeleteCommandHandler extends AbstractCommandHandler {
 	private void withEditLock(LayoutComponent component, Object model)
 			throws DataObjectException, KnowledgeBaseException {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		try (Transaction tx = kb.beginTransaction()) {
+		try (Transaction tx =
+			kb.beginTransaction(I18NConstants.DELETED_OBJECT__OBJ.fill(MetaLabelProvider.INSTANCE.getLabel(model)))) {
 			inTransaction(component, model);
 			tx.commit();
 		}

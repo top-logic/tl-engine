@@ -24,6 +24,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 DELETED_STORED_SEARCH__NAME;
 
+	/**
+	 * @en Stored search query.
+	 */
+	public static ResKey1 STORED_SEARCH_QUERY__NAME;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -36,7 +36,7 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * @en Removed unused accounts.
 	 */
-	protected static ResKey REMOVED_UNUSED_ACCOUNTS;
+	public static ResKey REMOVED_UNUSED_ACCOUNTS;
 
 	/**
 	 * @en Recorded failed login: {0}

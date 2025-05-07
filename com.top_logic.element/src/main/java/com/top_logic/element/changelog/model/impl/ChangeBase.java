@@ -18,6 +18,15 @@ public interface ChangeBase extends com.top_logic.model.TLObject {
 	String CHANGE_TYPE = "Change";
 
 	/**
+	 * Part <code>implicit</code> of <code>Change</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Boolean</code> in configuration.
+	 * </p>
+	 */
+	String IMPLICIT_ATTR = "implicit";
+
+	/**
 	 * Part <code>object</code> of <code>Change</code>
 	 * 
 	 * <p>
@@ -25,6 +34,29 @@ public interface ChangeBase extends com.top_logic.model.TLObject {
 	 * </p>
 	 */
 	String OBJECT_ATTR = "object";
+
+	/**
+	 * Part <code>oldObject</code> of <code>Change</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.model:TLObject</code> in configuration.
+	 * </p>
+	 */
+	String OLD_OBJECT_ATTR = "oldObject";
+
+	/**
+	 * Getter for part {@link #IMPLICIT_ATTR}.
+	 */
+	default boolean getImplicit() {
+		return (Boolean) tValueByName(IMPLICIT_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #IMPLICIT_ATTR}.
+	 */
+	default void setImplicit(boolean newValue) {
+		tUpdateByName(IMPLICIT_ATTR, newValue);
+	}
 
 	/**
 	 * Getter for part {@link #OBJECT_ATTR}.
@@ -38,6 +70,20 @@ public interface ChangeBase extends com.top_logic.model.TLObject {
 	 */
 	default void setObject(com.top_logic.model.TLObject newValue) {
 		tUpdateByName(OBJECT_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #OLD_OBJECT_ATTR}.
+	 */
+	default com.top_logic.model.TLObject getOldObject() {
+		return (com.top_logic.model.TLObject) tValueByName(OLD_OBJECT_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #OLD_OBJECT_ATTR}.
+	 */
+	default void setOldObject(com.top_logic.model.TLObject newValue) {
+		tUpdateByName(OLD_OBJECT_ATTR, newValue);
 	}
 
 }

@@ -424,7 +424,7 @@ public class TestStructuredElement extends BasicTestCase {
 	}
 
 	private Transaction beginTransaction() {
-		return _projectRoot.getKnowledgeBase().beginTransaction();
+		return _projectRoot.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 	}
 
 	/**

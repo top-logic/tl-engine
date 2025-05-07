@@ -90,7 +90,7 @@ public class TestBenchmark extends AbstractDBKnowledgeBaseClusterTest {
 		setup(B_NAME, 1000, 10000);
 		refetchNode2();
 
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		newB("newB").setAttributeValue(A2_NAME, "refetch value");
 		tx.commit();
 		
@@ -115,7 +115,7 @@ public class TestBenchmark extends AbstractDBKnowledgeBaseClusterTest {
 	private List<KnowledgeItem> setup(String typeName, int numberItems, int numberModifications)
 			throws DataObjectException, KnowledgeBaseException {
 		List<KnowledgeItem> items = new ArrayList<>(numberItems);
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		for (int i = 0; i < numberItems; i++) {
 			KnowledgeObject result = kb().createKnowledgeObject(typeName);
 			setA1(result, "item_" + i);
@@ -126,7 +126,7 @@ public class TestBenchmark extends AbstractDBKnowledgeBaseClusterTest {
 		Random r = new Random(1000L);
 		for (int i = 0; i < numberModifications; i++) {
 			int maxNumberItemsPerCommit = r.nextInt(50) + 1;
-			Transaction modTx = kb().beginTransaction();
+			Transaction modTx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			while (maxNumberItemsPerCommit-- > 0) {
 				items.get(r.nextInt(numberItems)).setAttributeValue(A1_NAME, "val_" + i);
 			}

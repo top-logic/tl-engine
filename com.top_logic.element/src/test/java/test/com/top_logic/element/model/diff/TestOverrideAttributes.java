@@ -24,7 +24,7 @@ public class TestOverrideAttributes extends AbstractModelPatchTest {
 
 	public void testOverrideMandatory() {
 		TLModel model;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			model = loadModel("test-override-mandatory.model.xml");
 			tx.commit();
 		}
@@ -44,7 +44,7 @@ public class TestOverrideAttributes extends AbstractModelPatchTest {
 
 	public void testOverrideAbstract() {
 		TLModel model;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			model = loadModel("test-override-abstract.model.xml");
 			tx.commit();
 		}
@@ -63,7 +63,7 @@ public class TestOverrideAttributes extends AbstractModelPatchTest {
 
 	public void testMakeAttributeAbstract() {
 		TLModel model;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			model = loadModel("test-make-abstract-left.model.xml");
 			tx.commit();
 		}
@@ -73,7 +73,7 @@ public class TestOverrideAttributes extends AbstractModelPatchTest {
 		assertFalse(baseB.getPartOrFail("a").isAbstract());
 
 		TLModel newModel = loadModelTransient("test-make-abstract-right.model.xml");
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			applyDiff(model, newModel);
 			tx.commit();
 		}

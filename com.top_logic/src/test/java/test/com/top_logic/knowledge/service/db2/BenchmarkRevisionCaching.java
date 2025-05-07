@@ -30,7 +30,7 @@ public class BenchmarkRevisionCaching extends AbstractDBKnowledgeBaseClusterTest
 
 		long lastTime = System.nanoTime();
 		for (int rev = 0; rev < 50; rev++) {
-			Transaction tx = kbNode2().beginTransaction();
+			Transaction tx = kbNode2().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			for (int obj = 0; obj < 10000; obj++) {
 				newBNode2("b-" + rev + "-" + obj);
 			}

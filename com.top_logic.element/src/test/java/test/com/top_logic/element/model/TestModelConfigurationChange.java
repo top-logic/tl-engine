@@ -51,7 +51,7 @@ public class TestModelConfigurationChange extends BasicTestCase {
 
 			// Make an dynamic change to the model that the test can be sure that the exiting in-app
 			// model is updated and the DB was not cleared in between.
-			try (Transaction tx = module.tHandle().getKnowledgeBase().beginTransaction()) {
+			try (Transaction tx = module.tHandle().getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 				TLI18NKey i18n = TypedConfiguration.newConfigItem(TLI18NKey.class);
 				i18n.setValue(ResKey.forTest("dynamic.change"));
 				A.setAnnotation(i18n);

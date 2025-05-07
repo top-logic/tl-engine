@@ -68,7 +68,7 @@ public class TestContentChangeEventListener extends BasicTestCase {
 		TestReceiver theReceiver = new TestReceiver(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
         theReceiver.subscribe();
         try {
-			Transaction tx1 = kBase.beginTransaction();
+			Transaction tx1 = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
             // create webfolder to hold the document
             DataAccessProxy theDAP = new DataAccessProxy("repository://");
             String theFolderName =
@@ -97,7 +97,7 @@ public class TestContentChangeEventListener extends BasicTestCase {
             assertTrue  ("Event no document event", theEvent instanceof DocumentEvent);
 			assertEquals("Wrong contained object.", theDocument, theEvent.getMessage());
             
-			Transaction tx2 = kBase.beginTransaction();
+			Transaction tx2 = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
             // change physical resource through change of attribute
 			theDocument.setValue(KOAttributes.PHYSICAL_RESOURCE, "test2");
             theReceiver.event = null;
@@ -108,7 +108,7 @@ public class TestContentChangeEventListener extends BasicTestCase {
             assertTrue("Event no document event", theEvent instanceof DocumentEvent);
 			assertEquals("Wrong contained object.", theDocument, theEvent.getMessage());
             
-			Transaction tx3 = kBase.beginTransaction();
+			Transaction tx3 = kBase.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
             theReceiver.event = null;
 			theDocument.tDelete();
 			tx3.commit();

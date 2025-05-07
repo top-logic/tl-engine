@@ -38,7 +38,7 @@ public class TestIMAPMailFolder extends BasicTestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 		MailFolder rootFolder = MailServer.getInstance().getRootFolder();
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
 			MailFolder subFolder = rootFolder.getFolder("TestIMAPMailFolder", true);
 			assertInstanceof(subFolder, IMAPMailFolder.class);
@@ -51,7 +51,7 @@ public class TestIMAPMailFolder extends BasicTestCase {
 
 	@Override
 	protected void tearDown() throws Exception {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
 			MailTestUtils.deleteFolderAndWrapper(_testRootFolder);
 			tx.commit();
@@ -62,7 +62,7 @@ public class TestIMAPMailFolder extends BasicTestCase {
 	}
 
 	public void testMailSubFolder() throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		MailFolder folder = _testRootFolder.getFolder("testSubFolder", true);
 		tx.commit();
 		assertNotNull(folder);

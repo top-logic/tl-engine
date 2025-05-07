@@ -118,7 +118,7 @@ public class TestDayEntryArchiver extends TestLogHelper {
             cal.setTime(dates[i]);
             cal.set(Calendar.HOUR_OF_DAY,1);
 			KnowledgeBase kb = KBSetup.getKnowledgeBase();
-			Transaction tx = kb.beginTransaction();
+			Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
             // Create 1    , 2    , 3     ... LogEntries
             // for    01:00, 01:11, 01:22 ...
             for(int j=0;j<=i;j++) { 

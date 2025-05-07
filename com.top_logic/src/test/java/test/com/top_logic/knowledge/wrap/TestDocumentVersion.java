@@ -46,7 +46,7 @@ public class TestDocumentVersion extends AbstractDocumentTest {
 		
 		final Wrapper updatedDoc;
 		{
-			final Transaction tx = kb.beginTransaction();
+			final Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			assertTrue("Error in uploading new content to document " + document,
 				document.update(this.getData(TEST_FILE)));
 			tx.commit();
@@ -71,14 +71,14 @@ public class TestDocumentVersion extends AbstractDocumentTest {
 			assertEquals(version1, DocumentVersion.getDocumentVersion(document, version1.getRevision()));
 		}
 		{
-			final Transaction tx = kb.beginTransaction();
+			final Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			document.update(this.getData(TEST_FILE));
 			tx.commit();
 			List<? extends DocumentVersion> res = document.getDocumentVersions();
 			assertEquals(3, res.size());
 		}
 		{
-			final Transaction tx = kb.beginTransaction();
+			final Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			document.update(this.getData(TEST_FILE));
 			tx.commit();
 			List<? extends DocumentVersion> res = document.getDocumentVersions();

@@ -245,7 +245,9 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 	 * @deprecated Use {@link #beginTransaction(ResKey)}.
 	 */
 	@Deprecated
-	public Transaction beginTransaction();
+	default Transaction beginTransaction() {
+		return beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
+	}
 	
 	/**
 	 * Begin a (potentially nested) transaction in this {@link KnowledgeBase}.

@@ -22,8 +22,6 @@ import com.top_logic.knowledge.service.Transaction;
 /*package protected*/
 class TransactionImpl extends AbstractTransaction {
 
-	private static final char ERROR_SEPARATOR = '\n';
-
 	/**
 	 * The context of this transaction and all {@link #outer} transactions.
 	 */
@@ -71,35 +69,24 @@ class TransactionImpl extends AbstractTransaction {
 	private Exception failureStacktrace;
 
 	/**
-	 * Creates an auto-begin {@link TransactionImpl}.
-	 */
-	public TransactionImpl(DefaultDBContext context) {
-		super(context.kb);
-
-		this.context = context;
-		this.outer = null;
-		this.anonymous = true;
-		this.initCommitMessage(I18NConstants.NO_COMMIT_MESSAGE);
-		this.autoBegin = true;
-	}
-
-	/**
 	 * Creates a named top-level {@link TransactionImpl}.
 	 * 
 	 * @param anonymous
-	 *        Whether this is an anonymous transaction that is created by a call
-	 *        to the legacy begin method.
+	 *        Whether this is an anonymous transaction that is created by a call to the legacy begin
+	 *        method.
+	 * @param autoBegin
+	 *        Whether this is a autobegin transaction (legacy).
 	 * @param commitMessage
 	 *        The commit message for the corresponding {@link #commit()}.
 	 */
-	public TransactionImpl(DefaultDBContext context, boolean anonymous, ResKey commitMessage) {
+	public TransactionImpl(DefaultDBContext context, boolean anonymous, boolean autoBegin, ResKey commitMessage) {
 		super(context.kb);
-
+		assert commitMessage != null;
 		this.context = context;
 		this.anonymous = anonymous;
 		this.outer = null;
-		this.initCommitMessage(commitMessage);
-		this.autoBegin = false;
+		this.commitMessageNonNull = commitMessage;
+		this.autoBegin = autoBegin;
 	}
 
 	/**
@@ -112,11 +99,11 @@ class TransactionImpl extends AbstractTransaction {
 	 */
 	public TransactionImpl(DefaultDBContext context, TransactionImpl outer, boolean anonymous, ResKey commitMessage) {
 		super(context.kb);
-
+		assert commitMessage != null;
 		this.context = context;
 		this.outer = outer;
 		this.anonymous = anonymous;
-		this.initCommitMessage(commitMessage);
+		this.commitMessageNonNull = commitMessage;
 		this.autoBegin = false;
 	}
 
@@ -185,7 +172,7 @@ class TransactionImpl extends AbstractTransaction {
 
     		this.autoBegin = false;
     		this.anonymous = nestedAnonymous;
-    		this.initCommitMessage(nestedCommitMessage);
+			this.commitMessageNonNull = I18NConstants.NO_COMMIT_MESSAGE;
     		
     		return this;
     	} else {
@@ -237,38 +224,6 @@ class TransactionImpl extends AbstractTransaction {
 		
 		builder.append(", context=");
 		builder.append(context);
-	}
-
-	/**
-	 * Sets the {@link #getCommitMessage()} property ensuring that it is never <code>null</code>.
-	 * 
-	 * @param message
-	 *        The {@link ResKey} to use. A default message is used, if <code>null</code>.
-	 */
-	private void initCommitMessage(ResKey message) {
-		if (message == null) {
-			this.commitMessageNonNull = I18NConstants.NO_COMMIT_MESSAGE;
-		} else {
-			this.commitMessageNonNull = message;
-		}
-	}
-	
-	private static class ErrorMessage {
-		private final ResKey message;
-		private final Throwable cause;
-		
-		public ErrorMessage(ResKey message, Throwable cause) {
-			this.message = message;
-			this.cause = cause;
-		}
-
-		public ResKey getMessage() {
-			return message;
-		}
-		
-		public Throwable getCause() {
-			return cause;
-		}
 	}
 
 }

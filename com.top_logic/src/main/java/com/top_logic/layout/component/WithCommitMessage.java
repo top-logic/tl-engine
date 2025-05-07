@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.component;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,6 +46,9 @@ public interface WithCommitMessage extends ConfigurationItem {
 	 */
 	@Name(COMMIT_MESSAGE)
 	ResKey1 getCommitMessage();
+
+	/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
+	Lookup LOOKUP = MethodHandles.lookup();
 
 	/**
 	 * Enhances the given command arguments with the given custom commit message.

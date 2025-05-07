@@ -13,6 +13,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.editor.LayoutTemplateUtils;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -24,6 +25,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.CombinedExecutabilityRule;
 import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.InDesignModeExecutable;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -50,8 +52,10 @@ public class ResetLayoutConfiguration extends AbstractCommandHandler {
 	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model,
 			Map<String, Object> someArguments) {
 		String layoutKey = ReleaseLayoutConfiguration.layoutKey(aComponent);
+		Person account = TLContext.getContext().getCurrentPersonWrapper();
 		boolean deleted;
-		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
+			.beginTransaction(I18NConstants.RESET_LAYOUT_CONFIG__USER.fill(account.getName()))) {
 			deleted = LayoutTemplateUtils.deletePersistentTemplateLayout(layoutKey);
 			tx.commit();
 		}

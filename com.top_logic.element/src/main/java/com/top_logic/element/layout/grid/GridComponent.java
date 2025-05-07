@@ -137,6 +137,7 @@ import com.top_logic.layout.form.model.TableField;
 import com.top_logic.layout.form.tag.TableTag;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.scripting.action.SelectAction.SelectionChangeKind;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
@@ -1319,7 +1320,8 @@ public class GridComponent extends EditComponent implements
 			}
 
 			try {
-				boolean needsCommit = theContext.isChanged() || isTransient(object);
+				boolean create = isTransient(object);
+				boolean needsCommit = theContext.isChanged() || create;
 				if (needsCommit) {
 					if (!theContext.checkAll()) {
 						HandlerResult error = new HandlerResult();
@@ -1337,8 +1339,10 @@ public class GridComponent extends EditComponent implements
 						return suspended;
 					}
 
-					try (Transaction tx = getKnowledgeBase(object).beginTransaction()) {
-						if (isTransient(object)) {
+					try (Transaction tx =
+						getKnowledgeBase(object).beginTransaction(create ? I18NConstants.CREATED_GRID_ROW
+							: I18NConstants.EDITED__OBJ.fill(MetaLabelProvider.INSTANCE.getLabel(object)))) {
+						if (create) {
 							Object createdObject = ((NewObject) object).create(this, formGroup);
 							tx.commit();
 
@@ -3745,7 +3749,8 @@ public class GridComponent extends EditComponent implements
 			{
                 boolean     isAdded = false;
                 Clipboard   theClip = Clipboard.getInstance();
-				Transaction theTX = PersistencyLayer.getKnowledgeBase().beginTransaction();
+				Transaction theTX = PersistencyLayer.getKnowledgeBase().beginTransaction(
+					com.top_logic.common.webfolder.ui.clipboard.I18NConstants.ADDED_TO_CLIPBOARD);
                 
                 for (Iterator<FormGroup> theIt = theComp.getMarkedFormGroups().iterator(); theIt.hasNext(); ) {
                     FormGroup theGroup   = theIt.next();

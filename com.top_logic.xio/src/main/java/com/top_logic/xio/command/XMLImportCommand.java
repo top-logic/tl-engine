@@ -39,6 +39,7 @@ import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.codeedit.editor.ConfigXMLEditor;
+import com.top_logic.layout.component.WithCommitMessage;
 import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.WithPostCreateActions;
@@ -95,11 +96,12 @@ public class XMLImportCommand extends AbstractCommandHandler implements WithPost
 		Config.PROGRESS_HEIGHT,
 		Config.IMPORT_DEFINITION,
 		Config.TRANSIENT,
+		Config.COMMIT_MESSAGE,
 		Config.LOGGING,
 		Config.POST_PROCESSING,
 		Config.POST_CREATE_ACTIONS,
 	})
-	public interface Config extends AbstractCommandHandler.Config, WithPostCreateActions.Config {
+	public interface Config extends AbstractCommandHandler.Config, WithCommitMessage, WithPostCreateActions.Config {
 
 		/** @see #getUploadTitle() */
 		String UPLOAD_TITLE = "upload-title";
@@ -416,7 +418,9 @@ public class XMLImportCommand extends AbstractCommandHandler implements WithPost
 
 						log.info(I18NConstants.STARTING_IMPORT);
 
-						try (Transaction tx = kb.beginTransaction()) {
+						try (Transaction tx =
+							kb.beginTransaction(
+								((Config) getConfig()).buildCommandMessage(component, XMLImportCommand.this, null))) {
 							_result = importer.importModel(modelBinding, source);
 
 							if (_postProcessing != null) {

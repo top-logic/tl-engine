@@ -378,7 +378,8 @@ public class ClipboardDialog extends AbstractFormPageDialog {
 	
 	        if (theField instanceof TableField) {
 	            FormTableModel theModel = (FormTableModel) ((TableField) theField).getTableModel();
-	            Transaction    theTX    = PersistencyLayer.getKnowledgeBase().beginTransaction();
+				Transaction theTX =
+					PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.REMOVED_FROM_CLIPBOARD);
 	
 	            try {
 	                Clipboard     theBoard   = Clipboard.getInstance();
@@ -455,7 +456,8 @@ public class ClipboardDialog extends AbstractFormPageDialog {
 	
 	        if (theField instanceof TableField) {
 	            FormTableModel theModel = (FormTableModel) ((TableField) theField).getTableModel();
-	            Transaction    theTX    = PersistencyLayer.getKnowledgeBase().beginTransaction();
+				Transaction theTX =
+					PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.ADDED_FROM_CLIPBOARD);
 	
 	            try {
 	                int           theRows    = theModel.getRowCount();

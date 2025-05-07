@@ -6,6 +6,7 @@
 package com.top_logic.importer.excel.transformer;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.ResPrefix;
 
 /**
@@ -31,6 +32,11 @@ public class I18NConstants extends com.top_logic.importer.excel.I18NConstants {
     public static ResKey PERSON_NAME_NOT_FOUND;
     public static ResKey NO_NUMBER;
     public static ResKey STRING_URL_INVALID;
+
+	/**
+	 * @en Created classification during import: {0}
+	 */
+	public static ResKey1 CREATED_CLASSIFICATION_DURING_IMPORT__NAME;
 
     static {
 		initConstants(I18NConstants.class);

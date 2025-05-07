@@ -205,7 +205,7 @@ public abstract class AbstractConfigureFormDefinitionCommand extends AbstractCom
 	protected static void updateStandardForm(FormComponent component, FormDefinition formDefintion,
 			TLStructuredType type) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(I18NConstants.UPDATED_STANDARD_FORM__COMP.fill(component.getTitleKey()));
 
 		TLFormDefinition formAnnotation = TypedConfiguration.newConfigItem(TLFormDefinition.class);
 		formAnnotation.setForm(formDefintion);

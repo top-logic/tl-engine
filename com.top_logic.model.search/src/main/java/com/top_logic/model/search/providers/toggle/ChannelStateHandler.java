@@ -15,6 +15,7 @@ import com.top_logic.basic.util.Utils;
 import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.boundsec.CommandHandler;
 
 /**
  * {@link StateHandler} linking the state of a {@link ToggleCommandByExpression} to a component
@@ -67,7 +68,7 @@ public class ChannelStateHandler extends AbstractConfiguredInstance<ChannelState
 	}
 
 	@Override
-	public void setState(LayoutComponent component, Object model, boolean state) {
+	public void setState(LayoutComponent component, Object model, CommandHandler command, boolean state) {
 		Boolean value = Boolean.valueOf(state);
 		_stateChannel.resolveChannel(new LogProtocol(ToggleCommandByExpression.class), component)
 			.set(value);

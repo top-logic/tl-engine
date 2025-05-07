@@ -303,7 +303,9 @@ public final class TaskResultWrapper extends AbstractWrapper implements TaskResu
 	}
 
 	private RetryResult<Void, Throwable> trySetLogFile(String logFilePath) {
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction transaction =
+			PersistencyLayer.getKnowledgeBase()
+				.beginTransaction(I18NConstants.SET_TASK_LOG__TASK_LOG.fill(getName(), logFilePath));
 		try {
 			setString(PROPERTY_LOG_FILE, logFilePath);
 			transaction.commit();
@@ -354,7 +356,9 @@ public final class TaskResultWrapper extends AbstractWrapper implements TaskResu
 	}
 
 	private RetryResult<Void, Throwable> trySetWarnings(String warnings) {
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction transaction =
+			PersistencyLayer.getKnowledgeBase()
+				.beginTransaction(I18NConstants.RECORDED_TASK_WARNINGS__TASK.fill(getName()));
 		try {
 			setString(PROPERTY_WARNINGS, warnings);
 			transaction.commit();

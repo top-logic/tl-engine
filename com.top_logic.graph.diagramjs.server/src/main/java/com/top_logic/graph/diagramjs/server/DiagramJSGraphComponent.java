@@ -478,7 +478,9 @@ public class DiagramJSGraphComponent extends AbstractGraphComponent implements D
 
 		DiagramJSGraphModel graphModel = (DiagramJSGraphModel) getGraphModel();
 
-		try (Transaction trans = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+		try (Transaction trans =
+			PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.ADDED_GENERALIZATION__CLASS_GEN
+				.fill(TLModelUtil.qualifiedName(sourceClass), TLModelUtil.qualifiedName(targetClass)))) {
 			List<TLClass> generalizations = sourceClass.getGeneralizations();
 			generalizations.add(targetClass);
 			switch (generalizations.size()) {

@@ -90,6 +90,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey CLUSER_TASK_CLEANUP;
 
+	/**
+	 * @en Completed task: {0}
+	 */
+	public static ResKey1 COMPLETED_TASK__TASK;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -95,7 +95,7 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler impleme
 			// TODO: Remove bullshit.
 			CommandHandler handler = CommandHandlerFactory.getInstance().getHandler("createProcessExecution");
 
-			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.STARTED_PROCESS)) {
 				HandlerResult res = handler.handleCommand(aContext, aComponent, model, someArguments);
 				if (res.isSuccess()) {
 					processExecution = retrieveProcessExecution(res);
@@ -171,7 +171,8 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler impleme
 
 	private void executeTransition(Token token, List<Edge> edges) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		try (Transaction tx = kb.beginTransaction()) {
+		try (Transaction tx = kb.beginTransaction(I18NConstants.COMPLETED_START_TASK__NAME
+			.fill(token.getNode().getName()))) {
 			ExecutionEngine.getInstance().execute(token, edges, null);
 			tx.commit();
 		} catch (Exception ex) {

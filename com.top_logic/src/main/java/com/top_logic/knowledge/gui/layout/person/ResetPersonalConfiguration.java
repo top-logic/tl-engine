@@ -72,7 +72,8 @@ public class ResetPersonalConfiguration extends AbstractCommandHandler {
 			throw new IllegalArgumentException("No account given.");
 		}
 
-		try (Transaction tx = account.getKnowledgeBase().beginTransaction()) {
+		try (Transaction tx = account.getKnowledgeBase()
+			.beginTransaction(I18NConstants.RESET_PERSONAL_CONFIG__USER.fill(account.getName()))) {
 			TLContext tlContext = TLContext.getContext();
 			if (tlContext != null && account == tlContext.getPerson()) {
 				forgetTransientConfiguration(tlContext);

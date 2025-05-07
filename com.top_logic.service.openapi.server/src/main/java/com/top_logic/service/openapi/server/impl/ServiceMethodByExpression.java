@@ -118,7 +118,8 @@ public class ServiceMethodByExpression implements ServiceMethod {
 				ServiceMethodByExpression.class);
 		}
 		if (_transaction) {
-			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			try (Transaction tx =
+				PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.REST_CALL__NAME.fill(_path))) {
 				Object result = execute(arguments);
 				tx.commit();
 				return result;

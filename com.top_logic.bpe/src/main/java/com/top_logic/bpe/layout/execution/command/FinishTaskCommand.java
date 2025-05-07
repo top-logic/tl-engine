@@ -185,7 +185,8 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 
 		// Decision is already made.
 		Decision decision = (Decision) context;
-		try (Transaction tx = token.tKnowledgeBase().beginTransaction()) {
+		try (Transaction tx = token.tKnowledgeBase()
+			.beginTransaction(I18NConstants.FINISHED_WORKFLOW_TASK__NAME.fill(token.getNode().getName()))) {
 			Object additional = someArguments.get(ADDITIONAL);
 			ExecutionEngine.getInstance().execute(token, decision.getPath(), additional);
 			tx.commit();

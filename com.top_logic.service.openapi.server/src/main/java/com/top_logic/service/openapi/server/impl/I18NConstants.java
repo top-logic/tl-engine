@@ -5,6 +5,7 @@
  */
 package com.top_logic.service.openapi.server.impl;
 
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -22,6 +23,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Invalid content type "{0}": {1}
 	 */
 	public static ResKey2 ERROR_INVALID_CONTENT_TYPE__VALUE_MSG;
+
+	/**
+	 * @en REST API call: {0}
+	 */
+	public static ResKey1 REST_CALL__NAME;
 
 	static {
 		initConstants(I18NConstants.class);

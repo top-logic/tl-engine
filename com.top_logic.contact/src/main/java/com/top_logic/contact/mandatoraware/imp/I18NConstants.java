@@ -6,6 +6,7 @@
 package com.top_logic.contact.mandatoraware.imp;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey5;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -22,6 +23,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_NO_IMPORT_DEFINED = legacyKey("progress.sap.start.model.null");
 
 	public static ResKey START_IMPORT = legacyKey("progress.sap.start");
+
+	/**
+	 * @en SAP import.
+	 */
+	public static ResKey SAP_IMPORT;
+
+	/**
+	 * @en Imported sheet "{0}".
+	 */
+	public static ResKey1 IMPORTED_SHEET__NAME;
 
 	static {
 		initConstants(I18NConstants.class);

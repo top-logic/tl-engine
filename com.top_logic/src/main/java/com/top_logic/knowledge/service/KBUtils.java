@@ -419,7 +419,7 @@ public class KBUtils {
 		CommitEvent commit = new CommitEvent(newRevision,
 			ThreadContextManager.getSubSession().getContextId(),
 			System.currentTimeMillis(),
-			I18NConstants.NO_COMMIT_MESSAGE);
+			I18NConstants.SYNTHESIZED_COMMIT_DURING_REPLAY);
 		cs.setCommit(commit);
 		writer.write(cs);
 	}

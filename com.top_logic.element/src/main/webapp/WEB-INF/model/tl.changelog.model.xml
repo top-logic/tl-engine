@@ -76,7 +76,13 @@
 				<property name="date"
 					mandatory="true"
 					type="tl.core:DateTime"
-				/>
+				>
+					<annotations>
+						<format>
+							<format-ref format-id="date-time"/>
+						</format>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 		<interface name="Modification">
@@ -91,13 +97,13 @@
 					type="tl.model:TLStructuredTypePart"
 				/>
 				<property name="oldValue"
-					multiple="true"
 					bag="true"
+					multiple="true"
 					type="tl.util:Any"
 				/>
 				<property name="newValue"
-					multiple="true"
 					bag="true"
+					multiple="true"
 					type="tl.util:Any"
 				/>
 			</attributes>

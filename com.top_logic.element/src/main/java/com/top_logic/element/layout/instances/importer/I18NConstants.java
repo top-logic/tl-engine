@@ -41,7 +41,7 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * @en Imported objects.
 	 */
-	protected static ResKey IMPORTED_OBJECTS;
+	public static ResKey IMPORTED_OBJECTS;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -38,6 +38,7 @@ import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.codeedit.editor.ConfigXMLEditor;
+import com.top_logic.layout.component.WithCommitMessage;
 import com.top_logic.layout.form.model.DataField;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
@@ -87,9 +88,10 @@ public class XMLImportCommand extends AbstractCommandHandler {
 		Config.PROGRESS_WIDTH,
 		Config.PROGRESS_HEIGHT,
 		Config.IMPORT_DEFINITION,
+		Config.COMMIT_MESSAGE,
 		Config.LOGGING,
 	})
-	public interface Config extends AbstractCommandHandler.Config {
+	public interface Config extends AbstractCommandHandler.Config, WithCommitMessage {
 
 		/** @see #getUploadTitle() */
 		String UPLOAD_TITLE = "upload-title";
@@ -304,7 +306,7 @@ public class XMLImportCommand extends AbstractCommandHandler {
 			}
 
 			private HandlerResult startImport(DisplayContext displaycontext) {
-				return openProgress(displaycontext, _dataField.getDataItem(), getDiscardClosure());
+				return openProgress(displaycontext, aComponent, _dataField.getDataItem(), getDiscardClosure());
 			}
 
 		}.open(aContext);
@@ -313,7 +315,8 @@ public class XMLImportCommand extends AbstractCommandHandler {
 	/**
 	 * Performs the actual import.
 	 */
-	protected HandlerResult openProgress(DisplayContext displaycontext, BinaryData dataItem, Command closeUpload) {
+	protected HandlerResult openProgress(DisplayContext displaycontext, LayoutComponent aComponent, BinaryData dataItem,
+			Command closeUpload) {
 		Handler importDefinition = _importDefinition;
 		boolean logging = _logging;
 
@@ -351,7 +354,9 @@ public class XMLImportCommand extends AbstractCommandHandler {
 
 						log.info(I18NConstants.STARTING_IMPORT);
 
-						try (Transaction tx = kb.beginTransaction()) {
+						try (Transaction tx =
+							kb.beginTransaction(
+								((Config) getConfig()).buildCommandMessage(aComponent, XMLImportCommand.this, null))) {
 							importer.importModel(modelBinding, source);
 
 							log.info(I18NConstants.COMMITTING_CHANGES);

@@ -165,7 +165,8 @@ public abstract class TokenBasedTask<C extends TokenBasedTask.Config<?>> extends
             Transaction theTX = null;
 
             if (useCommit) {
-            	theTX = PersistencyLayer.getKnowledgeBase().beginTransaction();
+				theTX = PersistencyLayer.getKnowledgeBase()
+					.beginTransaction(I18NConstants.TASK_STARTED__TASK.fill(getName()));
             }
 
             try {

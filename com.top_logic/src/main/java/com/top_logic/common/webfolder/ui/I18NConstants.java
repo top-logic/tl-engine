@@ -55,6 +55,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResPrefix TABLE;
 
+	/**
+	 * @en Uploaded documents: {0}
+	 */
+	public static ResKey1 UPLOADED_DOCUMENT__NAME;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

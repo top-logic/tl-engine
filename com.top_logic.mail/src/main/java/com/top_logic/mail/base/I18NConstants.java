@@ -31,6 +31,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey INITIALISING_ROOT_FOLDER;
 
+	/**
+	 * @en Received e-mail messages.
+	 */
+	public static ResKey RECEIVED_MESSAGES;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

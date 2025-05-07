@@ -10,6 +10,7 @@ import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.boundsec.CommandHandler;
 
 /**
  * {@link StateHandler} linking the button state to a component property.
@@ -38,7 +39,7 @@ public class LocalStateHandler implements StateHandler {
 	}
 
 	@Override
-	public void setState(LayoutComponent component, Object model, boolean state) {
+	public void setState(LayoutComponent component, Object model, CommandHandler command, boolean state) {
 		component.set(_property, Boolean.valueOf(state));
 	}
 

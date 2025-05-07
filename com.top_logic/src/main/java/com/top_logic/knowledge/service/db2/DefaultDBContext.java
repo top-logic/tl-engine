@@ -687,7 +687,8 @@ class DefaultDBContext extends DBContext {
     /*package protected*/ void beginAuto()  {
         if (innermostTransaction == null) {
         	// Start auto-begin transaction.
-			innermostTransaction = initFirstTX(true, true, null);
+			innermostTransaction =
+				initFirstTX(true, true, com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
         }
     }
 
@@ -702,13 +703,7 @@ class DefaultDBContext extends DBContext {
     }
 
 	protected TransactionImpl initFirstTX(boolean autoBegin, boolean anonymous, ResKey commitMessage) {
-		TransactionImpl firstTx;
-		if (autoBegin) {
-			firstTx = new TransactionImpl(this);
-		} else {
-			firstTx = new TransactionImpl(this, anonymous, commitMessage);
-		}
-		return firstTx;
+		return new TransactionImpl(this, anonymous, autoBegin, commitMessage);
 	}
 
 	@Override

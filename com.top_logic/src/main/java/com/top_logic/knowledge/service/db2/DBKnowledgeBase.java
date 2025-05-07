@@ -158,6 +158,7 @@ import com.top_logic.knowledge.service.FlexDataManager;
 import com.top_logic.knowledge.service.FlexDataManagerFactory;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseConfiguration;
@@ -2789,11 +2790,6 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
         return moRepository;
     }
 
-	@Override
-	public final Transaction beginTransaction() {
-		return beginTransaction(null);
-	}
-
     @Override
 	public Transaction beginTransaction(ResKey commitMessage) {
     	return internalCreateDBContext().begin(false, commitMessage);
@@ -2807,7 +2803,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
     @Override
 	@Deprecated
     public boolean begin() {
-    	internalCreateDBContext().begin(true, null);
+		internalCreateDBContext().begin(true, I18NConstants.NO_COMMIT_MESSAGE);
     	return true;
     }
 

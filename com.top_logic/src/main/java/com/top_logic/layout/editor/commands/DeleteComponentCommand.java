@@ -101,7 +101,8 @@ public class DeleteComponentCommand extends ConfirmCommandHandler {
 				ScriptingRecorder.pause();
 			}
 
-			try (Transaction tx = kb.beginTransaction()) {
+			try (Transaction tx =
+				kb.beginTransaction(I18NConstants.DELETED_COMPONENT__NAME.fill(editedComponent.getTitleKey()))) {
 				newIdentifiers = deleteComponents(editedComponent, visitedComponents);
 				tx.commit();
 			}

@@ -33,6 +33,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 LOGGED_OUT_USER__USER;
 
+	/**
+	 * @en Removed unused accounts.
+	 */
+	protected static ResKey REMOVED_UNUSED_ACCOUNTS;
+
+	/**
+	 * @en Recorded failed login: {0}
+	 */
+	public static ResKey1 RECORDED_FAILED_LOGIN__NAME;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

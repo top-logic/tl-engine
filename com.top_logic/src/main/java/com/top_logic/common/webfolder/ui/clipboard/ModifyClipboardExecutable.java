@@ -16,7 +16,6 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.form.model.CommandField;
 import com.top_logic.layout.form.model.ConstantExecutabilityModel;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
@@ -102,7 +101,7 @@ public class ModifyClipboardExecutable extends CommandField {
 
 	private void addToClipboardCommit(Wrapper aModel, Clipboard clipboard) {
 		try (Transaction theTX = PersistencyLayer.getKnowledgeBase().beginTransaction(
-			I18NConstants.ADDED_TO_CLIPBOARD__MODEL.fill(MetaLabelProvider.INSTANCE.getLabel(aModel)))) {
+			I18NConstants.ADDED_TO_CLIPBOARD)) {
 			clipboard.add(aModel);
 			theTX.commit();
 		}
@@ -110,7 +109,7 @@ public class ModifyClipboardExecutable extends CommandField {
 
 	private void removeFromClipboardCommit(Wrapper aModel, Clipboard clipboard) {
 		try (Transaction theTX = PersistencyLayer.getKnowledgeBase().beginTransaction(
-			I18NConstants.REMOVED_FROM_CLIPBOARD__MODEL.fill(MetaLabelProvider.INSTANCE.getLabel(aModel)))) {
+			I18NConstants.REMOVED_FROM_CLIPBOARD)) {
 			clipboard.remove(aModel);
 			theTX.commit();
 		}

@@ -18,6 +18,11 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en The Kafka service is not started. */
 	public static ResKey ERROR_KAFKA_SERVICE_NOT_STARTED;
 
+	/**
+	 * @en Processed Kafka message.
+	 */
+	public static ResKey PROCESSED_KAFKA_MESSAGE;
+
 	/* initialize constants with their appropriate value */
 	static {
 		initConstants(I18NConstants.class);

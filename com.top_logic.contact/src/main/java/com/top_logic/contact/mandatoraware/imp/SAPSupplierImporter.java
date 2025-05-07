@@ -351,7 +351,7 @@ public class SAPSupplierImporter extends DataObjectImportTask  {
             // only delete companies that were not imported
             allCompanies.removeAll(this.importedCompanies);
 
-            Transaction t = this.kBase.beginTransaction();
+			Transaction t = this.kBase.beginTransaction(I18NConstants.SAP_IMPORT);
             try {
 				for (int i = 0; i < allCompanies.size(); i++) {
 					CompanyContact company = (CompanyContact) allCompanies.get(i);

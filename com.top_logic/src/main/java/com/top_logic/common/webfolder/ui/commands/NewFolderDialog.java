@@ -102,7 +102,9 @@ public class NewFolderDialog extends AbstractFormPageDialog {
 	                if (this.folder.hasChild(theName)) {
 						theResult.addError(I18NConstants.ERROR_FOLDER_EXISTS__NAME.fill(theName));
 					} else {
-	                    Transaction theTX = PersistencyLayer.getKnowledgeBase().beginTransaction();
+						Transaction theTX =
+							PersistencyLayer.getKnowledgeBase()
+								.beginTransaction(I18NConstants.CREATED_FOLDER__NAME.fill(theName));
 	                    try {
 							WebFolder subFolder = folder.createSubFolder(theName);
 							FormField descriptionField = theContext.getField(WebFolder.DESCRIPTION);

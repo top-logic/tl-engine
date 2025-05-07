@@ -310,7 +310,7 @@ public class SAPFileSupplierDataImporter extends DataObjectImportTask {
             throw new IllegalStateException("There is alreay an open transaction");
         }
         
-        this.currentTransaction = this.kBase.beginTransaction();
+		this.currentTransaction = this.kBase.beginTransaction(I18NConstants.SAP_IMPORT);
     }
     
     protected final boolean commitTransaction() {

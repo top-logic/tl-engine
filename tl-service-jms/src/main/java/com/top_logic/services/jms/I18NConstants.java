@@ -5,6 +5,7 @@
  */
 package com.top_logic.services.jms;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -27,6 +28,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Error receiving a message by consumer {0}.
 	 */
 	public static ResKey1 ERROR_RECEIVING_MSG__NAME;
+
+	/**
+	 * @en Processed JMS message.
+	 */
+	public static ResKey PROCESSED_JMS_MESSAGE;
 
 	static {
 		initConstants(I18NConstants.class);

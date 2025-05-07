@@ -6,6 +6,7 @@
 package com.top_logic.util.sched.task;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -19,6 +20,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey RUNNING;
 
 	public static ResKey CANCELING;
+
+	/**
+	 * @en Stopped cluster task: {0}
+	 */
+	public static ResKey1 STOPPED_CLUSTER_TASK__TASK;
 
 	static {
 		initConstants(I18NConstants.class);

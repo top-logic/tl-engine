@@ -77,6 +77,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 CHANGED_THEME_RELOGIN_NECESSARY__THEME;
 
+	/**
+	 * @en User "{0}" changed password.
+	 */
+	public static ResKey1 CHANGED_PASSWORD__USER;
+
+	/**
+	 * @en User "{0}" reset personal configuration.
+	 */
+	public static ResKey1 RESET_PERSONAL_CONFIG__USER;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

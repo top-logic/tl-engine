@@ -104,7 +104,8 @@ public class UpdateDialog extends AbstractFormPageDialog {
 				if (theItem == null) {
 					return UploadDialog.errorNoDocumentSelected();
 				}
-	            Transaction theTX   = PersistencyLayer.getKnowledgeBase().beginTransaction();
+				Transaction theTX = PersistencyLayer.getKnowledgeBase()
+					.beginTransaction(I18NConstants.UPDATED_DOCUMENT__NAME.fill(document.getName()));
 	
 	            try {
 					document.update(theItem);

@@ -21,6 +21,7 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.component.ComponentUtil;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
@@ -57,7 +58,8 @@ public class WebFolderDeleteExecutable extends AbstractFolderDelete {
 				HandlerResult theResult = new HandlerResult();
 				KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
 
-				Transaction theTX = theKB.beginTransaction();
+				Transaction theTX = theKB.beginTransaction(
+					I18NConstants.DELETED_DOCUMENT__NAME.fill(MetaLabelProvider.INSTANCE.getLabel(deletedObject)));
 				try {
 					final WebFolder folder = (WebFolder) aFolder;
 					assert folder != null : "The node this " + AbstractFolderDelete.class.getName() + " [" + this

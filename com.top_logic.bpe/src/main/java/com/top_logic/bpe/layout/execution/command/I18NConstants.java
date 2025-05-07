@@ -49,6 +49,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey MULTIPLE_ERRORS_MESSAGE;
 
+	/**
+	 * @en Started workflow.
+	 */
+	public static ResKey STARTED_PROCESS;
+
+	/**
+	 * @en Completed start task "{0}".
+	 */
+	public static ResKey1 COMPLETED_START_TASK__NAME;
+
+	/**
+	 * @en Finished workflow task: {0}
+	 */
+	public static ResKey1 FINISHED_WORKFLOW_TASK__NAME;
+
     static {
         initConstants(I18NConstants.class);
     }

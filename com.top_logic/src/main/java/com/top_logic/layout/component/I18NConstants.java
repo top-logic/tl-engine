@@ -37,6 +37,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey NEW_LAYOUT;
 
+	/**
+	 * @en Deleted object: {0}
+	 */
+	public static ResKey1 DELETED_OBJECT__OBJ;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

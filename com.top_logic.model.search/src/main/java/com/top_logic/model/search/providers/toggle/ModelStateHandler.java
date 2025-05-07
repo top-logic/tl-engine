@@ -12,13 +12,19 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.layout.component.WithCommitMessage;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandler.ConfirmConfig.VisibleIf;
 
 /**
  * {@link StateHandler} taking the button state from a persistent state.
@@ -34,7 +40,7 @@ public class ModelStateHandler extends AbstractConfiguredInstance<ModelStateHand
 	/**
 	 * Configuration options for {@link ModelStateHandler}.
 	 */
-	public interface Config<I extends ModelStateHandler> extends PolymorphicConfiguration<I> {
+	public interface Config<I extends ModelStateHandler> extends PolymorphicConfiguration<I>, WithCommitMessage {
 		/**
 		 * @see #getStateLookup()
 		 */
@@ -86,6 +92,10 @@ public class ModelStateHandler extends AbstractConfiguredInstance<ModelStateHand
 		@Name(TRANSACTION)
 		@BooleanDefault(true)
 		boolean isInTransaction();
+
+		@Override
+		@DynamicMode(fun = VisibleIf.class, args = @Ref(TRANSACTION))
+		ResKey1 getCommitMessage();
 	}
 
 	private final QueryExecutor _stateLookup;
@@ -117,9 +127,10 @@ public class ModelStateHandler extends AbstractConfiguredInstance<ModelStateHand
 	}
 
 	@Override
-	public void setState(LayoutComponent component, Object model, boolean state) {
+	public void setState(LayoutComponent component, Object model, CommandHandler command, boolean state) {
 		if (_transaction) {
-			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			try (Transaction tx = PersistencyLayer.getKnowledgeBase()
+				.beginTransaction(((Config<?>) getConfig()).buildCommandMessage(component, command, model))) {
 				_stateUpdate.execute(model, Boolean.valueOf(state));
 
 				tx.commit();

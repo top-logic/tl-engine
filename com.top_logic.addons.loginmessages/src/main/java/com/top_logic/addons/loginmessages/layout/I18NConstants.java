@@ -25,6 +25,11 @@ public class I18NConstants extends I18NConstantsBase {
 	/** A key for the warning that the message of a {@link LoginMessage} is empty. */
 	public static ResKey LOGIN_MESSAGE_WARNING_EMPTY_MESSAGE;
 
+	/**
+	 * @en Reset login message.
+	 */
+	public static ResKey RESET_LOGIN_MESSAGE;
+
     static {
         initConstants(I18NConstants.class);
     }

@@ -205,7 +205,9 @@ public class ChangePasswordComponent extends FormComponent {
 				return error(I18NConstants.EMPTY_PASSWORD_DISALLOWED);
 			}
 			try (LoginCredentials newLogin = LoginCredentials.fromUserAndPassword(account, newPassword1.toCharArray())) {
-				Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction();
+				Transaction tx =
+					PersistencyLayer.getKnowledgeBase()
+						.beginTransaction(I18NConstants.CHANGED_PASSWORD__USER.fill(account.getName()));
 				try {
 					device.setPassword(account, newLogin.getPassword());
 

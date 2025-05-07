@@ -761,7 +761,7 @@ public abstract class AbstractMailServerDaemon<C extends AbstractMailServerDaemo
 			int theMeetFail = 0;
 
             KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
-			try (Transaction theTX = theKB.beginTransaction()) {
+			try (Transaction theTX = theKB.beginTransaction(com.top_logic.mail.base.I18NConstants.RECEIVED_MESSAGES)) {
 				for (MailServerMessage theMessage : MailReceiverService.getMailReceiverInstance()
 					.convertMessages(anEvent.getMessages())) {
 					// All processed messages are from the same folder. get it once, to expunge it

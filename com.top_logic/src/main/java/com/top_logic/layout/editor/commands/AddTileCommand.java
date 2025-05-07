@@ -106,7 +106,8 @@ public class AddTileCommand extends AbstractComponentConfigurationCommandHandler
 		HandlerResult result = HandlerResult.DEFAULT_RESULT;
 
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		try (Transaction tx = kb.beginTransaction()) {
+		try (Transaction tx =
+			kb.beginTransaction(I18NConstants.ADDED_COMPONENT_TILE__NAME.fill(component.getTitleKey()))) {
 			Identifiers identifiers = LayoutTemplateUtils.replaceInnerTemplates(componentConfig);
 
 			String tileIdentifier = LayoutTemplateUtils.createNewComponentLayoutKey();

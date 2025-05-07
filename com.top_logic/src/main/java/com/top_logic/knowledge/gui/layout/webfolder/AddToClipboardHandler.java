@@ -51,7 +51,8 @@ public class AddToClipboardHandler extends AbstractSystemAjaxCommand {
 		{
 			KnowledgeBase kb = object.getKnowledgeBase();
 			Clipboard clipboard = Clipboard.getInstance(kb);
-			Transaction tx = kb.beginTransaction();
+			Transaction tx =
+				kb.beginTransaction(com.top_logic.common.webfolder.ui.clipboard.I18NConstants.ADDED_TO_CLIPBOARD);
 			try {
 				boolean success = clipboard.add(object);
 				if (!success) {

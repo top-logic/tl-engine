@@ -1,11 +1,11 @@
 /*
- * SPDX-FileCopyrightText: 2012 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.layout.table.provider;
+package com.top_logic.layout.scripting.template.excel;
 
-import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -14,9 +14,9 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * @en Updated document description.
+	 * @en Script action: {0}
 	 */
-	protected static ResKey UPDATED_DOCUMENT_DESCRIPTION;
+	public static ResKey1 SCRIPT_ACTION__IMPL;
 
 	static {
 		initConstants(I18NConstants.class);

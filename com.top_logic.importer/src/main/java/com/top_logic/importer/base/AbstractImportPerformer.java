@@ -172,7 +172,7 @@ public abstract class AbstractImportPerformer<C extends AbstractImportPerformer.
 
         	this.addInfoMessage(I18NConstants.START_IMPORT);
 
-            Transaction theTX = PersistencyLayer.getKnowledgeBase().beginTransaction();
+			Transaction theTX = PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.IMPORT_COMMIT);
 
             try {
                 ImportResult theResult = this.doImport(theValues, theTX);

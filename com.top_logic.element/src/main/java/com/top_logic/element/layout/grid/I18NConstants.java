@@ -115,6 +115,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 CONTEXT_NOT_UNIQUE__CONTEXT;
 
+	/**
+	 * @en Edited object: {0}
+	 */
+	public static ResKey1 EDITED__OBJ;
+
+	/**
+	 * @en Created row in grid.
+	 */
+	public static ResKey CREATED_GRID_ROW;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

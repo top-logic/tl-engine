@@ -72,7 +72,7 @@ final class ReplayContext extends DefaultDBContext {
 	@Override
 	protected TransactionImpl initFirstTX(boolean autoBegin, boolean anonymous, ResKey commitMessage) {
 		assert outermostTX == null;
-		outermostTX = new TransactionImpl(this, false, null);
+		outermostTX = new TransactionImpl(this, false, false, commitMessage);
 		if (!autoBegin) {
 			return outermostTX.nest(anonymous, commitMessage);
 		} else {

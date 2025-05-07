@@ -128,11 +128,6 @@ public class DummyKnowledgeBase extends AbstractKnowledgeBase {
 	}
 
 	@Override
-	public final Transaction beginTransaction() {
-		return beginTransaction(null);
-	}
-	
-	@Override
 	public Transaction beginTransaction(ResKey commitMessage) {
 		return new NoTransaction(this);
 	}

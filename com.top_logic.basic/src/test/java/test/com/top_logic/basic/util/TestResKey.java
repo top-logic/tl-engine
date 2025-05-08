@@ -388,7 +388,8 @@ public class TestResKey extends TestCase {
 		ResKey pattern = ResKey.literal(en("foo {0}"), de("bar {0}"));
 		ResKey message = ResKey.message(pattern, "!");
 		assertResolve("foo !", message);
-		assertEquals("Resolving a suffix of message with literal key does not fail.", ResKey.NONE, message.tooltip());
+		assertEquals("Resolving a suffix of message with literal key does not fail.", ResKey.NONE,
+			message.tooltip().plain());
 	}
 
 	public void testLiteralKeyFallback() {

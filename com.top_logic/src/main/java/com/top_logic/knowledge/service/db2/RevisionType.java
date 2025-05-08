@@ -5,6 +5,7 @@
  */
 package com.top_logic.knowledge.service.db2;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.DataObject;
@@ -44,7 +45,17 @@ public final class RevisionType {
 
 		@Override
 		public void initCacheValue(MOAttribute attribute, DataObject item, Object[] storage, Object cacheValue) {
-			((RevisionImpl) item).initLog(ResKey.decode((String) cacheValue));
+			String encoded = (String) cacheValue;
+
+			ResKey message;
+			try {
+				message = ResKey.decode(encoded);
+			} catch (Exception | Error ex) {
+				Logger.warn("Cannot decode log message: " + encoded, LogStorage.class);
+				message = ResKey.text(encoded);
+			}
+
+			((RevisionImpl) item).initLog(message);
 		}
 
 		@Override

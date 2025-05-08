@@ -1336,7 +1336,7 @@ public abstract class ResKey {
 
 		@Override
 		public ResKey plain() {
-			return this;
+			return NONE;
 		}
 
 		@Override
@@ -1396,13 +1396,15 @@ public abstract class ResKey {
 			StringBuilder result = new StringBuilder();
 			result.append("none(");
 			boolean first = true;
-			for (Object arg : _args) {
-				if (first) {
-					first = false;
-				} else {
-					result.append(',');
+			if (_args != null) {
+				for (Object arg : _args) {
+					if (first) {
+						first = false;
+					} else {
+						result.append(',');
+					}
+					result.append(arg);
 				}
-				result.append(arg);
 			}
 			result.append(")");
 			if (_local != null) {

@@ -12,6 +12,7 @@ import static com.top_logic.dob.sql.SQLFactory.column;
 import java.sql.SQLException;
 import java.util.List;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.db.sql.SQLExpression;
 import com.top_logic.basic.db.sql.SQLOrder;
 import com.top_logic.basic.util.ResKey;
@@ -21,6 +22,7 @@ import com.top_logic.knowledge.event.CommitEvent;
 import com.top_logic.knowledge.event.EventReader;
 import com.top_logic.knowledge.service.BasicTypes;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
+import com.top_logic.knowledge.service.db2.RevisionType.LogStorage;
 
 /**
  * {@link EventReader} that reports commits as {@link CommitEvent}s.
@@ -95,9 +97,18 @@ public class CommitEventReader extends AbstractKnowledgeEventReader<CommitEvent>
 			long nextRev = revisions.getLongValue(_revisionAttr);
 			String nextAuthor = revisions.getStringValue(_authorAttr);
 			long nextDate = revisions.getLongValue(_dateAttr);
-			ResKey nextLog = ResKey.decode(revisions.getStringValue(_logAttr));
 			
-			return new CommitEvent(nextRev, nextAuthor, nextDate, nextLog);
+			String encoded = revisions.getStringValue(_logAttr);
+
+			ResKey message;
+			try {
+				message = ResKey.decode(encoded);
+			} catch (Exception | Error ex) {
+				Logger.warn("Cannot decode log message: " + encoded, LogStorage.class);
+				message = ResKey.text(encoded);
+			}
+
+			return new CommitEvent(nextRev, nextAuthor, nextDate, message);
 		} else {
 			return null;
 		}

@@ -17,7 +17,7 @@ import com.top_logic.model.TLModel;
 import com.top_logic.util.model.ModelService;
 
 /**
- * 
+ * {@link ListModelBuilder} for a table that displays the application's change log.
  */
 public class ChangeLogListModelBuilder implements ListModelBuilder {
 

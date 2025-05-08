@@ -207,7 +207,7 @@ public class TestKnowledgeEvent extends AbstractDBKnowledgeBaseMigrationTest imp
 			Revision r1 = kbNode2().getRevision(1L);
 			
 			assertEquals("author", r1.getAuthor());
-			assertEquals("migration", r1.getLog());
+			assertEquals(I18NConstants.NO_COMMIT_MESSAGE, r1.getLog());
 		}
 	}
 

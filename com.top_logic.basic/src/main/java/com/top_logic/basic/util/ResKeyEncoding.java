@@ -104,8 +104,16 @@ public class ResKeyEncoding {
 	 */
 	@FrameworkInternal
 	public static String encodeMessage(ResKey messageKey, Object... arguments) {
+		return encodeMessage(messageKey.internalEncode(), arguments);
+	}
+
+	/**
+	 * Use {@link ResKey#internalEncode()}
+	 */
+	@FrameworkInternal
+	public static String encodeMessage(String plainKey, Object... arguments) {
 		StringBuilder buffer = new StringBuilder();
-		buffer.append(messageKey.internalEncode());
+		buffer.append(plainKey);
 		for (Object argument : arguments) {
 			appendArgument(buffer, argument);
 		}
@@ -319,7 +327,7 @@ public class ResKeyEncoding {
 		} else {
 			String key = decodeKey(part);
 			keyLength = key.length();
-			plain = ResKey.internalCreate(key);
+			plain = ResKey.NONE.getKey().equals(key) ? ResKey.NONE : ResKey.internalCreate(key);
 		}
 
 		if (keyLength == part.length()) {

@@ -61,6 +61,12 @@ public class TestResKeyEncoding extends TestCase {
 		assertNull(decoded.arguments()[0]);
 	}
 
+	public void testEncodeNone() {
+		assertEncodeDecode(ResKey.NONE);
+		assertEncodeDecode(ResKey.none("some/layout/dir/myComp.xml#MyName", "foobar"));
+		assertEquals(ResKey.NONE.suffix("foobar"), ResKey.none(null, "foobar"));
+	}
+
 	public void testEncodeUnknown() {
 		ResKey key = message(new NamedConstant("foobar"));
 		String encoded = ResKey.encode(key);
@@ -150,6 +156,14 @@ public class TestResKeyEncoding extends TestCase {
 	public void testDecodeEmpty() {
 		assertNull(ResKey.decode(""));
 		assertNull(ResKey.decode(null));
+	}
+
+	private void assertEncodeDecode(ResKey key) {
+		String encoded = ResKey.encode(key);
+		ResKey decoded = ResKey.decode(encoded);
+		assertEquals(key, decoded);
+
+		assertEncodeDecode((Object) key);
 	}
 
 	private void assertEncodeDecode(Object value) {

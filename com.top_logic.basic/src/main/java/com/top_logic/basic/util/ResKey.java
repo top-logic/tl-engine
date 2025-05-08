@@ -70,7 +70,7 @@ public abstract class ResKey {
 	 * Use this as assertion that a certain key is never accessed.
 	 * </p>
 	 */
-	public static final ResKey NONE = none("", null);
+	public static final ResKey NONE = new NoKey();
 
 	/**
 	 * @see #message(ResKey, Object...)
@@ -808,7 +808,7 @@ public abstract class ResKey {
 	 * @return An key that produces a missing resource error when being resolved.
 	 */
 	public static ResKey none(Object id, String local) {
-		return new NoKey(id, local);
+		return NONE.asResKey1().fill(id).suffix(local);
 	}
 
 	/**
@@ -1310,12 +1310,22 @@ public abstract class ResKey {
 
 	private static final class NoKey extends DirectKey {
 
-		private final Object _id;
+		private Object[] _args;
 
-		private final String _local;
+		private String _local;
 
-		NoKey(Object id, String local) {
-			_id = id;
+		/**
+		 * Creates a {@link ResKey.NoKey}.
+		 */
+		public NoKey() {
+			this(NOARGS, null);
+		}
+
+		/**
+		 * Creates a {@link NoKey}.
+		 */
+		public NoKey(Object[] args, String local) {
+			_args = args;
 			_local = local;
 		}
 
@@ -1331,17 +1341,17 @@ public abstract class ResKey {
 
 		@Override
 		public Object[] arguments() {
-			return NOARGS;
+			return _args;
 		}
 
 		@Override
 		ResKey internalFill(Object... arguments) {
-			return this;
+			return arguments.length == 1 && arguments[0] == null ? this : new NoKey(arguments, _local);
 		}
 
 		@Override
 		protected ResKey internalSuffix(String suffix) {
-			return none(_id, StringServices.isEmpty(_local) ? suffix.substring(1) : _local + suffix);
+			return new NoKey(_args, _local == null ? suffix : _local + suffix);
 		}
 
 		@Override
@@ -1351,19 +1361,14 @@ public abstract class ResKey {
 
 		@Override
 		public String getKey() {
-			return name();
+			return "none";
 		}
 
 		@Override
 		protected String internalEncode() {
-			return name();
+			return _args == null ? getKey() : ResKeyEncoding.encodeMessage(getKey(), _args);
 		}
 		
-		@Override
-		public String toString() {
-			return name();
-		}
-
 		@Override
 		protected boolean exists(I18NBundleSPI bundle) {
 			return false;
@@ -1382,13 +1387,25 @@ public abstract class ResKey {
 			}
 		}
 
+		@Override
+		public String toString() {
+			return name();
+		}
+
 		private String name() {
 			StringBuilder result = new StringBuilder();
 			result.append("none(");
-			result.append(_id);
+			boolean first = true;
+			for (Object arg : _args) {
+				if (first) {
+					first = false;
+				} else {
+					result.append(',');
+				}
+				result.append(arg);
+			}
 			result.append(")");
 			if (_local != null) {
-				result.append(".");
 				result.append(_local);
 			}
 			return result.toString();

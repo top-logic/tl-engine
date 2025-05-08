@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.LongID;
+import com.top_logic.basic.SessionContext;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.identifier.DefaultObjectKey;
@@ -390,13 +391,13 @@ public class ChangeLogBuilder {
 	private Person resolveAuthor(Revision revision) {
 		String authorSpec = revision.getAuthor();
 		Person author;
-		if (authorSpec.startsWith("person:")) {
-			author = _kb.resolveObjectKey(
+		if (authorSpec.startsWith(SessionContext.PERSON_ID_PREFIX)) {
+			KnowledgeItem authorItem = _kb.resolveObjectKey(
 				new DefaultObjectKey(
 					_hm.getTrunk().getBranchId(), revision.getCommitNumber(),
 					_kb.getMORepository().getMetaObject(Person.OBJECT_NAME),
-					LongID.fromExternalForm(authorSpec.substring("person:".length()))))
-				.getWrapper();
+					LongID.fromExternalForm(authorSpec.substring(SessionContext.PERSON_ID_PREFIX.length()))));
+			author = authorItem == null ? null : authorItem.getWrapper();
 		} else {
 			author = null;
 		}

@@ -5,6 +5,31 @@
  */
 package com.top_logic.element.changelog.model;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import com.google.common.base.Objects;
+
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.element.changelog.model.trans.TransientChangeSet;
+import com.top_logic.element.changelog.model.trans.TransientCreation;
+import com.top_logic.element.changelog.model.trans.TransientDeletion;
+import com.top_logic.element.changelog.model.trans.TransientModification;
+import com.top_logic.element.changelog.model.trans.TransientUpdate;
+import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
+import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.model.ModelKind;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.factory.TLFactory;
+import com.top_logic.util.model.ModelService;
+
 /**
  * Interface for {@link #CHANGE_SET_TYPE} business objects.
  * 
@@ -12,6 +37,235 @@ package com.top_logic.element.changelog.model;
  */
 public interface ChangeSet extends com.top_logic.element.changelog.model.impl.ChangeSetBase {
 
-	// Wrapper functionality.
+	/**
+	 * Inverts this {@link ChangeSet}.
+	 */
+	default TransientChangeSet revert() {
+		TransientChangeSet undo = new TransientChangeSet();
+		undo.setRevision(getRevision());
+		undo.setAuthor(getAuthor());
+		undo.setDate(getDate());
+		undo.setMessage(revert(getMessage()));
+
+		for (Change change : getChanges()) {
+			if (change instanceof Creation creation) {
+				TransientDeletion delete = new TransientDeletion();
+				delete.setObject(creation.getObject());
+				delete.setImplicit(creation.getImplicit());
+				undo.addChange(delete);
+			} else if (change instanceof Deletion deletion) {
+				TransientCreation create = new TransientCreation();
+				create.setObject(deletion.getObject());
+				create.setImplicit(deletion.getImplicit());
+				undo.addChange(create);
+			} else if (change instanceof Update update) {
+				TransientUpdate revert = new TransientUpdate();
+				revert.setObject(update.getOldObject());
+				revert.setOldObject(update.getObject());
+				for (Modification modification : update.getModifications()) {
+					TransientModification reset = new TransientModification();
+					reset.setPart(modification.getPart());
+					reset.setNewValue(modification.getOldValue());
+					reset.setOldValue(modification.getNewValue());
+				}
+				undo.addChange(revert);
+			}
+		}
+
+		return undo;
+	}
+
+	/**
+	 * Applies the changes recorded in this change set to the current version of the model.
+	 */
+	default void apply() {
+		TLFactory factory = ModelService.getInstance().getFactory();
+
+		List<ResKey> problems = new ArrayList<>();
+		Map<TLObject, TLObject> created = new HashMap<>();
+
+		// First process creations, since the created objects might be used in further updates.
+		for (Change change : getChanges()) {
+			if (change instanceof Creation creation) {
+				TLObject template = creation.getObject();
+				TLObject currentTemplate = WrapperHistoryUtils.getCurrent(template);
+				if (currentTemplate != null) {
+					problems.add(I18NConstants.PROBLEM_OBJECT_TO_CREATE_ALREADY_EXISTS__OBJ
+						.fill(MetaLabelProvider.INSTANCE.getLabel(currentTemplate)));
+					continue;
+				}
+
+				TLObject revived = factory.createObject((TLClass) template.tType(), null, null, template.tIdLocal());
+				created.put(revived, template);
+			}
+		}
+
+		long rev = getRevision().getCommitNumber();
+		for (Entry<TLObject, TLObject> create : created.entrySet()) {
+			TLObject revived = create.getKey();
+			TLObject template = create.getValue();
+
+			for (TLStructuredTypePart part : revived.tType().getAllParts()) {
+				if (part.isDerived()) {
+					continue;
+				}
+
+				updateProperty(problems, rev, part, template, revived);
+			}
+		}
+
+		for (Change change : getChanges()) {
+			if (change instanceof Deletion deletion) {
+				TLObject deleted = deletion.getObject();
+				TLObject toDelete = WrapperHistoryUtils.getCurrent(deleted);
+				if (toDelete == null) {
+					problems.add(I18NConstants.PROBLEM_OBJECT_TO_DELETE_NO_LONGER_EXISTS__OBJ
+						.fill(MetaLabelProvider.INSTANCE.getLabel(deleted)));
+					continue;
+				}
+
+				for (TLStructuredTypePart part : toDelete.tType().getAllParts()) {
+					if (part.getModelKind() == ModelKind.REFERENCE) {
+						if (((TLReference) part).isComposite()) {
+							// Clear composition references to make sure that only those objects are
+							// deleted that are requested to delete.
+							toDelete.tUpdate(part, null);
+						}
+					}
+				}
+
+				toDelete.tDelete();
+			} else if (change instanceof Update update) {
+				// The object that represents the result of the change to perform.
+				TLObject oldUpdatedObject = update.getObject();
+
+				// The current object on which to re-do the change.
+				TLObject target = WrapperHistoryUtils.getCurrent(oldUpdatedObject);
+				if (target == null) {
+					problems.add(I18NConstants.PROBLEM_OBJECT_TO_MODIFY_NO_LONGER_EXISTS__OBJ
+						.fill(MetaLabelProvider.INSTANCE.getLabel(oldUpdatedObject)));
+					continue;
+				}
+
+				// The base object on which the change was initially performed.
+				TLObject oldBaseObject = update.getOldObject();
+
+				for (Modification modification : update.getModifications()) {
+					TLStructuredTypePart part = modification.getPart();
+
+					Object baseValue = toCurrent(rev, part, oldBaseObject.tValue(part));
+					Object currentValue = target.tValue(part);
+					if (!Objects.equal(currentValue, baseValue)) {
+						problems.add(I18NConstants.PROBLEM_VALUE_CHANGED_IN_BETWEEN__OBJ_PART_ORIG_CURR
+							.fill(MetaLabelProvider.INSTANCE.getLabel(target),
+								MetaLabelProvider.INSTANCE.getLabel(part),
+								MetaLabelProvider.INSTANCE.getLabel(baseValue),
+								MetaLabelProvider.INSTANCE.getLabel(currentValue)));
+					}
+
+					updateProperty(problems, rev, part, oldUpdatedObject, target);
+				}
+			}
+		}
+	}
+
+	private void updateProperty(List<ResKey> problems, long rev, TLStructuredTypePart part, TLObject template,
+			TLObject target) {
+		// The value that was set in the original update.
+		Object expectedValue = template.tValue(part);
+
+		// The value that is now set during re-do.
+		Object newValue = toCurrent(rev, part, expectedValue);
+
+		if (newValue == null && expectedValue != null || (newValue instanceof Collection<?> newCol
+			&& expectedValue instanceof Collection expCol && newCol.size() != expCol.size())) {
+
+			Object missing = missing(rev, part, expectedValue);
+
+			// Some value can no longer be resolved.
+			problems.add(I18NConstants.PROBLEM_OBJECTS_NO_LONGER_EXIST__OBJ_PART_MISSING
+				.fill(MetaLabelProvider.INSTANCE.getLabel(target),
+					MetaLabelProvider.INSTANCE.getLabel(part),
+					MetaLabelProvider.INSTANCE.getLabel(missing)));
+		}
+
+		target.tUpdate(part, newValue);
+	}
+
+	private Object toCurrent(long rev, TLStructuredTypePart part, Object value) {
+		if (part.getModelKind() == ModelKind.REFERENCE) {
+			return switch (((TLReference) part).getHistoryType()) {
+				case CURRENT, MIXED -> {
+					if (value instanceof Collection<?> coll) {
+						List<TLObject> result = new ArrayList<>(coll.size());
+						for (Object element : coll) {
+							TLObject currentElement = toCurrent(rev, element);
+							if (currentElement != null) {
+								result.add(currentElement);
+							}
+						}
+						yield result;
+					} else {
+						yield toCurrent(rev, value);
+					}
+				}
+				case HISTORIC -> value;
+			};
+		} else {
+			return value;
+		}
+	}
+
+	private TLObject toCurrent(long rev, Object obj) {
+		if (obj == null) {
+			return null;
+		}
+		TLObject historic = (TLObject) obj;
+		if (historic.tId().getHistoryContext() == rev) {
+			return WrapperHistoryUtils.getCurrent(historic);
+		} else {
+			return historic;
+		}
+	}
+
+	private Object missing(long rev, TLStructuredTypePart part, Object value) {
+		if (part.getModelKind() == ModelKind.REFERENCE) {
+			return switch (((TLReference) part).getHistoryType()) {
+				case CURRENT, MIXED -> {
+					if (value instanceof Collection<?> coll) {
+						List<Object> result = new ArrayList<>(coll.size());
+						for (Object element : coll) {
+							TLObject currentElement = toCurrent(rev, element);
+							if (currentElement == null) {
+								result.add(element);
+							}
+						}
+						yield result;
+					} else {
+						TLObject current = toCurrent(rev, value);
+						yield current == null ? value : null;
+					}
+				}
+				case HISTORIC -> null;
+			};
+		} else {
+			return null;
+		}
+	}
+
+	private ResKey revert(ResKey message) {
+		if (I18NConstants.REDO__MSG.getKey().equals(message.getKey())) {
+			return I18NConstants.REVERTED__MSG.fill(firstArg(message));
+		} else if (I18NConstants.REVERTED__MSG.getKey().equals(message.getKey())) {
+			return I18NConstants.REDO__MSG.fill(firstArg(message));
+		} else {
+			return I18NConstants.REVERTED__MSG.fill(message);
+		}
+	}
+
+	private Object firstArg(ResKey message) {
+		Object[] arguments = message.arguments();
+		return arguments.length > 0 ? arguments[0] : message;
+	}
 
 }

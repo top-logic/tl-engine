@@ -68,6 +68,7 @@
 			       <module key="com.top_logic.tool.boundsec.commandhandlers.BookmarkService$Module" value="true"/>
 			       <module key="com.top_logic.util.LayoutBasedSecurity$Module" value="true"/>
 			       <module key="com.top_logic.knowledge.service.db2.InitialDataSetupService$Module" value="true"/>
+			       <module key="com.top_logic.base.office.excel.handler.POITypeProvider$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>
@@ -1671,6 +1672,11 @@
 						</schedules>
 					</task>
 				</tasks>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.base.office.excel.handler.POITypeProvider">
+			<instance class="com.top_logic.base.office.excel.handler.POITypeProvider">
 			</instance>
 		</config>
 		

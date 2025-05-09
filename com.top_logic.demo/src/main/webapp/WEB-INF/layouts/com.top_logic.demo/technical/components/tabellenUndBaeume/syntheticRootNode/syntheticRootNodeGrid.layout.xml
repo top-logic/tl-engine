@@ -23,6 +23,7 @@
 		<buttons>
 			<button id="exportExcelGrid"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+				streaming="false"
 			/>
 			<button id="ID_c9a21a48_270c_4f79_a4d7_27f9315b46ce"
 				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"

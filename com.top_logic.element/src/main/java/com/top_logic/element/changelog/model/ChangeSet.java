@@ -42,7 +42,8 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 	 */
 	default TransientChangeSet revert() {
 		TransientChangeSet undo = new TransientChangeSet();
-		undo.setRevision(getRevision());
+		undo.setRevision(getParentRev());
+		undo.setParentRev(getRevision());
 		undo.setAuthor(getAuthor());
 		undo.setDate(getDate());
 		undo.setMessage(revert(getMessage()));
@@ -63,10 +64,11 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 				revert.setObject(update.getOldObject());
 				revert.setOldObject(update.getObject());
 				for (Modification modification : update.getModifications()) {
-					TransientModification reset = new TransientModification();
-					reset.setPart(modification.getPart());
-					reset.setNewValue(modification.getOldValue());
-					reset.setOldValue(modification.getNewValue());
+					TransientModification restore = new TransientModification();
+					restore.setPart(modification.getPart());
+					restore.setNewValue(modification.getOldValue());
+					restore.setOldValue(modification.getNewValue());
+					revert.addModification(restore);
 				}
 				undo.addChange(revert);
 			}
@@ -77,8 +79,10 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 
 	/**
 	 * Applies the changes recorded in this change set to the current version of the model.
+	 * 
+	 * @return A list of problems that were detected during execution.
 	 */
-	default void apply() {
+	default List<ResKey> apply() {
 		TLFactory factory = ModelService.getInstance().getFactory();
 
 		List<ResKey> problems = new ArrayList<>();
@@ -101,6 +105,7 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 		}
 
 		long rev = getRevision().getCommitNumber();
+		long parentRev = getParentRev().getCommitNumber();
 		for (Entry<TLObject, TLObject> create : created.entrySet()) {
 			TLObject revived = create.getKey();
 			TLObject template = create.getValue();
@@ -153,7 +158,7 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 				for (Modification modification : update.getModifications()) {
 					TLStructuredTypePart part = modification.getPart();
 
-					Object baseValue = toCurrent(rev, part, oldBaseObject.tValue(part));
+					Object baseValue = toCurrent(parentRev, part, oldBaseObject.tValue(part));
 					Object currentValue = target.tValue(part);
 					if (!Objects.equal(currentValue, baseValue)) {
 						problems.add(I18NConstants.PROBLEM_VALUE_CHANGED_IN_BETWEEN__OBJ_PART_ORIG_CURR
@@ -167,6 +172,7 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 				}
 			}
 		}
+		return problems;
 	}
 
 	private void updateProperty(List<ResKey> problems, long rev, TLStructuredTypePart part, TLObject template,

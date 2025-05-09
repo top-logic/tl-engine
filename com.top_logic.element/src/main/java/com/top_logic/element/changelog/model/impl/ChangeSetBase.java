@@ -54,6 +54,15 @@ public interface ChangeSetBase extends com.top_logic.model.TLObject {
 	String MESSAGE_ATTR = "message";
 
 	/**
+	 * Part <code>parentRev</code> of <code>ChangeSet</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:Revision</code> in configuration.
+	 * </p>
+	 */
+	String PARENT_REV_ATTR = "parentRev";
+
+	/**
 	 * Part <code>revision</code> of <code>ChangeSet</code>
 	 * 
 	 * <p>
@@ -145,6 +154,20 @@ public interface ChangeSetBase extends com.top_logic.model.TLObject {
 	 */
 	default void setMessage(com.top_logic.basic.util.ResKey newValue) {
 		tUpdateByName(MESSAGE_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #PARENT_REV_ATTR}.
+	 */
+	default com.top_logic.knowledge.service.Revision getParentRev() {
+		return (com.top_logic.knowledge.service.Revision) tValueByName(PARENT_REV_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #PARENT_REV_ATTR}.
+	 */
+	default void setParentRev(com.top_logic.knowledge.service.Revision newValue) {
+		tUpdateByName(PARENT_REV_ATTR, newValue);
 	}
 
 	/**

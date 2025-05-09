@@ -6,7 +6,6 @@
 package com.top_logic.element.meta.form.overlay;
 
 import com.top_logic.element.model.DynamicModelService;
-import com.top_logic.knowledge.wrap.ValueProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.factory.TLFactory;
@@ -19,21 +18,9 @@ import com.top_logic.model.impl.TransientObjectFactory;
  */
 public abstract class DefaultObjectConstructor implements ObjectConstructor {
 
-	private static final ValueProvider NONE = new ValueProvider() {
-		@Override
-		public Object getValue(String aKey) {
-			return null;
-		}
-
-		@Override
-		public void setValue(String aName, Object aValue) {
-			throw new UnsupportedOperationException();
-		}
-	};
-
 	@Override
 	public TLObject newInstance(TLFormObject overlay) {
-		return factory().createObject((TLClass) overlay.getType(), overlay.tContainer(), NONE);
+		return factory().createObject((TLClass) overlay.getType(), overlay.tContainer());
 	}
 
 	/**

@@ -298,7 +298,14 @@ public class ResKeyEncoding {
 
 	static final String LANGTAG = "@([a-zA-Z]+(?:-[a-zA-Z0-9]+)*)";
 
-	static final Pattern TAGGED_STRING_PATTERN = Pattern.compile(LITERAL + LANGTAG);
+	static final String SUFFIX_START = "(\\w+):\\s*\\{";
+
+	static final String SUFFIX_END = "(\\})";
+
+	static final String SEP = "(,\\s*)";
+
+	static final Pattern TAGGED_STRING_PATTERN =
+		Pattern.compile(LITERAL + LANGTAG + "|" + SUFFIX_START + "|" + SUFFIX_END + "|" + SEP);
 
 	private static ResKey atomicKey(String part) {
 		ResKey plain;
@@ -308,12 +315,11 @@ public class ResKeyEncoding {
 			keyLength = 2;
 			matcher.region(keyLength, part.length());
 			Builder translations = ResKey.builder();
-			while (matcher.find()) {
-				Locale lang = Locale.forLanguageTag(matcher.group(3));
-				String value = unquote(matcher.group(1), matcher.group(2));
-				translations.add(lang, value);
-				keyLength = matcher.end();
-			}
+
+			Builder current = translations;
+			parseLiteral(matcher, current);
+
+			keyLength = matcher.regionStart();
 			if (keyLength < part.length() && part.charAt(keyLength) == ')') {
 				// Skip ending parenthesis.
 				keyLength++;
@@ -340,6 +346,38 @@ public class ResKeyEncoding {
 		}
 	
 		return ResKey.message(plain, arguments.toArray());
+	}
+
+	private static void parseLiteral(Matcher matcher, Builder current) {
+		while (matcher.lookingAt()) {
+			String langSpec = matcher.group(3);
+			if (langSpec != null) {
+				Locale lang = Locale.forLanguageTag(langSpec);
+				String value = unquote(matcher.group(1), matcher.group(2));
+				current.add(lang, value);
+
+				consumeToken(matcher);
+			} else if (matcher.group(4) != null) {
+				String suffix = matcher.group(4);
+				consumeToken(matcher);
+
+				parseLiteral(matcher, current.suffix(suffix));
+			} else if (matcher.group(5) != null) {
+				consumeToken(matcher);
+				return;
+			} else if (matcher.group(6) != null) {
+				consumeToken(matcher);
+			} else {
+				assert false : "Did not match: " + matcher.toString();
+			}
+		}
+	}
+
+	/**
+	 * Sets the matcher location direct after the last match.
+	 */
+	private static void consumeToken(Matcher matcher) {
+		matcher.region(matcher.end(), matcher.regionEnd());
 	}
 
 	private static String unquote(String a, String b) {

@@ -152,6 +152,7 @@ public class ChangeLogBuilder {
 				TransientChangeSet entry = new TransientChangeSet();
 				entry.setDate(new Date(revision.getDate()));
 				entry.setRevision(revision);
+				entry.setParentRev(_hm.getRevision(changeSet.getRevision() - 1));
 				entry.setMessage(revision.getLog());
 				entry.setAuthor(resolveAuthor(revision));
 

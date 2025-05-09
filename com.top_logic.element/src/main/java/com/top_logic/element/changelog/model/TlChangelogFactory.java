@@ -194,6 +194,13 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	}
 
 	/**
+	 * Lookup {@link ChangeSet#PARENT_REV_ATTR} of {@link ChangeSet}.
+	 */
+	public static com.top_logic.model.TLReference getParentRevChangeSetAttr() {
+		return (com.top_logic.model.TLReference) getChangeSetType().getPart(ChangeSet.PARENT_REV_ATTR);
+	}
+
+	/**
 	 * Lookup {@link ChangeSet#REVISION_ATTR} of {@link ChangeSet}.
 	 */
 	public static com.top_logic.model.TLReference getRevisionChangeSetAttr() {

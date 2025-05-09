@@ -169,6 +169,12 @@
 						</format>
 					</annotations>
 				</property>
+				<reference name="parentRev"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="tl.core:Revision"
+				/>
 			</attributes>
 		</class>
 		<interface name="Modification">

@@ -104,7 +104,7 @@ public class TransientPersonalConfiguration implements PersonalConfiguration {
 		}
 
 		try (Transaction tx = PersonalConfigurationWrapper.getDefaultKnowledgeBase()
-			.beginTransaction(I18NConstants.STORED_PERSONAL_CONFIGURATION__USER)) {
+			.beginTransaction(I18NConstants.STORED_PERSONAL_CONFIGURATION)) {
 			if (theWrapper != null) {
 				theWrapper.tDelete(); // Delete Old values
 			}

@@ -29,9 +29,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey UPDATED_ACCOUNT_LIST;
 
 	/**
-	 * @en Stored personal configuration for user "{0}".
+	 * @en Stored personal configuration.
 	 */
-	public static ResKey STORED_PERSONAL_CONFIGURATION__USER;
+	public static ResKey STORED_PERSONAL_CONFIGURATION;
 
 	/**
 	 * @en Created root account.

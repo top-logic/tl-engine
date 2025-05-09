@@ -18,6 +18,15 @@ public interface ChangeBase extends com.top_logic.model.TLObject {
 	String CHANGE_TYPE = "Change";
 
 	/**
+	 * Part <code>belongsTo</code> of <code>Change</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.changelog:Change</code> in configuration.
+	 * </p>
+	 */
+	String BELONGS_TO_ATTR = "belongsTo";
+
+	/**
 	 * Part <code>implicit</code> of <code>Change</code>
 	 * 
 	 * <p>
@@ -43,6 +52,29 @@ public interface ChangeBase extends com.top_logic.model.TLObject {
 	 * </p>
 	 */
 	String OLD_OBJECT_ATTR = "oldObject";
+
+	/**
+	 * Part <code>partChanges</code> of <code>Change</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.changelog:Change</code> in configuration.
+	 * </p>
+	 */
+	String PART_CHANGES_ATTR = "partChanges";
+
+	/**
+	 * Getter for part {@link #BELONGS_TO_ATTR}.
+	 */
+	default com.top_logic.element.changelog.model.Change getBelongsTo() {
+		return (com.top_logic.element.changelog.model.Change) tValueByName(BELONGS_TO_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #BELONGS_TO_ATTR}.
+	 */
+	default void setBelongsTo(com.top_logic.element.changelog.model.Change newValue) {
+		tUpdateByName(BELONGS_TO_ATTR, newValue);
+	}
 
 	/**
 	 * Getter for part {@link #IMPLICIT_ATTR}.
@@ -84,6 +116,14 @@ public interface ChangeBase extends com.top_logic.model.TLObject {
 	 */
 	default void setOldObject(com.top_logic.model.TLObject newValue) {
 		tUpdateByName(OLD_OBJECT_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #PART_CHANGES_ATTR}.
+	 */
+	@SuppressWarnings("unchecked")
+	default java.util.Set<? extends com.top_logic.element.changelog.model.Change> getPartChanges() {
+		return (java.util.Set<? extends com.top_logic.element.changelog.model.Change>) tValueByName(PART_CHANGES_ATTR);
 	}
 
 }

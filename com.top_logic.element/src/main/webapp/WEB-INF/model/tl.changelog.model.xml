@@ -8,6 +8,25 @@
 				interface-package="com.top_logic.element.changelog.model"
 			/>
 		</annotations>
+		<enum name="ErrorAction">
+			<classifier name="IGNORE">
+				<annotations>
+					<instance-presentation icon="css:bi bi-skip-end-fill"/>
+				</annotations>
+			</classifier>
+		</enum>
+		<enum name="WarningAction">
+			<classifier name="IGNORE">
+				<annotations>
+					<instance-presentation icon="css:fa-solid fa-play"/>
+				</annotations>
+			</classifier>
+			<classifier name="SKIP">
+				<annotations>
+					<instance-presentation icon="colored:tl-icon cross"/>
+				</annotations>
+			</classifier>
+		</enum>
 		<class name="Change">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
@@ -37,6 +56,19 @@
 						</default-value>
 					</annotations>
 				</property>
+				<reference name="belongsTo"
+					inverse-reference="partChanges"
+					kind="forwards"
+					navigate="true"
+					type="Change"
+				/>
+				<reference name="partChanges"
+					inverse-reference="belongsTo"
+					kind="backwards"
+					multiple="true"
+					navigate="true"
+					type="Change"
+				/>
 			</attributes>
 		</class>
 		<class name="Creation">
@@ -60,6 +92,43 @@
 					multiple="true"
 					navigate="true"
 					type="Modification"
+				/>
+			</attributes>
+		</class>
+		<interface name="ChangeConfirmation">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="info"
+					mandatory="true"
+					type="tl.model.i18n:I18NString"
+				/>
+			</attributes>
+		</interface>
+		<class name="ErrorMessage">
+			<generalizations>
+				<generalization type="ChangeConfirmation"/>
+			</generalizations>
+			<attributes>
+				<reference name="action"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="ErrorAction"
+				/>
+			</attributes>
+		</class>
+		<class name="WarningMessage">
+			<generalizations>
+				<generalization type="ChangeConfirmation"/>
+			</generalizations>
+			<attributes>
+				<reference name="action"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="WarningAction"
 				/>
 			</attributes>
 		</class>
@@ -125,5 +194,94 @@
 				/>
 			</attributes>
 		</interface>
+		<class name="Operation">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="confirmations"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="ChangeConfirmation"
+				/>
+			</attributes>
+		</class>
+		<class name="CreateOp">
+			<generalizations>
+				<generalization type="Operation"/>
+			</generalizations>
+			<attributes>
+				<reference name="type"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="tl.model:TLClass"
+				/>
+				<property name="id"
+					type="tl.core:Long"
+				/>
+				<reference name="initializers"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="SetOp"
+				/>
+			</attributes>
+		</class>
+		<class name="DeleteOp">
+			<generalizations>
+				<generalization type="Operation"/>
+			</generalizations>
+			<attributes>
+				<reference name="target"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="tl.model:TLObject"
+				/>
+			</attributes>
+		</class>
+		<class name="UpdateOp">
+			<generalizations>
+				<generalization type="Operation"/>
+			</generalizations>
+			<attributes>
+				<reference name="target"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="tl.model:TLObject"
+				/>
+				<reference name="updates"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="SetOp"
+				/>
+			</attributes>
+		</class>
+		<class name="SetOp">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="property"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="tl.model:TLStructuredTypePart"
+				/>
+				<property name="value"
+					type="tl.util:Any"
+				/>
+			</attributes>
+		</class>
 	</module>
 </model>

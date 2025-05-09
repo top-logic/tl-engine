@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 
 import junit.framework.Test;
-import junit.framework.TestSuite;
 
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.usermodel.BorderStyle;
@@ -31,12 +30,14 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 
-import test.com.top_logic.TLTestSetup;
+import test.com.top_logic.ModuleLicenceTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.base.office.OfficeException;
 import com.top_logic.base.office.POIUtil;
 import com.top_logic.base.office.excel.ExcelAccess;
 import com.top_logic.base.office.excel.ExcelValue;
+import com.top_logic.base.office.excel.handler.POITypeProvider;
 import com.top_logic.base.office.style.FontStyle;
 import com.top_logic.base.office.style.TextOffset;
 import com.top_logic.base.office.style.Underline;
@@ -598,7 +599,9 @@ public class TestPOI extends AbstractPOIExcelTest {
     }
 
     public static Test suite () {
-        return TLTestSetup.createTLTestSetup(new TestSuite(TestPOI.class));
+		return ModuleLicenceTestSetup.setupModule(
+			ServiceTestSetup.createSetup(TestPOI.class,
+				POITypeProvider.Module.INSTANCE));
     }
 
     public static void main(String[] args) {

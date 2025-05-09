@@ -22,7 +22,7 @@ public class TestXLSExcelWriter extends AbstractExcelWriterTest {
 
 	@Override
 	protected ExcelWriter newExcelWriter() throws IOException {
-		return new ExcelWriter(false);
+		return ExcelWriter.createLegacyWriter();
 	}
 
 	/**

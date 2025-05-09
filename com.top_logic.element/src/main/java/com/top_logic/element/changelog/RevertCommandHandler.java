@@ -60,6 +60,8 @@ public class RevertCommandHandler extends AbstractCommandHandler {
 			tx.commit();
 		}
 
+		aComponent.invalidate();
+
 		return HandlerResult.DEFAULT_RESULT;
 	}
 

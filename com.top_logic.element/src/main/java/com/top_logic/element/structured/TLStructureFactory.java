@@ -6,6 +6,7 @@
 package com.top_logic.element.structured;
 
 
+import com.top_logic.basic.TLID;
 import com.top_logic.knowledge.wrap.ValueProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
@@ -31,11 +32,11 @@ public interface TLStructureFactory extends TLFactory {
 	TLModule getModule();
 
 	/**
-	 * @deprecated Use {@link #createObject(TLClass, TLObject, ValueProvider)} instead.
+	 * @deprecated Use {@link #createObject(TLClass, TLObject, ValueProvider, TLID)} instead.
 	 */
 	@Deprecated
 	default Object createObject(Object context, String typeName, ValueProvider initialValues) {
-		return createObject((TLClass) getModule().getType(typeName), (TLObject) context, initialValues);
+		return createObject((TLClass) getModule().getType(typeName), (TLObject) context, initialValues, null);
 	}
 
 	/**

@@ -192,8 +192,8 @@ public class StructuredElementWrapperFactory extends StructuredElementFactory {
 	}
 
 	@Override
-	public TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues) {
-		TLObject result = super.createObject(type, context, initialValues);
+	public TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues, TLID id) {
+		TLObject result = super.createObject(type, context, initialValues, id);
 		if (result instanceof TLScope) {
 			setupLocalScope((TLScope) result);
 		}

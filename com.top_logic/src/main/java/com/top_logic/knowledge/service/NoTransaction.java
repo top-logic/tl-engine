@@ -15,7 +15,7 @@ public final class NoTransaction extends AbstractTransaction {
 	 * Creates a {@link NoTransaction}.
 	 */
 	public NoTransaction(KnowledgeBase kb) {
-		super(kb);
+		super(kb, I18NConstants.NO_COMMIT_MESSAGE);
 	}
 
 	@Override

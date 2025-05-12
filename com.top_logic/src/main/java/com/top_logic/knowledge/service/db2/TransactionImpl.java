@@ -8,7 +8,6 @@ package com.top_logic.knowledge.service.db2;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.AbstractTransaction;
-import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.Revision;
@@ -46,11 +45,6 @@ class TransactionImpl extends AbstractTransaction {
 	private boolean autoBegin;
 
 	/**
-	 * @see #getCommitMessage()
-	 */
-	private ResKey commitMessageNonNull;
-
-	/**
 	 * The failure message of an invalidated transaction.
 	 * 
 	 * <p>
@@ -80,12 +74,10 @@ class TransactionImpl extends AbstractTransaction {
 	 *        The commit message for the corresponding {@link #commit()}.
 	 */
 	public TransactionImpl(DefaultDBContext context, boolean anonymous, boolean autoBegin, ResKey commitMessage) {
-		super(context.kb);
-		assert commitMessage != null;
+		super(context.kb, commitMessage);
 		this.context = context;
 		this.anonymous = anonymous;
 		this.outer = null;
-		this.commitMessageNonNull = commitMessage;
 		this.autoBegin = autoBegin;
 	}
 
@@ -98,12 +90,10 @@ class TransactionImpl extends AbstractTransaction {
 	 *        The commit message for the corresponding {@link #commit()}.
 	 */
 	public TransactionImpl(DefaultDBContext context, TransactionImpl outer, boolean anonymous, ResKey commitMessage) {
-		super(context.kb);
-		assert commitMessage != null;
+		super(context.kb, commitMessage);
 		this.context = context;
 		this.outer = outer;
 		this.anonymous = anonymous;
-		this.commitMessageNonNull = commitMessage;
 		this.autoBegin = false;
 	}
 
@@ -127,17 +117,6 @@ class TransactionImpl extends AbstractTransaction {
 	 */
 	public boolean isAnonymous() {
 		return anonymous;
-	}
-
-	/**
-	 * The commit message of this transaction.
-	 * 
-	 * @return The {@link ResKey} to identify the current transaction, never <code>null</code>.
-	 * 
-	 * @see #commit()
-	 */
-	public ResKey getCommitMessage() {
-		return commitMessageNonNull;
 	}
 
 	@Override
@@ -172,8 +151,6 @@ class TransactionImpl extends AbstractTransaction {
 
     		this.autoBegin = false;
     		this.anonymous = nestedAnonymous;
-			this.commitMessageNonNull = I18NConstants.NO_COMMIT_MESSAGE;
-    		
     		return this;
     	} else {
     		return new TransactionImpl(context, this, nestedAnonymous, nestedCommitMessage);

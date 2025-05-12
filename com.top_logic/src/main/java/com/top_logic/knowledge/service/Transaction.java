@@ -41,11 +41,18 @@ public interface Transaction extends AutoCloseable {
 	int STATE_OPEN = 0;
 	
 	/**
+	 * The transaction has been started in the persistency layer.
+	 * 
+	 * @see #getState()
+	 */
+	int STATE_STARTED = 1;
+
+	/**
 	 * {@link Transaction} has been successfully {@link #commit() committed}.
 	 * 
 	 * @see #getState()
 	 */
-	int STATE_COMMITTED = 1;
+	int STATE_COMMITTED = 2;
 
 	/**
 	 * {@link Transaction} has been {@link #rollback(ResKey, Throwable) rolled back}, or
@@ -53,7 +60,7 @@ public interface Transaction extends AutoCloseable {
 	 * 
 	 * @see #getState()
 	 */
-	int STATE_FAILED = 2;
+	int STATE_FAILED = 3;
 
 	/**
 	 * The {@link KnowledgeBase} in which this transaction happens.
@@ -63,10 +70,31 @@ public interface Transaction extends AutoCloseable {
 	/**
 	 * The state of this {@link Transaction}.
 	 * 
-	 * @return {@link #STATE_OPEN}, {@link #STATE_COMMITTED}, or {@link #STATE_FAILED}.
+	 * @return {@link #STATE_OPEN}, {@link #STATE_STARTED}, {@link #STATE_COMMITTED}, or
+	 *         {@link #STATE_FAILED}.
 	 */
 	int getState();
 	
+	/**
+	 * The commit message that is associated with the changes when committed.
+	 */
+	ResKey getCommitMessage();
+
+	/**
+	 * Updates the commit message.
+	 * 
+	 * <p>
+	 * Must only be called before the transaction in the persistency layer has been started.
+	 * </p>
+	 * 
+	 * @throws IllegalStateException
+	 *         If the transaction in the persistency layer has already been started.
+	 * 
+	 * @see #getState()
+	 * @see #STATE_STARTED
+	 */
+	void setCommitMessage(ResKey newCommitMessage) throws IllegalStateException;
+
 	/**
 	 * Whether this is a pseudo-nested transaction.
 	 */

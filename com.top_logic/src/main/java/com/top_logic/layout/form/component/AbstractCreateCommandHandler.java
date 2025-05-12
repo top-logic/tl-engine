@@ -133,11 +133,16 @@ public abstract class AbstractCreateCommandHandler extends AbstractFormCommandHa
 			Map<String, Object> arguments) {
 		ResKey customMessage = getCustomCommitMessage(arguments);
 		ResKey message = customMessage == null
-			? I18NConstants.CREATED__MODEL.fill(MetaLabelProvider.INSTANCE.getLabel(model))
+			? I18NConstants.CREATED_OBJECT
 			: customMessage;
 		{
 			try (Transaction tx = beginTransaction(model, message)) {
 				Object newObject = createObject(component, model, formContext, arguments);
+
+				if (customMessage == null && tx.getState() == Transaction.STATE_OPEN) {
+					tx.setCommitMessage(
+						I18NConstants.CREATED__MODEL.fill(MetaLabelProvider.INSTANCE.getLabel(newObject)));
+				}
 
 				commit(tx, model);
 

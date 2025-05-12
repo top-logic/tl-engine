@@ -1178,7 +1178,7 @@ class DefaultDBContext extends DBContext {
 	protected RevisionImpl createRevision(PooledConnection commitConnection) throws SQLException,
 			MergeConflictException, RefetchTimeout {
 		TransactionImpl tx = getOutermostTransaction();
-		return kb.createRevision(commitConnection, tx.getCommitMessage());
+		return kb.createRevision(commitConnection, tx.start());
 	}
 
 	private TransactionImpl getOutermostTransaction() {

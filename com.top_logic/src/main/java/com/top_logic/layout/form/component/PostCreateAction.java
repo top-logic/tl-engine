@@ -36,6 +36,8 @@ import com.top_logic.layout.channel.linking.ref.ComponentRef;
 import com.top_logic.layout.channel.linking.ref.NamedComponent;
 import com.top_logic.layout.form.component.edit.EditMode;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
+import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
 
 /**
  * Plug-in for an {@link AbstractCreateCommandHandler} for specifying common action to be done after
@@ -325,8 +327,15 @@ public interface PostCreateAction {
 				Logger.error("Cannot resolve component: " + getConfig().getTargetComponent(), ShowComponent.class);
 				return;
 			}
-			targetComponent.setModel(newModel);
-			targetComponent.makeVisible();
+			/**
+			 * Uses GotoHandler to properly navigate to the target component. This approach prevents
+			 * display issues that occurred with the previous implementation
+			 * (targetComponent.setModel/makeVisible) when this action was triggered from within
+			 * another GoTo component. The GotoHandler ensures proper component visibility even when
+			 * the originating GoTo component is being closed.
+			 */
+			GotoHandler goTo = (GotoHandler) CommandHandlerFactory.getInstance().getHandler(GotoHandler.COMMAND);
+			goTo.executeGoto(DefaultDisplayContext.getDisplayContext(), component, targetComponent.getName(), newModel);
 		}
 	}
 

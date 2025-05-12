@@ -95,6 +95,19 @@
 					navigate="true"
 					type="Thing"
 				/>
+				<property name="name"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[u -> "{0} ({1})".fill(
+    $u.get(`test.containmentContext:Usage#thing`).label(),
+    $u.get(`test.containmentContext:Usage#reason`))]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 		<class name="World">

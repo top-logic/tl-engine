@@ -12,10 +12,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.google.common.base.Objects;
 
 import com.top_logic.basic.CollectionUtil;
+import com.top_logic.basic.col.diff.CollectionDiff;
+import com.top_logic.basic.col.diff.SetDiff;
+import com.top_logic.basic.col.diff.op.DiffOp;
+import com.top_logic.basic.col.diff.op.DiffOp.Visitor;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.changelog.model.trans.TransientChangeSet;
 import com.top_logic.element.changelog.model.trans.TransientCreation;
@@ -118,7 +123,9 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 					continue;
 				}
 
-				updateProperty(problems, rev, part, template, revived);
+				Object newValue = resolveNewValue(problems, rev, part, template, revived);
+
+				updateProperty(revived, part, newValue);
 			}
 		}
 
@@ -154,13 +161,13 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 		for (Change change : getChanges()) {
 			if (change instanceof Update update) {
 				// The object that represents the result of the change to perform.
-				TLObject oldUpdatedObject = update.getObject();
+				TLObject template = update.getObject();
 
 				// The current object on which to re-do the change.
-				TLObject target = WrapperHistoryUtils.getCurrent(oldUpdatedObject);
+				TLObject target = WrapperHistoryUtils.getCurrent(template);
 				if (target == null) {
 					problems.add(I18NConstants.PROBLEM_OBJECT_TO_MODIFY_NO_LONGER_EXISTS__OBJ
-						.fill(MetaLabelProvider.INSTANCE.getLabel(oldUpdatedObject)));
+						.fill(MetaLabelProvider.INSTANCE.getLabel(template)));
 					continue;
 				}
 
@@ -170,26 +177,84 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 				for (Modification modification : update.getModifications()) {
 					TLStructuredTypePart part = modification.getPart();
 
+					// The original value that was set before the original change.
 					Object oldBaseValue = oldBaseObject.tValue(part);
 
+					// The original value transformed to the current time frame.
 					Object baseValue = toCurrent(parentRev, part, oldBaseValue);
+
+					// The current value of the property that will be changed.
 					Object currentValue = target.tValue(part);
+
+					// The value that is now set during re-do.
+					Object newValue = resolveNewValue(problems, rev, part, template, target);
+
+					Object newValueMerged;
 					if (!Objects.equal(currentValue, baseValue)) {
-						problems.add(I18NConstants.PROBLEM_VALUE_CHANGED_IN_BETWEEN__OBJ_PART_ORIG_CURR
+						// There is a merge conflict, since the original value changed.
+						
+						// Original change  Replay change   New change
+						//  parentRev,rev       head           head
+						//                  
+						// oldBaseValue       baseValue     currentValue
+						//       |                |             |
+						//       v                v             v
+						// templateValue       newValue    newValueMerged
+
+						// The since currentValue differs from baseValue, the patch/difference
+						// baseValue -> newValue must be applied to currentValue.
+
+						// However, this approach is only reasonable for a property containing
+						// multiple values.
+						if (part.isMultiple()) {
+							if (part.isOrdered() || part.isBag()) {
+								List<?> left = CollectionUtil.asList(baseValue);
+								List<?> right = CollectionUtil.asList(newValue);
+								List<DiffOp<Object>> listDiff = CollectionDiff.diffList(x -> x, left, right);
+								
+								Visitor<? super Object, Void, List<Object>> apply = part.isBag()
+									? ApplyListDiff.getInstanceBag()
+									: ApplyListDiff.getInstance();
+								List<Object> merged = new ArrayList<>(CollectionUtil.asList(currentValue));
+								for (DiffOp<Object> diff : listDiff) {
+									diff.visit(apply, merged);
+								}
+
+								newValueMerged = merged;
+							} else {
+								Collection<?> left = CollectionUtil.asSet(baseValue);
+								Collection<?> right = CollectionUtil.asSet(newValue);
+								SetDiff<Object> setDiff = CollectionDiff.diffSet(x -> x, left, right);
+
+								Set<Object> merged = new HashSet<>(CollectionUtil.asSet(currentValue));
+								merged.removeAll(setDiff.getDeleted());
+								merged.addAll(setDiff.getCreated());
+								newValueMerged = merged;
+							}
+						} else {
+							// Overwrite as only option.
+							newValueMerged = newValue;
+						}
+
+						problems.add(I18NConstants.PROBLEM_VALUE_CHANGED_IN_BETWEEN__OBJ_PART_ORIG_CURR_MERGED
 							.fill(MetaLabelProvider.INSTANCE.getLabel(target),
 								MetaLabelProvider.INSTANCE.getLabel(part),
 								MetaLabelProvider.INSTANCE.getLabel(baseValue),
-								MetaLabelProvider.INSTANCE.getLabel(currentValue)));
+								MetaLabelProvider.INSTANCE.getLabel(currentValue),
+								MetaLabelProvider.INSTANCE.getLabel(newValueMerged)));
+					} else {
+						// No conflict.
+						newValueMerged = newValue;
 					}
 
-					updateProperty(problems, rev, part, oldUpdatedObject, target);
+					updateProperty(target, part, newValueMerged);
 				}
 			}
 		}
 		return problems;
 	}
 
-	private void updateProperty(List<ResKey> problems, long rev, TLStructuredTypePart part, TLObject template,
+	private Object resolveNewValue(List<ResKey> problems, long rev, TLStructuredTypePart part, TLObject template,
 			TLObject target) {
 		// The value that was set in the original update.
 		Object templateValue = template.tValue(part);
@@ -203,12 +268,16 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 			Object missing = missing(rev, part, templateValue);
 
 			// Some value can no longer be resolved.
-			problems.add(I18NConstants.PROBLEM_OBJECTS_NO_LONGER_EXIST__OBJ_PART_MISSING
+			problems.add(I18NConstants.PROBLEM_OBJECTS_NO_LONGER_EXIST__OBJ_PART_MISSING_MERGED
 				.fill(MetaLabelProvider.INSTANCE.getLabel(target),
 					MetaLabelProvider.INSTANCE.getLabel(part),
-					MetaLabelProvider.INSTANCE.getLabel(missing)));
+					MetaLabelProvider.INSTANCE.getLabel(missing),
+					MetaLabelProvider.INSTANCE.getLabel(newValue)));
 		}
+		return newValue;
+	}
 
+	private void updateProperty(TLObject target, TLStructuredTypePart part, Object newValue) {
 		if (part.getModelKind() == ModelKind.REFERENCE) {
 			TLReference ref = (TLReference) part;
 			if (ref.isComposite()) {

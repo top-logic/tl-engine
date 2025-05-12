@@ -6,8 +6,8 @@
 package com.top_logic.element.changelog.model;
 
 import com.top_logic.basic.util.ResKey1;
-import com.top_logic.basic.util.ResKey3;
 import com.top_logic.basic.util.ResKey4;
+import com.top_logic.basic.util.ResKey5;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -42,15 +42,15 @@ public class I18NConstants extends I18NConstantsBase {
 
 	/**
 	 * @en The property "{1}" of object "{0}" has been changed from its original value "{2}" to the
-	 *     new value "{3}" in the meantime.
+	 *     new value "{3}" in the meantime, setting value to "{4}".
 	 */
-	public static ResKey4 PROBLEM_VALUE_CHANGED_IN_BETWEEN__OBJ_PART_ORIG_CURR;
+	public static ResKey5 PROBLEM_VALUE_CHANGED_IN_BETWEEN__OBJ_PART_ORIG_CURR_MERGED;
 
 	/**
-	 * @en Values set to the property "{1}" of object "{0}" are no longer available (deleted in the
-	 *     meantime): {2}
+	 * @en Values "{2}" set to the property "{1}" of object "{0}" are no longer available (deleted
+	 *     in the meantime), setting value to "{3}".
 	 */
-	public static ResKey3 PROBLEM_OBJECTS_NO_LONGER_EXIST__OBJ_PART_MISSING;
+	public static ResKey4 PROBLEM_OBJECTS_NO_LONGER_EXIST__OBJ_PART_MISSING_MERGED;
 
 	static {
 		initConstants(I18NConstants.class);

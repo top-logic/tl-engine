@@ -118,18 +118,19 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler impleme
 				Object context = someArguments.get(FinishTaskCommand.CONTEXT);
 				if (context == null) {
 					// Decide about the next step.
-					HandlerResult suspended = HandlerResult.suspended();
 					Node node = GuiEngine.getInstance().getNextNode(token);
 
 					if (GuiEngine.getInstance().needsDecision(node)) {
+						HandlerResult suspended = HandlerResult.suspended();
 						new SelectTransitionDialog(token, suspended).open(aContext);
+						WithPostCreateActions.processCreateActions(_actions, aComponent, processExecution);
+						return suspended;
 					} else {
 						Edge edge = GuiEngine.getInstance().getSingleOutgoingEdge(token);
 						if (edge instanceof SequenceFlow) {
 							executeTransition(token, Collections.singletonList(edge));
 						}
 					}
-					return suspended;
 				} else if (context instanceof Decision decision) {
 					executeTransition(token, decision.getPath());
 				}

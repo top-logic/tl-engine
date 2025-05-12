@@ -8,12 +8,14 @@ package com.top_logic.element.changelog.model;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import com.google.common.base.Objects;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.changelog.model.trans.TransientChangeSet;
 import com.top_logic.element.changelog.model.trans.TransientCreation;
@@ -104,6 +106,7 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 			}
 		}
 
+		// Set values to properties of created objects.
 		long rev = getRevision().getCommitNumber();
 		long parentRev = getParentRev().getCommitNumber();
 		for (Entry<TLObject, TLObject> create : created.entrySet()) {
@@ -119,6 +122,10 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 			}
 		}
 
+		// Process deletions. Deletions must be processed before property updates, since property
+		// updates may synthesize additional deletions, if values in composition references are
+		// replaced. When processing recorded deletions in advance, those regular deletions are not
+		// detected as merge conflicts.
 		for (Change change : getChanges()) {
 			if (change instanceof Deletion deletion) {
 				TLObject deleted = deletion.getObject();
@@ -140,7 +147,12 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 				}
 
 				toDelete.tDelete();
-			} else if (change instanceof Update update) {
+			}
+		}
+
+		// Process updates.
+		for (Change change : getChanges()) {
+			if (change instanceof Update update) {
 				// The object that represents the result of the change to perform.
 				TLObject oldUpdatedObject = update.getObject();
 
@@ -158,7 +170,9 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 				for (Modification modification : update.getModifications()) {
 					TLStructuredTypePart part = modification.getPart();
 
-					Object baseValue = toCurrent(parentRev, part, oldBaseObject.tValue(part));
+					Object oldBaseValue = oldBaseObject.tValue(part);
+
+					Object baseValue = toCurrent(parentRev, part, oldBaseValue);
 					Object currentValue = target.tValue(part);
 					if (!Objects.equal(currentValue, baseValue)) {
 						problems.add(I18NConstants.PROBLEM_VALUE_CHANGED_IN_BETWEEN__OBJ_PART_ORIG_CURR
@@ -178,21 +192,36 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 	private void updateProperty(List<ResKey> problems, long rev, TLStructuredTypePart part, TLObject template,
 			TLObject target) {
 		// The value that was set in the original update.
-		Object expectedValue = template.tValue(part);
+		Object templateValue = template.tValue(part);
 
 		// The value that is now set during re-do.
-		Object newValue = toCurrent(rev, part, expectedValue);
+		Object newValue = toCurrent(rev, part, templateValue);
 
-		if (newValue == null && expectedValue != null || (newValue instanceof Collection<?> newCol
-			&& expectedValue instanceof Collection expCol && newCol.size() != expCol.size())) {
+		if (newValue == null && templateValue != null || (newValue instanceof Collection<?> newCol
+			&& templateValue instanceof Collection expCol && newCol.size() != expCol.size())) {
 
-			Object missing = missing(rev, part, expectedValue);
+			Object missing = missing(rev, part, templateValue);
 
 			// Some value can no longer be resolved.
 			problems.add(I18NConstants.PROBLEM_OBJECTS_NO_LONGER_EXIST__OBJ_PART_MISSING
 				.fill(MetaLabelProvider.INSTANCE.getLabel(target),
 					MetaLabelProvider.INSTANCE.getLabel(part),
 					MetaLabelProvider.INSTANCE.getLabel(missing)));
+		}
+
+		if (part.getModelKind() == ModelKind.REFERENCE) {
+			TLReference ref = (TLReference) part;
+			if (ref.isComposite()) {
+				// Replaced values must be deleted.
+
+				Object replacedValue = target.tValue(part);
+				HashSet<?> toDelete = new HashSet<>(CollectionUtil.asSet(replacedValue));
+				toDelete.removeAll(CollectionUtil.asSet(newValue));
+
+				for (Object del : toDelete) {
+					((TLObject) del).tDelete();
+				}
+			}
 		}
 
 		target.tUpdate(part, newValue);

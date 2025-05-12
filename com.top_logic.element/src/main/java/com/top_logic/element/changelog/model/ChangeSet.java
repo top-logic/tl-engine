@@ -229,10 +229,12 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 
 	private Object toCurrent(long rev, TLStructuredTypePart part, Object value) {
 		if (part.getModelKind() == ModelKind.REFERENCE) {
-			return switch (((TLReference) part).getHistoryType()) {
+			TLReference ref = (TLReference) part;
+			return switch (ref.getHistoryType()) {
 				case CURRENT, MIXED -> {
 					if (value instanceof Collection<?> coll) {
-						List<TLObject> result = new ArrayList<>(coll.size());
+						Collection<TLObject> result =
+							ref.isOrdered() || ref.isBag() ? new ArrayList<>(coll.size()) : new HashSet<>(coll.size());
 						for (Object element : coll) {
 							TLObject currentElement = toCurrent(rev, element);
 							if (currentElement != null) {

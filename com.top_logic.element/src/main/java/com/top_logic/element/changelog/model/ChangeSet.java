@@ -12,9 +12,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
-
-import com.google.common.base.Objects;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.diff.CollectionDiff;
@@ -190,7 +189,7 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 					Object newValue = resolveNewValue(problems, rev, part, template, target);
 
 					Object newValueMerged;
-					if (!Objects.equal(currentValue, baseValue)) {
+					if (!Objects.equals(currentValue, baseValue)) {
 						// There is a merge conflict, since the original value changed.
 						
 						// Original change  Replay change   New change

@@ -120,6 +120,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 PERFORMED__OPERATION;
 
+	/**
+	 * @en Created object.
+	 */
+	public static ResKey CREATED_OBJECT;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

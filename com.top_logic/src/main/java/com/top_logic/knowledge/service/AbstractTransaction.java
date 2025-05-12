@@ -5,6 +5,7 @@
  */
 package com.top_logic.knowledge.service;
 
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.util.ResKey;
 
 /**
@@ -18,8 +19,16 @@ public abstract class AbstractTransaction implements Transaction {
 	
 	private int state = STATE_OPEN;
 
-	public AbstractTransaction(KnowledgeBase kb) {
+	private ResKey _commitMessage;
+
+	/**
+	 * Creates a {@link AbstractTransaction}.
+	 */
+	public AbstractTransaction(KnowledgeBase kb, ResKey commitMessage) {
+		assert commitMessage != null;
+
 		this.kb = kb;
+		_commitMessage = commitMessage;
 	}
 
 	@Override
@@ -32,6 +41,45 @@ public abstract class AbstractTransaction implements Transaction {
 		return state;
 	}
 	
+	@Override
+	public ResKey getCommitMessage() {
+		return _commitMessage;
+	}
+
+	/**
+	 * Internally starts the transaction in the persistency layer.
+	 */
+	@FrameworkInternal
+	public ResKey start() {
+		if (state == STATE_OPEN) {
+			// Change of commit message no longer possible.
+			state = STATE_STARTED;
+		}
+
+		return _commitMessage;
+	}
+
+	/**
+	 * Updates the commit message.
+	 * 
+	 * <p>
+	 * Must only be called before the transaction in the persistency layer has been started.
+	 * </p>
+	 * 
+	 * @throws IllegalStateException
+	 *         If the transaction in the persistency layer has already been started.
+	 */
+	@Override
+	public void setCommitMessage(ResKey newCommitMessage) throws IllegalStateException {
+		if (newCommitMessage == null) {
+			throw new IllegalArgumentException("Commit message must not be null.");
+		}
+		if (state != STATE_OPEN) {
+			throw new IllegalStateException("Transaction already " + getStateName() + ".");
+		}
+		this._commitMessage = newCommitMessage;
+	}
+
 	@Override
 	public final void close() {
 		rollback();
@@ -49,7 +97,7 @@ public abstract class AbstractTransaction implements Transaction {
 	
 	@Override
 	public final void rollback(ResKey failureMessage, Throwable cause) {
-		if (! isOpen()) {
+		if (state > STATE_STARTED) {
 			// Rollback after commit or rollback is a noop.
 			return;
 		}
@@ -65,7 +113,7 @@ public abstract class AbstractTransaction implements Transaction {
 
 	@Override
 	public final void commit() throws KnowledgeBaseException {
-		if (! isOpen()) {
+		if (state > STATE_STARTED) {
 			throw new IllegalStateException("Transaction already in state '" + getStateName() + "'.");
 		}
 
@@ -104,15 +152,12 @@ public abstract class AbstractTransaction implements Transaction {
 	protected abstract Revision internalGetCommitRevision();
 	
 	/**
-	 * Whether this {@link Transaction} is neiter committed, nor rolled back.
+	 * The name of the {@link #getState() state}.
 	 */
-	private boolean isOpen() {
-		return state == STATE_OPEN;
-	}
-	
-	private String getStateName() {
+	protected final String getStateName() {
 		switch (state) {
 		case STATE_OPEN: return "open";
+		case STATE_STARTED: return "started";
 		case STATE_COMMITTED: return "committed";
 		case STATE_FAILED: return "failed";
 		default:

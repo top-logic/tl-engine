@@ -23,6 +23,7 @@
 					<column-width value="500px"/>
 				</column>
 			</column-customizations>
+			<sort-columns order="date:descending"/>
 		</configurationProviders>
 		<buttons>
 			<button id="exportExcel"

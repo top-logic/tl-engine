@@ -30,6 +30,7 @@
 		<commandConfiguration class="com.top_logic.layout.component.configuration.DialogOpenerCommandModelConfiguration"
 			dialog="showCurrentPersonDialog"
 		/>
+		<include name="toolrow/changeLogButton.xml"/>
 		<commandConfiguration class="com.top_logic.layout.component.configuration.DefaultCommandModelConfiguration"
 			command="openLicenseDialog"
 		/>

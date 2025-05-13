@@ -14,6 +14,16 @@
 			<de>Letzte Änderungen</de>
 		</name>
 		<modelBuilder class="com.top_logic.element.changelog.ChangeLogListModelBuilder"/>
+		<configurationProviders>
+			<column-customizations>
+				<column name="date">
+					<column-width value="160px"/>
+				</column>
+				<column name="message">
+					<column-width value="500px"/>
+				</column>
+			</column-customizations>
+		</configurationProviders>
 		<buttons>
 			<button id="exportExcel"
 				class="com.top_logic.layout.table.export.ExcelExportHandler"

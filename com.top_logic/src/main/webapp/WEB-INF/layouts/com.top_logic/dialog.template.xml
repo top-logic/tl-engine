@@ -7,7 +7,7 @@
 			<display-order>
 				<value>
 					<property name="title"/>
-					
+
 					<property name="width"/>
 					<property name="height"/>
 					<property name="defaultFor"/>
@@ -18,7 +18,7 @@
 					<property name="closableUsingX"/>
 					<property name="createOpenerButtons"/>
 					<property name="with-security-configuration"/>
-					
+
 					<property name="open-handler"/>
 					<property name="buttons"/>
 				</value>

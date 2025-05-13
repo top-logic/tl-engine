@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.LongID;
 import com.top_logic.basic.SessionContext;
+import com.top_logic.basic.TLID;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.identifier.DefaultObjectKey;
@@ -39,10 +40,9 @@ import com.top_logic.knowledge.event.ItemDeletion;
 import com.top_logic.knowledge.event.ItemUpdate;
 import com.top_logic.knowledge.event.ObjectCreation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.ReaderConfig;
-import com.top_logic.knowledge.service.ReaderConfigBuilder;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.ModelKind;
@@ -71,6 +71,10 @@ public class ChangeLogBuilder {
 	private Revision _startRev;
 
 	private Revision _stopRev;
+
+	private Person _author;
+
+	private boolean _includeTechnical;
 
 	/**
 	 * The classes that store their instances in a certain table.
@@ -132,6 +136,41 @@ public class ChangeLogBuilder {
 	}
 
 	/**
+	 * The account for which to produce the change log.
+	 * 
+	 * <p>
+	 * <code>null</code> for a system-wide change log.
+	 * </p>
+	 */
+	public Person getAuthor() {
+		return _author;
+	}
+
+	/**
+	 * @see #getAuthor()
+	 */
+	public ChangeLogBuilder setAuthor(Person author) {
+		_author = author;
+		return this;
+	}
+
+	/**
+	 * Whether to also include change sets that represent a technical change that does not reflect
+	 * in the model.
+	 */
+	public boolean getIncludeTechnical() {
+		return _includeTechnical;
+	}
+
+	/**
+	 * @see #getIncludeTechnical()
+	 */
+	public ChangeLogBuilder setIncludeTechnical(boolean includeTechnical) {
+		_includeTechnical = includeTechnical;
+		return this;
+	}
+
+	/**
 	 * Retrieves the change sets.
 	 */
 	public Collection<com.top_logic.element.changelog.model.ChangeSet> build() {
@@ -139,8 +178,10 @@ public class ChangeLogBuilder {
 
 		analyzeModel();
 
-		ReaderConfig readerConfig = ReaderConfigBuilder.createConfig(_startRev, _stopRev);
-		try (ChangeSetReader reader = _kb.getChangeSetReader(readerConfig)) {
+		TLID authorIdFilter = _author == null ? null : _author.tIdLocal();
+
+		Branch branch = _hm.getTrunk();
+		try (ChangeSetReader reader = _kb.getDiffReader(_startRev, branch, _stopRev, branch, true)) {
 			while (true) {
 				ChangeSet changeSet = reader.read();
 				if (changeSet == null) {
@@ -148,15 +189,24 @@ public class ChangeLogBuilder {
 				}
 
 				Revision revision = _hm.getRevision(changeSet.getRevision());
+				Person author = resolveAuthor(revision);
+				if (authorIdFilter != null && (author == null || !authorIdFilter.equals(author.tIdLocal()))) {
+					// Filter foreign changes.
+					continue;
+				}
 
 				TransientChangeSet entry = new TransientChangeSet();
 				entry.setDate(new Date(revision.getDate()));
 				entry.setRevision(revision);
 				entry.setParentRev(_hm.getRevision(changeSet.getRevision() - 1));
 				entry.setMessage(revision.getLog());
-				entry.setAuthor(resolveAuthor(revision));
+				entry.setAuthor(author);
 
 				new ChangeSetAnalyzer(changeSet, entry).analyze();
+
+				if (!_includeTechnical && entry.getChanges().isEmpty()) {
+					continue;
+				}
 
 				log.add(entry);
 			}

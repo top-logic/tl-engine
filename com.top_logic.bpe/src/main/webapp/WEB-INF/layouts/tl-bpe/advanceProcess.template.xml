@@ -4,6 +4,33 @@
 	<properties extends="com.top_logic.mig.html.layout.LayoutComponentUIOptions, com.top_logic.layout.form.component.Editor$UIOptions, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.structure.ButtonbarOptions, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.layout.form.component.EditComponent$UIOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.mig.html.layout.WithDefaultFor">
 		<annotations>
 			<display-inherited value="APPEND"/>
+			<display-order>
+				<value>
+					<property name="titleKey"/>
+
+					<property name="model"/>
+
+					<property name="defaultFor"/>
+					
+					<property name="isSecurityMaster"/>
+					<property name="toolbar"/>
+					<property name="buttonbar"/>
+					<property name="saveClosesDialog"/>
+					<property name="resetInvisible"/>
+					
+					<property name="showMaximize"/>
+					<property name="showMinimize"/>
+					<property name="showPopOut"/>
+					<property name="edit-group"/>
+
+					<property name="securityObject"/>
+
+					<property name="editExecutability"/>
+					<property name="editMode"/>
+					
+					<property name="buttons"/>
+				</value>
+			</display-order>
 		</annotations>
 		<property name="modifier"
 			instance-type="com.top_logic.element.layout.meta.FormContextModificator"

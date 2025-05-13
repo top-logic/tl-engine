@@ -11,19 +11,19 @@
 					<property name="model"/>
 
 					<property name="startEvent"/>
-					
+
 					<property name="toolbar"/>
 					<property name="buttonbar"/>
 					<property name="isSecurityMaster"/>
 					<property name="resetInvisible"/>
-					
+
 					<property name="showMaximize"/>
 					<property name="showMinimize"/>
 					<property name="showPopOut"/>
 
 					<property name="securityObject"/>
 					<property name="buttons"/>
-					
+
 					<property name="initialization"/>
 				</value>
 			</display-order>

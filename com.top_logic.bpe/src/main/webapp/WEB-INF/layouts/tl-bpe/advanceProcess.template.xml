@@ -11,13 +11,13 @@
 					<property name="model"/>
 
 					<property name="defaultFor"/>
-					
+
 					<property name="isSecurityMaster"/>
 					<property name="toolbar"/>
 					<property name="buttonbar"/>
 					<property name="saveClosesDialog"/>
 					<property name="resetInvisible"/>
-					
+
 					<property name="showMaximize"/>
 					<property name="showMinimize"/>
 					<property name="showPopOut"/>
@@ -27,7 +27,7 @@
 
 					<property name="editExecutability"/>
 					<property name="editMode"/>
-					
+
 					<property name="buttons"/>
 				</value>
 			</display-order>

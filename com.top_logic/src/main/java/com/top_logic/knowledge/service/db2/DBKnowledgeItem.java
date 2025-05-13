@@ -1155,7 +1155,8 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 			initAttribute(attributeName, localValues, entry.getValue());
 			initialSetAttributes = InlineSet.add(String.class, initialSetAttributes, attributeName);
 		}
-		for (MOAttribute attr : tTable().getAttributes()) {
+		MOKnowledgeItem table = tTable();
+		for (MOAttribute attr : table.getAttributes()) {
 			MODefaultProvider defaultProvider = attr.getDefaultProvider();
 			if (defaultProvider != null && !InlineSet.contains(initialSetAttributes, attr.getName())) {
 				initAttribute(attr, localValues, defaultProvider.createDefault(attr));
@@ -1163,7 +1164,8 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 			if (attr.isInitial()) {
 				Object initialAttributeValue = getApplicationValue(attr, localValues);
 				if (initialAttributeValue == null) {
-					throw new DataObjectException("No non null value for initial attribute '" + attr + "' set.");
+					throw new DataObjectException(
+						"No non null value for initial attribute '" + table.getName() + "." + attr + "' set.");
 				}
 			}
 		}

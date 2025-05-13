@@ -3398,10 +3398,6 @@ services.form = {
 		getButton: function(ddBox) {
 			return document.body.firstElementChild.querySelector("#" + ddBox.dataset.ctrlid + " ." + this.buttonCl);
 		},
-		
-		getContainer: function(ddBox) {
-			return document.body.firstElementChild.querySelector("#" + ddBox.dataset.ctrlid + "." + this.containerCl);
-		},
 
 		closeDD: function(button, ddBox) {
 			// remove button direction
@@ -3593,7 +3589,7 @@ services.form = {
 		lostFocus: function() {
 			const ddBox = this.getDDBox();
 			const button = this.getButton(ddBox);
-			const container = this.getContainer(ddBox);
+			const container = document.getElementById(ddBox.dataset.ctrlid);
 			const ddList = ddBox.querySelector("." + this.listCl);
 			let itemList = ddList.children;
 

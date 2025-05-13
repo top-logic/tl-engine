@@ -720,7 +720,11 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 				return getDefaultValue();
 			}
 
-			TLStructuredType type = obj.tType();
+			TLStructuredType type = (TLStructuredType) TLModelUtil.type(obj); // handles classifiers by
+																				// returning owner
+																				// instead of
+																				// classifier
+
 			if (type == null) {
 				// Compatibility with test cases in modules not having dynamic types.
 				return lookupJava(obj);

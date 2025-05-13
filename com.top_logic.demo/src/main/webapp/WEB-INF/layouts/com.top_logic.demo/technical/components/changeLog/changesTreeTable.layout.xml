@@ -5,7 +5,7 @@
 	template="com.top_logic/treetable.template.xml"
 >
 	<arguments
-		defaultColumns="ID_e8c289ed_dc52_4667_980b_f52e9cc58281,tType,newValue,oldValue"
+		defaultColumns="changeType,ID_e8c289ed_dc52_4667_980b_f52e9cc58281,newValue,oldValue"
 		model="selection(com.top_logic.demo/technical/components/changeLog/change_LogTable.layout.xml#Table)"
 		rootVisible="false"
 		type="tl.changelog:Change,tl.changelog:ChangeSet,tl.changelog:Modification"

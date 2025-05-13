@@ -123,7 +123,6 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler impleme
 					if (GuiEngine.getInstance().needsDecision(node)) {
 						HandlerResult suspended = HandlerResult.suspended();
 						new SelectTransitionDialog(token, suspended).open(aContext);
-						WithPostCreateActions.processCreateActions(_actions, aComponent, processExecution);
 						return suspended;
 					} else {
 						Edge edge = GuiEngine.getInstance().getSingleOutgoingEdge(token);

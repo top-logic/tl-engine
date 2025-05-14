@@ -8,10 +8,10 @@ package com.top_logic.knowledge.gui.layout;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.gui.layout.list.FastListElementLabelProvider;
 import com.top_logic.knowledge.wrap.list.FastListElement;
-import com.top_logic.mig.html.DefaultResourceProvider;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLNamed;
+import com.top_logic.model.resources.TLPartResourceProvider;
 import com.top_logic.util.Resources;
 
 /**
@@ -20,7 +20,7 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */
-public class FastListElementResourceProvider extends DefaultResourceProvider {
+public class FastListElementResourceProvider extends TLPartResourceProvider {
 
     /**
      * We have to override this constant in oder to use our own implementation.

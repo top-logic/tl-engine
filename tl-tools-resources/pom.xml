@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-all</artifactId>
-		<version>0.0.4-AEMA-SNAPSHOT</version>
+		<version>0.0.5-AEMA-SNAPSHOT</version>
 		
 		<relativePath>../tl-parent-all</relativePath>	
 	</parent>

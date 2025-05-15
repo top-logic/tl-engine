@@ -39,7 +39,9 @@ public abstract class LayoutControlRenderer<T extends AbstractLayoutControl<?>> 
 	public static final String LAYOUT_SIZE_DATA_ATTRIBUTE = HTMLConstants.DATA_ATTRIBUTE_PREFIX + "layout-size";
 
 	/**
-	 * Min size has to be at least 1.
+	 * Min size has to be at least 1. Views cannot have a height/width of 0. A predefined JavaScript
+	 * constant sets the minimum limit for sizes, ensuring they cannot be smaller than this value.
+	 * Collapsed views are marked using a flag.
 	 */
 	public static final int MIN_SIZE = 1;
 

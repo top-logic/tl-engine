@@ -13,23 +13,33 @@ import java.util.List;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.formeditor.definition.GroupDefinition;
 import com.top_logic.element.layout.formeditor.definition.GroupProperties;
 import com.top_logic.element.layout.formeditor.definition.TextDefinition;
+import com.top_logic.element.meta.AttributeUpdateContainer;
+import com.top_logic.element.meta.form.AttributeFormContext;
+import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
+import com.top_logic.layout.form.boxes.layout.VerticalLayout;
 import com.top_logic.layout.form.control.I18NConstants;
 import com.top_logic.layout.form.control.Icons;
 import com.top_logic.layout.form.template.model.FieldSetBoxTemplate;
+import com.top_logic.layout.form.template.model.Templates;
 import com.top_logic.layout.table.ConfigKey;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.Columns;
 import com.top_logic.model.form.implementation.AbstractFormContainerProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
+import com.top_logic.model.form.implementation.FormMode;
 
 /**
  * Creates a template for a {@link GroupDefinition}.
@@ -46,6 +56,8 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 	private static final String CSS_GROUP =
 		ReactiveFormCSS.RF_COLUMNS_LAYOUT + " " + ReactiveFormCSS.RF_INNER_TARGET;
 
+	private final ModeSelector _modeSelector;
+
 	/**
 	 * Creates a {@link GroupDefinitionTemplateProvider} from configuration.
 	 * 
@@ -57,6 +69,19 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 	@CalledByReflection
 	public GroupDefinitionTemplateProvider(InstantiationContext context, GroupDefinition config) {
 		super(context, config);
+
+		_modeSelector = instantiateModeSelector(config);
+	}
+
+	private ModeSelector instantiateModeSelector(GroupDefinition config) {
+		PolymorphicConfiguration<ModeSelector> modeAnnotation = config.getModeSelector();
+
+		if (modeAnnotation != null) {
+			return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
+				.getInstance(modeAnnotation);
+		}
+
+		return null;
 	}
 
 	@Override
@@ -72,6 +97,41 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 	private static String getCssClasses(GroupProperties<?> config) {
 		Columns columns = config.getColumns();
 		return columns.appendColsCSSto(CSS_GROUP);
+	}
+
+	@Override
+	protected HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
+		FormMode formMode = context.getFormMode();
+		if (formMode == FormMode.DESIGN) {
+			return super.createDisplayTemplate(context);
+		} else {
+			GroupModeObserver modeObserver = addModeSelectorListener(context);
+
+			if (modeObserver == null || modeObserver.isVisible()) {
+				return super.createDisplayTemplate(context);
+			} else {
+				// Hide the box by displaying an empty box list.
+				return Templates.collectionBox(VerticalLayout.INSTANCE);
+			}
+		}
+	}
+
+	private GroupModeObserver addModeSelectorListener(FormEditorContext context) {
+		if (_modeSelector == null) {
+			return null;
+		}
+
+		AttributeFormContext formContext = (AttributeFormContext) context.getFormContext();
+		AttributeUpdateContainer attributeUpdateContainer = formContext.getAttributeUpdateContainer();
+
+		TLObject object = context.getModel();
+		TLFormObject editObject = formContext.editObject(object);
+
+		GroupModeObserver observer =
+			new GroupModeObserver(attributeUpdateContainer, _modeSelector, editObject, null);
+		observer.valueChanged(null, null, null);
+
+		return observer;
 	}
 
 	@Override
@@ -125,6 +185,7 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 		if (config.getWidth() != null) {
 			template.setWidth(config.getWidth());
 		}
+
 		return template;
 	}
 

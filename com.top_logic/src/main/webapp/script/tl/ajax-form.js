@@ -3589,6 +3589,7 @@ services.form = {
 		lostFocus: function() {
 			const ddBox = this.getDDBox();
 			const button = this.getButton(ddBox);
+			const container = document.getElementById(ddBox.dataset.ctrlid);
 			const ddList = ddBox.querySelector("." + this.listCl);
 			let itemList = ddList.children;
 
@@ -3599,7 +3600,7 @@ services.form = {
 							this.setItemInactive(item);
 						}
 					}
-					if (button.parentElement.classList.contains(this.activeCl)) {
+					if (container.classList.contains(this.activeCl)) {
 						this.buttonDrop(null, button);
 					}
 				}

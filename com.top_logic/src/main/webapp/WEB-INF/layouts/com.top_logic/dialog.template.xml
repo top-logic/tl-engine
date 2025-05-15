@@ -2,6 +2,28 @@
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<properties extends="com.top_logic.mig.html.layout.DialogInfo, com.top_logic.mig.html.layout.WithSecurityConfiguration, com.top_logic.mig.html.layout.WithDefaultFor, com.top_logic.layout.editor.config.ButtonTemplateParameters">
+		<annotations>
+			<display-inherited value="APPEND"/>
+			<display-order>
+				<value>
+					<property name="title"/>
+
+					<property name="width"/>
+					<property name="height"/>
+					<property name="defaultFor"/>
+
+					<property name="helpID"/>
+					<property name="resizable"/>
+					<property name="openMaximized"/>
+					<property name="closableUsingX"/>
+					<property name="createOpenerButtons"/>
+					<property name="with-security-configuration"/>
+
+					<property name="open-handler"/>
+					<property name="buttons"/>
+				</value>
+			</display-order>
+		</annotations>
 		<property name="open-handler"
 			type="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
 		>

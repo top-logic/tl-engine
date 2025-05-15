@@ -4690,6 +4690,8 @@ services.form = {
 	},
 	
 	FlexibleFlowLayout: {
+		/* This value can only be estimated though experimentation rather than exact calculation. 
+		If set too low, global scrollbars may appear. If set too high, excess space is reserved for elements that do not require it. */
 		MINIMUM_SIZE: 25, //px, randomely choosen
 		
 		initLayoutAdjustment: function(event, ctrlID, separatorID, adjustmentBar, resizeMode, isArrangedHorizontal) {

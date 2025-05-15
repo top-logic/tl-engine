@@ -4,6 +4,29 @@
 	<properties extends="com.top_logic.mig.html.layout.LayoutComponentUIOptions, com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent$UIOptions, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.structure.ButtonbarOptions, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.model.search.providers.MonomorphicCreateFormBuilderByExpression$WithInitialization">
 		<annotations>
 			<display-inherited value="APPEND"/>
+			<display-order>
+				<value>
+					<property name="titleKey"/>
+
+					<property name="model"/>
+
+					<property name="startEvent"/>
+
+					<property name="toolbar"/>
+					<property name="buttonbar"/>
+					<property name="isSecurityMaster"/>
+					<property name="resetInvisible"/>
+
+					<property name="showMaximize"/>
+					<property name="showMinimize"/>
+					<property name="showPopOut"/>
+
+					<property name="securityObject"/>
+					<property name="buttons"/>
+
+					<property name="initialization"/>
+				</value>
+			</display-order>
 		</annotations>
 		<property name="modifier"
 			instance-type="com.top_logic.element.layout.meta.FormContextModificator"

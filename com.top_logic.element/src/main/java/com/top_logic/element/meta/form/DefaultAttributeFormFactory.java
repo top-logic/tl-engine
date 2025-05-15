@@ -25,7 +25,6 @@ import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.Mapping;
-import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -38,7 +37,6 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdateContainer;
-import com.top_logic.element.meta.AttributeUpdateContainer.Handle;
 import com.top_logic.element.meta.LegacyTypeCodes;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
 import com.top_logic.knowledge.service.KBUtils;
@@ -75,8 +73,6 @@ import com.top_logic.model.annotate.ui.CssClassProvider;
 import com.top_logic.model.annotate.ui.PDFRendererAnnotation;
 import com.top_logic.model.annotate.ui.TLCssClass;
 import com.top_logic.model.annotate.util.ConstraintCheck;
-import com.top_logic.model.form.definition.FormVisibility;
-import com.top_logic.model.util.Pointer;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
@@ -228,7 +224,6 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 			if (result instanceof FormField) {
 				FormField field = (FormField) result;
 
-
 				TLConstraints annotation = attribute.getAnnotation(TLConstraints.class);
 				if (annotation != null) {
 					List<ConstraintCheck> checks = TypedConfiguration.getInstanceList(
@@ -260,48 +255,8 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 
 		TLObject object = update.getOverlay();
 
-		class Observer implements ValueListener, Sink<Pointer> {
-			private final List<AttributeUpdateContainer.Handle> _handles = new ArrayList<>();
-
-			@Override
-			public void valueChanged(FormField changedField, Object oldValue, Object newValue) {
-				FormVisibility mode = modeSelector.getMode(object, attribute);
-				mode.applyTo(member);
-				if (member instanceof FormField) {
-					switch (mode) {
-						case READ_ONLY:
-							/* Reset to original value to prevent modifying values by temporarily
-							 * activating fields. */
-							((FormField) member).reset();
-							break;
-						case HIDDEN:
-							/* Clear value to prevent leaking irrelevant values into the model. */
-							((FormField) member).setValue(null);
-							break;
-						default:
-							break;
-					}
-				}
-
-				removeListeners();
-
-				modeSelector.traceDependencies(object, attribute, this, updateContainer.getFormContext());
-			}
-
-			private void removeListeners() {
-				for (Handle handle : _handles) {
-					handle.release();
-				}
-				_handles.clear();
-			}
-
-			@Override
-			public void add(Pointer p) {
-				_handles.add(updateContainer.addValueListener(p.object(), p.attribute(), this));
-			}
-		}
-
-		new Observer().valueChanged(null, null, null);
+		new FieldModeObserver(member, updateContainer, modeSelector, object, attribute).valueChanged(null,
+				null, null);
 	}
 
 	private Constraint toFormConstraint(AttributeUpdate update, final AttributeUpdateContainer updateContainer,

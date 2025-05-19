@@ -1,4 +1,4 @@
-<handler>
+<dispatch>
 	<tag name="a">
 		<object model-type="test.com.top_logic.xio.importer.test1:A">
 			<property name="name" xml-attribute="val"/>
@@ -20,4 +20,4 @@
 			</dispatch>
 		</object>
 	</tag>
-</handler>
+</dispatch>

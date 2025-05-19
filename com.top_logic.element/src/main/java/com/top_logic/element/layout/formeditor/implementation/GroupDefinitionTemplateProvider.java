@@ -26,11 +26,11 @@ import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
-import com.top_logic.layout.form.boxes.layout.VerticalLayout;
 import com.top_logic.layout.form.control.I18NConstants;
 import com.top_logic.layout.form.control.Icons;
+import com.top_logic.layout.form.model.VisibilityModel;
+import com.top_logic.layout.form.model.VisibilityModel.Default;
 import com.top_logic.layout.form.template.model.FieldSetBoxTemplate;
-import com.top_logic.layout.form.template.model.Templates;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -58,6 +58,8 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 
 	private final ModeSelector _modeSelector;
 
+	private Default _visibilityModel;
+
 	/**
 	 * Creates a {@link GroupDefinitionTemplateProvider} from configuration.
 	 * 
@@ -71,6 +73,7 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 		super(context, config);
 
 		_modeSelector = instantiateModeSelector(config);
+		_visibilityModel = new VisibilityModel.Default();
 	}
 
 	private ModeSelector instantiateModeSelector(GroupDefinition config) {
@@ -102,18 +105,11 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 	@Override
 	protected HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
 		FormMode formMode = context.getFormMode();
-		if (formMode == FormMode.DESIGN) {
-			return super.createDisplayTemplate(context);
-		} else {
-			GroupModeObserver modeObserver = addModeSelectorListener(context);
-
-			if (modeObserver == null || modeObserver.isVisible()) {
-				return super.createDisplayTemplate(context);
-			} else {
-				// Hide the box by displaying an empty box list.
-				return Templates.collectionBox(VerticalLayout.INSTANCE);
-			}
+		if (formMode != FormMode.DESIGN) {
+			addModeSelectorListener(context);
 		}
+
+		return super.createDisplayTemplate(context);
 	}
 
 	private GroupModeObserver addModeSelectorListener(FormEditorContext context) {
@@ -128,7 +124,7 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 		TLFormObject editObject = formContext.editObject(object);
 
 		GroupModeObserver observer =
-			new GroupModeObserver(attributeUpdateContainer, _modeSelector, editObject, null);
+			new GroupModeObserver(attributeUpdateContainer, _modeSelector, editObject, null, _visibilityModel);
 		observer.valueChanged(null, null, null);
 
 		return observer;
@@ -138,7 +134,7 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 	public HTMLTemplateFragment decorateContainer(HTMLTemplateFragment content, FormEditorContext context) {
 		ConfigKey configKey = getConfigKey(context);
 
-		return wrapFieldSet(getConfig(), getID(), content, configKey);
+		return wrapFieldSet(getConfig(), getID(), content, configKey, _visibilityModel);
 	}
 
 	private ConfigKey getConfigKey(FormEditorContext context) {
@@ -156,9 +152,15 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 
 	static FieldSetBoxTemplate wrapFieldSet(GroupProperties<?> config, String id, HTMLTemplateFragment content,
 			ConfigKey personalizationKey) {
+		return wrapFieldSet(config, id, content, personalizationKey, null);
+	}
+
+	static FieldSetBoxTemplate wrapFieldSet(GroupProperties<?> config, String id, HTMLTemplateFragment content,
+			ConfigKey personalizationKey, VisibilityModel visibilityModel) {
 		return init(fieldsetBox(createHeader(config), content, personalizationKey), id, config)
 			.setCssClass(config.getCssClass())
-			.setInitiallyCollapsed(!config.getInitiallyOpened());
+			.setInitiallyCollapsed(!config.getInitiallyOpened())
+			.setVisibilityModel(visibilityModel);
 	}
 
 	private static HTMLTemplateFragment createHeader(GroupProperties<?> config) {

@@ -346,7 +346,7 @@ public abstract class ResKey {
 	 */
 	public static Builder builder(ResKey literal) {
 		Builder builder;
-		if (literal.hasKey()) {
+		if (literal != null && literal.hasKey()) {
 			builder = builder(literal.getKey());
 		} else {
 			builder = builder();

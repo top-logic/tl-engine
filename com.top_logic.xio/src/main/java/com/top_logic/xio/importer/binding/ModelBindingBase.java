@@ -5,6 +5,8 @@
  */
 package com.top_logic.xio.importer.binding;
 
+import java.util.function.Consumer;
+
 import javax.xml.stream.Location;
 
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -78,6 +80,20 @@ public interface ModelBindingBase {
 	 *        The value to set the property to.
 	 */
 	void setProperty(ImportPart handler, Object obj, String name, Object value);
+
+	/**
+	 * Retrieves a property from a model object.
+	 *
+	 * @param handler
+	 *        The handler that requested this operation (for error reporting).
+	 * @param obj
+	 *        The object whose property is set.
+	 * @param name
+	 *        The name of the property.
+	 * @param continuation
+	 *        The callback that receives the value.
+	 */
+	void getProperty(ImportPart handler, Object obj, String name, Consumer<Object> continuation);
 
 	/**
 	 * Assigns a reference-valued attribute.

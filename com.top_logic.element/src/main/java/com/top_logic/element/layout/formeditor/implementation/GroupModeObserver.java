@@ -7,6 +7,7 @@ package com.top_logic.element.layout.formeditor.implementation;
 
 import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.form.ModeObserver;
+import com.top_logic.layout.form.model.VisibilityModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.ModeSelector;
@@ -19,7 +20,7 @@ import com.top_logic.model.form.definition.FormVisibility;
  */
 public class GroupModeObserver extends ModeObserver {
 
-	boolean _isVisible = true;
+	VisibilityModel.Default _visibilityModel;
 
 	/**
 	 * Creates a {@link GroupModeObserver}.
@@ -34,36 +35,18 @@ public class GroupModeObserver extends ModeObserver {
 	 *        The attribute to observe. Maybe <code>null</code>.
 	 */
 	public GroupModeObserver(AttributeUpdateContainer updateContainer, ModeSelector modeSelector, TLObject object,
-			TLStructuredTypePart attribute) {
+			TLStructuredTypePart attribute, VisibilityModel.Default visibilityModel) {
 		super(updateContainer, modeSelector, object, attribute);
+
+		_visibilityModel = visibilityModel;
 	}
 
 	@Override
 	public void valueChanged(FormVisibility mode) {
-		boolean visibilityChanged = false;
-		switch (mode) {
-			case HIDDEN:
-				if (isVisible())
-					visibilityChanged = true;
-				_isVisible = false;
-				break;
-			default:
-				if (!isVisible())
-					visibilityChanged = true;
-				_isVisible = true;
-				break;
-		}
+		if (_visibilityModel == null)
+			return;
 
-		if (visibilityChanged) {
-			// trigger re-draw
-		}
+		boolean isVisible = !FormVisibility.HIDDEN.equals(mode);
+		_visibilityModel.setVisible(isVisible);
 	}
-
-	/**
-	 * Whether the element is calculated to be visible or not.
-	 */
-	public boolean isVisible() {
-		return _isVisible;
-	}
-
 }

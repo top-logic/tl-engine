@@ -33,6 +33,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey5 ERROR_SETTING_PROPERTY_FAILED__HANDLER_OBJ_PROP_VALUE_MESSAGE;
 
+	/**
+	 * @en Failed to retrieve value of property "{2}" from object "{1}": {3}
+	 */
+	public static ResKey4 ERROR_GETTING_PROPERTY_FAILED__HANDLER_OBJ_PROP_MESSAGE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

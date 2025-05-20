@@ -24,10 +24,20 @@ public class SkipDeep<C extends SkipDeep.Config<?>> extends ConfiguredImportHand
 	/**
 	 * Configuration options for {@link SkipDeep}.
 	 */
-	@TagName("skipDeep")
+	@TagName("skip-deep")
 	public interface Config<I extends SkipDeep<?>> extends ConfiguredImportHandler.Config<I> {
-		// Pure marker configuration.
+		/**
+		 * Report warnings about ignored tags.
+		 */
+		boolean getWarn();
+
+		/**
+		 * @see #getWarn()
+		 */
+		void setWarn(boolean value);
 	}
+
+	private final boolean _warn;
 
 	/**
 	 * Creates a {@link SkipDeep} from configuration.
@@ -40,10 +50,14 @@ public class SkipDeep<C extends SkipDeep.Config<?>> extends ConfiguredImportHand
 	@CalledByReflection
 	public SkipDeep(InstantiationContext context, C config) {
 		super(context, config);
+		_warn = config.getWarn();
 	}
 
 	@Override
 	public Object importXml(ImportContext context, XMLStreamReader in) throws XMLStreamException {
+		if (_warn) {
+			context.info(in.getLocation(), I18NConstants.WARN_IGNORING_UNKNOWN__TAG.fill(in.getLocalName()));
+		}
 		XMLStreamUtil.skipUpToMatchingEndTag(in);
 		return null;
 	}

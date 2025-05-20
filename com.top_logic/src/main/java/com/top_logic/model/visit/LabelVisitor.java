@@ -7,7 +7,7 @@ package com.top_logic.model.visit;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.gui.AbstractTLItemResourceProvider;
-import com.top_logic.knowledge.gui.layout.FastListElementResourceProvider;
+import com.top_logic.knowledge.gui.layout.list.FastListElementLabelProvider;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLAssociationEnd;
@@ -85,12 +85,20 @@ public class LabelVisitor implements TLModelVisitor<String, Void> {
 
 	@Override
 	public String visitClassifier(TLClassifier model, Void arg) {
-		return FastListElementResourceProvider.INSTANCE.getLabel(model);
+		// Note: Must not inherit functionality from
+		// I18NWrapperResourceProvider, because this does not mark the name
+		// as missing resource, if the internationalization is missing.
+		ResKey theName = FastListElementLabelProvider.labelKey((TLClassifier) model);
+		return (Resources.getInstance().getString(theName));
 	}
 
 	@Override
 	public String visitEnumeration(TLEnumeration model, Void arg) {
-		return FastListElementResourceProvider.INSTANCE.getLabel(model);
+		// Note: Must not inherit functionality from
+		// I18NWrapperResourceProvider, because this does not mark the name
+		// as missing resource, if the internationalization is missing.
+		ResKey theName = FastListElementLabelProvider.labelKey(model);
+		return (Resources.getInstance().getString(theName));
 	}
 
 	@Override

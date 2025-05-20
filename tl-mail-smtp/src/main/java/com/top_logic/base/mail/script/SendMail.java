@@ -248,7 +248,7 @@ public class SendMail extends GenericMethod {
 	private void addRecipients(MimeMessage message, RecipientType type, List<Address> addresses)
 			throws MessagingException {
 		for (Address address : addresses) {
-			message.setRecipient(type, address);
+			message.addRecipient(type, address);
 		}
 	}
 

@@ -5,6 +5,9 @@
  */
 package test.com.top_logic.graphic.flow;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+
 import junit.framework.TestCase;
 
 import com.top_logic.basic.xml.TagWriter;
@@ -20,6 +23,11 @@ import com.top_logic.graphic.flow.data.HorizontalLayout;
 import com.top_logic.graphic.flow.data.SpaceDistribution;
 import com.top_logic.graphic.flow.data.Text;
 import com.top_logic.graphic.flow.data.VerticalLayout;
+import com.top_logic.graphic.flow.data.Widget;
+
+import de.haumacher.msgbuf.graph.DefaultScope;
+import de.haumacher.msgbuf.json.JsonReader;
+import de.haumacher.msgbuf.server.io.ReaderAdapter;
 
 /**
  * Test case for {@link Diagram}.
@@ -279,6 +287,12 @@ public class TestFlowDiagram extends TestCase {
 				/>
 			</svg>""",
 			svg);
+	}
+
+	public void testComplex() throws IOException {
+		Diagram diagram = (Diagram) Widget.readWidget(new DefaultScope(1, 0), new JsonReader(
+			new ReaderAdapter(new InputStreamReader(TestFlowDiagram.class.getResourceAsStream("input.json")))));
+		diagram.layout(new TestingRenderContext());
 	}
 
 }

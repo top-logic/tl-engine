@@ -46,12 +46,18 @@ public class ColorValueProvider implements ComplexValueProvider<Color> {
 		if (aBusinessObject == null) {
 			return null;
 		}
+
+		// Also accept setting with color specs.
+		if (aBusinessObject instanceof String formatted) {
+			aBusinessObject = ColorFormat.parseColor(formatted);
+		}
+
 		return ColorFormat.formatColor((Color) aBusinessObject);
 	}
 
 	@Override
 	public boolean isCompatible(Object businessObject) {
-		return businessObject == null || businessObject instanceof Color;
+		return businessObject == null || businessObject instanceof Color || businessObject instanceof String;
 	}
 
 	@Override

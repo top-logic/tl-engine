@@ -108,7 +108,7 @@ public class FlowFactory {
 		return Align.create()
 			.setXAlign(hAlign)
 			.setYAlign(vAlign)
-			.setContent(content)
+			.setContent(nonNull(content))
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}
@@ -137,7 +137,7 @@ public class FlowFactory {
 			.setRight(right)
 			.setBottom(bottom)
 			.setDashes(dashes)
-			.setContent(content)
+			.setContent(nonNull(content))
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}
@@ -153,7 +153,7 @@ public class FlowFactory {
 	) {
 		return Fill.create()
 			.setFillStyle(fill)
-			.setContent(content)
+			.setContent(nonNull(content))
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}
@@ -195,7 +195,7 @@ public class FlowFactory {
 		if (bottom != null) {
 			result.setBottom(bottom);
 		}
-		result.setContent(content);
+		result.setContent(nonNull(content));
 		result.setCssClass(cssClass);
 		result.setUserObject(userObject);
 		return result;
@@ -405,7 +405,7 @@ public class FlowFactory {
 		Object userObject
 	) {
 		return SelectableBox.create()
-			.setContent(content)
+			.setContent(nonNull(content))
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}
@@ -492,6 +492,10 @@ public class FlowFactory {
 			.setConnectPosition(pos)
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
+	}
+
+	private static Box nonNull(Box content) {
+		return content == null ? Empty.create() : content;
 	}
 
 }

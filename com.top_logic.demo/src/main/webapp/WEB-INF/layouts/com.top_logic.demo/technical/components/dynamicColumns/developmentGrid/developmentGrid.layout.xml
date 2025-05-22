@@ -58,7 +58,7 @@
 			</configurationProvider>
 			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
 				columnId="ID_dac74ec6_50f2_4c76_9792_4518fa719d74"
-				columnType="tl.core:Integer"
+				columnType="tl.core:Double"
 			>
 				<columnLabel key="dynamic.605d2884-92d4-4deb-b1f5-d987c906d0f6">
 					<en>Best rating</en>
@@ -106,11 +106,22 @@
 					<de>Auswertungen</de>
 				</columnLabel>
 			</configurationProvider>
+			<column-customizations>
+				<column name="ID_dac74ec6_50f2_4c76_9792_4518fa719d74">
+					<configuration class="com.top_logic.model.search.providers.ColumnAdditionalHeaders">
+						<additionalHeaders>
+							<byExpression label="list -> $list.sum()"/>
+						</additionalHeaders>
+					</configuration>
+				</column>
+			</column-customizations>
 		</configurationProviders>
 		<buttons>
 			<button id="exportExcelGrid"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
-			/>
+			>
+				<downloadNameProvider class="com.top_logic.layout.table.export.ComponentDownloadName"/>
+			</button>
 			<button id="ID_d4ec0533_f936_4d06_b621_dfccfb3ac9fc"
 				class="com.top_logic.layout.form.component.InvalidateCommand"
 			>
@@ -127,6 +138,7 @@
 					<en>Delete project</en>
 					<de>Projekt löschen</de>
 				</resourceKey>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation"/>
 			</button>
 		</buttons>
 	</arguments>

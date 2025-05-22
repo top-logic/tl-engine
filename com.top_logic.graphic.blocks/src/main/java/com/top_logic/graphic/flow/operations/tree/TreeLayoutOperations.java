@@ -22,6 +22,7 @@ import com.top_logic.graphic.flow.data.DiagramDirection;
 import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
 import com.top_logic.graphic.flow.data.TreeLayout;
+import com.top_logic.graphic.flow.data.Widget;
 import com.top_logic.graphic.flow.operations.layout.FloatingLayoutOperations;
 
 /**
@@ -215,6 +216,13 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		while (ancestor != null) {
 			if (nodes.contains(ancestor)) {
 				nodeForAnchor.put(anchor, ancestor);
+				break;
+			}
+
+			Widget parent = ancestor.getParent();
+			if (parent instanceof Box) {
+				ancestor = (Box) parent;
+			} else {
 				break;
 			}
 		}

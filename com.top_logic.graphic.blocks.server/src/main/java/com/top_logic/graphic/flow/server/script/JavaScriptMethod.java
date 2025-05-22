@@ -13,7 +13,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
@@ -274,6 +276,14 @@ public class JavaScriptMethod extends GenericMethod {
 			} else if (type == Object.class) {
 				// No conversion necessary.
 				return null;
+			} else if (type.isAssignableFrom(List.class)) {
+				// TODO: Convert content.
+				// Type paramType = param.getParameterizedType();
+				return CollectionUtil::asList;
+			} else if (type.isAssignableFrom(Set.class)) {
+				// TODO: Convert content.
+				// Type paramType = param.getParameterizedType();
+				return CollectionUtil::asSet;
 			} else {
 				return input -> asType(param, type, input);
 			}

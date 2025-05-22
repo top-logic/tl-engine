@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -76,7 +77,10 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		for (TreeConnection connection : self().getConnections()) {
 			Box parentNode = nodeForAnchor.get(connection.getParent().getAnchor());
 			List<Box> childNodes =
-				connection.getChildren().stream().map(TreeConnector::getAnchor).map(nodeForAnchor::get)
+				connection.getChildren().stream()
+					.map(TreeConnector::getAnchor)
+					.map(nodeForAnchor::get)
+					.filter(Objects::nonNull)
 					.collect(Collectors.toList());
 			for (Box childNode : childNodes) {
 				parentForChildNode.put(childNode, parentNode);
@@ -237,7 +241,13 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 
 			double toX = Double.MAX_VALUE;
 			for (TreeConnector child : connection.getChildren()) {
-				toX = Math.min(toX, toX(child.getAnchor()));
+				Box anchor = child.getAnchor();
+
+				// This should normally not happen and represents a hard to debug error in the
+				// diagram model.
+				if (anchor != null) {
+					toX = Math.min(toX, toX(anchor));
+				}
 			}
 
 			double barX = self().isCompact() ? toX - self().getGapX() / 2 : (fromX + toX) / 2;

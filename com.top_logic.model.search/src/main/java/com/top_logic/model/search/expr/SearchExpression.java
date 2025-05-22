@@ -601,9 +601,16 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 * Converts the given value to an <code>int</code> value.
 	 */
 	public static int asInt(SearchExpression context, Object value) {
+		return asInt(context, value, 0);
+	}
+
+	/**
+	 * Converts the given value to an <code>int</code> value.
+	 */
+	public static int asInt(SearchExpression context, Object value, int defaultValue) {
 		value = asSingleElement(context, value);
 		if (value == null) {
-			return 0;
+			return defaultValue;
 		} else if (value instanceof Number) {
 			return ((Number) value).intValue();
 		} else if (value instanceof String) {
@@ -621,16 +628,30 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 * Converts the given value to an <code>int</code> value.
 	 */
 	public int asInt(Object value) {
-		return asInt(this, value);
+		return asInt(this, value, 0);
+	}
+
+	/**
+	 * Converts the given value to an <code>int</code> value.
+	 */
+	public int asInt(Object value, int defaultValue) {
+		return asInt(this, value, defaultValue);
 	}
 
 	/**
 	 * Converts the given value to an <code>double</code> value.
 	 */
 	public static double asDouble(SearchExpression context, Object value) {
+		return asDouble(context, value, 0.0);
+	}
+
+	/**
+	 * Converts the given value to an <code>double</code> value.
+	 */
+	public static double asDouble(SearchExpression context, Object value, double defaultValue) {
 		value = asSingleElement(context, value);
 		if (value == null) {
-			return 0.0;
+			return defaultValue;
 		} else if (value instanceof Number) {
 			return ((Number) value).doubleValue();
 		} else if (value instanceof String) {
@@ -694,7 +715,14 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 * Converts the given value to an <code>double</code> value.
 	 */
 	public double asDouble(Object value) {
-		return asDouble(this, value);
+		return asDouble(this, value, 0.0);
+	}
+
+	/**
+	 * Converts the given value to an <code>double</code> value.
+	 */
+	public double asDouble(Object value, double defaultValue) {
+		return asDouble(this, value, defaultValue);
 	}
 
 	/**

@@ -11,6 +11,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.OptionalInt;
 
 import javax.imageio.ImageIO;
@@ -445,8 +446,8 @@ public class FlowFactory {
 		Object userObject 
 	) {
 		return TreeLayout.create()
-			.setNodes(nodes)
-			.setConnections(connections)
+			.setNodes(nodes.stream().filter(Objects::nonNull).toList())
+			.setConnections(connections.stream().filter(Objects::nonNull).toList())
 			.setGapX(gapX)
 			.setGapY(gapY)
 			.setDirection(direction)
@@ -469,9 +470,12 @@ public class FlowFactory {
 			@Mandatory Object parent,
 			@Mandatory List<?> children
 	) {
+		if (parent == null) {
+			return null;
+		}
 		return TreeConnection.create()
 			.setParent(asConnector(parent))
-			.setChildren(children.stream().map(FlowFactory::asConnector).toList());
+			.setChildren(children.stream().filter(Objects::nonNull).map(FlowFactory::asConnector).toList());
 	}
 
 	private static TreeConnector asConnector(Object node) {
@@ -487,6 +491,9 @@ public class FlowFactory {
 		String cssClass,
 		Object userObject
 	) {
+		if (anchor == null) {
+			return null;
+		}
 		return TreeConnector.create()
 			.setAnchor(anchor)
 			.setConnectPosition(pos)

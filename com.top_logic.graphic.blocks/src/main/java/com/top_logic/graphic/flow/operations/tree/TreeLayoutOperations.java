@@ -241,6 +241,11 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 
 			double toX = Double.MAX_VALUE;
 			for (TreeConnector child : connection.getChildren()) {
+				if (child == null) {
+					// This is an invalid situation.
+					continue;
+				}
+
 				Box anchor = child.getAnchor();
 
 				// This should normally not happen and represents a hard to debug error in the

@@ -6,14 +6,12 @@
 package com.top_logic.graphic.blocks.svg.event;
 
 /**
- * 
+ * Handler that accepts {@link SVGClickEvent}s.
  */
 public interface SVGClickHandler {
 
 	/**
-	 * TODO
-	 *
-	 * @param svgClickEvent
+	 * A mouse click was observed.
 	 */
 	void onClick(SVGClickEvent event);
 

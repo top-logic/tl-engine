@@ -18,6 +18,7 @@ import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MORepository;
+import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.dob.util.MetaObjectUtils;
 import com.top_logic.knowledge.ByValueReferenceStorageImpl;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -120,11 +121,16 @@ public class ReferencePreload implements PreloadOperation {
 
 	private void loadReferenceByValue(List<KnowledgeObject> items, MOReference reference) {
 		if (reference.getStorage() instanceof ByValueReferenceStorageImpl) {
+			MOStructure ownerType = reference.getOwner();
 			/* MOReference is a reference that holds the complete object in cache. Internally the
 			 * cache is either the item itself or the ObjectKey of the referenced item if the item
 			 * is not loaded yet. It should be ensured that the cache of the reference now is the
 			 * item itself, cause it is present. */
 			for (KnowledgeObject item : items) {
+				if (!item.tTable().isSubtypeOf(ownerType)) {
+					// Item does not declare reference.
+					continue;
+				}
 				/* fetching value causes reference internally to change cache value from ObjectKey
 				 * to KnowledgeItem. */
 				item.getValue(reference);
@@ -138,9 +144,11 @@ public class ReferencePreload implements PreloadOperation {
 	}
 
 	private HashSet<ObjectKey> getReferencedKeys(Collection<? extends KnowledgeItem> items, MOReference reference) {
+		MOStructure ownerType = reference.getOwner();
 		HashSet<ObjectKey> referencedKeys = CollectionUtil.newSet(items.size());
 		for (KnowledgeItem item : items) {
-			if (!item.tTable().isSubtypeOf(reference.getOwner())) {
+			if (!item.tTable().isSubtypeOf(ownerType)) {
+				// Item does not declare reference.
 				continue;
 			}
 

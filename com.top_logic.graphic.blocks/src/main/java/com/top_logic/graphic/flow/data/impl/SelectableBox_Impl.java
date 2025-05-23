@@ -38,6 +38,7 @@ public class SelectableBox_Impl extends com.top_logic.graphic.flow.data.impl.Dec
 	protected final void internalSetSelected(boolean value) {
 		_listener.beforeSet(this, SELECTED__PROP, value);
 		_selected = value;
+		_listener.afterChanged(this, SELECTED__PROP);
 	}
 
 	@Override
@@ -55,6 +56,7 @@ public class SelectableBox_Impl extends com.top_logic.graphic.flow.data.impl.Dec
 	protected final void internalSetClickHandler(com.top_logic.graphic.blocks.svg.event.Registration value) {
 		_listener.beforeSet(this, CLICK_HANDLER__PROP, value);
 		_clickHandler = value;
+		_listener.afterChanged(this, CLICK_HANDLER__PROP);
 	}
 
 	@Override

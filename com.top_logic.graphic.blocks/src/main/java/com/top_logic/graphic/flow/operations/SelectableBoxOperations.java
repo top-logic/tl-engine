@@ -19,7 +19,7 @@ import com.top_logic.graphic.flow.data.SelectableBox;
 import de.haumacher.msgbuf.graph.AbstractSharedGraphNode;
 
 /**
- * 
+ * Operations for {@link SelectableBox} model.
  */
 public interface SelectableBoxOperations extends DecorationOperations, SVGClickHandler {
 

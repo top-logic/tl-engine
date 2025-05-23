@@ -10,7 +10,7 @@ import com.top_logic.graphic.blocks.model.block.Connector;
 import com.top_logic.graphic.blocks.model.content.mouth.Mouth;
 
 /**
- * Description of a {@link Connector} position within its {@link Connector#getOwner()}.
+ * Description of a {@link Connector} position within its {@link Connector#getOwner() owner}.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

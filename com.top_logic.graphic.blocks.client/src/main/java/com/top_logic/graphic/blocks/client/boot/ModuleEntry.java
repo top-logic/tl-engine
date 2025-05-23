@@ -14,7 +14,7 @@ import com.top_logic.graphic.blocks.control.JSBlocksControlCommon;
 import com.top_logic.graphic.flow.control.JSDiagramControlCommon;
 
 /**
- * {@link EntryPoint} that initializes this client-side diagramJS module.
+ * {@link EntryPoint} that initializes this client-side graphics module.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

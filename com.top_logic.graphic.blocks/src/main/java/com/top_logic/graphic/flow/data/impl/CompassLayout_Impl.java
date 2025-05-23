@@ -64,6 +64,7 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 		if (after != null) {
 			after.internalSetParent(this);
 		}
+		_listener.afterChanged(this, NORTH__PROP);
 	}
 
 	@Override
@@ -100,6 +101,7 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 		if (after != null) {
 			after.internalSetParent(this);
 		}
+		_listener.afterChanged(this, WEST__PROP);
 	}
 
 	@Override
@@ -136,6 +138,7 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 		if (after != null) {
 			after.internalSetParent(this);
 		}
+		_listener.afterChanged(this, EAST__PROP);
 	}
 
 	@Override
@@ -172,6 +175,7 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 		if (after != null) {
 			after.internalSetParent(this);
 		}
+		_listener.afterChanged(this, SOUTH__PROP);
 	}
 
 	@Override
@@ -208,6 +212,7 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 		if (after != null) {
 			after.internalSetParent(this);
 		}
+		_listener.afterChanged(this, CENTER__PROP);
 	}
 
 	@Override
@@ -230,6 +235,7 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 	protected final void internalSetCenterHeight(double value) {
 		_listener.beforeSet(this, CENTER_HEIGHT__PROP, value);
 		_centerHeight = value;
+		_listener.afterChanged(this, CENTER_HEIGHT__PROP);
 	}
 
 	@Override
@@ -247,6 +253,7 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 	protected final void internalSetHPadding(double value) {
 		_listener.beforeSet(this, H_PADDING__PROP, value);
 		_hPadding = value;
+		_listener.afterChanged(this, H_PADDING__PROP);
 	}
 
 	@Override
@@ -264,6 +271,7 @@ public class CompassLayout_Impl extends com.top_logic.graphic.flow.data.impl.Box
 	protected final void internalSetVPadding(double value) {
 		_listener.beforeSet(this, V_PADDING__PROP, value);
 		_vPadding = value;
+		_listener.afterChanged(this, V_PADDING__PROP);
 	}
 
 	@Override

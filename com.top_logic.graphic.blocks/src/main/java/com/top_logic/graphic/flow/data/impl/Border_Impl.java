@@ -27,6 +27,11 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 		protected void afterRemove(int index, Double element) {
 			_listener.afterRemove(Border_Impl.this, DASHES__PROP, index, element);
 		}
+
+		@Override
+		protected void afterChanged() {
+			_listener.afterChanged(Border_Impl.this, DASHES__PROP);
+		}
 	};
 
 	/**
@@ -58,6 +63,7 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 	protected final void internalSetStrokeStyle(String value) {
 		_listener.beforeSet(this, STROKE_STYLE__PROP, value);
 		_strokeStyle = value;
+		_listener.afterChanged(this, STROKE_STYLE__PROP);
 	}
 
 	@Override
@@ -75,6 +81,7 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 	protected final void internalSetThickness(double value) {
 		_listener.beforeSet(this, THICKNESS__PROP, value);
 		_thickness = value;
+		_listener.afterChanged(this, THICKNESS__PROP);
 	}
 
 	@Override
@@ -92,6 +99,7 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 	protected final void internalSetTop(boolean value) {
 		_listener.beforeSet(this, TOP__PROP, value);
 		_top = value;
+		_listener.afterChanged(this, TOP__PROP);
 	}
 
 	@Override
@@ -109,6 +117,7 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 	protected final void internalSetLeft(boolean value) {
 		_listener.beforeSet(this, LEFT__PROP, value);
 		_left = value;
+		_listener.afterChanged(this, LEFT__PROP);
 	}
 
 	@Override
@@ -126,6 +135,7 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 	protected final void internalSetBottom(boolean value) {
 		_listener.beforeSet(this, BOTTOM__PROP, value);
 		_bottom = value;
+		_listener.afterChanged(this, BOTTOM__PROP);
 	}
 
 	@Override
@@ -143,6 +153,7 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 	protected final void internalSetRight(boolean value) {
 		_listener.beforeSet(this, RIGHT__PROP, value);
 		_right = value;
+		_listener.afterChanged(this, RIGHT__PROP);
 	}
 
 	@Override

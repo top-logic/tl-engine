@@ -6,66 +6,66 @@ package com.top_logic.graphic.flow.data;
 public enum ImageAlign implements de.haumacher.msgbuf.data.ProtocolEnum {
 
 	/**
-	 * Forces uniform scaling. Align the midpoint X value of the element's viewBox with the midpoint
-	 * X value of the viewport. Align the midpoint Y value of the element's viewBox with the
-	 * midpoint Y value of the viewport. This is the default value.
+	 * Forces uniform scaling. Align the midpoint X value of the element's <code>viewBox</code> with
+	 * the midpoint X value of the viewport. Align the midpoint Y value of the element's
+	 * <code>viewBox</code> with the midpoint Y value of the viewport. This is the default value.
 	 */
 	X_MID_YMID("xMidYMid"),
 
 	/**
-	 * Forces uniform scaling. Align the <code>min-x</code> of the element's viewBox with the
-	 * smallest X value of the viewport. Align the <code>min-y</code> of the element's viewBox with
-	 * the smallest Y value of the viewport.
+	 * Forces uniform scaling. Align the <code>min-x</code> of the element's <code>viewBox</code>
+	 * with the smallest X value of the viewport. Align the <code>min-y</code> of the element's
+	 * <code>viewBox</code> with the smallest Y value of the viewport.
 	 */
 	X_MIN_YMIN("xMinYMin"),
 
 	/**
-	 * Forces uniform scaling. Align the midpoint X value of the element's viewBox with the midpoint
-	 * X value of the viewport. Align the <code>min-y</code> of the element's viewBox with the
-	 * smallest Y value of the viewport.
+	 * Forces uniform scaling. Align the midpoint X value of the element's <code>viewBox</code> with
+	 * the midpoint X value of the viewport. Align the <code>min-y</code> of the element's
+	 * <code>viewBox</code> with the smallest Y value of the viewport.
 	 */
 	X_MID_YMIN("xMidYMin"),
 
 	/**
 	 * Forces uniform scaling. Align the <code>min-x</code>+<code>width</code> of the element's
-	 * viewBox with the maximum X value of the viewport. Align the <code>min-y</code> of the
-	 * element's viewBox with the smallest Y value of the viewport.
+	 * <code>viewBox</code> with the maximum X value of the viewport. Align the <code>min-y</code>
+	 * of the element's <code>viewBox</code> with the smallest Y value of the viewport.
 	 */
 	X_MAX_YMIN("xMaxYMin"),
 
 	/**
-	 * Forces uniform scaling. Align the <code>min-x</code> of the element's viewBox with the
-	 * smallest X value of the viewport. Align the midpoint Y value of the element's viewBox with
-	 * the midpoint Y value of the viewport.
+	 * Forces uniform scaling. Align the <code>min-x</code> of the element's <code>viewBox</code>
+	 * with the smallest X value of the viewport. Align the midpoint Y value of the element's
+	 * <code>viewBox</code> with the midpoint Y value of the viewport.
 	 */
 	X_MIN_YMID("xMinYMid"),
 
 	/**
 	 * Forces uniform scaling. Align the <code>min-x</code>+<code>width</code> of the element's
-	 * viewBox with the maximum X value of the viewport. Align the midpoint Y value of the element's
-	 * viewBox with the midpoint Y value of the viewport.
+	 * <code>viewBox</code> with the maximum X value of the viewport. Align the midpoint Y value of
+	 * the element's <code>viewBox</code> with the midpoint Y value of the viewport.
 	 */
 	X_MAX_YMID("xMaxYMid"),
 
 	/**
-	 * Forces uniform scaling. Align the <code>min-x</code> of the element's viewBox with the
-	 * smallest X value of the viewport. Align the <code>min-y</code>+<code>height</code> of the
-	 * element's viewBox with the maximum Y value of the viewport.
+	 * Forces uniform scaling. Align the <code>min-x</code> of the element's <code>viewBox</code>
+	 * with the smallest X value of the viewport. Align the <code>min-y</code>+<code>height</code>
+	 * of the element's <code>viewBox</code> with the maximum Y value of the viewport.
 	 */
 	X_MIN_YMAX("xMinYMax"),
 
 	/**
-	 * Forces uniform scaling. Align the midpoint X value of the element's viewBox with the midpoint
-	 * X value of the viewport. Align the <code>min-y</code>+<code>height</code> of the element's
-	 * viewBox with the maximum Y value of the viewport.
+	 * Forces uniform scaling. Align the midpoint X value of the element's <code>viewBox</code> with
+	 * the midpoint X value of the viewport. Align the <code>min-y</code>+<code>height</code> of the
+	 * element's <code>viewBox</code> with the maximum Y value of the viewport.
 	 */
 	X_MID_YMAX("xMidYMax"),
 
 	/**
 	 * Forces uniform scaling. Align the <code>min-x</code>+<code>width</code> of the element's
-	 * viewBox with the maximum X value of the viewport. Align the
-	 * <code>min-y</code>+<code>height</code> of the element's viewBox with the maximum Y value of
-	 * the viewport.
+	 * <code>viewBox</code> with the maximum X value of the viewport. Align the
+	 * <code>min-y</code>+<code>height</code> of the element's <code>viewBox</code> with the maximum
+	 * Y value of the viewport.
 	 */
 	X_MAX_YMAX("xMaxYMax"),
 

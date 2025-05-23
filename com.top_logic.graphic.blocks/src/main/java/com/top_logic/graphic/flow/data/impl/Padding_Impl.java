@@ -42,6 +42,7 @@ public class Padding_Impl extends com.top_logic.graphic.flow.data.impl.Decoratio
 	protected final void internalSetTop(double value) {
 		_listener.beforeSet(this, TOP__PROP, value);
 		_top = value;
+		_listener.afterChanged(this, TOP__PROP);
 	}
 
 	@Override
@@ -59,6 +60,7 @@ public class Padding_Impl extends com.top_logic.graphic.flow.data.impl.Decoratio
 	protected final void internalSetLeft(double value) {
 		_listener.beforeSet(this, LEFT__PROP, value);
 		_left = value;
+		_listener.afterChanged(this, LEFT__PROP);
 	}
 
 	@Override
@@ -76,6 +78,7 @@ public class Padding_Impl extends com.top_logic.graphic.flow.data.impl.Decoratio
 	protected final void internalSetBottom(double value) {
 		_listener.beforeSet(this, BOTTOM__PROP, value);
 		_bottom = value;
+		_listener.afterChanged(this, BOTTOM__PROP);
 	}
 
 	@Override
@@ -93,6 +96,7 @@ public class Padding_Impl extends com.top_logic.graphic.flow.data.impl.Decoratio
 	protected final void internalSetRight(double value) {
 		_listener.beforeSet(this, RIGHT__PROP, value);
 		_right = value;
+		_listener.afterChanged(this, RIGHT__PROP);
 	}
 
 	@Override

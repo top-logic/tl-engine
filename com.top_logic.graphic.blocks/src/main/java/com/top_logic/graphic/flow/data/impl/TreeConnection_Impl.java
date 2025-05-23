@@ -27,6 +27,11 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 			removed.internalSetConnection(null);
 			_listener.afterRemove(TreeConnection_Impl.this, CHILDREN__PROP, index, element);
 		}
+
+		@Override
+		protected void afterChanged() {
+			_listener.afterChanged(TreeConnection_Impl.this, CHILDREN__PROP);
+		}
 	};
 
 	private double _barPosition = 0.0d;
@@ -65,6 +70,7 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 			throw new IllegalStateException("Object may not be part of two different containers.");
 		}
 		_owner = value;
+		_listener.afterChanged(this, OWNER__PROP);
 	}
 
 	@Override
@@ -101,6 +107,7 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 		if (after != null) {
 			after.internalSetConnection(this);
 		}
+		_listener.afterChanged(this, PARENT__PROP);
 	}
 
 	@Override
@@ -157,6 +164,7 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 	protected final void internalSetBarPosition(double value) {
 		_listener.beforeSet(this, BAR_POSITION__PROP, value);
 		_barPosition = value;
+		_listener.afterChanged(this, BAR_POSITION__PROP);
 	}
 
 	@Override

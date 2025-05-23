@@ -10,6 +10,7 @@ import com.top_logic.graphic.blocks.svg.SvgWriter;
 import com.top_logic.graphic.flow.operations.BoxOperations;
 
 /**
+ * A box that has several special sub boxes with a layout like a typical web page.
  * 
  * <pre>
  * +----------------------+

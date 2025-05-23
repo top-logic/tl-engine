@@ -6,10 +6,22 @@
 package com.top_logic.graphic.blocks.svg.event;
 
 /**
- * 
+ * The mouse buttons that create {@link SVGClickEvent}s.
  */
 public enum MouseButton {
+	/**
+	 * The left mouse button.
+	 */
+	LEFT,
 
-	LEFT, RIGHT, MIDDLE;
+	/**
+	 * The right mouse button.
+	 */
+	RIGHT,
+
+	/**
+	 * The middle mouse button.
+	 */
+	MIDDLE;
 
 }

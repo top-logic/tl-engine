@@ -48,6 +48,7 @@ public class Text_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl imp
 	protected final void internalSetValue(String value) {
 		_listener.beforeSet(this, VALUE__PROP, value);
 		_value = value;
+		_listener.afterChanged(this, VALUE__PROP);
 	}
 
 	@Override
@@ -65,6 +66,7 @@ public class Text_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl imp
 	protected final void internalSetFontWeight(String value) {
 		_listener.beforeSet(this, FONT_WEIGHT__PROP, value);
 		_fontWeight = value;
+		_listener.afterChanged(this, FONT_WEIGHT__PROP);
 	}
 
 	@Override
@@ -87,6 +89,7 @@ public class Text_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl imp
 	protected final void internalSetFontSize(String value) {
 		_listener.beforeSet(this, FONT_SIZE__PROP, value);
 		_fontSize = value;
+		_listener.afterChanged(this, FONT_SIZE__PROP);
 	}
 
 	@Override
@@ -109,6 +112,7 @@ public class Text_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl imp
 	protected final void internalSetFontFamily(String value) {
 		_listener.beforeSet(this, FONT_FAMILY__PROP, value);
 		_fontFamily = value;
+		_listener.afterChanged(this, FONT_FAMILY__PROP);
 	}
 
 	@Override
@@ -131,6 +135,7 @@ public class Text_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl imp
 	protected final void internalSetStrokeStyle(String value) {
 		_listener.beforeSet(this, STROKE_STYLE__PROP, value);
 		_strokeStyle = value;
+		_listener.afterChanged(this, STROKE_STYLE__PROP);
 	}
 
 	@Override
@@ -153,6 +158,7 @@ public class Text_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl imp
 	protected final void internalSetFillStyle(String value) {
 		_listener.beforeSet(this, FILL_STYLE__PROP, value);
 		_fillStyle = value;
+		_listener.afterChanged(this, FILL_STYLE__PROP);
 	}
 
 	@Override
@@ -175,6 +181,7 @@ public class Text_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl imp
 	protected final void internalSetBaseLine(double value) {
 		_listener.beforeSet(this, BASE_LINE__PROP, value);
 		_baseLine = value;
+		_listener.afterChanged(this, BASE_LINE__PROP);
 	}
 
 	@Override

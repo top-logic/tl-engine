@@ -35,6 +35,11 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 			removed.internalSetOwner(null);
 			_listener.afterRemove(TreeLayout_Impl.this, CONNECTIONS__PROP, index, element);
 		}
+
+		@Override
+		protected void afterChanged() {
+			_listener.afterChanged(TreeLayout_Impl.this, CONNECTIONS__PROP);
+		}
 	};
 
 	/**
@@ -66,6 +71,7 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	protected final void internalSetCompact(boolean value) {
 		_listener.beforeSet(this, COMPACT__PROP, value);
 		_compact = value;
+		_listener.afterChanged(this, COMPACT__PROP);
 	}
 
 	@Override
@@ -84,6 +90,7 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 		if (value == null) throw new IllegalArgumentException("Property 'direction' cannot be null.");
 		_listener.beforeSet(this, DIRECTION__PROP, value);
 		_direction = value;
+		_listener.afterChanged(this, DIRECTION__PROP);
 	}
 
 	@Override
@@ -101,6 +108,7 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	protected final void internalSetGapX(double value) {
 		_listener.beforeSet(this, GAP_X__PROP, value);
 		_gapX = value;
+		_listener.afterChanged(this, GAP_X__PROP);
 	}
 
 	@Override
@@ -118,6 +126,7 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	protected final void internalSetGapY(double value) {
 		_listener.beforeSet(this, GAP_Y__PROP, value);
 		_gapY = value;
+		_listener.afterChanged(this, GAP_Y__PROP);
 	}
 
 	@Override
@@ -135,6 +144,7 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	protected final void internalSetStrokeStyle(String value) {
 		_listener.beforeSet(this, STROKE_STYLE__PROP, value);
 		_strokeStyle = value;
+		_listener.afterChanged(this, STROKE_STYLE__PROP);
 	}
 
 	@Override
@@ -152,6 +162,7 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	protected final void internalSetThickness(double value) {
 		_listener.beforeSet(this, THICKNESS__PROP, value);
 		_thickness = value;
+		_listener.afterChanged(this, THICKNESS__PROP);
 	}
 
 	@Override

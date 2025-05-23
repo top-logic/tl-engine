@@ -85,18 +85,12 @@ public class LabelVisitor implements TLModelVisitor<String, Void> {
 
 	@Override
 	public String visitClassifier(TLClassifier model, Void arg) {
-		// Note: Must not inherit functionality from
-		// I18NWrapperResourceProvider, because this does not mark the name
-		// as missing resource, if the internationalization is missing.
-		ResKey theName = FastListElementLabelProvider.labelKey((TLClassifier) model);
+		ResKey theName = FastListElementLabelProvider.labelKey(model);
 		return (Resources.getInstance().getString(theName));
 	}
 
 	@Override
 	public String visitEnumeration(TLEnumeration model, Void arg) {
-		// Note: Must not inherit functionality from
-		// I18NWrapperResourceProvider, because this does not mark the name
-		// as missing resource, if the internationalization is missing.
 		ResKey theName = FastListElementLabelProvider.labelKey(model);
 		return (Resources.getInstance().getString(theName));
 	}

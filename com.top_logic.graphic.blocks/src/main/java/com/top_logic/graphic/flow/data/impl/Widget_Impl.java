@@ -33,6 +33,7 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 	protected final void internalSetCssClass(String value) {
 		_listener.beforeSet(this, CSS_CLASS__PROP, value);
 		_cssClass = value;
+		_listener.afterChanged(this, CSS_CLASS__PROP);
 	}
 
 	@Override
@@ -55,6 +56,7 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 	protected final void internalSetUserObject(java.lang.Object value) {
 		_listener.beforeSet(this, USER_OBJECT__PROP, value);
 		_userObject = value;
+		_listener.afterChanged(this, USER_OBJECT__PROP);
 	}
 
 	@Override
@@ -77,6 +79,7 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 	protected final void internalSetClientId(String value) {
 		_listener.beforeSet(this, CLIENT_ID__PROP, value);
 		_clientId = value;
+		_listener.afterChanged(this, CLIENT_ID__PROP);
 	}
 
 	@Override

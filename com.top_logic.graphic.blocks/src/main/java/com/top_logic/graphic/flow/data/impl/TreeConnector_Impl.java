@@ -45,6 +45,7 @@ public class TreeConnector_Impl extends com.top_logic.graphic.flow.data.impl.Wid
 			throw new IllegalStateException("Object may not be part of two different containers.");
 		}
 		_connection = value;
+		_listener.afterChanged(this, CONNECTION__PROP);
 	}
 
 	@Override
@@ -67,6 +68,7 @@ public class TreeConnector_Impl extends com.top_logic.graphic.flow.data.impl.Wid
 	protected final void internalSetAnchor(com.top_logic.graphic.flow.data.Box value) {
 		_listener.beforeSet(this, ANCHOR__PROP, value);
 		_anchor = value;
+		_listener.afterChanged(this, ANCHOR__PROP);
 	}
 
 	@Override
@@ -89,6 +91,7 @@ public class TreeConnector_Impl extends com.top_logic.graphic.flow.data.impl.Wid
 	protected final void internalSetConnectPosition(double value) {
 		_listener.beforeSet(this, CONNECT_POSITION__PROP, value);
 		_connectPosition = value;
+		_listener.afterChanged(this, CONNECT_POSITION__PROP);
 	}
 
 	@Override

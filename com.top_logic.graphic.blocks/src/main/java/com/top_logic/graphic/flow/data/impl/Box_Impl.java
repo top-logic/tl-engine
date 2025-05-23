@@ -42,6 +42,7 @@ public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widg
 			throw new IllegalStateException("Object may not be part of two different containers.");
 		}
 		_parent = value;
+		_listener.afterChanged(this, PARENT__PROP);
 	}
 
 	@Override
@@ -64,6 +65,7 @@ public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widg
 	protected final void internalSetX(double value) {
 		_listener.beforeSet(this, X__PROP, value);
 		_x = value;
+		_listener.afterChanged(this, X__PROP);
 	}
 
 	@Override
@@ -81,6 +83,7 @@ public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widg
 	protected final void internalSetY(double value) {
 		_listener.beforeSet(this, Y__PROP, value);
 		_y = value;
+		_listener.afterChanged(this, Y__PROP);
 	}
 
 	@Override
@@ -98,6 +101,7 @@ public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widg
 	protected final void internalSetWidth(double value) {
 		_listener.beforeSet(this, WIDTH__PROP, value);
 		_width = value;
+		_listener.afterChanged(this, WIDTH__PROP);
 	}
 
 	@Override
@@ -115,6 +119,7 @@ public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widg
 	protected final void internalSetHeight(double value) {
 		_listener.beforeSet(this, HEIGHT__PROP, value);
 		_height = value;
+		_listener.afterChanged(this, HEIGHT__PROP);
 	}
 
 	@Override

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_8a5eb9c7_cb9e_4980_800f_a1c793590154"
+		tabIcon="css:fa-solid fa-diagram-project"
+	>
+		<tabLabel key="dynamic.b66332eb-b470-493b-a3db-d1aed30773eb">
+			<en>Flowchart</en>
+			<de>Flussdiagramm</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/flowchart1/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

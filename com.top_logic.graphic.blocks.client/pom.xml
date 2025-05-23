@@ -1,0 +1,159 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  
+  <parent>
+	  <groupId>com.top-logic</groupId>
+	  <artifactId>tl-parent-gwt</artifactId>
+	  <version>7.10.0-SNAPSHOT</version>
+	  <relativePath>../tl-parent-gwt</relativePath>
+  </parent>
+
+  <artifactId>tl-graphic-blocks-client</artifactId>
+
+  <properties>
+	<gwt.module>com.top_logic.graphic.blocks.client.TLBlocksClient</gwt.module>
+  </properties>
+
+  <dependencies>
+  	<dependency>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-graph-diagramjs-client</artifactId>
+  	</dependency>
+
+  	<dependency>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-graph-diagramjs-client</artifactId>
+        <version>${tl.version}</version>
+        <classifier>sources</classifier>
+        <scope>provided</scope>
+  	</dependency>
+  	
+  	<dependency>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-graphic-blocks</artifactId>
+		<version>${project.version}</version>
+  	</dependency>
+
+  	<dependency>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-graphic-blocks</artifactId>
+		<version>${project.version}</version>
+        <classifier>sources</classifier>
+        <scope>provided</scope>
+  	</dependency>
+
+  	<dependency>
+		<groupId>org.vectomatic</groupId>
+		<artifactId>lib-gwt-svg</artifactId>
+		<version>0.5.15</version>
+  	</dependency>
+
+	<dependency>
+	    <groupId>com.google.elemental2</groupId>
+	    <artifactId>elemental2-dom</artifactId>
+	    <version>1.2.3</version>
+	</dependency>
+	<dependency>
+	    <groupId>com.google.elemental2</groupId>
+	    <artifactId>elemental2-dom</artifactId>
+	    <version>1.2.3</version>
+        <classifier>sources</classifier>
+        <scope>provided</scope>
+	</dependency>
+
+	<dependency>
+	    <groupId>com.google.elemental2</groupId>
+	    <artifactId>elemental2-core</artifactId>
+	    <version>1.2.3</version>
+	</dependency>
+	<dependency>
+	    <groupId>com.google.elemental2</groupId>
+	    <artifactId>elemental2-core</artifactId>
+	    <version>1.2.3</version>
+        <classifier>sources</classifier>
+        <scope>provided</scope>
+	</dependency>
+  	
+    <!-- Note: Must repeat non-inherited dependencies (provided dependencies are not inherited). -->
+    <dependency>
+      <groupId>org.gwtproject</groupId>
+      <artifactId>gwt-user</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.gwtproject</groupId>
+      <artifactId>gwt-dev</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-ajax-client</artifactId>
+	  <version>${tl.version}</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-client-diagramjs</artifactId>
+	  <version>${tl.version}</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-graph-diagramjs</artifactId>
+	  <version>${tl.version}</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-graph-common</artifactId>
+	  <version>${tl.version}</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-common-remote</artifactId>
+	  <version>${tl.version}</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-common-json</artifactId>
+	  <version>${tl.version}</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic-shared</artifactId>
+	  <version>${tl.version}</version>
+      <classifier>sources</classifier>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+       <groupId>de.haumacher.msgbuf</groupId>
+       <artifactId>msgbuf-api</artifactId>
+       <classifier>sources</classifier>
+       <scope>provided</scope>
+    </dependency>
+  	
+  </dependencies>
+  
+  <build>
+  	<plugins>
+  	  <plugin>
+		<groupId>org.apache.maven.plugins</groupId>
+		<artifactId>maven-war-plugin</artifactId>
+	  </plugin>
+ 	  <plugin>
+		<groupId>net.ltgt.gwt.maven</groupId>
+		<artifactId>gwt-maven-plugin</artifactId>
+ 	  </plugin>
+  	</plugins>
+  </build>
+  
+</project>

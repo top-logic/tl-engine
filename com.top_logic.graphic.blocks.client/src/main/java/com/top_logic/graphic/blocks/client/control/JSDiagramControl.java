@@ -59,7 +59,7 @@ public class JSDiagramControl extends AbstractJSControl
 
 	final SubIdGenerator _nextId;
 
-	protected double _changeTimeout;
+	double _changeTimeout;
 
 	/**
 	 * Creates a {@link JSDiagramControl}.

@@ -10,14 +10,14 @@ public enum ImageScale implements de.haumacher.msgbuf.data.ProtocolEnum {
 	 * <ul>
 	 * <li>The aspect ratio is preserved.</li>
 	 * <li>The entire viewBox is visible within the viewport.</li>
-	 * <li>The viewBox is scaled up as much as possible, while still meeting the other
+	 * <li>The <code>viewBox</code> is scaled up as much as possible, while still meeting the other
 	 * criteria.</li>
 	 * </ul>
 	 *
 	 * <p>
 	 * In this case, if the aspect ratio of the graphic does not match the viewport, some of the
-	 * viewport will extend beyond the bounds of the viewBox (i.e., the area into which the viewBox
-	 * will draw will be smaller than the viewport). meet
+	 * viewport will extend beyond the bounds of the <code>viewBox</code> (i.e., the area into which
+	 * the <code>viewBox</code> will draw will be smaller than the viewport). meet
 	 * </p>
 	 */
 	MEET("meet"),
@@ -27,15 +27,15 @@ public enum ImageScale implements de.haumacher.msgbuf.data.ProtocolEnum {
 	 *
 	 * <ul>
 	 * <li>The aspect ratio is preserved.</li>
-	 * <li>The entire viewport is covered by the viewBox.</li>
-	 * <li>The viewBox is scaled down as much as possible, while still meeting the other
-	 * criteria.</li>
+	 * <li>The entire viewport is covered by the <code>viewBox</code>.</li>
+	 * <li>The <code>viewBox</code> is scaled down as much as possible, while still meeting the
+	 * other criteria.</li>
 	 * </ul>
 	 *
 	 * <p>
-	 * In this case, if the aspect ratio of the viewBox does not match the viewport, some of the
-	 * viewBox will extend beyond the bounds of the viewport (i.e., the area into which the viewBox
-	 * will draw is larger than the viewport). slice
+	 * In this case, if the aspect ratio of the <code>viewBox</code> does not match the viewport,
+	 * some of the <code>viewBox</code> will extend beyond the bounds of the viewport (i.e., the
+	 * area into which the <code>viewBox</code> will draw is larger than the viewport). slice
 	 * </p>
 	 */
 	SLICE("slice"),

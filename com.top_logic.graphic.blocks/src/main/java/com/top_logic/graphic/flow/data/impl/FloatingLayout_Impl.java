@@ -23,6 +23,11 @@ public class FloatingLayout_Impl extends com.top_logic.graphic.flow.data.impl.Bo
 			removed.internalSetParent(null);
 			_listener.afterRemove(FloatingLayout_Impl.this, NODES__PROP, index, element);
 		}
+
+		@Override
+		protected void afterChanged() {
+			_listener.afterChanged(FloatingLayout_Impl.this, NODES__PROP);
+		}
 	};
 
 	/**

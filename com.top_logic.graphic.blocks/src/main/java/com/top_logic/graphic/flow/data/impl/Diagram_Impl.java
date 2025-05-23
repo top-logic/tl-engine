@@ -17,6 +17,11 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 		protected void afterRemove(int index, com.top_logic.graphic.flow.data.SelectableBox element) {
 			_listener.afterRemove(Diagram_Impl.this, SELECTION__PROP, index, element);
 		}
+
+		@Override
+		protected void afterChanged() {
+			_listener.afterChanged(Diagram_Impl.this, SELECTION__PROP);
+		}
 	};
 
 	private transient com.top_logic.graphic.blocks.svg.event.Registration _clickHandler = null;
@@ -64,6 +69,7 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 		if (after != null) {
 			after.internalSetParent(this);
 		}
+		_listener.afterChanged(this, ROOT__PROP);
 	}
 
 	@Override
@@ -120,6 +126,7 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 	protected final void internalSetClickHandler(com.top_logic.graphic.blocks.svg.event.Registration value) {
 		_listener.beforeSet(this, CLICK_HANDLER__PROP, value);
 		_clickHandler = value;
+		_listener.afterChanged(this, CLICK_HANDLER__PROP);
 	}
 
 	@Override

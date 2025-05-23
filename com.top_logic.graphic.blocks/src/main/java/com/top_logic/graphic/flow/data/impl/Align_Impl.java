@@ -39,6 +39,7 @@ public class Align_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 		if (value == null) throw new IllegalArgumentException("Property 'xAlign' cannot be null.");
 		_listener.beforeSet(this, X_ALIGN__PROP, value);
 		_xAlign = value;
+		_listener.afterChanged(this, X_ALIGN__PROP);
 	}
 
 	@Override
@@ -57,6 +58,7 @@ public class Align_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 		if (value == null) throw new IllegalArgumentException("Property 'yAlign' cannot be null.");
 		_listener.beforeSet(this, Y_ALIGN__PROP, value);
 		_yAlign = value;
+		_listener.afterChanged(this, Y_ALIGN__PROP);
 	}
 
 	@Override

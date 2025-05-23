@@ -31,6 +31,7 @@ public abstract class RowLayout_Impl extends com.top_logic.graphic.flow.data.imp
 	protected final void internalSetGap(double value) {
 		_listener.beforeSet(this, GAP__PROP, value);
 		_gap = value;
+		_listener.afterChanged(this, GAP__PROP);
 	}
 
 	@Override
@@ -49,6 +50,7 @@ public abstract class RowLayout_Impl extends com.top_logic.graphic.flow.data.imp
 		if (value == null) throw new IllegalArgumentException("Property 'fill' cannot be null.");
 		_listener.beforeSet(this, FILL__PROP, value);
 		_fill = value;
+		_listener.afterChanged(this, FILL__PROP);
 	}
 
 	@Override

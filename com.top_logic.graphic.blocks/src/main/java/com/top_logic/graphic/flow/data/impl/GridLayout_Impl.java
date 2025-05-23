@@ -23,6 +23,11 @@ public class GridLayout_Impl extends com.top_logic.graphic.flow.data.impl.Layout
 		protected void afterRemove(int index, Double element) {
 			_listener.afterRemove(GridLayout_Impl.this, ROW_HEIGHT__PROP, index, element);
 		}
+
+		@Override
+		protected void afterChanged() {
+			_listener.afterChanged(GridLayout_Impl.this, ROW_HEIGHT__PROP);
+		}
 	};
 
 	private final java.util.List<Double> _colWidth = new de.haumacher.msgbuf.util.ReferenceList<Double>() {
@@ -34,6 +39,11 @@ public class GridLayout_Impl extends com.top_logic.graphic.flow.data.impl.Layout
 		@Override
 		protected void afterRemove(int index, Double element) {
 			_listener.afterRemove(GridLayout_Impl.this, COL_WIDTH__PROP, index, element);
+		}
+
+		@Override
+		protected void afterChanged() {
+			_listener.afterChanged(GridLayout_Impl.this, COL_WIDTH__PROP);
 		}
 	};
 
@@ -66,6 +76,7 @@ public class GridLayout_Impl extends com.top_logic.graphic.flow.data.impl.Layout
 	protected final void internalSetRows(int value) {
 		_listener.beforeSet(this, ROWS__PROP, value);
 		_rows = value;
+		_listener.afterChanged(this, ROWS__PROP);
 	}
 
 	@Override
@@ -83,6 +94,7 @@ public class GridLayout_Impl extends com.top_logic.graphic.flow.data.impl.Layout
 	protected final void internalSetCols(int value) {
 		_listener.beforeSet(this, COLS__PROP, value);
 		_cols = value;
+		_listener.afterChanged(this, COLS__PROP);
 	}
 
 	@Override
@@ -100,6 +112,7 @@ public class GridLayout_Impl extends com.top_logic.graphic.flow.data.impl.Layout
 	protected final void internalSetGapX(double value) {
 		_listener.beforeSet(this, GAP_X__PROP, value);
 		_gapX = value;
+		_listener.afterChanged(this, GAP_X__PROP);
 	}
 
 	@Override
@@ -117,6 +130,7 @@ public class GridLayout_Impl extends com.top_logic.graphic.flow.data.impl.Layout
 	protected final void internalSetGapY(double value) {
 		_listener.beforeSet(this, GAP_Y__PROP, value);
 		_gapY = value;
+		_listener.afterChanged(this, GAP_Y__PROP);
 	}
 
 	@Override

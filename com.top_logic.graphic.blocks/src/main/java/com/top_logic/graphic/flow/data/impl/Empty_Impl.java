@@ -38,6 +38,7 @@ public class Empty_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 	protected final void internalSetMinWidth(double value) {
 		_listener.beforeSet(this, MIN_WIDTH__PROP, value);
 		_minWidth = value;
+		_listener.afterChanged(this, MIN_WIDTH__PROP);
 	}
 
 	@Override
@@ -55,6 +56,7 @@ public class Empty_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 	protected final void internalSetMinHeight(double value) {
 		_listener.beforeSet(this, MIN_HEIGHT__PROP, value);
 		_minHeight = value;
+		_listener.afterChanged(this, MIN_HEIGHT__PROP);
 	}
 
 	@Override

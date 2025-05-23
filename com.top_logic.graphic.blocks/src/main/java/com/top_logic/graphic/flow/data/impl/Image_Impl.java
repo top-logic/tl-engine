@@ -44,6 +44,7 @@ public class Image_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 	protected final void internalSetHref(String value) {
 		_listener.beforeSet(this, HREF__PROP, value);
 		_href = value;
+		_listener.afterChanged(this, HREF__PROP);
 	}
 
 	@Override
@@ -61,6 +62,7 @@ public class Image_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 	protected final void internalSetImgWidth(double value) {
 		_listener.beforeSet(this, IMG_WIDTH__PROP, value);
 		_imgWidth = value;
+		_listener.afterChanged(this, IMG_WIDTH__PROP);
 	}
 
 	@Override
@@ -78,6 +80,7 @@ public class Image_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 	protected final void internalSetImgHeight(double value) {
 		_listener.beforeSet(this, IMG_HEIGHT__PROP, value);
 		_imgHeight = value;
+		_listener.afterChanged(this, IMG_HEIGHT__PROP);
 	}
 
 	@Override
@@ -96,6 +99,7 @@ public class Image_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 		if (value == null) throw new IllegalArgumentException("Property 'align' cannot be null.");
 		_listener.beforeSet(this, ALIGN__PROP, value);
 		_align = value;
+		_listener.afterChanged(this, ALIGN__PROP);
 	}
 
 	@Override
@@ -114,6 +118,7 @@ public class Image_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 		if (value == null) throw new IllegalArgumentException("Property 'scale' cannot be null.");
 		_listener.beforeSet(this, SCALE__PROP, value);
 		_scale = value;
+		_listener.afterChanged(this, SCALE__PROP);
 	}
 
 	@Override

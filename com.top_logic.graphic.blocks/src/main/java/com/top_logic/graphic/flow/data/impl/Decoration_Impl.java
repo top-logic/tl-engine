@@ -43,6 +43,7 @@ public abstract class Decoration_Impl extends com.top_logic.graphic.flow.data.im
 		if (after != null) {
 			after.internalSetParent(this);
 		}
+		_listener.afterChanged(this, CONTENT__PROP);
 	}
 
 	@Override

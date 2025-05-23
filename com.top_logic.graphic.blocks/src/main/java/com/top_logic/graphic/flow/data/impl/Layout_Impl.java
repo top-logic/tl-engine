@@ -23,6 +23,11 @@ public abstract class Layout_Impl extends com.top_logic.graphic.flow.data.impl.B
 			removed.internalSetParent(null);
 			_listener.afterRemove(Layout_Impl.this, CONTENTS__PROP, index, element);
 		}
+
+		@Override
+		protected void afterChanged() {
+			_listener.afterChanged(Layout_Impl.this, CONTENTS__PROP);
+		}
 	};
 
 	/**

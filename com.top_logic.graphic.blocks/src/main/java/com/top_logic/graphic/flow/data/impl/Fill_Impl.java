@@ -36,6 +36,7 @@ public class Fill_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_I
 	protected final void internalSetFillStyle(String value) {
 		_listener.beforeSet(this, FILL_STYLE__PROP, value);
 		_fillStyle = value;
+		_listener.afterChanged(this, FILL_STYLE__PROP);
 	}
 
 	@Override

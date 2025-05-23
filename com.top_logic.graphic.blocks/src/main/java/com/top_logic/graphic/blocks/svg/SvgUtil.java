@@ -10,6 +10,9 @@ package com.top_logic.graphic.blocks.svg;
  */
 public class SvgUtil {
 
+	/**
+	 * Creates a space-separated list of double values.
+	 */
 	public static String valueList(double[] values) {
 		StringBuilder buffer = new StringBuilder();
 		boolean first = true;

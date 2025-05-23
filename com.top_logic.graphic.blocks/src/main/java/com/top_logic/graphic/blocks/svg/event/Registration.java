@@ -6,14 +6,20 @@
 package com.top_logic.graphic.blocks.svg.event;
 
 /**
- * 
+ * A handler registration.
  */
 public interface Registration {
 
+	/**
+	 * A dummy registration that does nothing on {@link #cancel()}.
+	 */
 	Registration NONE = () -> {
 		// Ignore.
 	};
 
+	/**
+	 * Cancels the registration and frees resources.
+	 */
 	void cancel();
 
 }

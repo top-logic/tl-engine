@@ -18,6 +18,9 @@ public interface TreeLayout extends FloatingLayout, com.top_logic.graphic.flow.o
 	/** @see #isCompact() */
 	String COMPACT__PROP = "compact";
 
+	/** @see #isAlignTop() */
+	String ALIGN_TOP__PROP = "alignTop";
+
 	/** @see #getDirection() */
 	String DIRECTION__PROP = "direction";
 
@@ -45,6 +48,16 @@ public interface TreeLayout extends FloatingLayout, com.top_logic.graphic.flow.o
 	 * @see #isCompact()
 	 */
 	com.top_logic.graphic.flow.data.TreeLayout setCompact(boolean value);
+
+	/**
+	 * Whether to align the parent node to the top border of its children. By default, the parent node is centered among its children.
+	 */
+	boolean isAlignTop();
+
+	/**
+	 * @see #isAlignTop()
+	 */
+	com.top_logic.graphic.flow.data.TreeLayout setAlignTop(boolean value);
 
 	/**
 	 * The layout direction of nodes (from top/parent to bottom/children)

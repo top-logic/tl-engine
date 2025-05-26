@@ -72,6 +72,9 @@ message TreeLayout extends FloatingLayout {
 	/** Whether to minimize vertical space required to layout the tree. */
 	boolean compact;
 	
+	/** Whether to align the parent node to the top border of its children. By default, the parent node is centered among its children. */
+	boolean alignTop;
+	
 	/** The layout direction of nodes (from top/parent to bottom/children) */
 	DiagramDirection direction;
 	

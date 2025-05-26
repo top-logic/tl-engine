@@ -177,8 +177,8 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 			double firstY = first.getY();
 			double lastY = last.getBottomY();
 
-			// Place node vertically in the middle of its direct children.
-			double centerY = (firstY + lastY - node.getHeight()) / 2;
+			// Place parent node relative to its direct children.
+			double centerY = self().isAlignTop() ? firstY : (firstY + lastY - node.getHeight()) / 2;
 
 			if (minY <= centerY) {
 				// Current node must be moved to the bottom to align with its children.

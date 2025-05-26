@@ -134,13 +134,6 @@
 					mandatory="true"
 					type="tl.core:String"
 				/>
-				<reference name="image"
-					composite="true"
-					kind="forwards"
-					multiple="true"
-					navigate="true"
-					type="tl.imagegallery:GalleryImage"
-				/>
 				<reference name="buildInstructions"
 					composite="true"
 					kind="forwards"
@@ -154,6 +147,15 @@
 					multiple="true"
 					navigate="true"
 					type="Part"
+				/>
+				<reference name="image"
+					bag="true"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="tl.imagegallery:GalleryImage"
 				/>
 			</attributes>
 		</class>

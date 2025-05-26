@@ -9,7 +9,7 @@ public enum ImageScale implements de.haumacher.msgbuf.data.ProtocolEnum {
 	 * Scales the graphic such that:
 	 * <ul>
 	 * <li>The aspect ratio is preserved.</li>
-	 * <li>The entire viewBox is visible within the viewport.</li>
+	 * <li>The entire <code>viewBox</code> is visible within the viewport.</li>
 	 * <li>The <code>viewBox</code> is scaled up as much as possible, while still meeting the other
 	 * criteria.</li>
 	 * </ul>

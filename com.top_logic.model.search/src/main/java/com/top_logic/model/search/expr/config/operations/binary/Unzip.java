@@ -75,14 +75,12 @@ public class Unzip extends GenericMethod {
 					entryObj.put("comment", entry.getComment());
 				}
 				entryObj.put("name", entry.getName());
-				entryObj.put("compressedSize", entry.getCompressedSize());
-				entryObj.put("crc", entry.getCrc());
 
 				if (entry.getCreationTime() != null) {
 					entryObj.put("creationTime", new Date(entry.getCreationTime().toMillis()));
 				}
 				if (entry.getExtra() != null) {
-					entryObj.put("extra", entry.getExtra());
+					entryObj.put("extra", BinaryDataFactory.createBinaryData(entry.getExtra()));
 				}
 				if (entry.getLastAccessTime() != null) {
 					entryObj.put("lastAccessTime", new Date(entry.getLastAccessTime().toMillis()));
@@ -91,8 +89,10 @@ public class Unzip extends GenericMethod {
 					entryObj.put("lastModifiedTime", new Date(entry.getLastModifiedTime().toMillis()));
 				}
 
-				entryObj.put("method", entry.getMethod());
-				entryObj.put("size", entry.getSize());
+				entryObj.put("method", entry.getMethod() == ZipEntry.DEFLATED ? "deflated" : "stored");
+				entryObj.put("size", Double.valueOf(entry.getSize()));
+				entryObj.put("compressedSize", Double.valueOf(entry.getCompressedSize()));
+				entryObj.put("crc", Double.valueOf(entry.getCrc()));
 
 				long entrySize = entry.getSize();
 				byte[] buffer;

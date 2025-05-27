@@ -49,24 +49,50 @@ public class ColorFunction extends GenericMethod {
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		String css = asString(arguments[0]);
 
+		Integer aNum = asIntNum(arguments[4]);
+
 		if (!css.isEmpty()) {
-			return ColorUtil.cssColor(css);
+			Color cssColor = ColorUtil.cssColor(css);
+
+			if (aNum != null) {
+				return new Color(cssColor.getRed(), cssColor.getGreen(), cssColor.getBlue(), aNum.intValue());
+			}
+
+			return cssColor;
 		}
 
-		Integer r = asIntNum(arguments[1]);
-		int g = asInt(arguments[2]);
-		int b = asInt(arguments[3]);
-		int a = asInt(arguments[4], 255);
+		Integer rNum = asIntNum(arguments[1]);
+		Integer gNum = asIntNum(arguments[2]);
+		Integer bNum = asIntNum(arguments[3]);
+		int a = aNum == null ? 255 : aNum.intValue();
 
-		if (r != null) {
-			return new Color(r.intValue(), g, b, a);
+		if (rNum != null || gNum != null || bNum != null) {
+			int r = rNum == null ? 0 : rNum.intValue();
+			int g = gNum == null ? 0 : gNum.intValue();
+			int b = bNum == null ? 0 : bNum.intValue();
+			return new Color(r, g, b, a);
 		}
 
-		Double h = asDoubleNum(arguments[5]);
-		Double s = asDoubleNum(arguments[6]);
-		Double l = asDoubleNum(arguments[7]);
+		HSLColor from = toColor(arguments[5]);
+
+		Double h = asDoubleNum(arguments[6]);
+		Double s = asDoubleNum(arguments[7]);
+		Double l = asDoubleNum(arguments[8]);
 		
-		return hslColor(h, s, l, a / 255.0f);
+		float hValue = h == null ? (from == null ? 0 : from.getHue()) : h.floatValue();
+		float sValue = s == null ? (from == null ? 100 : from.getSaturation()) : s.floatValue();
+		float lValue = l == null ? (from == null ? 50 : from.getLuminance()) : l.floatValue();
+		
+		return HSLColor.toRGB(hValue, sValue, lValue, a / 255.0f);
+	}
+
+	private HSLColor toColor(Object object) {
+		if (object instanceof Color color) {
+			return new HSLColor(color);
+		} else if (object == null) {
+			return null;
+		}
+		return new HSLColor(ColorUtil.cssColor(asString(object)));
 	}
 
 	private Integer asIntNum(Object object) {
@@ -75,14 +101,6 @@ public class ColorFunction extends GenericMethod {
 
 	private Double asDoubleNum(Object object) {
 		return object == null ? null : asDouble(object);
-	}
-
-	private static Color hslColor(Number h, Number s, Number l, float a) {
-		float hValue = h == null ? 0 : h.floatValue();
-		float sValue = s == null ? 100 : s.floatValue();
-		float lValue = l == null ? 100 : l.floatValue();
-
-		return HSLColor.toRGB(hValue, sValue, lValue, a);
 	}
 
 	/**
@@ -96,7 +114,10 @@ public class ColorFunction extends GenericMethod {
 			.optional("r")
 			.optional("g")
 			.optional("b")
+
 			.optional("a")
+
+			.optional("from")
 
 			.optional("h")
 			.optional("s")

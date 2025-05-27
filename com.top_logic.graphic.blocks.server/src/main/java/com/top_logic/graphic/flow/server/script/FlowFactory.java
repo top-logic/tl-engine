@@ -43,6 +43,7 @@ import com.top_logic.graphic.flow.data.ImageScale;
 import com.top_logic.graphic.flow.data.Padding;
 import com.top_logic.graphic.flow.data.SelectableBox;
 import com.top_logic.graphic.flow.data.SpaceDistribution;
+import com.top_logic.graphic.flow.data.Stack;
 import com.top_logic.graphic.flow.data.Text;
 import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
@@ -58,6 +59,7 @@ public class FlowFactory {
 	/**
 	 * Factory for Diagrams.
 	 */
+	@SideEffectFree
 	public static Diagram flowChart(
 		Box root,
 		String cssClass,
@@ -72,6 +74,7 @@ public class FlowFactory {
 	/**
 	 * Creates a text element.
 	 */
+	@SideEffectFree
 	public static Box flowText(
 		@Mandatory String text,
 		String strokeStyle, 
@@ -99,6 +102,7 @@ public class FlowFactory {
 	/**
 	 * Factory for {@link Align}.
 	 */
+	@SideEffectFree
 	public static Decoration flowAlign(
 		@Mandatory Box content,
 		Alignment hAlign,
@@ -117,6 +121,7 @@ public class FlowFactory {
 	/**
 	 * Factory for {@link Border}.
 	 */
+	@SideEffectFree
 	public static Decoration flowBorder(
 		@Mandatory Box content,
 		@BooleanDefault(true) boolean top,
@@ -146,6 +151,7 @@ public class FlowFactory {
 	/**
 	 * Factory for {@link Fill}.
 	 */
+	@SideEffectFree
 	public static Decoration flowFill(
 		@Mandatory Box content,
 		@StringDefault("gray") @ScriptConversion(ToStyle.class) String fill,
@@ -162,6 +168,7 @@ public class FlowFactory {
 	/**
 	 * Factory for {@link Padding}.
 	 */
+	@SideEffectFree
 	public static Box flowPadding(
 		@Mandatory Box content,
 		Double all,
@@ -205,6 +212,7 @@ public class FlowFactory {
 	/**
 	 * Factory for {@link HorizontalLayout}.
 	 */
+	@SideEffectFree
 	public static Box flowHorizontal(
 		@Mandatory List<Box> contents,
 		double gap,
@@ -234,6 +242,7 @@ public class FlowFactory {
 	/**
 	 * Factory for {@link VerticalLayout}.
 	 */
+	@SideEffectFree
 	public static Box flowVertical(
 		@Mandatory List<Box> contents,
 		double gap,
@@ -260,6 +269,7 @@ public class FlowFactory {
 	/**
 	 * Factory for {@link CompassLayout}.
 	 */
+	@SideEffectFree
 	public static CompassLayout flowCompass(
 		@Mandatory Box center,
 		Box north,
@@ -282,6 +292,7 @@ public class FlowFactory {
 	/**
 	 * Factory for {@link GridLayout}.
 	 */
+	@SideEffectFree
 	public static Box flowGrid(
 		@Mandatory List<List<Box>> contents,
 		double gapX,
@@ -320,6 +331,7 @@ public class FlowFactory {
 	/**
 	 * Factory for {@link Empty} boxes that produce gaps.
 	 */
+	@SideEffectFree
 	public static Box flowEmpty(
 		Double width,
 		Double height,
@@ -336,6 +348,7 @@ public class FlowFactory {
 	/**
 	 * Factory for {@link Image}.
 	 */
+	@SideEffectFree
 	public static Box flowImage(
 		@Mandatory Object data,
 		Double width,
@@ -400,7 +413,9 @@ public class FlowFactory {
 	/**
 	 * Creates an are that is user-selectable.
 	 */
+	@SideEffectFree
 	public static Box flowSelection(
+			@Mandatory
 		Box content,
 		String cssClass,
 		Object userObject
@@ -433,6 +448,7 @@ public class FlowFactory {
 	 * @param userObject
 	 *        An arbitrary object to associate with the graphics element.
 	 */
+	@SideEffectFree
 	public static Box flowTree(
 		@Mandatory List<? extends Box> nodes, 
 		@Mandatory List<? extends TreeConnection> connections,
@@ -468,6 +484,7 @@ public class FlowFactory {
 	 * @param children
 	 *        The children nodes or connectors to connect to the given parent.
 	 */
+	@SideEffectFree
 	public static TreeConnection flowConnection(
 			@Mandatory Object parent,
 			@Mandatory List<?> children
@@ -487,6 +504,7 @@ public class FlowFactory {
 	/**
 	 * A connector to attach to a node to connect.
 	 */
+	@SideEffectFree
 	public static TreeConnector flowConnector(
 		@Mandatory Box anchor,
 		@DoubleDefault(0.5) double pos,

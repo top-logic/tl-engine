@@ -327,6 +327,13 @@ message Empty extends Box {
 	double minHeight;
 }
 
+/** Write several boxes on top of each other. */
+@Operations("com.top_logic.graphic.flow.operations.StackOperations")
+message Stack extends Box {
+	/** The boxes that are rendered one over the other. The box that is on the bottom is the first in the list. */
+	repeated Box contents;
+}
+
 /** A box that draws some decoration around another box. */
 @Operations("com.top_logic.graphic.flow.operations.DecorationOperations")
 abstract message Decoration extends Box {

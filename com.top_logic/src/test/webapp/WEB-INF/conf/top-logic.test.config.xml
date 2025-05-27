@@ -588,6 +588,7 @@
 				<entry value="com.top_logic.tool.equationparser.parser" />
 				<entry value="com.top_logic.basic.version.model" />
 				<entry value="com.top_logic.html.template.parser" />
+				<entry value="com.top_logic.mig.util.HSLColor" />
 			</ignore>
 		</config>
 		

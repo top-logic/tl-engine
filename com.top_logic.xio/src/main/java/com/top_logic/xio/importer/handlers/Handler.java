@@ -33,7 +33,8 @@ public interface Handler {
 
 		/**
 		 * Wrapped configuration of an inner handler that allows specifying the inner handler by tag
-		 * name (if the using configuration already has another {@link DefaultContainer} property.
+		 * name (if the referring configuration already has another {@link DefaultContainer}
+		 * property).
 		 */
 		interface HandlerRef extends ConfigurationItem {
 			/**

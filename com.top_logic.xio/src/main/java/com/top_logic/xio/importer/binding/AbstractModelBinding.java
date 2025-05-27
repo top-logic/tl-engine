@@ -7,6 +7,7 @@ package com.top_logic.xio.importer.binding;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import javax.xml.stream.Location;
 
@@ -50,6 +51,13 @@ public abstract class AbstractModelBinding implements ModelBinding {
 	@Override
 	public void setProperty(ImportPart handler, Object obj, String name, Object value) {
 		setValue(obj, name, value);
+	}
+
+	@Override
+	public void getProperty(ImportPart handler, Object obj, String name, Consumer<Object> continuation) {
+		TLObject self = (TLObject) obj;
+		TLStructuredTypePart part = self.tType().getPartOrFail(name);
+		continuation.accept(self.tValue(part));
 	}
 
 	@Override

@@ -33,6 +33,9 @@ import com.top_logic.model.util.TLModelUtil;
  */
 public class Base64Decode extends GenericMethod implements WithFlatMapSemantics<Object[]> {
 
+	private static final String DATA_PREFIX = "data:";
+	private static final String BASE64_MARKER = ";base64,";
+
 	/** 
 	 * Creates a {@link Base64Decode}.
 	 */
@@ -63,8 +66,24 @@ public class Base64Decode extends GenericMethod implements WithFlatMapSemantics<
 		}
 
 		String name = asString(arguments[1]);
-
 		String specifiedContentType = asString(arguments[2]);
+
+		// Check for URL encoded data.
+		String data;
+		if (input.startsWith(DATA_PREFIX)) {
+			int sep = input.indexOf(BASE64_MARKER);
+			if (sep >= 0) {
+				if (specifiedContentType == null) {
+					specifiedContentType = input.substring(DATA_PREFIX.length(), sep);
+				}
+				data = input.substring(sep + BASE64_MARKER.length());
+			} else {
+				data = input;
+			}
+		} else {
+			data = input;
+		}
+
 		String contentType;
 		if (specifiedContentType == null) {
 			contentType = MimeTypesModule.getInstance().getMimeType(name);
@@ -75,7 +94,7 @@ public class Base64Decode extends GenericMethod implements WithFlatMapSemantics<
 		return new BinaryData() {
 			@Override
 			public InputStream getStream() throws IOException {
-				return Base64.getDecoder().wrap(new ASCIISource(input));
+				return Base64.getDecoder().wrap(new ASCIISource(data));
 			}
 
 			@Override

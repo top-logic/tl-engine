@@ -80,7 +80,9 @@ public class Unzip extends GenericMethod {
 					entryObj.put("creationTime", new Date(entry.getCreationTime().toMillis()));
 				}
 				if (entry.getExtra() != null) {
-					entryObj.put("extra", BinaryDataFactory.createBinaryData(entry.getExtra()));
+					entryObj.put("extra",
+						BinaryDataFactory.createBinaryData(
+							entry.getExtra(), BinaryData.CONTENT_TYPE_OCTET_STREAM, "extra"));
 				}
 				if (entry.getLastAccessTime() != null) {
 					entryObj.put("lastAccessTime", new Date(entry.getLastAccessTime().toMillis()));
@@ -92,7 +94,7 @@ public class Unzip extends GenericMethod {
 				entryObj.put("method", entry.getMethod() == ZipEntry.DEFLATED ? "deflated" : "stored");
 				entryObj.put("size", Double.valueOf(entry.getSize()));
 				entryObj.put("compressedSize", Double.valueOf(entry.getCompressedSize()));
-				entryObj.put("crc", Double.valueOf(entry.getCrc()));
+				entryObj.put("crc", entry.getCrc());
 
 				long entrySize = entry.getSize();
 				byte[] buffer;
@@ -105,7 +107,9 @@ public class Unzip extends GenericMethod {
 						buffer = bufferStream.toByteArray();
 					}
 				}
-				BinaryData entryData = BinaryDataFactory.createBinaryData(buffer);
+				BinaryData entryData =
+					BinaryDataFactory.createBinaryData(
+						buffer, BinaryData.CONTENT_TYPE_OCTET_STREAM, entry.getName());
 				entryObj.put("data", entryData);
 
 				result.add(entryObj);

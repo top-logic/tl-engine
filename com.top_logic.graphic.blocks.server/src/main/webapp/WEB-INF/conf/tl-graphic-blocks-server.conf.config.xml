@@ -25,6 +25,7 @@
 					<java name="flowAlign" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowAlign"/>
 					<java name="flowBorder" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowBorder"/>
 					<java name="flowFill" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowFill"/>
+					<java name="flowStack" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowStack"/>
 					<java name="flowPadding" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowPadding"/>
 					<java name="flowSelection" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowSelection"/>
 					<java name="flowHorizontal" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowHorizontal"/>

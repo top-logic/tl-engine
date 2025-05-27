@@ -1,0 +1,114 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>color("red")
+color("#ff0099")
+color(r: 200, g: 60, b: 20, a: 200)
+color(h:150, s:30, l:60)</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Erzeugt einen Farbwert entweder von einer CSS-Farbbeschreibung oder über die Komponenten im Rot-Grün-Blau- oder dem HSL-Farbraum.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td><code class="hljs inlineCode">css</code></td>
+			<td>Zeichenkette</td>
+			<td>Die CSS Farbbeschreibung.</td>
+			<td>nein</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">r</code></td>
+			<td>Zahl</td>
+			<td>Der Rotwert (0..255)</td>
+			<td>nein</td>
+			<td>0</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">g</code></td>
+			<td>Zahl</td>
+			<td>Der Grünwert (0..255)</td>
+			<td>nein</td>
+			<td>0</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">b</code></td>
+			<td>Zahl</td>
+			<td>Der Blauwert (0..255)</td>
+			<td>nein</td>
+			<td>0</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">a</code></td>
+			<td>Zahl</td>
+			<td>Der Alphawert (0..255)</td>
+			<td>nein</td>
+			<td>255</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">h</code></td>
+			<td>Zahl</td>
+			<td>Der Farbwinkel (0..360)</td>
+			<td>nein</td>
+			<td>0</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">s</code></td>
+			<td>Zahl</td>
+			<td>Die Sättigung (0..100)</td>
+			<td>nein</td>
+			<td>100</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">l</code></td>
+			<td>Zahl</td>
+			<td>Die Farbigkeit (0..100)</td>
+			<td>nein</td>
+			<td>50</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">from</code></td>
+			<td>Farbe</td>
+			<td>Beispielfarbe</td>
+			<td>nein</td>
+			<td>-</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Farbe</p>
+
+<p>Die Farbe, die den angebegenen Werten entspricht. Es gelten die folgenden Regeln in der angegebenen Reihenfolge:</p>
+
+<ul>
+	<li>Wenn <code class="hljs inlineCode">css</code> angegeben ist, wird die Beschreibung in eine Farbe übersetzt. Wenn zusätzlich <code class="hljs inlineCode">a</code> angegeben ist, dann wird dieser Alpha-Wert auf die Farbe angewendet. Alle anderen Werte werden ignoriert.</li>
+	<li>Wenn entweder <code class="hljs inlineCode">r</code>, <code class="hljs inlineCode">g</code>, oder <code class="hljs inlineCode">b</code> angegeben ist, wird eine Farbe im RGB-Farbraum erzeugt. Wenn zusätzlich <code class="hljs inlineCode">a</code> angegeben ist, dann wird dieser Alpha-Wert auf die Farbe angewendet. Alle anderen Werte werden ignoriert.</li>
+	<li>Es wird eine Farbe im HSL-Farbraum aus den angegebenen Werten <code class="hljs inlineCode">h</code>, <code class="hljs inlineCode">s</code>, und <code class="hljs inlineCode">l</code> erzeugt. Fehlende Werte werden von der Beispielfarbe <code class="hljs inlineCode">from</code> genommen, wenn diese angegeben ist. Ohne Beispielfarbe werden fehlende Werte mit den angegebenen Standardwerten gefüllt.</li>
+</ul>
+
+<h2>Beispiele</h2>
+
+<h3>Alle Farben des Regenbogens</h3>
+
+<pre>
+	<code>count(0, 360, 20).map(h -&gt; color(h: $h, s:80))
+</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> List mit den Farben des Regenbogens</p>

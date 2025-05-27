@@ -119,6 +119,20 @@ public class FlowFactory {
 	}
 
 	/**
+	 * Factory for {@link Stack}.
+	 */
+	@SideEffectFree
+	public static Stack flowStack(
+			List<Box> contents,
+			String cssClass,
+			Object userObject) {
+		return Stack.create()
+			.setContents(contents)
+			.setCssClass(cssClass)
+			.setUserObject(userObject);
+	}
+
+	/**
 	 * Factory for {@link Border}.
 	 */
 	@SideEffectFree

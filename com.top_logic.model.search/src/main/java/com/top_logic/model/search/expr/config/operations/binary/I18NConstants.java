@@ -39,6 +39,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_UNSUPPORTED_CONTENT_TYPE__VALUE_MSG;
 
+	/**
+	 * @en Failed to unzip data from "{0}": {1}
+	 */
+	public static ResKey2 ERROR_UNZIP_FAILED__NAME_MSG;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

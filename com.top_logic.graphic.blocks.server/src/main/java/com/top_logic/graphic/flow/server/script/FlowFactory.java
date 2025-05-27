@@ -123,7 +123,7 @@ public class FlowFactory {
 	 */
 	@SideEffectFree
 	public static Decoration flowBorder(
-		@Mandatory Box content,
+		Box content,
 		@BooleanDefault(true) boolean top,
 		@BooleanDefault(true) boolean left,
 		@BooleanDefault(true) boolean right,
@@ -153,7 +153,7 @@ public class FlowFactory {
 	 */
 	@SideEffectFree
 	public static Decoration flowFill(
-		@Mandatory Box content,
+			Box content,
 		@StringDefault("gray") @ScriptConversion(ToStyle.class) String fill,
 		String cssClass,
 		Object userObject
@@ -333,14 +333,14 @@ public class FlowFactory {
 	 */
 	@SideEffectFree
 	public static Box flowEmpty(
-		Double width,
-		Double height,
+		double minWidth,
+		double minHeight,
 		String cssClass,
 		Object userObject
 	) {
 		return Empty.create()
-			.setMinWidth(width)
-			.setMinHeight(height)
+			.setMinWidth(minWidth)
+			.setMinHeight(minHeight)
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}

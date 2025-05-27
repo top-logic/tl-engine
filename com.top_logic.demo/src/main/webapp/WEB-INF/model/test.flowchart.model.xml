@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="test.flowchart">
+		<class name="FlowNode">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="inputs"
+					inverse-reference="usedIn"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="FlowNode"
+				>
+					<annotations>
+						<constraints>
+							<constraint class="com.top_logic.model.util.NoAttributeCycle"/>
+						</constraints>
+						<options>
+							<options-by-expression>
+								<function><![CDATA[node -> $node.container()
+    .get(`test.flowchart:Product#buildInstructions`)]]></function>
+							</options-by-expression>
+						</options>
+					</annotations>
+				</reference>
+				<reference name="usedIn"
+					inverse-reference="inputs"
+					kind="backwards"
+					multiple="true"
+					navigate="true"
+					type="FlowNode"
+				/>
+				<property name="image"
+					type="tl.core:Binary"
+				/>
+				<reference name="locations"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Location"
+				/>
+				<property name="marker"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+		<class name="Location">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="part"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="Part"
+				>
+					<annotations>
+						<options>
+							<options-by-expression>
+								<function><![CDATA[l -> $l.container().container()
+    .get(`test.flowchart:Product#parts`)]]></function>
+							</options-by-expression>
+						</options>
+					</annotations>
+				</reference>
+				<property name="count"
+					type="tl.core:Integer"
+				/>
+				<property name="name"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query expr="x -> $x.get(`test.flowchart:Location#part`).toString()"/>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<reference name="usages"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="Usage"
+				/>
+			</attributes>
+		</class>
+		<class name="Part">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="color"
+					type="tl.util:Color"
+				/>
+			</attributes>
+		</class>
+		<class name="Product">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form columns="ONE">
+						<field
+							attribute="name"
+							fullQualifiedName="test.flowchart:Product#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="image"
+							fullQualifiedName="test.flowchart:Product#image"
+							type="tl.imagegallery:GalleryImage"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="buildInstructions"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="FlowNode"
+				/>
+				<reference name="parts"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Part"
+				/>
+				<reference name="image"
+					bag="true"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="tl.imagegallery:GalleryImage"
+				/>
+			</attributes>
+		</class>
+		<class name="Usage">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="tl-graphic-blocks-server/flowChart.template.xml"
+>
+	<arguments>
+		<name key="dynamic.d4066e09-7e0b-46d1-b6ee-75ed80cd16b6">
+			<en>Flowchart</en>
+			<de>Flussdiagramm</de>
+		</name>
+		<modelBuilder class="com.top_logic.graphic.flow.server.ui.ScriptFlowChartBuilder">
+			<create-chart><![CDATA[model -> {
+
+// All nodes that are not used to build other nodes.
+roots = [
+    all(`test.flowchart:FlowNode`)
+        .filter(n -> $n.get(`test.flowchart:FlowNode#usedIn`).isEmpty())
+];
+
+// Building levels: Array of level arrays with nodes. 
+// Each node in level N is used to build a node in level N-1.
+levels = 
+    $roots.recursion(level -> [$level.get(`test.flowchart:FlowNode#inputs`)]);
+
+// Chart of building flow.    
+flowChart(
+    flowPadding(all: 16, content: 
+        flowHorizontal(gap: 64, contents: $levels.map(nodes -> 
+        flowVertical(gap: 32, contents: $nodes.map(n -> 
+            flowAlign(hAlign: "CENTER",  content: 
+                flowVertical([
+                    {
+                        marker = $n.get(`test.flowchart:FlowNode#marker`);
+                        $marker ? flowAlign(hAlign: "CENTER", content: 
+                            flowBorder(stroke: "red", dashes: [5, 5], content: 
+                                flowPadding(all: 4, content: 
+                                    flowText($marker))
+                            )
+                        ) : null
+                    },
+                    flowAlign(hAlign: "CENTER", content: 
+                        flowPadding(all: 4, content: 
+                            flowText($n.get(`test.flowchart:FlowNode#name`))
+                    )),
+                    flowGrid(gapY: -1, contents: 
+                        $n.get(`test.flowchart:FlowNode#locations`).map(l -> 
+                            [
+                                {
+                                    count = $l.get(`test.flowchart:Location#count`);
+                                    $count != null ? 
+                                        flowBorder(right: false,  content: 
+                                            flowText($count)) : null
+                                },
+                                flowBorder(content:
+                                    flowFill(
+                                        fill: $l.get(`test.flowchart:Location#part`)
+                                            .get(`test.flowchart:Part#color`), 
+                                        content: 
+                                            flowText($l.get(`test.flowchart:Location#part`))
+                                    )
+                                ),
+                                {
+                                    usages = $l.get(`test.flowchart:Location#usages`);
+                                    $usages ? 
+                                        flowAlign(content: 
+                                            flowBorder(left: false, content: 
+                                                flowText($usages))) : null
+                                }
+                            ]
+                        )
+                    ),
+                    flowPadding(top: 8, content:
+                        flowBorder(
+                            flowImage($n.get(`test.flowchart:FlowNode#image`))))
+                ]))
+            )
+        )
+        ))
+    )
+)
+}]]></create-chart>
+		</modelBuilder>
+	</arguments>
+</config:template-call>

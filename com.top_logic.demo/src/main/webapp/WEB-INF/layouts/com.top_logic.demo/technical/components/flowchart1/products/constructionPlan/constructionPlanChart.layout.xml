@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="tl-graphic-blocks-server/flowChart.template.xml"
+>
+	<arguments model="selection(com.top_logic.demo/technical/components/flowchart1/productsContextList.layout.xml#List)">
+		<dialogs>
+			<layout-reference resource="com.top_logic.demo/technical/components/flowchart1/products/constructionPlan/addPart/dialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/flowchart1/products/constructionPlan/componentProperties/dialog.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/flowchart1/products/constructionPlan/createUsage/dialog.layout.xml"/>
+		</dialogs>
+		<name key="dynamic.90e02e7f-5528-47f0-bfaf-ffc41a982587">
+			<en>Construction plan</en>
+			<de>Bauplan</de>
+		</name>
+		<modelBuilder class="com.top_logic.graphic.flow.server.ui.ScriptFlowChartBuilder">
+			<create-chart><![CDATA[model -> {
+
+// All parts.
+parts = $model.get(`test.flowchart:Product#buildInstructions`);
+
+nodes = $parts.map(p -> flowSelection(
+    userObject: $p,
+    content: flowBorder(stroke: "#eccf33", thickness: 2, cssClass:"tlSelectionMarker", content: flowFill(fill: "#eccf3340", cssClass:"tlSelectionMarker", content: flowPadding(all: 3, 
+    content: flowVertical(
+        contents: [
+            {
+                marker = $p.get(`test.flowchart:FlowNode#marker`);
+                $marker.isEmpty()
+                    ? null
+                    : flowPadding(bottom: 8, content: flowAlign(
+                        hAlign: "middle", 
+                        content: 
+                            flowBorder(
+                                stroke: "red", 
+                                dashes: [5, 5], 
+                                content: flowPadding(
+                                    all: 4, 
+                                    content: flowText($marker)))))
+            },
+            flowAlign(
+                hAlign: "middle", 
+                content: flowPadding(
+                    all: 4, 
+                    content: flowText(
+                        fontWeight: "bold",
+                        text: $p.get(`test.flowchart:FlowNode#name`))
+            )),
+            flowAlign(
+                hAlign: "middle",  content: flowGrid(
+                gapY: -1, 
+                contents: $p.get(`test.flowchart:FlowNode#locations`).map(l -> [
+                    {
+                        count = $l.get(`test.flowchart:Location#count`);
+                        $count == null 
+                            ? null
+                            : flowBorder(
+                                right: false,  
+                                content: flowPadding(all: 3, content: flowText($count)))
+                    },
+                    flowBorder(
+                        content: flowFill(
+                            fill: $l.get(`test.flowchart:Location#part`)
+                                .get(`test.flowchart:Part#color`), 
+                            content: 
+                                flowPadding(all: 3, content: flowText($l.get(`test.flowchart:Location#part`)))
+                        )
+                    ),
+                    {
+                        usages = $l.get(`test.flowchart:Location#usages`);
+                        $usages.isEmpty() 
+                            ? null 
+                            : flowAlign(
+                                content: flowBorder(
+                                    left: false, 
+                                    content: flowPadding(all: 3, content: flowText($usages))))
+                    }
+                ])
+            )),
+            {
+                image = $p.get(`test.flowchart:FlowNode#image`);
+                $image == null
+                    ? null
+                    : flowPadding(
+                        top: 8, 
+                        content: flowBorder(flowImage($image)))
+            }
+        ]))))
+        )
+    );
+
+nodeByPart = $nodes.indexBy(n -> $n["userObject"]);
+
+flowChart(
+    root: flowPadding(all: 16, 
+        content: flowTree(
+            nodes: $nodes,
+            connections: $parts
+                .filter(p -> !$p.get(`test.flowchart:FlowNode#inputs`).isEmpty())
+                .map(p -> flowConnection(
+                    parent: $nodeByPart[$p],
+                    children: $p.get(`test.flowchart:FlowNode#inputs`)
+                        .map(p -> $nodeByPart[$p])
+                ))
+        )
+    )
+);
+
+}]]></create-chart>
+		</modelBuilder>
+		<buttons>
+			<button id="ID_6e8ce086_9a2c_4deb_9570_8ef943486a8c"
+				class="com.top_logic.layout.form.component.InvalidateCommand"
+			/>
+			<button id="ID_cf346e3d_eacf_410a_8ee4_ede994013f70"
+				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.d7f1be23-a60a-4f01-9be0-75189c27bc39">
+					<en>Delete selected component</en>
+					<de>Selektiertes Bauteil löschen</de>
+				</resourceKey>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation"/>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

@@ -26,6 +26,9 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 		/** Type literal for {@link com.top_logic.graphic.flow.data.Empty}. */
 		EMPTY,
 
+		/** Type literal for {@link com.top_logic.graphic.flow.data.Stack}. */
+		STACK,
+
 		/** Type literal for {@link com.top_logic.graphic.flow.data.SelectableBox}. */
 		SELECTABLE_BOX,
 
@@ -150,6 +153,7 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 			case Text.TEXT__TYPE: result = com.top_logic.graphic.flow.data.Text.create(); break;
 			case Image.IMAGE__TYPE: result = com.top_logic.graphic.flow.data.Image.create(); break;
 			case Empty.EMPTY__TYPE: result = com.top_logic.graphic.flow.data.Empty.create(); break;
+			case Stack.STACK__TYPE: result = com.top_logic.graphic.flow.data.Stack.create(); break;
 			case CompassLayout.COMPASS_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.CompassLayout.create(); break;
 			case TreeLayout.TREE_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.TreeLayout.create(); break;
 			case SelectableBox.SELECTABLE_BOX__TYPE: result = com.top_logic.graphic.flow.data.SelectableBox.create(); break;

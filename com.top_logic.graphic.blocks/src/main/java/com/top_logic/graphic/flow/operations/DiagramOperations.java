@@ -14,6 +14,7 @@ import com.top_logic.graphic.blocks.svg.event.MouseButton;
 import com.top_logic.graphic.blocks.svg.event.Registration;
 import com.top_logic.graphic.blocks.svg.event.SVGClickEvent;
 import com.top_logic.graphic.blocks.svg.event.SVGClickHandler;
+import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.graphic.flow.data.SelectableBox;
 
@@ -35,8 +36,9 @@ public interface DiagramOperations extends Drawable, SVGClickHandler {
 	 * </p>
 	 */
 	default void layout(RenderContext context) {
-		self().getRoot().computeIntrinsicSize(context, 0, 0);
-		self().getRoot().distributeSize(context, 0, 0, self().getRoot().getWidth(), self().getRoot().getHeight());
+		Box root = self().getRoot();
+		root.computeIntrinsicSize(context, 0, 0);
+		root.distributeSize(context, 0, 0, root.getWidth(), root.getHeight());
 	}
 
 	@Override
@@ -48,10 +50,15 @@ public interface DiagramOperations extends Drawable, SVGClickHandler {
 
 		out.beginSvg();
 		out.writeCssClass(self().getCssClass());
-		out.dimensions(Double.toString(self().getRoot().getWidth()), Double.toString(self().getRoot().getHeight()), 0,
-			0, self().getRoot().getWidth(),
-			self().getRoot().getHeight());
-		out.write(self().getRoot());
+		Box root = self().getRoot();
+		out.dimensions(
+			Double.toString(root.getWidth()),
+			Double.toString(root.getHeight()),
+			0,
+			0,
+			root.getWidth(),
+			root.getHeight());
+		out.write(root);
 		self().setClickHandler(out.attachOnClick(this, self()));
 		out.endSvg();
 	}

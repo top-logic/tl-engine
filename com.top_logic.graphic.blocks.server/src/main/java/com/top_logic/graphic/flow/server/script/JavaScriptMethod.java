@@ -49,24 +49,42 @@ public class JavaScriptMethod extends GenericMethod {
 
 	private final Converter[] _conversions;
 
+	private final boolean _sideEffectFree;
+
+	private final boolean _canEvaluateAtCompileTime;
+
 	/**
 	 * Creates a {@link JavaScriptMethod}.
 	 */
-	protected JavaScriptMethod(String name, Method java, Converter[] conversions,
+	protected JavaScriptMethod(String name, Method java, boolean sideEffectFree, boolean canEvaluateAtCompileTime,
+			Converter[] conversions,
 			SearchExpression[] arguments) {
 		super(name, arguments);
 		_java = java;
+		_canEvaluateAtCompileTime = canEvaluateAtCompileTime;
 		_conversions = conversions;
+		_sideEffectFree = sideEffectFree;
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new JavaScriptMethod(getName(), _java, _conversions, arguments);
+		return new JavaScriptMethod(getName(), _java, _sideEffectFree, _canEvaluateAtCompileTime, _conversions,
+			arguments);
 	}
 
 	@Override
 	public TLType getType(List<TLType> argumentTypes) {
 		return null;
+	}
+
+	@Override
+	public boolean isSideEffectFree() {
+		return _sideEffectFree;
+	}
+
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return _canEvaluateAtCompileTime;
 	}
 
 	@Override
@@ -91,6 +109,10 @@ public class JavaScriptMethod extends GenericMethod {
 		private final ArgumentDescriptor _descriptor;
 
 		private final Converter[] _conversions;
+
+		private final boolean _sideEffectFree;
+
+		private final boolean _canEvaluateAtCompileTime;
 
 		/**
 		 * Configuration options for {@link JavaScriptMethod.Builder}.
@@ -143,6 +165,15 @@ public class JavaScriptMethod extends GenericMethod {
 				}
 				_descriptor = descriptor.build();
 				_conversions = conversions.toArray(new Converter[0]);
+
+				SideEffectFree sideEffectFree = _method.getAnnotation(SideEffectFree.class);
+				if (sideEffectFree != null) {
+					_sideEffectFree = true;
+					_canEvaluateAtCompileTime = sideEffectFree.canEvaluateAtCompileTime();
+				} else {
+					_sideEffectFree = false;
+					_canEvaluateAtCompileTime = false;
+				}
 			} catch (ClassNotFoundException | SecurityException | NoSuchMethodException ex) {
 				throw new RuntimeException(ex);
 			}
@@ -324,7 +355,8 @@ public class JavaScriptMethod extends GenericMethod {
 
 		@Override
 		public JavaScriptMethod build(Expr expr, SearchExpression[] args) throws ConfigurationException {
-			return new JavaScriptMethod(getName(), _method, _conversions, args);
+			return new JavaScriptMethod(getName(), _method, _sideEffectFree, _canEvaluateAtCompileTime, _conversions,
+				args);
 		}
 
 		@Override

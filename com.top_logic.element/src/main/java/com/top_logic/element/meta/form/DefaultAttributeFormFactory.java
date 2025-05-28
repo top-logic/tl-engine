@@ -223,10 +223,11 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 				return null;
 			}
 
+			applyDynamicVisibility(update, updateContainer, result);
+
 			if (result instanceof FormField) {
 				FormField field = (FormField) result;
 
-				applyDynamicVisibility(update, updateContainer, result);
 
 				TLConstraints annotation = attribute.getAnnotation(TLConstraints.class);
 				if (annotation != null) {

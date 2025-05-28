@@ -52,6 +52,11 @@
 							fullQualifiedName="test.dynamicmode:Acquisition#reason"
 							type="tl.core:Text"
 						/>
+						<field
+							attribute="documents"
+							fullQualifiedName="test.dynamicmode:Acquisition#documents"
+							type="tl.folder:WebFolder"
+						/>
 					</form>
 				</form-definition>
 			</annotations>
@@ -118,6 +123,20 @@
 						</dynamic-visibility>
 					</annotations>
 				</property>
+				<reference name="documents"
+					composite="true"
+					kind="forwards"
+					navigate="true"
+					type="tl.folder:WebFolder"
+				>
+					<annotations>
+						<dynamic-visibility>
+							<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression">
+								<function>acquisition -&gt; $acquisition.get(`test.dynamicmode:Acquisition#category`) == `test.dynamicmode:Category#Investment` ? "editable" : "hidden"</function>
+							</mode-selector>
+						</dynamic-visibility>
+					</annotations>
+				</reference>
 			</attributes>
 		</class>
 		<class name="Position">

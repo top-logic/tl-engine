@@ -37,6 +37,7 @@ import com.top_logic.layout.basic.component.BreadcrumbComponent;
 import com.top_logic.layout.buttonbar.ButtonBarFactory;
 import com.top_logic.layout.component.TabComponent;
 import com.top_logic.layout.dynamic.DynamicLayoutContainer;
+import com.top_logic.layout.layoutRenderer.LayoutControlRenderer;
 import com.top_logic.layout.structure.LayoutControlProvider.Layouting;
 import com.top_logic.layout.structure.LayoutControlProvider.Strategy;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
@@ -607,10 +608,10 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 				width = dimension;
 				minWidth = theConstraint.getMinSize();
 				height = DisplayDimension.HUNDERED_PERCENT;
-				minHeight = 0;
+				minHeight = LayoutControlRenderer.MIN_SIZE;
 			} else {
 				width = DisplayDimension.HUNDERED_PERCENT;
-				minWidth = 0;
+				minWidth = LayoutControlRenderer.MIN_SIZE;
 				height = dimension;
 				minHeight = theConstraint.getMinSize();
 			}

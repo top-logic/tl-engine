@@ -219,6 +219,10 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 		if (provider != null) {
 			FormMember result = provider.getFormField(update, name);
 
+			if (result == null) {
+				return null;
+			}
+
 			if (result instanceof FormField) {
 				FormField field = (FormField) result;
 

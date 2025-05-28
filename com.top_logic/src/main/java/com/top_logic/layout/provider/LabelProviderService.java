@@ -719,11 +719,8 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 			if (!obj.tValid()) {
 				return getDefaultValue();
 			}
-
-			TLStructuredType type = (TLStructuredType) TLModelUtil.type(obj); // handles classifiers by
-																				// returning owner
-																				// instead of
-																				// classifier
+			// handle classifiers by returning owner instead of classifier
+			TLStructuredType type = (TLStructuredType) TLModelUtil.type(obj);
 
 			if (type == null) {
 				// Compatibility with test cases in modules not having dynamic types.

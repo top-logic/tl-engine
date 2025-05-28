@@ -85,14 +85,14 @@ public class LabelVisitor implements TLModelVisitor<String, Void> {
 
 	@Override
 	public String visitClassifier(TLClassifier model, Void arg) {
-		ResKey theName = FastListElementLabelProvider.labelKey(model);
-		return (Resources.getInstance().getString(theName));
+		ResKey labelKey = FastListElementLabelProvider.labelKey(model);
+		return (Resources.getInstance().getString(labelKey));
 	}
 
 	@Override
 	public String visitEnumeration(TLEnumeration model, Void arg) {
-		ResKey theName = FastListElementLabelProvider.labelKey(model);
-		return (Resources.getInstance().getString(theName));
+		ResKey labelKey = FastListElementLabelProvider.labelKey(model);
+		return (Resources.getInstance().getString(labelKey));
 	}
 
 	@Override

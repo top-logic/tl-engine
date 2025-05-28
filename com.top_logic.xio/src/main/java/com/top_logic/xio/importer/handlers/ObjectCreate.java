@@ -34,7 +34,7 @@ public class ObjectCreate<C extends ObjectCreate.Config<?>> extends ObjectImport
 
 		/**
 		 * Whether an existing object should be re-used, if the object with the given
-		 * {@link #getId()} was already imported.
+		 * {@link #getIdAttribute()} was already imported.
 		 */
 		boolean getJoinDuplicates();
 

@@ -489,7 +489,7 @@
 
 					<attribute-setting
 						config-name="COLOR"
-						legacy-type-code="1"
+						legacy-type-code="17"
 					>
 						<field-provider impl="com.top_logic.element.meta.form.fieldprovider.ColorFieldProvider"/>
 						<tag-provider impl="com.top_logic.element.meta.form.tag.ColorTagProvider"/>

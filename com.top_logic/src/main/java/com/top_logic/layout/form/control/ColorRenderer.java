@@ -13,6 +13,8 @@ import java.io.IOException;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
+import com.top_logic.layout.form.format.ColorFormat;
+import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
 
 /**
  * {@link Renderer} for {@link Color} values.
@@ -37,6 +39,8 @@ public class ColorRenderer implements Renderer<Color> {
 		out.append(bgColor);
 		out.append("; cursor:default;");
 		out.endAttribute();
+		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributesPlain(context, out,
+			ColorFormat.formatColor(value));
 		out.endBeginTag();
 
 		out.writeText(NBSP);

@@ -20,7 +20,6 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
-import com.top_logic.model.search.expr.config.operations.string.EncodeXML;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -107,7 +106,7 @@ public class ColorFunction extends GenericMethod {
 	 * {@link MethodBuilder} creating {@link ColorFunction}.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<ColorFunction> {
-		/** Description of parameters for a {@link EncodeXML}. */
+		/** Description of parameters. */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.optional("css")
 

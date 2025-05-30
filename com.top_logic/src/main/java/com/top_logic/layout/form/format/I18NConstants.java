@@ -16,6 +16,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey1 ERROR_INVALID_COLOR_FORMAT__VALUE_PROPERTY_POS;
 
+	/**
+	 * @en Invalid color specification: {0}
+	 */
+	public static ResKey1 ERROR_INVALID_COLOR_FORMAT__VALUE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

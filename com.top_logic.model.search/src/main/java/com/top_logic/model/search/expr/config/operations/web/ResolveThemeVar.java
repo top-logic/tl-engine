@@ -5,14 +5,11 @@
  */
 package com.top_logic.model.search.expr.config.operations.web;
 
-import java.awt.Color;
-import java.util.HashMap;
 import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.mig.util.ColorUtil;
-import com.top_logic.mig.util.HSLColor;
+import com.top_logic.gui.ThemeFactory;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
@@ -23,20 +20,20 @@ import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 
 /**
- * Function creating a {@link Color} value.
+ * Function resolving a theme alias.
  */
-public class ColorValues extends GenericMethod {
+public class ResolveThemeVar extends GenericMethod {
 
 	/**
-	 * Creates a {@link ColorValues}.
+	 * Creates a {@link ResolveThemeVar} operation.
 	 */
-	protected ColorValues(String name, SearchExpression[] arguments) {
+	protected ResolveThemeVar(String name, SearchExpression[] arguments) {
 		super(name, arguments);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new ColorValues(getName(), arguments);
+		return new ResolveThemeVar(getName(), arguments);
 	}
 
 	@Override
@@ -46,35 +43,17 @@ public class ColorValues extends GenericMethod {
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		Object arg = arguments[0];
-		Color color;
-		if (arg instanceof Color col) {
-			color = col;
-		} else if (arg == null) {
-			color = Color.black;
-		} else {
-			color = ColorUtil.cssColor(asString(arg));
-		}
-
-		HSLColor hsl = new HSLColor(color);
-		HashMap<String, Object> values = new HashMap<>();
-		values.put("h", Double.valueOf(hsl.getHue()));
-		values.put("s", Double.valueOf(hsl.getSaturation()));
-		values.put("l", Double.valueOf(hsl.getLuminance()));
-		values.put("r", Double.valueOf(color.getRed()));
-		values.put("g", Double.valueOf(color.getGreen()));
-		values.put("b", Double.valueOf(color.getBlue()));
-		values.put("a", Double.valueOf(color.getAlpha()));
-		return values;
+		String var = asString(arguments[0]);
+		return ThemeFactory.getTheme().getValue(var);
 	}
 
 	/**
-	 * {@link MethodBuilder} creating {@link ColorValues}.
+	 * {@link MethodBuilder} creating {@link ResolveThemeVar} operation.
 	 */
-	public static final class Builder extends AbstractSimpleMethodBuilder<ColorValues> {
+	public static final class Builder extends AbstractSimpleMethodBuilder<ResolveThemeVar> {
 		/** Description of parameters. */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
-			.mandatory("color")
+			.mandatory("var")
 			.build();
 
 		/**
@@ -90,9 +69,9 @@ public class ColorValues extends GenericMethod {
 		}
 
 		@Override
-		public ColorValues build(Expr expr, SearchExpression[] args)
+		public ResolveThemeVar build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new ColorValues(getConfig().getName(), args);
+			return new ResolveThemeVar(getConfig().getName(), args);
 		}
 	}
 }

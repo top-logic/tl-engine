@@ -11,6 +11,7 @@ import java.util.Map;
 
 import com.top_logic.basic.col.MapBuilder;
 import com.top_logic.layout.form.format.ColorFormat;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Utility methods for color computations.
@@ -143,10 +144,13 @@ public class ColorUtil {
     }
 
 	/**
-	 * Parses a CSS color sepcification in the form <code>#rrggbbaa</code> or a well-known color
+	 * Parses a CSS color specification in the form <code>#rrggbbaa</code> or a well-known color
 	 * name such as <code>red</code>.
+	 * 
+	 * @throws TopLogicException
+	 *         if the value cannot be parsed as CSS color spec.
 	 */
-	public static Color cssColor(String css) {
+	public static Color cssColor(String css) throws TopLogicException {
 		return ColorFormat.parseColor(css);
 	}
 

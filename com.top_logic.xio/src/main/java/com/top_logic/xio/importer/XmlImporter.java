@@ -6,6 +6,8 @@
 package com.top_logic.xio.importer;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -13,15 +15,21 @@ import javax.xml.transform.Source;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Log;
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationReader;
+import com.top_logic.basic.config.DefaultConfigConstructorScheme;
+import com.top_logic.basic.config.DefaultConfigConstructorScheme.Factory;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.Content;
+import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.xml.XMLStreamUtil;
 import com.top_logic.xio.importer.binding.DefaultImportContext;
 import com.top_logic.xio.importer.binding.ImportContext;
@@ -35,6 +43,26 @@ import com.top_logic.xio.importer.handlers.Handler;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public final class XmlImporter {
+
+	private static final Map<String, ConfigurationDescriptor> HANDLER_DESCRIPTORS;
+
+	static {
+		Map<String, ConfigurationDescriptor> descriptors = new HashMap<>();
+		for (Class<?> handlerType : TypeIndex.getInstance().getSpecializations(Handler.class, true, false, false)) {
+			try {
+				Factory factory = DefaultConfigConstructorScheme.getFactory(handlerType);
+				Class<?> config = factory.getConfigurationInterface();
+				TagName annotation = config.getAnnotation(TagName.class);
+				if (annotation != null) {
+					descriptors.put(annotation.value(), TypedConfiguration.getConfigurationDescriptor(config));
+				}
+			} catch (ConfigurationException ex) {
+				Logger.error("Cannot load configuration for '" + handlerType + "'.", XmlImporter.class);
+			}
+		}
+		descriptors.put("handler", TypedConfiguration.getConfigurationDescriptor(DispatchingImporter.Config.class));
+		HANDLER_DESCRIPTORS = Collections.unmodifiableMap(descriptors);
+	}
 
 	/**
 	 * Creates an {@link XmlImporter} with the given top-level import {@link Handler}.
@@ -84,8 +112,7 @@ public final class XmlImporter {
 	 * @return The {@link Handler} performing the actual import.
 	 */
 	public static Handler readImportConfig(InstantiationContext context, Content importConfig) {
-		ConfigurationReader reader = new ConfigurationReader(context, Collections.singletonMap("handler",
-			TypedConfiguration.getConfigurationDescriptor(DispatchingImporter.Config.class)));
+		ConfigurationReader reader = new ConfigurationReader(context, HANDLER_DESCRIPTORS);
 		reader.setSource(importConfig);
 		Handler handler;
 		try {

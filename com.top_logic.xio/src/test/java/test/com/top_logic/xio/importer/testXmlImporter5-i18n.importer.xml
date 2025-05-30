@@ -1,0 +1,27 @@
+<dispatch>
+	<tag name="a">
+		<object model-type="test.com.top_logic.xio.importer.test5:A">
+			<property name="name" xml-attribute="name"/>
+			
+			<dispatch>
+				<tag name="properties">
+					<dispatch>
+						<tag name="property">
+							<switch xml-attribute="name">
+								<case value="label_en">
+									<set-translation name="label" language="en"/>
+								</case>
+								<case value="label_de">
+									<set-translation name="label" language="de"/>
+								</case>
+								<default>
+									<dispatch/>
+								</default>
+							</switch>
+						</tag>					
+					</dispatch>
+				</tag>
+			</dispatch>
+		</object>
+	</tag>
+</dispatch>

@@ -1,0 +1,84 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>$binary.unzip()</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Unpacks a ZIP file and makes the contained files available as a list of JSON objects.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>binary</td>
+			<td>Binary value</td>
+			<td>The ZIP file to be unpacked</td>
+			<td>Yes</td>
+			<td>-</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> List of JSON objects</p>
+
+<p>An entry with the following fields for each file contained in the ZIP file:</p>
+
+<ul>
+	<li>
+	<p><code><code class="hljs inlineCode">data</code></code> The unpacked binary data of the entry.</p>
+	</li>
+	<li>
+	<p><code><code class="hljs inlineCode">name</code> </code>The file name of the unpacked file.</p>
+	</li>
+	<li>
+	<p><code class="hljs inlineCode">comment</code> An optional comment</p>
+	</li>
+	<li>
+	<p><code class="hljs inlineCode">compressedSize</code> The size of the compressed content.</p>
+	</li>
+	<li>
+	<p><code class="hljs inlineCode">crc</code> The CRC checksum of the content.</p>
+	</li>
+	<li>
+	<p><code class="hljs inlineCode">extra</code> Optional binary data assigned to the content.</p>
+	</li>
+	<li>
+	<p><code class="hljs inlineCode">creationTime</code> The date the content was last modified.</p>
+	</li>
+	<li>
+	<p><code class="hljs inlineCode">lastAccessTime</code> The date the content was last accessed.</p>
+	</li>
+	<li>
+	<p><code class="hljs inlineCode">lastModifiedTime</code> The date the content was last modified.</p>
+	</li>
+	<li>
+	<p><code class="hljs inlineCode">method</code> The compression method, either <code class="hljs inlineCode">"deflated"</code> or <code class="hljs inlineCode">"stored"</code>.</p>
+	</li>
+	<li>
+	<p><code class="hljs inlineCode">size</code> The unpacked size of the content.</p>
+	</li>
+</ul>
+
+<h2>Examples</h2>
+
+<h3>Calculate total size</h3>
+
+<pre>
+	<code>$zip.unzip().map(entry -&gt; $entry["size"]).sum()</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> The total size to be expected when unpacking the transferred ZIP file <code class="hljs inlineCode">$zip</code>.</p>

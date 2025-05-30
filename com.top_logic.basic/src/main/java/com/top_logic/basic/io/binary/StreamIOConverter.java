@@ -23,7 +23,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
  * @see BinaryDataSource#deliverTo(OutputStream)
  * @see #convert(BinaryDataSource)
  */
-class StreamIOConverter {
+public class StreamIOConverter {
 
 	/**
 	 * Provides output from the given source as {@link InputStream} buy using a separate

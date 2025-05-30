@@ -47,6 +47,11 @@ public class ResolveThemeVar extends GenericMethod {
 		return ThemeFactory.getTheme().getValue(var);
 	}
 
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		return false;
+	}
+
 	/**
 	 * {@link MethodBuilder} creating {@link ResolveThemeVar} operation.
 	 */

@@ -28,6 +28,8 @@ import com.top_logic.xio.importer.handlers.PropertySwitch.Config.ValueHandler;
  * attribute.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
+ * 
+ * @see SwitchImportHandler
  */
 public class PropertySwitch<C extends PropertySwitch.Config<?>> extends ConfiguredImportHandler<C> {
 

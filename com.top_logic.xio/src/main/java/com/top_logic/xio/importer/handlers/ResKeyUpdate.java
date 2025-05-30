@@ -13,6 +13,7 @@ import javax.xml.stream.XMLStreamReader;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey.Builder;
@@ -35,8 +36,12 @@ public class ResKeyUpdate<C extends ResKeyUpdate.Config<?>> extends StoreHandler
 
 		/**
 		 * The XML attribute to read.
+		 * 
+		 * <p>
+		 * If not given, the text content of the current element is read instead.
+		 * </p>
 		 */
-		@Mandatory
+		@Nullable
 		String getXmlAttribute();
 
 		/**
@@ -46,6 +51,8 @@ public class ResKeyUpdate<C extends ResKeyUpdate.Config<?>> extends StoreHandler
 		String getLanguage();
 
 	}
+
+	private String _xmlAttribute;
 
 	/**
 	 * Creates a {@link ResKeyUpdate} from configuration.
@@ -58,11 +65,13 @@ public class ResKeyUpdate<C extends ResKeyUpdate.Config<?>> extends StoreHandler
 	@CalledByReflection
 	public ResKeyUpdate(InstantiationContext context, C config) {
 		super(context, config);
+
+		_xmlAttribute = getConfig().getXmlAttribute();
 	}
 
 	@Override
 	public Object importXml(ImportContext context, XMLStreamReader in) throws XMLStreamException {
-		String rawValue = in.getAttributeValue(null, getConfig().getXmlAttribute());
+		String rawValue = _xmlAttribute == null ? in.getElementText() : in.getAttributeValue(null, _xmlAttribute);
 		if (rawValue != null) {
 			context.getProperty(this, var(context), name(), oldValue -> {
 				ResKey oldResKey = (ResKey) oldValue;

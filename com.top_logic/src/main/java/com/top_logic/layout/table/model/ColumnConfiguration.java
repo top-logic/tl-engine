@@ -471,8 +471,10 @@ public abstract class ColumnConfiguration extends ColumnBase
 	public abstract CellExistenceTester getCellExistenceTester();
 	
 	/**
-	 * Returns a {@link Renderer} that is finally used to export this column in the given
+	 * The {@link ExcelCellRenderer} that is finally used to export this column in the given
 	 * {@link ExcelExportSupport}.
+	 * 
+	 * @see #internalExcelRenderer()
 	 */
 	public ExcelCellRenderer getExcelRenderer() {
 		ExcelCellRenderer renderer = internalExcelRenderer();
@@ -482,6 +484,11 @@ public abstract class ColumnConfiguration extends ColumnBase
 		return DefaultExcelCellRenderer.INSTANCE;
 	}
 
+	/**
+	 * The configured {@link ExcelCellRenderer} or <code>null</code>, if none is specified.
+	 * 
+	 * @see #getExcelRenderer()
+	 */
 	public abstract ExcelCellRenderer internalExcelRenderer();
 
 	/**

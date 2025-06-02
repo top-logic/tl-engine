@@ -276,15 +276,6 @@
 		            <renderer kind="CODE" type="java.awt.Color" implementation="com.top_logic.layout.form.control.ColorRenderer" />
 				</renderers>
 				
-				<excel-renderers>
-					<!-- Note: Excel renderers must be configured with model type, since only this type is known for a column during generic table configuration. -->
-		            <excel-renderer kind="MODEL" type="tl.accounts:Person">
-		            	<implementation class="com.top_logic.tool.export.MappingExcelCellRenderer" 
-		            		excel-mapping="com.top_logic.knowledge.gui.layout.person.PersonExcelMapping"
-		            	/>
-		            </excel-renderer>
-				</excel-renderers>
-				
 				<mappings>
 					<mapping kind="CODE" type="com.top_logic.dob.data.DataObjectImpl" implementation="com.top_logic.layout.compare.ObjectNameMapping" />
 					<mapping kind="CODE" type="com.top_logic.model.TLObject" implementation="com.top_logic.layout.compare.ObjectNameMapping" />

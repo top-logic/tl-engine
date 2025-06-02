@@ -6,7 +6,7 @@
             <entry name="username" value="root"/>             
             <entry name="givenName" value="Administrator"/>
             <entry name="sn" value="Super"/>             
-            <entry name="personalTitle" value="Admin"/>
+            <entry name="personalTitle" value=""/>
             <entry name="customerName" value=""/>
             <entry name="telephoneNumber" value="+49 1234 111100"/>
             <entry name="mobile" value="+49 170 12345601"/>

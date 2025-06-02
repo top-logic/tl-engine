@@ -113,7 +113,7 @@ public class LoginMessagesUtil {
 		}
 
 		// if there is a duration, check the difference
-		return DateUtil.differenceInDays(new Date(), confirmDate) >= confirmDuration;
+		return DateUtil.differenceInDays(confirmDate, new Date()) >= confirmDuration;
 	}
 
 	/**

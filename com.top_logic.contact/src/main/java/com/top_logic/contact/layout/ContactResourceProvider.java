@@ -166,7 +166,7 @@ public class ContactResourceProvider extends WrapperResourceProvider
 	protected ResKey getLabelForPerson(PersonContact contact) {
 		String name = contact.getName();
 		String title = contact.getTitle();
-		if (title != null) {
+		if (!StringServices.isEmpty(title)) {
 			name = title + " " + name;
 		}
 		String firstName = contact.getFirstName();

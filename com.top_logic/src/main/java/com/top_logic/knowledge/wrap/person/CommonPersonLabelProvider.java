@@ -6,6 +6,7 @@
 package com.top_logic.knowledge.wrap.person;
 
 import com.top_logic.base.user.UserInterface;
+import com.top_logic.basic.StringServices;
 import com.top_logic.layout.LabelProvider;
 
 /**
@@ -59,7 +60,10 @@ public class CommonPersonLabelProvider implements LabelProvider {
 		StringBuffer name = new StringBuffer();
 		name.append(user.getName()).append(", ");
 		if (includeTitle) {
-			name.append(user.getTitle()).append(' ');
+			String title = user.getTitle();
+			if (!StringServices.isEmpty(title)) {
+				name.append(title).append(' ');
+			}
 		}
 		name.append(user.getFirstName());
 		return name.toString();

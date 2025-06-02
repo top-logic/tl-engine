@@ -122,7 +122,7 @@
 					<named-member name="content"/>
 					<object>
 						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-							value="3"
+							value="5"
 						/>
 					</object>
 					<labeled-member label="Berechnete Spalte"/>
@@ -146,7 +146,7 @@
 					<named-member name="content"/>
 					<object>
 						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-							value="3"
+							value="5"
 						/>
 					</object>
 					<labeled-member label="Berechnete Spalte"/>
@@ -173,7 +173,7 @@
 					<named-member name="content"/>
 					<object>
 						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-							value="3"
+							value="5"
 						/>
 					</object>
 					<labeled-member label="Berechnete Spalte"/>
@@ -196,7 +196,7 @@
 					<named-member name="content"/>
 					<object>
 						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-							value="3"
+							value="5"
 						/>
 					</object>
 					<labeled-member label="Berechnete Spalte"/>
@@ -219,7 +219,7 @@
 					<named-member name="content"/>
 					<object>
 						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-							value="3"
+							value="5"
 						/>
 					</object>
 					<labeled-member label="Berechnete Spalte"/>
@@ -247,7 +247,7 @@
 					<named-member name="content"/>
 					<object>
 						<business-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntNaming$Name"
-							value="3"
+							value="5"
 						/>
 					</object>
 					<labeled-member label="Berechnete Spalte"/>
@@ -291,11 +291,12 @@
 		>
 			<identifiers>
 				<uuids>
-					<uuid value="ID_dac74ec6_50f2_4c76_9792_4518fa719d74"/>
-					<uuid value="ID_753d4a5e_1a04_4aaa_87ac_b1dc181d2215"/>
-					<uuid value="ID_e4db7f98_f4ef_444e_b8d0_51cdf8ea29d9"/>
 					<uuid value="ID_d4ec0533_f936_4d06_b621_dfccfb3ac9fc"/>
 					<uuid value="ID_ebef0d83_187c_4c3e_b35f_6932c15f1fdd"/>
+					<uuid value="ID_dac74ec6_50f2_4c76_9792_4518fa719d74"/>
+					<uuid value="ID_753d4a5e_1a04_4aaa_87ac_b1dc181d2215"/>
+					<uuid value="ID_8c2a38b3_9292_4250_9bc5_efcec91e7c65"/>
+					<uuid value="ID_ee6fb986_8eb5_4801_8d0b_263671bd84cd"/>
 				</uuids>
 			</identifiers>
 		</action>
@@ -354,7 +355,7 @@
 								/>
 							</business-object>
 						</object>
-						<named-member name="ID_ebef0d83_187c_4c3e_b35f_6932c15f1fdd"/>
+						<named-member name="ID_ee6fb986_8eb5_4801_8d0b_263671bd84cd"/>
 					</path>
 				</model>
 			</actual-value>

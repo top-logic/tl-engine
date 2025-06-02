@@ -82,13 +82,6 @@
 						</additionalHeaders>
 					</configuration>
 				</column>
-				<column name="ID_c5e19ab4_2fa6_424b_9638_70874c0df60e">
-					<configuration class="com.top_logic.model.search.providers.ColumnAdditionalHeaders">
-						<additionalHeaders>
-							<byExpression label="list -> $list.sum()"/>
-						</additionalHeaders>
-					</configuration>
-				</column>
 			</column-customizations>
 			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
 				columnId="ID_c5e19ab4_2fa6_424b_9638_70874c0df60e"

@@ -127,7 +127,7 @@ public class ColumnGroupTableConfigurationProvider
 		for (String innerColumn : getConfig().getInnerColumns()) {
 			ColumnConfiguration declaredColumn = table.getDeclaredColumn(innerColumn);
 			if (declaredColumn == null) {
-				InfoService.showWarning(I18NConstants.NO_SUCH_COLUMN__COLUMN.fill(declaredColumn));
+				InfoService.showWarning(I18NConstants.NO_SUCH_COLUMN__COLUMN.fill(innerColumn));
 				continue;
 			}
 			columnGroup.addColumn(declaredColumn);

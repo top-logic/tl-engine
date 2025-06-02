@@ -97,15 +97,6 @@
  }
 }]]></accessor>
 			</configurationProvider>
-			<configurationProvider class="com.top_logic.layout.table.model.ColumnGroupTableConfigurationProvider"
-				columnId="ID_8c2a38b3_9292_4250_9bc5_efcec91e7c65"
-				inner-columns="ID_dac74ec6_50f2_4c76_9792_4518fa719d74,ID_753d4a5e_1a04_4aaa_87ac_b1dc181d2215"
-			>
-				<columnLabel key="dynamic.14471678-7361-4840-a113-cb4dc6ec6747">
-					<en>Evaluations</en>
-					<de>Auswertungen</de>
-				</columnLabel>
-			</configurationProvider>
 			<column-customizations>
 				<column name="ID_dac74ec6_50f2_4c76_9792_4518fa719d74">
 					<configuration class="com.top_logic.model.search.providers.ColumnAdditionalHeaders">
@@ -115,6 +106,15 @@
 					</configuration>
 				</column>
 			</column-customizations>
+			<column-group
+				columnId="ID_8c2a38b3_9292_4250_9bc5_efcec91e7c65"
+				inner-columns="ID_dac74ec6_50f2_4c76_9792_4518fa719d74,ID_753d4a5e_1a04_4aaa_87ac_b1dc181d2215"
+			>
+				<columnLabel key="dynamic.14471678-7361-4840-a113-cb4dc6ec6747">
+					<en>Evaluations</en>
+					<de>Auswertungen</de>
+				</columnLabel>
+			</column-group>
 		</configurationProviders>
 		<buttons>
 			<button id="exportExcelGrid"

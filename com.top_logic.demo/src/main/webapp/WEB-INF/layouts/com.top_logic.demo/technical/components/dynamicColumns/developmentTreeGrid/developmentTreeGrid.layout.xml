@@ -74,15 +74,6 @@
   .map(link -> $link.get(`test.dynamictable:Rating#value`))
   .max()]]></accessor>
 			</configurationProvider>
-			<configurationProvider class="com.top_logic.layout.table.model.ColumnGroupTableConfigurationProvider"
-				columnId="ID_ea5145a0_bf50_4c2e_a8ab_09dd37266ad7"
-				inner-columns="ID_fcdb1018_c067_48e5_8895_4670bbec0150,ID_c5e19ab4_2fa6_424b_9638_70874c0df60e"
-			>
-				<columnLabel key="dynamic.b6b5bbc5-4f64-4157-8961-71e53a39d8ab">
-					<en>Evaluations</en>
-					<de>Auswertungen</de>
-				</columnLabel>
-			</configurationProvider>
 			<column-customizations>
 				<column name="ID_fcdb1018_c067_48e5_8895_4670bbec0150">
 					<configuration class="com.top_logic.model.search.providers.ColumnAdditionalHeaders">
@@ -119,6 +110,15 @@
  }
 }]]></accessor>
 			</configurationProvider>
+			<column-group
+				columnId="ID_ea5145a0_bf50_4c2e_a8ab_09dd37266ad7"
+				inner-columns="ID_fcdb1018_c067_48e5_8895_4670bbec0150,ID_c5e19ab4_2fa6_424b_9638_70874c0df60e"
+			>
+				<columnLabel key="dynamic.b6b5bbc5-4f64-4157-8961-71e53a39d8ab">
+					<en>Evaluations</en>
+					<de>Auswertungen</de>
+				</columnLabel>
+			</column-group>
 		</configurationProviders>
 		<buttons>
 			<button id="exportExcelGrid"

@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.stream.StreamSource;
@@ -24,6 +25,7 @@ import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.util.I18NBundle;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
@@ -125,6 +127,17 @@ public class TestXmlImporter extends TestCase {
 		assertEquals("a5", a7others.get(4).tValueByName("name"));
 	}
 
+	public void testI18NImport() throws XMLStreamException, IOException {
+		TLObject result = importXml(
+			"testXmlImporter5-i18n.model.xml",
+			"testXmlImporter5-i18n.importer.xml",
+			"testXmlImporter5-i18n.data.xml");
+
+		assertEquals("my-obj", result.tValueByName("name"));
+		assertEquals(ResKey.builder().add(Locale.ENGLISH, "My object").add(Locale.GERMAN, "Mein Objekt").build(),
+			result.tValueByName("label"));
+	}
+
 	@SuppressWarnings("unchecked")
 	private Collection<? extends TLObject> collection(Object v) {
 		return v == null ? Collections.emptyList() : (Collection<TLObject>) v;
@@ -144,6 +157,8 @@ public class TestXmlImporter extends TestCase {
 		TLModel model = new TLModelImpl();
 		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE,
 			FileManager.getInstance().getData("/WEB-INF/model/tl.core.model.xml"));
+		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE,
+			FileManager.getInstance().getData("/WEB-INF/model/tl.model.i18n.model.xml"));
 		DynamicModelService.extendModel(log, model, TransientObjectFactory.INSTANCE, resource(modelResource));
 		ModelBinding binding = new TransientModelBinding(model);
 		return (TLObject) importer.importModel(binding, new StreamSource(resource(xmlResource).getStream()));

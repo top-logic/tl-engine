@@ -24,6 +24,8 @@ import com.top_logic.xio.importer.binding.ImportContext;
  * appropriate target {@link Handler}.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
+ * 
+ * @see PropertySwitch
  */
 public class SwitchImportHandler<C extends SwitchImportHandler.Config<?>> extends ConfiguredImportHandler<C> {
 

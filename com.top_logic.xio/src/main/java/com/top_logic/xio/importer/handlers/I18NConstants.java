@@ -36,6 +36,10 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey2 ERROR_UNEXPECTED_END_TAG__EXPECTED_FOUND; // Expected to have consumed all data up to the matching end element of ''{0}'', found: {1}
 
+	/**
+	 * @en Warning: Ignoring unknown tag "{0}".
+	 */
+	public static ResKey1 WARN_IGNORING_UNKNOWN__TAG;
 
 	static {
 		initConstants(I18NConstants.class);

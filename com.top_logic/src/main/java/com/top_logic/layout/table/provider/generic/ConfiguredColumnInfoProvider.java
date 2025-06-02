@@ -89,11 +89,6 @@ public class ConfiguredColumnInfoProvider implements ColumnInfoProvider {
 		}
 	
 		@Override
-		protected void setExcelRenderer(ColumnConfiguration column) {
-			// Legacy.
-		}
-	
-		@Override
 		protected void setRenderer(ColumnConfiguration column) {
 			// Legacy.
 		}

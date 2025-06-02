@@ -17,6 +17,7 @@ import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.form.template.ControlProvider;
+import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.security.SecurityAddingTableConfiguration;
 import com.top_logic.layout.table.CellClassProvider;
 import com.top_logic.layout.table.filter.AllCellsExist;
@@ -160,9 +161,12 @@ public abstract class ColumnInfo implements ColumnConfigurator {
 	protected abstract void setCellExistenceTester(ColumnConfiguration column);
 	
 	/**
-	 * Adapts {@link ColumnConfiguration#getExcelRenderer()}.
+	 * Adapts {@link ColumnConfiguration#internalExcelRenderer()}.
 	 */
-	protected abstract void setExcelRenderer(ColumnConfiguration column);
+	protected void setExcelRenderer(ColumnConfiguration column) {
+		column.setExcelRenderer(
+			LabelProviderService.getInstance().getExcelCellRendererForType(getTypeContext().getType()));
+	}
 
 	/**
 	 * Adapts {@link ColumnConfiguration#getCellRenderer()}.
@@ -206,7 +210,7 @@ public abstract class ColumnInfo implements ColumnConfigurator {
 			|| column.getCellExistenceTester() == null) {
 			setCellExistenceTester(column);
 		}
-		if (column.getExcelRenderer() == null) {
+		if (column.internalExcelRenderer() == null) {
 			setExcelRenderer(column);
 		}
 		if (column.getCellRenderer() == null) {

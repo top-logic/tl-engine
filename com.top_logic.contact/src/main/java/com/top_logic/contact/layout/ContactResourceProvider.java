@@ -16,6 +16,7 @@ import com.top_logic.contact.business.AddressHolder;
 import com.top_logic.contact.business.CompanyContact;
 import com.top_logic.contact.business.PersonContact;
 import com.top_logic.knowledge.gui.WrapperResourceProvider;
+import com.top_logic.util.Resources;
 
 
 /**
@@ -126,19 +127,20 @@ public class ContactResourceProvider extends WrapperResourceProvider
 
     @Override
 	public String getLabel(Object anObject) {
-        if (anObject instanceof PersonContact) {
-            String theLabel = getLabelForPerson((PersonContact) anObject);
+		if (anObject instanceof PersonContact contact) {
+			ResKey key = getLabelForPerson(contact);
+			String label = Resources.getInstance().getString(key);
 			if (getConfig().getMarkAccount()) {
 				String marker = getConfig().getMarkerString();
 				if (!getConfig().getInverse()) {
-					if (((PersonContact) anObject).getPerson() != null)
-						theLabel += marker;
+					if (contact.getPerson() != null)
+						label += marker;
 				} else {
-					if (((PersonContact) anObject).getPerson() == null)
-						theLabel += marker;
+					if (contact.getPerson() == null)
+						label += marker;
 				}
             }
-            return theLabel;
+			return label;
         }
         if (anObject instanceof CompanyContact) {
             return getLabelForCompany((CompanyContact) anObject);
@@ -161,10 +163,16 @@ public class ContactResourceProvider extends WrapperResourceProvider
     /** 
      * Return the Label for a PersonContact.
      */
-    protected String getLabelForPerson(PersonContact aPersonContact) {
-		String name = aPersonContact.getName();
-		String firstName = aPersonContact.getFirstName();
-		return StringServices.isEmpty(firstName) ? name : name + ", " + firstName;
+	protected ResKey getLabelForPerson(PersonContact contact) {
+		String name = contact.getName();
+		String title = contact.getTitle();
+		if (title != null) {
+			name = title + " " + name;
+		}
+		String firstName = contact.getFirstName();
+		return StringServices.isEmpty(firstName)
+			? com.top_logic.knowledge.gui.layout.person.I18NConstants.ACCOUNT_LABEL__LAST.fill(name)
+			: com.top_logic.knowledge.gui.layout.person.I18NConstants.ACCOUNT_LABEL__FIRST_LAST.fill(firstName, name);
     }
 
 }

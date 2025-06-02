@@ -11,6 +11,7 @@ import static com.top_logic.mig.html.NoLinkResourceProvider.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -42,7 +43,6 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.SelectField;
-import com.top_logic.layout.form.model.SelectFieldUtils;
 import com.top_logic.layout.form.model.TableField;
 import com.top_logic.layout.form.model.TreeTableField;
 import com.top_logic.layout.form.tag.TableTag;
@@ -183,12 +183,34 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 
 	private TableField createFlatTableField(TableConfiguration tableConfiguration,
 			AbstractRestrainedSelectionModel tableSelectionModel) {
-		List<?> allRows = SelectFieldUtils.getOptionAndSelectionOuterJoinOrdered(_targetSelectField);
+
+		List<Object> allRows = new ArrayList<>();
+		List<?> selection = _targetSelectField.getSelection();
+		allRows.addAll(selection);
+		Set<?> selectionSet = _targetSelectField.getSelectionSet();
+		for (Iterator<?> it = _targetSelectField.getOptionModel().iterator(); it.hasNext();) {
+			Object element = it.next();
+			if (selectionSet.contains(element)) {
+				continue;
+			}
+
+			allRows.add(element);
+		}
+
 		ObjectTableModel tableModel =
 			new ObjectTableModel(tableConfiguration.getDefaultColumns(), tableConfiguration, allRows);
 		TableField tableField = FormFactory.newTableField(SELECTION_TABLE, getConfigKey());
-		tableField.setTableModel(tableModel);
-		initSelectionModel(tableSelectionModel, _targetSelectField.getSelectionSet());
+
+		initSelectionModel(tableSelectionModel, selectionSet);
+
+		TableViewModel viewModel = new TableViewModel(tableModel, getConfigKey()) {
+			@Override
+			public Comparator<Object> getRowComparator() {
+				return new SelectionFirstComparator<>(tableSelectionModel.getSelection(), super.getRowComparator());
+			}
+		};
+
+		tableField.setTableModel(viewModel);
 		removeSelectionBlockingFilters(tableField, tableSelectionModel);
 		showFirstSelectedRow(tableField, tableSelectionModel);
 		return tableField;
@@ -528,6 +550,33 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 			return column.getResourceProvider();
 		}
 		return createNoLinkResourceProvider(column.getResourceProvider());
+	}
+
+	private static final class SelectionFirstComparator<T> implements Comparator<T> {
+
+		private final Set<?> _selectionSet;
+
+		private final Comparator<? super T> _comparator;
+
+		/**
+		 * Creates a {@link SelectionFirstComparator}.
+		 */
+		private SelectionFirstComparator(Set<?> selectionSet, Comparator<? super T> comparator) {
+			_selectionSet = selectionSet;
+			_comparator = comparator;
+		}
+
+		@Override
+		public int compare(T o1, T o2) {
+			boolean selected1 = _selectionSet.contains(o1);
+			boolean selected2 = _selectionSet.contains(o2);
+
+			if (selected1 ^ selected2) {
+				return selected1 ? -1 : 1;
+			}
+
+			return _comparator.compare(o1, o2);
+		}
 	}
 
 	private final class FixedOptionClassProvider implements RowClassProvider {

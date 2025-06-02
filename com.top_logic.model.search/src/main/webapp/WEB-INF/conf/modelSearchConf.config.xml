@@ -343,6 +343,9 @@
 					<method name="base64Encode" class="com.top_logic.model.search.expr.config.operations.binary.Base64Encode$Builder"/>
 					<method name="base64Decode" class="com.top_logic.model.search.expr.config.operations.binary.Base64Decode$Builder"/>
 					<method name="contextPath" class="com.top_logic.model.search.expr.config.operations.web.ContextPath$Builder"/>
+					<method name="color" class="com.top_logic.model.search.expr.config.operations.web.ColorFunction$Builder"/>
+					<method name="colorValues" class="com.top_logic.model.search.expr.config.operations.web.ColorValues$Builder"/>
+					<method name="themeVar" class="com.top_logic.model.search.expr.config.operations.web.ResolveThemeVar$Builder"/>
 					<method name="numberFormat" class="com.top_logic.model.search.expr.NumerFormatExpr$Builder"/>
 					<method name="dateFormat" class="com.top_logic.model.search.expr.DateFormatExpr$Builder"/>
 					<method name="messageFormat" class="com.top_logic.model.search.expr.MessageFormatExpr$Builder"/>

@@ -1,0 +1,49 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>themeVar("my-var")</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Looks up the value of a variable that is defined in the current theme. A theme can define colors, icons and dimensions, among other things. In a CSS file, a theme variable <code class="hljs inlineCode">my-var</code> is available via the expression <code class="hljs inlineCode">var(--my-var)</code>. The same variable can be evaluated via TL script using the expression <code class="hljs inlineCode">themeVar("my-var")</code>.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Theme name</th>
+			<th>Name Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td><code class="hljs inlineCode">var</code></td>
+			<td>String</td>
+			<td>The name of the variable to be looked up</td>
+			<td>Yes</td>
+			<td>-</td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> Depending on the variable, string, color value, icon.</p>
+
+<p>The value with which the given variable is assigned in the current theme.</p>
+
+<h2>Examples</h2>
+
+<h3>Example 1: Output</h3>
+
+<pre>
+	<code>themeVar("background-danger")
+</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> The color value with which the background of values annotated with the CSS class <code class="hljs inlineCode">tl-danger</code> is filled.</p>

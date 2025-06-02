@@ -10,14 +10,13 @@ import java.awt.GradientPaint;
 import java.util.Map;
 
 import com.top_logic.basic.col.MapBuilder;
+import com.top_logic.layout.form.format.ColorFormat;
+import com.top_logic.util.error.TopLogicException;
 
 /**
- * The ColorUtil contains useful static methods for colors.
+ * Utility methods for color computations.
  *
- * TODO move to tl-basic. Add darker/brighter wit a Factor as found
- *      in {@link Color}.
- *
- * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
+ * @author <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
 public class ColorUtil {
 
@@ -143,6 +142,17 @@ public class ColorUtil {
     public static GradientPaint getGradientPaintFor(Color aColor, int anIntensiveValue) {
         return new GradientPaint(0, 0, aColor, 0, 0, getDarkerColor(aColor, anIntensiveValue));
     }
+
+	/**
+	 * Parses a CSS color specification in the form <code>#rrggbbaa</code> or a well-known color
+	 * name such as <code>red</code>.
+	 * 
+	 * @throws TopLogicException
+	 *         if the value cannot be parsed as CSS color spec.
+	 */
+	public static Color cssColor(String css) throws TopLogicException {
+		return ColorFormat.parseColor(css);
+	}
 
 }
 

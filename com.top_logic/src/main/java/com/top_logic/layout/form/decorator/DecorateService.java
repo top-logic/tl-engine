@@ -132,7 +132,7 @@ public abstract class DecorateService<DI extends DecorateInfo> {
 	 * decorated informations.
 	 * 
 	 * <p>
-	 * The additional column has no {@link ColumnConfiguration#getExcelRenderer() excel renderer}.
+	 * The additional column has no {@link ColumnConfiguration#internalExcelRenderer() excel renderer}.
 	 * </p>
 	 * 
 	 * @see #createDecorationInfoColumn(Accessor, CellRenderer, ResKey, ExcelCellRenderer)

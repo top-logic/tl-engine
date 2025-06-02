@@ -372,7 +372,7 @@ public class ColumnDescription extends ColumnConfiguration {
 	}
 
 	@Override
-	public ExcelCellRenderer getExcelRenderer() {
+	public ExcelCellRenderer internalExcelRenderer() {
 		return _excelRenderer;
 	}
 

@@ -627,7 +627,7 @@ public interface ColumnBaseConfig extends WithColumnCssClasses {
 	 * {@link ExcelCellRenderer} that is used when the value for this column is exported to
 	 *         excel, or <code>null</code> if none configured.
 	 * 
-	 * @see ColumnConfiguration#getExcelRenderer()
+	 * @see ColumnConfiguration#internalExcelRenderer()
 	 */
 	@Name(ColumnConfig.EXCEL_RENDERER)
 	PolymorphicConfiguration<? extends ExcelCellRenderer> getExcelRenderer();

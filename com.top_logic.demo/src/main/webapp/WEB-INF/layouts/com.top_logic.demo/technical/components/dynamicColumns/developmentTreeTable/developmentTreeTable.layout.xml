@@ -99,7 +99,7 @@
  }
 }]]></accessor>
 			</configurationProvider>
-			<configurationProvider class="com.top_logic.layout.table.model.ColumnGroupTableConfigurationProvider"
+			<column-group
 				columnId="ID_39d37eb2_f615_4df6_a905_c2edccb3a736"
 				inner-columns="ID_e2342ee9_03f3_42aa_b326_d5b632da982a,ratings"
 			>
@@ -107,7 +107,7 @@
 					<en>Evaluations</en>
 					<de>Auswertungen</de>
 				</columnLabel>
-			</configurationProvider>
+			</column-group>
 		</configurationProviders>
 		<buttons>
 			<button id="ID_3ad17cf3_b3be_4b7f_9425_393bc0cbc2ef"

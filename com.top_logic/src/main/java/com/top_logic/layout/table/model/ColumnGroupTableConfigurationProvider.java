@@ -23,6 +23,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.Step;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.func.Function4;
 import com.top_logic.event.infoservice.InfoService;
@@ -48,6 +49,7 @@ public class ColumnGroupTableConfigurationProvider
 	/**
 	 * Typed configuration interface definition for {@link ColumnGroupTableConfigurationProvider}.
 	 */
+	@TagName("column-group")
 	public interface Config
 			extends PolymorphicConfiguration<ColumnGroupTableConfigurationProvider>, ConfigPart, ColumnProviderConfig {
 

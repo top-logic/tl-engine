@@ -12,10 +12,11 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 
 /**
- * Export of account values to Excel including the login name.
+ * {@link ExcelCellRenderer} that applies an {@link ExcelMapping} to values before export.
  */
 public class MappingExcelCellRenderer extends AbstractExcelCellRenderer
 		implements ConfiguredInstance<MappingExcelCellRenderer.Config<?>> {
@@ -38,6 +39,7 @@ public class MappingExcelCellRenderer extends AbstractExcelCellRenderer
 		 * The export mapping to apply.
 		 */
 		@Name(EXCEL_MAPPING)
+		@Mandatory
 		PolymorphicConfiguration<? extends ExcelMapping> getExcelMapping();
 
 	}

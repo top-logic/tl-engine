@@ -12,12 +12,16 @@ import com.top_logic.layout.I18NConstantsBase;
 /**
  * Internationalization constants for this package.
  */
-@SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
+	/** @en Invalid preview image at position {1}: {0} */
 	public static ResKey2 ERROR_INVALID_IMAGE_DEFINITION__SOURCE__POSITION;
 
+	/** @en {0} is no preview image. */
 	public static ResKey1 ERROR_NO_IMAGE__OBJ;
+
+	/** @en Invalid configured class {0}. */
+	public static ResKey1 INVALID_IMPLEMENTATION_CLASS__CLASS;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -1462,7 +1462,7 @@ public class TreeTableComponent extends BoundComponent
 	private static Object retrieveModelFromPath(TreeModelBuilder<Object> treeModelBuilder, List<?> path,
 			TreeTableComponent tree) {
 		Object actualSelected = getLast(path);
-		if (!((TLObject) actualSelected).tValid()) {
+		if (actualSelected instanceof TLObject tlObject && !tlObject.tValid()) {
 			return tree.getModel();
 		}
 		return treeModelBuilder.retrieveModelFromNode(tree, actualSelected);

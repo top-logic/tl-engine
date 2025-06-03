@@ -116,8 +116,7 @@ public class LoginMessagesMainLayout extends TLMainLayout {
 			LoginMessage loginMessage) {
 		final DefaultDialogModel dialogModel = createLoginMessageDialogModel(loginMessage);
 		HTMLFragment dialogContent = createLoginMessageDialogContent(loginMessage);
-		String confirmName = LoginMessagesUtil.getConfirmName(loginMessage);
-		CommandModel dialogButton = createLoginMessageDialogButton(configuration, confirmName, dialogModel);
+		CommandModel dialogButton = createLoginMessageDialogButton(configuration, loginMessage, dialogModel);
 		dialogModel.setDefaultCommand(dialogButton);
 		MessageBoxShortcuts.open(aContext, dialogModel, dialogContent, CollectionUtil.intoList(dialogButton));
 	}
@@ -170,12 +169,13 @@ public class LoginMessagesMainLayout extends TLMainLayout {
 	}
 
 	private CommandModel createLoginMessageDialogButton(final PersonalConfiguration configuration,
-			final String confirmName, final DefaultDialogModel dialogModel) {
+			final LoginMessage loginMessage, final DefaultDialogModel dialogModel) {
 		Command command = new Command() {
 			@Override
 			public HandlerResult executeCommand(DisplayContext context) {
-				// store flag in personal configuration that login-message were confirmed by user
-				configuration.setValue(confirmName, new Date());
+				// store flag in personal configuration that login-message was confirmed by user
+				LoginMessagesUtil.setConfirmDate(configuration, loginMessage, new Date());
+
 				// close the message box
 				dialogModel.getCloseAction().executeCommand(context);
 

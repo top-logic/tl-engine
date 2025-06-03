@@ -35,6 +35,23 @@
 						value="root"
 					/>
 				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+						<model config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+							label="Titel"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Profil bearbeiten"
+							/>
+						</model>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+						value=""
+					/>
+				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"
 					command-label="Bearbeiten"
@@ -109,7 +126,7 @@
 						/>
 					</field>
 					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Admin"
+						value=""
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
@@ -144,7 +161,7 @@
 						</model>
 					</actual-value>
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-						value="Admin"
+						value=""
 					/>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"

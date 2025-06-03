@@ -45,7 +45,7 @@ public class StyleSheetListModelBuilder implements ListModelBuilder {
 
 	@Override
 	public Object retrieveModelFromListElement(LayoutComponent contextComponent, Object listElement) {
-		return null;
+		return contextComponent.getModel();
 	}
 
 }

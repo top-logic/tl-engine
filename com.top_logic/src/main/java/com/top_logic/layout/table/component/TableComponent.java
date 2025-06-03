@@ -271,20 +271,75 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 		}
 	};
 
+	/**
+	 * Responds to selection changes by updating the table model when the new selection is not
+	 * already present in the current model.
+	 */
 	private static final ChannelListener ON_SELECTION_CHANGE = new ChannelListener() {
 		@Override
-		public void handleNewValue(ComponentChannel sender, Object oldValue, Object newValue) {
+		public void handleNewValue(ComponentChannel sender, Object oldSelection, Object newSelection) {
 			TableComponent table = (TableComponent) sender.getComponent();
 
-			ListModelBuilder listBuilder = table.getListBuilder();
-			if (listBuilder.supportsListElement(table, newValue)) {
-				Object retrievedModel = listBuilder.retrieveModelFromListElement(table, newValue);
-				table.setModel(retrievedModel);
+			// if selection not yet present in the table as a row object
+			if (!table.getTableModel().containsRowObject(newSelection)) {
+				// process single or multi-selection
+				Object selectionToProcess = determineSelectionForProcessing(table, newSelection);
+				if (selectionToProcess != null) {
+					updateTableModelIfSupported(table, selectionToProcess);
+				}
 			}
 
 			table.invalidateSelection();
 		}
 	};
+
+	/**
+	 * Extracts the appropriate selection object for table model processing.
+	 * 
+	 * @param table
+	 *        The table component being updated
+	 * @param newSelection
+	 *        The new selection from the channel
+	 * @return Selection object to process, or null if no processing needed
+	 */
+	private static Object determineSelectionForProcessing(TableComponent table, Object newSelection) {
+		if (!table.isInMultiSelectionMode()) {
+			return newSelection;
+		}
+
+		// handle multi-selection
+		if (!(newSelection instanceof Collection)) {
+			return null;
+		}
+
+		Collection<?> selections = (Collection<?>) newSelection;
+		if (selections.isEmpty()) {
+			return null;
+		}
+
+		// use last item for model lookup
+		return CollectionUtil.getLast(selections);
+	}
+
+	/**
+	 * Updates the table model if the list builder supports the given selection.
+	 * 
+	 * @param table
+	 *        The table component to update
+	 * @param selection
+	 *        The selection object to use for model retrieval
+	 */
+	private static void updateTableModelIfSupported(TableComponent table, Object selection) {
+		ListModelBuilder listBuilder = table.getListBuilder();
+		if (listBuilder == null) {
+			return;
+		}
+
+		if (listBuilder.supportsListElement(table, selection)) {
+			Object retrievedModel = listBuilder.retrieveModelFromListElement(table, selection);
+			table.setModel(retrievedModel);
+		}
+	}
 
 	private static final ChannelValueFilter SELECTION_FILTER = new ChannelValueFilter() {
 		@Override

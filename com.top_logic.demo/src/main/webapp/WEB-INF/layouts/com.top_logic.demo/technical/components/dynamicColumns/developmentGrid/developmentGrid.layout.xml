@@ -51,10 +51,14 @@
     $storage.set(`test.dynamictable:Rating#value`, $value);
   })
 }]]></updater>
+				<group-label key="dynamic.bf2553a0-4577-46a2-96b3-d686937d33cf">
+					<en>Reviews</en>
+					<de>Bewertungen</de>
+				</group-label>
 			</configurationProvider>
 			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
 				columnId="ID_dac74ec6_50f2_4c76_9792_4518fa719d74"
-				columnType="tl.core:Integer"
+				columnType="tl.core:Double"
 			>
 				<columnLabel key="dynamic.605d2884-92d4-4deb-b1f5-d987c906d0f6">
 					<en>Best rating</en>
@@ -93,11 +97,31 @@
  }
 }]]></accessor>
 			</configurationProvider>
+			<column-customizations>
+				<column name="ID_dac74ec6_50f2_4c76_9792_4518fa719d74">
+					<configuration class="com.top_logic.model.search.providers.ColumnAdditionalHeaders">
+						<additionalHeaders>
+							<byExpression label="list -> $list.sum()"/>
+						</additionalHeaders>
+					</configuration>
+				</column>
+			</column-customizations>
+			<column-group
+				columnId="ID_8c2a38b3_9292_4250_9bc5_efcec91e7c65"
+				inner-columns="ID_dac74ec6_50f2_4c76_9792_4518fa719d74,ID_753d4a5e_1a04_4aaa_87ac_b1dc181d2215"
+			>
+				<columnLabel key="dynamic.14471678-7361-4840-a113-cb4dc6ec6747">
+					<en>Evaluations</en>
+					<de>Auswertungen</de>
+				</columnLabel>
+			</column-group>
 		</configurationProviders>
 		<buttons>
 			<button id="exportExcelGrid"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
-			/>
+			>
+				<downloadNameProvider class="com.top_logic.layout.table.export.ComponentDownloadName"/>
+			</button>
 			<button id="ID_d4ec0533_f936_4d06_b621_dfccfb3ac9fc"
 				class="com.top_logic.layout.form.component.InvalidateCommand"
 			>
@@ -114,6 +138,7 @@
 					<en>Delete project</en>
 					<de>Projekt löschen</de>
 				</resourceKey>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation"/>
 			</button>
 		</buttons>
 	</arguments>

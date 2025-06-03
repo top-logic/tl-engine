@@ -79,6 +79,35 @@
   .map(link -> $link.get(`test.dynamictable:Rating#value`))
   .max()]]></accessor>
 			</configurationProvider>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="ID_e2342ee9_03f3_42aa_b326_d5b632da982a"
+				columnType="tl.util:IconResource"
+			>
+				<columnLabel key="dynamic.6bb46093-4725-46c7-aa6f-d5781477afda">
+					<en>Status of the project</en>
+					<de>Status des Projektes</de>
+				</columnLabel>
+				<accessor><![CDATA[row -> {
+ ratings = $row.get(`test.dynamictable:Development#ratings`);
+ averageRating = $ratings.map(link -> $link.get(`test.dynamictable:Rating#value`)).average();
+ maxRating = $ratings.map(link -> $link.get(`test.dynamictable:Rating#value`)).max();
+ switch {
+  $ratings.size() == 0: null;
+  $averageRating * 1.5 < $maxRating: resource(0,"css:far fa-frown",#("Abweichung zu hoch"@de, "Deviation too high"@en),#("Beste Bewertung weicht mehr als 50% vom Durchschnitt ab: {0}%"@de,"Best rating deviates more than 50% from the average: {0}%"@en).fill((($maxRating/$averageRating)-1)*100));
+  $averageRating * 1.25 < $maxRating: resource(1,"css:far fa-meh",#("Abweichung innerhalb der Toleranz"@de, "Deviation within tolerance"@en),#("Beste Bewertung weicht mehr als 25% vom Durchschnitt ab: {0}%"@de,"Best rating deviates more than 25% from the average: {0}%"@en).fill((($maxRating/$averageRating)-1)*100));
+  default: resource(2,"css:far fa-smile",#("Minimale Abweichung"@de, "Minimum deviation"@en), #("Beste Bewertung weicht weniger als 25% vom Durchschnitt ab."@de,"Best rating deviates less than 25% from the average"@en));
+ }
+}]]></accessor>
+			</configurationProvider>
+			<column-group
+				columnId="ID_39d37eb2_f615_4df6_a905_c2edccb3a736"
+				inner-columns="ID_e2342ee9_03f3_42aa_b326_d5b632da982a,ratings"
+			>
+				<columnLabel key="dynamic.24eec918-705a-42e2-a865-c52902ef89f5">
+					<en>Evaluations</en>
+					<de>Auswertungen</de>
+				</columnLabel>
+			</column-group>
 		</configurationProviders>
 		<buttons>
 			<button id="ID_3ad17cf3_b3be_4b7f_9425_393bc0cbc2ef"

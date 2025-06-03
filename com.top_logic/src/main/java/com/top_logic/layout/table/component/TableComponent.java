@@ -276,6 +276,12 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 		public void handleNewValue(ComponentChannel sender, Object oldValue, Object newValue) {
 			TableComponent table = (TableComponent) sender.getComponent();
 
+			ListModelBuilder listBuilder = table.getListBuilder();
+			if (listBuilder.supportsListElement(table, newValue)) {
+				Object retrievedModel = listBuilder.retrieveModelFromListElement(table, newValue);
+				table.setModel(retrievedModel);
+			}
+
 			table.invalidateSelection();
 		}
 	};

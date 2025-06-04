@@ -15,6 +15,8 @@ public class Image_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 
 	private com.top_logic.graphic.flow.data.ImageScale _scale = com.top_logic.graphic.flow.data.ImageScale.MEET;
 
+	private com.top_logic.graphic.flow.data.ImageOrientation _orientation = com.top_logic.graphic.flow.data.ImageOrientation.NORMAL;
+
 	/**
 	 * Creates a {@link Image_Impl} instance.
 	 *
@@ -122,6 +124,25 @@ public class Image_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 	}
 
 	@Override
+	public final com.top_logic.graphic.flow.data.ImageOrientation getOrientation() {
+		return _orientation;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Image setOrientation(com.top_logic.graphic.flow.data.ImageOrientation value) {
+		internalSetOrientation(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getOrientation()} without chain call utility. */
+	protected final void internalSetOrientation(com.top_logic.graphic.flow.data.ImageOrientation value) {
+		if (value == null) throw new IllegalArgumentException("Property 'orientation' cannot be null.");
+		_listener.beforeSet(this, ORIENTATION__PROP, value);
+		_orientation = value;
+		_listener.afterChanged(this, ORIENTATION__PROP);
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.Image setX(double value) {
 		internalSetX(value);
 		return this;
@@ -174,7 +195,8 @@ public class Image_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 			IMG_WIDTH__PROP, 
 			IMG_HEIGHT__PROP, 
 			ALIGN__PROP, 
-			SCALE__PROP));
+			SCALE__PROP, 
+			ORIENTATION__PROP));
 
 	private static java.util.Set<String> TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(new java.util.HashSet<>(
 			java.util.Arrays.asList(
@@ -198,6 +220,7 @@ public class Image_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 			case IMG_HEIGHT__PROP: return getImgHeight();
 			case ALIGN__PROP: return getAlign();
 			case SCALE__PROP: return getScale();
+			case ORIENTATION__PROP: return getOrientation();
 			default: return super.get(field);
 		}
 	}
@@ -210,6 +233,7 @@ public class Image_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 			case IMG_HEIGHT__PROP: internalSetImgHeight((double) value); break;
 			case ALIGN__PROP: internalSetAlign((com.top_logic.graphic.flow.data.ImageAlign) value); break;
 			case SCALE__PROP: internalSetScale((com.top_logic.graphic.flow.data.ImageScale) value); break;
+			case ORIENTATION__PROP: internalSetOrientation((com.top_logic.graphic.flow.data.ImageOrientation) value); break;
 			default: super.set(field, value); break;
 		}
 	}
@@ -227,6 +251,8 @@ public class Image_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 		getAlign().writeTo(out);
 		out.name(SCALE__PROP);
 		getScale().writeTo(out);
+		out.name(ORIENTATION__PROP);
+		getOrientation().writeTo(out);
 	}
 
 	@Override
@@ -252,6 +278,10 @@ public class Image_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 				getScale().writeTo(out);
 				break;
 			}
+			case ORIENTATION__PROP: {
+				getOrientation().writeTo(out);
+				break;
+			}
 			default: super.writeFieldValue(scope, out, field);
 		}
 	}
@@ -264,6 +294,7 @@ public class Image_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 			case IMG_HEIGHT__PROP: setImgHeight(in.nextDouble()); break;
 			case ALIGN__PROP: setAlign(com.top_logic.graphic.flow.data.ImageAlign.readImageAlign(in)); break;
 			case SCALE__PROP: setScale(com.top_logic.graphic.flow.data.ImageScale.readImageScale(in)); break;
+			case ORIENTATION__PROP: setOrientation(com.top_logic.graphic.flow.data.ImageOrientation.readImageOrientation(in)); break;
 			default: super.readField(scope, in, field);
 		}
 	}

@@ -280,20 +280,40 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 		public void handleNewValue(ComponentChannel sender, Object oldSelection, Object newSelection) {
 		    TableComponent table = (TableComponent) sender.getComponent();
 		    
-		    // Only update model if selection exists and is not already in the table
-		    if (newSelection != null && !table.getTableModel().containsRowObject(newSelection)) {
-		        // Extract the first element for model retrieval
-		        Object selectionForModelRetrieval = (newSelection instanceof Collection) 
-		            ? CollectionUtil.getFirst(newSelection) 
-		            : newSelection;
+			boolean shouldUpdateModel = false;
+			Object selectionForModelRetrieval = null;
+
+			// Handle Collection selections
+			if (newSelection instanceof Collection) {
+				Collection<?> collection = (Collection<?>) newSelection;
 		        
-		        // Update model if we have a valid selection element
-		        if (selectionForModelRetrieval != null) {
-		            Object retrievedModel = table.getListBuilder().retrieveModelFromListElement(table, selectionForModelRetrieval);
-		            table.setModel(retrievedModel);
+				// Only process non-empty collections
+				if (!collection.isEmpty()) {
+					// Get the first new element (non-null and not already in table)
+					selectionForModelRetrieval = collection.stream()
+						.filter(element -> element != null && !table.getTableModel().containsRowObject(element))
+						.findFirst()
+						.orElse(null);
+
+					shouldUpdateModel = (selectionForModelRetrieval != null);
+				}
+			}
+			// Handle single object selections
+			else if (newSelection != null) {
+				// Only update model if selection is not already in the table
+				if (!table.getTableModel().containsRowObject(newSelection)) {
+					selectionForModelRetrieval = newSelection;
+					shouldUpdateModel = true;
 		        }
 		    }
 		    
+			// Update model if needed
+			if (shouldUpdateModel) {
+				Object retrievedModel =
+					table.getListBuilder().retrieveModelFromListElement(table, selectionForModelRetrieval);
+				table.setModel(retrievedModel);
+			}
+
 		    table.invalidateSelection();
 		}
 	};

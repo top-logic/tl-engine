@@ -43,6 +43,7 @@ import com.top_logic.graphic.flow.data.ImageScale;
 public class SVGBuilder implements SvgWriter {
 
 	private OMSVGDocument _doc;
+
 	private OMSVGSVGElement _root;
 
 	private OMSVGElement _parent;
@@ -122,6 +123,7 @@ public class SVGBuilder implements SvgWriter {
 		OMSVGTransform transform = _root.createSVGTransform();
 		transform.setTranslate((float) dx, (float) dy);
 		OMSVGTransformList list = ((ISVGTransformable) _current).getTransform().getBaseVal();
+		list.clear();
 		list.appendItem(transform);
 	}
 
@@ -137,6 +139,7 @@ public class SVGBuilder implements SvgWriter {
 		OMSVGTransform transform = _root.createSVGTransform();
 		transform.setMatrix(matrix);
 		OMSVGTransformList list = ((ISVGTransformable) _current).getTransform().getBaseVal();
+		list.clear();
 		list.appendItem(transform);
 	}
 
@@ -286,7 +289,8 @@ public class SVGBuilder implements SvgWriter {
 
 	@Override
 	public void beginRect(double x, double y, double w, double h, double rx, double ry) {
-		OMSVGRectElement rect = _doc.createSVGRectElement((float) x, (float) y, (float) w, (float) h, (float) rx, (float) ry);
+		OMSVGRectElement rect =
+			_doc.createSVGRectElement((float) x, (float) y, (float) w, (float) h, (float) rx, (float) ry);
 		appendChild(rect);
 		_current = rect;
 	}

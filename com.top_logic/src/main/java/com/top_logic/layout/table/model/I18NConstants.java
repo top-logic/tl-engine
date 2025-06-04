@@ -16,7 +16,9 @@ import com.top_logic.layout.ResPrefix;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * @en There is no column with name {0}.
+	 * @en There is no column with the identifier {0}. It is important that the inner columns are
+	 *     defined in a previous column configuration before it is used in a column group
+	 *     configuration.
 	 */
 	public static ResKey1 NO_SUCH_COLUMN__COLUMN;
 	

@@ -8,7 +8,6 @@ package com.top_logic.layout.table.export;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -44,7 +43,6 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.control.AbstractFormMemberControl;
 import com.top_logic.layout.form.control.BlockControl;
 import com.top_logic.layout.form.control.ButtonControl;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.layout.table.model.Column;
@@ -406,16 +404,10 @@ public class StreamingExcelExportHandler extends AbstractTableExportHandler {
 		 */
 		protected Object formatValue(Object aValue, TableViewModel model, int row, Column column) {
 			ExcelCellRenderer excelRenderer = column.getConfig().getExcelRenderer();
-			if (excelRenderer != null) {
-				AdjustableCellValueContext cellContext =
-					_exportRenderContexts.computeIfAbsent(column, ignored -> createCellValueContext(model, column));
-				cellContext.setCellValue(aValue);
-				return excelRenderer.renderCell(cellContext);
-			} else if ((aValue instanceof Number) || (aValue instanceof Date)) {
-				return aValue;
-			} else {
-				return MetaLabelProvider.INSTANCE.getLabel(aValue);
-			}
+			AdjustableCellValueContext cellContext =
+				_exportRenderContexts.computeIfAbsent(column, ignored -> createCellValueContext(model, column));
+			cellContext.setCellValue(aValue);
+			return excelRenderer.renderCell(cellContext);
 		}
 
 		/**

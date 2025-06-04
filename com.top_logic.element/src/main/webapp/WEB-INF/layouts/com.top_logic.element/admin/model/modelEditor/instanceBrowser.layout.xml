@@ -20,6 +20,10 @@
 		>
 			<selectionModelFactory multiple="true"/>
 			<buttons>
+				<button id="exportExcelGrid"
+					class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+					streaming="false"
+				/>
 				<button id="deleteInstance"
 					class="com.top_logic.layout.component.GenericDeleteCommandHandler"
 					clique="delete"

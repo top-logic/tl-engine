@@ -31,21 +31,18 @@ public class LoginMessageNamingScheme extends AbstractModelNamingScheme<LoginMes
 	public interface LoginMessageName extends ModelName {
 
 		/** Name getter. */
-		public String getName();
+		String getName();
 
 		/** Name setter. */
-		public void setName(String name);
+		void setName(String name);
 
 	}
 
-	@Override
-	public Class<LoginMessageName> getNameClass() {
-		return LoginMessageName.class;
-	}
-
-	@Override
-	public Class<LoginMessage> getModelClass() {
-		return LoginMessage.class;
+	/**
+	 * Creates a {@link LoginMessageNamingScheme}.
+	 */
+	public LoginMessageNamingScheme() {
+		super(LoginMessage.class, LoginMessageName.class);
 	}
 
 	@Override

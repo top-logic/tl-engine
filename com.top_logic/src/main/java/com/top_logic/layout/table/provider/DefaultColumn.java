@@ -47,11 +47,6 @@ public abstract class DefaultColumn extends ColumnInfo {
 	}
 
 	@Override
-	protected void setExcelRenderer(ColumnConfiguration column) {
-		// No information.
-	}
-
-	@Override
 	protected void setRenderer(ColumnConfiguration column) {
 		// No information.
 	}

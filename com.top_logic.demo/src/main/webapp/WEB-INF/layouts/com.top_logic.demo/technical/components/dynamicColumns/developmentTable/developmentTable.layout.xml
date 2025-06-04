@@ -32,11 +32,55 @@
   .singleElement()
   .get(`test.dynamictable:Rating#value`)]]></accessor>
 			</configurationProvider>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="ID_6bb142f1_5345_400a_9a80_61dfe7aae1c6"
+				columnType="tl.core:Integer"
+			>
+				<columnLabel key="dynamic.4a551a6a-2d75-4fa1-aade-e6b2f4c5c6fd">
+					<en>Best rating</en>
+					<de>Beste Bewertung</de>
+				</columnLabel>
+				<accessor><![CDATA[row -> model -> 
+  $row.get(`test.dynamictable:Development#ratings`)
+  .map(link -> $link.get(`test.dynamictable:Rating#value`))
+  .max()]]></accessor>
+			</configurationProvider>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				columnId="ID_1c12cec2_bb3b_42c4_953c_9da4eaac6045"
+				columnType="tl.util:IconResource"
+			>
+				<columnLabel key="dynamic.6652b6d4-938a-40d6-a725-4fa5dbaac1fc">
+					<en>Status of the project</en>
+					<de>Status des Projektes</de>
+				</columnLabel>
+				<accessor><![CDATA[row -> {
+ ratings = $row.get(`test.dynamictable:Development#ratings`);
+ averageRating = $ratings.map(link -> $link.get(`test.dynamictable:Rating#value`)).average();
+ maxRating = $ratings.map(link -> $link.get(`test.dynamictable:Rating#value`)).max();
+ switch {
+  $ratings.size() == 0: null;
+  $averageRating * 1.5 < $maxRating: resource(0,"css:far fa-frown",#("Abweichung zu hoch"@de, "Deviation too high"@en),#("Beste Bewertung weicht mehr als 50% vom Durchschnitt ab: {0}%"@de,"Best rating deviates more than 50% from the average: {0}%"@en).fill((($maxRating/$averageRating)-1)*100));
+  $averageRating * 1.25 < $maxRating: resource(1,"css:far fa-meh",#("Abweichung innerhalb der Toleranz"@de, "Deviation within tolerance"@en),#("Beste Bewertung weicht mehr als 25% vom Durchschnitt ab: {0}%"@de,"Best rating deviates more than 25% from the average: {0}%"@en).fill((($maxRating/$averageRating)-1)*100));
+  default: resource(2,"css:far fa-smile",#("Minimale Abweichung"@de, "Minimum deviation"@en), #("Beste Bewertung weicht weniger als 25% vom Durchschnitt ab."@de,"Best rating deviates less than 25% from the average"@en));
+ }
+}]]></accessor>
+			</configurationProvider>
+			<configurationProvider class="com.top_logic.layout.table.model.ColumnGroupTableConfigurationProvider"
+				columnId="ID_92fa91bb_52d5_4a8a_ba43_946001b27664"
+				inner-columns="ID_6bb142f1_5345_400a_9a80_61dfe7aae1c6,ID_1c12cec2_bb3b_42c4_953c_9da4eaac6045"
+			>
+				<columnLabel key="dynamic.65b2c638-a858-41ad-b9d3-9535b17553aa">
+					<en>Evaluations</en>
+					<de>Auswertungen</de>
+				</columnLabel>
+			</configurationProvider>
 		</configurationProviders>
 		<buttons>
 			<button id="exportExcel"
 				class="com.top_logic.layout.table.export.ExcelExportHandler"
-			/>
+			>
+				<downloadNameProvider class="com.top_logic.layout.table.export.ComponentDownloadName"/>
+			</button>
 			<button id="ID_c33d7fd2_44c7_4a22_98f3_102e2d71e42e"
 				class="com.top_logic.layout.form.component.InvalidateCommand"
 			>

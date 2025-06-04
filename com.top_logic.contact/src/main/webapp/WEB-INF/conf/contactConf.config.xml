@@ -28,6 +28,14 @@
 					<provider kind="CODE" type="com.top_logic.contact.external.PlainExternalContact" implementation="com.top_logic.contact.external.ExternalContactResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.contact.external.PlainExternalContactAssignment" implementation="com.top_logic.contact.external.ExternalContactResourceProvider" />
                 </resource-providers>
+				<excel-renderers>
+					<!-- Note: Excel renderers must be configured with model type, since only this type is known for a column during generic table configuration. -->
+		            <excel-renderer kind="MODEL" type="Contacts:PersonContact">
+		            	<implementation class="com.top_logic.tool.export.MappingExcelCellRenderer" 
+		            		excel-mapping="com.top_logic.contact.layout.ContactExcelMapping"
+		            	/>
+		            </excel-renderer>
+				</excel-renderers>
             </instance>
         </config>
 		

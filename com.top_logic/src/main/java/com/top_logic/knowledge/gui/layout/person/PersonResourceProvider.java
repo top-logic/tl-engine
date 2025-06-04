@@ -98,6 +98,10 @@ public class PersonResourceProvider extends WrapperResourceProvider
 
 			String loginName = account.getName();
 			String lastName = user.getName();
+			String title = user.getTitle();
+			if (!StringServices.isEmpty(title)) {
+				lastName = title + " " + lastName;
+			}
 			String firstName = user.getFirstName();
 			ResKey key;
 			if (getConfig().getShowLoginName()) {

@@ -219,58 +219,15 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 		if (provider != null) {
 			FormMember result = provider.getFormField(update, name);
 
+			if (result == null) {
+				return null;
+			}
+
+			applyDynamicVisibility(update, updateContainer, result);
+
 			if (result instanceof FormField) {
 				FormField field = (FormField) result;
 
-				TLDynamicVisibility modeAnnotation = attribute.getAnnotation(TLDynamicVisibility.class);
-				if (modeAnnotation != null) {
-					ModeSelector modeSelector = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
-						.getInstance(modeAnnotation.getModeSelector());
-
-					TLObject object = update.getOverlay();
-
-					class Observer implements ValueListener, Sink<Pointer> {
-						private final List<AttributeUpdateContainer.Handle> _handles = new ArrayList<>();
-
-						@Override
-						public void valueChanged(FormField changedField, Object oldValue, Object newValue) {
-							FormVisibility mode = modeSelector.getMode(object, attribute);
-							mode.applyTo(result);
-							switch (mode) {
-								case READ_ONLY:
-									// Reset to original value to prevent modifying values by
-									// temporarily activating fields.
-									((FormField) result).reset();
-									break;
-								case HIDDEN:
-									// Clear value to prevent leaking irrelevant values into the
-									// model.
-									((FormField) result).setValue(null);
-									break;
-								default:
-									break;
-							}
-
-							removeListeners();
-
-							modeSelector.traceDependencies(object, attribute, this);
-						}
-
-						private void removeListeners() {
-							for (Handle handle : _handles) {
-								handle.release();
-							}
-							_handles.clear();
-						}
-
-						@Override
-						public void add(Pointer p) {
-							_handles.add(updateContainer.addValueListener(p.object(), p.attribute(), this));
-						}
-					}
-
-					new Observer().valueChanged(null, null, null);
-				}
 
 				TLConstraints annotation = attribute.getAnnotation(TLConstraints.class);
 				if (annotation != null) {
@@ -290,6 +247,61 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 		Logger.error("No form field available for attribute '" + attribute + "'.",
 			DefaultAttributeFormFactory.class);
 		return null;
+	}
+
+	private void applyDynamicVisibility(AttributeUpdate update, AttributeUpdateContainer updateContainer,
+			FormMember member) {
+		TLStructuredTypePart attribute = update.getAttribute();
+		TLDynamicVisibility modeAnnotation = attribute.getAnnotation(TLDynamicVisibility.class);
+		if (modeAnnotation == null) {
+			return;
+		}
+		ModeSelector modeSelector = TypedConfigUtil.createInstance(modeAnnotation.getModeSelector());
+
+		TLObject object = update.getOverlay();
+
+		class Observer implements ValueListener, Sink<Pointer> {
+			private final List<AttributeUpdateContainer.Handle> _handles = new ArrayList<>();
+
+			@Override
+			public void valueChanged(FormField changedField, Object oldValue, Object newValue) {
+				FormVisibility mode = modeSelector.getMode(object, attribute);
+				mode.applyTo(member);
+				if (member instanceof FormField) {
+					switch (mode) {
+						case READ_ONLY:
+							/* Reset to original value to prevent modifying values by temporarily
+							 * activating fields. */
+							((FormField) member).reset();
+							break;
+						case HIDDEN:
+							/* Clear value to prevent leaking irrelevant values into the model. */
+							((FormField) member).setValue(null);
+							break;
+						default:
+							break;
+					}
+				}
+
+				removeListeners();
+
+				modeSelector.traceDependencies(object, attribute, this);
+			}
+
+			private void removeListeners() {
+				for (Handle handle : _handles) {
+					handle.release();
+				}
+				_handles.clear();
+			}
+
+			@Override
+			public void add(Pointer p) {
+				_handles.add(updateContainer.addValueListener(p.object(), p.attribute(), this));
+			}
+		}
+
+		new Observer().valueChanged(null, null, null);
 	}
 
 	private Constraint toFormConstraint(AttributeUpdate update, final AttributeUpdateContainer updateContainer,

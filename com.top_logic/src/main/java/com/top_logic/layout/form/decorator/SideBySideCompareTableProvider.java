@@ -59,7 +59,7 @@ public class SideBySideCompareTableProvider<CI extends CompareInfo> extends Abst
 	public SideBySideCompareTableProvider(CompareService<CI> compareService, TableConfiguration leftTablePart,
 			TableConfiguration rightTablePart, TableConfigurationProvider decoratorProvider,
 			ExcelExportSupport excelExport, boolean isTreeTable) {
-		super(compareService, excelExport, isTreeTable);
+		super(compareService, isTreeTable);
 		_leftTablePartConfig = leftTablePart;
 		_rightTablePartConfig = rightTablePart;
 		_decoratorProvider = decoratorProvider;

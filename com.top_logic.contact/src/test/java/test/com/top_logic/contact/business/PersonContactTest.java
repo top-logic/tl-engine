@@ -42,8 +42,7 @@ public class PersonContactTest extends BasicTestCase {
         assertFalse(pfc.accept(theFac)   );
         
 		ContactResourceProvider clr = TypedConfigUtil.newConfiguredInstance(ContactResourceProvider.class);
-        assertTrue(clr.getLabel(thePerson).startsWith("Herberger"));
-        assertTrue(clr.getLabel(thePerson).startsWith("Herberger"));
+		assertTrue(clr.getLabel(thePerson).startsWith("Prof.Dr. Herberger"));
         
         // get rid of the person wrapper and knowledgeObject!
         thePerson.tDelete();

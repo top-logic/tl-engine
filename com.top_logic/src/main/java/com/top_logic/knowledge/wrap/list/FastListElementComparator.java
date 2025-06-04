@@ -7,10 +7,10 @@ package com.top_logic.knowledge.wrap.list;
 
 import java.util.Comparator;
 
-import com.top_logic.knowledge.gui.layout.FastListElementResourceProvider;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
+import com.top_logic.model.resources.TLPartResourceProvider;
 import com.top_logic.util.TLCollator;
 
 /**
@@ -22,7 +22,7 @@ public class FastListElementComparator implements Comparator<TLClassifier> {
 
 	private final TLCollator _collator;
 
-	private final LabelProvider _fleLabels = FastListElementResourceProvider.INSTANCE;
+	private final LabelProvider _fleLabels = TLPartResourceProvider.INSTANCE;
 
 	/**
 	 * Creates a new {@link FastListElementComparator}.

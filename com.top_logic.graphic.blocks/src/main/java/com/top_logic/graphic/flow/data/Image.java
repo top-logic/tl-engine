@@ -30,6 +30,9 @@ public interface Image extends Box, com.top_logic.graphic.flow.operations.ImageO
 	/** @see #getScale() */
 	String SCALE__PROP = "scale";
 
+	/** @see #getOrientation() */
+	String ORIENTATION__PROP = "orientation";
+
 	/**
 	 * The URL where the image data resides.
 	 */
@@ -79,6 +82,16 @@ public interface Image extends Box, com.top_logic.graphic.flow.operations.ImageO
 	 * @see #getScale()
 	 */
 	com.top_logic.graphic.flow.data.Image setScale(com.top_logic.graphic.flow.data.ImageScale value);
+
+	/**
+	 * The image transformation before display.
+	 */
+	com.top_logic.graphic.flow.data.ImageOrientation getOrientation();
+
+	/**
+	 * @see #getOrientation()
+	 */
+	com.top_logic.graphic.flow.data.Image setOrientation(com.top_logic.graphic.flow.data.ImageOrientation value);
 
 	@Override
 	com.top_logic.graphic.flow.data.Image setX(double value);

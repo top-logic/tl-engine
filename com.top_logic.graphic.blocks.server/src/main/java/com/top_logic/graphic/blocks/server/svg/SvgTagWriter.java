@@ -79,6 +79,26 @@ public class SvgTagWriter implements SvgWriter {
 	}
 
 	@Override
+	public void transform(double a, double b, double c, double d, double e, double f) {
+		_out.beginAttribute(TRANSFORM_ATTR);
+		append(MATRIX_OP);
+		append('(');
+		append(a);
+		append(',');
+		append(b);
+		append(',');
+		append(c);
+		append(',');
+		append(d);
+		append(',');
+		append(e);
+		append(',');
+		append(f);
+		append(')');
+		_out.endAttribute();
+	}
+
+	@Override
 	public void writeCssClass(String cssClass) {
 		_out.writeAttribute(CLASS_ATTR, cssClass);
 	}

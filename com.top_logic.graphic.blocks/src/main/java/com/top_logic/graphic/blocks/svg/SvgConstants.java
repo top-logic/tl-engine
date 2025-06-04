@@ -128,6 +128,11 @@ public interface SvgConstants {
 	String TRANSLATE_OP = "translate";
 
 	/**
+	 * Operator defining a matrix transformation.
+	 */
+	String MATRIX_OP = "matrix";
+
+	/**
 	 * Rectangle element.
 	 */
 	String RECT = "rect";

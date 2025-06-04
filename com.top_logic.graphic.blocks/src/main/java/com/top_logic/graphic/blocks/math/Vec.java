@@ -5,6 +5,8 @@
  */
 package com.top_logic.graphic.blocks.math;
 
+import java.util.Objects;
+
 /**
  * Immutable vector in two-dimensional space.
  * 
@@ -81,6 +83,29 @@ public class Vec {
 	 */
 	public double length() {
 		return Math.sqrt(_x * _x + _y * _y);
+	}
+
+	@Override
+	public String toString() {
+		return "[" + _x + " " + _y + "]";
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(_x, _y);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Vec other = (Vec) obj;
+		return Mat.equals(_x, other._x)
+			&& Mat.equals(_y, other._y);
 	}
 
 }

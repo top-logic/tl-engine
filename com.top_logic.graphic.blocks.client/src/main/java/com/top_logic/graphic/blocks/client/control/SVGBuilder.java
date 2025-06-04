@@ -12,6 +12,7 @@ import org.vectomatic.dom.svg.OMSVGElement;
 import org.vectomatic.dom.svg.OMSVGGElement;
 import org.vectomatic.dom.svg.OMSVGImageElement;
 import org.vectomatic.dom.svg.OMSVGLength;
+import org.vectomatic.dom.svg.OMSVGMatrix;
 import org.vectomatic.dom.svg.OMSVGPathElement;
 import org.vectomatic.dom.svg.OMSVGRectElement;
 import org.vectomatic.dom.svg.OMSVGSVGElement;
@@ -121,7 +122,21 @@ public class SVGBuilder implements SvgWriter {
 		OMSVGTransform transform = _root.createSVGTransform();
 		transform.setTranslate((float) dx, (float) dy);
 		OMSVGTransformList list = ((ISVGTransformable) _current).getTransform().getBaseVal();
-		list.clear();
+		list.appendItem(transform);
+	}
+
+	@Override
+	public void transform(double a, double b, double c, double d, double e, double f) {
+		OMSVGMatrix matrix = _root.createSVGMatrix();
+		matrix.setA((float) a);
+		matrix.setB((float) b);
+		matrix.setC((float) c);
+		matrix.setD((float) d);
+		matrix.setE((float) e);
+		matrix.setF((float) f);
+		OMSVGTransform transform = _root.createSVGTransform();
+		transform.setMatrix(matrix);
+		OMSVGTransformList list = ((ISVGTransformable) _current).getTransform().getBaseVal();
 		list.appendItem(transform);
 	}
 

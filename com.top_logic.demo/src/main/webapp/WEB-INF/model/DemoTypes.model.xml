@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+<model
+	xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
 	<module name="DemoTypes">
 		<annotations>
 			<display-group value="demo"/>
@@ -556,7 +559,15 @@
 				</property>
 				<property name="dateTime"
 					type="tl.core:DateTime"
-				/>
+				>
+					<annotations>
+						<dynamic-label>
+							<label config:interface="com.top_logic.layout.ScriptFunction3"
+								class="com.top_logic.demo.model.annotations.LabelWithTimeZone"
+							/>
+						</dynamic-label>
+					</annotations>
+				</property>
 				<property name="binary"
 					type="tl.core:Binary"
 				>

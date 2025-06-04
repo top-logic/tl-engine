@@ -8,6 +8,7 @@ package com.top_logic.model.search.form;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.func.Function0;
@@ -82,6 +83,11 @@ public class ScriptFunction0Impl<R> extends Function0<R> implements ConfiguredIn
 		@Override
 		protected Class<? extends WithExpression> scriptFunctionType() {
 			return Config.class;
+		}
+
+		@Override
+		protected Class<? extends PolymorphicConfiguration> minScriptFunctionType() {
+			return ScriptFunction0.class;
 		}
 
 	}

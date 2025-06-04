@@ -39,6 +39,7 @@ import com.top_logic.graphic.flow.data.GridLayout;
 import com.top_logic.graphic.flow.data.HorizontalLayout;
 import com.top_logic.graphic.flow.data.Image;
 import com.top_logic.graphic.flow.data.ImageAlign;
+import com.top_logic.graphic.flow.data.ImageOrientation;
 import com.top_logic.graphic.flow.data.ImageScale;
 import com.top_logic.graphic.flow.data.Padding;
 import com.top_logic.graphic.flow.data.SelectableBox;
@@ -369,6 +370,7 @@ public class FlowFactory {
 		Double height,
 		ImageAlign align,
 		ImageScale scale,
+			ImageOrientation orientation,
 		String cssClass,
 		Object userObject
 	) {
@@ -412,7 +414,13 @@ public class FlowFactory {
 			imgHeight = height.doubleValue();
 		}
 		
-		Image result = Image.create().setImgWidth(imgWidth).setImgHeight(imgHeight).setHref(href);
+		Image result = Image.create()
+			.setImgWidth(imgWidth)
+			.setImgHeight(imgHeight)
+			.setHref(href);
+		if (orientation != null) {
+			result.setOrientation(orientation);
+		}
 		if (align != null) {
 			result.setAlign(align);
 		}

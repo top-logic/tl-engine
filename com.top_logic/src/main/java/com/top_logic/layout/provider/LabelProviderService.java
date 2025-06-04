@@ -51,11 +51,12 @@ import com.top_logic.layout.renderers.RendererRegistryPDFRenderer;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
+import com.top_logic.tool.export.DefaultExcelCellRenderer;
+import com.top_logic.tool.export.ExcelCellRenderer;
 import com.top_logic.tool.export.pdf.PDFRenderer;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
@@ -155,6 +156,15 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 		List<PDFRendererConfig> getPDFRenderers();
 
 		/**
+		 * Configured {@link ExcelCellRenderer}s for types.
+		 * 
+		 * @see ExcelCellRendererConfig#getType()
+		 */
+		@Name("excel-renderers")
+		@Key(value = ExcelCellRendererConfig.TYPE)
+		List<ExcelCellRendererConfig> getExcelRenderers();
+
+		/**
 		 * Configured {@link Mapping}s for types. These mappings that map an object to a potentially
 		 * different object that is used to identify objects in compare views.
 		 * 
@@ -188,7 +198,7 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 		 */
 		@Name(IMPLEMENTATION)
 		@Mandatory
-		PolymorphicConfiguration<LabelProvider> getImplementation();
+		PolymorphicConfiguration<? extends LabelProvider> getImplementation();
 	}
 
 	/**
@@ -205,7 +215,7 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 		 */
 		@Name(IMPLEMENTATION)
 		@Mandatory
-		PolymorphicConfiguration<Renderer<?>> getImplementation();
+		PolymorphicConfiguration<? extends Renderer<?>> getImplementation();
 	}
 
 	/**
@@ -222,7 +232,24 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 		 */
 		@Name(IMPLEMENTATION)
 		@Mandatory
-		PolymorphicConfiguration<PDFRenderer> getImplementation();
+		PolymorphicConfiguration<? extends PDFRenderer> getImplementation();
+	}
+
+	/**
+	 * {@link ExcelCellRenderer} assignment to a {@link ExcelCellRendererConfig#TYPE}.
+	 */
+	public interface ExcelCellRendererConfig extends RegisterableConfig {
+		/**
+		 * @see #getImplementation()
+		 */
+		String IMPLEMENTATION = "implementation";
+
+		/**
+		 * The {@link ExcelCellRenderer} implementation for the given {@link #getType()}.
+		 */
+		@Name(IMPLEMENTATION)
+		@Mandatory
+		PolymorphicConfiguration<? extends ExcelCellRenderer> getImplementation();
 	}
 
 	/**
@@ -239,7 +266,7 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 		 */
 		@Name(IMPLEMENTATION)
 		@Mandatory
-		PolymorphicConfiguration<Mapping<?, ?>> getImplementation();
+		PolymorphicConfiguration<? extends Mapping<?, ?>> getImplementation();
 	}
 	
 	/**
@@ -313,11 +340,6 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 			@Override
 			public Object resolve(String name) throws ConfigurationException {
 				TLType type = TLModelUtil.findType(name);
-				if (!(type instanceof TLStructuredType)) {
-					throw new ConfigurationException(I18NConstants.ERROR_NO_STRUCTURED_TYPE__TYPE.fill(name),
-						RegisterableConfig.TYPE,
-						name);
-				}
 				return WrapperHistoryUtils.getUnversionedIdentity(type);
 			}
 		};
@@ -343,6 +365,8 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 	private MetaObject _generalizationTable;
 
 	private PDFRendererRegistry _pdfRenderers;
+
+	private ExcelCellRendererRegistry _excelRenderers;
 
 	private static final Mapping<Object, String> TO_STRING_MAPPING = new Mapping<>() {
 		@Override
@@ -370,6 +394,8 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 		_renderers = new RendererRegistry(context, ResourceRenderer.INSTANCE, config.getRenderers());
 		_pdfRenderers =
 			new PDFRendererRegistry(context, RendererRegistryPDFRenderer.INSTANCE, config.getPDFRenderers());
+		_excelRenderers =
+			new ExcelCellRendererRegistry(context, DefaultExcelCellRenderer.INSTANCE, config.getExcelRenderers());
 		_mappings = new MappingRegistry(context, TO_STRING_MAPPING, config.getMappings());
 		_contextCommands = new ContextCommandRegistry(context, config.getContextMenus());
 
@@ -458,10 +484,10 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 	}
 
 	/**
-	 * The {@link LabelProvider} to use for a given {@link TLStructuredType} without considering any
+	 * The {@link LabelProvider} to use for a given {@link TLType} without considering any
 	 * fall-backs to implementation classes and storage tables.
 	 */
-	public LabelProvider getLabelProviderForType(TLStructuredType type) {
+	public LabelProvider getLabelProviderForType(TLType type) {
 		return _labelProviders.searchModel(type);
 	}
 
@@ -473,11 +499,19 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 	}
 
 	/**
-	 * The {@link ResourceProvider} to use for a given {@link TLStructuredType} without considering
-	 * any fall-backs to implementation classes and storage tables.
+	 * The {@link ResourceProvider} to use for a given {@link TLType} without considering any
+	 * fall-backs to implementation classes and storage tables.
 	 */
-	public ResourceProvider getResourceProviderForType(TLStructuredType type) {
+	public ResourceProvider getResourceProviderForType(TLType type) {
 		return _resourceProviders.searchModel(type);
+	}
+
+	/**
+	 * The {@link ExcelCellRenderer} to use for a given {@link TLType} without considering any
+	 * fall-backs.
+	 */
+	public ExcelCellRenderer getExcelCellRendererForType(TLType type) {
+		return _excelRenderers.searchModel(type);
 	}
 
 	/**
@@ -494,6 +528,13 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 	 */
 	public PDFRenderer getPDFRenderer(Object obj) {
 		return _pdfRenderers.lookup(obj);
+	}
+
+	/**
+	 * The {@link ExcelCellRenderer} to use for the given object.
+	 */
+	public ExcelCellRenderer getExcelCellRenderer(Object obj) {
+		return _excelRenderers.lookup(obj);
 	}
 
 	/**
@@ -587,6 +628,24 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 	}
 
 	/**
+	 * A {@link Registry} for {@link ExcelCellRenderer}s.
+	 */
+	static class ExcelCellRendererRegistry extends Registry<ExcelCellRenderer> {
+
+		/**
+		 * Creates a {@link ExcelCellRendererRegistry}.
+		 */
+		public ExcelCellRendererRegistry(InstantiationContext context, ExcelCellRenderer defaultRenderer,
+				List<ExcelCellRendererConfig> list) {
+			super(defaultRenderer);
+
+			for (ExcelCellRendererConfig config : list) {
+				register(context, config, context.getInstance(config.getImplementation()));
+			}
+		}
+	}
+
+	/**
 	 * A {@link Registry} for {@link Mapping}s.
 	 *
 	 * @author <a href=mailto:Dmitry.Ivanizki@top-logic.com>Dmitry Ivanizki</a>
@@ -653,7 +712,7 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 		private final ConcurrentMap<Object, T> _cache = new ConcurrentHashMap<>();
 
 		/** The reference queue. */
-		private final ReferenceQueue<TLStructuredType> _refQueue = new ReferenceQueue<>();
+		private final ReferenceQueue<TLType> _refQueue = new ReferenceQueue<>();
 
 		/**
 		 * Creates a {@link Registry}.
@@ -720,7 +779,7 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 				return getDefaultValue();
 			}
 			// handle classifiers by returning owner instead of classifier
-			TLStructuredType type = (TLStructuredType) TLModelUtil.type(obj);
+			TLType type = TLModelUtil.type(obj);
 
 			if (type == null) {
 				// Compatibility with test cases in modules not having dynamic types.
@@ -743,10 +802,10 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 		}
 
 		/**
-		 * The registered functional class to use for a given {@link TLStructuredType} without considering
-		 * any fall-backs to implementation classes and storage tables.
+		 * The registered functional class to use for a given {@link TLType} without considering any
+		 * fall-backs to implementation classes and storage tables.
 		 */
-		public T searchModel(TLStructuredType type) {
+		public T searchModel(TLType type) {
 			ObjectKey id = id(type);
 			T directResult = get(id);
 			if (directResult != null) {
@@ -759,7 +818,7 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 			return searchModel(generalization);
 		}
 
-		private ObjectKey id(TLStructuredType type) {
+		private ObjectKey id(TLType type) {
 			ObjectKey id = type.tId();
 			if (id == null) {
 				return null;
@@ -830,7 +889,7 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 			return _valueByKey.get(key);
 		}
 
-		private T addToCache(TLStructuredType type, T result) {
+		private T addToCache(TLType type, T result) {
 			ObjectKey id = id(type);
 			if (id == null) {
 				// Transient object, do not cache.
@@ -880,14 +939,14 @@ public class LabelProviderService extends ManagedClass implements UpdateListener
 				super(TLContext.TRUNK_ID, Revision.CURRENT_REV, id.getObjectType(), id.getObjectName());
 			}
 
-			public void makeRef(ReferenceQueue<TLStructuredType> refQueue, TLStructuredType type) {
+			public void makeRef(ReferenceQueue<TLType> refQueue, TLType type) {
 				_ref = new Ref(refQueue, this, type);
 			}
 
-			static class Ref extends SoftReference<TLStructuredType> {
+			static class Ref extends SoftReference<TLType> {
 				private ObjectKey _key;
 
-				public Ref(ReferenceQueue<TLStructuredType> refQueue, ObjectKey key, TLStructuredType referent) {
+				public Ref(ReferenceQueue<TLType> refQueue, ObjectKey key, TLType referent) {
 					super(referent, refQueue);
 					_key = key;
 				}

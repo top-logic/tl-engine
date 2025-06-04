@@ -105,6 +105,8 @@ public class PrimitiveColumn extends ColumnInfo {
 		if (pattern != null) {
 			ExcelCellRenderer excelRenderer = new FormattedValueExcelRenderer(pattern);
 			column.setExcelRenderer(excelRenderer);
+		} else {
+			super.setExcelRenderer(column);
 		}
 	}
 

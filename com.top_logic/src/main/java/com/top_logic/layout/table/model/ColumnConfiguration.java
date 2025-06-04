@@ -43,6 +43,7 @@ import com.top_logic.layout.table.renderer.CellControlRenderer;
 import com.top_logic.layout.table.renderer.UniformCellRenderer;
 import com.top_logic.model.export.EmptyPreloadContribution;
 import com.top_logic.model.export.PreloadContribution;
+import com.top_logic.tool.export.DefaultExcelCellRenderer;
 import com.top_logic.tool.export.ExcelCellRenderer;
 import com.top_logic.tool.export.ExcelExportSupport;
 import com.top_logic.tool.export.pdf.PDFRenderer;
@@ -469,7 +470,26 @@ public abstract class ColumnConfiguration extends ColumnBase
 	
 	public abstract CellExistenceTester getCellExistenceTester();
 	
-	public abstract ExcelCellRenderer getExcelRenderer();
+	/**
+	 * The {@link ExcelCellRenderer} that is finally used to export this column in the given
+	 * {@link ExcelExportSupport}.
+	 * 
+	 * @see #internalExcelRenderer()
+	 */
+	public ExcelCellRenderer getExcelRenderer() {
+		ExcelCellRenderer renderer = internalExcelRenderer();
+		if (renderer != null) {
+			return renderer;
+		}
+		return DefaultExcelCellRenderer.INSTANCE;
+	}
+
+	/**
+	 * The configured {@link ExcelCellRenderer} or <code>null</code>, if none is specified.
+	 * 
+	 * @see #getExcelRenderer()
+	 */
+	public abstract ExcelCellRenderer internalExcelRenderer();
 
 	/**
 	 * The renderer for cell decorations.
@@ -623,7 +643,7 @@ public abstract class ColumnConfiguration extends ColumnBase
 	public abstract void setExcelRenderer(ExcelCellRenderer renderer);
 
 	/**
-	 * @see ColumnConfiguration#getExcelRenderer()
+	 * @see ColumnConfiguration#internalExcelRenderer()
 	 */
 	protected abstract void copyExcelRenderer(ExcelCellRenderer renderer);
 
@@ -845,18 +865,6 @@ public abstract class ColumnConfiguration extends ColumnBase
 			customRenderer = newResourceRenderer(getResourceProvider());
 		}
 		return customRenderer;
-	}
-
-	/**
-	 * Returns a {@link Renderer} that is finally used to export this column in the given
-	 * {@link ExcelExportSupport}.
-	 */
-	public ExcelCellRenderer finalExcelCellRenderer(ExcelExportSupport excelExport) {
-		ExcelCellRenderer renderer = getExcelRenderer();
-		if (renderer == null) {
-			renderer = excelExport.defaultExcelCellRenderer();
-		}
-		return renderer;
 	}
 
 	@Override
@@ -1290,7 +1298,7 @@ public abstract class ColumnConfiguration extends ColumnBase
 
 			@Override
 			public Object get(ColumnConfiguration self) {
-				return self.getExcelRenderer();
+				return self.internalExcelRenderer();
 			}
 		},
 		new ColumnConfiguration.Property(ColumnConfig.SORT_KEY_PROVIDER) {

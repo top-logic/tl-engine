@@ -14,7 +14,8 @@ import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.model.form.definition.FormVisibility;
 
 /**
- * Observes the {@link FormVisibility} of a {@link FormMember}.
+ * Observes the {@link FormVisibility} of a {@link FormMember} and adjusts its appearance
+ * accordingly.
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */

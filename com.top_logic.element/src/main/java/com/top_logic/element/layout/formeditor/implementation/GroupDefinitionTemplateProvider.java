@@ -29,7 +29,6 @@ import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.form.control.I18NConstants;
 import com.top_logic.layout.form.control.Icons;
 import com.top_logic.layout.form.model.VisibilityModel;
-import com.top_logic.layout.form.model.VisibilityModel.Default;
 import com.top_logic.layout.form.template.model.FieldSetBoxTemplate;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.model.TLObject;
@@ -58,7 +57,7 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 
 	private final ModeSelector _modeSelector;
 
-	private Default _visibilityModel;
+	private VisibilityModel _visibilityModel;
 
 	/**
 	 * Creates a {@link GroupDefinitionTemplateProvider} from configuration.
@@ -79,12 +78,12 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 	private ModeSelector instantiateModeSelector(GroupDefinition config) {
 		PolymorphicConfiguration<ModeSelector> modeAnnotation = config.getModeSelector();
 
-		if (modeAnnotation != null) {
-			return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
-				.getInstance(modeAnnotation);
+		if (modeAnnotation == null) {
+			return null;
 		}
 
-		return null;
+		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
+				.getInstance(modeAnnotation);
 	}
 
 	@Override
@@ -104,17 +103,15 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 
 	@Override
 	protected HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
-		FormMode formMode = context.getFormMode();
-		if (formMode != FormMode.DESIGN) {
-			addModeSelectorListener(context);
-		}
+		HTMLTemplateFragment groupDefinitionTemplate = super.createDisplayTemplate(context);
+		createModeSelectorListener(context);
 
-		return super.createDisplayTemplate(context);
+		return groupDefinitionTemplate;
 	}
 
-	private GroupModeObserver addModeSelectorListener(FormEditorContext context) {
-		if (_modeSelector == null) {
-			return null;
+	private void createModeSelectorListener(FormEditorContext context) {
+		if (_modeSelector == null || context.getFormMode() == FormMode.DESIGN) {
+			return;
 		}
 
 		AttributeFormContext formContext = (AttributeFormContext) context.getFormContext();
@@ -126,8 +123,6 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 		GroupModeObserver observer =
 			new GroupModeObserver(attributeUpdateContainer, _modeSelector, editObject, null, _visibilityModel);
 		observer.valueChanged(null, null, null);
-
-		return observer;
 	}
 
 	@Override

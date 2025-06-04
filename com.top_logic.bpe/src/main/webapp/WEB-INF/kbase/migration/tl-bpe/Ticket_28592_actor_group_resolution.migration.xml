@@ -7,7 +7,7 @@
 		module="tl-bpe"
 	/>
 	<dependencies>
-		<dependency name="Ticket_28336_migrate_command_confirmation"
+		<dependency name="Ticket_27906_polymorphic_format_annotations"
 			module="tl"
 		/>
 		<dependency name="Ticket_28338_create_duration"

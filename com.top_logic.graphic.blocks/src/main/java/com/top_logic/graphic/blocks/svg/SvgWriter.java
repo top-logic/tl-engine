@@ -5,6 +5,7 @@
  */
 package com.top_logic.graphic.blocks.svg;
 
+import com.top_logic.graphic.blocks.math.Mat;
 import com.top_logic.graphic.blocks.math.Vec;
 import com.top_logic.graphic.blocks.model.Drawable;
 import com.top_logic.graphic.blocks.svg.event.Registration;
@@ -67,6 +68,27 @@ public interface SvgWriter extends AutoCloseable {
 	 *        The translation along the Y axis.
 	 */
 	void translate(double dx, double dy);
+
+	/**
+	 * Writes a <code>transform</code> attribute containing a transformation matrix.
+	 */
+	default void transform(Mat m) {
+		transform(m.a(), m.b(), m.c(), m.d(), m.e(), m.f());
+	}
+
+	/**
+	 * Writes a <code>transform</code> attribute containing a transformation matrix.
+	 * 
+	 * <pre>
+	 * <code>
+	 * [a c e]
+	 * [b d f]
+	 * [0 0 1]
+	 * </code>
+	 * </pre>
+	 */
+	void transform(double a, double b, double c, double d, double e, double f);
+
 
 	/**
 	 * Closes a <code>g</code> tag.
@@ -392,4 +414,5 @@ public interface SvgWriter extends AutoCloseable {
 	 *        The attribute value.
 	 */
 	void writeAttribute(String name, String value);
+
 }

@@ -199,6 +199,36 @@ message Image extends Box {
 	
 	/** The scaling of the image data within the image box. */	
 	ImageScale scale;
+	
+	/** The image transformation before display. */
+	ImageOrientation orientation;
+}
+
+/** Image transformation. */
+enum ImageOrientation {
+	/** The image is displayed as encoded in the image data. */
+    normal;
+    
+	/** The image is flipped horizontally. */
+    flipH;
+    
+	/** The image is rotated by 180°. */
+    rotate180;
+    
+	/** The image is flipped vertically. */
+	flipV;
+	
+	/** The image is flipped horizontally, and rotated by 270° counter-clockwise. */
+	flipH_rotate270;
+	
+	/** The image is rotated by 90° counter-clockwise. */
+	rotate90;
+
+	/** The image is flipped horizontally and rotated by 90° counter-clockwise. */
+	flipH_rotate90;
+
+	/** The image is rotated by 270° counter-clockwise. */
+	rotate270;
 }
 
 /** Alignment of an image within a box. */

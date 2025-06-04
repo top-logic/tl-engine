@@ -277,7 +277,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	 */
 	private static final ChannelListener ON_SELECTION_CHANGE = new ChannelListener() {
 		@Override
-		private static final ChannelListener ON_SELECTION_CHANGE = (sender, oldSelection, newSelection) -> {
+		public void handleNewValue(ComponentChannel sender, Object oldSelection, Object newSelection) {
 		    TableComponent table = (TableComponent) sender.getComponent();
 		    
 		    // Only update model if selection exists and is not already in the table
@@ -295,7 +295,8 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 		    }
 		    
 		    table.invalidateSelection();
-		};
+		}
+	};
 
 	private static final ChannelValueFilter SELECTION_FILTER = new ChannelValueFilter() {
 		@Override

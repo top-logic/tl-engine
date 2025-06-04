@@ -20,16 +20,20 @@ import com.top_logic.model.form.definition.FormVisibility;
 import com.top_logic.model.util.Pointer;
 
 /**
- * This class serves as a listener that listens for changes to a list of model references. Based on
- * the changes in the models, the class computes the {@link FormVisibility} dynamically.
+ * Serves as a listener that listens for changes to a list of model references. Based on the changes
+ * in the models, the class computes the {@link FormVisibility} dynamically.
  * 
+ * <p>
  * The listener uses the {@link ModeSelector} to determine how a given element should be displayed
  * or hidden, depending on the state or changes of the models being referenced. Each time a model is
  * updated, the listener recalculates the visibility of the form elements based on the selected
  * mode.
+ * </p>
  * 
+ * <p>
  * The class maintains a list of model references, which are monitored for changes. Upon detecting
  * any updates, the listener triggers a re-evaluation of the visibility conditions.
+ * </p>
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */

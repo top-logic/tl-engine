@@ -20,7 +20,7 @@ import com.top_logic.model.form.definition.FormVisibility;
  */
 public class GroupModeObserver extends ModeObserver {
 
-	VisibilityModel.Default _visibilityModel;
+	VisibilityModel _visibilityModel;
 
 	/**
 	 * Creates a {@link GroupModeObserver}.
@@ -35,7 +35,7 @@ public class GroupModeObserver extends ModeObserver {
 	 *        The attribute to observe. Maybe <code>null</code>.
 	 */
 	public GroupModeObserver(AttributeUpdateContainer updateContainer, ModeSelector modeSelector, TLObject object,
-			TLStructuredTypePart attribute, VisibilityModel.Default visibilityModel) {
+			TLStructuredTypePart attribute, VisibilityModel visibilityModel) {
 		super(updateContainer, modeSelector, object, attribute);
 
 		_visibilityModel = visibilityModel;
@@ -43,9 +43,6 @@ public class GroupModeObserver extends ModeObserver {
 
 	@Override
 	public void valueChanged(FormVisibility mode) {
-		if (_visibilityModel == null)
-			return;
-
 		boolean isVisible = !FormVisibility.HIDDEN.equals(mode);
 		_visibilityModel.setVisible(isVisible);
 	}

@@ -46,6 +46,11 @@ public class SvgWriterAdapter implements SvgWriter {
 	}
 
 	@Override
+	public void transform(double a, double b, double c, double d, double e, double f) {
+		_impl.transform(a, b, c, d, e, f);
+	}
+
+	@Override
 	public void endGroup() {
 		_impl.endGroup();
 	}

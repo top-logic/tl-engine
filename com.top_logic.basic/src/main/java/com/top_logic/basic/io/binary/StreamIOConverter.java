@@ -11,9 +11,9 @@ import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 
+import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.sched.SchedulerService;
-import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 /**
@@ -30,7 +30,7 @@ public class StreamIOConverter {
 	 * {@link Thread} from the {@link SchedulerService}.
 	 */
 	public static InputStream convert(BinaryDataSource source) throws IOException {
-		ThreadContext context = ThreadContext.getThreadContext();
+		InteractionContext context = ThreadContextManager.getInteraction();
 
 		PipedInputStream in = new PipedInputStream();
 		PipedOutputStream out = new PipedOutputStream(in);
@@ -38,8 +38,14 @@ public class StreamIOConverter {
 		return in;
 	}
 
-	private static void produceIn(ThreadContext context, BinaryDataSource source, OutputStream out) {
-		ThreadContextManager.inContext(context, () -> produce(source, out));
+	private static void produceIn(InteractionContext context, BinaryDataSource source, OutputStream out) {
+		ThreadContextManager.setupInteractionContext(context.getSubSessionContext(), context.asServletContext(),
+			context.asRequest(), context.asResponse());
+		try {
+			produce(source, out);
+		} finally {
+			ThreadContextManager.getManager().removeInteraction();
+		}
 	}
 
 	/**

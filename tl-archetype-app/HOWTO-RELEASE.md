@@ -51,6 +51,12 @@ To release a new version of the TopLogic app archetype to Maven Central, you nee
     </server>
     ```
 
+A workaround for a Maven vs. Java 17 incompatibility is required to allow releasing (opening some JDK classes that are accessed from Maven plugins by reflection):
+
+```
+export MAVEN_OPTS="--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED"
+```
+
 Having this all set up, you can prepare a release (after the version number has been incremented to the new version to 
 release) using:
 

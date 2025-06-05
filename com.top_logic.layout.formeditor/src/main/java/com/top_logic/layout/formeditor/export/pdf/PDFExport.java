@@ -177,8 +177,7 @@ public class PDFExport {
 		ServletContext servletContext = ServletContextService.getInstance().getServletContext();
 
 		DisplayContext context =
-			new DummyDisplayContext()
-				.initServletContext(servletContext)
+			new DummyDisplayContext(servletContext)
 				.initOutputMedia(Media.PDF)
 				.initContextPath(servletContext.getContextPath());
 		context.initScope(new DummyControlScope());

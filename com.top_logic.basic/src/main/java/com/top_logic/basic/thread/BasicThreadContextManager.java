@@ -39,7 +39,7 @@ public class BasicThreadContextManager extends ThreadContextManager {
 	@Override
 	public InteractionContext internalNewInteraction(ServletContext servletContext, HttpServletRequest request,
 			HttpServletResponse response) {
-		return new DefaultInteractionContext();
+		return new DefaultInteractionContext(servletContext, request, response);
 	}
 
 	@Override

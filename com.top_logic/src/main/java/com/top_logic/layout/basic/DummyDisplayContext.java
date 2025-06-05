@@ -8,8 +8,6 @@ package com.top_logic.layout.basic;
 import java.util.Objects;
 
 import jakarta.servlet.ServletContext;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.layout.ControlScope;
@@ -29,8 +27,6 @@ public class DummyDisplayContext extends AbstractDisplayContext {
     
 	private static final UserAgent FEATURE_DETECTION_USER_AGENT = new UserAgent(UserAgent.FEATURE_DETECTION_BROWSER);
 
-	private ServletContext _servletContext;
-
 	private String _contextPath = "";
 
 	private Media _outputMedia;
@@ -40,13 +36,16 @@ public class DummyDisplayContext extends AbstractDisplayContext {
 	 * 
 	 * @see #forScope(ControlScope)
 	 */
-	public DummyDisplayContext() {
-		super();
+	public DummyDisplayContext(ServletContext servletContext) {
+		super(servletContext, null, null);
 	}
-	
-	@Override
-	public HttpServletRequest asRequest() {
-		return null;
+
+	/**
+	 * Creates a new {@link DummyDisplayContext}.
+	 *
+	 */
+	public DummyDisplayContext() {
+		super(null, null, null);
 	}
 
 	@Override
@@ -76,22 +75,6 @@ public class DummyDisplayContext extends AbstractDisplayContext {
 	public UserAgent getUserAgent() {
 		return FEATURE_DETECTION_USER_AGENT;
 	}
-
-	@Override
-	public ServletContext asServletContext() {
-		return _servletContext;
-	}
-
-	/**
-	 * Sets up {@link #asServletContext()}.
-	 */
-	public DummyDisplayContext initServletContext(ServletContext servletContext) {
-		if (_servletContext != null) {
-			throw new IllegalStateException("ServletContext already initialized.");
-		}
-		_servletContext = servletContext;
-		return this;
-	}
 	
 	@Override
 	public Media getOutputMedia() {
@@ -104,11 +87,6 @@ public class DummyDisplayContext extends AbstractDisplayContext {
 	public DummyDisplayContext initOutputMedia(Media outputMedia) {
 		_outputMedia = Objects.requireNonNull(outputMedia);
 		return this;
-	}
-
-	@Override
-	public HttpServletResponse asResponse() {
-		return null;
 	}
 
 	@Override

@@ -7,7 +7,9 @@ package com.top_logic.layout.basic;
 
 import java.io.IOException;
 
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
@@ -41,8 +43,6 @@ public abstract class AbstractDisplayContext extends DefaultInteractionContext i
 	 * @see DisplayContext#getExecutionScope()
 	 */
 	private ControlScope scope;
-	
-	private boolean invalid;
 
 	private Resources resources;
 
@@ -54,7 +54,9 @@ public abstract class AbstractDisplayContext extends DefaultInteractionContext i
 	 * @see DisplayContext#getExecutionScope() for a description under what circumstance the initial
 	 *      scope may be <code>null</code>.
 	 */
-	protected AbstractDisplayContext() {
+	protected AbstractDisplayContext(ServletContext servletContext, HttpServletRequest request,
+			HttpServletResponse response) {
+		super(servletContext, request, response);
 		this.processingInfo = new ProcessingInfo();
     }
 
@@ -149,24 +151,6 @@ public abstract class AbstractDisplayContext extends DefaultInteractionContext i
 	@Override
 	public ProcessingInfo getProcessingInfo() {
 		return this.processingInfo;
-	}
-
-	/**
-	 * Invalidates this {@link AbstractDisplayContext}. After calling this method
-	 * each access to the {@link DisplayContext} interface throws an
-	 * {@link IllegalStateException}.
-	 * 
-	 */
-	@Override
-	public void invalidate() {
-		this.invalid = true;
-		super.invalidate();
-	}
-
-	protected final void checkNotInvalid() {
-		if (invalid) {
-			throw new IllegalStateException("This DisplayContext is invalid since the corresponding request is already responded");
-		}
 	}
 
 	public <T, E1 extends Throwable, E2 extends Throwable> T runWithContext(ComputationEx2<T, E1, E2> computation)

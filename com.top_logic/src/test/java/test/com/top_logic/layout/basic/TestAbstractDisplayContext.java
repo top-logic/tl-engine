@@ -5,10 +5,6 @@
  */
 package test.com.top_logic.layout.basic;
 
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -58,22 +54,7 @@ public class TestAbstractDisplayContext extends TestDisplayContext {
 			}
 			
 		};
-		AbstractDisplayContext context = new AbstractDisplayContext() {
-
-			@Override
-			public HttpServletRequest asRequest() {
-				return null;
-			}
-
-			@Override
-			public HttpServletResponse asResponse() {
-				return null;
-			}
-
-			@Override
-			public ServletContext asServletContext() {
-				return null;
-			}
+		AbstractDisplayContext context = new AbstractDisplayContext(null, null, null) {
 
 			@Override
 			public Object getAttribute(String name) {

@@ -43,8 +43,8 @@
 				<buttons>
 					<button id="exportExcelGrid"
 						class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
-						streaming="false"
 						exportNameKey="/sTypes_Demo.xlsx"
+						streaming="false"
 					/>
 				</buttons>
 				<modelBuilder class="com.top_logic.element.layout.TypeInstanceListModelBuilder"

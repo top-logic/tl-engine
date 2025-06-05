@@ -63,8 +63,8 @@
 				<buttons>
 					<button id="exportExcelGrid"
 						class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
-						streaming="false"
 						exportNameKey="/sTypes_Demo.xls"
+						streaming="false"
 					/>
 					<button id="toggleRootVisibility"
 						class="com.top_logic.demo.table.ToggleRootVisibilityCommand"

@@ -23,6 +23,7 @@ import jakarta.activation.MimeType;
 import jakarta.activation.MimeTypeParseException;
 import jakarta.mail.Address;
 import jakarta.mail.BodyPart;
+import jakarta.mail.EncodingAware;
 import jakarta.mail.Message.RecipientType;
 import jakarta.mail.MessagingException;
 import jakarta.mail.Multipart;
@@ -31,6 +32,7 @@ import jakarta.mail.internet.InternetAddress;
 import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
+import jakarta.mail.util.StreamProvider.EncoderTypes;
 
 import com.top_logic.base.mail.MailSenderService;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
@@ -198,7 +200,7 @@ public class SendMail extends GenericMethod {
 		}
 		
 		if (object instanceof BinaryDataSource binary) {
-			return new DataHandler(new DataSource() {
+			return new DataHandler(new EncodingAwareDataSource() {
 				@Override
 				public OutputStream getOutputStream() throws IOException {
 					throw new UnsupportedOperationException("Cannot write to a binary data.");
@@ -218,10 +220,15 @@ public class SendMail extends GenericMethod {
 				public String getContentType() {
 					return binary.getContentType();
 				}
+
+				@Override
+				public String getEncoding() {
+					return EncoderTypes.BASE_64.getEncoder();
+				}
 			});
 		}
 
-		DataHandler result = new DataHandler(new DataSource() {
+		DataHandler result = new DataHandler(new EncodingAwareDataSource() {
 			@Override
 			public OutputStream getOutputStream() throws IOException {
 				throw new UnsupportedOperationException("Cannot write to a binary data.");
@@ -240,6 +247,11 @@ public class SendMail extends GenericMethod {
 			@Override
 			public String getContentType() {
 				return TEXT_PLAIN__UTF8;
+			}
+
+			@Override
+			public String getEncoding() {
+				return EncoderTypes.QUOTED_PRINTABLE_ENCODER.getEncoder();
 			}
 		});
 		return result;
@@ -314,6 +326,9 @@ public class SendMail extends GenericMethod {
 		public SendMail build(Expr expr, SearchExpression[] args) throws ConfigurationException {
 			return new SendMail(getConfig().getName(), args);
 		}
+	}
+
+	private interface EncodingAwareDataSource extends DataSource, EncodingAware {
 	}
 
 }

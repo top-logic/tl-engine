@@ -271,12 +271,50 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 		}
 	};
 
+	/**
+	 * Responds to selection changes by updating the table model when the new selection is not
+	 * already present in the current model.
+	 */
 	private static final ChannelListener ON_SELECTION_CHANGE = new ChannelListener() {
 		@Override
-		public void handleNewValue(ComponentChannel sender, Object oldValue, Object newValue) {
-			TableComponent table = (TableComponent) sender.getComponent();
+		public void handleNewValue(ComponentChannel sender, Object oldSelection, Object newSelection) {
+		    TableComponent table = (TableComponent) sender.getComponent();
+		    
+			boolean shouldUpdateModel = false;
+			Object selectionForModelRetrieval = null;
 
-			table.invalidateSelection();
+			// Handle Collection selections
+			if (newSelection instanceof Collection) {
+				Collection<?> collection = (Collection<?>) newSelection;
+		        
+				// Only process non-empty collections
+				if (!collection.isEmpty()) {
+					// Get the first new element (non-null and not already in table)
+					selectionForModelRetrieval = collection.stream()
+						.filter(element -> element != null && !table.getTableModel().containsRowObject(element))
+						.findFirst()
+						.orElse(null);
+
+					shouldUpdateModel = (selectionForModelRetrieval != null);
+				}
+			}
+			// Handle single object selections
+			else if (newSelection != null) {
+				// Only update model if selection is not already in the table
+				if (!table.getTableModel().containsRowObject(newSelection)) {
+					selectionForModelRetrieval = newSelection;
+					shouldUpdateModel = true;
+		        }
+		    }
+		    
+			// Update model if needed
+			if (shouldUpdateModel) {
+				Object retrievedModel =
+					table.getListBuilder().retrieveModelFromListElement(table, selectionForModelRetrieval);
+				table.setModel(retrievedModel);
+			}
+
+		    table.invalidateSelection();
 		}
 	};
 

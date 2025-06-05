@@ -36,7 +36,6 @@
 			</button>
 			<button id="ID_d9a27df8_9c83_4318_9d56_53c2185a9543"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
-				confirm="true"
 				target="model(self())"
 			>
 				<resourceKey key="dynamic.5ef11993-7c72-4b2d-b8fb-24ffbea6e619">
@@ -48,12 +47,10 @@
 						<decision>contact -&gt; if ($contact.get(`Contacts:PersonContact#account`) == null, null, #("Der Benutzer kann nicht gelöscht werden, weil sein Zugang noch aktiv ist."@de,"The user cannot be deleted because their account is still active."@en))</decision>
 					</rule-by-expression>
 				</executability>
-				<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation">
-					<confirmMessage key="dynamic.6f6ff59d-c794-4418-92f5-02ba4d3f3ca9">
-						<en>Do you really want to delete the user "{0}"?</en>
-						<de>Wollen Sie den Benutzer "{0}" wirklich löschen?</de>
-					</confirmMessage>
-				</confirmation>
+				<confirmMessage key="dynamic.6f6ff59d-c794-4418-92f5-02ba4d3f3ca9">
+					<en>Do you really want to delete the user "{0}"?</en>
+					<de>Wollen Sie den Benutzer "{0}" wirklich löschen?</de>
+				</confirmMessage>
 			</button>
 			<button id="ID_2fa7a149_7d10_46c9_90e1_b5e4db8b1378"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"

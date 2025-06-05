@@ -116,9 +116,7 @@
 		<buttons>
 			<button id="exportExcelGrid"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
-			>
-				<downloadNameProvider class="com.top_logic.layout.table.export.ComponentDownloadName"/>
-			</button>
+			/>
 			<button id="ID_be7f960b_3056_49e0_8a47_51f88ddee397"
 				class="com.top_logic.layout.form.component.InvalidateCommand"
 				clique=""

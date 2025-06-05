@@ -78,9 +78,7 @@
 		<buttons>
 			<button id="exportExcel"
 				class="com.top_logic.layout.table.export.ExcelExportHandler"
-			>
-				<downloadNameProvider class="com.top_logic.layout.table.export.ComponentDownloadName"/>
-			</button>
+			/>
 			<button id="ID_c33d7fd2_44c7_4a22_98f3_102e2d71e42e"
 				class="com.top_logic.layout.form.component.InvalidateCommand"
 			>

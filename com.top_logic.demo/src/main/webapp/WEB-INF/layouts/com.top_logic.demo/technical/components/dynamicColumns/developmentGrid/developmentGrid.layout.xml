@@ -119,9 +119,7 @@
 		<buttons>
 			<button id="exportExcelGrid"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
-			>
-				<downloadNameProvider class="com.top_logic.layout.table.export.ComponentDownloadName"/>
-			</button>
+			/>
 			<button id="ID_d4ec0533_f936_4d06_b621_dfccfb3ac9fc"
 				class="com.top_logic.layout.form.component.InvalidateCommand"
 			>
@@ -138,7 +136,6 @@
 					<en>Delete project</en>
 					<de>Projekt löschen</de>
 				</resourceKey>
-				<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation"/>
 			</button>
 		</buttons>
 	</arguments>

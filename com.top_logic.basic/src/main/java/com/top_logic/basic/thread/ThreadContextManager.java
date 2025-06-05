@@ -6,6 +6,7 @@
 package com.top_logic.basic.thread;
 
 import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -75,6 +76,8 @@ public abstract class ThreadContextManager extends ManagedClass {
 	private final boolean debugContextRemoval;
     
 	private final ThreadLocal<InteractionContext> _contexts = new ThreadLocal<>();
+
+	private static final String INTERACTION_CONTEXT_REQUEST_ATTRIBUTE = InteractionContext.class.getName();
 
 	/**
 	 * Creates a new {@link ThreadContextManager}.
@@ -566,6 +569,41 @@ public abstract class ThreadContextManager extends ManagedClass {
 		return interaction;
 	}
 	
+	public static InteractionContext lookupInteractionContext(ServletRequest request) {
+		if (request != null) {
+			return (InteractionContext) request.getAttribute(INTERACTION_CONTEXT_REQUEST_ATTRIBUTE);
+		} else {
+			return getInteraction();
+		}
+	}
+
+	public static void teardownInteractionContext(HttpServletRequest request) {
+		if (request != null) {
+			request.removeAttribute(INTERACTION_CONTEXT_REQUEST_ATTRIBUTE);
+		}
+		getManager().removeInteraction();
+	}
+
+	public static InteractionContext setupInteractionContext(SubSessionContext sessionContext,
+			ServletContext servletContext, HttpServletRequest request, HttpServletResponse response) {
+		InteractionContext context = getManager().newInteraction(servletContext, request, response);
+		context.installSubSessionContext(sessionContext);
+		setupInteractionContext(request, context);
+		return context;
+	}
+
+	public static void setupInteractionContext(HttpServletRequest request, InteractionContext context) {
+		// Note: The display context is linked both to the current thread *and* the current request
+		// for safety reasons: If a context is set up but forgotten to tear down, it
+		// must not be accidentally reused by the next request. This is ensured by the setup
+		// mechanism in TopLogicServlet only depending on the request attribute, not on the thread
+		// local variable.
+		if (request != null) {
+			request.setAttribute(INTERACTION_CONTEXT_REQUEST_ATTRIBUTE, context);
+		}
+		getManager().setInteraction(context);
+	}
+
 	/**
 	 * Notifies that the given session is going out of scope.
 	 * 
@@ -686,6 +724,21 @@ final class Remover implements InteractionContext {
 	@Override
 	public void addUnboundListener(UnboundListener l) {
 		fail();
+	}
+
+	@Override
+	public HttpServletRequest asRequest() {
+		throw fail();
+	}
+
+	@Override
+	public ServletContext asServletContext() {
+		throw fail();
+	}
+
+	@Override
+	public HttpServletResponse asResponse() {
+		throw fail();
 	}
 
 }

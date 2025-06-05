@@ -7,10 +7,6 @@ package com.top_logic.layout;
 
 import java.io.IOException;
 
-import jakarta.servlet.ServletContext;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import com.top_logic.base.context.TLInteractionContext;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.basic.Command;
@@ -51,25 +47,6 @@ public interface DisplayContext extends TLInteractionContext, WindowScopeProvide
 	 * An abstraction of the requesting user agent.
 	 */
 	public UserAgent getUserAgent();
-	
-	/**
-	 * Provide a view of this context as {@link HttpServletRequest} object.
-	 * 
-	 * <p style="color: red;">
-	 * <b>Note:</b> This method is only for backwards compatibility with APIs
-	 * that request a direct reference to the request object. Avoid using this
-	 * method whenever possible.
-	 * </p>
-	 * 
-	 * <p>
-	 * This method should be deprecated as soon as possible.
-	 * </p>
-	 */
-	public HttpServletRequest asRequest();
-
-	public ServletContext asServletContext();
-	
-	public HttpServletResponse asResponse();
 
 	/**
 	 * The scope which is currently being rendered or revalidated.

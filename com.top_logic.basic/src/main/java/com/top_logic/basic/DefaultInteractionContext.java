@@ -7,6 +7,11 @@ package com.top_logic.basic;
 
 import java.util.List;
 
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.InlineList;
 import com.top_logic.basic.col.LazyTypedAnnotatable;
 import com.top_logic.basic.thread.UnboundListener;
@@ -26,6 +31,57 @@ public class DefaultInteractionContext extends LazyTypedAnnotatable implements I
 	private SubSessionContext _subSession;
 	
 	private Object _unboundListeners = InlineList.newInlineList();
+
+	private final ServletContext servletContext;
+
+	private final HttpServletRequest request;
+
+	private HttpServletResponse response;
+
+	private boolean invalid;
+
+	public DefaultInteractionContext(ServletContext servletContext, HttpServletRequest request,
+			HttpServletResponse response) {
+		this.servletContext = servletContext;
+		this.request = request;
+		this.response = response;
+	}
+
+	@Override
+	public HttpServletRequest asRequest() {
+		checkNotInvalid();
+		return request;
+	}
+
+	@Override
+	public HttpServletResponse asResponse() {
+		checkNotInvalid();
+		return response;
+	}
+
+	@Override
+	public ServletContext asServletContext() {
+		checkNotInvalid();
+		return servletContext;
+	}
+
+	protected final void checkNotInvalid() {
+		if (invalid) {
+			throw new IllegalStateException(
+				"This InteractionContext is invalid since the corresponding request is already responded");
+		}
+	}
+
+	/**
+	 * Updates the underlying {@link HttpServletResponse}.
+	 * 
+	 * @param response
+	 *        The new response to use.
+	 */
+	@FrameworkInternal
+	public void setResponse(HttpServletResponse response) {
+		this.response = response;
+	}
 
 	@Override
 	public void installSessionContext(SessionContext session) {
@@ -58,6 +114,7 @@ public class DefaultInteractionContext extends LazyTypedAnnotatable implements I
 		notifyUnbound();
 		_subSession = null;
 		_session = null;
+		this.invalid = true;
 	}
 
 	private void notifyUnbound() {

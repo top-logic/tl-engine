@@ -1437,16 +1437,35 @@ public class TreeTableComponent extends BoundComponent
 			} else {
 				List<?> selectedPath = (List<?>) newValue;
 				selectionChannelValue = selectedPath.get(selectedPath.size() - 1);
+				TreeModelBuilder<Object> treeModelBuilder = tree.getTreeModelBuilder();
+				if (treeModelBuilder != null) {
+					tree.setModel(retrieveModelFromPath(treeModelBuilder, selectedPath, tree));
+				}
 			}
 		} else {
-			selectionChannelValue = ((Collection<?>) newValue).stream().map(path -> {
+			Collection<?> newValueCollection = (Collection<?>) newValue;
+			selectionChannelValue = newValueCollection.stream().map(path -> {
 				List<?> selectedPath = (List<?>) path;
 				return selectedPath.get(selectedPath.size() - 1);
 			}).collect(Collectors.toSet());
+			TreeModelBuilder<Object> treeModelBuilder = tree.getTreeModelBuilder();
+			if (treeModelBuilder != null && !newValueCollection.isEmpty()) {
+				tree.setModel(retrieveModelFromPath(treeModelBuilder, (List<?>) getFirst(newValueCollection), tree));
+			}
 		}
+
 		tree.setSelected(selectionChannelValue);
 
 		tree.invalidateSelection();
+	}
+
+	private static Object retrieveModelFromPath(TreeModelBuilder<Object> treeModelBuilder, List<?> path,
+			TreeTableComponent tree) {
+		Object actualSelected = getLast(path);
+		if (!ComponentUtil.isValid(actualSelected)) {
+			return tree.getModel();
+		}
+		return treeModelBuilder.retrieveModelFromNode(tree, actualSelected);
 	}
 
 	@Override

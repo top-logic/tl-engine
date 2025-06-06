@@ -239,7 +239,7 @@ public class DocumentationTreeComponent extends DocumentationViewerTree implemen
 	}
 
 	@Override
-	protected Map<String, ChannelSPI> channels() {
+	protected Map<String, ChannelSPI> programmaticChannels() {
 		return CHANNELS;
 	}
 

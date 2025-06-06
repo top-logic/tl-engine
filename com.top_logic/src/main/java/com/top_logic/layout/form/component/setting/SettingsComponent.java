@@ -70,7 +70,7 @@ public class SettingsComponent extends FormComponent implements EditMode, WithOu
 		channels(LayoutComponent.MODEL_CHANNEL, EditMode.EDIT_MODE_SPI, WithOutputChannel.OUTPUT_SPI);
 
 	@Override
-	protected Map<String, ChannelSPI> channels() {
+	protected Map<String, ChannelSPI> programmaticChannels() {
 		return CHANNELS;
 	}
 

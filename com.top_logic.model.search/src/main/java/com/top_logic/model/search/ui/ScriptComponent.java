@@ -60,7 +60,7 @@ public class ScriptComponent extends BoundLayout {
 	}
 
 	@Override
-	protected Map<String, ChannelSPI> channels() {
+	protected Map<String, ChannelSPI> programmaticChannels() {
 		return MODEL_AND_RESULT_CHANNEL;
 	}
 

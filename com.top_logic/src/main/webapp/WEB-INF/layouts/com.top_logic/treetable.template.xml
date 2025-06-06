@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<properties extends="com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.layout.structure.ToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.layout.component.InAppSelectable$InAppSelectableConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.mig.html.layout.WithGotoConfiguration">
+	<properties extends="com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.layout.structure.ToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.layout.component.InAppSelectable$InAppSelectableConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.mig.html.layout.WithGotoConfiguration, com.top_logic.mig.html.layout.WithChannelConfigs">
 		<annotations>
 			<display-order>
 				<value>
@@ -36,6 +36,7 @@
 					<property name="buttons"/>
 					<property name="onSelectionChange"/>
 					<property name="goto-targets"/>
+					<property name="additional-channels"/>
 				</value>
 			</display-order>
 		</annotations>
@@ -152,5 +153,6 @@
 			<include name="templates/editComponentCommands.xml"/>
 		</buttons>
 		<goto-targets>${goto-targets}</goto-targets>
+		<additional-channels>${additional-channels}</additional-channels>
 	</tree-table>
 </config:template>

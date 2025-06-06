@@ -5,6 +5,8 @@
  */
 package com.top_logic.mig.html;
 
+import java.util.List;
+
 import com.top_logic.layout.tree.model.TLTreeModel;
 
 /**
@@ -24,9 +26,21 @@ public class DefaultTreeSelectionModel<N> extends TreeSelectionModel<N> {
 		_model = model;
 	}
 
-	@Override
-	public TLTreeModel<N> model() {
+	/**
+	 * Base {@link TLTreeModel}.
+	 */
+	protected TLTreeModel<N> model() {
 		return _model;
+	}
+
+	@Override
+	protected N parent(N node) {
+		return model().getParent(node);
+	}
+
+	@Override
+	protected List<? extends N> children(N node) {
+		return model().getChildren(node);
 	}
 
 }

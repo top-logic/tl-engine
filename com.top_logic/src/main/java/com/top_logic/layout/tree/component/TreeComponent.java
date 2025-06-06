@@ -1610,7 +1610,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 	}
 
 	@Override
-	protected Map<String, ChannelSPI> channels() {
+	protected Map<String, ChannelSPI> programmaticChannels() {
 		return CHANNELS;
 	}
 

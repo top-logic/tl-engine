@@ -131,6 +131,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 DELETE_COMPONENT_CONFIRMATION__NAME;
 
+	/**
+	 * @en There is already a channel with name {0}.
+	 */
+	public static ResKey1 DUPLICATE_CHANNEL_NAME__NAME;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

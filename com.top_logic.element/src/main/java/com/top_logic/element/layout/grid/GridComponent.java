@@ -2838,7 +2838,7 @@ public class GridComponent extends EditComponent implements
 	}
 
 	@Override
-	protected Map<String, ChannelSPI> channels() {
+	protected Map<String, ChannelSPI> programmaticChannels() {
 		return CHANNELS;
 	}
 

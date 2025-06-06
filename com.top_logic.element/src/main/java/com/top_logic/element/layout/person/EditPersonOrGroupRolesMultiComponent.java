@@ -127,7 +127,7 @@ public class EditPersonOrGroupRolesMultiComponent extends EditComponent {
     }
 	
 	@Override
-	protected Map<String, ChannelSPI> channels() {
+	protected Map<String, ChannelSPI> programmaticChannels() {
 		return CHANNELS;
 	}
 

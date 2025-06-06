@@ -5,9 +5,19 @@
  */
 package com.top_logic.layout.scripting.recorder.ref;
 
+import java.util.Map;
+
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.mig.html.GenericSelectionModelOwner;
 
 /**
@@ -97,6 +107,68 @@ public class GenericModelOwner<T> {
 		 * The {@link Property} that is used to find the model.
 		 */
 		protected abstract Property<T> modelProperty();
+
+	}
+
+	/**
+	 * Algorithm to get model with a given name from a {@link TypedAnnotatable}.
+	 * 
+	 * <p>
+	 * This algorithm can be used to create a {@link GenericModelOwner} when the model can be
+	 * attached to a recordable {@link TypedAnnotatable}.
+	 * </p>
+	 */
+	public static class MultipleAnnotatedModels<T> extends AbstractConfiguredInstance<MultipleAnnotatedModels.Config<T>>
+			implements Mapping<Object, T> {
+
+		private static final TypedAnnotatable.Property<Map<String, Object>> MODELS =
+			TypedAnnotatable.propertyMap("models by name");
+
+		/**
+		 * Configuration for {@link MultipleAnnotatedModels}.
+		 */
+		public static interface Config<T>
+				extends NamedConfigMandatory, PolymorphicConfiguration<MultipleAnnotatedModels<T>> {
+			// Sum interface
+		}
+
+		/**
+		 * Creates a new {@link MultipleAnnotatedModels}.
+		 */
+		public MultipleAnnotatedModels(InstantiationContext context, Config<T> config) {
+			super(context, config);
+		}
+
+		/**
+		 * Creates a new {@link MultipleAnnotatedModels} for a model with the given name.
+		 */
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		public static <T> MultipleAnnotatedModels<T> newInstanceFor(String name) {
+			MultipleAnnotatedModels.Config<T> newConfig;
+			try {
+				newConfig =
+					(Config) TypedConfiguration
+						.createConfigItemForImplementationClass(MultipleAnnotatedModels.class);
+			} catch (ConfigurationException ex) {
+				throw new ConfigurationError(ex);
+			}
+			newConfig.setName(name);
+			return TypedConfigUtil.createInstance(newConfig);
+		}
+
+		/**
+		 * Annotates the given {@link TypedAnnotatable} with the given model.
+		 */
+		public void annotate(TypedAnnotatable annotatable, T model) {
+			annotatable.mkMap(MODELS).put(getConfig().getName(), model);
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public T map(Object input) {
+			Object model = ((TypedAnnotatable) input).get(MODELS).get(getConfig().getName());
+			return (T) model;
+		}
 
 	}
 

@@ -1367,7 +1367,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	}
 
     @Override
-	protected Map<String, ChannelSPI> channels() {
+	protected Map<String, ChannelSPI> programmaticChannels() {
 		return ColumnsChannel.COLUMNS_MODEL_ROWS_AND_SELECTION_CHANNEL;
 	}
 

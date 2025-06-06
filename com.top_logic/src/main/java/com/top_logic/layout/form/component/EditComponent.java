@@ -553,7 +553,7 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 	}
 
 	@Override
-	protected Map<String, ChannelSPI> channels() {
+	protected Map<String, ChannelSPI> programmaticChannels() {
 		return CHANNELS;
 	}
 

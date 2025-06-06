@@ -1124,7 +1124,7 @@ public class AttributedSearchComponent extends FormComponent {
     }
 
 	@Override
-	protected Map<String, ChannelSPI> channels() {
+	protected Map<String, ChannelSPI> programmaticChannels() {
 		return ColumnsChannel.COLUMNS_MODEL_AND_SELECTION_CHANNEL;
 	}
 

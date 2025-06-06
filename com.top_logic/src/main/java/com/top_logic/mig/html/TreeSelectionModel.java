@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.EventListener;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -35,6 +36,9 @@ import com.top_logic.layout.tree.model.TLTreeModel;
  * Nodes that have both, selected and de-selected children have {@link TriState#INDETERMINATE
  * indeterminate state}.
  * </p>
+ * 
+ * @param <N>
+ *        Type of the tree-like elements that can be selected.
  * 
  * @implNote {@link #isSelected(Object)} returns <code>true</code> iff the whole subtree is
  *           selected.
@@ -147,12 +151,6 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 		_nodeType = nodeType;
 	}
 
-	/**
-	 * The {@link TLTreeModel} holding the nodes which can be selected by this
-	 * {@link TreeSelectionModel}.
-	 */
-	public abstract TLTreeModel<N> model();
-
 	@Override
 	public boolean isSelectable(Object obj) {
 		return super.isSelectable(obj) && hasNodeType(obj);
@@ -205,7 +203,7 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 				return false;
 			}
 		}
-		boolean selectionChanged = internalSelect(model(), cast(obj), select);
+		boolean selectionChanged = internalSelect(cast(obj), select);
 		if (selectionChanged) {
 			setLastSelected(obj);
 		}
@@ -281,7 +279,7 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 
 	@Override
 	public Set<?> getSelection() {
-		return calculateAllSelected();
+		return calculateSelected();
 	}
 
 	@Override
@@ -344,25 +342,23 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 		return _statesView;
 	}
 
-	private boolean internalSelect(TLTreeModel<N> model, N node, boolean selected) {
-		assertPartOfModel(node);
-
+	private boolean internalSelect(N node, boolean selected) {
 		TriState currentState = _states.get(node);
 		if (currentState != null) {
 			switch (currentState) {
 				case INDETERMINATE: {
 					TriState newState = selected ? TriState.SELECTED : TriState.NOT_SELECTED;
 					_states.put(node, newState);
-					dropChildStates(model, node);
-					propagateUp(model, node, newState, TriState.INDETERMINATE);
+					dropChildStates(node);
+					propagateUp(node, newState, TriState.INDETERMINATE);
 					break;
 				}
 
 				case NOT_SELECTED: {
 					if (selected) {
 						_states.put(node, TriState.SELECTED);
-						dropChildStates(model, node);
-						propagateUp(model, node, TriState.SELECTED, TriState.NOT_SELECTED);
+						dropChildStates(node);
+						propagateUp(node, TriState.SELECTED, TriState.NOT_SELECTED);
 					} else {
 						// already not selected
 						return false;
@@ -375,8 +371,8 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 						return false;
 					} else {
 						_states.put(node, TriState.NOT_SELECTED);
-						dropChildStates(model, node);
-						propagateUp(model, node, TriState.NOT_SELECTED, TriState.SELECTED);
+						dropChildStates(node);
+						propagateUp(node, TriState.NOT_SELECTED, TriState.SELECTED);
 					}
 					break;
 				}
@@ -385,14 +381,14 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 			}
 		} else {
 			// find current selection state of node.
-			TriState state = ancestorState(model, _states, node);
+			TriState state = ancestorState(_states, node);
 			switch (state) {
 				case INDETERMINATE:
 					throw new IllegalStateException();
 				case NOT_SELECTED:
 					if (selected) {
 						_states.put(node, TriState.SELECTED);
-						propagateUp(model, node, TriState.SELECTED, TriState.NOT_SELECTED);
+						propagateUp(node, TriState.SELECTED, TriState.NOT_SELECTED);
 					} else {
 						// already (inherited) not selected
 						return false;
@@ -404,7 +400,7 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 						return false;
 					} else {
 						_states.put(node, TriState.NOT_SELECTED);
-						propagateUp(model, node, TriState.NOT_SELECTED, TriState.SELECTED);
+						propagateUp(node, TriState.NOT_SELECTED, TriState.SELECTED);
 					}
 					break;
 				default:
@@ -412,12 +408,6 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 			}
 		}
 		return true;
-	}
-
-	private void assertPartOfModel(N node) {
-		if (!model().containsNode(node)) {
-			throw new IllegalArgumentException("Not part of the model: " + node);
-		}
 	}
 
 	/**
@@ -431,19 +421,18 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 	}
 
 	TriState getState(Map<N, TriState> states, N node) {
-		assertPartOfModel(node);
 		TriState ownState = states.get(node);
 		if (ownState != null) {
 			return ownState;
 		}
-		return ancestorState(model(), states, node);
+		return ancestorState(states, node);
 
 	}
 
-	private static <N> TriState ancestorState(TLTreeModel<N> model, Map<N, TriState> states, N node) {
+	private TriState ancestorState(Map<N, TriState> states, N node) {
 		N tmp = node;
 		while (true) {
-			tmp = model.getParent(tmp);
+			tmp = parent(tmp);
 			if (tmp == null) {
 				// Root reached
 				return TriState.NOT_SELECTED;
@@ -455,8 +444,8 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 		}
 	}
 
-	private void propagateUp(TLTreeModel<N> model, N node, TriState newNodeState, TriState oldNodeState) {
-		N parent = model.getParent(node);
+	private void propagateUp(N node, TriState newNodeState, TriState oldNodeState) {
+		N parent = parent(node);
 		if (parent == null) {
 			// node is root
 			if (newNodeState == TriState.NOT_SELECTED) {
@@ -470,16 +459,16 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 			/* When there is no entry for the parent, the child hat gotten its state from the parent
 			 * of the parent, therefore the parent has the same state as the node. */
 			TriState oldParentState = oldNodeState;
-			if (model.getChildren(parent).size() == 1 && newNodeState != TriState.INDETERMINATE) {
+			if (children(parent).size() == 1 && newNodeState != TriState.INDETERMINATE) {
 				/* The given node is the only child of the parent. Therefore this element can carry
 				 * the new state. */
 				_states.remove(node);
 				_states.put(parent, newNodeState);
-				propagateUp(model, parent, newNodeState, oldParentState);
+				propagateUp(parent, newNodeState, oldParentState);
 			} else {
-				setSiblingState(model, parent, node, oldNodeState);
+				setSiblingState(parent, node, oldNodeState);
 				_states.put(parent, TriState.INDETERMINATE);
-				propagateUp(model, parent, TriState.INDETERMINATE, oldParentState);
+				propagateUp(parent, TriState.INDETERMINATE, oldParentState);
 			}
 			return;
 		}
@@ -491,14 +480,14 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 						// nothing to do here.
 						break;
 					case NOT_SELECTED:
-						setSiblingState(model, parent, node, oldNodeState);
+						setSiblingState(parent, node, oldNodeState);
 						_states.put(parent, TriState.INDETERMINATE);
-						propagateUp(model, parent, TriState.INDETERMINATE, TriState.NOT_SELECTED);
+						propagateUp(parent, TriState.INDETERMINATE, TriState.NOT_SELECTED);
 						break;
 					case SELECTED:
-						setSiblingState(model, parent, node, oldNodeState);
+						setSiblingState(parent, node, oldNodeState);
 						_states.put(parent, TriState.INDETERMINATE);
-						propagateUp(model, parent, TriState.INDETERMINATE, TriState.SELECTED);
+						propagateUp(parent, TriState.INDETERMINATE, TriState.SELECTED);
 						break;
 				}
 				break;
@@ -507,7 +496,7 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 				switch (parentState) {
 					case INDETERMINATE:
 						boolean allUnSelected = true;
-						for (N child : model.getChildren(parent)) {
+						for (N child : children(parent)) {
 							if (_states.get(child) != TriState.NOT_SELECTED) {
 								allUnSelected = false;
 								break;
@@ -515,8 +504,8 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 						}
 						if (allUnSelected) {
 							_states.put(parent, TriState.NOT_SELECTED);
-							dropChildStates(model, parent);
-							propagateUp(model, parent, TriState.NOT_SELECTED, TriState.INDETERMINATE);
+							dropChildStates(parent);
+							propagateUp(parent, TriState.NOT_SELECTED, TriState.INDETERMINATE);
 						}
 						break;
 					case NOT_SELECTED:
@@ -524,10 +513,10 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 						_states.remove(node);
 						break;
 					case SELECTED:
-						boolean anySibling = setSiblingState(model, parent, node, TriState.SELECTED);
+						boolean anySibling = setSiblingState(parent, node, TriState.SELECTED);
 						TriState newParentState = anySibling ? TriState.INDETERMINATE : TriState.NOT_SELECTED;
 						_states.put(parent, newParentState);
-						propagateUp(model, parent, newParentState, TriState.SELECTED);
+						propagateUp(parent, newParentState, TriState.SELECTED);
 						break;
 				}
 				break;
@@ -536,7 +525,7 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 				switch (parentState) {
 					case INDETERMINATE:
 						boolean allSelected = true;
-						for (N child : model.getChildren(parent)) {
+						for (N child : children(parent)) {
 							if (_states.get(child) != TriState.SELECTED) {
 								allSelected = false;
 								break;
@@ -544,15 +533,15 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 						}
 						if (allSelected) {
 							_states.put(parent, TriState.SELECTED);
-							dropChildStates(model, parent);
-							propagateUp(model, parent, TriState.SELECTED, TriState.INDETERMINATE);
+							dropChildStates(parent);
+							propagateUp(parent, TriState.SELECTED, TriState.INDETERMINATE);
 						}
 						break;
 					case NOT_SELECTED:
-						boolean anySibling = setSiblingState(model, parent, node, TriState.NOT_SELECTED);
+						boolean anySibling = setSiblingState(parent, node, TriState.NOT_SELECTED);
 						TriState newParentState = anySibling ? TriState.INDETERMINATE : TriState.SELECTED;
 						_states.put(parent, newParentState);
-						propagateUp(model, parent, newParentState, TriState.NOT_SELECTED);
+						propagateUp(parent, newParentState, TriState.NOT_SELECTED);
 						break;
 					case SELECTED:
 						// parent is also completely selected. Remove state for child.
@@ -564,10 +553,10 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 		}
 	}
 
-	private boolean setSiblingState(TLTreeModel<N> model, N parent, N node, TriState oldNodeState) {
+	private boolean setSiblingState(N parent, N node, TriState oldNodeState) {
 		assert oldNodeState != TriState.INDETERMINATE;
 		boolean anySibling = false;
-		for (N child : model.getChildren(parent)) {
+		for (N child : children(parent)) {
 			if (child == node) {
 				continue;
 			}
@@ -586,14 +575,14 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 		return anySibling;
 	}
 
-	private void dropChildStates(TLTreeModel<N> model, N parent) {
-		for (N child : model.getChildren(parent)) {
+	private void dropChildStates(N parent) {
+		for (N child : children(parent)) {
 			TriState state = _states.remove(child);
 			if (state == null) {
 				// No stored state for child.
 				continue;
 			}
-			dropChildStates(model, child);
+			dropChildStates(child);
 		}
 	}
 
@@ -617,41 +606,58 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 	 * @see #calculateSelected()
 	 */
 	public Set<N> calculateAllSelected() {
-		TLTreeModel<N> model = model();
-		N root = model.getRoot();
-		TriState rootState = _states.get(root);
-		if (rootState == null) {
-			// No entry for root => no entry at all.
+		if (_states.isEmpty()) {
 			return Collections.emptySet();
 		}
+
+		N randomNode = _states.keySet().iterator().next();
+		N root = randomNode;
+		while (true) {
+			N parent = parent(root);
+			if (parent == null) {
+				break;
+			}
+			root = parent;
+		}
+
 		Set<N> selection = new HashSet<>();
-		addToSelection(model, root, selection);
+		addToSelection(root, selection);
 		return selection;
 	}
 
-	private void addToSelection(TLTreeModel<N> model, N node, Set<N> selection) {
+	private void addToSelection(N node, Set<N> selection) {
 		TriState cachedState = _states.get(node);
 		switch (cachedState) {
 			case INDETERMINATE:
-				for (N child : model.getChildren(node)) {
-					addToSelection(model, child, selection);
+				for (N child : children(node)) {
+					addToSelection(child, selection);
 				}
 				break;
 			case NOT_SELECTED:
 				// no selected ignore complete subtree.
 				break;
 			case SELECTED:
-				addRecursive(model, node, selection);
+				addRecursive(node, selection);
 				break;
 		}
 
 	}
 
-	private void addRecursive(TLTreeModel<N> model, N node, Set<N> selection) {
+	private void addRecursive(N node, Set<N> selection) {
 		selection.add(node);
-		for (N child : model.getChildren(node)) {
-			addRecursive(model, child, selection);
+		for (N child : children(node)) {
+			addRecursive(child, selection);
 		}
 	}
+
+	/**
+	 * Determines the parent of the given node.
+	 */
+	protected abstract N parent(N node);
+
+	/**
+	 * Determines the children for the given node.
+	 */
+	protected abstract List<? extends N> children(N node);
 
 }

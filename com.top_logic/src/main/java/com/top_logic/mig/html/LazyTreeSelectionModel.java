@@ -5,13 +5,14 @@
  */
 package com.top_logic.mig.html;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 import com.top_logic.layout.tree.model.TLTreeModel;
 
 /**
- * {@link TreeSelectionModel} that does not store its {@link TreeSelectionModel#model()} but fetches
- * it from a {@link Supplier}.
+ * {@link TreeSelectionModel} that does not store its base {@link TLTreeModel tree model} but
+ * fetches it from a {@link Supplier}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -33,9 +34,21 @@ public class LazyTreeSelectionModel<N> extends TreeSelectionModel<N> {
 		_modelSupplier = modelSupplier;
 	}
 
-	@Override
-	public TLTreeModel<N> model() {
+	/**
+	 * Base {@link TLTreeModel}.
+	 */
+	protected TLTreeModel<N> model() {
 		return _modelSupplier.get();
+	}
+
+	@Override
+	protected N parent(N node) {
+		return model().getParent(node);
+	}
+
+	@Override
+	protected List<? extends N> children(N node) {
+		return model().getChildren(node);
 	}
 
 }

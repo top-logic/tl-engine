@@ -101,6 +101,7 @@ import com.top_logic.layout.URLParser;
 import com.top_logic.layout.WindowScope;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.channel.ChannelFactory;
 import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
@@ -117,7 +118,6 @@ import com.top_logic.layout.form.control.AbstractButtonControl;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.model.VisibilityModel;
 import com.top_logic.layout.form.tag.FormTag;
-import com.top_logic.layout.form.tag.I18NConstants;
 import com.top_logic.layout.scripting.recorder.DynamicRecordable;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -146,6 +146,7 @@ import com.top_logic.layout.window.WindowTemplate;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.UserAgent;
+import com.top_logic.mig.html.layout.WithChannelConfigs.ChannelConfig;
 import com.top_logic.mig.html.layout.tiles.GroupTileComponent;
 import com.top_logic.mig.html.layout.tiles.TileInfo;
 import com.top_logic.model.TLObject;
@@ -214,7 +215,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	public interface Config
 			extends PolymorphicConfiguration<LayoutComponent>, LayoutComponentUIOptions, IComponent.ComponentConfig,
 			OptionalToolbarOptions, ButtonbarOptions,
-			ExpandableConfig, WithGotoConfiguration, WithDefaultFor {
+			ExpandableConfig, WithGotoConfiguration, WithDefaultFor, WithChannelConfigs {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -846,6 +847,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 	private Set<TLObject> _observedObjects = Set.of();
 
+	private Map<String, ChannelSPI> _allChannels;
+
 	/**
 	 * When <code>true</code> this will result in some extra comments written to the HTML-header.
 	 * 
@@ -906,6 +909,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		doResetScrollPosition(false);
 		_defaultCommand = context.getInstance(atts.getDefaultAction());
 		_cancelCommand = context.getInstance(atts.getCancelAction());
+		_allChannels = addConfiguredChannels(context, programmaticChannels());
     }
 
 	@Override
@@ -2226,14 +2230,21 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	}
 
 	/**
-	 * Available channel kinds of this component implementation.
+	 * Available channel kinds of this component type.
 	 */
-	protected Map<String, ChannelSPI> channels() {
+	protected Map<String, ChannelSPI> programmaticChannels() {
 		if (this instanceof Selectable) {
 			return Selectable.MODEL_AND_SELECTION_CHANNEL;
 		} else {
 			return MODEL_CHANNEL;
 		}
+	}
+
+	/**
+	 * Available channel kinds of this component.
+	 */
+	protected final Map<String, ChannelSPI> channels() {
+		return _allChannels;
 	}
 
 	/**
@@ -2647,6 +2658,30 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		}
 
 		_gotoTargets = LayoutUtils.resolveGotoTargets(context, getMainLayout(), getConfig().getGotoTargets().values());
+	}
+
+	/**
+	 * Here all the tuning happens to prepare dialogs to be displayed.
+	 */
+	private Map<String, ChannelSPI> addConfiguredChannels(InstantiationContext context, Map<String, ChannelSPI> baseChannels ) {
+		Map<String, ChannelConfig> additionalChannels = getConfig().getAdditionalChannels();
+		if (additionalChannels.isEmpty()) {
+			return baseChannels;
+		}
+		Map<String, ChannelSPI> allChannels = new HashMap<>(baseChannels);
+		for (ChannelConfig channelConfig : additionalChannels.values()) {
+			ChannelFactory factory = context.getInstance(channelConfig.getImpl());
+			ChannelSPI newChannel = factory.createChannel(channelConfig.getName());
+			String newChannelName = newChannel.getName();
+
+			ChannelSPI clash = allChannels.put(newChannelName, newChannel);
+			if (clash != null) {
+				allChannels.put(newChannelName, clash);
+				ResKey errMsg = I18NConstants.DUPLICATE_CHANNEL_NAME__NAME.fill(newChannelName);
+				context.error(Resources.getInstance().getString(errMsg));
+			}
+		}
+		return allChannels;
 	}
 
 	/**
@@ -4438,6 +4473,16 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		if (this instanceof Selectable) {
 			((Selectable) this).linkSelectionChannel(log);
 		}
+
+		for (ChannelConfig channelConf : config.getAdditionalChannels().values()) {
+			ModelSpec channelValue = channelConf.getValue();
+			if (channelValue == null) {
+				continue;
+			}
+			ComponentChannel additionalChannel = getChannel(channelConf.getName());
+			ChannelLinking channelLinking = getChannelLinking(channelValue);
+			additionalChannel.linkChannel(log, this, channelLinking);
+		}
 	}
 
 	@Override
@@ -4471,7 +4516,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	public ResKey noModelKey() {
 		return ResKey.fallback(getConfig().getNoModelKey(),
 			ResKey.fallback(getResPrefix().key(FormTag.DEFAULT_NO_MODEL_KEY_SUFFIX),
-				I18NConstants.NO_MODEL));
+				com.top_logic.layout.form.tag.I18NConstants.NO_MODEL));
 	}
 
 	/**

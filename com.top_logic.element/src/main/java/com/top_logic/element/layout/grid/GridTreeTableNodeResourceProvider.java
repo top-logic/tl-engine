@@ -7,7 +7,7 @@ package com.top_logic.element.layout.grid;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.Accessor;
-import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.tree.model.TLTreeNodeResourceProvider;
 
 /**
@@ -31,8 +31,8 @@ public class GridTreeTableNodeResourceProvider extends TLTreeNodeResourceProvide
 
 	@Override
 	protected Object mapValue(Object node) {
-		FormMember formMember = (FormMember) super.mapValue(node);
-		return formMember.get(GridComponent.PROP_ATTRIBUTED);
+		FormGroup group = (FormGroup) super.mapValue(node);
+		return GridComponent.getRowObject(group);
 	}
 
 }

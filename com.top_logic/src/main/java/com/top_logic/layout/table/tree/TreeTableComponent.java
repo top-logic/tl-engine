@@ -34,8 +34,10 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.col.Maybe;
+import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -246,6 +248,9 @@ public class TreeTableComponent extends BoundComponent
 			registry.registerButton(TreeTableExpandCollapseAll.COLLAPSE_ID);
 		}
 	}
+
+	private static final Property<TreeTableComponent> TREE_OWNER =
+		TypedAnnotatable.property(TreeTableComponent.class, "owner");
 
 	/**
 	 * @see #channels()
@@ -1033,8 +1038,26 @@ public class TreeTableComponent extends BoundComponent
 	 *        Never null.
 	 */
 	protected void configureTreeModel(AbstractTreeTableModel<?> treeModel) {
-		treeModel.setRootVisible(isRootVisible() && treeModel.getRoot().getBusinessObject() != null);
+		AbstractTreeTableNode<?> root = treeModel.getRoot();
+		root.set(TREE_OWNER, this);
+		treeModel.setRootVisible(isRootVisible() && root.getBusinessObject() != null);
 		treeModel.addTreeModelListener(this::onTreeModelEvent);
+	}
+
+	/**
+	 * Determines the {@link TreeTableComponent} that created the given
+	 * {@link AbstractTreeTableModel}.
+	 * 
+	 * @param treeModel
+	 *        Tree model to get owner for.
+	 * @return The owning {@link TreeTableComponent} of the given tree model. May be
+	 *         <code>null</code> when the given model was not created by a
+	 *         {@link TreeTableComponent}.
+	 */
+	@FrameworkInternal
+	public static TreeTableComponent getOwner(AbstractTreeTableModel<?> treeModel) {
+		AbstractTreeTableNode<?> root = treeModel.getRoot();
+		return root.get(TREE_OWNER);
 	}
 
 	private void onTreeModelEvent(TreeModelEvent event) {
@@ -1267,7 +1290,7 @@ public class TreeTableComponent extends BoundComponent
 	}
 
 	@Override
-	protected Map<String, ChannelSPI> channels() {
+	protected Map<String, ChannelSPI> programmaticChannels() {
 		return CHANNELS;
 	}
 

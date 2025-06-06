@@ -1789,6 +1789,7 @@
 
 					<scheme class="com.top_logic.layout.table.DefaultTableDataNamingScheme"/>
 					<scheme class="com.top_logic.layout.table.GenericTableDataNaming" />
+					<scheme class="com.top_logic.layout.table.tree.TreeTableComponentNodeLabelNaming" />
 					<scheme class="com.top_logic.layout.table.control.FilterFormOwner$Naming"/>
 					<scheme class="com.top_logic.layout.scripting.recorder.ref.BranchNamingScheme"/>
 					<scheme class="com.top_logic.layout.scripting.recorder.ref.RevisionNamingScheme"/>

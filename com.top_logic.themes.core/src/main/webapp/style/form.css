@@ -1733,8 +1733,17 @@ input.is-checkbox[disabled] {
 .cDateInput.mandatory input,
 .cTimeInput.mandatory input,
 .ddwttContainer.mandatory button,
-.mandatory .lFixedRight a {
+.mandatory .lFixedRight a,
+.cStructuredText.mandatory .cke {
 	box-shadow: inset 0px -2px 0px 0px var(--focus);
+}
+
+.cStructuredText.mandatory .cke {
+	padding-bottom: 2px;
+}
+
+.cStructuredText:not(.mandatory) .cke {
+	margin-bottom: 2px;
 }
 
 .cTextInput textarea,

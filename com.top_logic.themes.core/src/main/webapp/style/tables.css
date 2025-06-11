@@ -923,7 +923,7 @@ table td .ddwttContainer {
 	width: 100%;
 }
 
-table td span.cDecoratedCell,
+table td .cDecoratedCell,
 table td span.cPopupSelect,
 table td span.cTextSelect,
 table td span.cDropdownSelect,
@@ -944,8 +944,8 @@ table td span.downloadControl {
 	height: 100%;
 }
 
-table td span.cDecoratedCell :is(.lFlexible,.lFixedLeft) 
-table td span.cDecoratedCell :is(.lFlexible,.lFixedLeft) > .cTooltip {
+table td .cDecoratedCell :is(.lFlexible,.lFixedLeft),
+table td .cDecoratedCell :is(.lFlexible,.lFixedLeft) > .cTooltip {
 	height: inherit;
 	display: inline-flex;
 	align-items: center;

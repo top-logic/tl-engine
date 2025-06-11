@@ -1724,9 +1724,11 @@ input.is-checkbox[disabled] {
 }
 
 .cTextInput.mandatory input,
+.cTextInput.mandatory textarea,
 .cIntegerInput.mandatory input,
 .cExpandableTextInput.mandatory input,
 .cBlockTextInput.mandatory input,
+.cBlockTextInput.mandatory textarea,
 .cPopupSelect.mandatory input,
 .cDateInput.mandatory input,
 .cTimeInput.mandatory input,

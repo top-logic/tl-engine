@@ -465,7 +465,8 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 			TableViewModel viewModel = table.getViewModel();
 			EditableTableModel applicationModel = (EditableTableModel) table.getApplicationModel();
 			
-			if (((EditableTableControl) table).getMode() != ModeModel.EDIT_MODE) {
+			EditableTableControl editTable = (EditableTableControl) table;
+			if (editTable.getMode() != ModeModel.EDIT_MODE) {
 				throw new IllegalStateException("Control not in edit mode.");
 			}
 			
@@ -475,6 +476,7 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 			// Execute the move.
 			applicationModel.moveRowToTop(viewModel.getApplicationModelRow(theRowID));
 			TableUtil.selectRow(table.getTableData(), 0);
+			editTable._selectionListener.notifySelectionChanged(null, Collections.emptySet(), Collections.emptySet());
 			return HandlerResult.DEFAULT_RESULT;
 		}
 		
@@ -502,7 +504,8 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 			TableViewModel viewModel = table.getViewModel();
 			EditableTableModel applicationModel = (EditableTableModel) table.getApplicationModel();
 			
-			if (((EditableTableControl) table).getMode() != ModeModel.EDIT_MODE) {
+			EditableTableControl editTable = (EditableTableControl) table;
+			if (editTable.getMode() != ModeModel.EDIT_MODE) {
 				throw new IllegalStateException("Control not in edit mode.");
 			}
 			
@@ -514,6 +517,8 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 				applicationModel.moveRowUp(viewModel.getApplicationModelRow(theRowID));
 				theRowID = (theRowID - 1 >= 0) ? (theRowID - 1) : 0;
 				TableUtil.selectRow(table.getTableData(), theRowID);
+				editTable._selectionListener.notifySelectionChanged(null, Collections.emptySet(),
+					Collections.emptySet());
 			}
             return HandlerResult.DEFAULT_RESULT;
 		}
@@ -541,7 +546,8 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 			TableViewModel viewModel = table.getViewModel();
 			EditableTableModel applicationModel = (EditableTableModel) table.getApplicationModel();
 			
-			if (((EditableTableControl) table).getMode() != ModeModel.EDIT_MODE) {
+			EditableTableControl editTable = (EditableTableControl) table;
+			if (editTable.getMode() != ModeModel.EDIT_MODE) {
 				throw new IllegalStateException("Control not in edit mode.");
 			}
 			
@@ -554,6 +560,8 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 				applicationModel.moveRowDown(viewModel.getApplicationModelRow(theRowID));
 				theRowID = ((theRowID + 1) < theMax) ? (theRowID + 1) : theRowID;
 				TableUtil.selectRow(table.getTableData(), theRowID);
+				editTable._selectionListener.notifySelectionChanged(null, Collections.emptySet(),
+					Collections.emptySet());
 			}
             return HandlerResult.DEFAULT_RESULT;
 		}
@@ -582,7 +590,9 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 			TableViewModel viewModel = table.getViewModel();
 			EditableTableModel applicationModel = (EditableTableModel) table.getApplicationModel();
 			
-			if (((EditableTableControl) table).getMode() != ModeModel.EDIT_MODE) {
+			EditableTableControl editTable = (EditableTableControl) table;
+			boolean tableDisabled = editTable.getMode() != ModeModel.EDIT_MODE;
+			if (tableDisabled) {
 				throw new IllegalStateException("Control not in edit mode.");
 			}
 			
@@ -592,6 +602,7 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 			// Execute the move.
 			applicationModel.moveRowToBottom(viewModel.getApplicationModelRow(theRowID));
 			TableUtil.selectRow(table.getTableData(), viewModel.getRowCount() - 1);
+			editTable._selectionListener.notifySelectionChanged(null, Collections.emptySet(), Collections.emptySet());
 			return HandlerResult.DEFAULT_RESULT;
 		}
 		
@@ -634,19 +645,14 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 		@Override
 		public void notifySelectionChanged(SelectionModel model, Set<?> oldSelection, Set<?> newSelection) {
 			TableViewModel theViewModel = getViewModel();
-			int rowCount = theViewModel.getRowCount();
 			int selected = TableUtil.getSingleSelectedRow(getModel());
 
-			boolean noneSelected = selected < 0;
-
-			boolean firstSelected = selected == 0;
-			boolean lastSelected = selected == rowCount - 1;
 			boolean tableDisabled = getMode() == ModeModel.DISABLED_MODE;
 
 			if (delButton != null) {
 				if (tableDisabled) {
 					disableTableDisabled(delButton);
-				} else if (noneSelected) {
+				} else if (selected < 0) {
 					disableNoSelection(delButton);
 				} else {
 					boolean canRemove = true;
@@ -663,6 +669,13 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 				}
 			}
 
+			updateButtons(theViewModel, selected, tableDisabled);
+		}
+
+		private void updateButtons(TableViewModel viewModel, int selectedRow, boolean tableDisabled) {
+			boolean noneSelected = selectedRow < 0;
+			boolean firstSelected = selectedRow == 0;
+			boolean lastSelected = selectedRow == viewModel.getRowCount() - 1;
 			updateUpButton(upButton, noneSelected, firstSelected, I18NConstants.MOVE_ROW_UP_DISABLED, tableDisabled);
 			updateUpButton(topButton, noneSelected, firstSelected, I18NConstants.MOVE_ROW_TO_TOP_DISABLED,
 				tableDisabled);

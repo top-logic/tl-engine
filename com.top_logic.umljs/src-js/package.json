@@ -23,9 +23,9 @@
     "execa": "^8.0.1",
     "rollup": "^3.29.4",
     "rollup-plugin-license": "^3.1.0"
-
   },
   "dependencies": {
+    "cross-spawn": "^7.0.6",
     "diagram-js": "^12.3.0",
     "diagram-js-direct-editing": "^2.0.0",
     "inherits": "^2.0.4",

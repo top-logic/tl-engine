@@ -31,6 +31,12 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+		<!-- commons-beanutils 1.10.0 is still pulled transitively; we override that with a secure version -->
+		<dependency>
+		    <groupId>commons-beanutils</groupId>
+		    <artifactId>commons-beanutils</artifactId>
+		    <version>1.11.0</version>
+		</dependency>
 
 		<!-- Tests -->
 		<dependency>

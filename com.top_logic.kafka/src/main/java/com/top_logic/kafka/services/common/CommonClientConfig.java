@@ -134,6 +134,9 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	/** @see #getSaslOauthbearerScopeClaimName() */
 	String SASL_OAUTHBEARER_SCOPE_CLAIM_NAME = SaslConfigs.SASL_OAUTHBEARER_SCOPE_CLAIM_NAME;
 
+	/** @see #getSaslOauthbearerAllowedUrls() */
+	String SASL_OAUTHBEARER_ALLOWED_URLS = "org.apache.kafka.sasl.oauthbearer.allowed.urls";
+
 	/** @see #getSaslOauthbearerJwksEndpointRetryBackoffMS() */
 	String SASL_OAUTHBEARER_JWKS_ENDPOINT_RETRY_BACKOFF_MS =
 		SaslConfigs.SASL_OAUTHBEARER_JWKS_ENDPOINT_RETRY_BACKOFF_MS;
@@ -638,6 +641,14 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	@Name(SASL_OAUTHBEARER_TOKEN_ENDPOINT_URL)
 	@KafkaClientProperty
 	String getSaslOauthbearerTokenEndpointUrl();
+
+	/**
+	 * Returns the allowed URLs, the so called whitelist. Mit komma trennen
+	 */
+	@Name(SASL_OAUTHBEARER_ALLOWED_URLS)
+	@KafkaClientProperty
+	@StringDefault(SaslConfigs.SASL_OAUTHBEARER_TOKEN_ENDPOINT_URL)
+	String getSaslOauthbearerAllowedUrls();
 
 	/**
 	 * @see CommonClientConfigs#SECURITY_PROTOCOL_DOC

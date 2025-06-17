@@ -2415,6 +2415,13 @@ div.imageContainer {
 	display: inline-block;
 }
 
+.cIconChooser .cannot-edit, 
+.cIconChooser .disabled, 
+.cIconSelect .cannot-edit, 
+.cIconSelect .disabled {
+	pointer-events: none;
+}
+
 .cIconChooser .input-image {
 	display: inline-flex;
 	align-items: center;

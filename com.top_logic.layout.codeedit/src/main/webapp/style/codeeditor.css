@@ -40,8 +40,17 @@
 
 div.ace_tooltip {
 	white-space: normal;
-	max-height: 50vh;
+	max-height: 50vh !important; /* To overwrite ace's JS height implementation */
+	max-width: 30vw !important; /* To overwrite ace's JS width implementation */
 	overflow: auto;
+	background: var(--background);
+	border: 1px solid var(--border-strong);
+	padding: var(--spacing-02);
+	font-family: var(--font-family);
+	font-size: var(--body-02-font-size);
+	line-height: var(--body-02-line-height);
+	letter-spacing: var(--body-02-letter-spacing);
+	color: var(--text-primary);
 }
 
 div.ace_tooltip>code {
@@ -51,3 +60,24 @@ div.ace_tooltip>code {
 div.ace_tooltip>code.inlineCode {
 	white-space: normal;
 }
+
+.ace_tooltip pre {
+	border: 1px solid var(--border-subtle);
+	background: var(--layer);
+	padding: 0 var(--spacing-02);
+}
+
+.ace_tooltip pre code {
+  display: block; /* To avoid unwanted text indentation */
+}
+
+.ace_tooltip .tlScriptDoc h2:not(:first-of-type) {
+	font-family: var(--font-family);
+    font-size: var(--heading-03-font-size);
+    line-height: var(--heading-03-line-height);
+    letter-spacing: var(--heading-03-letter-spacing);
+    font-weight: bold;
+}
+
+
+

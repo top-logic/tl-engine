@@ -220,6 +220,12 @@ public class HandlerForPath {
 			Object[] parts2 = o2._parts;
 			int len1 = parts1.length;
 			int len2 = parts2.length;
+
+			// Check length first - longer paths come first
+			if (len1 != len2) {
+				return len2 - len1;
+			}
+
 			int lim = Math.min(len1, len2);
 			for (int k = 0; k < lim; k++) {
 				Object part1 = parts1[k];
@@ -242,7 +248,7 @@ public class HandlerForPath {
 					}
 				}
 			}
-			return len1 - len2;
+			return 0;
 		}
 
 	}

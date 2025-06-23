@@ -292,7 +292,7 @@ public class GridComponent extends EditComponent implements
 		/** flag indicating whether to show clipboard commands or not */
 		@Deprecated
 		@Name(GridComponent.XML_CONFIG_SHOW_CLIPBOARD_COMMANDS)
-		Boolean getShowClipboardCommands();
+		boolean getShowClipboardCommands();
 
 		@Name(XML_CONFIG_STRUCTURE_NAME)
 		String getStructureName();

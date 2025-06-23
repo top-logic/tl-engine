@@ -72,7 +72,7 @@
 <attributes>
 	<mo_attribute att_name="name"    att_type="String" db_name="NAME"       db_size="64" mandatory="true" />
 	<mo_attribute att_name="id"      att_type="String" db_name="SESSION_ID" db_size="64" mandatory="true" />
-	<mo_attribute att_name="machine" att_type="String" db_name="MACHINE_IP" db_size="64" mandatory="true" />
+	<mo_attribute att_name="machine" att_type="String" db_name="MACHINE_IP" db_size="256" mandatory="true" />
 	<mo_attribute att_name="server"  att_type="String"                      db_size="64" mandatory="true" />
 	<mo_attribute att_name="date"    att_type="Date"   db_name="LOGIN"                   mandatory="true" />
 	<mo_attribute att_name="logout"  att_type="Date"                                     mandatory="false" />

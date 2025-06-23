@@ -45,6 +45,24 @@
   	<dependency>
 	    <groupId>com.manticore-projects.tools</groupId>
 	    <artifactId>h2migrationtool</artifactId>
+
+		<!-- Exclude old version of dependency. -->
+		<!-- Note: tl-ide-jetty is explicitly added to the dependencies when starting through exec:java plugin. 
+		     This causes the dependencies of h2migrationtool to override the regular dependencies of the application
+		     causing dependencies to be downgraded which causes the app to fail.
+		-->
+		<exclusions>
+			<exclusion>
+				<groupId>commons-io</groupId>
+				<artifactId>commons-io</artifactId>
+			</exclusion>
+		</exclusions>
+	</dependency>
+	
+	<!-- Re-add new version of dependency. -->
+	<dependency>
+		<groupId>commons-io</groupId>
+		<artifactId>commons-io</artifactId>
 	</dependency>
   </dependencies>
 </project>

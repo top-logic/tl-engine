@@ -290,8 +290,8 @@ public class GridComponent extends EditComponent implements
 		boolean getShowDetailOpener();
 
 		/** flag indicating whether to show clipboard commands or not */
+		@Deprecated
 		@Name(GridComponent.XML_CONFIG_SHOW_CLIPBOARD_COMMANDS)
-		@BooleanDefault(true)
 		Boolean getShowClipboardCommands();
 
 		@Name(XML_CONFIG_STRUCTURE_NAME)
@@ -403,6 +403,7 @@ public class GridComponent extends EditComponent implements
     public static final String XML_CONFIG_EDIT_COMPONENT_NAME = "editComponentName";
     
     /** Configuration flag indicating whether the clipboard buttons should be shown in the grid */
+	@Deprecated
     public static final String XML_CONFIG_SHOW_CLIPBOARD_COMMANDS = "showClipboardCommands";
 
 	/** Configuration flag indicating whether the technical column should be shown in the grid */

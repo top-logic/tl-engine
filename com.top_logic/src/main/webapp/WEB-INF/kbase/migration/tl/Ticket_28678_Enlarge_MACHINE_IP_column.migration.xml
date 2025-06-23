@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28678_Enlarge_MACHINE_IP_column"
+		module="tl"
+	/>
+	<dependencies>
+		<dependency name="Ticket_28305_Upgrade_download_names"
+			module="tl"
+		/>
+	</dependencies>
+	<processors>
+		<alter-column
+			table="UserSession"
+			column="machine"
+			db_size="256"
+		/>
+	</processors>
+	<post-processors/>
+</migration>

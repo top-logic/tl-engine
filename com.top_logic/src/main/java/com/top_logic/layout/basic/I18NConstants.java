@@ -91,6 +91,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey3 ERROR_UPDATING_EXECUTABILITY__CMD_CMP_MSG;
 
+	/**
+	 * @en Failed to compute executability state: {0}
+	 */
+	public static ResKey1 FAILED_TO_COMPUTE_STATE__MSG;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

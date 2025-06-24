@@ -19,7 +19,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseEvent;
 
 import com.top_logic.ajax.client.control.AbstractJSControl;
-import com.top_logic.graphic.blocks.control.JSBlocksControlCommon;
 import com.top_logic.graphic.blocks.model.Drawable;
 import com.top_logic.graphic.blocks.model.Identified;
 import com.top_logic.graphic.blocks.svg.RenderContext;
@@ -38,7 +37,7 @@ import elemental2.dom.Response;
 import elemental2.promise.Promise;
 
 /**
- * Client-side logic of a {@link JSBlocksControlCommon}.
+ * Client-side logic of a flow diagram control.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

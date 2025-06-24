@@ -7,6 +7,7 @@ package com.top_logic.layout.basic;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.form.FormHandler;
@@ -84,6 +85,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey CONTEXT_MENU_OPENER;
 
 	public static ResPrefix DIRTY_HANDLING;
+
+	/**
+	 * @en Failed to update command executability of command "{0}" in component "{1}": {2}
+	 */
+	public static ResKey3 ERROR_UPDATING_EXECUTABILITY__CMD_CMP_MSG;
+
+	/**
+	 * @en Failed to compute executability state: {0}
+	 */
+	public static ResKey1 FAILED_TO_COMPUTE_STATE__MSG;
 
 	static {
 		initConstants(I18NConstants.class);

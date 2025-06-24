@@ -34,6 +34,9 @@ message Diagram extends Widget {
 	@Ref
 	repeated SelectableBox selection;
 	
+	/** Whether multi-selection is supported */
+	boolean multiSelect;
+	
 	/** Internal field for storing the current click handler registration (client-side only). */
 	transient com.top_logic.graphic.blocks.svg.event.Registration clickHandler;
 	

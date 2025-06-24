@@ -24,6 +24,8 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 		}
 	};
 
+	private boolean _multiSelect = false;
+
 	private transient com.top_logic.graphic.blocks.svg.event.Registration _clickHandler = null;
 
 	/**
@@ -112,6 +114,24 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 	}
 
 	@Override
+	public final boolean isMultiSelect() {
+		return _multiSelect;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Diagram setMultiSelect(boolean value) {
+		internalSetMultiSelect(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isMultiSelect()} without chain call utility. */
+	protected final void internalSetMultiSelect(boolean value) {
+		_listener.beforeSet(this, MULTI_SELECT__PROP, value);
+		_multiSelect = value;
+		_listener.afterChanged(this, MULTI_SELECT__PROP);
+	}
+
+	@Override
 	public final com.top_logic.graphic.blocks.svg.event.Registration getClickHandler() {
 		return _clickHandler;
 	}
@@ -161,6 +181,7 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 		java.util.Arrays.asList(
 			ROOT__PROP, 
 			SELECTION__PROP, 
+			MULTI_SELECT__PROP, 
 			CLICK_HANDLER__PROP));
 
 	private static java.util.Set<String> TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(new java.util.HashSet<>(
@@ -182,6 +203,7 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 		switch (field) {
 			case ROOT__PROP: return getRoot();
 			case SELECTION__PROP: return getSelection();
+			case MULTI_SELECT__PROP: return isMultiSelect();
 			case CLICK_HANDLER__PROP: return getClickHandler();
 			default: return super.get(field);
 		}
@@ -192,6 +214,7 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 		switch (field) {
 			case ROOT__PROP: internalSetRoot((com.top_logic.graphic.flow.data.Box) value); break;
 			case SELECTION__PROP: internalSetSelection(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.graphic.flow.data.SelectableBox.class, value)); break;
+			case MULTI_SELECT__PROP: internalSetMultiSelect((boolean) value); break;
 			case CLICK_HANDLER__PROP: internalSetClickHandler((com.top_logic.graphic.blocks.svg.event.Registration) value); break;
 			default: super.set(field, value); break;
 		}
@@ -210,6 +233,8 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 			x.writeTo(scope, out);
 		}
 		out.endArray();
+		out.name(MULTI_SELECT__PROP);
+		out.value(isMultiSelect());
 	}
 
 	@Override
@@ -229,6 +254,10 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 					x.writeTo(scope, out);
 				}
 				out.endArray();
+				break;
+			}
+			case MULTI_SELECT__PROP: {
+				out.value(isMultiSelect());
 				break;
 			}
 			case CLICK_HANDLER__PROP: {
@@ -256,6 +285,7 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 				setSelection(newValue);
 			}
 			break;
+			case MULTI_SELECT__PROP: setMultiSelect(in.nextBoolean()); break;
 			default: super.readField(scope, in, field);
 		}
 	}

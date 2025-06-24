@@ -194,6 +194,10 @@ public class FlowChartComponent extends BuilderComponent
 		}
 
 		Diagram diagram = (Diagram) getBuilder().getModel(getModel(), this);
+		if (diagram != null) {
+			diagram.setMultiSelect(_selectionModel.isMultiSelectionSupported());
+		}
+
 		_control.setModel(diagram);
 
 		if (diagram != null) {

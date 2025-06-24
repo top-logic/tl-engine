@@ -89,7 +89,7 @@ public interface SelectableBoxOperations extends DecorationOperations, SVGClickH
 				diagram.setSelection(Collections.singletonList(self()));
 			}
 		} else {
-			if (event.isShiftKey() || event.isCtrlKey()) {
+			if (diagram.isMultiSelect() && (event.isShiftKey() || event.isCtrlKey())) {
 				diagram.getSelection().add(self());
 			} else {
 				// Make unique.

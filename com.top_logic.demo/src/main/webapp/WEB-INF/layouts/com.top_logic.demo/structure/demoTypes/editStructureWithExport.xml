@@ -135,6 +135,8 @@
 									</include>
 								</dialogs>
 								<buttons>
+									<reference command-id="addSelectedToClipboard"/>
+									<reference command-id="showClipboard"/>
 									<button id="newASibling"
 										class="com.top_logic.element.layout.grid.GenericStructureCreateHandler"
 										contextSelector="com.top_logic.element.layout.grid.SibblingCreateContext"
@@ -169,6 +171,10 @@
 									<tabInfo label="${resPrefix}demoStructureDemoTypesTreeGrid.tab"/>
 								</inject>
 								<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"/>
+								<additionalButtons>
+									<reference command-id="addSelectedToClipboard"/>
+									<reference command-id="showClipboard"/>
+								</additionalButtons>
 							</include>
 							<include name="com.top_logic.demo/structure/demoTypes/grid/grid.xml"
 								elements="A,B,C"

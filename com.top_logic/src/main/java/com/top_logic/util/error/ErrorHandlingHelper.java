@@ -15,7 +15,9 @@ import com.top_logic.base.services.simpleajax.ClientAction;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.exception.I18NFailure;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.module.ManagedClass;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResKey;
@@ -222,6 +224,12 @@ public class ErrorHandlingHelper extends ManagedClass {
 	public static boolean isInternalError(Throwable problem) {
 		if (!(problem instanceof I18NFailure)) {
 			return true;
+		}
+
+		if (problem instanceof I18NRuntimeException ex) {
+			if (ex.getSeverity().ordinal() >= ErrorSeverity.ERROR.ordinal()) {
+				return true;
+			}
 		}
 
 		Throwable cause = problem.getCause();

@@ -21,6 +21,9 @@ public interface Diagram extends Widget, com.top_logic.graphic.flow.operations.D
 	/** @see #getSelection() */
 	String SELECTION__PROP = "selection";
 
+	/** @see #isMultiSelect() */
+	String MULTI_SELECT__PROP = "multiSelect";
+
 	/** @see #getClickHandler() */
 	String CLICK_HANDLER__PROP = "clickHandler";
 
@@ -58,6 +61,16 @@ public interface Diagram extends Widget, com.top_logic.graphic.flow.operations.D
 	 * Removes a value from the {@link #getSelection()} list.
 	 */
 	void removeSelection(com.top_logic.graphic.flow.data.SelectableBox value);
+
+	/**
+	 * Whether multi-selection is supported
+	 */
+	boolean isMultiSelect();
+
+	/**
+	 * @see #isMultiSelect()
+	 */
+	com.top_logic.graphic.flow.data.Diagram setMultiSelect(boolean value);
 
 	/**
 	 * Internal field for storing the current click handler registration (client-side only).

@@ -6,6 +6,7 @@
 package com.top_logic.layout.form.model;
 
 import com.top_logic.basic.listener.EventType;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
@@ -38,11 +39,20 @@ public abstract class AbstractExecutabilityModel extends ExecutabilityObservable
     @Override
 	public final void updateExecutabilityState() {
 		final ExecutableState oldValue = _executability;
-		ExecutableState newValue = calculateExecutability();
-		_executability = newValue;
 
-		notifyExecutabilityChange(oldValue, newValue);
-    }
+		try {
+			_executability = calculateExecutability();
+		} catch (Exception ex) {
+			ResKey msg = com.top_logic.layout.basic.I18NConstants.FAILED_TO_COMPUTE_STATE__MSG.fill(ex.getMessage());
+
+			// Make sure that the new executability is initialized to prevent NPEs later on.
+			_executability = ExecutableState.createDisabledState(msg);
+
+			// Make the UI display the error.
+			throw ex;
+		}
+		notifyExecutabilityChange(oldValue, _executability);
+	}
 
 	/**
 	 * Calculate the new {@link ExecutableState} for this model.

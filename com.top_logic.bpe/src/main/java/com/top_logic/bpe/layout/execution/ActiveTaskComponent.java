@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.CalledFromJSP;
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.bpe.bpml.model.Iconified;
@@ -88,6 +89,7 @@ public class ActiveTaskComponent extends DefaultEditAttributedComponent implemen
 					return token;
 				}
 			}
+			return CollectionUtil.getFirst(pe.getActiveTokens());
 		}
 		return (Token) model;
 	}

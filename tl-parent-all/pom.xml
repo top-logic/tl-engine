@@ -1458,6 +1458,73 @@
 							<addResourcesToClasspath>false</addResourcesToClasspath>
 						</configuration>
 					</execution>
+
+
+					<!-- Run with mvn exec:java@migrate-ticket28336 -->
+					<execution>
+						<id>migrate-ticket28336</id>
+						<goals>
+							<goal>java</goal>
+						</goals>
+						
+						<configuration>
+							<skip>${skipNormalizeLayouts}</skip>
+
+							<mainClass>com.top_logic.layout.tools.ticket28336.UpgradeConfirmMessages</mainClass>
+							<arguments>
+								<argument>${tl.layoutDir}</argument>
+							</arguments>
+						    	
+							<includePluginDependencies>false</includePluginDependencies>
+							<includeProjectDependencies>true</includeProjectDependencies>
+							<addOutputToClasspath>true</addOutputToClasspath>
+							<addResourcesToClasspath>true</addResourcesToClasspath>
+						</configuration>
+					</execution>
+
+					<!-- Run with mvn exec:java@migrate-ticket28695 -->
+					<execution>
+						<id>migrate-ticket28695</id>
+						<goals>
+							<goal>java</goal>
+						</goals>
+						
+						<configuration>
+							<skip>${skipNormalizeLayouts}</skip>
+
+							<mainClass>com.top_logic.layout.tools.ticket28695.UpgradeSelectionModelFactory</mainClass>
+							<arguments>
+								<argument>${tl.layoutDir}</argument>
+							</arguments>
+						    	
+							<includePluginDependencies>false</includePluginDependencies>
+							<includeProjectDependencies>true</includeProjectDependencies>
+							<addOutputToClasspath>true</addOutputToClasspath>
+							<addResourcesToClasspath>true</addResourcesToClasspath>
+						</configuration>
+					</execution>
+
+					<!-- Run with mvn exec:java@migrate-ticket28305 -->
+					<execution>
+						<id>migrate-ticket28305</id>
+						<goals>
+							<goal>java</goal>
+						</goals>
+						
+						<configuration>
+							<skip>${skipNormalizeLayouts}</skip>
+
+							<mainClass>com.top_logic.layout.tools.ticket28305.UpgradeDownloadNames</mainClass>
+							<arguments>
+								<argument>${tl.layoutDir}</argument>
+							</arguments>
+						    	
+							<includePluginDependencies>false</includePluginDependencies>
+							<includeProjectDependencies>true</includeProjectDependencies>
+							<addOutputToClasspath>true</addOutputToClasspath>
+							<addResourcesToClasspath>true</addResourcesToClasspath>
+						</configuration>
+					</execution>
 		        </executions>
 			</plugin>
 

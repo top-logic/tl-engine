@@ -403,7 +403,7 @@ message ClickTarget extends Decoration {
 	
 }
 
-/** Mouse buttons that can be used to interact with diagram elements */
+/** Mouse buttons that can be used to interact with diagram elements. */
 enum MouseButton {
 	/**
 	 * The left mouse button.

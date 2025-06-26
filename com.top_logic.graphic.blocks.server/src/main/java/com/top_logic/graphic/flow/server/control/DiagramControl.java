@@ -9,14 +9,20 @@ import static com.top_logic.graphic.blocks.svg.SvgConstants.*;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.top_logic.ajax.server.util.JSControlUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.graphic.flow.callback.ClickHandler;
 import com.top_logic.graphic.flow.control.JSDiagramControlCommon;
+import com.top_logic.graphic.flow.data.ClickTarget;
 import com.top_logic.graphic.flow.data.Diagram;
+import com.top_logic.graphic.flow.data.MouseButton;
 import com.top_logic.graphic.flow.data.SelectableBox;
 import com.top_logic.graphic.flow.data.Widget;
 import com.top_logic.layout.ContentHandler;
@@ -51,7 +57,8 @@ public class DiagramControl extends AbstractControlBase
 
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
 		ContextMenuOpener.INSTANCE,
-		UpdateCommand.INSTANCE);
+		UpdateCommand.INSTANCE,
+		DispatchClickCommand.INSTANCE);
 
 	private Diagram _diagram;
 
@@ -185,6 +192,17 @@ public class DiagramControl extends AbstractControlBase
 		_graphScope.applyChanges(json);
 	}
 
+	/**
+	 * Processing click events sent from the client-side.
+	 */
+	public void processClick(int nodeId, Set<MouseButton> buttons) {
+		ClickTarget node = (ClickTarget) _graphScope.resolveOrFail(nodeId);
+		ClickHandler clickHandler = node.getClickHandler();
+		if (clickHandler != null) {
+			clickHandler.onClick(node, buttons);
+		}
+	}
+
 	static final class UpdateCommand extends ControlCommand {
 
 		/**
@@ -215,6 +233,37 @@ public class DiagramControl extends AbstractControlBase
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
+	}
+
+	static final class DispatchClickCommand extends ControlCommand {
+
+		/**
+		 * Singleton {@link DispatchClickCommand} instance.
+		 */
+		public static final DispatchClickCommand INSTANCE = new DispatchClickCommand();
+
+		/**
+		 * Creates a {@link UpdateCommand}.
+		 */
+		private DispatchClickCommand() {
+			super("dispatchClick");
+		}
+
+		@Override
+		public ResKey getI18NKey() {
+			return ResKey.text("Dispatch click");
+		}
+
+		@Override
+		protected HandlerResult execute(DisplayContext commandContext, Control control, Map<String, Object> arguments) {
+			@SuppressWarnings("unchecked")
+			List<String> buttonNames = (List<String>) arguments.get("mouseButtons");
+			Set<MouseButton> buttons =
+				buttonNames.stream().map(n -> MouseButton.valueOf(n)).collect(Collectors.toSet());
+			int nodeId = ((Number) arguments.get("nodeId")).intValue();
+			((DiagramControl) control).processClick(nodeId, buttons);
+			return HandlerResult.DEFAULT_RESULT;
+		}
 	}
 
 }

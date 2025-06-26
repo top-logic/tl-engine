@@ -27,6 +27,9 @@ public interface Diagram extends Widget, com.top_logic.graphic.flow.operations.D
 	/** @see #getClickHandler() */
 	String CLICK_HANDLER__PROP = "clickHandler";
 
+	/** @see #getContext() */
+	String CONTEXT__PROP = "context";
+
 	/**
 	 * The top-level diagram element.
 	 */
@@ -86,6 +89,21 @@ public interface Diagram extends Widget, com.top_logic.graphic.flow.operations.D
 	 * Checks, whether {@link #getClickHandler()} has a value.
 	 */
 	boolean hasClickHandler();
+
+	/**
+	 * Local (client-side) diagram-wide operation context to allow client-server communication.
+	 */
+	com.top_logic.graphic.flow.callback.DiagramContext getContext();
+
+	/**
+	 * @see #getContext()
+	 */
+	com.top_logic.graphic.flow.data.Diagram setContext(com.top_logic.graphic.flow.callback.DiagramContext value);
+
+	/**
+	 * Checks, whether {@link #getContext()} has a value.
+	 */
+	boolean hasContext();
 
 	@Override
 	com.top_logic.graphic.flow.data.Diagram setCssClass(String value);

@@ -120,6 +120,7 @@
 		securityObject="${securityObject}"
 		securityProviderClass="${securityProviderClass}"
 		selection="${selection}"
+		selection-filter="${selectionFilter}"
 		show-only-selectable-nodes="${showOnlySelectableNodes}"
 		showMaximize="${showMaximize}"
 		showMinimize="${showMinimize}"
@@ -127,10 +128,7 @@
 		titleKey="${name}"
 		toolbar="${toolbar}"
 	>
-		<selectionModelFactory class="com.top_logic.mig.html.TreeSelectionModelFactory"
-			multiSelection="${multiSelection}"
-			selectionFilter="${selectionFilter}"
-		/>
+		<selectionModelFactory multiSelection="${multiSelection}"/>
 		<buttons>
 			${buttons}
 			<include name="templates/editComponentCommands.xml"/>

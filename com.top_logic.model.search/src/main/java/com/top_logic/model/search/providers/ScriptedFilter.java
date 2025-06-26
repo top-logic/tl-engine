@@ -7,52 +7,42 @@ package com.top_logic.model.search.providers;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.element.config.annotation.TLConstraint;
-import com.top_logic.element.meta.form.EditContext;
-import com.top_logic.element.meta.kbbased.filtergen.AttributedValueFilter;
-import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
- * {@link AttributedValueFilter} that can be configured dynamically using {@link Expr search
- * expressions} for restricting the options.
+ * {@link Filter} that can be configured dynamically using {@link Expr TL-Script}.
  * 
- * @see TLConstraint
- * @see Config#getPredicate()
- * 
- * @see ScriptedFilter
+ * @see FilterByExpression
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @InApp
-@Deprecated
-public class FilterByExpression extends AbstractConfiguredInstance<FilterByExpression.Config<?>>
-		implements AttributedValueFilter {
+public class ScriptedFilter extends AbstractConfiguredInstance<ScriptedFilter.Config<?>> implements Filter<Object> {
 
 	private QueryExecutor _function;
 
 	/**
-	 * Configuration options for {@link FilterByExpression}.
+	 * Configuration options for {@link ScriptedFilter}.
 	 */
 	@TagName("filter-by-expression")
-	public interface Config<I extends FilterByExpression> extends PolymorphicConfiguration<I> {
+	public interface Config<I extends ScriptedFilter> extends PolymorphicConfiguration<I> {
 
 		/**
-		 * The function deciding whether the second argument is a valid option for the attribute of
-		 * the object given as first argument.
+		 * The function deciding whether the argument is accepted.
 		 */
 		Expr getPredicate();
 
 	}
 
 	/**
-	 * Creates a {@link FilterByExpression} from configuration.
+	 * Creates a {@link ScriptedFilter} from configuration.
 	 * 
 	 * @param context
 	 *        The context for instantiating sub configurations.
@@ -60,16 +50,15 @@ public class FilterByExpression extends AbstractConfiguredInstance<FilterByExpre
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public FilterByExpression(InstantiationContext context, Config<?> config) {
+	public ScriptedFilter(InstantiationContext context, Config<?> config) {
 		super(context, config);
 
 		_function = QueryExecutor.compile(config.getPredicate());
 	}
 
 	@Override
-	public boolean accept(Object value, EditContext editContext) {
-		TLObject object = editContext.getOverlay();
-		return SearchExpression.asBoolean(_function.execute(object, value));
+	public boolean accept(Object value) {
+		return SearchExpression.asBoolean(_function.execute(value));
 	}
 
 }

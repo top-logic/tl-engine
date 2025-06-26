@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<properties extends="com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.mig.html.layout.WithGotoConfiguration">
+	<properties extends="com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.mig.html.DefaultSelectionModelFactory$UIOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.mig.html.layout.WithGotoConfiguration">
 		<annotations>
 			<display-order>
 				<value>
 					<property name="name"/>
 					<property name="model"/>
 					<property name="modelBuilder"/>
+					<property name="selectionFilter"/>
 
 					<property name="rootVisible"/>
 					<property name="showOnlySelectableNodes"/>
@@ -58,9 +59,6 @@
 		/>
 		<property name="adjustSelectionWhenCollapsing"
 			default="false"
-			type="boolean"
-		/>
-		<property name="multiSelection"
 			type="boolean"
 		/>
 		<property name="securityObject"
@@ -129,7 +127,10 @@
 		titleKey="${name}"
 		toolbar="${toolbar}"
 	>
-		<selectionModelFactory multiple="${multiSelection}"/>
+		<selectionModelFactory class="com.top_logic.mig.html.TreeSelectionModelFactory"
+			multiSelection="${multiSelection}"
+			selectionFilter="${selectionFilter}"
+		/>
 		<buttons>
 			${buttons}
 			<include name="templates/editComponentCommands.xml"/>

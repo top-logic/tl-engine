@@ -11,6 +11,9 @@ public interface Decoration extends Box, com.top_logic.graphic.flow.operations.D
 		/** Visit case for {@link com.top_logic.graphic.flow.data.SelectableBox}.*/
 		R visit(com.top_logic.graphic.flow.data.SelectableBox self, A arg) throws E;
 
+		/** Visit case for {@link com.top_logic.graphic.flow.data.ClickTarget}.*/
+		R visit(com.top_logic.graphic.flow.data.ClickTarget self, A arg) throws E;
+
 		/** Visit case for {@link com.top_logic.graphic.flow.data.Align}.*/
 		R visit(com.top_logic.graphic.flow.data.Align self, A arg) throws E;
 
@@ -75,6 +78,7 @@ public interface Decoration extends Box, com.top_logic.graphic.flow.operations.D
 		int id = in.nextInt();
 		switch (type) {
 			case SelectableBox.SELECTABLE_BOX__TYPE: result = com.top_logic.graphic.flow.data.SelectableBox.create(); break;
+			case ClickTarget.CLICK_TARGET__TYPE: result = com.top_logic.graphic.flow.data.ClickTarget.create(); break;
 			case Align.ALIGN__TYPE: result = com.top_logic.graphic.flow.data.Align.create(); break;
 			case Border.BORDER__TYPE: result = com.top_logic.graphic.flow.data.Border.create(); break;
 			case Fill.FILL__TYPE: result = com.top_logic.graphic.flow.data.Fill.create(); break;

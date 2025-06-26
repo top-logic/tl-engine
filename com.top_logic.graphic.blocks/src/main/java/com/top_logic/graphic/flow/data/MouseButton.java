@@ -1,7 +1,7 @@
 package com.top_logic.graphic.flow.data;
 
 /**
- * Mouse buttons that can be used to interact with diagram elements
+ * Mouse buttons that can be used to interact with diagram elements.
  */
 public enum MouseButton implements de.haumacher.msgbuf.data.ProtocolEnum {
 

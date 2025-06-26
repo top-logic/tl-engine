@@ -6,12 +6,15 @@
 package com.top_logic.graphic.blocks.client.control;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.vectomatic.dom.svg.OMSVGDocument;
 import org.vectomatic.dom.svg.OMSVGElement;
 import org.vectomatic.dom.svg.OMSVGSVGElement;
 import org.vectomatic.dom.svg.utils.OMSVGParser;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -23,8 +26,11 @@ import com.top_logic.graphic.blocks.model.Drawable;
 import com.top_logic.graphic.blocks.model.Identified;
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
+import com.top_logic.graphic.flow.callback.DiagramContext;
 import com.top_logic.graphic.flow.control.JSDiagramControlCommon;
+import com.top_logic.graphic.flow.data.ClickTarget;
 import com.top_logic.graphic.flow.data.Diagram;
+import com.top_logic.graphic.flow.data.MouseButton;
 import com.top_logic.graphic.flow.data.Widget;
 
 import de.haumacher.msgbuf.graph.DefaultScope;
@@ -42,7 +48,7 @@ import elemental2.promise.Promise;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class JSDiagramControl extends AbstractJSControl
-		implements JSDiagramControlCommon, ClickHandler {
+		implements JSDiagramControlCommon, ClickHandler, DiagramContext {
 
 	private static final String SELECTED_CLASS = "tlbSelected";
 
@@ -100,6 +106,7 @@ public class JSDiagramControl extends AbstractJSControl
 						}
 					};
 					Diagram diagram = Diagram.readDiagram(_scope, new JsonReader(new StringR(json)));
+					diagram.setContext(this);
 
 					diagram.layout(_renderContext);
 					diagram.draw(svgBuilder());
@@ -208,4 +215,27 @@ public class JSDiagramControl extends AbstractJSControl
 		// DomGlobal.alert("Clicked: " + id);
 	}
 
+	@Override
+	public void processClick(ClickTarget node, List<MouseButton> pressedButtons) {
+		int nodeId = _scope.id(node);
+		List<String> buttons = pressedButtons.stream().map(x -> x.name()).collect(Collectors.toList());
+		dispatchClick(getId(), nodeId, toJsArray(buttons));
+	}
+
+	private static JsArrayString toJsArray(List<String> input) {
+		JsArrayString jsArrayString = JsArrayString.createArray().cast();
+		for (String s : input) {
+			jsArrayString.push(s);
+		}
+		return jsArrayString;
+	}
+
+	private native void dispatchClick(String id, int nodeId, JsArrayString mouseButtons) /*-{
+		$wnd.services.ajax.execute("dispatchControlCommand", {
+			controlCommand : "dispatchClick",
+			controlID : id,
+			nodeId : nodeId,
+			mouseButtons : mouseButtons
+		}, false)
+	}-*/;
 }

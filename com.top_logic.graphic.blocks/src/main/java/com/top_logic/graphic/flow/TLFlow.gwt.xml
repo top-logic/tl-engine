@@ -11,6 +11,7 @@
 
 	<!-- Specify the paths for translatable code                    -->
 	<source path='control'/>
+	<source path='callback'/>
 	<source path='data'/>
 	<source path='operations'/>
 	

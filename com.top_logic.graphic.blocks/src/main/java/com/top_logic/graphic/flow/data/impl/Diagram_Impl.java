@@ -28,6 +28,8 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 
 	private transient com.top_logic.graphic.blocks.svg.event.Registration _clickHandler = null;
 
+	private transient com.top_logic.graphic.flow.callback.DiagramContext _context = null;
+
 	/**
 	 * Creates a {@link Diagram_Impl} instance.
 	 *
@@ -155,6 +157,29 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 	}
 
 	@Override
+	public final com.top_logic.graphic.flow.callback.DiagramContext getContext() {
+		return _context;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Diagram setContext(com.top_logic.graphic.flow.callback.DiagramContext value) {
+		internalSetContext(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getContext()} without chain call utility. */
+	protected final void internalSetContext(com.top_logic.graphic.flow.callback.DiagramContext value) {
+		_listener.beforeSet(this, CONTEXT__PROP, value);
+		_context = value;
+		_listener.afterChanged(this, CONTEXT__PROP);
+	}
+
+	@Override
+	public final boolean hasContext() {
+		return _context != null;
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.Diagram setCssClass(String value) {
 		internalSetCssClass(value);
 		return this;
@@ -182,11 +207,13 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 			ROOT__PROP, 
 			SELECTION__PROP, 
 			MULTI_SELECT__PROP, 
-			CLICK_HANDLER__PROP));
+			CLICK_HANDLER__PROP, 
+			CONTEXT__PROP));
 
 	private static java.util.Set<String> TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(new java.util.HashSet<>(
 			java.util.Arrays.asList(
-				CLICK_HANDLER__PROP)));
+				CLICK_HANDLER__PROP, 
+				CONTEXT__PROP)));
 
 	@Override
 	public java.util.List<String> properties() {
@@ -205,6 +232,7 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 			case SELECTION__PROP: return getSelection();
 			case MULTI_SELECT__PROP: return isMultiSelect();
 			case CLICK_HANDLER__PROP: return getClickHandler();
+			case CONTEXT__PROP: return getContext();
 			default: return super.get(field);
 		}
 	}
@@ -216,6 +244,7 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 			case SELECTION__PROP: internalSetSelection(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.graphic.flow.data.SelectableBox.class, value)); break;
 			case MULTI_SELECT__PROP: internalSetMultiSelect((boolean) value); break;
 			case CLICK_HANDLER__PROP: internalSetClickHandler((com.top_logic.graphic.blocks.svg.event.Registration) value); break;
+			case CONTEXT__PROP: internalSetContext((com.top_logic.graphic.flow.callback.DiagramContext) value); break;
 			default: super.set(field, value); break;
 		}
 	}
@@ -262,6 +291,13 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 			}
 			case CLICK_HANDLER__PROP: {
 				if (hasClickHandler()) {
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case CONTEXT__PROP: {
+				if (hasContext()) {
 				} else {
 					out.nullValue();
 				}

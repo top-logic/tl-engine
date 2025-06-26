@@ -7,11 +7,14 @@ package com.top_logic.mig.html;
 
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 
 /**
  * {@link SelectionModelFactory} that creates "default" {@link SelectionModel}s.
@@ -24,40 +27,49 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 		ConfiguredInstance<PolymorphicConfiguration<?>> {
 	
 	/**
-	 * Configuration of this factory.
-	 * 
-	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 * Configuration of {@link DefaultSelectionModelFactory}.
 	 */
-	public interface Config extends PolymorphicConfiguration<DefaultSelectionModelFactory> {
+	public interface Config extends PolymorphicConfiguration<DefaultSelectionModelFactory>, UIOptions {
+		// Pure sum interface.
+	}
 
-		/** Name of the {@link #isMultiple()} property. */
-		String MULTIPLE_PROPERTY_NAME = "multiple";
+	/**
+	 * Options of {@link DefaultSelectionModelFactory} that can be configured in the layout editor.
+	 */
+	public interface UIOptions extends ConfigurationItem {
+		/** Name of the {@link #isMultiSelection()} property. */
+		String MULTI_SELECTION_PROPERTY_NAME = "multiSelection";
 
-		/** Name of the {@link #getFilter()} property. */
-		String FILTER_PROPERTY_NAME = "filter";
+		/** Name of the {@link #getSelectionFilter()} property. */
+		String SELECTION_FILTER_PROPERTY_NAME = "selectionFilter";
 
 		/**
-		 * Whether the created {@link SelectionModel} must support multiple selection.
+		 * Whether multiple value can be selected.
 		 */
-		@Name(MULTIPLE_PROPERTY_NAME)
-		boolean isMultiple();
+		@Name(MULTI_SELECTION_PROPERTY_NAME)
+		boolean isMultiSelection();
 
 		/**
-		 * Setter for {@link #isMultiple()}.
+		 * @see #isMultiSelection()
 		 */
-		void setMultiple(boolean multiple);
+		void setMultiSelection(boolean multiple);
 
 		/**
-		 * Returns the selection filter for the created {@link SelectionModel}.
+		 * Filter that decides, whether some value can be selected.
+		 * 
+		 * <p>
+		 * Only values, that are accepted by the filter can be selected.
+		 * </p>
 		 */
 		@InstanceFormat
-		@Name(FILTER_PROPERTY_NAME)
-		Filter getFilter();
+		@Name(SELECTION_FILTER_PROPERTY_NAME)
+		@Options(fun = AllInAppImplementations.class)
+		Filter<Object> getSelectionFilter();
 
 		/**
-		 * Setter for {@link #getFilter()}.
+		 * Setter for {@link #getSelectionFilter()}.
 		 */
-		void setFilter(Filter filter);
+		void setSelectionFilter(Filter<Object> filter);
 	}
 
 	private final Config _config;
@@ -79,12 +91,19 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 
 	@Override
 	public SelectionModel newSelectionModel(SelectionModelOwner owner) {
-		Filter selectionFilter = _config.getFilter();
-		if (_config.isMultiple()) {
+		Filter<Object> selectionFilter = getSelectionFilter();
+		if (_config.isMultiSelection()) {
 			return new DefaultMultiSelectionModel(selectionFilter, owner);
 		} else {
 			return new DefaultSingleSelectionModel(selectionFilter, owner);
 		}
+	}
+
+	/**
+	 * Optional filter to restrict selection events.
+	 */
+	protected Filter<Object> getSelectionFilter() {
+		return _config.getSelectionFilter();
 	}
 
 	@Override

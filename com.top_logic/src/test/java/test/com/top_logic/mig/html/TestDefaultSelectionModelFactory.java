@@ -61,8 +61,8 @@ public class TestDefaultSelectionModelFactory extends BasicTestCase {
 
 	private DefaultSelectionModelFactory.Config newConfig(boolean multiple, Filter filter) {
 		Config config = TypedConfiguration.newConfigItem(DefaultSelectionModelFactory.Config.class);
-		config.setMultiple(multiple);
-		config.setFilter(filter);
+		config.setMultiSelection(multiple);
+		config.setSelectionFilter(filter);
 		return config;
 	}
 

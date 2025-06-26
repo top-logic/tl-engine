@@ -18,7 +18,7 @@ import com.top_logic.graphic.flow.data.ClickTarget;
 import com.top_logic.graphic.flow.data.MouseButton;
 
 /**
- * 
+ * Custom operations for {@link ClickTarget} diagram nodes.
  */
 public interface ClickTargetOperations extends DecorationOperations, SVGClickHandler {
 

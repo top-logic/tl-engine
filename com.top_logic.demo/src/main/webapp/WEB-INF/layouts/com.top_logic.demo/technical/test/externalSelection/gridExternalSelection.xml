@@ -19,7 +19,7 @@
 					resPrefix="layouts.demo.grid.Grid."
 				>
 					<modelBuilder class="com.top_logic.element.layout.structured.StructuredElementListModelBuilder"/>
-					<selectionModelFactory multiple="true"/>
+					<selectionModelFactory multiSelection="true"/>
 					<tables>
 						<table
 							defaultColumns="name"
@@ -34,7 +34,7 @@
 					selection="selection(gridDemo1)"
 				>
 					<modelBuilder class="com.top_logic.element.layout.structured.StructuredElementListModelBuilder"/>
-					<selectionModelFactory multiple="true"/>
+					<selectionModelFactory multiSelection="true"/>
 
 					<tables>
 						<table
@@ -51,7 +51,7 @@
 					resPrefix="layouts.demo.grid.Grid."
 				>
 					<modelBuilder class="com.top_logic.element.layout.structured.StructuredElementListModelBuilder"/>
-					<selectionModelFactory multiple="false"/>
+					<selectionModelFactory multiSelection="false"/>
 
 					<tables>
 						<table
@@ -67,7 +67,7 @@
 					selection="selection(gridDemo3)"
 				>
 					<modelBuilder class="com.top_logic.element.layout.structured.StructuredElementListModelBuilder"/>
-					<selectionModelFactory multiple="false"/>
+					<selectionModelFactory multiSelection="false"/>
 
 					<tables>
 						<table

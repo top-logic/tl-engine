@@ -59,7 +59,7 @@
 				showMinimize="false"
 				titleKey="${titleKey}"
 			>
-				<selectionModelFactory multiple="${multiSelection}"/>
+				<selectionModelFactory multiSelection="${multiSelection}"/>
 				<buttons>
 					<button id="exportExcelGrid"
 						class="com.top_logic.layout.table.export.StreamingExcelExportHandler"

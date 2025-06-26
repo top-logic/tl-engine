@@ -147,6 +147,39 @@ public class ExcelWriter extends AbstractCellStreamWriter implements POITypeSupp
 		}
 	}
 
+	/**
+	 * Resolves the {@link Cell} for the given row and column.
+	 */
+	public Cell resolveCell(int row, int col) {
+		return resolveCell(_workbook, currentTable(), row, col);
+	}
+
+	/**
+	 * Writes an {@link ExcelValue} to the {@link CellPosition} described by table, row and col.
+	 */
+	public void writeAt(Object cellvalue, String table, int row, int col) {
+		String sheet = table == null ? currentTable() : table;
+		if (cellvalue instanceof ExcelValue) {
+			CellPosition position = new CellPosition(sheet, row, col);
+			_valueSetter.setValue(position, (ExcelValue) cellvalue);
+		} else {
+			addValue(_workbook, sheet, row, col, cellvalue, _sheetMap);
+		}
+	}
+
+	/**
+	 * Writes the given value and applies the given {@link CellStyle}.
+	 */
+	public void write(Object cellvalue, CellStyle style) throws IOException {
+		internalWrite(cellvalue);
+
+		if (style != null) {
+			Cell cell = resolveCell(currentRow(), currentColumn());
+			cell.setCellStyle(style);
+		}
+		newColumn();
+	}
+
 	@Override
 	public CellStyle getDateStyle() {
 		return _dateStyle;

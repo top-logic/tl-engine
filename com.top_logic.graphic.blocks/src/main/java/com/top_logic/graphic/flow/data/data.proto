@@ -40,6 +40,8 @@ message Diagram extends Widget {
 	/** Internal field for storing the current click handler registration (client-side only). */
 	transient com.top_logic.graphic.blocks.svg.event.Registration clickHandler;
 	
+	/** Local (client-side) diagram-wide operation context to allow client-server communication. */
+	transient com.top_logic.graphic.flow.callback.DiagramContext context;
 }
 
 /** A rectangular region of a {@link Diagram}. */
@@ -384,6 +386,39 @@ message SelectableBox extends Decoration {
 	/** Internal field to store the click handler registration (client-side only). */
 	transient com.top_logic.graphic.blocks.svg.event.Registration clickHandler;
 	
+}
+
+/** A box that reacts on interactive mouse click events invoking a callback. */
+@Operations("com.top_logic.graphic.flow.operations.ClickTargetOperations")
+message ClickTarget extends Decoration {
+
+	/** The mouse buttons to react on. */
+	repeated MouseButton buttons;
+
+	/** Server-side-only field to store the callback to invoke when the element is clicked. */
+	transient com.top_logic.graphic.flow.callback.ClickHandler clickHandler;
+	
+	/** Internal field to store the click handler registration (client-side only). */
+	transient com.top_logic.graphic.blocks.svg.event.Registration handlerRegistration;
+	
+}
+
+/** Mouse buttons that can be used to interact with diagram elements */
+enum MouseButton {
+	/**
+	 * The left mouse button.
+	 */
+	LEFT;
+
+	/**
+	 * The right mouse button.
+	 */
+	RIGHT;
+
+	/**
+	 * The middle mouse button.
+	 */
+	MIDDLE;
 }
 
 /** An alignment of some box within a potentially larger content box.  */

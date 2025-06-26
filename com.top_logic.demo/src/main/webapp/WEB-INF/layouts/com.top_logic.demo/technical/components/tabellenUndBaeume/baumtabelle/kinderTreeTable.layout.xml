@@ -42,5 +42,8 @@
 				</column>
 			</column-customizations>
 		</configurationProviders>
+		<selectionFilter class="com.top_logic.model.search.providers.ScriptedFilter">
+			<predicate>x -&gt; !$x.get(`DemoTypes:A#name`).stringEndsWith("-final")</predicate>
+		</selectionFilter>
 	</arguments>
 </config:template-call>

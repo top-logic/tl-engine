@@ -25,10 +25,15 @@
 			elements="x -> $x[1].inRevision($x[0]).get(`tl.element:StructuredElementContainer#children`)"
 			supportsElement="element->$element.instanceOf(`DemoTypes:DemoTypes.All`)"
 		/>
+		<selectionFilter class="com.top_logic.model.search.providers.ScriptedFilter">
+			<predicate>x -&gt; !$x.get(`DemoTypes:A#name`).stringEndsWith("-final")</predicate>
+		</selectionFilter>
 		<buttons>
 			<button id="exportExcel"
 				class="com.top_logic.layout.table.export.ExcelExportHandler"
-			/>
+			>
+				<downloadNameProvider class="com.top_logic.layout.table.export.ComponentDownloadName"/>
+			</button>
 		</buttons>
 	</arguments>
 </config:template-call>

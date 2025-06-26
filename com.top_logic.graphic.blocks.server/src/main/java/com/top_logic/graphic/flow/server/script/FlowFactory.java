@@ -25,10 +25,12 @@ import com.top_logic.basic.config.annotation.defaults.DoubleDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.graphic.flow.callback.ClickHandler;
 import com.top_logic.graphic.flow.data.Align;
 import com.top_logic.graphic.flow.data.Alignment;
 import com.top_logic.graphic.flow.data.Border;
 import com.top_logic.graphic.flow.data.Box;
+import com.top_logic.graphic.flow.data.ClickTarget;
 import com.top_logic.graphic.flow.data.CompassLayout;
 import com.top_logic.graphic.flow.data.Decoration;
 import com.top_logic.graphic.flow.data.Diagram;
@@ -41,6 +43,7 @@ import com.top_logic.graphic.flow.data.Image;
 import com.top_logic.graphic.flow.data.ImageAlign;
 import com.top_logic.graphic.flow.data.ImageOrientation;
 import com.top_logic.graphic.flow.data.ImageScale;
+import com.top_logic.graphic.flow.data.MouseButton;
 import com.top_logic.graphic.flow.data.Padding;
 import com.top_logic.graphic.flow.data.SelectableBox;
 import com.top_logic.graphic.flow.data.SpaceDistribution;
@@ -444,6 +447,27 @@ public class FlowFactory {
 	) {
 		return SelectableBox.create()
 			.setContent(nonNull(content))
+			.setCssClass(cssClass)
+			.setUserObject(userObject);
+	}
+	
+	/**
+	 * Creates box that responds to mouse click events.
+	 */
+	@SideEffectFree
+	public static Box flowClickTarget(
+			@Mandatory
+			Box content,
+			@Mandatory
+			ClickHandler clickHandler,
+			List<MouseButton> buttons,
+			String cssClass,
+			Object userObject
+			) {
+		return ClickTarget.create()
+			.setContent(nonNull(content))
+			.setClickHandler(clickHandler)
+			.setButtons(buttons)
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}

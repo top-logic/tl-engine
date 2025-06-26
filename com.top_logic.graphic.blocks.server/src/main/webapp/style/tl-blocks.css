@@ -35,3 +35,8 @@ path.tlbConnector {
 .tlSelected .tlSelectionMarker {
 	display: initial;
 }
+
+.tlClickTarget {
+	cursor: pointer;
+	stroke: var(--link-primary);
+}

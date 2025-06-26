@@ -33,6 +33,7 @@ public interface SelectableBoxOperations extends DecorationOperations, SVGClickH
 
 	@Override
 	default void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
+		// No visible content.
 		self().getContent().distributeSize(context, 0, 0, width, height);
 		self().setX(offsetX);
 		self().setY(offsetY);

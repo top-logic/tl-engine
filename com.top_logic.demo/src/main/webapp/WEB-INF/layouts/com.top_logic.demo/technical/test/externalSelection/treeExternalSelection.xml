@@ -20,7 +20,7 @@
 					resPrefix="layouts.demo.table.tree_grid.treeGrid."
 				>
 					<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"/>
-					<selectionModelFactory multiple="true"/>
+					<selectionModelFactory multiSelection="true"/>
 					<tables>
 						<table
 							defaultColumns="name"
@@ -41,7 +41,7 @@
 					selection="selection(treeGridDemo1)"
 				>
 					<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"/>
-					<selectionModelFactory multiple="true"/>
+					<selectionModelFactory multiSelection="true"/>
 					<tables>
 						<table
 							defaultColumns="name"
@@ -63,7 +63,7 @@
 					resPrefix="layouts.demo.table.tree_grid.treeGrid."
 				>
 					<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"/>
-					<selectionModelFactory multiple="false"/>
+					<selectionModelFactory multiSelection="false"/>
 					<tables>
 						<table
 							defaultColumns="name"
@@ -84,7 +84,7 @@
 					selection="selection(treeGridDemo3)"
 				>
 					<modelBuilder class="com.top_logic.element.layout.structured.DefaultStructuredElementTreeModelBuilder"/>
-					<selectionModelFactory multiple="false"/>
+					<selectionModelFactory multiSelection="false"/>
 					<tables>
 						<table
 							defaultColumns="name"

@@ -335,7 +335,7 @@ public class DefaultButtonUIModel extends AbstractButtonUIModel implements LazyT
 
 	private ExecutableState state() {
 		if (!isObserved()) {
-			return computeState();
+			return tryComputeState();
 		}
 		return _lastState;
 	}
@@ -349,11 +349,20 @@ public class DefaultButtonUIModel extends AbstractButtonUIModel implements LazyT
 			return;
 		}
 		ExecutableState oldState = _lastState;
-		ExecutableState newState = computeState();
+		ExecutableState newState = tryComputeState();
 		_lastState = newState;
 		if (oldState != null) {
 			// Do not bother listeners with initial internal null state.
 			notifyStateChanged(this, oldState, newState);
+		}
+	}
+
+	private ExecutableState tryComputeState() {
+		try {
+			return computeState();
+		} catch (Exception ex) {
+			return ExecutableState
+				.createDisabledState(I18NConstants.FAILED_TO_COMPUTE_STATE__MSG.fill(ex.getMessage()));
 		}
 	}
 

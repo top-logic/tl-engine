@@ -70,11 +70,13 @@ public class TranslationResult_Impl extends de.haumacher.msgbuf.data.AbstractDat
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case TRANSLATIONS__PROP: {
+				java.util.List<com.top_logic.tools.resources.translate.deepl.protocol.Translation> newValue = new java.util.ArrayList<>();
 				in.beginArray();
 				while (in.hasNext()) {
-					addTranslation(com.top_logic.tools.resources.translate.deepl.protocol.Translation.readTranslation(in));
+					newValue.add(com.top_logic.tools.resources.translate.deepl.protocol.Translation.readTranslation(in));
 				}
 				in.endArray();
+				setTranslations(newValue);
 			}
 			break;
 			default: super.readField(in, field);

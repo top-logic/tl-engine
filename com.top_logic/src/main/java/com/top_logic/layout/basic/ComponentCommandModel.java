@@ -18,6 +18,7 @@ import com.top_logic.tool.boundsec.BoundCommand;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link DynamicCommandModel} calling a {@link CommandHandler} on a specific
@@ -110,7 +111,14 @@ public class ComponentCommandModel extends DynamicDelegatingCommandModel {
 			CommandModelRegistry.getRegistry().deregisterCommandModel(this);
 			return;
 		}
-		super.updateExecutabilityState();
+		try {
+			super.updateExecutabilityState();
+		} catch (Exception ex) {
+			throw new TopLogicException(I18NConstants.ERROR_UPDATING_EXECUTABILITY__CMD_CMP_MSG
+				.fill(getCommandHandler().getResourceKey(getComponent()), getComponent().getTitleKey(),
+					ex.getMessage()),
+				ex);
+		}
 	}
 
 	/**

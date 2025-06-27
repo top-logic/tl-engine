@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.formeditor.definition.TextDefinition;
 import com.top_logic.layout.editor.config.TypeTemplateParameters;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
@@ -37,6 +38,7 @@ import com.top_logic.model.util.TLModelPartRef;
 @TagName("formTable")
 @DisplayOrder({
 	FormTableDefinition.LABEL,
+	FormTableDefinition.DYNAMIC_LABEL,
 	FormTableDefinition.TYPE,
 	FormTableDefinition.ROWS,
 	FormTableDefinition.COLUMNS,
@@ -53,6 +55,9 @@ public interface FormTableDefinition
 
 	/** Configuration name for the value of the {@link #getCommands()}. */
 	String COMMANDS = "commands";
+
+	/** Configuration name for the value of the {@link #getDynamicLabel()}. */
+	String DYNAMIC_LABEL = "dynamicLabel";
 
 	/**
 	 * Expression creating a list of objects edited in the displayed table as rows.
@@ -86,6 +91,26 @@ public interface FormTableDefinition
 	 */
 	@Name(COMMANDS)
 	List<TableCommandConfig> getCommands();
+
+	/**
+	 * Expression creating a dynamic label for the table based on the model.
+	 * 
+	 * <p>
+	 * If this expression is configured, it takes precedence over the static {@link #getLabel()}.
+	 * The expression receives two parameters:
+	 * <ul>
+	 * <li>First parameter: The model object</li>
+	 * <li>Second parameter: The static label as {@link ResKey}</li>
+	 * </ul>
+	 * The returned value can be a {@link ResKey} or a {@link String}, for example.
+	 * </p>
+	 * 
+	 * @see #getLabel()
+	 */
+	@Name(DYNAMIC_LABEL)
+	@ItemDisplay(ItemDisplayType.VALUE)
+	@Nullable
+	Expr getDynamicLabel();
 
 	/**
 	 * {@link ConfigPart} representing a column in a {@link FormTableDefinition}.

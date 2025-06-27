@@ -6,7 +6,7 @@
 	resPrefix="layouts.demo.table.table_grid_no_disabled_marker.tableGridNoDisabledMarker."
 >
 	<selectionModelFactory class="com.top_logic.mig.html.DefaultSelectionModelFactory"
-		multiSelection="true"
-		selectionFilter="com.top_logic.demo.table.grid.DemoSelectableObjectsFilter"
+		filter="com.top_logic.demo.table.grid.DemoSelectableObjectsFilter"
+		multiple="true"
 	/>
 </include>

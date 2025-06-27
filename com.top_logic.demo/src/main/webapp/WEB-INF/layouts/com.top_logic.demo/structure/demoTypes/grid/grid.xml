@@ -44,7 +44,7 @@
 				structureName="${structure}"
 				titleKey="${titleKey}"
 			>
-				<selectionModelFactory multiSelection="${multiSelection}"/>
+				<selectionModelFactory multiple="${multiSelection}"/>
 				<dialogs>${dialogs}</dialogs>
 				<buttons>
 					<button id="exportExcelGrid"

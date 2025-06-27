@@ -7,6 +7,7 @@ package com.top_logic.graphic.flow.server.ui;
 
 import static com.top_logic.model.search.expr.SearchExpressionFactory.*;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -30,6 +31,7 @@ import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.graphic.flow.callback.DiagramHandler;
 import com.top_logic.graphic.flow.data.Diagram;
+import com.top_logic.graphic.flow.data.Widget;
 import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
 import com.top_logic.layout.form.values.edit.editor.PlainEditor;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -72,6 +74,36 @@ public class ScriptFlowChartBuilder extends AbstractConfiguredInstance<ScriptFlo
 		@PropertyEditor(PlainEditor.class)
 		@Constraint(value = SyntaxCheck.class, args = @Ref(HANDLERS))
 		Expr getCreateChart();
+
+		/**
+		 * Function that retrieves the business objects to observe for change for a given diagram
+		 * element's user object.
+		 * 
+		 * <p>
+		 * The function receives a diagram element as first argument and the component's model as
+		 * second argument.
+		 * </p>
+		 *
+		 * <pre>
+		 * <code>userObject -> model -> ...</code>
+		 * </pre>
+		 * 
+		 * <p>
+		 * The diagram gets updated, whenever an observed object gets changed or deleted.
+		 * </p>
+		 * 
+		 * <p>
+		 * If not given, the default is to observe the user object of diagram elements. This would
+		 * correspond to the function:
+		 * </p>
+		 * 
+		 * <pre>
+		 * <code>userObject -> userObject</code>
+		 * </pre>
+		 * 
+		 * @implNote See {@link FlowChartBuilder#getObserved(Widget, LayoutComponent)}
+		 */
+		Expr getObserved();
 
 		/**
 		 * Specification of interactions with the diagram contents.
@@ -153,6 +185,8 @@ public class ScriptFlowChartBuilder extends AbstractConfiguredInstance<ScriptFlo
 
 	private final Map<String, DiagramHandler> _handlers;
 
+	private final QueryExecutor _getObserved;
+
 	/**
 	 * Creates a {@link ScriptFlowChartBuilder} from configuration.
 	 * 
@@ -176,6 +210,7 @@ public class ScriptFlowChartBuilder extends AbstractConfiguredInstance<ScriptFlo
 		}
 
 		_createChart = QueryExecutor.compile(createChart);
+		_getObserved = QueryExecutor.compileOptional(config.getObserved());
 	}
 
 	@Override
@@ -186,6 +221,14 @@ public class ScriptFlowChartBuilder extends AbstractConfiguredInstance<ScriptFlo
 	@Override
 	public Diagram getModel(Object businessModel, LayoutComponent aComponent) {
 		return (Diagram) _createChart.execute(businessModel);
+	}
+
+	@Override
+	public Collection<?> getObserved(Widget node, LayoutComponent component) {
+		if (_getObserved != null) {
+			return SearchExpression.asCollection(_getObserved.execute(node.getUserObject(), component.getModel()));
+		}
+		return FlowChartBuilder.super.getObserved(node, component);
 	}
 
 }

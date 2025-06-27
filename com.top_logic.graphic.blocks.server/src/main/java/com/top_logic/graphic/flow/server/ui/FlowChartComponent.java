@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -54,7 +55,13 @@ public class FlowChartComponent extends BuilderComponent
 
 	private DiagramControl _control = new DiagramControl();
 
-	private Map<Object, List<SelectableBox>> _index;
+	/**
+	 * User object of {@link SelectableBox} nodes mapped the box for updating the UI selection, if
+	 * the selection channel changes.
+	 */
+	private Map<Object, List<SelectableBox>> _selectableIndex;
+
+	private Map<Object, List<Widget>> _observedIndex;
 
 	private final SelectionModel _selectionModel;
 
@@ -138,7 +145,7 @@ public class FlowChartComponent extends BuilderComponent
 			try {
 				Set<SelectableBox> selectedBoxes = SearchExpression.asCollection(newValue)
 					.stream()
-					.flatMap(s -> _index.getOrDefault(s, Collections.emptyList()).stream())
+					.flatMap(s -> _selectableIndex.getOrDefault(s, Collections.emptyList()).stream())
 					.collect(Collectors.toSet());
 
 				_selectionModel.setSelection(selectedBoxes);
@@ -214,9 +221,12 @@ public class FlowChartComponent extends BuilderComponent
 		if (diagram != null) {
 			diagram.registerListener(_processUISelection);
 
-			_index = diagram.getRoot().visit(new IndexCreator(), null).getIndex();
+			_selectableIndex = diagram.getRoot().visit(new SelectableIndexCreator(), null).getIndex();
+			_observedIndex = diagram.getRoot()
+				.visit(new ObservedIndexCreator(node -> builder().getObserved(node, this)), null).getIndex();
 		} else {
-			_index = Collections.emptyMap();
+			_selectableIndex = Collections.emptyMap();
+			_observedIndex = Collections.emptyMap();
 		}
 	}
 
@@ -235,27 +245,38 @@ public class FlowChartComponent extends BuilderComponent
 	}
 
 	@Override
-	protected boolean receiveModelDeletedEvent(Set<TLObject> aModel, Object changedBy) {
-		boolean result = super.receiveModelDeletedEvent(aModel, changedBy);
+	protected boolean observeAllTypes() {
+		return true;
+	}
 
-		Object selected = getSelected();
-		if (selected instanceof Collection<?> multiSelection) {
-			List<?> newSelection = multiSelection.stream().filter(x -> !aModel.contains(x)).toList();
-			if (newSelection.size() != multiSelection.size()) {
-				if (newSelection.isEmpty()) {
-					setSelected(null);
-				} else if (newSelection.size() == 1) {
-					setSelected(newSelection.get(0));
-				} else {
-					setSelected(newSelection);
-				}
-			}
-		} else {
-			if (aModel.contains(selected)) {
-				setSelected(null);
+	@Override
+	protected boolean receiveModelDeletedEvent(Set<TLObject> deletedObjects, Object changedBy) {
+		boolean result = super.receiveModelDeletedEvent(deletedObjects, changedBy);
+
+		for (Object deleted : deletedObjects) {
+			if (!_observedIndex.getOrDefault(deleted, Collections.emptyList()).isEmpty()) {
+				// A part has been deleted, redraw.
+				// TODO: Optimize update.
+				invalidate();
+				break;
 			}
 		}
 
+		// Remove deleted nodes from selection.
+		Collection<?> selectedNodes = _selectionModel.getSelection();
+
+		FlowChartBuilder builder = builder();
+		Set<?> newSelection = selectedNodes.stream()
+			.filter(x -> !CollectionUtil.containsAny(builder.getObserved((Widget) x, this), deletedObjects))
+			.collect(Collectors.toSet());
+		if (newSelection.size() != selectedNodes.size()) {
+			_selectionModel.setSelection(newSelection);
+		}
+
 		return result;
+	}
+
+	private FlowChartBuilder builder() {
+		return (FlowChartBuilder) getBuilder();
 	}
 }

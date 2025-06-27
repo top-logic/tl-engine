@@ -164,8 +164,8 @@
 			readOnlyColumns="${readOnlyColumns}"
 		/>
 		<selectionModelFactory class="com.top_logic.element.layout.grid.GridSelectionModelFactory"
-			multiSelection="${multiSelection}"
-			selectionFilter="${selectionFilter}"
+			filter="${selectionFilter}"
+			multiple="${multiSelection}"
 		/>
 		<buttons>
 			${buttons}

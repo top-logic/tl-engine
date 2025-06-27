@@ -186,7 +186,6 @@ public class DiagramControl extends AbstractControlBase
 	}
 
 	void processUpdate(String patch) throws IOException {
-		Logger.info("Diagram update: " + patch, DiagramControl.class);
 		JsonReader json = new JsonReader(new StringR(patch));
 		_graphScope.applyChanges(json);
 	}

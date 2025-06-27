@@ -94,6 +94,7 @@ public interface FormTableDefinition
 
 	/**
 	 * Expression creating a dynamic label for the table based on the model.
+<<<<<<< Upstream, based on origin/master
 	 *
 	 * <p>
 	 * If this expression is configured, it takes precedence over the static {@link #getLabel()}.
@@ -111,6 +112,19 @@ public interface FormTableDefinition
 	 * this dynamic expression for multiple placeholders or custom placeholder handling.
 	 * </p>
 	 *
+=======
+	 * 
+	 * <p>
+	 * If this expression is configured, it takes precedence over the static {@link #getLabel()}.
+	 * The expression receives two parameters:
+	 * <ul>
+	 * <li>First parameter: The model object</li>
+	 * <li>Second parameter: The static label as {@link ResKey}</li>
+	 * </ul>
+	 * The returned value can be a {@link ResKey} or a {@link String}, for example.
+	 * </p>
+	 * 
+>>>>>>> 8cc7b45 Ticket #28679: add ability to set dynamic label for a form table
 	 * @see #getLabel()
 	 */
 	@Name(DYNAMIC_LABEL)

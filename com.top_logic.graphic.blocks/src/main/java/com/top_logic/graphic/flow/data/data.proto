@@ -403,6 +403,16 @@ message ClickTarget extends Decoration {
 	
 }
 
+/** A box that shows a tooltip when the mouse hovers over its contents. */
+@Operations("com.top_logic.graphic.flow.operations.TooltipOperations")
+message Tooltip extends Decoration {
+
+	/** The text to display as tooltip */
+	@Nullable
+	string text;
+	
+}
+
 /** Mouse buttons that can be used to interact with diagram elements. */
 enum MouseButton {
 	/**

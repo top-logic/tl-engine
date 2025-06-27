@@ -128,7 +128,7 @@
 		titleKey="${name}"
 		toolbar="${toolbar}"
 	>
-		<selectionModelFactory multiSelection="${multiSelection}"/>
+		<selectionModelFactory multiple="${multiSelection}"/>
 		<buttons>
 			${buttons}
 			<include name="templates/editComponentCommands.xml"/>

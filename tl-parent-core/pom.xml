@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-build</artifactId>
-		<version>7.9.5</version>
+		<version>0.0.6-AEMA-SNAPSHOT</version>
 
 		<relativePath>../tl-parent-build</relativePath>
 	</parent>
@@ -120,7 +120,7 @@
 			<plugin>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-maven-plugin</artifactId>
-				<version>7.9.5</version>
+				<version>0.0.6-AEMA-SNAPSHOT</version>
 
 				<executions>
 					<execution>

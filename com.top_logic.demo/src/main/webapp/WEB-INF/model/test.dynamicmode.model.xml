@@ -32,6 +32,20 @@
 							fullQualifiedName="test.dynamicmode:Acquisition#category"
 							type="test.dynamicmode:Category"
 						/>
+						<group>
+							<field
+								attribute="reasonCritical"
+								fullQualifiedName="test.dynamicmode:Acquisition#reasonCritical"
+								type="tl.core:Text"
+							/>
+							<label key="dynamic.da442965-2344-4126-9baa-f4c24f4e34c0">
+								<en>Extended information</en>
+								<de>Erweiterte Angaben</de>
+							</label>
+							<dynamicVisibility class="com.top_logic.model.search.providers.ModeSelectorByExpression">
+								<function>model -&gt; $model.get(`test.dynamicmode:Acquisition#critical`) ? "DEFAULT" : "HIDDEN"</function>
+							</dynamicVisibility>
+						</group>
 						<field
 							attribute="price"
 							fullQualifiedName="test.dynamicmode:Acquisition#price"
@@ -137,6 +151,9 @@
 						</dynamic-visibility>
 					</annotations>
 				</reference>
+				<property name="reasonCritical"
+					type="tl.core:Text"
+				/>
 			</attributes>
 		</class>
 		<class name="Position">

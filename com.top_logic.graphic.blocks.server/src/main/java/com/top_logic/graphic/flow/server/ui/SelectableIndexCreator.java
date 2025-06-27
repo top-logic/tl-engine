@@ -16,7 +16,7 @@ import com.top_logic.graphic.flow.data.SelectableBox;
 /**
  * {@link Visitor} that creates an index of all {@link SelectableBox} nodes by their user objects.
  */
-public class IndexCreator extends DescendingBoxVisitor<IndexCreator, Void> {
+public class SelectableIndexCreator extends DescendingBoxVisitor<SelectableIndexCreator, Void> {
 
 	private Map<Object, List<SelectableBox>> _index = new HashMap<>();
 
@@ -28,18 +28,21 @@ public class IndexCreator extends DescendingBoxVisitor<IndexCreator, Void> {
 	}
 
 	@Override
-	public IndexCreator visit(SelectableBox self, Void arg) {
-		_index.computeIfAbsent(self.getUserObject(), x -> new ArrayList<>()).add(self);
+	public SelectableIndexCreator visit(SelectableBox self, Void arg) {
+		Object userObject = self.getUserObject();
+		if (userObject != null) {
+			_index.computeIfAbsent(userObject, x -> new ArrayList<>()).add(self);
+		}
 		return none();
 	}
 
 	@Override
-	protected IndexCreator none() {
+	protected SelectableIndexCreator none() {
 		return this;
 	}
 
 	@Override
-	public IndexCreator apply(IndexCreator a, IndexCreator b) {
+	public SelectableIndexCreator apply(SelectableIndexCreator a, SelectableIndexCreator b) {
 		return a;
 	}
 

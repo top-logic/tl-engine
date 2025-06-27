@@ -26,6 +26,7 @@ import com.top_logic.graphic.flow.data.Stack;
 import com.top_logic.graphic.flow.data.Text;
 import com.top_logic.graphic.flow.data.Tooltip;
 import com.top_logic.graphic.flow.data.VerticalLayout;
+import com.top_logic.graphic.flow.data.Widget;
 
 /**
  * {@link Visitor} that descends through all elements of a diagram.
@@ -37,85 +38,103 @@ public abstract class DescendingBoxVisitor<R, A> implements Box.Visitor<R, A, Ru
 	 */
 	protected abstract R none();
 
+	/**
+	 * Callback that is informed of each generic {@link Widget} that is being visited.
+	 * 
+	 * @param self
+	 *        The visited generic node.
+	 * @param arg
+	 *        The visit argument.
+	 */
+	protected R visitBox(Widget self, A arg) {
+		return none();
+	}
+
 	@Override
 	public R visit(Empty self, A arg) throws RuntimeException {
-		return none();
+		return visitBox(self, arg);
 	}
 
 	@Override
 	public R visit(Image self, A arg) throws RuntimeException {
-		return none();
+		return visitBox(self, arg);
 	}
 
 	@Override
 	public R visit(Text self, A arg) throws RuntimeException {
-		return none();
+		return visitBox(self, arg);
 	}
 
 	@Override
 	public R visit(SelectableBox self, A arg) throws RuntimeException {
-		return self.getContent().visit(this, arg);
+		return apply(visitBox(self, arg), self.getContent().visit(this, arg));
 	}
 
 	@Override
 	public R visit(ClickTarget self, A arg) throws RuntimeException {
-		return self.getContent().visit(this, arg);
+		return apply(visitBox(self, arg), self.getContent().visit(this, arg));
 	}
 
 	@Override
 	public R visit(Tooltip self, A arg) throws RuntimeException {
-		return self.getContent().visit(this, arg);
+		return apply(visitBox(self, arg), self.getContent().visit(this, arg));
 	}
 
 	@Override
 	public R visit(Align self, A arg) throws RuntimeException {
-		return self.getContent().visit(this, arg);
+		return apply(visitBox(self, arg), self.getContent().visit(this, arg));
 	}
 
 	@Override
 	public R visit(Border self, A arg) throws RuntimeException {
-		return self.getContent().visit(this, arg);
+		return apply(visitBox(self, arg), self.getContent().visit(this, arg));
 	}
 
 	@Override
 	public R visit(Fill self, A arg) throws RuntimeException {
-		return self.getContent().visit(this, arg);
+		return apply(visitBox(self, arg), self.getContent().visit(this, arg));
 	}
 
 	@Override
 	public R visit(Padding self, A arg) throws RuntimeException {
-		return self.getContent().visit(this, arg);
+		return apply(visitBox(self, arg), self.getContent().visit(this, arg));
 	}
 
 	@Override
 	public R visit(GridLayout self, A arg) throws RuntimeException {
-		return self.getContents().stream().map(b -> b.visit(this, arg)).reduce(this).orElse(null);
+		return apply(visitBox(self, arg),
+			self.getContents().stream().map(b -> b.visit(this, arg)).reduce(this).orElse(null));
 	}
 
 	@Override
 	public R visit(HorizontalLayout self, A arg) throws RuntimeException {
-		return self.getContents().stream().map(b -> b.visit(this, arg)).reduce(this).orElse(null);
+		return apply(visitBox(self, arg),
+			self.getContents().stream().map(b -> b.visit(this, arg)).reduce(this).orElse(null));
 	}
 
 	@Override
 	public R visit(VerticalLayout self, A arg) throws RuntimeException {
-		return self.getContents().stream().map(b -> b.visit(this, arg)).reduce(this).orElse(null);
+		return apply(visitBox(self, arg),
+			self.getContents().stream().map(b -> b.visit(this, arg)).reduce(this).orElse(null));
 	}
 
 	@Override
 	public R visit(FloatingLayout self, A arg) throws RuntimeException {
-		return self.getNodes().stream().map(b -> b.visit(this, arg)).reduce(this).orElse(null);
+		return apply(visitBox(self, arg),
+			self.getNodes().stream().map(b -> b.visit(this, arg)).reduce(this).orElse(null));
 	}
 
 	@Override
 	public R visit(Stack self, A arg) throws RuntimeException {
-		return self.getContents().stream().map(b -> b.visit(this, arg)).reduce(this).orElse(null);
+		return apply(visitBox(self, arg),
+			self.getContents().stream().map(b -> b.visit(this, arg)).reduce(this).orElse(null));
 	}
 
 	@Override
 	public R visit(CompassLayout self, A arg) throws RuntimeException {
-		return Arrays.asList(self.getNorth(), self.getWest(), self.getEast(), self.getSouth(), self.getCenter())
-			.stream().map(b -> b.visit(this, arg)).reduce(this).orElse(null);
+		return apply(visitBox(self, arg),
+			Arrays.asList(self.getNorth(), self.getWest(), self.getEast(), self.getSouth(), self.getCenter())
+				.stream().map(b -> b.visit(this, arg)).reduce(this).orElse(null));
 	}
 
 }

@@ -6,11 +6,14 @@
 package com.top_logic.graphic.flow.server.ui;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.ConfigurationException;
@@ -38,6 +41,7 @@ import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelConfig;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.search.expr.SearchExpression;
 
 import de.haumacher.msgbuf.observer.Listener;
 import de.haumacher.msgbuf.observer.Observable;
@@ -49,6 +53,8 @@ public class FlowChartComponent extends BuilderComponent
 		implements SelectableWithSelectionModel, ControlRepresentable {
 
 	private DiagramControl _control = new DiagramControl();
+
+	private Map<Object, List<SelectableBox>> _index;
 
 	private final SelectionModel _selectionModel;
 
@@ -130,7 +136,12 @@ public class FlowChartComponent extends BuilderComponent
 		public void handleNewValue(ComponentChannel sender, Object oldValue, Object newValue) {
 			boolean removed = _selectionModel.removeSelectionListener(_updateChannelSelection);
 			try {
-				// TODO: Build index to retrieve diagram elements from business objects.
+				Set<SelectableBox> selectedBoxes = SearchExpression.asCollection(newValue)
+					.stream()
+					.flatMap(s -> _index.getOrDefault(s, Collections.emptyList()).stream())
+					.collect(Collectors.toSet());
+
+				_selectionModel.setSelection(selectedBoxes);
 			} finally {
 				if (removed) {
 					_selectionModel.addSelectionListener(_updateChannelSelection);
@@ -202,6 +213,10 @@ public class FlowChartComponent extends BuilderComponent
 
 		if (diagram != null) {
 			diagram.registerListener(_processUISelection);
+
+			_index = diagram.getRoot().visit(new IndexCreator(), null).getIndex();
+		} else {
+			_index = Collections.emptyMap();
 		}
 	}
 

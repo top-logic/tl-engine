@@ -5,6 +5,7 @@
  */
 package com.top_logic.mig.html;
 
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -29,13 +30,46 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 	/**
 	 * Configuration of {@link DefaultSelectionModelFactory}.
 	 */
-	public interface Config extends PolymorphicConfiguration<DefaultSelectionModelFactory>, UIOptions {
-		// Pure sum interface.
+	public interface Config extends PolymorphicConfiguration<DefaultSelectionModelFactory> {
+
+		/** Name of the {@link #isMultiple()} property. */
+		String MULTIPLE_PROPERTY_NAME = "multiple";
+
+		/** Name of the {@link #getFilter()} property. */
+		String FILTER_PROPERTY_NAME = "filter";
+
+		/**
+		 * Whether the created {@link SelectionModel} must support multiple selection.
+		 */
+		@Name(MULTIPLE_PROPERTY_NAME)
+		boolean isMultiple();
+
+		/**
+		 * Setter for {@link #isMultiple()}.
+		 */
+		void setMultiple(boolean multiple);
+
+		/**
+		 * Returns the selection filter for the created {@link SelectionModel}.
+		 */
+		@InstanceFormat
+		@Name(FILTER_PROPERTY_NAME)
+		Filter getFilter();
+
+		/**
+		 * Setter for {@link #getFilter()}.
+		 */
+		void setFilter(Filter filter);
 	}
 
 	/**
 	 * Options of {@link DefaultSelectionModelFactory} that can be configured in the layout editor.
+	 * 
+	 * @implNote This will replace properties in {@link Config}, but requires migration. Will be
+	 *           further refactored in a future change. Currently, this interface is only used as
+	 *           super interface for typed layout templates.
 	 */
+	@CalledByReflection
 	public interface UIOptions extends ConfigurationItem {
 		/** Name of the {@link #isMultiSelection()} property. */
 		String MULTI_SELECTION_PROPERTY_NAME = "multiSelection";
@@ -92,7 +126,7 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 	@Override
 	public SelectionModel newSelectionModel(SelectionModelOwner owner) {
 		Filter<Object> selectionFilter = getSelectionFilter();
-		if (_config.isMultiSelection()) {
+		if (_config.isMultiple()) {
 			return new DefaultMultiSelectionModel(selectionFilter, owner);
 		} else {
 			return new DefaultSingleSelectionModel(selectionFilter, owner);
@@ -103,7 +137,7 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 	 * Optional filter to restrict selection events.
 	 */
 	protected Filter<Object> getSelectionFilter() {
-		return _config.getSelectionFilter();
+		return _config.getFilter();
 	}
 
 	@Override

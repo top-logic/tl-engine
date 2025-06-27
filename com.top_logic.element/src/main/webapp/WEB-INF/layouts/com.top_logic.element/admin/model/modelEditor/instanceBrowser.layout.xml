@@ -18,7 +18,7 @@
 			showDetailOpener="false"
 			showMaximize="true"
 		>
-			<selectionModelFactory multiSelection="true"/>
+			<selectionModelFactory multiple="true"/>
 			<buttons>
 				<button id="exportExcelGrid"
 					class="com.top_logic.layout.table.export.StreamingExcelExportHandler"

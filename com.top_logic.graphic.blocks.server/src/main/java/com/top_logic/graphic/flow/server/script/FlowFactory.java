@@ -49,6 +49,7 @@ import com.top_logic.graphic.flow.data.SelectableBox;
 import com.top_logic.graphic.flow.data.SpaceDistribution;
 import com.top_logic.graphic.flow.data.Stack;
 import com.top_logic.graphic.flow.data.Text;
+import com.top_logic.graphic.flow.data.Tooltip;
 import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
 import com.top_logic.graphic.flow.data.TreeLayout;
@@ -472,6 +473,22 @@ public class FlowFactory {
 			.setUserObject(userObject);
 	}
 	
+	/**
+	 * Creates box that displays a tooltip when the mouse hovers over its contents.
+	 */
+	@SideEffectFree
+	public static Box flowTooltip(
+			@Mandatory String text,
+			@Mandatory Box content,
+			String cssClass,
+			Object userObject) {
+		return Tooltip.create()
+			.setText(text)
+			.setContent(nonNull(content))
+			.setCssClass(cssClass)
+			.setUserObject(userObject);
+	}
+
 	/**
 	 * Creates a tree layout.
 	 *

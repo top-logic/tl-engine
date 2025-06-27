@@ -80,6 +80,7 @@ import com.top_logic.model.form.definition.FormVisibility;
 import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormMode;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
@@ -181,7 +182,7 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 			genericProvider(),
 			adaptColumns(context.getFormContext(), contentGroup, configuredCols, columnNameProvider),
 			GenericTableConfigurationProvider.showColumns(visibleColumNames),
-			tableTitleProvider(),
+			tableTitleProvider(model),
 			additionalCommands(),
 			deactivateTableFeatures(inDesignMode));
 
@@ -310,19 +311,31 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 		return deactivateFeaturesForDesign;
 	}
 
-	private TableConfigurationProvider tableTitleProvider() {
+	private TableConfigurationProvider tableTitleProvider(TLObject model) {
 		ResKey labelKey = getConfig().getLabel();
-		TableConfigurationProvider tableTitle;
-		if (labelKey == null) {
-			tableTitle = TableConfigurationFactory.emptyProvider();
-		} else {
-			tableTitle = new TableConfigurationProvider() {
+		Expr dynamicLabelExpr = getConfig().getDynamicLabel();
 
+		TableConfigurationProvider tableTitle;
+		if (dynamicLabelExpr != null) {
+			// Calculate dynamic label based on the model and static label
+			Object dynamicLabelResult = QueryExecutor.compile(dynamicLabelExpr).execute(model, labelKey);
+			ResKey dynamicLabelKey = SearchExpression.asResKey(dynamicLabelResult);
+			tableTitle = new TableConfigurationProvider() {
+				@Override
+				public void adaptConfigurationTo(TableConfiguration table) {
+					table.setTitleKey(dynamicLabelKey);
+				}
+			};
+		} else if (labelKey != null) {
+			// Use static label
+			tableTitle = new TableConfigurationProvider() {
 				@Override
 				public void adaptConfigurationTo(TableConfiguration table) {
 					table.setTitleKey(labelKey);
 				}
 			};
+		} else {
+			tableTitle = TableConfigurationFactory.emptyProvider();
 		}
 		return tableTitle;
 	}

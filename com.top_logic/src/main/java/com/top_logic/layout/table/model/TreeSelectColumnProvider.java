@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
@@ -39,13 +40,13 @@ import com.top_logic.layout.table.provider.ColumnProviderConfig;
 import com.top_logic.layout.table.tree.TreeTableDataOwner;
 import com.top_logic.layout.tree.model.AbstractTreeTableModel;
 import com.top_logic.layout.tree.model.TLTreeModel;
-import com.top_logic.layout.tree.model.TLTreeModelUtil;
 import com.top_logic.mig.html.GenericSelectionModelOwner;
 import com.top_logic.mig.html.LazyTreeSelectionModel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.mig.html.TreeSelectionModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.util.Utils;
 
 /**
  * {@link TableConfigurationProvider} adding a column that displays the selection of a tree
@@ -111,9 +112,9 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		ColumnConfiguration treeSelectColumn = table.declareColumn(getConfig().getColumnId());
 		treeSelectColumn.setColumnLabelKey(getConfig().getColumnLabel());
 
-		TreeTableDataOwner treeOwner = (TreeTableDataOwner) _component;
+		TreeTableDataOwner treeOwner = treeTableDataOwner();
 		Supplier<TLTreeModel<?>> treeSupplier = () -> {
-			/* Table data may change during lifetime of selection model , e.g. when the owner is a
+			/* Table data may change during lifetime of selection model, e.g. when the owner is a
 			 * GridComponent. */
 			return treeOwner.getTableData().getTree();
 		};
@@ -132,6 +133,10 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		adaptColumnConfig(treeSelectColumn, selectionModel, () -> {
 			connectWithChannel(selectionModel, treeSupplier);
 		});
+	}
+
+	private TreeTableDataOwner treeTableDataOwner() {
+		return (TreeTableDataOwner) _component;
 	}
 
 	private <N> void listenToChannel(TreeSelectionModel<N> selectionModel,
@@ -168,14 +173,6 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 				_channel.set(newChannelValue);
 			}
 
-			List<Object> createBOPathFromRoot(TLTreeModel<N> model, N node) {
-				List<N> pathToRoot = model.createPathToRoot(node);
-				List<Object> bos = new ArrayList<>();
-				for (int i = pathToRoot.size() - 1; i >= 0; i--) {
-					bos.add(model.getBusinessObject(pathToRoot.get(i)));
-				}
-				return bos;
-			}
 		});
 	}
 
@@ -196,12 +193,64 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		TLTreeModel<N> treeModel = treeSupplier.get();
 		Set<Object> newSelectionModelValue = ((Collection<?>) channelValue)
 			.stream()
-			.map(value -> {
-				List bosWithRoot = (List) value;
-				return TLTreeModelUtil.findNode(treeModel, bosWithRoot.subList(1, bosWithRoot.size()), false);
-			})
+			.map(value -> findNode(treeModel, value))
 			.collect(Collectors.toSet());
 		return newSelectionModelValue;
+	}
+
+	private <N> Object findNode(TLTreeModel<N> model, Object value) {
+		Mapping<Object, ?> modelMapping = modelMapping();
+
+		List bosWithRoot = (List) value;
+		
+		assert !bosWithRoot.isEmpty(): "Selection must not contain empty path";
+		N node = model.getRoot();
+
+		if (!Utils.equals(bosWithRoot.get(0), getBusinessObject(model, modelMapping, node))) {
+			// Root has different user object.
+			return null;
+		}
+
+		path:
+		for (int i = 0 ; i < bosWithRoot.size(); i++) {
+			Object userObject = bosWithRoot.get(i);
+			for (N child : model.getChildren(node)) {
+				if (Utils.equals(userObject, getBusinessObject(model, modelMapping, child))) {
+					node = child;
+
+					// Node was found, continue with next step in path.
+					continue path;
+				}
+			}
+			// No corresponding node found.
+			return null;
+		}
+		return node;
+	}
+
+	private <N> List<Object> createBOPathFromRoot(TLTreeModel<N> model, N node) {
+		Mapping<Object, ?> modelMapping = modelMapping();
+		List<N> pathToRoot = model.createPathToRoot(node);
+		List<Object> bos = new ArrayList<>();
+		for (int i = pathToRoot.size() - 1; i >= 0; i--) {
+			bos.add(getBusinessObject(model, modelMapping, pathToRoot.get(i)));
+		}
+		return bos;
+	}
+
+	private <N> Object getBusinessObject(TLTreeModel<N> model, Mapping<Object, ?> modelMapping, N node) {
+		Object bo;
+		if (modelMapping == null) {
+			bo = model.getBusinessObject(node);
+		} else {
+			bo = modelMapping.apply(node);
+		}
+		return bo;
+	}
+
+	private Mapping<Object, ?> modelMapping() {
+		TreeTableDataOwner treeTableDataOwner = treeTableDataOwner();
+		return treeTableDataOwner.getTableData().getTableModel().getTableConfiguration().getModelMapping();
 	}
 
 	private static class TreeSelectCellRenderer<N> extends AbstractCellRenderer {
@@ -231,6 +280,4 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 
 	}
 
-
 }
-

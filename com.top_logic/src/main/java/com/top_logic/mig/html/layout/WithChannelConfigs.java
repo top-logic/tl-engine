@@ -54,8 +54,10 @@ public interface WithChannelConfigs extends ConfigurationItem {
 	})
 	interface ChannelConfig extends NamedConfigMandatory {
 
+		/** Configuration name for the property {@link #getImpl()}. */
 		String IMPL = "impl";
 
+		/** Configuration name for the property {@link #getValue()}. */
 		String VALUE = "value";
 
 		/**

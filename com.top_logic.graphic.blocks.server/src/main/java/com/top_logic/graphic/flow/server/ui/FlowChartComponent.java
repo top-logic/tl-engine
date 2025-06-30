@@ -60,9 +60,9 @@ public class FlowChartComponent extends BuilderComponent
 	 * User object of {@link SelectableBox} nodes mapped the box for updating the UI selection, if
 	 * the selection channel changes.
 	 */
-	private Map<Object, List<SelectableBox>> _selectableIndex;
+	private Map<Object, List<SelectableBox>> _selectableIndex = Collections.emptyMap();
 
-	private Map<Object, List<Widget>> _observedIndex;
+	private Map<Object, List<Widget>> _observedIndex = Collections.emptyMap();
 
 	private final SelectionModel _selectionModel;
 

@@ -209,7 +209,10 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 	private final List<DialogWindowControl> dialogsToClose = new ArrayList<>();
 	private final List<DialogWindowControl> dialogsToOpen = new ArrayList<>();
 	
-	private final List<PopupDialogControl> popupDialogsToClose = new ArrayList<>();
+	/**
+	 * Client-side IDs of popup dialogs that must be removed from view.
+	 */
+	private final List<String> popupDialogsToClose = new ArrayList<>();
 	private final List<PopupDialogControl> popupDialogsToOpen = new ArrayList<>();
 
 	private final WindowScope opener;
@@ -414,7 +417,13 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 			popupDialogs.get(i).getModel().setClosed();
 		}
 		popupDialogs.remove(popupIndex);
-		popupDialogsToClose.add(aDialog);
+		popupDialogsToClose.add(aDialog.getID());
+
+		// Early detach (removed from UI during final validation). This is necessary to unregister
+		// commands within the dialog from command model registry before final validation.
+		// Otherwise, those commands may get validated but are still bound to potentially deleted
+		// objects.
+		aDialog.detach();
 	}
 	
 	/**
@@ -471,19 +480,18 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 	}
 
 	/**
-	 * This method brings the visible popup dialogs in sync with the popup dialogs which were opened (and
-	 * closed, resp.) on server side.
+	 * Brings the visible popup dialogs in sync with the popup dialogs which are open (and closed,
+	 * resp.) on server side.
 	 * 
 	 * @param actions
-	 *            may be <code>null</code>. If <code>actions != null</code>
-	 *            {@link ClientAction} to bring the client in sync will be added to.
+	 *        The action quey to add necessary client actions to.
 	 */
 	protected void updatePopupDialogs(UpdateQueue actions) {
 		// Closed popup dialogs
 		int size = popupDialogsToClose.size();
 		for (int i = 0; i < size; i++) {
-			PopupDialogControl popupDialog = popupDialogsToClose.get(i);
-			actions.add(new ElementReplacement(popupDialog.getID(), Fragments.empty()));
+			String popupDialogId = popupDialogsToClose.get(i);
+			actions.add(new ElementReplacement(popupDialogId, Fragments.empty()));
 		}
 
 		// Opened popup dialogs
@@ -522,7 +530,6 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 
 	private void dropIncrementalPopupUpdates() {
 		popupDialogsToOpen.clear();
-		popupDialogsToClose.forEach(PopupDialogControl::detach);
 		popupDialogsToClose.clear();
 	}
 

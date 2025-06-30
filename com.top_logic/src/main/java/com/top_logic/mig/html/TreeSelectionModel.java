@@ -284,11 +284,12 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 
 	@Override
 	public void setSelection(Set<?> newSelection, Object lead) {
-		Set<?> oldSelection = null;
-		Map<N, TriState> oldStates = null;
-		if (hasListeners()) {
-			oldSelection = getSelection();
+		Set<?> oldSelection = getSelection();
+		if (oldSelection.equals(newSelection)) {
+			setLastSelected(lead);
+			return;
 		}
+		Map<N, TriState> oldStates = null;
 		if (_listeners.hasRegisteredListeners()) {
 			oldStates = new HashMap<>(_states);
 		}

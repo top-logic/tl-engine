@@ -473,7 +473,7 @@ public class EventBuilder {
 			try {
 				listener.notifyChange(change);
 			} catch (Exception ex) {
-				Logger.error("Failed to deliver change event to listener: " + listener, EventBuilder.class);
+				Logger.error("Failed to deliver change event to listener: " + listener, ex, EventBuilder.class);
 			}
 		}
 	}

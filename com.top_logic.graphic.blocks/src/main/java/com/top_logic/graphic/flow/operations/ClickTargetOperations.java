@@ -85,6 +85,9 @@ public interface ClickTargetOperations extends DecorationOperations, SVGClickHan
 		}
 		
 		self().getDiagram().getContext().processClick(self(), pressedButtons);
+
+		event.stopPropagation();
+		event.preventDefault();
 	}
 
 }

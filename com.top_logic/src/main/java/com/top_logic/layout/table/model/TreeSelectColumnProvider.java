@@ -113,7 +113,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		treeSelectColumn.setColumnLabelKey(getConfig().getColumnLabel());
 
 		TreeTableDataOwner treeOwner = treeTableDataOwner();
-		Supplier<TLTreeModel<?>> treeSupplier = () -> {
+		Supplier treeSupplier = () -> {
 			/* Table data may change during lifetime of selection model, e.g. when the owner is a
 			 * GridComponent. */
 			return treeOwner.getTableData().getTree();

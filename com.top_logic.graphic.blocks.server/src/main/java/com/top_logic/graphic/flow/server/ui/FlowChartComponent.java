@@ -206,6 +206,8 @@ public class FlowChartComponent extends BuilderComponent
 	protected void handleNewModel(Object newModel) {
 		super.handleNewModel(newModel);
 
+		Set<?> selectionBefore = _selectionModel.getSelection();
+
 		Diagram before = _control.getModel();
 		if (before != null) {
 			before.unregisterListener(_processUISelection);
@@ -227,6 +229,13 @@ public class FlowChartComponent extends BuilderComponent
 		} else {
 			_selectableIndex = Collections.emptyMap();
 			_observedIndex = Collections.emptyMap();
+		}
+
+		// Remove objects no longer present from selection.
+		for (Object oldSelected : selectionBefore) {
+			if (!_selectableIndex.containsKey(oldSelected)) {
+				_selectionModel.setSelected(oldSelected, false);
+			}
 		}
 	}
 

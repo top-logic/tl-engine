@@ -399,6 +399,11 @@ public class SVGBuilder implements SvgWriter {
 					public void stopPropagation() {
 						event.getNativeEvent().stopPropagation();
 					}
+
+					@Override
+					public void preventDefault() {
+						event.getNativeEvent().preventDefault();
+					}
 				});
 			}
 		}, ClickEvent.getType());

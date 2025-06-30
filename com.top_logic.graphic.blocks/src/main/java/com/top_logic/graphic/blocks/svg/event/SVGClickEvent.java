@@ -45,4 +45,9 @@ public interface SVGClickEvent {
 	 */
 	void stopPropagation();
 
+	/**
+	 * Prevents the default action for this event.
+	 */
+	void preventDefault();
+
 }

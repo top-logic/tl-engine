@@ -50,9 +50,11 @@ import com.top_logic.layout.structure.DialogClosedListener;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
+import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link CommandHandler} that completes a task and advances the process to the next step(s).
@@ -192,6 +194,15 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 		}
 
 		WithPostCreateActions.processCreateActions(_actions, aComponent, token.getProcessExecution());
+
+		if (editComponent.isInEditMode()) {
+			CommandHandler editHandler = editComponent.getEditCommandHandler();
+			if (editHandler != null
+				&& !editComponent.allow(TLContext.currentUser(), (BoundObject) model,
+					editHandler.getCommandGroup())) {
+				editComponent.setViewMode();
+			}
+		}
 		return HandlerResult.DEFAULT_RESULT;
 	}
 

@@ -183,11 +183,9 @@ public class DiagramControl extends AbstractControlBase
 		ExternalScope graphScope = new ExternalScope(2, 0);
 		StringW buffer = new StringW();
 		_diagram.writeTo(graphScope, new JsonWriter(buffer));
-		Logger.info("Diagram: \n" + buffer.toString(), DiagramControl.class);
 	}
 
 	void processUpdate(String patch) throws IOException {
-		Logger.info("Diagram update: " + patch, DiagramControl.class);
 		JsonReader json = new JsonReader(new StringR(patch));
 		_graphScope.applyChanges(json);
 	}

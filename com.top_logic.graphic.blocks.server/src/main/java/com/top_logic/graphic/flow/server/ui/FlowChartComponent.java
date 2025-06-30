@@ -5,13 +5,18 @@
  */
 package com.top_logic.graphic.flow.server.ui;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -38,6 +43,7 @@ import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelConfig;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.search.expr.SearchExpression;
 
 import de.haumacher.msgbuf.observer.Listener;
 import de.haumacher.msgbuf.observer.Observable;
@@ -49,6 +55,14 @@ public class FlowChartComponent extends BuilderComponent
 		implements SelectableWithSelectionModel, ControlRepresentable {
 
 	private DiagramControl _control = new DiagramControl();
+
+	/**
+	 * User object of {@link SelectableBox} nodes mapped the box for updating the UI selection, if
+	 * the selection channel changes.
+	 */
+	private Map<Object, List<SelectableBox>> _selectableIndex = Collections.emptyMap();
+
+	private Map<Object, List<Widget>> _observedIndex = Collections.emptyMap();
 
 	private final SelectionModel _selectionModel;
 
@@ -130,7 +144,12 @@ public class FlowChartComponent extends BuilderComponent
 		public void handleNewValue(ComponentChannel sender, Object oldValue, Object newValue) {
 			boolean removed = _selectionModel.removeSelectionListener(_updateChannelSelection);
 			try {
-				// TODO: Build index to retrieve diagram elements from business objects.
+				Set<SelectableBox> selectedBoxes = SearchExpression.asCollection(newValue)
+					.stream()
+					.flatMap(s -> _selectableIndex.getOrDefault(s, Collections.emptyList()).stream())
+					.collect(Collectors.toSet());
+
+				_selectionModel.setSelection(selectedBoxes);
 			} finally {
 				if (removed) {
 					_selectionModel.addSelectionListener(_updateChannelSelection);
@@ -188,6 +207,8 @@ public class FlowChartComponent extends BuilderComponent
 	protected void handleNewModel(Object newModel) {
 		super.handleNewModel(newModel);
 
+		List<?> selectionBefore = new ArrayList<>(_selectionModel.getSelection());
+
 		Diagram before = _control.getModel();
 		if (before != null) {
 			before.unregisterListener(_processUISelection);
@@ -202,6 +223,20 @@ public class FlowChartComponent extends BuilderComponent
 
 		if (diagram != null) {
 			diagram.registerListener(_processUISelection);
+
+			_selectableIndex = diagram.getRoot().visit(new SelectableIndexCreator(), null).getIndex();
+			_observedIndex = diagram.getRoot()
+				.visit(new ObservedIndexCreator(node -> builder().getObserved(node, this)), null).getIndex();
+		} else {
+			_selectableIndex = Collections.emptyMap();
+			_observedIndex = Collections.emptyMap();
+		}
+
+		// Remove objects no longer present from selection.
+		for (Object oldSelected : selectionBefore) {
+			if (!_selectableIndex.containsKey(oldSelected)) {
+				_selectionModel.setSelected(oldSelected, false);
+			}
 		}
 	}
 
@@ -220,27 +255,38 @@ public class FlowChartComponent extends BuilderComponent
 	}
 
 	@Override
-	protected boolean receiveModelDeletedEvent(Set<TLObject> aModel, Object changedBy) {
-		boolean result = super.receiveModelDeletedEvent(aModel, changedBy);
+	protected boolean observeAllTypes() {
+		return true;
+	}
 
-		Object selected = getSelected();
-		if (selected instanceof Collection<?> multiSelection) {
-			List<?> newSelection = multiSelection.stream().filter(x -> !aModel.contains(x)).toList();
-			if (newSelection.size() != multiSelection.size()) {
-				if (newSelection.isEmpty()) {
-					setSelected(null);
-				} else if (newSelection.size() == 1) {
-					setSelected(newSelection.get(0));
-				} else {
-					setSelected(newSelection);
-				}
-			}
-		} else {
-			if (aModel.contains(selected)) {
-				setSelected(null);
+	@Override
+	protected boolean receiveModelDeletedEvent(Set<TLObject> deletedObjects, Object changedBy) {
+		boolean result = super.receiveModelDeletedEvent(deletedObjects, changedBy);
+
+		for (Object deleted : deletedObjects) {
+			if (!_observedIndex.getOrDefault(deleted, Collections.emptyList()).isEmpty()) {
+				// A part has been deleted, redraw.
+				// TODO: Optimize update.
+				invalidate();
+				break;
 			}
 		}
 
+		// Remove deleted nodes from selection.
+		Collection<?> selectedNodes = _selectionModel.getSelection();
+
+		FlowChartBuilder builder = builder();
+		Set<?> newSelection = selectedNodes.stream()
+			.filter(x -> !CollectionUtil.containsAny(builder.getObserved((Widget) x, this), deletedObjects))
+			.collect(Collectors.toSet());
+		if (newSelection.size() != selectedNodes.size()) {
+			_selectionModel.setSelection(newSelection);
+		}
+
 		return result;
+	}
+
+	private FlowChartBuilder builder() {
+		return (FlowChartBuilder) getBuilder();
 	}
 }

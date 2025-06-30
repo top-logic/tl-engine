@@ -5,6 +5,7 @@
  */
 package com.top_logic.graphic.flow.server.ui;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -206,7 +207,7 @@ public class FlowChartComponent extends BuilderComponent
 	protected void handleNewModel(Object newModel) {
 		super.handleNewModel(newModel);
 
-		Set<?> selectionBefore = _selectionModel.getSelection();
+		List<?> selectionBefore = new ArrayList<>(_selectionModel.getSelection());
 
 		Diagram before = _control.getModel();
 		if (before != null) {

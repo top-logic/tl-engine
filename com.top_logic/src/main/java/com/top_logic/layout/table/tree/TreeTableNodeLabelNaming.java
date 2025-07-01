@@ -13,8 +13,8 @@ import java.util.NoSuchElementException;
 
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.col.search.SearchResult;
+import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.Format;
-import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -33,13 +33,13 @@ import com.top_logic.layout.tree.model.TLTreeModelUtil;
 /**
  * A {@link ModelNamingScheme} for identifying a row in the tree component by the label path to it.
  */
-public abstract class TreeTableNodeLabelNaming<N extends AbstractTreeTableNode<N>>
-		extends AbstractModelNamingScheme<N, TreeTableNodeLabelNaming.Name> {
+public abstract class TreeTableNodeLabelNaming<N extends AbstractTreeTableNode<N>, NAME extends TreeTableNodeLabelNaming.Name>
+		extends AbstractModelNamingScheme<N, NAME> {
 
 	/**
 	 * {@link ModelName} for the {@link TreeTableNodeLabelNaming}.
 	 */
-	@Label("{foreach(path, \" > \")}")
+	@Abstract
 	public interface Name extends ModelName {
 
 		/**
@@ -109,16 +109,6 @@ public abstract class TreeTableNodeLabelNaming<N extends AbstractTreeTableNode<N
 	static final String NAME_COLUMN_NAME = AbstractWrapper.NAME_ATTRIBUTE;
 
 	/**
-	 * Creates a new {@link TreeTableNodeLabelNaming} with type {@link Name} as name type.
-	 * 
-	 * @param nodeType
-	 *        Value of {@link #getModelClass()}.
-	 */
-	public TreeTableNodeLabelNaming(Class<N> nodeType) {
-		this(nodeType, Name.class);
-	}
-
-	/**
 	 * Creates a new {@link TreeTableNodeLabelNaming}.
 	 * 
 	 * @param nodeType
@@ -126,7 +116,7 @@ public abstract class TreeTableNodeLabelNaming<N extends AbstractTreeTableNode<N
 	 * @param nameType
 	 *        Value of {@link #getNameClass()}.
 	 */
-	protected TreeTableNodeLabelNaming(Class<N> nodeType, Class<? extends TreeTableNodeLabelNaming.Name> nameType) {
+	protected TreeTableNodeLabelNaming(Class<N> nodeType, Class<NAME> nameType) {
 		super(nodeType, nameType);
 	}
 
@@ -145,7 +135,7 @@ public abstract class TreeTableNodeLabelNaming<N extends AbstractTreeTableNode<N
 	}
 
 	@Override
-	protected void initName(Name name, N node) {
+	protected void initName(NAME name, N node) {
 		TreeTableDataOwner owner = getOwner(node);
 		name.setComponent(ModelResolver.buildModelName(owner));
 		name.setPath(getStringPathFromRoot(node, owner));

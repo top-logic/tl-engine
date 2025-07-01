@@ -33,7 +33,7 @@ public class GridTreeTableNodeLabelNaming extends TreeTableNodeLabelNaming<GridT
 	 * Creates a new {@link GridTreeTableNodeLabelNaming}.
 	 */
 	public GridTreeTableNodeLabelNaming() {
-		super(GridTreeTableNode.class);
+		super(GridTreeTableNode.class, GridNodeLabelName.class);
 	}
 
 	@Override

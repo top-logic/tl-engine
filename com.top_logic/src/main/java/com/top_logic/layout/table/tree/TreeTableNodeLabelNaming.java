@@ -109,13 +109,25 @@ public abstract class TreeTableNodeLabelNaming<N extends AbstractTreeTableNode<N
 	static final String NAME_COLUMN_NAME = AbstractWrapper.NAME_ATTRIBUTE;
 
 	/**
+	 * Creates a new {@link TreeTableNodeLabelNaming} with type {@link Name} as name type.
+	 * 
+	 * @param nodeType
+	 *        Value of {@link #getModelClass()}.
+	 */
+	public TreeTableNodeLabelNaming(Class<N> nodeType) {
+		this(nodeType, Name.class);
+	}
+
+	/**
 	 * Creates a new {@link TreeTableNodeLabelNaming}.
 	 * 
 	 * @param nodeType
-	 *        Value of {@link #getModelClass()}
+	 *        Value of {@link #getModelClass()}.
+	 * @param nameType
+	 *        Value of {@link #getNameClass()}.
 	 */
-	public TreeTableNodeLabelNaming(Class<N> nodeType) {
-		super(nodeType, Name.class);
+	protected TreeTableNodeLabelNaming(Class<N> nodeType, Class<? extends TreeTableNodeLabelNaming.Name> nameType) {
+		super(nodeType, nameType);
 	}
 
 	@Override

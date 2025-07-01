@@ -231,6 +231,12 @@ public class DiagramControl extends AbstractControlBase
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
+		@Override
+		protected boolean executeCommandIfViewDisabled() {
+			// May be updated in the background.
+			return true;
+		}
+
 	}
 
 	static final class DispatchClickCommand extends ControlCommand {

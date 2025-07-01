@@ -118,6 +118,11 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 		AttributeUpdateContainer attributeUpdateContainer = formContext.getAttributeUpdateContainer();
 
 		TLObject object = context.getModel();
+
+		if (object == null) {
+			return;
+		}
+
 		TLFormObject editObject = formContext.editObject(object);
 
 		GroupModeObserver observer =

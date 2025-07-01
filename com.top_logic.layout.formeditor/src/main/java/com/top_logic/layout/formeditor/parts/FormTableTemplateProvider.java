@@ -83,10 +83,6 @@ import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormMode;
 import com.top_logic.model.search.expr.SearchExpression;
-<<<<<<< Upstream, based on origin/master
-=======
-import com.top_logic.model.search.expr.config.dom.Expr;
->>>>>>> 8cc7b45 Ticket #28679: add ability to set dynamic label for a form table
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
@@ -331,19 +327,15 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 
 	private TableConfigurationProvider tableTitleProvider(TLObject model) {
 		ResKey labelKey = getConfig().getLabel();
-<<<<<<< Upstream, based on origin/master
 		TableConfigurationProvider tableTitle;
 		if (_dynamicLabelExecutor != null) {
 			// Calculate dynamic label based on the model and static label
 			Object dynamicLabelResult = _dynamicLabelExecutor.execute(model, labelKey);
 			ResKey dynamicLabelKey = SearchExpression.asResKey(dynamicLabelResult);
-=======
-		Expr dynamicLabelExpr = getConfig().getDynamicLabel();
-
 		TableConfigurationProvider tableTitle;
-		if (dynamicLabelExpr != null) {
+		if (_dynamicLabelExecutor != null) {
 			// Calculate dynamic label based on the model and static label
-			Object dynamicLabelResult = QueryExecutor.compile(dynamicLabelExpr).execute(model, labelKey);
+			Object dynamicLabelResult = _dynamicLabelExecutor.execute(model, labelKey);
 			ResKey dynamicLabelKey = SearchExpression.asResKey(dynamicLabelResult);
 			tableTitle = new TableConfigurationProvider() {
 				@Override
@@ -353,14 +345,12 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 			};
 		} else if (labelKey != null) {
 			// Use static label
->>>>>>> 8cc7b45 Ticket #28679: add ability to set dynamic label for a form table
 			tableTitle = new TableConfigurationProvider() {
 				@Override
 				public void adaptConfigurationTo(TableConfiguration table) {
 					table.setTitleKey(dynamicLabelKey);
 				}
 			};
-<<<<<<< Upstream, based on origin/master
 		} else if (labelKey != null) {
 			// Use static label
 			tableTitle = new TableConfigurationProvider() {
@@ -369,8 +359,6 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 					table.setTitleKey(ResKey.message(labelKey, model));
 				}
 			};
-=======
->>>>>>> 8cc7b45 Ticket #28679: add ability to set dynamic label for a form table
 		} else {
 			tableTitle = TableConfigurationFactory.emptyProvider();
 		}

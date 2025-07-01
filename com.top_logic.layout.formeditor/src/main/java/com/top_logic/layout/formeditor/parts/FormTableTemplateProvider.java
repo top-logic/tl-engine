@@ -81,7 +81,6 @@ import com.top_logic.model.form.implementation.AbstractFormElementProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormMode;
 import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
@@ -150,11 +149,25 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 	private static final ResKey LABEL = I18NConstants.FORM_EDITOR__TOOL_NEW_TABLE;
 
 	/**
+	 * Compiled {@link QueryExecutor} for the rows expression, or <code>null</code> if no rows
+	 * expression is configured.
+	 */
+	private final QueryExecutor _rowsExecutor;
+
+	/**
+	 * Compiled {@link QueryExecutor} for the dynamic label expression, or <code>null</code> if no
+	 * dynamic label expression is configured.
+	 */
+	private final QueryExecutor _dynamicLabelExecutor;
+
+	/**
 	 * Create a new {@link FormTableTemplateProvider} for a {@link FormTableDefinition} in a given
 	 * {@link InstantiationContext}.
 	 */
 	public FormTableTemplateProvider(InstantiationContext context, FormTableDefinition config) {
 		super(context, config);
+		_rowsExecutor = QueryExecutor.compileOptional(config.getRows());
+		_dynamicLabelExecutor = QueryExecutor.compileOptional(config.getDynamicLabel());
 	}
 
 	@Override
@@ -269,9 +282,8 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 			return Collections.emptyList();
 		}
 		List<?> rows;
-		Expr rowsExpr = getConfig().getRows();
-		if (rowsExpr != null) {
-			rows = CollectionUtil.toList((Collection<?>) QueryExecutor.compile(rowsExpr).execute(model));
+		if (_rowsExecutor != null) {
+			rows = CollectionUtil.toList((Collection<?>) _rowsExecutor.execute(model));
 		} else {
 			rows = Collections.emptyList();
 		}
@@ -313,12 +325,10 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 
 	private TableConfigurationProvider tableTitleProvider(TLObject model) {
 		ResKey labelKey = getConfig().getLabel();
-		Expr dynamicLabelExpr = getConfig().getDynamicLabel();
-
 		TableConfigurationProvider tableTitle;
-		if (dynamicLabelExpr != null) {
+		if (_dynamicLabelExecutor != null) {
 			// Calculate dynamic label based on the model and static label
-			Object dynamicLabelResult = QueryExecutor.compile(dynamicLabelExpr).execute(model, labelKey);
+			Object dynamicLabelResult = _dynamicLabelExecutor.execute(model, labelKey);
 			ResKey dynamicLabelKey = SearchExpression.asResKey(dynamicLabelResult);
 			tableTitle = new TableConfigurationProvider() {
 				@Override

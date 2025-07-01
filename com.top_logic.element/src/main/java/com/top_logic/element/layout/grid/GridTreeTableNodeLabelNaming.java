@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.layout.grid;
 
+import com.top_logic.element.layout.grid.GridTreeTableNodeLabelNaming.GridNodeLabelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
 import com.top_logic.layout.table.tree.TreeTableNodeLabelNaming;
@@ -14,18 +15,14 @@ import com.top_logic.layout.table.tree.TreeTableNodeLabelNaming;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
-public class GridTreeTableNodeLabelNaming extends TreeTableNodeLabelNaming<GridTreeTableNode> {
+public class GridTreeTableNodeLabelNaming extends TreeTableNodeLabelNaming<GridTreeTableNode, GridNodeLabelName> {
 
 	/**
 	 * {@link ModelName} for the {@link GridTreeTableNodeLabelNaming}.
-	 * 
-	 * @deprecated Use {@link com.top_logic.layout.table.tree.TreeTableNodeLabelNaming.Name}. This
-	 *             class just exists for compatibility with existing scripts.
 	 */
-	@Deprecated
 	public interface GridNodeLabelName extends TreeTableNodeLabelNaming.Name {
 
-		// Compatibility with existing scripts.
+		// No properties here.
 
 	}
 

@@ -5,6 +5,8 @@
  */
 
 package com.top_logic.layout.table.tree;
+
+import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.tree.model.DefaultTreeTableModel.DefaultTreeTableNode;
 
 /**
@@ -13,13 +15,23 @@ import com.top_logic.layout.tree.model.DefaultTreeTableModel.DefaultTreeTableNod
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class TreeTableComponentNodeLabelNaming extends TreeTableNodeLabelNaming<DefaultTreeTableNode> {
+public class TreeTableComponentNodeLabelNaming
+		extends TreeTableNodeLabelNaming<DefaultTreeTableNode, TreeTableComponentNodeLabelNaming.Name> {
+
+	/**
+	 * {@link ModelName} for the {@link TreeTableComponentNodeLabelNaming}.
+	 */
+	public interface Name extends TreeTableNodeLabelNaming.Name {
+
+		// No properties here.
+
+	}
 
 	/**
 	 * Creates a new {@link TreeTableComponentNodeLabelNaming}.
 	 */
 	public TreeTableComponentNodeLabelNaming() {
-		super(DefaultTreeTableNode.class);
+		super(DefaultTreeTableNode.class, Name.class);
 
 	}
 

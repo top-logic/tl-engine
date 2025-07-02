@@ -313,7 +313,7 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			throw new UnreachableAssertion(e);
 		}
 		DBAttribute[] primaryKeyColumns =
-			BasicTypeProvider.primaryKeyColumns(branchAttribute, revMaxAttribute, typeAttribute, idAttribute,
+			BasicTypeProvider.primaryKeyColumns(branchAttribute, typeAttribute, idAttribute, revMaxAttribute,
 				attributeAttribute);
 		type.setPrimaryKey(primaryKeyColumns);
 		/* Compress value must be strict less than number of columns in the prefix. Otherwise Oracle

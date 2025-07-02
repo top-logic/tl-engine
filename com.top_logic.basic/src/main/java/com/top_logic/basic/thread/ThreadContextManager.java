@@ -583,6 +583,19 @@ public abstract class ThreadContextManager extends ManagedClass {
 		getManager().removeInteraction();
 	}
 
+	/**
+	 * Sets up an {@link InteractionContext} with the given subsession and servlet components.
+	 *
+	 * @param sessionContext
+	 *        Sub-session context to bind to the interaction.
+	 * @param servletContext
+	 *        Web application context for servlet container communication.
+	 * @param request
+	 *        HTTP request that initiated this interaction.
+	 * @param response
+	 *        HTTP response for sending content back to client.
+	 * @return The created and installed interaction context.
+	 */
 	public static InteractionContext setupInteractionContext(SubSessionContext sessionContext,
 			ServletContext servletContext, HttpServletRequest request, HttpServletResponse response) {
 		InteractionContext context = getManager().newInteraction(servletContext, request, response);

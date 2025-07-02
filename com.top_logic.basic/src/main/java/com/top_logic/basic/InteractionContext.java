@@ -85,8 +85,14 @@ public interface InteractionContext extends TypedAnnotatable {
 	 */
 	public HttpServletRequest asRequest();
 
+	/**
+	 * Servlet context for this interaction.
+	 */
 	public ServletContext asServletContext();
 
+	/**
+	 * HTTP response object for this interaction.
+	 */
 	public HttpServletResponse asResponse();
 
 }

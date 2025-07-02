@@ -25,7 +25,6 @@
 					<property name="defaultSelection"/>
 					<property name="expandSelected"/>
 					<property name="multiSelection"/>
-					<property name="tree-selection"/>
 					<property name="adjustSelectionWhenCollapsing"/>
 					<property name="showDetailOpener"/>
 					<property name="isSecurityMaster"/>
@@ -69,9 +68,6 @@
 			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>
 		</property>
 		<property name="multiSelection"
-			type="boolean"
-		/>
-		<property name="tree-selection"
 			type="boolean"
 		/>
 		<property name="adjustSelectionWhenCollapsing"
@@ -184,10 +180,7 @@
 		<modifier class="com.top_logic.element.layout.meta.TemplateFormContextModificator"
 			readOnlyColumns="${readOnlyColumns}"
 		/>
-		<selectionModelFactory
-			multiple="${multiSelection}"
-			tree-selection="${tree-selection}"
-		/>
+		<selectionModelFactory multiple="${multiSelection}"/>
 		<buttons>
 			${buttons}
 			<include name="templates/editComponentCommands.xml"/>

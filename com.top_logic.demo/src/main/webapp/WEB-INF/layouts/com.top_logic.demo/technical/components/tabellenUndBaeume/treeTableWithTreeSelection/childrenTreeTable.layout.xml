@@ -5,11 +5,10 @@
 	template="com.top_logic/treetable.template.xml"
 >
 	<arguments
-		defaultColumns="name"
+		defaultColumns="ID_554985f5_b2f1_4a65_9a5c_5e29fe648960,name"
 		defaultSelection="false"
 		expandSelected="false"
 		multiSelection="true"
-		tree-selection="true"
 		type="DemoTypes:DemoTypes.All"
 	>
 		<name key="dynamic.d1d03790-8a0b-4aa4-b4e7-332f8bf3416e">
@@ -30,5 +29,29 @@
 			parents="node->$node.referers(`tl.element:StructuredElementContainer#children`)"
 			rootNode="x -> $x[1].inRevision($x[0])"
 		/>
+		<configurationProviders>
+			<tree-select-column
+				channel="visibilityChannel(self())"
+				columnId="ID_554985f5_b2f1_4a65_9a5c_5e29fe648960"
+			>
+				<columnLabel key="dynamic.2dee4bcf-9708-45a0-bb6d-c907da5bdb60">
+					<en>Visibility</en>
+					<de>Sichtbarkeit</de>
+				</columnLabel>
+			</tree-select-column>
+		</configurationProviders>
+		<additional-channels>
+			<additional-channel name="visibilityChannel">
+				<impl class="com.top_logic.layout.channel.SetChannelFactory"/>
+				<value class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+					input="model(self())"
+				>
+					<function><![CDATA[model -> {
+  root = $model[1].inRevision($model[0]);
+  [[$root]];
+}]]></function>
+				</value>
+			</additional-channel>
+		</additional-channels>
 	</arguments>
 </config:template-call>

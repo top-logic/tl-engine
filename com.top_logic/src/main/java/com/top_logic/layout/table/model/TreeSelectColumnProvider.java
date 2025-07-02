@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -24,6 +25,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ModelSpec;
@@ -46,6 +48,8 @@ import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.mig.html.TreeSelectionModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.mig.html.layout.ValidationListener;
+import com.top_logic.mig.html.layout.VisibilityListener;
 import com.top_logic.util.Utils;
 
 /**
@@ -80,8 +84,8 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 
 	}
 
-	private final TypedAnnotatable.Property<ComponentChannel.ChannelListener> _existingListener =
-		TypedAnnotatable.property(ComponentChannel.ChannelListener.class, "listener");
+	private final TypedAnnotatable.Property<SelectionModelUpdater> _existingListener =
+		TypedAnnotatable.property(SelectionModelUpdater.class, "listener");
 
 	private LayoutComponent _component;
 
@@ -141,20 +145,15 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 
 	private <N> void listenToChannel(TreeSelectionModel<N> selectionModel,
 			Supplier<? extends TLTreeModel<N>> treeSupplier) {
-		ChannelListener existingListener = _component.get(_existingListener);
-		if (existingListener != null) {
-			_channel.removeListener(existingListener);
-			_component.reset(_existingListener);
+		@SuppressWarnings("unchecked")
+		SelectionModelUpdater<N> listener = _component.get(_existingListener);
+		if (listener == null) {
+			listener = new SelectionModelUpdater<>();
+			_component.set(_existingListener, listener);
+			listener.attach(_component, _channel);
 		}
-		ChannelListener cl = new ChannelListener() {
 
-			@Override
-			public void handleNewValue(ComponentChannel sender, Object oldValue, Object newValue) {
-				selectionModel.setSelection(createModelValueFromChannelValue(treeSupplier, newValue));
-			}
-		};
-		_channel.addListener(cl);
-		_component.set(_existingListener, cl);
+		listener.setModels(selectionModel, treeSupplier);
 	}
 
 	private <N> void connectWithChannel(TreeSelectionModel<N> selectionModel,
@@ -194,6 +193,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		Set<Object> newSelectionModelValue = ((Collection<?>) channelValue)
 			.stream()
 			.map(value -> findNode(treeModel, value))
+			.filter(Objects::nonNull)
 			.collect(Collectors.toSet());
 		return newSelectionModelValue;
 	}
@@ -201,7 +201,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 	private <N> Object findNode(TLTreeModel<N> model, Object value) {
 		Mapping<Object, ?> modelMapping = modelMapping();
 
-		List bosWithRoot = (List) value;
+		List<?> bosWithRoot = (List<?>) value;
 		
 		assert !bosWithRoot.isEmpty(): "Selection must not contain empty path";
 		N node = model.getRoot();
@@ -212,7 +212,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		}
 
 		path:
-		for (int i = 0 ; i < bosWithRoot.size(); i++) {
+		for (int i = 1; i < bosWithRoot.size(); i++) {
 			Object userObject = bosWithRoot.get(i);
 			for (N child : model.getChildren(node)) {
 				if (Utils.equals(userObject, getBusinessObject(model, modelMapping, child))) {
@@ -276,6 +276,56 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 			@SuppressWarnings("unchecked")
 			N rowObject = (N) cell.getRowObject();
 			new TreeSelectionPartControl<>(_selectionModel, rowObject).write(context, out);
+		}
+
+	}
+
+	private class SelectionModelUpdater<N> implements ValidationListener, VisibilityListener, ChannelListener {
+
+		private boolean _updateRequired;
+
+		private TreeSelectionModel<N> _selectionModel;
+
+		private Supplier<? extends TLTreeModel<N>> _treeSupplier;
+
+		void setModels(TreeSelectionModel<N> selectionModel, Supplier<? extends TLTreeModel<N>> treeSupplier) {
+			_selectionModel = selectionModel;
+			_treeSupplier = treeSupplier;
+			_updateRequired = false;
+		}
+
+		void attach(LayoutComponent component, ComponentChannel channel) {
+			component.addValidationListener(this);
+			component.addListener(LayoutComponent.VISIBILITY_EVENT, this);
+			channel.addListener(this);
+		}
+
+		@Override
+		public void handleNewValue(ComponentChannel sender, Object oldValue, Object newValue) {
+			LayoutComponent component = sender.getComponent();
+			if (component.isVisible() && component.isModelValid()) {
+				_selectionModel.setSelection(createModelValueFromChannelValue(_treeSupplier, newValue));
+			} else {
+				_updateRequired = true;
+			}
+		}
+
+		@Override
+		public Bubble handleVisibilityChange(Object sender, Boolean oldVisibility, Boolean newVisibility) {
+			LayoutComponent component = (LayoutComponent) sender;
+			if (_updateRequired && component.isModelValid()) {
+				_selectionModel.setSelection(createModelValueFromChannelValue(_treeSupplier, _channel.get()));
+				_updateRequired = false;
+			}
+			return Bubble.BUBBLE;
+		}
+
+		@Override
+		public void doValidateModel(DisplayContext context, LayoutComponent component) {
+			if (_updateRequired && component.isVisible()) {
+				_selectionModel.setSelection(createModelValueFromChannelValue(_treeSupplier, _channel.get()));
+				_updateRequired = false;
+			}
 		}
 
 	}

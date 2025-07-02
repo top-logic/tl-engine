@@ -609,9 +609,15 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
     	
     	@Override
 		public HandlerResult handleCommand(DisplayContext context, LayoutComponent component, Object model, Map<String, Object> someArguments) {
-			if (component instanceof EditMode) {
-				((EditMode) component).setViewMode();
+			if (component instanceof EditMode editor) {
+				editor.setViewMode();
     		}
+			if (component instanceof Editor editor) {
+				if (editor.saveClosesDialog()) {
+					// Then, it makes sense for cancel, too.
+					component.closeDialog();
+				}
+			}
     		return HandlerResult.DEFAULT_RESULT;
     	}
     	

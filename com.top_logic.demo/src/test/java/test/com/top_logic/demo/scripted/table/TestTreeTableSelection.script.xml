@@ -112,6 +112,23 @@
 						tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
 					/>
 				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.AllTableRows">
+						<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+							<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/pathsInThe_visibilityChannel_TreeTable.layout.xml#TreeTable"
+								tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
+							/>
+						</table>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.IntValue"
+						int="1"
+					/>
+				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
 					failure-expected="false"
 					user-id="root"
@@ -139,116 +156,155 @@
 				>
 					<selection>
 						<selectee config:interface="com.top_logic.element.layout.grid.GridTreeTableNodeLabelNaming$GridNodeLabelName"
-							path="TestTreeSelection > A2"
+							path="TestTreeSelection > A2 > C4"
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid"
 								tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
 							/>
 						</selectee>
-						<selection-state boolean="true"/>
+						<selection-state boolean="false"/>
 					</selection>
 					<selection-model-name config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
-						<owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid"
-							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
-						/>
+						<owner config:interface="com.top_logic.mig.html.GenericSelectionModelNaming$GenericSelectionModelName">
+							<algorithm class="com.top_logic.layout.scripting.recorder.ref.GenericModelOwner$MultipleAnnotatedModels"
+								name="ID_225df3c5_5818_4549_a5b2_2d13a0768102"
+							/>
+							<reference config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid"
+								tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
+							/>
+						</owner>
+					</selection-model-name>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="INCREMENTAL"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.element.layout.grid.GridTreeTableNodeLabelNaming$GridNodeLabelName"
+							path="TestTreeSelection > A2 > C5"
+						>
+							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid"
+								tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
+							/>
+						</selectee>
+						<selection-state boolean="false"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
+						<owner config:interface="com.top_logic.mig.html.GenericSelectionModelNaming$GenericSelectionModelName">
+							<algorithm class="com.top_logic.layout.scripting.recorder.ref.GenericModelOwner$MultipleAnnotatedModels"
+								name="ID_225df3c5_5818_4549_a5b2_2d13a0768102"
+							/>
+							<reference config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid"
+								tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
+							/>
+						</owner>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-					comparision="equals"
-					inverted="false"
+					comment=""
+					comparision="set-equals"
 					user-id="root"
 				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeSelectionRef">
-						<context config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid"
-								tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
-							/>
-							<path>
-								<named-member name="fieldTable"/>
-							</path>
-						</context>
-						<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="A2"
+					<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/pathsInThe_visibilityChannel_TreeTable.layout.xml#TreeTable"
+							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
 						/>
 					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
-						boolean="true"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-					comment="Parent selected."
-					comparision="equals"
-					inverted="false"
-					user-id="root"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeSelectionRef">
-						<context config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid"
-								tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
-							/>
-							<path>
-								<named-member name="fieldTable"/>
-							</path>
-						</context>
-						<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="A2 > X2"
-						/>
-					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
-						boolean="true"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-					comment="Parent selected."
-					comparision="equals"
-					inverted="false"
-					user-id="root"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeSelectionRef">
-						<context config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid"
-								tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
-							/>
-							<path>
-								<named-member name="fieldTable"/>
-							</path>
-						</context>
-						<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="A2 > C5"
-						/>
-					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
-						boolean="true"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-					comment="Parent selected."
-					comparision="equals"
-					inverted="false"
-					user-id="root"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeSelectionRef">
-						<context config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid"
-								tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
-							/>
-							<path>
-								<named-member name="fieldTable"/>
-							</path>
-						</context>
-						<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="A2 > C4"
-						/>
-					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
-						boolean="true"
-					/>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+						<list>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeSelection"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+									<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeSelection > A1"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+								</values>
+							</entry>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeSelection"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+									<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeSelection > A4"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+								</values>
+							</entry>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeSelection"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+									<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeSelection > A2"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+									<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeSelection > A2 > X2"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+								</values>
+							</entry>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeSelection"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+									<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeSelection > A0"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+								</values>
+							</entry>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeSelection"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+									<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeSelection > A3"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+								</values>
+							</entry>
+						</list>
+					</expected-value>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 					change-kind="INCREMENTAL"
@@ -266,103 +322,96 @@
 						<selection-state boolean="false"/>
 					</selection>
 					<selection-model-name config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
-						<owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid"
-							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
-						/>
+						<owner config:interface="com.top_logic.mig.html.GenericSelectionModelNaming$GenericSelectionModelName">
+							<algorithm class="com.top_logic.layout.scripting.recorder.ref.GenericModelOwner$MultipleAnnotatedModels"
+								name="ID_225df3c5_5818_4549_a5b2_2d13a0768102"
+							/>
+							<reference config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid"
+								tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
+							/>
+						</owner>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-					comparision="equals"
-					inverted="false"
+					comment=""
+					comparision="set-equals"
 					user-id="root"
 				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeSelectionRef">
-						<context config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid"
-								tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
-							/>
-							<path>
-								<named-member name="fieldTable"/>
-							</path>
-						</context>
-						<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="A2"
-						/>
-					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
-						boolean="false"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-					comparision="equals"
-					inverted="false"
-					user-id="root"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeSelectionRef">
-						<context config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid"
-								tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
-							/>
-							<path>
-								<named-member name="fieldTable"/>
-							</path>
-						</context>
-						<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="A2 > X2"
-						/>
-					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
-						boolean="false"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					change-kind="INCREMENTAL"
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.element.layout.grid.GridTreeTableNodeLabelNaming$GridNodeLabelName"
-							path="TestTreeSelection > A2 > X2"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid"
-								tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
-							/>
-						</selectee>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
-						<owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid"
+					<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/pathsInThe_visibilityChannel_TreeTable.layout.xml#TreeTable"
 							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
 						/>
-					</selection-model-name>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-					comment="All children selected"
-					comparision="equals"
-					inverted="false"
-					user-id="root"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeSelectionRef">
-						<context config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid"
-								tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
-							/>
-							<path>
-								<named-member name="fieldTable"/>
-							</path>
-						</context>
-						<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="A2"
-						/>
 					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
-						boolean="true"
-					/>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+						<list>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeSelection"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+									<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeSelection > A1"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+								</values>
+							</entry>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeSelection"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+									<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeSelection > A4"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+								</values>
+							</entry>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeSelection"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+									<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeSelection > A0"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+								</values>
+							</entry>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeSelection"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+									<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeSelection > A3"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+								</values>
+							</entry>
+						</list>
+					</expected-value>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
 					change-kind="INCREMENTAL"
@@ -377,86 +426,45 @@
 								tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
 							/>
 						</selectee>
-						<selection-state boolean="false"/>
+						<selection-state boolean="true"/>
 					</selection>
 					<selection-model-name config:interface="com.top_logic.mig.html.SelectionModelNaming$SelectionModelName">
-						<owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid"
-							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
-						/>
+						<owner config:interface="com.top_logic.mig.html.GenericSelectionModelNaming$GenericSelectionModelName">
+							<algorithm class="com.top_logic.layout.scripting.recorder.ref.GenericModelOwner$MultipleAnnotatedModels"
+								name="ID_225df3c5_5818_4549_a5b2_2d13a0768102"
+							/>
+							<reference config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid"
+								tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
+							/>
+						</owner>
 					</selection-model-name>
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-					comment="Parent deselected."
-					comparision="equals"
-					inverted="false"
+					comment=""
+					comparision="set-equals"
 					user-id="root"
 				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeSelectionRef">
-						<context config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid"
-								tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
-							/>
-							<path>
-								<named-member name="fieldTable"/>
-							</path>
-						</context>
-						<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="A2 > X2"
+					<actual-value config:interface="com.top_logic.layout.component.ComponentModelNamingScheme$ComponentModelName">
+						<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/pathsInThe_visibilityChannel_TreeTable.layout.xml#TreeTable"
+							tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
 						/>
 					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
-						boolean="false"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-					comment="Parent deselected."
-					comparision="equals"
-					inverted="false"
-					user-id="root"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeSelectionRef">
-						<context config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid"
-								tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
-							/>
-							<path>
-								<named-member name="fieldTable"/>
-							</path>
-						</context>
-						<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="A2 > C5"
-						/>
-					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
-						boolean="false"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-					comment="Parent deselected."
-					comparision="equals"
-					inverted="false"
-					user-id="root"
-				>
-					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeSelectionRef">
-						<context config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-							<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid"
-								tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid mit Baumauswahl"
-							/>
-							<path>
-								<named-member name="fieldTable"/>
-							</path>
-						</context>
-						<node config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-							path="A2 > C4"
-						/>
-					</actual-value>
-					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
-						boolean="false"
-					/>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
+						<list>
+							<entry config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+								<values>
+									<value config:interface="com.top_logic.element.layout.scripting.StructuredElementNaming$Name"
+										path="TestTreeSelection"
+										singleton="ROOT"
+										singleton-label="ROOT"
+										structure="DemoTypes"
+									/>
+								</values>
+							</entry>
+						</list>
+					</expected-value>
 				</action>
 			</actions>
 		</action>

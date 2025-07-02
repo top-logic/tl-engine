@@ -4,10 +4,13 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	template="com.top_logic/contentLayout.template.xml"
 >
-	<arguments>
+	<arguments orientation="VERTICAL">
 		<components>
 			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml">
 				<layoutInfo/>
+			</layout-reference>
+			<layout-reference resource="com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/pathsInThe_visibilityChannel_TreeTable.layout.xml">
+				<layoutInfo size="300px"/>
 			</layout-reference>
 		</components>
 	</arguments>

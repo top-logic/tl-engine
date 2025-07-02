@@ -5,11 +5,10 @@
 	template="com.top_logic.element/treegrid.template.xml"
 >
 	<arguments
-		defaultColumns="name"
+		defaultColumns="ID_225df3c5_5818_4549_a5b2_2d13a0768102,name"
 		defaultSelection="false"
 		expandSelected="false"
 		multiSelection="true"
-		tree-selection="true"
 		type="DemoTypes:DemoTypes.All"
 	>
 		<name key="dynamic.f4c8be14-1b95-428b-b234-b37c500019c1">
@@ -30,10 +29,23 @@
 			parents="node->$node.referers(`tl.element:StructuredElementContainer#children`)"
 			rootNode="x -> $x[1].inRevision($x[0])"
 		/>
+		<configurationProviders>
+			<tree-select-column
+				channel="visibilityChannel(self())"
+				columnId="ID_225df3c5_5818_4549_a5b2_2d13a0768102"
+			>
+				<columnLabel key="dynamic.74bad879-2c48-4a84-9adb-213464419fb6">
+					<en>Visibility</en>
+					<de>Sichtbarkeit</de>
+				</columnLabel>
+			</tree-select-column>
+		</configurationProviders>
 		<buttons>
 			<button id="exportExcelGrid"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
-			/>
+			>
+				<downloadNameProvider class="com.top_logic.layout.table.export.ComponentDownloadName"/>
+			</button>
 			<button id="createNewRow"
 				class="com.top_logic.model.search.providers.GridCreateHandlerByExpression"
 				createContext="model -> $model"
@@ -47,5 +59,18 @@
 				/>
 			</button>
 		</buttons>
+		<additional-channels>
+			<additional-channel name="visibilityChannel">
+				<impl class="com.top_logic.layout.channel.SetChannelFactory"/>
+				<value class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+					input="model(self())"
+				>
+					<function><![CDATA[model -> {
+  root = $model[1].inRevision($model[0]);
+  [[$root]];
+}]]></function>
+				</value>
+			</additional-channel>
+		</additional-channels>
 	</arguments>
 </config:template-call>

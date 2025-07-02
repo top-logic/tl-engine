@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/treetable.template.xml"
+>
+	<arguments
+		defaultColumns="name"
+		model="visibilityChannel(com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid)"
+		type="DemoTypes:DemoTypes.All"
+	>
+		<name key="dynamic.8c619e43-cbff-4164-8429-d1d2b9acd964">
+			<en>Paths in the "visibilityChannel"</en>
+			<de>Pfade im "visibilityChannel"</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
+			nodePredicate="node->$node.instanceOf(`DemoTypes:DemoTypes.All`)"
+			rootNode="model -> $model.elementAt(0)[0]"
+		>
+			<children><![CDATA[node->model->$model.map(path-> {
+  nodeIdx = $path.elementIndex($node);
+  $nodeIdx > -1 && $nodeIdx < $path.size()-1 ? $path.elementAt($nodeIdx + 1) : null
+}).toSet().filter(child -> $child != null)]]></children>
+			<parents><![CDATA[node->model->$model.map(path-> {
+  nodeIdx = $path.elementIndex($node);
+  $nodeIdx > 0 ? $path.elementAt($nodeIdx -1) : null;
+}).filter(child -> $child != null).firstElement()]]></parents>
+		</modelBuilder>
+	</arguments>
+</config:template-call>

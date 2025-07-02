@@ -260,6 +260,20 @@ public class FlowChartComponent extends BuilderComponent
 	}
 
 	@Override
+	protected boolean receiveModelChangedEvent(Object changed, Object changedBy) {
+		boolean result = super.receiveModelChangedEvent(changed, changedBy);
+
+		if (!_observedIndex.getOrDefault(changed, Collections.emptyList()).isEmpty()) {
+			// A part has been deleted, redraw.
+			// TODO: Optimize update.
+			invalidate();
+			return true;
+		}
+
+		return result;
+	}
+
+	@Override
 	protected boolean receiveModelDeletedEvent(Set<TLObject> deletedObjects, Object changedBy) {
 		boolean result = super.receiveModelDeletedEvent(deletedObjects, changedBy);
 

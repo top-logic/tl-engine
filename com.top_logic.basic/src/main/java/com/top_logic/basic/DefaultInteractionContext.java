@@ -40,6 +40,16 @@ public class DefaultInteractionContext extends LazyTypedAnnotatable implements I
 
 	private boolean _invalid;
 
+	/**
+	 * Creates a {@link DefaultInteractionContext}.
+	 *
+	 * @param servletContext
+	 *        Web application context providing container services.
+	 * @param request
+	 *        HTTP request that initiated this interaction.
+	 * @param response
+	 *        HTTP response for sending content back to client.
+	 */
 	public DefaultInteractionContext(ServletContext servletContext, HttpServletRequest request,
 			HttpServletResponse response) {
 		this._servletContext = servletContext;
@@ -65,6 +75,12 @@ public class DefaultInteractionContext extends LazyTypedAnnotatable implements I
 		return _servletContext;
 	}
 
+	/**
+	 * Ensures this context is still valid for use.
+	 * 
+	 * @throws IllegalStateException
+	 *         If this context has been invalidated.
+	 */
 	protected final void checkNotInvalid() {
 		if (_invalid) {
 			throw new IllegalStateException(

@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
@@ -61,6 +62,9 @@ public interface FormTableDefinition
 
 	/** Configuration name for the value of the {@link #getDynamicLabel()}. */
 	String DYNAMIC_LABEL = "dynamicLabel";
+
+	/** Configuration name for the value of the {@link #getCommands()}. */
+	String SELECTABLE = "selectable";
 
 	/**
 	 * Returns the title of the Table.
@@ -157,6 +161,18 @@ public interface FormTableDefinition
 	@ItemDisplay(ItemDisplayType.VALUE)
 	@Nullable
 	Expr getDynamicLabel();
+
+	/**
+	 * Whether the table allows row selection.
+	 */
+	@Name(SELECTABLE)
+	@BooleanDefault(true)
+	boolean getSelectable();
+
+	/**
+	 * Setter for {@link #getSelectable()}.
+	 */
+	void setSelectable(boolean selectable);
 
 	/**
 	 * {@link ConfigPart} representing a column in a {@link FormTableDefinition}.

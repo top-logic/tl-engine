@@ -160,6 +160,8 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 	 */
 	private final QueryExecutor _dynamicLabelExecutor;
 
+	private final boolean _selectable;
+
 	/**
 	 * Create a new {@link FormTableTemplateProvider} for a {@link FormTableDefinition} in a given
 	 * {@link InstantiationContext}.
@@ -168,6 +170,7 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 		super(context, config);
 		_rowsExecutor = QueryExecutor.compileOptional(config.getRows());
 		_dynamicLabelExecutor = QueryExecutor.compileOptional(config.getDynamicLabel());
+		_selectable = config.getSelectable();
 	}
 
 	@Override
@@ -245,7 +248,7 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 		} else {
 			tableField = FormFactory.newTableField(fieldName);
 		}
-		tableField.setSelectable(true);
+		tableField.setSelectable(_selectable);
 		tableField.setSelectionModel(new DefaultMultiSelectionModel(tableField));
 		return tableField;
 	}

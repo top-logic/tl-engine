@@ -312,9 +312,29 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 		} catch (DuplicateAttributeException e) {
 			throw new UnreachableAssertion(e);
 		}
+
+		// Note: Even if it sounds appealing to move the REV_MAX column more to the start of the
+		// index to bring rows for the current revision more close together, this is not advisable,
+		// since optimizers of some DBs (including PostgreSQL) then do not consider this index for
+		// the most frequent queries for attribute load. Those queries are typically structured like
+		// this:
+
+		// select * from FLEX_DATA
+		// where branch=?
+		// and type=?
+		// and identifier=?
+		// and rev_min <= [rev]
+		// and rev_max >= [rev]
+
+		// Here, the REV_MAX column only occurs in a range condition. Even if this is no problem for
+		// query execution, since the range most likely only consists of a single value
+		// Long.MAX_VALUE, this may prevent the optimizer from using this index at all preferring a
+		// full-table-scan. This results in catastrophic performance degradation for non-trivial
+		// datasets.
 		DBAttribute[] primaryKeyColumns =
 			BasicTypeProvider.primaryKeyColumns(branchAttribute, typeAttribute, idAttribute, revMaxAttribute,
 				attributeAttribute);
+
 		type.setPrimaryKey(primaryKeyColumns);
 		/* Compress value must be strict less than number of columns in the prefix. Otherwise Oracle
 		 * sends a ORA-25194 error. */

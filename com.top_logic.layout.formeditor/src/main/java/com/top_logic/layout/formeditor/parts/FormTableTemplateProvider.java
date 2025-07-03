@@ -29,6 +29,7 @@ import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.MetaControlProvider;
 import com.top_logic.element.meta.gui.MetaAttributeGUIHelper;
 import com.top_logic.html.template.HTMLTemplateFragment;
+import com.top_logic.html.template.TagTemplate;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.DisplayContext;
@@ -75,6 +76,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.AnnotationContainer;
+import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.AttributeDefinition;
 import com.top_logic.model.form.definition.FormVisibility;
 import com.top_logic.model.form.implementation.AbstractFormElementProvider;
@@ -411,7 +413,9 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 	}
 
 	private HTMLTemplateFragment templateForMember(String fieldName) {
-		return contentBox(member(fieldName));
+		TagTemplate contentFragment = div(css("rf_keepInline"), member(fieldName));
+		// use rf_inputCell so that the table will not overshoot its parent
+		return div(css(ReactiveFormCSS.RF_INPUT_CELL), contentFragment);
 	}
 
 	private Collection<ColumnDisplay> colums() {

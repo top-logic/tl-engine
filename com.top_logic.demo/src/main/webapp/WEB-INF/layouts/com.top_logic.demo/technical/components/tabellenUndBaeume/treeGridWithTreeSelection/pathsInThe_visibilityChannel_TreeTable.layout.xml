@@ -6,12 +6,12 @@
 >
 	<arguments
 		defaultColumns="name"
-		model="visibilityChannel(com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid)"
+		model="hiddenChannel(com.top_logic.demo/technical/components/tabellenUndBaeume/treeGridWithTreeSelection/childrenGrid.layout.xml#Grid)"
 		type="DemoTypes:DemoTypes.All"
 	>
 		<name key="dynamic.8c619e43-cbff-4164-8429-d1d2b9acd964">
-			<en>Paths in the "visibilityChannel"</en>
-			<de>Pfade im "visibilityChannel"</de>
+			<en>Paths in the "hiddenChannel"</en>
+			<de>Pfade im "hiddenChannel"</de>
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
 			nodePredicate="node->$node.instanceOf(`DemoTypes:DemoTypes.All`)"

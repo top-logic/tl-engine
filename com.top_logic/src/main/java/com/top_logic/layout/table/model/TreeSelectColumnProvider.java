@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -47,6 +48,7 @@ import com.top_logic.mig.html.LazyTreeSelectionModel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.mig.html.TreeSelectionModel;
+import com.top_logic.mig.html.TriState;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.ValidationListener;
 import com.top_logic.mig.html.layout.VisibilityListener;
@@ -79,8 +81,20 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		 */
 		ModelSpec getChannel();
 
-		/** @see #getChannel() */
+		/** Setter for {@link #getChannel()} */
 		void setChannel(ModelSpec value);
+
+		/**
+		 * If the tree select column stores unselected elements, then the paths in the channel are
+		 * treated as unselected elements for the selection model.
+		 * 
+		 * <p>
+		 * E.g. when the channel has an empty value, then the checkboxes for all table rows are
+		 * selected; if only one checkbox is deselected, then the path for this node is stored to
+		 * the channel.
+		 * </p>
+		 */
+		boolean isStoreUnselectedElements();
 
 	}
 
@@ -90,6 +104,8 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 	private LayoutComponent _component;
 
 	private ComponentChannel _channel;
+
+	private boolean _ignoreModelEvent;
 
 	/**
 	 * Create a {@link TreeSelectColumnProvider}.
@@ -158,18 +174,14 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 
 	private <N> void connectWithChannel(TreeSelectionModel<N> selectionModel,
 			Supplier<? extends TLTreeModel<N>> treeSupplier) {
-		selectionModel.setSelection(createModelValueFromChannelValue(treeSupplier, _channel.get()));
+		updateSelectionModelFromChannel(selectionModel, treeSupplier, _channel.get());
 		selectionModel.addSelectionListener(new SelectionListener() {
 
-			@SuppressWarnings("unchecked")
 			@Override
 			public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects,
 					Set<?> selectedObjects) {
-				TLTreeModel<N> treeModel = treeSupplier.get();
-				Set<Object> newChannelValue = selectedObjects.stream()
-					.map(selected -> createBOPathFromRoot(treeModel, (N) selected))
-					.collect(Collectors.toSet());
-				_channel.set(newChannelValue);
+				ComponentChannel channel = _channel;
+				updateChannelFromSelectionModel(channel, treeSupplier, selectionModel.getStates());
 			}
 
 		});
@@ -187,23 +199,58 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		column.setCellRenderer(new TreeSelectCellRenderer<>(selectionModel, modelInitializer));
 	}
 
-	private <N> Set<Object> createModelValueFromChannelValue(Supplier<? extends TLTreeModel<N>> treeSupplier,
-			Object channelValue) {
+	private <N> void updateChannelFromSelectionModel(ComponentChannel channel,
+			Supplier<? extends TLTreeModel<N>> treeSupplier, Map<N, TriState> states) {
+		if (_ignoreModelEvent) {
+			return;
+		}
+		TLTreeModel<N> treeModel = treeSupplier.get();
+		TriState relevantState = !getConfig().isStoreUnselectedElements() ? TriState.SELECTED : TriState.NOT_SELECTED;
+		Set<Object> newChannelValue;
+		if (states.isEmpty() && relevantState == TriState.NOT_SELECTED) {
+			// Special case nothing is selected in the selection model, i.e. the root node is
+			// actually not selected: In this case the root node is not contained in the states with
+			// state NOT_SELECTED. Therefore the default logic does not work.
+			newChannelValue = Collections.singleton(createBOPathFromRoot(treeModel, treeModel.getRoot()));
+		} else {
+			newChannelValue = states.entrySet()
+					.stream()
+					.filter(e -> relevantState == e.getValue())
+					.map(Map.Entry::getKey)
+					.map(selected -> createBOPathFromRoot(treeModel, selected))
+					.collect(Collectors.toSet());
+		}
+		channel.set(newChannelValue);
+	}
+
+	private <N> void updateSelectionModelFromChannel(TreeSelectionModel<N> selectionModel,
+			Supplier<? extends TLTreeModel<N>> treeSupplier, Object channelValue) {
 		TLTreeModel<N> treeModel = treeSupplier.get();
 		Set<Object> newSelectionModelValue = ((Collection<?>) channelValue)
 			.stream()
 			.map(value -> findNode(treeModel, value))
 			.filter(Objects::nonNull)
 			.collect(Collectors.toSet());
-		return newSelectionModelValue;
+		assert _ignoreModelEvent == false;
+		_ignoreModelEvent = true;
+		try {
+			if (!getConfig().isStoreUnselectedElements()) {
+				selectionModel.setSelection(newSelectionModelValue);
+			} else {
+				selectionModel.setSelection(Collections.singleton(treeModel.getRoot()));
+				selectionModel.removeFromSelection(newSelectionModelValue);
+			}
+		} finally {
+			_ignoreModelEvent = false;
+		}
 	}
 
 	private <N> Object findNode(TLTreeModel<N> model, Object value) {
 		Mapping<Object, ?> modelMapping = modelMapping();
 
 		List<?> bosWithRoot = (List<?>) value;
-		
-		assert !bosWithRoot.isEmpty(): "Selection must not contain empty path";
+
+		assert !bosWithRoot.isEmpty() : "Selection must not contain empty path";
 		N node = model.getRoot();
 
 		if (!Utils.equals(bosWithRoot.get(0), getBusinessObject(model, modelMapping, node))) {
@@ -304,7 +351,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		public void handleNewValue(ComponentChannel sender, Object oldValue, Object newValue) {
 			LayoutComponent component = sender.getComponent();
 			if (component.isVisible() && component.isModelValid()) {
-				_selectionModel.setSelection(createModelValueFromChannelValue(_treeSupplier, newValue));
+				updateSelectionModelFromChannel(_selectionModel, _treeSupplier, newValue);
 			} else {
 				_updateRequired = true;
 			}
@@ -314,7 +361,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		public Bubble handleVisibilityChange(Object sender, Boolean oldVisibility, Boolean newVisibility) {
 			LayoutComponent component = (LayoutComponent) sender;
 			if (_updateRequired && component.isModelValid()) {
-				_selectionModel.setSelection(createModelValueFromChannelValue(_treeSupplier, _channel.get()));
+				updateSelectionModelFromChannel(_selectionModel, _treeSupplier, _channel.get());
 				_updateRequired = false;
 			}
 			return Bubble.BUBBLE;
@@ -323,7 +370,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		@Override
 		public void doValidateModel(DisplayContext context, LayoutComponent component) {
 			if (_updateRequired && component.isVisible()) {
-				_selectionModel.setSelection(createModelValueFromChannelValue(_treeSupplier, _channel.get()));
+				updateSelectionModelFromChannel(_selectionModel, _treeSupplier, _channel.get());
 				_updateRequired = false;
 			}
 		}

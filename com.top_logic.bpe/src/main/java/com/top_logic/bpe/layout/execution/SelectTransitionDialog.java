@@ -23,10 +23,10 @@ import com.top_logic.basic.col.MapBuilder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.basic.xml.TagUtil;
+import com.top_logic.bpe.bpml.display.ConfigurableCondition;
 import com.top_logic.bpe.bpml.display.RuleCondition;
 import com.top_logic.bpe.bpml.display.RuleType;
 import com.top_logic.bpe.bpml.display.SequenceFlowRule;
-import com.top_logic.bpe.bpml.display.ConfigurableCondition;
 import com.top_logic.bpe.bpml.model.DefaultGateway;
 import com.top_logic.bpe.bpml.model.Edge;
 import com.top_logic.bpe.bpml.model.EndEvent;
@@ -141,6 +141,13 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 		someButtons.add(MessageBox.button(ButtonType.OK, getYesCommand()));
 		someButtons.add(MessageBox.button(ButtonType.CANCEL, getNoCommand()));
 
+	}
+
+	@Override
+	public boolean isChanged() {
+		// Disable dirty handling for this dialog since the form data is not meant to be saved
+		// in the traditional sense. The OK button handles form submission and continuation.
+		return false;
 	}
 
 	/**

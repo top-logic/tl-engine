@@ -117,14 +117,20 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 	 */
 	public TreeSelectColumnProvider(InstantiationContext context, Config config) {
 		super(context, config);
-		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, component -> {
-			_component = component;
+		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class,
+			component -> _component = component);
+	}
+
+	private ComponentChannel channel() {
+		if (_channel == null) {
+			// The channel can not resolved lazy: This TreeSelectColumnProvider is
+			// part of a *new* and when the component is created, it is not possible to resolve
+			// channels from other components.
 			BufferingProtocol log = new BufferingProtocol();
 			_channel = ChannelLinking.resolveChannel(log, _component, getConfig().getChannel());
-			if (log.hasErrors()) {
-				log.getErrors().forEach(context::error);
-			}
-		});
+			log.checkErrors();
+		}
+		return _channel;
 	}
 
 	@Override
@@ -166,7 +172,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		if (listener == null) {
 			listener = new SelectionModelUpdater<>();
 			_component.set(_existingListener, listener);
-			listener.attach(_component, _channel);
+			listener.attach(_component, channel());
 		}
 
 		listener.setModels(selectionModel, treeSupplier);
@@ -174,13 +180,13 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 
 	private <N> void connectWithChannel(TreeSelectionModel<N> selectionModel,
 			Supplier<? extends TLTreeModel<N>> treeSupplier) {
-		updateSelectionModelFromChannel(selectionModel, treeSupplier, _channel.get());
+		updateSelectionModelFromChannel(selectionModel, treeSupplier, channel().get());
 		selectionModel.addSelectionListener(new SelectionListener() {
 
 			@Override
 			public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects,
 					Set<?> selectedObjects) {
-				ComponentChannel channel = _channel;
+				ComponentChannel channel = channel();
 				updateChannelFromSelectionModel(channel, treeSupplier, selectionModel.getStates());
 			}
 
@@ -361,7 +367,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		public Bubble handleVisibilityChange(Object sender, Boolean oldVisibility, Boolean newVisibility) {
 			LayoutComponent component = (LayoutComponent) sender;
 			if (_updateRequired && component.isModelValid()) {
-				updateSelectionModelFromChannel(_selectionModel, _treeSupplier, _channel.get());
+				updateSelectionModelFromChannel(_selectionModel, _treeSupplier, channel().get());
 				_updateRequired = false;
 			}
 			return Bubble.BUBBLE;
@@ -370,7 +376,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		@Override
 		public void doValidateModel(DisplayContext context, LayoutComponent component) {
 			if (_updateRequired && component.isVisible()) {
-				updateSelectionModelFromChannel(_selectionModel, _treeSupplier, _channel.get());
+				updateSelectionModelFromChannel(_selectionModel, _treeSupplier, channel().get());
 				_updateRequired = false;
 			}
 		}

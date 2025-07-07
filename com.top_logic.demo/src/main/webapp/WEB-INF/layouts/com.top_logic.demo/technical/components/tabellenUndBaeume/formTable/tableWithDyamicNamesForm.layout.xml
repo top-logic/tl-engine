@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/form.template.xml"
+>
+	<arguments model="selection(com.top_logic.demo/technical/components/tabellenUndBaeume/contextTree.layout.xml#Tree)">
+		<name key="dynamic.f2ad4d8c-2fe1-4fb4-9c78-d371e2d362b3">
+			<en>Table with dyamic names</en>
+			<de>Tabelle mit dyamischen Namen</de>
+		</name>
+		<forms>
+			<form type="DemoTypes:BNotUnderA">
+				<formDefinition>
+					<formTable
+						form-field-name="b326c280-26d4-41bc-934c-a7c941cf7801"
+						rows="x -> $x.get(`tl.element:StructuredElementContainer#children`)"
+						type="DemoTypes:A"
+					>
+						<label key="dynamic.0e51a661-36b9-492b-bbba-ca4d5714aefd">
+							<en>Children of {0} as a table</en>
+							<de>Kinder von {0} als Tabelle</de>
+						</label>
+						<columns>
+							<column name="name"/>
+							<column name="float"/>
+						</columns>
+					</formTable>
+				</formDefinition>
+			</form>
+			<form type="DemoTypes:A">
+				<formDefinition>
+					<formTable
+						form-field-name="0a40dce5-af9c-44be-a175-c9cecb45f467"
+						rows="x -> $x.get(`tl.element:StructuredElementContainer#children`)"
+						type="DemoTypes:A"
+					>
+						<label key="dynamic.ff3a3c97-a110-4587-afd2-b8bd7bd670f5">
+							<en>Children of {0} as a table</en>
+							<de>Kinder von {0} als Tabelle</de>
+						</label>
+						<columns>
+							<column name="name"/>
+							<column name="float"/>
+						</columns>
+					</formTable>
+				</formDefinition>
+			</form>
+			<form type="DemoTypes/1/7927:C">
+				<formDefinition>
+					<formTable
+						form-field-name="4380cba5-813d-408d-ab3f-f51aadb969ca"
+						rows="x -> $x.get(`tl.element:StructuredElementContainer#children`)"
+						type="DemoTypes:A"
+					>
+						<label key="dynamic.891b62d5-97b1-44f2-839a-2319430fe4fc">
+							<en>Children of {0} as table, {1}</en>
+							<de>Kinder von {0} als Tabelle, {1}</de>
+						</label>
+						<dynamicLabel>model -&gt; label -&gt; $label.fill($model.label(), #("weitere Platzhalter"@de, "another Placeholder"@en))</dynamicLabel>
+						<columns>
+							<column name="name"/>
+							<column name="float"/>
+						</columns>
+					</formTable>
+				</formDefinition>
+			</form>
+		</forms>
+	</arguments>
+</config:template-call>

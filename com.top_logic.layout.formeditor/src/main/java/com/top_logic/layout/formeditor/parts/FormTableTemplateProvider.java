@@ -348,6 +348,7 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 			tableTitle = new TableConfigurationProvider() {
 				@Override
 				public void adaptConfigurationTo(TableConfiguration table) {
+<<<<<<< Upstream, based on origin/master
 					table.setTitleKey(dynamicLabelKey);
 				}
 			};
@@ -356,6 +357,8 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 			tableTitle = new TableConfigurationProvider() {
 				@Override
 				public void adaptConfigurationTo(TableConfiguration table) {
+=======
+>>>>>>> 2ffcf68 Ticket #28679: add default option to static label
 					table.setTitleKey(ResKey.message(labelKey, model));
 				}
 			};

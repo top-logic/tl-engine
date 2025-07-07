@@ -8,6 +8,7 @@ package com.top_logic.layout.formeditor.parts;
 import java.util.List;
 
 import com.top_logic.basic.config.annotation.Abstract;
+import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.config.annotation.Container;
 import com.top_logic.basic.config.annotation.DerivedRef;
 import com.top_logic.basic.config.annotation.Hidden;
@@ -17,7 +18,6 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.element.layout.formeditor.definition.TextDefinition;
 import com.top_logic.layout.editor.config.TypeTemplateParameters;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
@@ -45,7 +45,10 @@ import com.top_logic.model.util.TLModelPartRef;
 	FormTableDefinition.COMMANDS,
 })
 public interface FormTableDefinition
-		extends FormElement<FormTableTemplateProvider>, TextDefinition, TypeTemplateParameters {
+		extends FormElement<FormTableTemplateProvider>, TypeTemplateParameters {
+
+	/** Configuration name for the value of the {@link #getLabel()}. */
+	String LABEL = "label";
 
 	/** Configuration name for the value of the {@link #getRows()}. */
 	String ROWS = "rows";
@@ -58,6 +61,29 @@ public interface FormTableDefinition
 
 	/** Configuration name for the value of the {@link #getDynamicLabel()}. */
 	String DYNAMIC_LABEL = "dynamicLabel";
+
+	/**
+	 * Returns the title of the Table.
+	 * 
+	 * <p>
+	 * Can contain placeholders such as <code>{0}</code>. If no dynamic label is configured, the
+	 * placeholder will be filled with the model of the table.
+	 * </p>
+	 * 
+	 * @return The title of the Table.
+	 */
+	@Name(LABEL)
+	@ItemDisplay(ItemDisplayType.MONOMORPHIC)
+	@Binding(ResKey.ValueBinding.class)
+	ResKey getLabel();
+
+	/**
+	 * Sets the title of the Table.
+	 * 
+	 * @param id
+	 *        The {@link ResKey} for the title of the table.
+	 */
+	void setLabel(ResKey id);
 
 	/**
 	 * Expression creating a list of objects edited in the displayed table as rows.

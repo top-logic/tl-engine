@@ -82,8 +82,12 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 		return result;
 	}
 
+	/**
+	 * @param request
+	 *        unused
+	 */
 	private static DisplayContext lookupDisplayContext(ServletRequest request) {
-		return (DisplayContext) ThreadContextManager.lookupInteractionContext(request);
+		return (DisplayContext) ThreadContextManager.getInteraction();
 	}
 
 	/**
@@ -147,21 +151,22 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 	 * Note: It is essential to call {@link #teardownDisplayContext(HttpServletRequest)} in a
 	 * following try-finally-block.
 	 * </p>
+	 * 
+	 * @param request
+	 *        unused
 	 */
 	public static void setupDisplayContext(HttpServletRequest request, InteractionContext context) {
-		ThreadContextManager.setupInteractionContext(request, context);
+		ThreadContextManager.getManager().setInteraction(context);
 	}
 
 	/**
 	 * Invalidates the {@link DisplayContext} and removes it from the corresponding request.
 	 * 
 	 * @param request
-	 *        The request for which the given {@link DisplayContext} was
-	 *        {@link #setupDisplayContext(TLSubSessionContext, ServletContext, HttpServletRequest, HttpServletResponse)
-	 *        set up}.
+	 *        unused
 	 */
 	public static void teardownDisplayContext(HttpServletRequest request) {
-		ThreadContextManager.teardownInteractionContext(request);
+		ThreadContextManager.getManager().removeInteraction();
 	}
 
 	/**

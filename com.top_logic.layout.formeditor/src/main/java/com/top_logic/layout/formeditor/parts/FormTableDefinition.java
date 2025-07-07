@@ -42,6 +42,7 @@ import com.top_logic.model.util.TLModelPartRef;
 	FormTableDefinition.DYNAMIC_LABEL,
 	FormTableDefinition.TYPE,
 	FormTableDefinition.ROWS,
+	FormTableDefinition.SELECTABLE,
 	FormTableDefinition.COLUMNS,
 	FormTableDefinition.COMMANDS,
 })

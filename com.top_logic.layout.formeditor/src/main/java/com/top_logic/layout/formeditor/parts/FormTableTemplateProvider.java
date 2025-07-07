@@ -343,7 +343,7 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 			tableTitle = new TableConfigurationProvider() {
 				@Override
 				public void adaptConfigurationTo(TableConfiguration table) {
-					table.setTitleKey(labelKey);
+					table.setTitleKey(ResKey.message(labelKey, model));
 				}
 			};
 		} else {

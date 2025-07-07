@@ -28,24 +28,6 @@
 					</formTable>
 				</formDefinition>
 			</form>
-			<form type="DemoTypes:A">
-				<formDefinition>
-					<formTable
-						form-field-name="736cf2fb-36c3-467b-a846-a54d875652a9"
-						rows="x -> $x.get(`tl.element:StructuredElementContainer#children`)"
-						type="DemoTypes:DemoTypes.A"
-					>
-						<label key="dynamic.b5e62884-db17-4a09-a219-b2e92f3b8e17">
-							<en>Children as table</en>
-							<de>Kinder als Tabelle</de>
-						</label>
-						<columns>
-							<column name="name"/>
-							<column name="float"/>
-						</columns>
-					</formTable>
-				</formDefinition>
-			</form>
 		</forms>
 	</arguments>
 </config:template-call>

@@ -6,7 +6,6 @@
 package com.top_logic.basic.thread;
 
 import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -566,22 +565,6 @@ public abstract class ThreadContextManager extends ManagedClass {
 		interaction.installSubSessionContext(subsession);
 		return interaction;
 	}
-	
-	/**
-	 * @deprecated Use {@link #getInteraction()} instead.
-	 */
-	@Deprecated
-	public static InteractionContext lookupInteractionContext(ServletRequest request) {
-		return getInteraction();
-	}
-
-	/**
-	 * @deprecated Use {@link ThreadContextManager#removeInteraction()} instead.
-	 */
-	@Deprecated
-	public static void teardownInteractionContext(HttpServletRequest request) {
-		getManager().removeInteraction();
-	}
 
 	/**
 	 * Sets up an {@link InteractionContext} with the given subsession and servlet components.
@@ -602,14 +585,6 @@ public abstract class ThreadContextManager extends ManagedClass {
 		context.installSubSessionContext(sessionContext);
 		getManager().setInteraction(context);
 		return context;
-	}
-
-	/**
-	 * @deprecated Use {@link ThreadContextManager#setInteraction(InteractionContext)} instead.
-	 */
-	@Deprecated
-	public static void setupInteractionContext(HttpServletRequest request, InteractionContext context) {
-		getManager().setInteraction(context);
 	}
 
 	/**

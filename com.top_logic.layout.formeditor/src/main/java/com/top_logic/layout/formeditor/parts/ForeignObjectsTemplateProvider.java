@@ -35,7 +35,7 @@ import com.top_logic.layout.form.boxes.reactive_tag.AbstractGroupSettings;
 import com.top_logic.layout.form.control.Icons;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.template.model.FieldSetBoxTemplate;
-import com.top_logic.layout.form.template.model.Member;
+import com.top_logic.layout.form.template.model.Self;
 import com.top_logic.layout.form.template.model.Templates;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.table.ConfigKey;
@@ -63,11 +63,24 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 	private static final ImageProvider IMAGE_PROVIDER =
 		(any, flavor) -> Icons.FORM_EDITOR__REFERENCE;
 
+	private TLClass _targetType;
+
+	private QueryExecutor _itemsExpr;
+
+	private QueryExecutor _readOnlyExpr;
+
+	private QueryExecutor _labelExpr;
+
 	/**
 	 * Creates a new {@link ForeignObjectsTemplateProvider}.
 	 */
 	public ForeignObjectsTemplateProvider(InstantiationContext context, ForeignObjects config) {
 		super(context, config);
+
+		_targetType = OptionalTypeTemplateParameters.resolve(config);
+		_itemsExpr = QueryExecutor.compile(config.getItems());
+		_readOnlyExpr = QueryExecutor.compileOptional(config.getReadOnly());
+		_labelExpr = QueryExecutor.compileOptional(config.getLabel());
 	}
 
 	@Override
@@ -102,34 +115,33 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 
 	@Override
 	protected HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
-		TLClass targetType = OptionalTypeTemplateParameters.resolve(getConfig());
-		FormDefinitionTemplateProvider globalLayout = TypedConfigUtil.createInstance(getConfig().getLayout());
-		QueryExecutor itemsExpr = QueryExecutor.compile(getConfig().getItems());
-		QueryExecutor readOnlyExpr = QueryExecutor.compileOptional(getConfig().getReadOnly());
+		ForeignObjects config = getConfig();
+
+		FormDefinitionTemplateProvider globalLayout = TypedConfigUtil.createInstance(config.getLayout());
 		TLObject model = context.getModel();
-		Collection<?> objects = SearchExpression.asCollection(itemsExpr.execute(model));
-		QueryExecutor labelExpr = QueryExecutor.compileOptional(getConfig().getLabel());
-		HTMLTemplateFragment[] templates = new HTMLTemplateFragment[objects.size()];
+		Collection<?> objects = SearchExpression.asCollection(_itemsExpr.execute(model));
 		FormContainer contentGroup = context.getContentGroup();
+
+		FormGroup objectsGroup = new FormGroup(uniqueName(contentGroup), ResPrefix.NONE);
+		contentGroup.addMember(objectsGroup);
+
 		ConfigKey personalizationKey = ConfigKey.field(contentGroup);
 		personalizationKey = ConfigKey.derived(personalizationKey, "foreignObjects");
-		boolean noSeparateGroup = getConfig().isNoSeparateGroup();
-		int index = 0;
+		boolean noSeparateGroup = config.isNoSeparateGroup();
 		for (Object obj : objects) {
-			TLObject item = SearchExpression.asTLObjectNonNull(itemsExpr.getSearch(), obj);
+			TLObject item = SearchExpression.asTLObjectNonNull(_itemsExpr.getSearch(), obj);
 			String itemID = IdentifierUtil.toExternalForm(item.tIdLocal());
 
-			FormContainer innerGroup = new FormGroup("foreignObjects-" + itemID, ResPrefix.NONE);
+			FormContainer innerGroup = new FormGroup("object-" + itemID, ResPrefix.NONE);
 			innerGroup.setStableIdSpecialCaseMarker(obj);
-			innerGroup.setImmutable(displayReadOnly(readOnlyExpr, item, model));
-			contentGroup.addMember(innerGroup);
+			innerGroup.setImmutable(displayReadOnly(_readOnlyExpr, item, model));
+			objectsGroup.addMember(innerGroup);
 
-			HTMLTemplateFragment legend = text(label(labelExpr, item));
+			HTMLTemplateFragment legend = text(label(_labelExpr, item));
 			HTMLTemplateFragment contentTemplate;
-			FormEditorContext innerContext;
 			if (globalLayout != null) {
-				innerContext = new FormEditorContext.Builder(context)
-					.formType(targetType)
+				FormEditorContext innerContext = new FormEditorContext.Builder(context)
+					.formType(_targetType)
 					.concreteType(null)
 					.model(item)
 					.contentGroup(innerGroup)
@@ -139,7 +151,7 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 				TypedForm typedForm = TypedForm.lookup(null, item);
 				FormDefinitionTemplateProvider localLayout =
 					TypedConfigUtil.createInstance(typedForm.getFormDefinition());
-				innerContext = new FormEditorContext.Builder(context)
+				FormEditorContext innerContext = new FormEditorContext.Builder(context)
 					.formType(typedForm.getFormType())
 					.concreteType(typedForm.getDisplayedType())
 					.model(item)
@@ -148,7 +160,7 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 				contentTemplate = localLayout.createContentTemplate(innerContext);
 			}
 			ConfigKey derivedKey = ConfigKey.derived(personalizationKey, itemID);
-			Member content = member(innerGroup, contentTemplate);
+			Self content = self(contentTemplate);
 			HTMLTemplateFragment finalTemplate;
 			if (noSeparateGroup) {
 				finalTemplate = content;
@@ -157,10 +169,22 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 				addButtons(fieldsetBox, item, false);
 				finalTemplate = fieldsetBox;
 			}
-			templates[index] = finalTemplate;
-			index++;
+			template(innerGroup, finalTemplate);
 		}
-		return contentBox(div(templates));
+		return contentBox(member(objectsGroup));
+	}
+
+	private String uniqueName(FormContainer contentGroup) {
+		String id = getConfig().getId();
+		if (id == null) {
+			// For legacy compatibility.
+			int index = 1;
+			while (contentGroup.hasMember("objects-" + index)) {
+				index++;
+			}
+			return "objects-" + index;
+		}
+		return "objects-" + id;
 	}
 
 	private void addButtons(AbstractGroupSettings<?> template, TLObject targetModel, boolean designMode) {

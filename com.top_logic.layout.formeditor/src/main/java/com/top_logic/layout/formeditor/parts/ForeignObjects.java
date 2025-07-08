@@ -8,11 +8,16 @@ package com.top_logic.layout.formeditor.parts;
 import java.util.List;
 
 import com.top_logic.basic.config.annotation.DerivedRef;
+import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.ValueInitializer;
+import com.top_logic.basic.config.format.JavaIdentifier;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.element.layout.meta.HideActiveIf;
 import com.top_logic.layout.editor.config.ButtonTemplateParameters;
@@ -20,7 +25,7 @@ import com.top_logic.layout.editor.config.TypeTemplateParameters;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
-import com.top_logic.model.form.definition.FormContextDefinition;
+import com.top_logic.layout.form.values.edit.initializer.UUIDInitializer;
 import com.top_logic.model.form.definition.FormDefinition;
 import com.top_logic.model.form.definition.FormElement;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -44,8 +49,10 @@ import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
 })
 @TagName("foreign-objects")
 public interface ForeignObjects
-		extends FormElement<ForeignObjectsTemplateProvider>, TypeTemplateParameters, ButtonTemplateParameters,
-		FormContextDefinition {
+		extends FormElement<ForeignObjectsTemplateProvider>, TypeTemplateParameters, ButtonTemplateParameters {
+
+	/** Configuration name for {@link #getId()}. */
+	String ID_PROPERTY = "id";
 
 	/** Configuration name for {@link #getItems()}. */
 	String ITEMS = "items";
@@ -61,6 +68,16 @@ public interface ForeignObjects
 
 	/** Configuration name for {@link #isNoSeparateGroup()}. */
 	String NO_SEPARATE_GROUP = "no-separate-group";
+
+	/**
+	 * ID to make form context contents stable.
+	 */
+	@Name(ID_PROPERTY)
+	@Format(JavaIdentifier.class)
+	@ValueInitializer(UUIDInitializer.class)
+	@Hidden
+	@Nullable // For legacy compatibility.
+	String getId();
 
 	/**
 	 * The items to display forms for.

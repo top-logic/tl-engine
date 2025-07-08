@@ -11,9 +11,9 @@ import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 
+import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.sched.SchedulerService;
-import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 /**
@@ -30,27 +30,48 @@ public class StreamIOConverter {
 	 * {@link Thread} from the {@link SchedulerService}.
 	 */
 	public static InputStream convert(BinaryDataSource source) throws IOException {
-		ThreadContext context = ThreadContext.getThreadContext();
+		InteractionContext context = ThreadContextManager.getInteraction();
 
 		PipedInputStream in = new PipedInputStream();
 		PipedOutputStream out = new PipedOutputStream(in);
-		SchedulerService.getInstance().execute(() -> produceIn(context, source, out));
+		SchedulerService.getInstance().execute(() -> produce(context, source, out));
 		return in;
 	}
 
-	private static void produceIn(ThreadContext context, BinaryDataSource source, OutputStream out) {
-		ThreadContextManager.inContext(context, () -> produce(source, out));
-	}
-
 	/**
-	 * Produces data that can be read on the {@link InputStream} end.
+	 * Produces data that can be read on the {@link InputStream} end. If context is provided, sets
+	 * up interaction context during production.
 	 */
-	public static void produce(BinaryDataSource source, OutputStream out) {
+	private static void produce(InteractionContext context, BinaryDataSource source, OutputStream out) {
+		boolean contextSetup = false;
+
 		try {
+			// Set up interaction context if provided
+			if (context != null) {
+				ThreadContextManager.setupInteractionContext(
+					context.getSubSessionContext(),
+					context.asServletContext(),
+					context.asRequest(),
+					context.asResponse());
+				contextSetup = true;
+			}
+
+			// Deliver the data
 			source.deliverTo(out);
+
 		} catch (Throwable ex) {
-			Logger.error("Faild to create output: " + source, ex, StreamIOConverter.class);
+			Logger.error("Failed to create output: " + source, ex, StreamIOConverter.class);
 		} finally {
+			// Clean up thread context if it was set up
+			if (contextSetup) {
+				try {
+					ThreadContextManager.getManager().removeInteraction();
+				} catch (Exception ex) {
+					Logger.error("Failed to remove thread context interaction", ex, StreamIOConverter.class);
+				}
+			}
+
+			// Always close the output stream, regardless of any previous exceptions
 			try {
 				out.close();
 			} catch (IOException ex) {

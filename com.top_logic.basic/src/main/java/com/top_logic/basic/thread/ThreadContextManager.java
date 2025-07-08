@@ -565,7 +565,28 @@ public abstract class ThreadContextManager extends ManagedClass {
 		interaction.installSubSessionContext(subsession);
 		return interaction;
 	}
-	
+
+	/**
+	 * Sets up an {@link InteractionContext} with the given subsession and servlet components.
+	 *
+	 * @param sessionContext
+	 *        Sub-session context to bind to the interaction.
+	 * @param servletContext
+	 *        Web application context for servlet container communication.
+	 * @param request
+	 *        HTTP request that initiated this interaction.
+	 * @param response
+	 *        HTTP response for sending content back to client.
+	 * @return The created and installed interaction context.
+	 */
+	public static InteractionContext setupInteractionContext(SubSessionContext sessionContext,
+			ServletContext servletContext, HttpServletRequest request, HttpServletResponse response) {
+		InteractionContext context = getManager().newInteraction(servletContext, request, response);
+		context.installSubSessionContext(sessionContext);
+		getManager().setInteraction(context);
+		return context;
+	}
+
 	/**
 	 * Notifies that the given session is going out of scope.
 	 * 
@@ -686,6 +707,21 @@ final class Remover implements InteractionContext {
 	@Override
 	public void addUnboundListener(UnboundListener l) {
 		fail();
+	}
+
+	@Override
+	public HttpServletRequest asRequest() {
+		throw fail();
+	}
+
+	@Override
+	public ServletContext asServletContext() {
+		throw fail();
+	}
+
+	@Override
+	public HttpServletResponse asResponse() {
+		throw fail();
 	}
 
 }

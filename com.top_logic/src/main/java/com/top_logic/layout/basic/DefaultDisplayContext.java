@@ -13,6 +13,7 @@ import jakarta.servlet.jsp.PageContext;
 
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.CalledFromJSP;
+import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.HistoryManager;
@@ -28,13 +29,6 @@ import com.top_logic.util.TLContextManager;
  */
 public class DefaultDisplayContext extends AbstractDisplayContext {
 
-	private static final String DISPLAY_CONTEXT_REQUEST_ATTRIBUTE = DisplayContext.class.getName();
-
-	private final ServletContext servletContext;
-	private final HttpServletRequest   request;
-
-	private HttpServletResponse response;
-
 	private long _sessionRevision;
 
     /**
@@ -48,46 +42,31 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 	@FrameworkInternal
 	public DefaultDisplayContext(ServletContext servletContext, HttpServletRequest request,
 			HttpServletResponse response) {
-		super();
-        this.servletContext          = servletContext;
-        this.request                 = request;
-        this.response                = response;
+		super(servletContext, request, response);
     }
 
 	@Override
 	public String getContextPath() {
 		checkNotInvalid();
-		return request.getContextPath();
+		return asRequest().getContextPath();
 	}
 	
 	@Override
 	public String getCharacterEncoding() {
 		checkNotInvalid();
-		return response.getCharacterEncoding();
+		return asResponse().getCharacterEncoding();
 	}
 
 	@Override
 	public Object getAttribute(String name) {
 		checkNotInvalid();
-		return request.getAttribute(name);
+		return asRequest().getAttribute(name);
 	}
 
 	@Override
 	public UserAgent getUserAgent() {
 		checkNotInvalid();
-		return UserAgent.getUserAgent(request);
-	}
-
-	@Override
-	public HttpServletRequest asRequest() {
-		checkNotInvalid();
-		return request;
-	}
-
-	@Override
-	public HttpServletResponse asResponse() {
-		checkNotInvalid();
-		return response;
+		return UserAgent.getUserAgent(asRequest());
 	}
 	
 	/**
@@ -103,14 +82,14 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 		return result;
 	}
 
+	/**
+	 * @param request
+	 *        unused
+	 */
 	private static DisplayContext lookupDisplayContext(ServletRequest request) {
-		if (request != null) {
-			return (DisplayContext) request.getAttribute(DISPLAY_CONTEXT_REQUEST_ATTRIBUTE);
-		} else {
-			return (DisplayContext) ThreadContextManager.getInteraction();
-		}
+		return (DisplayContext) ThreadContextManager.getInteraction();
 	}
-	
+
 	/**
 	 * Lookup or creates an abstraction for the context, in which rendering happens.
 	 */
@@ -161,13 +140,10 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 	 */
 	public static DefaultDisplayContext setupDisplayContext(TLSubSessionContext sessionContext, ServletContext servletContext,
 			HttpServletRequest request, HttpServletResponse response) {
-		DefaultDisplayContext context =
-			(DefaultDisplayContext) TLContextManager.getManager().newInteraction(servletContext, request, response);
-		context.installSubSessionContext(sessionContext);
-		setupDisplayContext(request, context);
-		return context;
+		InteractionContext context = ThreadContextManager.setupInteractionContext(sessionContext, servletContext, request, response);
+		return (DefaultDisplayContext) context;
 	}
-	
+
 	/**
 	 * Installs the given display context for the current thread.
 	 * 
@@ -175,16 +151,11 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 	 * Note: It is essential to call {@link #teardownDisplayContext(HttpServletRequest)} in a
 	 * following try-finally-block.
 	 * </p>
+	 * 
+	 * @param request
+	 *        unused
 	 */
-	public static void setupDisplayContext(HttpServletRequest request, DisplayContext context) {
-		// Note: The display context is linked both to the current thread *and* the current request
-		// for safety reasons: If a context is set up but forgotten to tear down, it
-		// must not be accidentally reused by the next request. This is ensured by the setup
-		// mechanism in TopLogicServlet only depending on the request attribute, not on the thread
-		// local variable.
-		if (request != null) {
-			request.setAttribute(DISPLAY_CONTEXT_REQUEST_ATTRIBUTE, context);
-		}
+	public static void setupDisplayContext(HttpServletRequest request, InteractionContext context) {
 		ThreadContextManager.getManager().setInteraction(context);
 	}
 
@@ -192,14 +163,9 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 	 * Invalidates the {@link DisplayContext} and removes it from the corresponding request.
 	 * 
 	 * @param request
-	 *        The request for which the given {@link DisplayContext} was
-	 *        {@link #setupDisplayContext(TLSubSessionContext, ServletContext, HttpServletRequest, HttpServletResponse)
-	 *        set up}.
+	 *        unused
 	 */
 	public static void teardownDisplayContext(HttpServletRequest request) {
-		if (request != null) {
-			request.removeAttribute(DISPLAY_CONTEXT_REQUEST_ATTRIBUTE);
-		}
 		ThreadContextManager.getManager().removeInteraction();
 	}
 
@@ -209,29 +175,16 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 	 * <p>
 	 * Note: This method is only for convenience for the application. The framework servlets must
 	 * only rely on {@link #getDisplayContext(ServletRequest)} for safety reasons (see
-	 * {@link #setupDisplayContext(HttpServletRequest, DisplayContext)}).
+	 * {@link #setupDisplayContext(HttpServletRequest, InteractionContext)}).
 	 * </p>
 	 */
 	public static DisplayContext getDisplayContext() {
 		return getDisplayContext((HttpServletRequest) null);
 	}
 
-	@Override
-	public ServletContext asServletContext() {
-		checkNotInvalid();
-		return servletContext;
-	}
 
-	/**
-	 * Updates the underlying {@link HttpServletResponse}.
-	 * 
-	 * @param response
-	 *        The new response to use.
-	 */
-	@FrameworkInternal
-	public void setResponse(HttpServletResponse response) {
-		this.response = response;
-	}
+
+
 
 	@Override
 	public long getInteractionRevision(HistoryManager historyManager) {

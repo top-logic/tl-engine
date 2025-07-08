@@ -5,6 +5,10 @@
  */
 package com.top_logic.basic;
 
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.thread.UnboundListener;
 
@@ -66,5 +70,29 @@ public interface InteractionContext extends TypedAnnotatable {
 	 * @since 5.7.5
 	 */
 	void addUnboundListener(UnboundListener l);
+
+	/**
+	 * Provide a view of this context as {@link HttpServletRequest} object.
+	 * 
+	 * <p style="color: red;">
+	 * <b>Note:</b> This method is only for backwards compatibility with APIs that request a direct
+	 * reference to the request object. Avoid using this method whenever possible.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method should be deprecated as soon as possible.
+	 * </p>
+	 */
+	public HttpServletRequest asRequest();
+
+	/**
+	 * Servlet context for this interaction.
+	 */
+	public ServletContext asServletContext();
+
+	/**
+	 * HTTP response object for this interaction.
+	 */
+	public HttpServletResponse asResponse();
 
 }

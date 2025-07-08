@@ -6,6 +6,7 @@
 
 package com.top_logic.layout.table.tree;
 
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.tree.model.DefaultTreeTableModel.DefaultTreeTableNode;
 
@@ -21,6 +22,7 @@ public class TreeTableComponentNodeLabelNaming
 	/**
 	 * {@link ModelName} for the {@link TreeTableComponentNodeLabelNaming}.
 	 */
+	@Label("{foreach(path, \" > \")}")
 	public interface Name extends TreeTableNodeLabelNaming.Name {
 
 		// No properties here.

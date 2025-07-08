@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.layout.grid;
 
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.element.layout.grid.GridTreeTableNodeLabelNaming.GridNodeLabelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
@@ -20,6 +21,7 @@ public class GridTreeTableNodeLabelNaming extends TreeTableNodeLabelNaming<GridT
 	/**
 	 * {@link ModelName} for the {@link GridTreeTableNodeLabelNaming}.
 	 */
+	@Label("{foreach(path, \" > \")}")
 	public interface GridNodeLabelName extends TreeTableNodeLabelNaming.Name {
 
 		// No properties here.

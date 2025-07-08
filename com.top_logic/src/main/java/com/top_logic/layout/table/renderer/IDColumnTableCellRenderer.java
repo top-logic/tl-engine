@@ -101,7 +101,7 @@ public class IDColumnTableCellRenderer extends AbstractCellRenderer {
 		if (hasLink) {
 			out.beginBeginTag(HTMLConstants.ANCHOR);
 			out.writeAttribute(HTMLConstants.HREF_ATTR, HTMLConstants.HREF_EMPTY_LINK);
-			CssUtil.writeCombinedCssClasses(out, GotoHandler.GOTO_CLASS, "cDecoratedCell", cssClass);
+			CssUtil.writeCombinedCssClasses(out, GotoHandler.GOTO_CLASS, cssClass);
 			out.writeAttribute(HTMLConstants.ONCLICK_ATTR, link);
 			if (hasTooltip) {
 				// OverLib attributes are OK for ANCHOR, too

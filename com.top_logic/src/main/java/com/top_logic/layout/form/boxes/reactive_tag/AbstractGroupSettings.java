@@ -5,9 +5,11 @@
  */
 package com.top_logic.layout.form.boxes.reactive_tag;
 
-import com.top_logic.layout.basic.ThemeImage;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
-import com.top_logic.layout.form.boxes.model.Icons;
 import com.top_logic.model.annotate.LabelPosition;
 
 /**
@@ -43,9 +45,9 @@ public abstract class AbstractGroupSettings<S extends AbstractGroupSettings<S>> 
 
 	private String _dataId = null;
 
-	private Menu _commands = null;
+	private List<CommandModel> _commands = new ArrayList<>();
 
-	private ThemeImage _commandButton = Icons.BURGER_MENU;
+	private Menu _menu = null;
 
 	@Override
 	public int getColumns() {
@@ -217,28 +219,28 @@ public abstract class AbstractGroupSettings<S extends AbstractGroupSettings<S>> 
 	}
 
 	@Override
-	public Menu getMenu() {
+	public List<CommandModel> getCommands() {
 		return _commands;
+	}
+
+	/**
+	 * @see #getCommands()
+	 */
+	public S addCommand(CommandModel command) {
+		_commands.add(command);
+		return self();
+	}
+
+	@Override
+	public Menu getMenu() {
+		return _menu;
 	}
 
 	/**
 	 * @see #getMenu()
 	 */
 	public S setMenu(Menu commands) {
-		_commands = commands;
-		return self();
-	}
-
-	@Override
-	public ThemeImage getCommandButton() {
-		return _commandButton;
-	}
-
-	/**
-	 * @see #getCommandButton()
-	 */
-	public S setCommandButton(ThemeImage commandButton) {
-		_commandButton = commandButton;
+		_menu = commands;
 		return self();
 	}
 

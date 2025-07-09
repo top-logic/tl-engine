@@ -42,8 +42,13 @@ import com.top_logic.layout.scripting.runtime.Application;
 public class ApplicationTestSetup extends RearrangableThreadContextSetup {
 
 	/**
-	 * Counts nested setups and prevents overriding of the
-	 * {@link ApplicationTestSetup#application} variable.
+	 * indicates if warning in a log file will the test cause to fail
+	 */
+	public static boolean TREAT_WARN_AS_ERROR = true;
+
+	/**
+	 * Counts nested setups and prevents overriding of the {@link ApplicationTestSetup#application}
+	 * variable.
 	 */
 	private static MutableInteger setupCnt = new MutableInteger();
 	static TestedApplication application;
@@ -59,7 +64,7 @@ public class ApplicationTestSetup extends RearrangableThreadContextSetup {
 		String mainLayoutDefinition = LayoutConfig.getDefaultLayout();
 		application = new TestedApplication(ConfigLoaderTestUtil.getApplicationRoot(), mainLayoutDefinition);
 
-		_logListener = new AssertNoErrorLogListener();
+		_logListener = new AssertNoErrorLogListener(TREAT_WARN_AS_ERROR);
 		_logListener.activate();
 		try {
 			application.startup();

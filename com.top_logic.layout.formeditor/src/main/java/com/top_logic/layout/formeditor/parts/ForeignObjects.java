@@ -19,6 +19,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.ValueInitializer;
 import com.top_logic.basic.config.format.JavaIdentifier;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.meta.HideActiveIf;
 import com.top_logic.layout.editor.config.ButtonTemplateParameters;
 import com.top_logic.layout.editor.config.TypeTemplateParameters;
@@ -39,6 +40,7 @@ import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @DisplayOrder({
+	ForeignObjects.TITLE,
 	ForeignObjects.TYPE,
 	ForeignObjects.ITEMS,
 	ForeignObjects.LABEL,
@@ -60,10 +62,13 @@ public interface ForeignObjects
 	/** Configuration name for {@link #getLayout()}. */
 	String LAYOUT = "layout";
 
-	/** Configuration name for {@link #getLayout()}. */
+	/** Configuration name for {@link #getLabel()}. */
 	String LABEL = "label";
 
-	/** Configuration name for {@link #getLayout()}. */
+	/** Configuration name for {@link #getTitle()}. */
+	String TITLE = "title";
+
+	/** Configuration name for {@link #getReadOnly()}. */
 	String READ_ONLY = "read-only";
 
 	/** Configuration name for {@link #isNoSeparateGroup()}. */
@@ -86,6 +91,17 @@ public interface ForeignObjects
 	@ItemDisplay(ItemDisplayType.VALUE)
 	@Mandatory
 	Expr getItems();
+
+	/**
+	 * Title of group surrounding all object groups.
+	 * 
+	 * <p>
+	 * If not given, content groups are not surrounded by an extra group.
+	 * </p>
+	 */
+	@DynamicMode(fun = HideActiveIf.class, args = @Ref(NO_SEPARATE_GROUP))
+	@Name(TITLE)
+	ResKey getTitle();
 
 	/**
 	 * Expression that is used to compute the label of the single form groups, from the base object
@@ -132,9 +148,16 @@ public interface ForeignObjects
 	List<ConfigBase<? extends CommandHandler>> getButtons();
 
 	/**
-	 * Defines that no separate groups should be displayed for the individual objects. In this case
-	 * the elements are displayed inline in the outer form.
+	 * Whether fields of objects should be directly embedded into the rest of the form without any
+	 * visual grouping.
+	 * 
+	 * <p>
+	 * This option is most likely only appropriate, if at most a single object is being displayed.
+	 * This option then gives the impression that the fields of that object are fields of the
+	 * surrounding object defining the rest of the form.
+	 * </p>
 	 */
+	@Label("Embedd contents")
 	@Name(NO_SEPARATE_GROUP)
 	boolean isNoSeparateGroup();
 }

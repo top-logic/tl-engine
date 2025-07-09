@@ -140,6 +140,8 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 		ResKey title = config.getTitle();
 		boolean hasTitle = title != null && !noSeparateGroup;
 
+		boolean initiallyCollapsed = config.initiallyCollapsed() && !noSeparateGroup;
+
 		for (Object obj : objects) {
 			TLObject item = SearchExpression.asTLObjectNonNull(_itemsExpr.getSearch(), obj);
 			String itemID = IdentifierUtil.toExternalForm(item.tIdLocal());
@@ -147,6 +149,9 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 			FormContainer innerGroup = new FormGroup("object-" + itemID, ResPrefix.NONE);
 			innerGroup.setStableIdSpecialCaseMarker(obj);
 			innerGroup.setImmutable(displayReadOnly(_readOnlyExpr, item, model));
+			if (initiallyCollapsed) {
+				innerGroup.setCollapsed(true);
+			}
 			objectsGroup.addMember(innerGroup);
 
 			HTMLTemplateFragment legend = text(label(_labelExpr, item));
@@ -171,14 +176,14 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 					.build();
 				contentTemplate = localLayout.createContentTemplate(innerContext);
 			}
-			ConfigKey derivedKey = ConfigKey.derived(personalizationKey, itemID);
 			Self content = self(contentTemplate);
 			HTMLTemplateFragment objectTemplate;
 			if (noSeparateGroup) {
 				objectTemplate = content;
 			} else {
-				FieldSetBoxTemplate fieldsetBox = Templates.fieldsetBoxWrap(legend, content, derivedKey)
-					.setHasBorder(Boolean.valueOf(!hasTitle));
+				FieldSetBoxTemplate fieldsetBox = Templates.fieldsetBoxWrap(legend, content, ConfigKey.none())
+					.setHasBorder(Boolean.valueOf(!hasTitle))
+					.setGroupName(".");
 				addButtons(fieldsetBox, item, false);
 
 				objectTemplate = fieldsetBox;

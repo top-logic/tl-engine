@@ -52,6 +52,16 @@ public class TemplateControl extends AbstractFormMemberControl implements Collap
 
 	private final HTMLTemplateFragment _template;
 
+	/**
+	 * Whether this control can provide incremental updates to the UI.
+	 * 
+	 * <p>
+	 * This is only possible, if the template used has a top-level tag with that can write an ID
+	 * attribute.
+	 * </p>
+	 */
+	private final boolean _active;
+
 	private List<FormMember> _parts = null;
 
 	private PartUpdater _partUpdate = null;
@@ -76,15 +86,17 @@ public class TemplateControl extends AbstractFormMemberControl implements Collap
 	public TemplateControl(FormMember model, ControlProvider controlProvider, HTMLTemplateFragment template) {
 		super(model, COMMANDS);
 		_controlProvider = controlProvider;
-		_template = ensureTechnicalAttributes(template);
+
+		if (template instanceof TagTemplate tag) {
+			_template = ensureTechnicalAttributes(tag);
+			_active = true;
+		} else {
+			_template = template;
+			_active = false;
+		}
 	}
 
-	private static HTMLTemplateFragment ensureTechnicalAttributes(HTMLTemplateFragment template) {
-		if (!(template instanceof TagTemplate)) {
-			return template;
-		}
-
-		TagTemplate tag = (TagTemplate) template;
+	private static HTMLTemplateFragment ensureTechnicalAttributes(TagTemplate tag) {
 		StartTagTemplate customStart = tag.getStart();
 		StartTagTemplate syntheticsStart = customStart.copy();
 		syntheticsStart.addAttribute(ID_EXPR_ATTR);
@@ -151,6 +163,10 @@ public class TemplateControl extends AbstractFormMemberControl implements Collap
 	}
 
 	void addPart(FormMember embeddedMember) {
+		if (!_active) {
+			return;
+		}
+
 		if (_parts == null) {
 			_parts = new ArrayList<>();
 			_partUpdate = new PartUpdater();
@@ -172,29 +188,43 @@ public class TemplateControl extends AbstractFormMemberControl implements Collap
 	}
 	
 	@Override
+	protected boolean skipEvent(Object sender) {
+		return !_active || super.skipEvent(sender);
+	}
+
+	@Override
 	protected void registerListener(FormMember member) {
-		super.registerListener(member);
-		member.addListener(Collapsible.COLLAPSED_PROPERTY, this);
+		if (_active) {
+			super.registerListener(member);
+
+			member.addListener(Collapsible.COLLAPSED_PROPERTY, this);
+		}
 	}
 
 	@Override
 	protected void afterRendering() {
 		super.afterRendering();
 
-		// Note: While rendering a template, inner form fields may be built by expanding embedded
-		// forms. Therefore, a template control must not start listening for changes to the form
-		// hierarchy before its rendering process has completed.
-		FormMember member = getModel();
-		member.addListener(FormContainer.MEMBER_ADDED_PROPERTY, this);
-		member.addListener(FormContainer.MEMBER_REMOVED_PROPERTY, this);
+		if (_active) {
+			// Note: While rendering a template, inner form fields may be built by expanding
+			// embedded
+			// forms. Therefore, a template control must not start listening for changes to the form
+			// hierarchy before its rendering process has completed.
+			FormMember member = getModel();
+			member.addListener(FormContainer.MEMBER_ADDED_PROPERTY, this);
+			member.addListener(FormContainer.MEMBER_REMOVED_PROPERTY, this);
+		}
 	}
 
 	@Override
 	protected void deregisterListener(FormMember member) {
-		member.removeListener(FormContainer.MEMBER_REMOVED_PROPERTY, this);
-		member.removeListener(FormContainer.MEMBER_ADDED_PROPERTY, this);
-		member.removeListener(Collapsible.COLLAPSED_PROPERTY, this);
-		super.deregisterListener(member);
+		if (_active) {
+			member.removeListener(FormContainer.MEMBER_REMOVED_PROPERTY, this);
+			member.removeListener(FormContainer.MEMBER_ADDED_PROPERTY, this);
+			member.removeListener(Collapsible.COLLAPSED_PROPERTY, this);
+
+			super.deregisterListener(member);
+		}
 	}
 
 	@Override

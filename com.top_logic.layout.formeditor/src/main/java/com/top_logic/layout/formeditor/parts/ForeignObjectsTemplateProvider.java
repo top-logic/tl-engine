@@ -25,8 +25,10 @@ import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.ResPrefix;
+import com.top_logic.layout.basic.AbstractCommandModel;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.editor.config.OptionalTypeTemplateParameters;
@@ -51,6 +53,7 @@ import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.css.CssUtil;
 
 /**
@@ -71,6 +74,8 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 
 	private QueryExecutor _labelExpr;
 
+	private List<CommandHandler> _buttons;
+
 	/**
 	 * Creates a new {@link ForeignObjectsTemplateProvider}.
 	 */
@@ -78,9 +83,11 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 		super(context, config);
 
 		_targetType = OptionalTypeTemplateParameters.resolve(config);
-		_itemsExpr = QueryExecutor.compile(config.getItems());
+		_itemsExpr = QueryExecutor.compileOptional(config.getItems());
 		_readOnlyExpr = QueryExecutor.compileOptional(config.getReadOnly());
 		_labelExpr = QueryExecutor.compileOptional(config.getLabel());
+
+		_buttons = TypedConfigUtil.createInstanceList(getConfig().getButtons());
 	}
 
 	@Override
@@ -122,12 +129,17 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 		Collection<?> objects = SearchExpression.asCollection(_itemsExpr.execute(model));
 		FormContainer contentGroup = context.getContentGroup();
 
-		FormGroup objectsGroup = new FormGroup(uniqueName(contentGroup), ResPrefix.NONE);
+		String objectsName = uniqueName(contentGroup);
+		FormGroup objectsGroup = new FormGroup(objectsName, ResPrefix.NONE);
 		contentGroup.addMember(objectsGroup);
 
-		ConfigKey personalizationKey = ConfigKey.field(contentGroup);
-		personalizationKey = ConfigKey.derived(personalizationKey, "foreignObjects");
+		ConfigKey personalizationKey = ConfigKey.field(objectsGroup);
+
 		boolean noSeparateGroup = config.isNoSeparateGroup();
+
+		ResKey title = config.getTitle();
+		boolean hasTitle = title != null && !noSeparateGroup;
+
 		for (Object obj : objects) {
 			TLObject item = SearchExpression.asTLObjectNonNull(_itemsExpr.getSearch(), obj);
 			String itemID = IdentifierUtil.toExternalForm(item.tIdLocal());
@@ -161,16 +173,29 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 			}
 			ConfigKey derivedKey = ConfigKey.derived(personalizationKey, itemID);
 			Self content = self(contentTemplate);
-			HTMLTemplateFragment finalTemplate;
+			HTMLTemplateFragment objectTemplate;
 			if (noSeparateGroup) {
-				finalTemplate = content;
+				objectTemplate = content;
 			} else {
-				FieldSetBoxTemplate fieldsetBox = Templates.fieldsetBoxWrap(legend, content, derivedKey);
+				FieldSetBoxTemplate fieldsetBox = Templates.fieldsetBoxWrap(legend, content, derivedKey)
+					.setHasBorder(Boolean.valueOf(!hasTitle));
 				addButtons(fieldsetBox, item, false);
-				finalTemplate = fieldsetBox;
+
+				objectTemplate = fieldsetBox;
 			}
-			template(innerGroup, finalTemplate);
+			template(innerGroup, objectTemplate);
 		}
+
+		HTMLTemplateFragment objectsTemplate;
+		if (hasTitle) {
+			objectsTemplate = Templates
+				.fieldsetBoxWrap(resource(title), items(self()), personalizationKey)
+				.setContainer(true);
+		} else {
+			objectsTemplate = items(self());
+		}
+
+		template(objectsGroup, div(objectsTemplate));
 		return contentBox(member(objectsGroup));
 	}
 
@@ -188,8 +213,7 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 	}
 
 	private void addButtons(AbstractGroupSettings<?> template, TLObject targetModel, boolean designMode) {
-		List<CommandHandler> buttons = TypedConfigUtil.createInstanceList(getConfig().getButtons());
-		if (buttons.isEmpty()) {
+		if (_buttons.isEmpty()) {
 			return;
 		}
 
@@ -197,7 +221,7 @@ public class ForeignObjectsTemplateProvider extends AbstractFormElementProvider<
 		LayoutComponent component = MainLayout.getComponent(displayContext);
 
 		Map<String, Object> args = ContextMenuUtil.createArguments(targetModel);
-		Stream<CommandModel> buttonsStream = ContextMenuUtil.toButtonsStream(component, args, buttons);
+		Stream<CommandModel> buttonsStream = ContextMenuUtil.toButtonsStream(component, args, _buttons);
 		Menu menu;
 		if (designMode) {
 			List<List<? extends CommandModel>> deactivated = ContextMenuUtil.groupAndSort(buttonsStream)

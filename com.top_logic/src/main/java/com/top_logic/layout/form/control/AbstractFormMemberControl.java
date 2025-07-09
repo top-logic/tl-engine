@@ -202,8 +202,10 @@ public abstract class AbstractFormMemberControl extends AbstractControl implemen
 		member.removeListener(FormMember.VISIBLE_PROPERTY, this);
 	}
 	
-
-	protected final boolean skipEvent(Object sender) {
+	/**
+	 * Whether an event from the given sender requires processing or not.
+	 */
+	protected boolean skipEvent(Object sender) {
 		return sender != getModel();
 	}
 

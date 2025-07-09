@@ -441,7 +441,7 @@
 		expr="%IMAGE_BUTTONS_SCRIPT_RECORDER22%"
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.Icons.REMOVE_ICON"
-		expr="%ICONS_REMOVE%"
+		expr="%ICONS_REMOVE% tl-danger"
 	/>
 	<icon name="com.top_logic.layout.form.values.edit.Icons.REMOVE_ICON_DISABLED"
 		expr="%ICONS_REMOVE%"

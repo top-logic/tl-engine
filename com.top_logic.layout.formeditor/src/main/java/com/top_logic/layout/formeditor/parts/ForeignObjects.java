@@ -46,6 +46,7 @@ import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
 	ForeignObjects.LABEL,
 	ForeignObjects.READ_ONLY,
 	ForeignObjects.NO_SEPARATE_GROUP,
+	ForeignObjects.INITIALLY_COLLAPSED,
 	ForeignObjects.LAYOUT,
 	ForeignObjects.BUTTONS,
 })
@@ -73,6 +74,11 @@ public interface ForeignObjects
 
 	/** Configuration name for {@link #isNoSeparateGroup()}. */
 	String NO_SEPARATE_GROUP = "no-separate-group";
+
+	/**
+	 * @see #initiallyCollapsed()
+	 */
+	String INITIALLY_COLLAPSED = "initially-collapsed";
 
 	/**
 	 * ID to make form context contents stable.
@@ -160,5 +166,16 @@ public interface ForeignObjects
 	@Label("Embedd contents")
 	@Name(NO_SEPARATE_GROUP)
 	boolean isNoSeparateGroup();
+
+	/**
+	 * Whether to collapse all object groups during initial display.
+	 * 
+	 * <p>
+	 * Has no meaning, if {@link #isNoSeparateGroup()} is active.
+	 * </p>
+	 */
+	@DynamicMode(fun = HideActiveIf.class, args = @Ref(NO_SEPARATE_GROUP))
+	@Name(INITIALLY_COLLAPSED)
+	boolean initiallyCollapsed();
 }
 

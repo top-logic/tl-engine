@@ -15,6 +15,7 @@ import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.Collapsible;
 import com.top_logic.layout.form.DefaultExpansionModel;
+import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.boxes.reactive_tag.AbstractGroupSettings;
 import com.top_logic.layout.form.boxes.reactive_tag.GroupCellControl;
 import com.top_logic.layout.form.boxes.tag.PersonalizedExpansionModel;
@@ -37,6 +38,8 @@ public class FieldSetBoxTemplate extends AbstractGroupSettings<FieldSetBoxTempla
 	private final HTMLTemplateFragment _content;
 
 	private ConfigKey _personalizationKey = ConfigKey.none();
+
+	private String _groupName;
 
 	private boolean _initiallyCollapsed;
 
@@ -71,7 +74,29 @@ public class FieldSetBoxTemplate extends AbstractGroupSettings<FieldSetBoxTempla
 	}
 
 	/**
+	 * Name of the {@link FormContainer} that should serve as expansion model.
+	 * 
+	 * <p>
+	 * If this option is given, {@link #getPersonalizationKey()} and {@link #isInitiallyCollapsed()}
+	 * has no meaning, since the expansion state is taken from the form container.
+	 * </p>
+	 */
+	public String getGroupName() {
+		return _groupName;
+	}
+
+	/**
+	 * See {@link #getGroupName()}.
+	 */
+	public FieldSetBoxTemplate setGroupName(String groupName) {
+		_groupName = groupName;
+		return this;
+	}
+
+	/**
 	 * The personalization key for the collapsed state.
+	 * 
+	 * @see #getGroupName()
 	 */
 	public ConfigKey getPersonalizationKey() {
 		return _personalizationKey;
@@ -87,6 +112,8 @@ public class FieldSetBoxTemplate extends AbstractGroupSettings<FieldSetBoxTempla
 
 	/**
 	 * Whether the fieldset box is collapsed when the user displays it the first time.
+	 * 
+	 * @see #getGroupName()
 	 */
 	public boolean isInitiallyCollapsed() {
 		return _initiallyCollapsed;
@@ -118,7 +145,10 @@ public class FieldSetBoxTemplate extends AbstractGroupSettings<FieldSetBoxTempla
 
 	@Override
 	public void write(DisplayContext displayContext, TagWriter out, WithProperties properties) throws IOException {
-		Collapsible collapsible = createExpansionModel();
+		FormContainer container =
+			_groupName == null ? null : (FormContainer) TemplateRenderer.resolveMember(properties, _groupName);
+
+		Collapsible collapsible = container != null ? container : createExpansionModel();
 		HTMLFragment legend = TemplateRenderer.toFragmentInline(properties, getLegend());
 		HTMLFragment content = TemplateRenderer.toFragment(properties, getContent());
 		GroupCellControl groupCell = new GroupCellControl(content, collapsible, this).setTitle(legend);

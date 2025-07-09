@@ -248,10 +248,6 @@ span.can-edit {
 	list-style-type: none;	
 }
 
-.collapsed .frmGroupExpand::before {
-	content: none;
-}
-
 .frmGroupExpand {
 	display: inline-flex;
 }

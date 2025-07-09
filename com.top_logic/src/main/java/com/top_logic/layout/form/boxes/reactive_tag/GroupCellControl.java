@@ -191,6 +191,11 @@ public class GroupCellControl extends ConstantControl<HTMLFragment> implements C
 	}
 
 	@Override
+	public boolean isContainer() {
+		return _settings.isContainer();
+	}
+
+	@Override
 	public boolean hasLegend() {
 		return _settings.hasLegend();
 	}

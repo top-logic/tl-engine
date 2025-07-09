@@ -33,6 +33,8 @@ public abstract class AbstractGroupSettings<S extends AbstractGroupSettings<S>> 
 
 	private Boolean _hasBorder = null;
 
+	private boolean _container = false;
+
 	private boolean _wholeLine = true;
 
 	private boolean _hasLegend = true;
@@ -120,6 +122,19 @@ public abstract class AbstractGroupSettings<S extends AbstractGroupSettings<S>> 
 	 */
 	public S setHasBorder(Boolean hasBorder) {
 		_hasBorder = hasBorder;
+		return self();
+	}
+
+	@Override
+	public boolean isContainer() {
+		return _container;
+	}
+
+	/**
+	 * @see #isContainer()
+	 */
+	public S setContainer(boolean container) {
+		_container = container;
 		return self();
 	}
 

@@ -5,7 +5,7 @@
 	data-id="{dataId}"
 >
 	<tl:if test="hasLegend || collapsible || hasMenu">
-		<div class="rf_header"
+		<div class="{isContainer ? 'rf_containerHeader' : 'rf_header'}"
 			onclick="{onclick}"
 			ondblclick="{ondblclick}"
 		>
@@ -22,7 +22,7 @@
 	</tl:if>
 
 	<tl:if test="!collapsed">
-		<div class="rf_content rf_dropTarget {columns > 0 ? 'cols' + columns}">
+		<div class="{isContainer ? 'rf_containerContent' : 'rf_content'}  rf_dropTarget {columns > 0 ? 'cols' + columns}">
 			{content}
 		</div>
 	</tl:if>

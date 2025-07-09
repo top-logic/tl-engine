@@ -57,6 +57,16 @@ public interface GroupSettings extends WithProperties {
 	boolean hasBorder();
 
 	/**
+	 * Whether this group is a pure container of other groups.
+	 * 
+	 * <p>
+	 * A group container has different visual properties that sets it apart from its content groups.
+	 * </p>
+	 */
+	@TemplateVariable("isContainer")
+	boolean isContainer();
+
+	/**
 	 * Whether the group cell has a legend to be rendered.
 	 */
 	@TemplateVariable("hasLegend")

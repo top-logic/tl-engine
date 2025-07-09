@@ -115,6 +115,7 @@ a.tl-table__title:visited {
 	color: var(--layer-accent-text);
 }
 
+.rf_containerHeader,
 .tl-table__title {
 	display: flex;
 	justify-content: space-between;

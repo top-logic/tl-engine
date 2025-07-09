@@ -799,6 +799,18 @@ div.dfListAdd {
 	height: max-content;
 }
 
+:root {
+	--groupCell-noBorder-top: none;
+}
+
+.rf_containerContent {
+	--groupCell-noBorder-top: 1px solid var(--border-subtle);
+} 
+
+.rf_content {
+	--groupCell-noBorder-top: none;
+} 
+
 .rf_groupCell .rf_groupCell {
     margin-top: 0;
 }
@@ -812,7 +824,14 @@ div.dfListAdd {
 }
 
 .rf_groupCell.noBorder {
-	border: 0px;
+	border-top: var(--groupCell-noBorder-top);
+	border-left: none;
+	border-bottom: none;
+	border-right: none;
+}
+
+.rf_groupCell.noBorder:first-child {
+	border-top: none;
 }
 
 .rf_groupCell .rf_header {

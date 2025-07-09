@@ -6,6 +6,7 @@
 package com.top_logic.layout.form.boxes.reactive_tag;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -19,16 +20,17 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.AbstractCommandModel;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.AttachListener;
+import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ConstantControl;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.DefaultPopupMenuModel;
 import com.top_logic.layout.basic.PopupMenuModel;
 import com.top_logic.layout.basic.TemplateVariable;
-import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.form.CollapsedListener;
 import com.top_logic.layout.form.Collapsible;
 import com.top_logic.layout.form.FormConstants;
+import com.top_logic.layout.form.boxes.model.Icons;
 import com.top_logic.layout.form.control.AbstractButtonRenderer;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.ImageButtonRenderer;
@@ -226,13 +228,13 @@ public class GroupCellControl extends ConstantControl<HTMLFragment> implements C
 	}
 
 	@Override
-	public Menu getMenu() {
-		return _settings.getMenu();
+	public List<CommandModel> getCommands() {
+		return _settings.getCommands();
 	}
 
 	@Override
-	public ThemeImage getCommandButton() {
-		return _settings.getCommandButton();
+	public Menu getMenu() {
+		return _settings.getMenu();
 	}
 
 	@Override
@@ -241,14 +243,30 @@ public class GroupCellControl extends ConstantControl<HTMLFragment> implements C
 	}
 
 	/**
-	 * The menu button to open a context menu displaying additional commands.
+	 * Whether there are additional commands in the header.
 	 */
-	@TemplateVariable("menuButton")
-	public void writeMenuButton(DisplayContext context, TagWriter out) throws IOException {
-		PopupMenuModel popupMenuField = new DefaultPopupMenuModel(getCommandButton(), getMenu());
-		PopupMenuButtonControl menuControl =
-			new PopupMenuButtonControl(popupMenuField, DefaultToolBar.BUTTON_RENDERER);
-		menuControl.write(context, out);
+	@TemplateVariable("hasCommands")
+	public boolean hasMenu() {
+		return !getCommands().isEmpty() || getMenu() != null;
+	}
+
+	/**
+	 * Additional commands displayed in the title bar (including the opening button for a potential
+	 * menu).
+	 */
+	@TemplateVariable("commands")
+	public void writeCommands(DisplayContext context, TagWriter out) throws IOException {
+		for (CommandModel command : getCommands()) {
+			new ButtonControl(command).write(context, out);
+		}
+
+		Menu menu = getMenu();
+		if (menu != null) {
+			PopupMenuModel popupMenuField = new DefaultPopupMenuModel(Icons.BURGER_MENU, menu);
+			PopupMenuButtonControl menuControl =
+				new PopupMenuButtonControl(popupMenuField, DefaultToolBar.BUTTON_RENDERER);
+			menuControl.write(context, out);
+		}
 	}
 
 	/**

@@ -5,8 +5,10 @@
  */
 package com.top_logic.layout.form.boxes.reactive_tag;
 
+import java.util.List;
+
+import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.TemplateVariable;
-import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.template.WithProperties;
 import com.top_logic.model.annotate.LabelPosition;
@@ -103,22 +105,13 @@ public interface GroupSettings extends WithProperties {
 	String getWidth();
 
 	/**
+	 * Command buttons rendered directly in the group header.
+	 */
+	List<CommandModel> getCommands();
+
+	/**
 	 * The menu of commands.
 	 */
 	Menu getMenu();
-
-	/**
-	 * Whether there is a menu.
-	 */
-	@TemplateVariable("hasMenu")
-	default boolean hasMenu() {
-		return getMenu() != null;
-	}
-
-	/**
-	 * The {@link ThemeImage} to open the menu.
-	 */
-	@TemplateVariable("menuButton")
-	ThemeImage getCommandButton();
 
 }

@@ -21,7 +21,6 @@ import com.top_logic.layout.channel.ChannelFactory;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.model.TLType;
 
 /**
  * Configuration of additional channels for a component.
@@ -35,9 +34,8 @@ public interface WithChannelConfigs extends ConfigurationItem {
 	 * Configuration for additional channels.
 	 * 
 	 * <p>
-	 * The values are pairs of {@link TLType} name's and {@link ComponentName}s. When an object of
-	 * the type (or a specialization) is displayed, the configured target component is used as goto
-	 * target by default.
+	 * Configuring an additional channel involves providing a name for the new channel, implementing
+	 * the channel, and optionally assigning a value to it.
 	 * </p>
 	 */
 	@Key(ChannelConfig.NAME_ATTRIBUTE)
@@ -67,7 +65,7 @@ public interface WithChannelConfigs extends ConfigurationItem {
 		String getName();
 
 		/**
-		 * The channel implementation which is created with the given {@link #getName() name}.
+		 * The channel implementation which is created for the given {@link #getName() name}.
 		 */
 		@Mandatory
 		@Options(fun = AllInAppImplementations.class)
@@ -80,7 +78,7 @@ public interface WithChannelConfigs extends ConfigurationItem {
 		void setImpl(PolymorphicConfiguration<? extends ChannelFactory> value);
 
 		/**
-		 * The initial value for the new channel.
+		 * The value of the new channel.
 		 */
 		@Name(VALUE)
 		ModelSpec getValue();

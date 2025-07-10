@@ -15,15 +15,15 @@
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.TreeModelByExpression"
 			nodePredicate="node->$node.instanceOf(`DemoTypes:DemoTypes.All`)"
-			rootNode="model -> $model.elementAt(0)[0]"
+			rootNode="model -> $model.isEmpty() ? null : $model[0][0]"
 		>
 			<children><![CDATA[node->model->$model.map(path-> {
   nodeIdx = $path.elementIndex($node);
-  $nodeIdx > -1 && $nodeIdx < $path.size()-1 ? $path.elementAt($nodeIdx + 1) : null
+  $nodeIdx > -1 && $nodeIdx < $path.size()-1 ? $path[$nodeIdx + 1] : null
 }).toSet().filter(child -> $child != null)]]></children>
 			<parents><![CDATA[node->model->$model.map(path-> {
   nodeIdx = $path.elementIndex($node);
-  $nodeIdx > 0 ? $path.elementAt($nodeIdx -1) : null;
+  $nodeIdx > 0 ? $path[$nodeIdx - 1] : null;
 }).filter(child -> $child != null).firstElement()]]></parents>
 		</modelBuilder>
 	</arguments>

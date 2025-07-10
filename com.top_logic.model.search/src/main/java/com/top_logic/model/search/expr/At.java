@@ -5,9 +5,10 @@
  */
 package com.top_logic.model.search.expr;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
@@ -77,14 +78,14 @@ public class At extends SearchExpression {
 		} else if (self instanceof Map<?, ?>) {
 			Map<?, ?> map = (Map<?, ?>) self;
 			return SearchExpression.normalizeValue(map.get(indexArg));
-		} else if (self instanceof List<?>) {
-			List<?> list = (List<?>) self;
+		} else if (self instanceof Collection<?>) {
+			Collection<?> col = (Collection<?>) self;
 			int index = asInt(indexArg);
 			try {
-				return SearchExpression.normalizeValue(list.get(index));
+				return SearchExpression.normalizeValue(CollectionUtil.getElementAt(col, index));
 			} catch (IndexOutOfBoundsException ex) {
 				throw new TopLogicException(
-					I18NConstants.ERROR_INVALID_LIST_INDEX__LIST_INDEX_EXPR.fill(list, index, this));
+					I18NConstants.ERROR_INVALID_LIST_INDEX__LIST_INDEX_EXPR.fill(col, index, this));
 			}
 		} else if (self instanceof TLObject) {
 			TLObject obj = (TLObject) self;

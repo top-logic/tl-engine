@@ -42,7 +42,7 @@ import com.top_logic.layout.scripting.runtime.Application;
 public class ApplicationTestSetup extends RearrangableThreadContextSetup {
 
 	/**
-	 * indicates if warning in a log file will the test cause to fail
+	 * Treats log warnings as test failures when enabled.
 	 */
 	public static boolean TREAT_WARN_AS_ERROR = true;
 

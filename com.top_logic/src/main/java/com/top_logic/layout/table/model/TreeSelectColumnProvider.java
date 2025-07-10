@@ -38,9 +38,10 @@ import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.control.TreeSelectionPartControl;
 import com.top_logic.layout.scripting.recorder.ref.GenericModelOwner.MultipleAnnotatedModels;
 import com.top_logic.layout.table.AbstractCellRenderer;
+import com.top_logic.layout.table.TableDataOwner;
 import com.top_logic.layout.table.TableRenderer.Cell;
 import com.top_logic.layout.table.provider.ColumnProviderConfig;
-import com.top_logic.layout.table.tree.TreeTableDataOwner;
+import com.top_logic.layout.table.tree.TreeTableData;
 import com.top_logic.layout.tree.model.AbstractTreeTableModel;
 import com.top_logic.layout.tree.model.TLTreeModel;
 import com.top_logic.mig.html.GenericSelectionModelOwner;
@@ -138,11 +139,10 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		ColumnConfiguration treeSelectColumn = table.declareColumn(getConfig().getColumnId());
 		treeSelectColumn.setColumnLabelKey(getConfig().getColumnLabel());
 
-		TreeTableDataOwner treeOwner = treeTableDataOwner();
 		Supplier treeSupplier = () -> {
 			/* Table data may change during lifetime of selection model, e.g. when the owner is a
 			 * GridComponent. */
-			return treeOwner.getTableData().getTree();
+			return treeTableData().getTree();
 		};
 		MultipleAnnotatedModels<SelectionModel> algorithm =
 			MultipleAnnotatedModels.newInstanceFor(getConfig().getColumnId());
@@ -161,8 +161,9 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		});
 	}
 
-	private TreeTableDataOwner treeTableDataOwner() {
-		return (TreeTableDataOwner) _component;
+	private TreeTableData treeTableData() {
+		TableDataOwner treeTableDataOwner = (TableDataOwner) _component;
+		return (TreeTableData) treeTableDataOwner.getTableData();
 	}
 
 	private <N> void listenToChannel(TreeSelectionModel<N> selectionModel,
@@ -302,8 +303,8 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 	}
 
 	private Mapping<Object, ?> modelMapping() {
-		TreeTableDataOwner treeTableDataOwner = treeTableDataOwner();
-		return treeTableDataOwner.getTableData().getTableModel().getTableConfiguration().getModelMapping();
+		TreeTableData tableData = treeTableData();
+		return tableData.getTableModel().getTableConfiguration().getModelMapping();
 	}
 
 	private static class TreeSelectCellRenderer<N> extends AbstractCellRenderer {

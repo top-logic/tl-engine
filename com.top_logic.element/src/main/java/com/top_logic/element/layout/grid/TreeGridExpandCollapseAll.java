@@ -49,7 +49,7 @@ public class TreeGridExpandCollapseAll extends AbstractTreeTableExpandCollapseAl
 		if (!(handler instanceof TreeGridHandler)) {
 			return new Hide();
 		}
-		TableField tableField = ((AbstractTreeGridBuilder<?>.TreeGridHandler) handler).getTableField();
+		TableField tableField = handler.getTableField();
 		if (!(tableField instanceof TreeTableData)) {
 			return new Hide();
 		}

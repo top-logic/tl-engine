@@ -33,7 +33,7 @@
 			<tree-select-column
 				channel="hiddenChannel(self())"
 				columnId="ID_225df3c5_5818_4549_a5b2_2d13a0768102"
-				store-unselected-elements="true"
+				invert-selection="true"
 			>
 				<columnLabel key="dynamic.74bad879-2c48-4a84-9adb-213464419fb6">
 					<en>Visibility</en>

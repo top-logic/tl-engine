@@ -2231,6 +2231,11 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 	/**
 	 * Available channel kinds of this component type.
+	 * 
+	 * <p>
+	 * Subclasses can override this method to define implementation specific {@link ChannelSPI
+	 * channels}.
+	 * </p>
 	 */
 	protected Map<String, ChannelSPI> programmaticChannels() {
 		if (this instanceof Selectable) {
@@ -2242,6 +2247,13 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 	/**
 	 * Available channel kinds of this component.
+	 * 
+	 * <p>
+	 * The return value contains all channels known by this component, the programmatic channels and
+	 * the configured channels.
+	 * </p>
+	 * 
+	 * @seee #programmaticChannels()
 	 */
 	protected final Map<String, ChannelSPI> channels() {
 		return _allChannels;

@@ -48,7 +48,10 @@
 				>
 					<function><![CDATA[model -> {
   root = $model[1].inRevision($model[0]);
-  [[$root]];
+  // Add the path to the root element to the channel to ensure all elements are treated as visible.
+  rootPath = [$root];
+  // Value of the channel is a set of paths.
+  [$rootPath];
 }]]></function>
 				</value>
 			</additional-channel>

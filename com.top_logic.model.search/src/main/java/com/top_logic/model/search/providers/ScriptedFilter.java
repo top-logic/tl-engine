@@ -11,6 +11,7 @@ import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -26,7 +27,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 @InApp
 public class ScriptedFilter extends AbstractConfiguredInstance<ScriptedFilter.Config<?>> implements Filter<Object> {
 
-	private QueryExecutor _function;
+	private final QueryExecutor _function;
 
 	/**
 	 * Configuration options for {@link ScriptedFilter}.
@@ -37,6 +38,7 @@ public class ScriptedFilter extends AbstractConfiguredInstance<ScriptedFilter.Co
 		/**
 		 * The function deciding whether the argument is accepted.
 		 */
+		@Mandatory
 		Expr getPredicate();
 
 	}

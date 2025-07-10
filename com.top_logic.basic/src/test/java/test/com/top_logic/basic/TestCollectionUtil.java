@@ -15,6 +15,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -873,8 +874,37 @@ public class TestCollectionUtil extends BasicTestCase {
     }
 
     /**
-     * Tests {@link CollectionUtil#intoSet(Object)}.
-     */
+	 * Tests {@link CollectionUtil#getLast(Collection)}.
+	 */
+	public void testGetElementAt() {
+		List<String> l = new ArrayList<>();
+		l.add("A");
+		l.add("B");
+		l.add("C");
+		l.add("D");
+		assertNull(CollectionUtil.getElementAt(l, -1));
+		assertNull(CollectionUtil.getElementAt(l, 55));
+		assertEquals("A", CollectionUtil.getElementAt(l, 0));
+		assertEquals("B", CollectionUtil.getElementAt(l, 1));
+		assertEquals("C", CollectionUtil.getElementAt(l, 2));
+		assertEquals("D", CollectionUtil.getElementAt(l, 3));
+
+		Set<String> s = new LinkedHashSet<>();
+		s.add("A");
+		s.add("B");
+		s.add("C");
+		s.add("D");
+		assertNull(CollectionUtil.getElementAt(s, -1));
+		assertNull(CollectionUtil.getElementAt(s, 55));
+		assertEquals("A", CollectionUtil.getElementAt(s, 0));
+		assertEquals("B", CollectionUtil.getElementAt(s, 1));
+		assertEquals("C", CollectionUtil.getElementAt(s, 2));
+		assertEquals("D", CollectionUtil.getElementAt(s, 3));
+	}
+
+	/**
+	 * Tests {@link CollectionUtil#intoSet(Object)}.
+	 */
     public void testIntoSet() {
         assertEquals(1, CollectionUtil.intoSet(null).size());
         assertEquals(null, CollectionUtil.intoSet(null).iterator().next());

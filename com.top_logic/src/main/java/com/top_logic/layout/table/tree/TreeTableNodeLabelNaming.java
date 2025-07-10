@@ -29,11 +29,12 @@ import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.tree.model.AbstractTreeTableModel;
 import com.top_logic.layout.tree.model.AbstractTreeTableModel.AbstractTreeTableNode;
 import com.top_logic.layout.tree.model.TLTreeModelUtil;
+import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
  * A {@link ModelNamingScheme} for identifying a row in the tree component by the label path to it.
  */
-public abstract class TreeTableNodeLabelNaming<N extends AbstractTreeTableNode<N>, NAME extends TreeTableNodeLabelNaming.Name>
+public abstract class TreeTableNodeLabelNaming<N extends AbstractTreeTableNode<N>, NAME extends TreeTableNodeLabelNaming.Name, C>
 		extends AbstractModelNamingScheme<N, NAME> {
 
 	/**
@@ -122,7 +123,7 @@ public abstract class TreeTableNodeLabelNaming<N extends AbstractTreeTableNode<N
 
 	@Override
 	protected boolean isCompatibleModel(N node) {
-		TreeTableDataOwner owner = getOwner(node);
+		C owner = getOwner(node);
 		if (owner == null) {
 			return false;
 		}
@@ -136,15 +137,15 @@ public abstract class TreeTableNodeLabelNaming<N extends AbstractTreeTableNode<N
 
 	@Override
 	protected void initName(NAME name, N node) {
-		TreeTableDataOwner owner = getOwner(node);
+		C owner = getOwner(node);
 		name.setComponent(ModelResolver.buildModelName(owner));
 		name.setPath(getStringPathFromRoot(node, owner));
 	}
 
-	private List<String> getStringPathFromRoot(N node, TreeTableDataOwner grid) {
+	private List<String> getStringPathFromRoot(N node, C owner) {
 		List<N> nodePath = getNodePathFromRoot(node);
 		List<String> labelPath = new ArrayList<>();
-		TableModel tableModel = getTableModel(grid);
+		TableModel tableModel = getTableModel(owner);
 		ColumnLabel labelProvider =
 			ColumnLabel.getInstanceFor(tableModel);
 		for (N ancestor : nodePath) {
@@ -160,17 +161,28 @@ public abstract class TreeTableNodeLabelNaming<N extends AbstractTreeTableNode<N
 	}
 
 	/**
-	 * Determines the {@link TreeTableDataOwner owner} for the given node.
+	 * Determines the {@link LayoutComponent owner} for the given node, that can deliver the
+	 * corresponding {@link TreeTableData}.
 	 * 
 	 * @return <code>null</code>, when no owner could be determined.
+	 * 
+	 * @see #getTreeTable(Object)
 	 */
-	protected abstract TreeTableDataOwner getOwner(N node);
+	protected abstract C getOwner(N node);
+
+	/**
+	 * Determines the {@link TreeTableData} for owner component.
+	 * 
+	 * @see #getOwner(AbstractTreeTableNode)
+	 */
+	protected abstract TreeTableData getTreeTable(C owner);
 
 	@Override
 	public N locateModel(ActionContext context, Name name) {
-		TreeTableDataOwner grid = (TreeTableDataOwner) context.resolve(name.getComponent());
-		TableModel tableModel = getTableModel(grid);
-		AbstractTreeTableModel<N> treeModel = getTree(grid);
+		@SuppressWarnings("unchecked")
+		C component = (C) context.resolve(name.getComponent());
+		TableModel tableModel = getTableModel(component);
+		AbstractTreeTableModel<N> treeModel = getTree(component);
 		ColumnLabel labelProvider = ColumnLabel.getInstanceFor(tableModel);
 		N root = treeModel.getRoot();
 		List<String> pathWithRoot = name.getPath();
@@ -195,13 +207,13 @@ public abstract class TreeTableNodeLabelNaming<N extends AbstractTreeTableNode<N
 		return node;
 	}
 
-	private TableModel getTableModel(TreeTableDataOwner owner) {
-		return owner.getTableData().getTableModel();
+	private TableModel getTableModel(C owner) {
+		return getTreeTable(owner).getTableModel();
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private AbstractTreeTableModel<N> getTree(TreeTableDataOwner owner) {
-		return (AbstractTreeTableModel) owner.getTableData().getTree();
+	private AbstractTreeTableModel<N> getTree(C owner) {
+		return (AbstractTreeTableModel) getTreeTable(owner).getTree();
 	}
 
 }

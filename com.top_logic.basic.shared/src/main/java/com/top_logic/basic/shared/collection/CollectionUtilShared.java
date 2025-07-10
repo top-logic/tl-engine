@@ -869,6 +869,9 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	 *        the collection to get the first element from.
 	 * @return the first element of the given collection or <code>null</code>, if the collection is
 	 *         empty
+	 * 
+	 * @see #getElementAt(Collection, int)
+	 * @see #getLast(Collection)
 	 */
 	public static <T> T getFirst(Collection<T> aCollection) {
 		if (isEmptyOrNull(aCollection)) {
@@ -925,6 +928,9 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	 *        the collection to get the last element from.
 	 * @return the last element of the given collection or <code>null</code>, if the collection is
 	 *         empty
+	 * 
+	 * @see #getFirst(Collection)
+	 * @see #getElementAt(Collection, int)
 	 */
 	public static <E> E getLast(Collection<E> aCollection) {
 		if (isEmptyOrNull(aCollection)) {
@@ -960,6 +966,37 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 			return anObject; // implies check for null
 		}
 		return getLast((Collection<?>) anObject);
+	}
+
+	/**
+	 * Determines the <code>index</code>th element of the given collection.
+	 *
+	 * @param collection
+	 *        The collection to get the element from.
+	 * @return The element of the given collection at the given <code>index</code> or
+	 *         <code>null</code>, if the index is is out of range.
+	 * 
+	 * @see #getFirst(Collection)
+	 * @see #getLast(Collection)
+	 */
+	public static <E> E getElementAt(Collection<E> collection, int index) {
+		if (collection == null) {
+			return null;
+		}
+		if (index < 0 || index >= collection.size()) {
+			return null;
+		}
+		if (collection instanceof RandomAccess) {
+			return ((List<E>) collection).get(index);
+		}
+		Iterator<E> elements = collection.iterator();
+		while (index > 0) {
+			// Ignore elements with smaller index.
+			elements.next();
+			index--;
+		}
+		return elements.next();
+
 	}
 
 	/**

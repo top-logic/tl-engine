@@ -29,9 +29,12 @@ class TracingAccess extends Access {
 		TracingAccessRewriter.traceAccess(definitions, self, part);
 		AttributeUpdateContainer updateContainer =
 			(AttributeUpdateContainer) definitions.getVar(TracingAccessRewriter.UPDATE_CONTAINER);
-		TLFormObject overlay = updateContainer.getExistingOverlay(self);
-		if (overlay != null) {
-			return super.lookupValue(definitions, overlay, part);
+
+		if (updateContainer != null) {
+			TLFormObject overlay = updateContainer.getExistingOverlay(self);
+			if (overlay != null) {
+				return super.lookupValue(definitions, overlay, part);
+			}
 		}
 
 		return super.lookupValue(definitions, self, part);

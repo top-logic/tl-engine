@@ -456,7 +456,7 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 		 * @param readOnlyColumns
 		 *        Name of columns that are read only.
 		 */
-		private TLObject mkEditContext(AttributeUpdateContainer updateContainer, FormContainer contentGroup,
+		public static TLObject mkEditContext(AttributeUpdateContainer updateContainer, FormContainer contentGroup,
 				TLObject editedObject, Collection<String> readOnlyColumns) {
 			TLFormObject overlay = updateContainer.editObject(editedObject);
 			FormContainer rowGroup = updateContainer.getFormContext().createFormContainerForOverlay(overlay);
@@ -488,7 +488,8 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 		 *        Name of columns that are read only.
 		 * @return The created {@link FormMember}. May be <code>null</code>.
 		 */
-		private FormMember addFieldForEditContext(AttributeUpdateContainer updateContainer, FormContainer contentGroup,
+		private static FormMember addFieldForEditContext(AttributeUpdateContainer updateContainer,
+				FormContainer contentGroup,
 				TLFormObject editedObject, TLStructuredTypePart attribute, Collection<String> readOnlyColumns) {
 			AttributeFormContext formContext = updateContainer.getFormContext();
 			AttributeUpdate update = editedObject.newEditUpdateDefault(attribute, false);

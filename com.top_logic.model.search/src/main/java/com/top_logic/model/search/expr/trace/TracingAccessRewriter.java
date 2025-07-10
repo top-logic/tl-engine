@@ -9,6 +9,7 @@ import java.util.List;
 
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.col.Sink;
+import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.configured.QueryExecutorMethod;
@@ -37,6 +38,12 @@ public final class TracingAccessRewriter extends Rewriter<Void> {
 	 * during an evaluation.
 	 */
 	public static final NamedConstant TRACE = new NamedConstant("trace");
+
+	/**
+	 * Variable identifier in the {@link EvalContext} that contains the
+	 * {@link AttributeUpdateContainer} during an evaluation.
+	 */
+	public static final NamedConstant UPDATE_CONTAINER = new NamedConstant("updateContainer");
 
 	private TracingAccessRewriter() {
 		// Singleton constructor.

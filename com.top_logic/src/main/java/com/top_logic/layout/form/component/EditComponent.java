@@ -493,6 +493,15 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 		return result;
 	}
 
+	/**
+	 * Attempts to switch back to edit mode after validation or temporary mode changes.
+	 * 
+	 * <p>
+	 * Silently ignores the request if no edit command handler is available or if switching is
+	 * currently not executable. Token conflicts during mode switching are handled by displaying an
+	 * informational error dialog to the user without interrupting the current process.
+	 * </p>
+	 */
 	public void reswitchToEdit() {
 		CommandHandler switchCommand = getEditCommandHandler();
 		if (switchCommand == null) {

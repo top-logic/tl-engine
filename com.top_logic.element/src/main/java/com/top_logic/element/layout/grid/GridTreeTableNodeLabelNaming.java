@@ -9,6 +9,8 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.element.layout.grid.GridTreeTableNodeLabelNaming.GridNodeLabelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
+import com.top_logic.layout.table.TableData;
+import com.top_logic.layout.table.tree.TreeTableData;
 import com.top_logic.layout.table.tree.TreeTableNodeLabelNaming;
 
 /**
@@ -16,7 +18,8 @@ import com.top_logic.layout.table.tree.TreeTableNodeLabelNaming;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
-public class GridTreeTableNodeLabelNaming extends TreeTableNodeLabelNaming<GridTreeTableNode, GridNodeLabelName> {
+public class GridTreeTableNodeLabelNaming
+		extends TreeTableNodeLabelNaming<GridTreeTableNode, GridNodeLabelName, GridComponent> {
 
 	/**
 	 * {@link ModelName} for the {@link GridTreeTableNodeLabelNaming}.
@@ -39,6 +42,12 @@ public class GridTreeTableNodeLabelNaming extends TreeTableNodeLabelNaming<GridT
 	protected GridComponent getOwner(GridTreeTableNode node) {
 		GridTreeTableModel treeModel = (GridTreeTableModel) node.getModel();
 		return treeModel.getGrid();
+	}
+
+	@Override
+	protected TreeTableData getTreeTable(GridComponent owner) {
+		TableData tableData = owner.getTableData();
+		return (TreeTableData) tableData;
 	}
 
 }

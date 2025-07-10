@@ -16,8 +16,8 @@ import com.top_logic.layout.tree.model.DefaultTreeTableModel.DefaultTreeTableNod
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class TreeTableComponentNodeLabelNaming
-		extends TreeTableNodeLabelNaming<DefaultTreeTableNode, TreeTableComponentNodeLabelNaming.Name> {
+public class TreeTableComponentNodeLabelNaming extends
+		TreeTableNodeLabelNaming<DefaultTreeTableNode, TreeTableComponentNodeLabelNaming.Name, TreeTableComponent> {
 
 	/**
 	 * {@link ModelName} for the {@link TreeTableComponentNodeLabelNaming}.
@@ -38,8 +38,13 @@ public class TreeTableComponentNodeLabelNaming
 	}
 
 	@Override
-	protected TreeTableDataOwner getOwner(DefaultTreeTableNode node) {
+	protected TreeTableComponent getOwner(DefaultTreeTableNode node) {
 		return TreeTableComponent.getOwner(node.getModel());
+	}
+
+	@Override
+	protected TreeTableData getTreeTable(TreeTableComponent owner) {
+		return owner.getTableData();
 	}
 
 }

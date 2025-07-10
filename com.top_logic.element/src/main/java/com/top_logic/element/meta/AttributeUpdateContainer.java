@@ -294,6 +294,14 @@ public class AttributeUpdateContainer {
 		return newOverlay;
 	}
 
+	public TLFormObject getExistingOverlay(TLObject object) {
+		if (object instanceof TLFormObject) {
+			return (TLFormObject) object;
+		}
+
+		return _edits.get(object);
+	}
+
 	/**
 	 * Requests an object edit operation.
 	 * 
@@ -304,11 +312,7 @@ public class AttributeUpdateContainer {
 	 *         {@link AttributeUpdate}s for its attributes to display.
 	 */
 	public TLFormObject editObject(TLObject object) {
-		if (object instanceof TLFormObject) {
-			return (TLFormObject) object;
-		}
-
-		FormObjectOverlay existingOverlay = _edits.get(object);
+		TLFormObject existingOverlay = getExistingOverlay(object);
 		if (existingOverlay != null) {
 			return existingOverlay;
 		}

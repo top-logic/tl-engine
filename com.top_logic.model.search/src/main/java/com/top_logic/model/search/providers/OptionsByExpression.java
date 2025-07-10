@@ -167,7 +167,7 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 		}
 	
 		private List<?> createOptions() {
-			List<?> list = SearchExpression.asList(_function.execute(this, getObject()));
+			List<?> list = SearchExpression.asList(_function.execute(this, null, getObject()));
 			if (_normalizer != null) {
 				return list.stream().map(_normalizer).collect(Collectors.toList());
 			}

@@ -23,6 +23,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.element.meta.form.EditContext;
+import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.kbbased.filtergen.AttributedValueFilter;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
 import com.top_logic.layout.form.model.utility.OptionModel;
@@ -253,9 +254,10 @@ public class TreeOptionsByExpression extends AbstractConfiguredInstance<TreeOpti
 			return FilterFactory.and(filters);
 		}
 
-		private void addConfiguredSelectionFilter(List<Filter<Object>> filters, TLObject currentObject) {
+		private void addConfiguredSelectionFilter(List<Filter<Object>> filters, TLFormObject currentObject) {
 			if (_selectionFilter != null) {
-				filters.add(node -> SearchExpression.asBoolean(_selectionFilter.execute(this, node, currentObject)));
+				filters.add(node -> SearchExpression
+					.asBoolean(_selectionFilter.execute(this, currentObject.getScope(), node, currentObject)));
 			}
 		}
 
@@ -277,15 +279,15 @@ public class TreeOptionsByExpression extends AbstractConfiguredInstance<TreeOpti
 			Function<Object, Collection<?>> parentsByNode = createParentsByNode(currentObject);
 
 			return new BusinessObjectTreeModel<>(
-				_root.execute(this, currentObject), childrenByNode, parentsByNode, _finite);
+				_root.execute(this, null, currentObject), childrenByNode, parentsByNode, _finite);
 		}
 
 		private Function<Object, Collection<?>> createParentsByNode(TLObject currentObject) {
-			return node -> SearchExpression.asCollection(_parents.execute(this, node, currentObject));
+			return node -> SearchExpression.asCollection(_parents.execute(this, null, node, currentObject));
 		}
 
 		private Function<Object, Collection<?>> createChildrenByNode(TLObject currentObject) {
-			return node -> SearchExpression.asCollection(_children.execute(this, node, currentObject));
+			return node -> SearchExpression.asCollection(_children.execute(this, null, node, currentObject));
 		}
 	}
 		

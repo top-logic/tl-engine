@@ -89,7 +89,7 @@ public class ModeSelectorByExpression<C extends ModeSelectorByExpression.Config<
 
 	@Override
 	public void traceDependencies(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace) {
-		_selectorAnalyzer.execute(trace, object);
+		_selectorAnalyzer.execute(trace, null, object);
 	}
 
 	private static FormVisibility toFieldMode(Object result) {

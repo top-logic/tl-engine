@@ -6,6 +6,7 @@
 package com.top_logic.model.search.expr.trace;
 
 import com.top_logic.basic.col.Sink;
+import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLModel;
@@ -29,7 +30,7 @@ import com.top_logic.util.model.ModelService;
  * </p>
  * 
  * @see #compile(Expr)
- * @see #execute(KnowledgeBase, Sink, Object...)
+ * @see #execute(KnowledgeBase, Sink, AttributeUpdateContainer, Object...)
  * @see QueryExecutor
  */
 public class ScriptTracer {
@@ -83,8 +84,8 @@ public class ScriptTracer {
 	 *        The arguments to the script.
 	 * @return The evaluation result returned by the script.
 	 */
-	public Object execute(Sink<Pointer> trace, Object... args) {
-		return execute(PersistencyLayer.getKnowledgeBase(), trace, args);
+	public Object execute(Sink<Pointer> trace, AttributeUpdateContainer updateContainer, Object... args) {
+		return execute(PersistencyLayer.getKnowledgeBase(), trace, updateContainer, args);
 	}
 
 	/**
@@ -99,13 +100,16 @@ public class ScriptTracer {
 	 *        The arguments to the script.
 	 * @return The evaluation result returned by the script.
 	 */
-	public Object execute(KnowledgeBase kb, Sink<Pointer> trace, Object... args) {
-		return _debugExpr.evalWith(ScriptTracer.tracingContext(kb, _model, trace), Args.some(args));
+	public Object execute(KnowledgeBase kb, Sink<Pointer> trace, AttributeUpdateContainer updateContainer,
+			Object... args) {
+		return _debugExpr.evalWith(ScriptTracer.tracingContext(kb, _model, trace, updateContainer), Args.some(args));
 	}
 
-	private static EvalContext tracingContext(KnowledgeBase kb, TLModel model, Sink<Pointer> trace) {
+	private static EvalContext tracingContext(KnowledgeBase kb, TLModel model, Sink<Pointer> trace,
+			AttributeUpdateContainer updateContainer) {
 		EvalContext context = new EvalContext(false, kb, model, null, null);
 		context.defineVar(TracingAccessRewriter.TRACE, trace);
+		context.defineVar(TracingAccessRewriter.UPDATE_CONTAINER, updateContainer);
 		return context;
 	}
 

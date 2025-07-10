@@ -92,7 +92,7 @@ public class ConstraintCheckByExpression<C extends ConstraintCheckByExpression.C
 
 	@Override
 	public void traceDependencies(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace) {
-		_checkAnalyzer.execute(trace, object.tValue(attribute), object);
+		_checkAnalyzer.execute(trace, null, object.tValue(attribute), object);
 	}
 
 	private static ResKey toResKey(Object result) {

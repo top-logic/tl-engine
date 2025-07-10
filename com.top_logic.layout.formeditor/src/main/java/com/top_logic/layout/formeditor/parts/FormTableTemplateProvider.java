@@ -25,16 +25,19 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.layout.formeditor.FormEditorUtil;
 import com.top_logic.element.layout.formeditor.implementation.FieldDefinitionTemplateProvider;
+import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.MetaControlProvider;
+import com.top_logic.element.meta.form.overlay.ObjectEditing;
+import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.gui.MetaAttributeGUIHelper;
 import com.top_logic.html.template.HTMLTemplateFragment;
-import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
+import com.top_logic.layout.ReadOnlyAccessor;
 import com.top_logic.layout.basic.ErrorFragmentGenerator;
 import com.top_logic.layout.editor.config.OptionalTypeTemplateParameters;
 import com.top_logic.layout.form.FormContainer;
@@ -118,12 +121,13 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 
 		@Override
 		public String getFieldName(Object aModel, Accessor anAccessor, String aProperty) {
-			return MetaAttributeGUIHelper.getAttributeID(_part, (TLObject) aModel);
+			ObjectEditing overlay = (ObjectEditing) aModel;
+			return MetaAttributeGUIHelper.getAttributeID(_part, overlay.getEditedObject());
 		}
 
 		@Override
 		public FormMember createField(Object aModel, Accessor anAccessor, String aProperty) {
-			Wrapper rowType = (Wrapper) aModel;
+			TLObject rowType = (TLObject) aModel;
 			boolean isDisabled = false;
 			FormMember field =
 				FormEditorUtil.createAnotherMetaAttributeForEdit(_formContext, _contentGroup, _part, rowType,
@@ -194,15 +198,27 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 			visibleColumNames.add(column.visit(columnNameProvider, null));
 		}
 
+		AttributeFormContext formContext = (AttributeFormContext) context.getFormContext();
 		TableConfiguration tableConfig = TableConfigurationFactory.build(
 			genericProvider(),
-			adaptColumns(context.getFormContext(), contentGroup, configuredCols, columnNameProvider),
+			adaptColumns(formContext, contentGroup, configuredCols, columnNameProvider),
 			GenericTableConfigurationProvider.showColumns(visibleColumNames),
 			tableTitleProvider(model),
 			additionalCommands(),
 			deactivateTableFeatures(inDesignMode));
 
-		ObjectTableModel otm = new ObjectTableModel(visibleColumNames, tableConfig, rows(model));
+		List<?> rows = rows(model);
+		AttributeUpdateContainer attributeUpdateContainer = formContext.getAttributeUpdateContainer();
+		List<TLObject> overlays = new ArrayList<>();
+		for (Object row : rows) {
+			TLFormObject overlay = attributeUpdateContainer.editObject((TLObject) row);
+			FormContainer rowGroup = attributeUpdateContainer.getFormContext().createFormContainerForOverlay(overlay);
+			rowGroup.setStableIdSpecialCaseMarker(row);
+			contentGroup.addMember(rowGroup);
+			overlays.add(overlay);
+		}
+
+		ObjectTableModel otm = new ObjectTableModel(visibleColumNames, tableConfig, overlays);
 
 		FormGroup group = new FormGroup(fieldName + "_container", contentGroup.getResources());
 		contentGroup.addMember(group);
@@ -378,9 +394,23 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 
 						arg.setCellExistenceTester(cellExistenceTester);
 
+						AttributeFormContext attributeFormContext = (AttributeFormContext) formContext;
 						arg.setFieldProvider(
-							new FieldProviderImpl(part, col, (AttributeFormContext) formContext, contentGroup));
+							new FieldProviderImpl(part, col, attributeFormContext, contentGroup));
 						arg.setControlProvider(MetaControlProvider.INSTANCE);
+						arg.setAccessor(new ReadOnlyAccessor<>() {
+							@Override
+							public Object getValue(Object row, String property) {
+								TLObject rowObject = (TLObject) row;
+								TLFormObject overlay =
+									attributeFormContext.getAttributeUpdateContainer().getOverlay(rowObject, null);
+								if (overlay != null) {
+									return overlay.getFieldValue(part);
+								} else {
+									return rowObject.tValueByName(property);
+								}
+							}
+						});
 
 						// Classes are displayed dynamically by the fields in the cells.
 						CellClassProvider cssClassProvider = arg.getCssClassProvider();

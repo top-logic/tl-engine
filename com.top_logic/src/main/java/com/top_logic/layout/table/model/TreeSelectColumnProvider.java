@@ -59,6 +59,19 @@ import com.top_logic.util.Utils;
  * {@link TableConfigurationProvider} adding a column that displays the selection of a tree
  * selection model.
  * 
+ * <p>
+ * A tree selection model is an additional special selection model for components that display a
+ * tree structure. If a node is selected in a tree selection model, all nodes in the subtree are
+ * selected; if a node is de-selected, all nodes in the subtree are de-selected. A node that
+ * contains both selected and de-selected sub nodes is displayed as undecided.
+ * </p>
+ * 
+ * <p>
+ * In contrast to a normal selection model, a tree selection model does not contain all selected
+ * nodes but only the nodes whose complete subtree is selected, e.g. a tree selection model in which
+ * all nodes are selected only contains the root node.
+ * </p>
+ * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @InApp(classifiers = { "treegrid", "treetable" })
@@ -73,11 +86,17 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 	public interface Config extends PolymorphicConfiguration<TreeSelectColumnProvider>, ColumnProviderConfig {
 
 		/**
-		 * The {@link ModelSpec} to get the value for the selection model for.
+		 * This is the channel in which the selection is stored.
 		 * 
 		 * <p>
-		 * It is expected that the channel contains as value a set of paths of objects, started from
-		 * the root node to the actually selected node.
+		 * The stored value is a set of paths leading from the root node of the tree to the selected
+		 * node in the tree selection model.
+		 * </p>
+		 * 
+		 * <p>
+		 * <b>Warning:</b> As the tree selection model does not contain all the selected nodes
+		 * directly, but rather paths to the root nodes of the fully selected subtrees, it is
+		 * advisable to define a separate channel rather than using the normal selection channel.
 		 * </p>
 		 */
 		ModelSpec getChannel();
@@ -86,16 +105,16 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		void setChannel(ModelSpec value);
 
 		/**
-		 * If the tree select column stores unselected elements, then the paths in the channel are
-		 * treated as unselected elements for the selection model.
+		 * When this option is activated, the paths to the unselected nodes are saved in the channel
+		 * rather than the paths to the selected nodes.
 		 * 
 		 * <p>
-		 * E.g. when the channel has an empty value, then the checkboxes for all table rows are
-		 * selected; if only one checkbox is deselected, then the path for this node is stored to
-		 * the channel.
+		 * For example, if no nodes are selected in the tree, the path containing the root node is
+		 * saved in the channel. Conversely, if all nodes in the tree are selected, the empty set is
+		 * saved.
 		 * </p>
 		 */
-		boolean isStoreUnselectedElements();
+		boolean isInvertSelection();
 
 	}
 
@@ -212,7 +231,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 			return;
 		}
 		TLTreeModel<N> treeModel = treeSupplier.get();
-		TriState relevantState = !getConfig().isStoreUnselectedElements() ? TriState.SELECTED : TriState.NOT_SELECTED;
+		TriState relevantState = !getConfig().isInvertSelection() ? TriState.SELECTED : TriState.NOT_SELECTED;
 		Set<Object> newChannelValue;
 		if (states.isEmpty() && relevantState == TriState.NOT_SELECTED) {
 			// Special case nothing is selected in the selection model, i.e. the root node is
@@ -241,7 +260,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		assert _ignoreModelEvent == false;
 		_ignoreModelEvent = true;
 		try {
-			if (!getConfig().isStoreUnselectedElements()) {
+			if (!getConfig().isInvertSelection()) {
 				selectionModel.setSelection(newSelectionModelValue);
 			} else {
 				selectionModel.setSelection(Collections.singleton(treeModel.getRoot()));

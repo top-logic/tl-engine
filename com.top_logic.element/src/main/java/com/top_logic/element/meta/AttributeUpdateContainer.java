@@ -294,6 +294,15 @@ public class AttributeUpdateContainer {
 		return newOverlay;
 	}
 
+	/**
+	 * Retrieves the existing form overlay for the given object.
+	 * 
+	 * @param object
+	 *        The base object to find an overlay for.
+	 * 
+	 * @return The object itself if already a form object, otherwise the existing overlay from
+	 *         edits, or {@code null} if no overlay exists.
+	 */
 	public TLFormObject getExistingOverlay(TLObject object) {
 		if (object instanceof TLFormObject) {
 			return (TLFormObject) object;

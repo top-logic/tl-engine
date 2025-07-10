@@ -101,13 +101,13 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 			public void valueChanged(FormField field, Object oldValue, Object newValue) {
 				_handles.forEach(Handle::release);
 
-				overlay.tUpdate(attribute, getAttributeValue(overlay, attribute));
+				Object result = listen();
 
-				listen();
+				overlay.tUpdate(attribute, convertAndCheck(overlay, attribute, result));
 			}
 
-			public void listen() {
-				_analyzer.execute(attribute.tKnowledgeBase(), this, overlay);
+			public Object listen() {
+				return _analyzer.execute(attribute.tKnowledgeBase(), this, updateContainer, overlay);
 			}
 		}
 		

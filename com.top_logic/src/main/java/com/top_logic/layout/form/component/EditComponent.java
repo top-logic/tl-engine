@@ -493,7 +493,7 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 		return result;
 	}
 
-	private void reswitchToEdit() {
+	public void reswitchToEdit() {
 		CommandHandler switchCommand = getEditCommandHandler();
 		if (switchCommand == null) {
 			return;

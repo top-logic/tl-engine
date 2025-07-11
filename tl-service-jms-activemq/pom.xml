@@ -29,7 +29,23 @@
 					<groupId>commons-logging</groupId>
 					<artifactId>commons-logging</artifactId>
 				</exclusion>
+				<exclusion>
+			      <groupId>commons-beanutils</groupId>
+			      <artifactId>commons-beanutils</artifactId>
+			    </exclusion>	
 			</exclusions>
+		</dependency>
+		<!-- commons-beanutils 1.10.0 is still pulled transitively; we override that with a secure version -->
+		<dependency>
+		  <groupId>commons-beanutils</groupId>
+		  <artifactId>commons-beanutils</artifactId>
+		  <version>1.11.0</version>
+		  <exclusions>
+		    <exclusion>
+		      <groupId>commons-logging</groupId>
+		      <artifactId>commons-logging</artifactId>
+		    </exclusion>
+		  </exclusions>
 		</dependency>
 
 		<!-- Tests -->

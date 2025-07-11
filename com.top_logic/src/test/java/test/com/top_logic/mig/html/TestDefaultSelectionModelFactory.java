@@ -7,6 +7,7 @@ package test.com.top_logic.mig.html;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
+
 import test.com.top_logic.TLTestSetup;
 import test.com.top_logic.basic.BasicTestCase;
 
@@ -15,10 +16,10 @@ import com.top_logic.basic.col.filter.FilterFactory;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.mig.html.DefaultSelectionModelFactory;
+import com.top_logic.mig.html.DefaultSelectionModelFactory.Config;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelFactory;
 import com.top_logic.mig.html.SelectionModelOwner;
-import com.top_logic.mig.html.DefaultSelectionModelFactory.Config;
 
 /**
  * {@link TestCase} for {@link DefaultSelectionModelFactory}.

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<properties extends="com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.layout.structure.ToolbarOptions, com.top_logic.layout.component.InAppSelectable$InAppSelectableConfig, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.mig.html.layout.WithGotoConfiguration">
+	<properties extends="com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.mig.html.DefaultSelectionModelFactory$UIOptions, com.top_logic.layout.structure.ToolbarOptions, com.top_logic.layout.component.InAppSelectable$InAppSelectableConfig, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.mig.html.layout.WithGotoConfiguration">
 		<annotations>
 			<display-order>
 				<value>
@@ -15,6 +15,7 @@
 					<property name="fixedColumns"/>
 					<property name="partnerGroup"/>
 					<property name="configurationProviders"/>
+					<property name="selectionFilter"/>
 
 					<property name="defaultSelection"/>
 					<property name="multiSelection"/>
@@ -54,9 +55,6 @@
 			<mandatory/>
 			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>
 		</property>
-		<property name="multiSelection"
-			type="boolean"
-		/>
 		<property name="securityProviderClass"
 			default="securityRoot"
 			type="String"
@@ -129,7 +127,10 @@
 		titleKey="${name}"
 	>
 		<layoutInfo size="${size}"/>
-		<selectionModelFactory multiple="${multiSelection}"/>
+		<selectionModelFactory
+			filter="${selectionFilter}"
+			multiple="${multiSelection}"
+		/>
 		<table
 			configurationProviders="${configurationProviders}"
 			defaultColumns="${defaultColumns}"

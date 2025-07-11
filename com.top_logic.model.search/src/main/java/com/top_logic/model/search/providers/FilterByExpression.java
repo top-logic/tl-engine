@@ -15,6 +15,7 @@ import com.top_logic.element.config.annotation.TLConstraint;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.kbbased.filtergen.AttributedValueFilter;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
@@ -24,6 +25,8 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * 
  * @see TLConstraint
  * @see Config#getPredicate()
+ * 
+ * @see ScriptedFilter
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -66,11 +69,7 @@ public class FilterByExpression extends AbstractConfiguredInstance<FilterByExpre
 	@Override
 	public boolean accept(Object value, EditContext editContext) {
 		TLObject object = editContext.getOverlay();
-		return toBoolean(_function.execute(object, value));
-	}
-
-	private boolean toBoolean(Object result) {
-		return result != null && ((Boolean) result).booleanValue();
+		return SearchExpression.asBoolean(_function.execute(object, value));
 	}
 
 }

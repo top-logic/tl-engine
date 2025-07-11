@@ -1,0 +1,31 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "enabledManagers": [
+    "maven",
+    "npm"
+  ],
+  "packageRules": [
+    {
+      "enabled": false,
+      "reviewers": [
+        "jenkins",
+        "TopLogic/Mitarbeiter"
+      ],
+      "dependencyDashboard": false,
+      "matchPackageNames": [
+        "*"
+      ]
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "commitMessagePrefix": "Administrative change: ",
+    "rangeStrategy": "bump",
+    "vulnerabilityFixStrategy": "lowest",
+    "prCreation": "immediate"
+  },
+  "osvVulnerabilityAlerts": true
+}

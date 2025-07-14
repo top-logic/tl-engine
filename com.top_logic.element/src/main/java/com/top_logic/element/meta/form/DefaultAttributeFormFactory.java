@@ -285,7 +285,7 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 
 				removeListeners();
 
-				modeSelector.traceDependencies(object, attribute, this);
+				modeSelector.traceDependencies(object, attribute, this, updateContainer.getFormContext());
 			}
 
 			private void removeListeners() {
@@ -357,6 +357,7 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 			private Set<FormField> computeDependencies() {
 				HashSet<FormField> dependencies = new HashSet<>();
 				TLObject object = updateContainer.getOverlay(update);
+				AttributeFormContext formContext = updateContainer.getFormContext();
 				final TLStructuredTypePart attribute = update.getAttribute();
 				check.traceDependencies(object, attribute, p -> {
 					AttributeUpdate other =
@@ -365,11 +366,11 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 						return;
 					}
 
-					FormMember otherMember = updateContainer.getFormContext().getMember(other);
+					FormMember otherMember = formContext.getMember(other);
 					if (otherMember instanceof FormField && otherMember != field) {
 						dependencies.add((FormField) otherMember);
 					}
-				});
+				}, formContext);
 				return dependencies;
 			}
 		};

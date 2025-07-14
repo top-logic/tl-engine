@@ -6,6 +6,7 @@
 package com.top_logic.model.annotate;
 
 import com.top_logic.basic.col.Sink;
+import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.form.definition.FormVisibility;
@@ -38,7 +39,10 @@ public interface ModeSelector {
 	 *        The model attribute that is represented by a form field.
 	 * @param trace
 	 *        Callback for reporting all values, the field mode depends on.
+	 * @param formContext
+	 *        The form context, or <code>null</code> if not available.
 	 */
-	void traceDependencies(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace);
+	void traceDependencies(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace,
+			FormContext formContext);
 
 }

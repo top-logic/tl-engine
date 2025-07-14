@@ -7,6 +7,7 @@ package com.top_logic.model.annotate.util;
 
 import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.TLConstraints;
@@ -37,7 +38,8 @@ public interface ConstraintCheck {
 	 * @param attribute
 	 *        The main attribute whose value is checked. Failures are reported in the context of
 	 *        this attribute. The check may involve other attributes of the same object or
-	 *        associated objects, see {@link #traceDependencies(TLObject, TLStructuredTypePart, Sink)}.
+	 *        associated objects, see
+	 *        {@link #traceDependencies(TLObject, TLStructuredTypePart, Sink, FormContext)}.
 	 * 
 	 * @return <code>null</code> for a successful check, or the reason why the check failed as
 	 *         internationalizable message.
@@ -58,10 +60,12 @@ public interface ConstraintCheck {
 	 * @param attribute
 	 *        The main attribute whose value is checked. The main value
 	 *        <code>object.attribute</code> is not required to be reported as dependency.
-	 * 
 	 * @param trace
 	 *        A {@link Sink} of {@link Pointer}s to the model whose values determine the check
 	 *        result. The tracing reports all those {@link Pointer}s to the given {@link Sink}.
+	 * @param formContext
+	 *        The form context, or <code>null</code> if not available.
 	 */
-	void traceDependencies(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace);
+	void traceDependencies(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace,
+			FormContext formContext);
 }

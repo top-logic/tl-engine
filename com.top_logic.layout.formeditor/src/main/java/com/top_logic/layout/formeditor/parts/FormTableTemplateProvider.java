@@ -110,15 +110,18 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 
 		private final TLStructuredTypePart _part;
 
+		private final Map<TLObject, FormContainer> _rowGroups;
+
 		/**
 		 * Creates a new {@link FieldProviderImpl}.
 		 */
 		FieldProviderImpl(TLStructuredTypePart part, AttributeColumn col, AttributeFormContext formContext,
-				FormContainer contentGroup) {
+				FormContainer contentGroup, Map<TLObject, FormContainer> rowGroups) {
 			_col = col;
 			_part = part;
 			_formContext = formContext;
 			_contentGroup = contentGroup;
+			_rowGroups = rowGroups;
 		}
 
 		@Override
@@ -131,8 +134,15 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 		public FormMember createField(Object aModel, Accessor anAccessor, String aProperty) {
 			TLObject rowType = (TLObject) aModel;
 			boolean isDisabled = false;
+
+			// Use the row-specific group if available, otherwise fall back to contentGroup
+			FormContainer targetGroup = _rowGroups != null ? _rowGroups.get(rowType) : _contentGroup;
+			if (targetGroup == null) {
+				targetGroup = _contentGroup;
+			}
+
 			FormMember field =
-				FormEditorUtil.createAnotherMetaAttributeForEdit(_formContext, _contentGroup, _part, rowType,
+				FormEditorUtil.createAnotherMetaAttributeForEdit(_formContext, targetGroup, _part, rowType,
 					isDisabled, AnnotationContainer.EMPTY);
 			if (field != null) {
 				FormVisibility visibility = _col.getVisibility();
@@ -197,25 +207,26 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 			visibleColumNames.add(column.visit(columnNameProvider, null));
 		}
 
-		AttributeFormContext formContext = (AttributeFormContext) context.getFormContext();
-		TableConfiguration tableConfig = TableConfigurationFactory.build(
-			genericProvider(),
-			adaptColumns(formContext, contentGroup, configuredCols, columnNameProvider),
-			GenericTableConfigurationProvider.showColumns(visibleColumNames),
-			tableTitleProvider(model),
-			additionalCommands(),
-			deactivateTableFeatures(inDesignMode));
-
 		List<?> rows = rows(model);
+		AttributeFormContext formContext = (AttributeFormContext) context.getFormContext();
 		AttributeUpdateContainer attributeUpdateContainer = formContext.getAttributeUpdateContainer();
 		List<TLObject> overlays = new ArrayList<>();
+		Map<TLObject, FormContainer> rowGroups = new HashMap<>();
 		for (Object row : rows) {
 			TLFormObject overlay = attributeUpdateContainer.editObject((TLObject) row);
 			FormContainer rowGroup = attributeUpdateContainer.getFormContext().createFormContainerForOverlay(overlay);
 			rowGroup.setStableIdSpecialCaseMarker(row);
 			contentGroup.addMember(rowGroup);
+			rowGroups.put((TLObject) row, rowGroup);
 			overlays.add(overlay);
 		}
+		TableConfiguration tableConfig = TableConfigurationFactory.build(
+			genericProvider(),
+			adaptColumns(formContext, contentGroup, rowGroups, configuredCols, columnNameProvider),
+			GenericTableConfigurationProvider.showColumns(visibleColumNames),
+			tableTitleProvider(model),
+			additionalCommands(),
+			deactivateTableFeatures(inDesignMode));
 
 		ObjectTableModel otm = new ObjectTableModel(visibleColumNames, tableConfig, overlays);
 
@@ -269,9 +280,11 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 	}
 
 	private TableConfigurationProvider adaptColumns(FormContext formContext, FormContainer contentGroup,
+			Map<TLObject, FormContainer> rowGroups,
 			Collection<ColumnDisplay> colums,
 			ColumnDisplayVisitor<String, Void> columnNameProvider) {
-		ColumnDisplayVisitor<Void, ColumnConfiguration> adaptColumn = adaptColumnVisitor(formContext, contentGroup);
+		ColumnDisplayVisitor<Void, ColumnConfiguration> adaptColumn =
+			adaptColumnVisitor(formContext, contentGroup, rowGroups);
 		TableConfigurationProvider adaptColumns = new TableConfigurationProvider() {
 			@Override
 			public void adaptConfigurationTo(TableConfiguration table) {
@@ -369,7 +382,7 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 	}
 
 	private ColumnDisplayVisitor<Void, ColumnConfiguration> adaptColumnVisitor(FormContext formContext,
-			FormContainer contentGroup) {
+			FormContainer contentGroup, Map<TLObject, FormContainer> rowGroups) {
 		return new ColumnDisplayVisitor<Void, ColumnConfiguration>() {
 
 			@Override
@@ -395,7 +408,7 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 
 						AttributeFormContext attributeFormContext = (AttributeFormContext) formContext;
 						arg.setFieldProvider(
-							new FieldProviderImpl(part, col, attributeFormContext, contentGroup));
+							new FieldProviderImpl(part, col, attributeFormContext, contentGroup, rowGroups));
 						arg.setControlProvider(MetaControlProvider.INSTANCE);
 						arg.setAccessor(new ReadOnlyAccessor<>() {
 							@Override

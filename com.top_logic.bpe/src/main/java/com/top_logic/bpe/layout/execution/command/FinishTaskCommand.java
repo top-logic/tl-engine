@@ -197,7 +197,6 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 			// force permission re-evaluation for new context by resetting edit mode and delegating
 			// validation to reswitchToEdit()
 			editComponent.setViewMode();
-			editComponent.setViewMode();
 			editComponent.reswitchToEdit();
 		}
 

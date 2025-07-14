@@ -12,6 +12,7 @@ import java.util.Set;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.layout.SingleSelectionModel;
+import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.component.model.SingleSelectionListener;
 import com.top_logic.util.Utils;
@@ -86,10 +87,19 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 			throw new IllegalArgumentException("Selected object may not be null.");
 		}
 		
-		if (!isSelectable(touchedObject) || isSelectionNotChangable()) {
+		if (isSelectionFixed()) {
 			return;
 		}
+
 		if (select) {
+			if (!isSelectable(touchedObject)) {
+				// No valid new selection.
+
+				// Note: Evaluating the selection filter must only happen on objects that are about
+				// to be selected, since de-selection naturally occurs on deleted objects.
+				return;
+			}
+
 			if (!touchedObject.equals(_selected)) {
 				internalSetSelected(touchedObject);
             }
@@ -133,8 +143,12 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 		}
 	}
 
-	private boolean isSelectionNotChangable() {
-		return _selected != null ? !getDeselectionFilter().accept(_selected) : false;
+	private boolean isSelectionFixed() {
+		// A deleted object must be removable from selection. A filter must not be evaluated on a
+		// deleted object.
+		return _selected != null
+			? ComponentUtil.isValid(_selected) && !getDeselectionFilter().accept(_selected)
+			: false;
 	}
 
 	/**
@@ -182,7 +196,7 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 
 	@Override
 	public void clear() {
-		if (_selected == null || isSelectionNotChangable()) {
+		if (_selected == null || isSelectionFixed()) {
 			return;
 		}
 		internalSetSelected(null);

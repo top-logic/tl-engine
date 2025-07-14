@@ -14,6 +14,7 @@ import java.util.Set;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.filter.FilterFactory;
+import com.top_logic.layout.component.ComponentUtil;
 
 /**
  * A selection model that supports multiple selections.
@@ -58,7 +59,7 @@ public class DefaultMultiSelectionModel extends AbstractRestrainedSelectionModel
 	 * true, if the given object can be removed from set of selected objects.
 	 */
 	public boolean isDeselectable(Object obj) {
-		return getDeselectionFilter().accept(obj);
+		return !ComponentUtil.isValid(obj) || getDeselectionFilter().accept(obj);
 	}
 
 	/**
@@ -78,7 +79,6 @@ public class DefaultMultiSelectionModel extends AbstractRestrainedSelectionModel
 			throw new IllegalArgumentException("Selected object may not be null.");
 		}
 
-		
 		if (select) {
 			if (!isSelectable(obj)) {
 				return;

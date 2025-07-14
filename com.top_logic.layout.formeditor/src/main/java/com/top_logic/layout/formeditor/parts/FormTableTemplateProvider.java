@@ -28,7 +28,6 @@ import com.top_logic.element.layout.formeditor.implementation.FieldDefinitionTem
 import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.MetaControlProvider;
-import com.top_logic.element.meta.form.overlay.ObjectEditing;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.gui.MetaAttributeGUIHelper;
 import com.top_logic.html.template.HTMLTemplateFragment;
@@ -121,7 +120,7 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 
 		@Override
 		public String getFieldName(Object aModel, Accessor anAccessor, String aProperty) {
-			ObjectEditing overlay = (ObjectEditing) aModel;
+			TLFormObject overlay = (TLFormObject) aModel;
 			return MetaAttributeGUIHelper.getAttributeID(_part, overlay.getEditedObject());
 		}
 

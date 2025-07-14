@@ -22,6 +22,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.kbbased.filtergen.AttributedValueFilter;
@@ -203,12 +204,15 @@ public class TreeOptionsByExpression extends AbstractConfiguredInstance<TreeOpti
 
 		private BusinessObjectTreeModel<Object> _treeModel;
 
+		private AttributeUpdateContainer _updateContainer;
+
 		/**
 		 * Creates a {@link ScriptOptionTree}.
 		 */
 		public ScriptOptionTree(EditContext editContext) {
 			super(editContext.getOverlay());
 			_optionsFilter = createSelectionFilter(editContext);
+			_updateContainer = editContext.getOverlay().getScope();
 		}
 
 		@Override
@@ -257,7 +261,7 @@ public class TreeOptionsByExpression extends AbstractConfiguredInstance<TreeOpti
 		private void addConfiguredSelectionFilter(List<Filter<Object>> filters, TLFormObject currentObject) {
 			if (_selectionFilter != null) {
 				filters.add(node -> SearchExpression
-					.asBoolean(_selectionFilter.execute(this, currentObject.getScope(), node, currentObject)));
+					.asBoolean(_selectionFilter.execute(this, _updateContainer, node, currentObject)));
 			}
 		}
 
@@ -279,15 +283,16 @@ public class TreeOptionsByExpression extends AbstractConfiguredInstance<TreeOpti
 			Function<Object, Collection<?>> parentsByNode = createParentsByNode(currentObject);
 
 			return new BusinessObjectTreeModel<>(
-				_root.execute(this, null, currentObject), childrenByNode, parentsByNode, _finite);
+				_root.execute(this, _updateContainer, currentObject), childrenByNode, parentsByNode, _finite);
 		}
 
 		private Function<Object, Collection<?>> createParentsByNode(TLObject currentObject) {
-			return node -> SearchExpression.asCollection(_parents.execute(this, null, node, currentObject));
+			return node -> SearchExpression.asCollection(_parents.execute(this, _updateContainer, node, currentObject));
 		}
 
 		private Function<Object, Collection<?>> createChildrenByNode(TLObject currentObject) {
-			return node -> SearchExpression.asCollection(_children.execute(this, null, node, currentObject));
+			return node -> SearchExpression
+				.asCollection(_children.execute(this, _updateContainer, node, currentObject));
 		}
 	}
 		

@@ -25,6 +25,7 @@ import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.InAppClassifierConstants;
 import com.top_logic.element.config.annotation.TLOptions;
 import com.top_logic.element.meta.AttributeUpdate;
+import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
@@ -113,7 +114,8 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 
 	@Override
 	public OptionModel<?> generate(EditContext editContext) {
-		return new ScriptObservingOptionList(editContext.getOverlay(), editContext.getValueType());
+		return new ScriptObservingOptionList(editContext.getOverlay(), editContext.getValueType(),
+			editContext.getOverlay().getScope());
 	}
 
 	@Override
@@ -135,6 +137,8 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 
 		private Function<Object, Object> _normalizer;
 
+		private AttributeUpdateContainer _updateContainer;
+
 		/**
 		 * Creates a {@link ScriptObservingOptions}.
 		 * 
@@ -142,9 +146,12 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 		 *        The base object that owns the attribute for which options are generated.
 		 * @param valueType
 		 *        The type of option values.
+		 * @param updateContainer
+		 *        The attribute update container.
 		 */
-		private ScriptObservingOptionList(TLObject object, TLType valueType) {
+		private ScriptObservingOptionList(TLObject object, TLType valueType, AttributeUpdateContainer updateContainer) {
 			super(object);
+			_updateContainer = updateContainer;
 
 			if (valueType.getModelKind() == ModelKind.DATATYPE) {
 				StorageMapping<?> storageMapping = ((TLPrimitive) valueType).getStorageMapping();
@@ -167,7 +174,8 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 		}
 	
 		private List<?> createOptions() {
-			List<?> list = SearchExpression.asList(_function.execute(this, null, getObject()));
+			List<?> list = SearchExpression
+				.asList(_function.execute(this, _updateContainer, getObject()));
 			if (_normalizer != null) {
 				return list.stream().map(_normalizer).collect(Collectors.toList());
 			}

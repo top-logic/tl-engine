@@ -11,7 +11,7 @@
       "enabled": false,
       "reviewers": [
         "jenkins",
-        "team:TopLogic/Mitarbeiter"
+        "team:Mitarbeiter"
       ],
       "dependencyDashboard": false,
       "matchPackageNames": [

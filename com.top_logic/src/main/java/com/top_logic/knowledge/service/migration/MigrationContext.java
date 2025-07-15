@@ -8,8 +8,8 @@ package com.top_logic.knowledge.service.migration;
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
 import java.sql.SQLException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.w3c.dom.Document;
 
@@ -64,7 +64,7 @@ public class MigrationContext extends TypedAnnotationContainer {
 
 	private MORepository _schemaRepository;
 
-	private final Set<MOStructure> _xrefInvalidates = new HashSet<>();
+	private final Map<String, MOStructure> _xrefInvalidates = new HashMap<>();
 
 	/**
 	 * Creates a {@link MigrationContext}.
@@ -170,7 +170,11 @@ public class MigrationContext extends TypedAnnotationContainer {
 	 *        rebuilt.
 	 */
 	public void invalidateXRef(MOStructure table) {
-		_xrefInvalidates.add(table);
+		/* It is not sufficient to store the tables in a set, because an MOStructure is only equal
+		 * to itself. It is possible that several MORepositories with the (logically) same tables
+		 * are created during the migration. However, these MORepository's have different
+		 * MOStructure instances for the same tables. */
+		_xrefInvalidates.put(table.getName(), table);
 	}
 
 	/**
@@ -178,7 +182,7 @@ public class MigrationContext extends TypedAnnotationContainer {
 	 * {@link #invalidateXRef(MOStructure) invalidated}.
 	 */
 	public void revalidateXRef(Log log, PooledConnection connection) throws SQLException {
-		for (MOStructure table : _xrefInvalidates) {
+		for (MOStructure table : _xrefInvalidates.values()) {
 			CompiledStatement removeXref = query(
 				delete(table(SQLH.mangleDBName(RevisionXref.REVISION_XREF_TYPE_NAME)),
 					eqSQL(
@@ -190,7 +194,7 @@ public class MigrationContext extends TypedAnnotationContainer {
 				+ RevisionXref.REVISION_XREF_TYPE_NAME + ".");
 		}
 
-		for (MOStructure table : _xrefInvalidates) {
+		for (MOStructure table : _xrefInvalidates.values()) {
 			CompiledStatement fillXref = query(
 				insert(
 					table(SQLH.mangleDBName(RevisionXref.REVISION_XREF_TYPE_NAME)),

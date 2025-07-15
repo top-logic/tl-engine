@@ -80,15 +80,16 @@ public class DefaultMultiSelectionModel extends AbstractRestrainedSelectionModel
 		}
 
 		if (select) {
+			if (selected.contains(obj)) {
+				return;
+			}
 			if (!isSelectable(obj)) {
 				return;
 			}
-			if (! selected.contains(obj)) {
-				HashSet oldSelection = new HashSet(selected);
-				selected.add(obj);
-				setLastSelected(obj);
-				fireSelectionChanged(oldSelection);
-			}
+			HashSet oldSelection = new HashSet(selected);
+			selected.add(obj);
+			setLastSelected(obj);
+			fireSelectionChanged(oldSelection);
 		} else {
 			if (!isDeselectable(obj)) {
 				return;

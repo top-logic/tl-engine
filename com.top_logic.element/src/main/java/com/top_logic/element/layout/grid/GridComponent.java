@@ -683,6 +683,7 @@ public class GridComponent extends EditComponent implements
     @Override
     public void invalidate() {
 		invalidateSelection();
+		markRowsInvalid();
 
         super.invalidate();
     }

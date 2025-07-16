@@ -945,7 +945,10 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 * the {@link CommandHandler#getID()} of the handler used to close this component
 	 */
 	protected String getDefaultCloseDialogHandlerName() {
-		return CloseModalDialogCommandHandler.HANDLER_NAME;
+		if (isTopLevelDialog()) {
+			return CloseModalDialogCommandHandler.HANDLER_NAME;
+		}
+		return null;
 	}
 
 	/**

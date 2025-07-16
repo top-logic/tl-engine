@@ -92,6 +92,10 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 		}
 
 		if (select) {
+			if (touchedObject.equals(_selected)) {
+				// touchedObject is already the selected item
+				return;
+			}
 			if (!isSelectable(touchedObject)) {
 				// No valid new selection.
 
@@ -100,9 +104,7 @@ public class DefaultSingleSelectionModel extends AbstractRestrainedSelectionMode
 				return;
 			}
 
-			if (!touchedObject.equals(_selected)) {
-				internalSetSelected(touchedObject);
-            }
+			internalSetSelected(touchedObject);
 		} else {
 			if (touchedObject.equals(_selected)) {
 				internalSetSelected(null);

@@ -81,7 +81,6 @@ import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.Clipboard;
-import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.ContextPosition;
 import com.top_logic.layout.Control;
@@ -2015,14 +2014,14 @@ public class GridComponent extends EditComponent implements
 	}
 
 	@Override
-	public List<Wrapper> getDisplayedRows() {
-		List<Wrapper> rows = new ArrayList<>();
+	public List<Object> getDisplayedRows() {
+		List<Object> rows = new ArrayList<>();
 		for (FormGroup group : getAllVisibleFormGroups()) {
 			Object rowObject = group.get(GridComponent.PROP_ATTRIBUTED);
 
-			// beware: rowObject may be a new, transient object
-			if (rowObject instanceof Wrapper) {
-				rows.add((Wrapper) rowObject);
+			// beware: rowObject may be a "the" new object - no one can do anything with it.
+			if (!(rowObject instanceof NewObject)) {
+				rows.add(rowObject);
 			}
 		}
 		return rows;
@@ -3238,7 +3237,7 @@ public class GridComponent extends EditComponent implements
      * A grid row must be represented as form group. This will contain some form members
      * and an {@link GridComponent#PROP_ATTRIBUTED}. When there is a form member named
      * like a column in the table, the accessor will return this, otherwise the
-     * {@link GridComponent#PROP_ATTRIBUTED} (which is an {@link Wrapper}) will be asked
+     * {@link GridComponent#PROP_ATTRIBUTED} (which is an {@link TLObject}) will be asked
      * for the value.
      *
      * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
@@ -3745,7 +3744,7 @@ public class GridComponent extends EditComponent implements
                 
                 for (Iterator<FormGroup> theIt = theComp.getMarkedFormGroups().iterator(); theIt.hasNext(); ) {
                     FormGroup theGroup   = theIt.next();
-					Wrapper theWrapper = (Wrapper) theGroup.get(PROP_ATTRIBUTED);
+					TLObject theWrapper = (TLObject) theGroup.get(PROP_ATTRIBUTED);
 
                     if (!theWrapper.tValid()) {
                         throw LayoutUtils.createErrorSelectedObjectDeleted();

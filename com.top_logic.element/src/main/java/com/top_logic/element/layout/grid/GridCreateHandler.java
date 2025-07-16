@@ -158,8 +158,8 @@ public class GridCreateHandler extends AbstractGridCreateHandler {
 			Object selection = ((Selectable) component).getSelected();
 			if (selection == null) {
 				return new Failure(I18NConstants.NO_SELECTION);
-			} else if (selection instanceof Wrapper) {
-				TLStructuredType selectionType = ((Wrapper) selection).tType();
+			} else if (selection instanceof TLObject) {
+				TLStructuredType selectionType = ((TLObject) selection).tType();
 				if (!parentTypes.contains(TLModelUtil.qualifiedName(selectionType))) {
 					return new Failure(I18NConstants.WRONG_SELECTION);
 				}

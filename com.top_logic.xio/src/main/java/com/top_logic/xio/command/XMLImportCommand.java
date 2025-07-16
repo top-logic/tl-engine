@@ -39,6 +39,7 @@ import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.codeedit.editor.ConfigXMLEditor;
+import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.WithPostCreateActions;
 import com.top_logic.layout.form.model.DataField;
@@ -348,6 +349,7 @@ public class XMLImportCommand extends AbstractCommandHandler implements WithPost
 			@Override
 			protected void fillFormContext(FormContext context) {
 				_dataField = FormFactory.newDataField(INPUT_FIELD, false);
+				_dataField.setMandatory(true);
 				context.addMember(_dataField);
 			}
 
@@ -358,6 +360,9 @@ public class XMLImportCommand extends AbstractCommandHandler implements WithPost
 			}
 
 			private HandlerResult startImport(DisplayContext displaycontext) {
+				if (!getFormContext().checkAll()) {
+					return AbstractApplyCommandHandler.createErrorResult(getFormContext());
+				}
 				return openProgress(displaycontext, aComponent, model, _dataField.getDataItem(), getDiscardClosure());
 			}
 

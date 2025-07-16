@@ -98,6 +98,12 @@ public interface FormTableDefinition
 	List<TableCommandConfig> getCommands();
 
 	/**
+	 * Title of the table.
+	 */
+	@Override
+	ResKey getLabel();
+
+	/**
 	 * Expression creating a dynamic label for the table based on the model.
 	 *
 	 * <p>

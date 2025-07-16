@@ -31,6 +31,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.commons.collections4.CollectionUtils;
 
+import com.top_logic.base.locking.handler.LockHandler;
+import com.top_logic.base.locking.handler.NoTokenHandling;
 import com.top_logic.base.services.simpleajax.AJAXCommandHandler;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
@@ -3701,7 +3703,9 @@ public class GridComponent extends EditComponent implements
                 	return ExecutableState.EXECUTABLE;
                 }
                 
-				return grid.getLockHandler().hasLock() ? ExecutableState.EXECUTABLE : NOT_LOCKED;
+				LockHandler lockHandler = grid.getLockHandler();
+				return lockHandler == NoTokenHandling.INSTANCE || lockHandler.hasLock() ? ExecutableState.EXECUTABLE
+					: NOT_LOCKED;
             }
 
             return ExecutableState.NOT_EXEC_HIDDEN;

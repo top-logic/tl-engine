@@ -15,10 +15,11 @@ import com.top_logic.layout.component.model.AbstractSelectionModel;
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */
-public abstract class AbstractRestrainedSelectionModel extends AbstractSelectionModel {
+public abstract class AbstractRestrainedSelectionModel<T> extends AbstractSelectionModel<T> {
 
-	private Filter<Object> _selectionFilter;
-	private Filter<Object> _deselectionFilter;
+	private Filter<? super T> _selectionFilter;
+
+	private Filter<? super T> _deselectionFilter;
 
 	/**
 	 * Create a new {@link AbstractRestrainedSelectionModel}.
@@ -29,14 +30,14 @@ public abstract class AbstractRestrainedSelectionModel extends AbstractSelection
 	}
 
 	@Override
-	public boolean isSelectable(Object obj) {
+	public boolean isSelectable(T obj) {
 		return getSelectionFilter().accept(obj);
 	}
 
 	/**
 	 * Whether the given object can be selected.
 	 */
-	public boolean isDeselectable(Object obj) {
+	public boolean isDeselectable(T obj) {
 		return !ComponentUtil.isValid(obj) || getDeselectionFilter().accept(obj);
 	}
 
@@ -47,14 +48,14 @@ public abstract class AbstractRestrainedSelectionModel extends AbstractSelection
 	 *        The {@link Filter filter}, which defines, whether an object is selectable or not. If
 	 *        the filter is <code>null</code>, then every object is selectable.
 	 */
-	public void setSelectionFilter(Filter<?> selectionFilter) {
+	public void setSelectionFilter(Filter<? super T> selectionFilter) {
 		_selectionFilter = nonNull(selectionFilter);
 	}
 
 	/**
 	 * @see #setSelectionFilter(Filter)
 	 */
-	public Filter<Object> getSelectionFilter() {
+	public Filter<? super T> getSelectionFilter() {
 		return _selectionFilter;
 	}
 
@@ -64,7 +65,7 @@ public abstract class AbstractRestrainedSelectionModel extends AbstractSelection
 	 * @param deselectionFilter
 	 *        May be <code>null</code>. In that case {@link FilterFactory#trueFilter()} is used.
 	 */
-	public void setDeselectionFilter(Filter<?> deselectionFilter) {
+	public void setDeselectionFilter(Filter<? super T> deselectionFilter) {
 		_deselectionFilter = nonNull(deselectionFilter);
 	}
 
@@ -72,16 +73,15 @@ public abstract class AbstractRestrainedSelectionModel extends AbstractSelection
 	 * The {@link Filter filter}, which defines whether an object can be removed from the selection
 	 * or not.
 	 */
-	public Filter<Object> getDeselectionFilter() {
+	public Filter<? super T> getDeselectionFilter() {
 		return _deselectionFilter;
 	}
 
 	/**
 	 * Given filter, if it is not <code>null</code>, {@link FilterFactory#trueFilter()} otherwise.
 	 */
-	@SuppressWarnings("unchecked")
-	protected final Filter<Object> nonNull(Filter<?> selectionFilter) {
-		return (Filter<Object>) (selectionFilter == null ? FilterFactory.trueFilter() : selectionFilter);
+	protected final Filter<? super T> nonNull(Filter<? super T> selectionFilter) {
+		return selectionFilter == null ? FilterFactory.trueFilter() : selectionFilter;
 	}
 
 }

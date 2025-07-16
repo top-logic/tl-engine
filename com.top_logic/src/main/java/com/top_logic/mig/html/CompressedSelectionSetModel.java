@@ -64,7 +64,7 @@ public class CompressedSelectionSetModel implements SelectionSetModel {
 	public SelectionModel getSelectionModel(final int selectionIndex) {
 		final int mask = 1 << selectionIndex;
 
-		return new AbstractSelectionModel(SelectionModelOwner.NO_OWNER) {
+		return new AbstractSelectionModel<>(SelectionModelOwner.NO_OWNER) {
 			
 			@Override
 			public boolean isSelectable(Object obj) {
@@ -87,7 +87,7 @@ public class CompressedSelectionSetModel implements SelectionSetModel {
 			}
 
 			@Override
-			public void setSelection(Set<?> newSelection) {
+			public void setSelection(Set<? extends Object> newSelection) {
 				clear();
 				for (Object newSelected : newSelection) {
 					setSelected(newSelected, true);
@@ -96,8 +96,8 @@ public class CompressedSelectionSetModel implements SelectionSetModel {
 
 			@Override
 			public Set<?> getSelection() {
-				HashSet result = new HashSet();
-				for (Iterator it = selections.keySet().iterator(); it.hasNext(); ) {
+				HashSet<Object> result = new HashSet<>();
+				for (Iterator<Object> it = selections.keySet().iterator(); it.hasNext();) {
 					Object obj = it.next();
 					if (isSelected(obj)) result.add(obj);
 				}

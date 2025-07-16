@@ -14,10 +14,11 @@ import com.top_logic.layout.component.model.AbstractSelectionModel;
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */
-public abstract class AbstractRestrainedSelectionModel extends AbstractSelectionModel {
+public abstract class AbstractRestrainedSelectionModel<T> extends AbstractSelectionModel<T> {
 
-	private Filter<Object> _selectionFilter;
-	private Filter<Object> _deselectionFilter;
+	private Filter<? super T> _selectionFilter;
+
+	private Filter<? super T> _deselectionFilter;
 
 	/**
 	 * Create a new {@link AbstractRestrainedSelectionModel}.
@@ -33,14 +34,14 @@ public abstract class AbstractRestrainedSelectionModel extends AbstractSelection
 	 * @param selectionFilter - the {@link Filter filter}, which defines, if an object is selectable, or not.
 	 * If the filter is null, then every object is selectable.
 	 */
-	public void setSelectionFilter(Filter<?> selectionFilter) {
+	public void setSelectionFilter(Filter<? super T> selectionFilter) {
 		this._selectionFilter = nonNull(selectionFilter);
 	}
 
 	/**
 	 * @see #setSelectionFilter(Filter)
 	 */
-	public Filter<Object> getSelectionFilter() {
+	public Filter<? super T> getSelectionFilter() {
 		return _selectionFilter;
 	}
 
@@ -51,14 +52,14 @@ public abstract class AbstractRestrainedSelectionModel extends AbstractSelection
 	 *        - the {@link Filter filter}, which defines, if an object can be removed from
 	 *        selection, or not. If the filter is null, then every object is deselectable.
 	 */
-	public void setDeselectionFilter(Filter<?> deselectionFilter) {
+	public void setDeselectionFilter(Filter<? super T> deselectionFilter) {
 		_deselectionFilter = nonNull(deselectionFilter);
 	}
 
 	/**
 	 * @set {@link #setDeselectionFilter(Filter)}
 	 */
-	public Filter<Object> getDeselectionFilter() {
+	public Filter<? super T> getDeselectionFilter() {
 		return _deselectionFilter;
 	}
 
@@ -66,9 +67,8 @@ public abstract class AbstractRestrainedSelectionModel extends AbstractSelection
 	 * given filter, if it is not <code>null</code>, {@link FilterFactory#trueFilter()}
 	 *         otherwise.
 	 */
-	@SuppressWarnings("unchecked")
-	protected final Filter<Object> nonNull(Filter<?> selectionFilter) {
-		return (Filter<Object>) (selectionFilter == null ? FilterFactory.trueFilter() : selectionFilter);
+	protected final Filter<? super T> nonNull(Filter<? super T> selectionFilter) {
+		return selectionFilter == null ? FilterFactory.trueFilter() : selectionFilter;
 	}
 
 }

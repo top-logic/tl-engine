@@ -19,8 +19,11 @@ import com.top_logic.mig.html.SelectionModelOwner;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class NoSelectionModel implements SelectionModel {
+public class NoSelectionModel implements SelectionModel<Object> {
 
+	/**
+	 * Singleton immutable instance.
+	 */
 	public static final NoSelectionModel INSTANCE = new NoSelectionModel();
 	
 	/**

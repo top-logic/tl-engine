@@ -19,16 +19,23 @@ import com.top_logic.mig.html.SelectionModelOwner;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public abstract class AbstractSelectionModel extends AbstractObservable<SelectionListener, MultiSelectionEvent> implements SelectionModel {
+public abstract class AbstractSelectionModel<T> extends AbstractObservable<SelectionListener, MultiSelectionEvent>
+		implements SelectionModel<T> {
 
 	private SelectionModelOwner _owner;
 
+	/**
+	 * Creates a {@link AbstractSelectionModel}.
+	 *
+	 * @param owner
+	 *        See {@link #getOwner()}.
+	 */
 	public AbstractSelectionModel(SelectionModelOwner owner) {
 		_owner = owner;
 	}
 
 	/**
-	 * Initialises {@link #getOwner()}
+	 * Initializes {@link #getOwner()}
 	 * 
 	 * @param owner
 	 *        Value of {@link #getOwner()}.
@@ -52,11 +59,11 @@ public abstract class AbstractSelectionModel extends AbstractObservable<Selectio
 	 * @param formerlySelectedObjects
 	 *            the set of objects which was selected before.
 	 */
-	protected final void fireSelectionChanged(Set formerlySelectedObjects) {
+	protected final void fireSelectionChanged(Set<? extends T> formerlySelectedObjects) {
 		if (!hasListeners()) {
 			return;
 		}
-		Set currentSelection = getSelection();
+		Set<? extends T> currentSelection = getSelection();
 
 		notifyListeners(new MultiSelectionEvent(this, formerlySelectedObjects, currentSelection));
 	}
@@ -66,8 +73,8 @@ public abstract class AbstractSelectionModel extends AbstractObservable<Selectio
 		{
 			// Decompose event to keep original code with annotate information referencing #3910.
 			SelectionListener currentListener = listener;
-			Set formerlySelectedObjects = event.getFormerlySelectedObjects();
-			Set currentSelection = event.getNewlySelectedObjects();
+			Set<?> formerlySelectedObjects = event.getFormerlySelectedObjects();
+			Set<?> currentSelection = event.getNewlySelectedObjects();
 
 			// Quirks introduced in #3910 to fix #3936:
 

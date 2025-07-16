@@ -46,7 +46,7 @@ import com.top_logic.layout.tree.model.TLTreeModel;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel {
+public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel<N> {
 
 	/**
 	 * Event object used by {@link TreeSelectionListener}.
@@ -152,7 +152,7 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 	}
 
 	@Override
-	public boolean isSelectable(Object obj) {
+	public boolean isSelectable(N obj) {
 		return super.isSelectable(obj) && hasNodeType(obj);
 	}
 
@@ -173,8 +173,8 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 	}
 
 	@Override
-	public void setSelected(Object obj, boolean select) {
-		Set<?> oldSelection = null;
+	public void setSelected(N obj, boolean select) {
+		Set<? extends N> oldSelection = null;
 		Map<N, TriState> oldStates = null;
 		if (hasListeners()) {
 			oldSelection = getSelection();
@@ -193,7 +193,7 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 		}
 	}
 
-	private boolean internalSetSelected(Object obj, boolean select) {
+	private boolean internalSetSelected(N obj, boolean select) {
 		if (select) {
 			if (!isSelectable(obj)) {
 				return false;
@@ -211,7 +211,7 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 	}
 
 	@Override
-	public void addToSelection(Collection<?> objects) {
+	public void addToSelection(Collection<? extends N> objects) {
 		switch (objects.size()) {
 			case 0:
 				break;
@@ -219,7 +219,7 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 				setSelected(objects.iterator().next(), true);
 				break;
 			default:
-				Set<?> oldSelection = null;
+				Set<? extends N> oldSelection = null;
 				Map<N, TriState> oldStates = null;
 				if (hasListeners()) {
 					oldSelection = getSelection();
@@ -228,7 +228,7 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 					oldStates = new HashMap<>(_states);
 				}
 				boolean changed = false;
-				for (Object obj : objects) {
+				for (N obj : objects) {
 					changed |= internalSetSelected(obj, true);
 				}
 				if (changed) {
@@ -244,7 +244,7 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 	}
 
 	@Override
-	public void removeFromSelection(Collection<?> objects) {
+	public void removeFromSelection(Collection<? extends N> objects) {
 		switch (objects.size()) {
 			case 0:
 				break;
@@ -252,7 +252,7 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 				setSelected(objects.iterator().next(), false);
 				break;
 			default:
-				Set<?> oldSelection = null;
+				Set<? extends N> oldSelection = null;
 				Map<N, TriState> oldStates = null;
 				if (hasListeners()) {
 					oldSelection = getSelection();
@@ -261,7 +261,7 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 					oldStates = new HashMap<>(_states);
 				}
 				boolean changed = false;
-				for (Object obj : objects) {
+				for (N obj : objects) {
 					changed |= internalSetSelected(obj, false);
 				}
 				if (changed) {
@@ -278,13 +278,13 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 	}
 
 	@Override
-	public Set<?> getSelection() {
+	public Set<? extends N> getSelection() {
 		return calculateSelected();
 	}
 
 	@Override
-	public void setSelection(Set<?> newSelection, Object lead) {
-		Set<?> oldSelection = getSelection();
+	public void setSelection(Set<? extends N> newSelection, Object lead) {
+		Set<? extends N> oldSelection = getSelection();
 		if (oldSelection.equals(newSelection)) {
 			setLastSelected(lead);
 			return;
@@ -295,7 +295,7 @@ public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel 
 		}
 		boolean changed = !_states.isEmpty();
 		_states.clear();
-		for (Object obj : newSelection) {
+		for (N obj : newSelection) {
 			changed |= internalSetSelected(obj, true);
 		}
 		setLastSelected(lead);

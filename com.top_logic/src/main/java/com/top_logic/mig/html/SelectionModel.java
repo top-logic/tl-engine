@@ -20,7 +20,7 @@ import com.top_logic.layout.scripting.recorder.ref.NamedModel;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public interface SelectionModel extends NamedModel, Serializable {
+public interface SelectionModel<T> extends NamedModel, Serializable {
 
 	/**
 	 * true, if this {@link SelectionModel} can handle multiple selected elements, false
@@ -33,12 +33,12 @@ public interface SelectionModel extends NamedModel, Serializable {
 	/**
 	 * Whether the given object can be selected.
 	 */
-	boolean isSelectable(Object obj);
+	boolean isSelectable(T obj);
 	
 	/**
 	 * Checks, whether the given object is contained in this selection.
 	 */
-	public boolean isSelected(Object obj);
+	public boolean isSelected(T obj);
 	
 	/**
 	 * Adds or removes the given object from this selection depending on 
@@ -48,7 +48,7 @@ public interface SelectionModel extends NamedModel, Serializable {
 	 * @param select If <code>true</code>, the object is selected. Otherwise, 
 	 *        the Object is deselected. 
 	 */
-	public void setSelected(Object obj, boolean select);
+	public void setSelected(T obj, boolean select);
 	
 	/**
 	 * Adds all of the given objects to the selection of this {@link SelectionModel}.
@@ -56,8 +56,8 @@ public interface SelectionModel extends NamedModel, Serializable {
 	 * @param objects
 	 *        The objects that should be selected.
 	 */
-	default void addToSelection(Collection<?> objects) {
-		for (Object obj : objects) {
+	default void addToSelection(Collection<? extends T> objects) {
+		for (T obj : objects) {
 			setSelected(obj, true);
 		}
 	}
@@ -68,8 +68,8 @@ public interface SelectionModel extends NamedModel, Serializable {
 	 * @param objects
 	 *        The objects that should be de-selected.
 	 */
-	default void removeFromSelection(Collection<?> objects) {
-		for (Object obj : objects) {
+	default void removeFromSelection(Collection<? extends T> objects) {
+		for (T obj : objects) {
 			setSelected(obj, false);
 		}
 	}
@@ -79,7 +79,7 @@ public interface SelectionModel extends NamedModel, Serializable {
 	 * 
 	 * @return the set of selected objects.
 	 */
-	public Set<?> getSelection();
+	public Set<? extends T> getSelection();
 	
 	/**
 	 * Selects the given objects (if possible) and deselects all others.
@@ -87,7 +87,7 @@ public interface SelectionModel extends NamedModel, Serializable {
 	 * @param newSelection
 	 *        The new selection. Must not be <code>null</code>.
 	 */
-	void setSelection(Set<?> newSelection);
+	void setSelection(Set<? extends T> newSelection);
 
 	/**
 	 * Clears this selection.

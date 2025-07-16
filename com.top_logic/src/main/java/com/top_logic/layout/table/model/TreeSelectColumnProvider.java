@@ -252,7 +252,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 	private <N> void updateSelectionModelFromChannel(TreeSelectionModel<N> selectionModel,
 			Supplier<? extends TLTreeModel<N>> treeSupplier, Object channelValue) {
 		TLTreeModel<N> treeModel = treeSupplier.get();
-		Set<Object> newSelectionModelValue = ((Collection<?>) channelValue)
+		Set<? extends N> newSelectionModelValue = ((Collection<?>) channelValue)
 			.stream()
 			.map(value -> findNode(treeModel, value))
 			.filter(Objects::nonNull)
@@ -271,7 +271,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		}
 	}
 
-	private <N> Object findNode(TLTreeModel<N> model, Object value) {
+	private <N> N findNode(TLTreeModel<N> model, Object value) {
 		Mapping<Object, ?> modelMapping = modelMapping();
 
 		List<?> bosWithRoot = (List<?>) value;

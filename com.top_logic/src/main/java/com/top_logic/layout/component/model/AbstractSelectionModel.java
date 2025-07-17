@@ -82,7 +82,7 @@ public abstract class AbstractSelectionModel<T> extends AbstractObservable<Selec
 			// previous listener can force it to remove as listener. In that
 			// case no notification must be happen.
 			if (hasListener(SelectionListener.class, currentListener)) {
-				currentListener.notifySelectionChanged(this, formerlySelectedObjects, currentSelection);
+				currentListener.notifySelectionChanged(this, event);
 			}
 
 		}

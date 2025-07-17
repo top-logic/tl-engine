@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.Set;
 
 import com.top_logic.layout.Control;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.scripting.action.SelectAction.SelectionChangeKind;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
@@ -117,7 +118,7 @@ public class TableHeaderSelectionControl extends TriStateCheckboxControl impleme
 	}
 
 	@Override
-	public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
+	public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 		invalidate();
 	}
 

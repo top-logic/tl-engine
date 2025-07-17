@@ -12,11 +12,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.ControlRenderer;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.dynamic.DynamicLayoutContainer;
 import com.top_logic.layout.layoutRenderer.FixedFlowLayoutRenderer;
@@ -83,14 +83,13 @@ public class SelectionModelLayoutControl extends ContainerControl<SelectionModel
         this.selectionChangedListener = new SelectionListener() {
 
             /**
-             * @see com.top_logic.layout.component.model.SelectionListener#notifySelectionChanged(com.top_logic.mig.html.SelectionModel, Set, Set)
+             * @see com.top_logic.layout.component.model.SelectionListener#notifySelectionChanged(com.top_logic.mig.html.SelectionModel, SelectionEvent)
              */
             @Override
-			public void notifySelectionChanged(SelectionModel selectionModel, Set<?> aFormerlySelectedObjects,
-					Set<?> aSelectedObjects) {
-				Collection<?> theOldComps = new HashSet<>(aFormerlySelectedObjects);
-				Collection<?> theNewComps = new HashSet<>(aSelectedObjects);
-				Collection<?> theOldCopy = new HashSet<>(aFormerlySelectedObjects);
+			public void notifySelectionChanged(SelectionModel selectionModel, SelectionEvent event) {
+				Collection<?> theOldComps = new HashSet<>(event.getFormerlySelectedObjects());
+				Collection<?> theNewComps = new HashSet<>(event.getNewlySelectedObjects());
+				Collection<?> theOldCopy = new HashSet<>(theOldComps);
                 theOldComps.removeAll(theNewComps);
                 theNewComps.removeAll(theOldCopy);
                 

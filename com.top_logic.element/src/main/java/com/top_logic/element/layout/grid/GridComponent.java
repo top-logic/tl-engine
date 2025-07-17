@@ -115,6 +115,7 @@ import com.top_logic.layout.compare.CompareAlgorithmHolder;
 import com.top_logic.layout.component.InAppSelectable;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.NoSelectionModel;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.ChangeStateListener;
 import com.top_logic.layout.form.FormConstants;
@@ -3416,12 +3417,13 @@ public class GridComponent extends EditComponent implements
 		private boolean _ignoreChanges = false;
 
 		@Override
-		public void notifySelectionChanged(SelectionModel model, Set<?> oldSelection, Set<?> newSelection) {
+		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			if (_ignoreChanges) {
 				return;
 			}
 			focusColumn(getTableField(getFormContext()).getViewModel());
 
+			Set<?> newSelection = event.getNewlySelectedObjects();
 			Set<List<Object>> newSelectedPaths = getRowObjectPaths(newSelection);
 
 			Collection<?> currentlySelectedPathsCollection = getSelectedPathsCollection();
@@ -3434,11 +3436,12 @@ public class GridComponent extends EditComponent implements
 				Set<Object> newSelectedObjects = getRowObjects(newSelection);
 				if (!CollectionUtil.equals(getSelectedCollection(), newSelectedObjects)) {
 					channelUpdated = false;
-					revertSelection(oldSelection);
+					revertSelection(event.getFormerlySelectedObjects());
 				}
 			}
 
 			if (isInEditMode()) {
+				Set<?> oldSelection = event.getFormerlySelectedObjects();
 				HandlerResult result = storeAttributeValuesAndAddFields(oldSelection, newSelection);
 				if (!result.isSuccess()) {
 					revertSelection(oldSelection);

@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.Control;
@@ -17,6 +16,8 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.WrappedModel;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.component.model.MultiSelectionEvent;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.ImageButtonRenderer;
@@ -335,8 +336,8 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 
 		// Ensure initial  consistency.
 		SelectionModel selectionModel = getSelectionModel();
-		_selectionListener.notifySelectionChanged(selectionModel, selectionModel.getSelection(),
-			Collections.emptySet());
+		_selectionListener.notifySelectionChanged(selectionModel,
+			new MultiSelectionEvent(selectionModel, Collections.emptySet(), selectionModel.getSelection()));
 
 		requestRepaint();
 	}
@@ -399,7 +400,8 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 		selectionModel.addSelectionListener(_selectionListener);
         
         // Ensure initial consistency.
-		_selectionListener.notifySelectionChanged(selectionModel, selectionModel.getSelection(), Collections.emptySet());
+		_selectionListener.notifySelectionChanged(selectionModel,
+			new MultiSelectionEvent(selectionModel, Collections.emptySet(), selectionModel.getSelection()));
 	}
 
 	@Override
@@ -632,7 +634,7 @@ public class EditableTableControl extends TableControl implements ModeModelListe
 	class SelectionListener implements com.top_logic.layout.component.model.SelectionListener {
 
 		@Override
-		public void notifySelectionChanged(SelectionModel model, Set<?> oldSelection, Set<?> newSelection) {
+		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			TableViewModel theViewModel = getViewModel();
 			int rowCount = theViewModel.getRowCount();
 			int selected = TableUtil.getSingleSelectedRow(getModel());

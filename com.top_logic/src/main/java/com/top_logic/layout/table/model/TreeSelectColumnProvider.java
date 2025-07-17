@@ -34,6 +34,7 @@ import com.top_logic.layout.SimpleAccessor;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.channel.linking.impl.ChannelLinking;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.control.TreeSelectionPartControl;
 import com.top_logic.layout.scripting.recorder.ref.GenericModelOwner.MultipleAnnotatedModels;
@@ -202,14 +203,11 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 			Supplier<? extends TLTreeModel<N>> treeSupplier) {
 		updateSelectionModelFromChannel(selectionModel, treeSupplier, channel().get());
 		selectionModel.addSelectionListener(new SelectionListener() {
-
 			@Override
-			public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects,
-					Set<?> selectedObjects) {
+			public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 				ComponentChannel channel = channel();
 				updateChannelFromSelectionModel(channel, treeSupplier, selectionModel.getStates());
 			}
-
 		});
 	}
 

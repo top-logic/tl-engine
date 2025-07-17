@@ -120,7 +120,7 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 		TLObject object = context.getModel();
 
 		if (object == null) {
-			return;
+			object = formContext.getOverlay(context.getContentGroup());
 		}
 
 		TLFormObject editObject = formContext.editObject(object);

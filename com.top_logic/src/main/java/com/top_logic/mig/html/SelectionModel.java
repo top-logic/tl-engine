@@ -6,6 +6,7 @@
 package com.top_logic.mig.html;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 
@@ -87,12 +88,17 @@ public interface SelectionModel<T> extends NamedModel, Serializable {
 	 * @param newSelection
 	 *        The new selection. Must not be <code>null</code>.
 	 */
-	void setSelection(Set<? extends T> newSelection);
+	default void setSelection(Set<? extends T> newSelection) {
+		clear();
+		addToSelection(newSelection);
+	}
 
 	/**
 	 * Clears this selection.
 	 */
-	public void clear();
+	default void clear() {
+		removeFromSelection(new ArrayList<>(getSelection()));
+	}
 
 	/**
 	 * Adds the given listener to this model.

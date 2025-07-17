@@ -43,6 +43,16 @@ public interface TreeView<N> {
 	Iterator<? extends N> getChildIterator(N node);
 
 	/**
+	 * Whether the given node has any children.
+	 * 
+	 * @param node
+	 *        The node to check.
+	 */
+	default boolean hasChildren(N node) {
+		return getChildIterator(node).hasNext();
+	}
+
+	/**
 	 * Whether the tree is guaranteed to be finite.
 	 */
 	boolean isFinite();

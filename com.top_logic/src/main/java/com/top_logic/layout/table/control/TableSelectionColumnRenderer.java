@@ -17,7 +17,7 @@ import com.top_logic.layout.table.CellRenderer;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableRenderer.Cell;
 import com.top_logic.mig.html.SelectionModel;
-import com.top_logic.mig.html.TreeSelectionModel;
+import com.top_logic.mig.html.SubtreeSelectionModel;
 
 /**
  * {@link CellRenderer} creating the technical column for keyboard row selection.
@@ -60,10 +60,10 @@ public class TableSelectionColumnRenderer extends AbstractCellRenderer {
 	public static Control createSelectionPartControl(SelectionModel selectionModel, Object rowObject,
 			Iterable<SelectionVetoListener> vetoListeners) {
 		Control ctrl;
-		if (selectionModel instanceof TreeSelectionModel) {
+		if (selectionModel instanceof SubtreeSelectionModel) {
 			@SuppressWarnings({ "rawtypes", "unchecked" })
 			TreeSelectionPartControl<?> selectionPartControl =
-				new TreeSelectionPartControl((TreeSelectionModel) selectionModel, rowObject);
+				new TreeSelectionPartControl((SubtreeSelectionModel) selectionModel, rowObject);
 			vetoListeners.forEach(selectionPartControl::addSelectionVetoListener);
 			ctrl = selectionPartControl;
 		} else {

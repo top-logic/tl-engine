@@ -13,8 +13,8 @@ import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.tree.model.DefaultMutableTLTreeModel;
 import com.top_logic.layout.tree.model.DefaultMutableTLTreeNode;
 import com.top_logic.mig.html.DefaultTreeMultiSelectionModel;
-import com.top_logic.mig.html.DefaultTreeMultiSelectionModel.NodeSelectionState;
 import com.top_logic.mig.html.SelectionModel;
+import com.top_logic.mig.html.TreeSelectionModel.NodeSelectionState;
 
 /**
  * Test case for {@link DefaultTreeMultiSelectionModel}.
@@ -87,67 +87,67 @@ public class TestDefaultTreeMultiSelectionModel extends TestCase {
 	}
 
 	public void testSelect() {
-		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_root));
-		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_b));
-		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_b1));
+		assertEquals(NodeSelectionState.NONE, _selection.getNodeSelectionState(_root));
+		assertEquals(NodeSelectionState.NONE, _selection.getNodeSelectionState(_b));
+		assertEquals(NodeSelectionState.NONE, _selection.getNodeSelectionState(_b1));
 
 		_selection.setSelected(_b1, true);
 
-		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_b1));
-		assertEquals(NodeSelectionState.ALL_DESCENDANTS, _selection.getTreeSelectionState(_b));
-		assertEquals(NodeSelectionState.SOME_DESCENDANTS, _selection.getTreeSelectionState(_root));
+		assertEquals(NodeSelectionState.FULL, _selection.getNodeSelectionState(_b1));
+		assertEquals(NodeSelectionState.ALL_DESCENDANTS, _selection.getNodeSelectionState(_b));
+		assertEquals(NodeSelectionState.SOME_DESCENDANTS, _selection.getNodeSelectionState(_root));
 
 		_selection.setSelected(_a, true);
-		assertEquals(NodeSelectionState.SELECTED_NO_DESCENDANTS, _selection.getTreeSelectionState(_a));
+		assertEquals(NodeSelectionState.SELECTED_NO_DESCENDANTS, _selection.getNodeSelectionState(_a));
 		_selection.setSelected(_a1, true);
-		assertEquals(NodeSelectionState.SELECTED_SOME_DESCENDANTS, _selection.getTreeSelectionState(_a));
+		assertEquals(NodeSelectionState.SELECTED_SOME_DESCENDANTS, _selection.getNodeSelectionState(_a));
 		_selection.setSelected(_a2, true);
 		_selection.setSelected(_a3, true);
-		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_a));
-		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_a1));
-		assertEquals(NodeSelectionState.SOME_DESCENDANTS, _selection.getTreeSelectionState(_root));
+		assertEquals(NodeSelectionState.FULL, _selection.getNodeSelectionState(_a));
+		assertEquals(NodeSelectionState.FULL, _selection.getNodeSelectionState(_a1));
+		assertEquals(NodeSelectionState.SOME_DESCENDANTS, _selection.getNodeSelectionState(_root));
 
 		_selection.setSelected(_a3, false);
-		assertEquals(NodeSelectionState.SELECTED_SOME_DESCENDANTS, _selection.getTreeSelectionState(_a));
-		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_a1));
-		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_a3));
-		assertEquals(NodeSelectionState.SOME_DESCENDANTS, _selection.getTreeSelectionState(_root));
+		assertEquals(NodeSelectionState.SELECTED_SOME_DESCENDANTS, _selection.getNodeSelectionState(_a));
+		assertEquals(NodeSelectionState.FULL, _selection.getNodeSelectionState(_a1));
+		assertEquals(NodeSelectionState.NONE, _selection.getNodeSelectionState(_a3));
+		assertEquals(NodeSelectionState.SOME_DESCENDANTS, _selection.getNodeSelectionState(_root));
 	}
 
 	public void testSelectSubtree() {
 		_selection.setSelectedSubtree(_root, true);
 
-		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_root));
-		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_a));
-		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_a1));
-		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_a2));
-		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_a3));
+		assertEquals(NodeSelectionState.FULL, _selection.getNodeSelectionState(_root));
+		assertEquals(NodeSelectionState.FULL, _selection.getNodeSelectionState(_a));
+		assertEquals(NodeSelectionState.FULL, _selection.getNodeSelectionState(_a1));
+		assertEquals(NodeSelectionState.FULL, _selection.getNodeSelectionState(_a2));
+		assertEquals(NodeSelectionState.FULL, _selection.getNodeSelectionState(_a3));
 
 		_selection.setSelected(_a3, false);
 
-		assertEquals(NodeSelectionState.SELECTED_SOME_DESCENDANTS, _selection.getTreeSelectionState(_root));
-		assertEquals(NodeSelectionState.SELECTED_SOME_DESCENDANTS, _selection.getTreeSelectionState(_a));
-		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_a1));
-		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_a2));
-		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_a3));
+		assertEquals(NodeSelectionState.SELECTED_SOME_DESCENDANTS, _selection.getNodeSelectionState(_root));
+		assertEquals(NodeSelectionState.SELECTED_SOME_DESCENDANTS, _selection.getNodeSelectionState(_a));
+		assertEquals(NodeSelectionState.FULL, _selection.getNodeSelectionState(_a1));
+		assertEquals(NodeSelectionState.FULL, _selection.getNodeSelectionState(_a2));
+		assertEquals(NodeSelectionState.NONE, _selection.getNodeSelectionState(_a3));
 
 		_selection.setSelected(_a2, false);
 		_selection.setSelected(_a1, false);
 
-		assertEquals(NodeSelectionState.SELECTED_SOME_DESCENDANTS, _selection.getTreeSelectionState(_root));
-		assertEquals(NodeSelectionState.SELECTED_NO_DESCENDANTS, _selection.getTreeSelectionState(_a));
-		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_a1));
-		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_a2));
-		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_a3));
+		assertEquals(NodeSelectionState.SELECTED_SOME_DESCENDANTS, _selection.getNodeSelectionState(_root));
+		assertEquals(NodeSelectionState.SELECTED_NO_DESCENDANTS, _selection.getNodeSelectionState(_a));
+		assertEquals(NodeSelectionState.NONE, _selection.getNodeSelectionState(_a1));
+		assertEquals(NodeSelectionState.NONE, _selection.getNodeSelectionState(_a2));
+		assertEquals(NodeSelectionState.NONE, _selection.getNodeSelectionState(_a3));
 
-		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_b));
+		assertEquals(NodeSelectionState.FULL, _selection.getNodeSelectionState(_b));
 
 		_selection.setSelectedSubtree(_root, false);
 
-		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_root));
-		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_a));
-		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_a1));
-		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_b));
+		assertEquals(NodeSelectionState.NONE, _selection.getNodeSelectionState(_root));
+		assertEquals(NodeSelectionState.NONE, _selection.getNodeSelectionState(_a));
+		assertEquals(NodeSelectionState.NONE, _selection.getNodeSelectionState(_a1));
+		assertEquals(NodeSelectionState.NONE, _selection.getNodeSelectionState(_b));
 	}
 
 	public void testRedundantSelection() {

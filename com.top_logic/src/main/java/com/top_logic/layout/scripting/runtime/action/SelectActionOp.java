@@ -31,7 +31,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
-import com.top_logic.mig.html.TreeSelectionModel;
+import com.top_logic.mig.html.SubtreeSelectionModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
@@ -138,7 +138,7 @@ public class SelectActionOp extends AbstractApplicationActionOp<SelectAction> {
 
 	private void checkIncrementalSelection(SelectionModel selectionModel) {
 		Set<?> selection;
-		if (selectionModel instanceof TreeSelectionModel<?> treeSelectionModel) {
+		if (selectionModel instanceof SubtreeSelectionModel<?> treeSelectionModel) {
 			/* The TreeSelectionModel contains as selection a compact version the actual selected
 			 * elements (when all descendants of a node are selected, then only this node is
 			 * contained in the ordinary selection). Therefore the "special" selection must be

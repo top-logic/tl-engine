@@ -147,10 +147,11 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 			return;
 		}
 
+		NodeSelectionState newState = select ? NodeSelectionState.FULL : NodeSelectionState.NONE;
+
 		HashSet<T> oldSelection = new HashSet<>(getSelection());
 
-		NodeSelectionState newState = select ? NodeSelectionState.FULL : NodeSelectionState.NONE;
-		updateLocalState(obj, newState, select);
+		updateState(obj, newState, select);
 
 		// Clear redundant descendant state.
 		clearDescendantState(obj);
@@ -177,8 +178,6 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 			return;
 		}
 
-		HashSet<T> oldSelection = new HashSet<>(getSelection());
-
 		DescendantState newDescendantState;
 		if (!_treeModel.hasChildren(obj)) {
 			// A completely selected subtree must be marked as FULL, a subtree without any
@@ -190,13 +189,16 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 		}
 		
 		NodeSelectionState newState = NodeSelectionState.valueOf(select, newDescendantState);
-		updateLocalState(obj, newState, select);
+
+		HashSet<T> oldSelection = new HashSet<>(getSelection());
+
+		updateState(obj, newState, select);
 
 		fireSelectionChanged(oldSelection);
 	}
 
 
-	private void updateLocalState(T obj, NodeSelectionState newState, boolean select) {
+	private void updateState(T obj, NodeSelectionState newState, boolean select) {
 		// Note: Event "not selected" must be temporarily stored, since the states are currently
 		// inconsistent and must be updated after the parent has been updated.
 		_state.put(obj, newState);

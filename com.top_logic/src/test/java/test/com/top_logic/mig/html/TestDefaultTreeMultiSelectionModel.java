@@ -1,0 +1,189 @@
+/*
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * 
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package test.com.top_logic.mig.html;
+
+import java.util.Set;
+
+import junit.framework.TestCase;
+
+import com.top_logic.layout.component.model.SelectionListener;
+import com.top_logic.layout.tree.model.DefaultMutableTLTreeModel;
+import com.top_logic.layout.tree.model.DefaultMutableTLTreeNode;
+import com.top_logic.mig.html.DefaultTreeMultiSelectionModel;
+import com.top_logic.mig.html.DefaultTreeMultiSelectionModel.NodeSelectionState;
+import com.top_logic.mig.html.SelectionModel;
+
+/**
+ * Test case for {@link DefaultTreeMultiSelectionModel}.
+ */
+@SuppressWarnings("javadoc")
+public class TestDefaultTreeMultiSelectionModel extends TestCase {
+
+	private DefaultTreeMultiSelectionModel<DefaultMutableTLTreeNode> _selection;
+
+	private DefaultMutableTLTreeModel _tree;
+
+	private DefaultMutableTLTreeNode _a;
+
+	private DefaultMutableTLTreeNode _b;
+
+	private DefaultMutableTLTreeNode _c;
+
+	private DefaultMutableTLTreeNode _a1;
+
+	private DefaultMutableTLTreeNode _a2;
+
+	private DefaultMutableTLTreeNode _a3;
+
+	private DefaultMutableTLTreeNode _b1;
+
+	private DefaultMutableTLTreeNode _root;
+
+	private SelectionListener _listener;
+
+	protected Set<?> _selectedEvent;
+
+	protected int _events;
+
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+
+		_tree = new DefaultMutableTLTreeModel("root");
+
+		_root = _tree.getRoot();
+
+		_a = _root.createChild("A");
+		_b = _root.createChild("B");
+		_c = _root.createChild("C");
+
+		_a1 = _a.createChild("1");
+		_a2 = _a.createChild("2");
+		_a3 = _a.createChild("3");
+
+		_b1 = _b.createChild("single");
+
+		assertTrue(!_c.getModel().hasChildren(_c));
+
+		_selection = new DefaultTreeMultiSelectionModel<>(null, _tree);
+
+		_listener = new SelectionListener() {
+			@Override
+			public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects,
+					Set<?> selectedObjects) {
+				_events++;
+				_selectedEvent = selectedObjects;
+			}
+		};
+	}
+
+	private void listen() {
+		_events = 0;
+		_selectedEvent = null;
+		_selection.addSelectionListener(_listener);
+	}
+
+	public void testSelect() {
+		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_root));
+		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_b));
+		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_b1));
+
+		_selection.setSelected(_b1, true);
+
+		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_b1));
+		assertEquals(NodeSelectionState.ALL_DESCENDANTS, _selection.getTreeSelectionState(_b));
+		assertEquals(NodeSelectionState.SOME_DESCENDANTS, _selection.getTreeSelectionState(_root));
+
+		_selection.setSelected(_a, true);
+		assertEquals(NodeSelectionState.SELECTED_NO_DESCENDANTS, _selection.getTreeSelectionState(_a));
+		_selection.setSelected(_a1, true);
+		assertEquals(NodeSelectionState.SELECTED_SOME_DESCENDANTS, _selection.getTreeSelectionState(_a));
+		_selection.setSelected(_a2, true);
+		_selection.setSelected(_a3, true);
+		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_a));
+		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_a1));
+		assertEquals(NodeSelectionState.SOME_DESCENDANTS, _selection.getTreeSelectionState(_root));
+
+		_selection.setSelected(_a3, false);
+		assertEquals(NodeSelectionState.SELECTED_SOME_DESCENDANTS, _selection.getTreeSelectionState(_a));
+		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_a1));
+		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_a3));
+		assertEquals(NodeSelectionState.SOME_DESCENDANTS, _selection.getTreeSelectionState(_root));
+	}
+
+	public void testSelectSubtree() {
+		_selection.setSelectedSubtree(_root, true);
+
+		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_root));
+		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_a));
+		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_a1));
+		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_a2));
+		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_a3));
+
+		_selection.setSelected(_a3, false);
+
+		assertEquals(NodeSelectionState.SELECTED_SOME_DESCENDANTS, _selection.getTreeSelectionState(_root));
+		assertEquals(NodeSelectionState.SELECTED_SOME_DESCENDANTS, _selection.getTreeSelectionState(_a));
+		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_a1));
+		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_a2));
+		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_a3));
+
+		_selection.setSelected(_a2, false);
+		_selection.setSelected(_a1, false);
+
+		assertEquals(NodeSelectionState.SELECTED_SOME_DESCENDANTS, _selection.getTreeSelectionState(_root));
+		assertEquals(NodeSelectionState.SELECTED_NO_DESCENDANTS, _selection.getTreeSelectionState(_a));
+		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_a1));
+		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_a2));
+		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_a3));
+
+		assertEquals(NodeSelectionState.FULL, _selection.getTreeSelectionState(_b));
+
+		_selection.setSelectedSubtree(_root, false);
+
+		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_root));
+		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_a));
+		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_a1));
+		assertEquals(NodeSelectionState.NONE, _selection.getTreeSelectionState(_b));
+	}
+
+	public void testRedundantSelection() {
+		listen();
+		_selection.setSelected(_a, false);
+		assertEquals(0, _events);
+		
+		_selection.setSelected(_a, true);
+		
+		listen();
+		_selection.setSelected(_a, true);
+		assertEquals(0, _events);
+	}
+
+	public void testFilteredSelection() {
+		_selection.setSelected(_a, true);
+		_selection.setSelected(_b, true);
+
+		_selection.setSelectionFilter(n -> n != _c);
+		_selection.setDeselectionFilter(n -> n != _b);
+
+		listen();
+		_selection.setSelected(_c, true);
+		assertFalse(_selection.isSelected(_c));
+		assertEquals(0, _events);
+
+		listen();
+		_selection.setSelected(_b, false);
+		assertTrue(_selection.isSelected(_b));
+		assertEquals(0, _events);
+
+		listen();
+		assertTrue(_selection.isSelected(_a));
+		_selection.setSelected(_a, false);
+		assertFalse(_selection.isSelected(_a));
+		assertEquals(1, _events);
+	}
+
+}

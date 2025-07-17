@@ -45,6 +45,18 @@ public abstract class AbstractRestrainedSelectionModel<T> extends AbstractSelect
 		return _selectionFilter;
 	}
 
+	@Override
+	public boolean isSelectable(T obj) {
+		return getSelectionFilter().accept(obj);
+	}
+
+	/**
+	 * true, if the given object can be removed from set of selected objects.
+	 */
+	public boolean isDeselectable(T obj) {
+		return getDeselectionFilter().accept(obj);
+	}
+
 	/**
 	 * A setter for a deselection filter
 	 * 

@@ -49,18 +49,6 @@ public class DefaultMultiSelectionModel<T> extends AbstractRestrainedSelectionMo
 	}
 	
 	@Override
-	public boolean isSelectable(T obj) {
-		return getSelectionFilter().accept(obj);
-	}
-	
-	/**
-	 * true, if the given object can be removed from set of selected objects.
-	 */
-	public boolean isDeselectable(T obj) {
-		return getDeselectionFilter().accept(obj);
-	}
-
-	@Override
 	public boolean isSelected(T obj) {
 		return selected.contains(obj);
 	}	

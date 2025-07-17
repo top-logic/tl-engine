@@ -49,13 +49,11 @@ public class DefaultSingleSelectionModel<T> extends AbstractRestrainedSelectionM
 		return false;
 	}
 
-	/**
-	 * @see com.top_logic.layout.SingleSelectionModel#isSelectable(java.lang.Object)
-	 */
 	@Override
 	public boolean isSelectable(T obj) {
-		return getSelectionFilter().accept(obj)
-			&& (_selected != null ? getDeselectionFilter().accept(_selected) : true);
+		return super.isSelectable(obj)
+			// The current selection can be removed.
+			&& (_selected == null || getDeselectionFilter().accept(_selected));
 	}
 	
 	/**

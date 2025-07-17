@@ -392,8 +392,7 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 
 		@Override
 		public boolean shallUpdateBox(SelectionEvent event) {
-			return event.getOldSelection().contains(_selectionPart) ^
-				event.getNewSelection().contains(_selectionPart);
+			return event.getUpdatedObjects().contains(_selectionPart);
 		}
 
 		@Override

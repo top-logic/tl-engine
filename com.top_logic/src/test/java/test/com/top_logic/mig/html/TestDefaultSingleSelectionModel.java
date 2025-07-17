@@ -36,10 +36,10 @@ public class TestDefaultSingleSelectionModel extends TestCase {
 
 		@Override
 		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
-			assertNotNull(event.getFormerlySelectedObjects());
-			assertNotNull(event.getNewlySelectedObjects());
-			_formerlySelectedObjects = event.getFormerlySelectedObjects();
-			_selectedObjects = event.getNewlySelectedObjects();
+			assertNotNull(event.getOldSelection());
+			assertNotNull(event.getNewSelection());
+			_formerlySelectedObjects = event.getOldSelection();
+			_selectedObjects = event.getNewSelection();
 		}
 
 		void reset() {

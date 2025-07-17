@@ -137,8 +137,8 @@ public class ClipboardDialog extends AbstractFormPageDialog {
 
 			@Override
 			public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
-				boolean cleared = event.getNewlySelectedObjects().isEmpty();
-				if (event.getFormerlySelectedObjects().isEmpty() == cleared) {
+				boolean cleared = event.getNewSelection().isEmpty();
+				if (event.getOldSelection().isEmpty() == cleared) {
 					// No change.
 					return;
 				}

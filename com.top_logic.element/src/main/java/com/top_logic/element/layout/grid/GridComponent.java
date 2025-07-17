@@ -3419,7 +3419,7 @@ public class GridComponent extends EditComponent implements
 			}
 			focusColumn(getTableField(getFormContext()).getViewModel());
 
-			Set<?> newSelection = event.getNewlySelectedObjects();
+			Set<?> newSelection = event.getNewSelection();
 			Set<List<Object>> newSelectedPaths = getRowObjectPaths(newSelection);
 
 			Collection<?> currentlySelectedPathsCollection = getSelectedPathsCollection();
@@ -3432,12 +3432,12 @@ public class GridComponent extends EditComponent implements
 				Set<Object> newSelectedObjects = getRowObjects(newSelection);
 				if (!CollectionUtil.equals(getSelectedCollection(), newSelectedObjects)) {
 					channelUpdated = false;
-					revertSelection(event.getFormerlySelectedObjects());
+					revertSelection(event.getOldSelection());
 				}
 			}
 
 			if (isInEditMode()) {
-				Set<?> oldSelection = event.getFormerlySelectedObjects();
+				Set<?> oldSelection = event.getOldSelection();
 				HandlerResult result = storeAttributeValuesAndAddFields(oldSelection, newSelection);
 				if (!result.isSuccess()) {
 					revertSelection(oldSelection);

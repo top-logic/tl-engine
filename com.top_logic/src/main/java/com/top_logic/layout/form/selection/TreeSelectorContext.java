@@ -607,7 +607,7 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 				@Override
 				public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 					boolean changed =
-						!CollectionUtil.equals(oldSelection, CollectionUtil.toList(event.getNewlySelectedObjects()));
+						!CollectionUtil.equals(oldSelection, CollectionUtil.toList(event.getNewSelection()));
 					setExecutability(accept, changed);
 				}
 			});

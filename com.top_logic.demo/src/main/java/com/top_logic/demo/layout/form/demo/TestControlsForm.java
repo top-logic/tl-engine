@@ -3866,7 +3866,7 @@ public class TestControlsForm extends FormComponent {
 
 				selectionUpdateDisabled.set(true);
 				try {
-					ArrayList sorted = new ArrayList(event.getNewlySelectedObjects());
+					ArrayList sorted = new ArrayList(event.getNewSelection());
 					Collections.sort(sorted);
 					selectionDisplay.setValue(StringServices.join(sorted, ", "));
 				} finally {

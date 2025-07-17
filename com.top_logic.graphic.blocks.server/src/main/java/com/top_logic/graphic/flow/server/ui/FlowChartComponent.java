@@ -70,7 +70,7 @@ public class FlowChartComponent extends BuilderComponent
 	private final SelectionListener _updateUISelection = new SelectionListener() {
 		@Override
 		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
-			Set<?> selectedObjects = event.getNewlySelectedObjects();
+			Set<?> selectedObjects = event.getNewSelection();
 			// Forward selection to UI.
 			HashSet<Object> newlySelected = new HashSet<>(selectedObjects);
 			List<SelectableBox> uiSelection = _control.getModel().getSelection();
@@ -91,7 +91,7 @@ public class FlowChartComponent extends BuilderComponent
 		@Override
 		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			// Forward selection to component channel.
-			List<Object> selectedUserObjects = event.getNewlySelectedObjects().stream()
+			List<Object> selectedUserObjects = event.getNewSelection().stream()
 				.map(s -> s instanceof Widget w ? w.getUserObject() : null).filter(Objects::nonNull).toList();
 			setSelected(selectedUserObjects);
 		}

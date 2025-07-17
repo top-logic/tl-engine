@@ -405,7 +405,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 				return;
 			}
 
-			Set<?> newSelection = event.getNewlySelectedObjects();
+			Set<?> newSelection = event.getNewSelection();
 			if (ScriptingRecorder.isRecordingActive()) {
 				ScriptingRecorder.recordSelection(_tableData, newSelection, true,
 					SelectionChangeKind.ABSOLUTE);
@@ -418,7 +418,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 				boolean selectionChannelIsUpdated = setSelectionToChannel(newSelection, true);
 
 				if (!selectionChannelIsUpdated) {
-					_selectionModel.setSelection(event.getFormerlySelectedObjects());
+					_selectionModel.setSelection(event.getOldSelection());
 				}
 			}
 		}

@@ -28,9 +28,9 @@ public class MultiSelectionEvent implements SelectionEvent {
 	 * @param sender
 	 *        See {@link #getSender()}.
 	 * @param formerlySelectedObjects
-	 *        See {@link #getFormerlySelectedObjects()}.
+	 *        See {@link #getOldSelection()}.
 	 * @param newlySelectedObjects
-	 *        See {@link #getNewlySelectedObjects()}.
+	 *        See {@link #getNewSelection()}.
 	 */
 	public MultiSelectionEvent(SelectionModel sender, Set<?> formerlySelectedObjects,
 			Set<?> newlySelectedObjects) {
@@ -45,12 +45,12 @@ public class MultiSelectionEvent implements SelectionEvent {
 	}
 
 	@Override
-	public Set<?> getFormerlySelectedObjects() {
+	public Set<?> getOldSelection() {
 		return _formerlySelectedObjects;
 	}
 
 	@Override
-	public Set<?> getNewlySelectedObjects() {
+	public Set<?> getNewSelection() {
 		return _newlySelectedObjects;
 	}
 

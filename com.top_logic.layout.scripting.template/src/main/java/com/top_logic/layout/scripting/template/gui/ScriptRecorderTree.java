@@ -453,7 +453,7 @@ public class ScriptRecorderTree extends BoundComponent implements TreeDataOwner,
 		@Override
 		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			TLTreeNode<?> selectedNode =
-				(TLTreeNode<?>) CollectionUtil.getSingleValueFromCollection(event.getNewlySelectedObjects());
+				(TLTreeNode<?>) CollectionUtil.getSingleValueFromCollection(event.getNewSelection());
 			setSelected(selectedNode);
 		}
 	};

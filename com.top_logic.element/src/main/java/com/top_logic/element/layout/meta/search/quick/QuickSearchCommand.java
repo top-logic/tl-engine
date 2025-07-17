@@ -322,7 +322,7 @@ public class QuickSearchCommand extends AbstractSearchCommand {
 
 			@Override
 			public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
-				Set<?> newSelection = event.getNewlySelectedObjects();
+				Set<?> newSelection = event.getNewSelection();
 				if (!CollectionUtils.isEmpty(newSelection)) {
 					Object theObject = CollectionUtil.getFirst(newSelection);
 

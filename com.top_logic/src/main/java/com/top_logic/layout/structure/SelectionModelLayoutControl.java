@@ -87,8 +87,8 @@ public class SelectionModelLayoutControl extends ContainerControl<SelectionModel
              */
             @Override
 			public void notifySelectionChanged(SelectionModel selectionModel, SelectionEvent event) {
-				Collection<?> theOldComps = new HashSet<>(event.getFormerlySelectedObjects());
-				Collection<?> theNewComps = new HashSet<>(event.getNewlySelectedObjects());
+				Collection<?> theOldComps = new HashSet<>(event.getOldSelection());
+				Collection<?> theNewComps = new HashSet<>(event.getNewSelection());
 				Collection<?> theOldCopy = new HashSet<>(theOldComps);
                 theOldComps.removeAll(theNewComps);
                 theNewComps.removeAll(theOldCopy);

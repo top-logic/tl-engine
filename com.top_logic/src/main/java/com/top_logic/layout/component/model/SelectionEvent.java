@@ -24,11 +24,11 @@ public interface SelectionEvent {
 	/**
 	 * The objects that were selected before the select operation.
 	 */
-	Set<?> getFormerlySelectedObjects();
+	Set<?> getOldSelection();
 
 	/**
 	 * The objects that are selected after the select operation.
 	 */
-	Set<?> getNewlySelectedObjects();
+	Set<?> getNewSelection();
 
 }

@@ -75,7 +75,7 @@ public class TestDefaultTreeMultiSelectionModel extends TestCase {
 			@Override
 			public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 				_events++;
-				_selectedEvent = event.getNewlySelectedObjects();
+				_selectedEvent = event.getNewSelection();
 			}
 		};
 	}

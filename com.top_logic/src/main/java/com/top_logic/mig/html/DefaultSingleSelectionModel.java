@@ -250,8 +250,8 @@ public class DefaultSingleSelectionModel<T> extends AbstractRestrainedSelectionM
 		@Override
 		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			listener.notifySelectionChanged((DefaultSingleSelectionModel) model,
-				CollectionUtil.getFirst(event.getFormerlySelectedObjects()), CollectionUtil
-					.getFirst(event.getNewlySelectedObjects()));
+				CollectionUtil.getFirst(event.getOldSelection()), CollectionUtil
+					.getFirst(event.getNewSelection()));
 		}
 		
 		@Override

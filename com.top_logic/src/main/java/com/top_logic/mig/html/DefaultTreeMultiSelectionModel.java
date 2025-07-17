@@ -15,6 +15,7 @@ import java.util.Set;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.StructureView;
 import com.top_logic.basic.col.filter.FilterFactory;
+import com.top_logic.layout.component.model.SelectionEvent;
 
 /**
  * A selection model that supports multiple selection in tree-like structures.
@@ -47,6 +48,8 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 	 * </p>
 	 */
 	private final Map<T, NodeSelectionState> _state = new HashMap<>();
+
+	private EventBuilder _eventBuilder;
 
 
 	/**
@@ -149,14 +152,11 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 
 		NodeSelectionState newState = select ? NodeSelectionState.FULL : NodeSelectionState.NONE;
 
-		HashSet<T> oldSelection = new HashSet<>(getSelection());
-
 		updateState(obj, newState, select);
 
 		// Clear redundant descendant state.
 		clearDescendantState(obj);
 
-		fireSelectionChanged(oldSelection);
 	}
 
 	private void clearDescendantState(T parent) {
@@ -190,24 +190,27 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 		
 		NodeSelectionState newState = NodeSelectionState.valueOf(select, newDescendantState);
 
-		HashSet<T> oldSelection = new HashSet<>(getSelection());
-
 		updateState(obj, newState, select);
-
-		fireSelectionChanged(oldSelection);
 	}
 
-
 	private void updateState(T obj, NodeSelectionState newState, boolean select) {
+		boolean shouldFire = installEventBuilder();
+
 		// Note: Event "not selected" must be temporarily stored, since the states are currently
 		// inconsistent and must be updated after the parent has been updated.
 		_state.put(obj, newState);
+
+		_eventBuilder.recordUpdate(obj);
 
 		updateParent(obj, newState, select);
 
 		// Clean up redundant state.
 		if (newState == NodeSelectionState.NONE) {
 			_state.remove(obj);
+		}
+
+		if (shouldFire) {
+			fireEvent();
 		}
 	}
 
@@ -260,6 +263,8 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 		}
 
 		if (newParentState != oldParentState) {
+			_eventBuilder.recordUpdate(parent);
+
 			updateParent(parent, newParentState, select);
 		}
 	}
@@ -345,6 +350,81 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 
 		// This should never happen, since the query is only done, when there is at least one child.
 		return false;
+	}
+
+	private boolean installEventBuilder() {
+		boolean shouldFire = _eventBuilder == null;
+		if (shouldFire) {
+			_eventBuilder = hasListeners() ? EventBuilder.create(this) : EventBuilder.NONE;
+		}
+		return shouldFire;
+	}
+
+	private void fireEvent() {
+		notifyListeners(_eventBuilder.build());
+		_eventBuilder = null;
+	}
+
+	static interface EventBuilder {
+
+		public static final EventBuilder NONE = new EventBuilder() {
+			@Override
+			public SelectionEvent build() {
+				return null;
+			}
+
+			@Override
+			public void recordUpdate(Object obj) {
+				// Ignore.
+			}
+		};
+
+		public SelectionEvent build();
+
+		public void recordUpdate(Object obj);
+
+		public static EventBuilder create(SelectionModel<?> model) {
+			Set<?> old = model.getSelection();
+
+			return new EventBuilder() {
+				private Set<Object> _updated = new HashSet<>();
+
+				@Override
+				public void recordUpdate(Object obj) {
+					_updated.add(obj);
+				}
+
+				@Override
+				public SelectionEvent build() {
+					return new SelectionEvent() {
+						private Set<?> _current;
+
+						@Override
+						public Set<?> getUpdatedObjects() {
+							return _updated;
+						}
+
+						@Override
+						public SelectionModel<?> getSender() {
+							return model;
+						}
+
+						@Override
+						public Set<?> getOldSelection() {
+							return old;
+						}
+
+						@Override
+						public Set<?> getNewSelection() {
+							if (_current == null) {
+								_current = model.getSelection();
+							}
+							return _current;
+						}
+					};
+				}
+			};
+		}
 	}
 
 }

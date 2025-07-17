@@ -15,7 +15,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.w3c.dom.Document;
 
@@ -52,6 +51,7 @@ import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.ConstantDisplayValue;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.CheckException;
 import com.top_logic.layout.form.Constraint;
@@ -615,7 +615,7 @@ public class TestLayoutProblems extends FormComponent {
 		table.getSelectionModel().addSelectionListener(new SelectionListener() {
 			
 			@Override
-			public void notifySelectionChanged(SelectionModel model, Set<?> oldSelection, Set<?> newSelection) {
+			public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 				if (waitingField.hasValue() && !waitingField.hasError() && waitingField.hasInt()) {
 					try {
 						Thread.sleep(waitingField.getAsInteger());

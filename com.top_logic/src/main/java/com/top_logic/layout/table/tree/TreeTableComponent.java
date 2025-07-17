@@ -63,6 +63,7 @@ import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.component.InAppSelectable;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.structure.ContentLayouting;
 import com.top_logic.layout.structure.ControlRepresentable;
@@ -267,9 +268,8 @@ public class TreeTableComponent extends BoundComponent
 	private final SelectionListener _selectionListener = new SelectionListener() {
 
 		@Override
-		public void notifySelectionChanged(SelectionModel model, Set<?> oldSelection, Set<?> newSelection) {
-			Collection<TreeUINode<?>> oldSelectedNodes = unsafeCast(oldSelection);
-			Set<AbstractTreeTableNode<?>> newSelectedNodes = unsafeCast(newSelection);
+		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
+			Set<AbstractTreeTableNode<?>> newSelectedNodes = unsafeCast(event.getNewlySelectedObjects());
 
 			if (_expandSelected) {
 				for (AbstractTreeTableNode<?> newSelectedNode : newSelectedNodes) {
@@ -287,7 +287,7 @@ public class TreeTableComponent extends BoundComponent
 				 * selection must not be reverted. */
 				Set<Object> newSelectedObjects = TreeUIModelUtil.getBusinessObjects(newSelectedNodes);
 				if (!CollectionUtil.equals(selectionFromChannel(), newSelectedObjects)) {
-					_selectionModel.setSelection(oldSelection);
+					_selectionModel.setSelection(event.getFormerlySelectedObjects());
 				}
 			}
 		}

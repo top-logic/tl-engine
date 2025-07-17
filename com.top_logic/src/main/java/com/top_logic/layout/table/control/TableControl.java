@@ -77,6 +77,8 @@ import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
 import com.top_logic.layout.basic.contextmenu.control.ContextMenuOpener;
 import com.top_logic.layout.basic.contextmenu.control.ContextMenuOwner;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
+import com.top_logic.layout.component.model.MultiSelectionEvent;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.dnd.DnD;
 import com.top_logic.layout.dnd.DndData;
@@ -361,7 +363,8 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		pagingModel.addListener(PagingModel.PAGE_SIZE_OPTIONS_EVENT, this);
 
 		// Initialize.
-		notifySelectionChanged(selectionModel, Collections.emptySet(), selectionModel.getSelection());
+		notifySelectionChanged(selectionModel,
+			new MultiSelectionEvent(selectionModel, Collections.emptySet(), selectionModel.getSelection()));
 	}
 	
 	@Override
@@ -1131,9 +1134,9 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	}
 	
 	@Override
-	public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
-		updateRows(formerlySelectedObjects);
-		updateRows(selectedObjects);
+	public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
+		updateRows(event.getFormerlySelectedObjects());
+		updateRows(event.getNewlySelectedObjects());
 
 		if (!model.getSelection().isEmpty()) {
 			setVisibleRange(model);

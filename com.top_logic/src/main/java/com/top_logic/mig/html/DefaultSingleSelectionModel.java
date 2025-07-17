@@ -12,6 +12,7 @@ import java.util.Set;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.layout.SingleSelectionModel;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.component.model.SingleSelectionListener;
 import com.top_logic.util.Utils;
@@ -247,9 +248,10 @@ public class DefaultSingleSelectionModel<T> extends AbstractRestrainedSelectionM
 		}
 
 		@Override
-		public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
-			listener.notifySelectionChanged((DefaultSingleSelectionModel) model, CollectionUtil.getFirst(formerlySelectedObjects), CollectionUtil
-					.getFirst(selectedObjects));
+		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
+			listener.notifySelectionChanged((DefaultSingleSelectionModel) model,
+				CollectionUtil.getFirst(event.getFormerlySelectedObjects()), CollectionUtil
+					.getFirst(event.getNewlySelectedObjects()));
 		}
 		
 		@Override

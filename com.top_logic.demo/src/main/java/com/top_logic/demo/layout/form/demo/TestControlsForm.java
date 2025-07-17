@@ -133,6 +133,7 @@ import com.top_logic.layout.basic.control.IconControl;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.codeedit.control.CodeEditorControl;
 import com.top_logic.layout.component.configuration.ExternalLink;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.folder.FolderControl;
 import com.top_logic.layout.form.CheckException;
@@ -3858,14 +3859,14 @@ public class TestControlsForm extends FormComponent {
 
 		SelectionListener displayUpdate = new SelectionListener() {
 			@Override
-			public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
+			public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 				if (displayUpdateDisabled.get()) {
 					return;
 				}
 
 				selectionUpdateDisabled.set(true);
 				try {
-					ArrayList sorted = new ArrayList(selectedObjects);
+					ArrayList sorted = new ArrayList(event.getNewlySelectedObjects());
 					Collections.sort(sorted);
 					selectionDisplay.setValue(StringServices.join(sorted, ", "));
 				} finally {

@@ -64,6 +64,7 @@ import com.top_logic.layout.compare.CompareAlgorithmHolder;
 import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.component.InAppSelectable;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.FormHandler;
 import com.top_logic.layout.form.component.FormComponent;
@@ -399,11 +400,12 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 	private final SelectionListener _selectionListener = new SelectionListener() {
 
 		@Override
-		public void notifySelectionChanged(SelectionModel model, Set<?> oldSelection, Set<?> newSelection) {
+		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			if (!isSelectable()) {
 				return;
 			}
 
+			Set<?> newSelection = event.getNewlySelectedObjects();
 			if (ScriptingRecorder.isRecordingActive()) {
 				ScriptingRecorder.recordSelection(_tableData, newSelection, true,
 					SelectionChangeKind.ABSOLUTE);
@@ -416,7 +418,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 				boolean selectionChannelIsUpdated = setSelectionToChannel(newSelection, true);
 
 				if (!selectionChannelIsUpdated) {
-					_selectionModel.setSelection(oldSelection);
+					_selectionModel.setSelection(event.getFormerlySelectedObjects());
 				}
 			}
 		}

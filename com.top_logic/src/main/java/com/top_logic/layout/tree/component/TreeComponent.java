@@ -71,6 +71,7 @@ import com.top_logic.layout.channel.ComponentChannel.ChannelValueFilter;
 import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
@@ -492,9 +493,9 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 	public class SelectionModelListener implements SelectionListener {
 
 		@Override
-		public void notifySelectionChanged(SelectionModel model, Set<?> oldSelection, Set<?> newSelection) {
+		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			{
-				Set<DefaultTreeUINode> newSelectedNodes = unsafeCast(newSelection);
+				Set<DefaultTreeUINode> newSelectedNodes = unsafeCast(event.getNewlySelectedObjects());
 				if (_expandSelected) {
 					for (DefaultTreeUINode selectedNode : newSelectedNodes) {
 						if (selectedNode != null) {

@@ -47,14 +47,14 @@ public class TestDefaultMultiSelectionModel extends TestCase {
 		}
 	}
 
-	private DefaultMultiSelectionModel _model;
+	private DefaultMultiSelectionModel<Integer> _model;
 
 	private Listener _l;
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		_model = new DefaultMultiSelectionModel(SelectionModelOwner.NO_OWNER);
+		_model = new DefaultMultiSelectionModel<>(SelectionModelOwner.NO_OWNER);
 		_l = new Listener();
 		_model.addSelectionListener(_l);
 	}
@@ -132,17 +132,16 @@ public class TestDefaultMultiSelectionModel extends TestCase {
 	}
 
 	public void testCannotChangeFixedSelection() {
-		final Object fixedSelection = new Object();
+		final Integer fixedSelection = 42;
 		_model.setSelected(fixedSelection, true);
 		_model.setDeselectionFilter(new Filter<>() {
-
 			@Override
-			public boolean accept(Object anObject) {
+			public boolean accept(Integer anObject) {
 				return anObject != fixedSelection;
 			}
 		});
 
-		Object newSelection = new Object();
+		Integer newSelection = 13;
 
 		_model.setSelection(set(newSelection));
 		assertEquals(set(fixedSelection, newSelection), _model.getSelection());
@@ -152,12 +151,11 @@ public class TestDefaultMultiSelectionModel extends TestCase {
 	}
 
 	public void testCannotClearFixedSelection() {
-		final Object fixedSelection = new Object();
+		final Integer fixedSelection = 42;
 		_model.setSelected(fixedSelection, true);
 		_model.setDeselectionFilter(new Filter<>() {
-
 			@Override
-			public boolean accept(Object anObject) {
+			public boolean accept(Integer anObject) {
 				return anObject != fixedSelection;
 			}
 		});

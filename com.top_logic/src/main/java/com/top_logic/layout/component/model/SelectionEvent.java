@@ -31,4 +31,9 @@ public interface SelectionEvent {
 	 */
 	Set<?> getNewSelection();
 
+	/**
+	 * The objects have to be updated due to the selection change.
+	 */
+	Set<?> getUpdatedObjects();
+
 }

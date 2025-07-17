@@ -25,10 +25,8 @@ import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.ResPrefix;
-import com.top_logic.layout.basic.AbstractCommandModel;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.editor.config.OptionalTypeTemplateParameters;
@@ -53,7 +51,6 @@ import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tool.boundsec.CommandHandler;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.css.CssUtil;
 
 /**

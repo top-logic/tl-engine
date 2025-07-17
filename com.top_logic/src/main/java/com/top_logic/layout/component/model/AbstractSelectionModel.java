@@ -71,20 +71,14 @@ public abstract class AbstractSelectionModel<T> extends AbstractObservable<Selec
 	@Override
 	protected void sendEvent(SelectionListener listener, MultiSelectionEvent event) {
 		{
-			// Decompose event to keep original code with annotate information referencing #3910.
-			SelectionListener currentListener = listener;
-			Set<?> formerlySelectedObjects = event.getFormerlySelectedObjects();
-			Set<?> currentSelection = event.getNewlySelectedObjects();
-
 			// Quirks introduced in #3910 to fix #3936:
 
 			// must check whether the current listener is still attached, as a
 			// previous listener can force it to remove as listener. In that
 			// case no notification must be happen.
-			if (hasListener(SelectionListener.class, currentListener)) {
-				currentListener.notifySelectionChanged(this, event);
+			if (hasListener(SelectionListener.class, listener)) {
+				listener.notifySelectionChanged(this, event);
 			}
-
 		}
 	}
 

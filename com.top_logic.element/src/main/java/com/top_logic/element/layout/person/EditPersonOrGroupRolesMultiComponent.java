@@ -171,6 +171,12 @@ public class EditPersonOrGroupRolesMultiComponent extends EditComponent {
 					out.append(DefaultTableRenderer.TABLE_ROW_CSS_CLASS);
         		}
 			}
+
+			@Override
+			protected void appendControlClasses(TagWriter out) throws IOException {
+				super.appendControlClasses(out);
+				out.append(" tl-standard-table");
+			}
 		};
         theFormTree.setTreeRenderer(theTreeTableRenderer);
         theFC.addMember(theFormTree);

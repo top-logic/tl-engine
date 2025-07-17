@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.layout.Attachable;
 import com.top_logic.layout.IdentityProvider;
 import com.top_logic.layout.InvalidationListener;
@@ -230,8 +229,7 @@ public class TreeUpdateListener extends TreeUIUpdateAccumulator<TreeUIModel> imp
 
 	@Override
 	public void notifySelectionChanged(SelectionModel senderModel, SelectionEvent event) {
-		invalidateNodes(
-			CollectionUtil.symmetricDifference(event.getOldSelection(), event.getNewSelection()));
+		invalidateNodes(event.getUpdatedObjects());
 	}
 
 	private void invalidateNodes(Collection<?> nodes) {

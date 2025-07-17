@@ -37,6 +37,7 @@ import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.component.Selectable;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.scripting.action.ActionChain;
 import com.top_logic.layout.scripting.action.ActionFactory;
@@ -450,8 +451,9 @@ public class ScriptRecorderTree extends BoundComponent implements TreeDataOwner,
 
 	private final SelectionListener uiSelectionForwarder = new SelectionListener() {
 		@Override
-		public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
-			TLTreeNode<?> selectedNode = (TLTreeNode<?>) CollectionUtil.getSingleValueFromCollection(selectedObjects);
+		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
+			TLTreeNode<?> selectedNode =
+				(TLTreeNode<?>) CollectionUtil.getSingleValueFromCollection(event.getNewlySelectedObjects());
 			setSelected(selectedNode);
 		}
 	};

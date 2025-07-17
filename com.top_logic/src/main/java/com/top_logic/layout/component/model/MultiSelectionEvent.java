@@ -14,7 +14,7 @@ import com.top_logic.mig.html.SelectionModel;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class MultiSelectionEvent {
+public class MultiSelectionEvent implements SelectionEvent {
 
 	private final SelectionModel _sender;
 
@@ -39,23 +39,17 @@ public class MultiSelectionEvent {
 		_newlySelectedObjects = newlySelectedObjects;
 	}
 
-	/**
-	 * @see SelectionListener#notifySelectionChanged(SelectionModel, Set, Set)
-	 */
+	@Override
 	public SelectionModel getSender() {
 		return _sender;
 	}
 
-	/**
-	 * @see SelectionListener#notifySelectionChanged(SelectionModel, Set, Set)
-	 */
+	@Override
 	public Set<?> getFormerlySelectedObjects() {
 		return _formerlySelectedObjects;
 	}
 
-	/**
-	 * @see SelectionListener#notifySelectionChanged(SelectionModel, Set, Set)
-	 */
+	@Override
 	public Set<?> getNewlySelectedObjects() {
 		return _newlySelectedObjects;
 	}

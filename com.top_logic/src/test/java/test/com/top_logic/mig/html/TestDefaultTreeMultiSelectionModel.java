@@ -9,6 +9,7 @@ import java.util.Set;
 
 import junit.framework.TestCase;
 
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.tree.model.DefaultMutableTLTreeModel;
 import com.top_logic.layout.tree.model.DefaultMutableTLTreeNode;
@@ -72,10 +73,9 @@ public class TestDefaultTreeMultiSelectionModel extends TestCase {
 
 		_listener = new SelectionListener() {
 			@Override
-			public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects,
-					Set<?> selectedObjects) {
+			public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 				_events++;
-				_selectedEvent = selectedObjects;
+				_selectedEvent = event.getNewlySelectedObjects();
 			}
 		};
 	}

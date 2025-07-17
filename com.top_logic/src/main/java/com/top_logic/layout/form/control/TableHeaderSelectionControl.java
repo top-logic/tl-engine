@@ -18,6 +18,7 @@ import com.top_logic.layout.DynamicText;
 import com.top_logic.layout.UpdateQueue;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.scripting.action.SelectAction.SelectionChangeKind;
@@ -107,7 +108,7 @@ public class TableHeaderSelectionControl extends AbstractControlBase implements 
 	}
 
 	@Override
-	public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
+	public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 		_isValid = false;
 	}
 

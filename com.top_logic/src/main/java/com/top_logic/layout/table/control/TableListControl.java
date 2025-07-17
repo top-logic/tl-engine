@@ -6,12 +6,12 @@
 package com.top_logic.layout.table.control;
 
 import java.util.Map;
-import java.util.Set;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.ImageButtonRenderer;
 import com.top_logic.layout.form.model.TableField;
@@ -237,8 +237,8 @@ public class TableListControl extends TableControl {
     }
 
 	@Override
-	public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
-		super.notifySelectionChanged(model, formerlySelectedObjects, selectedObjects);
+	public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
+		super.notifySelectionChanged(model, event);
 		updateButtons();
 	}
 

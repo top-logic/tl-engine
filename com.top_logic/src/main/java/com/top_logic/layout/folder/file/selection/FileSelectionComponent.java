@@ -6,7 +6,6 @@
 package com.top_logic.layout.folder.file.selection;
 
 import java.io.File;
-import java.util.Set;
 
 import com.top_logic.basic.Log;
 import com.top_logic.basic.config.ConfigurationException;
@@ -25,6 +24,7 @@ import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.SingleSelectionModel;
 import com.top_logic.layout.component.Selectable;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.folder.CurrentSelectionStorage;
 import com.top_logic.layout.folder.FolderControl;
@@ -166,7 +166,7 @@ public class FileSelectionComponent extends FolderComponent implements Selectabl
 		tableData.getSelectionModel().addSelectionListener(new SelectionListener() {
 
 			@Override
-			public void notifySelectionChanged(SelectionModel model, Set<?> oldSelection, Set<?> newSelection) {
+			public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 				applySelectionFromTableToChannel(tableData);
 			}
 		});

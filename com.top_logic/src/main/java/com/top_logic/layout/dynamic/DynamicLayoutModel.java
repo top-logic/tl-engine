@@ -22,6 +22,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.component.model.MultiSelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -184,13 +185,16 @@ public class DynamicLayoutModel implements SelectionModel<LayoutComponent> {
 			if (newComponent != null) {
 				newComponent.setVisible(true);
 			}
+
+			Object oldComponent = this.currentComponent;
+			MultiSelectionEvent event = new MultiSelectionEvent(this, Collections.singleton(oldComponent),
+				Collections.singleton(newComponent));
+			this.currentComponent = newComponent;
+
             for (Iterator theIt = this.selectionListeners.iterator(); theIt.hasNext();) {
                 SelectionListener theListener = (SelectionListener) theIt.next();
-                theListener.notifySelectionChanged(this, 
-                        Collections.singleton(this.currentComponent), 
-					Collections.singleton(newComponent));
+				theListener.notifySelectionChanged(this, event);
             }
-			this.currentComponent = newComponent;
         }
 	}
 

@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.top_logic.base.services.simpleajax.PropertyUpdate;
 import com.top_logic.basic.util.ResKey;
@@ -24,6 +23,7 @@ import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.ConstantDisplayValue;
 import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.scripting.action.SelectAction.SelectionChangeKind;
@@ -253,8 +253,8 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 	}
 
 	@Override
-	public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
-		if (_selectionPartModel.shallUpdateBox(formerlySelectedObjects, selectedObjects)) {
+	public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
+		if (_selectionPartModel.shallUpdateBox(event)) {
 			invalidateSelection();
 		}
 	}
@@ -338,7 +338,7 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 		 * true, if the box (check box or radio box) shall be updated, due to changes of the
 		 *         selected options, false otherwise.
 		 */
-		public abstract boolean shallUpdateBox(Set<?> formerlySelectedObjects, Set<?> currentlySelectedOptions);
+		public abstract boolean shallUpdateBox(SelectionEvent event);
 
 		/**
 		 * Implementation of {@link #updateSelection(boolean)} but checks control for veto.
@@ -404,8 +404,9 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 		}
 
 		@Override
-		public boolean shallUpdateBox(Set<?> formerlySelectedObjects, Set<?> currentlySelectedOptions) {
-			return formerlySelectedObjects.contains(_selectionPart) ^ currentlySelectedOptions.contains(_selectionPart);
+		public boolean shallUpdateBox(SelectionEvent event) {
+			return event.getFormerlySelectedObjects().contains(_selectionPart) ^
+				event.getNewlySelectedObjects().contains(_selectionPart);
 		}
 
 		@Override

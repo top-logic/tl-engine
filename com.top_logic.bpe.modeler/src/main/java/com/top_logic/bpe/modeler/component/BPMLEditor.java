@@ -34,6 +34,7 @@ import com.top_logic.layout.channel.ChannelSPI;
 import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.component.Editor;
 import com.top_logic.layout.form.component.edit.EditMode;
@@ -220,8 +221,8 @@ public class BPMLEditor extends BoundComponent
 	}
 
 	@Override
-	public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
-		Object newSelection = extractSelection(selectedObjects);
+	public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
+		Object newSelection = extractSelection(event.getNewlySelectedObjects());
 
 		if (ScriptingRecorder.isRecordingActive()) {
 			if (newSelection == null) {

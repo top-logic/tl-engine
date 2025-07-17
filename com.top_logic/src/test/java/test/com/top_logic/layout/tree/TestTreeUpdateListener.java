@@ -15,6 +15,7 @@ import test.com.top_logic.layout.tree.model.AbstractTLTreeModelTest;
 import com.top_logic.layout.IdentifierSource;
 import com.top_logic.layout.IdentityProvider;
 import com.top_logic.layout.IgnoreInvalidation;
+import com.top_logic.layout.component.model.MultiSelectionEvent;
 import com.top_logic.layout.tree.TreeNodeIdentification;
 import com.top_logic.layout.tree.TreeUpdateAccumulator.NodeUpdate;
 import com.top_logic.layout.tree.TreeUpdateAccumulator.SubtreeUpdate;
@@ -225,7 +226,7 @@ public class TestTreeUpdateListener extends AbstractTLTreeModelTest<DefaultMutab
 		final Collection<NodeUpdate> updates = updateListener.getUpdates();
 
 		rootNode.clearChildren();
-		updateListener.notifySelectionChanged(null, set(child_1), set(rootNode));
+		updateListener.notifySelectionChanged(null, new MultiSelectionEvent(null, set(child_1), set(rootNode)));
 
 		// No update must be recorded for de-selecting the removed node.
 		assertEquals(1, updates.size());

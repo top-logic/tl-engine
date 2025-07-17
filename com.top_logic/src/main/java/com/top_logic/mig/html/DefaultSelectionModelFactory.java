@@ -154,7 +154,7 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 					 * owner is a GridComponent. */
 					return treeOwner.getTableData().getTree();
 				};
-				TreeSelectionModel<?> selectionModel = new LazyTreeSelectionModel(owner,
+				SubtreeSelectionModel<?> selectionModel = new LazyTreeSelectionModel(owner,
 					AbstractTreeTableModel.AbstractTreeTableNode.class, treeSupplier);
 				selectionModel.setSelectionFilter(selectionFilter);
 				return selectionModel;

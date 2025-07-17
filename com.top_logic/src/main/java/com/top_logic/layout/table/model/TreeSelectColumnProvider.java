@@ -48,7 +48,7 @@ import com.top_logic.mig.html.GenericSelectionModelOwner;
 import com.top_logic.mig.html.LazyTreeSelectionModel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
-import com.top_logic.mig.html.TreeSelectionModel;
+import com.top_logic.mig.html.SubtreeSelectionModel;
 import com.top_logic.mig.html.TriState;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.ValidationListener;
@@ -166,7 +166,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		MultipleAnnotatedModels<SelectionModel> algorithm =
 			MultipleAnnotatedModels.newInstanceFor(getConfig().getColumnId());
 		SelectionModelOwner owner = new GenericSelectionModelOwner(_component, algorithm);
-		TreeSelectionModel selectionModel = new LazyTreeSelectionModel(owner,
+		SubtreeSelectionModel selectionModel = new LazyTreeSelectionModel(owner,
 			AbstractTreeTableModel.AbstractTreeTableNode.class, treeSupplier);
 		algorithm.annotate(_component, selectionModel);
 
@@ -185,7 +185,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		return (TreeTableData) treeTableDataOwner.getTableData();
 	}
 
-	private <N> void listenToChannel(TreeSelectionModel<N> selectionModel,
+	private <N> void listenToChannel(SubtreeSelectionModel<N> selectionModel,
 			Supplier<? extends TLTreeModel<N>> treeSupplier) {
 		@SuppressWarnings("unchecked")
 		SelectionModelUpdater<N> listener = _component.get(_existingListener);
@@ -198,7 +198,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		listener.setModels(selectionModel, treeSupplier);
 	}
 
-	private <N> void connectWithChannel(TreeSelectionModel<N> selectionModel,
+	private <N> void connectWithChannel(SubtreeSelectionModel<N> selectionModel,
 			Supplier<? extends TLTreeModel<N>> treeSupplier) {
 		updateSelectionModelFromChannel(selectionModel, treeSupplier, channel().get());
 		selectionModel.addSelectionListener(new SelectionListener() {
@@ -213,7 +213,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		});
 	}
 
-	private <N> void adaptColumnConfig(ColumnConfiguration column, TreeSelectionModel<N> selectionModel,
+	private <N> void adaptColumnConfig(ColumnConfiguration column, SubtreeSelectionModel<N> selectionModel,
 			Runnable modelInitializer) {
 		column.setAccessor(SimpleAccessor.INSTANCE);
 		column.setFilterProvider(null);
@@ -249,7 +249,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		channel.set(newChannelValue);
 	}
 
-	private <N> void updateSelectionModelFromChannel(TreeSelectionModel<N> selectionModel,
+	private <N> void updateSelectionModelFromChannel(SubtreeSelectionModel<N> selectionModel,
 			Supplier<? extends TLTreeModel<N>> treeSupplier, Object channelValue) {
 		TLTreeModel<N> treeModel = treeSupplier.get();
 		Set<? extends N> newSelectionModelValue = ((Collection<?>) channelValue)
@@ -328,14 +328,14 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 
 	private static class TreeSelectCellRenderer<N> extends AbstractCellRenderer {
 
-		private final TreeSelectionModel<N> _selectionModel;
+		private final SubtreeSelectionModel<N> _selectionModel;
 
 		private Runnable _modelInitializer;
 
 		/**
 		 * Creates a new {@link TreeSelectCellRenderer}.
 		 */
-		public TreeSelectCellRenderer(TreeSelectionModel<N> selectionModel, Runnable modelInitializer) {
+		public TreeSelectCellRenderer(SubtreeSelectionModel<N> selectionModel, Runnable modelInitializer) {
 			_selectionModel = selectionModel;
 			_modelInitializer = modelInitializer;
 		}
@@ -357,11 +357,11 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 
 		private boolean _updateRequired;
 
-		private TreeSelectionModel<N> _selectionModel;
+		private SubtreeSelectionModel<N> _selectionModel;
 
 		private Supplier<? extends TLTreeModel<N>> _treeSupplier;
 
-		void setModels(TreeSelectionModel<N> selectionModel, Supplier<? extends TLTreeModel<N>> treeSupplier) {
+		void setModels(SubtreeSelectionModel<N> selectionModel, Supplier<? extends TLTreeModel<N>> treeSupplier) {
 			_selectionModel = selectionModel;
 			_treeSupplier = treeSupplier;
 			_updateRequired = false;

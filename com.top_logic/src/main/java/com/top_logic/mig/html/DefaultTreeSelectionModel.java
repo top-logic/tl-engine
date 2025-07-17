@@ -14,7 +14,7 @@ import com.top_logic.layout.tree.model.TLTreeModel;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class DefaultTreeSelectionModel<N> extends TreeSelectionModel<N> {
+public class DefaultTreeSelectionModel<N> extends SubtreeSelectionModel<N> {
 
 	private TLTreeModel<N> _model;
 

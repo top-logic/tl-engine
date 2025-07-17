@@ -19,11 +19,11 @@ import com.top_logic.layout.tree.model.DefaultMutableTLTreeModel;
 import com.top_logic.layout.tree.model.DefaultMutableTLTreeNode;
 import com.top_logic.mig.html.DefaultTreeSelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
-import com.top_logic.mig.html.TreeSelectionModel;
+import com.top_logic.mig.html.SubtreeSelectionModel;
 import com.top_logic.mig.html.TriState;
 
 /**
- * Test for {@link TreeSelectionModel}.
+ * Test for {@link SubtreeSelectionModel}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -43,7 +43,7 @@ public class TestTreeSelectionModel extends BasicTestCase {
 	private DefaultMutableTLTreeNode _child_2_1_2;
 	private DefaultMutableTLTreeNode _child_2_2_2;
 
-	private TreeSelectionModel<DefaultMutableTLTreeNode> _selectionModel;
+	private SubtreeSelectionModel<DefaultMutableTLTreeNode> _selectionModel;
 
 	private Map<?, TriState> _states;
 

@@ -16,9 +16,9 @@ import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.table.control.SelectionVetoListener;
 import com.top_logic.layout.table.control.TableControl.SelectionType;
 import com.top_logic.mig.html.SelectionModel;
-import com.top_logic.mig.html.TreeSelectionModel;
-import com.top_logic.mig.html.TreeSelectionModel.StateChanged;
-import com.top_logic.mig.html.TreeSelectionModel.TreeSelectionListener;
+import com.top_logic.mig.html.SubtreeSelectionModel;
+import com.top_logic.mig.html.SubtreeSelectionModel.StateChanged;
+import com.top_logic.mig.html.SubtreeSelectionModel.TreeSelectionListener;
 import com.top_logic.mig.html.TriState;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -29,7 +29,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  */
 public class TreeSelectionPartControl<N> extends TriStateCheckboxControl implements TreeSelectionListener<N> {
 
-	private TreeSelectionModel<N> _selectionModel;
+	private SubtreeSelectionModel<N> _selectionModel;
 
 	private N _node;
 
@@ -38,13 +38,13 @@ public class TreeSelectionPartControl<N> extends TriStateCheckboxControl impleme
 	/**
 	 * Creates a {@link TreeSelectionPartControl}.
 	 */
-	public TreeSelectionPartControl(TreeSelectionModel<N> selectionModel, N part) {
+	public TreeSelectionPartControl(SubtreeSelectionModel<N> selectionModel, N part) {
 		_selectionModel = selectionModel;
 		_node = part;
 	}
 
 	@Override
-	public TreeSelectionModel<N> getModel() {
+	public SubtreeSelectionModel<N> getModel() {
 		return _selectionModel;
 	}
 

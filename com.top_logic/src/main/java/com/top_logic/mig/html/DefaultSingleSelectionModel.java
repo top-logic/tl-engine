@@ -52,7 +52,8 @@ public class DefaultSingleSelectionModel<T> extends AbstractRestrainedSelectionM
 	@Override
 	public boolean isSelectable(T obj) {
 		return super.isSelectable(obj)
-				&& (_selected != null ? isDeselectable(_selected) : true);
+			// The current selection can be removed.
+			&& (_selected == null || isDeselectable(_selected));
 	}
 	
 	/**

@@ -5,660 +5,155 @@
  */
 package com.top_logic.mig.html;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EventListener;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import com.top_logic.basic.util.AbstractListeners;
-import com.top_logic.layout.tree.model.TLTreeModel;
-
 /**
- * {@link AbstractMultiSelectionModel} for {@link TLTreeModel}.
- * 
- * <p>
- * The selection strategy in a {@link TreeSelectionModel} differs from the
- * {@link DefaultMultiSelectionModel}:
- * <ol>
- * <li>When a node is selected, the whole subtree starting from this node is selected.</li>
- * <li>When a node is de-selected, the whole subtree starting from this node is de-selected.</li>
- * <li>A node is selected, iff the whole subtree is selected.</li>
- * <li>A node is de-selected, iff the whole subtree is de-selected.</li>
- * </ol>
- * </p>
- * 
- * <p>
- * Nodes that have both, selected and de-selected children have {@link TriState#INDETERMINATE
- * indeterminate state}.
- * </p>
- * 
- * @param <N>
- *        Type of the tree-like elements that can be selected.
- * 
- * @implNote {@link #isSelected(Object)} returns <code>true</code> iff the whole subtree is
- *           selected.
- * @implNote {@link #getSelection()} contains the root nodes of the completely selected subtrees.
- * 
- * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+ * A {@link SelectionModel} for nodes of a tree structure that provides additional functionality and
+ * information.
  */
-public abstract class TreeSelectionModel<N> extends AbstractMultiSelectionModel<N> {
+public interface TreeSelectionModel<T> extends SelectionModel<T> {
 
-	/**
-	 * Event object used by {@link TreeSelectionListener}.
-	 */
-	public static class StateChanged<N> {
-
-		private final TreeSelectionModel<N> _sender;
-
-		private final Map<N, TriState> _formerStates;
-
-		/**
-		 * Creates a {@link StateChanged}.
-		 */
-		public StateChanged(TreeSelectionModel<N> sender, Map<N, TriState> formerStates) {
-			super();
-			_sender = sender;
-			_formerStates = formerStates;
-		}
-
-		/**
-		 * The {@link TreeSelectionModel} in which the states changed.
-		 */
-		public TreeSelectionModel<N> sender() {
-			return _sender;
-		}
-
-		/**
-		 * The stored states before the change.
-		 * 
-		 * @see #states()
-		 */
-		public Map<N, TriState> formerStates() {
-			return _formerStates;
-		}
-
-		/**
-		 * The state of the given node before the change.
-		 * 
-		 * @see #state(Object)
-		 */
-		public TriState formerState(N node) {
-			return sender().getState(formerStates(), node);
-		}
-
-		/**
-		 * The current state of the model.
-		 * 
-		 * @see #formerStates()
-		 */
-		public Map<N, TriState> states() {
-			return sender().getStates();
-		}
-
-		/**
-		 * The current state of the given node.
-		 * 
-		 * @see #formerState(Object)
-		 */
-		public TriState state(N node) {
-			return sender().getState(node);
-		}
-
+	@Override
+	default boolean isSelected(T obj) {
+		return getNodeSelectionState(obj).isSelected();
 	}
 
 	/**
-	 * Listener interfaces that is informed about changes {@link TreeSelectionModel}s.
-	 */
-	public static interface TreeSelectionListener<N> extends EventListener {
-
-		/**
-		 * Notifies the receiver about changes in the stores states.
-		 * 
-		 * @param event
-		 *        Object holding change informations.
-		 */
-		void handleStateChanged(StateChanged<N> event);
-
-	}
-
-	private static class Listeners<N> extends AbstractListeners<TreeSelectionListener<N>, StateChanged<N>> {
-
-		@Override
-		protected void sendEvent(TreeSelectionListener<N> listener, StateChanged<N> event) {
-			listener.handleStateChanged(event);
-		}
-
-	}
-
-	private final Map<N, TriState> _states = new HashMap<>();
-
-	private final Map<N, TriState> _statesView = Collections.unmodifiableMap(_states);
-
-	private final Listeners<N> _listeners = new Listeners<>();
-
-	private final Class<N> _nodeType;
-
-	/**
-	 * Creates a {@link TreeSelectionModel}.
-	 */
-	public TreeSelectionModel(SelectionModelOwner owner, Class<N> nodeType) {
-		super(owner);
-		_nodeType = nodeType;
-	}
-
-	@Override
-	public boolean isSelectable(N obj) {
-		return super.isSelectable(obj) && hasNodeType(obj);
-	}
-
-	private boolean hasNodeType(Object obj) {
-		return _nodeType.isInstance(obj);
-	}
-
-	private N cast(Object obj) {
-		return _nodeType.cast(obj);
-	}
-
-	@Override
-	public boolean isSelected(Object obj) {
-		if (!hasNodeType(obj)) {
-			return false;
-		}
-		return getState(cast(obj)) == TriState.SELECTED;
-	}
-
-	@Override
-	public void setSelected(N obj, boolean select) {
-		Set<? extends N> oldSelection = null;
-		Map<N, TriState> oldStates = null;
-		if (hasListeners()) {
-			oldSelection = getSelection();
-		}
-		if (_listeners.hasRegisteredListeners()) {
-			oldStates = new HashMap<>(_states);
-		}
-		boolean changed = internalSetSelected(obj, select);
-		if (changed) {
-			if (hasListeners()) {
-				fireSelectionChanged(oldSelection);
-			}
-			if (_listeners.hasRegisteredListeners()) {
-				_listeners.notifyListeners(new StateChanged<>(this, oldStates));
-			}
-		}
-	}
-
-	private boolean internalSetSelected(N obj, boolean select) {
-		if (select) {
-			if (!isSelectable(obj)) {
-				return false;
-			}
-		} else {
-			if (!isDeselectable(obj)) {
-				return false;
-			}
-		}
-		boolean selectionChanged = internalSelect(cast(obj), select);
-		if (selectionChanged) {
-			setLastSelected(obj);
-		}
-		return selectionChanged;
-	}
-
-	@Override
-	public void addToSelection(Collection<? extends N> objects) {
-		switch (objects.size()) {
-			case 0:
-				break;
-			case 1:
-				setSelected(objects.iterator().next(), true);
-				break;
-			default:
-				Set<? extends N> oldSelection = null;
-				Map<N, TriState> oldStates = null;
-				if (hasListeners()) {
-					oldSelection = getSelection();
-				}
-				if (_listeners.hasRegisteredListeners()) {
-					oldStates = new HashMap<>(_states);
-				}
-				boolean changed = false;
-				for (N obj : objects) {
-					changed |= internalSetSelected(obj, true);
-				}
-				if (changed) {
-					if (hasListeners()) {
-						fireSelectionChanged(oldSelection);
-					}
-					if (_listeners.hasRegisteredListeners()) {
-						_listeners.notifyListeners(new StateChanged<>(this, oldStates));
-					}
-				}
-				break;
-		}
-	}
-
-	@Override
-	public void removeFromSelection(Collection<? extends N> objects) {
-		switch (objects.size()) {
-			case 0:
-				break;
-			case 1:
-				setSelected(objects.iterator().next(), false);
-				break;
-			default:
-				Set<? extends N> oldSelection = null;
-				Map<N, TriState> oldStates = null;
-				if (hasListeners()) {
-					oldSelection = getSelection();
-				}
-				if (_listeners.hasRegisteredListeners()) {
-					oldStates = new HashMap<>(_states);
-				}
-				boolean changed = false;
-				for (N obj : objects) {
-					changed |= internalSetSelected(obj, false);
-				}
-				if (changed) {
-					if (hasListeners()) {
-						fireSelectionChanged(oldSelection);
-					}
-					if (_listeners.hasRegisteredListeners()) {
-						_listeners.notifyListeners(new StateChanged<>(this, oldStates));
-					}
-				}
-				break;
-
-		}
-	}
-
-	@Override
-	public Set<? extends N> getSelection() {
-		return calculateSelected();
-	}
-
-	@Override
-	public void setSelection(Set<? extends N> newSelection, Object lead) {
-		Set<? extends N> oldSelection = getSelection();
-		if (oldSelection.equals(newSelection)) {
-			setLastSelected(lead);
-			return;
-		}
-		Map<N, TriState> oldStates = null;
-		if (_listeners.hasRegisteredListeners()) {
-			oldStates = new HashMap<>(_states);
-		}
-		boolean changed = !_states.isEmpty();
-		_states.clear();
-		for (N obj : newSelection) {
-			changed |= internalSetSelected(obj, true);
-		}
-		setLastSelected(lead);
-		if (changed) {
-			if (hasListeners()) {
-				fireSelectionChanged(oldSelection);
-			}
-			if (_listeners.hasRegisteredListeners()) {
-				_listeners.notifyListeners(new StateChanged<>(this, oldStates));
-			}
-		}
-	}
-
-	@Override
-	public void clear() {
-		setSelection(Collections.emptySet());
-	}
-
-	/**
-	 * Adds the given {@link TreeSelectionListener} from the list of listeners.
+	 * Retrieves the selection state for the given object.
 	 * 
-	 * @param listener
-	 *        the listener to add.
-	 * @return Whether the given listener was not registered before (newly registered).
+	 * <p>
+	 * The selection state is only stored specifically for an object, if it cannot be derived from
+	 * the selection state of its parent, see {@link DescendantState#ALL} and
+	 * {@link DescendantState#NONE}.
+	 * </p>
 	 */
-	public boolean addTreeSelectionListener(TreeSelectionListener<N> listener) {
-		return _listeners.addListener(listener);
-	}
+	public NodeSelectionState getNodeSelectionState(T obj);
 
 	/**
-	 * Removes the given {@link TreeSelectionListener} from the list of listeners.
-	 * 
-	 * @param listener
-	 *        The listener to remove.
-	 * @return Whether the listener was registered before removal (something changed).
+	 * Updates the selection state of the whole sub-tree rooted at the given node.
 	 */
-	public boolean removeTreeSelectionListener(TreeSelectionListener<N> listener) {
-		return _listeners.removeListener(listener);
-	}
+	public void setSelectedSubtree(T obj, boolean select);
 
 	/**
-	 * A view to the stored mapping of nodes to selection state.
+	 * Description of the selection state of a tree node.
 	 */
-	public Map<N, TriState> getStates() {
-		return _statesView;
-	}
-
-	private boolean internalSelect(N node, boolean selected) {
-		TriState currentState = _states.get(node);
-		if (currentState != null) {
-			switch (currentState) {
-				case INDETERMINATE: {
-					TriState newState = selected ? TriState.SELECTED : TriState.NOT_SELECTED;
-					_states.put(node, newState);
-					dropChildStates(node);
-					propagateUp(node, newState, TriState.INDETERMINATE);
-					break;
-				}
-
-				case NOT_SELECTED: {
-					if (selected) {
-						_states.put(node, TriState.SELECTED);
-						dropChildStates(node);
-						propagateUp(node, TriState.SELECTED, TriState.NOT_SELECTED);
-					} else {
-						// already not selected
-						return false;
-					}
-					break;
-				}
-				case SELECTED: {
-					if (selected) {
-						// already selected
-						return false;
-					} else {
-						_states.put(node, TriState.NOT_SELECTED);
-						dropChildStates(node);
-						propagateUp(node, TriState.NOT_SELECTED, TriState.SELECTED);
-					}
-					break;
-				}
-				default:
-					throw new IllegalArgumentException("Unexpected value: " + currentState);
-			}
-		} else {
-			// find current selection state of node.
-			TriState state = ancestorState(_states, node);
-			switch (state) {
-				case INDETERMINATE:
-					throw new IllegalStateException();
-				case NOT_SELECTED:
-					if (selected) {
-						_states.put(node, TriState.SELECTED);
-						propagateUp(node, TriState.SELECTED, TriState.NOT_SELECTED);
-					} else {
-						// already (inherited) not selected
-						return false;
-					}
-					break;
-				case SELECTED:
-					if (selected) {
-						// already (inherited) selected
-						return false;
-					} else {
-						_states.put(node, TriState.NOT_SELECTED);
-						propagateUp(node, TriState.NOT_SELECTED, TriState.SELECTED);
-					}
-					break;
-				default:
-					throw new IllegalArgumentException("Unexpected value: " + state);
-			}
+	public static enum NodeSelectionState {
+		/**
+		 * Neither the node nor any of its descendants is selected.
+		 */
+		NONE(false, DescendantState.NONE),
+	
+		/**
+		 * The node is not selected, but there are selected descendants.
+		 */
+		SOME_DESCENDANTS(false, DescendantState.SOME),
+	
+		/**
+		 * The node is not selected, but all of its descendants.
+		 */
+		ALL_DESCENDANTS(false, DescendantState.ALL),
+	
+		/**
+		 * The node is selected, but none of its descendants.
+		 */
+		SELECTED_NO_DESCENDANTS(true, DescendantState.NONE),
+	
+		/**
+		 * The node and some of its descendants are selected.
+		 */
+		SELECTED_SOME_DESCENDANTS(true, DescendantState.SOME),
+	
+		/**
+		 * The node and all of its its descendants are selected.
+		 */
+		FULL(true, DescendantState.ALL);
+	
+		private DescendantState _childrenState;
+	
+		private boolean _selected;
+	
+		/**
+		 * Creates a {@link NodeSelectionState}.
+		 */
+		private NodeSelectionState(boolean selected, DescendantState childState) {
+			_selected = selected;
+			_childrenState = childState;
 		}
-		return true;
-	}
-
-	/**
-	 * Computes the state for the given node.
-	 *
-	 * @param node
-	 *        The node to get state for.
-	 */
-	public final TriState getState(N node) {
-		return getState(_states, node);
-	}
-
-	TriState getState(Map<N, TriState> states, N node) {
-		TriState ownState = states.get(node);
-		if (ownState != null) {
-			return ownState;
+	
+		/**
+		 * Whether the current node is selected itself.
+		 */
+		public boolean isSelected() {
+			return _selected;
 		}
-		return ancestorState(states, node);
-
-	}
-
-	private TriState ancestorState(Map<N, TriState> states, N node) {
-		N tmp = node;
-		while (true) {
-			tmp = parent(tmp);
-			if (tmp == null) {
-				// Root reached
-				return TriState.NOT_SELECTED;
-			}
-			TriState ancestorState = states.get(tmp);
-			if (ancestorState != null) {
-				return ancestorState;
-			}
+	
+		/**
+		 * Whether all children are selected.
+		 */
+		public boolean allDescendants() {
+			return descendants() == DescendantState.ALL;
 		}
-	}
-
-	private void propagateUp(N node, TriState newNodeState, TriState oldNodeState) {
-		N parent = parent(node);
-		if (parent == null) {
-			// node is root
-			if (newNodeState == TriState.NOT_SELECTED) {
-				_states.remove(node);
-			}
-			return;
+	
+		/**
+		 * Information about the descendants of the current node.
+		 */
+		public DescendantState descendants() {
+			return _childrenState;
 		}
-		TriState parentState = _states.get(parent);
-		if (parentState == null) {
-			/* No cached parents state. Some node deep in the tree was modified. */
-			/* When there is no entry for the parent, the child hat gotten its state from the parent
-			 * of the parent, therefore the parent has the same state as the node. */
-			TriState oldParentState = oldNodeState;
-			if (children(parent).size() == 1 && newNodeState != TriState.INDETERMINATE) {
-				/* The given node is the only child of the parent. Therefore this element can carry
-				 * the new state. */
-				_states.remove(node);
-				_states.put(parent, newNodeState);
-				propagateUp(parent, newNodeState, oldParentState);
+	
+		/**
+		 * The {@link NodeSelectionState} with the given information.
+		 */
+		public static NodeSelectionState valueOf(boolean selected, DescendantState childrenState) {
+			if (selected) {
+				return switch (childrenState) {
+					case NONE -> SELECTED_NO_DESCENDANTS;
+					case SOME -> SELECTED_SOME_DESCENDANTS;
+					case ALL -> FULL;
+				};
 			} else {
-				setSiblingState(parent, node, oldNodeState);
-				_states.put(parent, TriState.INDETERMINATE);
-				propagateUp(parent, TriState.INDETERMINATE, oldParentState);
-			}
-			return;
-		}
-
-		switch (newNodeState) {
-			case INDETERMINATE: {
-				switch (parentState) {
-					case INDETERMINATE:
-						// nothing to do here.
-						break;
-					case NOT_SELECTED:
-						setSiblingState(parent, node, oldNodeState);
-						_states.put(parent, TriState.INDETERMINATE);
-						propagateUp(parent, TriState.INDETERMINATE, TriState.NOT_SELECTED);
-						break;
-					case SELECTED:
-						setSiblingState(parent, node, oldNodeState);
-						_states.put(parent, TriState.INDETERMINATE);
-						propagateUp(parent, TriState.INDETERMINATE, TriState.SELECTED);
-						break;
-				}
-				break;
-			}
-			case NOT_SELECTED: {
-				switch (parentState) {
-					case INDETERMINATE:
-						boolean allUnSelected = true;
-						for (N child : children(parent)) {
-							if (_states.get(child) != TriState.NOT_SELECTED) {
-								allUnSelected = false;
-								break;
-							}
-						}
-						if (allUnSelected) {
-							_states.put(parent, TriState.NOT_SELECTED);
-							dropChildStates(parent);
-							propagateUp(parent, TriState.NOT_SELECTED, TriState.INDETERMINATE);
-						}
-						break;
-					case NOT_SELECTED:
-						// parent is also completely unselected. Remove state for child.
-						_states.remove(node);
-						break;
-					case SELECTED:
-						boolean anySibling = setSiblingState(parent, node, TriState.SELECTED);
-						TriState newParentState = anySibling ? TriState.INDETERMINATE : TriState.NOT_SELECTED;
-						_states.put(parent, newParentState);
-						propagateUp(parent, newParentState, TriState.SELECTED);
-						break;
-				}
-				break;
-			}
-			case SELECTED: {
-				switch (parentState) {
-					case INDETERMINATE:
-						boolean allSelected = true;
-						for (N child : children(parent)) {
-							if (_states.get(child) != TriState.SELECTED) {
-								allSelected = false;
-								break;
-							}
-						}
-						if (allSelected) {
-							_states.put(parent, TriState.SELECTED);
-							dropChildStates(parent);
-							propagateUp(parent, TriState.SELECTED, TriState.INDETERMINATE);
-						}
-						break;
-					case NOT_SELECTED:
-						boolean anySibling = setSiblingState(parent, node, TriState.NOT_SELECTED);
-						TriState newParentState = anySibling ? TriState.INDETERMINATE : TriState.SELECTED;
-						_states.put(parent, newParentState);
-						propagateUp(parent, newParentState, TriState.NOT_SELECTED);
-						break;
-					case SELECTED:
-						// parent is also completely selected. Remove state for child.
-						_states.remove(node);
-						break;
-				}
-				break;
+				return switch (childrenState) {
+					case NONE -> NONE;
+					case SOME -> SOME_DESCENDANTS;
+					case ALL -> ALL_DESCENDANTS;
+				};
 			}
 		}
-	}
-
-	private boolean setSiblingState(N parent, N node, TriState oldNodeState) {
-		assert oldNodeState != TriState.INDETERMINATE;
-		boolean anySibling = false;
-		for (N child : children(parent)) {
-			if (child == node) {
-				continue;
-			}
-			anySibling = true;
-			TriState formerState = _states.put(child, oldNodeState);
-			if (formerState != null) {
-				String message =
-					" Sibling state must only be set, when the state of the parent switches from " + TriState.SELECTED
-							+ " or " + TriState.NOT_SELECTED
-							+ ". In such case no sibling of the changed child must have an cache entry: Node: " + node
-							+ ", parent: " + parent + ", old node state: " + oldNodeState + ", sibling: " + child
-							+ ", sibling state: " + formerState;
-				throw new IllegalStateException(message);
-			}
-		}
-		return anySibling;
-	}
-
-	private void dropChildStates(N parent) {
-		for (N child : children(parent)) {
-			TriState state = _states.remove(child);
-			if (state == null) {
-				// No stored state for child.
-				continue;
-			}
-			dropChildStates(child);
+	
+		/**
+		 * Whether the complete subtree has the same selection state.
+		 */
+		public boolean isHomogeneous() {
+			return _selected ? _childrenState == DescendantState.ALL : _childrenState == DescendantState.NONE;
 		}
 	}
 
 	/**
-	 * Calculates all nodes which have state {@link TriState#SELECTED}.
-	 * 
-	 * @see #calculateAllSelected()
+	 * Description of the selection state of the descendants of a tree node.
 	 */
-	public Set<N> calculateSelected() {
-		return _states.entrySet()
-			.stream()
-			.filter(e -> TriState.SELECTED == e.getValue())
-			.map(Map.Entry::getKey)
-			.collect(Collectors.toSet());
-	}
+	public static enum DescendantState {
+		/**
+		 * None of the descendants of the node are selected.
+		 */
+		NONE,
 
-	/**
-	 * Calculates all selected nodes, i.e. all nodes for which {@link #getState(Object)} returns
-	 * {@link TriState#SELECTED}.
-	 * 
-	 * @see #calculateSelected()
-	 */
-	public Set<N> calculateAllSelected() {
-		if (_states.isEmpty()) {
-			return Collections.emptySet();
-		}
+		/**
+		 * There are descendants of the node that are selected.
+		 */
+		SOME,
 
-		N randomNode = _states.keySet().iterator().next();
-		N root = randomNode;
-		while (true) {
-			N parent = parent(root);
-			if (parent == null) {
-				break;
-			}
-			root = parent;
-		}
+		/**
+		 * All descendants of the node are selected.
+		 */
+		ALL;
 
-		Set<N> selection = new HashSet<>();
-		addToSelection(root, selection);
-		return selection;
-	}
-
-	private void addToSelection(N node, Set<N> selection) {
-		TriState cachedState = _states.get(node);
-		switch (cachedState) {
-			case INDETERMINATE:
-				for (N child : children(node)) {
-					addToSelection(child, selection);
-				}
-				break;
-			case NOT_SELECTED:
-				// no selected ignore complete subtree.
-				break;
-			case SELECTED:
-				addRecursive(node, selection);
-				break;
-		}
-
-	}
-
-	private void addRecursive(N node, Set<N> selection) {
-		selection.add(node);
-		for (N child : children(node)) {
-			addRecursive(child, selection);
+		/**
+		 * Whether all descendants share the same selection state.
+		 */
+		public boolean isHomogeneous() {
+			return switch (this) {
+				case NONE, ALL -> true;
+				case SOME -> false;
+			};
 		}
 	}
-
-	/**
-	 * Determines the parent of the given node.
-	 */
-	protected abstract N parent(N node);
-
-	/**
-	 * Determines the children for the given node.
-	 */
-	protected abstract List<? extends N> children(N node);
 
 }

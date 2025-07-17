@@ -19,7 +19,7 @@ import com.top_logic.mig.html.SelectionModelOwner;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public abstract class AbstractSelectionModel<T> extends AbstractObservable<SelectionListener, MultiSelectionEvent>
+public abstract class AbstractSelectionModel<T> extends AbstractObservable<SelectionListener, SelectionEvent>
 		implements SelectionModel<T> {
 
 	private SelectionModelOwner _owner;
@@ -69,7 +69,7 @@ public abstract class AbstractSelectionModel<T> extends AbstractObservable<Selec
 	}
 
 	@Override
-	protected void sendEvent(SelectionListener listener, MultiSelectionEvent event) {
+	protected void sendEvent(SelectionListener listener, SelectionEvent event) {
 		{
 			// Quirks introduced in #3910 to fix #3936:
 

@@ -86,7 +86,7 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 
 	}
 
-	private final Collection<ClientConfigurator> _clientConfigurators;
+	private final Collection<? extends ClientConfigurator> _clientConfigurators;
 
 	private org.pac4j.core.config.Config _pac4jConfig;
 

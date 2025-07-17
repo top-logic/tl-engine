@@ -483,8 +483,11 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 
 	private HTMLTemplateFragment templateForMember(String fieldName) {
 		TagTemplate contentFragment = div(css("rf_keepInline"), member(fieldName));
-		// use rf_inputCell so that the table will not overshoot its parent
-		return div(css(ReactiveFormCSS.RF_INPUT_CELL), contentFragment);
+		// Override grid-template-columns to prevent table overflow while maintaining full width
+		// usage
+		return div(css(ReactiveFormCSS.RF_LINE),
+			style("grid-template-columns: minmax(0, 1fr);"),
+			contentFragment);
 	}
 
 	private Collection<ColumnDisplay> colums() {

@@ -231,7 +231,7 @@ public class TreeUpdateListener extends TreeUIUpdateAccumulator<TreeUIModel> imp
 	@Override
 	public void notifySelectionChanged(SelectionModel senderModel, SelectionEvent event) {
 		invalidateNodes(
-			CollectionUtil.symmetricDifference(event.getFormerlySelectedObjects(), event.getNewlySelectedObjects()));
+			CollectionUtil.symmetricDifference(event.getOldSelection(), event.getNewSelection()));
 	}
 
 	private void invalidateNodes(Collection<?> nodes) {

@@ -89,7 +89,7 @@ public class TestDefaultTableData extends AbstractLayoutTest {
 		@Override
 		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			_calledCount++;
-			_selectionChanges.add(new Pair<>(event.getFormerlySelectedObjects(), event.getNewlySelectedObjects()));
+			_selectionChanges.add(new Pair<>(event.getOldSelection(), event.getNewSelection()));
 		}
 
 		/**

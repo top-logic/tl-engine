@@ -495,7 +495,7 @@ public class TreeComponent extends BuilderComponent implements SelectableWithSel
 		@Override
 		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			{
-				Set<DefaultTreeUINode> newSelectedNodes = unsafeCast(event.getNewlySelectedObjects());
+				Set<DefaultTreeUINode> newSelectedNodes = unsafeCast(event.getNewSelection());
 				if (_expandSelected) {
 					for (DefaultTreeUINode selectedNode : newSelectedNodes) {
 						if (selectedNode != null) {

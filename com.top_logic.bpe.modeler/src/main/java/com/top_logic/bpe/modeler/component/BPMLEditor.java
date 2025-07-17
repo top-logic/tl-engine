@@ -222,7 +222,7 @@ public class BPMLEditor extends BoundComponent
 
 	@Override
 	public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
-		Object newSelection = extractSelection(event.getNewlySelectedObjects());
+		Object newSelection = extractSelection(event.getNewSelection());
 
 		if (ScriptingRecorder.isRecordingActive()) {
 			if (newSelection == null) {

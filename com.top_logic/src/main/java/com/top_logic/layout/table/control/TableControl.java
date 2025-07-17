@@ -1163,8 +1163,8 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	
 	@Override
 	public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
-		updateRows(event.getFormerlySelectedObjects());
-		updateRows(event.getNewlySelectedObjects());
+		updateRows(event.getOldSelection());
+		updateRows(event.getNewSelection());
 
 		if (!model.getSelection().isEmpty()) {
 			setVisibleRange(model);

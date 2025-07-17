@@ -704,7 +704,7 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 		@Override
 		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			boolean changed =
-				!CollectionUtil.containsSame(_referenceSelection, event.getNewlySelectedObjects());
+				!CollectionUtil.containsSame(_referenceSelection, event.getNewSelection());
 			setExecutability(getApplyCommand(), changed);
 		}
 	}

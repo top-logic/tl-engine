@@ -269,7 +269,7 @@ public class TreeTableComponent extends BoundComponent
 
 		@Override
 		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
-			Set<AbstractTreeTableNode<?>> newSelectedNodes = unsafeCast(event.getNewlySelectedObjects());
+			Set<AbstractTreeTableNode<?>> newSelectedNodes = unsafeCast(event.getNewSelection());
 
 			if (_expandSelected) {
 				for (AbstractTreeTableNode<?> newSelectedNode : newSelectedNodes) {
@@ -287,7 +287,7 @@ public class TreeTableComponent extends BoundComponent
 				 * selection must not be reverted. */
 				Set<Object> newSelectedObjects = TreeUIModelUtil.getBusinessObjects(newSelectedNodes);
 				if (!CollectionUtil.equals(selectionFromChannel(), newSelectedObjects)) {
-					_selectionModel.setSelection(event.getFormerlySelectedObjects());
+					_selectionModel.setSelection(event.getOldSelection());
 				}
 			}
 		}

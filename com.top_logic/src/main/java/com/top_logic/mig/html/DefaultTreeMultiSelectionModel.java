@@ -15,7 +15,6 @@ import java.util.Set;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.StructureView;
 import com.top_logic.basic.col.filter.FilterFactory;
-import com.top_logic.layout.component.model.SelectionEvent;
 
 /**
  * A selection model that supports multiple selection in tree-like structures.
@@ -49,7 +48,7 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 	 */
 	private final Map<T, NodeSelectionState> _state = new HashMap<>();
 
-	private EventBuilder _eventBuilder;
+	private SelectionEventBuilder _eventBuilder;
 
 
 	/**
@@ -369,25 +368,7 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 		return false;
 	}
 
-	/**
-	 * Prevent the model from firing multiple events for a bulk update operation that consists of
-	 * multiple selections.
-	 * 
-	 * <p>
-	 * Use with the following pattern:
-	 * </p>
-	 * 
-	 * <pre>
-	 * <code>selectionModel.startBulkUpdate();
-	 * try {
-	 *     selectionModel.setSelected(foo, true);
-	 *     selectionModel.setSelectedSubtree(bar, false);
-	 *     ...
-	 * } finally {
-	 *     selectionModel.completeBulkUpdate();
-	 * }</code>
-	 * </pre>
-	 */
+	@Override
 	public void startBulkUpdate() {
 		if (_eventBuilder != null) {
 			throw new IllegalStateException("Bulk update already started.");
@@ -395,11 +376,7 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 		installEventBuilder();
 	}
 
-	/**
-	 * Completes a bulk-update and fires an event.
-	 * 
-	 * @see #startBulkUpdate()
-	 */
+	@Override
 	public void completeBulkUpdate() {
 		if (_eventBuilder == null) {
 			throw new IllegalStateException("Bulk update not started.");
@@ -410,7 +387,7 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 	private boolean installEventBuilder() {
 		boolean shouldFire = _eventBuilder == null;
 		if (shouldFire) {
-			_eventBuilder = hasListeners() ? EventBuilder.create(this) : EventBuilder.NONE;
+			_eventBuilder = hasListeners() ? SelectionEventBuilder.create(this) : SelectionEventBuilder.NONE;
 		}
 		return shouldFire;
 	}
@@ -423,68 +400,6 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 	private boolean cancelEvent() {
 		_eventBuilder = null;
 		return false;
-	}
-
-	static interface EventBuilder {
-
-		public static final EventBuilder NONE = new EventBuilder() {
-			@Override
-			public SelectionEvent build() {
-				return null;
-			}
-
-			@Override
-			public void recordUpdate(Object obj) {
-				// Ignore.
-			}
-		};
-
-		public SelectionEvent build();
-
-		public void recordUpdate(Object obj);
-
-		public static EventBuilder create(SelectionModel<?> model) {
-			Set<?> old = model.getSelection();
-
-			return new EventBuilder() {
-				private Set<Object> _updated = new HashSet<>();
-
-				@Override
-				public void recordUpdate(Object obj) {
-					_updated.add(obj);
-				}
-
-				@Override
-				public SelectionEvent build() {
-					return new SelectionEvent() {
-						private Set<?> _current;
-
-						@Override
-						public Set<?> getUpdatedObjects() {
-							return _updated;
-						}
-
-						@Override
-						public SelectionModel<?> getSender() {
-							return model;
-						}
-
-						@Override
-						public Set<?> getOldSelection() {
-							return old;
-						}
-
-						@Override
-						public Set<?> getNewSelection() {
-							if (_current == null) {
-								_current = model.getSelection();
-							}
-							return _current;
-						}
-					};
-				}
-			};
-		}
 	}
 
 }

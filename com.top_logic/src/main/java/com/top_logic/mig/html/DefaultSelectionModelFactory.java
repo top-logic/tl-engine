@@ -12,6 +12,10 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.tree.TreeModelOwner;
+import com.top_logic.tool.boundsec.CommandHandler;
 
 /**
  * {@link SelectionModelFactory} that creates "default" {@link SelectionModel}s.
@@ -37,6 +41,11 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 		String FILTER_PROPERTY_NAME = "filter";
 
 		/**
+		 * @see #withTreeSemantics()
+		 */
+		String TREE_SEMANTICS = "treeSemantics";
+
+		/**
 		 * Whether the created {@link SelectionModel} must support multiple selection.
 		 */
 		@Name(MULTIPLE_PROPERTY_NAME)
@@ -46,6 +55,23 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 		 * Setter for {@link #isMultiple()}.
 		 */
 		void setMultiple(boolean multiple);
+
+		/**
+		 * Whether to create a selection model that provides enhanced information and operations for
+		 * tree structures.
+		 * 
+		 * <p>
+		 * A selection model with tree semantics must only be used, if the underlying model is a
+		 * tree model.
+		 * </p>
+		 * 
+		 * <p>
+		 * This option is only relevant, for a multi-selection model.
+		 * </p>
+		 */
+		@Name(TREE_SEMANTICS)
+		@DynamicMode(fun = CommandHandler.ConfirmConfig.VisibleIf.class, args = @Ref(MULTIPLE_PROPERTY_NAME))
+		boolean withTreeSemantics();
 
 		/**
 		 * Returns the selection filter for the created {@link SelectionModel}.
@@ -81,6 +107,10 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 	public SelectionModel<?> newSelectionModel(SelectionModelOwner owner) {
 		Filter<?> selectionFilter = _config.getFilter();
 		if (_config.isMultiple()) {
+			if (_config.withTreeSemantics()) {
+				return new DefaultTreeMultiSelectionModel<>(selectionFilter, owner,
+					((TreeModelOwner) owner));
+			}
 			return new DefaultMultiSelectionModel<>(selectionFilter, owner);
 		} else {
 			return new DefaultSingleSelectionModel<>(selectionFilter, owner);

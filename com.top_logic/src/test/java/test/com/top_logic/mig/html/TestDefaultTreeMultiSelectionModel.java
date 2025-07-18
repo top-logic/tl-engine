@@ -16,6 +16,7 @@ import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.tree.model.DefaultMutableTLTreeModel;
 import com.top_logic.layout.tree.model.DefaultMutableTLTreeNode;
+import com.top_logic.layout.tree.model.TreeUIModelUpgrade;
 import com.top_logic.mig.html.DefaultTreeMultiSelectionModel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.TreeSelectionModel.NodeSelectionState;
@@ -76,7 +77,9 @@ public class TestDefaultTreeMultiSelectionModel extends TestCase {
 
 		assertTrue(!_c.getModel().hasChildren(_c));
 
-		_selection = new DefaultTreeMultiSelectionModel<>(null, _tree);
+		TreeUIModelUpgrade<DefaultMutableTLTreeNode> uiTree = new TreeUIModelUpgrade<>(_tree);
+
+		_selection = new DefaultTreeMultiSelectionModel<>(null, () -> uiTree);
 
 		_listener = new SelectionListener() {
 			@Override

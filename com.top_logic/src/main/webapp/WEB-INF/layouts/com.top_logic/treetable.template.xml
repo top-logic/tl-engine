@@ -129,7 +129,10 @@
 		showPopOut="${showPopOut}"
 		titleKey="${name}"
 	>
-		<selectionModelFactory multiple="${multiSelection}"/>
+		<selectionModelFactory
+			multiple="${multiSelection}"
+			treeSemantics="true"
+		/>
 		<treeBuilder class="com.top_logic.layout.table.tree.TreeBuilderAdaptor"
 			treeModelBuilder="${modelBuilder}"
 		/>

@@ -58,6 +58,10 @@ public interface SelectionEventBuilder {
 
 			@Override
 			public SelectionEvent build() {
+				if (_updated.isEmpty()) {
+					return null;
+				}
+
 				return new SelectionEvent() {
 					private Set<?> _current;
 

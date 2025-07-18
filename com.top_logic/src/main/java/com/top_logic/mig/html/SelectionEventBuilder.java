@@ -10,8 +10,14 @@ import java.util.Set;
 
 import com.top_logic.layout.component.model.SelectionEvent;
 
-interface SelectionEventBuilder {
+/**
+ * Builder for {@link SelectionEvent}s.
+ */
+public interface SelectionEventBuilder {
 
+	/**
+	 * A {@link SelectionEventBuilder} that ignores updates and builds no event.
+	 */
 	public static final SelectionEventBuilder NONE = new SelectionEventBuilder() {
 		@Override
 		public SelectionEvent build() {
@@ -24,10 +30,21 @@ interface SelectionEventBuilder {
 		}
 	};
 
+	/**
+	 * Creates the {@link SelectionEvent} from recorded updates.
+	 */
 	public SelectionEvent build();
 
+	/**
+	 * Marks the given object as touched.
+	 * 
+	 * @see SelectionEvent#getUpdatedObjects()
+	 */
 	public void recordUpdate(Object obj);
 
+	/**
+	 * Creates a {@link SelectionEventBuilder}.
+	 */
 	public static SelectionEventBuilder create(SelectionModel<?> model) {
 		Set<?> old = model.getSelection();
 

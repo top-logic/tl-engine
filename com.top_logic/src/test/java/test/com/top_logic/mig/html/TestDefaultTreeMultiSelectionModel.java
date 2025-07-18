@@ -5,9 +5,12 @@
  */
 package test.com.top_logic.mig.html;
 
-import java.util.Set;
+import java.util.Arrays;
+import java.util.HashSet;
 
 import junit.framework.TestCase;
+
+import test.com.top_logic.basic.BasicTestCase;
 
 import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
@@ -45,7 +48,7 @@ public class TestDefaultTreeMultiSelectionModel extends TestCase {
 
 	private SelectionListener _listener;
 
-	protected Set<?> _selectedEvent;
+	protected SelectionEvent _selectedEvent;
 
 	protected int _events;
 
@@ -57,15 +60,19 @@ public class TestDefaultTreeMultiSelectionModel extends TestCase {
 
 		_root = _tree.getRoot();
 
-		_a = _root.createChild("A");
-		_b = _root.createChild("B");
-		_c = _root.createChild("C");
+		_a = _root.createChild("a");
+		_b = _root.createChild("b");
 
-		_a1 = _a.createChild("1");
-		_a2 = _a.createChild("2");
-		_a3 = _a.createChild("3");
+		// Node without children
+		_c = _root.createChild("c");
 
-		_b1 = _b.createChild("single");
+		// Multiple children
+		_a1 = _a.createChild("a1");
+		_a2 = _a.createChild("a2");
+		_a3 = _a.createChild("a3");
+
+		// Single child
+		_b1 = _b.createChild("b1");
 
 		assertTrue(!_c.getModel().hasChildren(_c));
 
@@ -75,7 +82,7 @@ public class TestDefaultTreeMultiSelectionModel extends TestCase {
 			@Override
 			public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 				_events++;
-				_selectedEvent = event.getNewSelection();
+				_selectedEvent = event;
 			}
 		};
 	}
@@ -184,6 +191,60 @@ public class TestDefaultTreeMultiSelectionModel extends TestCase {
 		_selection.setSelected(_a, false);
 		assertFalse(_selection.isSelected(_a));
 		assertEquals(1, _events);
+	}
+
+	public void testBulkUpdate() {
+		listen();
+		_selection.startBulkUpdate();
+
+		_selection.setSelectedSubtree(_a, true);
+		_selection.setSelectedSubtree(_b, true);
+		_selection.setSelectedSubtree(_c, true);
+
+		assertEquals(0, _events);
+
+		_selection.completeBulkUpdate();
+		assertEquals(1, _events);
+
+		assertEquals(_selection, _selectedEvent.getSender());
+		assertEquals(new HashSet<>(), _selectedEvent.getOldSelection());
+		assertEquals(new HashSet<>(Arrays.asList(_a, _a1, _a2, _a3, _b, _b1, _c)), _selectedEvent.getNewSelection());
+		BasicTestCase.assertEquals(new HashSet<>(Arrays.asList(_root, _a, _a1, _a2, _a3, _b, _b1, _c)),
+			_selectedEvent.getUpdatedObjects());
+	}
+
+	public void testMaximalSubtreeEvent() {
+		listen();
+		_selection.setSelectedSubtree(_root, true);
+		assertEquals(1, _events);
+		BasicTestCase.assertEquals(new HashSet<>(Arrays.asList(_root, _a, _a1, _a2, _a3, _b, _b1, _c)),
+			_selectedEvent.getUpdatedObjects());
+
+		listen();
+		_selection.setSelectedSubtree(_root, false);
+		assertEquals(1, _events);
+		BasicTestCase.assertEquals(new HashSet<>(Arrays.asList(_root, _a, _a1, _a2, _a3, _b, _b1, _c)),
+			_selectedEvent.getUpdatedObjects());
+	}
+
+	public void testMinimalSubtreeEvent() {
+		_selection.setSelectedSubtree(_a, true);
+
+		listen();
+		_selection.setSelectedSubtree(_root, true);
+		assertEquals(1, _events);
+		BasicTestCase.assertEquals(new HashSet<>(Arrays.asList(_root, _b, _b1, _c)),
+			_selectedEvent.getUpdatedObjects());
+
+		_selection.setSelectedSubtree(_a, false);
+		assertFalse(_selection.isSelected(_a));
+		assertFalse(_selection.isSelected(_a1));
+
+		listen();
+		_selection.setSelectedSubtree(_root, false);
+		assertEquals(1, _events);
+		BasicTestCase.assertEquals(new HashSet<>(Arrays.asList(_root, _b, _b1, _c)),
+			_selectedEvent.getUpdatedObjects());
 	}
 
 }

@@ -154,6 +154,17 @@ public interface TreeSelectionModel<T> extends SelectionModel<T> {
 				case SOME -> false;
 			};
 		}
+
+		/**
+		 * The state that is assumed for a child that has no explicit state stored.
+		 */
+		public NodeSelectionState implicitState() {
+			return switch (this) {
+				case NONE -> NodeSelectionState.NONE;
+				case ALL -> NodeSelectionState.FULL;
+				case SOME -> NodeSelectionState.NONE;
+			};
+		}
 	}
 
 }

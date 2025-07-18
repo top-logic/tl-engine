@@ -152,21 +152,39 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 
 		NodeSelectionState newState = select ? NodeSelectionState.FULL : NodeSelectionState.NONE;
 
-		updateState(obj, newState, select);
+		boolean shouldFire = installEventBuilder();
+		try {
+			updateState(obj, newState, select);
 
-		// Clear redundant descendant state.
-		clearDescendantState(obj);
-
+			// Clear redundant descendant state.
+			updateDescendantState(obj, oldState, newState);
+		} catch (Throwable ex) {
+			shouldFire = cancelEvent();
+			throw ex;
+		} finally {
+			if (shouldFire) {
+				fireEvent();
+			}
+		}
 	}
 
-	private void clearDescendantState(T parent) {
+	private void updateDescendantState(T parent, NodeSelectionState oldState, NodeSelectionState newState) {
 		Iterator<? extends T> it = _treeModel.getChildIterator(parent);
 		while (it.hasNext()) {
 			T child = it.next();
 			NodeSelectionState before = _state.remove(child);
 
-			if (before != null && before.descendants() != DescendantState.NONE) {
-				clearDescendantState(child);
+			NodeSelectionState implicitBefore = before == null ? oldState.descendants().implicitState() : before;
+			if (implicitBefore != newState) {
+				_eventBuilder.recordUpdate(child);
+			}
+
+			boolean requireDescend =
+				implicitBefore.descendants() != DescendantState.NONE
+					|| implicitBefore.descendants() != newState.descendants();
+
+			if (requireDescend) {
+				updateDescendantState(child, implicitBefore, newState);
 			}
 		}
 	}
@@ -190,12 +208,20 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 		
 		NodeSelectionState newState = NodeSelectionState.valueOf(select, newDescendantState);
 
-		updateState(obj, newState, select);
+		boolean shouldFire = installEventBuilder();
+		try {
+			updateState(obj, newState, select);
+		} catch (Throwable ex) {
+			shouldFire = cancelEvent();
+			throw ex;
+		} finally {
+			if (shouldFire) {
+				fireEvent();
+			}
+		}
 	}
 
 	private void updateState(T obj, NodeSelectionState newState, boolean select) {
-		boolean shouldFire = installEventBuilder();
-
 		// Note: Event "not selected" must be temporarily stored, since the states are currently
 		// inconsistent and must be updated after the parent has been updated.
 		_state.put(obj, newState);
@@ -207,10 +233,6 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 		// Clean up redundant state.
 		if (newState == NodeSelectionState.NONE) {
 			_state.remove(obj);
-		}
-
-		if (shouldFire) {
-			fireEvent();
 		}
 	}
 
@@ -292,12 +314,7 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 			NodeSelectionState childState = _state.get(child);
 			if (childState == null) {
 				// Implicit state.
-				childResult = oldParentState.descendants().isHomogeneous()
-					// Same as (old) parent state - cannot happen, since only called in complicated
-					// situation.
-					? oldParentState.descendants()
-					// Just not selected - vote for NONE.
-					: DescendantState.NONE;
+				childResult = oldParentState.descendants().implicitState().descendants();
 			} else if (childState.isHomogeneous()) {
 				childResult = childState.descendants();
 			} else {
@@ -352,6 +369,44 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 		return false;
 	}
 
+	/**
+	 * Prevent the model from firing multiple events for a bulk update operation that consists of
+	 * multiple selections.
+	 * 
+	 * <p>
+	 * Use with the following pattern:
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>selectionModel.startBulkUpdate();
+	 * try {
+	 *     selectionModel.setSelected(foo, true);
+	 *     selectionModel.setSelectedSubtree(bar, false);
+	 *     ...
+	 * } finally {
+	 *     selectionModel.completeBulkUpdate();
+	 * }</code>
+	 * </pre>
+	 */
+	public void startBulkUpdate() {
+		if (_eventBuilder != null) {
+			throw new IllegalStateException("Bulk update already started.");
+		}
+		installEventBuilder();
+	}
+
+	/**
+	 * Completes a bulk-update and fires an event.
+	 * 
+	 * @see #startBulkUpdate()
+	 */
+	public void completeBulkUpdate() {
+		if (_eventBuilder == null) {
+			throw new IllegalStateException("Bulk update not started.");
+		}
+		fireEvent();
+	}
+
 	private boolean installEventBuilder() {
 		boolean shouldFire = _eventBuilder == null;
 		if (shouldFire) {
@@ -363,6 +418,11 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 	private void fireEvent() {
 		notifyListeners(_eventBuilder.build());
 		_eventBuilder = null;
+	}
+
+	private boolean cancelEvent() {
+		_eventBuilder = null;
+		return false;
 	}
 
 	static interface EventBuilder {

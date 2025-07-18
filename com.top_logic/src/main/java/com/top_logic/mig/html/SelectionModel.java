@@ -58,8 +58,13 @@ public interface SelectionModel<T> extends NamedModel, Serializable {
 	 *        The objects that should be selected.
 	 */
 	default void addToSelection(Collection<? extends T> objects) {
-		for (T obj : objects) {
-			setSelected(obj, true);
+		Object update = startBulkUpdate();
+		try {
+			for (T obj : objects) {
+				setSelected(obj, true);
+			}
+		} finally {
+			completeBulkUpdate(update);
 		}
 	}
 
@@ -70,8 +75,13 @@ public interface SelectionModel<T> extends NamedModel, Serializable {
 	 *        The objects that should be de-selected.
 	 */
 	default void removeFromSelection(Collection<? extends T> objects) {
-		for (T obj : objects) {
-			setSelected(obj, false);
+		Object update = startBulkUpdate();
+		try {
+			for (T obj : objects) {
+				setSelected(obj, false);
+			}
+		} finally {
+			completeBulkUpdate(update);
 		}
 	}
 
@@ -89,8 +99,13 @@ public interface SelectionModel<T> extends NamedModel, Serializable {
 	 *        The new selection. Must not be <code>null</code>.
 	 */
 	default void setSelection(Set<? extends T> newSelection) {
-		clear();
-		addToSelection(newSelection);
+		Object update = startBulkUpdate();
+		try {
+			clear();
+			addToSelection(newSelection);
+		} finally {
+			completeBulkUpdate(update);
+		}
 	}
 
 	/**
@@ -140,17 +155,24 @@ public interface SelectionModel<T> extends NamedModel, Serializable {
 	 * This is an optional API. Depending on its implementation, the selection model may decide to
 	 * send events for each operation anyway.
 	 * </p>
+	 * 
+	 * @return An identifier for the update that must be passed to the corresponding call to
+	 *         {@link #completeBulkUpdate(Object)}
 	 */
-	default void startBulkUpdate() {
+	default Object startBulkUpdate() {
 		// Optional operation.
+		return null;
 	}
 
 	/**
 	 * Completes a bulk-update and fires an event.
 	 * 
+	 * @param update
+	 *        The value from the corresponding {@link #startBulkUpdate()} call.
+	 * 
 	 * @see #startBulkUpdate()
 	 */
-	default void completeBulkUpdate() {
+	default void completeBulkUpdate(Object update) {
 		// Optional operation.
 	}
 

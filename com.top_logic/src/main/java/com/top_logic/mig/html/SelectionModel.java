@@ -117,4 +117,41 @@ public interface SelectionModel<T> extends NamedModel, Serializable {
 	/** @see SelectionModelOwner */
 	public SelectionModelOwner getOwner();
 
+	/**
+	 * Recommend the model to prevent firing multiple events for a bulk update that consists of
+	 * multiple selections.
+	 * 
+	 * <p>
+	 * Use with the following pattern:
+	 * </p>
+	 * 
+	 * <pre>
+	 * <code>selectionModel.startBulkUpdate();
+	 * try {
+	 *     selectionModel.setSelected(foo, true);
+	 *     selectionModel.setSelectedSubtree(bar, false);
+	 *     ...
+	 * } finally {
+	 *     selectionModel.completeBulkUpdate();
+	 * }</code>
+	 * </pre>
+	 * 
+	 * <p>
+	 * This is an optional API. Depending on its implementation, the selection model may decide to
+	 * send events for each operation anyway.
+	 * </p>
+	 */
+	default void startBulkUpdate() {
+		// Optional operation.
+	}
+
+	/**
+	 * Completes a bulk-update and fires an event.
+	 * 
+	 * @see #startBulkUpdate()
+	 */
+	default void completeBulkUpdate() {
+		// Optional operation.
+	}
+
 }

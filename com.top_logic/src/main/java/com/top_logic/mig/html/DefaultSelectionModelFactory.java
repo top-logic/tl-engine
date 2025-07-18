@@ -52,12 +52,12 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 		 */
 		@InstanceFormat
 		@Name(FILTER_PROPERTY_NAME)
-		Filter getFilter();
+		Filter<?> getFilter();
 
 		/**
 		 * Setter for {@link #getFilter()}.
 		 */
-		void setFilter(Filter filter);
+		void setFilter(Filter<?> filter);
 	}
 
 	private final Config _config;
@@ -78,12 +78,12 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 	}
 
 	@Override
-	public SelectionModel newSelectionModel(SelectionModelOwner owner) {
-		Filter selectionFilter = _config.getFilter();
+	public SelectionModel<?> newSelectionModel(SelectionModelOwner owner) {
+		Filter<?> selectionFilter = _config.getFilter();
 		if (_config.isMultiple()) {
-			return new DefaultMultiSelectionModel(selectionFilter, owner);
+			return new DefaultMultiSelectionModel<>(selectionFilter, owner);
 		} else {
-			return new DefaultSingleSelectionModel(selectionFilter, owner);
+			return new DefaultSingleSelectionModel<>(selectionFilter, owner);
 		}
 	}
 

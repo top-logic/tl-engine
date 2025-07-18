@@ -74,12 +74,12 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 		 */
 		@InstanceFormat
 		@Name(FILTER_PROPERTY_NAME)
-		Filter getFilter();
+		Filter<?> getFilter();
 
 		/**
 		 * Setter for {@link #getFilter()}.
 		 */
-		void setFilter(Filter filter);
+		void setFilter(Filter<?> filter);
 	}
 
 	/**
@@ -144,8 +144,8 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 	}
 
 	@Override
-	public SelectionModel newSelectionModel(SelectionModelOwner owner) {
-		Filter<Object> selectionFilter = getSelectionFilter();
+	public SelectionModel<?> newSelectionModel(SelectionModelOwner owner) {
+		Filter selectionFilter = getSelectionFilter();
 		if (_config.isMultiple()) {
 			if (_config.isTreeSelection()) {
 				TreeTableDataOwner treeOwner = (TreeTableDataOwner) owner;
@@ -160,17 +160,17 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 				return selectionModel;
 					
 			} else {
-				return new DefaultMultiSelectionModel(selectionFilter, owner);
+				return new DefaultMultiSelectionModel<>(selectionFilter, owner);
 			}
 		} else {
-			return new DefaultSingleSelectionModel(selectionFilter, owner);
+			return new DefaultSingleSelectionModel<>(selectionFilter, owner);
 		}
 	}
 
 	/**
 	 * Optional filter to restrict selection events.
 	 */
-	protected Filter<Object> getSelectionFilter() {
+	protected Filter<?> getSelectionFilter() {
 		return _config.getFilter();
 	}
 

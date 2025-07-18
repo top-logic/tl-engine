@@ -6,15 +6,22 @@
 package com.top_logic.layout.table.tree;
 
 import com.top_logic.layout.table.TableDataOwner;
+import com.top_logic.layout.tree.TreeModelOwner;
+import com.top_logic.layout.tree.model.TreeUIModel;
 
 /**
  * Owner of a {@link TreeTableData}.
  * 
  * @author <a href="mailto:sfo@top-logic.com">sfo</a>
  */
-public interface TreeTableDataOwner extends TableDataOwner {
+public interface TreeTableDataOwner extends TableDataOwner, TreeModelOwner {
 
 	@Override
 	public TreeTableData getTableData();
+
+	@Override
+	default TreeUIModel getTree() {
+		return getTableData().getTree();
+	}
 
 }

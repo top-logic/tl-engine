@@ -129,7 +129,7 @@ public interface SelectionModel<T> extends NamedModel, Serializable {
 	 * <code>selectionModel.startBulkUpdate();
 	 * try {
 	 *     selectionModel.setSelected(foo, true);
-	 *     selectionModel.setSelectedSubtree(bar, false);
+	 *     selectionModel.setSelected(bar, false);
 	 *     ...
 	 * } finally {
 	 *     selectionModel.completeBulkUpdate();

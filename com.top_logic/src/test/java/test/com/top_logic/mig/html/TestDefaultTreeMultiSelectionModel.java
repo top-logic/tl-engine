@@ -124,6 +124,15 @@ public class TestDefaultTreeMultiSelectionModel extends TestCase {
 		assertEquals(NodeSelectionState.SOME_DESCENDANTS, _selection.getNodeSelectionState(_root));
 	}
 
+	public void testSelectSingleChildParent() {
+		DefaultMutableTLTreeNode b11 = _b1.createChild("b1.1");
+		_selection.setSelected(_b1, true);
+
+		assertEquals(NodeSelectionState.NONE, _selection.getNodeSelectionState(b11));
+		assertEquals(NodeSelectionState.SELECTED_NO_DESCENDANTS, _selection.getNodeSelectionState(_b1));
+		assertEquals(NodeSelectionState.SOME_DESCENDANTS, _selection.getNodeSelectionState(_root));
+	}
+
 	public void testSelectSubtree() {
 		_selection.setSelectedSubtree(_root, true);
 

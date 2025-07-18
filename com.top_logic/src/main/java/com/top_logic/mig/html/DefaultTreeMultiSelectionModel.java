@@ -34,6 +34,10 @@ import com.top_logic.layout.tree.TreeModelOwner;
 public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelectionModel<T>
 		implements TreeSelectionModel<T> {
 	
+	private static final Object NO_UPDATE = null;
+
+	private static final Object BULK_UPDATE = new NamedConstant("bulkUpdate");
+
 	private final TreeModelOwner _treeModelOwner;
 
 	/**
@@ -370,17 +374,18 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 	}
 
 	@Override
-	public void startBulkUpdate() {
+	public Object startBulkUpdate() {
 		if (_eventBuilder != null) {
-			throw new IllegalStateException("Bulk update already started.");
+			return NO_UPDATE;
 		}
 		installEventBuilder();
+		return BULK_UPDATE;
 	}
 
 	@Override
-	public void completeBulkUpdate() {
-		if (_eventBuilder == null) {
-			throw new IllegalStateException("Bulk update not started.");
+	public void completeBulkUpdate(Object update) {
+		if (update != BULK_UPDATE) {
+			return;
 		}
 		fireEvent();
 	}
@@ -394,8 +399,12 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 	}
 
 	private void fireEvent() {
-		notifyListeners(_eventBuilder.build());
+		SelectionEvent event = _eventBuilder.build();
 		_eventBuilder = null;
+
+		if (event != null) {
+			notifyListeners(event);
+		}
 	}
 
 	private boolean cancelEvent() {

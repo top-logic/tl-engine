@@ -198,7 +198,7 @@ public class TestDefaultTreeMultiSelectionModel extends TestCase {
 
 	public void testBulkUpdate() {
 		listen();
-		_selection.startBulkUpdate();
+		Object update = _selection.startBulkUpdate();
 
 		_selection.setSelectedSubtree(_a, true);
 		_selection.setSelectedSubtree(_b, true);
@@ -206,7 +206,7 @@ public class TestDefaultTreeMultiSelectionModel extends TestCase {
 
 		assertEquals(0, _events);
 
-		_selection.completeBulkUpdate();
+		_selection.completeBulkUpdate(update);
 		assertEquals(1, _events);
 
 		assertEquals(_selection, _selectedEvent.getSender());

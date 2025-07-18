@@ -884,8 +884,12 @@ public class TableControl extends AbstractControl implements TableModelListener,
 			}
 		}
 		recordAbsoluteSelection(selection);
-		((AbstractMultiSelectionModel) selectionModel).setSelection(selection,
-			getViewModel().getRowObject(newSelectedRow));
+
+		if (selectionModel instanceof AbstractMultiSelectionModel multiSelectionModel) {
+			multiSelectionModel.setSelection(selection, getViewModel().getRowObject(newSelectedRow));
+		} else {
+			selectionModel.setSelection(selection);
+		}
 	}
 
 	private void setSelected(Set<Object> selection, int row, boolean doSelect) {
@@ -1190,18 +1194,19 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		});
 	}
 
-	private void setVisibleRange(Object selectionModel) {
+	private void setVisibleRange(SelectionModel selectionModel) {
 		TableViewModel viewModel = getViewModel();
 		int row;
-		if (selectionModel instanceof DefaultSingleSelectionModel) {
-			row = viewModel.getRowOfObject(((DefaultSingleSelectionModel) selectionModel).getSingleSelection());
-		} else {
-			AbstractMultiSelectionModel multiselectionModel = (AbstractMultiSelectionModel) selectionModel;
-			Object selected = multiselectionModel.getLastSelected();
+		if (selectionModel instanceof DefaultSingleSelectionModel singleSelection) {
+			row = viewModel.getRowOfObject(singleSelection.getSingleSelection());
+		} else if (selectionModel instanceof AbstractMultiSelectionModel<?> multiSelection) {
+			Object selected = multiSelection.getLastSelected();
 			if (selected == null) {
-				selected = CollectionUtilShared.getFirst(multiselectionModel.getSelection());
+				selected = CollectionUtilShared.getFirst(multiSelection.getSelection());
 			}
 			row = viewModel.getRowOfObject(selected);
+		} else {
+			row = viewModel.getRowOfObject(CollectionUtilShared.getFirst(selectionModel.getSelection()));
 		}
 		if (row != TableViewModel.NO_ROW) {
 			getVisiblePaneRequest().setPersistentRowRange(IndexRange.singleIndex(row));

@@ -351,7 +351,7 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 		DescendantState descendantState;
 		if (hasSingleChild(parent)) {
 			// The parent follows its single child.
-			descendantState = newState.descendants();
+			descendantState = newState.isHomogeneous() ? newState.descendants() : DescendantState.SOME;
 		} else {
 			// There are other children, therefore the state becomes mixed.
 			descendantState = DescendantState.SOME;

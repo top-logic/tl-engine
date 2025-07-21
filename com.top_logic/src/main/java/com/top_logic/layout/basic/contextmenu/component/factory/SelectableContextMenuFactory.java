@@ -65,8 +65,8 @@ public class SelectableContextMenuFactory<C extends SelectableContextMenuFactory
 		}
 
 		@Override
-		protected List<CommandModel> createButtons(Object model, Map<String, Object> arguments) {
-			List<CommandModel> buttons = super.createButtons(model, arguments);
+		protected List<CommandModel> createButtons(Object directTarget, Object model, Map<String, Object> arguments) {
+			List<CommandModel> buttons = super.createButtons(directTarget, model, arguments);
 
 			LayoutComponent self = getComponent();
 			buttons.addAll(

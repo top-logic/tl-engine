@@ -247,6 +247,7 @@ public class TreeTableComponent extends BoundComponent
 			BoundComponent.Config.super.modifyIntrinsicCommands(registry);
 			registry.registerButton(TreeTableExpandCollapseAll.EXPAND_ID);
 			registry.registerButton(TreeTableExpandCollapseAll.COLLAPSE_ID);
+			registry.registerButton(SelectSubtree.SELECT_SUBTREE_ID);
 		}
 	}
 

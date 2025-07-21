@@ -2088,7 +2088,7 @@ public abstract class StructureEditComponent<N extends MutableTLTreeNode<N>> ext
 
 		@Override
 		public void write(DisplayContext context, TagWriter out, Object value) throws IOException {
-			new SelectionPartControl(_selectionModel, value).write(context, out);
+			SelectionPartControl.createSelectionPartControl(_selectionModel, value).write(context, out);
 		}
 	}
 

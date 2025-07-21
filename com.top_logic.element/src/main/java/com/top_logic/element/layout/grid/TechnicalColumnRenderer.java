@@ -76,7 +76,7 @@ public class TechnicalColumnRenderer implements Renderer<FormGroup> {
 		SelectionModel selectionModel = grid.getSelectionModel();
 		Object tableRow = grid.getHandler().getFirstTableRow(row);
 
-		SelectionPartControl partControl = new SelectionPartControl(selectionModel, tableRow);
+		SelectionPartControl partControl = SelectionPartControl.createSelectionPartControl(selectionModel, tableRow);
 		grid.getTableField(grid.getFormContext()).getSelectionVetoListeners()
 			.forEach(partControl::addSelectionVetoListener);
 		if (isDrawDisabledCheckboxes() || selectionModel.isSelectable(tableRow)) {

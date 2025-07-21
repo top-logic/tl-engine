@@ -43,7 +43,7 @@ public class TableSelectionColumnRenderer extends AbstractCellRenderer {
 			return;
 		}
 		Object rowObject = tableData.getViewModel().getRowObject(row);
-		SelectionPartControl selectionPartControl = new SelectionPartControl(selectionModel, rowObject);
+		SelectionPartControl selectionPartControl = SelectionPartControl.createSelectionPartControl(selectionModel, rowObject);
 		tableData.getSelectionVetoListeners().forEach(selectionPartControl::addSelectionVetoListener);
 		selectionPartControl.write(context, out);
 	}

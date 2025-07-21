@@ -3848,7 +3848,7 @@ public class TestControlsForm extends FormComponent {
 			partA.setControlProvider(new ControlProvider() {
 				@Override
 				public Control createControl(Object model, String style) {
-					return new SelectionPartControl(selectionModel, currentPartName);
+					return SelectionPartControl.createSelectionPartControl(selectionModel, currentPartName);
 				}
 			});
 			testGroup.addMember(partA);

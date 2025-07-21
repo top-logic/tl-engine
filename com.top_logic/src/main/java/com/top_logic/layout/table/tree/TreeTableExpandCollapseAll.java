@@ -9,6 +9,8 @@ import java.util.Map;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.layout.table.TableData;
+import com.top_logic.layout.table.TableDataOwner;
 import com.top_logic.layout.tree.component.AbstractExpandCollapseAll;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
@@ -35,11 +37,13 @@ public class TreeTableExpandCollapseAll extends AbstractTreeTableExpandCollapseA
 
 	@Override
 	protected CommandStep prepare(LayoutComponent component, Object model, Map<String, Object> arguments) {
-		if (!(component instanceof TreeTableComponent)) {
-			return new Hide();
+		if (component instanceof TableDataOwner tableDataOwner) {
+			TableData tableData = tableDataOwner.getTableData();
+			if (tableData instanceof TreeTableData treeTable) {
+				return prepare(treeTable);
+			}
 		}
-
-		return prepare(((TreeTableComponent) component).getTableData());
+		return new Hide();
 	}
 
 }

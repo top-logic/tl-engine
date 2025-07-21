@@ -50,7 +50,11 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 			ValueChanged.INSTANCE
 		});
 
-	private SelectionPartModel _selectionPartModel;
+	private SelectionModel _selectionModel;
+
+	private Object _selectionPart;
+
+	private List<SelectionVetoListener> _vetoListeners = Collections.emptyList();
 
 	private String _inputStyle;
 
@@ -68,12 +72,13 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 	 */
 	public SelectionPartControl(SelectionModel selectionModel, Object part) {
 		super(COMMANDS);
-		_selectionPartModel = new SelectionPartModel(selectionModel, part);
+		_selectionModel = selectionModel;
+		_selectionPart = part;
 	}
 
 	@Override
-	public SelectionPartModel getModel() {
-		return _selectionPartModel;
+	public Object getModel() {
+		return _selectionModel;
 	}
 
 	@Override
@@ -85,12 +90,12 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 	protected void internalAttach() {
 		super.internalAttach();
 
-		_selectionPartModel.addSelectionModelListener(this);
+		addSelectionModelListener(this);
 	}
 
 	@Override
 	protected void internalDetach() {
-		_selectionPartModel.removeSelectionModelListener(this);
+		removeSelectionModelListener(this);
 
 		super.internalDetach();
 	}
@@ -104,14 +109,14 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 			out.beginBeginTag(INPUT);
 			out.writeAttribute(ID_ATTR, getInputId());
 
-			boolean single = isSingle();
+			boolean single = isSingleSelection();
 			if (single) {
 				out.writeAttribute(TYPE_ATTR, RADIO_TYPE_VALUE);
 			} else {
 				out.writeAttribute(TYPE_ATTR, CHECKBOX_TYPE_VALUE);
 			}
 
-			if (isChecked()) {
+			if (isSelected()) {
 				out.writeAttribute(CHECKED_ATTR, CHECKED_CHECKED_VALUE);
 			}
 
@@ -171,38 +176,6 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 		return _inputStyle;
 	}
 
-	private boolean isDisabled() {
-		return _selectionPartModel.isDisabled();
-	}
-
-	private boolean isChecked() {
-		return _selectionPartModel.isSelected();
-	}
-
-	private boolean isSingle() {
-		return _selectionPartModel.isSingleSelection();
-	}
-
-	/**
-	 * Registers the given {@link SelectionVetoListener}.
-	 * 
-	 * @param listener
-	 *        Listener to check, before selection changes.
-	 */
-	public void addSelectionVetoListener(SelectionVetoListener listener) {
-		_selectionPartModel.addSelectionVetoListener(listener);
-	}
-
-	/**
-	 * Removes the given {@link SelectionVetoListener}.
-	 * 
-	 * @param listener
-	 *        Listener to remove.
-	 */
-	public void removeSelectionVetoListener(SelectionVetoListener listener) {
-		_selectionPartModel.removeSelectionVetoListener(listener);
-	}
-
 	private static class ValueChanged extends ControlCommand {
 
 		public static final ControlCommand INSTANCE = new ValueChanged();
@@ -221,7 +194,7 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 
 			SelectionPartControl optionControl = (SelectionPartControl) control;
 
-			optionControl.getModel().updateSelectionVeto(optionControl, Utils.isTrue(value));
+			optionControl.updateSelectionVeto(optionControl, Utils.isTrue(value));
 
 			return HandlerResult.DEFAULT_RESULT;
 		}
@@ -234,7 +207,7 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 
 	@Override
 	public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
-		if (_selectionPartModel.shallUpdateBox(event)) {
+		if (event.getUpdatedObjects().contains(_selectionPart)) {
 			invalidateSelection();
 		}
 	}
@@ -253,145 +226,119 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 		if (!_selectionValid) {
 			actions.add(
 				new PropertyUpdate(getInputId(), CHECKED_ATTR,
-					new ConstantDisplayValue(Boolean.toString(isChecked()))));
+					new ConstantDisplayValue(Boolean.toString(isSelected()))));
 
 			_selectionValid = true;
 		}
 	}
 
 	/**
-	 * Model of {@link SelectionPartControl}, that handles synchronization of displayed box (radio
-	 * box or check box) with a {@link SelectionModel}.
+	 * @see SelectionModel#addSelectionListener(SelectionListener)
 	 */
-	public static class SelectionPartModel {
+	public final void addSelectionModelListener(SelectionPartControl control) {
+		_selectionModel.addSelectionListener(control);
+	}
 
-		private SelectionModel _selectionModel;
+	/**
+	 * @see SelectionModel#removeSelectionListener(SelectionListener)
+	 */
+	public final void removeSelectionModelListener(SelectionPartControl control) {
+		_selectionModel.removeSelectionListener(control);
+	}
 
-		private Object _selectionPart;
+	/**
+	 * The {@link SelectionModel} .
+	 */
+	protected final SelectionModel getSelectionModel() {
+		return _selectionModel;
+	}
 
-		private List<SelectionVetoListener> _vetoListeners = Collections.emptyList();
+	/**
+	 * true, if a single option can be selected only, false otherwise
+	 */
+	public final boolean isSingleSelection() {
+		return _selectionModel instanceof SingleSelectionModel;
+	}
 
-		public SelectionPartModel(SelectionModel selectionModel, Object selectionPart) {
-			_selectionModel = selectionModel;
-			_selectionPart = selectionPart;
+	/**
+	 * Registers the given {@link SelectionVetoListener}.
+	 */
+	public void addSelectionVetoListener(SelectionVetoListener listener) {
+		if (_vetoListeners == Collections.<SelectionVetoListener> emptyList()) {
+			_vetoListeners = new ArrayList<>();
 		}
+		_vetoListeners.add(listener);
+	}
 
-		/**
-		 * @see SelectionModel#addSelectionListener(SelectionListener)
-		 */
-		public final void addSelectionModelListener(SelectionPartControl control) {
-			_selectionModel.addSelectionListener(control);
+	/**
+	 * Removes the given {@link SelectionVetoListener}.
+	 */
+	public void removeSelectionVetoListener(SelectionVetoListener listener) {
+		if (_vetoListeners.isEmpty()) {
+			return;
 		}
+		_vetoListeners.remove(listener);
+	}
 
-		/**
-		 * @see SelectionModel#removeSelectionListener(SelectionListener)
-		 */
-		public final void removeSelectionModelListener(SelectionPartControl control) {
-			_selectionModel.removeSelectionListener(control);
+	/**
+	 * Returns the {@link SelectionVetoListener}s.
+	 * 
+	 * @return the {@link SelectionVetoListener}s.
+	 */
+	protected List<SelectionVetoListener> getVetoListeners() {
+		return _vetoListeners;
+	}
+
+	/**
+	 * true, if the selectable option is currently disabled, false otherwise.
+	 */
+	public boolean isDisabled() {
+		return !getSelectionModel().isSelectable(_selectionPart);
+	}
+
+	/**
+	 * true, if the selectable option is currently checked, false otherwise.
+	 */
+	public boolean isSelected() {
+		return getSelectionModel().isSelected(_selectionPart);
+	}
+
+	/**
+	 * Update of the {@link SelectionModel}.
+	 */
+	public void updateSelection(boolean selected) {
+		if (ScriptingRecorder.isRecordingActive()) {
+			ScriptingRecorder.recordSelection(getSelectionModel(), _selectionPart, selected,
+				SelectionChangeKind.INCREMENTAL);
 		}
+		getSelectionModel().setSelected(_selectionPart, selected);
+	}
 
-		/**
-		 * {@link SelectionModel} of this {@link SelectionPartModel}.
-		 */
-		protected final SelectionModel getSelectionModel() {
-			return _selectionModel;
-		}
-
-		/**
-		 * true, if a single option can be selected only, false otherwise
-		 */
-		public final boolean isSingleSelection() {
-			return _selectionModel instanceof SingleSelectionModel;
-		}
-
-		/**
-		 * Registers the given {@link SelectionVetoListener}.
-		 */
-		public void addSelectionVetoListener(SelectionVetoListener listener) {
-			if (_vetoListeners == Collections.<SelectionVetoListener> emptyList()) {
-				_vetoListeners = new ArrayList<>();
+	/**
+	 * Implementation of {@link #updateSelection(boolean)} but checks control for veto.
+	 * 
+	 * @param control
+	 *        The holder for the veto listeners.
+	 */
+	public void updateSelectionVeto(SelectionPartControl control, boolean selected) {
+		try {
+			for (SelectionVetoListener vetoListener : getVetoListeners()) {
+				vetoListener.checkVeto(getSelectionModel(), _selectionPart, SelectionType.TOGGLE_SINGLE);
 			}
-			_vetoListeners.add(listener);
-		}
+			updateSelection(selected);
+		} catch (VetoException ex) {
+			ex.setContinuationCommand(new Command() {
 
-		/**
-		 * Removes the given {@link SelectionVetoListener}.
-		 */
-		public void removeSelectionVetoListener(SelectionVetoListener listener) {
-			if (_vetoListeners.isEmpty()) {
-				return;
-			}
-			_vetoListeners.remove(listener);
-		}
-
-		/**
-		 * Returns the {@link SelectionVetoListener}s.
-		 * 
-		 * @return the {@link SelectionVetoListener}s.
-		 */
-		protected List<SelectionVetoListener> getVetoListeners() {
-			return _vetoListeners;
-		}
-
-		/**
-		 * true, if the selectable option is currently disabled, false otherwise.
-		 */
-		public boolean isDisabled() {
-			return !getSelectionModel().isSelectable(_selectionPart);
-		}
-
-		/**
-		 * true, if the selectable option is currently checked, false otherwise.
-		 */
-		public boolean isSelected() {
-			return getSelectionModel().isSelected(_selectionPart);
-		}
-
-		/**
-		 * true, if the box (check box or radio box) shall be updated, due to changes of the
-		 *         selected options, false otherwise.
-		 */
-		public boolean shallUpdateBox(SelectionEvent event) {
-			return event.getUpdatedObjects().contains(_selectionPart);
-		}
-
-		/**
-		 * Update of the {@link SelectionModel}.
-		 */
-		public void updateSelection(boolean selected) {
-			if (ScriptingRecorder.isRecordingActive()) {
-				ScriptingRecorder.recordSelection(getSelectionModel(), _selectionPart, selected,
-					SelectionChangeKind.INCREMENTAL);
-			}
-			getSelectionModel().setSelected(_selectionPart, selected);
-		}
-
-		/**
-		 * Implementation of {@link #updateSelection(boolean)} but checks control for veto.
-		 * 
-		 * @param control
-		 *        The holder for the veto listeners.
-		 */
-		public void updateSelectionVeto(SelectionPartControl control, boolean selected) {
-			try {
-				for (SelectionVetoListener vetoListener : getVetoListeners()) {
-					vetoListener.checkVeto(getSelectionModel(), _selectionPart, SelectionType.TOGGLE_SINGLE);
+				@Override
+				public HandlerResult executeCommand(DisplayContext context) {
+					updateSelection(selected);
+					return HandlerResult.DEFAULT_RESULT;
 				}
-				updateSelection(selected);
-			} catch (VetoException ex) {
-				ex.setContinuationCommand(new Command() {
-
-					@Override
-					public HandlerResult executeCommand(DisplayContext context) {
-						updateSelection(selected);
-						return HandlerResult.DEFAULT_RESULT;
-					}
-				});
-				ex.process(control.getWindowScope());
-
-			}
+			});
+			ex.process(control.getWindowScope());
 
 		}
+
 	}
 
 }

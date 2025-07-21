@@ -1201,7 +1201,11 @@ public class TreeTableComponent extends BoundComponent
 	}
 
 	private void setSelection(Set<? extends TreeUINode<?>> newSelectedNodes) {
-		SelectionUtil.setTreeSelection(_selectionModel, newSelectedNodes);
+		if (_expandSelected) {
+			SelectionUtil.setTreeSelection(_selectionModel, newSelectedNodes);
+		} else {
+			SelectionUtil.setSelection(_selectionModel, newSelectedNodes);
+		}
 	}
 
 	private AbstractTreeTableNode<?> getDefaultSelection() {

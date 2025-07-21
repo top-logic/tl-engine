@@ -206,7 +206,7 @@
 								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 									command-implementation-comment="com.top_logic.element.layout.grid.TreeGridExpandAll"
 									command-label="Alles aufklappen"
-									command-name="treeGridExpandAll"
+									command-name="treeTableExpandAll"
 									component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
 									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
 								>
@@ -343,7 +343,7 @@
 								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 									command-implementation-comment="com.top_logic.element.layout.grid.TreeGridExpandAll"
 									command-label="Alles aufklappen"
-									command-name="treeGridExpandAll"
+									command-name="treeTableExpandAll"
 									component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
 									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
 								>
@@ -540,7 +540,7 @@
 								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 									command-implementation-comment="com.top_logic.element.layout.grid.TreeGridExpandAll"
 									command-label="Alles aufklappen"
-									command-name="treeGridExpandAll"
+									command-name="treeTableExpandAll"
 									component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
 									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
 								>
@@ -814,7 +814,7 @@
 								<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 									command-implementation-comment="com.top_logic.element.layout.grid.TreeGridExpandAll"
 									command-label="Alles aufklappen"
-									command-name="treeGridExpandAll"
+									command-name="treeTableExpandAll"
 									component-implementation-comment="com.top_logic.element.layout.grid.GridComponent"
 									component-name="com.top_logic.demo/structure/demoTypes/demoTypesView.layout.xml#DemoTypestreeGrid"
 								>

@@ -75,17 +75,23 @@ public class TableHeaderSelectionControl extends AbstractControlBase implements 
 		_options = options;
 	}
 
-	Set<?> options() {
+	/**
+	 * All potential values that can be selected.
+	 */
+	protected Set<?> options() {
 		return _options;
 	}
 
-	SelectionModel selectionModel() {
+	/**
+	 * The underlying selection model.
+	 */
+	protected final SelectionModel getSelectionModel() {
 		return _selectionModel;
 	}
 
 	@Override
 	public Object getModel() {
-		return selectionModel();
+		return getSelectionModel();
 	}
 
 	@Override
@@ -97,12 +103,12 @@ public class TableHeaderSelectionControl extends AbstractControlBase implements 
 	protected void internalAttach() {
 		super.internalAttach();
 
-		selectionModel().addSelectionListener(this);
+		getSelectionModel().addSelectionListener(this);
 	}
 
 	@Override
 	protected void internalDetach() {
-		selectionModel().removeSelectionListener(this);
+		getSelectionModel().removeSelectionListener(this);
 
 		super.internalDetach();
 	}
@@ -126,21 +132,26 @@ public class TableHeaderSelectionControl extends AbstractControlBase implements 
 		}
 	}
 
-	private DynamicText createCheckboxUpdate() {
-		Set<?> selection = selectionModel().getSelection();
+	/**
+	 * Creates a JavaScript that updates the checkbox state.
+	 */
+	protected DynamicText createCheckboxUpdate() {
+		Set<?> selection = getSelectionModel().getSelection();
 
 		if (selection.isEmpty()) {
-			return createCheckboxUpdate(false, false);
+			return checkboxUpdateScript(false, false);
 		} else if (selection.containsAll(options())) {
-			return createCheckboxUpdate(true, false);
+			return checkboxUpdateScript(true, false);
 		} else {
-			return createCheckboxUpdate(false, true);
+			return checkboxUpdateScript(false, true);
 		}
 	}
 
-	private DynamicText createCheckboxUpdate(boolean checked, boolean indeterminate) {
+	/**
+	 * Creates a JavaScript that updates the checkbox to the given state.
+	 */
+	protected DynamicText checkboxUpdateScript(boolean checked, boolean indeterminate) {
 		return new DynamicText() {
-			
 			@Override
 			public void append(DisplayContext context, Appendable out) throws IOException {
 				out.append("var checkbox = document.getElementById('");
@@ -149,7 +160,6 @@ public class TableHeaderSelectionControl extends AbstractControlBase implements 
 				out.append("checkbox.checked = " + String.valueOf(checked) + ";");
 				out.append("checkbox.indeterminate = " + String.valueOf(indeterminate) + ";");
 			}
-
 		};
 	}
 
@@ -171,14 +181,10 @@ public class TableHeaderSelectionControl extends AbstractControlBase implements 
 		}
 		out.endTag(SPAN);
 
-		/* 
-		 * Is necessary to set the initial state of the checkbox.
-		 * 
-		 * Although it is possible to check or uncheck the checkbox by the html boolean attribute checked
-		 * of the input element, it is not possible to set the checkbox state to
-		 * indeterminate. This is only possible using javascript by setting the indeterminate
-		 * property of the dom node. 
-		 */
+		/* Is necessary to initialize the checkbox via JavaScript: Although it is possible to check
+		 * or uncheck the checkbox by the HTML boolean attribute 'checked' of the input element, it
+		 * is not possible to set the checkbox state to indeterminate. This is only possible using
+		 * JavaScript by setting the 'indeterminate' property of the DOM node. */
 		HTMLUtil.beginScriptAfterRendering(out);
 		createCheckboxUpdate().append(context, out);
 		HTMLUtil.endScriptAfterRendering(out);
@@ -210,6 +216,26 @@ public class TableHeaderSelectionControl extends AbstractControlBase implements 
 		out.endAttribute();
 	}
 
+	/**
+	 * Processes a click on the header.
+	 */
+	protected void updateSelection(TableHeaderSelectionControl control, boolean selectedAll) {
+		SelectionModel selectionModel = control.getSelectionModel();
+		if (selectedAll) {
+			Set<?> options = control.options();
+			if (ScriptingRecorder.isRecordingActive()) {
+				ScriptingRecorder.recordSelection(selectionModel, options, true, SelectionChangeKind.ABSOLUTE);
+			}
+			selectionModel.setSelection(options);
+		} else {
+			if (ScriptingRecorder.isRecordingActive()) {
+				ScriptingRecorder.recordSelection(selectionModel, ScriptingRecorder.NO_SELECTION, false,
+					SelectionChangeKind.ABSOLUTE);
+			}
+			selectionModel.clear();
+		}
+	}
+
 	private static class ValueChanged extends ControlCommand {
 
 		public static final ControlCommand INSTANCE = new ValueChanged();
@@ -224,28 +250,12 @@ public class TableHeaderSelectionControl extends AbstractControlBase implements 
 
 		@Override
 		protected HandlerResult execute(DisplayContext commandContext, Control control, Map<String, Object> arguments) {
-			boolean isAllSelected = Utils.isTrue((Boolean) arguments.get(VALUE_PARAM));
+			boolean selectAll = Utils.isTrue((Boolean) arguments.get(VALUE_PARAM));
 
-			updateSelection((TableHeaderSelectionControl) control, isAllSelected);
+			((TableHeaderSelectionControl) control).updateSelection((TableHeaderSelectionControl) control,
+				selectAll);
 
 			return HandlerResult.DEFAULT_RESULT;
-		}
-
-		private void updateSelection(TableHeaderSelectionControl control, boolean selectAll) {
-			SelectionModel selectionModel = control.selectionModel();
-			if (selectAll) {
-				Set<?> options = control.options();
-				if (ScriptingRecorder.isRecordingActive()) {
-					ScriptingRecorder.recordSelection(selectionModel, options, true, SelectionChangeKind.ABSOLUTE);
-				}
-				selectionModel.setSelection(options);
-			} else {
-				if (ScriptingRecorder.isRecordingActive()) {
-					ScriptingRecorder.recordSelection(selectionModel, ScriptingRecorder.NO_SELECTION, false,
-						SelectionChangeKind.ABSOLUTE);
-				}
-				selectionModel.clear();
-			}
 		}
 
 		@Override

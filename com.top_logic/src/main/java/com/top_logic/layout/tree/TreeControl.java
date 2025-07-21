@@ -649,7 +649,7 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 		Object directTarget = getNodeById(contextInfo);
 		Set<?> selection = getSelectionModel().getSelection();
 		Object extendedTarget = ContextMenuProvider.getContextMenuTarget(directTarget, selection);
-		return _contextMenuProvider.getContextMenu(extendedTarget);
+		return _contextMenuProvider.getContextMenu(directTarget, extendedTarget);
 	}
 
 	@Override

@@ -8,6 +8,7 @@ package com.top_logic.layout.basic.contextmenu;
 import java.util.Collection;
 
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
+import com.top_logic.layout.tree.model.TLTreeNode;
 
 /**
  * Application-level provider of a context menu.
@@ -31,12 +32,17 @@ public interface ContextMenuProvider {
 	 * <p>
 	 * A call to {@link #hasContextMenu(Object)} must have returned <code>true</code> before.
 	 * </p>
+	 * 
+	 * @param directTarget
+	 *        The raw object, on which the context menu was opened. In case of a tree, this might be
+	 *        the {@link TLTreeNode}.
+	 * @param model
+	 *        The model object for which the context menu is opened. In case of a tree, this might
+	 *        be the {@link TLTreeNode#getBusinessObject() business object} of the tree.
 	 *
-	 * @param obj
-	 *        The object for which the context menu is opened.
 	 * @return The {@link Menu} to display.
 	 */
-	Menu getContextMenu(Object obj);
+	Menu getContextMenu(Object directTarget, Object model);
 
 	/**
 	 * Whether the context menu should be opened for the entire selection or just the single object

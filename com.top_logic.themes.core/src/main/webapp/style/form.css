@@ -1663,6 +1663,7 @@ input.is-checkbox[disabled] {
 .cDatetime,
 .cTimeInput,
 .cPopupSelect,
+.cColorChooser,
 .cCheckList-counts,
 .cBooleanChoice,
 .ddwttImmutableItem {
@@ -1675,6 +1676,7 @@ input.is-checkbox[disabled] {
 .tl-table__cell .cDatetime,
 .tl-table__cell .cTimeInput,
 .tl-table__cell .cPopupSelect,
+.tl-table__cell .cColorChooser,
 .tl-table__cell .cCheckList-counts,
 .tl-table__cell .cBooleanChoice,
 .tl-table__cell .ddwttImmutableItem {

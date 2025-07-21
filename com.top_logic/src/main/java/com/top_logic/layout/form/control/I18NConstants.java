@@ -176,6 +176,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey OPEN_COLOR_SELECTION;
 
+	/**
+	 * @en Reset color selection
+	 */
+	public static ResKey CLEAR_COLOR_SELECTION;
+
 	public static ResKey COLOR_SELECTION;
 
 	public static ResKey SET_FIELD_COLOR;

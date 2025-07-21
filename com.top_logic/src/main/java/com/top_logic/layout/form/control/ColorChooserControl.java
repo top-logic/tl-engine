@@ -9,13 +9,20 @@ import java.awt.Color;
 import java.io.IOException;
 import java.util.Map;
 
+import com.top_logic.base.services.simpleajax.ElementReplacement;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.VetoException;
+import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.ControlCommand;
+import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.model.AbstractFormField;
+import com.top_logic.layout.form.model.FormFieldInternals;
+import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.structure.PopupDialogControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -29,7 +36,8 @@ public class ColorChooserControl extends AbstractFormFieldControl {
 	private static final Map COMMANDS = createCommandMap(
 		AbstractFormFieldControl.COMMANDS,
 		new ControlCommand[] {
-			ColorSelectionCommand.INSTANCE
+			new ColorSelectionCommand(),
+			new ClearSelection()
 		});
 	
 	/**
@@ -54,6 +62,10 @@ public class ColorChooserControl extends AbstractFormFieldControl {
 		writeControlAttributes(context, out);
 		out.endBeginTag();
 		{
+			out.beginBeginTag(SPAN);
+			out.writeAttribute(CLASS_ATTR, FormConstants.FLEXIBLE_CSS_CLASS);
+			out.endBeginTag();
+
 			out.beginBeginTag(BUTTON);
 			writeInputIdAttr(out);
 
@@ -92,8 +104,48 @@ public class ColorChooserControl extends AbstractFormFieldControl {
 			out.writeText(NBSP);
 
 			out.endTag(BUTTON);
+			out.endTag(SPAN);
+
+			out.beginBeginTag(SPAN);
+			out.writeAttribute(CLASS_ATTR, FormConstants.FIXED_RIGHT_CSS_CLASS);
+			out.endBeginTag();
+
+			writeClearButton(context, out);
+
+			out.endTag(SPAN);
 		}
 		out.endTag(SPAN);
+	}
+
+	private String getClearButtonID() {
+		return getID() + "-clear";
+	}
+
+	private void writeClearButton(DisplayContext context, TagWriter out) throws IOException {
+		ButtonWriter buttonWriter = new ButtonWriter(this, com.top_logic.layout.form.tag.Icons.DELETE_BUTTON,
+			com.top_logic.layout.form.tag.Icons.DELETE_BUTTON_DISABLED, getCommand(ClearSelection.COMMAND));
+		buttonWriter.setID(getClearButtonID());
+		buttonWriter.setCss(FormConstants.CLEAR_BUTTON_CSS_CLASS);
+		buttonWriter.setTooltip(
+			com.top_logic.layout.form.I18NConstants.CLEAR_CHOOSER__LABEL.fill(getModel().getLabel()));
+
+		boolean active = activeClearButton();
+		if (active) {
+			buttonWriter.writeButton(context, out);
+		} else {
+			buttonWriter.writeDisabledButton(context, out);
+		}
+	}
+
+	private boolean activeClearButton() {
+		FormField model = getFieldModel();
+		if (!model.isActive()) {
+			return false;
+		}
+		if (model.hasError()) {
+			return true;
+		}
+		return model.hasValue() && model.getValue() != null;
 	}
 
 	private void writeOnClick(TagWriter out) throws IOException {
@@ -107,6 +159,8 @@ public class ColorChooserControl extends AbstractFormFieldControl {
 	@Override
 	public void internalHandleDisabledEvent(FormMember sender, Boolean oldValue, Boolean newValue) {
 		addDisabledUpdate(newValue.booleanValue());
+		
+		addUpdate(new ElementReplacement(getClearButtonID(), (context, out) -> writeClearButton(context, out)));
 	}
 
 	@Override
@@ -128,19 +182,12 @@ public class ColorChooserControl extends AbstractFormFieldControl {
 
 	static class ColorSelectionCommand extends ControlCommand {
 
-		public static final ColorSelectionCommand INSTANCE = new ColorSelectionCommand();
-		
 		protected static final String COMMAND_ID = "openSelectionDialog";
 		
 		protected ColorSelectionCommand() {
 			super(COMMAND_ID);
 		}
 
-		/**
-		 * @see com.top_logic.layout.basic.ControlCommand#execute(com.top_logic.layout.DisplayContext,
-		 *      com.top_logic.layout.Control,
-		 *      Map)
-		 */
 		@Override
 		protected HandlerResult execute(DisplayContext commandContext, Control control,
 				Map<String, Object> arguments) {
@@ -166,6 +213,58 @@ public class ColorChooserControl extends AbstractFormFieldControl {
 		}
 	}
 	
+	/**
+	 * 
+	 * {@link ControlCommand} clearing the selection of a {@link ColorChooserControl}.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public static class ClearSelection extends ControlCommand {
+
+		/**
+		 * {@link ControlCommand#getID() ID} of the {@link ClearSelection} command.
+		 */
+		public static final String COMMAND = "clearSelection";
+
+		/**
+		 * Singleton constructor.
+		 */
+		protected ClearSelection() {
+			super(COMMAND);
+		}
+
+		@Override
+		protected HandlerResult execute(DisplayContext commandContext, Control control, Map<String, Object> arguments) {
+			ColorChooserControl ccc = (ColorChooserControl) control;
+			AbstractFormField colorField = (AbstractFormField) ccc.getFieldModel();
+			Object newValue = null;
+			try {
+				FormFieldInternals.setValue(colorField, newValue);
+			} catch (VetoException ex) {
+				ex.setContinuationCommand(new Command() {
+
+					@Override
+					public HandlerResult executeCommand(DisplayContext context) {
+						colorField.setValue(newValue);
+						return HandlerResult.DEFAULT_RESULT;
+					}
+				});
+				ex.process(ccc.getWindowScope());
+			}
+
+			if (ScriptingRecorder.isRecordingActive()) {
+				ScriptingRecorder.recordFieldInput(colorField, newValue);
+			}
+
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		@Override
+		public ResKey getI18NKey() {
+			return I18NConstants.CLEAR_COLOR_SELECTION;
+		}
+	}
+
 	/**
 	 * The {@link Color} business object being edited.
 	 */

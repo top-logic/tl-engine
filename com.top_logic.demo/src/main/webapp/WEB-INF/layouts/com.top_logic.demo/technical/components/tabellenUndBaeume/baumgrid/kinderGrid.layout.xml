@@ -6,6 +6,9 @@
 >
 	<arguments
 		defaultColumns="name"
+		defaultSelection="false"
+		expandSelected="false"
+		multiSelection="true"
 		partnerGroup="TreeGridPartner"
 		type="DemoTypes:DemoTypes.All"
 	>
@@ -46,7 +49,9 @@
 			<button id="exportExcelGrid"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
 				streaming="false"
-			/>
+			>
+				<downloadNameProvider class="com.top_logic.layout.table.export.ComponentDownloadName"/>
+			</button>
 		</buttons>
 	</arguments>
 </config:template-call>

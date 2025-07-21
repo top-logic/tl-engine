@@ -2,11 +2,11 @@
 
 <config:template-call
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
-	final="false"
 	template="com.top_logic/selector.template.xml"
 >
 	<arguments
 		defaultSelection="false"
+		multiple="true"
 		partnerGroup="TreeGridPartner"
 	>
 		<titleKey key="dynamic.daf7b581-c962-4de2-bb84-8135e90465c8">

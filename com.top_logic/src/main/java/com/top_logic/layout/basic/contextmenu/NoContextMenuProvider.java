@@ -29,7 +29,7 @@ public final class NoContextMenuProvider implements ContextMenuProvider {
 	}
 
 	@Override
-	public Menu getContextMenu(Object obj) {
+	public Menu getContextMenu(Object directTarget, Object model) {
 		return null;
 	}
 

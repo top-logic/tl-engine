@@ -70,7 +70,8 @@ public abstract class AbstractFormMemberControl extends AbstractControl implemen
 
 	@Override
 	public Menu createContextMenu(String contextInfo) {
-		return getContextMenuProvider().getContextMenu(getModel());
+		FormMember model = getModel();
+		return getContextMenuProvider().getContextMenu(model, model);
 	}
 
 	/**

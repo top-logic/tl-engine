@@ -117,7 +117,8 @@ public class ContentControl extends AbstractLayoutControl<ContentControl> implem
 
 	@Override
 	public Menu createContextMenu(String contextInfo) {
-		return _contextMenu.getContextMenu(_component.getModel());
+		Object model = _component.getModel();
+		return _contextMenu.getContextMenu(model, model);
 	}
 
 	/**

@@ -455,7 +455,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		Object directTarget = getTableData().getTableModel().getRowObject(rowIndex);
 		Set<?> selection = getTableData().getSelectionModel().getSelection();
 		Object extendedTarget = ContextMenuProvider.getContextMenuTarget(directTarget, selection);
-		return getContextMenuProvider().getContextMenu(extendedTarget);
+		return getContextMenuProvider().getContextMenu(directTarget, extendedTarget);
 	}
 
 	@Override

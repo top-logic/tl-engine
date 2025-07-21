@@ -1943,11 +1943,11 @@ public class TestControlsForm extends FormComponent {
 			}
 
 			@Override
-			public Menu getContextMenu(Object obj) {
+			public Menu getContextMenu(Object directTarget, Object model) {
 				Command command = new Command() {
 					@Override
 					public HandlerResult executeCommand(DisplayContext context) {
-						InfoService.showInfo(Fragments.text("Option: " + obj));
+						InfoService.showInfo(Fragments.text("Option: " + model));
 						return HandlerResult.DEFAULT_RESULT;
 					}
 				};
@@ -2623,11 +2623,11 @@ public class TestControlsForm extends FormComponent {
 			}
 
 			@Override
-			public Menu getContextMenu(Object obj) {
+			public Menu getContextMenu(Object directTarget, Object model) {
 				return Menu.create(
-					option(obj, "Option 1"),
-					option(obj, "Option 2"),
-					option(obj, "Option 3"));
+					option(model, "Option 1"),
+					option(model, "Option 2"),
+					option(model, "Option 3"));
 			}
 
 			private CommandModel option(Object obj, String value) {

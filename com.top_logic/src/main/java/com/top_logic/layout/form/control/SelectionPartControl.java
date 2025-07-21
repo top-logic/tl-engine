@@ -31,6 +31,8 @@ import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.table.control.SelectionVetoListener;
 import com.top_logic.layout.table.control.TableControl.SelectionType;
 import com.top_logic.mig.html.SelectionModel;
+import com.top_logic.mig.html.SubtreeSelectionModel;
+import com.top_logic.mig.html.TreeSelectionModel;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Utils;
 
@@ -49,6 +51,41 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 		new ControlCommand[] {
 			ValueChanged.INSTANCE
 		});
+
+	/**
+	 * Creates a {@link SelectionPartControl} without veto listeners.
+	 */
+	public static <T> Control createSelectionPartControl(SelectionModel<T> selectionModel, T part) {
+		return createSelectionPartControl(selectionModel, part, Collections.emptyList());
+	}
+
+	/**
+	 * Creates a {@link SelectionPartControl}.
+	 * 
+	 * @param selectionModel
+	 *        The {@link SelectionModel} of which a part is displayed and observed.
+	 * @param part
+	 *        The element whose selection status is displayed. The control displays a checked box,
+	 *        if the element is part of the {@link SelectionModel}, and an unchecked box, if the
+	 *        element is not selected in the given {@link SelectionModel}.
+	 */
+	public static <T> Control createSelectionPartControl(SelectionModel<T> selectionModel, T part,
+			Iterable<SelectionVetoListener> vetoListeners) {
+		if (selectionModel instanceof SubtreeSelectionModel<T> subtreeSelection) {
+			SubtreeSelectionPartControl<T> result = new SubtreeSelectionPartControl<>(subtreeSelection, part);
+			vetoListeners.forEach(result::addSelectionVetoListener);
+			return result;
+		} else if (selectionModel.isMultiSelectionSupported()
+			&& selectionModel instanceof TreeSelectionModel<?> treeSelection) {
+			TreeSelectionPartControl result = new TreeSelectionPartControl(treeSelection, part);
+			vetoListeners.forEach(result::addSelectionVetoListener);
+			return result;
+		} else {
+			SelectionPartControl result = new SelectionPartControl(selectionModel, part);
+			vetoListeners.forEach(result::addSelectionVetoListener);
+			return result;
+		}
+	}
 
 	private SelectionModel _selectionModel;
 
@@ -70,7 +107,7 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 	 *        if the element is part of the {@link SelectionModel}, and an unchecked box, if the
 	 *        element is not selected in the given {@link SelectionModel}.
 	 */
-	public SelectionPartControl(SelectionModel selectionModel, Object part) {
+	protected SelectionPartControl(SelectionModel selectionModel, Object part) {
 		super(COMMANDS);
 		_selectionModel = selectionModel;
 		_selectionPart = part;
@@ -78,7 +115,14 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 
 	@Override
 	public Object getModel() {
-		return _selectionModel;
+		return getSelectionPart();
+	}
+
+	/**
+	 * The object whose selection state is controlled by this control.
+	 */
+	public Object getSelectionPart() {
+		return _selectionPart;
 	}
 
 	@Override
@@ -109,8 +153,7 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 			out.beginBeginTag(INPUT);
 			out.writeAttribute(ID_ATTR, getInputId());
 
-			boolean single = isSingleSelection();
-			if (single) {
+			if (isSingleSelection()) {
 				out.writeAttribute(TYPE_ATTR, RADIO_TYPE_VALUE);
 			} else {
 				out.writeAttribute(TYPE_ATTR, CHECKBOX_TYPE_VALUE);
@@ -124,11 +167,10 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 				out.writeAttribute(DISABLED_ATTR, DISABLED_DISABLED_VALUE);
 			}
 
-			if (single) {
-				out.writeAttribute(CLASS_ATTR, FormConstants.IS_RADIO_CSS_CLASS);
-			} else {
-				out.writeAttribute(CLASS_ATTR, FormConstants.IS_CHECKBOX_CSS_CLASS);
-			}
+			out.beginCssClasses();
+			writeInputCssClassesContent(out);
+			out.endCssClasses();
+
 			out.writeAttribute(STYLE_ATTR, getInputStyle());
 
 			writeOnChange(context, out);
@@ -136,6 +178,17 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 			out.endEmptyTag();
 		}
 		out.endTag(SPAN);
+	}
+
+	/**
+	 * Writes the CSS classes of the input element.
+	 */
+	protected void writeInputCssClassesContent(TagWriter out) throws IOException {
+		if (isSingleSelection()) {
+			out.write(FormConstants.IS_RADIO_CSS_CLASS);
+		} else {
+			out.write(FormConstants.IS_CHECKBOX_CSS_CLASS);
+		}
 	}
 
 	@Override
@@ -207,7 +260,7 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 
 	@Override
 	public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
-		if (event.getUpdatedObjects().contains(_selectionPart)) {
+		if (event.getUpdatedObjects().contains(getSelectionPart())) {
 			invalidateSelection();
 		}
 	}
@@ -293,14 +346,14 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 	 * true, if the selectable option is currently disabled, false otherwise.
 	 */
 	public boolean isDisabled() {
-		return !getSelectionModel().isSelectable(_selectionPart);
+		return !getSelectionModel().isSelectable(getSelectionPart());
 	}
 
 	/**
 	 * true, if the selectable option is currently checked, false otherwise.
 	 */
 	public boolean isSelected() {
-		return getSelectionModel().isSelected(_selectionPart);
+		return getSelectionModel().isSelected(getSelectionPart());
 	}
 
 	/**
@@ -308,10 +361,10 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 	 */
 	public void updateSelection(boolean selected) {
 		if (ScriptingRecorder.isRecordingActive()) {
-			ScriptingRecorder.recordSelection(getSelectionModel(), _selectionPart, selected,
+			ScriptingRecorder.recordSelection(getSelectionModel(), getSelectionPart(), selected,
 				SelectionChangeKind.INCREMENTAL);
 		}
-		getSelectionModel().setSelected(_selectionPart, selected);
+		getSelectionModel().setSelected(getSelectionPart(), selected);
 	}
 
 	/**
@@ -323,7 +376,7 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 	public void updateSelectionVeto(SelectionPartControl control, boolean selected) {
 		try {
 			for (SelectionVetoListener vetoListener : getVetoListeners()) {
-				vetoListener.checkVeto(getSelectionModel(), _selectionPart, SelectionType.TOGGLE_SINGLE);
+				vetoListener.checkVeto(getSelectionModel(), getSelectionPart(), SelectionType.TOGGLE_SINGLE);
 			}
 			updateSelection(selected);
 		} catch (VetoException ex) {

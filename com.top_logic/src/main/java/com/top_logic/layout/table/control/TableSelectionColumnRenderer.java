@@ -11,13 +11,11 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.control.SelectionPartControl;
-import com.top_logic.layout.form.control.TreeSelectionPartControl;
 import com.top_logic.layout.table.AbstractCellRenderer;
 import com.top_logic.layout.table.CellRenderer;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableRenderer.Cell;
 import com.top_logic.mig.html.SelectionModel;
-import com.top_logic.mig.html.SubtreeSelectionModel;
 
 /**
  * {@link CellRenderer} creating the technical column for keyboard row selection.
@@ -59,19 +57,9 @@ public class TableSelectionColumnRenderer extends AbstractCellRenderer {
 	 */
 	public static Control createSelectionPartControl(SelectionModel selectionModel, Object rowObject,
 			Iterable<SelectionVetoListener> vetoListeners) {
-		Control ctrl;
-		if (selectionModel instanceof SubtreeSelectionModel) {
-			@SuppressWarnings({ "rawtypes", "unchecked" })
-			TreeSelectionPartControl<?> selectionPartControl =
-				new TreeSelectionPartControl((SubtreeSelectionModel) selectionModel, rowObject);
-			vetoListeners.forEach(selectionPartControl::addSelectionVetoListener);
-			ctrl = selectionPartControl;
-		} else {
-			SelectionPartControl selectionPartControl = new SelectionPartControl(selectionModel, rowObject);
-			vetoListeners.forEach(selectionPartControl::addSelectionVetoListener);
-			ctrl = selectionPartControl;
-		}
-		return ctrl;
+		Control selectionPartControl =
+			SelectionPartControl.createSelectionPartControl(selectionModel, rowObject, vetoListeners);
+		return selectionPartControl;
 	}
 
 }

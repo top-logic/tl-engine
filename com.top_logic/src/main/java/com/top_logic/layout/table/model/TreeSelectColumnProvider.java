@@ -36,7 +36,7 @@ import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
-import com.top_logic.layout.form.control.TreeSelectionPartControl;
+import com.top_logic.layout.form.control.SubtreeSelectionPartControl;
 import com.top_logic.layout.scripting.recorder.ref.GenericModelOwner.MultipleAnnotatedModels;
 import com.top_logic.layout.table.AbstractCellRenderer;
 import com.top_logic.layout.table.TableDataOwner;
@@ -346,7 +346,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 			}
 			@SuppressWarnings("unchecked")
 			N rowObject = (N) cell.getRowObject();
-			new TreeSelectionPartControl<>(_selectionModel, rowObject).write(context, out);
+			new SubtreeSelectionPartControl<>(_selectionModel, rowObject).write(context, out);
 		}
 
 	}

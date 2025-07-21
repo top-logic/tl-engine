@@ -6,6 +6,7 @@
 >
 	<arguments
 		defaultColumns="name"
+		defaultSelection="false"
 		multiSelection="true"
 		type="DemoTypes:DemoTypes.All"
 	>

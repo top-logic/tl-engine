@@ -5,6 +5,8 @@
  */
 package com.top_logic.mig.html;
 
+import com.top_logic.layout.tree.model.TreeUIModel;
+
 /**
  * A {@link SelectionModel} for nodes of a tree structure that provides additional functionality and
  * information.
@@ -25,12 +27,17 @@ public interface TreeSelectionModel<T> extends SelectionModel<T> {
 	 * {@link DescendantState#NONE}.
 	 * </p>
 	 */
-	public NodeSelectionState getNodeSelectionState(T obj);
+	NodeSelectionState getNodeSelectionState(T obj);
 
 	/**
 	 * Updates the selection state of the whole sub-tree rooted at the given node.
 	 */
-	public void setSelectedSubtree(T obj, boolean select);
+	void setSelectedSubtree(T obj, boolean select);
+
+	/**
+	 * The underlying tree model.
+	 */
+	TreeUIModel<T> getTreeModel();
 
 	/**
 	 * Description of the selection state of a tree node.

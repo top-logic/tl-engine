@@ -94,26 +94,36 @@ public abstract class TriStateCheckboxControl extends AbstractControlBase {
 	@Override
 	protected void internalRevalidate(DisplayContext context, UpdateQueue actions) {
 		if (!_isValid) {
-			actions.add(new JSSnipplet(createCheckboxUpdate(currentState())));
+			actions.add(new JSSnipplet(createCheckboxUpdate()));
 
 			_isValid = true;
 		}
 	}
 
+	/**
+	 * Creates a script that updates the state of the checkbox.
+	 */
+	protected DynamicText createCheckboxUpdate() {
+		return createCheckboxUpdate(currentState());
+	}
+
 	private DynamicText createCheckboxUpdate(State state) {
 		switch (state) {
 			case CHECKED:
-				return createCheckboxUpdate(true, false);
+				return checkboxUpdateScript(true, false);
 			case INDETERMINATE:
-				return createCheckboxUpdate(false, true);
+				return checkboxUpdateScript(false, true);
 			case UNCHECKED:
-				return createCheckboxUpdate(false, false);
+				return checkboxUpdateScript(false, false);
 
 		}
 		throw new UnreachableAssertion(state + " no covered.");
 	}
 
-	private DynamicText createCheckboxUpdate(boolean checked, boolean indeterminate) {
+	/**
+	 * Creates an update script that sets the checkbox to the given state.
+	 */
+	protected final DynamicText checkboxUpdateScript(boolean checked, boolean indeterminate) {
 		return new DynamicText() {
 			
 			@Override

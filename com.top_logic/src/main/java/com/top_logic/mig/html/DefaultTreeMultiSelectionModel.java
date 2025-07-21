@@ -12,10 +12,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.col.Filter;
-import com.top_logic.basic.col.StructureView;
 import com.top_logic.basic.col.filter.FilterFactory;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.tree.TreeModelOwner;
+import com.top_logic.layout.tree.model.TreeUIModel;
 
 /**
  * A selection model that supports multiple selection in tree-like structures.
@@ -87,7 +89,7 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 	
 		T ancestor = obj;
 		while (true) {
-			ancestor = tree().getParent(ancestor);
+			ancestor = getTreeModel().getParent(ancestor);
 			if (ancestor == null) {
 				// No node on the path to parent has information about its descendants.
 				return NodeSelectionState.NONE;
@@ -117,7 +119,7 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 	}
 
 	private void addDescendants(HashSet<T> result, T node) {
-		Iterator<? extends T> it = tree().getChildIterator(node);
+		Iterator<? extends T> it = getTreeModel().getChildIterator(node);
 		while (it.hasNext()) {
 			T child = it.next();
 			result.add(child);
@@ -173,7 +175,7 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 	}
 
 	private void updateDescendantState(T parent, NodeSelectionState oldState, NodeSelectionState newState) {
-		Iterator<? extends T> it = tree().getChildIterator(parent);
+		Iterator<? extends T> it = getTreeModel().getChildIterator(parent);
 		while (it.hasNext()) {
 			T child = it.next();
 			NodeSelectionState before = _state.remove(child);
@@ -201,7 +203,7 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 		}
 
 		DescendantState newDescendantState;
-		if (!tree().hasChildren(obj)) {
+		if (!getTreeModel().hasChildren(obj)) {
 			// A completely selected subtree must be marked as FULL, a subtree without any
 			// selections with NONE. Therefore, a node without children cannot use the states
 			// SELECTED_NO_DESCENDANTS and ALL_DESCENDANTS.
@@ -241,7 +243,7 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 	}
 
 	private void updateParent(T obj, NodeSelectionState newChildState, boolean select) {
-		T parent = tree().getParent(obj);
+		T parent = getTreeModel().getParent(obj);
 		if (parent == null) {
 			// No more nodes to update.
 			return;
@@ -281,7 +283,7 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 			NodeSelectionState implicitChildState = oldParentState.descendants() == DescendantState.ALL
 				? NodeSelectionState.FULL
 				: NodeSelectionState.NONE;
-			Iterator<? extends T> it = tree().getChildIterator(parent);
+			Iterator<? extends T> it = getTreeModel().getChildIterator(parent);
 			while (it.hasNext()) {
 				T child = it.next();
 				_state.putIfAbsent(child, implicitChildState);
@@ -296,7 +298,7 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 	}
 
 	private void clearChildState(T parent) {
-		Iterator<? extends T> it = tree().getChildIterator(parent);
+		Iterator<? extends T> it = getTreeModel().getChildIterator(parent);
 		while (it.hasNext()) {
 			T child = it.next();
 			_state.remove(child);
@@ -310,7 +312,7 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 	private DescendantState computeDescendantState(T parent, NodeSelectionState oldParentState) {
 		DescendantState result = null;
 
-		Iterator<? extends T> it = tree().getChildIterator(parent);
+		Iterator<? extends T> it = getTreeModel().getChildIterator(parent);
 		while (it.hasNext()) {
 			T child = it.next();
 
@@ -360,7 +362,7 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 	}
 
 	private boolean hasSingleChild(T node) {
-		Iterator<? extends T> it = tree().getChildIterator(node);
+		Iterator<? extends T> it = getTreeModel().getChildIterator(node);
 		if (it.hasNext()) {
 			// There is one child.
 			it.next();
@@ -412,8 +414,9 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 		return false;
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
-	private StructureView<T> tree() {
+	public TreeUIModel<T> getTreeModel() {
 		return _treeModelOwner.getTree();
 	}
 

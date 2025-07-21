@@ -67,15 +67,8 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 	 *        element is not selected in the given {@link SelectionModel}.
 	 */
 	public SelectionPartControl(SelectionModel selectionModel, Object part) {
-		this(new DefaultSelectionPartModel(selectionModel, part));
-	}
-
-	/**
-	 * Create a new {@link SelectionPartControl}.
-	 */
-	public SelectionPartControl(SelectionPartModel selectionPartModel) {
 		super(COMMANDS);
-		_selectionPartModel = selectionPartModel;
+		_selectionPartModel = new SelectionPartModel(selectionModel, part);
 	}
 
 	@Override
@@ -270,17 +263,17 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 	 * Model of {@link SelectionPartControl}, that handles synchronization of displayed box (radio
 	 * box or check box) with a {@link SelectionModel}.
 	 */
-	public static abstract class SelectionPartModel {
+	public static class SelectionPartModel {
 
 		private SelectionModel _selectionModel;
 
+		private Object _selectionPart;
+
 		private List<SelectionVetoListener> _vetoListeners = Collections.emptyList();
 
-		/**
-		 * Create a new {@link SelectionPartModel}.
-		 */
-		public SelectionPartModel(SelectionModel selectionModel) {
+		public SelectionPartModel(SelectionModel selectionModel, Object selectionPart) {
 			_selectionModel = selectionModel;
+			_selectionPart = selectionPart;
 		}
 
 		/**
@@ -312,35 +305,6 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 		}
 
 		/**
-		 * true, if the selectable option is currently disabled, false otherwise.
-		 */
-		public abstract boolean isDisabled();
-
-		/**
-		 * true, if the selectable option is currently checked, false otherwise.
-		 */
-		public abstract boolean isSelected();
-
-		/**
-		 * true, if the box (check box or radio box) shall be updated, due to changes of the
-		 *         selected options, false otherwise.
-		 */
-		public abstract boolean shallUpdateBox(SelectionEvent event);
-
-		/**
-		 * Implementation of {@link #updateSelection(boolean)} but checks control for veto.
-		 * 
-		 * @param control
-		 *        The holder for the veto listeners.
-		 */
-		public abstract void updateSelectionVeto(SelectionPartControl control, boolean selected);
-
-		/**
-		 * Update of the {@link SelectionModel}.
-		 */
-		public abstract void updateSelection(boolean selected);
-
-		/**
 		 * Registers the given {@link SelectionVetoListener}.
 		 */
 		public void addSelectionVetoListener(SelectionVetoListener listener) {
@@ -369,33 +333,31 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 			return _vetoListeners;
 		}
 
-	}
-	
-	private static class DefaultSelectionPartModel extends SelectionPartModel {
-
-		private Object _selectionPart;
-
-		public DefaultSelectionPartModel(SelectionModel selectionModel, Object selectionPart) {
-			super(selectionModel);
-			_selectionPart = selectionPart;
-		}
-
-		@Override
+		/**
+		 * true, if the selectable option is currently disabled, false otherwise.
+		 */
 		public boolean isDisabled() {
 			return !getSelectionModel().isSelectable(_selectionPart);
 		}
 
-		@Override
+		/**
+		 * true, if the selectable option is currently checked, false otherwise.
+		 */
 		public boolean isSelected() {
 			return getSelectionModel().isSelected(_selectionPart);
 		}
 
-		@Override
+		/**
+		 * true, if the box (check box or radio box) shall be updated, due to changes of the
+		 *         selected options, false otherwise.
+		 */
 		public boolean shallUpdateBox(SelectionEvent event) {
 			return event.getUpdatedObjects().contains(_selectionPart);
 		}
 
-		@Override
+		/**
+		 * Update of the {@link SelectionModel}.
+		 */
 		public void updateSelection(boolean selected) {
 			if (ScriptingRecorder.isRecordingActive()) {
 				ScriptingRecorder.recordSelection(getSelectionModel(), _selectionPart, selected,
@@ -404,7 +366,12 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 			getSelectionModel().setSelected(_selectionPart, selected);
 		}
 
-		@Override
+		/**
+		 * Implementation of {@link #updateSelection(boolean)} but checks control for veto.
+		 * 
+		 * @param control
+		 *        The holder for the veto listeners.
+		 */
 		public void updateSelectionVeto(SelectionPartControl control, boolean selected) {
 			try {
 				for (SelectionVetoListener vetoListener : getVetoListeners()) {
@@ -425,6 +392,6 @@ public class SelectionPartControl extends AbstractControlBase implements Selecti
 			}
 
 		}
-
 	}
+
 }

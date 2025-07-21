@@ -151,6 +151,7 @@ import com.top_logic.layout.table.CellClassProvider;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.layout.table.ITableRenderer;
 import com.top_logic.layout.table.TableData;
+import com.top_logic.layout.table.TableDataOwner;
 import com.top_logic.layout.table.TableModel;
 import com.top_logic.layout.table.TableModelUtils;
 import com.top_logic.layout.table.TableRenderer;
@@ -233,7 +234,7 @@ import com.top_logic.util.model.TL5Types;
 public class GridComponent extends EditComponent implements
 		SelectableWithSelectionModel, InAppSelectable,
 		ControlRepresentable, SelectionVetoListener, CompareAlgorithmHolder,
-		ComponentRowSource, WithSelectionPath {
+		ComponentRowSource, WithSelectionPath, TableDataOwner {
 
 	/**
 	 * Configuration options for {@link GridComponent}.
@@ -1634,6 +1635,11 @@ public class GridComponent extends EditComponent implements
     
 		getLockHandler().releaseLock();
     }
+
+	@Override
+	public TableData getTableData() {
+		return getTableField(getFormContext());
+	}
 
     /**
      * Return the table field held by this component.

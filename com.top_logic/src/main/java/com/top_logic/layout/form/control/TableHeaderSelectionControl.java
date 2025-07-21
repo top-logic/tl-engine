@@ -59,22 +59,28 @@ public class TableHeaderSelectionControl extends TriStateCheckboxControl impleme
 		_options = options;
 	}
 
-	Set<?> options() {
+	/**
+	 * All potential values that can be selected.
+	 */
+	protected Set<?> options() {
 		return _options;
 	}
 
-	SelectionModel selectionModel() {
+	/**
+	 * The underlying selection model.
+	 */
+	protected final SelectionModel getSelectionModel() {
 		return _selectionModel;
 	}
 
 	@Override
 	public Object getModel() {
-		return selectionModel();
+		return getSelectionModel();
 	}
 
 	@Override
 	protected State currentState() {
-		Set<?> selection = selectionModel().getSelection();
+		Set<?> selection = getSelectionModel().getSelection();
 
 		if (selection.isEmpty()) {
 			return State.UNCHECKED;
@@ -87,7 +93,7 @@ public class TableHeaderSelectionControl extends TriStateCheckboxControl impleme
 
 	@Override
 	protected void updateSelection(boolean select) {
-		SelectionModel selectionModel = selectionModel();
+		SelectionModel selectionModel = getSelectionModel();
 		if (select) {
 			Set<?> options = options();
 			if (ScriptingRecorder.isRecordingActive()) {
@@ -107,12 +113,12 @@ public class TableHeaderSelectionControl extends TriStateCheckboxControl impleme
 	protected void internalAttach() {
 		super.internalAttach();
 
-		selectionModel().addSelectionListener(this);
+		getSelectionModel().addSelectionListener(this);
 	}
 
 	@Override
 	protected void internalDetach() {
-		selectionModel().removeSelectionListener(this);
+		getSelectionModel().removeSelectionListener(this);
 
 		super.internalDetach();
 	}

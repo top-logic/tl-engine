@@ -2621,9 +2621,12 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		if (getConfiguredDefaultCommand() != null) {
 			registerCommand(getConfiguredDefaultCommand());
 		}
-		if (getConfiguredCancelCommand() != null) {
-			registerCommand(getConfiguredCancelCommand());
+
+		CommandHandler cancelHandler = getConfiguredCancelCommand();
+		if (cancelHandler != null) {
+			registerButtonCommand(cancelHandler);
 		}
+
 		List<CommandHandler.ConfigBase<? extends CommandHandler>> commandConfigs = _config.getCommands();
 		if (!commandConfigs.isEmpty()) {
 			for (CommandHandler.ConfigBase<? extends CommandHandler> commandConfig : commandConfigs) {

@@ -55,8 +55,6 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 	private static final String CSS_GROUP =
 		ReactiveFormCSS.RF_COLUMNS_LAYOUT + " " + ReactiveFormCSS.RF_INNER_TARGET;
 
-	private final ModeSelector _modeSelector;
-
 	private VisibilityModel _visibilityModel;
 
 	/**
@@ -71,7 +69,6 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 	public GroupDefinitionTemplateProvider(InstantiationContext context, GroupDefinition config) {
 		super(context, config);
 
-		_modeSelector = instantiateModeSelector(config);
 		_visibilityModel = new VisibilityModel.Default();
 	}
 
@@ -110,7 +107,8 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 	}
 
 	private void createModeSelectorListener(FormEditorContext context) {
-		if (_modeSelector == null || context.getFormMode() == FormMode.DESIGN) {
+		ModeSelector modeSelector = instantiateModeSelector(getConfig());
+		if (modeSelector == null || context.getFormMode() == FormMode.DESIGN) {
 			return;
 		}
 
@@ -126,7 +124,7 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 		TLFormObject editObject = formContext.editObject(object);
 
 		GroupModeObserver observer =
-			new GroupModeObserver(attributeUpdateContainer, _modeSelector, editObject, null, _visibilityModel);
+			new GroupModeObserver(attributeUpdateContainer, modeSelector, editObject, null, _visibilityModel);
 		observer.valueChanged(null, null, null);
 	}
 

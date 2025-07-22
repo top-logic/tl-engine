@@ -14,7 +14,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.formeditor.definition.GroupDefinition;
 import com.top_logic.element.layout.formeditor.definition.GroupProperties;
@@ -75,12 +74,7 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 	private ModeSelector instantiateModeSelector(GroupDefinition config) {
 		PolymorphicConfiguration<ModeSelector> modeAnnotation = config.getModeSelector();
 
-		if (modeAnnotation == null) {
-			return null;
-		}
-
-		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
-				.getInstance(modeAnnotation);
+		return getContext().getInstance(modeAnnotation);
 	}
 
 	@Override

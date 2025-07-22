@@ -295,6 +295,23 @@ public class AttributeUpdateContainer {
 	}
 
 	/**
+	 * Retrieves the existing form overlay for the given object.
+	 * 
+	 * @param object
+	 *        The base object to find an overlay for.
+	 * 
+	 * @return The object itself if already a form object, otherwise the existing overlay from
+	 *         edits, or {@code null} if no overlay exists.
+	 */
+	public TLFormObject getExistingOverlay(TLObject object) {
+		if (object instanceof TLFormObject) {
+			return (TLFormObject) object;
+		}
+
+		return _edits.get(object);
+	}
+
+	/**
 	 * Requests an object edit operation.
 	 * 
 	 * @param object
@@ -304,11 +321,7 @@ public class AttributeUpdateContainer {
 	 *         {@link AttributeUpdate}s for its attributes to display.
 	 */
 	public TLFormObject editObject(TLObject object) {
-		if (object instanceof TLFormObject) {
-			return (TLFormObject) object;
-		}
-
-		FormObjectOverlay existingOverlay = _edits.get(object);
+		TLFormObject existingOverlay = getExistingOverlay(object);
 		if (existingOverlay != null) {
 			return existingOverlay;
 		}

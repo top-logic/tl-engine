@@ -15,6 +15,8 @@ import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.element.meta.form.AttributeFormContext;
+import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -88,8 +90,10 @@ public class ModeSelectorByExpression<C extends ModeSelectorByExpression.Config<
 	}
 
 	@Override
-	public void traceDependencies(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace) {
-		_selectorAnalyzer.execute(trace, object);
+	public void traceDependencies(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace,
+			FormContext formContext) {
+		AttributeFormContext attributeFormContext = (AttributeFormContext) formContext;
+		_selectorAnalyzer.execute(trace, attributeFormContext.getAttributeUpdateContainer(), object);
 	}
 
 	private static FormVisibility toFieldMode(Object result) {

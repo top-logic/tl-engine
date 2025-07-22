@@ -25,17 +25,20 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.element.layout.formeditor.FormEditorUtil;
 import com.top_logic.element.layout.formeditor.implementation.FieldDefinitionTemplateProvider;
+import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.MetaControlProvider;
+import com.top_logic.element.meta.form.overlay.ObjectEditing;
+import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.gui.MetaAttributeGUIHelper;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.html.template.TagTemplate;
-import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.Accessor;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
+import com.top_logic.layout.ReadOnlyAccessor;
 import com.top_logic.layout.basic.ErrorFragmentGenerator;
 import com.top_logic.layout.editor.config.OptionalTypeTemplateParameters;
 import com.top_logic.layout.form.FormContainer;
@@ -107,28 +110,39 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 
 		private final TLStructuredTypePart _part;
 
+		private final Map<TLObject, FormContainer> _rowGroups;
+
 		/**
 		 * Creates a new {@link FieldProviderImpl}.
 		 */
 		FieldProviderImpl(TLStructuredTypePart part, AttributeColumn col, AttributeFormContext formContext,
-				FormContainer contentGroup) {
+				FormContainer contentGroup, Map<TLObject, FormContainer> rowGroups) {
 			_col = col;
 			_part = part;
 			_formContext = formContext;
 			_contentGroup = contentGroup;
+			_rowGroups = rowGroups;
 		}
 
 		@Override
 		public String getFieldName(Object aModel, Accessor anAccessor, String aProperty) {
-			return MetaAttributeGUIHelper.getAttributeID(_part, (TLObject) aModel);
+			ObjectEditing overlay = (ObjectEditing) aModel;
+			return MetaAttributeGUIHelper.getAttributeID(_part, overlay.getEditedObject());
 		}
 
 		@Override
 		public FormMember createField(Object aModel, Accessor anAccessor, String aProperty) {
-			Wrapper rowType = (Wrapper) aModel;
+			TLObject rowType = (TLObject) aModel;
 			boolean isDisabled = false;
+
+			// Use the row-specific group if available, otherwise fall back to contentGroup
+			FormContainer targetGroup = _rowGroups != null ? _rowGroups.get(rowType) : _contentGroup;
+			if (targetGroup == null) {
+				targetGroup = _contentGroup;
+			}
+
 			FormMember field =
-				FormEditorUtil.createAnotherMetaAttributeForEdit(_formContext, _contentGroup, _part, rowType,
+				FormEditorUtil.createAnotherMetaAttributeForEdit(_formContext, targetGroup, _part, rowType,
 					isDisabled, AnnotationContainer.EMPTY);
 			if (field != null) {
 				FormVisibility visibility = _col.getVisibility();
@@ -193,15 +207,28 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 			visibleColumNames.add(column.visit(columnNameProvider, null));
 		}
 
+		List<?> rows = rows(model);
+		AttributeFormContext formContext = (AttributeFormContext) context.getFormContext();
+		AttributeUpdateContainer attributeUpdateContainer = formContext.getAttributeUpdateContainer();
+		List<TLObject> overlays = new ArrayList<>();
+		Map<TLObject, FormContainer> rowGroups = new HashMap<>();
+		for (Object row : rows) {
+			TLFormObject overlay = attributeUpdateContainer.editObject((TLObject) row);
+			FormContainer rowGroup = attributeUpdateContainer.getFormContext().createFormContainerForOverlay(overlay);
+			rowGroup.setStableIdSpecialCaseMarker(row);
+			contentGroup.addMember(rowGroup);
+			rowGroups.put((TLObject) row, rowGroup);
+			overlays.add(overlay);
+		}
 		TableConfiguration tableConfig = TableConfigurationFactory.build(
 			genericProvider(),
-			adaptColumns(context.getFormContext(), contentGroup, configuredCols, columnNameProvider),
+			adaptColumns(formContext, contentGroup, rowGroups, configuredCols, columnNameProvider),
 			GenericTableConfigurationProvider.showColumns(visibleColumNames),
 			tableTitleProvider(model),
 			additionalCommands(),
 			deactivateTableFeatures(inDesignMode));
 
-		ObjectTableModel otm = new ObjectTableModel(visibleColumNames, tableConfig, rows(model));
+		ObjectTableModel otm = new ObjectTableModel(visibleColumNames, tableConfig, overlays);
 
 		FormGroup group = new FormGroup(fieldName + "_container", contentGroup.getResources());
 		contentGroup.addMember(group);
@@ -253,9 +280,11 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 	}
 
 	private TableConfigurationProvider adaptColumns(FormContext formContext, FormContainer contentGroup,
+			Map<TLObject, FormContainer> rowGroups,
 			Collection<ColumnDisplay> colums,
 			ColumnDisplayVisitor<String, Void> columnNameProvider) {
-		ColumnDisplayVisitor<Void, ColumnConfiguration> adaptColumn = adaptColumnVisitor(formContext, contentGroup);
+		ColumnDisplayVisitor<Void, ColumnConfiguration> adaptColumn =
+			adaptColumnVisitor(formContext, contentGroup, rowGroups);
 		TableConfigurationProvider adaptColumns = new TableConfigurationProvider() {
 			@Override
 			public void adaptConfigurationTo(TableConfiguration table) {
@@ -353,7 +382,7 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 	}
 
 	private ColumnDisplayVisitor<Void, ColumnConfiguration> adaptColumnVisitor(FormContext formContext,
-			FormContainer contentGroup) {
+			FormContainer contentGroup, Map<TLObject, FormContainer> rowGroups) {
 		return new ColumnDisplayVisitor<Void, ColumnConfiguration>() {
 
 			@Override
@@ -377,9 +406,23 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 
 						arg.setCellExistenceTester(cellExistenceTester);
 
+						AttributeFormContext attributeFormContext = (AttributeFormContext) formContext;
 						arg.setFieldProvider(
-							new FieldProviderImpl(part, col, (AttributeFormContext) formContext, contentGroup));
+							new FieldProviderImpl(part, col, attributeFormContext, contentGroup, rowGroups));
 						arg.setControlProvider(MetaControlProvider.INSTANCE);
+						arg.setAccessor(new ReadOnlyAccessor<>() {
+							@Override
+							public Object getValue(Object row, String property) {
+								TLObject rowObject = (TLObject) row;
+								TLFormObject overlay =
+									attributeFormContext.getAttributeUpdateContainer().getOverlay(rowObject, null);
+								if (overlay != null) {
+									return overlay.getFieldValue(part);
+								} else {
+									return rowObject.tValueByName(property);
+								}
+							}
+						});
 
 						// Classes are displayed dynamically by the fields in the cells.
 						CellClassProvider cssClassProvider = arg.getCssClassProvider();

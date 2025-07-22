@@ -27,7 +27,7 @@
 		<components>
 			<form name="${formName}"
 				buttonbar="true"
-				closeHandlerName="cancelCreate"
+				cancelAction="cancelCreate"
 				model="${ownerModel}"
 				resPrefix="element.meta.createStructuredType.Form."
 				resetInvisible="true"
@@ -36,10 +36,6 @@
 				<modelBuilder class="com.top_logic.element.layout.meta.TLEnumerationFormBuilder"
 					contextOptional="true"
 					create="true"
-				/>
-
-				<cancelAction config:interface="com.top_logic.tool.boundsec.CommandHandlerReference$Config"
-					command-id="cancelCreate"
 				/>
 
 				<buttons>

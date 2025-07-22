@@ -28,6 +28,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
@@ -98,6 +99,10 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 		@Override
 		@ClassDefault(EditComponent.class)
 		Class<? extends LayoutComponent> getImplementationClass();
+
+		@Override
+		@StringDefault(CloseDialogInViewCommandHandler.COMMAND_ID)
+		String getCloseHandlerName();
 
 		/**
 		 * Whether the {@link FormContext} is reset whenever F5 is pressed.
@@ -301,11 +306,6 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 		super.registerDialogCloseCommand();
     }
     
-    @Override
-    protected String getDefaultCloseDialogHandlerName() {
-    	return CloseDialogInViewCommandHandler.COMMAND_ID;
-    }
-
 	/**
 	 * Hook called before the actual mode change happens.
 	 * 

@@ -156,7 +156,6 @@ import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.CloseModalDialogCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.CommandHandlerUtil;
@@ -907,8 +906,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		}
 		_initiallyMinimized = atts.isInitiallyMinimized();
 		doResetScrollPosition(false);
-		_defaultCommand = context.getInstance(atts.getDefaultAction());
-		_cancelCommand = context.getInstance(atts.getCancelAction());
+		_defaultCommand = CommandHandlerFactory.getInstance().getCommand(context, atts.getDefaultAction());
+		_cancelCommand = CommandHandlerFactory.getInstance().getCommand(context, atts.getCancelAction());
 		_allChannels = addConfiguredChannels(context, programmaticChannels());
     }
 
@@ -939,16 +938,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 	private static final LayoutComponent.GlobalConfig getGlobalConfig() {
 		return ApplicationConfig.getInstance().getConfig(LayoutComponent.GlobalConfig.class);
-	}
-
-	/**
-	 * the {@link CommandHandler#getID()} of the handler used to close this component
-	 */
-	protected String getDefaultCloseDialogHandlerName() {
-		if (isTopLevelDialog()) {
-			return CloseModalDialogCommandHandler.HANDLER_NAME;
-		}
-		return null;
 	}
 
 	/**
@@ -3215,9 +3204,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 */
     protected void registerDialogCloseCommand() {
 		String closeHandlerName = _config.getCloseHandlerName();
-		if (closeHandlerName.isEmpty()) {
-			closeHandlerName = getDefaultCloseDialogHandlerName();
-		}
 		if (!StringServices.isEmpty(closeHandlerName)) {
 			this.registerCommandHandler(closeHandlerName, getButtonBar() != null);
 		}

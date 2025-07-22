@@ -59,6 +59,7 @@
 		/>
 
 		<form name="Form"
+			closeHandlerName="cancelCreate"
 			buttonbar="true"
 			resetInvisible="true"
 			securityObject="${securityObject}"

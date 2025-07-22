@@ -55,8 +55,7 @@ public class ModeSelectorByExpression<C extends ModeSelectorByExpression.Config<
 		 * The function expects the object defining the displayed attribute as single argument:
 		 * </p>
 		 * 
-		 * <code>object -> [one of <code>"editable"</code>, <code>"disabled"</code>,
-		 * <code>"read-only"</code>, <code>"mandatory"</code>, <code>"hidden"</code>]</code>
+		 * <code>object -> [one of <code>"default"</code>, <code>"hidden"</code> | all other visibilities (<code>"editable"</code>, <code>"disabled"</code>, <code>"read-only"</code>, <code>"mandatory"</code>) are interpreted as <code>"default"</code>.]</code>
 		 * 
 		 * @see FormVisibility
 		 */
@@ -102,7 +101,7 @@ public class ModeSelectorByExpression<C extends ModeSelectorByExpression.Config<
 		}
 
 		if (result instanceof Boolean) {
-			return ((Boolean) result).booleanValue() ? FormVisibility.EDITABLE : FormVisibility.HIDDEN;
+			return ((Boolean) result).booleanValue() ? FormVisibility.DEFAULT : FormVisibility.HIDDEN;
 		}
 
 		if (result instanceof String) {

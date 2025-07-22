@@ -6,7 +6,7 @@
 >
 	<arguments
 		formType="tl.demo.forms:DuplicateObjectInput"
-		height="300px"
+		height="320px"
 		width="400px"
 	>
 		<title class="com.top_logic.layout.component.title.ModelTitle"
@@ -27,6 +27,13 @@
 				<en>Duplicate selection</en>
 				<de>Selektion duplizieren</de>
 			</resourceKey>
+			<executability>
+				<rule-by-expression show-disabled="true">
+					<decision><![CDATA[x -> $x != null
+    ? true
+    : #("Kein Objekt gewählt"@de, "No object selected."@en)]]></decision>
+				</rule-by-expression>
+			</executability>
 		</open-handler>
 		<initialization><![CDATA[form -> model -> {
   newName=#("Kopie von {0}"@de, "Copy of {0}"@en).fill($model);
@@ -35,7 +42,7 @@
 }]]></initialization>
 		<transactionHandler id="perform"
 			class="com.top_logic.model.search.providers.TransactionHandlerByExpression"
-			clique="main"
+			clique="default"
 			closeDialog="true"
 			confirm="false"
 			disabledImage=""

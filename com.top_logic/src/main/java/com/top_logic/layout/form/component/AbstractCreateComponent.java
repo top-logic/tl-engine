@@ -17,7 +17,6 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
-import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ModelSpec;
@@ -29,6 +28,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CloseModalDialogCommandHandler;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandler.ConfigBase;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
@@ -105,8 +105,8 @@ public class AbstractCreateComponent extends FormComponent {
 		String getCreateHandler();
 
 		@Override
-		@StringDefault(CancelHandler.COMMAND_ID)
-		String getCloseHandlerName();
+		@FormattedDefault(CancelHandler.COMMAND_ID)
+		ConfigBase<? extends CommandHandler> getCancelAction();
 
 		@Override
 		default void modifyIntrinsicCommands(CommandRegistry registry) {

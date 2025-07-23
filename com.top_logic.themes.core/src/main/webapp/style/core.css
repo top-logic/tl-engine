@@ -2249,6 +2249,10 @@ h5.card-title > a:hover {
 	text-decoration: none;
 }
 
+.treeBody.collapsed-borders {
+    border-collapse: collapse !important;
+}
+
 .tcrNode .treeNode {
     display: flex;
     align-items: center;

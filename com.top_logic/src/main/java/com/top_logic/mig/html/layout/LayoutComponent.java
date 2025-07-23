@@ -158,6 +158,7 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
+import com.top_logic.tool.boundsec.CommandHandlerReference;
 import com.top_logic.tool.boundsec.CommandHandlerUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
@@ -906,10 +907,23 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		}
 		_initiallyMinimized = atts.isInitiallyMinimized();
 		doResetScrollPosition(false);
-		_defaultCommand = CommandHandlerFactory.getInstance().getCommand(context, atts.getDefaultAction());
-		_cancelCommand = CommandHandlerFactory.getInstance().getCommand(context, atts.getCancelAction());
+		_defaultCommand = resolveCommand(context, atts.getDefaultAction());
+		_cancelCommand = resolveCommand(context, atts.getCancelAction());
 		_allChannels = addConfiguredChannels(context, programmaticChannels());
     }
+
+	/**
+	 * Instantiates the command through the {@link CommandHandlerFactory}.
+	 * 
+	 * <p>
+	 * {@link CommandHandler} cannot in general be instantiated directly, since the may be
+	 * configured as {@link CommandHandlerReference}.
+	 * </p>
+	 */
+	protected final CommandHandler resolveCommand(InstantiationContext context,
+			PolymorphicConfiguration<? extends CommandHandler> config) {
+		return config == null ? null : CommandHandlerFactory.getInstance().getCommand(context, config);
+	}
 
 	@Override
 	public boolean shouldRecord() {
@@ -2546,7 +2560,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 	private void registerWindowOpener(InstantiationContext context, WindowTemplate.Config aSepWin) {
 		PolymorphicConfiguration<? extends CommandHandler> config = OpenWindowCommand.createWindowOpenHandler(aSepWin);
-		CommandHandler handler = CommandHandlerFactory.getInstance().getCommand(context, config);
+		CommandHandler handler = resolveCommand(context, config);
 		registerCommandHandler(handler, aSepWin.getWindowInfo().getCreateOpenerButtons());
     }
 
@@ -2613,7 +2627,6 @@ public abstract class LayoutComponent extends ModelEventAdapter
 			_buttonBar = parent == null ? null : parent.getButtonBar();
         }
 
-		CommandHandlerFactory factory = CommandHandlerFactory.getInstance();
 		/* Register only the _configured_ default command, as it is guaranteed to be constant. If
 		 * getDefaultCommand is overridden its result might not be constant, which might require
 		 * dynamic registration and deregistration, complicating it a lot. Therefore, the overriding
@@ -2630,7 +2643,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		List<CommandHandler.ConfigBase<? extends CommandHandler>> commandConfigs = _config.getCommands();
 		if (!commandConfigs.isEmpty()) {
 			for (CommandHandler.ConfigBase<? extends CommandHandler> commandConfig : commandConfigs) {
-				registerCommand(factory.getCommand(context, commandConfig));
+				registerCommand(resolveCommand(context, commandConfig));
         	}
 		}
 
@@ -2639,7 +2652,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		List<CommandHandler.ConfigBase<? extends CommandHandler>> buttonConfigs = _config.getButtons();
 		if (!buttonConfigs.isEmpty()) {
 			for (CommandHandler.ConfigBase<? extends CommandHandler> commandConfig : buttonConfigs) {
-				registerButtonCommand(factory.getCommand(context, commandConfig));
+				registerButtonCommand(resolveCommand(context, commandConfig));
         	}
         }
 
@@ -3267,7 +3280,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 			if (openhandler == null) {
 				continue;
 			}
-			CommandHandler command = CommandHandlerFactory.getInstance().getCommand(context, openhandler);
+			CommandHandler command = resolveCommand(context, openhandler);
 			registerCommandHandler(command, dialog.getDialogInfo().getCreateOpenerButtons());
 		}
     }

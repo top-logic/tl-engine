@@ -5,6 +5,7 @@
 	<components>
 		<layout name="dialogInline2_1"
 			buttonbar="true"
+			closeHandlerName="closeModalDialog"
 			horizontal="true"
 		>
 			<components>

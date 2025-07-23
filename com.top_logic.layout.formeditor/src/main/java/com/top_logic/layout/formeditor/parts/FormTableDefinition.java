@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
@@ -41,6 +42,7 @@ import com.top_logic.model.util.TLModelPartRef;
 	FormTableDefinition.DYNAMIC_LABEL,
 	FormTableDefinition.TYPE,
 	FormTableDefinition.ROWS,
+	FormTableDefinition.SELECTABLE,
 	FormTableDefinition.COLUMNS,
 	FormTableDefinition.COMMANDS,
 })
@@ -58,6 +60,9 @@ public interface FormTableDefinition
 
 	/** Configuration name for the value of the {@link #getDynamicLabel()}. */
 	String DYNAMIC_LABEL = "dynamicLabel";
+
+	/** Configuration name for the value of the {@link #getSelectable()}. */
+	String SELECTABLE = "selectable";
 
 	/**
 	 * Expression creating a list of objects edited in the displayed table as rows.
@@ -93,6 +98,12 @@ public interface FormTableDefinition
 	List<TableCommandConfig> getCommands();
 
 	/**
+	 * Title of the table.
+	 */
+	@Override
+	ResKey getLabel();
+
+	/**
 	 * Expression creating a dynamic label for the table based on the model.
 	 *
 	 * <p>
@@ -117,6 +128,18 @@ public interface FormTableDefinition
 	@ItemDisplay(ItemDisplayType.VALUE)
 	@Nullable
 	Expr getDynamicLabel();
+
+	/**
+	 * Whether the table allows row selection.
+	 */
+	@Name(SELECTABLE)
+	@BooleanDefault(true)
+	boolean getSelectable();
+
+	/**
+	 * Setter for {@link #getSelectable()}.
+	 */
+	void setSelectable(boolean selectable);
 
 	/**
 	 * {@link ConfigPart} representing a column in a {@link FormTableDefinition}.

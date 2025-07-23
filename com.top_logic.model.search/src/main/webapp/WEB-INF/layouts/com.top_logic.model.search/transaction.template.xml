@@ -59,8 +59,8 @@
 		/>
 
 		<form name="Form"
-			cancelAction="cancelCreate"
 			buttonbar="true"
+			cancelAction="cancelCreate"
 			resetInvisible="true"
 			securityObject="${securityObject}"
 			securityProviderClass="${securityProviderClass}"

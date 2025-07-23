@@ -485,8 +485,7 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 		TagTemplate contentFragment = div(css("rf_keepInline"), member(fieldName));
 		// Override grid-template-columns to prevent table overflow while maintaining full width
 		// usage
-		return div(css(ReactiveFormCSS.RF_LINE),
-			style("grid-template-columns: minmax(0, 1fr);"),
+		return div(css(ReactiveFormCSS.RF_LINE + " " + ReactiveFormCSS.RF_GRID_MINMAX),
 			contentFragment);
 	}
 

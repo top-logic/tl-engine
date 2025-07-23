@@ -5,6 +5,8 @@
  */
 package com.top_logic.mig.html;
 
+import java.util.function.Supplier;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.config.ConfigurationException;
@@ -16,6 +18,9 @@ import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.table.tree.TreeTableDataOwner;
+import com.top_logic.layout.tree.model.AbstractTreeTableModel;
+import com.top_logic.layout.tree.model.TLTreeModel;
 
 /**
  * {@link SelectionModelFactory} that creates "default" {@link SelectionModel}s.
@@ -35,6 +40,9 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 		/** Name of the {@link #isMultiple()} property. */
 		String MULTIPLE_PROPERTY_NAME = "multiple";
 
+		/** Name of the {@link #isMultiple()} property. */
+		String TREE_SELECTION_PROPERTY_NAME = "tree-selection";
+
 		/** Name of the {@link #getFilter()} property. */
 		String FILTER_PROPERTY_NAME = "filter";
 
@@ -48,6 +56,18 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 		 * Setter for {@link #isMultiple()}.
 		 */
 		void setMultiple(boolean multiple);
+
+		/**
+		 * Whether the created {@link SelectionModel} supports tree selection, i.e. when a node in a
+		 * tree is selected, that means that all children are selected.
+		 */
+		@Name(TREE_SELECTION_PROPERTY_NAME)
+		boolean isTreeSelection();
+
+		/**
+		 * Setter for {@link #isTreeSelection()}.
+		 */
+		void setTreeSelection(boolean value);
 
 		/**
 		 * Returns the selection filter for the created {@link SelectionModel}.
@@ -127,7 +147,21 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 	public SelectionModel newSelectionModel(SelectionModelOwner owner) {
 		Filter<Object> selectionFilter = getSelectionFilter();
 		if (_config.isMultiple()) {
-			return new DefaultMultiSelectionModel(selectionFilter, owner);
+			if (_config.isTreeSelection()) {
+				TreeTableDataOwner treeOwner = (TreeTableDataOwner) owner;
+				Supplier<TLTreeModel<?>> treeSupplier = () -> {
+					/* Table data may change during lifetime of selection model , e.g. when the
+					 * owner is a GridComponent. */
+					return treeOwner.getTableData().getTree();
+				};
+				TreeSelectionModel<?> selectionModel = new LazyTreeSelectionModel(owner,
+					AbstractTreeTableModel.AbstractTreeTableNode.class, treeSupplier);
+				selectionModel.setSelectionFilter(selectionFilter);
+				return selectionModel;
+					
+			} else {
+				return new DefaultMultiSelectionModel(selectionFilter, owner);
+			}
 		} else {
 			return new DefaultSingleSelectionModel(selectionFilter, owner);
 		}

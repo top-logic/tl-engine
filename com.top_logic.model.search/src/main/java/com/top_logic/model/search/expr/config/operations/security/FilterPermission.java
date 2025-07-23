@@ -104,6 +104,20 @@ public class FilterPermission extends GenericMethod {
 			.collect(Collectors.toSet());
 	}
 
+	@Override
+	public boolean canEvaluateAtCompileTime(Object[] arguments) {
+		/* FilterPermission must not be evaluated at compile time.
+		 * 
+		 * 1. When no user is given the current user is used. When this method is evaluated at
+		 * compile time, all users have the same rights as the user when the script is evaluated the
+		 * first time.
+		 * 
+		 * 2. The rights for a user may change during the runtime of the application. Therefore it
+		 * also not correct when the script would be compiled and always executed for the same
+		 * user. */
+		return false;
+	}
+
 	/**
 	 * {@link AbstractSimpleMethodBuilder} creating {@link FilterPermission}.
 	 */

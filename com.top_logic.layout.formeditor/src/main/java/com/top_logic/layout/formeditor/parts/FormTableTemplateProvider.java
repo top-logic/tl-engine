@@ -87,6 +87,7 @@ import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormMode;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.util.css.CssUtil;
 
 /**
  * Creates a template for a {@link FormTableDefinition} and stores the necessary information.
@@ -485,7 +486,7 @@ public class FormTableTemplateProvider extends AbstractFormElementProvider<FormT
 		TagTemplate contentFragment = div(css("rf_keepInline"), member(fieldName));
 		// Override grid-template-columns to prevent table overflow while maintaining full width
 		// usage
-		return div(css(ReactiveFormCSS.RF_LINE + " " + ReactiveFormCSS.RF_GRID_MINMAX),
+		return div(css(CssUtil.joinCssClasses(ReactiveFormCSS.RF_LINE, ReactiveFormCSS.RF_GRID_MINMAX)),
 			contentFragment);
 	}
 

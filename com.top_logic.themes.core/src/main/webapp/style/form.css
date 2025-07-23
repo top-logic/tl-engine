@@ -1242,6 +1242,10 @@ div.dfListAdd {
   }
 }
 
+.rf_gridMinmax {
+    grid-template-columns: minmax(0, 1fr);
+}
+
 /*
 ****					****
 ****	Input styles	****

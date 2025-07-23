@@ -91,5 +91,10 @@ public interface ReactiveFormCSS {
 	 * to drag an form element into or out from the area.
 	 */
 	String RF_LOCKED = "rf_locked";
+
+	/**
+	 * CSS class to prevent grid column overflow and ensure full width usage.
+	 */
+	String RF_GRID_MINMAX = "rf_gridMinmax";
 }
 

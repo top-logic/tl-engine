@@ -53,10 +53,6 @@ public class CommandHandlerFormat extends AbstractConfigurationValueProvider<Com
 
 	@Override
 	public boolean isLegalValue(Object value) {
-		if (value instanceof CommandHandler.Config config) {
-			CommandHandler canonicalValue = CommandHandlerFactory.getInstance().getHandler(config.getId());
-			return value == canonicalValue;
-		}
 		return value instanceof CommandHandlerReference.Config;
 	}
 

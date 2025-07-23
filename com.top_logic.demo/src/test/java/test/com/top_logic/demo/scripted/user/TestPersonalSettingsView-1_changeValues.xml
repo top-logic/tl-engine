@@ -91,6 +91,15 @@
 				>
 					<arguments/>
 				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+					command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+					command-label="Persönliche Einstellungen"
+					command-name="showCurrentPersonDialog"
+					component-implementation-comment="com.top_logic.layout.component.TabComponent"
+					component-name="mainTabbar.layout.xml#mainTabber"
+				>
+					<arguments/>
+				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 					comparision="equals"
 					inverted="false"
@@ -269,6 +278,15 @@
 							command-name="nothing"
 							component-implementation-comment="com.top_logic.layout.form.component.EditComponent"
 							component-name="admin/security/accounts/userSettings/editCurrentUserForm.layout.xml#Form"
+						>
+							<arguments/>
+						</action>
+						<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+							command-implementation-comment="com.top_logic.tool.boundsec.OpenModalDialogCommandHandler"
+							command-label="Persönliche Einstellungen"
+							command-name="showCurrentPersonDialog"
+							component-implementation-comment="com.top_logic.layout.component.TabComponent"
+							component-name="mainTabbar.layout.xml#mainTabber"
 						>
 							<arguments/>
 						</action>

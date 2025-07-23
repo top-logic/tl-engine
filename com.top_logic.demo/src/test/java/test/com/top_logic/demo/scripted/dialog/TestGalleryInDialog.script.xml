@@ -146,18 +146,6 @@
 			</parameters>
 		</action>
 		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
-			template="script:/Knopf/Action-Knopf-Druecken.xml"
-			template-name-comment="Knopf Druecken"
-		>
-			<parameters>
-				<parameter name="Name">
-					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringValue"
-						string="Schließen"
-					/>
-				</parameter>
-			</parameters>
-		</action>
-		<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
 			template="script:/Element/Action-Element-Loeschen.xml"
 			template-name-comment="Element Loeschen"
 		>

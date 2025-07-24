@@ -126,9 +126,7 @@ import com.top_logic.layout.form.component.AbstractCreateCommandHandler;
 import com.top_logic.layout.form.component.CreateFunction;
 import com.top_logic.layout.form.component.EditComponent;
 import com.top_logic.layout.form.component.WarningsDialog;
-import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.ErrorControl;
-import com.top_logic.layout.form.control.ImageButtonRenderer;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
@@ -847,16 +845,6 @@ public class GridComponent extends EditComponent implements
 
 		if (command.equals(this.getApplyCommandHandler())) {
 			this.setButtonImages(theModel, Icons.SAVE_BUTTON_ICON, Icons.SAVE_BUTTON_ICON_DISABLED);
-			/*
-			 * set ImageButtonRenderer explicitly because ButtonRenderer is
-			 * default which replaces the whole DOM element when image changes.
-			 * If such an replacement occurs the command may not be executed,
-			 * e.g. an input field was changed and the button is clicked
-			 * directly (without previously leaving the field). In this case (if
-			 * the server is fast enough) the DOM element of the button is
-			 * replaced before the onClick-event occurs
-			 */
-			theModel.set(ButtonControl.BUTTON_RENDERER, ImageButtonRenderer.INSTANCE);
 			this._applyListener = new ApplyComandImageChange(theModel, Icons.SAVE_BUTTON_MODIFIED, Icons.SAVE_BUTTON_ICON);
             // initially the button looks like not executable
             this._applyListener.updateImage(false);

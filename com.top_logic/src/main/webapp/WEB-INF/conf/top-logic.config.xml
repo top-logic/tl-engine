@@ -948,6 +948,7 @@
 					/>
 					
 					<clique name="default" display="commands"/>
+					<clique name="default-toolbar" display="toolbar"/>
 					
 					<group name="state-handling" display="toolbar">
 						<cliques>
@@ -1499,6 +1500,7 @@
 						group="System"
 		            />
 					<handler id="addComponentCommand" class="com.top_logic.layout.editor.commands.AddComponentCommand"
+						clique="default-toolbar"
 						image="theme:com.top_logic.layout.Icons.ADD_COMPONENT_COMMAND"
 						group="System"
 		            />

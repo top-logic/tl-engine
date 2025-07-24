@@ -20,8 +20,8 @@
 			<tabInfo label="layouts.layoutdemo.dialog.dialog2.demoDialogTab2.tab"/>
 			<components>
 				<component class="com.top_logic.mig.html.layout.SimpleComponent"
-					closeHandlerName="closeModalDialog"
 					buttonbar="true"
+					closeHandlerName="closeModalDialog"
 					content="42"
 					name="dialogInfo2b"
 					resPrefix="layouts.layoutdemo.dialog.dialog2.dialogInfo2b."

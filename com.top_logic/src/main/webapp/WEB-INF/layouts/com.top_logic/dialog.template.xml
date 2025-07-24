@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<properties extends="com.top_logic.mig.html.layout.DialogInfo, com.top_logic.mig.html.layout.WithSecurityConfiguration, com.top_logic.mig.html.layout.WithDefaultFor, com.top_logic.layout.editor.config.ButtonTemplateParameters">
+	<properties extends="com.top_logic.mig.html.layout.DialogInfo, com.top_logic.layout.structure.ButtonbarOptions, com.top_logic.mig.html.layout.WithSecurityConfiguration, com.top_logic.mig.html.layout.WithDefaultFor, com.top_logic.layout.editor.config.ButtonTemplateParameters">
 		<annotations>
 			<display-inherited value="APPEND"/>
 			<display-order>
@@ -14,6 +14,7 @@
 
 					<property name="helpID"/>
 					<property name="resizable"/>
+					<property name="buttonbar"/>
 					<property name="openMaximized"/>
 					<property name="closableUsingX"/>
 					<property name="createOpenerButtons"/>
@@ -62,6 +63,7 @@
 	</properties>
 
 	<component class="${component-class}"
+		buttonbar="${buttonbar}"
 		components="${components}"
 		defaultFor="${defaultFor}"
 		name="Dialog"

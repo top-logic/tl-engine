@@ -7,7 +7,11 @@ package com.top_logic.tool.boundsec;
 
 import java.util.Map;
 
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.structure.I18NConstants;
@@ -16,11 +20,30 @@ import com.top_logic.tool.execution.AlwaysExecutable;
 import com.top_logic.tool.execution.ExecutabilityRule;
 
 /**
- * Default command to close a Dialog.
- *  
- * @author    <a href="mailto:skr@top-logic.com">Sylwester Kras</a>
+ * {@link CommandHandler} closing the currently open dialog.
+ * 
+ * @author <a href="mailto:skr@top-logic.com">Sylwester Kras</a>
  */
+@Label("Close dialog")
+@InApp(classifiers = "dialog")
 public class CloseModalDialogCommandHandler extends AbstractSystemCommand {
+
+	/**
+	 * Configuration options for {@link CloseModalDialogCommandHandler}.
+	 */
+	public interface Config extends AbstractSystemCommand.Config {
+
+		@Override
+		@StringDefault("close")
+		String getClique();
+
+		// Note: Without a default in the configuration interface, the layout editor does not
+		// display a default value in the command label field.
+		@Override
+		@FormattedDefault("class.com.top_logic.layout.structure.I18NConstants.CLOSE_DIALOG")
+		ResKey getResourceKey();
+
+	}
 
     /** name of handler as registered in factory */
     public static final String HANDLER_NAME = "closeModalDialog";

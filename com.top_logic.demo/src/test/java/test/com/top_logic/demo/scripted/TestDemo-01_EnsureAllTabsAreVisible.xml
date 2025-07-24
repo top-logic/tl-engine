@@ -187,16 +187,6 @@
 						>
 							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 								name=""
-								tab-path="Strukturen > Typendemo > 0 Mails"
-							/>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-							comment=""
-							failure-message=""
-							user-id="root"
-						>
-							<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-								name=""
 								tab-path="Strukturen > Typendemo > 0 Kommentare"
 							/>
 						</action>
@@ -494,7 +484,7 @@
 									command-label="Schließen"
 									command-name="closeModalDialog"
 									component-implementation-comment="com.top_logic.mig.html.layout.SimpleComponent"
-									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dynamicLayout/layout2.xml#dynamicDemoLayout2_content"
+									component-name="com.top_logic.demo/technical/layoutDemo1/dialogs/dialogDemo.layout.xml#dynamicLayoutDemo"
 									user-id="root"
 								>
 									<arguments/>

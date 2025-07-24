@@ -16,6 +16,7 @@
 
 					<components>
 						<component class="com.top_logic.demo.layout.demo.dialog.DemoDialog"
+							closeHandlerName="closeModalDialog"
 							buttonbar="true"
 							name="infoDialog1a"
 							page="/jsp/test/layout/dialog/DemoDialogContent.jsp"

@@ -5,8 +5,6 @@
  */
 package com.top_logic.mig.html;
 
-import java.util.function.Supplier;
-
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.config.ConfigurationException;
@@ -20,10 +18,10 @@ import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.table.tree.TreeTableDataOwner;
+import com.top_logic.layout.table.TableDataOwner;
+import com.top_logic.layout.table.tree.TreeTableData;
 import com.top_logic.layout.tree.TreeModelOwner;
 import com.top_logic.layout.tree.model.AbstractTreeTableModel;
-import com.top_logic.layout.tree.model.TLTreeModel;
 import com.top_logic.tool.boundsec.CommandHandler;
 
 /**
@@ -175,21 +173,23 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 		Filter<Object> selectionFilter = getSelectionFilter();
 		if (_config.isMultiple()) {
 			if (_config.withTreeSemantics()) {
-				if (_config.isSubtreeSelection()) {
-					TreeTableDataOwner treeOwner = (TreeTableDataOwner) owner;
-					Supplier<TLTreeModel<?>> treeSupplier = () -> {
-						/* Table data may change during lifetime of selection model , e.g. when the
-						 * owner is a GridComponent. */
-						return treeOwner.getTableData().getTree();
-					};
-					SubtreeSelectionModel<?> selectionModel = new LazyTreeSelectionModel(owner,
-						AbstractTreeTableModel.AbstractTreeTableNode.class, treeSupplier);
-					selectionModel.setSelectionFilter(selectionFilter);
-					return selectionModel;
+				TreeModelOwner treeModelOwner;
+				if (owner instanceof TreeModelOwner treeOwner) {
+					treeModelOwner = treeOwner;
+				} else {
+					// Try to extract from table data.
+					TableDataOwner tableOwner = (TableDataOwner) owner;
+					treeModelOwner = () -> ((TreeTableData) tableOwner.getTableData()).getTree();
 				}
 
-				return new DefaultTreeMultiSelectionModel<>(selectionFilter, owner,
-					((TreeModelOwner) owner));
+				if (_config.isSubtreeSelection()) {
+					SubtreeSelectionModel<?> selectionModel = new LazyTreeSelectionModel(owner,
+						AbstractTreeTableModel.AbstractTreeTableNode.class, treeModelOwner);
+					selectionModel.setSelectionFilter(selectionFilter);
+					return selectionModel;
+				} else {
+					return new DefaultTreeMultiSelectionModel<>(selectionFilter, owner, treeModelOwner);
+				}
 			} else {
 				return new DefaultMultiSelectionModel<>(selectionFilter, owner);
 			}

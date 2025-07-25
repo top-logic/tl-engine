@@ -8,6 +8,7 @@ package com.top_logic.mig.html;
 import java.util.List;
 import java.util.function.Supplier;
 
+import com.top_logic.layout.tree.TreeModelOwner;
 import com.top_logic.layout.tree.model.TLTreeModel;
 
 /**
@@ -18,7 +19,7 @@ import com.top_logic.layout.tree.model.TLTreeModel;
  */
 public class LazyTreeSelectionModel<N> extends SubtreeSelectionModel<N> {
 
-	private Supplier<? extends TLTreeModel<N>> _modelSupplier;
+	private TreeModelOwner _modelSupplier;
 
 	/**
 	 * Creates a {@link LazyTreeSelectionModel}.
@@ -29,7 +30,7 @@ public class LazyTreeSelectionModel<N> extends SubtreeSelectionModel<N> {
 	 *        {@link #clear()}.
 	 */
 	public LazyTreeSelectionModel(SelectionModelOwner owner, Class<N> nodeType,
-			Supplier<? extends TLTreeModel<N>> modelSupplier) {
+			TreeModelOwner modelSupplier) {
 		super(owner, nodeType);
 		_modelSupplier = modelSupplier;
 	}
@@ -38,7 +39,7 @@ public class LazyTreeSelectionModel<N> extends SubtreeSelectionModel<N> {
 	 * Base {@link TLTreeModel}.
 	 */
 	protected TLTreeModel<N> model() {
-		return _modelSupplier.get();
+		return _modelSupplier.getTree();
 	}
 
 	@Override

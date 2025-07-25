@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.BufferingProtocol;
@@ -43,6 +42,7 @@ import com.top_logic.layout.table.TableDataOwner;
 import com.top_logic.layout.table.TableRenderer.Cell;
 import com.top_logic.layout.table.provider.ColumnProviderConfig;
 import com.top_logic.layout.table.tree.TreeTableData;
+import com.top_logic.layout.tree.TreeModelOwner;
 import com.top_logic.layout.tree.model.AbstractTreeTableModel;
 import com.top_logic.layout.tree.model.TLTreeModel;
 import com.top_logic.mig.html.GenericSelectionModelOwner;
@@ -159,7 +159,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 		ColumnConfiguration treeSelectColumn = table.declareColumn(getConfig().getColumnId());
 		treeSelectColumn.setColumnLabelKey(getConfig().getColumnLabel());
 
-		Supplier treeSupplier = () -> {
+		TreeModelOwner treeSupplier = () -> {
 			/* Table data may change during lifetime of selection model, e.g. when the owner is a
 			 * GridComponent. */
 			return treeTableData().getTree();
@@ -187,7 +187,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 	}
 
 	private <N> void listenToChannel(SubtreeSelectionModel<N> selectionModel,
-			Supplier<? extends TLTreeModel<N>> treeSupplier) {
+			TreeModelOwner treeSupplier) {
 		@SuppressWarnings("unchecked")
 		SelectionModelUpdater<N> listener = _component.get(_existingListener);
 		if (listener == null) {
@@ -200,7 +200,7 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 	}
 
 	private <N> void connectWithChannel(SubtreeSelectionModel<N> selectionModel,
-			Supplier<? extends TLTreeModel<N>> treeSupplier) {
+			TreeModelOwner treeSupplier) {
 		updateSelectionModelFromChannel(selectionModel, treeSupplier, channel().get());
 		selectionModel.addSelectionListener(new SelectionListener() {
 			@Override
@@ -224,11 +224,11 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 	}
 
 	private <N> void updateChannelFromSelectionModel(ComponentChannel channel,
-			Supplier<? extends TLTreeModel<N>> treeSupplier, Map<N, TriState> states) {
+			TreeModelOwner treeSupplier, Map<N, TriState> states) {
 		if (_ignoreModelEvent) {
 			return;
 		}
-		TLTreeModel<N> treeModel = treeSupplier.get();
+		TLTreeModel<N> treeModel = treeSupplier.getTree();
 		TriState relevantState = !getConfig().isInvertSelection() ? TriState.SELECTED : TriState.NOT_SELECTED;
 		Set<Object> newChannelValue;
 		if (states.isEmpty() && relevantState == TriState.NOT_SELECTED) {
@@ -248,8 +248,8 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 	}
 
 	private <N> void updateSelectionModelFromChannel(SubtreeSelectionModel<N> selectionModel,
-			Supplier<? extends TLTreeModel<N>> treeSupplier, Object channelValue) {
-		TLTreeModel<N> treeModel = treeSupplier.get();
+			TreeModelOwner treeSupplier, Object channelValue) {
+		TLTreeModel<N> treeModel = treeSupplier.getTree();
 		Set<? extends N> newSelectionModelValue = ((Collection<?>) channelValue)
 			.stream()
 			.map(value -> findNode(treeModel, value))
@@ -357,9 +357,9 @@ public class TreeSelectColumnProvider extends AbstractConfiguredInstance<TreeSel
 
 		private SubtreeSelectionModel<N> _selectionModel;
 
-		private Supplier<? extends TLTreeModel<N>> _treeSupplier;
+		private TreeModelOwner _treeSupplier;
 
-		void setModels(SubtreeSelectionModel<N> selectionModel, Supplier<? extends TLTreeModel<N>> treeSupplier) {
+		void setModels(SubtreeSelectionModel<N> selectionModel, TreeModelOwner treeSupplier) {
 			_selectionModel = selectionModel;
 			_treeSupplier = treeSupplier;
 			_updateRequired = false;

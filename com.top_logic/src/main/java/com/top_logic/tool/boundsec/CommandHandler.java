@@ -407,6 +407,7 @@ public interface CommandHandler
 	@Abstract
 	@TitleProperty(name = ConfigBase.UI_TITLE)
 	@CollapseEntries
+	@Format(CommandHandlerFormat.class)
 	public interface ConfigBase<T extends CommandHandler> extends PolymorphicConfiguration<T> {
 
 		/**

@@ -370,16 +370,11 @@
 					max-sleep="300000"
 					user-id="root"
 				/>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
-					command-label="Schließen"
-					command-name="closeModalDialog"
-					component-implementation-comment="com.top_logic.tool.export.progress.ExportDownloadComponent"
-					component-name="export/gridExportDialog.layout.xml#GridExportDownload"
+				<action class="com.top_logic.layout.scripting.runtime.action.CloseDialogActionOp"
+					component-implementation-comment="com.top_logic.tool.boundsec.BoundLayout"
+					component-name="export/gridExportDialog.layout.xml#GridExportDownloadDialog"
 					user-id="root"
-				>
-					<arguments/>
-				</action>
+				/>
 			</actions>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"

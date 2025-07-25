@@ -219,8 +219,8 @@
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
-					command-label="Schließen"
-					command-name="closeModalDialog"
+					command-label="Abbrechen"
+					command-name="cancelCreate"
 					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
 					component-name="com.top_logic.demo/technical/components/transaction/inputDialog.layout.xml#Form"
 					user-id="root"
@@ -511,8 +511,8 @@
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
-					command-label="Schließen"
-					command-name="closeModalDialog"
+					command-label="Abbrechen"
+					command-name="cancelCreate"
 					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
 					component-name="com.top_logic.demo/technical/components/transaction/inputDialog.layout.xml#Form"
 					user-id="root"
@@ -548,8 +548,8 @@
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 					command-implementation-comment="com.top_logic.tool.boundsec.CloseModalDialogCommandHandler"
-					command-label="Schließen"
-					command-name="closeModalDialog"
+					command-label="Abbrechen"
+					command-name="cancelCreate"
 					component-implementation-comment="com.top_logic.layout.form.component.FormComponent"
 					component-name="com.top_logic.demo/technical/components/transaction/inputDialog.layout.xml#Form"
 					user-id="root"

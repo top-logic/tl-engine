@@ -98,6 +98,18 @@ public class DefaultInstantiationContext extends AbstractInstantiationContext {
 
 	private <T> T create(InstantiationContext self, PolymorphicConfiguration<T> configuration, Factory factory)
 			throws ConfigurationException {
+		try {
+			return tryCreate(self, configuration, factory);
+		} catch (ConfigurationException ex) {
+			throw ex;
+		} catch (Exception ex) {
+			throw new ConfigurationException(I18NConstants.ERROR_INSTANTIATION_FAILED__CLASS_LOCATION
+				.fill(configuration.getImplementationClass(), configuration.location()), null, null, ex);
+		}
+	}
+
+	private <T> T tryCreate(InstantiationContext self, PolymorphicConfiguration<T> configuration, Factory factory)
+			throws ConfigurationException {
 		T ref;
 		int createLevel;
 

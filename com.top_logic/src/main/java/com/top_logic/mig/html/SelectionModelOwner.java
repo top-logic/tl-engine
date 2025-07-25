@@ -31,12 +31,12 @@ public interface SelectionModelOwner {
 	public static final SelectionModelOwner NO_OWNER = new SelectionModelOwner() {
 
 		@Override
-		public SelectionModel getSelectionModel() {
+		public <T> SelectionModel<T> getSelectionModel() {
 			throw new UnsupportedOperationException("There is no owner and therefore no selection model.");
 		}
 	};
 
 	/** Getter for the owned {@link SelectionModel}. */
-	public SelectionModel getSelectionModel();
+	public <T> SelectionModel<T> getSelectionModel();
 
 }

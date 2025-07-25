@@ -13,14 +13,14 @@ import com.top_logic.layout.component.model.SelectionEvent;
 /**
  * Builder for {@link SelectionEvent}s.
  */
-public interface SelectionEventBuilder {
+public interface SelectionEventBuilder<T> {
 
 	/**
 	 * A {@link SelectionEventBuilder} that ignores updates and builds no event.
 	 */
-	public static final SelectionEventBuilder NONE = new SelectionEventBuilder() {
+	public static final SelectionEventBuilder<Object> NONE = new SelectionEventBuilder<>() {
 		@Override
-		public SelectionEvent build() {
+		public SelectionEvent<Object> build() {
 			return null;
 		}
 
@@ -33,7 +33,7 @@ public interface SelectionEventBuilder {
 	/**
 	 * Creates the {@link SelectionEvent} from recorded updates.
 	 */
-	public SelectionEvent build();
+	public SelectionEvent<T> build();
 
 	/**
 	 * Marks the given object as touched.
@@ -45,10 +45,10 @@ public interface SelectionEventBuilder {
 	/**
 	 * Creates a {@link SelectionEventBuilder}.
 	 */
-	public static SelectionEventBuilder create(SelectionModel<?> model) {
-		Set<?> old = model.getSelection();
+	public static <T> SelectionEventBuilder<T> create(SelectionModel<T> model) {
+		Set<? extends T> old = model.getSelection();
 
-		return new SelectionEventBuilder() {
+		return new SelectionEventBuilder<>() {
 			private Set<Object> _updated = new HashSet<>();
 
 			@Override
@@ -57,13 +57,13 @@ public interface SelectionEventBuilder {
 			}
 
 			@Override
-			public SelectionEvent build() {
+			public SelectionEvent<T> build() {
 				if (_updated.isEmpty()) {
 					return null;
 				}
 
-				return new SelectionEvent() {
-					private Set<?> _current;
+				return new SelectionEvent<>() {
+					private Set<? extends T> _current;
 
 					@Override
 					public Set<?> getUpdatedObjects() {
@@ -71,17 +71,17 @@ public interface SelectionEventBuilder {
 					}
 
 					@Override
-					public SelectionModel<?> getSender() {
+					public SelectionModel<T> getSender() {
 						return model;
 					}
 
 					@Override
-					public Set<?> getOldSelection() {
+					public Set<? extends T> getOldSelection() {
 						return old;
 					}
 
 					@Override
-					public Set<?> getNewSelection() {
+					public Set<? extends T> getNewSelection() {
 						if (_current == null) {
 							_current = model.getSelection();
 						}
@@ -90,5 +90,13 @@ public interface SelectionEventBuilder {
 				};
 			}
 		};
+	}
+
+	/**
+	 * A {@link SelectionEventBuilder} that creates no events.
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> SelectionEventBuilder<T> none() {
+		return (SelectionEventBuilder<T>) NONE;
 	}
 }

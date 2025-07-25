@@ -120,14 +120,14 @@ public interface SelectionModel<T> extends NamedModel, Serializable {
 	 * 
 	 * @return <code>true</code> if the listener was not formerly added
 	 */
-	public boolean addSelectionListener(SelectionListener listener);
+	public boolean addSelectionListener(SelectionListener<T> listener);
 	
 	/**
 	 * Removes the given listener from this model.
 	 * 
 	 * @return <code>true</code> if the listener was formerly added
 	 */
-	public boolean removeSelectionListener(SelectionListener listener);
+	public boolean removeSelectionListener(SelectionListener<T> listener);
 
 	/** @see SelectionModelOwner */
 	public SelectionModelOwner getOwner();

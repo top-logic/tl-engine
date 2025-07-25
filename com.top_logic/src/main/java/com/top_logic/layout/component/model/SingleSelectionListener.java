@@ -13,7 +13,7 @@ import com.top_logic.layout.SingleSelectionModel;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public interface SingleSelectionListener {
+public interface SingleSelectionListener<T> {
 
 	/**
 	 * This method will be called if the selected object of the given
@@ -27,6 +27,6 @@ public interface SingleSelectionListener {
 	 * @param selectedObject
 	 *            the newly selected object. may be <code>null</code>.
 	 */
-	public void notifySelectionChanged(SingleSelectionModel model, Object formerlySelectedObject, Object selectedObject);
+	public void notifySelectionChanged(SingleSelectionModel<T> model, T formerlySelectedObject, T selectedObject);
 
 }

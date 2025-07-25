@@ -55,7 +55,7 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 	 */
 	private final Map<T, NodeSelectionState> _state = new HashMap<>();
 
-	private SelectionEventBuilder _eventBuilder;
+	private SelectionEventBuilder<T> _eventBuilder;
 
 
 	/**
@@ -395,13 +395,13 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 	private boolean installEventBuilder() {
 		boolean shouldFire = _eventBuilder == null;
 		if (shouldFire) {
-			_eventBuilder = hasListeners() ? SelectionEventBuilder.create(this) : SelectionEventBuilder.NONE;
+			_eventBuilder = hasListeners() ? SelectionEventBuilder.create(this) : SelectionEventBuilder.none();
 		}
 		return shouldFire;
 	}
 
 	private void fireEvent() {
-		SelectionEvent event = _eventBuilder.build();
+		SelectionEvent<T> event = _eventBuilder.build();
 		_eventBuilder = null;
 
 		if (event != null) {

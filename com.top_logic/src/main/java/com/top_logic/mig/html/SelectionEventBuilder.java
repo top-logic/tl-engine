@@ -62,9 +62,13 @@ public interface SelectionEventBuilder<T> {
 					return null;
 				}
 
-				return new SelectionEvent<>() {
-					private Set<? extends T> _current;
+				Set<? extends T> current = model.getSelection();
+				if (old.equals(current)) {
+					// Was a no-op bulk-update that had no effect at all (e.g. clear and re-select).
+					return null;
+				}
 
+				return new SelectionEvent<>() {
 					@Override
 					public Set<?> getUpdatedObjects() {
 						return _updated;
@@ -82,10 +86,7 @@ public interface SelectionEventBuilder<T> {
 
 					@Override
 					public Set<? extends T> getNewSelection() {
-						if (_current == null) {
-							_current = model.getSelection();
-						}
-						return _current;
+						return current;
 					}
 				};
 			}

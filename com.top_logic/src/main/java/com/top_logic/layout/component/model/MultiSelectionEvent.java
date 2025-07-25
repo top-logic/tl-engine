@@ -15,13 +15,13 @@ import com.top_logic.mig.html.SelectionModel;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class MultiSelectionEvent implements SelectionEvent {
+public class MultiSelectionEvent<T> implements SelectionEvent<T> {
 
-	private final SelectionModel _sender;
+	private final SelectionModel<T> _sender;
 
-	private final Set<?> _oldSelection;
+	private final Set<? extends T> _oldSelection;
 
-	private final Set<?> _newSelection;
+	private final Set<? extends T> _newSelection;
 
 	private Set<?> _updated;
 
@@ -35,24 +35,24 @@ public class MultiSelectionEvent implements SelectionEvent {
 	 * @param newSelection
 	 *        See {@link #getNewSelection()}.
 	 */
-	public MultiSelectionEvent(SelectionModel sender, Set<?> oldSelection, Set<?> newSelection) {
+	public MultiSelectionEvent(SelectionModel<T> sender, Set<? extends T> oldSelection, Set<? extends T> newSelection) {
 		_sender = sender;
 		_oldSelection = oldSelection;
 		_newSelection = newSelection;
 	}
 
 	@Override
-	public SelectionModel getSender() {
+	public SelectionModel<T> getSender() {
 		return _sender;
 	}
 
 	@Override
-	public Set<?> getOldSelection() {
+	public Set<? extends T> getOldSelection() {
 		return _oldSelection;
 	}
 
 	@Override
-	public Set<?> getNewSelection() {
+	public Set<? extends T> getNewSelection() {
 		return _newSelection;
 	}
 

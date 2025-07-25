@@ -16,7 +16,7 @@ import java.util.Set;
  * 
  * @author     <a href="mailto:STS@top-logic.com">STS</a>
  */
-public interface ReferencedSelectionModel extends SelectionModel {
+public interface ReferencedSelectionModel<T> extends SelectionModel<T> {
 	
 	/**
 	 * This method determines, if the given object belongs to an external selection set.
@@ -24,12 +24,12 @@ public interface ReferencedSelectionModel extends SelectionModel {
 	 * @param obj - the object, that needs to be checked
 	 * @return true, if the object is part of the referenced selection, false otherwise
 	 */
-	public boolean isReferencedSelection(Object obj);
+	public boolean isReferencedSelection(T obj);
 	
 	/**
 	 * This method propagates changes in the referenced selection
 	 * 
 	 * @param changedSelection - the list of changed elements
 	 */
-	public void propagateReferencedSelectionChange(Set changedSelection);
+	public void propagateReferencedSelectionChange(Set<? extends T> changedSelection);
 }

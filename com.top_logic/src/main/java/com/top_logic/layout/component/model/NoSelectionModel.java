@@ -79,13 +79,13 @@ public class NoSelectionModel implements SelectionModel<Object> {
 	}
 
 	@Override
-	public boolean addSelectionListener(SelectionListener listener) {
+	public boolean addSelectionListener(SelectionListener<Object> listener) {
 		// Immutable, no updates, no listener notification required.
 		return true;
 	}
 	
 	@Override
-	public boolean removeSelectionListener(SelectionListener listener) {
+	public boolean removeSelectionListener(SelectionListener<Object> listener) {
 		// Immutable, no updates, no listener notification required.
 		return true;
 	}

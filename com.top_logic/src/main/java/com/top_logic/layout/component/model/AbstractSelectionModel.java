@@ -19,7 +19,8 @@ import com.top_logic.mig.html.SelectionModelOwner;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public abstract class AbstractSelectionModel<T> extends AbstractObservable<SelectionListener, SelectionEvent>
+public abstract class AbstractSelectionModel<T>
+		extends AbstractObservable<SelectionListener<T>, SelectionEvent<T>>
 		implements SelectionModel<T> {
 
 	private SelectionModelOwner _owner;
@@ -65,11 +66,11 @@ public abstract class AbstractSelectionModel<T> extends AbstractObservable<Selec
 		}
 		Set<? extends T> currentSelection = getSelection();
 
-		notifyListeners(new MultiSelectionEvent(this, formerlySelectedObjects, currentSelection));
+		notifyListeners(new MultiSelectionEvent<>(this, formerlySelectedObjects, currentSelection));
 	}
 
 	@Override
-	protected void sendEvent(SelectionListener listener, SelectionEvent event) {
+	protected void sendEvent(SelectionListener<T> listener, SelectionEvent<T> event) {
 		{
 			// Quirks introduced in #3910 to fix #3936:
 
@@ -86,18 +87,18 @@ public abstract class AbstractSelectionModel<T> extends AbstractObservable<Selec
 	 * Keep original signature to not discard the annotate information to the quirks introduced in
 	 * #3910
 	 */
-	private boolean hasListener(@SuppressWarnings("unused") Class<SelectionListener> listenerClass,
-			SelectionListener listener) {
+	private boolean hasListener(@SuppressWarnings({ "unused", "rawtypes" }) Class<SelectionListener> listenerClass,
+			SelectionListener<T> listener) {
 		return hasListener(listener);
 	}
 
 	@Override
-	public boolean addSelectionListener(SelectionListener listener) {
+	public boolean addSelectionListener(SelectionListener<T> listener) {
 		return addListener(listener);
 	}
 	
 	@Override
-	public boolean removeSelectionListener(SelectionListener listener) {
+	public boolean removeSelectionListener(SelectionListener<T> listener) {
 		return removeListener(listener);
 	}
 

@@ -14,22 +14,22 @@ import com.top_logic.mig.html.SelectionModel;
  * 
  * @see SelectionListener
  */
-public interface SelectionEvent {
+public interface SelectionEvent<T> {
 
 	/**
 	 * The {@link SelectionModel} that sent the event.
 	 */
-	SelectionModel getSender();
+	SelectionModel<T> getSender();
 
 	/**
 	 * The objects that were selected before the select operation.
 	 */
-	Set<?> getOldSelection();
+	Set<? extends T> getOldSelection();
 
 	/**
 	 * The objects that are selected after the select operation.
 	 */
-	Set<?> getNewSelection();
+	Set<? extends T> getNewSelection();
 
 	/**
 	 * The objects have to be updated due to the selection change.

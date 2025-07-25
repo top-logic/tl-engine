@@ -14,6 +14,8 @@ import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.table.TableDataOwner;
+import com.top_logic.layout.table.tree.TreeTableData;
 import com.top_logic.layout.tree.TreeModelOwner;
 import com.top_logic.tool.boundsec.CommandHandler;
 
@@ -108,8 +110,15 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 		Filter<?> selectionFilter = _config.getFilter();
 		if (_config.isMultiple()) {
 			if (_config.withTreeSemantics()) {
-				return new DefaultTreeMultiSelectionModel<>(selectionFilter, owner,
-					((TreeModelOwner) owner));
+				TreeModelOwner treeModelOwner;
+				if (owner instanceof TreeModelOwner treeOwner) {
+					treeModelOwner = treeOwner;
+				} else {
+					// Try to extract from table data.
+					TableDataOwner tableOwner = (TableDataOwner) owner;
+					treeModelOwner = () -> ((TreeTableData) tableOwner.getTableData()).getTree();
+				}
+				return new DefaultTreeMultiSelectionModel<>(selectionFilter, owner, treeModelOwner);
 			}
 			return new DefaultMultiSelectionModel<>(selectionFilter, owner);
 		} else {

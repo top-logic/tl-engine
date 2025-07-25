@@ -9,7 +9,6 @@ import java.io.IOException;
 
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.mig.html.TreeSelectionModel;
-import com.top_logic.mig.html.TreeSelectionModel.DescendantState;
 import com.top_logic.mig.html.TreeSelectionModel.NodeSelectionState;
 
 /**
@@ -45,14 +44,15 @@ public class TreeSelectionPartControl extends SelectionPartControl {
 	public void updateSelection(boolean selected) {
 		NodeSelectionState state = selectionState();
 		if (state.descendants().isHomogeneous()) {
-			if (state.isSelected() && state.descendants() == DescendantState.NONE) {
-				// Select also all children.
-				selectionModel().setSelectedSubtree(getSelectionPart(), true);
+			if (state == NodeSelectionState.FULL) {
+				// Deselect all.
+				selectionModel().setSelectedSubtree(getSelectionPart(), false);
 			} else if (state == NodeSelectionState.NONE) {
 				// Only select node itself
 				selectionModel().setSelected(getSelectionPart(), true);
 			} else {
-				selectionModel().setSelectedSubtree(getSelectionPart(), false);
+				// Select all.
+				selectionModel().setSelectedSubtree(getSelectionPart(), true);
 			}
 		} else {
 			selectionModel().setSelected(getSelectionPart(), !state.isSelected());

@@ -20,6 +20,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutabilityRule;
@@ -40,6 +41,15 @@ public class SelectSubtree extends AbstractCommandHandler {
 		 */
 		boolean getSelect();
 
+		/**
+		 * The number of tree levels to process.
+		 * 
+		 * <p>
+		 * A value of <code>0</code> means "all levels".
+		 * </p>
+		 */
+		int getLevels();
+
 		@Override
 		@FormattedDefault(SimpleBoundCommandGroup.SYSTEM_NAME)
 		CommandGroupReference getGroup();
@@ -49,8 +59,14 @@ public class SelectSubtree extends AbstractCommandHandler {
 
 	private static final ExecutableState NO_EXEC_NONE = ExecutableState.createDisabledState(I18NConstants.NO_EXEC_NONE);
 
+	/**
+	 * Well-known ID for the sub-tree select command in the {@link CommandHandlerFactory}.
+	 */
 	public static final String SELECT_SUBTREE_ID = "treeTableSelectSubtree";
 
+	/**
+	 * Well-known ID for the sub-tree deselect command in the {@link CommandHandlerFactory}.
+	 */
 	public static final String DESELECT_SUBTREE_ID = "treeTableDeselectSubtree";
 
 	/**
@@ -65,13 +81,39 @@ public class SelectSubtree extends AbstractCommandHandler {
 			Map<String, Object> someArguments) {
 
 		if (component instanceof TableDataOwner table) {
-			SelectionModel selectionModel = table.getTableData().getSelectionModel();
-			if (selectionModel instanceof TreeSelectionModel treeSelection) {
-				treeSelection.setSelectedSubtree(model, select());
+			SelectionModel<Object> selectionModel = table.getTableData().getSelectionModel();
+			if (selectionModel instanceof TreeSelectionModel<Object> treeSelection) {
+				int levels = levels();
+				if (levels == 0) {
+					treeSelection.setSelectedSubtree(model, select());
+				} else {
+					selectLevels(treeSelection, model, levels);
+				}
 			}
 		}
 
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	private void selectLevels(TreeSelectionModel<Object> treeSelection, Object model, int levels) {
+		Object update = treeSelection.startBulkUpdate();
+		try {
+			selectLevel(treeSelection, model, levels);
+		} finally {
+			treeSelection.completeBulkUpdate(update);
+		}
+	}
+
+	private void selectLevel(TreeSelectionModel<Object> treeSelection, Object model, int levels) {
+		treeSelection.setSelected(model, select());
+
+		if (levels > 0) {
+			int childLevels = levels - 1;
+
+			for (Object child : treeSelection.getTreeModel().getChildren(model)) {
+				selectLevel(treeSelection, child, childLevels);
+			}
+		}
 	}
 
 	/**
@@ -80,7 +122,18 @@ public class SelectSubtree extends AbstractCommandHandler {
 	protected boolean select() {
 		// Note: Must not be cached, since the label depends on this property and that is accessed
 		// by the super-constructor.
-		return ((Config) getConfig()).getSelect();
+		return config().getSelect();
+	}
+
+	/**
+	 * The number of selection levels.
+	 */
+	protected int levels() {
+		return config().getLevels();
+	}
+
+	private Config config() {
+		return (Config) getConfig();
 	}
 
 	@Override
@@ -94,9 +147,9 @@ public class SelectSubtree extends AbstractCommandHandler {
 		}
 
 		if (component instanceof TableDataOwner table) {
-			SelectionModel selectionModel = table.getTableData().getSelectionModel();
-			if (selectionModel instanceof TreeSelectionModel treeSelection) {
-				if (treeSelection.getNodeSelectionState(model) == disabledState()) {
+			SelectionModel<Object> selectionModel = table.getTableData().getSelectionModel();
+			if (selectionModel instanceof TreeSelectionModel<Object> treeSelection) {
+				if (levels() == 0 && treeSelection.getNodeSelectionState(model) == disabledState()) {
 					return select() ? NO_EXEC_FULL : NO_EXEC_NONE;
 				}
 

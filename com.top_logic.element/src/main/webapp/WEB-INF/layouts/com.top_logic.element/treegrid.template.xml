@@ -179,7 +179,10 @@
 		<modifier class="com.top_logic.element.layout.meta.TemplateFormContextModificator"
 			readOnlyColumns="${readOnlyColumns}"
 		/>
-		<selectionModelFactory multiple="${multiSelection}"/>
+		<selectionModelFactory
+			multiple="${multiSelection}"
+			treeSemantics="true"
+		/>
 		<buttons>
 			${buttons}
 			<include name="templates/editComponentCommands.xml"/>

@@ -12,7 +12,7 @@ import com.top_logic.mig.html.SelectionModel;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public interface SelectionListener {
+public interface SelectionListener<T> {
 
 	/**
 	 * Notifies the receiver that the selected objects of the given {@link SelectionModel} have
@@ -23,6 +23,6 @@ public interface SelectionListener {
 	 * @param event
 	 *        The event describing the change.
 	 */
-	void notifySelectionChanged(SelectionModel model, SelectionEvent event);
+	void notifySelectionChanged(SelectionModel<T> model, SelectionEvent<T> event);
 
 }

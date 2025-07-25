@@ -221,16 +221,16 @@ public class DefaultSingleSelectionModel<T> extends AbstractRestrainedSelectionM
 	 * @see com.top_logic.layout.SingleSelectionModel#addSingleSelectionListener(com.top_logic.layout.component.model.SingleSelectionListener)
 	 */
 	@Override
-	public boolean addSingleSelectionListener(SingleSelectionListener listener) {
-		return addSelectionListener(new SelectionListenerAdaptar(listener));
+	public boolean addSingleSelectionListener(SingleSelectionListener<T> listener) {
+		return addSelectionListener(new SelectionListenerAdaptar<>(listener));
 	}
 
 	/**
 	 * @see com.top_logic.layout.SingleSelectionModel#removeSingleSelectionListener(com.top_logic.layout.component.model.SingleSelectionListener)
 	 */
 	@Override
-	public boolean removeSingleSelectionListener(SingleSelectionListener listener) {
-		return removeSelectionListener(new SelectionListenerAdaptar(listener));
+	public boolean removeSingleSelectionListener(SingleSelectionListener<T> listener) {
+		return removeSelectionListener(new SelectionListenerAdaptar<>(listener));
 	}
 	
 	/**
@@ -239,17 +239,17 @@ public class DefaultSingleSelectionModel<T> extends AbstractRestrainedSelectionM
 	 * 
 	 * @author <a href=mailto:daniel.busche@top-logic.com>Daniel Busche</a>
 	 */
-	private static final class SelectionListenerAdaptar implements SelectionListener {
+	private static final class SelectionListenerAdaptar<T> implements SelectionListener<T> {
 
-		private final SingleSelectionListener listener;
+		private final SingleSelectionListener<T> listener;
 
-		public SelectionListenerAdaptar(SingleSelectionListener listener) {
+		public SelectionListenerAdaptar(SingleSelectionListener<T> listener) {
 			this.listener = listener;
 		}
 
 		@Override
-		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
-			listener.notifySelectionChanged((DefaultSingleSelectionModel) model,
+		public void notifySelectionChanged(SelectionModel<T> model, SelectionEvent<T> event) {
+			listener.notifySelectionChanged((DefaultSingleSelectionModel<T>) model,
 				CollectionUtil.getFirst(event.getOldSelection()), CollectionUtil
 					.getFirst(event.getNewSelection()));
 		}
@@ -262,7 +262,7 @@ public class DefaultSingleSelectionModel<T> extends AbstractRestrainedSelectionM
 			if (!(obj instanceof SelectionListenerAdaptar)) {
 				return false;
 			}
-			return Utils.equals(listener, ((SelectionListenerAdaptar) obj).listener);
+			return Utils.equals(listener, ((SelectionListenerAdaptar<?>) obj).listener);
 		}
 		
 		@Override

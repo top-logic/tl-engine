@@ -51,7 +51,7 @@ public interface SingleSelectionModel<T> {
 	 *         listener will be informed about changes of
 	 *         {@link #getSingleSelection()}
 	 */
-	boolean addSingleSelectionListener(SingleSelectionListener listener);
+	boolean addSingleSelectionListener(SingleSelectionListener<T> listener);
 
 	/**
 	 * Removes the given listener
@@ -60,6 +60,6 @@ public interface SingleSelectionModel<T> {
 	 *        the listener to detach.
 	 * @return whether detaching was successful.
 	 */
-	boolean removeSingleSelectionListener(SingleSelectionListener listener);
+	boolean removeSingleSelectionListener(SingleSelectionListener<T> listener);
 
 }

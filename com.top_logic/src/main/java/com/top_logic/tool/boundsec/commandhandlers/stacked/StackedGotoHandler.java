@@ -94,14 +94,19 @@ public class StackedGotoHandler extends GotoHandler {
 
 		// Source and Target of the goto must be configured for a Stacked GOTO
 		if (!this._excludedLayouts.contains(contextComponent.getName())) {
-			Object startModel = getGotoModel(contextComponent);
-			LayoutComponent targetComponent = super.gotoLayout(contextComponent, targetObject, targetComponentName);
-			if (targetComponent != null && !this._excludedLayouts.contains(targetComponent.getName())) {
-				GotoArgument backArgs = newGotoArgument(contextComponent, startModel);
-				GotoArgument forwardArgs = newGotoArgument(targetComponent, targetObject);
-				registerGotoInStack(contextComponent.getMainLayout(), backArgs, forwardArgs);
+			LayoutComponent targetComponent;
+			if (contextComponent.openedAsDialog()) {
+				Object startModel = getGotoModel(contextComponent);
+				targetComponent = super.gotoLayout(contextComponent, targetObject, targetComponentName);
+				if (targetComponent != null && !this._excludedLayouts.contains(targetComponent.getName())) {
+					GotoArgument backArgs = newGotoArgument(contextComponent, startModel);
+					GotoArgument forwardArgs = newGotoArgument(targetComponent, targetObject);
+					registerGotoInStack(contextComponent.getMainLayout(), backArgs, forwardArgs);
+				} else {
+					clearStack(contextComponent);
+				}
 			} else {
-				clearStack(contextComponent);
+				targetComponent = super.gotoLayout(contextComponent, targetObject, targetComponentName);
 			}
 			return targetComponent;
 		} else {

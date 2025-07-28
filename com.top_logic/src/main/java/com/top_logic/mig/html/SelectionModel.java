@@ -99,6 +99,9 @@ public interface SelectionModel<T> extends NamedModel, Serializable {
 	 *        The new selection. Must not be <code>null</code>.
 	 */
 	default void setSelection(Set<? extends T> newSelection) {
+		if (getSelection().equals(newSelection)) {
+			return;
+		}
 		Object update = startBulkUpdate();
 		try {
 			clear();

@@ -8,6 +8,8 @@ package com.top_logic.layout.form.control;
 import java.io.IOException;
 
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.scripting.action.SelectAction.SelectionChangeKind;
+import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.mig.html.TreeSelectionModel;
 import com.top_logic.mig.html.TreeSelectionModel.NodeSelectionState;
 
@@ -42,20 +44,30 @@ public class TreeSelectionPartControl extends SelectionPartControl {
 
 	@Override
 	public void updateSelection(boolean selected) {
+		boolean doSelect;
+		SelectionChangeKind kind;
 		NodeSelectionState state = selectionState();
 		if (state.descendants().isHomogeneous()) {
 			if (state == NodeSelectionState.FULL) {
 				// Deselect all.
-				selectionModel().setSelectedSubtree(getSelectionPart(), false);
+				selectionModel().setSelectedSubtree(getSelectionPart(), doSelect = false);
+				kind = SelectionChangeKind.SUBTREE;
 			} else if (state == NodeSelectionState.NONE) {
 				// Only select node itself
-				selectionModel().setSelected(getSelectionPart(), true);
+				selectionModel().setSelected(getSelectionPart(), doSelect = true);
+				kind = SelectionChangeKind.INCREMENTAL;
 			} else {
 				// Select all.
-				selectionModel().setSelectedSubtree(getSelectionPart(), true);
+				selectionModel().setSelectedSubtree(getSelectionPart(), doSelect = true);
+				kind = SelectionChangeKind.SUBTREE;
 			}
 		} else {
-			selectionModel().setSelected(getSelectionPart(), !state.isSelected());
+			selectionModel().setSelected(getSelectionPart(), doSelect = !state.isSelected());
+			kind = SelectionChangeKind.INCREMENTAL;
+		}
+
+		if (ScriptingRecorder.isRecordingActive()) {
+			ScriptingRecorder.recordSelection(getSelectionModel(), getSelectionPart(), doSelect, kind);
 		}
 	}
 

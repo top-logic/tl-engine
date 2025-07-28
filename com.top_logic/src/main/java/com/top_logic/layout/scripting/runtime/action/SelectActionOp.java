@@ -32,6 +32,7 @@ import com.top_logic.layout.table.TableData;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.mig.html.SubtreeSelectionModel;
+import com.top_logic.mig.html.TreeSelectionModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
@@ -124,6 +125,15 @@ public class SelectActionOp extends AbstractApplicationActionOp<SelectAction> {
 				checkIncrementalSelection(selectionModel);
 				return;
 			}
+			case SUBTREE: {
+				if (selectionModel instanceof TreeSelectionModel treeSelect) {
+					treeSelect.setSelectedSubtree(_selection, _doSelect);
+					checkIncrementalSelection(selectionModel);
+					return;
+				} else {
+					throw fail("Not a tree selection model, cannot select a subtree.");
+				}
+			}
 			case ABSOLUTE: {
 				if (_doSelect) {
 					selectionModel.setSelection(getSelectionSet());
@@ -208,6 +218,22 @@ public class SelectActionOp extends AbstractApplicationActionOp<SelectAction> {
 	private void selectTableData(TableData tableData) {
 		SelectionModel selectionModel = tableData.getSelectionModel();
 		switch (getConfig().getChangeKind()) {
+			case SUBTREE: {
+				if (selectionModel instanceof TreeSelectionModel treeSelect) {
+					Set<?> selectionCollection = asSet(_selection);
+					if (_doSelect) {
+						assertAllElementsExist(tableData, selectionCollection);
+					}
+					for (Object element : selectionCollection) {
+						treeSelect.setSelectedSubtree(element, _doSelect);
+						assertEquals("Selection change failed!", _doSelect,
+							selectionModel.getSelection().contains(element));
+					}
+					return;
+				} else {
+					throw fail("Not a tree selection model, cannot select a subtree.");
+				}
+			}
 			case INCREMENTAL: {
 				Set<?> selectionCollection = asSet(_selection);
 				if (_doSelect) {

@@ -362,13 +362,13 @@ abstract class DefaultDBAccess extends AbstractDBAccess {
 				batchSize++;
 				
 				if (batchSize == maxBatchSize) {
-					executeInsertBatch(objects, batch, n);
+					executeInsertBatch(objects, batch, n, batchSize);
 					batchSize = 0;
 				}
 			}
 			
 			if (batchSize > 0) {
-				executeInsertBatch(objects, batch, objects.size() - 1);
+				executeInsertBatch(objects, batch, objects.size() - 1, batchSize);
 			}
 		} catch (SQLException ex) {
 			if (Logger.isDebugEnabled(DefaultDBAccess.class)) {
@@ -395,12 +395,22 @@ abstract class DefaultDBAccess extends AbstractDBAccess {
 	 *        The list of all objects that are inserted in all batches.
 	 * @param batch
 	 *        The batch to execute.
-	 * @param endOffset
+	 * @param lastIndex
 	 *        The offset of the object in the given list of all objects that is added as last insert
 	 *        to the batch.
+	 * @param batchSize
+	 *        The number of inserts to commit.
 	 */
-	private void executeInsertBatch(List<?> objects, Batch batch, int endOffset) throws SQLException {
-		int[] updates = batch.executeBatch();
+	private void executeInsertBatch(List<?> objects, Batch batch, int lastIndex, int batchSize) throws SQLException {
+		int[] updates;
+		try {
+			updates = batch.executeBatch();
+		} catch (SQLException ex) {
+			Logger.error(
+				"Problem while inserting objects: " + objects.subList(lastIndex + 1 - batchSize, lastIndex + 1),
+				ex, DefaultDBAccess.class);
+			throw ex;
+		}
 		for (int n = 0, cnt = updates.length; n < cnt; n++) {
 			int updateCnt = updates[n];
 			
@@ -411,7 +421,8 @@ abstract class DefaultDBAccess extends AbstractDBAccess {
 			}
 			case PreparedStatement.EXECUTE_FAILED:
 			default: { 
-				throw new SQLException("Insert failed: cnt=" + updateCnt + ", obj=" + objects.get(endOffset - updates.length + n + 1));
+				throw new SQLException(
+					"Insert failed: cnt=" + updateCnt + ", obj=" + objects.get(lastIndex - updates.length + n + 1));
 			}
 			}
 		}

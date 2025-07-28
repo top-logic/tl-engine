@@ -39,7 +39,7 @@
 		<slf4j.version>2.0.7</slf4j.version>
 		<log4j.version>2.20.0</log4j.version>
 		<fasterxml.version>2.16.1</fasterxml.version>
-		<msgbuf.version>1.1.5</msgbuf.version>
+		<msgbuf.version>1.1.8</msgbuf.version>
 		<bouncycastle.version>1.78.1</bouncycastle.version>
 		<tl.license.version>7.8.2</tl.license.version>
 		
@@ -1330,6 +1330,7 @@
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
+					<parameters>true</parameters>
 					<useIncrementalCompilation>false</useIncrementalCompilation>
 					<forceJavacCompilerUse>true</forceJavacCompilerUse>
 				</configuration>

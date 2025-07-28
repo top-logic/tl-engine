@@ -59,18 +59,17 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 
 
 	/**
-	 * Create a new DefaultMultiSelectionModel, which allows to select all objects
-	 *
+	 * Creates a {@link DefaultMultiSelectionModel}, which allows to select all objects
 	 */
 	public DefaultTreeMultiSelectionModel(SelectionModelOwner owner, TreeModelOwner treeModelOwner) {
 		this(null, owner, treeModelOwner);
 	}
 	
 	/**
-	 * Create a new DefaultMultiSelectionModel, with a subset of non selectable objects
+	 * Creates a {@link DefaultMultiSelectionModel}, with a selection filter.
 	 * 
 	 * @param selectionFilter
-	 *        - the {@link Filter filter}, which defines, if an object is selectable, or not
+	 *        The {@link Filter filter}, which defines, whether an object is selectable, or not.
 	 */
 	public DefaultTreeMultiSelectionModel(Filter<? super T> selectionFilter, SelectionModelOwner owner,
 			TreeModelOwner treeModelOwner) {

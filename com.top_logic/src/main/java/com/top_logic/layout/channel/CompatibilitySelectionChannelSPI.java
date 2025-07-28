@@ -92,10 +92,7 @@ public class CompatibilitySelectionChannelSPI extends SelectionChannelSPI {
 
 		@Override
 		protected Object tranformInput(Object newValue) {
-			if (newValue instanceof Collection<?>) {
-				return newValue;
-			}
-			return CollectionUtil.singletonOrEmptySet(newValue);
+			return CollectionUtil.asSet(newValue);
 		}
 
 	}

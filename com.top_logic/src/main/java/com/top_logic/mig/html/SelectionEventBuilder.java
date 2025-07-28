@@ -58,14 +58,17 @@ public interface SelectionEventBuilder<T> {
 
 			@Override
 			public SelectionEvent<T> build() {
-				if (_updated.isEmpty()) {
-					return null;
-				}
-
 				Set<? extends T> current = model.getSelection();
 				if (old.equals(current)) {
 					// Was a no-op bulk-update that had no effect at all (e.g. clear and re-select).
-					return null;
+					if (_updated.isEmpty()) {
+						return null;
+					} else {
+						// Some strange thing has happened, the selection did not change, but there
+						// was an update of a parent node. This might happen, if the underlying tree
+						// model has changed in between. This event must be delivered to update
+						// dependencies, even if the "old" state is not correct.
+					}
 				}
 
 				return new SelectionEvent<>() {

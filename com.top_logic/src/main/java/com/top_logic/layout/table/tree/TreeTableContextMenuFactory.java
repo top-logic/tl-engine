@@ -5,11 +5,23 @@
  */
 package com.top_logic.layout.table.tree;
 
+import static com.top_logic.layout.basic.contextmenu.component.factory.ContextMenuUtil.*;
+
+import java.util.List;
+import java.util.Map;
+
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.layout.basic.CommandModel;
+import com.top_logic.layout.basic.CommandModelFactory;
 import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
 import com.top_logic.layout.basic.contextmenu.component.factory.SelectableContextMenuFactory;
+import com.top_logic.layout.table.TableDataOwner;
 import com.top_logic.layout.tree.model.TLTreeNode;
+import com.top_logic.mig.html.SelectionModel;
+import com.top_logic.mig.html.TreeSelectionModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.boundsec.CommandHandler;
+import com.top_logic.tool.boundsec.CommandHandlerFactory;
 
 /**
  * {@link SelectableContextMenuFactory} mapping node objects to their respective business objects.
@@ -44,6 +56,34 @@ public class TreeTableContextMenuFactory<C extends TreeTableContextMenuFactory.C
 		 */
 		public Provider(LayoutComponent component) {
 			super(component);
+		}
+
+		@Override
+		protected List<CommandModel> createButtons(Object directTarget, Object model, Map<String, Object> arguments) {
+			List<CommandModel> buttons = super.createButtons(directTarget, model, arguments);
+
+			Map<String, Object> treeArgs = createArguments(directTarget);
+
+			LayoutComponent component = getComponent();
+			if (component instanceof TableDataOwner table) {
+				SelectionModel<?> selectionModel = table.getTableData().getSelectionModel();
+				if (selectionModel instanceof TreeSelectionModel treeSelect) {
+					addTreeButton(buttons, component, treeArgs, SelectSubtree.SELECT_SUBTREE_ID);
+					addTreeButton(buttons, component, treeArgs, SelectSubtree.DESELECT_SUBTREE_ID);
+				}
+			}
+
+			return buttons;
+		}
+
+		private void addTreeButton(List<CommandModel> buttons, LayoutComponent component,
+				Map<String, Object> treeArgs, String id) {
+			CommandHandler handler =
+				CommandHandlerFactory.getInstance().getHandler(id);
+			if (handler != null) {
+				CommandModel commandModel = CommandModelFactory.commandModel(handler, component, treeArgs);
+				buttons.add(commandModel);
+			}
 		}
 
 		@Override

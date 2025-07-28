@@ -30,6 +30,7 @@ import com.top_logic.layout.IdentityAccessor;
 import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.AttachedPropertyListener;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
@@ -320,8 +321,8 @@ public class QuickSearchCommand extends AbstractSearchCommand {
 		return new SelectionListener() {
 
 			@Override
-			public void notifySelectionChanged(SelectionModel model, Set<?> oldSelection, Set<?> newSelection) {
-
+			public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
+				Set<?> newSelection = event.getNewSelection();
 				if (!CollectionUtils.isEmpty(newSelection)) {
 					Object theObject = CollectionUtil.getFirst(newSelection);
 

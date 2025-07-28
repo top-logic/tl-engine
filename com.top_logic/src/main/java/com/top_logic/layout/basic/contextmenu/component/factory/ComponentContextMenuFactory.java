@@ -84,8 +84,8 @@ public class ComponentContextMenuFactory<C extends ComponentContextMenuFactory.C
 		}
 
 		@Override
-		protected List<CommandModel> createButtons(Object model, Map<String, Object> arguments) {
-			List<CommandModel> buttons = super.createButtons(model, arguments);
+		protected List<CommandModel> createButtons(Object directTarget, Object model, Map<String, Object> arguments) {
+			List<CommandModel> buttons = super.createButtons(directTarget, model, arguments);
 			List<CommandModel> componentButtons = createComponentCommandButtons(model, arguments);
 			return CollectionUtil.concatNew(buttons, componentButtons);
 		}
@@ -94,9 +94,9 @@ public class ComponentContextMenuFactory<C extends ComponentContextMenuFactory.C
 		 * Context menu entries from the component's commands, see {@link #componentCommands()}.
 		 * 
 		 * @param model
-		 *        See {@link #createButtons(Object, Map)}.
+		 *        See {@link #createButtons(Object, Object, Map)}.
 		 * @param arguments
-		 *        See {@link #createButtons(Object, Map)}.
+		 *        See {@link #createButtons(Object, Object, Map)}.
 		 */
 		protected final List<CommandModel> createComponentCommandButtons(Object model,
 				Map<String, Object> arguments) {

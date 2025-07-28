@@ -1,0 +1,106 @@
+/*
+ * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
+ * 
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.mig.html;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import com.top_logic.layout.component.model.SelectionEvent;
+
+/**
+ * Builder for {@link SelectionEvent}s.
+ */
+public interface SelectionEventBuilder<T> {
+
+	/**
+	 * A {@link SelectionEventBuilder} that ignores updates and builds no event.
+	 */
+	public static final SelectionEventBuilder<Object> NONE = new SelectionEventBuilder<>() {
+		@Override
+		public SelectionEvent<Object> build() {
+			return null;
+		}
+
+		@Override
+		public void recordUpdate(Object obj) {
+			// Ignore.
+		}
+	};
+
+	/**
+	 * Creates the {@link SelectionEvent} from recorded updates.
+	 */
+	public SelectionEvent<T> build();
+
+	/**
+	 * Marks the given object as touched.
+	 * 
+	 * @see SelectionEvent#getUpdatedObjects()
+	 */
+	public void recordUpdate(Object obj);
+
+	/**
+	 * Creates a {@link SelectionEventBuilder}.
+	 */
+	public static <T> SelectionEventBuilder<T> create(SelectionModel<T> model) {
+		Set<? extends T> old = model.getSelection();
+
+		return new SelectionEventBuilder<>() {
+			private Set<Object> _updated = new HashSet<>();
+
+			@Override
+			public void recordUpdate(Object obj) {
+				_updated.add(obj);
+			}
+
+			@Override
+			public SelectionEvent<T> build() {
+				Set<? extends T> current = model.getSelection();
+				if (old.equals(current)) {
+					// Was a no-op bulk-update that had no effect at all (e.g. clear and re-select).
+					if (_updated.isEmpty()) {
+						return null;
+					} else {
+						// Some strange thing has happened, the selection did not change, but there
+						// was an update of a parent node. This might happen, if the underlying tree
+						// model has changed in between. This event must be delivered to update
+						// dependencies, even if the "old" state is not correct.
+					}
+				}
+
+				return new SelectionEvent<>() {
+					@Override
+					public Set<?> getUpdatedObjects() {
+						return _updated;
+					}
+
+					@Override
+					public SelectionModel<T> getSender() {
+						return model;
+					}
+
+					@Override
+					public Set<? extends T> getOldSelection() {
+						return old;
+					}
+
+					@Override
+					public Set<? extends T> getNewSelection() {
+						return current;
+					}
+				};
+			}
+		};
+	}
+
+	/**
+	 * A {@link SelectionEventBuilder} that creates no events.
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> SelectionEventBuilder<T> none() {
+		return (SelectionEventBuilder<T>) NONE;
+	}
+}

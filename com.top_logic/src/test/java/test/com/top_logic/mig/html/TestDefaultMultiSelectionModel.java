@@ -12,6 +12,7 @@ import java.util.Set;
 import junit.framework.TestCase;
 
 import com.top_logic.basic.col.Filter;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.mig.html.DefaultMultiSelectionModel;
 import com.top_logic.mig.html.SelectionModel;
@@ -34,11 +35,11 @@ public class TestDefaultMultiSelectionModel extends TestCase {
 		Set<?> _selectedObjects;
 
 		@Override
-		public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
-			assertNotNull(formerlySelectedObjects);
-			assertNotNull(selectedObjects);
-			_formerlySelectedObjects = formerlySelectedObjects;
-			_selectedObjects = selectedObjects;
+		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
+			assertNotNull(event.getOldSelection());
+			assertNotNull(event.getNewSelection());
+			_formerlySelectedObjects = event.getOldSelection();
+			_selectedObjects = event.getNewSelection();
 		}
 
 		void reset() {
@@ -47,14 +48,14 @@ public class TestDefaultMultiSelectionModel extends TestCase {
 		}
 	}
 
-	private DefaultMultiSelectionModel _model;
+	private DefaultMultiSelectionModel<Integer> _model;
 
 	private Listener _l;
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		_model = new DefaultMultiSelectionModel(SelectionModelOwner.NO_OWNER);
+		_model = new DefaultMultiSelectionModel<>(SelectionModelOwner.NO_OWNER);
 		_l = new Listener();
 		_model.addSelectionListener(_l);
 	}
@@ -132,17 +133,16 @@ public class TestDefaultMultiSelectionModel extends TestCase {
 	}
 
 	public void testCannotChangeFixedSelection() {
-		final Object fixedSelection = new Object();
+		final Integer fixedSelection = 42;
 		_model.setSelected(fixedSelection, true);
 		_model.setDeselectionFilter(new Filter<>() {
-
 			@Override
-			public boolean accept(Object anObject) {
+			public boolean accept(Integer anObject) {
 				return anObject != fixedSelection;
 			}
 		});
 
-		Object newSelection = new Object();
+		Integer newSelection = 13;
 
 		_model.setSelection(set(newSelection));
 		assertEquals(set(fixedSelection, newSelection), _model.getSelection());
@@ -152,12 +152,11 @@ public class TestDefaultMultiSelectionModel extends TestCase {
 	}
 
 	public void testCannotClearFixedSelection() {
-		final Object fixedSelection = new Object();
+		final Integer fixedSelection = 42;
 		_model.setSelected(fixedSelection, true);
 		_model.setDeselectionFilter(new Filter<>() {
-
 			@Override
-			public boolean accept(Object anObject) {
+			public boolean accept(Integer anObject) {
 				return anObject != fixedSelection;
 			}
 		});

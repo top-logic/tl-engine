@@ -14,14 +14,14 @@ import com.top_logic.layout.tree.model.TLTreeModel;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class DefaultTreeSelectionModel<N> extends TreeSelectionModel<N> {
+public class DefaultSubtreeSelectionModel<N> extends SubtreeSelectionModel<N> {
 
 	private TLTreeModel<N> _model;
 
 	/**
-	 * Creates a {@link DefaultTreeSelectionModel}.
+	 * Creates a {@link DefaultSubtreeSelectionModel}.
 	 */
-	public DefaultTreeSelectionModel(SelectionModelOwner owner, Class<N> nodeType, TLTreeModel<N> model) {
+	public DefaultSubtreeSelectionModel(SelectionModelOwner owner, Class<N> nodeType, TLTreeModel<N> model) {
 		super(owner, nodeType);
 		_model = model;
 	}

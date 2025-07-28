@@ -33,6 +33,7 @@ import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ResourceRenderer;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.component.model.AbstractSelectionModel;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.FormMemberVisitor;
 import com.top_logic.layout.form.I18NConstants;
@@ -701,9 +702,9 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 		}
 
 		@Override
-		public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
+		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			boolean changed =
-				!CollectionUtil.containsSame(_referenceSelection, selectedObjects);
+				!CollectionUtil.containsSame(_referenceSelection, event.getNewSelection());
 			setExecutability(getApplyCommand(), changed);
 		}
 	}

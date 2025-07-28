@@ -8,13 +8,12 @@ package com.top_logic.mig.html;
 import java.util.Set;
 
 /**
- * 
  * {@link AbstractRestrainedSelectionModel} for multi selection having a lead selection, i.e. the
  * most last selected element.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public abstract class AbstractMultiSelectionModel extends AbstractRestrainedSelectionModel {
+public abstract class AbstractMultiSelectionModel<T> extends AbstractRestrainedSelectionModel<T> {
 
 	private static final Object NO_LEAD = new Object();
 
@@ -31,7 +30,7 @@ public abstract class AbstractMultiSelectionModel extends AbstractRestrainedSele
 	 * Same as {@link #setSelected(Object, boolean)}, but without specifying a lead object.
 	 */
 	@Override
-	public final void setSelection(Set<?> newSelection) {
+	public final void setSelection(Set<? extends T> newSelection) {
 		setSelection(newSelection, NO_LEAD);
 	}
 
@@ -39,7 +38,7 @@ public abstract class AbstractMultiSelectionModel extends AbstractRestrainedSele
 	 * Sets the new overall selection, whereby lead object specifies the selection item, that shall
 	 * mark the most important part (e.g. scrolling to according table row).
 	 */
-	public abstract void setSelection(Set<?> newSelection, Object leadObject);
+	public abstract void setSelection(Set<? extends T> newSelection, Object leadObject);
 
 	/**
 	 * Object, that has been (de-)selected at last time of modification of this selection model.

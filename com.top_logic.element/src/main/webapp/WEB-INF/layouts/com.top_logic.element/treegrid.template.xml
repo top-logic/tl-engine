@@ -181,6 +181,7 @@
 		<selectionModelFactory class="com.top_logic.element.layout.grid.GridSelectionModelFactory"
 			filter="${selectionFilter}"
 			multiple="${multiSelection}"
+			treeSemantics="true"
 		/>
 		<buttons>
 			${buttons}

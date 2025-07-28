@@ -131,6 +131,7 @@
 		<selectionModelFactory class="com.top_logic.mig.html.TreeSelectionModelFactory"
 			filter="${selectionFilter}"
 			multiple="${multiSelection}"
+			treeSemantics="true"
 		/>
 		<treeBuilder class="com.top_logic.layout.table.tree.TreeBuilderAdaptor"
 			treeModelBuilder="${modelBuilder}"

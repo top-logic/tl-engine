@@ -6,6 +6,9 @@
 >
 	<arguments
 		defaultColumns="name"
+		defaultSelection="false"
+		expandSelected="false"
+		multiSelection="true"
 		partnerGroup="TreeGridPartner"
 		type="DemoTypes:DemoTypes.All"
 	>

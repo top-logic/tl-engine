@@ -19,16 +19,24 @@ import com.top_logic.mig.html.SelectionModelOwner;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public abstract class AbstractSelectionModel extends AbstractObservable<SelectionListener, MultiSelectionEvent> implements SelectionModel {
+public abstract class AbstractSelectionModel<T>
+		extends AbstractObservable<SelectionListener<T>, SelectionEvent<T>>
+		implements SelectionModel<T> {
 
 	private SelectionModelOwner _owner;
 
+	/**
+	 * Creates a {@link AbstractSelectionModel}.
+	 *
+	 * @param owner
+	 *        See {@link #getOwner()}.
+	 */
 	public AbstractSelectionModel(SelectionModelOwner owner) {
 		_owner = owner;
 	}
 
 	/**
-	 * Initialises {@link #getOwner()}
+	 * Initializes {@link #getOwner()}
 	 * 
 	 * @param owner
 	 *        Value of {@link #getOwner()}.
@@ -52,32 +60,26 @@ public abstract class AbstractSelectionModel extends AbstractObservable<Selectio
 	 * @param formerlySelectedObjects
 	 *            the set of objects which was selected before.
 	 */
-	protected final void fireSelectionChanged(Set formerlySelectedObjects) {
+	protected final void fireSelectionChanged(Set<? extends T> formerlySelectedObjects) {
 		if (!hasListeners()) {
 			return;
 		}
-		Set currentSelection = getSelection();
+		Set<? extends T> currentSelection = getSelection();
 
-		notifyListeners(new MultiSelectionEvent(this, formerlySelectedObjects, currentSelection));
+		notifyListeners(new MultiSelectionEvent<>(this, formerlySelectedObjects, currentSelection));
 	}
 
 	@Override
-	protected void sendEvent(SelectionListener listener, MultiSelectionEvent event) {
+	protected void sendEvent(SelectionListener<T> listener, SelectionEvent<T> event) {
 		{
-			// Decompose event to keep original code with annotate information referencing #3910.
-			SelectionListener currentListener = listener;
-			Set formerlySelectedObjects = event.getFormerlySelectedObjects();
-			Set currentSelection = event.getNewlySelectedObjects();
-
 			// Quirks introduced in #3910 to fix #3936:
 
 			// must check whether the current listener is still attached, as a
 			// previous listener can force it to remove as listener. In that
 			// case no notification must be happen.
-			if (hasListener(SelectionListener.class, currentListener)) {
-				currentListener.notifySelectionChanged(this, formerlySelectedObjects, currentSelection);
+			if (hasListener(SelectionListener.class, listener)) {
+				listener.notifySelectionChanged(this, event);
 			}
-
 		}
 	}
 
@@ -85,18 +87,18 @@ public abstract class AbstractSelectionModel extends AbstractObservable<Selectio
 	 * Keep original signature to not discard the annotate information to the quirks introduced in
 	 * #3910
 	 */
-	private boolean hasListener(@SuppressWarnings("unused") Class<SelectionListener> listenerClass,
-			SelectionListener listener) {
+	private boolean hasListener(@SuppressWarnings({ "unused", "rawtypes" }) Class<SelectionListener> listenerClass,
+			SelectionListener<T> listener) {
 		return hasListener(listener);
 	}
 
 	@Override
-	public boolean addSelectionListener(SelectionListener listener) {
+	public boolean addSelectionListener(SelectionListener<T> listener) {
 		return addListener(listener);
 	}
 	
 	@Override
-	public boolean removeSelectionListener(SelectionListener listener) {
+	public boolean removeSelectionListener(SelectionListener<T> listener) {
 		return removeListener(listener);
 	}
 

@@ -1050,6 +1050,12 @@
 								image="theme:ICONS_COLLAPSE"
 								disabledImage="theme:ICONS_COLLAPSE_DISABLED"
 							/>
+							<clique name="select"
+								image="theme:ICONS_SELECT_ALL"
+							/>
+							<clique name="deselect"
+								image="theme:ICONS_DESELECT_ALL"
+							/>
 						</cliques>
 					</group>
 					<clique name="componentButtons" display="menu"/>
@@ -1138,6 +1144,14 @@
 						disabledImage="theme:ICONS_COLLAPSE_ALL_DISABLED"
 						expand="false"
 						image="theme:ICONS_COLLAPSE_ALL"
+					/>
+					<handler id="treeTableSelectSubtree" class="com.top_logic.layout.table.tree.SelectSubtree"
+						clique="select"
+						select="true"
+					/>
+					<handler id="treeTableDeselectSubtree" class="com.top_logic.layout.table.tree.SelectSubtree"
+						clique="deselect"
+						select="false"
 					/>
 		            <handler class="com.top_logic.layout.progress.AJAXProgressComponent$WriteFinishedProgressCommand" />
 		            <handler class="com.top_logic.layout.table.tree.UpdateTreeTableCommandHandler"

@@ -297,6 +297,10 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 
 			updateParent(parent, newParentState, select);
 		}
+
+		if (newParentState == NodeSelectionState.NONE) {
+			_state.remove(parent);
+		}
 	}
 
 	private void clearChildState(T parent) {

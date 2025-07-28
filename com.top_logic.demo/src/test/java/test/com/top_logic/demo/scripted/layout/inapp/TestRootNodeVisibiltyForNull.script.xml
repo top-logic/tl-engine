@@ -298,41 +298,6 @@
 							/>
 						</action>
 						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
-							comparision="set-equals"
-							inverted="false"
-							user-id="root"
-						>
-							<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TableSelection">
-								<table config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										name="com.top_logic.demo/technical/components/tabellenUndBaeume/baumgrid/kinderGrid.layout.xml#Grid"
-										tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid"
-									/>
-									<path>
-										<named-member name="fieldTable"/>
-									</path>
-								</table>
-							</actual-value>
-							<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.ValueInContextNamingScheme$ValueInContextName">
-								<context-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
-									<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-										name="com.top_logic.demo/technical/components/tabellenUndBaeume/baumgrid/kinderGrid.layout.xml#Grid"
-										tab-path="Technisches Demo > Komponenten > Tabellen und Bäume > Baumgrid"
-									/>
-									<path>
-										<named-member name="fieldTable"/>
-									</path>
-								</context-name>
-								<local-name config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListValue">
-									<list>
-										<entry config:interface="com.top_logic.layout.scripting.recorder.ref.TreeLabelPathNaming$TreeLabelPathName"
-											path=""
-										/>
-									</list>
-								</local-name>
-							</expected-value>
-						</action>
-						<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 							comparision="equals"
 							inverted="false"
 							user-id="root"

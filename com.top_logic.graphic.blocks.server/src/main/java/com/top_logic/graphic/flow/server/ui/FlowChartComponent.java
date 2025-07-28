@@ -36,6 +36,7 @@ import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ComponentChannel.ChannelListener;
 import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.structure.ControlRepresentable;
 import com.top_logic.layout.table.component.BuilderComponent;
@@ -68,14 +69,15 @@ public class FlowChartComponent extends BuilderComponent
 
 	private final SelectionListener _updateUISelection = new SelectionListener() {
 		@Override
-		public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects,
-				Set<?> selectedObjects) {
+		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			// Forward selection to UI.
-			HashSet<Object> newlySelected = new HashSet<>(selectedObjects);
+			Set<?> newSelection = event.getNewSelection();
+
+			HashSet<Object> newlySelected = new HashSet<>(newSelection);
 			List<SelectableBox> uiSelection = _control.getModel().getSelection();
 			for (int n = uiSelection.size() - 1; n >= 0; n--) {
 				SelectableBox uiSelected = uiSelection.get(n);
-				if (!selectedObjects.contains(uiSelected)) {
+				if (!newSelection.contains(uiSelected)) {
 					uiSelection.remove(n);
 				}
 				newlySelected.remove(uiSelected);
@@ -88,10 +90,9 @@ public class FlowChartComponent extends BuilderComponent
 
 	private final SelectionListener _updateChannelSelection = new SelectionListener() {
 		@Override
-		public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects,
-				Set<?> selectedObjects) {
+		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			// Forward selection to component channel.
-			List<Object> selectedUserObjects = selectedObjects.stream()
+			List<Object> selectedUserObjects = event.getNewSelection().stream()
 				.map(s -> s instanceof Widget w ? w.getUserObject() : null).filter(Objects::nonNull).toList();
 			setSelected(selectedUserObjects);
 		}

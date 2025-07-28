@@ -150,7 +150,7 @@ public class DiagramControl extends AbstractControlBase
 			return null;
 		}
 
-		return _contextMenuProvider.getContextMenu(userObject);
+		return _contextMenuProvider.getContextMenu(node, userObject);
 	}
 
 	@Override

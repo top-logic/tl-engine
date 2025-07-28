@@ -176,6 +176,23 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 		}
 	}
 
+	@Override
+	public void clear() {
+		Object update = startBulkUpdate();
+		try {
+			super.clear();
+
+			// If some selection state is left, this can happen, if the underlying tree has changed
+			// in the meantime.
+			for (T x : _state.keySet()) {
+				_eventBuilder.recordUpdate(x);
+			}
+			_state.clear();
+		} finally {
+			completeBulkUpdate(update);
+		}
+	}
+
 	private void updateDescendantState(T parent, NodeSelectionState oldState, NodeSelectionState newState) {
 		Iterator<? extends T> it = getTreeModel().getChildIterator(parent);
 		while (it.hasNext()) {

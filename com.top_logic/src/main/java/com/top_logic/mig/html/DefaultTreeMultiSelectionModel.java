@@ -85,6 +85,9 @@ public class DefaultTreeMultiSelectionModel<T> extends AbstractRestrainedSelecti
 		if (state != null) {
 			return state;
 		}
+		if (obj == null) {
+			return NodeSelectionState.NONE;
+		}
 	
 		T ancestor = obj;
 		while (true) {

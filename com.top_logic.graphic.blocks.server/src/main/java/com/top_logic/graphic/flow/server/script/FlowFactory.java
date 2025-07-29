@@ -35,6 +35,7 @@ import com.top_logic.graphic.flow.data.CompassLayout;
 import com.top_logic.graphic.flow.data.Decoration;
 import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.graphic.flow.data.DiagramDirection;
+import com.top_logic.graphic.flow.data.DropRegion;
 import com.top_logic.graphic.flow.data.Empty;
 import com.top_logic.graphic.flow.data.Fill;
 import com.top_logic.graphic.flow.data.GridLayout;
@@ -54,6 +55,7 @@ import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
 import com.top_logic.graphic.flow.data.TreeLayout;
 import com.top_logic.graphic.flow.data.VerticalLayout;
+import com.top_logic.graphic.flow.server.ui.handler.ServerDropHandler;
 import com.top_logic.model.search.expr.ToString;
 
 /**
@@ -473,6 +475,22 @@ public class FlowFactory {
 			.setUserObject(userObject);
 	}
 	
+	/**
+	 * Creates box that receives drop events..
+	 */
+	@SideEffectFree
+	public static Box flowDropRegion(
+			@Mandatory Box content,
+			@Mandatory ServerDropHandler dropHandler,
+			String cssClass,
+			Object userObject) {
+		return DropRegion.create()
+			.setContent(nonNull(content))
+			.setDropHandler(dropHandler)
+			.setCssClass(cssClass)
+			.setUserObject(userObject);
+	}
+
 	/**
 	 * Creates box that displays a tooltip when the mouse hovers over its contents.
 	 */

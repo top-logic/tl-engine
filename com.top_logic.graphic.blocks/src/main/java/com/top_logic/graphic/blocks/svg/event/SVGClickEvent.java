@@ -8,12 +8,7 @@ package com.top_logic.graphic.blocks.svg.event;
 /**
  * Event that announces a click on a SVG drawing.
  */
-public interface SVGClickEvent {
-
-	/**
-	 * The element that was clicked.
-	 */
-	Object getSender();
+public interface SVGClickEvent extends SVGEvent {
 
 	/**
 	 * Whether the given {@link MouseButton} was pressed.
@@ -39,15 +34,5 @@ public interface SVGClickEvent {
 	 * Whether the ctrl key was pressed.
 	 */
 	boolean isCtrlKey();
-
-	/**
-	 * Stops propagation of the event to parent elements.
-	 */
-	void stopPropagation();
-
-	/**
-	 * Prevents the default action for this event.
-	 */
-	void preventDefault();
 
 }

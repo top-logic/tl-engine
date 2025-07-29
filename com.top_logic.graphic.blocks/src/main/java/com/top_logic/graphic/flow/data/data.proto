@@ -403,6 +403,18 @@ message ClickTarget extends Decoration {
 	
 }
 
+/** A box that accepts drop events by invoking a server callback. */
+@Operations("com.top_logic.graphic.flow.operations.DropRegionOperations")
+message DropRegion extends Decoration {
+
+	/** Server-side-only field to store the callback to invoke when a drop occurs. */
+	transient com.top_logic.graphic.flow.callback.DropHandler dropHandler;
+	
+	/** Internal field to store the drop handler registration (client-side only). */
+	transient com.top_logic.graphic.blocks.svg.event.Registration handlerRegistration;
+	
+}
+
 /** A box that shows a tooltip when the mouse hovers over its contents. */
 @Operations("com.top_logic.graphic.flow.operations.TooltipOperations")
 message Tooltip extends Decoration {

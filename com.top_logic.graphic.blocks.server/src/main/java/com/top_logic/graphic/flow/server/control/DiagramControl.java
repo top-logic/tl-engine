@@ -19,12 +19,15 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.graphic.flow.callback.ClickHandler;
+import com.top_logic.graphic.flow.callback.DropHandler;
 import com.top_logic.graphic.flow.control.JSDiagramControlCommon;
 import com.top_logic.graphic.flow.data.ClickTarget;
 import com.top_logic.graphic.flow.data.Diagram;
+import com.top_logic.graphic.flow.data.DropRegion;
 import com.top_logic.graphic.flow.data.MouseButton;
 import com.top_logic.graphic.flow.data.SelectableBox;
 import com.top_logic.graphic.flow.data.Widget;
+import com.top_logic.graphic.flow.server.ui.handler.ServerDropHandler;
 import com.top_logic.layout.ContentHandler;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
@@ -37,6 +40,8 @@ import com.top_logic.layout.basic.contextmenu.NoContextMenuProvider;
 import com.top_logic.layout.basic.contextmenu.control.ContextMenuOpener;
 import com.top_logic.layout.basic.contextmenu.control.ContextMenuOwner;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
+import com.top_logic.layout.dnd.DnD;
+import com.top_logic.layout.dnd.DndData;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 import de.haumacher.msgbuf.graph.DefaultScope;
@@ -58,7 +63,8 @@ public class DiagramControl extends AbstractControlBase
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(
 		ContextMenuOpener.INSTANCE,
 		UpdateCommand.INSTANCE,
-		DispatchClickCommand.INSTANCE);
+		DispatchClickCommand.INSTANCE,
+		DispatchDropCommand.INSTANCE);
 
 	private Diagram _diagram;
 
@@ -201,6 +207,17 @@ public class DiagramControl extends AbstractControlBase
 		}
 	}
 
+	/**
+	 * Processing drop events sent from the client-side.
+	 */
+	public void processDrop(int nodeId, DndData data) {
+		DropRegion node = (DropRegion) _graphScope.resolveOrFail(nodeId);
+		DropHandler dropHandler = node.getDropHandler();
+		if (dropHandler instanceof ServerDropHandler serverDrop) {
+			serverDrop.onDrop(node, data);
+		}
+	}
+
 	static final class UpdateCommand extends ControlCommand {
 
 		/**
@@ -247,7 +264,7 @@ public class DiagramControl extends AbstractControlBase
 		public static final DispatchClickCommand INSTANCE = new DispatchClickCommand();
 
 		/**
-		 * Creates a {@link UpdateCommand}.
+		 * Creates a {@link DispatchClickCommand}.
 		 */
 		private DispatchClickCommand() {
 			super("dispatchClick");
@@ -266,6 +283,38 @@ public class DiagramControl extends AbstractControlBase
 				buttonNames.stream().map(n -> MouseButton.valueOf(n)).collect(Collectors.toSet());
 			int nodeId = ((Number) arguments.get("nodeId")).intValue();
 			((DiagramControl) control).processClick(nodeId, buttons);
+			return HandlerResult.DEFAULT_RESULT;
+		}
+	}
+
+	static final class DispatchDropCommand extends ControlCommand {
+
+		/**
+		 * Singleton {@link DispatchDropCommand} instance.
+		 */
+		public static final DispatchDropCommand INSTANCE = new DispatchDropCommand();
+
+		/**
+		 * Creates a {@link DispatchDropCommand}.
+		 */
+		private DispatchDropCommand() {
+			super("dispatchDrop");
+		}
+
+		@Override
+		public ResKey getI18NKey() {
+			return ResKey.text("Dispatch drop");
+		}
+
+		@Override
+		protected HandlerResult execute(DisplayContext commandContext, Control control, Map<String, Object> arguments) {
+			int nodeId = ((Number) arguments.get("nodeId")).intValue();
+
+			DndData data = DnD.getDndData(commandContext, arguments);
+			if (data != null) {
+				((DiagramControl) control).processDrop(nodeId, data);
+			}
+
 			return HandlerResult.DEFAULT_RESULT;
 		}
 	}

@@ -5,45 +5,53 @@
  */
 package com.top_logic.graphic.flow.server.ui.handler;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.graphic.flow.callback.ClickHandler;
 import com.top_logic.graphic.flow.data.ClickTarget;
-import com.top_logic.graphic.flow.data.MouseButton;
+import com.top_logic.graphic.flow.data.DropRegion;
 import com.top_logic.graphic.flow.server.ui.ScriptFlowChartBuilder.Config.HandlerDefinition;
+import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.layout.dnd.DndData;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.WithPostCreateActions;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.providers.WithTransaction;
 
 /**
- * {@link ClickHandler} that can be implemented in TL-Script.
+ * {@link ServerDropHandler} that can be implemented in TL-Script.
  */
-public class ScriptedClickHandler extends AbstractConfiguredInstance<ScriptedClickHandler.Config<?>>
-		implements ClickHandler, WithPostCreateActions {
+public class ScriptedDropHandler extends AbstractConfiguredInstance<ScriptedDropHandler.Config<?>>
+		implements ServerDropHandler, WithPostCreateActions, WithTransaction {
 
 	/**
-	 * Configuration options for {@link ScriptedClickHandler}.
+	 * Configuration options for {@link ScriptedDropHandler}.
 	 */
-	public interface Config<I extends ScriptedClickHandler> extends HandlerDefinition<I>, WithPostCreateActions.Config {
+	public interface Config<I extends ScriptedDropHandler>
+			extends HandlerDefinition<I>, WithPostCreateActions.Config, WithTransaction.Config {
 
 		/**
-		 * Function that retrieves the {@link ClickTarget} diagram element.
+		 * Function that retrieves the {@link DropRegion} diagram element, the dragged objects and
+		 * the model of the drag source from which the drag operation was initiated.
+		 * 
+		 * <pre>
+		 * <code>node -> dragged -> source -> ...</code>
+		 * </pre>
 		 * 
 		 * <p>
 		 * The function's result is passed to configured {@link #getPostCreateActions() UI actions}.
 		 * </p>
 		 * 
 		 * <p>
-		 * If no script is provided, the {@link ClickTarget#getUserObject() user object} of the
-		 * clicked diagram element is used as input for {@link #getPostCreateActions() further UI
-		 * actions}.
+		 * If no script is provided, a list with the {@link ClickTarget#getUserObject() user object}
+		 * of the clicked diagram element as first element and the list of dragged objects as second
+		 * element is used as input for {@link #getPostCreateActions() further UI actions}.
 		 * </p>
 		 */
 		Expr getScript();
@@ -57,7 +65,7 @@ public class ScriptedClickHandler extends AbstractConfiguredInstance<ScriptedCli
 	private LayoutComponent _component;
 
 	/**
-	 * Creates a {@link ScriptedClickHandler} from configuration.
+	 * Creates a {@link ScriptedDropHandler} from configuration.
 	 * 
 	 * @param context
 	 *        The context for instantiating sub configurations.
@@ -65,7 +73,7 @@ public class ScriptedClickHandler extends AbstractConfiguredInstance<ScriptedCli
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public ScriptedClickHandler(InstantiationContext context, Config<?> config) {
+	public ScriptedDropHandler(InstantiationContext context, Config<?> config) {
 		super(context, config);
 		_actions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
 		_script = QueryExecutor.compileOptional(config.getScript());
@@ -73,12 +81,17 @@ public class ScriptedClickHandler extends AbstractConfiguredInstance<ScriptedCli
 	}
 
 	@Override
-	public void onClick(ClickTarget target, Set<MouseButton> buttons) {
+	public void onDrop(DropRegion target, DndData data) {
 		Object result;
 		if (_script == null) {
-			result = target.getUserObject();
+			result = Arrays.asList(target.getUserObject(), data.getDragData(), data.getSource().getDragSourceModel());
 		} else {
-			result = _script.execute(target);
+			Transaction tx = beginTransaction(getConfig().isInTransaction());
+			try {
+				result = _script.execute(target, data.getDragData(), data.getSource().getDragSourceModel());
+			} finally {
+				tx.commit();
+			}
 		}
 
 		WithPostCreateActions.processCreateActions(_actions, _component, result);

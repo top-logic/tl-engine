@@ -23,6 +23,10 @@ import org.vectomatic.dom.svg.itf.ISVGTransformable;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.DragOverEvent;
+import com.google.gwt.event.dom.client.DragOverHandler;
+import com.google.gwt.event.dom.client.DropEvent;
+import com.google.gwt.event.dom.client.DropHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 import com.top_logic.graphic.blocks.svg.SVGColor;
@@ -32,6 +36,8 @@ import com.top_logic.graphic.blocks.svg.event.MouseButton;
 import com.top_logic.graphic.blocks.svg.event.Registration;
 import com.top_logic.graphic.blocks.svg.event.SVGClickEvent;
 import com.top_logic.graphic.blocks.svg.event.SVGClickHandler;
+import com.top_logic.graphic.blocks.svg.event.SVGDropEvent;
+import com.top_logic.graphic.blocks.svg.event.SVGDropHandler;
 import com.top_logic.graphic.flow.data.ImageAlign;
 import com.top_logic.graphic.flow.data.ImageScale;
 
@@ -409,6 +415,44 @@ public class SVGBuilder implements SvgWriter {
 		}, ClickEvent.getType());
 
 		return () -> registration.removeHandler();
+	}
+
+	@Override
+	public Registration attachOnDrop(SVGDropHandler handler, Object sender) {
+		HandlerRegistration registration = _current.addDomHandler(new DropHandler() {
+			@Override
+			public void onDrop(DropEvent event) {
+				handler.onDrop(new SVGDropEvent() {
+					@Override
+					public Object getSender() {
+						return sender;
+					}
+
+					@Override
+					public void stopPropagation() {
+						event.getNativeEvent().stopPropagation();
+					}
+
+					@Override
+					public void preventDefault() {
+						event.getNativeEvent().preventDefault();
+					}
+				});
+			}
+		}, DropEvent.getType());
+
+		// Make sure, the drop can be accepted.
+		HandlerRegistration dragOver = _current.addDomHandler(new DragOverHandler() {
+			@Override
+			public void onDragOver(DragOverEvent event) {
+				event.preventDefault();
+			}
+		}, DragOverEvent.getType());
+
+		return () -> {
+			registration.removeHandler();
+			dragOver.removeHandler();
+		};
 	}
 
 	private void created(OMSVGElement svgElement, Object model) {

@@ -26,10 +26,12 @@ import com.top_logic.graphic.blocks.model.Drawable;
 import com.top_logic.graphic.blocks.model.Identified;
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
+import com.top_logic.graphic.blocks.svg.event.SVGDropEvent;
 import com.top_logic.graphic.flow.callback.DiagramContext;
 import com.top_logic.graphic.flow.control.JSDiagramControlCommon;
 import com.top_logic.graphic.flow.data.ClickTarget;
 import com.top_logic.graphic.flow.data.Diagram;
+import com.top_logic.graphic.flow.data.DropRegion;
 import com.top_logic.graphic.flow.data.MouseButton;
 import com.top_logic.graphic.flow.data.Widget;
 
@@ -222,6 +224,12 @@ public class JSDiagramControl extends AbstractJSControl
 		dispatchClick(getId(), nodeId, toJsArray(buttons));
 	}
 
+	@Override
+	public void processDrop(DropRegion node, SVGDropEvent event) {
+		int nodeId = _scope.id(node);
+		dispatchDrop(getId(), nodeId);
+	}
+
 	private static JsArrayString toJsArray(List<String> input) {
 		JsArrayString jsArrayString = JsArrayString.createArray().cast();
 		for (String s : input) {
@@ -236,6 +244,15 @@ public class JSDiagramControl extends AbstractJSControl
 			controlID : id,
 			nodeId : nodeId,
 			mouseButtons : mouseButtons
+		}, false)
+	}-*/;
+
+	private native void dispatchDrop(String id, int nodeId) /*-{
+		$wnd.services.ajax.execute("dispatchControlCommand", {
+			controlCommand : "dispatchDrop",
+			controlID : id,
+			nodeId : nodeId,
+			data : $wnd.tlDnD.data
 		}, false)
 	}-*/;
 }

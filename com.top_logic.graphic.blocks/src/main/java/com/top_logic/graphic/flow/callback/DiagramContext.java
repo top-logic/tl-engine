@@ -7,8 +7,10 @@ package com.top_logic.graphic.flow.callback;
 
 import java.util.List;
 
+import com.top_logic.graphic.blocks.svg.event.SVGDropEvent;
 import com.top_logic.graphic.flow.data.ClickTarget;
 import com.top_logic.graphic.flow.data.Diagram;
+import com.top_logic.graphic.flow.data.DropRegion;
 import com.top_logic.graphic.flow.data.MouseButton;
 
 /**
@@ -23,5 +25,11 @@ public interface DiagramContext {
 	 * {@link ClickTarget} element.
 	 */
 	void processClick(ClickTarget node, List<MouseButton> pressedButtons);
+
+	/**
+	 * Callback that in invoked on client-side, if a drop operation occurs over a {@link DropRegion}
+	 * element.
+	 */
+	void processDrop(DropRegion node, SVGDropEvent event);
 
 }

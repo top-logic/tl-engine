@@ -4,10 +4,32 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	groups="commons"
 >
-	<properties extends="com.top_logic.layout.editor.config.LayoutTemplateParameters, com.top_logic.layout.structure.ButtonbarOptions">
+	<properties extends="com.top_logic.layout.editor.config.LayoutTemplateParameters, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.structure.ButtonbarOptions">
 		<annotations>
 			<display-inherited value="APPEND"/>
 		</annotations>
+
+		<property name="toolbar"
+			default="false"
+			type="boolean"
+		/>
+
+		<property name="name"
+			type="ResKey"
+		>
+			<dynamic-mode fun="com.top_logic.layout.form.values.edit.mode.InvisibleButActiveIf">
+				<args>
+					<ref value="toolbar"/>
+				</args>
+			</dynamic-mode>
+			<dynamic-mandatory fun="com.top_logic.basic.func.Identity">
+				<args>
+					<ref value="toolbar"/>
+				</args>
+			</dynamic-mandatory>
+			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
+			<item-display value="monomorphic"/>
+		</property>
 
 		<property name="components"
 			element-type="com.top_logic.mig.html.layout.LayoutComponent$Config"
@@ -30,5 +52,10 @@
 		horizontal="${horizontal}"
 		resizable="${resizable}"
 		resizeMode="instant"
+		showMaximize="${showMaximize}"
+		showMinimize="${showMinimize}"
+		showPopOut="${showPopOut}"
+		titleKey="${name}"
+		toolbar="${toolbar}"
 	/>
 </config:template>

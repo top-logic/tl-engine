@@ -121,6 +121,7 @@ public interface Box extends Widget, com.top_logic.graphic.flow.operations.BoxOp
 			case TreeLayout.TREE_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.TreeLayout.create(); break;
 			case SelectableBox.SELECTABLE_BOX__TYPE: result = com.top_logic.graphic.flow.data.SelectableBox.create(); break;
 			case ClickTarget.CLICK_TARGET__TYPE: result = com.top_logic.graphic.flow.data.ClickTarget.create(); break;
+			case DropRegion.DROP_REGION__TYPE: result = com.top_logic.graphic.flow.data.DropRegion.create(); break;
 			case Tooltip.TOOLTIP__TYPE: result = com.top_logic.graphic.flow.data.Tooltip.create(); break;
 			case Align.ALIGN__TYPE: result = com.top_logic.graphic.flow.data.Align.create(); break;
 			case Border.BORDER__TYPE: result = com.top_logic.graphic.flow.data.Border.create(); break;

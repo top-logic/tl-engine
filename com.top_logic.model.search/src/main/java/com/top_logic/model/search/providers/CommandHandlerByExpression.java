@@ -16,9 +16,6 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.NoTransaction;
-import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.FormHandler;
@@ -48,7 +45,7 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @InApp
-public class CommandHandlerByExpression extends AbstractCommandHandler {
+public class CommandHandlerByExpression extends AbstractCommandHandler implements WithTransaction {
 
 	private QueryExecutor _operation;
 
@@ -75,7 +72,8 @@ public class CommandHandlerByExpression extends AbstractCommandHandler {
 		Config.CONFIRMATION,
 		Config.SECURITY_OBJECT,
 	})
-	public interface Config extends AbstractCommandHandler.Config, WithPostCreateActions.Config {
+	public interface Config
+			extends AbstractCommandHandler.Config, WithPostCreateActions.Config, WithTransaction.Config {
 
 		/**
 		 * @see #getFormApply()
@@ -86,11 +84,6 @@ public class CommandHandlerByExpression extends AbstractCommandHandler {
 		 * @see #getOperation()
 		 */
 		String OPERATION = "operation";
-
-		/**
-		 * @see #isInTransaction()
-		 */
-		String TRANSACTION = "transaction";
 
 		/**
 		 * @see #getCloseDialog()
@@ -123,19 +116,6 @@ public class CommandHandlerByExpression extends AbstractCommandHandler {
 		 */
 		@Name(OPERATION)
 		Expr getOperation();
-
-		/**
-		 * Whether to perform the operation in a transaction.
-		 * 
-		 * <p>
-		 * Note: Creating, modifying, or deleting persistent objects require a transaction.
-		 * Modification of transient objects or pure service operations do not require a transaction
-		 * context.
-		 * </p>
-		 */
-		@Name(TRANSACTION)
-		@BooleanDefault(true)
-		boolean isInTransaction();
 
 		/**
 		 * Whether to close an active dialog, this {@link CommandHandler} is executed in.
@@ -173,7 +153,7 @@ public class CommandHandlerByExpression extends AbstractCommandHandler {
 		Config config = (Config) getConfig();
 
 		if (_operation != null) {
-			try (Transaction tx = beginTransaction()) {
+			try (Transaction tx = beginTransaction(_transaction)) {
 				if (aComponent instanceof FormHandler && config.getFormApply()) {
 					FormContext formContext = ((FormHandler) aComponent).getFormContext();
 					if (formContext != null) {
@@ -197,11 +177,6 @@ public class CommandHandlerByExpression extends AbstractCommandHandler {
 
 		WithPostCreateActions.processCreateActions(_actions, aComponent, result);
 		return HandlerResult.DEFAULT_RESULT;
-	}
-
-	private Transaction beginTransaction() {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		return _transaction ? kb.beginTransaction() : new NoTransaction(kb);
 	}
 
 }

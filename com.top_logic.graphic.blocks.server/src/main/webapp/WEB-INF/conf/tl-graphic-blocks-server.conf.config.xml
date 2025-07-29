@@ -29,6 +29,7 @@
 					<java name="flowPadding" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowPadding"/>
 					<java name="flowSelection" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowSelection"/>
 					<java name="flowClickTarget" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowClickTarget"/>
+					<java name="flowDropRegion" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowDropRegion"/>
 					<java name="flowTooltip" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowTooltip"/>
 					<java name="flowHorizontal" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowHorizontal"/>
 					<java name="flowVertical" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowVertical"/>

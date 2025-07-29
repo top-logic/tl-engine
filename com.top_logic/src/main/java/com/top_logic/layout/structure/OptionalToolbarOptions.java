@@ -9,12 +9,19 @@ import com.top_logic.basic.config.Decision;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.tool.boundsec.CommandHandler.ConfirmConfig.VisibleIf;
 
 /**
  * {@link ToolbarOptions} that allow to hide the toolbar.
  */
+@DisplayOrder({
+	OptionalToolbarOptions.TOOLBAR,
+	OptionalToolbarOptions.SHOW_MAXIMIZE,
+	OptionalToolbarOptions.SHOW_MINIMIZE,
+	OptionalToolbarOptions.SHOW_POP_OUT,
+})
 public interface OptionalToolbarOptions extends ToolbarOptions {
 
 	/**

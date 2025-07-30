@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.search.providers;
 
+import java.util.Collection;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
@@ -36,7 +37,7 @@ import com.top_logic.util.model.ModelService;
 public class TableDragSourceByExpression implements TableDragSource {
 
 	/** {@link ConfigurationItem} for the {@link TableDragSourceByExpression}. */
-	public interface Config extends PolymorphicConfiguration<TableDragSourceByExpression> {
+	public interface Config<I extends TableDragSourceByExpression> extends PolymorphicConfiguration<I> {
 
 		/**
 		 * Name of {@link #canDrag()}.
@@ -111,7 +112,7 @@ public class TableDragSourceByExpression implements TableDragSource {
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public TableDragSourceByExpression(InstantiationContext context, Config config) {
+	public TableDragSourceByExpression(InstantiationContext context, Config<?> config) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		TLModel model = ModelService.getApplicationModel();
 
@@ -140,7 +141,7 @@ public class TableDragSourceByExpression implements TableDragSource {
 	}
 
 	@Override
-	public Object getDragSelection(TableData tableData, int row) {
+	public Collection<?> getDragSelection(TableData tableData, int row) {
 		return tableData.getSelectionModel().getSelection().stream().map(this::unwrap).collect(Collectors.toSet());
 	}
 

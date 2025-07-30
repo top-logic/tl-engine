@@ -6,14 +6,10 @@
 package com.top_logic.model.search.providers;
 
 import com.top_logic.basic.annotation.InApp;
-import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.element.layout.grid.GridBusinessObjectNaming;
 import com.top_logic.element.layout.grid.GridComponent;
 import com.top_logic.element.layout.grid.GridDragSource;
-import com.top_logic.layout.scripting.recorder.ref.ModelName;
-import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
@@ -36,7 +32,7 @@ public class GridDragSourceByExpression extends TableDragSourceByExpression impl
 	 * @param config
 	 *        The configuration.
 	 */
-	public GridDragSourceByExpression(InstantiationContext context, Config config) {
+	public GridDragSourceByExpression(InstantiationContext context, Config<?> config) {
 		super(context, config);
 
 		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, component -> {
@@ -53,19 +49,6 @@ public class GridDragSourceByExpression extends TableDragSourceByExpression impl
 		}
 		
 		return super.dragEnabled(data, rowObject);
-	}
-
-	@Override
-	public Maybe<? extends ModelName> getDragDataName(Object dragSource, TableData tableData, int row) {
-		// Note: Must not call super.getDragObject(), since this already unwraps the row.
-		Object gridRow = tableData.getViewModel().getRowObject(row);
-
-		Maybe<? extends ModelName> rowName =
-			ModelResolver.buildModelNameIfAvailable(dragSource, gridRow);
-		if (rowName.hasValue()) {
-			return Maybe.some(GridBusinessObjectNaming.newName(rowName.get()));
-		}
-		return Maybe.none();
 	}
 
 	/**

@@ -664,7 +664,7 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 
 	@Override
 	public Object getDragSourceModel() {
-		return getData();
+		return getData().getDragSource().getDragSourceModel(getData());
 	}
 
 	Object getLastClickedNode() {

@@ -45,6 +45,11 @@ public class ProxyGridDragSource implements GridDragSource {
 	}
 
 	@Override
+	public Object getDragSourceModel(TableData tableData) {
+		return _impl.getDragSourceModel(tableData);
+	}
+
+	@Override
 	public Maybe<? extends ModelName> getDragDataName(Object dragSource, TableData tableData, int row) {
 		Maybe<? extends ModelName> rowName =
 			ModelResolver.buildModelNameIfAvailable(_impl.getDragObject(tableData, row));

@@ -460,7 +460,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 	@Override
 	public Object getDragSourceModel() {
-		return getModel();
+		return getTableData().getDragSource().getDragSourceModel(getTableData());
 	}
 
 	@Override

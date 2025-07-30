@@ -16,9 +16,13 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.layout.dnd.DropEvent;
+import com.top_logic.layout.table.TableData;
+import com.top_logic.layout.table.dnd.TableDragSource;
 import com.top_logic.layout.tree.TreeData;
 import com.top_logic.layout.tree.dnd.TreeDragSource;
 import com.top_logic.layout.tree.model.TLTreeNode;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -64,11 +68,39 @@ public class TreeDragSourceByExpression implements TreeDragSource {
 		@Hidden
 		boolean getDragEnabled();
 
+		/**
+		 * Function creating the drag source model.
+		 * 
+		 * <p>
+		 * The drag source model can be retrieved at the drop location together with the dragged
+		 * objects.
+		 * </p>
+		 * 
+		 * <p>
+		 * The function receives the component's model as single argument.
+		 * </p>
+		 * 
+		 * <pre>
+		 * <code>model -> ...</code>
+		 * </pre>
+		 * 
+		 * <p>
+		 * If not given, the component's model is used as drag source model.
+		 * </p>
+		 * 
+		 * @see TableDragSource#getDragSourceModel(TableData)
+		 * @see DropEvent#getSource()
+		 */
+		Expr getDragSourceModel();
 	}
 
-	private QueryExecutor _canDrag;
+	private LayoutComponent _contextComponent;
 
-	private boolean _dragEnabled;
+	private final QueryExecutor _canDrag;
+
+	private final QueryExecutor _sourceModel;
+
+	private final boolean _dragEnabled;
 
 	/**
 	 * Creates a {@link TreeDropTargetByExpression} from configuration.
@@ -83,7 +115,12 @@ public class TreeDragSourceByExpression implements TreeDragSource {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		TLModel model = ModelService.getApplicationModel();
 
+		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, component -> {
+			_contextComponent = component;
+		});
+
 		_canDrag = QueryExecutor.compile(kb, model, config.canDrag());
+		_sourceModel = QueryExecutor.compileOptional(config.getDragSourceModel());
 		_dragEnabled = config.getDragEnabled();
 	}
 
@@ -95,6 +132,17 @@ public class TreeDragSourceByExpression implements TreeDragSource {
 	@Override
 	public boolean dragEnabled(TreeData data) {
 		return _dragEnabled;
+	}
+
+	@Override
+	public Object getDragSourceModel(TreeData treeData) {
+		Object model = _contextComponent.getModel();
+
+		if (_sourceModel == null) {
+			return model;
+		} else {
+			return _sourceModel.execute(model);
+		}
 	}
 
 }

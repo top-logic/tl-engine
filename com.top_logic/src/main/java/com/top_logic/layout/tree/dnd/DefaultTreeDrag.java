@@ -36,4 +36,9 @@ public class DefaultTreeDrag implements TreeDragSource {
 		return true;
 	}
 
+	@Override
+	public Object getDragSourceModel(TreeData data) {
+		return data;
+	}
+
 }

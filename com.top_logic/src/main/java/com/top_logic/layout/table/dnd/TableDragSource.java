@@ -49,6 +49,11 @@ public interface TableDragSource {
 	Object getDragObject(TableData tableData, int row);
 
 	/**
+	 * The source model, from which objects have been dragged.
+	 */
+	Object getDragSourceModel(TableData tableData);
+
+	/**
 	 * Tries to create a {@link ModelName} for the object with the given client-side identifier.
 	 * 
 	 * @param dragSource

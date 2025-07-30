@@ -41,4 +41,9 @@ public class DefaultTableDrag implements TableDragSource {
 		return tableData.getViewModel().getRowObject(row);
 	}
 
+	@Override
+	public Object getDragSourceModel(TableData tableData) {
+		return tableData;
+	}
+
 }

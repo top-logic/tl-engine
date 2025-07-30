@@ -16,8 +16,10 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.layout.dnd.DropEvent;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.dnd.TableDragSource;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -56,6 +58,31 @@ public class TableDragSourceByExpression implements TableDragSource {
 		Expr canDrag();
 
 		/**
+		 * Function creating the drag source model.
+		 * 
+		 * <p>
+		 * The drag source model can be retrieved at the drop location together with the dragged
+		 * objects.
+		 * </p>
+		 * 
+		 * <p>
+		 * The function receives the component's model as single argument.
+		 * </p>
+		 * 
+		 * <pre>
+		 * <code>model -> ...</code>
+		 * </pre>
+		 * 
+		 * <p>
+		 * If not given, the component's model is used as drag source model.
+		 * </p>
+		 * 
+		 * @see TableDragSource#getDragSourceModel(TableData)
+		 * @see DropEvent#getSource()
+		 */
+		Expr getDragSourceModel();
+
+		/**
 		 * Whether dragging from the given table is enabled.
 		 */
 		@Name(DRAG_ENABLED)
@@ -65,7 +92,11 @@ public class TableDragSourceByExpression implements TableDragSource {
 
 	}
 
+	private LayoutComponent _contextComponent;
+
 	private QueryExecutor _canDrag;
+
+	private QueryExecutor _sourceModel;
 
 	private boolean _dragEnabled;
 
@@ -82,7 +113,12 @@ public class TableDragSourceByExpression implements TableDragSource {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		TLModel model = ModelService.getApplicationModel();
 
+		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, component -> {
+			_contextComponent = component;
+		});
+
 		_canDrag = QueryExecutor.compile(kb, model, config.canDrag());
+		_sourceModel = QueryExecutor.compileOptional(config.getDragSourceModel());
 		_dragEnabled = config.getDragEnabled();
 	}
 
@@ -101,4 +137,14 @@ public class TableDragSourceByExpression implements TableDragSource {
 		return tableData.getViewModel().getRowObject(row);
 	}
 
+	@Override
+	public Object getDragSourceModel(TableData tableData) {
+		Object model = _contextComponent.getModel();
+
+		if (_sourceModel == null) {
+			return model;
+		} else {
+			return _sourceModel.execute(model);
+		}
+	}
 }

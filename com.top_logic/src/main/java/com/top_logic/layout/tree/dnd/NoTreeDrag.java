@@ -36,4 +36,9 @@ public class NoTreeDrag implements TreeDragSource {
 		return false;
 	}
 
+	@Override
+	public Object getDragSourceModel(TreeData data) {
+		return null;
+	}
+
 }

@@ -45,6 +45,11 @@ public class ProxyGridDragSource implements GridDragSource {
 	}
 
 	@Override
+	public Object getDragSelection(TableData tableData, int row) {
+		return _impl.getDragSelection(tableData, row);
+	}
+
+	@Override
 	public Object getDragSourceModel(TableData tableData) {
 		return _impl.getDragSourceModel(tableData);
 	}

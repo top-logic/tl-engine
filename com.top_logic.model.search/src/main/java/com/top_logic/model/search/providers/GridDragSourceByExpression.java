@@ -45,11 +45,9 @@ public class GridDragSourceByExpression extends TableDragSourceByExpression impl
 	}
 
 	@Override
-	public boolean dragEnabled(TableData data, Object row) {
-		Object rowObject = rowObject(row);
-
+	public boolean dragEnabled(TableData data, Object rowObject) {
 		if (_grid.isEditing()) {
-			if (_grid.getSelected() == rowObject) {
+			if (_grid.getSelected() == unwrap(rowObject)) {
 				return false;
 			}
 		}
@@ -58,14 +56,12 @@ public class GridDragSourceByExpression extends TableDragSourceByExpression impl
 	}
 
 	@Override
-	public Object getDragObject(TableData tableData, int row) {
-		return rowObject(super.getDragObject(tableData, row));
-	}
-
-	@Override
 	public Maybe<? extends ModelName> getDragDataName(Object dragSource, TableData tableData, int row) {
+		// Note: Must not call super.getDragObject(), since this already unwraps the row.
+		Object gridRow = tableData.getViewModel().getRowObject(row);
+
 		Maybe<? extends ModelName> rowName =
-			ModelResolver.buildModelNameIfAvailable(dragSource, super.getDragObject(tableData, row));
+			ModelResolver.buildModelNameIfAvailable(dragSource, gridRow);
 		if (rowName.hasValue()) {
 			return Maybe.some(GridBusinessObjectNaming.newName(rowName.get()));
 		}
@@ -75,7 +71,8 @@ public class GridDragSourceByExpression extends TableDragSourceByExpression impl
 	/**
 	 * Converts the internal row object into the dragged object.
 	 */
-	private Object rowObject(Object rowObject) {
+	@Override
+	protected Object unwrap(Object rowObject) {
 		return _grid.getBusinessObjectFromInternalRow(rowObject);
 	}
 }

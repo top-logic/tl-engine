@@ -6,6 +6,7 @@
 package com.top_logic.layout.table.dnd;
 
 import com.top_logic.basic.col.Maybe;
+import com.top_logic.layout.dnd.DropEvent;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.table.TableData;
@@ -45,8 +46,27 @@ public interface TableDragSource {
 	 * @param row
 	 *        The row from which the drag started.
 	 * @return The drag object to be announced in the drop event.
+	 * 
+	 * @see DropEvent#getData()
 	 */
 	Object getDragObject(TableData tableData, int row);
+
+	/**
+	 * Retrieves the current selection as drag data.
+	 * 
+	 * <p>
+	 * When a selected row is dragged, this means that the whole selection should be dragged.
+	 * </p>
+	 * 
+	 * @param tableData
+	 *        The {@link TableData} from which the drag started.
+	 * @param row
+	 *        The row from which the drag started.
+	 * @return The drag objects to be announced in the drop event.
+	 * 
+	 * @see DropEvent#getData()
+	 */
+	Object getDragSelection(TableData tableData, int row);
 
 	/**
 	 * The source model, from which objects have been dragged.

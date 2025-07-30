@@ -5,6 +5,8 @@
  */
 package com.top_logic.model.search.providers;
 
+import java.util.stream.Collectors;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -123,8 +125,8 @@ public class TableDragSourceByExpression implements TableDragSource {
 	}
 
 	@Override
-	public boolean dragEnabled(TableData data, Object row) {
-		return (boolean) _canDrag.execute(row);
+	public boolean dragEnabled(TableData data, Object rowObject) {
+		return (boolean) _canDrag.execute(unwrap(rowObject));
 	}
 
 	@Override
@@ -133,8 +135,13 @@ public class TableDragSourceByExpression implements TableDragSource {
 	}
 
 	@Override
-	public Object getDragObject(TableData tableData, int row) {
-		return tableData.getViewModel().getRowObject(row);
+	public final Object getDragObject(TableData tableData, int row) {
+		return unwrap(tableData.getViewModel().getRowObject(row));
+	}
+
+	@Override
+	public Object getDragSelection(TableData tableData, int row) {
+		return tableData.getSelectionModel().getSelection().stream().map(this::unwrap).collect(Collectors.toSet());
 	}
 
 	@Override
@@ -146,5 +153,12 @@ public class TableDragSourceByExpression implements TableDragSource {
 		} else {
 			return _sourceModel.execute(model);
 		}
+	}
+
+	/**
+	 * Hook for sub-classes to unwrap technical objects and hide them from the script layer.
+	 */
+	protected Object unwrap(Object rowObject) {
+		return rowObject;
 	}
 }

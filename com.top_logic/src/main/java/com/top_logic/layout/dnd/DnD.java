@@ -5,22 +5,17 @@
  */
 package com.top_logic.layout.dnd;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.ConfigurationException;
-import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
-import com.top_logic.layout.scripting.recorder.ref.value.ListNaming;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutComponentScope;
@@ -82,7 +77,7 @@ public class DnD {
 
 		String scopeName = dataUrl.substring(scopeStartIndex, scopeEndIndex);
 		String controlId = dataUrl.substring(controlStartIndex, controlEndIndex);
-		String references = dataUrl.substring(refStartIndex);
+		String dataId = dataUrl.substring(refStartIndex);
 
 		LayoutComponent scope;
 		try {
@@ -97,35 +92,29 @@ public class DnD {
 			// Control was removed in the meanwhile.
 			return null;
 		}
-		String[] referenceIDs = references.split(",");
-		return new DndData(source, getDragData(referenceIDs, source), getDragDataName(referenceIDs, source));
+		Collection<?> data = getDragData(dataId, source);
+		Function<Object, ModelName> naming = getDragDataName(dataId, source);
+		return new DndData(source, data, naming);
 	}
 
-	private static Collection<Object> getDragData(String[] referenceIDs, DragSourceSPI source) {
-		return Arrays.stream(referenceIDs).map(source::getDragData).collect(Collectors.toList());
+	private static Collection<?> getDragData(String dataId, DragSourceSPI source) {
+		return source.getDragData(dataId);
 	}
 
-	private static Function<Object, ModelName> getDragDataName(String[] referenceIDs, DragSourceSPI source) {
+	private static Function<Object, ModelName> getDragDataName(String dataId, DragSourceSPI source) {
 		if (ScriptingRecorder.isRecordingActive()) {
-			return dragViewName -> {
-				List<ModelName> modelNames = Arrays.stream(referenceIDs)
-					.map(id -> createNameForDragData(id, source, dragViewName))
-					.collect(Collectors.toList());
-				ListNaming.Name name = TypedConfiguration.newConfigItem(ListNaming.Name.class);
-				name.getValues().addAll(modelNames);
-				return name;
-			};
+			return dragViewName -> createNameForDragData(dataId, source, dragViewName);
 		} else {
 			return ERROR_ON_CALL_SCRIPTING_NOT_ENABLED;
 		}
 	}
 
-	private static ModelName createNameForDragData(String id, DragSourceSPI source, Object dragView) {
-		Maybe<? extends ModelName> specialName = source.getDragDataName(dragView, id);
+	private static ModelName createNameForDragData(String dataId, DragSourceSPI source, Object dragView) {
+		Maybe<? extends ModelName> specialName = source.getDragDataName(dragView, dataId);
 		if (specialName.hasValue()) {
 			return specialName.get();
 		}
 		/* Try to build a name for the concrete business object that is dragged. */
-		return ModelResolver.buildModelName(dragView, source.getDragData(id));
+		return ModelResolver.buildModelName(dragView, source.getDragData(dataId));
 	}
 }

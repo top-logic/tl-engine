@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.table.dnd;
 
+import java.util.Collection;
+
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.layout.dnd.DropEvent;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
@@ -66,7 +68,7 @@ public interface TableDragSource {
 	 * 
 	 * @see DropEvent#getData()
 	 */
-	Object getDragSelection(TableData tableData, int row);
+	Collection<?> getDragSelection(TableData tableData, int row);
 
 	/**
 	 * The source model, from which objects have been dragged.
@@ -80,13 +82,12 @@ public interface TableDragSource {
 	 *        The source model.
 	 * @param tableData
 	 *        The {@link TableData} from which the drag started.
-	 * @param row
-	 *        The row from which the drag started.
-	 * 
+	 * @param dragObject
+	 *        A single object being dragged.
 	 * @return {@link ModelName} for the drag data or empty if no such name could be created.
 	 */
-	default Maybe<? extends ModelName> getDragDataName(Object dragSource, TableData tableData, int row) {
-		return ModelResolver.buildModelNameIfAvailable(dragSource, getDragObject(tableData, row));
+	default Maybe<? extends ModelName> getDragDataName(Object dragSource, TableData tableData, Object dragObject) {
+		return ModelResolver.buildModelNameIfAvailable(dragSource, dragObject);
 	}
 
 }

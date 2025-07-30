@@ -7,6 +7,7 @@ package com.top_logic.layout.table.control;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -19,6 +20,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import org.bouncycastle.util.Strings;
 
@@ -33,6 +35,7 @@ import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.col.TupleFactory.Pair;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.listener.PropertyListener;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
@@ -103,6 +106,8 @@ import com.top_logic.layout.scripting.action.SelectAction.SelectionChangeKind;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming;
+import com.top_logic.layout.scripting.recorder.ref.value.ListNaming;
+import com.top_logic.layout.scripting.recorder.ref.value.ListNaming.Name;
 import com.top_logic.layout.structure.DefaultLayoutData;
 import com.top_logic.layout.structure.DefaultPopupDialogModel;
 import com.top_logic.layout.structure.DialogClosedListener;
@@ -466,18 +471,32 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	}
 
 	@Override
-	public Object getDragData(String ref) {
-		if (ref.startsWith(SELECTION_REF_PREFIX)) {
+	public Collection<?> getDragData(String dataId) {
+		if (dataId.startsWith(SELECTION_REF_PREFIX)) {
 			return getTableData().getDragSource().getDragSelection(getTableData(),
-				getRowIndex(ref.substring(SELECTION_REF_PREFIX.length())));
+				getRowIndex(dataId.substring(SELECTION_REF_PREFIX.length())));
 		} else {
-			return getTableData().getDragSource().getDragObject(getTableData(), getRowIndex(ref));
+			String[] referenceIDs = dataId.split(",");
+			return Arrays.stream(referenceIDs)
+				.map(ref -> getTableData().getDragSource().getDragObject(getTableData(), getRowIndex(ref))).toList();
 		}
 	}
 
 	@Override
-	public Maybe<? extends ModelName> getDragDataName(Object dragSource, String ref) {
-		return getTableData().getDragSource().getDragDataName(dragSource, getTableData(), getRowIndex(ref));
+	public Maybe<? extends ModelName> getDragDataName(Object dragSource, String dataId) {
+		Collection<?> dragData = getDragData(dataId);
+		List<ModelName> dragObjectNames = dragData.stream()
+			.map(dragObject -> getTableData().getDragSource().getDragDataName(dragSource, getTableData(), dragObject)
+				.getElse(null))
+			.collect(Collectors.toList());
+
+		if (dragObjectNames.contains(null)) {
+			return Maybe.none();
+		}
+
+		Name listName = TypedConfiguration.newConfigItem(ListNaming.Name.class);
+		listName.setValues(dragObjectNames);
+		return Maybe.<ModelName> some(listName);
 	}
 
 	final int getRowIndex(String rowId) {

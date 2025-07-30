@@ -1836,7 +1836,7 @@
 					<scheme class="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableNaming" priority="preferred" />
 					<scheme class="com.top_logic.gui.ThemeNaming"/>
 					<scheme class="com.top_logic.layout.scripting.recorder.ref.ResourceModelNaming"/>
-					<scheme class="com.top_logic.layout.scripting.recorder.ref.TransientTLObjectNaming"/>
+					<scheme class="com.top_logic.layout.scripting.recorder.ref.TransientTLObjectNaming" priority="resolve-only"/>
 				</schemes>
 			</instance>
 		</config>

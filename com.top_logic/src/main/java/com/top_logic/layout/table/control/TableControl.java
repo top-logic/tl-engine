@@ -167,6 +167,11 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		SelectionListener, TableDataListener, PageCountListener, PageListener, PageSizeOptionsListener,
 		PageSizeListener, DragSourceSPI, ContextMenuOwner {
 
+	/**
+	 * Prefix added to the dragged row ID, when the dragged row was part of the selection.
+	 */
+	private static final String SELECTION_REF_PREFIX = "selection-";
+
 	/** Name of the technical select column */
 	public static final String SELECT_COLUMN_NAME = "_select";
 
@@ -462,7 +467,12 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 	@Override
 	public Object getDragData(String ref) {
-		return getTableData().getDragSource().getDragObject(getTableData(), getRowIndex(ref));
+		if (ref.startsWith(SELECTION_REF_PREFIX)) {
+			return getTableData().getDragSource().getDragSelection(getTableData(),
+				getRowIndex(ref.substring(SELECTION_REF_PREFIX.length())));
+		} else {
+			return getTableData().getDragSource().getDragObject(getTableData(), getRowIndex(ref));
+		}
 	}
 
 	@Override

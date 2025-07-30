@@ -282,15 +282,17 @@ public class ResKeyEncoding {
 		}
 	}
 
-	static final String QUOTED_SPECIAL = "\\'|\\\"|\\\\";
+	static final String QUOTED_SPECIAL = "\\\\'|\\\\\"|\\\\\\\\";
 
 	static final String LITERAL =
-		"'" + "((?:" + "[^\\']*" + "|" + QUOTED_SPECIAL + ")*)" + "'" + "|" +
-			"\"" + "((?:" + "[^\\\"]*" + "|" + QUOTED_SPECIAL + ")*)" + "\"";
+		"'" + "(" + "(?:" + "[^\\']*" + "|" + QUOTED_SPECIAL + ")*" + ")" + "'" + "|" +
+		"\"" + "(" + "(?:" + "[^\\\"]*" + "|" + QUOTED_SPECIAL + ")*" + ")" + "\"";
 
 	static final String LANGTAG = "@([a-zA-Z]+(?:-[a-zA-Z0-9]+)*)";
 
-	static final Pattern TAGGED_STRING_PATTERN = Pattern.compile(LITERAL + LANGTAG);
+	static final String SEPARATOR = "(?:" + "(" + ",\\s+" + ")" + "|" + "(" + "\\)" + ")" + ")";
+
+	static final Pattern TAGGED_STRING_PATTERN = Pattern.compile(LITERAL + LANGTAG + SEPARATOR);
 
 	private static ResKey atomicKey(String part) {
 		ResKey plain;
@@ -300,15 +302,17 @@ public class ResKeyEncoding {
 			keyLength = 2;
 			matcher.region(keyLength, part.length());
 			Builder translations = ResKey.builder();
-			while (matcher.find()) {
+			while (matcher.lookingAt()) {
 				Locale lang = Locale.forLanguageTag(matcher.group(3));
 				String value = unquote(matcher.group(1), matcher.group(2));
 				translations.add(lang, value);
 				keyLength = matcher.end();
-			}
-			if (keyLength < part.length() && part.charAt(keyLength) == ')') {
-				// Skip ending parenthesis.
-				keyLength++;
+
+				if (matcher.group(5) != null) {
+					break;
+				}
+
+				matcher.region(matcher.end(), part.length());
 			}
 
 			plain = translations.build();

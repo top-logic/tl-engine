@@ -38,6 +38,7 @@ import com.top_logic.graphic.flow.data.DiagramDirection;
 import com.top_logic.graphic.flow.data.DropRegion;
 import com.top_logic.graphic.flow.data.Empty;
 import com.top_logic.graphic.flow.data.Fill;
+import com.top_logic.graphic.flow.data.FloatingLayout;
 import com.top_logic.graphic.flow.data.GridLayout;
 import com.top_logic.graphic.flow.data.HorizontalLayout;
 import com.top_logic.graphic.flow.data.Image;
@@ -184,6 +185,24 @@ public class FlowFactory {
 			.setContent(nonNull(content))
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
+	}
+
+	/**
+	 * Factory for a box with an explicit position.
+	 * 
+	 * <p>
+	 * This can be used in combination with {@link #flowFloating(List, String, Object)}.
+	 * </p>
+	 */
+	@SideEffectFree
+	public static Box flowPosition(
+			@Mandatory Box content,
+			double x,
+			double y,
+			double width,
+			double height) {
+
+		return Padding.create().setContent(content).setX(x).setY(y).setWidth(width).setHeight(height);
 	}
 
 	/**
@@ -347,6 +366,21 @@ public class FlowFactory {
 		return result
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
+	}
+
+	/**
+	 * A layout in which boxes can be positioned explicitly.
+	 * 
+	 * <p>
+	 * Use in combination with {@link #flowPosition(Box, double, double, double, double)}.
+	 * </p>
+	 */
+	@SideEffectFree
+	public static Box flowFloating(
+			@Mandatory List<? extends Box> contents,
+			String cssClass,
+			Object userObject) {
+		return FloatingLayout.create().setNodes(contents).setCssClass(cssClass).setUserObject(userObject);
 	}
 
 	/**

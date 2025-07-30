@@ -242,10 +242,8 @@ public class TransientTLObjectNaming extends AbstractModelNamingScheme<TLObject,
 
 	@Override
 	protected boolean isCompatibleModel(TLObject model) {
-		if (!model.tTransient()) {
-			return false;
-		}
-		return super.isCompatibleModel(model);
+		// Only for resolving.
+		return false;
 	}
 
 }

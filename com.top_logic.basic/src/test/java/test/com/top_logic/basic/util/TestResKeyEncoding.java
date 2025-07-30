@@ -14,9 +14,11 @@ import java.util.Map;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
+import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.DateUtil;
@@ -121,6 +123,17 @@ public class TestResKeyEncoding extends TestCase {
 		assertEquals(key.arguments()[2].toString(), decoded.arguments()[2]);
 	}
 
+	public void testDecodeNestedLiteral() {
+		String encoded =
+			"#(&quot;{0} - {1} ({2})&quot;@de, &quot;{0} - {1} ({2})&quot;@en)/[#(&quot;A-de&quot;@de, &quot;A-en&quot;@en)]/[#(&quot;B-de&quot;@de, &quot;B-en&quot;@en)]/Uxxx"
+				.replace("&quot;", "\"")
+				.replace("&amp;", "&");
+		ResKey decoded = ResKey.decode(encoded);
+		assertEquals("xxx", decoded.arguments()[2]);
+		assertEquals("A-de - B-de (xxx)", ResourcesModule.getInstance().getBundle(Locale.GERMAN).getString(decoded));
+		assertEquals("A-en - B-en (xxx)", ResourcesModule.getInstance().getBundle(Locale.ENGLISH).getString(decoded));
+	}
+
 	public void testDecodeLegacyString() {
 		String value = "/foo//bar/";
 		String encoded = "abc.def/s" + value.replace("/", "//");
@@ -221,7 +234,8 @@ public class TestResKeyEncoding extends TestCase {
 	}
 
 	public static Test suite() {
-		return ModuleTestSetup.setupModule(TestResKeyEncoding.class);
+		return ModuleTestSetup.setupModule(
+			ServiceTestSetup.createSetup(new TestSuite(TestResKeyEncoding.class), ResourcesModule.Module.INSTANCE));
 	}
 
 }

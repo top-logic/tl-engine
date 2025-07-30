@@ -7,7 +7,6 @@ package com.top_logic.model.search.providers;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.tree.model.TLTreeNode;
 
 /**
@@ -31,17 +30,8 @@ public class TreeTableDragSourceByExpression extends TableDragSourceByExpression
 	}
 
 	@Override
-	public boolean dragEnabled(TableData data, Object row) {
-		return super.dragEnabled(data, nodeObject(row));
-	}
-
-	private Object nodeObject(Object node) {
-		return ((TLTreeNode<?>) node).getBusinessObject();
-	}
-
-	@Override
-	public Object getDragObject(TableData tableData, int row) {
-		return ((TLTreeNode<?>) super.getDragObject(tableData, row)).getBusinessObject();
+	protected Object unwrap(Object rowObject) {
+		return ((TLTreeNode<?>) rowObject).getBusinessObject();
 	}
 
 }

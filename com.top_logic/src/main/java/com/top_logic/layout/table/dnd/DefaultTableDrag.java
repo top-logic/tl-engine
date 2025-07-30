@@ -42,6 +42,11 @@ public class DefaultTableDrag implements TableDragSource {
 	}
 
 	@Override
+	public Object getDragSelection(TableData tableData, int row) {
+		return tableData.getSelectionModel().getSelection();
+	}
+
+	@Override
 	public Object getDragSourceModel(TableData tableData) {
 		return tableData;
 	}

@@ -7,6 +7,7 @@ package com.top_logic.layout.scripting.recorder.ref.ui.form;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.col.Filter;
+import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -89,8 +90,11 @@ public class BusinessObjectFieldMatcher extends AbstractFieldMatcher<BusinessObj
 			if (marker != null) {
 				Object context = field.getStableIdSpecialCaseContext();
 				Config config = TypedConfiguration.newConfigItem(Config.class);
-				config.setBusinessObject(ModelResolver.buildModelName(context, marker));
-				return new BusinessObjectFieldMatcher(null, config);
+				Maybe<? extends ModelName> modelName = ModelResolver.buildModelNameIfAvailable(context, marker);
+				if (modelName.hasValue()) {
+					config.setBusinessObject(modelName.get());
+					return new BusinessObjectFieldMatcher(null, config);
+				}
 			}
 			return null;
 		}

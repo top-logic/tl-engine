@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.table.dnd;
 
+import java.util.Collection;
+
 import com.top_logic.layout.table.TableData;
 
 /**
@@ -42,7 +44,7 @@ public class DefaultTableDrag implements TableDragSource {
 	}
 
 	@Override
-	public Object getDragSelection(TableData tableData, int row) {
+	public Collection<?> getDragSelection(TableData tableData, int row) {
 		return tableData.getSelectionModel().getSelection();
 	}
 

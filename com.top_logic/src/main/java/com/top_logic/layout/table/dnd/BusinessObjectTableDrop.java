@@ -21,7 +21,7 @@ public abstract class BusinessObjectTableDrop implements TableDropTarget {
 
 	@Override
 	public void handleDrop(TableDropEvent event) {
-		Collection<Object> droppedObjects = TLTreeModelUtil.getInnerBusinessObjects(event.getData());
+		Collection<?> droppedObjects = TLTreeModelUtil.getInnerBusinessObjects(event.getData());
 		Object referenceRow = getReferenceRow(event);
 
 		if (ScriptingRecorder.isRecordingActive()) {

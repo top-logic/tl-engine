@@ -516,6 +516,28 @@ message Padding extends Decoration {
 	double right;
 }
 
+/** Element with explicit given width and height. */
+@Operations("com.top_logic.graphic.flow.operations.SizedOperations")
+message Sized extends Decoration {
+
+	/** Minimum width of content. */
+	@Nullable
+	double minWidth;
+	
+	/** Maximum width of content. */
+	@Nullable
+	double maxWidth;
+	
+	/** Minimum height of content. */
+	@Nullable
+	double minHeight;
+	
+	/** Maximum height of content. */
+	@Nullable
+	double maxHeight;
+	
+}
+
 /** A layout that places boxes around some centerd content box. */
 @Operations("com.top_logic.graphic.flow.operations.layout.CompassLayoutOperations")
 message CompassLayout extends Box {
@@ -591,7 +613,7 @@ message HorizontalLayout extends RowLayout {
 message VerticalLayout extends RowLayout {
 }
 
-/** Instruction how to use exta space in a row layout. */
+/** Instruction how to use extra space in a row layout. */
 enum SpaceDistribution {
 	/** Do not use extra space, allow to {@link Align} the row within its container. */
 	NONE;

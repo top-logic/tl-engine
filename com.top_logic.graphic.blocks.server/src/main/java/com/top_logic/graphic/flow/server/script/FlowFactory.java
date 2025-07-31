@@ -7,6 +7,7 @@ package com.top_logic.graphic.flow.server.script;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Iterator;
@@ -99,15 +100,33 @@ public class FlowFactory {
 		if (text == null) {
 			return Empty.create().setUserObject(userObject);
 		}
-		return Text.create()
-			.setValue(text)
-			.setStrokeStyle(strokeStyle)
-			.setFillStyle(fillStyle)
-			.setFontFamily(fontFamily)
-			.setFontSize(fontSize)
-			.setFontWeight(fontWeight)
-			.setCssClass(cssClass)
-			.setUserObject(userObject);
+
+		String[] lines = text.split("\\r?\\n");
+		if (lines.length > 1) {
+			// This could be done better during layout, when the render context and text metrics are
+			// known. Additionally, a line height setting could be given.
+			return VerticalLayout.create().setContents(
+				Arrays.stream(lines).map(line -> Text.create()
+					.setValue(line)
+					.setStrokeStyle(strokeStyle)
+					.setFillStyle(fillStyle)
+					.setFontFamily(fontFamily)
+					.setFontSize(fontSize)
+					.setFontWeight(fontWeight)
+					.setCssClass(cssClass)).toList())
+				.setGap(4)
+				.setUserObject(userObject);
+		} else {
+			return Text.create()
+				.setValue(text)
+				.setStrokeStyle(strokeStyle)
+				.setFillStyle(fillStyle)
+				.setFontFamily(fontFamily)
+				.setFontSize(fontSize)
+				.setFontWeight(fontWeight)
+				.setCssClass(cssClass)
+				.setUserObject(userObject);
+		}
 	}
 
 	/**

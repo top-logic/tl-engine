@@ -236,6 +236,48 @@ public interface SvgWriter extends AutoCloseable {
 	 */
 	void endPath();
 
+	/**
+	 * Starts an anonymous {@value SvgConstants#POLYLINE} tag.
+	 */
+	default void beginPolyline() {
+		beginPolyline(null);
+	}
+
+	/**
+	 * Starts a {@value SvgConstants#POLYLINE} tag.
+	 */
+	void beginPolyline(Object model);
+
+	/**
+	 * Closes a {@value SvgConstants#POLYLINE} tag.
+	 */
+	void endPolyline();
+
+	/**
+	 * Starts an anonymous {@value SvgConstants#POLYGON} tag.
+	 */
+	default void beginPolygon() {
+		beginPolygon(null);
+	}
+
+	/**
+	 * Starts a {@value SvgConstants#POLYGON} tag.
+	 */
+	void beginPolygon(Object model);
+
+	/**
+	 * Closes a {@value SvgConstants#POLYGON} tag.
+	 */
+	void endPolygon();
+
+	/**
+	 * Writes a <code>points</code> attribute
+	 * 
+	 * @param points
+	 *        Space separated pairs of x,y coordinates.
+	 */
+	void writePoints(String points);
+
 	@Override
 	void close();
 

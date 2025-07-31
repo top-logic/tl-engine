@@ -104,6 +104,11 @@ public class SvgTagWriter implements SvgWriter {
 	}
 
 	@Override
+	public void writePoints(String points) {
+		_out.writeAttribute(POINTS_ATTR, points);
+	}
+
+	@Override
 	public void writeId(String id) {
 		_out.writeAttribute(ID_ATTR, id);
 	}
@@ -116,6 +121,16 @@ public class SvgTagWriter implements SvgWriter {
 	@Override
 	public void beginPath(Object model) {
 		beginBeginTag(PATH);
+	}
+
+	@Override
+	public void beginPolyline(Object model) {
+		beginBeginTag(POLYLINE);
+	}
+
+	@Override
+	public void beginPolygon(Object model) {
+		beginBeginTag(POLYGON);
 	}
 
 	@Override
@@ -278,6 +293,16 @@ public class SvgTagWriter implements SvgWriter {
 	@Override
 	public void endPath() {
 		endTag(PATH);
+	}
+
+	@Override
+	public void endPolygon() {
+		endTag(POLYGON);
+	}
+
+	@Override
+	public void endPolyline() {
+		endTag(POLYLINE);
 	}
 
 	@Override

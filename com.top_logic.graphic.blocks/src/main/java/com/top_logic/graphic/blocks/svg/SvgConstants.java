@@ -177,4 +177,19 @@ public interface SvgConstants {
 	 */
 	String IMAGE = "image";
 
+	/**
+	 * Polygon element.
+	 */
+	String POLYGON = "polygon";
+
+	/**
+	 * Polyline element.
+	 */
+	String POLYLINE = "polyline";
+
+	/**
+	 * {@link #POLYGON} and {@link #POLYLINE} points attribute.
+	 */
+	String POINTS_ATTR = "points";
+
 }

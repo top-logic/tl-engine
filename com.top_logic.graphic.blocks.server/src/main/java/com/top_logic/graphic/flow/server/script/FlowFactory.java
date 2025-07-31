@@ -48,6 +48,7 @@ import com.top_logic.graphic.flow.data.ImageScale;
 import com.top_logic.graphic.flow.data.MouseButton;
 import com.top_logic.graphic.flow.data.Padding;
 import com.top_logic.graphic.flow.data.SelectableBox;
+import com.top_logic.graphic.flow.data.Sized;
 import com.top_logic.graphic.flow.data.SpaceDistribution;
 import com.top_logic.graphic.flow.data.Stack;
 import com.top_logic.graphic.flow.data.Text;
@@ -197,12 +198,46 @@ public class FlowFactory {
 	@SideEffectFree
 	public static Box flowPosition(
 			@Mandatory Box content,
-			double x,
-			double y,
-			double width,
-			double height) {
+			Double x,
+			Double y,
+			Double minWidth,
+			Double maxWidth,
+			Double width,
+			Double minHeight,
+			Double maxHeight,
+			Double height) {
+		Sized sized = Sized.create()
+			.setContent(content);
+		if (width != null) {
+			// set width as min and max, eventually overridden by explicit values
+			sized.setMinWidth(width).setMaxWidth(width);
+		}
+		if (minWidth != null) {
+			sized.setMinWidth(minWidth);
+		}
+		if (maxWidth != null) {
+			sized.setMaxWidth(maxWidth);
+		}
 
-		return Padding.create().setContent(content).setX(x).setY(y).setWidth(width).setHeight(height);
+		if (height != null) {
+			// set height as min and max, eventually overridden by explicit values
+			sized.setMinHeight(height).setMaxHeight(height);
+		}
+		if (minHeight != null) {
+			sized.setMinHeight(minHeight);
+		}
+		if (maxHeight != null) {
+			sized.setMaxHeight(maxHeight);
+		}
+
+		if (x != null) {
+			sized.setX(x.doubleValue());
+		}
+		if (y != null) {
+			sized.setY(y.doubleValue());
+		}
+
+		return sized;
 	}
 
 	/**

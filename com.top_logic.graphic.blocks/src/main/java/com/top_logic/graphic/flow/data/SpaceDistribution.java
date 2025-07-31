@@ -1,7 +1,7 @@
 package com.top_logic.graphic.flow.data;
 
 /**
- * Instruction how to use exta space in a row layout.
+ * Instruction how to use extra space in a row layout.
  */
 public enum SpaceDistribution implements de.haumacher.msgbuf.data.ProtocolEnum {
 

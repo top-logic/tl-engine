@@ -32,6 +32,9 @@ public interface Decoration extends Box, com.top_logic.graphic.flow.operations.D
 		/** Visit case for {@link com.top_logic.graphic.flow.data.Padding}.*/
 		R visit(com.top_logic.graphic.flow.data.Padding self, A arg) throws E;
 
+		/** Visit case for {@link com.top_logic.graphic.flow.data.Sized}.*/
+		R visit(com.top_logic.graphic.flow.data.Sized self, A arg) throws E;
+
 	}
 
 	/** @see #getContent() */
@@ -91,6 +94,7 @@ public interface Decoration extends Box, com.top_logic.graphic.flow.operations.D
 			case Border.BORDER__TYPE: result = com.top_logic.graphic.flow.data.Border.create(); break;
 			case Fill.FILL__TYPE: result = com.top_logic.graphic.flow.data.Fill.create(); break;
 			case Padding.PADDING__TYPE: result = com.top_logic.graphic.flow.data.Padding.create(); break;
+			case Sized.SIZED__TYPE: result = com.top_logic.graphic.flow.data.Sized.create(); break;
 			default: in.skipValue(); result = null; break;
 		}
 		if (result != null) {

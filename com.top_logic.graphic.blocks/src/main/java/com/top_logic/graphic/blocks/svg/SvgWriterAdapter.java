@@ -37,7 +37,7 @@ public class SvgWriterAdapter implements SvgWriter {
 
 	@Override
 	public void beginGroup(Object model) {
-		_impl.beginGroup();
+		_impl.beginGroup(model);
 	}
 
 	@Override
@@ -57,7 +57,7 @@ public class SvgWriterAdapter implements SvgWriter {
 
 	@Override
 	public void beginPath(Object model) {
-		_impl.beginPath();
+		_impl.beginPath(model);
 	}
 
 	@Override

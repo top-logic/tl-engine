@@ -26,6 +26,9 @@ public interface Box extends Widget, com.top_logic.graphic.flow.operations.BoxOp
 		/** Visit case for {@link com.top_logic.graphic.flow.data.CompassLayout}.*/
 		R visit(com.top_logic.graphic.flow.data.CompassLayout self, A arg) throws E;
 
+		/** Visit case for {@link com.top_logic.graphic.flow.data.PolygonalChain}.*/
+		R visit(com.top_logic.graphic.flow.data.PolygonalChain self, A arg) throws E;
+
 	}
 
 	/** @see #getParent() */
@@ -118,6 +121,7 @@ public interface Box extends Widget, com.top_logic.graphic.flow.operations.BoxOp
 			case Empty.EMPTY__TYPE: result = com.top_logic.graphic.flow.data.Empty.create(); break;
 			case Stack.STACK__TYPE: result = com.top_logic.graphic.flow.data.Stack.create(); break;
 			case CompassLayout.COMPASS_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.CompassLayout.create(); break;
+			case PolygonalChain.POLYGONAL_CHAIN__TYPE: result = com.top_logic.graphic.flow.data.PolygonalChain.create(); break;
 			case TreeLayout.TREE_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.TreeLayout.create(); break;
 			case SelectableBox.SELECTABLE_BOX__TYPE: result = com.top_logic.graphic.flow.data.SelectableBox.create(); break;
 			case ClickTarget.CLICK_TARGET__TYPE: result = com.top_logic.graphic.flow.data.ClickTarget.create(); break;

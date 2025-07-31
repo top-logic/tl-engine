@@ -61,6 +61,16 @@ public class SvgWriterAdapter implements SvgWriter {
 	}
 
 	@Override
+	public void beginPolygon(Object model) {
+		_impl.beginPolygon(model);
+	}
+
+	@Override
+	public void beginPolyline(Object model) {
+		_impl.beginPolyline(model);
+	}
+
+	@Override
 	public void beginData() {
 		_impl.beginData();
 	}
@@ -131,6 +141,16 @@ public class SvgWriterAdapter implements SvgWriter {
 	}
 
 	@Override
+	public void endPolygon() {
+		_impl.endPolygon();
+	}
+
+	@Override
+	public void endPolyline() {
+		_impl.endPolyline();
+	}
+
+	@Override
 	public void close() {
 		// The adapter is for temporary use, the underlying writer may be used after closing the
 		// adapter.
@@ -162,6 +182,11 @@ public class SvgWriterAdapter implements SvgWriter {
 	@Override
 	public void writeCssClass(String cssClass) {
 		_impl.writeCssClass(cssClass);
+	}
+
+	@Override
+	public void writePoints(String points) {
+		_impl.writePoints(points);
 	}
 
 	@Override

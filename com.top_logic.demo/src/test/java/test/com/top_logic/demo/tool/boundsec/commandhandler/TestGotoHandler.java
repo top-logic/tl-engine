@@ -75,8 +75,11 @@ public class TestGotoHandler extends BasicTestCase {
 		checkVisible("tab1");
 		checkNotVisible("tab2", "dialog2");
 		goTo("tab1", "dialog2");
-		checkVisible("tab2", "dialog2");
-		checkNotVisible("tab1");
+
+		// Note: Dialog on foreign component was opened without witching between defining
+		// components.
+		checkVisible("tab1", "dialog2");
+		checkNotVisible("tab2");
 	}
 
 	public void testDialogToSameDialog() {
@@ -114,8 +117,10 @@ public class TestGotoHandler extends BasicTestCase {
 
 		goTo("dialog1", "dialog2");
 		
-		checkNotVisible("dialog1", "tab1");
-		checkVisible("tab2", "dialog2");
+		// The dialog2 has been opened above dialog1. No component switch occurs in the background
+		// of the dialogs.
+		checkVisible("tab1", "dialog1", "dialog2");
+		checkNotVisible("tab2");
 	}
 
 	public void testDialogToInnerDialog() {
@@ -157,8 +162,7 @@ public class TestGotoHandler extends BasicTestCase {
 		
 		goTo("dialog1.1", "dialog2.1");
 		
-		checkNotVisible("dialog1", "tab1", "dialog1.1");
-		checkVisible("dialog2.1", "dialog2", "tab2");
+		checkVisible("tab1", "dialog1", "dialog1.1", "dialog2.1");
 	}
 	
 	public void testDialogToOtherChildOfDialogParent() {

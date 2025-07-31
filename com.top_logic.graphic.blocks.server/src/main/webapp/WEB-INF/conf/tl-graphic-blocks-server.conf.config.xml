@@ -40,6 +40,9 @@
 					<java name="flowTree" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowTree"/>
 					<java name="flowConnection" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowConnection"/>
 					<java name="flowConnector" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowConnector"/>
+					<java name="flowPolyline" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowPolyline"/>
+					<java name="flowPolygon" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowPolygon"/>
+					<java name="flowPoint" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowPoint"/>
 				</methods>
 			</instance>
 		</config>

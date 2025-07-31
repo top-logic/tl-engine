@@ -627,3 +627,36 @@ enum SpaceDistribution {
 	/** Evenly distribute extra space among the content and the gap between boxes. */
 	STRETCH_ALL;
 }
+
+/** A 2D point. */
+message Point {
+
+	/** The X coordinate of the point. */
+	double x;
+	
+	/** The Y coordinate of the point. */
+	double y;
+}
+
+/** A polygonal chain in the diagram. */
+@Operations("com.top_logic.graphic.flow.operations.PolygonalChainOperations")
+message PolygonalChain extends Box {
+
+	/** The corners in the polygonal chain. */
+	repeated Point points;
+	
+	/** Whether a polygonal chain is closed, i.e. there is an additional synthetic line between the first and the last point. */
+	boolean closed;
+	
+	/** The SVG <code>stroke</code> style. */
+	@Nullable
+	string strokeStyle;
+	
+	/** The SVG <code>fill</code> style. */
+	@Nullable
+	string fillStyle;
+	
+	/** Stroke width of lines. */
+	double thickness = 1.0;
+	
+}

@@ -22,6 +22,7 @@ import com.top_logic.graphic.flow.data.GridLayout;
 import com.top_logic.graphic.flow.data.HorizontalLayout;
 import com.top_logic.graphic.flow.data.Image;
 import com.top_logic.graphic.flow.data.Padding;
+import com.top_logic.graphic.flow.data.PolygonalChain;
 import com.top_logic.graphic.flow.data.SelectableBox;
 import com.top_logic.graphic.flow.data.Sized;
 import com.top_logic.graphic.flow.data.Stack;
@@ -105,6 +106,11 @@ public abstract class DescendingBoxVisitor<R, A> implements Box.Visitor<R, A, Ru
 	@Override
 	public R visit(Padding self, A arg) throws RuntimeException {
 		return apply(visitBox(self, arg), self.getContent().visit(this, arg));
+	}
+
+	@Override
+	public R visit(PolygonalChain self, A arg) throws RuntimeException {
+		return visitBox(self, arg);
 	}
 
 	@Override

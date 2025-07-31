@@ -47,6 +47,8 @@ import com.top_logic.graphic.flow.data.ImageOrientation;
 import com.top_logic.graphic.flow.data.ImageScale;
 import com.top_logic.graphic.flow.data.MouseButton;
 import com.top_logic.graphic.flow.data.Padding;
+import com.top_logic.graphic.flow.data.Point;
+import com.top_logic.graphic.flow.data.PolygonalChain;
 import com.top_logic.graphic.flow.data.SelectableBox;
 import com.top_logic.graphic.flow.data.Sized;
 import com.top_logic.graphic.flow.data.SpaceDistribution;
@@ -407,7 +409,8 @@ public class FlowFactory {
 	 * A layout in which boxes can be positioned explicitly.
 	 * 
 	 * <p>
-	 * Use in combination with {@link #flowPosition(Box, double, double, double, double)}.
+	 * Use in combination with
+	 * {@link #flowPosition(Box, Double, Double, Double, Double, Double, Double, Double, Double)}.
 	 * </p>
 	 */
 	@SideEffectFree
@@ -673,6 +676,75 @@ public class FlowFactory {
 
 	private static Box nonNull(Box content) {
 		return content == null ? Empty.create() : content;
+	}
+
+	/**
+	 * Creates a 2D {@link Point}.
+	 */
+	@SideEffectFree
+	public static Point flowPoint(double x, double y) {
+		return Point.create().setX(x).setY(y);
+	}
+
+	private static PolygonalChain flowPolygonalChain(
+			List<Point> points,
+			boolean closed,
+			String fillStyle,
+			String strokeStyle,
+			double strokeWidth,
+			Object userObject) {
+		return PolygonalChain.create()
+			.setPoints(points)
+			.setClosed(closed)
+			.setFillStyle(fillStyle)
+			.setStrokeStyle(strokeStyle)
+			.setThickness(strokeWidth)
+			.setUserObject(userObject);
+
+	}
+
+	/**
+	 * Creates a polygon, i.e. a closed polygonal chain.
+	 * 
+	 * @param points
+	 *        The corners of the polygon.
+	 * @param fillStyle
+	 *        The style how the enclosed area is filled.
+	 * @param strokeStyle
+	 *        The style of the stroke.
+	 * @param strokeWidth
+	 *        The width of the stroke.
+	 */
+	@SideEffectFree
+	public static PolygonalChain flowPolygon(
+			List<Point> points,
+			@StringDefault("none") String fillStyle,
+			@StringDefault("black") String strokeStyle,
+			@DoubleDefault(1) double strokeWidth,
+			Object userObject) {
+		return flowPolygonalChain(points, true, fillStyle, strokeStyle, strokeWidth, userObject);
+	}
+
+	/**
+	 * Creates a polygonal chain
+	 * 
+	 * @param points
+	 *        The corners of the polygon.
+	 * @param fillStyle
+	 *        The style how the enclosed area is filled.
+	 * @param strokeStyle
+	 *        The style of the stroke.
+	 * @param strokeWidth
+	 *        The width of the stroke.
+	 */
+	@SideEffectFree
+	public static PolygonalChain flowPolyline(
+			List<Point> points,
+			@StringDefault("none") String fillStyle,
+			@StringDefault("black") String strokeStyle,
+			@DoubleDefault(1) double strokeWidth,
+			Object userObject) {
+		return flowPolygonalChain(points, false, fillStyle, strokeStyle, strokeWidth, userObject);
 	}
 
 }

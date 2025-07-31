@@ -14,6 +14,8 @@ import org.vectomatic.dom.svg.OMSVGImageElement;
 import org.vectomatic.dom.svg.OMSVGLength;
 import org.vectomatic.dom.svg.OMSVGMatrix;
 import org.vectomatic.dom.svg.OMSVGPathElement;
+import org.vectomatic.dom.svg.OMSVGPolygonElement;
+import org.vectomatic.dom.svg.OMSVGPolylineElement;
 import org.vectomatic.dom.svg.OMSVGRectElement;
 import org.vectomatic.dom.svg.OMSVGSVGElement;
 import org.vectomatic.dom.svg.OMSVGTransform;
@@ -160,6 +162,34 @@ public class SVGBuilder implements SvgWriter {
 		appendChild(path);
 
 		created(path, model);
+	}
+
+	@Override
+	public void beginPolyline(Object model) {
+		OMSVGPolylineElement polyline = _doc.createSVGPolylineElement();
+		appendChild(polyline);
+
+		created(polyline, model);
+		_current = polyline;
+	}
+
+	@Override
+	public void beginPolygon(Object model) {
+		OMSVGPolygonElement polygon = _doc.createSVGPolygonElement();
+		appendChild(polygon);
+
+		created(polygon, model);
+		_current = polygon;
+	}
+
+	@Override
+	public void endPolyline() {
+		_current = null;
+	}
+
+	@Override
+	public void endPolygon() {
+		_current = null;
 	}
 
 	@Override
@@ -310,6 +340,13 @@ public class SVGBuilder implements SvgWriter {
 	public void writeCssClass(String cssClass) {
 		if (cssClass != null) {
 			_current.setAttribute(CLASS_ATTR, cssClass);
+		}
+	}
+
+	@Override
+	public void writePoints(String points) {
+		if (points != null) {
+			_current.setAttribute(POINTS_ATTR, points);
 		}
 	}
 

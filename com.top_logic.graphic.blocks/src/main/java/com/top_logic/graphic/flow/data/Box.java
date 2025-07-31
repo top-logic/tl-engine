@@ -127,6 +127,7 @@ public interface Box extends Widget, com.top_logic.graphic.flow.operations.BoxOp
 			case Border.BORDER__TYPE: result = com.top_logic.graphic.flow.data.Border.create(); break;
 			case Fill.FILL__TYPE: result = com.top_logic.graphic.flow.data.Fill.create(); break;
 			case Padding.PADDING__TYPE: result = com.top_logic.graphic.flow.data.Padding.create(); break;
+			case Sized.SIZED__TYPE: result = com.top_logic.graphic.flow.data.Sized.create(); break;
 			case GridLayout.GRID_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.GridLayout.create(); break;
 			case HorizontalLayout.HORIZONTAL_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.HorizontalLayout.create(); break;
 			case VerticalLayout.VERTICAL_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.VerticalLayout.create(); break;

@@ -27,6 +27,9 @@ public interface Sized extends Decoration, com.top_logic.graphic.flow.operations
 	/** @see #getMaxHeight() */
 	String MAX_HEIGHT__PROP = "maxHeight";
 
+	/** @see #isPreserveAspectRatio() */
+	String PRESERVE_ASPECT_RATIO__PROP = "preserveAspectRatio";
+
 	/**
 	 * Minimum width of content.
 	 */
@@ -86,6 +89,16 @@ public interface Sized extends Decoration, com.top_logic.graphic.flow.operations
 	 * Checks, whether {@link #getMaxHeight()} has a value.
 	 */
 	boolean hasMaxHeight();
+
+	/**
+	 * When content size is adjusted, the aspect ratio of the content ist kept.
+	 */
+	boolean isPreserveAspectRatio();
+
+	/**
+	 * @see #isPreserveAspectRatio()
+	 */
+	com.top_logic.graphic.flow.data.Sized setPreserveAspectRatio(boolean value);
 
 	@Override
 	com.top_logic.graphic.flow.data.Sized setContent(com.top_logic.graphic.flow.data.Box value);

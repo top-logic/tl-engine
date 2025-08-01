@@ -33,7 +33,6 @@ public interface SizedOperations extends DecorationOperations {
 		if (self().getMaxWidth() != null) {
 			width = Math.min(self().getMaxWidth(), width);
 		}
-		self().setWidth(width);
 
 		double height = content.getHeight();
 		if (self().getMinHeight() != null) {
@@ -42,7 +41,24 @@ public interface SizedOperations extends DecorationOperations {
 		if (self().getMaxHeight() != null) {
 			height = Math.min(self().getMaxHeight(), height);
 		}
-		self().setHeight(height);
+
+		if (self().isPreserveAspectRatio()) {
+			double xScale = width / content.getWidth();
+			double yScale = height / content.getHeight();
+
+			// First try to fulfill the maximum bounds.
+			double scale = Math.min(xScale, yScale);
+			if (scale == 1.0) {
+				// There were no maximum bounds enforced, use the minimum bounds, if any.
+				scale = Math.max(xScale, yScale);
+			}
+
+			self().setWidth(content.getWidth() * scale);
+			self().setHeight(content.getHeight() * scale);
+		} else {
+			self().setWidth(width);
+			self().setHeight(height);
+		}
 	}
 
 	@Override

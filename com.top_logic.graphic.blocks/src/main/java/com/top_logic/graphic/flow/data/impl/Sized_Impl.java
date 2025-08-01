@@ -13,6 +13,8 @@ public class Sized_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 
 	private Double _maxHeight = null;
 
+	private boolean _preserveAspectRatio = false;
+
 	/**
 	 * Creates a {@link Sized_Impl} instance.
 	 *
@@ -120,6 +122,24 @@ public class Sized_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 	}
 
 	@Override
+	public final boolean isPreserveAspectRatio() {
+		return _preserveAspectRatio;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Sized setPreserveAspectRatio(boolean value) {
+		internalSetPreserveAspectRatio(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isPreserveAspectRatio()} without chain call utility. */
+	protected final void internalSetPreserveAspectRatio(boolean value) {
+		_listener.beforeSet(this, PRESERVE_ASPECT_RATIO__PROP, value);
+		_preserveAspectRatio = value;
+		_listener.afterChanged(this, PRESERVE_ASPECT_RATIO__PROP);
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.Sized setContent(com.top_logic.graphic.flow.data.Box value) {
 		internalSetContent(value);
 		return this;
@@ -177,7 +197,8 @@ public class Sized_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 			MIN_WIDTH__PROP, 
 			MAX_WIDTH__PROP, 
 			MIN_HEIGHT__PROP, 
-			MAX_HEIGHT__PROP));
+			MAX_HEIGHT__PROP, 
+			PRESERVE_ASPECT_RATIO__PROP));
 
 	private static java.util.Set<String> TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(new java.util.HashSet<>(
 			java.util.Arrays.asList(
@@ -200,6 +221,7 @@ public class Sized_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 			case MAX_WIDTH__PROP: return getMaxWidth();
 			case MIN_HEIGHT__PROP: return getMinHeight();
 			case MAX_HEIGHT__PROP: return getMaxHeight();
+			case PRESERVE_ASPECT_RATIO__PROP: return isPreserveAspectRatio();
 			default: return super.get(field);
 		}
 	}
@@ -211,6 +233,7 @@ public class Sized_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 			case MAX_WIDTH__PROP: internalSetMaxWidth((Double) value); break;
 			case MIN_HEIGHT__PROP: internalSetMinHeight((Double) value); break;
 			case MAX_HEIGHT__PROP: internalSetMaxHeight((Double) value); break;
+			case PRESERVE_ASPECT_RATIO__PROP: internalSetPreserveAspectRatio((boolean) value); break;
 			default: super.set(field, value); break;
 		}
 	}
@@ -234,6 +257,8 @@ public class Sized_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 			out.name(MAX_HEIGHT__PROP);
 			out.value(getMaxHeight());
 		}
+		out.name(PRESERVE_ASPECT_RATIO__PROP);
+		out.value(isPreserveAspectRatio());
 	}
 
 	@Override
@@ -271,6 +296,10 @@ public class Sized_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 				}
 				break;
 			}
+			case PRESERVE_ASPECT_RATIO__PROP: {
+				out.value(isPreserveAspectRatio());
+				break;
+			}
 			default: super.writeFieldValue(scope, out, field);
 		}
 	}
@@ -282,6 +311,7 @@ public class Sized_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 			case MAX_WIDTH__PROP: setMaxWidth(in.nextDouble()); break;
 			case MIN_HEIGHT__PROP: setMinHeight(in.nextDouble()); break;
 			case MAX_HEIGHT__PROP: setMaxHeight(in.nextDouble()); break;
+			case PRESERVE_ASPECT_RATIO__PROP: setPreserveAspectRatio(in.nextBoolean()); break;
 			default: super.readField(scope, in, field);
 		}
 	}

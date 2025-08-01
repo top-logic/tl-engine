@@ -61,7 +61,8 @@ public class DBKnowledgeAssociation extends StaticKnowledgeItem implements Knowl
 
 	@Override
 	public String toString() {
-		return super.toString() + "(" + getSourceIdentity() + "->" + getDestinationIdentity() + ")";
+		return super.toString() + "(" + KnowledgeAssociationImpl.getSourceIdentityOrNull(this) + "->"
+				+ KnowledgeAssociationImpl.getDestinationIdentityOrNull(this) + ")";
 	}
 
 	public static void clearDestinationAndRemoveLink(KnowledgeAssociation ka) throws DataObjectException {

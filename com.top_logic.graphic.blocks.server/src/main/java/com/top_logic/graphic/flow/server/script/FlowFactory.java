@@ -207,9 +207,9 @@ public class FlowFactory {
 			Double width,
 			Double minHeight,
 			Double maxHeight,
-			Double height) {
-		Sized sized = Sized.create()
-			.setContent(content);
+			Double height,
+			Object userObject) {
+		Sized sized = Sized.create();
 		if (width != null) {
 			// set width as min and max, eventually overridden by explicit values
 			sized.setMinWidth(width).setMaxWidth(width);
@@ -239,7 +239,9 @@ public class FlowFactory {
 			sized.setY(y.doubleValue());
 		}
 
-		return sized;
+		return sized
+			.setContent(content)
+				.setUserObject(userObject);
 	}
 
 	/**
@@ -410,7 +412,7 @@ public class FlowFactory {
 	 * 
 	 * <p>
 	 * Use in combination with
-	 * {@link #flowPosition(Box, Double, Double, Double, Double, Double, Double, Double, Double)}.
+	 * {@link #flowPosition(Box, Double, Double, Double, Double, Double, Double, Double, Double, Object)}.
 	 * </p>
 	 */
 	@SideEffectFree

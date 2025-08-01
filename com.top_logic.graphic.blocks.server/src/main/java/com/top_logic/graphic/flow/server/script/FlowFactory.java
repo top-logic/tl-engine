@@ -229,8 +229,9 @@ public class FlowFactory {
 			Double minHeight,
 			Double maxHeight,
 			Double height,
+			boolean preserveAspectRatio,
 			Object userObject) {
-		Sized sized = Sized.create();
+		Sized sized = Sized.create().setPreserveAspectRatio(preserveAspectRatio);
 		if (width != null) {
 			// set width as min and max, eventually overridden by explicit values
 			sized.setMinWidth(width).setMaxWidth(width);

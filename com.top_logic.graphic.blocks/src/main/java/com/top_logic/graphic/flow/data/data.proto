@@ -536,6 +536,9 @@ message Sized extends Decoration {
 	@Nullable
 	double maxHeight;
 	
+	/** When content size is adjusted, the aspect ratio of the content ist kept. */
+	bool preserveAspectRatio;
+	
 }
 
 /** A layout that places boxes around some centerd content box. */

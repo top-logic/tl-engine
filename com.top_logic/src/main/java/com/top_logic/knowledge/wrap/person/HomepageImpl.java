@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.CollectionUtil;
+import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -25,11 +26,13 @@ import com.top_logic.layout.channel.ComponentChannel;
 import com.top_logic.layout.channel.ModelChannel;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
+import com.top_logic.layout.scripting.recorder.ref.TransientTLObjectNaming;
 import com.top_logic.layout.scripting.recorder.ref.ui.LayoutComponentResolver;
 import com.top_logic.layout.scripting.runtime.LiveActionContext;
 import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
+import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.commandhandlers.RelevantComponentFinder;
 
 /**
@@ -253,7 +256,15 @@ public class HomepageImpl extends AbstractConfiguredInstance<Homepage> {
 	 * Extracts the wrapper from the model if available.
 	 */
 	protected ModelName extractTargetObjectFromModel(Object model) {
-		return ModelResolver.buildModelNameIfAvailable(model).getElse(null);
+		Maybe<? extends ModelName> modelName = ModelResolver.buildModelNameIfAvailable(model);
+		if (modelName.hasValue()) {
+			return modelName.get();
+		}
+		if (model instanceof TLObject && ((TLObject) model).tTransient()) {
+			/* In general, transient TLObjects are not recorded, so an explicit name is created. */
+			return TransientTLObjectNaming.forceBuildName((TLObject) model).getElse(null);
+		}
+		return null;
 	}
 
 }

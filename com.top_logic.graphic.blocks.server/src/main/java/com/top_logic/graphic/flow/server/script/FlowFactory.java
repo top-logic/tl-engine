@@ -106,7 +106,9 @@ public class FlowFactory {
 			// This could be done better during layout, when the render context and text metrics are
 			// known. Additionally, a line height setting could be given.
 			return VerticalLayout.create().setContents(
-				Arrays.stream(lines).map(line -> Text.create()
+				Arrays.stream(lines).map(line -> line.isBlank()
+					? Sized.create().setMinHeight(12.0).setContent(Empty.create())
+					: Text.create()
 					.setValue(line)
 					.setStrokeStyle(strokeStyle)
 					.setFillStyle(fillStyle)
@@ -114,7 +116,7 @@ public class FlowFactory {
 					.setFontSize(fontSize)
 					.setFontWeight(fontWeight)
 					.setCssClass(cssClass)).toList())
-				.setGap(4)
+				.setGap(6)
 				.setUserObject(userObject);
 		} else {
 			return Text.create()

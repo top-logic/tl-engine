@@ -3,7 +3,7 @@
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	groups="commons"
 >
-	<properties extends="com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.mig.html.layout.WithGotoConfiguration">
+	<properties extends="com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.mig.html.layout.WithGotoConfiguration, com.top_logic.mig.html.DefaultSelectionModelFactory$UIOptions">
 		<annotations>
 			<display-order>
 				<value>
@@ -13,6 +13,7 @@
 					<property name="modelBuilder"/>
 
 					<property name="multiSelection"/>
+					<property name="selectionFilter"/>
 
 					<property name="isSecurityMaster"/>
 
@@ -47,9 +48,6 @@
 			<mandatory/>
 			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>
 		</property>
-		<property name="multiSelection"
-			type="boolean"
-		/>
 		<property name="securityProviderClass"
 			default="securityRoot"
 			type="String"
@@ -79,7 +77,10 @@
 		titleKey="${name}"
 		toolbar="${toolbar}"
 	>
-		<selectionModelFactory multiple="${multiSelection}"/>
+		<selectionModelFactory
+			filter="${selectionFilter}"
+			multiple="${multiSelection}"
+		/>
 		<buttons>
 			${buttons}
 			<include name="templates/editComponentCommands.xml"/>

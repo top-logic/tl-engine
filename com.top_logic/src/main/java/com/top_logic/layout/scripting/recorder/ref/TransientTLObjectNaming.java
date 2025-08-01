@@ -54,6 +54,9 @@ public class TransientTLObjectNaming extends AbstractModelNamingScheme<TLObject,
 	private static final Property<Integer> NEXT_ID =
 		TypedAnnotatable.property(Integer.class, "nextId", Integer.valueOf(1));
 
+	private static final Property<Boolean> FORCE_BUILD_NAME =
+		TypedAnnotatable.property(Boolean.class, "force build name");
+
 	/**
 	 * {@link ModelName} of {@link TransientTLObjectNaming}.
 	 */
@@ -242,8 +245,35 @@ public class TransientTLObjectNaming extends AbstractModelNamingScheme<TLObject,
 
 	@Override
 	protected boolean isCompatibleModel(TLObject model) {
-		// Only for resolving.
-		return false;
+		DisplayContext dc = DefaultDisplayContext.getDisplayContext();
+		if (!dc.get(FORCE_BUILD_NAME)) {
+			/* Deactivate recording by default. Only in special cases, recording is necessary. */
+			return false;
+		}
+		if (!model.tTransient()) {
+			return false;
+		}
+		return super.isCompatibleModel(model);
+	}
+
+	/**
+	 * Creates a {@link Name} for the given {@link TLObject}.
+	 * 
+	 * @param model
+	 *        A {@link TLObject#tTransient() transient} {@link TLObject} to create model name for.
+	 *        Must not be <code>null</code>.
+	 * @return Model name for the given transient {@link TLObject}.
+	 */
+	public static Maybe<Name> forceBuildName(TLObject model) {
+		TransientTLObjectNaming scheme =
+			(TransientTLObjectNaming) ModelResolver.getInstance().getSchemeForNameType(Name.class);
+		DisplayContext dc = DefaultDisplayContext.getDisplayContext();
+		Boolean formerValue = dc.set(FORCE_BUILD_NAME, true);
+		try {
+			return scheme.buildName(model);
+		} finally {
+			dc.set(FORCE_BUILD_NAME, formerValue);
+		}
 	}
 
 }

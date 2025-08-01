@@ -10,8 +10,8 @@
 		</annotations>
 
 		<property name="toolbar"
-			type="boolean"
 			default="false"
+			type="boolean"
 		/>
 
 		<property name="name"
@@ -30,7 +30,7 @@
 			<property-editor value="com.top_logic.layout.form.values.edit.editor.InternationalizationEditor"/>
 			<item-display value="monomorphic"/>
 		</property>
-		
+
 		<property name="components"
 			element-type="com.top_logic.mig.html.layout.LayoutComponent$Config"
 			type="List"

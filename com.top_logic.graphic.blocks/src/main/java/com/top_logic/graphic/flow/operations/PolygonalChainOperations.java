@@ -11,6 +11,7 @@ import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
 import com.top_logic.graphic.flow.data.Point;
 import com.top_logic.graphic.flow.data.PolygonalChain;
+import com.top_logic.graphic.flow.operations.util.DiagramUtil;
 
 /**
  * A polygonal chain.
@@ -62,6 +63,11 @@ public interface PolygonalChainOperations extends BoxOperations {
 			out.beginPolyline();
 		}
 		out.writePoints(points);
+		out.writeCssClass(self().getCssClass());
+		if (!self().getDashes().isEmpty()) {
+			out.setStrokeDasharray(DiagramUtil.doubleArray(self().getDashes()));
+		}
+		out.setStrokeWidth(self().getThickness());
 		out.setStroke(self().getStrokeStyle());
 		out.setFill(self().getFillStyle());
 		if (isPolygon) {

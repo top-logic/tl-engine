@@ -714,15 +714,22 @@ public class FlowFactory {
 			List<Point> points,
 			boolean closed,
 			String fillStyle,
-			String strokeStyle,
-			double strokeWidth,
+			String stroke,
+			double thickness,
+			List<Double> dashes,
+			String cssClass,
 			Object userObject) {
+		if (dashes == null) {
+			dashes = Collections.emptyList();
+		}
 		return PolygonalChain.create()
 			.setPoints(points)
 			.setClosed(closed)
 			.setFillStyle(fillStyle)
-			.setStrokeStyle(strokeStyle)
-			.setThickness(strokeWidth)
+			.setStrokeStyle(stroke)
+			.setThickness(thickness)
+			.setDashes(dashes)
+			.setCssClass(cssClass)
 			.setUserObject(userObject);
 
 	}
@@ -734,19 +741,21 @@ public class FlowFactory {
 	 *        The corners of the polygon.
 	 * @param fillStyle
 	 *        The style how the enclosed area is filled.
-	 * @param strokeStyle
+	 * @param stroke
 	 *        The style of the stroke.
-	 * @param strokeWidth
+	 * @param thickness
 	 *        The width of the stroke.
 	 */
 	@SideEffectFree
 	public static PolygonalChain flowPolygon(
 			List<Point> points,
 			@StringDefault("none") String fillStyle,
-			@StringDefault("black") String strokeStyle,
-			@DoubleDefault(1) double strokeWidth,
+			@StringDefault("black") @ScriptConversion(ToStyle.class) String stroke,
+			@DoubleDefault(1) double thickness,
+			List<Double> dashes,
+			String cssClass,
 			Object userObject) {
-		return flowPolygonalChain(points, true, fillStyle, strokeStyle, strokeWidth, userObject);
+		return flowPolygonalChain(points, true, fillStyle, stroke, thickness, dashes, cssClass, userObject);
 	}
 
 	/**
@@ -756,19 +765,21 @@ public class FlowFactory {
 	 *        The corners of the polygon.
 	 * @param fillStyle
 	 *        The style how the enclosed area is filled.
-	 * @param strokeStyle
+	 * @param stroke
 	 *        The style of the stroke.
-	 * @param strokeWidth
+	 * @param thickness
 	 *        The width of the stroke.
 	 */
 	@SideEffectFree
 	public static PolygonalChain flowPolyline(
 			List<Point> points,
 			@StringDefault("none") String fillStyle,
-			@StringDefault("black") String strokeStyle,
-			@DoubleDefault(1) double strokeWidth,
+			@StringDefault("black") @ScriptConversion(ToStyle.class) String stroke,
+			@DoubleDefault(1) double thickness,
+			List<Double> dashes,
+			String cssClass,
 			Object userObject) {
-		return flowPolygonalChain(points, false, fillStyle, strokeStyle, strokeWidth, userObject);
+		return flowPolygonalChain(points, false, fillStyle, stroke, thickness, dashes, cssClass, userObject);
 	}
 
 }

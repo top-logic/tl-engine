@@ -30,6 +30,23 @@ public class PolygonalChain_Impl extends com.top_logic.graphic.flow.data.impl.Bo
 
 	private double _thickness = 1.0;
 
+	private final java.util.List<Double> _dashes = new de.haumacher.msgbuf.util.ReferenceList<Double>() {
+		@Override
+		protected void beforeAdd(int index, Double element) {
+			_listener.beforeAdd(PolygonalChain_Impl.this, DASHES__PROP, index, element);
+		}
+
+		@Override
+		protected void afterRemove(int index, Double element) {
+			_listener.afterRemove(PolygonalChain_Impl.this, DASHES__PROP, index, element);
+		}
+
+		@Override
+		protected void afterChanged() {
+			_listener.afterChanged(PolygonalChain_Impl.this, DASHES__PROP);
+		}
+	};
+
 	/**
 	 * Creates a {@link PolygonalChain_Impl} instance.
 	 *
@@ -161,6 +178,39 @@ public class PolygonalChain_Impl extends com.top_logic.graphic.flow.data.impl.Bo
 	}
 
 	@Override
+	public final java.util.List<Double> getDashes() {
+		return _dashes;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.PolygonalChain setDashes(java.util.List<? extends Double> value) {
+		internalSetDashes(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getDashes()} without chain call utility. */
+	protected final void internalSetDashes(java.util.List<? extends Double> value) {
+		_dashes.clear();
+		_dashes.addAll(value);
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.PolygonalChain addDashe(double value) {
+		internalAddDashe(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addDashe(double)} without chain call utility. */
+	protected final void internalAddDashe(double value) {
+		_dashes.add(value);
+	}
+
+	@Override
+	public final void removeDashe(double value) {
+		_dashes.remove(value);
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.PolygonalChain setX(double value) {
 		internalSetX(value);
 		return this;
@@ -213,7 +263,8 @@ public class PolygonalChain_Impl extends com.top_logic.graphic.flow.data.impl.Bo
 			CLOSED__PROP, 
 			STROKE_STYLE__PROP, 
 			FILL_STYLE__PROP, 
-			THICKNESS__PROP));
+			THICKNESS__PROP, 
+			DASHES__PROP));
 
 	private static java.util.Set<String> TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(new java.util.HashSet<>(
 			java.util.Arrays.asList(
@@ -237,6 +288,7 @@ public class PolygonalChain_Impl extends com.top_logic.graphic.flow.data.impl.Bo
 			case STROKE_STYLE__PROP: return getStrokeStyle();
 			case FILL_STYLE__PROP: return getFillStyle();
 			case THICKNESS__PROP: return getThickness();
+			case DASHES__PROP: return getDashes();
 			default: return super.get(field);
 		}
 	}
@@ -249,6 +301,7 @@ public class PolygonalChain_Impl extends com.top_logic.graphic.flow.data.impl.Bo
 			case STROKE_STYLE__PROP: internalSetStrokeStyle((String) value); break;
 			case FILL_STYLE__PROP: internalSetFillStyle((String) value); break;
 			case THICKNESS__PROP: internalSetThickness((double) value); break;
+			case DASHES__PROP: internalSetDashes(de.haumacher.msgbuf.util.Conversions.asList(Double.class, value)); break;
 			default: super.set(field, value); break;
 		}
 	}
@@ -274,6 +327,12 @@ public class PolygonalChain_Impl extends com.top_logic.graphic.flow.data.impl.Bo
 		}
 		out.name(THICKNESS__PROP);
 		out.value(getThickness());
+		out.name(DASHES__PROP);
+		out.beginArray();
+		for (double x : getDashes()) {
+			out.value(x);
+		}
+		out.endArray();
 	}
 
 	@Override
@@ -311,6 +370,14 @@ public class PolygonalChain_Impl extends com.top_logic.graphic.flow.data.impl.Bo
 				out.value(getThickness());
 				break;
 			}
+			case DASHES__PROP: {
+				out.beginArray();
+				for (double x : getDashes()) {
+					out.value(x);
+				}
+				out.endArray();
+				break;
+			}
 			default: super.writeFieldValue(scope, out, field);
 		}
 	}
@@ -332,6 +399,16 @@ public class PolygonalChain_Impl extends com.top_logic.graphic.flow.data.impl.Bo
 			case STROKE_STYLE__PROP: setStrokeStyle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case FILL_STYLE__PROP: setFillStyle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case THICKNESS__PROP: setThickness(in.nextDouble()); break;
+			case DASHES__PROP: {
+				java.util.List<Double> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(in.nextDouble());
+				}
+				in.endArray();
+				setDashes(newValue);
+			}
+			break;
 			default: super.readField(scope, in, field);
 		}
 	}
@@ -343,6 +420,10 @@ public class PolygonalChain_Impl extends com.top_logic.graphic.flow.data.impl.Bo
 				((com.top_logic.graphic.flow.data.Point) element).writeTo(scope, out);
 				break;
 			}
+			case DASHES__PROP: {
+				out.value(((double) element));
+				break;
+			}
 			default: super.writeElement(scope, out, field, element);
 		}
 	}
@@ -352,6 +433,9 @@ public class PolygonalChain_Impl extends com.top_logic.graphic.flow.data.impl.Bo
 		switch (field) {
 			case POINTS__PROP: {
 				return com.top_logic.graphic.flow.data.Point.readPoint(scope, in);
+			}
+			case DASHES__PROP: {
+				return in.nextDouble();
 			}
 			default: return super.readElement(scope, in, field);
 		}

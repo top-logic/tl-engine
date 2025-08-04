@@ -50,6 +50,7 @@
 					<java name="flowPolyline" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowPolyline"/>
 					<java name="flowPolygon" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowPolygon"/>
 					<java name="flowPoint" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowPoint"/>
+					<java name="flowClipbox" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowClipbox"/>
 				</methods>
 			</instance>
 		</config>

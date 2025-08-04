@@ -32,6 +32,7 @@ import com.top_logic.graphic.flow.data.Alignment;
 import com.top_logic.graphic.flow.data.Border;
 import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.data.ClickTarget;
+import com.top_logic.graphic.flow.data.ClipBox;
 import com.top_logic.graphic.flow.data.CompassLayout;
 import com.top_logic.graphic.flow.data.Decoration;
 import com.top_logic.graphic.flow.data.Diagram;
@@ -780,6 +781,24 @@ public class FlowFactory {
 			String cssClass,
 			Object userObject) {
 		return flowPolygonalChain(points, false, fillStyle, stroke, thickness, dashes, cssClass, userObject);
+	}
+
+	/**
+	 * A {@link Box} whose contents are cut off when they become to large.
+	 * 
+	 * @param content
+	 *        The contents to clip.
+	 */
+	@SideEffectFree
+	public static ClipBox flowClipbox(
+			@Mandatory Box content,
+			String cssClass,
+			Object userObject) {
+		return ClipBox.create()
+			.setContent(content)
+			.setUserObject(userObject)
+			.setClientId(cssClass)
+			.setCssClass(cssClass);
 	}
 
 }

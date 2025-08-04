@@ -192,4 +192,8 @@ public interface SvgConstants {
 	 */
 	String POINTS_ATTR = "points";
 
+	/**
+	 * <code>clipPath</code> element.
+	 */
+	String CLIP_PATH = "clipPath";
 }

@@ -7,6 +7,7 @@ package com.top_logic.graphic.blocks.client.control;
 
 import static com.top_logic.graphic.blocks.svg.SvgConstants.*;
 
+import org.vectomatic.dom.svg.OMSVGClipPathElement;
 import org.vectomatic.dom.svg.OMSVGDocument;
 import org.vectomatic.dom.svg.OMSVGElement;
 import org.vectomatic.dom.svg.OMSVGGElement;
@@ -190,6 +191,20 @@ public class SVGBuilder implements SvgWriter {
 	@Override
 	public void endPolygon() {
 		_current = null;
+	}
+
+	@Override
+	public void beginClipPath(Object model) {
+		OMSVGClipPathElement clipPath = _doc.createSVGClipPathElement();
+		_parent.appendChild(clipPath);
+		setParent(clipPath);
+
+		created(clipPath, model);
+	}
+
+	@Override
+	public void endClipPath() {
+		setParent((OMSVGElement) _parent.getParentNode());
 	}
 
 	@Override

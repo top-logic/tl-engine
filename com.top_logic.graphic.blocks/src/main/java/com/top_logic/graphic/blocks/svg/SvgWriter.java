@@ -271,6 +271,23 @@ public interface SvgWriter extends AutoCloseable {
 	void endPolygon();
 
 	/**
+	 * Starts an anonymous {@value SvgConstants#CLIP_PATH} tag.
+	 */
+	default void beginClipPath() {
+		beginClipPath(null);
+	}
+
+	/**
+	 * Starts a {@value SvgConstants#CLIP_PATH} tag.
+	 */
+	void beginClipPath(Object model);
+
+	/**
+	 * Closes a {@value SvgConstants#CLIP_PATH} tag.
+	 */
+	void endClipPath();
+
+	/**
 	 * Writes a <code>points</code> attribute
 	 * 
 	 * @param points

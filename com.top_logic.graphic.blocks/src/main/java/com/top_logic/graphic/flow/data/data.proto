@@ -666,3 +666,9 @@ message PolygonalChain extends Box {
 	repeated double dashes;
 
 }
+
+/** A box whose content is clipped. */
+@Operations("com.top_logic.graphic.flow.operations.ClipBoxOperations")
+message ClipBox extends Decoration {
+  // Nothing additional here	
+}

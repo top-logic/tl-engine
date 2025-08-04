@@ -56,6 +56,9 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 		/** Type literal for {@link com.top_logic.graphic.flow.data.Sized}. */
 		SIZED,
 
+		/** Type literal for {@link com.top_logic.graphic.flow.data.ClipBox}. */
+		CLIP_BOX,
+
 		/** Type literal for {@link com.top_logic.graphic.flow.data.CompassLayout}. */
 		COMPASS_LAYOUT,
 
@@ -181,6 +184,7 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 			case Fill.FILL__TYPE: result = com.top_logic.graphic.flow.data.Fill.create(); break;
 			case Padding.PADDING__TYPE: result = com.top_logic.graphic.flow.data.Padding.create(); break;
 			case Sized.SIZED__TYPE: result = com.top_logic.graphic.flow.data.Sized.create(); break;
+			case ClipBox.CLIP_BOX__TYPE: result = com.top_logic.graphic.flow.data.ClipBox.create(); break;
 			case GridLayout.GRID_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.GridLayout.create(); break;
 			case HorizontalLayout.HORIZONTAL_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.HorizontalLayout.create(); break;
 			case VerticalLayout.VERTICAL_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.VerticalLayout.create(); break;

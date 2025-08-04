@@ -30,6 +30,9 @@ public interface PolygonalChain extends Box, com.top_logic.graphic.flow.operatio
 	/** @see #getThickness() */
 	String THICKNESS__PROP = "thickness";
 
+	/** @see #getDashes() */
+	String DASHES__PROP = "dashes";
+
 	/**
 	 * The corners in the polygonal chain.
 	 */
@@ -91,7 +94,7 @@ public interface PolygonalChain extends Box, com.top_logic.graphic.flow.operatio
 	boolean hasFillStyle();
 
 	/**
-	 * Stroke width of lines.
+	 * Thickness of drawn lines.
 	 */
 	double getThickness();
 
@@ -99,6 +102,26 @@ public interface PolygonalChain extends Box, com.top_logic.graphic.flow.operatio
 	 * @see #getThickness()
 	 */
 	com.top_logic.graphic.flow.data.PolygonalChain setThickness(double value);
+
+	/**
+	 * Length of dashes for a dashed border.
+	 */
+	java.util.List<Double> getDashes();
+
+	/**
+	 * @see #getDashes()
+	 */
+	com.top_logic.graphic.flow.data.PolygonalChain setDashes(java.util.List<? extends Double> value);
+
+	/**
+	 * Adds a value to the {@link #getDashes()} list.
+	 */
+	com.top_logic.graphic.flow.data.PolygonalChain addDashe(double value);
+
+	/**
+	 * Removes a value from the {@link #getDashes()} list.
+	 */
+	void removeDashe(double value);
 
 	@Override
 	com.top_logic.graphic.flow.data.PolygonalChain setX(double value);

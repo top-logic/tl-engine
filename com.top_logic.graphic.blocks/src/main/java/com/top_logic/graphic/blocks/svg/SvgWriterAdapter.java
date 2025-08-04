@@ -71,6 +71,16 @@ public class SvgWriterAdapter implements SvgWriter {
 	}
 
 	@Override
+	public void beginClipPath(Object model) {
+		_impl.beginClipPath(model);
+	}
+
+	@Override
+	public void endClipPath() {
+		_impl.endClipPath();
+	}
+
+	@Override
 	public void beginData() {
 		_impl.beginData();
 	}

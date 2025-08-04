@@ -134,6 +134,16 @@ public class SvgTagWriter implements SvgWriter {
 	}
 
 	@Override
+	public void beginClipPath(Object model) {
+		beginBeginTag(CLIP_PATH);
+	}
+
+	@Override
+	public void endClipPath() {
+		endTag(CLIP_PATH);
+	}
+
+	@Override
 	public void beginData() {
 		_out.beginAttribute(D_ATTR);
 		_inData = true;

@@ -35,6 +35,9 @@ public interface Decoration extends Box, com.top_logic.graphic.flow.operations.D
 		/** Visit case for {@link com.top_logic.graphic.flow.data.Sized}.*/
 		R visit(com.top_logic.graphic.flow.data.Sized self, A arg) throws E;
 
+		/** Visit case for {@link com.top_logic.graphic.flow.data.ClipBox}.*/
+		R visit(com.top_logic.graphic.flow.data.ClipBox self, A arg) throws E;
+
 	}
 
 	/** @see #getContent() */
@@ -95,6 +98,7 @@ public interface Decoration extends Box, com.top_logic.graphic.flow.operations.D
 			case Fill.FILL__TYPE: result = com.top_logic.graphic.flow.data.Fill.create(); break;
 			case Padding.PADDING__TYPE: result = com.top_logic.graphic.flow.data.Padding.create(); break;
 			case Sized.SIZED__TYPE: result = com.top_logic.graphic.flow.data.Sized.create(); break;
+			case ClipBox.CLIP_BOX__TYPE: result = com.top_logic.graphic.flow.data.ClipBox.create(); break;
 			default: in.skipValue(); result = null; break;
 		}
 		if (result != null) {

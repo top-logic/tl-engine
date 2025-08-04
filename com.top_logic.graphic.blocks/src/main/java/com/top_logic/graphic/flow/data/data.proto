@@ -659,7 +659,10 @@ message PolygonalChain extends Box {
 	@Nullable
 	string fillStyle;
 	
-	/** Stroke width of lines. */
+	/** Thickness of drawn lines. */
 	double thickness = 1.0;
 	
+	/** Length of dashes for a dashed border. */
+	repeated double dashes;
+
 }

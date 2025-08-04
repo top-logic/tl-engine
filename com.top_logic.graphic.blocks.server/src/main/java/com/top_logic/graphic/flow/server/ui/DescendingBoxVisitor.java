@@ -13,6 +13,7 @@ import com.top_logic.graphic.flow.data.Border;
 import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.data.Box.Visitor;
 import com.top_logic.graphic.flow.data.ClickTarget;
+import com.top_logic.graphic.flow.data.ClipBox;
 import com.top_logic.graphic.flow.data.CompassLayout;
 import com.top_logic.graphic.flow.data.DropRegion;
 import com.top_logic.graphic.flow.data.Empty;
@@ -153,6 +154,11 @@ public abstract class DescendingBoxVisitor<R, A> implements Box.Visitor<R, A, Ru
 		return apply(visitBox(self, arg),
 			Arrays.asList(self.getNorth(), self.getWest(), self.getEast(), self.getSouth(), self.getCenter())
 				.stream().map(b -> b.visit(this, arg)).reduce(this).orElse(null));
+	}
+
+	@Override
+	public R visit(ClipBox self, A arg) throws RuntimeException {
+		return visitBox(self, arg);
 	}
 
 }

@@ -254,23 +254,24 @@ public class PersistentObjectImpl {
 	 *        the value
 	 */
 	public static void addValue(TLObject object, String aKey, Object aValue) {
-        try{
-			TLStructuredTypePart attribute = object.tType().getPart(aKey);
-            if (AttributeOperations.isCollectionValued(attribute)) {
+		TLStructuredTypePart attribute = object.tType().getPart(aKey);
+		if (attribute == null) {
+			throw new IllegalStateException(
+				aKey + " is not an attribute of " + TLModelUtil.qualifiedName(object.tType()));
+		}
+		try {
+			if (AttributeOperations.isCollectionValued(attribute)) {
 				AttributeOperations.addAttributeValue(object, attribute, aValue);
-            }
-            else{
-				throw new IllegalStateException("Attribute is not collection-valued: " + attribute);
-            } 
-        }
-        catch (NoSuchAttributeException e) {
-			throw new IllegalStateException(aKey + " is not an attribute of " + object);
-        }
-        catch (Exception ex) {
-            String message = "Problem adding attribute "+aValue+" to "+aKey;
+			} else {
+				throw new IllegalStateException("Attribute is not collection-valued but a collection is added: "
+					+ TLModelUtil.qualifiedName(attribute));
+			}
+		} catch (Exception ex) {
+			String message =
+				"Problem adding value '" + aValue + "' to attribute " + TLModelUtil.qualifiedName(attribute);
 			Logger.error(message, ex, PersistentObjectImpl.class);
             throw new IllegalStateException(message, ex);
-        }  
+		}
     }
 
 

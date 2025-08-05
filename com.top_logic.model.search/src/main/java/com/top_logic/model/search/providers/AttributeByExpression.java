@@ -140,7 +140,8 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 		}
 		if (mandatory && collection.isEmpty()) {
 			throw new TopLogicException(
-				I18NConstants.ERROR_SCRIPT_DELIVERED_NO_RESULT_FOR_MANDATORY_ARRTIBUTE__ATTR_OBJ.fill(attribute,
+				I18NConstants.ERROR_SCRIPT_DELIVERED_NO_RESULT_FOR_MANDATORY_ARRTIBUTE__ATTR_OBJ.fill(
+					TLModelUtil.qualifiedName(attribute),
 					object));
 		}
 		return collection;
@@ -209,7 +210,8 @@ public class AttributeByExpression<C extends AttributeByExpression.Config<?>> ex
 					return c.iterator().next();
 				default:
 					throw new TopLogicException(
-						I18NConstants.ERROR_SCRIPT_RESULT_IS_COLLECTION__ATTR_VALUE.fill(attribute, result));
+						I18NConstants.ERROR_SCRIPT_RESULT_IS_COLLECTION__ATTR_VALUE
+							.fill(TLModelUtil.qualifiedName(attribute), result));
 			}
 		} else {
 			return result;

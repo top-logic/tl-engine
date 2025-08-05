@@ -22,7 +22,7 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey1 ERROR_EXPECTED_END_OF_ELEMENT__HANDLER;
 
-	public static ResKey2 ERROR_PROPERTY_FORMAT__HANDLER_MESSAGE;
+	public static ResKey3 ERROR_PROPERTY_FORMAT__HANDLER_VALUE_MESSAGE;
 
 	public static ResKey2 ERROR_ID_FORMAT__HANDLER_MESSAGE;
 

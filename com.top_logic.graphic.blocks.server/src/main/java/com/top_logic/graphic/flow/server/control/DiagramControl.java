@@ -122,6 +122,7 @@ public class DiagramControl extends AbstractControlBase
 		super.writeControlAttributes(context, out);
 
 		out.writeAttribute(DATA_CONTENT_ATTR, getFrameScope().getURL(context, this).getURL());
+		out.writeAttribute(DRAGGABLE_ATTR, DRAGGABLE_TRUE_VALUE);
 	}
 
 	@Override

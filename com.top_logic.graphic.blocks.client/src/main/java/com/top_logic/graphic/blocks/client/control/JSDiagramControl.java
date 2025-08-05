@@ -19,7 +19,14 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.DragEndEvent;
+import com.google.gwt.event.dom.client.DragEndHandler;
+import com.google.gwt.event.dom.client.DragOverEvent;
+import com.google.gwt.event.dom.client.DragOverHandler;
+import com.google.gwt.event.dom.client.DragStartEvent;
+import com.google.gwt.event.dom.client.DragStartHandler;
 import com.google.gwt.event.dom.client.MouseEvent;
+import com.google.gwt.user.client.ui.Image;
 
 import com.top_logic.ajax.client.control.AbstractJSControl;
 import com.top_logic.graphic.blocks.model.Drawable;
@@ -50,7 +57,8 @@ import elemental2.promise.Promise;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class JSDiagramControl extends AbstractJSControl
-		implements JSDiagramControlCommon, ClickHandler, DiagramContext {
+		implements JSDiagramControlCommon, ClickHandler, DragStartHandler, DragEndHandler, DragOverHandler,
+		DiagramContext {
 
 	private static final String SELECTED_CLASS = "tlbSelected";
 
@@ -67,6 +75,10 @@ public class JSDiagramControl extends AbstractJSControl
 	final SubIdGenerator _nextId;
 
 	double _changeTimeout;
+
+	int dragStartX, dragStartY;
+
+	boolean draggingSVG = false;
 
 	/**
 	 * Creates a {@link JSDiagramControl}.
@@ -120,7 +132,10 @@ public class JSDiagramControl extends AbstractJSControl
 				return null;
 			});
 
-		_svg.addClickHandler(this);
+		// _svg.addClickHandler(this);
+		_svg.addDragStartHandler(this);
+		_svg.addDragEndHandler(this);
+		_svg.addDragOverHandler(this);
 	}
 
 	/**
@@ -255,4 +270,40 @@ public class JSDiagramControl extends AbstractJSControl
 			data : $wnd.tlDnD.data
 		}, false)
 	}-*/;
+	
+	@Override
+	public void onDragStart(DragStartEvent event) {
+		dragStartX = event.getNativeEvent().getClientX();
+		dragStartY = event.getNativeEvent().getClientY();
+
+		Image img = new Image();
+		img.setUrl("data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=");
+		event.getDataTransfer().setDragImage(img.getElement(), 0, 0);
+		draggingSVG = true;
+	}
+
+	@Override
+	public void onDragEnd(DragEndEvent event) {
+		draggingSVG = false;
+	}
+
+	@Override
+	public void onDragOver(DragOverEvent event) {
+		if (draggingSVG) {
+			int dragDeltaX = dragStartX - event.getNativeEvent().getClientX();
+			int dragDeltaY = dragStartY - event.getNativeEvent().getClientY();
+
+			Element svgParent = _svg.getElement().getParentElement();
+			int scrollX = svgParent.getScrollLeft();
+			int scrollY = svgParent.getScrollTop();
+
+			// .scrollBy({top: dragDeltaY, left: dragDeltaX});
+			svgParent.setScrollLeft(scrollX + dragDeltaX);
+			svgParent.setScrollTop(scrollY + dragDeltaY);
+			
+			dragStartX = event.getNativeEvent().getClientX();
+			dragStartY = event.getNativeEvent().getClientY();
+		}
+		event.preventDefault();
+	}
 }

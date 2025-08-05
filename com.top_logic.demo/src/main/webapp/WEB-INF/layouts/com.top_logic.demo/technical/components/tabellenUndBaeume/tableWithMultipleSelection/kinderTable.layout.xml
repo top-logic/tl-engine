@@ -31,9 +31,7 @@
 		<buttons>
 			<button id="exportExcel"
 				class="com.top_logic.layout.table.export.ExcelExportHandler"
-			>
-				<downloadNameProvider class="com.top_logic.layout.table.export.ComponentDownloadName"/>
-			</button>
+			/>
 		</buttons>
 	</arguments>
 </config:template-call>

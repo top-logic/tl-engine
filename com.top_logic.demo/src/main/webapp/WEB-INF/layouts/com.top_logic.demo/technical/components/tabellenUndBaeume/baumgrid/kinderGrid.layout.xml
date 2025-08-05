@@ -49,9 +49,7 @@
 			<button id="exportExcelGrid"
 				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
 				streaming="false"
-			>
-				<downloadNameProvider class="com.top_logic.layout.table.export.ComponentDownloadName"/>
-			</button>
+			/>
 		</buttons>
 	</arguments>
 </config:template-call>

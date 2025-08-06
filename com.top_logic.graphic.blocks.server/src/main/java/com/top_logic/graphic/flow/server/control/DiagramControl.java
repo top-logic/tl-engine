@@ -127,10 +127,14 @@ public class DiagramControl extends AbstractControlBase
 
 	@Override
 	protected void internalWrite(DisplayContext context, TagWriter out) throws IOException {
-		out.beginBeginTag(SVG);
+		out.beginBeginTag(DIV);
 		writeControlAttributes(context, out);
 		out.endBeginTag();
+		out.beginBeginTag(SVG);
+		out.writeAttribute(ID_ATTR, this.getID() + SVG_ID_SUFFIX);
+		out.endBeginTag();
 		out.endTag(SVG);
+		out.endTag(DIV);
 
 		JSControlUtil.writeCreateJSControlScript(out, JSDiagramControlCommon.CONTROL_TYPE, getID());
 	}

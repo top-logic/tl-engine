@@ -24,6 +24,7 @@ import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfigurationValueProvider;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationException;
@@ -306,7 +307,10 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		odic.setClientId(config.getClientId());
 		odic.setConnectTimeout(config.getConnectTimeout());
 		for (Entry<String, String> entry : config.getCustomParams().entrySet()) {
-			odic.addCustomParam(entry.getKey(), entry.getValue());
+			String value = entry.getValue();
+			if (!StringServices.isEmpty(value)) {
+				odic.addCustomParam(entry.getKey(), value);
+			}
 		}
 		odic.setDiscoveryURI(config.getDiscoveryURI());
 		odic.setLogoutUrl(config.getLogoutUrl());

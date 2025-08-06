@@ -1,0 +1,7 @@
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<configs>
+		<config config:interface="com.top_logic.base.accesscontrol.ApplicationPages$Config">
+			<loginPage>/servlet/openid</loginPage>
+		</config>
+	</configs>
+</application>

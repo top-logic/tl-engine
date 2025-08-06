@@ -29,6 +29,7 @@
 	<configs>
 		<config config:interface="com.top_logic.base.accesscontrol.ExternalAuthentication"
 			isEnabled="true"
+			reuseSession="true"
 		/>
 	</configs>
 </application>

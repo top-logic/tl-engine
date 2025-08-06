@@ -12,6 +12,9 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.element.model.copy.CopyConstructor;
+import com.top_logic.element.model.copy.CopyFilter;
+import com.top_logic.element.model.copy.CopyOperation;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
@@ -19,9 +22,6 @@ import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.WithFlatMapSemantics;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.config.operations.copy.CopyConstructor;
-import com.top_logic.model.search.expr.config.operations.copy.CopyFilter;
-import com.top_logic.model.search.expr.config.operations.copy.CopyOperation;
 
 /**
  * Deep object graph copy operation.

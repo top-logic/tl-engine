@@ -9,7 +9,13 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 
 /**
- * The actual implementation of the copy.
+ * Operation for performing a (configurable) deep copy of a model object graph.
+ * 
+ * <p>
+ * By default, all composition references are copied alongside the copied object, but the depth and
+ * types of the copy is configurable, see {@link #setFilter(CopyFilter)},
+ * {@link #setConstructor(CopyConstructor)}, and {@link #setTransient(Boolean)}.
+ * </p>
  */
 public abstract class CopyOperation {
 
@@ -36,29 +42,35 @@ public abstract class CopyOperation {
 	/**
 	 * Sets a filter that decides which parts of the input object graph should be copied.
 	 */
-	public abstract void setFilter(CopyFilter filter);
+	public abstract CopyOperation setFilter(CopyFilter filter);
 
 	/**
 	 * Sets a constructor function that is responsible for creating new instances in the copied
 	 * graph.
 	 */
-	public abstract void setConstructor(CopyConstructor constructor);
+	public abstract CopyOperation setConstructor(CopyConstructor constructor);
 
 	/**
 	 * Whether to allocate transient objects by default (if no explicit constructor function is
 	 * given).
 	 */
-	public abstract void setTransient(Boolean transientCopy);
+	public abstract CopyOperation setTransient(Boolean transientCopy);
 
 	/**
-	 * Last step of {@link #copy(TLObject)} after all nested copies have finished.
+	 * Final step of the copy that ensures that all inner fields of all
+	 * {@link #copyReference(TLObject) copied} objects and nested compositions are filled.
 	 */
 	public abstract void finish();
 
 	/**
-	 * Copies the given object.
+	 * Copies the given object (without any inner properties).
+	 * 
+	 * <p>
+	 * To ensure that all inner fields are filled, ensure that {@link #finish()} is called
+	 * afterwards.
+	 * </p>
 	 */
-	public abstract Object copy(TLObject orig);
+	public abstract Object copyReference(TLObject orig);
 
 	/**
 	 * Resolves the copy of an original that has potentially copied before.

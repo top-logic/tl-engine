@@ -6,14 +6,15 @@
 			<instance>
 				<clients>
 					<keycloak name="pac4j-keycloak">
-						<user-mapping class="com.top_logic.base.accesscontrol.LDAPUserMapping"
-							ldap="LdapSecurity"
-						/>
 						<client-id>%PAC_CLIENT_ID%</client-id>
+						<scope>%PAC_SCOPE%</scope>
 						<secret>%PAC_SECRET%</secret>
 						<base-uri>%PAC_KEYCLOAK_BASE_URI%</base-uri>
 						<realm>%PAC_KEYCLOAK_REALM%</realm>
 						<client-authentication-method>%PAC_CLIENT_AUTHENTICATION_METHOD%</client-authentication-method>
+						<custom-params>
+							<custom-param key="acr_values" value="%PAC_ACR_VALUES%" />
+						</custom-params>
 					</keycloak>
 				</clients>
 			</instance>

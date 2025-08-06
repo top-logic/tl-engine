@@ -6,12 +6,13 @@
 			<instance>
 				<clients>
 					<google name="pac4j-google">
-						<user-mapping class="com.top_logic.base.accesscontrol.LDAPUserMapping"
-							ldap="LdapSecurity"
-						/>
 						<client-id>%PAC_CLIENT_ID%</client-id>
+						<scope>%PAC_SCOPE%</scope>
 						<secret>%PAC_SECRET%</secret>
 						<client-authentication-method>%PAC_CLIENT_AUTHENTICATION_METHOD%</client-authentication-method>
+						<custom-params>
+							<custom-param key="acr_values" value="%PAC_ACR_VALUES%" />
+						</custom-params>
 					</google>
 				</clients>
 			</instance>

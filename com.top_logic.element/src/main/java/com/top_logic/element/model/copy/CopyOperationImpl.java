@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.model.search.expr.config.operations.copy;
+package com.top_logic.element.model.copy;
 
 import java.util.ArrayList;
 import java.util.Collection;

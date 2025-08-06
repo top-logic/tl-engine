@@ -134,7 +134,7 @@ public class Copy extends GenericMethod implements WithFlatMapSemantics<CopyOper
 	@Override
 	public Object evalDirect(EvalContext definitions, Object singletonValue, CopyOperation operation) {
 		if (singletonValue instanceof TLObject) {
-			return operation.copy((TLObject) singletonValue);
+			return operation.copyReference((TLObject) singletonValue);
 		}
 		if (singletonValue instanceof ConfigurationItem) {
 			return TypedConfiguration.copy((ConfigurationItem) singletonValue);

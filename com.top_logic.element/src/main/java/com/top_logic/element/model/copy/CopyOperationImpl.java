@@ -37,18 +37,21 @@ abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, Co
 	private Boolean _transientCopy;
 
 	@Override
-	public void setFilter(CopyFilter filter) {
+	public CopyOperationImpl setFilter(CopyFilter filter) {
 		_filter = filter;
+		return this;
 	}
 
 	@Override
-	public void setTransient(Boolean transientCopy) {
+	public CopyOperationImpl setTransient(Boolean transientCopy) {
 		_transientCopy = transientCopy;
+		return this;
 	}
 
 	@Override
-	public void setConstructor(CopyConstructor constructor) {
+	public CopyOperation setConstructor(CopyConstructor constructor) {
 		_constructor = constructor;
+		return this;
 	}
 
 	public final TLObject getContext() {
@@ -75,7 +78,7 @@ abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, Co
 	protected abstract Set<Entry<TLObject, TLObject>> localCopies();
 
 	@Override
-	public Object copy(TLObject orig) {
+	public Object copyReference(TLObject orig) {
 		return createCopy(orig);
 	}
 

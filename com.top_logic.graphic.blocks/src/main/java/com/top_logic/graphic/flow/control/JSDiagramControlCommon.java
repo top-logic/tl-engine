@@ -24,4 +24,9 @@ public interface JSDiagramControlCommon {
 	 */
 	String DATA_CONTENT_ATTR = "data-content";
 
+	/**
+	 * The ID suffix for the svg element.
+	 */
+	String SVG_ID_SUFFIX = "-svg";
+
 }

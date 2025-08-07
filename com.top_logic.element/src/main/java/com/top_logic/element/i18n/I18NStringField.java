@@ -103,4 +103,9 @@ public class I18NStringField extends I18NField<StringField, ResKey, ResKey.Build
 		return builder.build();
 	}
 
+	@Override
+	protected boolean isEmptyValue(ResKey value) {
+		return value == null;
+	}
+
 }

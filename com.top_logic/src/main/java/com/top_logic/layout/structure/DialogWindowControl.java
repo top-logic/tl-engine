@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.base.services.simpleajax.JSSnipplet;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
@@ -237,7 +238,10 @@ public class DialogWindowControl extends WindowControl<DialogWindowControl> impl
 	 */
 	@TemplateVariable("dialogTitle")
 	public void writeDialogTitle(DisplayContext context, TagWriter out) throws IOException {
-		this.getTitle().write(context, out);
+		HTMLFragment title = getTitle();
+		if (title != null) {
+			title.write(context, out);
+		}
 	}
 
 	/**

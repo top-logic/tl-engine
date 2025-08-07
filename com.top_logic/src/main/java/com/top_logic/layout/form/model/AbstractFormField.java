@@ -491,7 +491,9 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 	public void setPlaceholder(Object newValue) {
 		Object oldValue = _placeholder;
 		_placeholder = newValue;
-		notifyListeners(PLACEHOLDER_PROPERTY, this, oldValue, newValue);
+		if (!Utils.equals(newValue, oldValue)) {
+			notifyListeners(PLACEHOLDER_PROPERTY, this, oldValue, newValue);
+		}
 	}
 
 	/**

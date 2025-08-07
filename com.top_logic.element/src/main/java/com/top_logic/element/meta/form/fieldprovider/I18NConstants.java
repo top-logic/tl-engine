@@ -35,6 +35,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 MISSING_TYPE_COMPUTATION__ATTRIBUTE;
 
+	/**
+	 * @en Edit details
+	 */
+	public static String EDIT_DETAILS;
+
+	/**
+	 * @en Detail opener
+	 */
+	public static ResKey DETAIL_OPENER;
+
+	/**
+	 * @en Edit details of {0}
+	 */
+	public static ResKey1 EDIT_DETAILS_TITLE__TYPE;
+
 	static {
         initConstants(I18NConstants.class);
     }

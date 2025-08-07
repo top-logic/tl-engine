@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.model.copy;
 
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -41,4 +42,8 @@ class NestedOperation extends CopyOperationImpl {
 		// Is done by the outermost copy operation.
 	}
 
+	@Override
+	public Map<TLObject, TLObject> getCorrespondence() {
+		return _outer.getCorrespondence();
+	}
 }

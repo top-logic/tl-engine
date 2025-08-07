@@ -69,7 +69,7 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 	public static final Property<Boolean> LISTENER_DISABLED =
 		TypedAnnotatable.property(Boolean.class, "listenerDisabled", Boolean.FALSE);
 
-	private static final String PROFY_FIELD_SUFFIX = "proxy";
+	private static final String PROXY_FIELD = "proxy";
 
 	private final FormField _proxyField;
 
@@ -171,7 +171,7 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 	}
 
 	private FormField createProxyField(boolean isMandatory, boolean immutable) {
-		FormField field = new I18NProxyField(PROFY_FIELD_SUFFIX, isMandatory, immutable);
+		FormField field = new I18NProxyField(PROXY_FIELD, isMandatory, immutable);
 		addListener(FormMember.LABEL_PROPERTY, new LabelChangedListener() {
 
 			@Override

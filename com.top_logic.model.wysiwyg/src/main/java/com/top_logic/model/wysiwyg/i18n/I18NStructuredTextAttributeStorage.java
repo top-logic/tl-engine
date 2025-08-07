@@ -97,7 +97,7 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 		Map<Locale, StructuredText> structuredTexts = map();
 		addSourceCodes(tlObject, structuredTexts);
 		addImages(tlObject, structuredTexts);
-		return new I18NStructuredText(structuredTexts);
+		return !structuredTexts.isEmpty() ? new I18NStructuredText(structuredTexts) : I18NStructuredText.EMPTY;
 	}
 
 	private void addSourceCodes(TLObject tlObject, Map<Locale, StructuredText> structuredTexts) {

@@ -853,8 +853,8 @@ public class KBUtils {
 	}
 
 	private static boolean mustBeDeleted(TLObject item, Predicate<? super TLObject> filter) {
-		if (!item.tValid()) {
-			// Already deleted.
+		if (!item.tValid() || item.tTransient()) {
+			// Already deleted or cannot be deleted.
 			return false;
 		}
 		return filter.test(item);

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.listener.EventType.Bubble;
@@ -29,6 +30,7 @@ import com.top_logic.layout.form.FormMemberVisitor;
 import com.top_logic.layout.form.ImmutablePropertyListener;
 import com.top_logic.layout.form.LabelChangedListener;
 import com.top_logic.layout.form.MandatoryChangedListener;
+import com.top_logic.layout.form.PlaceholderChangedListener;
 import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.constraints.AbstractConstraint;
 import com.top_logic.layout.form.model.AbstractFormField;
@@ -61,6 +63,9 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 
 	/** Field name language separator. */
 	public static final String FIELD_NAME_LANGUAGE_SEPARATOR = "_";
+
+	/** Property storing the {@link FormField#getPlaceholder()} when the value is not empty. */
+	public static final Property<Object> PLACEHOLDER = TypedAnnotatable.property(Object.class, "placeholder");
 
 	/** Property for language of the language fields. */
 	public static final Property<Locale> LANGUAGE = InternationalizationEditor.LOCALE;
@@ -232,10 +237,20 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 			public void valueChanged(FormField field, Object oldValue, Object newValue) {
 				if (!field.get(LISTENER_DISABLED)) {
 					V i18nValue = toI18NValue(newValue);
+					boolean emptyNewValue = isEmptyValue(i18nValue);
 					for (F langField : fields) {
 						langField.set(LISTENER_DISABLED, Boolean.TRUE);
 						Locale locale = langField.get(LANGUAGE);
 						langField.setValue(localize(locale, i18nValue));
+
+						/* Set placeholder (fallback value) only in the case when the whole I18N
+						 * value is empty; when one field has a non-empty value, the other language
+						 * fields must not display the fallback. */
+						if (emptyNewValue) {
+							langField.setPlaceholder(langField.get(PLACEHOLDER));
+						} else {
+							langField.setPlaceholder(null);
+						}
 						langField.reset(LISTENER_DISABLED);
 					}
 				}
@@ -263,6 +278,38 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 				return true;
 			}
 		});
+		proxyField.addListener(FormField.PLACEHOLDER_PROPERTY, new PlaceholderChangedListener() {
+
+			@Override
+			public Bubble handlePlaceholderChanged(FormField sender, Object oldValue, Object newValue) {
+				boolean emptyValue = false;
+				if (sender.hasValue()) {
+					if (isEmptyValue(toI18NValue(sender.getValue()))) {
+						emptyValue = true;
+					}
+				}
+				if (!sender.get(LISTENER_DISABLED)) {
+					V i18nValue = toI18NValue(newValue);
+					for (F langField : fields) {
+						langField.set(LISTENER_DISABLED, Boolean.TRUE);
+						Locale locale = langField.get(LANGUAGE);
+						Object localized = localize(locale, i18nValue);
+
+						// Cache placeholder to set later when I18N value change.
+						langField.set(PLACEHOLDER, localized);
+						if (emptyValue) {
+							/* Set placeholder (fallback value) only in the case when the whole I18N
+							 * value is empty; when one field has a non-empty value, the other
+							 * language fields must not display the fallback. */
+							langField.setPlaceholder(localized);
+						}
+						langField.reset(LISTENER_DISABLED);
+					}
+				}
+				return Bubble.BUBBLE;
+			}
+		});
+
 		addListener(DISABLED_PROPERTY, new DisabledPropertyListener() {
 			@Override
 			public Bubble handleDisabledChanged(FormMember sender, Boolean oldValue, Boolean newValue) {
@@ -396,17 +443,37 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 		FormField proxy = getProxy();
 		proxy.set(LISTENER_DISABLED, Boolean.TRUE);
 		try {
-			FormFieldInternals.updateFieldNoClientUpdate(proxy, proxyValue);
-		} catch (VetoException ex) {
-			/* TODO Ticket #15445: Value can not be reset by the ValueListener that triggers the
-			 * change. Therefore the whole exception handling is done in a validation step. */
-			DefaultDisplayContext.getDisplayContext().getLayoutContext().notifyInvalid(new ToBeValidated() {
-
-				@Override
-				public void validate(DisplayContext validationContext) {
-					handleVetoInProxy(proxy, proxyValue, sender, formerValue, ex);
+			/* It is not possible to update proxy with a fake "client value" when the proxy itself
+			 * or a parent is not active, because this is omitted by the framework: A client side
+			 * update can only happen when the field and all parents are active.
+			 * 
+			 * Unfortunately it may be the proxy is active, but the field itself is not. This may
+			 * happen during event handling (e.g. setting composite immutable). */
+			boolean needsProgrammaticUpdate = !isActive() || !proxy.isActive();
+			if (needsProgrammaticUpdate) {
+				try {
+					// Initialise filed instead of "setValue(....)", because the proxy must not be
+					// treated as changed in this case.
+					proxy.initializeField(proxyValue.value());
+				} catch (CheckException ex) {
+					Logger.error("Unable to get value for proxy.", ex, I18NField.class);
 				}
-			});
+			} else {
+				try {
+					FormFieldInternals.updateFieldNoClientUpdate(proxy, proxyValue);
+				} catch (VetoException ex) {
+					/* TODO Ticket #15445: Value can not be reset by the ValueListener that triggers
+					 * the change. Therefore the whole exception handling is done in a validation
+					 * step. */
+					DefaultDisplayContext.getDisplayContext().getLayoutContext().notifyInvalid(new ToBeValidated() {
+
+						@Override
+						public void validate(DisplayContext validationContext) {
+							handleVetoInProxy(proxy, proxyValue, sender, formerValue, ex);
+						}
+					});
+				}
+			}
 		} finally {
 			proxy.reset(LISTENER_DISABLED);
 		}
@@ -441,18 +508,16 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 	protected ValueWithError createProxyValue() {
 		FormField proxy = getProxy();
 		B builder = createValueBuilder();
-		boolean updateMandatory = proxy.isMandatory();
+
 		boolean allFieldsEmpty = true;
 		for (F field : getLanguageFields()) {
-			if (field.hasValue()) {
-				Locale locale = field.get(LANGUAGE);
-				addValueToBuilder(builder, proxy, locale, field);
-			}
-			if (updateMandatory && allFieldsEmpty && hasNonEmptyValue(field)) {
+			Locale locale = field.get(LANGUAGE);
+			addValueToBuilder(builder, proxy, locale, field);
+			if (allFieldsEmpty && hasNonEmptyValue(field)) {
 				allFieldsEmpty = false;
 			}
 		}
-		if (updateMandatory) {
+		if (proxy.isMandatory()) {
 			for (F field : getLanguageFields()) {
 				field.setMandatory(allFieldsEmpty);
 				field.check();
@@ -503,10 +568,13 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 	 * 
 	 * @param builder
 	 *        Never null.
-	 * @return Null, if that is the representation of the accumulated values: Either, because there
-	 *         are no accumulated values, they are all null or empty.
 	 */
 	protected abstract V buildValue(B builder);
+
+	/**
+	 * Checks whether the given value is treated as empty.
+	 */
+	protected abstract boolean isEmptyValue(V value);
 
 	/**
 	 * {@link ValueListener} on language fields updating the proxy field.

@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.model.copy;
 
+import java.util.Map;
+
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 
@@ -47,6 +49,12 @@ public abstract class CopyOperation {
 	/**
 	 * Sets a constructor function that is responsible for creating new instances in the copied
 	 * graph.
+	 * 
+	 * <p>
+	 * If the given constructor function returns <code>null</code> for a given object, the default
+	 * constructor is invoked. To filter objects that should not be copied, use
+	 * {@link #setFilter(CopyFilter)}.
+	 * </p>
 	 */
 	public abstract CopyOperation setConstructor(CopyConstructor constructor);
 
@@ -61,6 +69,11 @@ public abstract class CopyOperation {
 	 * {@link #copyReference(TLObject) copied} objects and nested compositions are filled.
 	 */
 	public abstract void finish();
+
+	/**
+	 * A mapping of copies indexed by their originals.
+	 */
+	public abstract Map<TLObject, TLObject> getCorrespondence();
 
 	/**
 	 * Copies the given object (without any inner properties).

@@ -157,7 +157,7 @@ public class AttributeUpdateContainer {
 	 * @see #newObject(TLStructuredType, TLObject)
 	 */
 	public TLFormObject createObject(TLStructuredType type, String domain, TLObject container) {
-		return createObject(type, domain, container, DefaultObjectConstructor.INSTANCE);
+		return createObject(type, domain, container, DefaultObjectConstructor.getPersistentInstance());
 	}
 
 	/**
@@ -231,7 +231,7 @@ public class AttributeUpdateContainer {
 	 * @see #createObject(TLStructuredType, String, TLObject)
 	 */
 	public TLFormObject newObject(TLStructuredType type, TLObject container) {
-		return newObject(type, container, DefaultObjectConstructor.INSTANCE);
+		return newObject(type, container, DefaultObjectConstructor.getPersistentInstance());
 	}
 
 	/**

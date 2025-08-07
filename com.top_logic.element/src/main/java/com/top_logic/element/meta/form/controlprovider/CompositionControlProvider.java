@@ -80,7 +80,6 @@ public class CompositionControlProvider implements ControlProvider {
 
 		private CommandModel openingModel() {
 			CommandModel commandModel = new AbstractCommandModel() {
-
 				@Override
 				protected HandlerResult internalExecuteCommand(DisplayContext context) {
 					DisplayDimension width = DisplayDimension.dim(80, DisplayUnit.PERCENT);
@@ -107,7 +106,6 @@ public class CompositionControlProvider implements ControlProvider {
 						true,
 						true, null);
 					dialogModel.addListener(DialogModel.CLOSED_PROPERTY, new DialogClosedListener() {
-
 						@Override
 						public void handleDialogClosed(Object sender, Boolean oldValue, Boolean newValue) {
 							getModel().checkAll();
@@ -118,7 +116,7 @@ public class CompositionControlProvider implements ControlProvider {
 					hideTableLabel(getModel());
 
 					Control content = MetaControlProvider.INSTANCE.createControl(getModel());
-					CommandModel closeButton = MessageBox.button(ButtonType.CLOSE, dialogModel.getCloseAction());
+					CommandModel closeButton = MessageBox.button(ButtonType.OK, dialogModel.getCloseAction());
 					dialogModel.setDefaultCommand(closeButton);
 					MessageBox.open(context, dialogModel, content, Collections.singletonList(closeButton));
 					return HandlerResult.DEFAULT_RESULT;

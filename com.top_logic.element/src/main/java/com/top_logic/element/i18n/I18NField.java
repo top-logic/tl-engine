@@ -14,7 +14,6 @@ import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
-import com.top_logic.basic.util.Utils;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.VetoException;
 import com.top_logic.layout.basic.Command;
@@ -68,7 +67,7 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 
 	/** Property for (temporary) disabling value listener in field. */
 	public static final Property<Boolean> LISTENER_DISABLED =
-		TypedAnnotatable.property(Boolean.class, "listenerDisabled");
+		TypedAnnotatable.property(Boolean.class, "listenerDisabled", Boolean.FALSE);
 
 	private static final String PROFY_FIELD_SUFFIX = "proxy";
 
@@ -231,13 +230,13 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 		proxyField.addValueListener(new ValueListener() {
 			@Override
 			public void valueChanged(FormField field, Object oldValue, Object newValue) {
-				if (!Utils.getbooleanValue(field.get(LISTENER_DISABLED))) {
+				if (!field.get(LISTENER_DISABLED)) {
 					V i18nValue = toI18NValue(newValue);
 					for (F langField : fields) {
 						langField.set(LISTENER_DISABLED, Boolean.TRUE);
 						Locale locale = langField.get(LANGUAGE);
 						langField.setValue(localize(locale, i18nValue));
-						langField.set(LISTENER_DISABLED, null);
+						langField.reset(LISTENER_DISABLED);
 					}
 				}
 			}
@@ -516,7 +515,7 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 
 		@Override
 		public void valueChanged(FormField field, Object oldValue, Object newValue) {
-			if (!Utils.getbooleanValue(field.get(LISTENER_DISABLED))) {
+			if (!field.get(LISTENER_DISABLED)) {
 				transportValues(field, oldValue);
 			}
 		}
@@ -613,13 +612,13 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 		@Override
 		public void setDefaultValue(Object defaultValue) {
 			super.setDefaultValue(defaultValue);
-			if (!Utils.getbooleanValue(_proxyField.get(LISTENER_DISABLED))) {
+			if (!_proxyField.get(LISTENER_DISABLED)) {
 				V i18nValue = toI18NValue(defaultValue);
 				for (F langField : getLanguageFields()) {
 					langField.set(LISTENER_DISABLED, Boolean.TRUE);
 					Locale locale = langField.get(LANGUAGE);
 					langField.setDefaultValue(localize(locale, i18nValue));
-					langField.set(LISTENER_DISABLED, null);
+					langField.reset(LISTENER_DISABLED);
 				}
 			}
 		}

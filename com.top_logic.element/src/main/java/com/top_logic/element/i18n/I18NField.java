@@ -655,6 +655,11 @@ public abstract class I18NField<F extends FormField, V, B> extends CompositeFiel
 			return value;
 		}
 
+		@Override
+		protected FormField selfAsField() {
+			return I18NField.this;
+		}
+
 	}
 
 }

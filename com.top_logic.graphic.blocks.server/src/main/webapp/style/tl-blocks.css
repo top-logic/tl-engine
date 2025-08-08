@@ -40,3 +40,7 @@ path.tlbConnector {
 	cursor: pointer;
 	stroke: var(--link-primary);
 }
+
+.tlDiagram {
+	transform-origin: top left;
+}

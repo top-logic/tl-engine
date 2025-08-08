@@ -16,6 +16,7 @@ import org.vectomatic.dom.svg.utils.OMSVGParser;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.MouseEvent;
+import com.google.gwt.i18n.client.NumberFormat;
 
 import com.top_logic.ajax.client.control.AbstractJSControl;
 import com.top_logic.graphic.blocks.model.Drawable;
@@ -36,6 +37,8 @@ import de.haumacher.msgbuf.graph.SharedGraphNode;
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonReader;
+import elemental2.core.JsMath;
+import elemental2.dom.DOMRect;
 import elemental2.dom.DomGlobal;
 import elemental2.dom.DragEvent;
 import elemental2.dom.Element;
@@ -44,6 +47,7 @@ import elemental2.dom.EventListener;
 import elemental2.dom.HTMLDocument;
 import elemental2.dom.Image;
 import elemental2.dom.Response;
+import elemental2.dom.WheelEvent;
 import elemental2.promise.Promise;
 
 /**
@@ -98,6 +102,7 @@ public class JSDiagramControl extends AbstractJSControl
 		String contentUrl = _control.getAttribute(DATA_CONTENT_ATTR);
 
 		Element ctrlParent = _control.parentElement;
+		com.google.gwt.dom.client.Element ctrl = jsinterop.base.Js.cast(_control);
 
 		_svgDoc = OMSVGParser.currentDocument();
 		_svg = _svgDoc.getElementById(controlElement().getId() + SVG_ID_SUFFIX);
@@ -212,6 +217,37 @@ public class JSDiagramControl extends AbstractJSControl
 				DomGlobal.window.removeEventListener("dragover", draggingSVG);
 
 				event.stopImmediatePropagation();
+			}
+		});
+
+		ctrl.getStyle().setProperty("scale", "1");
+
+		_control.addEventListener("wheel", new EventListener() {
+
+			@Override
+			public void handleEvent(Event evt) {
+				WheelEvent event = (WheelEvent) evt;
+				if (event.ctrlKey) {
+					NumberFormat nf = NumberFormat.getDecimalFormat();
+					double factor = JsMath.sign(event.deltaY) / -10;
+					double oldZoom = nf.parse(ctrl.getStyle().getProperty("scale"));
+					double newZoom = oldZoom + factor;
+
+					DOMRect parentRect = ctrlParent.getBoundingClientRect();
+					double cursorSVGLeft = event.clientX - parentRect.left;
+					double cursorSVGTop = event.clientY - parentRect.top;
+
+					double newScrollTop = (((cursorSVGTop + ctrlParent.scrollTop) / oldZoom) * newZoom) - cursorSVGTop;
+					double newScrollLeft =
+						(((cursorSVGLeft + ctrlParent.scrollLeft) / oldZoom) * newZoom) - cursorSVGLeft;
+
+					ctrl.getStyle().setProperty("scale", nf.format(newZoom));
+					ctrlParent.scrollTop = Math.round(newScrollTop);
+					ctrlParent.scrollLeft = Math.round(newScrollLeft);
+
+					event.stopImmediatePropagation();
+					event.preventDefault();
+				}
 			}
 		});
 	}

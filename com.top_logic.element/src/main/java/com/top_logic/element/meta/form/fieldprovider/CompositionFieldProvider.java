@@ -207,7 +207,7 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 								DefaultDialogModel dialogModel = new DefaultDialogModel(
 									new DefaultLayoutData(
 										annotation.getWidth(), 100,
-										annotation.getHeight(), 100, Scrolling.AUTO),
+										annotation.getHeight(), 100, Scrolling.NO),
 									Fragments.message(title),
 									true, true, null);
 
@@ -231,9 +231,11 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 								}
 
 								// See com.top_logic.layout.form.declarative.DirectFormDisplay.
-								Control content = new MediaQueryControl(
+								MediaQueryControl content = new MediaQueryControl(
 									Fragments.div(FormConstants.FORM_BODY_CSS_CLASS,
 										MetaControlProvider.INSTANCE.createControl(formContext)));
+
+								content.setConstraint(DefaultLayoutData.DEFAULT_CONSTRAINT);
 
 								CommandModel okButton = MessageBox.button(ButtonType.OK, applyContext -> {
 									if (!formContext.checkAll()) {

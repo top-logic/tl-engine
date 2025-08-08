@@ -74,7 +74,9 @@ public class JSDiagramControl extends AbstractJSControl
 
 	double dragStartX, dragStartY;
 
-	boolean draggingSVG;
+	double scrollX, scrollY;
+
+	boolean draggingToScroll;
 
 	/**
 	 * Creates a {@link JSDiagramControl}.
@@ -94,6 +96,8 @@ public class JSDiagramControl extends AbstractJSControl
 		HTMLDocument document = DomGlobal.document;
 		_control = document.getElementById(getId());
 		String contentUrl = _control.getAttribute(DATA_CONTENT_ATTR);
+
+		Element ctrlParent = _control.parentElement;
 
 		_svgDoc = OMSVGParser.currentDocument();
 		_svg = _svgDoc.getElementById(controlElement().getId() + SVG_ID_SUFFIX);
@@ -129,7 +133,40 @@ public class JSDiagramControl extends AbstractJSControl
 				return null;
 			});
 
-		draggingSVG = false;
+		draggingToScroll = false;
+
+		EventListener preventScroll = new EventListener() {
+
+			@Override
+			public void handleEvent(Event evt) {
+				if (draggingToScroll) {
+					ctrlParent.scrollTo(scrollX, scrollY);
+				}
+			}
+		};
+
+		EventListener draggingSVG = new EventListener() {
+
+			@Override
+			public void handleEvent(Event evt) {
+				if (draggingToScroll) {
+					DragEvent event = (DragEvent) evt;
+
+					double dragDeltaX = dragStartX - event.clientX;
+					double dragDeltaY = dragStartY - event.clientY;
+
+					scrollX = scrollX + dragDeltaX;
+					scrollY = scrollY + dragDeltaY;
+
+					ctrlParent.scrollTo(scrollX, scrollY);
+
+					dragStartX = event.clientX;
+					dragStartY = event.clientY;
+					event.stopImmediatePropagation();
+					event.preventDefault();
+				}
+			}
+		};
 
 		_control.addEventListener("dragstart", new EventListener() {
 
@@ -138,24 +175,16 @@ public class JSDiagramControl extends AbstractJSControl
 				DragEvent event = (DragEvent) evt;
 				dragStartX = event.clientX;
 				dragStartY = event.clientY;
+				scrollX = ctrlParent.scrollLeft;
+				scrollY = ctrlParent.scrollTop;
 
 				Image img = (Image) DomGlobal.document.createElement("img");
 				img.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=";
 				event.dataTransfer.setDragImage(img, 0, 0);
 
-				draggingSVG = true;
-
-				event.stopImmediatePropagation();
-			}
-		});
-
-		_control.addEventListener("dragend", new EventListener() {
-
-			@Override
-			public void handleEvent(Event evt) {
-				DragEvent event = (DragEvent) evt;
-
-				draggingSVG = false;
+				draggingToScroll = true;
+				ctrlParent.addEventListener("scroll", preventScroll);
+				DomGlobal.window.addEventListener("dragover", draggingSVG);
 
 				event.stopImmediatePropagation();
 			}
@@ -172,28 +201,17 @@ public class JSDiagramControl extends AbstractJSControl
 			}
 		});
 
-		_control.addEventListener("dragover", new EventListener() {
+		_control.addEventListener("dragend", new EventListener() {
 
 			@Override
 			public void handleEvent(Event evt) {
-				if (draggingSVG) {
-					DragEvent event = (DragEvent) evt;
+				DragEvent event = (DragEvent) evt;
 
-					double dragDeltaX = dragStartX - event.clientX;
-					double dragDeltaY = dragStartY - event.clientY;
+				draggingToScroll = false;
+				ctrlParent.removeEventListener("scroll", preventScroll);
+				DomGlobal.window.removeEventListener("dragover", draggingSVG);
 
-					Element ctrlParent = _control.parentElement;
-
-					double scrollX = ctrlParent.scrollLeft;
-					double scrollY = ctrlParent.scrollTop;
-
-					ctrlParent.scrollTo(scrollX + dragDeltaX, scrollY + dragDeltaY);
-
-					dragStartX = event.clientX;
-					dragStartY = event.clientY;
-					event.stopImmediatePropagation();
-					event.preventDefault();
-				}
+				event.stopImmediatePropagation();
 			}
 		});
 	}

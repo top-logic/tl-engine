@@ -718,6 +718,41 @@
 				>
 					<arguments/>
 				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+					comparision="equals"
+					inverted="false"
+					user-id="root"
+				>
+					<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.TreeNodeSelectionRef">
+						<context config:interface="com.top_logic.layout.tree.TreeDataName">
+							<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+								tab-path="Technisches Demo > Komponenten > Drag &amp; Drop > Fabrikplan"
+							/>
+						</context>
+						<node config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="Fabrik 1_Kopie"
+						/>
+					</actual-value>
+					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
+						boolean="true"
+					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path=""
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Technisches Demo > Komponenten > Drag &amp; Drop > Fabrikplan"
+						/>
+					</selection-model-name>
+				</action>
 				<action class="com.top_logic.model.search.providers.OrderedTreeDropActionOp"
 					user-id="root"
 				>
@@ -807,6 +842,22 @@
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
 						boolean="true"
 					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="Fabrik 1_Kopie"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Technisches Demo > Komponenten > Drag &amp; Drop > Fabrikplan"
+						/>
+					</selection-model-name>
 				</action>
 				<action class="com.top_logic.model.search.providers.OrderedTreeDropActionOp"
 					user-id="root"
@@ -901,6 +952,22 @@
 					<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanValue"
 						boolean="true"
 					/>
+				</action>
+				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
+					change-kind="ABSOLUTE"
+					user-id="root"
+				>
+					<selection>
+						<selectee config:interface="com.top_logic.layout.scripting.recorder.ref.value.object.CompactLabelPath"
+							label-path="Fabrik 1_Kopie"
+						/>
+						<selection-state boolean="true"/>
+					</selection>
+					<selection-model-name config:interface="com.top_logic.layout.tree.TreeDataName">
+						<tree-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+							tab-path="Technisches Demo > Komponenten > Drag &amp; Drop > Fabrikplan"
+						/>
+					</selection-model-name>
 				</action>
 				<action class="com.top_logic.model.search.providers.OrderedTreeDropActionOp"
 					user-id="root"

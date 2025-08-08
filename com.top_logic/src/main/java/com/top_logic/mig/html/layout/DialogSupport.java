@@ -134,9 +134,6 @@ public class DialogSupport {
 		if (theDialog.isVisible()) {
 			return;
 		}
-		/* necessary to set the dialog parent visible. */
-		LayoutComponent dialogParent = component.getDialogParent();
-		dialogParent.makeVisible();
 
 		/* Set the title of dialog to name of dialog component */
 		DialogInfo theInfo = theDialog.getDialogInfo();

@@ -120,7 +120,10 @@ public abstract class PersistentObject extends AbstractTLObject implements Seria
 		}
 	}
 
-	private static String toString(Throwable ex) {
+	/**
+	 * Serialization of an {@link Throwable}, thrown during {@link #toString()}.
+	 */
+	public static String toString(Throwable ex) {
 		final String className = ex.getClass().getName();
 		if (ex instanceof I18NFailure) {
 			// Note: If the error is an internationalized failure, arguments of that failure must

@@ -73,6 +73,12 @@ public class NoHistoryManager implements HistoryManager {
 		public HistoryManager getHistoryManager() {
 			return NoHistoryManager.this;
 		}
+
+		/** "TRUNK" */
+		@Override
+		public String toString() {
+			return "TRUNK";
+		}
 	}
 	
 	private final Branch trunk = new Trunk();

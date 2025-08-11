@@ -392,4 +392,8 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 		return result;
 	}
 
+	@Override
+	protected String toStringValues() {
+		return super.toStringValues() + ", edited: " + String.valueOf(getEditedObject());
+	}
 }

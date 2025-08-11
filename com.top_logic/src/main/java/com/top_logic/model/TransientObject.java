@@ -13,6 +13,7 @@ import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
+import com.top_logic.knowledge.service.db2.PersistentObject;
 
 /**
  * {@link TLObject} without persistency.
@@ -91,4 +92,26 @@ public abstract class TransientObject extends AbstractTLObject {
 		// some value.
 		return PersistencyLayer.getKnowledgeBase();
 	}
+
+	@Override
+	public String toString() {
+		String values;
+		try {
+			values = this.toStringValues();
+		} catch (Throwable ex) {
+			values = ", ERROR: '" + PersistentObject.toString(ex) + "'";
+		}
+
+		String className = this.getClass().getSimpleName();
+		return className + "(" + "type:" + tType() + values + ")";
+	}
+
+	/**
+	 * Hook for {@link #toString()} to retrieve relevant values in a format " (
+	 * <code>, property: value</code>)*".
+	 */
+	protected String toStringValues() {
+		return "";
+	}
+
 }

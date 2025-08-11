@@ -17,6 +17,8 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.element.layout.formeditor.builder.ConfiguredDynamicFormBuilder;
+import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.knowledge.service.Transaction;
@@ -243,16 +245,23 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 			fc.store();
 		}
 
-		// Try to fetch create.
-		TLFormObject parameterObject = fc.getAttributeUpdateContainer().getOverlay(null, null);
-		if (parameterObject == null) {
-			// Try to fetch edited model.
-			parameterObject = fc.getAttributeUpdateContainer().getOverlay((TLObject) model, null);
+		AttributeUpdateContainer updateContainer = fc.getAttributeUpdateContainer();
+		TLFormObject parameterObject;
+		if (fc.isSet(ConfiguredDynamicFormBuilder.TOP_LEVEL_OBJECT)) {
+			parameterObject = updateContainer.getOverlay(fc.get(ConfiguredDynamicFormBuilder.TOP_LEVEL_OBJECT), null);
+		} else {
+			// Try to fetch create.
+			parameterObject = updateContainer.getOverlay(null, null);
 			if (parameterObject == null) {
-				// Use just the first one.
-				parameterObject = fc.getAttributeUpdateContainer().getAllOverlays().iterator().next();
+				// Try to fetch edited model.
+				parameterObject = updateContainer.getOverlay((TLObject) model, null);
+				if (parameterObject == null) {
+					// Use just the first one.
+					parameterObject = updateContainer.getAllOverlays().iterator().next();
+				}
 			}
 		}
+
 
 		return _operation.execute(parameterObject, model, parameterObject.getEditedObject());
 	}

@@ -373,7 +373,7 @@ public class FormGroup extends AbstractFormContainer {
 	}
 
 	@Override
-	public Object visit(FormMemberVisitor v, Object arg) {
+	public <R, A> R visit(FormMemberVisitor<R, A> v, A arg) {
 		return v.visitFormGroup(this, arg);
 	}
 

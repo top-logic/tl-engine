@@ -158,6 +158,7 @@ public class GenericFormBuilderByExpression extends ConfiguredDynamicFormBuilder
 			.build();
 		FormEditorUtil.createAttributes(context, typedForm.getFormDefinition());
 
+		formContext.set(TOP_LEVEL_OBJECT, formObject);
 		return formOverlay;
 	}
 

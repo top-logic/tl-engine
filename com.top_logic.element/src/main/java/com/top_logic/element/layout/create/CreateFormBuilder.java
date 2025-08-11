@@ -152,6 +152,8 @@ public class CreateFormBuilder extends ConfiguredDynamicFormBuilder {
 	@Override
 	public Object getModel(Object businessModel, LayoutComponent component) {
 		AttributeFormContext formContext = new AttributeFormContext(component.getResPrefix());
+		formContext.set(TOP_LEVEL_OBJECT, null);
+
 		FormComponent.initFormContext(component, (FormHandler) component, formContext);
 
 		FormField typeField = createTypeField(businessModel);

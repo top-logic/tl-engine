@@ -748,6 +748,13 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 			return _context.isMultiple();
 		}
 
+		/**
+		 * The table showing composition entries as rows.
+		 */
+		public TableField getTableField() {
+			return _tableField;
+		}
+
 	}
 
 	/**

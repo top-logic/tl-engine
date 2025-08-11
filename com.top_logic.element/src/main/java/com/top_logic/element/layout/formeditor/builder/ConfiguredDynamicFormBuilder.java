@@ -8,13 +8,18 @@ package com.top_logic.element.layout.formeditor.builder;
 import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.element.layout.formeditor.definition.TLFormDefinition;
+import com.top_logic.element.meta.AttributeUpdateContainer;
+import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.values.edit.FormBuilder;
 import com.top_logic.mig.html.ModelBuilder;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.form.definition.FormDefinition;
 
@@ -39,6 +44,20 @@ import com.top_logic.model.form.definition.FormDefinition;
  */
 public abstract class ConfiguredDynamicFormBuilder
 		implements ModelBuilder, ConfiguredInstance<ConfiguredDynamicFormBuilder.Config> {
+
+	/**
+	 * {@link Property} to annotate the top level {@link TLObject} to a {@link FormContext}.
+	 * 
+	 * <p>
+	 * When this property is set, the value can be used to determine the actually edited
+	 * {@link TLFormObject} from the {@link FormContext}. A value of <code>null</code> indicates
+	 * that a new objects is created.
+	 * </p>
+	 * 
+	 * @see AttributeUpdateContainer#getOverlay(TLObject, String)
+	 */
+	public static final Property<TLObject> TOP_LEVEL_OBJECT =
+		TypedAnnotatable.property(TLObject.class, "top level object");
 
 	/**
 	 * Configuration for a dynamic {@link FormBuilder}.

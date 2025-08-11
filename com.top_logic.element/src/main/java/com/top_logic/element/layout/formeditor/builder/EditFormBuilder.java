@@ -134,6 +134,7 @@ public class EditFormBuilder extends ConfiguredDynamicFormBuilder {
 			.build();
 		
 		FormEditorUtil.createAttributes(context, typedForm.getFormDefinition());
+		formContext.set(TOP_LEVEL_OBJECT, object);
 		return formContext;
 	}
 

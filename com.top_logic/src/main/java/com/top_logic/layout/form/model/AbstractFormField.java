@@ -698,7 +698,7 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
     	assert 
     		(! newHasError) || 
     		(state == ILLEGAL_INPUT_STATE) || 
-    		(state == ILLEGAL_VALUE_STATE);
+				(state == ILLEGAL_VALUE_STATE) : "Invalid state: " + state;
     	
     	boolean errorTextChanged = !StringServices.equals(newError, oldError);
     	if (newHasError != oldHasError || errorTextChanged)

@@ -130,6 +130,7 @@ public class MonomorphicCreateFormBuilder extends ConfiguredDynamicFormBuilder {
 			.build();
 		FormEditorUtil.createAttributes(context, typedForm.getFormDefinition());
 
+		formContext.set(TOP_LEVEL_OBJECT, null);
 		return newCreation;
 	}
 

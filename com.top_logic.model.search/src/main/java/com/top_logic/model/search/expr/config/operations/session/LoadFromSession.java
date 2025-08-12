@@ -5,12 +5,16 @@
  */
 package com.top_logic.model.search.expr.config.operations.session;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
+import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
@@ -50,10 +54,42 @@ public class LoadFromSession extends GenericMethod {
 		boolean persist = asBoolean(arguments[1]);
 
 		if (persist) {
-			return PersonalConfiguration.getPersonalConfiguration().getJSONValue(key);
+			PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
+			Object result = pc.getJSONValue(key);
+			if (!isValid(result)) {
+				result = null;
+
+				// Drop value.
+				pc.setValue(key, null);
+			}
+			return result;
 		} else {
-			return DefaultDisplayContext.getDisplayContext().getSessionContext().get(StoreInSession.SCRIPT_STATE).get(key);
+			TLSessionContext session = DefaultDisplayContext.getDisplayContext().getSessionContext();
+			Object result = session.get(StoreInSession.SCRIPT_STATE).get(key);
+			if (!isValid(result)) {
+				result = null;
+
+				// Drop value.
+				session.set(StoreInSession.SCRIPT_STATE, null);
+			}
+			return result;
 		}
+	}
+
+	/**
+	 * Whether the given value only contains valid (non-deleted) objects.
+	 */
+	private static boolean isValid(Object value) {
+		if (value instanceof TLObject obj) {
+			return ((TLObject) value).tValid();
+		}
+		if (value instanceof Collection<?> coll) {
+			return coll.stream().allMatch(LoadFromSession::isValid);
+		}
+		if (value instanceof Map<?, ?> coll) {
+			return coll.values().stream().allMatch(LoadFromSession::isValid);
+		}
+		return true;
 	}
 
 	@Override

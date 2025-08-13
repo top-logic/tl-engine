@@ -1690,6 +1690,7 @@ input.is-checkbox[disabled] {
 .cExpandableTextInput input,
 .cBlockTextInput input,
 .cPopupSelect input,
+.cTextPopup,
 .cDateInput input,
 .cTimeInput input {
 	color: var(--highlight-fg, var(--text-primary));
@@ -1699,13 +1700,22 @@ input.is-checkbox[disabled] {
 	height: var(--form-line-height);
 	box-sizing: border-box;
 	max-width: 100%;
-	white-space: break-spaces;
-	word-wrap: break-word;
-	word-break: break-word;
 	font-family: var(--font-family);
     font-size: var(--body-02-font-size);
     line-height: var(--body-02-line-height);
     letter-spacing: var(--body-02-letter-spacing);
+}
+
+.cTextInput input,
+.cIntegerInput input,
+.cExpandableTextInput input,
+.cBlockTextInput input,
+.cPopupSelect input,
+.cDateInput input,
+.cTimeInput input {
+	white-space: break-spaces;
+	word-wrap: break-word;
+	word-break: break-word;
 }
 
 .cIntegerInput input,

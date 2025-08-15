@@ -16,7 +16,6 @@ import org.vectomatic.dom.svg.OMSVGSVGElement;
 import org.vectomatic.dom.svg.utils.OMSVGParser;
 
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.MouseEvent;
 import com.google.gwt.i18n.client.NumberFormat;
 
@@ -126,13 +125,21 @@ public class JSDiagramControl extends AbstractJSControl
 							if (_changeTimeout != 0) {
 								DomGlobal.clearTimeout(_changeTimeout);
 							}
-							_changeTimeout = DomGlobal.setTimeout(JSDiagramControl.this::onChange, 10);
+							_changeTimeout = DomGlobal.setTimeout(JSDiagramControl.this::onChange, 100);
 						}
 					};
 					Diagram diagram = Diagram.readDiagram(_scope, new JsonReader(new StringR(json)));
 					diagram.setContext(this);
 
 					diagram.layout(_renderContext);
+
+					if (diagram.getViewBoxWidth() == 0) {
+						diagram.setViewBoxWidth(diagram.getRoot().getWidth());
+					}
+					if (diagram.getViewBoxHeight() == 0) {
+						diagram.setViewBoxHeight(diagram.getRoot().getHeight());
+					}
+
 					diagram.draw(svgBuilder());
 
 					_diagram = diagram;
@@ -167,6 +174,9 @@ public class JSDiagramControl extends AbstractJSControl
 					viewbox = _svg.getViewBox().getBaseVal();
 					viewbox.setX(viewbox.getX() + dragDeltaX);
 					viewbox.setY(viewbox.getY() + dragDeltaY);
+
+					_diagram.setViewBoxX(viewbox.getX());
+					_diagram.setViewBoxY(viewbox.getY());
 
 					dragStartX = event.clientX;
 					dragStartY = event.clientY;
@@ -305,11 +315,6 @@ public class JSDiagramControl extends AbstractJSControl
 			DomGlobal.console.info("Sending updates: ", patch);
 
 			sendUpdate(getId(), patch, true);
-
-			_svg.setWidth(Unit.PX, _control.parentElement.clientWidth);
-			_svg.setHeight(Unit.PX, _control.parentElement.clientHeight - 5);
-			_svg.setViewBox(0, 0, _control.parentElement.clientWidth, _control.parentElement.clientHeight - 5);
-
 		} catch (IOException ex) {
 			DomGlobal.console.error("Faild to write updates.", ex);
 		}

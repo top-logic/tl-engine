@@ -107,7 +107,7 @@ public class SVGBuilder implements SvgWriter {
 		if (_parent == _root) {
 			_root.setAttribute(WIDTH_ATTR, width);
 			_root.setAttribute(HEIGHT_ATTR, height);
-			_root.setAttribute(VIEW_BOX_ATTR, x1 + " " + y1 + " " + x2 + " " + y2);
+			_root.setAttribute(VIEWBOX_ATTR, x1 + " " + y1 + " " + x2 + " " + y2);
 		}
 	}
 

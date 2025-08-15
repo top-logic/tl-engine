@@ -98,11 +98,6 @@ public interface SvgConstants {
 	String STROKE_DASHARRAY_ATTR = "stroke-dasharray";
 
 	/**
-	 * View-box attribute.
-	 */
-	String VIEW_BOX_ATTR = "viewBox";
-
-	/**
 	 * Group.
 	 */
 	String G = "g";

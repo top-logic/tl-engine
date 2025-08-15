@@ -14,10 +14,12 @@ import java.util.stream.Collectors;
 
 import org.vectomatic.dom.svg.OMSVGDocument;
 import org.vectomatic.dom.svg.OMSVGElement;
+import org.vectomatic.dom.svg.OMSVGRect;
 import org.vectomatic.dom.svg.OMSVGSVGElement;
 import org.vectomatic.dom.svg.utils.OMSVGParser;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.MouseEvent;
 import com.google.gwt.i18n.client.NumberFormat;
 
@@ -80,9 +82,11 @@ public class JSDiagramControl extends AbstractJSControl
 
 	double dragStartX, dragStartY;
 
+	private OMSVGRect viewbox;
+
 	double scrollX, scrollY;
 
-	boolean draggingToScroll;
+	boolean draggingToPan;
 
 	/** Flag to indicate that currently a server side triggered diagram update is applied. */
 	boolean _processServerUpdate;
@@ -161,32 +165,31 @@ public class JSDiagramControl extends AbstractJSControl
 				return null;
 			});
 
-		draggingToScroll = false;
+		NumberFormat nf = NumberFormat.getDecimalFormat();
 
-		EventListener preventScroll = new EventListener() {
+		draggingToPan = false;
+
+		EventListener scrollSVG = new EventListener() {
 
 			@Override
 			public void handleEvent(Event evt) {
-				if (draggingToScroll) {
-					ctrlParent.scrollTo(scrollX, scrollY);
-				}
+
 			}
 		};
 
-		EventListener draggingSVG = new EventListener() {
+		EventListener panSVG = new EventListener() {
 
 			@Override
 			public void handleEvent(Event evt) {
-				if (draggingToScroll) {
+				if (draggingToPan) {
 					DragEvent event = (DragEvent) evt;
 
-					double dragDeltaX = dragStartX - event.clientX;
-					double dragDeltaY = dragStartY - event.clientY;
+					float dragDeltaX = (float) (dragStartX - event.clientX);
+					float dragDeltaY = (float) (dragStartY - event.clientY);
 
-					scrollX = scrollX + dragDeltaX;
-					scrollY = scrollY + dragDeltaY;
-
-					ctrlParent.scrollTo(scrollX, scrollY);
+					viewbox = _svg.getViewBox().getBaseVal();
+					viewbox.setX(viewbox.getX() + dragDeltaX);
+					viewbox.setY(viewbox.getY() + dragDeltaY);
 
 					dragStartX = event.clientX;
 					dragStartY = event.clientY;
@@ -210,9 +213,9 @@ public class JSDiagramControl extends AbstractJSControl
 				img.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=";
 				event.dataTransfer.setDragImage(img, 0, 0);
 
-				draggingToScroll = true;
-				ctrlParent.addEventListener("scroll", preventScroll);
-				DomGlobal.window.addEventListener("dragover", draggingSVG);
+				draggingToPan = true;
+
+				DomGlobal.window.addEventListener("dragover", panSVG);
 
 				event.stopImmediatePropagation();
 			}
@@ -235,9 +238,9 @@ public class JSDiagramControl extends AbstractJSControl
 			public void handleEvent(Event evt) {
 				DragEvent event = (DragEvent) evt;
 
-				draggingToScroll = false;
-				ctrlParent.removeEventListener("scroll", preventScroll);
-				DomGlobal.window.removeEventListener("dragover", draggingSVG);
+				draggingToPan = false;
+
+				DomGlobal.window.removeEventListener("dragover", panSVG);
 
 				event.stopImmediatePropagation();
 			}
@@ -245,13 +248,14 @@ public class JSDiagramControl extends AbstractJSControl
 
 		ctrl.getStyle().setProperty("scale", "1");
 
+		_control.addEventListener("scroll", scrollSVG);
+
 		_control.addEventListener("wheel", new EventListener() {
 
 			@Override
 			public void handleEvent(Event evt) {
 				WheelEvent event = (WheelEvent) evt;
 				if (event.ctrlKey) {
-					NumberFormat nf = NumberFormat.getDecimalFormat();
 					double factor = JsMath.sign(event.deltaY) / -10;
 					double oldZoom = nf.parse(ctrl.getStyle().getProperty("scale"));
 					double newZoom = oldZoom + factor;
@@ -324,6 +328,10 @@ public class JSDiagramControl extends AbstractJSControl
 			DomGlobal.console.info("Sending updates: ", patch);
 
 			sendUpdate(getId(), patch, true);
+			
+			_svg.setWidth(Unit.PX, _control.parentElement.clientWidth);
+			_svg.setHeight(Unit.PX, _control.parentElement.clientHeight - 5);
+			_svg.setViewBox(0, 0, _control.parentElement.clientWidth, _control.parentElement.clientHeight - 5);
 
 		} catch (IOException ex) {
 			DomGlobal.console.error("Failed to write updates.", ex);

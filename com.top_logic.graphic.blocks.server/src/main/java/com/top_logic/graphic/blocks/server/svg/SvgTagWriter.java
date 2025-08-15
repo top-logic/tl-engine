@@ -53,7 +53,7 @@ public class SvgTagWriter implements SvgWriter {
 	public void dimensions(String width, String height, double x1, double y1, double x2, double y2) {
 		_out.writeAttribute(WIDTH_ATTR, width);
 		_out.writeAttribute(HEIGHT_ATTR, height);
-		_out.writeAttribute(VIEW_BOX_ATTR, x1 + " " + y1 + " " + x2 + " " + y2);
+		_out.writeAttribute(VIEWBOX_ATTR, x1 + " " + y1 + " " + x2 + " " + y2);
 	}
 
 	@Override

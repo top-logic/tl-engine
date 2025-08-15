@@ -30,6 +30,18 @@ public interface Diagram extends Widget, com.top_logic.graphic.flow.operations.D
 	/** @see #getContext() */
 	String CONTEXT__PROP = "context";
 
+	/** @see #getViewBoxX() */
+	String VIEW_BOX_X__PROP = "viewBoxX";
+
+	/** @see #getViewBoxY() */
+	String VIEW_BOX_Y__PROP = "viewBoxY";
+
+	/** @see #getViewBoxWidth() */
+	String VIEW_BOX_WIDTH__PROP = "viewBoxWidth";
+
+	/** @see #getViewBoxHeight() */
+	String VIEW_BOX_HEIGHT__PROP = "viewBoxHeight";
+
 	/**
 	 * The top-level diagram element.
 	 */
@@ -104,6 +116,46 @@ public interface Diagram extends Widget, com.top_logic.graphic.flow.operations.D
 	 * Checks, whether {@link #getContext()} has a value.
 	 */
 	boolean hasContext();
+
+	/**
+	 * X coordinate of the view box.
+	 */
+	double getViewBoxX();
+
+	/**
+	 * @see #getViewBoxX()
+	 */
+	com.top_logic.graphic.flow.data.Diagram setViewBoxX(double value);
+
+	/**
+	 * Y coordinate of the view box.
+	 */
+	double getViewBoxY();
+
+	/**
+	 * @see #getViewBoxY()
+	 */
+	com.top_logic.graphic.flow.data.Diagram setViewBoxY(double value);
+
+	/**
+	 * Width of the view box.
+	 */
+	double getViewBoxWidth();
+
+	/**
+	 * @see #getViewBoxWidth()
+	 */
+	com.top_logic.graphic.flow.data.Diagram setViewBoxWidth(double value);
+
+	/**
+	 * Height of the view box.
+	 */
+	double getViewBoxHeight();
+
+	/**
+	 * @see #getViewBoxHeight()
+	 */
+	com.top_logic.graphic.flow.data.Diagram setViewBoxHeight(double value);
 
 	@Override
 	com.top_logic.graphic.flow.data.Diagram setCssClass(String value);

@@ -42,6 +42,18 @@ message Diagram extends Widget {
 	
 	/** Local (client-side) diagram-wide operation context to allow client-server communication. */
 	transient com.top_logic.graphic.flow.callback.DiagramContext context;
+	
+	/** X coordinate of the view box. */
+	double viewBoxX;
+	
+	/** Y coordinate of the view box. */
+	double viewBoxY;
+	
+	/** Width of the view box. */
+	double viewBoxWidth;
+	
+	/** Height of the view box. */
+	double viewBoxHeight;
 }
 
 /** A rectangular region of a {@link Diagram}. */

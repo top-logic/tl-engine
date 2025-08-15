@@ -30,6 +30,14 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 
 	private transient com.top_logic.graphic.flow.callback.DiagramContext _context = null;
 
+	private double _viewBoxX = 0.0d;
+
+	private double _viewBoxY = 0.0d;
+
+	private double _viewBoxWidth = 0.0d;
+
+	private double _viewBoxHeight = 0.0d;
+
 	/**
 	 * Creates a {@link Diagram_Impl} instance.
 	 *
@@ -180,6 +188,78 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 	}
 
 	@Override
+	public final double getViewBoxX() {
+		return _viewBoxX;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Diagram setViewBoxX(double value) {
+		internalSetViewBoxX(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getViewBoxX()} without chain call utility. */
+	protected final void internalSetViewBoxX(double value) {
+		_listener.beforeSet(this, VIEW_BOX_X__PROP, value);
+		_viewBoxX = value;
+		_listener.afterChanged(this, VIEW_BOX_X__PROP);
+	}
+
+	@Override
+	public final double getViewBoxY() {
+		return _viewBoxY;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Diagram setViewBoxY(double value) {
+		internalSetViewBoxY(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getViewBoxY()} without chain call utility. */
+	protected final void internalSetViewBoxY(double value) {
+		_listener.beforeSet(this, VIEW_BOX_Y__PROP, value);
+		_viewBoxY = value;
+		_listener.afterChanged(this, VIEW_BOX_Y__PROP);
+	}
+
+	@Override
+	public final double getViewBoxWidth() {
+		return _viewBoxWidth;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Diagram setViewBoxWidth(double value) {
+		internalSetViewBoxWidth(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getViewBoxWidth()} without chain call utility. */
+	protected final void internalSetViewBoxWidth(double value) {
+		_listener.beforeSet(this, VIEW_BOX_WIDTH__PROP, value);
+		_viewBoxWidth = value;
+		_listener.afterChanged(this, VIEW_BOX_WIDTH__PROP);
+	}
+
+	@Override
+	public final double getViewBoxHeight() {
+		return _viewBoxHeight;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Diagram setViewBoxHeight(double value) {
+		internalSetViewBoxHeight(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getViewBoxHeight()} without chain call utility. */
+	protected final void internalSetViewBoxHeight(double value) {
+		_listener.beforeSet(this, VIEW_BOX_HEIGHT__PROP, value);
+		_viewBoxHeight = value;
+		_listener.afterChanged(this, VIEW_BOX_HEIGHT__PROP);
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.Diagram setCssClass(String value) {
 		internalSetCssClass(value);
 		return this;
@@ -208,7 +288,11 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 			SELECTION__PROP, 
 			MULTI_SELECT__PROP, 
 			CLICK_HANDLER__PROP, 
-			CONTEXT__PROP));
+			CONTEXT__PROP, 
+			VIEW_BOX_X__PROP, 
+			VIEW_BOX_Y__PROP, 
+			VIEW_BOX_WIDTH__PROP, 
+			VIEW_BOX_HEIGHT__PROP));
 
 	private static java.util.Set<String> TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(new java.util.HashSet<>(
 			java.util.Arrays.asList(
@@ -233,6 +317,10 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 			case MULTI_SELECT__PROP: return isMultiSelect();
 			case CLICK_HANDLER__PROP: return getClickHandler();
 			case CONTEXT__PROP: return getContext();
+			case VIEW_BOX_X__PROP: return getViewBoxX();
+			case VIEW_BOX_Y__PROP: return getViewBoxY();
+			case VIEW_BOX_WIDTH__PROP: return getViewBoxWidth();
+			case VIEW_BOX_HEIGHT__PROP: return getViewBoxHeight();
 			default: return super.get(field);
 		}
 	}
@@ -245,6 +333,10 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 			case MULTI_SELECT__PROP: internalSetMultiSelect((boolean) value); break;
 			case CLICK_HANDLER__PROP: internalSetClickHandler((com.top_logic.graphic.blocks.svg.event.Registration) value); break;
 			case CONTEXT__PROP: internalSetContext((com.top_logic.graphic.flow.callback.DiagramContext) value); break;
+			case VIEW_BOX_X__PROP: internalSetViewBoxX((double) value); break;
+			case VIEW_BOX_Y__PROP: internalSetViewBoxY((double) value); break;
+			case VIEW_BOX_WIDTH__PROP: internalSetViewBoxWidth((double) value); break;
+			case VIEW_BOX_HEIGHT__PROP: internalSetViewBoxHeight((double) value); break;
 			default: super.set(field, value); break;
 		}
 	}
@@ -264,6 +356,14 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 		out.endArray();
 		out.name(MULTI_SELECT__PROP);
 		out.value(isMultiSelect());
+		out.name(VIEW_BOX_X__PROP);
+		out.value(getViewBoxX());
+		out.name(VIEW_BOX_Y__PROP);
+		out.value(getViewBoxY());
+		out.name(VIEW_BOX_WIDTH__PROP);
+		out.value(getViewBoxWidth());
+		out.name(VIEW_BOX_HEIGHT__PROP);
+		out.value(getViewBoxHeight());
 	}
 
 	@Override
@@ -303,6 +403,22 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 				}
 				break;
 			}
+			case VIEW_BOX_X__PROP: {
+				out.value(getViewBoxX());
+				break;
+			}
+			case VIEW_BOX_Y__PROP: {
+				out.value(getViewBoxY());
+				break;
+			}
+			case VIEW_BOX_WIDTH__PROP: {
+				out.value(getViewBoxWidth());
+				break;
+			}
+			case VIEW_BOX_HEIGHT__PROP: {
+				out.value(getViewBoxHeight());
+				break;
+			}
 			default: super.writeFieldValue(scope, out, field);
 		}
 	}
@@ -322,6 +438,10 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 			}
 			break;
 			case MULTI_SELECT__PROP: setMultiSelect(in.nextBoolean()); break;
+			case VIEW_BOX_X__PROP: setViewBoxX(in.nextDouble()); break;
+			case VIEW_BOX_Y__PROP: setViewBoxY(in.nextDouble()); break;
+			case VIEW_BOX_WIDTH__PROP: setViewBoxWidth(in.nextDouble()); break;
+			case VIEW_BOX_HEIGHT__PROP: setViewBoxHeight(in.nextDouble()); break;
 			default: super.readField(scope, in, field);
 		}
 	}

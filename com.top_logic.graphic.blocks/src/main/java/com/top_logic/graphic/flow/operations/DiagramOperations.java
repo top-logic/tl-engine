@@ -52,8 +52,8 @@ public interface DiagramOperations extends Drawable, SVGClickHandler {
 		out.writeCssClass(self().getCssClass());
 		Box root = self().getRoot();
 		out.dimensions(
-			Double.toString(root.getWidth()),
-			Double.toString(root.getHeight()),
+			"100%",
+			"100%",
 			self().getViewBoxX(),
 			self().getViewBoxY(),
 			self().getViewBoxWidth(),

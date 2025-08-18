@@ -615,28 +615,29 @@ BAL = {
 		return new BAL.Coordinates(x, y);
 	},
 	
+	getWheelScrollFactor: function(event) {
+			switch(event.deltaMode) {
+				case WheelEvent.DOM_DELTA_PIXEL: {
+					return 1;
+				}
+				case WheelEvent.DOM_DELTA_LINE: {
+					const el = document.createElement('div');
+					el.style.fontSize = 'initial';
+					el.style.display = 'none';
+					document.body.appendChild(el);
+					const fontSize = window.getComputedStyle(el).fontSize;
+					document.body.removeChild(el);
+					return fontSize ? parseInt(fontSize) : 1;
+				}
+				case WheelEvent.DOM_DELTA_PAGE: {
+					var pixelPerPage = 450; /*randomely chosen*/
+					return pixelPerPage;
+				}
+			}
+		},
+	
 	getEventMouseScrollDelta: function(event) {
-		var pixelMode = 0;
-		var lineMode = 1;
-		var pageMode = 2;
-		var pixelPerLine = 30; /*randomely chosen*/
-		var pixelPerPage = 450; /*randomely chosen*/
-		
-		var deltaModeFactor = 0;
-		switch(event.deltaMode) {
-			case pixelMode: {
-				deltaModeFactor = 1;
-				break;
-			}
-			case lineMode: {
-				deltaModeFactor = pixelPerLine;
-				break;
-			}
-			case pageMode: {
-				deltaModeFactor = pixelPerPage;
-				break;
-			}
-		}
+		var deltaModeFactor = this.getWheelScrollFactor(event);
 		return event.deltaY * deltaModeFactor;
 	},
 	

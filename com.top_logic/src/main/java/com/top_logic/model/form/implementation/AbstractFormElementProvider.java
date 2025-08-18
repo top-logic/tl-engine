@@ -58,9 +58,6 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 		return rfInputCell;
 	}
 
-	/** The context of the form. */
-	private InstantiationContext _context;
-
 	private String _id;
 
 	/** Prefix for UUID for ResKeys. */
@@ -72,8 +69,6 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 	 */
 	public AbstractFormElementProvider(InstantiationContext context, T config) {
 		super(context, config);
-
-		_context = context;
 	}
 	
 	/**
@@ -207,15 +202,6 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 	 */
 	protected HTMLTemplateFragment getIdAttribute() {
 		return getID() != null ? attr(HTMLConstants.DATA_ATTRIBUTE_PREFIX + "id", getID()) : empty();
-	}
-
-	/**
-	 * Returns the {@link InstantiationContext}.
-	 * 
-	 * @return The {@link InstantiationContext}.
-	 */
-	public InstantiationContext getContext() {
-		return _context;
 	}
 
 	@Override

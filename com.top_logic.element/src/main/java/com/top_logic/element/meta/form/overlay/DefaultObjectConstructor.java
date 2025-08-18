@@ -49,12 +49,22 @@ public abstract class DefaultObjectConstructor implements ObjectConstructor {
 		protected TLFactory factory() {
 			return DynamicModelService.getInstance();
 		}
+
+		@Override
+		public boolean isTransient(TLFormObject overlay) {
+			return false;
+		}
 	};
 
 	private static final ObjectConstructor TRANSIENT_INSTANCE = new DefaultObjectConstructor() {
 		@Override
 		protected TLFactory factory() {
 			return TransientObjectFactory.INSTANCE;
+		}
+
+		@Override
+		public boolean isTransient(TLFormObject overlay) {
+			return true;
 		}
 	};
 

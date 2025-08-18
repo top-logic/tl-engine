@@ -134,10 +134,10 @@ public class JSDiagramControl extends AbstractJSControl
 					diagram.layout(_renderContext);
 
 					if (diagram.getViewBoxWidth() == 0) {
-						diagram.setViewBoxWidth(diagram.getRoot().getWidth());
+						diagram.setViewBoxWidth(ctrlParent.clientWidth);
 					}
 					if (diagram.getViewBoxHeight() == 0) {
-						diagram.setViewBoxHeight(diagram.getRoot().getHeight());
+						diagram.setViewBoxHeight(ctrlParent.clientHeight - 5);
 					}
 
 					diagram.draw(svgBuilder());
@@ -153,15 +153,7 @@ public class JSDiagramControl extends AbstractJSControl
 
 		draggingToPan = false;
 
-		EventListener scrollSVG = new EventListener() {
-
-			@Override
-			public void handleEvent(Event evt) {
-
-			}
-		};
-
-		EventListener panSVG = new EventListener() {
+		EventListener panningSVG = new EventListener() {
 
 			@Override
 			public void handleEvent(Event evt) {
@@ -171,12 +163,7 @@ public class JSDiagramControl extends AbstractJSControl
 					float dragDeltaX = (float) (dragStartX - event.clientX);
 					float dragDeltaY = (float) (dragStartY - event.clientY);
 
-					viewbox = _svg.getViewBox().getBaseVal();
-					viewbox.setX(viewbox.getX() + dragDeltaX);
-					viewbox.setY(viewbox.getY() + dragDeltaY);
-
-					_diagram.setViewBoxX(viewbox.getX());
-					_diagram.setViewBoxY(viewbox.getY());
+					panSVG(dragDeltaX, dragDeltaY);
 
 					dragStartX = event.clientX;
 					dragStartY = event.clientY;
@@ -186,7 +173,7 @@ public class JSDiagramControl extends AbstractJSControl
 			}
 		};
 
-		_control.addEventListener("dragstart", new EventListener() {
+		EventListener startDraggingSVG = new EventListener() {
 
 			@Override
 			public void handleEvent(Event evt) {
@@ -202,13 +189,13 @@ public class JSDiagramControl extends AbstractJSControl
 
 				draggingToPan = true;
 
-				DomGlobal.window.addEventListener("dragover", panSVG);
+				DomGlobal.window.addEventListener("dragover", panningSVG);
 
 				event.stopImmediatePropagation();
 			}
-		});
+		};
 
-		_control.addEventListener("drop", new EventListener() {
+		EventListener dropSVG = new EventListener() {
 
 			@Override
 			public void handleEvent(Event evt) {
@@ -217,9 +204,9 @@ public class JSDiagramControl extends AbstractJSControl
 				event.stopImmediatePropagation();
 				event.preventDefault();
 			}
-		});
+		};
 
-		_control.addEventListener("dragend", new EventListener() {
+		EventListener endDraggingSVG = new EventListener() {
 
 			@Override
 			public void handleEvent(Event evt) {
@@ -227,17 +214,13 @@ public class JSDiagramControl extends AbstractJSControl
 
 				draggingToPan = false;
 
-				DomGlobal.window.removeEventListener("dragover", panSVG);
+				DomGlobal.window.removeEventListener("dragover", panningSVG);
 
 				event.stopImmediatePropagation();
 			}
-		});
+		};
 
-		ctrl.getStyle().setProperty("scale", "1");
-
-		_control.addEventListener("scroll", scrollSVG);
-
-		_control.addEventListener("wheel", new EventListener() {
+		EventListener zoomOrScrollSVG = new EventListener() {
 
 			@Override
 			public void handleEvent(Event evt) {
@@ -261,9 +244,41 @@ public class JSDiagramControl extends AbstractJSControl
 
 					event.stopImmediatePropagation();
 					event.preventDefault();
+				} else {
+					int scrollFactor = getWheelScrollFactor(evt);
+					float deltaX = (float) event.deltaX * scrollFactor;
+					float deltaY = (float) event.deltaY * scrollFactor;
+					panSVG(deltaX, deltaY);
 				}
 			}
-		});
+		};
+
+		ctrl.getStyle().setProperty("scale", "1");
+
+		_control.addEventListener("dragstart", startDraggingSVG);
+
+		_control.addEventListener("drop", dropSVG);
+
+		_control.addEventListener("dragend", endDraggingSVG);
+
+		_control.addEventListener("wheel", zoomOrScrollSVG);
+	}
+
+	private native int getWheelScrollFactor(Event event) /*-{
+		return $wnd.BAL.getWheelScrollFactor(event);
+	}-*/;
+
+	void panSVG(float panDeltaX, float panDeltaY) {
+		viewbox = _svg.getViewBox().getBaseVal();
+		float newX = (float) JsMath.max(0,
+			JsMath.min(viewbox.getX() + panDeltaX, _diagram.getRoot().getWidth() - viewbox.getWidth()));
+		float newY = (float) JsMath.max(0,
+			JsMath.min(viewbox.getY() + panDeltaY, _diagram.getRoot().getHeight() - viewbox.getHeight()));
+		viewbox.setX(newX);
+		viewbox.setY(newY);
+
+		_diagram.setViewBoxX(viewbox.getX());
+		_diagram.setViewBoxY(viewbox.getY());
 	}
 
 	/**

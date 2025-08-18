@@ -23,4 +23,9 @@ public interface ObjectConstructor {
 	 */
 	TLObject newInstance(TLFormObject overlay);
 
+	/**
+	 * Whether this constructor will create a transient object for the given overlay.
+	 */
+	boolean isTransient(TLFormObject overlay);
+
 }

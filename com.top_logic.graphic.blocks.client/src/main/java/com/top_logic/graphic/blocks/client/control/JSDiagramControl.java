@@ -271,6 +271,11 @@ public class JSDiagramControl extends AbstractJSControl
 
 					event.stopImmediatePropagation();
 					event.preventDefault();
+				} else if (event.shiftKey) {
+					int scrollFactor = getWheelScrollFactor(evt);
+					float deltaX = (float) event.deltaY * scrollFactor;
+					float deltaY = (float) event.deltaX * scrollFactor;
+					panSVG(deltaX, deltaY);
 				} else {
 					int scrollFactor = getWheelScrollFactor(evt);
 					float deltaX = (float) event.deltaX * scrollFactor;

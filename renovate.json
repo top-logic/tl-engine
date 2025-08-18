@@ -6,19 +6,19 @@
   "enabledManagers": [
     "maven"
   ],
-  "packageRules": [
+    "packageRules": [
     {
-      "enabled": false,
-      "reviewers": [
-        "jenkins",
-        "msi",
-        "bhu",
-        "dbu"
-      ],
-      "dependencyDashboard": false,
-      "matchPackageNames": [
-        "*"
-      ]
+      "description": "Standard: alle Maven-Dependencies deaktivieren",
+      "matchManagers": ["maven"],
+      "enabled": false
+    },
+    {
+      "description": "Nur interne Maven-Dependencies mit Prefix wieder aktivieren",
+      "matchManagers": ["maven"],
+      "matchPackageNames": ["/^com\\.top-logic:/"],
+      "enabled": true,
+      "reviewers": ["jenkins", "msi", "bhu", "dbu"],
+      "dependencyDashboard": false
     }
   ],
   "vulnerabilityAlerts": {

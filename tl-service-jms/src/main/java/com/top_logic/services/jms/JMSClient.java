@@ -10,17 +10,20 @@ import java.util.Map;
 
 import javax.naming.NamingException;
 
+import jakarta.jms.ConnectionFactory;
+import jakarta.jms.Destination;
+import jakarta.jms.ExceptionListener;
+import jakarta.jms.JMSContext;
+import jakarta.jms.JMSException;
+
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.services.jms.JMSService.MQSystemClient;
-
-import jakarta.jms.ConnectionFactory;
-import jakarta.jms.Destination;
-import jakarta.jms.JMSContext;
-import jakarta.jms.JMSException;
 
 /**
  * The parent class for every Message Queue System Client.
@@ -29,6 +32,10 @@ import jakarta.jms.JMSException;
  */
 public abstract class JMSClient extends AbstractConfiguredInstance<JMSClient.Config<?>>
 		implements MQSystemClient, Closeable {
+
+	private JMSService _service;
+
+	private ConnectionFactory _cFactory;
 
 	private JMSContext _context;
 
@@ -83,7 +90,6 @@ public abstract class JMSClient extends AbstractConfiguredInstance<JMSClient.Con
 		return _context;
 	}
 
-
 	/**
 	 * This method returns the destination of the JMS Connection that is either a queue or a topic.
 	 * 
@@ -118,7 +124,32 @@ public abstract class JMSClient extends AbstractConfiguredInstance<JMSClient.Con
 	 */
 	@Override
 	public void setupMQConnection() throws JMSException, NamingException {
-		_context = setupConnectionFactory().createContext();
+		_cFactory = setupConnectionFactory();
+		connect();
+	}
+
+	/**
+	 * (Re-)Connects the application to the MQ System by (re-)creating the context.
+	 * 
+	 * @throws JMSException
+	 *         Exception if something is not JMS conform
+	 * @throws NamingException
+	 *         Exception if something went wrong with the JNDI lookup
+	 */
+	public void connect() throws JMSException, NamingException {
+		if (_context != null) {
+			close();
+		}
+		_context = _cFactory.createContext();
+		_context.setExceptionListener(new ExceptionListener() {
+
+			@Override
+			public void onException(JMSException exception) {
+				InfoService.showWarning(I18NConstants.ERROR_CONNECTION_LOST,
+					I18NConstants.ERROR_CONNECTION_LOST_DETAILS);
+				Logger.warn("Connection to the MQ System lost.", exception, this);
+			}
+		});
 	}
 
 	/**

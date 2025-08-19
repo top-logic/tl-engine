@@ -16,6 +16,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.services.jms.JMSClient;
@@ -36,6 +37,7 @@ public class IBMMQClient extends JMSClient {
 		Config.PORT,
 		Config.USER,
 		Config.PASSWORD,
+		Config.AUTO_RECONNECT,
 		Config.RECONNECT_TIMEOUT,
 		Config.CHANNEL,
 		Config.QUEUE_MANAGER,
@@ -63,6 +65,11 @@ public class IBMMQClient extends JMSClient {
 		 * Configuration name for {@link #getPassword()}.
 		 */
 		String PASSWORD = "password";
+
+		/**
+		 * Configuration name for {@link #getAutoReconnect()}.
+		 */
+		String AUTO_RECONNECT = "auto-reconnect";
 
 		/**
 		 * Configuration name for {@link #getReconnectTimeout()}.
@@ -109,8 +116,15 @@ public class IBMMQClient extends JMSClient {
 		/**
 		 * The reconnect timeout in seconds for the connection.
 		 */
+		@Name(AUTO_RECONNECT)
+		@BooleanDefault(false)
+		boolean getAutoReconnect();
+
+		/**
+		 * The reconnect timeout in seconds for the connection.
+		 */
 		@Name(RECONNECT_TIMEOUT)
-		@IntDefault(120)
+		@IntDefault(240)
 		int getReconnectTimeout();
 
 		/**
@@ -163,8 +177,10 @@ public class IBMMQClient extends JMSClient {
 			Resources.getSystemInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE));
 		ibmcf.setStringProperty(WMQConstants.USERID, config.getUser());
 		ibmcf.setStringProperty(WMQConstants.PASSWORD, config.getPassword());
-		ibmcf.setClientReconnectOptions(WMQConstants.WMQ_CLIENT_RECONNECT_Q_MGR);
-		ibmcf.setClientReconnectTimeout(config.getReconnectTimeout());
+		if (config.getAutoReconnect()) {
+			ibmcf.setClientReconnectOptions(WMQConstants.WMQ_CLIENT_RECONNECT_Q_MGR);
+			ibmcf.setClientReconnectTimeout(config.getReconnectTimeout());
+		}
 		return ibmcf;
 	}
 

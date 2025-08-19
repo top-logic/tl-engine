@@ -44,10 +44,6 @@ import com.top_logic.layout.form.model.NodeGroupInitializer;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.form.template.SelectionControlProvider;
-import com.top_logic.layout.table.renderer.DefaultRowClassProvider;
-import com.top_logic.layout.table.renderer.DefaultTableRenderer;
-import com.top_logic.layout.tree.NodeContext;
-import com.top_logic.layout.tree.TreeControl;
 import com.top_logic.layout.tree.model.ComposingTreeModel;
 import com.top_logic.layout.tree.model.DefaultStructureTreeUIModel;
 import com.top_logic.layout.tree.model.TLTreeModel;
@@ -57,6 +53,7 @@ import com.top_logic.layout.tree.renderer.DefaultColumnDeclaration;
 import com.top_logic.layout.tree.renderer.DefaultTableDeclaration;
 import com.top_logic.layout.tree.renderer.DefaultTreeImageProvider;
 import com.top_logic.layout.tree.renderer.TreeTableRenderer;
+import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLModuleSingleton;
@@ -160,16 +157,12 @@ public class EditPersonOrGroupRolesMultiComponent extends EditComponent {
         theTD.setHasHeader(true);
 
         TreeTableRenderer theTreeTableRenderer = new TreeTableRenderer(DefaultTreeImageProvider.INSTANCE, theTD) {
-        	@Override
-			protected void writeNodeClassesContent(TagWriter out, NodeContext nodeContext) throws IOException {
-        		Object node = nodeContext.currentNode();
-        		TreeControl tree = nodeContext.getTree();
-        		boolean isLeaf = tree.getModel().isLeaf(node);
-        		if (isLeaf) {
-					out.append(DefaultRowClassProvider.TR_EVEN_CSS_CLASS);
-        		} else {
-					out.append(DefaultTableRenderer.TABLE_ROW_CSS_CLASS);
-        		}
+
+			@Override
+			protected void appendControlClasses(TagWriter out) throws IOException {
+				super.appendControlClasses(out);
+				HTMLUtil.appendCSSClass(out, "collapsed-borders");
+				HTMLUtil.appendCSSClass(out, "tl-standard-table");
 			}
 		};
         theFormTree.setTreeRenderer(theTreeTableRenderer);

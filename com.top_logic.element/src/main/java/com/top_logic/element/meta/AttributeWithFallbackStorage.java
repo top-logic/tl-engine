@@ -13,6 +13,7 @@ import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Container;
 import com.top_logic.basic.config.annotation.Hidden;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.Ref;
@@ -88,6 +89,7 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 				@Step(TLAttributeAnnotation.ANNOTATED),
 				@Step(value = PartModel.RESOLVED_TYPE, type = PartModel.class) }),
 		})
+		@Mandatory
 		String getStorageAttribute();
 
 		/**
@@ -112,6 +114,7 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 				@Step(TLAttributeAnnotation.ANNOTATED),
 				@Step(value = PartModel.RESOLVED_TYPE, type = PartModel.class) }),
 		})
+		@Mandatory
 		String getFallbackAttribute();
 
 		/**

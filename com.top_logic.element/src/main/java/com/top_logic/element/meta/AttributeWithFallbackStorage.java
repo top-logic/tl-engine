@@ -21,7 +21,7 @@ import com.top_logic.basic.config.annotation.Step;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.container.ConfigPart;
-import com.top_logic.basic.func.Function3;
+import com.top_logic.basic.func.Function4;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.config.annotation.TLStorage;
@@ -88,6 +88,10 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 				@Step(STORAGE_ANNOTATION),
 				@Step(TLAttributeAnnotation.ANNOTATED),
 				@Step(value = PartModel.RESOLVED_TYPE, type = PartModel.class) }),
+			@Ref(steps = {
+				@Step(STORAGE_ANNOTATION),
+				@Step(TLAttributeAnnotation.ANNOTATED),
+				@Step(value = PartModel.MULTIPLE_PROPERTY, type = PartModel.class) }),
 		})
 		@Mandatory
 		String getStorageAttribute();
@@ -113,6 +117,10 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 				@Step(STORAGE_ANNOTATION),
 				@Step(TLAttributeAnnotation.ANNOTATED),
 				@Step(value = PartModel.RESOLVED_TYPE, type = PartModel.class) }),
+			@Ref(steps = {
+				@Step(STORAGE_ANNOTATION),
+				@Step(TLAttributeAnnotation.ANNOTATED),
+				@Step(value = PartModel.MULTIPLE_PROPERTY, type = PartModel.class) }),
 		})
 		@Mandatory
 		String getFallbackAttribute();
@@ -189,11 +197,11 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 		 * {@link Config#getFallbackAttribute()}.
 		 */
 		class CompatibleAttributes extends
-				Function3<List<? extends TLStructuredTypePart>, TLStructuredTypePart, TLStructuredType, TLType> {
+				Function4<List<? extends TLStructuredTypePart>, TLStructuredTypePart, TLStructuredType, TLType, Boolean> {
 
 			@Override
 			public List<? extends TLStructuredTypePart> apply(TLStructuredTypePart self, TLStructuredType contextType,
-					TLType attributeType) {
+					TLType attributeType, Boolean multiple) {
 				if (contextType == null || attributeType == null) {
 					return Collections.emptyList();
 				}
@@ -201,7 +209,7 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 				return contextType.getAllParts().stream()
 					.filter(p -> p != self)
 					.filter(p -> p.getType() == attributeType)
-					.filter(p -> p.isMultiple() == self.isMultiple())
+					.filter(p -> p.isMultiple() == Utils.isTrue(multiple))
 					.toList();
 			}
 		}

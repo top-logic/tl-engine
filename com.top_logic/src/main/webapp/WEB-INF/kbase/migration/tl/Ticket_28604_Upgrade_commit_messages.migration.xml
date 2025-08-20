@@ -7,7 +7,7 @@
 		module="tl"
 	/>
 	<dependencies>
-		<dependency name="Ticket_28336_migrate_command_confirmation"
+		<dependency name="Ticket_28678_Enlarge_MACHINE_IP_column"
 			module="tl"
 		/>
 	</dependencies>

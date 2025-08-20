@@ -36,6 +36,8 @@
 			<layout-reference resource="com.top_logic.demo/technical/components/dynamicVisibility/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/fallbackValues/tabLayout.layout.xml"/>
 			<layout-reference resource="com.top_logic.demo/technical/components/workflow/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/blocks/tabLayout.layout.xml"/>
+			<layout-reference resource="com.top_logic.demo/technical/components/flowchart1/tabLayout.layout.xml"/>
 		</components>
 	</arguments>
 </config:template-call>

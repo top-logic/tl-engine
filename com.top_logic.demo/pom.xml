@@ -63,7 +63,8 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-graph-diagramjs-server</artifactId>
+      <artifactId>tl-graphic-blocks-server</artifactId>
+      <version>${tl.version}</version>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>

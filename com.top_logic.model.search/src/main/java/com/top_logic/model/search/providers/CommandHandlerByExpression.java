@@ -48,7 +48,8 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @InApp
-public class CommandHandlerByExpression extends AbstractCommandHandler implements WithTransaction {
+public class CommandHandlerByExpression extends AbstractCommandHandler
+		implements WithTransaction<CommandHandler.ConfigBase<? extends CommandHandler>> {
 
 	private QueryExecutor _operation;
 
@@ -161,7 +162,7 @@ public class CommandHandlerByExpression extends AbstractCommandHandler implement
 		Config config = (Config) getConfig();
 
 		if (_operation != null) {
-			try (Transaction tx = beginTransaction(aComponent, model)) {
+			try (Transaction tx = beginTransaction(getResourceKey(aComponent), model)) {
 				if (aComponent instanceof FormHandler && config.getFormApply()) {
 					FormContext formContext = ((FormHandler) aComponent).getFormContext();
 					if (formContext != null) {

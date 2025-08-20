@@ -130,7 +130,8 @@ public class ModelStateHandler extends AbstractConfiguredInstance<ModelStateHand
 	public void setState(LayoutComponent component, Object model, CommandHandler command, boolean state) {
 		if (_transaction) {
 			try (Transaction tx = PersistencyLayer.getKnowledgeBase()
-				.beginTransaction(((Config<?>) getConfig()).buildCommandMessage(component, command, model))) {
+				.beginTransaction(
+					((Config<?>) getConfig()).buildCommandMessage(command.getResourceKey(component), model))) {
 				_stateUpdate.execute(model, Boolean.valueOf(state));
 
 				tx.commit();

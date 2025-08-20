@@ -96,7 +96,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_COMPONENT_CHANNEL_EXPECTED;
 
 	/**
-	 * @en Updated object: {0}
+	 * @en Updated object "{0}".
 	 */
 	public static ResKey1 UPDATED__MODEL;
 
@@ -106,17 +106,17 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 DELETED__MODEL;
 
 	/**
-	 * @en Created object: {0}
+	 * @en Object "{0}" created.
 	 */
 	public static ResKey1 CREATED__MODEL;
 
 	/**
-	 * @en Performed operation "{0}" on "{1}".
+	 * @en Operation "{0}" performed on "{1}".
 	 */
 	public static ResKey2 PERFORMED__OPERATION_MODEL;
 
 	/**
-	 * @en Performed operation "{0}".
+	 * @en Operation "{0}" performed.
 	 */
 	public static ResKey1 PERFORMED__OPERATION;
 

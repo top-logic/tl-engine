@@ -420,7 +420,7 @@ public class XMLImportCommand extends AbstractCommandHandler implements WithPost
 
 						try (Transaction tx =
 							kb.beginTransaction(
-								((Config) getConfig()).buildCommandMessage(component, XMLImportCommand.this, null))) {
+								((Config) getConfig()).buildCommandMessage(getResourceKey(component), null))) {
 							_result = importer.importModel(modelBinding, source);
 
 							if (_postProcessing != null) {

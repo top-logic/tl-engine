@@ -6,6 +6,7 @@
 package com.top_logic.element.meta.kbbased.storage;
 
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
@@ -16,12 +17,14 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.ex.NoSuchAttributeException;
+import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.AssociationStorage;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.kbbased.AttributeUtil;
+import com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil;
 import com.top_logic.element.meta.kbbased.storage.LinkStorage.LinkStorageConfig;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
@@ -100,6 +103,25 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 
 		_preload = new SinglePreloadContribution(new AssociationNavigationPreload(getOutgoingQuery()));
 		_reversePreload = new SinglePreloadContribution(new AssociationNavigationPreload(getIncomingQuery()));
+	}
+
+	@Override
+	public ObjectKey getBaseObjectId(Map<String, Object> row) {
+		return (ObjectKey) row.get(DBKnowledgeAssociation.REFERENCE_SOURCE_NAME);
+	}
+
+	@Override
+	public String getStorageColumn() {
+		return DBKnowledgeAssociation.REFERENCE_DEST_NAME;
+	}
+
+	@Override
+	public ObjectKey getPartId(Map<String, Object> row) {
+		if (monomophicTable()) {
+			return getAttribute().tId();
+		} else {
+			return (ObjectKey) row.get(WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR);
+		}
 	}
 
 	@Override

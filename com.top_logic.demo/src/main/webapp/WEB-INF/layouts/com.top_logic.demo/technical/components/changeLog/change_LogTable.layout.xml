@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="date,author,message"
+		type="tl.changelog:ChangeSet"
+	>
+		<name key="dynamic.bb58db20-c677-4062-89e0-0588ab3f0df8">
+			<en>Change-Log</en>
+			<de>Change-Log</de>
+		</name>
+		<modelBuilder class="com.top_logic.element.changelog.ChangeLogListModelBuilder"/>
+		<configurationProviders>
+			<sort-columns order="date:descending"/>
+		</configurationProviders>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="ID_155aea09_4941_4ca5_ae52_2a71551f9749"
+				class="com.top_logic.layout.form.component.InvalidateCommand"
+			/>
+			<button id="ID_f98b773f_cce7_43af_ae6a_f8bd08caf5cc"
+				class="com.top_logic.element.changelog.RevertCommandHandler"
+				group="Write"
+				image="css:fa-solid fa-delete-left"
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.e18367fc-d473-4b8a-b02b-a5a5b7e8405e">
+					<en>Undo change</en>
+					<de>Änderung zurücknehmen</de>
+				</resourceKey>
+				<executability>
+					<rule-by-expression decision="x -> $x != null"/>
+				</executability>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultConfirmation"/>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

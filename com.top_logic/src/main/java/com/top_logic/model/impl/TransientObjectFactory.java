@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.impl;
 
+import com.top_logic.basic.TLID;
 import com.top_logic.knowledge.wrap.ValueProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -27,7 +28,7 @@ public class TransientObjectFactory implements TLFactory {
 	}
 
 	@Override
-	public TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues) {
+	public TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues, TLID id) {
 		TLFactory.failIfAbstract(type);
 		TransientTLObjectImpl result = new TransientTLObjectImpl(type, context);
 		TLFactory.setupDefaultValues(context, result, type);

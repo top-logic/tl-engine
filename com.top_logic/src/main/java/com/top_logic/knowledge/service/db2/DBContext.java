@@ -8,8 +8,8 @@ package com.top_logic.knowledge.service.db2;
 import java.util.Collection;
 import java.util.Set;
 
-import com.top_logic.basic.message.Message;
 import com.top_logic.basic.sql.AbstractCommitContext;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.identifier.ObjectKey;
@@ -68,7 +68,7 @@ abstract class DBContext extends AbstractCommitContext {
 	 */
 	abstract boolean addCommittableDelete(Committable commitable);
 
-	abstract Transaction begin(boolean anonymous, Message commitMessage);
+	abstract Transaction begin(boolean anonymous, ResKey commitMessage);
 
 	/**
 	 * Forget all about the transaction.

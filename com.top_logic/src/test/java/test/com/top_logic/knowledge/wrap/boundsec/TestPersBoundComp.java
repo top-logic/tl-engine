@@ -56,7 +56,7 @@ public class TestPersBoundComp extends BasicTestCase {
 	@Override
 	protected void tearDown() throws Exception {
 		if (!_createdItems.isEmpty()) {
-			try (Transaction tx = _kb.beginTransaction()) {
+			try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 				_createdItems.forEach(TLObject::tDelete);
 				tx.commit();
 			}
@@ -184,13 +184,13 @@ public class TestPersBoundComp extends BasicTestCase {
 		BoundCommandGroup grp2 = CommandGroupRegistry.resolve("TestPersBoundComp_read1");
 		BoundCommandGroup grp3 = CommandGroupRegistry.resolve("TestPersBoundComp_read2");
 		BoundCommandGroup grp4 = CommandGroupRegistry.resolve("TestPersBoundComp_read3");
-		try (Transaction tx = _kb.beginTransaction()) {
+		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			comp = newPersBoundComp("DestinationZiel", toSimpleName("DestinationZiel"));
 			role1 = newBoundedRole("PrinzenRolle2");
 			role2 = newBoundedRole("Sommersault");
 			tx.commit();
 		}
-		try (Transaction tx = _kb.beginTransaction()) {
+		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			Map<BoundedRole, List<BoundCommandGroup>> rights = new MapBuilder<BoundedRole, List<BoundCommandGroup>>()
 				.put(role1, list(grp1, grp2))
 				.put(role2, list(grp1, grp3))
@@ -202,7 +202,7 @@ public class TestPersBoundComp extends BasicTestCase {
 			assertEquals(set(role2), comp.rolesForCommandGroup(grp3));
 			assertEquals(set(), comp.rolesForCommandGroup(grp4));
 		}
-		try (Transaction tx = _kb.beginTransaction()) {
+		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			Map<BoundedRole, List<BoundCommandGroup>> rights = new MapBuilder<BoundedRole, List<BoundCommandGroup>>()
 				.put(role1, list(grp1))
 				.put(role2, list(grp1, grp4))

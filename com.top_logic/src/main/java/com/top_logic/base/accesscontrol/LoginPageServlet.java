@@ -515,7 +515,9 @@ public class LoginPageServlet extends NoContextServlet {
 			char[] newPassword = pwd1.toCharArray();
 			AuthenticationDevice device = account.getAuthenticationDevice();
 
-			try (Transaction tx = account.tHandle().getKnowledgeBase().beginTransaction()) {
+			try (Transaction tx =
+				account.tHandle().getKnowledgeBase()
+					.beginTransaction(I18NConstants.CHANGED_PASSWORD__USER.fill(username))) {
 				device.setPassword(account, newPassword);
 				tx.commit();
 				return null;

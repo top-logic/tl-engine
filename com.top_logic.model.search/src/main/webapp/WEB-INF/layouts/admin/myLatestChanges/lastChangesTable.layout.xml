@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/table.template.xml"
+>
+	<arguments
+		defaultColumns="date,message"
+		resetInvisible="true"
+		type="tl.changelog:ChangeSet"
+	>
+		<name key="dynamic.af8b86cb-64a3-49df-b5ff-cef684f4bd3a">
+			<en>Last changes</en>
+			<de>Letzte Änderungen</de>
+		</name>
+		<modelBuilder class="com.top_logic.element.changelog.ChangeLogListModelBuilder"/>
+		<configurationProviders>
+			<column-customizations>
+				<column name="date">
+					<column-width value="160px"/>
+				</column>
+				<column name="message">
+					<column-width value="500px"/>
+				</column>
+			</column-customizations>
+			<sort-columns order="date:descending"/>
+		</configurationProviders>
+		<buttons>
+			<button id="exportExcel"
+				class="com.top_logic.layout.table.export.ExcelExportHandler"
+			/>
+			<button id="ID_f98b773f_cce7_43af_ae6a_f8bd08caf5cc"
+				class="com.top_logic.element.changelog.RevertCommandHandler"
+				group="Write"
+				image="css:fa-solid fa-delete-left"
+				target="selection(self())"
+			>
+				<resourceKey key="dynamic.e18367fc-d473-4b8a-b02b-a5a5b7e8405e">
+					<en>Undo change</en>
+					<de>Änderung zurücknehmen</de>
+				</resourceKey>
+				<executability>
+					<rule-by-expression decision="x -> $x != null"/>
+				</executability>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.CustomConfirmation">
+					<confirmMessage key="dynamic.80918be2-05d0-49c6-8706-007118f4ab98">
+						<en>Are you sure you want to undo the change "{0}"?</en>
+						<de>Sind sie sicher, dass Sie die Änderung "{0}" zurücknehmen wollen?</de>
+					</confirmMessage>
+				</confirmation>
+			</button>
+		</buttons>
+	</arguments>
+</config:template-call>

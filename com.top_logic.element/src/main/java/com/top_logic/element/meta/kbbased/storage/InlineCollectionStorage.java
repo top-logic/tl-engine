@@ -6,6 +6,7 @@
 package com.top_logic.element.meta.kbbased.storage;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.CollectionUtil;
@@ -17,10 +18,12 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.ex.NoSuchAttributeException;
+import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.ReferenceStorage;
+import com.top_logic.element.meta.SeparateTableStorage;
 import com.top_logic.element.meta.kbbased.AttributeUtil;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
@@ -29,28 +32,31 @@ import com.top_logic.model.composite.CompositeStorage;
 import com.top_logic.model.composite.ContainerStorage;
 import com.top_logic.model.composite.MonomorphicContainerColumn;
 import com.top_logic.model.composite.PolymorphicContainerColumn;
+import com.top_logic.model.config.annotation.TableName;
 import com.top_logic.model.export.PreloadContribution;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.model.v5.ReferencePreload;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link CollectionStorage} for references which is stored in the target.
+ * {@link CollectionStorage} for references that stores a foreign key of the base object in the
+ * referenced objects.
  * 
  * <p>
- * If an element A refers to B1, B2, then this relation is saved by storing an inline reference to A
- * in the table of B1 and B2.
+ * If an element A refers to B1, B2, then this relation is the ID of A in foreign key columns of the
+ * table of B1 and B2.
  * </p>
  * 
  * <p>
- * Especially, is it not possible to have A1, A2 both pointing to the same B with the same
- * attribute.
+ * Especially, is it not possible to have A1, A2 both pointing to the same B using the same foreign
+ * key storage column in the table of B. This is no restriction, if this storage is used for
+ * composition references, since each part can only have a single container.
  * </p>
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public abstract class InlineCollectionStorage<C extends InlineCollectionStorage.Config<?>> extends CollectionStorage<C>
-		implements ReferenceStorage, CompositeStorage {
+		implements ReferenceStorage, CompositeStorage, SeparateTableStorage {
 
 	/**
 	 * Configuration options to store the referrer of an object inline in the table of the target.
@@ -74,7 +80,15 @@ public abstract class InlineCollectionStorage<C extends InlineCollectionStorage.
 		String REFERENCE_COLUMN = "reference-column";
 
 		/**
-		 * Name of the column in the target table which holds the referencing object.
+		 * Name of the column in the target table which holds the ID of the referencing object
+		 * (typically the container of a composition).
+		 * 
+		 * <p>
+		 * If the values compatible with the {@link TLReference} implemented by this storage can be
+		 * stored in different tables, all those tables must define this container column. All
+		 * potential tables must derive from the table that is declared for the target type of the
+		 * {@link TLReference reference} of this storage, see {@link TableName}.
+		 * </p>
 		 */
 		@Name(CONTAINER_COLUMN)
 		@Mandatory
@@ -90,8 +104,14 @@ public abstract class InlineCollectionStorage<C extends InlineCollectionStorage.
 		 * association between referrer and referenced object.
 		 * 
 		 * <p>
-		 * May be <code>null</code>. In this case the container column must not be used by multiple
-		 * references to store their values.
+		 * Storing the model reference along with the ID of the container object in the table of the
+		 * referenced objects allows to reuse the same {@link #getContainerColumn()} for storing
+		 * multiple mutually exclusive {@link TLReference}s.
+		 * </p>
+		 * 
+		 * <p>
+		 * May be <code>null</code>. In this case the {@link #getContainerColumn() container column}
+		 * must not be used by multiple references to store their values.
 		 * </p>
 		 */
 		@Name(REFERENCE_COLUMN)
@@ -109,9 +129,7 @@ public abstract class InlineCollectionStorage<C extends InlineCollectionStorage.
 	 */
 	public interface Config<I extends InlineCollectionStorage<?>>
 			extends CollectionStorage.Config<I>, StoreInTargetConfig {
-
 		// no additional options here.
-
 	}
 
 	/**
@@ -122,14 +140,29 @@ public abstract class InlineCollectionStorage<C extends InlineCollectionStorage.
 	}
 
 	@Override
+	public ObjectKey getBaseObjectId(Map<String, Object> row) {
+		return (ObjectKey) row.get(getConfig().getContainerColumn());
+	}
+
+	@Override
+	public String getStorageColumn() {
+		return getConfig().getContainerColumn();
+	}
+
+	@Override
+	public ObjectKey getPartId(Map<String, Object> row) {
+		String referenceColumn = getConfig().getReferenceColumn();
+		if (referenceColumn == null) {
+			return getAttribute().tId();
+		} else {
+			return (ObjectKey) row.get(referenceColumn);
+		}
+	}
+
+	@Override
 	public Set<? extends TLObject> getReferers(TLObject self, TLReference reference) {
 		return CollectionUtil.singletonOrEmptySet(resolveContainer(getConfig(), getTable(), self, reference));
 	}
-
-	/**
-	 * Name of the table in which this storage stores the values.
-	 */
-	protected abstract String getTable();
 
 	/**
 	 * Determines the container of the given item via the given reference.

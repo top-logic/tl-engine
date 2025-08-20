@@ -99,7 +99,7 @@ public class InlineListStorage<C extends InlineListStorage.Config<?>> extends In
 	}
 
 	@Override
-	protected String getTable() {
+	public String getTable() {
 		return _outgoingQuery.getAssociationTypeName();
 	}
 

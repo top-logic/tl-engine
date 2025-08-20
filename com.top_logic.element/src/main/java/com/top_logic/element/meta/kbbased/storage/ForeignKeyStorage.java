@@ -35,6 +35,7 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.access.WithStorageAttribute;
 import com.top_logic.model.annotate.persistency.AllReferenceColumns;
 import com.top_logic.model.composite.CompositeStorage;
 import com.top_logic.model.composite.ContainerStorage;
@@ -56,20 +57,17 @@ import com.top_logic.util.error.TopLogicException;
 @InApp(classifiers = TLStorage.REFERENCE_CLASSIFIER)
 @Label("Storage in the source table")
 public class ForeignKeyStorage<C extends ForeignKeyStorage.Config<?>> extends TLItemStorage<C>
-		implements ReferenceStorage, CompositeStorage {
+		implements ReferenceStorage, CompositeStorage, ColumnStorage {
 
 	/**
 	 * {@link ForeignKeyStorage} configuration options.
 	 */
 	@TagName("foreign-key-storage")
 	@DisplayOrder({ Config.STORAGE_TYPE, Config.STORAGE_ATTRIBUTE })
-	public interface Config<I extends ForeignKeyStorage<?>> extends TLItemStorage.Config<I> {
+	public interface Config<I extends ForeignKeyStorage<?>> extends TLItemStorage.Config<I>, WithStorageAttribute {
 
 		/** Property name of {@link #getStorageType()}. */
 		String STORAGE_TYPE = "storage-type";
-
-		/** Property name of {@link #getStorageAttribute()}. */
-		String STORAGE_ATTRIBUTE = "storage-attribute";
 
 		/**
 		 * Table type name that defines the {@link #getStorageAttribute()}.
@@ -95,14 +93,9 @@ public class ForeignKeyStorage<C extends ForeignKeyStorage.Config<?>> extends TL
 		 * If not set, it defaults to the name of the reference attribute name.
 		 * </p>
 		 */
+		@Override
 		@Options(fun = AllReferenceColumns.class, args = { @Ref(STORAGE_TYPE) })
-		@Name(STORAGE_ATTRIBUTE)
 		String getStorageAttribute();
-
-		/**
-		 * @see #getStorageAttribute()
-		 */
-		void setStorageAttribute(String value);
 
 	}
 
@@ -239,8 +232,9 @@ public class ForeignKeyStorage<C extends ForeignKeyStorage.Config<?>> extends TL
 	}
 
 	/**
-	 * Returns the name of the {@link MOAttribute} storing the reference in the database table.
+	 * The name of the {@link MOAttribute} storing the reference in the database table.
 	 */
+	@Override
 	public final String getStorageAttribute() {
 		return _storageAttributeName;
 	}

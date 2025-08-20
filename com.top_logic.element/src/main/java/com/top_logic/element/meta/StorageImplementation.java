@@ -9,6 +9,8 @@ import static com.top_logic.model.util.TLModelUtil.*;
 
 import java.util.Collection;
 
+import com.top_logic.element.changelog.ChangeLogBuilder;
+import com.top_logic.element.meta.kbbased.storage.ColumnStorage;
 import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -21,6 +23,12 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * <p>
  * Note: When implementing this interface, use at least {@link AbstractStorageBase} as base class.
+ * </p>
+ * 
+ * <p>
+ * Note: A storage must either implement {@link ColumnStorage}, or {@link SeparateTableStorage}, or
+ * represent a derived attribute whose values are not stored persistently at all. Otherwise,
+ * {@link ChangeLogBuilder change log extration} is not possible.
  * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>

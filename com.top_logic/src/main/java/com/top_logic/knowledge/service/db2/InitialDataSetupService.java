@@ -23,7 +23,6 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseSetup;
-import com.top_logic.knowledge.service.Messages;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLModel;
@@ -83,7 +82,7 @@ public class InitialDataSetupService extends ManagedClass {
 		}
 
 		if (!resourceNames.isEmpty()) {
-			try (Transaction tx = kb.beginTransaction(Messages.INITIAL_IMPORT)) {
+			try (Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.INITIAL_IMPORT)) {
 				CommitContext commitContext = KBUtils.getCurrentContext(kb);
 				PooledConnection commitCon = commitContext.getConnection();
 

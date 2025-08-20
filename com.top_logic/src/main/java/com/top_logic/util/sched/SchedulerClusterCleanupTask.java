@@ -75,7 +75,8 @@ public final class SchedulerClusterCleanupTask extends StateHandlingTask<StateHa
 	}
 
 	private RetryResult<Boolean, Throwable> checkClusterState() {
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction transaction =
+			PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.CLUSER_TASK_CLEANUP);
 		try {
 			for (Task task : Scheduler.getSchedulerInstance().getAllKnownTasks()) {
 				if (getShouldStop()) {

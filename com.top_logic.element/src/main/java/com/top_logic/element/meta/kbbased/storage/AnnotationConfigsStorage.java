@@ -37,7 +37,8 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @FrameworkInternal
-public class AnnotationConfigsStorage extends CollectionStorage<AnnotationConfigsStorage.Config> {
+public class AnnotationConfigsStorage extends CollectionStorage<AnnotationConfigsStorage.Config>
+		implements ColumnStorage {
 
 	private final String _dbAttribute;
 
@@ -59,6 +60,11 @@ public class AnnotationConfigsStorage extends CollectionStorage<AnnotationConfig
 	public AnnotationConfigsStorage(InstantiationContext context, Config config) {
 		super(context, config);
 		_dbAttribute = config.getDBAttribute();
+	}
+
+	@Override
+	public String getStorageAttribute() {
+		return _dbAttribute;
 	}
 
 	@Override

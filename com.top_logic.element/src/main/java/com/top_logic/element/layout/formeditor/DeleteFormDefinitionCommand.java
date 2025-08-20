@@ -74,7 +74,8 @@ public class DeleteFormDefinitionCommand extends AbstractCommandHandler {
 	private HandlerResult deleteLocalFormDefinition(FormComponent component, String scope, TLLayout layout) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		
-		try (Transaction tx = kb.beginTransaction()) {
+		try (Transaction tx =
+			kb.beginTransaction(I18NConstants.DELETED_FORM__COMPONENT.fill(component.getTitleKey()))) {
 			TypedForm typedForm = ((ConfiguredDynamicFormBuilder) component.getBuilder()).getDisplayedTypedForm();
 			TLStructuredType type = typedForm.getFormType();
 

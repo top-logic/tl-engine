@@ -25,7 +25,9 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.basic.util.Utils;
+import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.element.meta.AttributeException;
+import com.top_logic.element.meta.SeparateTableStorage;
 import com.top_logic.element.meta.kbbased.storage.AbstractStorage;
 import com.top_logic.element.model.i18n.I18NAttributeStorage;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -48,7 +50,7 @@ import com.top_logic.util.TLContextManager;
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttributeStorage.Config<?>>
-		extends CommonStructuredTextAttributeStorage<C> {
+		extends CommonStructuredTextAttributeStorage<C> implements SeparateTableStorage {
 
 	/** Name of the database table storing the sources codes. */
 	public static final String SOURCES_CODES_TABLE_NAME = I18NAttributeStorage.I18N_STORAGE_KO_TYPE;
@@ -80,6 +82,26 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 		_sourcePreload = new AssociationCachePreload(_sourceCodesQuery);
 		
 		_supportedLocales = unmodifiableList(list(getSupportedLocales()));
+	}
+
+	@Override
+	public String getTable() {
+		return SOURCES_CODES_TABLE_NAME;
+	}
+
+	@Override
+	public String getStorageColumn() {
+		return SOURCE_CODE_ATTRIBUTE_NAME;
+	}
+
+	@Override
+	public ObjectKey getBaseObjectId(Map<String, Object> row) {
+		return (ObjectKey) row.get(OBJECT_ATTRIBUTE_NAME);
+	}
+
+	@Override
+	public ObjectKey getPartId(Map<String, Object> row) {
+		return (ObjectKey) row.get(META_ATTRIBUTE_ATTRIBUTE_NAME);
 	}
 
 	@Override

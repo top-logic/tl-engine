@@ -114,7 +114,7 @@ public class TestReplayWithBusinessCode extends AbstractDBKnowledgeBaseMigration
 		write(_writer,
 			new ChangeSet(2).add(create(2, a1)).setCommit(commit(2)));
 
-		final Transaction tx = kbNode2().beginTransaction();
+		final Transaction tx = kbNode2().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		final KnowledgeObject obj = newBNode2("a2");
 		tx.commit();
 
@@ -193,7 +193,7 @@ public class TestReplayWithBusinessCode extends AbstractDBKnowledgeBaseMigration
 			new ChangeSet(2).add(create(2, a1)).setCommit(commit(2)),
 			new ChangeSet(3).add(create(3, a2)));
 
-		final Transaction tx = kbNode2().beginTransaction();
+		final Transaction tx = kbNode2().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		final KnowledgeObject obj = newBNode2("a2");
 		tx.commit();
 
@@ -207,7 +207,7 @@ public class TestReplayWithBusinessCode extends AbstractDBKnowledgeBaseMigration
 		write(_writer,
 			new ChangeSet(2).add(create(2, a1)).setCommit(commit(2)));
 
-		final Transaction tx = kbNode2().beginTransaction();
+		final Transaction tx = kbNode2().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		final KnowledgeObject obj = newBNode2("a2");
 		tx.commit();
 

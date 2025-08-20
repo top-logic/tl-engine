@@ -40,6 +40,61 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey MEMORY_CHART_TITLE = legacyKey("admin.sys.memoryObserver.chart.title");
 
+	/**
+	 * @en Cleaned task log: {0}
+	 */
+	public static ResKey1 CLEANED_TASK_LOG__TASK;
+
+	/**
+	 * @en Cleaned task log of global task: {0}.
+	 */
+	public static ResKey1 CLEANED_GLOBAL_TASK_LOG__TASK;
+
+	/**
+	 * @en Requested cluster lock for task: {0}.
+	 */
+	public static ResKey1 REQUESTED_CLUSTER_LOCK_FOR__TASK;
+
+	/**
+	 * @en Created task: {0}
+	 */
+	public static ResKey1 CREATED_TASK__TASK;
+
+	/**
+	 * @en Started task: {0}
+	 */
+	public static ResKey1 STARTED_TASK__TASK;
+
+	/**
+	 * @en Compressed task result list: {0}
+	 */
+	public static ResKey1 COMPRESSED_TASK_RESULT_LIST__TASK;
+
+	/**
+	 * @en Task finished: {0}
+	 */
+	public static ResKey1 TASK_FINISHED__TASK;
+
+	/**
+	 * @en Task canceled: {0}
+	 */
+	public static ResKey1 TASK_CANCELED__TASK;
+
+	/**
+	 * @en Cleared cluster lock for task: {0}
+	 */
+	public static ResKey1 CLEARED_CLUSTER_LOCK__TASK;
+
+	/**
+	 * @en Cleaned up died custer-global tasks.
+	 */
+	public static ResKey CLUSER_TASK_CLEANUP;
+
+	/**
+	 * @en Completed task: {0}
+	 */
+	public static ResKey1 COMPLETED_TASK__TASK;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -14,6 +14,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 import test.com.top_logic.knowledge.service.AbstractKnowledgeBaseTest;
 
+import com.top_logic.basic.TLID;
 import com.top_logic.knowledge.wrap.MapValueProvider;
 import com.top_logic.knowledge.wrap.ValueProvider;
 import com.top_logic.model.TLClass;
@@ -127,7 +128,7 @@ public abstract class AbstractTLModelTest extends AbstractKnowledgeBaseTest {
 	 * @param className
 	 *        Name of a {@link TLClass} in {@link #module()}.
 	 * 
-	 * @see TLFactory#createObject(TLClass, TLObject, ValueProvider)
+	 * @see TLFactory#createObject(TLClass, TLObject, ValueProvider, TLID)
 	 */
 	public TLObject newObject(TLObject context, String className, ValueProvider initialValues) {
 		return newObject(context, module().getName(), className, initialValues);

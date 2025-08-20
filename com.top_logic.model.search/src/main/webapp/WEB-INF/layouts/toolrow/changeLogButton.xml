@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<template>
+	<params>
+		<param name="renderer"
+			optional="true"
+		/>
+		<param name="entryRenderer"
+			optional="true"
+		/>
+	</params>
+
+	<commandConfiguration class="com.top_logic.layout.component.configuration.DialogOpenerCommandModelConfiguration"
+		dialog="openChangeLogDialog"
+	/>
+</template>

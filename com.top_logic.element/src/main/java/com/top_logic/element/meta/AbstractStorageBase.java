@@ -33,6 +33,8 @@ import com.top_logic.util.model.check.InstanceCheck;
 public abstract class AbstractStorageBase<C extends AbstractStorageBase.Config<?>> extends AbstractConfiguredInstance<C>
 		implements StorageImplementation {
 
+	private TLStructuredTypePart _attribute;
+
 	/**
 	 * Base configuration interface for {@link AbstractStorageBase}.
 	 */
@@ -60,7 +62,14 @@ public abstract class AbstractStorageBase<C extends AbstractStorageBase.Config<?
 
 	@Override
 	public void init(TLStructuredTypePart attribute) {
-		// No initialization by default.
+		_attribute = attribute;
+	}
+
+	/**
+	 * The attribute, this storage stores values for.
+	 */
+	public TLStructuredTypePart getAttribute() {
+		return _attribute;
 	}
 
 	@Override

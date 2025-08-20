@@ -497,7 +497,9 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 						+ m.getVersion().getName(), MigrationService.class);
 				for (var actionConfig : m.getStartupActions()) {
 					StartupAction action = TypedConfigUtil.createInstance(actionConfig);
-					try (Transaction tx = kb.beginTransaction()) {
+					try (Transaction tx =
+						kb.beginTransaction(I18NConstants.PERFORMED_STARTUP_ACTION__NAME
+							.fill(actionConfig.getImplementationClass().getSimpleName()))) {
 						action.perform();
 						tx.commit();
 					}
@@ -561,7 +563,9 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 
 						if (kb == null) {
 							kb = createKB(log);
-							tx = kb.beginTransaction();
+							tx = kb.beginTransaction(
+								I18NConstants.PERFORMED_MIGRATION__NAME.fill(migration.getVersion().getModule() + ": "
+									+ migration.getVersion().getName()));
 						}
 
 						processor.afterMigration(log, kb);

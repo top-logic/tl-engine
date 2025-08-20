@@ -6,6 +6,7 @@
 package com.top_logic.element.model.importer;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
 
@@ -28,6 +29,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey THE_FOLLOWING_CHANGES_ARE_APPLIED;
 
 	public static ResKey UPLOAD_MODEL_Definition;
+
+	/**
+	 * @en Imported model patch "{0}".
+	 */
+	public static ResKey1 IMPORTED_MODEL_PATCH__NAME;
 
 	static {
 		initConstants(I18NConstants.class);

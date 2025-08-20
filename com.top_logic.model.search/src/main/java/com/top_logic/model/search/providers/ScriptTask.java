@@ -62,7 +62,8 @@ public class ScriptTask<C extends ScriptTask.Config<?>> extends TaskImpl<C> {
 
 			getLog().taskStarted();
 
-			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			try (Transaction tx =
+				PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.SCRIPT_TASK__TASK.fill(getName()))) {
 				Object result = _script.execute();
 				tx.commit();
 

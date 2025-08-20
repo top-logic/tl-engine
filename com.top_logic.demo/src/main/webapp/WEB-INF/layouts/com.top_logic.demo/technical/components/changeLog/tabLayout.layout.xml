@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments helpID="ID_ede07c4d_59c8_4d33_9e71_318afa396a69">
+		<tabLabel key="dynamic.32b5dad3-dce0-49e1-9e64-ecea605eab1a">
+			<en>Change log</en>
+			<de>Change-Log</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="com.top_logic.demo/technical/components/changeLog/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

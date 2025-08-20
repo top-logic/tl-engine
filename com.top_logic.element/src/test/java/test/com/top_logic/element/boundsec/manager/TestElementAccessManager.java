@@ -1500,7 +1500,7 @@ public class TestElementAccessManager extends BasicTestCase {
     }
 
 	private Transaction begin() {
-		return _kb.beginTransaction();
+		return _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 	}
 
 	private void commit(Transaction tx) {

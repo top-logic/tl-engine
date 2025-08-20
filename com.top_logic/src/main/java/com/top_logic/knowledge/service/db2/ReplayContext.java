@@ -10,11 +10,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.top_logic.basic.col.IdentityHashSet;
-import com.top_logic.basic.message.Message;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.event.KnowledgeEvent;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
-import com.top_logic.knowledge.service.Messages;
 import com.top_logic.knowledge.service.RefetchTimeout;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
@@ -32,7 +31,7 @@ final class ReplayContext extends DefaultDBContext {
 
 	private String author;
 
-	private String logMessage;
+	private ResKey logMessage;
 
 	private long lastRevisionDate;
 
@@ -71,9 +70,9 @@ final class ReplayContext extends DefaultDBContext {
 	}
 	
 	@Override
-	protected TransactionImpl initFirstTX(boolean autoBegin, boolean anonymous, Message commitMessage) {
+	protected TransactionImpl initFirstTX(boolean autoBegin, boolean anonymous, ResKey commitMessage) {
 		assert outermostTX == null;
-		outermostTX = new TransactionImpl(this, false, null);
+		outermostTX = new TransactionImpl(this, false, false, commitMessage);
 		if (!autoBegin) {
 			return outermostTX.nest(anonymous, commitMessage);
 		} else {
@@ -101,7 +100,7 @@ final class ReplayContext extends DefaultDBContext {
 		this.lastRevisionDate = revisionDate;
 	}
 
-	public void setLogMessage(String logMessage) {
+	public void setLogMessage(ResKey logMessage) {
 		this.logMessage = logMessage;
 	}
 
@@ -123,7 +122,8 @@ final class ReplayContext extends DefaultDBContext {
 			kb.resetLastRevision(expectedCommitNumber - 1);
 		} else {
 			newRevision =
-				kb.internalCreateRevision(expectedCommitNumber, getUpdater(), lastRevisionDate, Messages.SYNTHESIZED_COMMIT_DURING_REPLAY);
+				kb.internalCreateRevision(expectedCommitNumber, getUpdater(), lastRevisionDate,
+					com.top_logic.knowledge.service.I18NConstants.SYNTHESIZED_COMMIT_DURING_REPLAY);
 		}
 		return newRevision;
 	}

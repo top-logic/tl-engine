@@ -54,7 +54,7 @@ public class TransientTLObjectImpl extends TransientObject {
 	 * 
 	 * @see TransientObjectFactory
 	 */
-	TransientTLObjectImpl(TLStructuredType type, TLObject context) {
+	protected TransientTLObjectImpl(TLStructuredType type, TLObject context) {
 		_type = type;
 		_context = context;
 	}
@@ -254,7 +254,7 @@ public class TransientTLObjectImpl extends TransientObject {
 
 	private Collection<Object> createCollection(TLReference ref) {
 		Collection<Object> newCollection;
-		if (ref.isOrdered()) {
+		if (ref.isOrdered() || ref.isBag()) {
 			newCollection = new ArrayList<>();
 		} else {
 			newCollection = new HashSet<>();

@@ -101,7 +101,7 @@ public class BenchmarkDBKnowledgeBase extends AbstractDBKnowledgeBaseClusterTest
 	}
 
 	private void delete(List<KnowledgeItem> connections) throws DataObjectException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
 			for (KnowledgeItem item : connections) {
 				item.delete();
@@ -125,7 +125,7 @@ public class BenchmarkDBKnowledgeBase extends AbstractDBKnowledgeBaseClusterTest
 	}
 
 	private void connect(BObj[] sources, BObj[] targets, int connectionCnt) throws KnowledgeBaseException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
 			for (int n = 0, cnt = sources.length; n < cnt; n++) {
 				connetTo(sources[n], targets, connectionCnt);
@@ -206,7 +206,7 @@ public class BenchmarkDBKnowledgeBase extends AbstractDBKnowledgeBaseClusterTest
 	}
 
 	protected BObj createTree() {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
 			BObj root = newB();
 			createTree(root, FANOUT, DEPTH);
@@ -237,7 +237,7 @@ public class BenchmarkDBKnowledgeBase extends AbstractDBKnowledgeBaseClusterTest
 	}
 
 	private void changeTree(BObj root, int changesPerNode) throws KnowledgeBaseException {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
 			changeNode(root, changesPerNode);
 			for (Object child : root.getAB()) {
@@ -273,7 +273,7 @@ public class BenchmarkDBKnowledgeBase extends AbstractDBKnowledgeBaseClusterTest
 	}
 
 	private void deleteTree(BObj root) {
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
 			for (Object child : root.getAB()) {
 				deleteTree((BObj) child);

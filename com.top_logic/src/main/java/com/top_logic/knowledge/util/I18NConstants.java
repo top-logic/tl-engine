@@ -19,6 +19,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey TASK_COMMIT_FAILED;
 
+	/**
+	 * @en Task started: {0}
+	 */
+	public static ResKey1 TASK_STARTED__TASK;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

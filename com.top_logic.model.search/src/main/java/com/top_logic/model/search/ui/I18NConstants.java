@@ -23,6 +23,11 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en Error when executing the script. */
 	public static ResKey1 ERROR_EXECUTING_SEARCH__EXPR;
 
+	/**
+	 * @en Executed custom script: {0}
+	 */
+	public static ResKey1 EXECUTED_CUSTOM_SCRIPT__SCRIPT;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

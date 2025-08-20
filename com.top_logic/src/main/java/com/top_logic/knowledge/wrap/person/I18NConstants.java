@@ -23,6 +23,26 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey ERROR_NO_MORE_USERS;
 
+	/**
+	 * @en Updated account list.
+	 */
+	public static ResKey UPDATED_ACCOUNT_LIST;
+
+	/**
+	 * @en Stored personal configuration.
+	 */
+	public static ResKey STORED_PERSONAL_CONFIGURATION;
+
+	/**
+	 * @en Created root account.
+	 */
+	public static ResKey CREATED_ROOT_ACCOUNT;
+
+	/**
+	 * @en Resetting password of root account.
+	 */
+	public static ResKey RESETTING_ROOT_PASSWORD;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

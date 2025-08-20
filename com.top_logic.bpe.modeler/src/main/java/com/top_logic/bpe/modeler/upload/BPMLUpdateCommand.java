@@ -113,7 +113,7 @@ public class BPMLUpdateCommand extends PreconditionCommandHandler {
 	public static void updateCollaborationInTransaction(Collaboration collaboration, Source source,
 			boolean updateExtensions) throws XMLStreamException {
 		KnowledgeBase kb = collaboration.tKnowledgeBase();
-		try (Transaction tx = kb.beginTransaction()) {
+		try (Transaction tx = kb.beginTransaction(I18NConstants.UPDATED_WORKFLOW)) {
 			updateCollaboration(collaboration, source, updateExtensions);
 			tx.commit();
 		}

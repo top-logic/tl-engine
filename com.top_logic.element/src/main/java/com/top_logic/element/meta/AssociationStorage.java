@@ -20,16 +20,10 @@ import com.top_logic.model.TLStructuredTypePart;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public interface AssociationStorage extends ReferenceStorage {
+public interface AssociationStorage extends ReferenceStorage, SeparateTableStorage {
 
 	/**
-	 * The name of the association table in which this {@link AssociationStorage} stores the data
-	 * for the {@link TLStructuredTypePart}.
-	 */
-	String getTable();
-
-	/**
-	 * Whether the {@link #getTable() table} stores the date for only one
+	 * Whether the {@link #getTable() table} stores attribute data for only one
 	 * {@link TLStructuredTypePart} or for many.
 	 */
 	boolean monomophicTable();

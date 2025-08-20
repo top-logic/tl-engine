@@ -41,6 +41,21 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey NO_ROW_SELECTED;
 
 	public static ResKey CLIPBOARD_DIALOG_TITLE;
+
+	/**
+	 * @en Added to clipboard.
+	 */
+	public static ResKey ADDED_TO_CLIPBOARD;
+
+	/**
+	 * @en Removed from clipboard.
+	 */
+	public static ResKey REMOVED_FROM_CLIPBOARD;
+
+	/**
+	 * @en Added contents from clipboard.
+	 */
+	public static ResKey ADDED_FROM_CLIPBOARD;
 	
 	static {
 		initConstants(I18NConstants.class);

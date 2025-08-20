@@ -49,7 +49,8 @@ public class ReleaseLayoutConfiguration extends ConfirmCommandHandler {
 	@Override
 	protected HandlerResult internalHandleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model,
 			Map<String, Object> someArguments) {
-		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+		try (Transaction tx =
+			PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.RELEASED_LAYOUT_CONFIGURATION)) {
 			LayoutStorage.getInstance().releaseLayouts(TLContext.getContext().getPerson());
 			tx.commit();
 		}

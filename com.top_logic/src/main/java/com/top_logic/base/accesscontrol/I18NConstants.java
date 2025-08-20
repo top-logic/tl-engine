@@ -151,6 +151,11 @@ public class I18NConstants extends I18NConstantsBase {
 	@CalledFromJSP
 	public static ResKey APP_BUZZY_RELOAD;
 
+	/**
+	 * @en User changed password: {0}
+	 */
+	public static ResKey1 CHANGED_PASSWORD__USER;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -61,6 +61,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey REMOVE = legacyKey("webfolder.error.object.remove");
 
+	/**
+	 * @en Cleared clipboard.
+	 */
+	public static ResKey CLEARED_CLIPBOARD;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

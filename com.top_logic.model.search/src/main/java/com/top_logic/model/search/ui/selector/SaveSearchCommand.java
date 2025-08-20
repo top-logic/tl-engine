@@ -73,7 +73,9 @@ public class SaveSearchCommand extends SaveExpressionCommand {
 		SearchAndReportConfig searchExpression = component.getExpression();
 		String searchExpressionString = TypedConfiguration.toString(searchExpression);
 		SearchExpressionImpl expressionWrapper = component.getSelected();
-		Transaction transaction = WrapperUtil.getKnowledgeBase(expressionWrapper).beginTransaction();
+		Transaction transaction =
+			WrapperUtil.getKnowledgeBase(expressionWrapper)
+				.beginTransaction(I18NConstants.STORED_SEARCH_QUERY__NAME.fill(expressionWrapper.getName()));
 		try {
 			expressionWrapper.setExpression(searchExpressionString);
 			expressionWrapper.setVersion(Search.VERSION);

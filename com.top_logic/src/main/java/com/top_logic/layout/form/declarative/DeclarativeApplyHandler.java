@@ -11,11 +11,13 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.component.WithCommitMessage;
 import com.top_logic.layout.form.component.AbstractApplyCommandHandler;
 import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.model.FormContext;
@@ -38,7 +40,7 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 public abstract class DeclarativeApplyHandler<E extends ConfigurationItem, M> extends AbstractCommandHandler {
 
 	/** Config interface for {@link DeclarativeApplyHandler}. */
-	public interface Config extends AbstractCommandHandler.Config {
+	public interface Config extends AbstractCommandHandler.Config, WithCommitMessage {
 
 		@Override
 		@FormattedDefault(SimpleBoundCommandGroup.WRITE_NAME)
@@ -87,9 +89,11 @@ public abstract class DeclarativeApplyHandler<E extends ConfigurationItem, M> ex
 	protected void doTransaction(FormComponent formHandler, FormContext formContext, Object model) {
 		Transaction tx;
 		if (model instanceof TLObject) {
+			ResKey commitMessage = ((Config) getConfig()).buildCommandMessage(formHandler, this, model);
+
 			TLObject modelObject = (TLObject) model;
 			KnowledgeBase kb = modelObject.tHandle().getKnowledgeBase();
-			tx = kb.beginTransaction();
+			tx = kb.beginTransaction(commitMessage);
 		} else {
 			tx = null;
 		}

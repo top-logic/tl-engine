@@ -206,6 +206,7 @@
 					<bundle name="model.Tag.messages" />
 					<bundle name="model.tl.element.messages" />
 					<bundle name="model.SecurityStructure.messages" />
+					<bundle name="model.tl.changelog.messages"/>
 				</bundles>
 			</instance>
 		</config>
@@ -816,6 +817,7 @@
 					<declaration file="/WEB-INF/model/SecurityStructure.model.xml"/>
 					<declaration file="/WEB-INF/model/Tag.model.xml"/>
 					<declaration file="/WEB-INF/model/tl.comments.model.xml"/>
+					<declaration file="/WEB-INF/model/tl.changelog.model.xml"/>
 				</declarations>
 				<settings>
 					<module name="tl.element" />

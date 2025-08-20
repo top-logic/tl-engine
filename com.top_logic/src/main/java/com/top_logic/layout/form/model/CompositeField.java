@@ -274,7 +274,13 @@ public abstract class CompositeField extends FormGroup implements FormField {
 
 	@Override
 	public <L extends PropertyListener, S, V> boolean addListener(EventType<L, S, V> type, L listener) {
-		if (FormMember.FORM_MEMBER_EVENT_TYPES.contains(type)) {
+		// Note: In a composite filed, errors typically occur on inner fields that receive user
+		// input (not on the proxy that is solely responsible for providing the application value to
+		// the outside). Those events bubble up from the inner fields to this composite field. E.g.
+		// the error state of this group changes, if the error state of any of the descendent fields
+		// changes.
+		if (FormMember.FORM_MEMBER_EVENT_TYPES.contains(type) || FormField.HAS_ERROR_PROPERTY == type
+			|| FormField.ERROR_PROPERTY == type) {
 			return super.addListener(type, listener);
 		}
 		return getProxy().addListener(type, listener);
@@ -282,7 +288,8 @@ public abstract class CompositeField extends FormGroup implements FormField {
 
 	@Override
 	public <L extends PropertyListener, S, V> boolean removeListener(EventType<L, S, V> type, L listener) {
-		if (FormMember.FORM_MEMBER_EVENT_TYPES.contains(type)) {
+		if (FormMember.FORM_MEMBER_EVENT_TYPES.contains(type) || FormField.HAS_ERROR_PROPERTY == type
+			|| FormField.ERROR_PROPERTY == type) {
 			return super.removeListener(type, listener);
 		}
 		return getProxy().removeListener(type, listener);

@@ -38,8 +38,8 @@ import de.haumacher.msgbuf.graph.SharedGraphNode;
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonReader;
+import elemental2.core.JsArray;
 import elemental2.core.JsMath;
-import elemental2.dom.DOMRect;
 import elemental2.dom.DomGlobal;
 import elemental2.dom.DragEvent;
 import elemental2.dom.Element;
@@ -47,6 +47,10 @@ import elemental2.dom.Event;
 import elemental2.dom.EventListener;
 import elemental2.dom.HTMLDocument;
 import elemental2.dom.Image;
+import elemental2.dom.KeyboardEvent;
+import elemental2.dom.ResizeObserver;
+import elemental2.dom.ResizeObserverCallback;
+import elemental2.dom.ResizeObserverEntry;
 import elemental2.dom.Response;
 import elemental2.dom.WheelEvent;
 import elemental2.promise.Promise;
@@ -81,9 +85,9 @@ public class JSDiagramControl extends AbstractJSControl
 
 	private OMSVGRect viewbox;
 
-	double scrollX, scrollY;
-
 	boolean draggingToPan;
+	
+	private ResizeObserver _observer;
 
 	/**
 	 * Creates a {@link JSDiagramControl}.
@@ -125,7 +129,6 @@ public class JSDiagramControl extends AbstractJSControl
 							if (_changeTimeout != 0) {
 								DomGlobal.clearTimeout(_changeTimeout);
 							}
-							_changeTimeout = DomGlobal.setTimeout(JSDiagramControl.this::onChange, 100);
 						}
 					};
 					Diagram diagram = Diagram.readDiagram(_scope, new JsonReader(new StringR(json)));
@@ -154,14 +157,13 @@ public class JSDiagramControl extends AbstractJSControl
 		draggingToPan = false;
 
 		EventListener panningSVG = new EventListener() {
-
 			@Override
 			public void handleEvent(Event evt) {
 				if (draggingToPan) {
 					DragEvent event = (DragEvent) evt;
 
-					float dragDeltaX = (float) (dragStartX - event.clientX);
-					float dragDeltaY = (float) (dragStartY - event.clientY);
+					double dragDeltaX = dragStartX - event.clientX;
+					double dragDeltaY = dragStartY - event.clientY;
 
 					panSVG(dragDeltaX, dragDeltaY);
 
@@ -174,14 +176,11 @@ public class JSDiagramControl extends AbstractJSControl
 		};
 
 		EventListener startDraggingSVG = new EventListener() {
-
 			@Override
 			public void handleEvent(Event evt) {
 				DragEvent event = (DragEvent) evt;
 				dragStartX = event.clientX;
 				dragStartY = event.clientY;
-				scrollX = ctrlParent.scrollLeft;
-				scrollY = ctrlParent.scrollTop;
 
 				Image img = (Image) DomGlobal.document.createElement("img");
 				img.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=";
@@ -196,7 +195,6 @@ public class JSDiagramControl extends AbstractJSControl
 		};
 
 		EventListener dropSVG = new EventListener() {
-
 			@Override
 			public void handleEvent(Event evt) {
 				DragEvent event = (DragEvent) evt;
@@ -207,7 +205,6 @@ public class JSDiagramControl extends AbstractJSControl
 		};
 
 		EventListener endDraggingSVG = new EventListener() {
-
 			@Override
 			public void handleEvent(Event evt) {
 				DragEvent event = (DragEvent) evt;
@@ -221,44 +218,52 @@ public class JSDiagramControl extends AbstractJSControl
 		};
 
 		EventListener zoomOrScrollSVG = new EventListener() {
-
 			@Override
 			public void handleEvent(Event evt) {
 				WheelEvent event = (WheelEvent) evt;
 				if (event.ctrlKey) {
-					double factor = JsMath.sign(event.deltaY) / -10;
-					double oldZoom = nf.parse(ctrl.getStyle().getProperty("scale"));
-					double newZoom = oldZoom + factor;
-
-					DOMRect parentRect = ctrlParent.getBoundingClientRect();
-					double cursorSVGLeft = event.clientX - parentRect.left;
-					double cursorSVGTop = event.clientY - parentRect.top;
-
-					double newScrollTop = (((cursorSVGTop + ctrlParent.scrollTop) / oldZoom) * newZoom) - cursorSVGTop;
-					double newScrollLeft =
-						(((cursorSVGLeft + ctrlParent.scrollLeft) / oldZoom) * newZoom) - cursorSVGLeft;
-
-					ctrl.getStyle().setProperty("scale", nf.format(newZoom));
-					ctrlParent.scrollTop = Math.round(newScrollTop);
-					ctrlParent.scrollLeft = Math.round(newScrollLeft);
-
-					event.stopImmediatePropagation();
-					event.preventDefault();
+					double delta = event.deltaY == 0 ? event.deltaX : event.deltaY;
+					double factor = JsMath.sign(delta) / -10;
+					zoomSVG(factor, event.offsetX, event.offsetY);
 				} else if (event.shiftKey) {
 					int scrollFactor = getWheelScrollFactor(evt);
-					float deltaX = (float) event.deltaY * scrollFactor;
-					float deltaY = (float) event.deltaX * scrollFactor;
+					double deltaX = event.deltaY * scrollFactor;
+					double deltaY = event.deltaX * scrollFactor;
 					panSVG(deltaX, deltaY);
 				} else {
 					int scrollFactor = getWheelScrollFactor(evt);
-					float deltaX = (float) event.deltaX * scrollFactor;
-					float deltaY = (float) event.deltaY * scrollFactor;
+					double deltaX = event.deltaX * scrollFactor;
+					double deltaY = event.deltaY * scrollFactor;
 					panSVG(deltaX, deltaY);
+				}
+				event.stopImmediatePropagation();
+				event.preventDefault();
+			}
+		};
+		
+		EventListener resetZoom = new EventListener() {
+			@Override
+			public void handleEvent(Event evt) {
+				KeyboardEvent event = (KeyboardEvent) evt;
+				if (event.key == "0" && event.ctrlKey) {
+					zoomSVG(1, 0, 0);
 				}
 			}
 		};
 
-		ctrl.getStyle().setProperty("scale", "1");
+		EventListener mouseEnter = new EventListener() {
+			@Override
+			public void handleEvent(Event evt) {
+				DomGlobal.window.addEventListener("keyup", resetZoom);
+			}
+		};
+
+		EventListener mouseLeave = new EventListener() {
+			@Override
+			public void handleEvent(Event evt) {
+				DomGlobal.window.removeEventListener("keyup", resetZoom);
+			}
+		};
 
 		_control.addEventListener("dragstart", startDraggingSVG);
 
@@ -267,13 +272,30 @@ public class JSDiagramControl extends AbstractJSControl
 		_control.addEventListener("dragend", endDraggingSVG);
 
 		_control.addEventListener("wheel", zoomOrScrollSVG);
+
+		_control.addEventListener("mouseenter", mouseEnter);
+
+		_control.addEventListener("mouseleave", mouseLeave);
+
+		ResizeObserverCallback resize = new ResizeObserverCallback() {
+			@Override
+			public Object onInvoke(JsArray<ResizeObserverEntry> p0, ResizeObserver p1) {
+				zoomSVG(0, 0, 0);
+				return null;
+			}
+		};
+
+		_observer = new ResizeObserver(resize);
+
+		_observer.observe(ctrlParent);
+
 	}
 
 	private native int getWheelScrollFactor(Event event) /*-{
 		return $wnd.BAL.getWheelScrollFactor(event);
 	}-*/;
 
-	void panSVG(float panDeltaX, float panDeltaY) {
+	void panSVG(double panDeltaX, double panDeltaY) {
 		viewbox = _svg.getViewBox().getBaseVal();
 		float newX = (float) JsMath.max(0,
 			JsMath.min(viewbox.getX() + panDeltaX, _diagram.getRoot().getWidth() - viewbox.getWidth()));
@@ -284,6 +306,36 @@ public class JSDiagramControl extends AbstractJSControl
 
 		_diagram.setViewBoxX(viewbox.getX());
 		_diagram.setViewBoxY(viewbox.getY());
+	}
+	
+	void zoomSVG(double zoomFactor, double mouseX, double mouseY) {
+		viewbox = _svg.getViewBox().getBaseVal();
+		float parentW = _control.parentElement.clientWidth;
+		float parentH = _control.parentElement.clientHeight - 5;
+		if (zoomFactor >= 1) {
+			viewbox.setWidth(parentW);
+			viewbox.setHeight(parentH);
+			panSVG(-viewbox.getX(), -viewbox.getY());
+		} else {
+			float ratio = parentW / parentH;
+			float vbW = viewbox.getWidth();
+			float vbH = viewbox.getHeight();
+			if (ratio != vbW / vbH) {
+				vbH = (vbW / ratio);
+			}
+			float deltaW = (float) (vbW * zoomFactor);
+			float deltaH = (float) (vbH * zoomFactor);
+
+			viewbox.setWidth(vbW - deltaW);
+			viewbox.setHeight(vbH - deltaH);
+
+			double deltaX = deltaW * mouseX / parentW;
+			double deltaY = deltaH * mouseY / parentH;
+			panSVG(deltaX, deltaY);
+		}
+
+		_diagram.setViewBoxWidth(viewbox.getWidth());
+		_diagram.setViewBoxHeight(viewbox.getHeight());
 	}
 
 	/**
@@ -368,6 +420,7 @@ public class JSDiagramControl extends AbstractJSControl
 	}
 
 	private OMSVGElement removeDisplay(Identified model) {
+		_observer.disconnect();
 		OMSVGElement result = _svgDoc.getElementById(model.getId());
 		result.getParentNode().removeChild(result);
 		return result;

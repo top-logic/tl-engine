@@ -57,11 +57,7 @@ public class TestTransientTLObjectNaming extends TestWithModelExtension {
 		aObj.tUpdateByName("transientRef", bObj1);
 		aObj.tUpdateByName("multipleTransientRef", set(bObj1, bObj2));
 
-		Maybe<? extends ModelName> modelNameMaybe = ModelResolver.buildModelNameIfAvailable(aObj);
-		assertTrue(modelNameMaybe.hasValue());
-		ModelName modelName = modelNameMaybe.get();
-		assertTrue("This is a test for " + TransientTLObjectNaming.class,
-			modelName instanceof TransientTLObjectNaming.Name);
+		ModelName modelName = createName(aObj);
 
 		TLObject located = (TLObject) ModelResolver.locateModel(actionContext(), modelName);
 
@@ -75,6 +71,15 @@ public class TestTransientTLObjectNaming extends TestWithModelExtension {
 		assertEquals(2, multipleTransientRef.size());
 		assertTrue(multipleTransientRef.remove(locatedB1));
 		assertEquals("b2", ((TLObject) multipleTransientRef.iterator().next()).tValueByName("name"));
+	}
+
+	private static ModelName createName(TLObject object) {
+		Maybe<? extends ModelName> modelNameMaybe = TransientTLObjectNaming.forceBuildName(object);
+		assertTrue(modelNameMaybe.hasValue());
+		ModelName modelName = modelNameMaybe.get();
+		assertTrue("This is a test for " + TransientTLObjectNaming.class,
+			modelName instanceof TransientTLObjectNaming.Name);
+		return modelName;
 	}
 
 	private LiveActionContext actionContext() {
@@ -91,9 +96,7 @@ public class TestTransientTLObjectNaming extends TestWithModelExtension {
 		bObj.tUpdateByName("name", "b1");
 		bObj.tUpdateByName("a", aObj);
 
-		ModelName aModelName = ModelResolver.buildModelName(aObj);
-		assertTrue("This is a test for " + TransientTLObjectNaming.class,
-			aModelName instanceof TransientTLObjectNaming.Name);
+		ModelName aModelName = createName(aObj);
 		TLObject locatedA = (TLObject) ModelResolver.locateModel(actionContext(), aModelName);
 		TLObject b = (TLObject) locatedA.tValueByName("transientRef");
 		assertSame(locatedA, b.tValueByName("a"));
@@ -114,9 +117,7 @@ public class TestTransientTLObjectNaming extends TestWithModelExtension {
 			@Override
 			public void run() throws Exception {
 				ThreadContextManager.inSystemInteraction(TestTransientTLObjectNaming.class, () -> {
-					ModelName bModelName = ModelResolver.buildModelName(bObj);
-					assertTrue("This is a test for " + TransientTLObjectNaming.class,
-						bModelName instanceof TransientTLObjectNaming.Name);
+					ModelName bModelName = createName(bObj);
 					TLObject locatedB = (TLObject) ModelResolver.locateModel(actionContext(), bModelName);
 					TLObject a = (TLObject) locatedB.tValueByName("a");
 					assertSame(locatedB, a.tValueByName("transientRef"));

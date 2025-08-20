@@ -17,6 +17,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.gui.layout.ButtonBar;
 import com.top_logic.layout.Control;
@@ -67,7 +68,7 @@ import com.top_logic.util.Resources;
 /**
  * Control displaying a value with a popup button opening a popup dialog for editing this value.
  *
- * @author <a href="mailto:sfo@top-logic.com">Sven F?rster</a>
+ * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public class PopupEditControl extends AbstractFormFieldControl {
 
@@ -340,7 +341,12 @@ public class PopupEditControl extends AbstractFormFieldControl {
 		writeControlAttributes(context, out);
 		out.endBeginTag();
 		{
-			_settings.getFirstLineRenderer().write(context, out, getFieldModel().getValue());
+			FormField field = getFieldModel();
+			Object value = field.getValue();
+			if (Utils.isEmpty(value)) {
+				value = field.getPlaceholder();
+			}
+			_settings.getFirstLineRenderer().write(context, out, value);
 			if (editable) {
 				writeEditorButton(context, out);
 			}
@@ -420,6 +426,7 @@ public class PopupEditControl extends AbstractFormFieldControl {
 	private FormField createEditFieldInternal(FormField originalField) {
 		FormField editField = createEditField(originalField);
 		editField.setLabel(originalField.getLabel());
+		editField.setPlaceholder(originalField.getPlaceholder());
 		editField.initializeField(originalField.getValue());
 		editField.setControlProvider(originalField.getControlProvider());
 		copyFieldConstraints(originalField, editField);

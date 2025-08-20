@@ -223,4 +223,9 @@ public class I18NStructuredTextField extends I18NField<FormField, I18NStructured
 		return new I18NStructuredText(builder);
 	}
 
+	@Override
+	protected boolean isEmptyValue(I18NStructuredText value) {
+		return value == null || value.getEntries().isEmpty();
+	}
+
 }

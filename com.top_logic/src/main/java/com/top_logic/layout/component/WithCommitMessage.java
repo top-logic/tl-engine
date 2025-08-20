@@ -18,8 +18,6 @@ import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.form.component.I18NConstants;
 import com.top_logic.layout.form.component.TransactionHandler;
 import com.top_logic.layout.provider.MetaLabelProvider;
-import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.tool.boundsec.CommandHandler;
 
 /**
  * Configuration plug-in to configure a command commit message.
@@ -67,14 +65,14 @@ public interface WithCommitMessage extends ConfigurationItem {
 	/**
 	 * Resolves a commit message to use for the given command.
 	 */
-	default ResKey buildCommandMessage(LayoutComponent component, CommandHandler handler, Object model) {
+	default ResKey buildCommandMessage(ResKey commandLabel, Object model) {
 		ResKey message;
 		ResKey1 customMessage = getCommitMessage();
 		if (customMessage == null) {
 			if (model == null) {
-				message = I18NConstants.PERFORMED__OPERATION.fill(handler.getResourceKey(component));
+				message = I18NConstants.PERFORMED__OPERATION.fill(commandLabel);
 			} else {
-				message = I18NConstants.PERFORMED__OPERATION_MODEL.fill(handler.getResourceKey(component),
+				message = I18NConstants.PERFORMED__OPERATION_MODEL.fill(commandLabel,
 					MetaLabelProvider.INSTANCE.getLabel(model));
 			}
 		} else {

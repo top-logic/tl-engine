@@ -89,7 +89,7 @@ public abstract class DeclarativeApplyHandler<E extends ConfigurationItem, M> ex
 	protected void doTransaction(FormComponent formHandler, FormContext formContext, Object model) {
 		Transaction tx;
 		if (model instanceof TLObject) {
-			ResKey commitMessage = ((Config) getConfig()).buildCommandMessage(formHandler, this, model);
+			ResKey commitMessage = ((Config) getConfig()).buildCommandMessage(getResourceKey(formHandler), model);
 
 			TLObject modelObject = (TLObject) model;
 			KnowledgeBase kb = modelObject.tHandle().getKnowledgeBase();

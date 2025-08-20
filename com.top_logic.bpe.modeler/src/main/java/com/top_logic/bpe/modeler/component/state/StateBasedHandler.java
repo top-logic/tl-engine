@@ -147,7 +147,7 @@ public class StateBasedHandler extends PreconditionCommandHandler {
 		return new Success() {
 			@Override
 			protected void doExecute(DisplayContext context) {
-				ResKey message = ((Config) getConfig()).buildCommandMessage(component, StateBasedHandler.this, model);
+				ResKey message = ((Config) getConfig()).buildCommandMessage(getResourceKey(component), model);
 				try (Transaction tx = obj.tKnowledgeBase().beginTransaction(message)) {
 					updateState(obj, newState);
 

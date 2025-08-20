@@ -19,6 +19,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.dnd.DndData;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.WithPostCreateActions;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -28,7 +29,7 @@ import com.top_logic.model.search.providers.WithTransaction;
  * {@link ServerDropHandler} that can be implemented in TL-Script.
  */
 public class ScriptedDropHandler extends AbstractConfiguredInstance<ScriptedDropHandler.Config<?>>
-		implements ServerDropHandler, WithPostCreateActions, WithTransaction {
+		implements ServerDropHandler, WithPostCreateActions, WithTransaction<ScriptedDropHandler.Config<?>> {
 
 	/**
 	 * Configuration options for {@link ScriptedDropHandler}.
@@ -83,10 +84,13 @@ public class ScriptedDropHandler extends AbstractConfiguredInstance<ScriptedDrop
 	@Override
 	public void onDrop(DropRegion target, DndData data) {
 		Object result;
+		Object userObject = target.getUserObject();
 		if (_script == null) {
-			result = Arrays.asList(target.getUserObject(), data.getDragData(), data.getSource().getDragSourceModel());
+			result = Arrays.asList(userObject, data.getDragData(), data.getSource().getDragSourceModel());
 		} else {
-			Transaction tx = beginTransaction(getConfig().isInTransaction());
+			Transaction tx = beginTransaction(
+				I18NConstants.DIAGRAM_DROP_ACTION__TARGET.fill(MetaLabelProvider.INSTANCE.getLabel(userObject)),
+				getConfig().isInTransaction());
 			try {
 				result = _script.execute(target, data.getDragData(), data.getSource().getDragSourceModel());
 			} finally {

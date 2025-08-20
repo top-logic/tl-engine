@@ -171,7 +171,7 @@ public class ToggleCommandByExpression extends ToggleCommandHandler implements W
 		QueryExecutor operation = _operation;
 		if (_transaction && operation != null) {
 			try (Transaction tx = PersistencyLayer.getKnowledgeBase()
-				.beginTransaction(((Config) getConfig()).buildCommandMessage(component, this, model))) {
+				.beginTransaction(((Config) getConfig()).buildCommandMessage(getResourceKey(component), model))) {
 				// Note the state handler may perform its own transaction. Therefore it must be
 				// nested in the operation transaction to prevent two commits for the same command.
 				_stateHandler.setState(component, model, this, newValue);

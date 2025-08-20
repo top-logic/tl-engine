@@ -14,7 +14,7 @@ import com.top_logic.mig.html.SelectionModel;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public interface SingleSelectionModel {
+public interface SingleSelectionModel<T> {
 
 	/**
 	 * Determines whether the given object can be selected by this
@@ -24,7 +24,7 @@ public interface SingleSelectionModel {
 	 *        the object under test
 	 * @return whether the given object can be selected
 	 */
-	boolean isSelectable(Object obj);
+	boolean isSelectable(T obj);
 
 	/**
 	 * This method sets the new single selection. If <code>touchedObject</code>
@@ -33,14 +33,14 @@ public interface SingleSelectionModel {
 	 * @param obj
 	 *        the new selected object. may be <code>null</code>.
 	 */
-	void setSingleSelection(Object obj);
+	void setSingleSelection(T obj);
 
 	/**
 	 * Since only one object is selected, return the selected object.
 	 * 
 	 * @return the selected object.
 	 */
-	Object getSingleSelection();
+	T getSingleSelection();
 
 	/**
 	 * Adds the given listener to be informed about changes of the selection
@@ -51,7 +51,7 @@ public interface SingleSelectionModel {
 	 *         listener will be informed about changes of
 	 *         {@link #getSingleSelection()}
 	 */
-	boolean addSingleSelectionListener(SingleSelectionListener listener);
+	boolean addSingleSelectionListener(SingleSelectionListener<T> listener);
 
 	/**
 	 * Removes the given listener
@@ -60,6 +60,6 @@ public interface SingleSelectionModel {
 	 *        the listener to detach.
 	 * @return whether detaching was successful.
 	 */
-	boolean removeSingleSelectionListener(SingleSelectionListener listener);
+	boolean removeSingleSelectionListener(SingleSelectionListener<T> listener);
 
 }

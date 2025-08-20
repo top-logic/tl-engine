@@ -133,6 +133,7 @@ import com.top_logic.layout.basic.control.IconControl;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.codeedit.control.CodeEditorControl;
 import com.top_logic.layout.component.configuration.ExternalLink;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.folder.FolderControl;
 import com.top_logic.layout.form.CheckException;
@@ -1942,11 +1943,11 @@ public class TestControlsForm extends FormComponent {
 			}
 
 			@Override
-			public Menu getContextMenu(Object obj) {
+			public Menu getContextMenu(Object directTarget, Object model) {
 				Command command = new Command() {
 					@Override
 					public HandlerResult executeCommand(DisplayContext context) {
-						InfoService.showInfo(Fragments.text("Option: " + obj));
+						InfoService.showInfo(Fragments.text("Option: " + model));
 						return HandlerResult.DEFAULT_RESULT;
 					}
 				};
@@ -2622,11 +2623,11 @@ public class TestControlsForm extends FormComponent {
 			}
 
 			@Override
-			public Menu getContextMenu(Object obj) {
+			public Menu getContextMenu(Object directTarget, Object model) {
 				return Menu.create(
-					option(obj, "Option 1"),
-					option(obj, "Option 2"),
-					option(obj, "Option 3"));
+					option(model, "Option 1"),
+					option(model, "Option 2"),
+					option(model, "Option 3"));
 			}
 
 			private CommandModel option(Object obj, String value) {
@@ -3847,7 +3848,7 @@ public class TestControlsForm extends FormComponent {
 			partA.setControlProvider(new ControlProvider() {
 				@Override
 				public Control createControl(Object model, String style) {
-					return new SelectionPartControl(selectionModel, currentPartName);
+					return SelectionPartControl.createSelectionPartControl(selectionModel, currentPartName);
 				}
 			});
 			testGroup.addMember(partA);
@@ -3858,14 +3859,14 @@ public class TestControlsForm extends FormComponent {
 
 		SelectionListener displayUpdate = new SelectionListener() {
 			@Override
-			public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
+			public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 				if (displayUpdateDisabled.get()) {
 					return;
 				}
 
 				selectionUpdateDisabled.set(true);
 				try {
-					ArrayList sorted = new ArrayList(selectedObjects);
+					ArrayList sorted = new ArrayList(event.getNewSelection());
 					Collections.sort(sorted);
 					selectionDisplay.setValue(StringServices.join(sorted, ", "));
 				} finally {

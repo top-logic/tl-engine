@@ -70,8 +70,8 @@ public class TypeBasedContextMenuProvider extends AbstractConfiguredInstance<Typ
 	}
 
 	@Override
-	public Menu getContextMenu(Object obj) {
-		return _provider.getContextMenu(obj);
+	public Menu getContextMenu(Object directTarget, Object model) {
+		return _provider.getContextMenu(directTarget, model);
 	}
 
 }

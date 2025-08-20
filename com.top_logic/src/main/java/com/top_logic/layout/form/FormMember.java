@@ -698,7 +698,7 @@ public interface FormMember extends FormContextProxy, Focusable, VisibilityModel
 	 * 
 	 * <p>
 	 * The context object of the resulting {@link ContextMenuProvider} (the argument to
-	 * {@link ContextMenuProvider#getContextMenu(Object)}) is always this {@link FormMember}
+	 * {@link ContextMenuProvider#getContextMenu(Object, Object)}) is always this {@link FormMember}
 	 * instance.
 	 * </p>
 	 */

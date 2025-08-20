@@ -7,6 +7,7 @@ package com.top_logic.layout.component.model;
 
 import java.util.Set;
 
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.mig.html.SelectionModel;
 
 /**
@@ -14,50 +15,53 @@ import com.top_logic.mig.html.SelectionModel;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class MultiSelectionEvent {
+public class MultiSelectionEvent<T> implements SelectionEvent<T> {
 
-	private final SelectionModel _sender;
+	private final SelectionModel<T> _sender;
 
-	private final Set<?> _formerlySelectedObjects;
+	private final Set<? extends T> _oldSelection;
 
-	private final Set<?> _newlySelectedObjects;
+	private final Set<? extends T> _newSelection;
+
+	private Set<?> _updated;
 
 	/**
 	 * Creates a {@link MultiSelectionEvent}.
 	 * 
 	 * @param sender
 	 *        See {@link #getSender()}.
-	 * @param formerlySelectedObjects
-	 *        See {@link #getFormerlySelectedObjects()}.
-	 * @param newlySelectedObjects
-	 *        See {@link #getNewlySelectedObjects()}.
+	 * @param oldSelection
+	 *        See {@link #getOldSelection()}.
+	 * @param newSelection
+	 *        See {@link #getNewSelection()}.
 	 */
-	public MultiSelectionEvent(SelectionModel sender, Set<?> formerlySelectedObjects,
-			Set<?> newlySelectedObjects) {
+	public MultiSelectionEvent(SelectionModel<T> sender, Set<? extends T> oldSelection, Set<? extends T> newSelection) {
 		_sender = sender;
-		_formerlySelectedObjects = formerlySelectedObjects;
-		_newlySelectedObjects = newlySelectedObjects;
+		_oldSelection = oldSelection;
+		_newSelection = newSelection;
 	}
 
-	/**
-	 * @see SelectionListener#notifySelectionChanged(SelectionModel, Set, Set)
-	 */
-	public SelectionModel getSender() {
+	@Override
+	public SelectionModel<T> getSender() {
 		return _sender;
 	}
 
-	/**
-	 * @see SelectionListener#notifySelectionChanged(SelectionModel, Set, Set)
-	 */
-	public Set<?> getFormerlySelectedObjects() {
-		return _formerlySelectedObjects;
+	@Override
+	public Set<? extends T> getOldSelection() {
+		return _oldSelection;
 	}
 
-	/**
-	 * @see SelectionListener#notifySelectionChanged(SelectionModel, Set, Set)
-	 */
-	public Set<?> getNewlySelectedObjects() {
-		return _newlySelectedObjects;
+	@Override
+	public Set<? extends T> getNewSelection() {
+		return _newSelection;
+	}
+
+	@Override
+	public Set<?> getUpdatedObjects() {
+		if (_updated == null) {
+			_updated = CollectionUtil.symmetricDifference(_oldSelection, _newSelection);
+		}
+		return _updated;
 	}
 
 }

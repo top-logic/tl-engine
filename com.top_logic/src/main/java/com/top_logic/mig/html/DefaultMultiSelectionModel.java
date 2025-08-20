@@ -20,10 +20,12 @@ import com.top_logic.basic.col.filter.FilterFactory;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class DefaultMultiSelectionModel extends AbstractMultiSelectionModel {
+public class DefaultMultiSelectionModel<T> extends AbstractMultiSelectionModel<T> {
 	
-	private final Set selected = new HashSet();
-	private final Set selectedView = Collections.unmodifiableSet(selected);
+
+	private final Set<T> selected = new HashSet<>();
+
+	private final Set<T> selectedView = Collections.unmodifiableSet(selected);
 	/**
 	 * Create a new DefaultMultiSelectionModel, which allows to select all objects
 	 *
@@ -37,25 +39,19 @@ public class DefaultMultiSelectionModel extends AbstractMultiSelectionModel {
 	 * 
 	 * @param selectionFilter - the {@link Filter filter}, which defines, if an object is selectable, or not
 	 */
-	public DefaultMultiSelectionModel(Filter selectionFilter, SelectionModelOwner owner) {
+	public DefaultMultiSelectionModel(Filter<? super T> selectionFilter, SelectionModelOwner owner) {
 		super(owner);
 		setSelectionFilter(selectionFilter);
 		setDeselectionFilter(FilterFactory.trueFilter());
 	}
 	
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
-	public boolean isSelected(Object obj) {
+	public boolean isSelected(T obj) {
 		return selected.contains(obj);
 	}	
 	
-	/**
-	 * {@inheritDoc}
-	 */
 	@Override
-	public void setSelected(Object obj, boolean select) {
+	public void setSelected(T obj, boolean select) {
 		if (obj == null) {
 			throw new IllegalArgumentException("Selected object may not be null.");
 		}
@@ -67,7 +63,7 @@ public class DefaultMultiSelectionModel extends AbstractMultiSelectionModel {
 			if (!isSelectable(obj)) {
 				return;
 			}
-			HashSet oldSelection = new HashSet(selected);
+			HashSet<T> oldSelection = new HashSet<>(selected);
 			selected.add(obj);
 			setLastSelected(obj);
 			fireSelectionChanged(oldSelection);
@@ -76,7 +72,7 @@ public class DefaultMultiSelectionModel extends AbstractMultiSelectionModel {
 				return;
 			}
 			if (selected.contains(obj)) {
-				HashSet oldSelection = new HashSet(selected);
+				HashSet<T> oldSelection = new HashSet<>(selected);
 				selected.remove(obj);
 				setLastSelected(obj);
 				fireSelectionChanged(oldSelection);
@@ -85,7 +81,7 @@ public class DefaultMultiSelectionModel extends AbstractMultiSelectionModel {
 	}
 
 	@Override
-	public void addToSelection(Collection<?> objects) {
+	public void addToSelection(Collection<? extends T> objects) {
 		switch (objects.size()) {
 			case 0:
 				return;
@@ -93,10 +89,10 @@ public class DefaultMultiSelectionModel extends AbstractMultiSelectionModel {
 				setSelected(objects.iterator().next(), true);
 				return;
 			default:
-				Iterator<?> it = objects.iterator();
-				Object tmp = null;
+				Iterator<? extends T> it = objects.iterator();
+				T tmp = null;
 				do {
-					Object next = it.next();
+					T next = it.next();
 					if (next == null) {
 						continue;
 					}
@@ -112,11 +108,11 @@ public class DefaultMultiSelectionModel extends AbstractMultiSelectionModel {
 				if (tmp == null) {
 					return;
 				}
-				HashSet oldSelection = new HashSet(selected);
+				HashSet<T> oldSelection = new HashSet<>(selected);
 				selected.add(tmp);
 				setLastSelected(tmp);
 				while (it.hasNext()) {
-					Object next = it.next();
+					T next = it.next();
 					if (next == null) {
 						continue;
 					}
@@ -131,7 +127,7 @@ public class DefaultMultiSelectionModel extends AbstractMultiSelectionModel {
 	}
 
 	@Override
-	public void removeFromSelection(Collection<?> objects) {
+	public void removeFromSelection(Collection<? extends T> objects) {
 		switch (objects.size()) {
 			case 0:
 				return;
@@ -139,10 +135,10 @@ public class DefaultMultiSelectionModel extends AbstractMultiSelectionModel {
 				setSelected(objects.iterator().next(), false);
 				return;
 			default:
-				Iterator<?> it = objects.iterator();
-				Object tmp = null;
+				Iterator<? extends T> it = objects.iterator();
+				T tmp = null;
 				do {
-					Object next = it.next();
+					T next = it.next();
 					if (next == null) {
 						continue;
 					}
@@ -158,11 +154,11 @@ public class DefaultMultiSelectionModel extends AbstractMultiSelectionModel {
 				if (tmp == null) {
 					return;
 				}
-				HashSet oldSelection = new HashSet(selected);
+				HashSet<T> oldSelection = new HashSet<>(selected);
 				selected.remove(tmp);
 				setLastSelected(tmp);
 				while (it.hasNext()) {
-					Object next = it.next();
+					T next = it.next();
 					if (next == null) {
 						continue;
 					}
@@ -176,36 +172,31 @@ public class DefaultMultiSelectionModel extends AbstractMultiSelectionModel {
 		}
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public void clear() {
 		if (isNonEmptySelection()) {
-			HashSet<Object> oldSelection = new HashSet<>(selected);
+			HashSet<T> oldSelection = new HashSet<>(selected);
 			clearSelectableItems();
 			fireSelectionChanged(oldSelection);
 		}
 	}
 
 	private boolean isNonEmptySelection() {
-		Set<Object> fixedSelection = getFixedSelection();
+		Set<? extends T> fixedSelection = getFixedSelection();
 		return !CollectionUtil.containsSame(fixedSelection, selected);
 	}
 
-	@SuppressWarnings("unchecked")
 	private void clearSelectableItems() {
-		Set<Object> fixedSelection = getFixedSelection();
+		Set<? extends T> fixedSelection = getFixedSelection();
 		selected.retainAll(fixedSelection);
 	}
 
-	private Set<Object> getFixedSelection() {
+	private Set<T> getFixedSelection() {
 		if (FilterFactory.isTrue(getDeselectionFilter())) {
 			return Collections.emptySet();
 		}
-		HashSet<Object> fixedSelection = new HashSet<>();
-		for (Object item : selected) {
+		HashSet<T> fixedSelection = new HashSet<>();
+		for (T item : selected) {
 			if (!isDeselectable(item)) {
 				fixedSelection.add(item);
 			}
@@ -214,13 +205,12 @@ public class DefaultMultiSelectionModel extends AbstractMultiSelectionModel {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public void setSelection(Set<?> newSelection, Object leadObject) {
+	public void setSelection(Set<? extends T> newSelection, Object leadObject) {
 		if (newSelection == null) {
 			throw new IllegalArgumentException("Selection must not be null");
 		}
-		HashSet<Object> oldSelection = new HashSet<>(selected);
-		Set<Object> fixedSelection = getFixedSelection();
+		HashSet<T> oldSelection = new HashSet<>(selected);
+		Set<T> fixedSelection = getFixedSelection();
 		Set<?> retainedSelection;
 		if (fixedSelection.isEmpty()) {
 			retainedSelection = newSelection;
@@ -229,7 +219,7 @@ public class DefaultMultiSelectionModel extends AbstractMultiSelectionModel {
 			retainedSelection = fixedSelection;
 		}
 		boolean modified = selected.retainAll(retainedSelection);
-		for (Object newSelected : newSelection) {
+		for (T newSelected : newSelection) {
 			if (isSelectable(newSelected)) {
 				boolean added = selected.add(newSelected);
 				modified |= added;
@@ -241,11 +231,8 @@ public class DefaultMultiSelectionModel extends AbstractMultiSelectionModel {
 		}
 	}
 
-	/**
-	 *{@inheritDoc}
-	 */
 	@Override
-	public Set<?> getSelection() {
+	public Set<? extends T> getSelection() {
 		return selectedView;
 	}
 

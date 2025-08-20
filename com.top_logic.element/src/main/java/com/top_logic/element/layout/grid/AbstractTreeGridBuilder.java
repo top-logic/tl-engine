@@ -44,6 +44,7 @@ import com.top_logic.layout.table.dnd.TableDragSource;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.NoPrepare;
 import com.top_logic.layout.table.model.TableConfiguration;
+import com.top_logic.layout.table.tree.TreeTableExpandCollapseAll;
 import com.top_logic.layout.tree.component.TreeModelBuilder;
 import com.top_logic.layout.tree.model.AbstractMutableTLTreeModel;
 import com.top_logic.layout.tree.model.AbstractTreeTableModel;
@@ -96,8 +97,8 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 	 */
 	private final Collection<CommandHandler> _allCommands =
 		Arrays.<CommandHandler> asList(
-			CommandHandlerFactory.getInstance().getHandler(TreeGridExpandCollapseAll.EXPAND_ID),
-			CommandHandlerFactory.getInstance().getHandler(TreeGridExpandCollapseAll.COLLAPSE_ID));
+			CommandHandlerFactory.getInstance().getHandler(TreeTableExpandCollapseAll.EXPAND_ID),
+			CommandHandlerFactory.getInstance().getHandler(TreeTableExpandCollapseAll.COLLAPSE_ID));
 
 	/**
 	 * Commands when <em>not</em> {@link #canExpandAll()}.
@@ -109,7 +110,7 @@ public abstract class AbstractTreeGridBuilder<R> implements GridBuilder<R> {
 	 */
 	private final Collection<CommandHandler> _restrictedCommands =
 		Arrays.<CommandHandler> asList(
-			CommandHandlerFactory.getInstance().getHandler(TreeGridExpandCollapseAll.COLLAPSE_ID));
+			CommandHandlerFactory.getInstance().getHandler(TreeTableExpandCollapseAll.COLLAPSE_ID));
 
 	private boolean _rootVisible;
 

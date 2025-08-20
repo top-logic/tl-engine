@@ -13,7 +13,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import javax.swing.DefaultListModel;
 import javax.swing.ListModel;
@@ -35,6 +34,7 @@ import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ResourceRenderer;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.FormMemberVisitor;
 import com.top_logic.layout.form.I18NConstants;
@@ -605,9 +605,9 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 				private List<?> oldSelection = (List<?>) FormFieldInternals.getStoredValue(targetSelectField);
 
 				@Override
-				public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects,
-						Set<?> selectedObjects) {
-					boolean changed = !CollectionUtil.equals(oldSelection, CollectionUtil.toList(selectedObjects));
+				public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
+					boolean changed =
+						!CollectionUtil.equals(oldSelection, CollectionUtil.toList(event.getNewSelection()));
 					setExecutability(accept, changed);
 				}
 			});
@@ -641,7 +641,7 @@ public class TreeSelectorContext extends FormContext implements DynamicRecordabl
 		}
 
 		@Override
-		public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
+		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			updateButtonsState();
 		}
 	}

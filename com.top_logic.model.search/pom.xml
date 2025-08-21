@@ -1,61 +1,66 @@
-<?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <relativePath>../tl-parent-core/internal</relativePath>
-    <groupId>com.top-logic</groupId>
-    <artifactId>tl-parent-core-internal</artifactId>
-    <version>7.10.0-SNAPSHOT</version>
-  </parent>
+<?xml version="1.0" encoding="utf-8" ?>
 
-  <artifactId>tl-model-search</artifactId>
-  <description>TL-Script engine.</description>
+<project
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd"
+>
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<relativePath>../tl-parent-core/internal</relativePath>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-parent-core-internal</artifactId>
+		<version>7.10.0-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>tl-model-search</artifactId>
+	<description>TL-Script engine.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
-  <dependencies>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-basic</artifactId>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-core</artifactId>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-reporting-flex</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
-      <artifactId>tl-layout-codeedit</artifactId>
-    </dependency>
-    <dependency>
-		<groupId>com.fasterxml.jackson.dataformat</groupId>
-		<artifactId>jackson-dataformat-csv</artifactId>
-		<version>2.13.0</version>
-	</dependency>
-	<dependency>
-	    <groupId>org.apache.poi</groupId>
-	    <artifactId>poi</artifactId>
-	</dependency>
-	<dependency>
-	    <groupId>org.apache.poi</groupId>
-	    <artifactId>poi-ooxml</artifactId>
-	</dependency>
+	<dependencies>
 		<dependency>
-	    <groupId>org.apache.poi</groupId>
-	    <artifactId>poi-ooxml-full</artifactId>
-	</dependency>
-	<dependency>
-	    <groupId>org.apache.poi</groupId>
-	    <artifactId>poi-scratchpad</artifactId>
-	</dependency>
-  </dependencies>
-  
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-basic</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-core</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-reporting-flex</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-codeedit</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.dataformat</groupId>
+			<artifactId>jackson-dataformat-csv</artifactId>
+			<version>2.13.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml-full</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-scratchpad</artifactId>
+		</dependency>
+	</dependencies>
+
 	<build>
 		<plugins>
 			<!-- Call explicitly with: mvn javacc:javacc@generate-javacc -->
@@ -63,7 +68,7 @@
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>javacc-maven-plugin</artifactId>
 				<version>3.0.1</version>
-				
+
 				<executions>
 					<execution>
 						<id>generate-javacc</id>
@@ -73,7 +78,7 @@
 						<phase>none</phase>
 					</execution>
 				</executions>
-				
+
 				<configuration>
 					<sourceDirectory>${basedir}/src/main/java</sourceDirectory>
 					<outputDirectory>${basedir}/src/main/java</outputDirectory>
@@ -81,5 +86,4 @@
 			</plugin>
 		</plugins>
 	</build>
-	  
 </project>

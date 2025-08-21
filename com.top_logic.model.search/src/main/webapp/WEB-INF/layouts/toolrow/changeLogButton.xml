@@ -12,5 +12,6 @@
 
 	<commandConfiguration class="com.top_logic.layout.component.configuration.DialogOpenerCommandModelConfiguration"
 		dialog="openChangeLogDialog"
+		dialogParent="rootLayout#masterFrame"
 	/>
 </template>

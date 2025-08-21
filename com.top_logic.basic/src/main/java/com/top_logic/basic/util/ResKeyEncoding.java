@@ -296,11 +296,20 @@ public class ResKeyEncoding {
 		"'" + "(" + "(?:" + "[^\\']*" + "|" + QUOTED_SPECIAL + ")*" + ")" + "'" + "|" +
 		"\"" + "(" + "(?:" + "[^\\\"]*" + "|" + QUOTED_SPECIAL + ")*" + ")" + "\"";
 
-	static final String LANGTAG = "@([a-zA-Z]+(?:-[a-zA-Z0-9]+)*)";
+	private static final String NAME = "[a-zA-Z][a-zA-Z0-9]*(?:-[a-zA-Z][a-zA-Z0-9]*)*";
 
-	static final String SEPARATOR = "(?:" + "(" + ",\\s+" + ")" + "|" + "(" + "\\)" + ")" + ")";
+	static final String LANGTAG = "@(" + NAME + ")";
 
-	static final Pattern TAGGED_STRING_PATTERN = Pattern.compile(LITERAL + LANGTAG + SEPARATOR);
+	static final String SEPARATOR =
+		"(?:" + "(" + ",\\s+" + ")" + "|" + "(" + "\\)" + ")" + "|" + "(" + "\\}" + ")" + ")";
+
+	static final String SUBKEY_START = "(" + NAME + ")" + ":" + "\\s*" + "\\{";
+
+	static final Pattern TAGGED_STRING_PATTERN = Pattern.compile(
+		"(?:" +
+			"(?:" + "(?:" + LITERAL + LANGTAG + ")?" + SEPARATOR + ")" + "|" +
+			"(?:" + SUBKEY_START + ")" +
+			")");
 
 	private static ResKey atomicKey(String part) {
 		ResKey plain;
@@ -310,18 +319,7 @@ public class ResKeyEncoding {
 			keyLength = 2;
 			matcher.region(keyLength, part.length());
 			Builder translations = ResKey.builder();
-			while (matcher.lookingAt()) {
-				Locale lang = Locale.forLanguageTag(matcher.group(3));
-				String value = unquote(matcher.group(1), matcher.group(2));
-				translations.add(lang, value);
-				keyLength = matcher.end();
-
-				if (matcher.group(5) != null) {
-					break;
-				}
-
-				matcher.region(matcher.end(), part.length());
-			}
+			keyLength = parseTranslations(translations, matcher, part, keyLength);
 
 			plain = translations.build();
 		} else {
@@ -346,8 +344,43 @@ public class ResKeyEncoding {
 		return ResKey.message(plain, arguments.toArray());
 	}
 
+	private static int parseTranslations(Builder translations, Matcher matcher, String part, int keyLength) {
+		while (matcher.lookingAt()) {
+			String valSquote = matcher.group(1);
+			String valDquote = matcher.group(2);
+			String langName = matcher.group(3);
+			boolean nextTag = matcher.group(4) != null;
+			boolean endAll = matcher.group(5) != null;
+			boolean endSuffix = matcher.group(6) != null;
+			String suffix = matcher.group(7);
+
+			keyLength = matcher.end();
+			matcher.region(matcher.end(), part.length());
+
+			if (suffix != null) {
+				Builder inner = translations.suffix(suffix);
+
+				keyLength = parseTranslations(inner, matcher, part, keyLength);
+			} else {
+				if (langName != null) {
+					Locale lang = Locale.forLanguageTag(langName);
+					String value = unquote(valSquote, valDquote);
+					translations.add(lang, value);
+				}
+
+				if (endAll || endSuffix) {
+					break;
+				}
+
+				// A comma was seen.
+				assert nextTag;
+			}
+		}
+		return keyLength;
+	}
+
 	private static String unquote(String a, String b) {
-		return a == null ? unquote(b) : unquote(a);
+		return a != null ? unquote(a) : (b != null ? unquote(b) : null);
 	}
 
 	private static String unquote(String value) {

@@ -7,7 +7,4 @@
 			resource="com.top_logic.model.search/search/modelSearch.layout.xml"
 		/>
 	</components>
-	<dialogs>
-		<layout-reference resource="admin/myLatestChanges/dialog.layout.xml"/>
-	</dialogs>
 </arguments>

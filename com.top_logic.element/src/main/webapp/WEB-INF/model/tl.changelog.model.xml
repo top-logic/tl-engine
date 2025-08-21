@@ -192,20 +192,6 @@
 					navigate="true"
 					type="tl.core:Revision"
 				/>
-				<property name="name"
-					type="tl.core:String"
-				>
-					<annotations>
-						<storage-algorithm>
-							<query>
-								<expr><![CDATA[cs -> "{0} ({1})".fill(
-    $cs.get(`tl.changelog:ChangeSet#message`).localize(),
-    $cs.get(`tl.changelog:ChangeSet#date`)
-)]]></expr>
-							</query>
-						</storage-algorithm>
-					</annotations>
-				</property>
 			</attributes>
 		</class>
 		<interface name="Modification">

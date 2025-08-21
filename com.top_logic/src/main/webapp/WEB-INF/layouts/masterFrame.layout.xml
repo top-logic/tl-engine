@@ -5,7 +5,7 @@
 	final="false"
 	template="com.top_logic/masterFrame.template.xml"
 >
-	<arguments closeDialogOnBackgroundClick="true">
+	<arguments closeDialogOnBackgroundClick="%closeDialogOnBackgroundClick%">
 		<components>
 			<layout-reference resource="masterContent.layout.xml"/>
 		</components>

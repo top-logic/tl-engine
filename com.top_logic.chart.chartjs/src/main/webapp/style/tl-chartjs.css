@@ -1,6 +1,6 @@
 
 /* Expand the ChartJS control of a ChartJS component to 100% of its available space. */
 div.cjsComp {
-	flex-grow: 1;
-	min-height: 0;
+	width: 100%;
+	height: 100%;
 }

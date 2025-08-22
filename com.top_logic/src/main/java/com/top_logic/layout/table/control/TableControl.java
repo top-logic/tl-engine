@@ -7,7 +7,6 @@ package com.top_logic.layout.table.control;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -135,6 +134,7 @@ import com.top_logic.layout.table.display.IndexRange;
 import com.top_logic.layout.table.display.RowIndexAnchor;
 import com.top_logic.layout.table.display.ViewportState;
 import com.top_logic.layout.table.display.VisiblePaneRequest;
+import com.top_logic.layout.table.dnd.TableDragSource;
 import com.top_logic.layout.table.dnd.TableDropEvent;
 import com.top_logic.layout.table.dnd.TableDropEvent.Position;
 import com.top_logic.layout.table.dnd.TableDropTarget;
@@ -472,13 +472,12 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 	@Override
 	public Collection<?> getDragData(String dataId) {
+		TableDragSource dragSource = getTableData().getDragSource();
 		if (dataId.startsWith(SELECTION_REF_PREFIX)) {
-			return getTableData().getDragSource().getDragSelection(getTableData(),
+			return dragSource.getDragSelection(getTableData(),
 				getRowIndex(dataId.substring(SELECTION_REF_PREFIX.length())));
 		} else {
-			String[] referenceIDs = dataId.split(",");
-			return Arrays.stream(referenceIDs)
-				.map(ref -> getTableData().getDragSource().getDragObject(getTableData(), getRowIndex(ref))).toList();
+			return Collections.singletonList(dragSource.getDragObject(getTableData(), getRowIndex(dataId)));
 		}
 	}
 

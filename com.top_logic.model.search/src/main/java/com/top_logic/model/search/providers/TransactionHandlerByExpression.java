@@ -82,6 +82,11 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 		String OPERATION = "operation";
 
 		/**
+		 * @see #getCommitMessage()
+		 */
+		String COMMIT_MESSAGE = "commitMessage";
+
+		/**
 		 * Whether to check the form for errors before attempting to execute the operation.
 		 * 
 		 * <p>
@@ -164,6 +169,7 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 		 * model.
 		 * </p>
 		 */
+		@Name(COMMIT_MESSAGE)
 		ResKey1 getCommitMessage();
 
 	}
@@ -184,6 +190,7 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 		Config.AUTO_APPLY,
 		Config.TRANSACTION,
 		Config.OPERATION,
+		Config.COMMIT_MESSAGE,
 		Config.POST_CREATE_ACTIONS,
 		Config.CLOSE_DIALOG,
 		Config.CONFIRMATION,

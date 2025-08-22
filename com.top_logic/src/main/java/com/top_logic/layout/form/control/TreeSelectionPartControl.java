@@ -48,13 +48,17 @@ public class TreeSelectionPartControl extends SelectionPartControl {
 		SelectionChangeKind kind;
 		NodeSelectionState state = selectionState();
 		if (state.descendants().isHomogeneous()) {
-			if (state == NodeSelectionState.FULL) {
+			if (state == NodeSelectionState.ALL_DESCENDANTS) {
 				// Deselect all.
 				selectionModel().setSelectedSubtree(getSelectionPart(), doSelect = false);
 				kind = SelectionChangeKind.SUBTREE;
 			} else if (state == NodeSelectionState.NONE) {
 				// Only select node itself
 				selectionModel().setSelected(getSelectionPart(), doSelect = true);
+				kind = SelectionChangeKind.INCREMENTAL;
+			} else if (state == NodeSelectionState.FULL) {
+				// Only select node itself
+				selectionModel().setSelected(getSelectionPart(), doSelect = false);
 				kind = SelectionChangeKind.INCREMENTAL;
 			} else {
 				// Select all.

@@ -50,9 +50,9 @@ public class TreeHeaderSelectionControl extends TableHeaderSelectionControl {
 
 		boolean doSelectAll;
 		if (treeModel.isRootVisible()) {
-			doSelectAll = !rootState.isSelected() || rootState.descendants() != DescendantState.ALL;
+			doSelectAll = rootState == NodeSelectionState.NONE;
 		} else {
-			doSelectAll = rootState.descendants() != DescendantState.ALL;
+			doSelectAll = rootState.descendants() != DescendantState.NONE;
 		}
 
 		Object update = selectionModel.startBulkUpdate();

@@ -79,11 +79,13 @@ public class FlowChartComponent extends BuilderComponent
 				SelectableBox uiSelected = uiSelection.get(n);
 				if (!newSelection.contains(uiSelected)) {
 					uiSelection.remove(n);
+					uiSelected.setSelected(false);
 				}
 				newlySelected.remove(uiSelected);
 			}
 			for (Object x : newlySelected) {
 				uiSelection.add((SelectableBox) x);
+				((SelectableBox) x).setSelected(true);
 			}
 		}
 	};

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<config:template xmlns:config="http://www.top-logic.com/ns/config/6.0"
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	groups="commons"
 >
-	<properties extends="com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.mig.html.layout.WithGotoConfiguration, com.top_logic.mig.html.DefaultSelectionModelFactory$UIOptions">
+	<properties extends="com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.component.InAppSelectable$InAppSelectableConfig, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.mig.html.layout.WithGotoConfiguration, com.top_logic.mig.html.DefaultSelectionModelFactory$UIOptions">
 		<annotations>
 			<display-order>
 				<value>
@@ -13,6 +14,7 @@
 					<property name="modelBuilder"/>
 
 					<property name="multiSelection"/>
+					<property name="partnerGroup"/>
 					<property name="selectionFilter"/>
 
 					<property name="isSecurityMaster"/>
@@ -25,6 +27,7 @@
 					<property name="securityObject"/>
 
 					<property name="buttons"/>
+					<property name="onSelectionChange"/>
 					<property name="goto-targets"/>
 				</value>
 			</display-order>
@@ -69,6 +72,8 @@
 		isSecurityMaster="${isSecurityMaster}"
 		model="${model}"
 		modelBuilder="${modelBuilder}"
+		onSelectionChange="${onSelectionChange}"
+		partnerGroup="${partnerGroup}"
 		securityObject="${securityObject}"
 		securityProviderClass="${securityProviderClass}"
 		showMaximize="${showMaximize}"

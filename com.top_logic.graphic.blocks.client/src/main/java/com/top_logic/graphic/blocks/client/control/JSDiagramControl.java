@@ -6,7 +6,10 @@
 package com.top_logic.graphic.blocks.client.control;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.vectomatic.dom.svg.OMSVGDocument;
@@ -37,6 +40,7 @@ import de.haumacher.msgbuf.graph.SharedGraphNode;
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonReader;
+import de.haumacher.msgbuf.observer.Observable;
 import elemental2.core.JsMath;
 import elemental2.dom.DOMRect;
 import elemental2.dom.DomGlobal;
@@ -57,8 +61,6 @@ import elemental2.promise.Promise;
  */
 public class JSDiagramControl extends AbstractJSControl
 		implements JSDiagramControlCommon, DiagramContext {
-
-	private static final String SELECTED_CLASS = "tlbSelected";
 
 	private OMSVGDocument _svgDoc;
 
@@ -81,6 +83,16 @@ public class JSDiagramControl extends AbstractJSControl
 	double scrollX, scrollY;
 
 	boolean draggingToScroll;
+
+	/** Flag to indicate that currently a server side triggered diagram update is applied. */
+	boolean _processServerUpdate;
+
+	/**
+	 * The diagram nodes which are touched during a server side triggered diagram update.
+	 * 
+	 * @see #_processServerUpdate
+	 */
+	final Set<SharedGraphNode> _dirtyNodes = new HashSet<>();
 
 	/**
 	 * Creates a {@link JSDiagramControl}.
@@ -119,11 +131,22 @@ public class JSDiagramControl extends AbstractJSControl
 					_scope = new DefaultScope(2, 1) {
 						@Override
 						protected void beforeChange() {
-							if (_changeTimeout != 0) {
-								DomGlobal.clearTimeout(_changeTimeout);
+							if (!_processServerUpdate) {
+								if (_changeTimeout != 0) {
+									DomGlobal.clearTimeout(_changeTimeout);
+								}
+								_changeTimeout = DomGlobal.setTimeout(JSDiagramControl.this::onChange, 10);
 							}
-							_changeTimeout = DomGlobal.setTimeout(JSDiagramControl.this::onChange, 10);
 						}
+						
+						@Override
+						public void afterChanged(Observable obj, String property) {
+							super.afterChanged(obj, property);
+							if (_processServerUpdate) {
+								_dirtyNodes.add((SharedGraphNode) obj);
+							}
+						}
+
 					};
 					Diagram diagram = Diagram.readDiagram(_scope, new JsonReader(new StringR(json)));
 					diagram.setContext(this);
@@ -252,13 +275,63 @@ public class JSDiagramControl extends AbstractJSControl
 		});
 	}
 
+	@Override
+	public void invoke(String command, Object[] args) {
+		switch (command) {
+			case DIAGRAM_UPDATE_COMMAND: {
+				String patch = (String) args[0];
+
+				DomGlobal.console.info("Apply server-side patch: " + patch);
+
+				JsonReader json = new JsonReader(new StringR(patch));
+				// avoid sending changes back to server.
+				_processServerUpdate = true;
+				try {
+					_scope.applyChanges(json);
+					if (!_dirtyNodes.isEmpty()) {
+						applyScopeChanges(_dirtyNodes);
+						_dirtyNodes.clear();
+					}
+					_scope.dropChanges();
+				} catch (IOException ex) {
+					String error = "Unable to apply diagram patch: " + ex.getMessage();
+					DomGlobal.console.error(error);
+					logError(error);
+				} finally {
+					_processServerUpdate = false;
+				}
+
+				break;
+			}
+			default:
+				super.invoke(command, args);
+		}
+	}
+
 	/**
 	 * Called after some user-initiated changes occurred in the UI.
 	 */
 	void onChange(Object... args) {
 		_changeTimeout = 0;
 
-		if (_scope.getDirty().isEmpty()) {
+		applyScopeChanges(_scope.getDirty());
+
+		try {
+			StringW buffer = new StringW();
+			_scope.createPatch(new de.haumacher.msgbuf.json.JsonWriter(buffer));
+
+			String patch = buffer.toString();
+			DomGlobal.console.info("Sending updates: ", patch);
+
+			sendUpdate(getId(), patch, true);
+
+		} catch (IOException ex) {
+			DomGlobal.console.error("Failed to write updates.", ex);
+		}
+	}
+
+	private void applyScopeChanges(Collection<? extends SharedGraphNode> dirtyNodes) {
+		if (dirtyNodes.isEmpty()) {
 			return;
 		}
 
@@ -286,24 +359,13 @@ public class JSDiagramControl extends AbstractJSControl
 		};
 
 		// Update UI.
-		for (SharedGraphNode dirty : _scope.getDirty()) {
+		for (SharedGraphNode dirty : dirtyNodes) {
 			Widget widget = (Widget) dirty;
 			if (widget.getClientId() != null) {
 				widget.draw(updateWriter);
 			}
 		}
 
-		try {
-			StringW buffer = new StringW();
-			_scope.createPatch(new de.haumacher.msgbuf.json.JsonWriter(buffer));
-
-			String patch = buffer.toString();
-			DomGlobal.console.info("Sending updates: ", patch);
-
-			sendUpdate(getId(), patch, true);
-		} catch (IOException ex) {
-			DomGlobal.console.error("Faild to write updates.", ex);
-		}
 	}
 
 	private native void sendUpdate(String id, String patch, boolean showWait) /*-{
@@ -312,6 +374,10 @@ public class JSDiagramControl extends AbstractJSControl
 			controlID : id,
 			patch : patch
 		}, showWait)
+	}-*/;
+
+	private native void logError(String message) /*-{
+		$wnd.services.log.error(message, null)
 	}-*/;
 
 	private SVGBuilder svgBuilder() {

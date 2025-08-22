@@ -7,6 +7,7 @@ package com.top_logic.graphic.flow.operations;
 
 import java.util.Collections;
 
+import com.top_logic.basic.shared.string.StringServicesShared;
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
 import com.top_logic.graphic.blocks.svg.event.MouseButton;
@@ -22,6 +23,12 @@ import de.haumacher.msgbuf.graph.AbstractSharedGraphNode;
  * Operations for {@link SelectableBox} model.
  */
 public interface SelectableBoxOperations extends DecorationOperations, SVGClickHandler {
+
+	/** CSS class for a selectable node which is currently not selected. */
+	public static final String TL_CAN_SELECT = "tlCanSelect";
+
+	/** CSS class for a selected node. */
+	public static final String TL_SELECTED = "tlSelected";
 
 	@Override
 	SelectableBox self();
@@ -50,7 +57,11 @@ public interface SelectableBoxOperations extends DecorationOperations, SVGClickH
 
 		out.beginGroup(self());
 		out.translate(self().getX(), self().getY());
-		out.writeCssClass(self().isSelected() ? "tlSelected" : "tlCanSelect");
+		String cssClass = self().isSelected() ? TL_SELECTED : TL_CAN_SELECT;
+		if (!StringServicesShared.isEmpty(self().getCssClass())) {
+			cssClass += " " + self().getCssClass();
+		}
+		out.writeCssClass(cssClass);
 
 		int id = ((AbstractSharedGraphNode) self()).id();
 		if (id != 0) {

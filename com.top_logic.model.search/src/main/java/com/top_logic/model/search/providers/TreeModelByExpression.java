@@ -15,21 +15,19 @@ import java.util.Set;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.col.factory.CollectionFactory;
-import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
-import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.layout.tree.component.TreeModelBuilder;
+import com.top_logic.layout.tree.component.TreeModelBuilderBase;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
@@ -50,7 +48,7 @@ import com.top_logic.util.model.ModelService;
  */
 @InApp
 public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> extends
-		AbstractConfiguredInstance<C> implements TreeModelBuilder<Object> {
+		TreeModelBuilderBase<Object, TreeModelByExpression.Config<?>> {
 
 	/**
 	 * Configuration options for {@link TreeModelByExpression}.
@@ -67,7 +65,7 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 		Config.NODES_TO_UPDATE,
 		Config.FINITE,
 	})
-	public interface Config<I extends TreeModelByExpression<?>> extends PolymorphicConfiguration<I> {
+	public interface Config<I extends TreeModelByExpression<?>> extends TreeModelBuilderBase.Config<I> {
 
 		/**
 		 * Configuration property label for {@link #getParents()}
@@ -105,30 +103,12 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 		String NODE_PREDICATE = "nodePredicate";
 
 		/**
-		 * @see #isFinite()
-		 */
-		String FINITE = "finite";
-
-		/**
 		 * Configuration property label for {@link #getNodesToUpdate()}
 		 */
 		String NODES_TO_UPDATE = "nodesToUpdate";
 
 		/** Property name of {@link #getTypesToObserve()}. */
 		String TYPES_TO_OBSERVE = "typesToObserve";
-
-		/**
-		 * Whether it is possible to expand all nodes.
-		 * 
-		 * <p>
-		 * This option might only be enabled, if the tree is guaranteed to be finite.
-		 * </p>
-		 * 
-		 * @see TreeModelByExpression#canExpandAll()
-		 */
-		@BooleanDefault(true)
-		@Name(FINITE)
-		boolean isFinite();
 
 		/**
 		 * Function checking whether a given object is part of this tree.
@@ -338,11 +318,6 @@ public class TreeModelByExpression<C extends TreeModelByExpression.Config<?>> ex
 	@Override
 	public boolean supportsNode(LayoutComponent contextComponent, Object node) {
 		return asBoolean(_supportsNode.execute(node));
-	}
-
-	@Override
-	public boolean canExpandAll() {
-		return getConfig().isFinite();
 	}
 
 	@Override

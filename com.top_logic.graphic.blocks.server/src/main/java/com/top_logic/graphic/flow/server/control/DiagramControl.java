@@ -5,9 +5,11 @@
  */
 package com.top_logic.graphic.flow.server.control;
 
+import static com.top_logic.ajax.shared.api.NamingConstants.*;
 import static com.top_logic.graphic.blocks.svg.SvgConstants.*;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +17,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.ajax.server.util.JSControlUtil;
+import com.top_logic.base.services.simpleajax.JSFunctionCall;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
@@ -166,14 +169,24 @@ public class DiagramControl extends AbstractControlBase
 
 	@Override
 	protected boolean hasUpdates() {
-		// TODO: Automatically created
-		return false;
+		return _graphScope.hasChanges();
 	}
 
 	@Override
 	protected void internalRevalidate(DisplayContext context, UpdateQueue actions) {
-		// TODO: Automatically created
+		if (_graphScope.hasChanges()) {
+			StringW out = new StringW();
+			try {
+				_graphScope.createPatch(new JsonWriter(out));
+			} catch (IOException ex) {
+				throw new UncheckedIOException(ex);
+			}
 
+			String objectPath = SERVICE_NAMESPACE + "." + SERVICE_NAME;
+			String methodName = INVOKE;
+			actions.add(new JSFunctionCall(getID(), objectPath, methodName,
+				DIAGRAM_UPDATE_COMMAND, out.toString()));
+		}
 	}
 
 	@Override
@@ -190,10 +203,6 @@ public class DiagramControl extends AbstractControlBase
 		response.setContentType("text/json");
 		response.setCharacterEncoding("utf-8");
 		_diagram.writeTo(_graphScope, new JsonWriter(new WriterAdapter(response.getWriter())));
-
-		ExternalScope graphScope = new ExternalScope(2, 0);
-		StringW buffer = new StringW();
-		_diagram.writeTo(graphScope, new JsonWriter(buffer));
 	}
 
 	void processUpdate(String patch) throws IOException {

@@ -29,4 +29,7 @@ public interface JSDiagramControlCommon {
 	 */
 	String SVG_ID_SUFFIX = "-svg";
 
+	/** Client side command to handle server side diagram update. */
+	String DIAGRAM_UPDATE_COMMAND = "handleDiagramUpdate";
+
 }

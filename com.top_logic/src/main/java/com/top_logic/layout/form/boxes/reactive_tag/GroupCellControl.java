@@ -33,7 +33,9 @@ import com.top_logic.layout.form.control.AbstractButtonRenderer;
 import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.ImageButtonRenderer;
 import com.top_logic.layout.form.control.PopupMenuButtonControl;
+import com.top_logic.layout.form.model.VisibilityModel;
 import com.top_logic.layout.toolbar.DefaultToolBar;
+import com.top_logic.mig.html.layout.VisibilityListener;
 import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -42,9 +44,12 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */
-public class GroupCellControl extends ConstantControl<HTMLFragment> implements CollapsedListener, GroupSettings {
+public class GroupCellControl extends ConstantControl<HTMLFragment>
+		implements CollapsedListener, VisibilityListener, GroupSettings {
 
 	private final Collapsible _collapsible;
+
+	private VisibilityModel _visibility;
 
 	private final ButtonControl _toggle;
 
@@ -86,6 +91,7 @@ public class GroupCellControl extends ConstantControl<HTMLFragment> implements C
 		_collapsible = Objects.requireNonNull(collapsible);
 		_settings = settings;
 		_toggle = createToggleButton();
+		_visibility = new VisibilityModel.Default();
 
 		if (!isCollapsible()) {
 			_toggle.getModel().setNotExecutable(I18NConstants.GROUP_NOT_COLLAPSIBLE);
@@ -149,6 +155,22 @@ public class GroupCellControl extends ConstantControl<HTMLFragment> implements C
 	@TemplateVariable("ondblclick")
 	public void writeOndDlClick(TagWriter out) throws IOException {
 		out.write("this.toggeling = false;");
+	}
+
+	/**
+	 * Sets a separate {@link VisibilityModel} that controls the visibility of this control.
+	 */
+	public void setVisibilityModel(VisibilityModel visibilityModel) {
+		_visibility = visibilityModel;
+	}
+
+	/**
+	 * Whether the group is currently visible.
+	 */
+	@Override
+	@TemplateVariable("visible")
+	public boolean isVisible() {
+		return _visibility.isVisible();
 	}
 
 	/**
@@ -267,11 +289,13 @@ public class GroupCellControl extends ConstantControl<HTMLFragment> implements C
 	protected void internalAttach() {
 		super.internalAttach();
 		_collapsible.addListener(Collapsible.COLLAPSED_PROPERTY, this);
+		_visibility.addListener(VisibilityModel.VISIBLE_PROPERTY, this);
 	}
 
 	@Override
 	protected void internalDetach() {
 		_collapsible.removeListener(Collapsible.COLLAPSED_PROPERTY, this);
+		_visibility.removeListener(VisibilityModel.VISIBLE_PROPERTY, this);
 		super.internalDetach();
 	}
 
@@ -286,6 +310,14 @@ public class GroupCellControl extends ConstantControl<HTMLFragment> implements C
 			if (isCollapsible()) {
 				requestRepaint();
 			}
+		}
+		return Bubble.BUBBLE;
+	}
+
+	@Override
+	public Bubble handleVisibilityChange(Object sender, Boolean oldVisibility, Boolean newVisibility) {
+		if (sender.equals(_visibility)) {
+			requestRepaint();
 		}
 		return Bubble.BUBBLE;
 	}

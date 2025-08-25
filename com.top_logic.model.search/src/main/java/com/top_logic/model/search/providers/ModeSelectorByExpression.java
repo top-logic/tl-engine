@@ -56,7 +56,9 @@ public class ModeSelectorByExpression<C extends ModeSelectorByExpression.Config<
 		 * </p>
 		 * 
 		 * <code>object -> [one of <code>"editable"</code>, <code>"disabled"</code>,
-		 * <code>"read-only"</code>, <code>"mandatory"</code>, <code>"hidden"</code>]</code>
+		 * <code>"read-only"</code>, <code>"mandatory"</code>, <code>"hidden"</code> | for
+		 * fieldsets: one of <code>"default"</code>, <code>"hidden"</code> | all other visibilities
+		 * are interpreted as <code>"default"</code>.]</code>
 		 * 
 		 * @see FormVisibility
 		 */

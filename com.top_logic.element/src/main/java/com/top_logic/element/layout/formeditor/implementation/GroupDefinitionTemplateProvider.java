@@ -13,23 +13,31 @@ import java.util.List;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.formeditor.definition.GroupDefinition;
 import com.top_logic.element.layout.formeditor.definition.GroupProperties;
 import com.top_logic.element.layout.formeditor.definition.TextDefinition;
+import com.top_logic.element.meta.AttributeUpdateContainer;
+import com.top_logic.element.meta.form.AttributeFormContext;
+import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.ImageProvider;
 import com.top_logic.layout.form.control.I18NConstants;
 import com.top_logic.layout.form.control.Icons;
+import com.top_logic.layout.form.model.VisibilityModel;
 import com.top_logic.layout.form.template.model.FieldSetBoxTemplate;
 import com.top_logic.layout.table.ConfigKey;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.model.form.ReactiveFormCSS;
 import com.top_logic.model.form.definition.Columns;
 import com.top_logic.model.form.implementation.AbstractFormContainerProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
+import com.top_logic.model.form.implementation.FormMode;
 
 /**
  * Creates a template for a {@link GroupDefinition}.
@@ -46,6 +54,10 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 	private static final String CSS_GROUP =
 		ReactiveFormCSS.RF_COLUMNS_LAYOUT + " " + ReactiveFormCSS.RF_INNER_TARGET;
 
+	private ModeSelector _modeSelector;
+
+	private VisibilityModel _visibilityModel;
+
 	/**
 	 * Creates a {@link GroupDefinitionTemplateProvider} from configuration.
 	 * 
@@ -57,6 +69,15 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 	@CalledByReflection
 	public GroupDefinitionTemplateProvider(InstantiationContext context, GroupDefinition config) {
 		super(context, config);
+
+		_modeSelector = instantiateModeSelector(context, getConfig());
+		_visibilityModel = new VisibilityModel.Default();
+	}
+
+	private ModeSelector instantiateModeSelector(InstantiationContext context, GroupDefinition config) {
+		PolymorphicConfiguration<ModeSelector> modeAnnotation = config.getModeSelector();
+
+		return context.getInstance(modeAnnotation);
 	}
 
 	@Override
@@ -75,10 +96,39 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 	}
 
 	@Override
+	protected HTMLTemplateFragment createDisplayTemplate(FormEditorContext context) {
+		HTMLTemplateFragment groupDefinitionTemplate = super.createDisplayTemplate(context);
+		createModeSelectorListener(context);
+
+		return groupDefinitionTemplate;
+	}
+
+	private void createModeSelectorListener(FormEditorContext context) {
+		if (_modeSelector == null || context.getFormMode() == FormMode.DESIGN) {
+			return;
+		}
+
+		AttributeFormContext formContext = (AttributeFormContext) context.getFormContext();
+		AttributeUpdateContainer attributeUpdateContainer = formContext.getAttributeUpdateContainer();
+
+		TLObject object = context.getModel();
+
+		if (object == null) {
+			object = formContext.getOverlay(context.getContentGroup());
+		}
+
+		TLFormObject editObject = formContext.editObject(object);
+
+		GroupModeObserver observer =
+			new GroupModeObserver(attributeUpdateContainer, _modeSelector, editObject, null, _visibilityModel);
+		observer.valueChanged(null, null, null);
+	}
+
+	@Override
 	public HTMLTemplateFragment decorateContainer(HTMLTemplateFragment content, FormEditorContext context) {
 		ConfigKey configKey = getConfigKey(context);
 
-		return wrapFieldSet(getConfig(), getID(), content, configKey);
+		return wrapFieldSet(getConfig(), getID(), content, configKey, _visibilityModel);
 	}
 
 	private ConfigKey getConfigKey(FormEditorContext context) {
@@ -96,9 +146,15 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 
 	static FieldSetBoxTemplate wrapFieldSet(GroupProperties<?> config, String id, HTMLTemplateFragment content,
 			ConfigKey personalizationKey) {
+		return wrapFieldSet(config, id, content, personalizationKey, null);
+	}
+
+	static FieldSetBoxTemplate wrapFieldSet(GroupProperties<?> config, String id, HTMLTemplateFragment content,
+			ConfigKey personalizationKey, VisibilityModel visibilityModel) {
 		return init(fieldsetBox(createHeader(config), content, personalizationKey), id, config)
 			.setCssClass(config.getCssClass())
-			.setInitiallyCollapsed(!config.getInitiallyOpened());
+			.setInitiallyCollapsed(!config.getInitiallyOpened())
+			.setVisibilityModel(visibilityModel);
 	}
 
 	private static HTMLTemplateFragment createHeader(GroupProperties<?> config) {
@@ -125,6 +181,7 @@ public class GroupDefinitionTemplateProvider extends AbstractFormContainerProvid
 		if (config.getWidth() != null) {
 			template.setWidth(config.getWidth());
 		}
+
 		return template;
 	}
 

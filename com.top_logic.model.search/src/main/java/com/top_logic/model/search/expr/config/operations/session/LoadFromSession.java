@@ -89,7 +89,8 @@ public class LoadFromSession extends GenericMethod {
 			return coll.stream().allMatch(LoadFromSession::isValid);
 		}
 		if (value instanceof Map<?, ?> coll) {
-			return coll.values().stream().allMatch(LoadFromSession::isValid);
+			return coll.values().stream().allMatch(LoadFromSession::isValid)
+				&& coll.keySet().stream().allMatch(LoadFromSession::isValid);
 		}
 		return true;
 	}

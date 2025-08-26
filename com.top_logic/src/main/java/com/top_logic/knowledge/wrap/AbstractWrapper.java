@@ -86,12 +86,7 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 
     @Override
 	protected String toStringValues() {
-		final String name = this.getName();
-		if (KBUtils.getObjectKeyString(this.tHandle()).equals(name)) {
-			return "";
-		} else {
-			return ", name: " + name;
-		}
+		return ", name: " + this.getName();
     }
     
     /**

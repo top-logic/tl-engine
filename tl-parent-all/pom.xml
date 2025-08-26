@@ -1367,7 +1367,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-release-plugin</artifactId>
-				<version>3.0.0-M4</version>
+				<version>3.0.1</version>
 				<configuration>
 					<tagBase>http://tl.bos.local/svn/top-logic/tags/TL/</tagBase>
 					<branchBase>http://tl.bos.local/svn/top-logic/branches/TL/</branchBase>

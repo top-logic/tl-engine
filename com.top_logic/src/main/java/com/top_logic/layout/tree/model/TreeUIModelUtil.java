@@ -26,6 +26,13 @@ import com.top_logic.util.Utils;
 public class TreeUIModelUtil {
 
 	/**
+	 * Maximal inspected levels in infinite trees when
+	 * {@link #setExpansionUserModel(Collection, TreeUIModel, Mapping)} or
+	 * {@link #getExpansionUserModel(TreeUIModel, Mapping)}.
+	 */
+	private static final int EXPANSION_MODEL_MAX_DEPTH = 8;
+
+	/**
 	 * Expands all ancestors of the given node in the given {@link TreeUIModel}.
 	 */
 	public static <N> void expandParents(TreeUIModel<N> model, N node) {
@@ -160,20 +167,25 @@ public class TreeUIModelUtil {
 	public static Collection<Object> getExpansionUserModel(TreeUIModel<?> aTreeUIModel,
 			Mapping<TLTreeNode<?>, Object> userObjectMapping) {
 		Set<Object> result = new HashSet<>();
-		TLTreeNode<?> root = (TLTreeNode<?>) aTreeUIModel.getRoot();
-		getExpansionUserModelRecursively(result, (TreeUIModel<TLTreeNode<?>>) aTreeUIModel, root, userObjectMapping);
+		TreeUIModel<TLTreeNode<?>> treeUIModel = (TreeUIModel<TLTreeNode<?>>) aTreeUIModel;
+		TLTreeNode<?> root = treeUIModel.getRoot();
+		int maxDepth = treeUIModel.isFinite() ? Integer.MAX_VALUE : EXPANSION_MODEL_MAX_DEPTH;
+		getExpansionUserModelRecursively(result, treeUIModel, root, userObjectMapping, maxDepth);
 		return result;
 	}
 
 	private static void getExpansionUserModelRecursively(Set<Object> aExpansionModel,
 			TreeUIModel<TLTreeNode<?>> aTreeUIModel, TLTreeNode<?> aNode,
-			Mapping<TLTreeNode<?>, Object> userObjectMapping) {
+			Mapping<TLTreeNode<?>, Object> userObjectMapping, int maxDepth) {
         if (aTreeUIModel.isExpanded(aNode)) {
 			aExpansionModel.add(userObjectMapping.map(aNode));
         }
+		if (maxDepth <= 0) {
+			return;
+		}
 		for (Iterator<?> it = aNode.getChildren().iterator(); it.hasNext();) {
 			getExpansionUserModelRecursively(aExpansionModel, aTreeUIModel, (TLTreeNode<?>) it.next(),
-				userObjectMapping);
+				userObjectMapping, maxDepth - 1);
         }
     }
 
@@ -204,19 +216,23 @@ public class TreeUIModelUtil {
 	@SuppressWarnings("unchecked")
 	public static void setExpansionUserModel(Collection<? extends Object> aExpansionModel, TreeUIModel<?> aTreeUIModel,
 			Mapping<TLTreeNode<?>, Object> userObjectMapping) {
-		TLTreeNode<?> root = (TLTreeNode<?>) aTreeUIModel.getRoot();
-		setExpansionUserModelRecursively(aExpansionModel, (TreeUIModel<TLTreeNode<?>>) aTreeUIModel, root,
-			userObjectMapping);
+		TreeUIModel<TLTreeNode<?>> treeUIModel = (TreeUIModel<TLTreeNode<?>>) aTreeUIModel;
+		TLTreeNode<?> root = treeUIModel.getRoot();
+		int maxDepth = treeUIModel.isFinite() ? Integer.MAX_VALUE : EXPANSION_MODEL_MAX_DEPTH;
+		setExpansionUserModelRecursively(aExpansionModel, treeUIModel, root, userObjectMapping, maxDepth);
     }
 
 	private static void setExpansionUserModelRecursively(Collection<? extends Object> expansionModel,
 			TreeUIModel<TLTreeNode<?>> aTreeUIModel,
 			TLTreeNode<?> node,
-			Mapping<TLTreeNode<?>, Object> userObjectMapping) {
+			Mapping<TLTreeNode<?>, Object> userObjectMapping, int maxDepth) {
 		aTreeUIModel.setExpanded(node, expansionModel.contains(userObjectMapping.map(node)));
+		if (maxDepth <= 0) {
+			return;
+		}
 		for (Iterator<?> it = node.getChildren().iterator(); it.hasNext();) {
 			setExpansionUserModelRecursively(expansionModel, aTreeUIModel, (TLTreeNode<?>) it.next(),
-				userObjectMapping);
+				userObjectMapping, maxDepth - 1);
         }
     }
 

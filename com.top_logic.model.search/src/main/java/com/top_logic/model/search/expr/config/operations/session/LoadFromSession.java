@@ -65,12 +65,14 @@ public class LoadFromSession extends GenericMethod {
 			return result;
 		} else {
 			TLSessionContext session = DefaultDisplayContext.getDisplayContext().getSessionContext();
-			Object result = session.get(StoreInSession.SCRIPT_STATE).get(key);
+			Map<String, Object> cacheMap = session.get(StoreInSession.SCRIPT_STATE);
+			Object result = cacheMap.get(key);
 			if (!isValid(result)) {
 				result = null;
 
-				// Drop value.
-				session.set(StoreInSession.SCRIPT_STATE, null);
+				// Drop value. Note: cacheMap is not the default value of the property (EMPTY_MAP),
+				// the value for "key" is not null.
+				cacheMap.remove(key);
 			}
 			return result;
 		}
@@ -81,7 +83,7 @@ public class LoadFromSession extends GenericMethod {
 	 */
 	private static boolean isValid(Object value) {
 		if (value instanceof TLObject obj) {
-			return ((TLObject) value).tValid();
+			return obj.tValid();
 		}
 		if (value instanceof Collection<?> coll) {
 			return coll.stream().allMatch(LoadFromSession::isValid);

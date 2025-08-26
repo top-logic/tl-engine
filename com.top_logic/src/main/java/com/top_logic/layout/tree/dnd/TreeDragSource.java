@@ -41,4 +41,9 @@ public interface TreeDragSource {
 	 */
 	boolean canDrag(TreeData data, Object node);
 
+	/**
+	 * The source model, from which objects have been dragged.
+	 */
+	Object getDragSourceModel(TreeData data);
+
 }

@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import org.bouncycastle.util.Strings;
 
@@ -33,6 +34,7 @@ import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.col.TupleFactory.Pair;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.listener.EventType.Bubble;
 import com.top_logic.basic.listener.PropertyListener;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
@@ -103,6 +105,8 @@ import com.top_logic.layout.scripting.action.SelectAction.SelectionChangeKind;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ui.button.LabeledButtonNaming;
+import com.top_logic.layout.scripting.recorder.ref.value.ListNaming;
+import com.top_logic.layout.scripting.recorder.ref.value.ListNaming.Name;
 import com.top_logic.layout.structure.DefaultLayoutData;
 import com.top_logic.layout.structure.DefaultPopupDialogModel;
 import com.top_logic.layout.structure.DialogClosedListener;
@@ -130,6 +134,7 @@ import com.top_logic.layout.table.display.IndexRange;
 import com.top_logic.layout.table.display.RowIndexAnchor;
 import com.top_logic.layout.table.display.ViewportState;
 import com.top_logic.layout.table.display.VisiblePaneRequest;
+import com.top_logic.layout.table.dnd.TableDragSource;
 import com.top_logic.layout.table.dnd.TableDropEvent;
 import com.top_logic.layout.table.dnd.TableDropEvent.Position;
 import com.top_logic.layout.table.dnd.TableDropTarget;
@@ -166,6 +171,11 @@ import com.top_logic.util.error.TopLogicException;
 public class TableControl extends AbstractControl implements TableModelListener,
 		SelectionListener, TableDataListener, PageCountListener, PageListener, PageSizeOptionsListener,
 		PageSizeListener, DragSourceSPI, ContextMenuOwner {
+
+	/**
+	 * Prefix added to the dragged row ID, when the dragged row was part of the selection.
+	 */
+	private static final String SELECTION_REF_PREFIX = "selection-";
 
 	/** Name of the technical select column */
 	public static final String SELECT_COLUMN_NAME = "_select";
@@ -457,17 +467,35 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 	@Override
 	public Object getDragSourceModel() {
-		return getModel();
+		return getTableData().getDragSource().getDragSourceModel(getTableData());
 	}
 
 	@Override
-	public Object getDragData(String ref) {
-		return getTableData().getDragSource().getDragObject(getTableData(), getRowIndex(ref));
+	public Collection<?> getDragData(String dataId) {
+		TableDragSource dragSource = getTableData().getDragSource();
+		if (dataId.startsWith(SELECTION_REF_PREFIX)) {
+			return dragSource.getDragSelection(getTableData(),
+				getRowIndex(dataId.substring(SELECTION_REF_PREFIX.length())));
+		} else {
+			return Collections.singletonList(dragSource.getDragObject(getTableData(), getRowIndex(dataId)));
+		}
 	}
 
 	@Override
-	public Maybe<? extends ModelName> getDragDataName(Object dragSource, String ref) {
-		return getTableData().getDragSource().getDragDataName(dragSource, getTableData(), getRowIndex(ref));
+	public Maybe<? extends ModelName> getDragDataName(Object dragSource, String dataId) {
+		Collection<?> dragData = getDragData(dataId);
+		List<ModelName> dragObjectNames = dragData.stream()
+			.map(dragObject -> getTableData().getDragSource().getDragDataName(dragSource, getTableData(), dragObject)
+				.getElse(null))
+			.collect(Collectors.toList());
+
+		if (dragObjectNames.contains(null)) {
+			return Maybe.none();
+		}
+
+		Name listName = TypedConfiguration.newConfigItem(ListNaming.Name.class);
+		listName.setValues(dragObjectNames);
+		return Maybe.<ModelName> some(listName);
 	}
 
 	final int getRowIndex(String rowId) {

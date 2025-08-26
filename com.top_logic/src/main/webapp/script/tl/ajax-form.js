@@ -534,18 +534,21 @@ services.form = {
 				return false;
 			}
 
+			var dataId;
 			var draggedRows = [];
-			
+
 			if(BAL.DOM.containsClass(rowElement, "tblSelected")) {
 				/*
 				 * When one of the selected rows is dragged, the whole selection is dragged.
 				 */
+				dataId = "selection-" + rowElement.id;
 				for (const selectedRow of controlElement.querySelectorAll('tr.tblSelected')) {
 					if(!draggedRows.includes(selectedRow)) {
 						draggedRows.push(selectedRow);
 					}
 				}
 			} else {
+				dataId = rowElement.id;
 				draggedRows.push(rowElement);
 			}
 
@@ -556,7 +559,7 @@ services.form = {
 				/**
 				 * For Chrome and IE the dataTransfer data is only available during the drop event handling. 
 				 */
-				data: "dnd://" + scope + "/" + controlElement.id + "/" + draggedRows.map(row => row.id).join(),
+				data: "dnd://" + scope + "/" + controlElement.id + "/" + dataId,
 				image: dragImageElement
 			};
 

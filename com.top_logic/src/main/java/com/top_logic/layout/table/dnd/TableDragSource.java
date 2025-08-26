@@ -5,7 +5,10 @@
  */
 package com.top_logic.layout.table.dnd;
 
+import java.util.Collection;
+
 import com.top_logic.basic.col.Maybe;
+import com.top_logic.layout.dnd.DropEvent;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.table.TableData;
@@ -45,8 +48,32 @@ public interface TableDragSource {
 	 * @param row
 	 *        The row from which the drag started.
 	 * @return The drag object to be announced in the drop event.
+	 * 
+	 * @see DropEvent#getData()
 	 */
 	Object getDragObject(TableData tableData, int row);
+
+	/**
+	 * Retrieves the current selection as drag data.
+	 * 
+	 * <p>
+	 * When a selected row is dragged, this means that the whole selection should be dragged.
+	 * </p>
+	 * 
+	 * @param tableData
+	 *        The {@link TableData} from which the drag started.
+	 * @param row
+	 *        The row from which the drag started.
+	 * @return The drag objects to be announced in the drop event.
+	 * 
+	 * @see DropEvent#getData()
+	 */
+	Collection<?> getDragSelection(TableData tableData, int row);
+
+	/**
+	 * The source model, from which objects have been dragged.
+	 */
+	Object getDragSourceModel(TableData tableData);
 
 	/**
 	 * Tries to create a {@link ModelName} for the object with the given client-side identifier.
@@ -55,13 +82,12 @@ public interface TableDragSource {
 	 *        The source model.
 	 * @param tableData
 	 *        The {@link TableData} from which the drag started.
-	 * @param row
-	 *        The row from which the drag started.
-	 * 
+	 * @param dragObject
+	 *        A single object being dragged.
 	 * @return {@link ModelName} for the drag data or empty if no such name could be created.
 	 */
-	default Maybe<? extends ModelName> getDragDataName(Object dragSource, TableData tableData, int row) {
-		return ModelResolver.buildModelNameIfAvailable(dragSource, getDragObject(tableData, row));
+	default Maybe<? extends ModelName> getDragDataName(Object dragSource, TableData tableData, Object dragObject) {
+		return ModelResolver.buildModelNameIfAvailable(dragSource, dragObject);
 	}
 
 }

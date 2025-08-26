@@ -572,7 +572,7 @@ public class TLTreeModelUtil {
 	 * 
 	 * @see #getInnerBusinessObject(Object)
 	 */
-	public static Collection<Object> getInnerBusinessObjects(Collection<Object> objects) {
+	public static Collection<Object> getInnerBusinessObjects(Collection<?> objects) {
 		Collection<Object> businessObjects = new ArrayList<>();
 
 		for (Object object : objects) {

@@ -108,7 +108,7 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 
 	private final boolean _inTransaction;
 
-	LayoutComponent _contextComponent;
+	private LayoutComponent _contextComponent;
 
 	/**
 	 * Creates a {@link TableDropTargetByExpression} from configuration.
@@ -132,6 +132,13 @@ public class TableDropTargetByExpression extends BusinessObjectTableDrop {
 		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, component -> {
 			_contextComponent = component;
 		});
+	}
+
+	/**
+	 * The component, this drop target was configured for.
+	 */
+	protected LayoutComponent getContextComponent() {
+		return _contextComponent;
 	}
 
 	@Override

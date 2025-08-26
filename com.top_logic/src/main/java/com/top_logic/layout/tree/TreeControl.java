@@ -653,8 +653,9 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 	}
 
 	@Override
-	public Object getDragData(String ref) {
-		return getNodeById(ref);
+	public Collection<Object> getDragData(String dataId) {
+		String[] referenceIDs = dataId.split(",");
+		return Arrays.stream(referenceIDs).map(ref -> getNodeById(ref)).toList();
 	}
 
 	@Override
@@ -664,7 +665,7 @@ public class TreeControl extends AbstractControlBase implements TreeModelListene
 
 	@Override
 	public Object getDragSourceModel() {
-		return getData();
+		return getData().getDragSource().getDragSourceModel(getData());
 	}
 
 	Object getLastClickedNode() {

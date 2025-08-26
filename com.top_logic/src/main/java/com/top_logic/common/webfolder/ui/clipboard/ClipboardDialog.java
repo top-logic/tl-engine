@@ -36,6 +36,7 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.basic.control.IconControl;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.component.ComponentUtil;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormHandler;
@@ -135,12 +136,13 @@ public class ClipboardDialog extends AbstractFormPageDialog {
 		selection.addSelectionListener(new SelectionListener() {
 
 			@Override
-			public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
-				if (formerlySelectedObjects.isEmpty() == selectedObjects.isEmpty()) {
+			public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
+				boolean cleared = event.getNewSelection().isEmpty();
+				if (event.getOldSelection().isEmpty() == cleared) {
 					// No change.
 					return;
 				}
-				ClipboardDialog.this.setNoRowSelected(selectedObjects.isEmpty());
+				ClipboardDialog.this.setNoRowSelected(cleared);
 			}
 		});
 		return selection;

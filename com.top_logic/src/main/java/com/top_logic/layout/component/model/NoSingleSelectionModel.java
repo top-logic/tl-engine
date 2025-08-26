@@ -14,7 +14,7 @@ import com.top_logic.layout.SingleSelectionModel;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class NoSingleSelectionModel extends NoSelectionModel implements SingleSelectionModel {
+public class NoSingleSelectionModel extends NoSelectionModel implements SingleSelectionModel<Object> {
 
 	/** Singleton {@link NoSingleSelectionModel} instance. */
 	public static final NoSingleSelectionModel SINGLE_SELECTION_INSTANCE = new NoSingleSelectionModel();
@@ -28,7 +28,7 @@ public class NoSingleSelectionModel extends NoSelectionModel implements SingleSe
 	}
 
 	@Override
-	public boolean addSingleSelectionListener(SingleSelectionListener listener) {
+	public boolean addSingleSelectionListener(SingleSelectionListener<Object> listener) {
 		// Immutable, no updates, no listener notification required.
 		return true;
 	}
@@ -39,7 +39,7 @@ public class NoSingleSelectionModel extends NoSelectionModel implements SingleSe
 	}
 
 	@Override
-	public boolean removeSingleSelectionListener(SingleSelectionListener listener) {
+	public boolean removeSingleSelectionListener(SingleSelectionListener<Object> listener) {
 		// Immutable, no updates, no listener notification required.
 		return true;
 	}

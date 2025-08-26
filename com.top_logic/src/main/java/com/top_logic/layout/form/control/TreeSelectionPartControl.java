@@ -5,135 +5,82 @@
  */
 package com.top_logic.layout.form.control;
 
-import java.util.Iterator;
+import java.io.IOException;
 
-import com.top_logic.basic.col.InlineList;
-import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.VetoException;
-import com.top_logic.layout.basic.Command;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.scripting.action.SelectAction.SelectionChangeKind;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
-import com.top_logic.layout.table.control.SelectionVetoListener;
-import com.top_logic.layout.table.control.TableControl.SelectionType;
-import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.TreeSelectionModel;
-import com.top_logic.mig.html.TreeSelectionModel.StateChanged;
-import com.top_logic.mig.html.TreeSelectionModel.TreeSelectionListener;
-import com.top_logic.mig.html.TriState;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.mig.html.TreeSelectionModel.NodeSelectionState;
 
 /**
- * {@link TriStateCheckboxControl} displaying the selection state of on tree node.
- * 
- * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+ * {@link SelectionPartControl} that displays special states of a {@link TreeSelectionModel}.
  */
-public class TreeSelectionPartControl<N> extends TriStateCheckboxControl implements TreeSelectionListener<N> {
-
-	private TreeSelectionModel<N> _selectionModel;
-
-	private N _node;
-
-	private Object _vetoListeners = InlineList.newInlineList();
+public class TreeSelectionPartControl extends SelectionPartControl {
 
 	/**
 	 * Creates a {@link TreeSelectionPartControl}.
 	 */
-	public TreeSelectionPartControl(TreeSelectionModel<N> selectionModel, N part) {
-		_selectionModel = selectionModel;
-		_node = part;
+	public TreeSelectionPartControl(TreeSelectionModel<?> treeSelection, Object part) {
+		super(treeSelection, part);
 	}
 
 	@Override
-	public TreeSelectionModel<N> getModel() {
-		return _selectionModel;
-	}
-
-	/**
-	 * Registers the given {@link SelectionVetoListener}.
-	 * 
-	 * @param listener
-	 *        Listener to check, before selection changes.
-	 */
-	public void addSelectionVetoListener(SelectionVetoListener listener) {
-		_vetoListeners = InlineList.add(SelectionVetoListener.class, _vetoListeners, listener);
-	}
-
-	/**
-	 * Removes the given {@link SelectionVetoListener}.
-	 * 
-	 * @param listener
-	 *        Listener to remove.
-	 */
-	public void removeSelectionVetoListener(SelectionVetoListener listener) {
-		_vetoListeners = InlineList.remove(_vetoListeners, listener);
+	protected String getTypeCssClass() {
+		return "tl-radio-checkbox-container tl-treeSelect";
 	}
 
 	@Override
-	protected void internalAttach() {
-		super.internalAttach();
-		getModel().addTreeSelectionListener(this);
+	protected void writeInputCssClassesContent(TagWriter out) throws IOException {
+		super.writeInputCssClassesContent(out);
+
+		NodeSelectionState state = selectionState();
+		out.write(switch (state.descendants()) {
+			case ALL -> "tl-treeSelect__allChildren";
+			case SOME -> "tl-treeSelect__someChildren";
+			case NONE -> "tl-treeSelect__noChildren";
+		});
 	}
 
 	@Override
-	protected void internalDetach() {
-		getModel().removeTreeSelectionListener(this);
-		super.internalDetach();
-	}
-
-	@Override
-	protected State currentState() {
-		TriState selectionState = _selectionModel.getState(_node);
-		switch (selectionState) {
-			case INDETERMINATE:
-				return State.INDETERMINATE;
-			case NOT_SELECTED:
-				return State.UNCHECKED;
-			case SELECTED:
-				return State.CHECKED;
-		}
-		throw new IllegalArgumentException("Unexpected value: " + selectionState);
-	}
-
-	@Override
-	protected void updateSelection(boolean select) {
-		if (InlineList.isEmpty(_vetoListeners)) {
-			internalUpdateSelection(select);
-		} else {
-			try {
-				for (Iterator<SelectionVetoListener> it =
-					InlineList.iterator(SelectionVetoListener.class, _vetoListeners); it.hasNext();) {
-					it.next().checkVeto(getModel(), _node, SelectionType.TOGGLE_SINGLE);
-				}
-				internalUpdateSelection(select);
-			} catch (VetoException ex) {
-				ex.setContinuationCommand(new Command() {
-
-					@Override
-					public HandlerResult executeCommand(DisplayContext context) {
-						updateSelection(select);
-						return HandlerResult.DEFAULT_RESULT;
-					}
-				});
-				ex.process(getWindowScope());
+	public void updateSelection(boolean selected) {
+		boolean doSelect;
+		SelectionChangeKind kind;
+		NodeSelectionState state = selectionState();
+		if (state.descendants().isHomogeneous()) {
+			if (state == NodeSelectionState.ALL_DESCENDANTS) {
+				// Deselect all.
+				selectionModel().setSelectedSubtree(getSelectionPart(), doSelect = false);
+				kind = SelectionChangeKind.SUBTREE;
+			} else if (state == NodeSelectionState.NONE) {
+				// Only select node itself
+				selectionModel().setSelected(getSelectionPart(), doSelect = true);
+				kind = SelectionChangeKind.INCREMENTAL;
+			} else if (state == NodeSelectionState.FULL) {
+				// Only select node itself
+				selectionModel().setSelected(getSelectionPart(), doSelect = false);
+				kind = SelectionChangeKind.INCREMENTAL;
+			} else {
+				// Select all.
+				selectionModel().setSelectedSubtree(getSelectionPart(), doSelect = true);
+				kind = SelectionChangeKind.SUBTREE;
 			}
+		} else {
+			selectionModel().setSelected(getSelectionPart(), doSelect = !state.isSelected());
+			kind = SelectionChangeKind.INCREMENTAL;
 		}
-	}
 
-	private void internalUpdateSelection(boolean select) {
-		SelectionModel selectionModel = getModel();
 		if (ScriptingRecorder.isRecordingActive()) {
-			ScriptingRecorder.recordSelection(selectionModel, _node, select, SelectionChangeKind.INCREMENTAL);
-		}
-
-		selectionModel.setSelected(_node, select);
-	}
-
-	@Override
-	public void handleStateChanged(StateChanged<N> event) {
-		TriState formerState = event.formerState(_node);
-		TriState state = event.state(_node);
-		if (state != formerState) {
-			invalidate();
+			ScriptingRecorder.recordSelection(getSelectionModel(), getSelectionPart(), doSelect, kind);
 		}
 	}
+
+	private NodeSelectionState selectionState() {
+		return selectionModel().getNodeSelectionState(getSelectionPart());
+	}
+
+	private TreeSelectionModel selectionModel() {
+		return (TreeSelectionModel) getSelectionModel();
+	}
+
 }

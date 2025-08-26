@@ -35,6 +35,7 @@ import com.top_logic.layout.basic.contextmenu.config.MetaContextMenuCommandsProv
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.tree.model.TLTreeNode;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandHandler;
 
@@ -140,11 +141,11 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 		}
 
 		@Override
-		public Menu getContextMenu(Object obj) {
-			Object model = mapContext(obj);
-			List<CommandModel> buttons = createButtons(model, createArguments(model));
+		public Menu getContextMenu(Object directTarget, Object model) {
+			Object mappedModel = mapContext(model);
+			List<CommandModel> buttons = createButtons(directTarget, mappedModel, createArguments(mappedModel));
 			Menu result = ContextMenuUtil.toContextMenu(buttons);
-			String title = getConfig().getTitleProvider().getLabel(model);
+			String title = getConfig().getTitleProvider().getLabel(mappedModel);
 			if (!StringServices.isEmpty(title)) {
 				result.setTitle(Fragments.text(title));
 			}
@@ -193,14 +194,20 @@ public class TypeBasedContextMenuFactory<C extends TypeBasedContextMenuFactory.C
 
 		/**
 		 * Creates all context menu entries.
-		 *
+		 * 
+		 * @param directTarget
+		 *        The raw object, on which the context menu was invoked. In case of a tree, this may
+		 *        be the clicked {@link TLTreeNode}.
 		 * @param model
-		 *        The model object for which the context menu is opened.
+		 *        The model object for which the context menu is opened. In case of a tree, this is
+		 *        the {@link TLTreeNode#getBusinessObject() business object} of the tree node (or
+		 *        even all currently selected objects, if the context menu was opened on a
+		 *        selection).
 		 * @param arguments
 		 *        The arguments to invoke the commands with.
 		 * @return The (unordered) list of context menu entries.
 		 */
-		protected List<CommandModel> createButtons(Object model, Map<String, Object> arguments) {
+		protected List<CommandModel> createButtons(Object directTarget, Object model, Map<String, Object> arguments) {
 			return createProviderButtons(model, arguments);
 		}
 

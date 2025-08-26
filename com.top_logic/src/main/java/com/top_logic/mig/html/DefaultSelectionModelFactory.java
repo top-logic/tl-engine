@@ -5,8 +5,6 @@
  */
 package com.top_logic.mig.html;
 
-import java.util.function.Supplier;
-
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.config.ConfigurationException;
@@ -16,11 +14,15 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.layout.table.tree.TreeTableDataOwner;
+import com.top_logic.layout.table.TableDataOwner;
+import com.top_logic.layout.table.tree.TreeTableData;
+import com.top_logic.layout.tree.TreeModelOwner;
 import com.top_logic.layout.tree.model.AbstractTreeTableModel;
-import com.top_logic.layout.tree.model.TLTreeModel;
+import com.top_logic.tool.boundsec.CommandHandler;
 
 /**
  * {@link SelectionModelFactory} that creates "default" {@link SelectionModel}s.
@@ -40,11 +42,16 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 		/** Name of the {@link #isMultiple()} property. */
 		String MULTIPLE_PROPERTY_NAME = "multiple";
 
-		/** Name of the {@link #isMultiple()} property. */
-		String TREE_SELECTION_PROPERTY_NAME = "tree-selection";
+		/** Name of the {@link #isSubtreeSelection()} property. */
+		String SUBTREE_SELECTION_PROPERTY_NAME = "subtree-selection";
 
 		/** Name of the {@link #getFilter()} property. */
 		String FILTER_PROPERTY_NAME = "filter";
+
+		/**
+		 * @see #withTreeSemantics()
+		 */
+		String TREE_SEMANTICS = "treeSemantics";
 
 		/**
 		 * Whether the created {@link SelectionModel} must support multiple selection.
@@ -58,28 +65,46 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 		void setMultiple(boolean multiple);
 
 		/**
-		 * Whether the created {@link SelectionModel} supports tree selection, i.e. when a node in a
-		 * tree is selected, that means that all children are selected.
+		 * Whether to create a selection model that provides enhanced information and operations for
+		 * tree structures.
+		 * 
+		 * <p>
+		 * A selection model with tree semantics must only be used, if the underlying model is a
+		 * tree model.
+		 * </p>
+		 * 
+		 * <p>
+		 * This option is only relevant, for a multi-selection model.
+		 * </p>
 		 */
-		@Name(TREE_SELECTION_PROPERTY_NAME)
-		boolean isTreeSelection();
+		@Name(TREE_SEMANTICS)
+		@DynamicMode(fun = CommandHandler.ConfirmConfig.VisibleIf.class, args = @Ref(MULTIPLE_PROPERTY_NAME))
+		boolean withTreeSemantics();
+		
+		/**
+		 * Whether the selection represents whole subtrees. When a node is selected, that means that
+		 * all of its children are (implicitly) selected.
+		 */
+		@Name(SUBTREE_SELECTION_PROPERTY_NAME)
+		@DynamicMode(fun = CommandHandler.ConfirmConfig.VisibleIf.class, args = @Ref(TREE_SEMANTICS))
+		boolean isSubtreeSelection();
 
 		/**
-		 * Setter for {@link #isTreeSelection()}.
+		 * Setter for {@link #isSubtreeSelection()}.
 		 */
-		void setTreeSelection(boolean value);
+		void setSubtreeSelection(boolean value);
 
 		/**
 		 * Returns the selection filter for the created {@link SelectionModel}.
 		 */
 		@InstanceFormat
 		@Name(FILTER_PROPERTY_NAME)
-		Filter getFilter();
+		Filter<?> getFilter();
 
 		/**
 		 * Setter for {@link #getFilter()}.
 		 */
-		void setFilter(Filter filter);
+		void setFilter(Filter<?> filter);
 	}
 
 	/**
@@ -144,34 +169,41 @@ public class DefaultSelectionModelFactory extends SelectionModelFactory implemen
 	}
 
 	@Override
-	public SelectionModel newSelectionModel(SelectionModelOwner owner) {
+	public SelectionModel<?> newSelectionModel(SelectionModelOwner owner) {
 		Filter<Object> selectionFilter = getSelectionFilter();
 		if (_config.isMultiple()) {
-			if (_config.isTreeSelection()) {
-				TreeTableDataOwner treeOwner = (TreeTableDataOwner) owner;
-				Supplier<TLTreeModel<?>> treeSupplier = () -> {
-					/* Table data may change during lifetime of selection model , e.g. when the
-					 * owner is a GridComponent. */
-					return treeOwner.getTableData().getTree();
-				};
-				TreeSelectionModel<?> selectionModel = new LazyTreeSelectionModel(owner,
-					AbstractTreeTableModel.AbstractTreeTableNode.class, treeSupplier);
-				selectionModel.setSelectionFilter(selectionFilter);
-				return selectionModel;
-					
+			if (_config.withTreeSemantics()) {
+				TreeModelOwner treeModelOwner;
+				if (owner instanceof TreeModelOwner treeOwner) {
+					treeModelOwner = treeOwner;
+				} else {
+					// Try to extract from table data.
+					TableDataOwner tableOwner = (TableDataOwner) owner;
+					treeModelOwner = () -> ((TreeTableData) tableOwner.getTableData()).getTree();
+				}
+
+				if (_config.isSubtreeSelection()) {
+					SubtreeSelectionModel<?> selectionModel = new LazyTreeSelectionModel(owner,
+						AbstractTreeTableModel.AbstractTreeTableNode.class, treeModelOwner);
+					selectionModel.setSelectionFilter(selectionFilter);
+					return selectionModel;
+				} else {
+					return new DefaultTreeMultiSelectionModel<>(selectionFilter, owner, treeModelOwner);
+				}
 			} else {
-				return new DefaultMultiSelectionModel(selectionFilter, owner);
+				return new DefaultMultiSelectionModel<>(selectionFilter, owner);
 			}
 		} else {
-			return new DefaultSingleSelectionModel(selectionFilter, owner);
+			return new DefaultSingleSelectionModel<>(selectionFilter, owner);
 		}
 	}
 
 	/**
 	 * Optional filter to restrict selection events.
 	 */
+	@SuppressWarnings("unchecked")
 	protected Filter<Object> getSelectionFilter() {
-		return _config.getFilter();
+		return (Filter<Object>) _config.getFilter();
 	}
 
 	@Override

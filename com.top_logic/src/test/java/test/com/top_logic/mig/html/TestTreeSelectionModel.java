@@ -17,13 +17,13 @@ import test.com.top_logic.basic.ReflectionUtils;
 
 import com.top_logic.layout.tree.model.DefaultMutableTLTreeModel;
 import com.top_logic.layout.tree.model.DefaultMutableTLTreeNode;
-import com.top_logic.mig.html.DefaultTreeSelectionModel;
+import com.top_logic.mig.html.DefaultSubtreeSelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
-import com.top_logic.mig.html.TreeSelectionModel;
+import com.top_logic.mig.html.SubtreeSelectionModel;
 import com.top_logic.mig.html.TriState;
 
 /**
- * Test for {@link TreeSelectionModel}.
+ * Test for {@link SubtreeSelectionModel}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -43,7 +43,7 @@ public class TestTreeSelectionModel extends BasicTestCase {
 	private DefaultMutableTLTreeNode _child_2_1_2;
 	private DefaultMutableTLTreeNode _child_2_2_2;
 
-	private TreeSelectionModel<DefaultMutableTLTreeNode> _selectionModel;
+	private SubtreeSelectionModel<DefaultMutableTLTreeNode> _selectionModel;
 
 	private Map<?, TriState> _states;
 
@@ -68,7 +68,7 @@ public class TestTreeSelectionModel extends BasicTestCase {
 		_child_2_2_2 = _child_2_2.createChild("2.2.2");
 
 		_selectionModel =
-			new DefaultTreeSelectionModel<>(SelectionModelOwner.NO_OWNER, DefaultMutableTLTreeNode.class, model);
+			new DefaultSubtreeSelectionModel<>(SelectionModelOwner.NO_OWNER, DefaultMutableTLTreeNode.class, model);
 
 		@SuppressWarnings("unchecked")
 		Map<?, TriState> statesFieldMap = (Map<?, TriState>) ReflectionUtils.getValue(_selectionModel, "_states");

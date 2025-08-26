@@ -839,6 +839,12 @@
 	<icon name="ICONS_COLLAPSE_ALL_DISABLED"
 		expr="%ICONS_COLLAPSE_ALL%"
 	/>
+	<icon name="ICONS_SELECT_ALL"
+		value="css:fa-solid fa-check-double"
+	/>
+	<icon name="ICONS_DESELECT_ALL"
+		value="css:fa-regular fa-square"
+	/>
 	<icon name="ICONS_DIALOG_QUESTION"
 		value="css:fa-solid fa-circle-info"
 	/>

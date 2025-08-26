@@ -50,6 +50,7 @@ import com.top_logic.layout.basic.XMLTag;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.control.TableHeaderSelectionControl;
+import com.top_logic.layout.form.control.TreeHeaderSelectionControl;
 import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.layout.layoutRenderer.LayoutControlRenderer;
 import com.top_logic.layout.provider.MetaResourceProvider;
@@ -84,6 +85,7 @@ import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.mig.html.SelectionModel;
+import com.top_logic.mig.html.TreeSelectionModel;
 import com.top_logic.util.Resources;
 import com.top_logic.util.css.CssUtil;
 
@@ -2662,9 +2664,12 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 				return new ControlProvider() {
 					@Override
 					public Control createControl(Object model, String style) {
-						Set<Object> allRows = CollectionUtil.toSet(state.getModel().getDisplayedRows());
-				
-						return new TableHeaderSelectionControl(selectionModel, allRows);
+						if (selectionModel instanceof TreeSelectionModel<?> treeSelection) {
+							return new TreeHeaderSelectionControl(selectionModel);
+						} else {
+							Set<Object> allRows = CollectionUtil.toSet(state.getModel().getDisplayedRows());
+							return new TableHeaderSelectionControl(selectionModel, allRows);
+						}
 					}
 				};
 			}

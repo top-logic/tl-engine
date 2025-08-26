@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <config:template xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<properties extends="com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.mig.html.DefaultSelectionModelFactory$UIOptions, com.top_logic.layout.structure.ToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.layout.component.InAppSelectable$InAppSelectableConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.mig.html.layout.WithGotoConfiguration, com.top_logic.mig.html.layout.WithChannelConfigs">
+	<properties extends="com.top_logic.layout.tree.component.WithTreeModelBuilder, com.top_logic.layout.editor.config.ColumnsTemplateParameters, com.top_logic.mig.html.DefaultSelectionModelFactory$UIOptions, com.top_logic.layout.structure.ToolbarOptions, com.top_logic.layout.editor.config.ButtonTemplateParameters, com.top_logic.layout.editor.config.DialogTemplateParameters, com.top_logic.layout.tree.model.TreeViewConfig, com.top_logic.layout.component.InAppSelectable$InAppSelectableConfig, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster, com.top_logic.mig.html.layout.WithGotoConfiguration, com.top_logic.mig.html.layout.WithChannelConfigs">
 		<annotations>
 			<display-order>
 				<value>
@@ -52,13 +52,6 @@
 			instance-type="com.top_logic.layout.channel.linking.impl.ChannelLinking"
 			type="com.top_logic.layout.ModelSpec"
 		/>
-		<property name="modelBuilder"
-			instance-type="com.top_logic.layout.tree.component.TreeModelBuilder"
-			type="PolymorphicConfiguration"
-		>
-			<mandatory/>
-			<options fun="com.top_logic.layout.form.values.edit.AllInAppImplementations"/>
-		</property>
 		<property name="adjustSelectionWhenCollapsing"
 			default="false"
 			type="boolean"
@@ -131,6 +124,7 @@
 		<selectionModelFactory class="com.top_logic.mig.html.TreeSelectionModelFactory"
 			filter="${selectionFilter}"
 			multiple="${multiSelection}"
+			treeSemantics="${tree-semantics-supported}"
 		/>
 		<treeBuilder class="com.top_logic.layout.table.tree.TreeBuilderAdaptor"
 			treeModelBuilder="${modelBuilder}"

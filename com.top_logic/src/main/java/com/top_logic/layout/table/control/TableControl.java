@@ -79,6 +79,8 @@ import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
 import com.top_logic.layout.basic.contextmenu.control.ContextMenuOpener;
 import com.top_logic.layout.basic.contextmenu.control.ContextMenuOwner;
 import com.top_logic.layout.basic.contextmenu.menu.Menu;
+import com.top_logic.layout.component.model.MultiSelectionEvent;
+import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.dnd.DnD;
 import com.top_logic.layout.dnd.DndData;
@@ -371,7 +373,8 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		pagingModel.addListener(PagingModel.PAGE_SIZE_OPTIONS_EVENT, this);
 
 		// Initialize.
-		notifySelectionChanged(selectionModel, Collections.emptySet(), selectionModel.getSelection());
+		notifySelectionChanged(selectionModel,
+			new MultiSelectionEvent(selectionModel, Collections.emptySet(), selectionModel.getSelection()));
 	}
 	
 	@Override
@@ -462,7 +465,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		Object directTarget = getTableData().getTableModel().getRowObject(rowIndex);
 		Set<?> selection = getTableData().getSelectionModel().getSelection();
 		Object extendedTarget = ContextMenuProvider.getContextMenuTarget(directTarget, selection);
-		return getContextMenuProvider().getContextMenu(extendedTarget);
+		return getContextMenuProvider().getContextMenu(directTarget, extendedTarget);
 	}
 
 	@Override
@@ -881,8 +884,12 @@ public class TableControl extends AbstractControl implements TableModelListener,
 			}
 		}
 		recordAbsoluteSelection(selection);
-		((AbstractMultiSelectionModel) selectionModel).setSelection(selection,
-			getViewModel().getRowObject(newSelectedRow));
+
+		if (selectionModel instanceof AbstractMultiSelectionModel multiSelectionModel) {
+			multiSelectionModel.setSelection(selection, getViewModel().getRowObject(newSelectedRow));
+		} else {
+			selectionModel.setSelection(selection);
+		}
 	}
 
 	private void setSelected(Set<Object> selection, int row, boolean doSelect) {
@@ -1159,9 +1166,8 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	}
 	
 	@Override
-	public void notifySelectionChanged(SelectionModel model, Set<?> formerlySelectedObjects, Set<?> selectedObjects) {
-		updateRows(formerlySelectedObjects);
-		updateRows(selectedObjects);
+	public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
+		updateRows(event.getUpdatedObjects());
 
 		if (!model.getSelection().isEmpty()) {
 			setVisibleRange(model);
@@ -1188,18 +1194,19 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		});
 	}
 
-	private void setVisibleRange(Object selectionModel) {
+	private void setVisibleRange(SelectionModel selectionModel) {
 		TableViewModel viewModel = getViewModel();
 		int row;
-		if (selectionModel instanceof DefaultSingleSelectionModel) {
-			row = viewModel.getRowOfObject(((DefaultSingleSelectionModel) selectionModel).getSingleSelection());
-		} else {
-			AbstractMultiSelectionModel multiselectionModel = (AbstractMultiSelectionModel) selectionModel;
-			Object selected = multiselectionModel.getLastSelected();
+		if (selectionModel instanceof DefaultSingleSelectionModel singleSelection) {
+			row = viewModel.getRowOfObject(singleSelection.getSingleSelection());
+		} else if (selectionModel instanceof AbstractMultiSelectionModel<?> multiSelection) {
+			Object selected = multiSelection.getLastSelected();
 			if (selected == null) {
-				selected = CollectionUtilShared.getFirst(multiselectionModel.getSelection());
+				selected = CollectionUtilShared.getFirst(multiSelection.getSelection());
 			}
 			row = viewModel.getRowOfObject(selected);
+		} else {
+			row = viewModel.getRowOfObject(CollectionUtilShared.getFirst(selectionModel.getSelection()));
 		}
 		if (row != TableViewModel.NO_ROW) {
 			getVisiblePaneRequest().setPersistentRowRange(IndexRange.singleIndex(row));

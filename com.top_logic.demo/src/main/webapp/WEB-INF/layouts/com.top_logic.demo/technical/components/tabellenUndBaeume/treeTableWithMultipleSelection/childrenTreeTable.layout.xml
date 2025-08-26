@@ -6,6 +6,8 @@
 >
 	<arguments
 		defaultColumns="name"
+		defaultSelection="false"
+		expandSelected="false"
 		multiSelection="true"
 		type="DemoTypes:DemoTypes.All"
 	>

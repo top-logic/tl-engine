@@ -1990,26 +1990,44 @@ input[type="checkbox"] {
 	appearance: none;
 }
 
+input[type="checkbox"]::after,
 input[type="checkbox"]::before {
 	font-family: 'Font Awesome 6 Free';
+}
+ 
+input[type="checkbox"]::after {
+	margin-left: calc(-1em + 2px);
+}
+
+input[type="checkbox"]::before {
 	content: "\f0c8";
 }
 
-input[type="checkbox"]:checked::before {
-	content: "\f14a";
-	font-weight: 900;
-}
-
+input[type="checkbox"].tl-treeSelect__allChildren::before,
+input[type="checkbox"].tl-treeSelect__someChildren::before,
 input[type="checkbox"]:indeterminate::before {
 	font-weight: 900;
 	color: var(--text-disabled);
 }
 
+input[type="checkbox"].tl-treeSelect__allChildren::after, 
+input[type="checkbox"].tl-treeSelect__someChildren::after, 
 input[type="checkbox"]:indeterminate::after { 
-	font-family: 'Font Awesome 6 Free';
 	content: "\f0c8";
-	margin-left: calc(-1em + 2px);
 }
+
+input[type="checkbox"]:checked::after {
+	content: "\f14a";
+	font-weight: 900;
+}
+
+input[type="checkbox"]:checked.tl-treeSelect__noChildren::after {
+	font-weight: normal;
+}
+
+input[type="checkbox"]:checked.tl-treeSelect__someChildren::after {
+	font-weight: normal;
+} 
 
 /*
 ****										****

@@ -73,6 +73,7 @@ public abstract class ContextMenuControl<T> extends ConstantControl<T> implement
 
 	@Override
 	public Menu createContextMenu(String contextInfo) {
-		return _contextMenu.getContextMenu(getModel());
+		T model = getModel();
+		return _contextMenu.getContextMenu(model, model);
 	}
 }

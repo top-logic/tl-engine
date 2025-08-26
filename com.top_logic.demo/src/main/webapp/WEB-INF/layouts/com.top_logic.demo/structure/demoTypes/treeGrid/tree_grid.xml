@@ -28,6 +28,9 @@
 		<param name="multiSelection"
 			value="true"
 		/>
+		<param name="treeSemantics"
+			value="true"
+		/>
 	</params>
 
 	<layout name="${namePrefix}treeGridLayout"
@@ -59,7 +62,10 @@
 				showMinimize="false"
 				titleKey="${titleKey}"
 			>
-				<selectionModelFactory multiple="${multiSelection}"/>
+				<selectionModelFactory
+					multiple="${multiSelection}"
+					treeSemantics="${treeSemantics}"
+				/>
 				<buttons>
 					<button id="exportExcelGrid"
 						class="com.top_logic.layout.table.export.StreamingExcelExportHandler"

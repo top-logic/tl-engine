@@ -28,6 +28,9 @@
 		<param name="multiSelection"
 			value="true"
 		/>
+		<param name="treeSemantics"
+			value="true"
+		/>
 	</params>
 
 	<layout name="${namePrefix}treeGridLayout"
@@ -61,7 +64,7 @@
 			>
 				<selectionModelFactory
 					multiple="${multiSelection}"
-					treeSemantics="true"
+					treeSemantics="${treeSemantics}"
 				/>
 				<buttons>
 					<button id="exportExcelGrid"

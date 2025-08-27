@@ -20,7 +20,7 @@ import org.vectomatic.dom.svg.utils.OMSVGParser;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.MouseEvent;
-import com.google.gwt.i18n.client.NumberFormat;
+import com.google.gwt.user.client.Timer;
 
 import com.top_logic.ajax.client.control.AbstractJSControl;
 import com.top_logic.graphic.blocks.model.Drawable;
@@ -43,6 +43,7 @@ import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonReader;
 import de.haumacher.msgbuf.observer.Observable;
 import elemental2.core.JsMath;
+import elemental2.core.JsNumber;
 import elemental2.dom.DomGlobal;
 import elemental2.dom.DragEvent;
 import elemental2.dom.Element;
@@ -82,13 +83,19 @@ public class JSDiagramControl extends AbstractJSControl
 
 	double _changeTimeout;
 
+	int zoomLevel;
+
 	double dragStartX, dragStartY;
 
-	private OMSVGRect viewbox;
-
 	boolean draggingToPan;
+
+	private OMSVGRect _viewbox;
 	
 	private ResizeObserver _observer;
+
+	private Timer serverUpdateTriggered = null;
+
+	static final int TIMEOUT = 10; // timeout in seconds
 
 	/** Flag to indicate that currently a server side triggered diagram update is applied. */
 	boolean _processServerUpdate;
@@ -169,13 +176,14 @@ public class JSDiagramControl extends AbstractJSControl
 					diagram.draw(svgBuilder());
 
 					_diagram = diagram;
+
+					_viewbox = _svg.getViewBox().getBaseVal();
+					calcZoomLevel();
 				} catch (IOException ex) {
 					DomGlobal.console.error("Failed to fetch diagram data: ", ex.getMessage());
 				}
 				return null;
 			});
-
-		NumberFormat nf = NumberFormat.getDecimalFormat();
 
 		draggingToPan = false;
 
@@ -188,7 +196,7 @@ public class JSDiagramControl extends AbstractJSControl
 					double dragDeltaX = dragStartX - event.clientX;
 					double dragDeltaY = dragStartY - event.clientY;
 
-					panSVG(dragDeltaX, dragDeltaY);
+					panSVG(dragDeltaX, dragDeltaY, false);
 
 					dragStartX = event.clientX;
 					dragStartY = event.clientY;
@@ -246,18 +254,26 @@ public class JSDiagramControl extends AbstractJSControl
 				WheelEvent event = (WheelEvent) evt;
 				if (event.ctrlKey) {
 					double delta = event.deltaY == 0 ? event.deltaX : event.deltaY;
-					double factor = JsMath.sign(delta) / -10;
+					double direction = JsMath.sign(delta);
+
+					// Beim Herauszoomen (positives delta) muss der Zoom
+					// den Faktor des vorherigen Levels nehmen, daher -10
+					int level = (direction < 0 ? zoomLevel : zoomLevel - 10) / 100;
+
+					// Anteil für 10% Zoom: 2^x * -10, wobei x immer das aktuell volle 100% Level
+					// ist
+					double factor = direction / (JsMath.pow(2, level) * (-10));
 					zoomSVG(factor, event.offsetX, event.offsetY);
 				} else if (event.shiftKey) {
-					int scrollFactor = getWheelScrollFactor(evt);
+					double scrollFactor = getWheelScrollFactor(evt);
 					double deltaX = event.deltaY * scrollFactor;
 					double deltaY = event.deltaX * scrollFactor;
-					panSVG(deltaX, deltaY);
+					panSVG(deltaX, deltaY, false);
 				} else {
 					int scrollFactor = getWheelScrollFactor(evt);
 					double deltaX = event.deltaX * scrollFactor;
 					double deltaY = event.deltaY * scrollFactor;
-					panSVG(deltaX, deltaY);
+					panSVG(deltaX, deltaY, false);
 				}
 				event.stopImmediatePropagation();
 				event.preventDefault();
@@ -296,9 +312,9 @@ public class JSDiagramControl extends AbstractJSControl
 
 		_control.addEventListener("wheel", zoomOrScrollSVG);
 
-		_control.addEventListener("mouseenter", mouseEnter);
+		_control.addEventListener("pointerenter", mouseEnter);
 
-		_control.addEventListener("mouseleave", mouseLeave);
+		_control.addEventListener("pointerleave", mouseLeave);
 
 		ResizeObserverCallback resize = new ResizeObserverCallback() {
 			@Override
@@ -314,51 +330,97 @@ public class JSDiagramControl extends AbstractJSControl
 
 	}
 
+	private void calcZoomLevel() {
+		int level = 0;
+		double fract = 1;
+		for (int i = 0; fract >= 1; i++) {
+			level = i;
+			fract = 2 - (_viewbox.getWidth() / _control.parentElement.clientWidth) * JsMath.pow(2, level);
+		}
+		double factor;
+		if (level == 0) {
+			factor = _control.parentElement.clientWidth / _viewbox.getWidth();
+		} else {
+			factor = level + fract;
+		}
+		zoomLevel = JsMath.round(factor * 100);
+	}
+
 	private native int getWheelScrollFactor(Event event) /*-{
 		return $wnd.BAL.getWheelScrollFactor(event);
 	}-*/;
 
-	void panSVG(double panDeltaX, double panDeltaY) {
-		viewbox = _svg.getViewBox().getBaseVal();
-		float newX = (float) JsMath.max(0,
-			JsMath.min(viewbox.getX() + panDeltaX, _diagram.getRoot().getWidth() - viewbox.getWidth()));
-		float newY = (float) JsMath.max(0,
-			JsMath.min(viewbox.getY() + panDeltaY, _diagram.getRoot().getHeight() - viewbox.getHeight()));
-		viewbox.setX(newX);
-		viewbox.setY(newY);
+	void panSVG(double panDeltaX, double panDeltaY, boolean zoom) {
 
-		_diagram.setViewBoxX(viewbox.getX());
-		_diagram.setViewBoxY(viewbox.getY());
+		double factor = 1;
+		if (!zoom) {
+			float zL = zoomLevel;
+			float level = JsMath.trunc(zL / 100);
+			float fract = (float) JsNumber.parseFloat(new JsNumber((zL / 100) - level).toFixed(2));
+			// (2 - y) / 2^x -> x = ganze 100%; y = 10% Teile | Bsp. 320% -> x = 3, y = 0.2
+			factor = (2 - fract) / JsMath.pow(2, level);
+		}
+
+		float newX = (float) JsMath.max(0,
+			JsMath.min(_viewbox.getX() + (panDeltaX * factor),
+				_diagram.getRoot().getWidth() - _viewbox.getWidth()));
+		float newY = (float) JsMath.max(0,
+			JsMath.min(_viewbox.getY() + (panDeltaY * factor),
+				_diagram.getRoot().getHeight() - _viewbox.getHeight()));
+		_viewbox.setX(newX);
+		_viewbox.setY(newY);
+
+		updateServerViewbox();
 	}
 	
 	void zoomSVG(double zoomFactor, double mouseX, double mouseY) {
-		viewbox = _svg.getViewBox().getBaseVal();
+		if (_viewbox == null) {
+			return;
+		}
 		float parentW = _control.parentElement.clientWidth;
 		float parentH = _control.parentElement.clientHeight - 5;
 		if (zoomFactor >= 1) {
-			viewbox.setWidth(parentW);
-			viewbox.setHeight(parentH);
-			panSVG(-viewbox.getX(), -viewbox.getY());
+			_viewbox.setWidth(parentW);
+			_viewbox.setHeight(parentH);
+			zoomLevel = 100;
+			panSVG(-_viewbox.getX(), -_viewbox.getY(), true);
 		} else {
 			float ratio = parentW / parentH;
-			float vbW = viewbox.getWidth();
-			float vbH = viewbox.getHeight();
+			float vbW = _viewbox.getWidth();
+			float vbH = _viewbox.getHeight();
 			if (ratio != vbW / vbH) {
 				vbH = (vbW / ratio);
 			}
-			float deltaW = (float) (vbW * zoomFactor);
-			float deltaH = (float) (vbH * zoomFactor);
+			float deltaW = (float) (parentW * zoomFactor);
+			float deltaH = (float) (parentH * zoomFactor);
 
-			viewbox.setWidth(vbW - deltaW);
-			viewbox.setHeight(vbH - deltaH);
+			_viewbox.setWidth(vbW - deltaW);
+			_viewbox.setHeight(vbH - deltaH);
+			
+			calcZoomLevel();
 
-			double deltaX = deltaW * mouseX / parentW;
-			double deltaY = deltaH * mouseY / parentH;
-			panSVG(deltaX, deltaY);
+			double deltaX = mouseX * zoomFactor;
+			double deltaY = mouseY * zoomFactor;
+			panSVG(deltaX, deltaY, true);
 		}
 
-		_diagram.setViewBoxWidth(viewbox.getWidth());
-		_diagram.setViewBoxHeight(viewbox.getHeight());
+		updateServerViewbox();
+	}
+
+	private void updateServerViewbox() {
+		if (serverUpdateTriggered == null) {
+			serverUpdateTriggered = new Timer() {
+				@Override
+				public void run() {
+					_diagram.setViewBoxX(_viewbox.getX());
+					_diagram.setViewBoxY(_viewbox.getY());
+					_diagram.setViewBoxWidth(_viewbox.getWidth());
+					_diagram.setViewBoxHeight(_viewbox.getHeight());
+					serverUpdateTriggered = null;
+				}
+			};
+			serverUpdateTriggered.schedule(TIMEOUT * 1000);
+		}
 	}
 
 	@Override

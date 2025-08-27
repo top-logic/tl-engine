@@ -66,12 +66,11 @@ public class ObjectCreation extends FormObjectOverlay {
 		return true;
 	}
 
-	@Override
-	public boolean tTransient() {
-		// A creation is de-facto transient, but the caller is interested, whether the resulting
-		// object will be transient or not. This question is especially relevant, when creating
-		// multiple nested composition instances.
-		return _constructor.isTransient(this);
+	/**
+	 * The constructor function that will allocate the object during commit.
+	 */
+	public ObjectConstructor getConstructor() {
+		return _constructor;
 	}
 
 	@Override

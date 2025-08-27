@@ -28,6 +28,8 @@ import com.top_logic.layout.form.values.edit.annotation.CollapseEntries;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
 import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
+import com.top_logic.layout.form.values.edit.mode.ActiveIf;
+import com.top_logic.layout.form.values.edit.mode.HideImmutableIf;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.annotation.TitleProperty;

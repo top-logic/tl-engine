@@ -33,7 +33,6 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.basic.config.customization.AnnotationCustomizations;
 import com.top_logic.basic.translation.TranslationService;
 import com.top_logic.basic.util.I18NBundle;
 import com.top_logic.basic.util.ResKey;
@@ -60,8 +59,12 @@ import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.form.template.AbstractFormFieldControlProvider;
 import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
 import com.top_logic.layout.form.template.model.internal.TemplateControlProvider;
+import com.top_logic.layout.form.values.DerivedProperty;
 import com.top_logic.layout.form.values.Fields;
+import com.top_logic.layout.form.values.Listener;
+import com.top_logic.layout.form.values.ListenerBinding;
 import com.top_logic.layout.form.values.Value;
+import com.top_logic.layout.form.values.Values;
 import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.layout.form.values.edit.ValueModel;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
@@ -195,8 +198,8 @@ public class InternationalizationEditor implements Editor {
 
 		boolean minimized = Fields.displayMinimized(editorFactory, property);
 		Resources resources = Resources.getInstance();
-		boolean propertyMandatory = isMandatory(editorFactory, property);
-		boolean currentlyMandatory = propertyMandatory && model.getValue() == null;
+		Value<Boolean> propertyMandatory = isMandatory(editorFactory, model);
+		boolean currentlyMandatory = model.getValue() == null && propertyMandatory.get();
 		
 		Map<String, ResKey> derivedKeyDefinitions = getDerivedResourceDefinition(editorFactory, model);
 		ArrayList<String> suffixes = new ArrayList<>(derivedKeyDefinitions.keySet());
@@ -365,10 +368,19 @@ public class InternationalizationEditor implements Editor {
 	}
 
 
-	static boolean isMandatory(AnnotationCustomizations customizations, PropertyDescriptor property) {
-		return property.isMandatory() || !property.isNullable()
-			|| customizations.getAnnotation(property, Mandatory.class) != null
-			|| customizations.getAnnotation(property, NonNullable.class) != null;
+	static Value<Boolean> isMandatory(EditorFactory editorFactory, ValueModel model) {
+		PropertyDescriptor property = model.getProperty();
+		boolean staticMandatory = property.isMandatory() || !property.isNullable()
+				|| editorFactory.getAnnotation(property, Mandatory.class) != null
+				|| editorFactory.getAnnotation(property, NonNullable.class) != null;
+		if (staticMandatory) {
+			return Values.literal(Boolean.TRUE);
+		}
+		DerivedProperty<Boolean> dynamicMandatory = Fields.mandatoryProperty(editorFactory.formOptions(property));
+		if (dynamicMandatory != null) {
+			return dynamicMandatory.getValue(model.getModel());
+		}
+		return Values.literal(Boolean.FALSE);
 	}
 
 	/**
@@ -478,15 +490,17 @@ public class InternationalizationEditor implements Editor {
 		return ResKey.builder(key);
 	}
 
-	static class ValueBinding implements ValueListener, ConfigurationListener {
+	static class ValueBinding implements ValueListener, ConfigurationListener, Listener {
 
-		private final boolean _mandatory;
+		private final Value<Boolean> _mandatory;
 
 		private final ValueModel _model;
 
 		private final FormGroup _group;
 
-		public ValueBinding(boolean mandatory, ValueModel model, FormGroup group) {
+		private ListenerBinding _mandatoryListenerBinding = ListenerBinding.NONE;
+
+		public ValueBinding(Value<Boolean> mandatory, ValueModel model, FormGroup group) {
 			_mandatory = mandatory;
 			_model = model;
 			_group = group;
@@ -512,18 +526,21 @@ public class InternationalizationEditor implements Editor {
 		}
 
 		private void updateMandatory() {
-			if (_mandatory) {
-				boolean fieldMandatory = _model.getValue() == null;
-				for (Iterator<FormField> it = _group.getFields(); it.hasNext();) {
-					FormField input = it.next();
-					String suffix = input.get(SUFFIX);
-					if (suffix != null) {
-						// Just a derived resource
-						continue;
-					}
-					input.setMandatory(fieldMandatory);
+			boolean fieldMandatory = _model.getValue() == null && _mandatory.get();
+			for (Iterator<FormField> it = _group.getFields(); it.hasNext();) {
+				FormField input = it.next();
+				String suffix = input.get(SUFFIX);
+				if (suffix != null) {
+					// Just a derived resource
+					continue;
 				}
+				input.setMandatory(fieldMandatory);
 			}
+		}
+
+		@Override
+		public void handleChange(Value<?> sender) {
+			updateMandatory();
 		}
 
 		@Override
@@ -602,10 +619,13 @@ public class InternationalizationEditor implements Editor {
 
 		private void bindModelListener() {
 			_model.getModel().addConfigurationListener(_model.getProperty(), this);
+			_mandatoryListenerBinding = _mandatory.addListener(this);
 		}
 
 		private void unbindModelListener() {
 			_model.getModel().removeConfigurationListener(_model.getProperty(), this);
+			_mandatoryListenerBinding.close();
+			_mandatoryListenerBinding = ListenerBinding.NONE;
 		}
 	}
 

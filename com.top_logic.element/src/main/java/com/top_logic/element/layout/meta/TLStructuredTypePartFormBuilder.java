@@ -47,6 +47,8 @@ import com.top_logic.layout.form.values.edit.ConfigLabelProvider;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.layout.form.values.edit.editor.GroupInlineControlProvider;
+import com.top_logic.layout.form.values.edit.mode.ActiveIf;
+import com.top_logic.layout.form.values.edit.mode.HideImmutableIf;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLReference;

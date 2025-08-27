@@ -3,7 +3,7 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.element.layout.meta;
+package com.top_logic.layout.form.values.edit.mode;
 
 import com.top_logic.basic.func.GenericFunction;
 import com.top_logic.layout.form.model.FieldMode;

@@ -301,11 +301,11 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 
 									cell.getView().getModel().mkSet(DELETED).addAll(toDelete);
 
-									return dialogModel.getCloseAction().executeCommand(context);
+									return dialogModel.getCloseAction().executeCommand(applyContext);
 								});
 
 								dialogModel.setDefaultCommand(okButton);
-								return MessageBox.open(context, dialogModel, content,
+								return MessageBox.open(openerContext, dialogModel, content,
 									Arrays.asList(okButton,
 										MessageBox.button(ButtonType.CANCEL, dialogModel.getCloseAction())));
 							}

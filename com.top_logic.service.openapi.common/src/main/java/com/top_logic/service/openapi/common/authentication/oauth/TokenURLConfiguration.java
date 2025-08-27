@@ -15,10 +15,10 @@ import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.func.misc.IsFalse;
 import com.top_logic.basic.func.misc.IsTrue;
-import com.top_logic.element.layout.meta.HideActiveIf;
-import com.top_logic.element.layout.meta.HideActiveIfNot;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMandatory;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
+import com.top_logic.layout.form.values.edit.mode.HideActiveIfNot;
 
 /**
  * Configuration of an token URL. This is made either by configuring the token URL direct or by

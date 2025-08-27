@@ -45,6 +45,7 @@ import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayT
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.editor.GroupInlineControlProvider;
+import com.top_logic.layout.form.values.edit.mode.ActiveIf;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLModelPart;

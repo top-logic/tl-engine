@@ -3,28 +3,28 @@
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.element.layout.meta;
+package com.top_logic.layout.form.values.edit.mode;
 
 import com.top_logic.layout.form.model.FieldMode;
 
 /**
- * {@link FieldMode#DISABLED} iff all arguments are <code>true</code>, {@link FieldMode#ACTIVE}
- * otherwise.
+ * {@link ModeSwitch} hiding an otherwise {@link FieldMode#ACTIVE} field if condition is
+ * <code>true</code>.
  * 
- * @see DisabledIf
+ * @see HideActiveIfNot
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class DisabledIfNot extends ModeSwitch {
+public class HideActiveIf extends ModeSwitch {
 
 	@Override
 	protected FieldMode trueMode() {
-		return FieldMode.ACTIVE;
+		return FieldMode.INVISIBLE;
 	}
 
 	@Override
 	protected FieldMode falseMode() {
-		return FieldMode.DISABLED;
+		return FieldMode.ACTIVE;
 	}
 
 }

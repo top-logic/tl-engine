@@ -25,6 +25,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.config.ModuleConfig;
 import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.mode.ActiveIf;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.config.TLModuleAnnotation;

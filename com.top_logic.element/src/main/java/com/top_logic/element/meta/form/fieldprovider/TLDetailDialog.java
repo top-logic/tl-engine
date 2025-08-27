@@ -42,7 +42,6 @@ public interface TLDetailDialog extends TLAttributeAnnotation, SizeInfo {
 	 * concrete object being edited.
 	 * </p>
 	 */
-	@Label("Dialog title")
 	@Override
 	ResKey getDefaultI18N();
 }

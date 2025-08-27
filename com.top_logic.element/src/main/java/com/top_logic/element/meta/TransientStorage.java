@@ -39,6 +39,17 @@ public class TransientStorage extends AbstractStorage<AbstractStorageBase.Config
 	}
 
 	@Override
+	public void update(AttributeUpdate update) throws AttributeException {
+		if (update.getAttribute().isDerived()) {
+			// Since the transient storage is used for all attributes no matter what real storage
+			// implementation they have, this decision must be consistent with the derived storage
+			// implementation of the underlying attribute.
+			return;
+		}
+		super.update(update);
+	}
+
+	@Override
 	public void initUpdate(TLObject object, TLStructuredTypePart attribute, AttributeUpdate update) {
 		StorageImplementation realStorage = AttributeOperations.getStorageImplementation(attribute);
 		if (realStorage != this) {

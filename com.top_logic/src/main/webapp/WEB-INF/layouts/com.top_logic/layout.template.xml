@@ -17,7 +17,7 @@
 		<property name="name"
 			type="ResKey"
 		>
-			<dynamic-mode fun="com.top_logic.layout.form.values.edit.mode.InvisibleButActiveIf">
+			<dynamic-mode fun="com.top_logic.layout.form.values.edit.mode.HideActiveIfNot">
 				<args>
 					<ref value="toolbar"/>
 				</args>

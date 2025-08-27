@@ -19,6 +19,7 @@
 					<property name="closableUsingX"/>
 					<property name="createOpenerButtons"/>
 					<property name="with-security-configuration"/>
+					<property name="security-label"/>
 
 					<property name="open-handler"/>
 					<property name="buttons"/>

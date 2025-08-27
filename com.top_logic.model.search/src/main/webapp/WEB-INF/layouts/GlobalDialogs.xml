@@ -3,4 +3,5 @@
 <template>
 	<layout-reference resource="export/exportDialog.layout.xml"/>
 	<layout-reference resource="export/gridExportDialog.layout.xml"/>
+	<layout-reference resource="admin/myLatestChanges/dialog.layout.xml"/>
 </template>

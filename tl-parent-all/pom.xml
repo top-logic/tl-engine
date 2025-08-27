@@ -953,7 +953,7 @@
 			<dependency>
 			    <groupId>org.docx4j</groupId>
 			    <artifactId>docx4j-core</artifactId>
-			    <version>11.4.9</version>
+			    <version>11.4.11</version>
 				<exclusions>
 					<!-- Do not include Log4j 1, because this collides with Log4j 2  -->
 					<exclusion>

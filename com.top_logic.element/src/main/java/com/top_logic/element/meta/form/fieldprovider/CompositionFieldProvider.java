@@ -39,6 +39,7 @@ import com.top_logic.element.meta.form.MetaControlProvider;
 import com.top_logic.element.meta.form.controlprovider.CompositionControlProvider;
 import com.top_logic.element.meta.form.overlay.DefaultObjectConstructor;
 import com.top_logic.element.meta.form.overlay.ObjectConstructor;
+import com.top_logic.element.meta.form.overlay.ObjectCreation;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.model.copy.CopyConstructor;
 import com.top_logic.element.model.copy.CopyOperation;
@@ -890,11 +891,17 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 
 		final TLObject createRow(Control aControl, TLClass valueType) {
 			TableField tableField = (TableField) ((TableControl) aControl).getModel();
-			TLObject newRow = mkCreateContext(_context, _contentGroup, _owner, valueType,
-				_owner.tTransient() ? DefaultObjectConstructor.getTransientInstance()
-					: DefaultObjectConstructor.getPersistentInstance());
+			TLObject newRow = mkCreateContext(_context, _contentGroup, _owner, valueType, lookupConstructor());
 			addValue(tableField, newRow);
 			return newRow;
+		}
+
+		private ObjectConstructor lookupConstructor() {
+			if (_owner instanceof ObjectCreation creation) {
+				return creation.getConstructor();
+			}
+			return _owner.tTransient() ? DefaultObjectConstructor.getTransientInstance()
+				: DefaultObjectConstructor.getPersistentInstance();
 		}
 
 		private void addValue(TableField table, TLObject row) {

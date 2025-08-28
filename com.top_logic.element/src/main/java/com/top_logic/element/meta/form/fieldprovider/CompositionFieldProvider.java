@@ -269,15 +269,9 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 
 											TLObject copiedContainer = origByCopy.get(copyContext);
 
-											TLObject editedObject = formObj.getEditedObject();
-											ObjectConstructor allocator =
-												editedObject == null || editedObject.tTransient()
-													? DefaultObjectConstructor.getTransientInstance()
-													: DefaultObjectConstructor.getPersistentInstance();
-
 											TLObject result =
 												mkCreateContext(update, formObj.getFormContainer(), copiedContainer,
-													orig.tType(), allocator);
+													orig.tType(), lookupConstructor(formObj));
 
 											// Keep new object, in case an inner allocation
 											// has also happened.
@@ -891,18 +885,11 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 
 		final TLObject createRow(Control aControl, TLClass valueType) {
 			TableField tableField = (TableField) ((TableControl) aControl).getModel();
-			TLObject newRow = mkCreateContext(_context, _contentGroup, _owner, valueType, lookupConstructor());
+			TLObject newRow = mkCreateContext(_context, _contentGroup, _owner, valueType, lookupConstructor(_owner));
 			addValue(tableField, newRow);
 			return newRow;
 		}
 
-		private ObjectConstructor lookupConstructor() {
-			if (_owner instanceof ObjectCreation creation) {
-				return creation.getConstructor();
-			}
-			return _owner.tTransient() ? DefaultObjectConstructor.getTransientInstance()
-				: DefaultObjectConstructor.getPersistentInstance();
-		}
 
 		private void addValue(TableField table, TLObject row) {
 			Collection<?> currentValue = (Collection<?>) table.getValue();
@@ -940,6 +927,18 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 			}
 			return false;
 		}
+	}
+
+	static ObjectConstructor lookupConstructor(TLObject obj) {
+		ObjectConstructor constuctor;
+		if (obj instanceof ObjectCreation creation) {
+			constuctor = creation.getConstructor();
+		} else {
+			constuctor = obj.tTransient()
+				? DefaultObjectConstructor.getTransientInstance()
+				: DefaultObjectConstructor.getPersistentInstance();
+		}
+		return constuctor;
 	}
 
 	@Override

@@ -96,10 +96,10 @@ message TreeLayout extends FloatingLayout {
 	DiagramDirection direction;
 	
 	/** Horizontal gap between columns of tree nodes. */
-	double gapX = 30;
+	double gapX = 40;
 	
 	/** Vertical gap between nodes in a tree column. */
-	double gapY = 30;
+	double gapY = 20;
 
 	/** Stroke style of tree connections. */	
 	string strokeStyle = "black";
@@ -167,6 +167,30 @@ message TreeConnector extends Widget {
 	 * </p>
 	 */
 	double connectPosition = 0.5;
+	
+	/** The connector symbol to display. */
+	ConnectorSymbol symbol;
+}
+
+/** Description of connector symbols. */
+enum ConnectorSymbol {
+	/** Display no connector symbol. */
+	none;
+	
+	/** An open arrow. */
+	arrow;
+	
+	/** A closed (triangular) arrow. */
+	closedArrow;
+	
+	/** A filled (triangular) arrow. */
+	filledArrow;
+	
+	/** A diamond. */
+	diamond;
+
+	/** A filled diamond. */
+	filledDiamond;
 }
 
 /** A line of text. */

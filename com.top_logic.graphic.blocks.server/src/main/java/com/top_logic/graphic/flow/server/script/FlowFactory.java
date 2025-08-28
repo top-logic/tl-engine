@@ -34,6 +34,7 @@ import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.data.ClickTarget;
 import com.top_logic.graphic.flow.data.ClipBox;
 import com.top_logic.graphic.flow.data.CompassLayout;
+import com.top_logic.graphic.flow.data.ConnectorSymbol;
 import com.top_logic.graphic.flow.data.Decoration;
 import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.graphic.flow.data.DiagramDirection;
@@ -630,8 +631,8 @@ public class FlowFactory {
 	public static Box flowTree(
 		@Mandatory List<? extends Box> nodes, 
 		@Mandatory List<? extends TreeConnection> connections,
-		@DoubleDefault(30) double gapX, 
-		@DoubleDefault(30) double gapY, 
+		@DoubleDefault(40) double gapX, 
+		@DoubleDefault(20) double gapY, 
 		DiagramDirection direction,
 		@StringDefault("black") String stroke, 
 		@DoubleDefault(1) double strokeWidth, 
@@ -686,6 +687,7 @@ public class FlowFactory {
 	public static TreeConnector flowConnector(
 		@Mandatory Box anchor,
 		@DoubleDefault(0.5) double pos,
+		ConnectorSymbol symbol,
 		String cssClass,
 		Object userObject
 	) {
@@ -695,6 +697,7 @@ public class FlowFactory {
 		return TreeConnector.create()
 			.setAnchor(anchor)
 			.setConnectPosition(pos)
+			.setSymbol(symbol)
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}

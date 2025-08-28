@@ -1850,7 +1850,7 @@
 					<scheme class="com.top_logic.layout.scripting.recorder.ref.value.object.GlobalVariableNaming" priority="preferred" />
 					<scheme class="com.top_logic.gui.ThemeNaming"/>
 					<scheme class="com.top_logic.layout.scripting.recorder.ref.ResourceModelNaming"/>
-					<scheme class="com.top_logic.layout.scripting.recorder.ref.TransientTLObjectNaming"/>
+					<scheme class="com.top_logic.layout.scripting.recorder.ref.TransientTLObjectNaming" priority="resolve-only"/>
 				</schemes>
 			</instance>
 		</config>
@@ -2281,6 +2281,7 @@
 		<config config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.FieldAnalyzers">
 			<analyzers>
 				<analyzer class="com.top_logic.layout.scripting.recorder.ref.ui.form.FieldNameMatcher$Analyzer"/>
+				<analyzer class="com.top_logic.layout.scripting.recorder.ref.ui.form.BusinessObjectLabelFieldMatcher$Analyzer"/>
 				<analyzer class="com.top_logic.layout.scripting.recorder.ref.ui.form.BusinessObjectFieldMatcher$Analyzer"/>
 				<analyzer class="com.top_logic.layout.scripting.recorder.ref.ui.form.FormContextMatcher$Analyzer"/>
 				<analyzer class="com.top_logic.layout.scripting.recorder.ref.ui.form.FieldLabelMatcher$Analyzer"/>

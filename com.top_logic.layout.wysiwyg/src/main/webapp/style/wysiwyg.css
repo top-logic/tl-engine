@@ -66,44 +66,6 @@
 	overflow-wrap: break-word;	
 }
 
-.tlDocTable {
-	border-collapse: collapse;
-}
-
-.tlDocTable th {
-	color: var(--text-primary);
-	font-family: var(--font-family);
-	font-weight: bold;
-    font-size: var(--heading-compact-02-font-size);
-    line-height: var(--heading-compact-02-line-height);
-    letter-spacing: var(--heading-compact-02-letter-spacing);
-	border: 1px solid var(--border-subtle);
-	background: var(--layer);
-	padding: var(--spacing-02) var(--spacing-03);
-}
-
-.tlDocTable th * {
-	color: var(--text-primary);
-}
-
-.tlDocTable td * {
-	color: var(--text-secondary);
-}
-
-.tlDocTable td {
-	color: var(--text-secondary);
-	border: 1px solid var(--border-subtle);
-	padding: var(--spacing-03);
-}
-
-.tlDocTable tr:nth-child(even) {
-	background: var(--background);
-}
-
-.tlDocTable tr:nth-child(odd) {
-	background: var(--background);
-}
-
 .cke_combo__format .cke_combopanel {
 	width: auto !important;
 }

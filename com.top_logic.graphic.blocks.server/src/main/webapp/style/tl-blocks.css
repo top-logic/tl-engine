@@ -44,3 +44,17 @@ path.tlbConnector {
 .tlDiagram {
 	transform-origin: top left;
 }
+
+.tlDiagram > svg {
+	cursor: default;
+}
+
+.zoomDisplay {
+	position: absolute;
+	top: 0;
+	right: 0;
+	padding: 8px;
+	background-color: #3338;
+	border-bottom-left-radius: 8px;
+	color: white;
+}

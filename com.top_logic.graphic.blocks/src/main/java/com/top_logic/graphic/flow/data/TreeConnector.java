@@ -24,6 +24,9 @@ public interface TreeConnector extends Widget, com.top_logic.graphic.flow.operat
 	/** @see #getConnectPosition() */
 	String CONNECT_POSITION__PROP = "connectPosition";
 
+	/** @see #getSymbol() */
+	String SYMBOL__PROP = "symbol";
+
 	/**
 	 * The connection that owns this connector.
 	 */
@@ -62,6 +65,16 @@ public interface TreeConnector extends Widget, com.top_logic.graphic.flow.operat
 	 * @see #getConnectPosition()
 	 */
 	com.top_logic.graphic.flow.data.TreeConnector setConnectPosition(double value);
+
+	/**
+	 * The connector symbol to display.
+	 */
+	com.top_logic.graphic.flow.data.ConnectorSymbol getSymbol();
+
+	/**
+	 * @see #getSymbol()
+	 */
+	com.top_logic.graphic.flow.data.TreeConnector setSymbol(com.top_logic.graphic.flow.data.ConnectorSymbol value);
 
 	@Override
 	com.top_logic.graphic.flow.data.TreeConnector setCssClass(String value);

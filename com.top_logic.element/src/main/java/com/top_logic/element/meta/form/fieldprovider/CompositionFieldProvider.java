@@ -190,7 +190,9 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 						CommandModel openCommand = new AbstractCommandModel() {
 							@Override
 							protected HandlerResult internalExecuteCommand(DisplayContext openerContext) {
-								CopyOperation operation = CopyOperation.initial().setTransient(true);
+								CopyOperation operation = CopyOperation.initial();
+								operation.setContext(formObj.tContainer(), null);
+								operation.setTransient(true);
 								Object copy = operation.copyReference(formObj);
 								operation.finish();
 

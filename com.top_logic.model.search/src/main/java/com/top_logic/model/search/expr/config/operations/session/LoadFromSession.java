@@ -65,12 +65,13 @@ public class LoadFromSession extends GenericMethod {
 			return result;
 		} else {
 			TLSessionContext session = DefaultDisplayContext.getDisplayContext().getSessionContext();
-			Object result = session.get(StoreInSession.SCRIPT_STATE).get(key);
+			Map<String, Object> sessionMap = session.get(StoreInSession.SCRIPT_STATE);
+			Object result = sessionMap.get(key);
 			if (!isValid(result)) {
 				result = null;
 
 				// Drop value.
-				session.set(StoreInSession.SCRIPT_STATE, null);
+				sessionMap.remove(key);
 			}
 			return result;
 		}

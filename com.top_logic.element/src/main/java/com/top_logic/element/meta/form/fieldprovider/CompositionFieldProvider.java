@@ -175,6 +175,8 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 			return null;
 		}
 
+		TableField tableField =
+			FormFactory.newTableField(TABLE_FIELD_NAME, update::getConfigKey);
 		boolean isOrdered = update.isOrdered();
 
 		AttributeUpdateContainer updateContainer = update.getOverlay().getScope();
@@ -198,7 +200,11 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 					Object rowObj = cell.getRowObject();
 					if (rowObj instanceof TLFormObject formObj) {
 
-						CommandModel openCommand = new OpenDetailsCommand(update, formObj, cell.getView(), annotation);
+						/* Compute "immutable" as late as possible,because it is changed late by the
+						 * layout component. */
+						boolean immutable = tableField.isImmutable();
+						CommandModel openCommand =
+							new OpenDetailsCommand(update, formObj, cell.getView(), annotation, immutable);
 
 						openCommand.setLabel(I18NConstants.EDIT_DETAILS);
 						openCommand.setImage(com.top_logic.layout.table.control.Icons.OPEN_SELECTOR);
@@ -221,8 +227,6 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 		ObjectTableModel tableModel =
 			new ObjectTableModel(config.getDefaultColumns(), config, Collections.emptyList(), isOrdered);
 
-		TableField tableField =
-			FormFactory.newTableField(TABLE_FIELD_NAME, update::getConfigKey);
 		tableField.setTableModel(tableModel);
 
 		/* Set label explicit, because generic just sets the label for the wrapping group. */
@@ -321,15 +325,18 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 
 		private final TableControl _view;
 
+		private boolean _immutable;
+
 		/**
 		 * This constructor creates a new {@link OpenDetailsCommand}.
 		 */
 		private OpenDetailsCommand(EditContext update, TLFormObject row, TableControl view,
-				SizeInfo dialogSize) {
+				SizeInfo dialogSize, boolean immutable) {
 			_update = update;
 			_formObj = row;
 			_view = view;
 			_dialogSize = dialogSize;
+			_immutable = immutable;
 			Naming.annotate(this);
 		}
 
@@ -373,9 +380,11 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 					.model(editObject)
 					.formContext(formContext)
 					.contentGroup(formContext)
+					.editMode(!_immutable)
 					.build();
 
 				FormEditorUtil.createAttributes(editContext, typedForm.getFormDefinition());
+				formContext.setImmutable(_immutable);
 			}
 
 			// See com.top_logic.layout.form.declarative.DirectFormDisplay.
@@ -384,6 +393,11 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 					MetaControlProvider.INSTANCE.createControl(formContext)));
 
 			content.setConstraint(DefaultLayoutData.DEFAULT_CONSTRAINT);
+
+			if (_immutable) {
+				return MessageBox.open(openerContext, dialogModel, content,
+					Arrays.asList(MessageBox.button(ButtonType.CLOSE, dialogModel.getCloseAction())));
+			}
 
 			CommandModel okButton = MessageBox.button(ButtonType.OK, applyContext -> {
 				if (!formContext.checkAll()) {

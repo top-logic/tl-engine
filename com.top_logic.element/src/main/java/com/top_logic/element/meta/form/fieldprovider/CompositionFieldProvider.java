@@ -99,6 +99,7 @@ import com.top_logic.layout.table.RowObjectCreator;
 import com.top_logic.layout.table.RowObjectRemover;
 import com.top_logic.layout.table.TableData;
 import com.top_logic.layout.table.TableRenderer.Cell;
+import com.top_logic.layout.table.TableViewModel;
 import com.top_logic.layout.table.control.ColumnDescription;
 import com.top_logic.layout.table.control.TableControl;
 import com.top_logic.layout.table.control.TableListControl;
@@ -455,6 +456,12 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 				toDelete.removeAll(didCopy);
 
 				_view.getModel().mkSet(DELETED).addAll(toDelete);
+
+				/* Repaint row: This is necessary when in a cell no control is rendered which reacts
+				 * on the value of the cell. */
+				TableViewModel viewModel = _view.getViewModel();
+				int rowIndex = viewModel.getRowOfObject(_formObj);
+				viewModel.updateRows(rowIndex, rowIndex);
 
 				return dialogModel.getCloseAction().executeCommand(applyContext);
 			});

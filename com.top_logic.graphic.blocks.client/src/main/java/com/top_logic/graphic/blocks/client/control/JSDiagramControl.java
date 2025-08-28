@@ -49,6 +49,7 @@ import elemental2.dom.DragEvent;
 import elemental2.dom.Element;
 import elemental2.dom.Event;
 import elemental2.dom.EventListener;
+import elemental2.dom.HTMLDivElement;
 import elemental2.dom.HTMLDocument;
 import elemental2.dom.Image;
 import elemental2.dom.KeyboardEvent;
@@ -82,6 +83,10 @@ public class JSDiagramControl extends AbstractJSControl
 	final SubIdGenerator _nextId;
 
 	double _changeTimeout;
+
+	private HTMLDivElement _zoomDisplay;
+
+	private Timer hideZoomDisplay = null;
 
 	int zoomLevel;
 
@@ -176,6 +181,17 @@ public class JSDiagramControl extends AbstractJSControl
 					diagram.draw(svgBuilder());
 
 					_diagram = diagram;
+
+					_zoomDisplay = (HTMLDivElement) DomGlobal.document.createElement("div");
+					_zoomDisplay.classList.add("zoomDisplay");
+					_control.appendChild(_zoomDisplay);
+
+					hideZoomDisplay = new Timer() {
+						@Override
+						public void run() {
+							_zoomDisplay.classList.add("invisible");
+						}
+					};
 
 					_viewbox = _svg.getViewBox().getBaseVal();
 					calcZoomLevel();
@@ -344,6 +360,12 @@ public class JSDiagramControl extends AbstractJSControl
 			factor = level + fract;
 		}
 		zoomLevel = JsMath.round(factor * 100);
+
+		_zoomDisplay.textContent = "Zoom: " + zoomLevel + "%";
+		_zoomDisplay.classList.remove("invisible");
+
+		hideZoomDisplay.cancel();
+		hideZoomDisplay.schedule(5 * 1000);
 	}
 
 	private native int getWheelScrollFactor(Event event) /*-{
@@ -382,7 +404,7 @@ public class JSDiagramControl extends AbstractJSControl
 		if (zoomFactor >= 1) {
 			_viewbox.setWidth(parentW);
 			_viewbox.setHeight(parentH);
-			zoomLevel = 100;
+			calcZoomLevel();
 			panSVG(-_viewbox.getX(), -_viewbox.getY(), true);
 		} else {
 			float ratio = parentW / parentH;

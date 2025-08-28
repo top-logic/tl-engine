@@ -20,8 +20,12 @@ import java.util.Set;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.annotation.FrameworkInternal;
+import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
@@ -43,6 +47,7 @@ import com.top_logic.element.meta.form.overlay.ObjectCreation;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.model.copy.CopyConstructor;
 import com.top_logic.element.model.copy.CopyOperation;
+import com.top_logic.knowledge.gui.layout.SizeInfo;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.event.Modification;
 import com.top_logic.layout.Accessor;
@@ -79,6 +84,11 @@ import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.messagebox.SimpleFormDialog;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.scripting.recorder.ref.GlobalModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.ModelName;
+import com.top_logic.layout.scripting.recorder.ref.ModelNamingScheme;
+import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
+import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.structure.DefaultDialogModel;
 import com.top_logic.layout.structure.DefaultLayoutData;
 import com.top_logic.layout.structure.MediaQueryControl;
@@ -187,125 +197,8 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 				public void writeCell(DisplayContext context, TagWriter out, Cell cell) throws IOException {
 					Object rowObj = cell.getRowObject();
 					if (rowObj instanceof TLFormObject formObj) {
-						CommandModel openCommand = new AbstractCommandModel() {
-							@Override
-							protected HandlerResult internalExecuteCommand(DisplayContext openerContext) {
-								CopyOperation operation = CopyOperation.initial();
-								operation.setContext(formObj.tContainer(), null);
-								operation.setTransient(true);
-								Object copy = operation.copyReference(formObj);
-								operation.finish();
 
-								TLObject editObject = (TLObject) copy;
-
-								ResKey title = annotation.getDefaultI18N();
-								if (title == null) {
-									title = I18NConstants.EDIT_DETAILS_TITLE__TYPE
-										.fill(MetaLabelProvider.INSTANCE.getLabel(editObject.tType()));
-								} else {
-									@SuppressWarnings("deprecation")
-									ResKey1 titleTemplate = title.asResKey1();
-									title = titleTemplate.fill(MetaLabelProvider.INSTANCE.getLabel(editObject.tType()));
-								}
-								DefaultDialogModel dialogModel = new DefaultDialogModel(
-									new DefaultLayoutData(
-										annotation.getWidth(), 100,
-										annotation.getHeight(), 100, Scrolling.NO),
-									Fragments.message(title),
-									true, true, null);
-
-								// See
-								// com.top_logic.element.layout.formeditor.builder.EditFormBuilder
-								AttributeFormContext formContext;
-								{
-									formContext = new AttributeFormContext(ResPrefix.NONE);
-									TypedForm typedForm = TypedForm.lookup(Collections.emptyMap(), editObject);
-
-									FormEditorContext editContext = new FormEditorContext.Builder()
-										.formMode(FormMode.EDIT)
-										.formType(typedForm.getFormType())
-										.concreteType(typedForm.getDisplayedType())
-										.model(editObject)
-										.formContext(formContext)
-										.contentGroup(formContext)
-										.build();
-
-									FormEditorUtil.createAttributes(editContext, typedForm.getFormDefinition());
-								}
-
-								// See com.top_logic.layout.form.declarative.DirectFormDisplay.
-								MediaQueryControl content = new MediaQueryControl(
-									Fragments.div(FormConstants.FORM_BODY_CSS_CLASS,
-										MetaControlProvider.INSTANCE.createControl(formContext)));
-
-								content.setConstraint(DefaultLayoutData.DEFAULT_CONSTRAINT);
-
-								CommandModel okButton = MessageBox.button(ButtonType.OK, applyContext -> {
-									if (!formContext.checkAll()) {
-										return AbstractApplyCommandHandler.createErrorResult(formContext);
-									}
-									formContext.store();
-
-									Map<TLObject, TLObject> origByCopy = new HashMap<>();
-									for (var entry : operation.getCorrespondence().entrySet()) {
-										origByCopy.put(entry.getValue(), entry.getKey());
-									}
-
-									HashSet<TLObject> didCopy = new HashSet<>();
-
-									// Copy back.
-									CopyConstructor constructor = new CopyConstructor() {
-										@Override
-										public TLObject allocate(TLObject orig, TLReference reference,
-												TLObject copyContext) {
-											// The orig here is an object from the copied graph
-											// created above!
-
-											// Note, newly allocated objects return null and are
-											// allocated by the default constructor.
-											TLObject existing = origByCopy.get(orig);
-											if (existing != null) {
-												didCopy.add(existing);
-												return existing;
-											}
-
-											TLObject copiedContainer = origByCopy.get(copyContext);
-
-											TLObject result =
-												mkCreateContext(update, formObj.getFormContainer(), copiedContainer,
-													orig.tType(), lookupConstructor(formObj));
-
-											// Keep new object, in case an inner allocation
-											// has also happened.
-											origByCopy.put(orig, result);
-											didCopy.add(result);
-
-											return result;
-										}
-									};
-									CopyOperation copyBack =
-										CopyOperation.initial().setTransient(true).setConstructor(constructor);
-									copyBack.copyReference(editObject);
-									copyBack.finish();
-
-									// All objects that have not used during the copy-back
-									// operation are inner compositions that must be deleted,
-									// since they were deleted transiently during the edit
-									// operation in the dialog.
-									Collection<TLObject> toDelete = new HashSet<>(origByCopy.values());
-									toDelete.removeAll(didCopy);
-
-									cell.getView().getModel().mkSet(DELETED).addAll(toDelete);
-
-									return dialogModel.getCloseAction().executeCommand(applyContext);
-								});
-
-								dialogModel.setDefaultCommand(okButton);
-								return MessageBox.open(openerContext, dialogModel, content,
-									Arrays.asList(okButton,
-										MessageBox.button(ButtonType.CANCEL, dialogModel.getCloseAction())));
-							}
-						};
+						CommandModel openCommand = new OpenDetailsCommand(update, formObj, cell.getView(), annotation);
 
 						openCommand.setLabel(I18NConstants.EDIT_DETAILS);
 						openCommand.setImage(com.top_logic.layout.table.control.Icons.OPEN_SELECTOR);
@@ -411,6 +304,238 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 			addFieldForCreateContext(formContext, rowGroup, newObject, attribute, readOnlyColumns);
 		}
 		return newObject;
+	}
+
+	/**
+	 * {@link AbstractCommandModel} that opens the detail dialog for a {@link TLFormObject row}.
+	 * 
+	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+	 */
+	public static final class OpenDetailsCommand extends AbstractCommandModel {
+
+		private final EditContext _update;
+
+		private final SizeInfo _dialogSize;
+
+		private final TLFormObject _formObj;
+
+		private final TableControl _view;
+
+		/**
+		 * This constructor creates a new {@link OpenDetailsCommand}.
+		 */
+		private OpenDetailsCommand(EditContext update, TLFormObject row, TableControl view,
+				SizeInfo dialogSize) {
+			_update = update;
+			_formObj = row;
+			_view = view;
+			_dialogSize = dialogSize;
+			Naming.annotate(this);
+		}
+
+		@Override
+		protected HandlerResult internalExecuteCommand(DisplayContext openerContext) {
+			CopyOperation operation = CopyOperation.initial();
+			operation.setContext(_formObj.tContainer(), null);
+			operation.setTransient(true);
+			Object copy = operation.copyReference(_formObj);
+			operation.finish();
+
+			TLObject editObject = (TLObject) copy;
+
+			ResKey title = _dialogSize.getDefaultI18N();
+			if (title == null) {
+				title = I18NConstants.EDIT_DETAILS_TITLE__TYPE
+					.fill(MetaLabelProvider.INSTANCE.getLabel(editObject.tType()));
+			} else {
+				@SuppressWarnings("deprecation")
+				ResKey1 titleTemplate = title.asResKey1();
+				title = titleTemplate.fill(MetaLabelProvider.INSTANCE.getLabel(editObject.tType()));
+			}
+			DefaultDialogModel dialogModel = new DefaultDialogModel(
+				new DefaultLayoutData(
+					_dialogSize.getWidth(), 100,
+					_dialogSize.getHeight(), 100, Scrolling.NO),
+				Fragments.message(title),
+				true, true, null);
+
+			// See
+			// com.top_logic.element.layout.formeditor.builder.EditFormBuilder
+			AttributeFormContext formContext;
+			{
+				formContext = new AttributeFormContext(ResPrefix.NONE);
+				TypedForm typedForm = TypedForm.lookup(Collections.emptyMap(), editObject);
+
+				FormEditorContext editContext = new FormEditorContext.Builder()
+					.formMode(FormMode.EDIT)
+					.formType(typedForm.getFormType())
+					.concreteType(typedForm.getDisplayedType())
+					.model(editObject)
+					.formContext(formContext)
+					.contentGroup(formContext)
+					.build();
+
+				FormEditorUtil.createAttributes(editContext, typedForm.getFormDefinition());
+			}
+
+			// See com.top_logic.layout.form.declarative.DirectFormDisplay.
+			MediaQueryControl content = new MediaQueryControl(
+				Fragments.div(FormConstants.FORM_BODY_CSS_CLASS,
+					MetaControlProvider.INSTANCE.createControl(formContext)));
+
+			content.setConstraint(DefaultLayoutData.DEFAULT_CONSTRAINT);
+
+			CommandModel okButton = MessageBox.button(ButtonType.OK, applyContext -> {
+				if (!formContext.checkAll()) {
+					return AbstractApplyCommandHandler.createErrorResult(formContext);
+				}
+				formContext.store();
+
+				Map<TLObject, TLObject> origByCopy = new HashMap<>();
+				for (var entry : operation.getCorrespondence().entrySet()) {
+					origByCopy.put(entry.getValue(), entry.getKey());
+				}
+
+				HashSet<TLObject> didCopy = new HashSet<>();
+
+				// Copy back.
+				CopyConstructor constructor = new CopyConstructor() {
+					@Override
+					public TLObject allocate(TLObject orig, TLReference reference,
+							TLObject copyContext) {
+						// The orig here is an object from the copied graph
+						// created above!
+
+						// Note, newly allocated objects return null and are
+						// allocated by the default constructor.
+						TLObject existing = origByCopy.get(orig);
+						if (existing != null) {
+							didCopy.add(existing);
+							return existing;
+						}
+
+						TLObject copiedContainer = origByCopy.get(copyContext);
+
+						TLObject result =
+							mkCreateContext(_update, _formObj.getFormContainer(), copiedContainer,
+								orig.tType(), lookupConstructor(_formObj));
+
+						// Keep new object, in case an inner allocation
+						// has also happened.
+						origByCopy.put(orig, result);
+						didCopy.add(result);
+
+						return result;
+					}
+				};
+				CopyOperation copyBack =
+					CopyOperation.initial().setTransient(true).setConstructor(constructor);
+				copyBack.copyReference(editObject);
+				copyBack.finish();
+
+				// All objects that have not used during the copy-back
+				// operation are inner compositions that must be deleted,
+				// since they were deleted transiently during the edit
+				// operation in the dialog.
+				Collection<TLObject> toDelete = new HashSet<>(origByCopy.values());
+				toDelete.removeAll(didCopy);
+
+				_view.getModel().mkSet(DELETED).addAll(toDelete);
+
+				return dialogModel.getCloseAction().executeCommand(applyContext);
+			});
+
+			dialogModel.setDefaultCommand(okButton);
+			return MessageBox.open(openerContext, dialogModel, content,
+				Arrays.asList(okButton,
+					MessageBox.button(ButtonType.CANCEL, dialogModel.getCloseAction())));
+		}
+
+		/**
+		 * {@link ModelNamingScheme} for am {@link OpenDetailsCommand}.
+		 * 
+		 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+		 */
+		public static class Naming extends GlobalModelNamingScheme<OpenDetailsCommand, Naming.Name> {
+
+			private static final Property<Map<Object, OpenDetailsCommand>> DETAIL_OPENERS =
+				TypedAnnotatable.propertyMap("Composition detail openers");
+
+			/**
+			 * {@link ModelName} identifying an {@link OpenDetailsCommand}.
+			 * 
+			 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
+			 */
+			@Label("Detail of '{row}'")
+			public interface Name extends ModelName {
+
+				/**
+				 * Name of the displayed table.
+				 */
+				@Mandatory
+				ModelName getTable();
+
+				/**
+				 * Setter for {@link #getTable()}.
+				 */
+				void setTable(ModelName value);
+
+				/**
+				 * Name of the row for which the detail dialog is opened.
+				 */
+				@Mandatory
+				ModelName getRow();
+
+				/**
+				 * Setter for {@link #getRow()}.
+				 */
+				void setRow(ModelName value);
+
+			}
+
+			/**
+			 * Creates a new {@link Naming}.
+			 */
+			public Naming() {
+				super(OpenDetailsCommand.class, Name.class);
+			}
+
+			@Override
+			public Maybe<Name> buildName(OpenDetailsCommand model) {
+				TableData owner = findOwner(model);
+				Maybe<? extends ModelName> ownerName = ModelResolver.buildModelNameIfAvailable(owner);
+				Maybe<? extends ModelName> rowName = ModelResolver.buildModelNameIfAvailable(owner, findRow(model));
+				if (ownerName.hasValue() && rowName.hasValue()) {
+					Name name = TypedConfiguration.newConfigItem(Name.class);
+					name.setTable(ownerName.get());
+					name.setRow(rowName.get());
+					return Maybe.some(name);
+				}
+				return Maybe.none();
+			}
+
+
+			private static TLFormObject findRow(OpenDetailsCommand model) {
+				return model._formObj;
+			}
+
+			private static TableData findOwner(OpenDetailsCommand model) {
+				return model._view.getTableData();
+			}
+
+			@Override
+			public OpenDetailsCommand locateModel(ActionContext context, Name name) {
+				TypedAnnotatable owner = (TypedAnnotatable) ModelResolver.locateModel(context, name.getTable());
+				Object row = ModelResolver.locateModel(context, owner, name.getRow());
+				return owner.get(DETAIL_OPENERS).get(row);
+			}
+			
+			static void annotate(OpenDetailsCommand command) {
+				findOwner(command).mkMap(DETAIL_OPENERS).put(findRow(command), command);
+			}
+
+
+		}
 	}
 
 	private static final class FieldAccessProvider implements TableConfigurationProvider {

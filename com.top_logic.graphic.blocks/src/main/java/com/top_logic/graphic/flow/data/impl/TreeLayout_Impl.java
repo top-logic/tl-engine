@@ -11,9 +11,9 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 
 	private com.top_logic.graphic.flow.data.DiagramDirection _direction = com.top_logic.graphic.flow.data.DiagramDirection.LTR;
 
-	private double _gapX = 30;
+	private double _gapX = 40;
 
-	private double _gapY = 30;
+	private double _gapY = 20;
 
 	private String _strokeStyle = "black";
 

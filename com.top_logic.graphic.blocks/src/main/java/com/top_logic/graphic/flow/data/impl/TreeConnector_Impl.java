@@ -11,6 +11,8 @@ public class TreeConnector_Impl extends com.top_logic.graphic.flow.data.impl.Wid
 
 	private double _connectPosition = 0.5;
 
+	private com.top_logic.graphic.flow.data.ConnectorSymbol _symbol = com.top_logic.graphic.flow.data.ConnectorSymbol.NONE;
+
 	/**
 	 * Creates a {@link TreeConnector_Impl} instance.
 	 *
@@ -95,6 +97,25 @@ public class TreeConnector_Impl extends com.top_logic.graphic.flow.data.impl.Wid
 	}
 
 	@Override
+	public final com.top_logic.graphic.flow.data.ConnectorSymbol getSymbol() {
+		return _symbol;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.TreeConnector setSymbol(com.top_logic.graphic.flow.data.ConnectorSymbol value) {
+		internalSetSymbol(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getSymbol()} without chain call utility. */
+	protected final void internalSetSymbol(com.top_logic.graphic.flow.data.ConnectorSymbol value) {
+		if (value == null) throw new IllegalArgumentException("Property 'symbol' cannot be null.");
+		_listener.beforeSet(this, SYMBOL__PROP, value);
+		_symbol = value;
+		_listener.afterChanged(this, SYMBOL__PROP);
+	}
+
+	@Override
 	public com.top_logic.graphic.flow.data.TreeConnector setCssClass(String value) {
 		internalSetCssClass(value);
 		return this;
@@ -121,7 +142,8 @@ public class TreeConnector_Impl extends com.top_logic.graphic.flow.data.impl.Wid
 		java.util.Arrays.asList(
 			CONNECTION__PROP, 
 			ANCHOR__PROP, 
-			CONNECT_POSITION__PROP));
+			CONNECT_POSITION__PROP, 
+			SYMBOL__PROP));
 
 	private static java.util.Set<String> TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(new java.util.HashSet<>(
 			java.util.Arrays.asList(
@@ -143,6 +165,7 @@ public class TreeConnector_Impl extends com.top_logic.graphic.flow.data.impl.Wid
 			case CONNECTION__PROP: return getConnection();
 			case ANCHOR__PROP: return getAnchor();
 			case CONNECT_POSITION__PROP: return getConnectPosition();
+			case SYMBOL__PROP: return getSymbol();
 			default: return super.get(field);
 		}
 	}
@@ -152,6 +175,7 @@ public class TreeConnector_Impl extends com.top_logic.graphic.flow.data.impl.Wid
 		switch (field) {
 			case ANCHOR__PROP: internalSetAnchor((com.top_logic.graphic.flow.data.Box) value); break;
 			case CONNECT_POSITION__PROP: internalSetConnectPosition((double) value); break;
+			case SYMBOL__PROP: internalSetSymbol((com.top_logic.graphic.flow.data.ConnectorSymbol) value); break;
 			default: super.set(field, value); break;
 		}
 	}
@@ -165,6 +189,8 @@ public class TreeConnector_Impl extends com.top_logic.graphic.flow.data.impl.Wid
 		}
 		out.name(CONNECT_POSITION__PROP);
 		out.value(getConnectPosition());
+		out.name(SYMBOL__PROP);
+		getSymbol().writeTo(out);
 	}
 
 	@Override
@@ -190,6 +216,10 @@ public class TreeConnector_Impl extends com.top_logic.graphic.flow.data.impl.Wid
 				out.value(getConnectPosition());
 				break;
 			}
+			case SYMBOL__PROP: {
+				getSymbol().writeTo(out);
+				break;
+			}
 			default: super.writeFieldValue(scope, out, field);
 		}
 	}
@@ -199,6 +229,7 @@ public class TreeConnector_Impl extends com.top_logic.graphic.flow.data.impl.Wid
 		switch (field) {
 			case ANCHOR__PROP: setAnchor(com.top_logic.graphic.flow.data.Box.readBox(scope, in)); break;
 			case CONNECT_POSITION__PROP: setConnectPosition(in.nextDouble()); break;
+			case SYMBOL__PROP: setSymbol(com.top_logic.graphic.flow.data.ConnectorSymbol.readConnectorSymbol(in)); break;
 			default: super.readField(scope, in, field);
 		}
 	}

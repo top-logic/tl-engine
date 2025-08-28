@@ -42,6 +42,7 @@ import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonReader;
 import de.haumacher.msgbuf.observer.Observable;
+import elemental2.core.JsArray;
 import elemental2.core.JsMath;
 import elemental2.core.JsNumber;
 import elemental2.dom.DomGlobal;
@@ -494,10 +495,6 @@ public class JSDiagramControl extends AbstractJSControl
 			DomGlobal.console.info("Sending updates: ", patch);
 
 			sendUpdate(getId(), patch, true);
-			
-			_svg.setWidth(Unit.PX, _control.parentElement.clientWidth);
-			_svg.setHeight(Unit.PX, _control.parentElement.clientHeight - 5);
-			_svg.setViewBox(0, 0, _control.parentElement.clientWidth, _control.parentElement.clientHeight - 5);
 
 		} catch (IOException ex) {
 			DomGlobal.console.error("Failed to write updates.", ex);

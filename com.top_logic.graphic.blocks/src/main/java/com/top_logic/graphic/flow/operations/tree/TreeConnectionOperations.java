@@ -5,8 +5,11 @@
  */
 package com.top_logic.graphic.flow.operations.tree;
 
+import java.util.List;
+
 import com.top_logic.graphic.blocks.model.Drawable;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
+import com.top_logic.graphic.flow.data.ConnectorSymbol;
 import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
 
@@ -14,6 +17,21 @@ import com.top_logic.graphic.flow.data.TreeConnector;
  * Custom operations for {@link TreeConnection}s.
  */
 public interface TreeConnectionOperations extends Drawable {
+
+	/**
+	 * Width of a horizontally drawn arrow symbol.
+	 */
+	public static final double ARROW_LENGTH = 12;
+
+	/**
+	 * Width of an arrow opening.
+	 */
+	public static final double ARROW_WIDTH = 8;
+
+	/**
+	 * Radius of a diamond symbol.
+	 */
+	public static final double DIAMOND_RADIUS = 6;
 
 	/**
 	 * The {@link TreeConnection} data.
@@ -29,37 +47,124 @@ public interface TreeConnectionOperations extends Drawable {
 
 		double barX = self().getBarPosition();
 
-		out.beginPath();
-		out.setStroke(self().getOwner().getStrokeStyle());
-		out.setStrokeWidth(self().getOwner().getThickness());
-		out.setFill("none");
-		out.beginData();
-		out.moveToAbs(fromX, fromY);
-		out.lineToHorizontalAbs(barX);
+		List<TreeConnector> children = self().getChildren();
+		if (!children.isEmpty()) {
+			out.beginPath();
+			out.setStroke(self().getOwner().getStrokeStyle());
+			out.setStrokeWidth(self().getOwner().getThickness());
+			out.setFill("none");
+			out.beginData();
 
-		double minY = Double.MAX_VALUE;
-		double maxY = Double.MIN_VALUE;
+			for (TreeConnector child : children) {
+				double childX = child.getX() - inset(child.getSymbol());
+				double childY = child.getY();
 
-		for (TreeConnector child : self().getChildren()) {
-			double childX = child.getX();
-			double childY = child.getY();
+				out.moveToAbs(childX, childY);
+				out.lineToHorizontalAbs(barX);
+				out.lineToVerticalAbs(fromY);
+				out.lineToHorizontalAbs(fromX + inset(parent.getSymbol()));
+			}
 
-			out.moveToAbs(childX, childY);
-			out.lineToAbs(barX, childY);
-			out.lineToAbs(barX, fromY);
+			out.endData();
+			out.endPath();
+			
+			for (TreeConnector child : children) {
+				double childX = child.getX();
+				double childY = child.getY();
 
-			minY = Math.min(minY, childY);
-			maxY = Math.max(maxY, childY);
+				drawSymbol(out, childX, childY, 1, child.getSymbol());
+			}
+
+			drawSymbol(out, fromX, fromY, -1, parent.getSymbol());
+		}
+	}
+
+	/** 
+	 * The space to reserve for the symbol in X direction.
+	 */
+	default double inset(ConnectorSymbol symbol) {
+		switch (symbol) {
+			case NONE:
+			case ARROW:
+				return 0;
+			case CLOSED_ARROW:
+			case FILLED_ARROW:
+				return ARROW_LENGTH;
+			case DIAMOND:
+			case FILLED_DIAMOND:
+				return 2 * DIAMOND_RADIUS;
 		}
 
-		out.endData();
-		out.endPath();
+		throw new IllegalArgumentException("No such symbol type: " + symbol);
+	}
 
-		// Optionally show connectors
-//		parent.draw(out);
-//		for (TreeConnector child : self().getChildren()) {
-//			child.draw(out);
-//		}
+	/**
+	 * Draws a connector symbol at the given location.
+	 *
+	 * @param out
+	 *        The writer write to.
+	 * @param fromX
+	 *        The X position of the connector.
+	 * @param fromY
+	 *        The Y position of the connector.
+	 * @param direction
+	 *        <code>-1<code> for a parent connector and <code>1</code> for a child connector.
+	 * @param connectorSymbol
+	 *        The symbol type.
+	 */
+	default void drawSymbol(SvgWriter out, double fromX, double fromY, double direction,
+			ConnectorSymbol connectorSymbol) {
+		switch (connectorSymbol) {
+			case NONE:
+				return;
+			case ARROW:
+			case CLOSED_ARROW:
+			case FILLED_ARROW: {
+				// Arrow to parent
+				double arrowOffset = ARROW_LENGTH * direction;
+				double arrowOpening = ARROW_WIDTH / 2;
 
+				out.beginPath();
+				out.setStroke(self().getOwner().getStrokeStyle());
+				out.setStrokeWidth(self().getOwner().getThickness());
+				if (connectorSymbol != ConnectorSymbol.FILLED_ARROW) {
+					out.setFill("none");
+				}
+				out.beginData();
+
+				out.moveToAbs(fromX - arrowOffset, fromY + arrowOpening);
+				out.lineToRel(arrowOffset, -arrowOpening);
+				out.lineToRel(-arrowOffset, -arrowOpening);
+				if (connectorSymbol != ConnectorSymbol.ARROW) {
+					out.closePath();
+				}
+
+				out.endData();
+				out.endPath();
+				break;
+			}
+			case DIAMOND:
+			case FILLED_DIAMOND: {
+				out.beginPath();
+				out.setStroke(self().getOwner().getStrokeStyle());
+				out.setStrokeWidth(self().getOwner().getThickness());
+				if (connectorSymbol != ConnectorSymbol.FILLED_DIAMOND) {
+					out.setFill("none");
+				}
+				out.beginData();
+
+				out.moveToAbs(fromX - DIAMOND_RADIUS, fromY - DIAMOND_RADIUS);
+				out.lineToRel(DIAMOND_RADIUS, DIAMOND_RADIUS);
+				out.lineToRel(-DIAMOND_RADIUS, DIAMOND_RADIUS);
+				out.lineToRel(-DIAMOND_RADIUS, -DIAMOND_RADIUS);
+				out.closePath();
+
+				out.endData();
+				out.endPath();
+				break;
+			}
+			default:
+				break;
+		}
 	}
 }

@@ -108,19 +108,23 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 			bottomY = layoutTree(columns, childrenForParentNode, 0, root, bottomY);
 		}
 
+		List<Double> columnWidths = new ArrayList<>();
+
 		// Assign X coordinates to all nodes.
 		double minX = 0;
 		for (List<Box> column : columns) {
 			double maxWidth = 0;
 			for (Box node : column) {
-				node.setX(minX);
-
 				maxWidth = Math.max(maxWidth, node.getWidth());
 			}
+
+			columnWidths.add(maxWidth);
 
 			minX += maxWidth;
 			minX += self().getGapX();
 		}
+
+		context.setRenderInfo(self(), new TreeRenderInfo(columns, columnWidths));
 
 		self().setWidth(minX - (columns.isEmpty() ? 0.0 : self().getGapX()));
 		self().setHeight(bottomY);
@@ -234,7 +238,28 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 
 	@Override
 	default void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
-		FloatingLayoutOperations.super.distributeSize(context, offsetX, offsetY, width, height);
+		double dy = offsetY - self().getY();
+
+		self().setX(offsetX);
+		self().setY(offsetY);
+		self().setWidth(width);
+		self().setHeight(height);
+
+		TreeRenderInfo info = context.getRenderInfo(self());
+
+		// Offer available space to nodes.
+		double x = offsetX;
+		int columnIndex = 0;
+		for (List<Box> column : info.getColumns()) {
+			double columnWidth = info.getColumnWidths().get(columnIndex++);
+
+			for (Box node : column) {
+				node.distributeSize(context, x, node.getY() + dy, columnWidth, node.getHeight());
+			}
+
+			x += columnWidth;
+			x += self().getGapX();
+		}
 
 		for (TreeConnection connection : self().getConnections()) {
 			double fromX = fromX(connection.getParent().getAnchor());

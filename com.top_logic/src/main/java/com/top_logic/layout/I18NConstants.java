@@ -33,7 +33,8 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey APPLICATION_TITLE = legacyKey("tl.title");
 
 	/**
-	 * @en Target control {0} not found delivering command "{1}" arguments: {2}
+	 * @en The target control {0} was not found while delivering the command "{1}" with the
+	 *     following arguments: {2}.
 	 */
 	public static ResKey3 ERROR_TARGET_CONTROL_NOT_FOUND__ID_CMD_ARGS;
 

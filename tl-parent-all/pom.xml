@@ -206,6 +206,11 @@
 				<artifactId>tl-graph-diagramjs-client</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-graphic-blocks-client</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
 
 			<dependency>
 				<groupId>com.top-logic</groupId>
@@ -430,6 +435,16 @@
 			<dependency>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-graph-server</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-graphic-blocks</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-graphic-blocks-server</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
 			<dependency>

@@ -12,6 +12,7 @@ import java.awt.font.LineMetrics;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
+import com.top_logic.graphic.blocks.svg.AbstractRenderContext;
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.TextMetricsImpl;
 
@@ -20,7 +21,7 @@ import com.top_logic.graphic.blocks.svg.TextMetricsImpl;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class AWTContext implements RenderContext {
+public class AWTContext extends AbstractRenderContext {
 
 	private final Font _font;
 

@@ -1240,11 +1240,6 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
-				<artifactId>tl-graph-demo</artifactId>
-				<version>7.6.0-SNAPSHOT</version>
-			</dependency>
-			<dependency>
-				<groupId>com.top-logic</groupId>
 				<artifactId>tl-kafka-demo</artifactId>
 				<version>${tl.version}</version>
 			</dependency>

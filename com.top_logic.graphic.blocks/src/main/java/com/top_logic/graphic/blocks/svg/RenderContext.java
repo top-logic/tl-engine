@@ -5,6 +5,8 @@
  */
 package com.top_logic.graphic.blocks.svg;
 
+import com.top_logic.graphic.flow.data.Widget;
+
 /**
  * Context for rendering to SVG.
  *
@@ -18,5 +20,17 @@ public interface RenderContext {
 	 * @see TextMetrics
 	 */
 	TextMetrics measure(String text);
+
+	/**
+	 * Remembers temporary information during layout phases.
+	 */
+	void setRenderInfo(Widget widget, Object info);
+
+	/**
+	 * The info remembered before.
+	 * 
+	 * @see #setRenderInfo(Widget, Object)
+	 */
+	<T> T getRenderInfo(Widget widget);
 
 }

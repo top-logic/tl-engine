@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.graphic.flow;
 
+import com.top_logic.graphic.blocks.svg.AbstractRenderContext;
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.TextMetrics;
 import com.top_logic.graphic.blocks.svg.TextMetricsImpl;
@@ -12,7 +13,7 @@ import com.top_logic.graphic.blocks.svg.TextMetricsImpl;
 /**
  * {@link RenderContext} for testing only.
  */
-final class TestingRenderContext implements RenderContext {
+final class TestingRenderContext extends AbstractRenderContext {
 	@Override
 	public TextMetrics measure(String text) {
 		return new TextMetricsImpl(text.length() * 12, 12, 10);

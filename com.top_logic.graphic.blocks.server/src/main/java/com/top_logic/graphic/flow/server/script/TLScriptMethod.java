@@ -43,7 +43,7 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Reflection-based {@link GenericMethod TL-Script method} calling a static Java utility.
  */
-public class JavaScriptMethod extends GenericMethod {
+public class TLScriptMethod extends GenericMethod {
 
 	private final Method _java;
 
@@ -54,9 +54,9 @@ public class JavaScriptMethod extends GenericMethod {
 	private final boolean _canEvaluateAtCompileTime;
 
 	/**
-	 * Creates a {@link JavaScriptMethod}.
+	 * Creates a {@link TLScriptMethod}.
 	 */
-	protected JavaScriptMethod(String name, Method java, boolean sideEffectFree, boolean canEvaluateAtCompileTime,
+	protected TLScriptMethod(String name, Method java, boolean sideEffectFree, boolean canEvaluateAtCompileTime,
 			Converter[] conversions,
 			SearchExpression[] arguments) {
 		super(name, arguments);
@@ -68,7 +68,7 @@ public class JavaScriptMethod extends GenericMethod {
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new JavaScriptMethod(getName(), _java, _sideEffectFree, _canEvaluateAtCompileTime, _conversions,
+		return new TLScriptMethod(getName(), _java, _sideEffectFree, _canEvaluateAtCompileTime, _conversions,
 			arguments);
 	}
 
@@ -100,9 +100,9 @@ public class JavaScriptMethod extends GenericMethod {
 	}
 
 	/**
-	 * Builder for {@link JavaScriptMethod}.
+	 * Builder for {@link TLScriptMethod}.
 	 */
-	public static final class Builder extends AbstractSimpleMethodBuilder<JavaScriptMethod> {
+	public static final class Builder extends AbstractSimpleMethodBuilder<TLScriptMethod> {
 
 		private final Method _method;
 
@@ -115,7 +115,7 @@ public class JavaScriptMethod extends GenericMethod {
 		private final boolean _canEvaluateAtCompileTime;
 
 		/**
-		 * Configuration options for {@link JavaScriptMethod.Builder}.
+		 * Configuration options for {@link TLScriptMethod.Builder}.
 		 */
 		@TagName("java")
 		public interface Config extends AbstractSimpleMethodBuilder.Config<Builder> {
@@ -229,7 +229,7 @@ public class JavaScriptMethod extends GenericMethod {
 					ValueConverter result = ConfigUtil.getInstance(implClass);
 					return result;
 				} catch (ConfigurationException ex) {
-					Logger.error("Cannot instantiate converter for: " + param, ex, JavaScriptMethod.class);
+					Logger.error("Cannot instantiate converter for: " + param, ex, TLScriptMethod.class);
 				}
 			}
 			return defaultConverter(param, param.getType());
@@ -354,8 +354,8 @@ public class JavaScriptMethod extends GenericMethod {
 		}
 
 		@Override
-		public JavaScriptMethod build(Expr expr, SearchExpression[] args) throws ConfigurationException {
-			return new JavaScriptMethod(getName(), _method, _sideEffectFree, _canEvaluateAtCompileTime, _conversions,
+		public TLScriptMethod build(Expr expr, SearchExpression[] args) throws ConfigurationException {
+			return new TLScriptMethod(getName(), _method, _sideEffectFree, _canEvaluateAtCompileTime, _conversions,
 				args);
 		}
 
@@ -376,7 +376,7 @@ public class JavaScriptMethod extends GenericMethod {
 		private final ValueConverter _conversion;
 
 		/**
-		 * Creates a {@link JavaScriptMethod.Converter}.
+		 * Creates a {@link TLScriptMethod.Converter}.
 		 */
 		public Converter(int index, ValueConverter converter) {
 			_index = index;

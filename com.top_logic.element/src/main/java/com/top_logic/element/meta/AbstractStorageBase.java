@@ -101,10 +101,17 @@ public abstract class AbstractStorageBase<C extends AbstractStorageBase.Config<?
 	}
 
 	private static Object toPersistentObject(Object value) {
-		if (value instanceof TLFormObject) {
-			TLObject result = ((TLFormObject) value).getEditedObject();
+		if (value instanceof TLFormObject overlay) {
+			TLObject result = overlay.getEditedObject();
 			if (result == null) {
-				throw new IllegalStateException("Object creation not performed before updating persistent values.");
+				/* This can only be the case when the overlay is an ObjectCreation. This can happen,
+				 * for example, in the following case: An element with a composite reference is
+				 * edited and two new elements (A1, A2) are scheduled. If A1 is edited in a dialog,
+				 * then A1 is copied (to allow cancel changes). If an attribute of A1 is changed to
+				 * point to A2 and the changes are applied, then A2 (the object creation without a
+				 * base object) is set as value which leads to an error. */
+//				throw new IllegalStateException("Object creation not performed before updating persistent values.");
+				return overlay;
 			}
 			return result;
 		} else {

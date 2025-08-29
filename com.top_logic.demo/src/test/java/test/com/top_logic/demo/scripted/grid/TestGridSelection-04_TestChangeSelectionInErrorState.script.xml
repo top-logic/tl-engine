@@ -409,7 +409,7 @@
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
 					component-name="rootLayout#masterFrame"
-					label="Schließen"
+					label="Ok"
 					user-id="root"
 				/>
 				<action class="com.top_logic.layout.scripting.runtime.action.ExpectedFailureActionOp"
@@ -472,7 +472,7 @@
 				</action>
 				<action class="com.top_logic.layout.scripting.runtime.action.LabeledButtonActionOp"
 					component-name="rootLayout#masterFrame"
-					label="Schließen"
+					label="Ok"
 					user-id="root"
 				/>
 				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"

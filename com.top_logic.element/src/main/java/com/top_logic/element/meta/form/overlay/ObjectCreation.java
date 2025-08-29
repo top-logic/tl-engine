@@ -66,6 +66,13 @@ public class ObjectCreation extends FormObjectOverlay {
 		return true;
 	}
 
+	/**
+	 * The constructor function that will allocate the object during commit.
+	 */
+	public ObjectConstructor getConstructor() {
+		return _constructor;
+	}
+
 	@Override
 	public TLObject getEditedObject() {
 		return _created != null && _created.tValid() ? _created : null;

@@ -1073,6 +1073,7 @@
 						config:position="begin"/>
 
 					<scheme class="com.top_logic.element.layout.grid.GridBusinessObjectNaming" priority="resolve-only"/>
+					<scheme class="com.top_logic.element.meta.form.fieldprovider.CompositionFieldProvider$OpenDetailsCommand$Naming"/>
 				</schemes>
 			</instance>
 		</config>

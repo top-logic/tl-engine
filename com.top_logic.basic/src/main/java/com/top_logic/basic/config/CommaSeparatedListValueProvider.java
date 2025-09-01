@@ -5,31 +5,30 @@
  */
 package com.top_logic.basic.config;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import com.top_logic.basic.StringServices;
 
 /**
- * {@link SetConfigValueProvider} that serialises a {@link Set} separated by a ','.
+ * {@link ListConfigValueProvider} that serialises a {@link List} separated by a ','.
  * 
  * <p>
  * Eventually occurrences of ',' in the values are <b>not</b> escaped.
  * </p>
  * 
- * @see CommaSeparatedListValueProvider
+ * @see CommaSeparatedSetValueProvider
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public abstract class CommaSeparatedSetValueProvider<T> extends SetConfigValueProvider<T> {
+public abstract class CommaSeparatedListValueProvider<T> extends ListConfigValueProvider<T> {
 
 	@Override
-	protected Set<T> getValueNonEmpty(String propertyName, CharSequence propertyValue) throws ConfigurationException {
+	protected List<T> getValueNonEmpty(String propertyName, CharSequence propertyValue) throws ConfigurationException {
 		List<String> values = StringServices.toList(propertyValue, ',');
 		int cnt = values.size();
-		Set<T> result = new HashSet<>(cnt);
+		List<T> result = new ArrayList<>(cnt);
 		for (int n = 0; n < cnt; n++) {
 			result.add(parseSingleValue(propertyName, propertyValue, values.get(n)));
 		}
@@ -57,7 +56,7 @@ public abstract class CommaSeparatedSetValueProvider<T> extends SetConfigValuePr
 			throws ConfigurationException;
 
 	@Override
-	protected String getSpecificationNonNull(Set<T> configValue) {
+	protected String getSpecificationNonNull(List<T> configValue) {
 		switch (configValue.size()) {
 			case 0:
 				return StringServices.EMPTY_STRING;
@@ -79,12 +78,12 @@ public abstract class CommaSeparatedSetValueProvider<T> extends SetConfigValuePr
 	 * Formats a single configuration value
 	 * 
 	 * @param singleConfigValue
-	 *        An entry of the set given in {@link #getSpecificationNonNull(Set)}. May be
+	 *        An entry of the list given in {@link #getSpecificationNonNull(List)}. May be
 	 *        <code>null</code>, when the config value contains <code>null</code>.
 	 * 
 	 * @return A specification for the given config value.
 	 * 
-	 * @see #getSpecificationNonNull(Set)
+	 * @see #getSpecificationNonNull(List)
 	 */
 	protected abstract String formatSingleValue(T singleConfigValue);
 }

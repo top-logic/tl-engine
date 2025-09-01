@@ -14,10 +14,13 @@ import com.ibm.msg.client.jakarta.wmq.WMQConstants;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.services.jms.JMSClient;
 import com.top_logic.util.Resources;
@@ -114,18 +117,19 @@ public class IBMMQClient extends JMSClient {
 		String getPassword();
 
 		/**
-		 * The reconnect timeout in seconds for the connection.
+		 * The Option to activate the IBM auto-reconnect.
 		 */
 		@Name(AUTO_RECONNECT)
 		@BooleanDefault(false)
 		boolean getAutoReconnect();
 
 		/**
-		 * The reconnect timeout in seconds for the connection.
+		 * The time in milliseconds that the IBM auto-reconnect tries to reconnect.
 		 */
 		@Name(RECONNECT_TIMEOUT)
-		@IntDefault(240)
-		int getReconnectTimeout();
+		@StringDefault("4min")
+		@Format(MillisFormat.class)
+		long getReconnectTimeout();
 
 		/**
 		 * The channel of the target queue.
@@ -179,7 +183,7 @@ public class IBMMQClient extends JMSClient {
 		ibmcf.setStringProperty(WMQConstants.PASSWORD, config.getPassword());
 		if (config.getAutoReconnect()) {
 			ibmcf.setClientReconnectOptions(WMQConstants.WMQ_CLIENT_RECONNECT_Q_MGR);
-			ibmcf.setClientReconnectTimeout(config.getReconnectTimeout());
+			ibmcf.setClientReconnectTimeout((int) config.getReconnectTimeout());
 		}
 		return ibmcf;
 	}

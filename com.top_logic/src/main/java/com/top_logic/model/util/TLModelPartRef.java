@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfigurationValueProvider;
+import com.top_logic.basic.config.CommaSeparatedListValueProvider;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.annotation.Derived;
@@ -167,6 +168,25 @@ public class TLModelPartRef {
 		return _qualifiedName.equals(other._qualifiedName);
 	}
 
+	/**
+	 * {@link ConfigurationValueProvider} for a list of {@link TLModelPartRef}s referencing
+	 * {@link TLModelPart}s.
+	 */
+	public static class CommaSeparatedTLModelPartRefs extends CommaSeparatedListValueProvider<TLModelPartRef> {
+
+		@Override
+		protected TLModelPartRef parseSingleValue(String propertyName, CharSequence propertyValue,
+				String singlePropertyValue) throws ConfigurationException {
+			return TLModelPartRefValueProvider.INSTANCE.getValue(propertyName, singlePropertyValue);
+		}
+
+		@Override
+		protected String formatSingleValue(TLModelPartRef singleConfigValue) {
+			return TLModelPartRefValueProvider.INSTANCE.getSpecification(singleConfigValue);
+		}
+
+
+	}
 	/**
 	 * {@link ConfigurationValueProvider} for {@link TLModelPartRef}s referencing
 	 * {@link TLModelPart}s.

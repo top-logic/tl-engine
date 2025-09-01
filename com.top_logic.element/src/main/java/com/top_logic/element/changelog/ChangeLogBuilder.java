@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CollectionUtil;
@@ -44,6 +45,7 @@ import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Revision;
+import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.StorageDetail;
@@ -92,6 +94,8 @@ public class ChangeLogBuilder {
 	 * objects (if any).
 	 */
 	private Map<MOStructure, Map<String, SeparateTableStorage>> _storagesByTable = new HashMap<>();
+
+	private Set<TLModule> _excludeModules = Collections.emptySet();
 
 	/**
 	 * Creates a {@link ChangeLogBuilder}.
@@ -167,6 +171,21 @@ public class ChangeLogBuilder {
 	 */
 	public ChangeLogBuilder setIncludeTechnical(boolean includeTechnical) {
 		_includeTechnical = includeTechnical;
+		return this;
+	}
+
+	/**
+	 * {@link TLModule}s that must not be regarded.
+	 */
+	public Set<TLModule> getExcludedModules() {
+		return _excludeModules;
+	}
+
+	/**
+	 * @see #getExcludedModules()
+	 */
+	public ChangeLogBuilder setExcludedModules(Set<TLModule> excluded) {
+		_excludeModules = excluded;
 		return this;
 	}
 
@@ -274,7 +293,7 @@ public class ChangeLogBuilder {
 		
 			for (ObjectCreation creation : creations) {
 				MetaObject table = creation.getObjectType();
-				analyzeTechnicalUpdate(_changeSet, table, createdKeys, creation);
+				analyzeTechnicalUpdate(_changeSet.getRevision(), table, createdKeys, creation);
 		
 				List<TLClass> classes = _classesByTable.get(table);
 				if (classes == null) {
@@ -283,6 +302,9 @@ public class ChangeLogBuilder {
 				}
 		
 				TLObject object = _kb.resolveObjectKey(creation.getOriginalObject()).getWrapper();
+				if (excludedByModule(object)) {
+					continue;
+				}
 		
 				// Record a creation.
 				TransientCreation change = new TransientCreation();
@@ -300,7 +322,7 @@ public class ChangeLogBuilder {
 		
 			for (ItemUpdate update : updates) {
 				MetaObject table = update.getObjectType();
-				analyzeTechnicalUpdate(_changeSet, table, Collections.emptySet(), update);
+				analyzeTechnicalUpdate(_changeSet.getRevision(), table, Collections.emptySet(), update);
 		
 				List<TLClass> classes = _classesByTable.get(table);
 				if (classes == null) {
@@ -309,6 +331,9 @@ public class ChangeLogBuilder {
 				}
 		
 				TLObject newObject = _kb.resolveObjectKey(update.getOriginalObject()).getWrapper();
+				if (excludedByModule(newObject)) {
+					continue;
+				}
 		
 				// Record an update.
 				Set<TLStructuredTypePart> changedParts = enter(newObject);
@@ -356,7 +381,7 @@ public class ChangeLogBuilder {
 		
 			for (ItemDeletion deletion : deletions) {
 				MetaObject table = deletion.getObjectType();
-				analyzeTechnicalUpdate(_changeSet, table, deletedKeys, deletion);
+				analyzeTechnicalUpdate(_changeSet.getRevision(), table, deletedKeys, deletion);
 		
 				List<TLClass> classes = _classesByTable.get(table);
 				if (classes == null) {
@@ -367,7 +392,10 @@ public class ChangeLogBuilder {
 				KnowledgeItem item =
 					_kb.resolveObjectKey(deletion.getObjectId().toObjectKey(_changeSet.getRevision() - 1));
 				TLObject object = item.getWrapper();
-		
+				if (excludedByModule(object)) {
+					continue;
+				}
+
 				// Record a deletion.
 				TransientDeletion change = new TransientDeletion();
 				change.setObject(object);
@@ -379,7 +407,7 @@ public class ChangeLogBuilder {
 			}
 		}
 
-		private void analyzeTechnicalUpdate(ChangeSet changeSet, MetaObject table, Set<ObjectKey> createdDeletedKeys,
+		private void analyzeTechnicalUpdate(long revision, MetaObject table, Set<ObjectKey> createdDeletedKeys,
 				ItemChange change) {
 			Map<String, SeparateTableStorage> storages = _storagesByTable.get(table);
 			if (storages == null) {
@@ -396,14 +424,17 @@ public class ChangeLogBuilder {
 					// associate value objects with container objects by storing a foreign key value
 					// in the table of the value object.
 
-					ObjectKey oldId = inRevision(objId, changeSet.getRevision() - 1);
-					ObjectKey newId = inRevision(objId, changeSet.getRevision());
+					ObjectKey oldId = inRevision(objId, revision - 1);
+					ObjectKey newId = inRevision(objId, revision);
 					if (createdDeletedKeys.contains(oldId) || createdDeletedKeys.contains(newId)) {
 						// Part of a created or deleted object, no additional change.
-						return;
+						continue;
 					}
 
 					TLObject newObject = _kb.resolveObjectKey(newId).getWrapper();
+					if (excludedByModule(newObject)) {
+						continue;
+					}
 					ObjectKey partId = storage.getPartId(change.getValues());
 					TLStructuredTypePart part = _kb.resolveObjectKey(partId).getWrapper();
 
@@ -463,6 +494,9 @@ public class ChangeLogBuilder {
 		_storagesByTable = new HashMap<>();
 
 		for (TLModule module : _model.getModules()) {
+			if (_excludeModules.contains(module)) {
+				continue;
+			}
 			for (TLType type : module.getTypes()) {
 				if (type.getModelKind() == ModelKind.CLASS) {
 					TLClass classType = (TLClass) type;
@@ -490,5 +524,21 @@ public class ChangeLogBuilder {
 				}
 			}
 		}
+	}
+
+	boolean excludedByModule(TLObject obj) {
+		if (_excludeModules.isEmpty()) {
+			return false;
+		}
+		TLModule module = obj.tType().getModule();
+		if (!WrapperHistoryUtils.isCurrent(module)) {
+			/* Must actually not happen. The type is current in almost all cases, also for historic
+			 * items. When the type does not longer exists, the type and therefore the module is
+			 * historic. Check for name of the module in this case. */
+			return _excludeModules.stream()
+				.map(TLModule::getName)
+				.anyMatch(Predicate.isEqual(module.getName()));
+		}
+		return _excludeModules.contains(module);
 	}
 }

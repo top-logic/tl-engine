@@ -41,7 +41,7 @@ public interface SelectableBoxOperations extends DecorationOperations, SVGClickH
 	@Override
 	default void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
 		// No visible content.
-		self().getContent().distributeSize(context, 0, 0, width, height);
+		self().getContent().distributeSize(context, offsetX, offsetY, width, height);
 		self().setX(offsetX);
 		self().setY(offsetY);
 		self().setWidth(width);
@@ -56,7 +56,6 @@ public interface SelectableBoxOperations extends DecorationOperations, SVGClickH
 		}
 
 		out.beginGroup(self());
-		out.translate(self().getX(), self().getY());
 		String cssClass = self().isSelected() ? TL_SELECTED : TL_CAN_SELECT;
 		if (!StringServicesShared.isEmpty(self().getCssClass())) {
 			cssClass += " " + self().getCssClass();

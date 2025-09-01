@@ -24,6 +24,10 @@
 				</column>
 			</column-customizations>
 			<sort-columns order="date:descending"/>
+			<configurationProvider class="com.top_logic.layout.table.model.AllVisibleColumnsProvider"
+				columns="changes,name"
+				excluded="true"
+			/>
 		</configurationProviders>
 		<buttons>
 			<button id="exportExcel"

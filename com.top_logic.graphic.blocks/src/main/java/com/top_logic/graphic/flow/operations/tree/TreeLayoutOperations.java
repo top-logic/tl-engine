@@ -65,9 +65,9 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		// child node of a layouted box.
 		Map<Box, Box> nodeForAnchor = new HashMap<>();
 		for (TreeConnection connection : self().getConnections()) {
-			enterAnchor(nodeSet, nodeForAnchor, connection.getParent());
+			enterAnchor(nodeForAnchor, nodeSet, connection.getParent());
 			for (TreeConnector child : connection.getChildren()) {
-				enterAnchor(nodeSet, nodeForAnchor, child);
+				enterAnchor(nodeForAnchor, nodeSet, child);
 			}
 		}
 
@@ -217,9 +217,16 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 	/**
 	 * Helper method to build the mapping from nodes (that are layouted) for anchor boxes (that are
 	 * visually connected).
+	 * 
+	 * @param nodeForAnchor
+	 *        The mapping that is built.
+	 * @param nodes
+	 *        all top-level tree nodes that are layouted.
+	 * @param connector
+	 *        The tree connector to analyze.
 	 */
-	default void enterAnchor(Set<Box> nodes, Map<Box, Box> nodeForAnchor, TreeConnector connector) {
-		Box anchor = connector.getAnchor();
+	default void enterAnchor(Map<Box, Box> nodeForAnchor, Set<Box> nodes, TreeConnector connector) {
+		final Box anchor = connector.getAnchor();
 		Box ancestor = anchor;
 		while (ancestor != null) {
 			if (nodes.contains(ancestor)) {
@@ -231,6 +238,7 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 			if (parent instanceof Box) {
 				ancestor = (Box) parent;
 			} else {
+				// Not found, most likely an error.
 				break;
 			}
 		}
@@ -262,7 +270,8 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		}
 
 		for (TreeConnection connection : self().getConnections()) {
-			double fromX = fromX(connection.getParent().getAnchor());
+			TreeConnector parent = connection.getParent();
+			double fromX = fromX(parent.getAnchor());
 
 			double toX = Double.MAX_VALUE;
 			for (TreeConnector child : connection.getChildren()) {

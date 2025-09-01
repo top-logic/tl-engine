@@ -99,7 +99,7 @@ public class JSDiagramControl extends AbstractJSControl
 	
 	private ResizeObserver _observer;
 
-	private Timer serverUpdateTriggered = null;
+	private Timer _serverViewBoxUpdater = null;
 
 	static final int TIMEOUT = 10; // timeout in seconds
 
@@ -454,8 +454,8 @@ public class JSDiagramControl extends AbstractJSControl
 	}
 
 	private void updateServerViewbox() {
-		if (serverUpdateTriggered == null) {
-			serverUpdateTriggered = new Timer() {
+		if (_serverViewBoxUpdater == null) {
+			_serverViewBoxUpdater = new Timer() {
 				@Override
 				public void run() {
 					if (!DomGlobal.document.contains(_control)) {
@@ -466,10 +466,10 @@ public class JSDiagramControl extends AbstractJSControl
 					_diagram.setViewBoxY(_viewbox.getY());
 					_diagram.setViewBoxWidth(_viewbox.getWidth());
 					_diagram.setViewBoxHeight(_viewbox.getHeight());
-					serverUpdateTriggered = null;
+					_serverViewBoxUpdater = null;
 				}
 			};
-			serverUpdateTriggered.schedule(TIMEOUT * 1000);
+			_serverViewBoxUpdater.schedule(TIMEOUT * 1000);
 		}
 	}
 
@@ -511,6 +511,16 @@ public class JSDiagramControl extends AbstractJSControl
 	 */
 	void onChange(Object... args) {
 		_changeTimeout = 0;
+
+		if (_serverViewBoxUpdater != null) {
+			_serverViewBoxUpdater.cancel();
+			_serverViewBoxUpdater.run();
+			if (_changeTimeout != 0) {
+				// running updater has triggered a new timeout. Process all changes at one:
+				return;
+			}
+		}
+
 
 		applyScopeChanges(_scope.getDirty());
 

@@ -251,11 +251,15 @@ public class JSDiagramControl extends AbstractJSControl
 
 					// Beim Herauszoomen (positives delta) muss der Zoom
 					// den Faktor des vorherigen Levels nehmen, daher -10
-					int level = (direction < 0 ? zoomLevel : zoomLevel - 10) / 100;
+					int zL = (direction < 0 ? zoomLevel : zoomLevel - 10);
+					int level = JsMath.trunc(zL / 100);
 
 					// Anteil für 10% Zoom: 2^x * -10, wobei x immer das aktuell volle 100% Level
 					// ist
 					double factor = direction / (JsMath.pow(2, level) * (-10));
+					if (zL < 100) {
+						factor = factor * 2;
+					}
 					zoomSVG(factor, event.offsetX, event.offsetY);
 				} else if (event.shiftKey) {
 					double scrollFactor = getWheelScrollFactor(evt);
@@ -384,17 +388,36 @@ public class JSDiagramControl extends AbstractJSControl
 			calcZoomLevel();
 			panSVG(-_viewbox.getX(), -_viewbox.getY(), true);
 		} else {
+			float deltaW = (float) (parentW * zoomFactor);
+			float deltaH = (float) (parentH * zoomFactor);
 			float ratio = parentW / parentH;
 			float vbW = _viewbox.getWidth();
 			float vbH = _viewbox.getHeight();
-			if (ratio != vbW / vbH) {
+			if (ratio != vbW / vbH && ratio != 0) {
 				vbH = (vbW / ratio);
 			}
-			float deltaW = (float) (parentW * zoomFactor);
-			float deltaH = (float) (parentH * zoomFactor);
+			float newVBW = vbW - deltaW;
+			float newVBH = vbH - deltaH;
 
-			_viewbox.setWidth(vbW - deltaW);
-			_viewbox.setHeight(vbH - deltaH);
+			if (JsMath.abs(new JsNumber((newVBW - parentW) / parentW).toFixed(2)) < 0.05) {
+				newVBW = parentW;
+				newVBH = parentH;
+			}
+
+			float maxW = (float) _diagram.getRoot().getWidth();
+			float maxH = (float) _diagram.getRoot().getHeight();
+			if (maxW < newVBW && maxH < newVBH) {
+				if (ratio < 1) {
+					newVBH = maxH;
+					newVBW = (newVBH * ratio);
+				} else {
+					newVBW = maxW;
+					newVBH = (newVBW * ratio);
+				}
+			}
+
+			_viewbox.setWidth(newVBW);
+			_viewbox.setHeight(newVBH);
 			
 			calcZoomLevel();
 
@@ -411,6 +434,10 @@ public class JSDiagramControl extends AbstractJSControl
 			serverUpdateTriggered = new Timer() {
 				@Override
 				public void run() {
+					if (!DomGlobal.document.contains(_control)) {
+						serverUpdateTriggered = null;
+						return;
+					}
 					_diagram.setViewBoxX(_viewbox.getX());
 					_diagram.setViewBoxY(_viewbox.getY());
 					_diagram.setViewBoxWidth(_viewbox.getWidth());

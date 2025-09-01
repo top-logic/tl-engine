@@ -138,7 +138,6 @@ public class JSDiagramControl extends AbstractJSControl
 		String contentUrl = _control.getAttribute(DATA_CONTENT_ATTR);
 
 		Element ctrlParent = _control.parentElement;
-		com.google.gwt.dom.client.Element ctrl = jsinterop.base.Js.cast(_control);
 
 		_svgDoc = OMSVGParser.currentDocument();
 		_svg = _svgDoc.getElementById(controlElement().getId() + SVG_ID_SUFFIX);
@@ -345,7 +344,10 @@ public class JSDiagramControl extends AbstractJSControl
 		ResizeObserverCallback resize = new ResizeObserverCallback() {
 			@Override
 			public Object onInvoke(JsArray<ResizeObserverEntry> p0, ResizeObserver p1) {
-				zoomSVG(0, 0, 0);
+				/* Execute update in next animation frame: Otherwise the size of the observed
+				 * element may changed, which leads to warnings:
+				 * "ResizeObserver loop completed with undelivered notifications" */
+				DomGlobal.requestAnimationFrame(timestamp -> zoomSVG(0, 0, 0));
 				return null;
 			}
 		};

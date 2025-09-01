@@ -137,8 +137,6 @@ public class JSDiagramControl extends AbstractJSControl
 		_control = document.getElementById(getId());
 		String contentUrl = _control.getAttribute(DATA_CONTENT_ATTR);
 
-		Element ctrlParent = _control.parentElement;
-
 		_svgDoc = OMSVGParser.currentDocument();
 		_svg = _svgDoc.getElementById(controlElement().getId() + SVG_ID_SUFFIX);
 
@@ -177,10 +175,10 @@ public class JSDiagramControl extends AbstractJSControl
 					diagram.layout(_renderContext);
 
 					if (diagram.getViewBoxWidth() == 0) {
-						diagram.setViewBoxWidth(ctrlParent.clientWidth);
+						diagram.setViewBoxWidth(controlParentWidth());
 					}
 					if (diagram.getViewBoxHeight() == 0) {
-						diagram.setViewBoxHeight(ctrlParent.clientHeight - 5);
+						diagram.setViewBoxHeight(controlParentHeight() - 5);
 					}
 
 					diagram.draw(svgBuilder());
@@ -354,7 +352,7 @@ public class JSDiagramControl extends AbstractJSControl
 
 		_observer = new ResizeObserver(resize);
 
-		_observer.observe(ctrlParent);
+		_observer.observe(conrolParent());
 
 	}
 
@@ -363,11 +361,11 @@ public class JSDiagramControl extends AbstractJSControl
 		double fract = 1;
 		for (int i = 0; fract >= 1; i++) {
 			level = i;
-			fract = 2 - (_viewbox.getWidth() / _control.parentElement.clientWidth) * JsMath.pow(2, level);
+			fract = 2 - (_viewbox.getWidth() / controlParentWidth()) * JsMath.pow(2, level);
 		}
 		double factor;
 		if (level == 0) {
-			factor = _control.parentElement.clientWidth / _viewbox.getWidth();
+			factor = controlParentWidth() / _viewbox.getWidth();
 		} else {
 			factor = level + fract;
 		}
@@ -378,6 +376,18 @@ public class JSDiagramControl extends AbstractJSControl
 
 		hideZoomDisplay.cancel();
 		hideZoomDisplay.schedule(5 * 1000);
+	}
+
+	private int controlParentHeight() {
+		return conrolParent().clientHeight;
+	}
+
+	private int controlParentWidth() {
+		return conrolParent().clientWidth;
+	}
+
+	private Element conrolParent() {
+		return _control.parentElement;
 	}
 
 	private native int getWheelScrollFactor(Event event) /*-{
@@ -411,8 +421,8 @@ public class JSDiagramControl extends AbstractJSControl
 		if (_viewbox == null) {
 			return;
 		}
-		float parentW = _control.parentElement.clientWidth;
-		float parentH = _control.parentElement.clientHeight - 5;
+		float parentW = controlParentWidth();
+		float parentH = controlParentHeight() - 5;
 
 		if (parentH <= 0 || parentH <= 0) {
 			/* parent has either no width or height: This actually just occurs when the element was

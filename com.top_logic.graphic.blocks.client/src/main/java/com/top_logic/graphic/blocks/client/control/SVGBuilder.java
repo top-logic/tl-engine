@@ -399,7 +399,7 @@ public class SVGBuilder implements SvgWriter {
 	public void image(double x, double y, double width, double height, String href, ImageAlign align,
 			ImageScale scale) {
 		OMSVGImageElement img = _doc.createSVGImageElement((float) x, (float) y, (float) width, (float) height, href);
-		img.setAttribute(PRESERVE_ASPECT_RATIO_ATTR, align + " " + scale);
+		img.setAttribute(PRESERVE_ASPECT_RATIO_ATTR, align.protocolName() + " " + scale.protocolName());
 		appendChild(img);
 	}
 

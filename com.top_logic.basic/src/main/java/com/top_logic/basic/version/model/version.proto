@@ -36,7 +36,7 @@ message VersionInfo {
 	@Nullable	
 	string url;
 	
-	/** Date of the first releas of the software. */
+	/** Date of the first release of the software. */
 	@Nullable	
 	string inceptionYear;
 	
@@ -76,7 +76,7 @@ message License {
 	/** Official name of the license, preferably an SPDX identifier. */
 	string name;
 	
-	/** The URL where the license text can be downloade. */
+	/** The URL where the license text can be downloaded. */
 	@Nullable	
 	string url;
 	

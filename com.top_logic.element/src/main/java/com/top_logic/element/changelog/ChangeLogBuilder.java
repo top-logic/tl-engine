@@ -19,6 +19,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CollectionUtil;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.LongID;
 import com.top_logic.basic.SessionContext;
 import com.top_logic.basic.TLID;
@@ -500,29 +501,45 @@ public class ChangeLogBuilder {
 			for (TLType type : module.getTypes()) {
 				if (type.getModelKind() == ModelKind.CLASS) {
 					TLClass classType = (TLClass) type;
-
-					MOStructure table = TLModelUtil.getTable(classType);
-					_classesByTable.computeIfAbsent(table, x -> new ArrayList<>()).add(classType);
-					
-					for (TLStructuredTypePart part : classType.getLocalParts()) {
-						StorageDetail storage = part.getStorageImplementation();
-						if (storage.isReadOnly()) {
-							// Skip derived storages.
-							continue;
-						}
-						if (storage instanceof SeparateTableStorage associationStorage) {
-							String storageTable = associationStorage.getTable();
-							String storageColumn = associationStorage.getStorageColumn();
-
-							MOStructure storageType = (MOStructure) _kb.getMORepository().getType(storageTable);
-							Map<String, SeparateTableStorage> storageByColumn =
-								_storagesByTable.computeIfAbsent(storageType, x -> new HashMap<>());
-
-							storageByColumn.putIfAbsent(storageColumn, associationStorage);
-						}
+					try {
+						analyzeType(classType);
+					} catch (RuntimeException ex) {
+						// Safety. Do not fail when something is strange in the model.
+						Logger.error("Unable to analyze type " + TLModelUtil.qualifiedName(type), ex);
 					}
 				}
 			}
+		}
+	}
+
+	private void analyzeType(TLClass classType) {
+		MOStructure table = TLModelUtil.getTable(classType);
+		_classesByTable.computeIfAbsent(table, x -> new ArrayList<>()).add(classType);
+
+		for (TLStructuredTypePart part : classType.getLocalParts()) {
+			try {
+				analyzeTypePart(part);
+			} catch (RuntimeException ex) {
+				// Safety. Do not fail when something is strange in the model.
+				Logger.error("Unable to analyze type part " + TLModelUtil.qualifiedName(part), ex);
+			}
+		}
+	}
+
+	private void analyzeTypePart(TLStructuredTypePart part) {
+		StorageDetail storage = part.getStorageImplementation();
+		if (storage.isReadOnly()) {
+			return;
+		}
+		if (storage instanceof SeparateTableStorage associationStorage) {
+			String storageTable = associationStorage.getTable();
+			String storageColumn = associationStorage.getStorageColumn();
+
+			MOStructure storageType = (MOStructure) _kb.getMORepository().getType(storageTable);
+			Map<String, SeparateTableStorage> storageByColumn =
+				_storagesByTable.computeIfAbsent(storageType, x -> new HashMap<>());
+
+			storageByColumn.putIfAbsent(storageColumn, associationStorage);
 		}
 	}
 

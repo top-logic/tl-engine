@@ -348,7 +348,7 @@ public class SvgTagWriter implements SvgWriter {
 		writeAttribute(WIDTH_ATTR, width);
 		writeAttribute(HEIGHT_ATTR, height);
 		writeAttribute(HREF_ATTR, href);
-		writeAttribute(PRESERVE_ASPECT_RATIO_ATTR, align + " " + scale);
+		writeAttribute(PRESERVE_ASPECT_RATIO_ATTR, align.protocolName() + " " + scale.protocolName());
 		endEmptyTag();
 	}
 

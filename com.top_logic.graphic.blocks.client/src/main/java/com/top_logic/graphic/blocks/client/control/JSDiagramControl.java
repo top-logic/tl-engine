@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.vectomatic.dom.svg.OMSVGDocument;
@@ -69,6 +70,12 @@ import elemental2.promise.Promise;
 public class JSDiagramControl extends AbstractJSControl
 		implements JSDiagramControlCommon, DiagramContext {
 
+	/**
+	 * Timeout in seconds to inform the server about change of the viewport position or scroll
+	 * level.
+	 */
+	private static final int TIMEOUT = 3;
+
 	private OMSVGDocument _svgDoc;
 
 	private Element _control;
@@ -100,8 +107,6 @@ public class JSDiagramControl extends AbstractJSControl
 	private ResizeObserver _observer;
 
 	private Timer _serverViewBoxUpdater = null;
-
-	static final int TIMEOUT = 10; // timeout in seconds
 
 	/** Flag to indicate that currently a server side triggered diagram update is applied. */
 	boolean _processServerUpdate;
@@ -406,6 +411,13 @@ public class JSDiagramControl extends AbstractJSControl
 		}
 		float parentW = _control.parentElement.clientWidth;
 		float parentH = _control.parentElement.clientHeight - 5;
+
+		if (parentH <= 0 || parentH <= 0) {
+			/* parent has either no width or height: This actually just occurs when the element was
+			 * removed from the client. */
+			return;
+		}
+
 		if (zoomFactor >= 1) {
 			_viewbox.setWidth(parentW);
 			_viewbox.setHeight(parentH);
@@ -469,8 +481,10 @@ public class JSDiagramControl extends AbstractJSControl
 					_serverViewBoxUpdater = null;
 				}
 			};
-			_serverViewBoxUpdater.schedule(TIMEOUT * 1000);
+		} else {
+			_serverViewBoxUpdater.cancel();
 		}
+		_serverViewBoxUpdater.schedule((int) TimeUnit.SECONDS.toMillis(TIMEOUT));
 	}
 
 	@Override
@@ -529,6 +543,13 @@ public class JSDiagramControl extends AbstractJSControl
 			_scope.createPatch(new de.haumacher.msgbuf.json.JsonWriter(buffer));
 
 			String patch = buffer.toString();
+
+			if (!DomGlobal.document.contains(_control)) {
+				DomGlobal.console.info("Cancel sending update of patch, because control was removed from client: ",
+					patch);
+				return;
+			}
+
 			DomGlobal.console.info("Sending updates: ", patch);
 
 			sendUpdate(getId(), patch, true);

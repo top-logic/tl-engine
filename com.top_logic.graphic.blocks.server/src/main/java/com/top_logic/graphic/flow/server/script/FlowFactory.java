@@ -637,7 +637,11 @@ public class FlowFactory {
 		@StringDefault("black") String stroke, 
 		@DoubleDefault(1) double strokeWidth, 
 		boolean compact,
-		boolean alignTop,
+		@DoubleDefault(0.5)
+			double parentAlign,
+		@DoubleDefault(0)
+		double parentOffset,
+			boolean alignTop,
 		String cssClass,
 		Object userObject 
 	) {
@@ -650,7 +654,8 @@ public class FlowFactory {
 			.setStrokeStyle(stroke)
 			.setThickness(strokeWidth)
 			.setCompact(compact)
-			.setAlignTop(alignTop)
+			.setParentAlign(parentAlign)
+			.setParentOffset(parentOffset)
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}

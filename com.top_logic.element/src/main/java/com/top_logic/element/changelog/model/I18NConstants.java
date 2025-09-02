@@ -31,11 +31,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 PROBLEM_OBJECT_TO_CREATE_ALREADY_EXISTS__OBJ;
 
 	/**
-	 * @en The object that should be deleted does no longer exist: {0}
-	 */
-	public static ResKey1 PROBLEM_OBJECT_TO_DELETE_NO_LONGER_EXISTS__OBJ;
-
-	/**
 	 * @en The object that should be changed does no longer exist: {0}
 	 */
 	public static ResKey1 PROBLEM_OBJECT_TO_MODIFY_NO_LONGER_EXISTS__OBJ;

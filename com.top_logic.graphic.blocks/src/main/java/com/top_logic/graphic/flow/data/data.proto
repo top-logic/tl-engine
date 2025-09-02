@@ -89,8 +89,20 @@ message TreeLayout extends FloatingLayout {
 	/** Whether to minimize vertical space required to layout the tree. */
 	boolean compact;
 	
-	/** Whether to align the parent node to the top border of its children. By default, the parent node is centered among its children. */
-	boolean alignTop;
+	/** 
+	 * Factor to determine the placement of the parent node relative to it's children. 
+	 * With a value of zero the center of the parent node is placed at the same Y coordinate 
+	 * as the first of it's children. With a value of 1.0, the parent is aligned to its last child. 
+	 * A value in between, places the parent corresponding to the ratio between the first 
+	 * and the last child.
+	 */
+	@Default(0.5)
+	double parentAlign;
+	
+	/**
+	 * Offset to add to the parent Y coordinate after the alignment operation based on {@link #parentRatio}.
+	 */	
+	double parentOffset;
 	
 	/** The layout direction of nodes (from top/parent to bottom/children) */
 	DiagramDirection direction;

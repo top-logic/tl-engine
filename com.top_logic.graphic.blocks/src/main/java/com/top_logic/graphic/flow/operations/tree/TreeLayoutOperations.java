@@ -64,10 +64,11 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		// Mapping of anchor boxes to layouted top-level boxes. A tree connection may connect a
 		// child node of a layouted box.
 		Map<Box, Box> nodeForAnchor = new HashMap<>();
+		Map<Box, Box> anchorForNode = new HashMap<>();
 		for (TreeConnection connection : self().getConnections()) {
-			enterAnchor(nodeForAnchor, nodeSet, connection.getParent());
+			enterAnchor(nodeForAnchor, anchorForNode, nodeSet, connection.getParent());
 			for (TreeConnector child : connection.getChildren()) {
-				enterAnchor(nodeForAnchor, nodeSet, child);
+				enterAnchor(nodeForAnchor, anchorForNode, nodeSet, child);
 			}
 		}
 
@@ -105,7 +106,7 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		// Enter tree nodes in columns and assign reasonable Y coordinates to nodes.
 		double bottomY = -self().getGapY();
 		for (Box root : roots) {
-			bottomY = layoutTree(columns, childrenForParentNode, 0, root, bottomY);
+			bottomY = layoutTree(columns, childrenForParentNode, anchorForNode, 0, root, bottomY);
 		}
 
 		List<Double> columnWidths = new ArrayList<>();
@@ -130,8 +131,15 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		self().setHeight(bottomY);
 	}
 
-	/** Helper method to layout a single tree within a forest. */
-	default double layoutTree(List<List<Box>> columns, Map<Box, List<Box>> children, int level, Box node,
+	/**
+	 * Helper method to layout a single tree within a forest.
+	 * 
+	 * @param parentBottomY
+	 *        The maximum Y coordinate used among all nodes placed so far (the parent and all of the
+	 *        current node's preceding siblings and their sub-trees.
+	 */
+	default double layoutTree(List<List<Box>> columns, Map<Box, List<Box>> children, Map<Box, Box> anchorForNode,
+			int level, Box node,
 			double parentBottomY) {
 		while (columns.size() <= level) {
 			columns.add(new ArrayList<>());
@@ -157,6 +165,7 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 
 		List<Box> nextLevel = children.getOrDefault(node, Collections.emptyList());
 		if (nextLevel.isEmpty()) {
+			// This is a leaf node.
 			if (!self().isCompact()) {
 				for (int l = level + 1; l < columns.size(); l++) {
 					List<Box> down = columns.get(l);
@@ -167,38 +176,48 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 				}
 			}
 
+			// Place node at the minimum Y coordinate possible.
 			node.setY(minY);
 			bottomY = minY + node.getHeight();
 		} else {
+			// Recursively place all children.
 			double childBottomY = minY;
 			for (Box child : nextLevel) {
-				childBottomY = layoutTree(columns, children, level + 1, child, childBottomY);
+				childBottomY = layoutTree(columns, children, anchorForNode, level + 1, child, childBottomY);
 			}
 
-			Box first = nextLevel.get(0);
-			Box last = nextLevel.get(nextLevel.size() - 1);
+			Box firstChild = nextLevel.get(0);
+			Box lastChild = nextLevel.get(nextLevel.size() - 1);
 
-			double firstY = first.getY();
-			double lastY = last.getBottomY();
+			Box firstAnchor = anchorForNode.getOrDefault(firstChild, firstChild);
+			Box lastAnchor = anchorForNode.getOrDefault(lastChild, lastChild);
+
+			double firstY = firstAnchor.getY() + 0.5 * firstAnchor.getHeight();
+			double lastY = lastAnchor.getY() + 0.5 * lastAnchor.getHeight();
 
 			// Place parent node relative to its direct children.
-			double centerY = self().isAlignTop() ? firstY : (firstY + lastY - node.getHeight()) / 2;
+			double anchorY = firstY + (lastY - firstY) * self().getParentAlign() + self().getParentOffset();
 
-			if (minY <= centerY) {
+			Box nodeAnchor = anchorForNode.getOrDefault(node, node);
+			double nodeAnchorOffset = nodeAnchor.getY() - node.getY();
+			double nodeY = anchorY - 0.5 * nodeAnchor.getHeight() - nodeAnchorOffset;
+
+			if (nodeY >= minY) {
 				// Current node must be moved to the bottom to align with its children.
-				minY = centerY;
+				minY = nodeY;
 			} else {
 				// Children must be moved to the bottom to align with the current node.
-				// Length to shift the subtree to the bottom.
-				double shiftY = minY - centerY;
+
+				// Amount to shift the subtree to the bottom.
+				double shiftY = minY - nodeY;
 				for (Box child : nextLevel) {
 					shiftY(children, child, shiftY);
 				}
 				childBottomY += shiftY;
 			}
-			node.setY(minY);
+			node.setY(nodeY);
 
-			bottomY = Math.max(minY + node.getHeight(), childBottomY);
+			bottomY = Math.max(node.getBottomY(), childBottomY);
 		}
 
 		return bottomY;
@@ -219,18 +238,22 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 	 * visually connected).
 	 * 
 	 * @param nodeForAnchor
-	 *        The mapping that is built.
+	 *        The mapping from anchor to node that is built.
+	 * @param anchorForNode
+	 *        The mapping from node to its anchor that is built.
 	 * @param nodes
 	 *        all top-level tree nodes that are layouted.
 	 * @param connector
 	 *        The tree connector to analyze.
 	 */
-	default void enterAnchor(Map<Box, Box> nodeForAnchor, Set<Box> nodes, TreeConnector connector) {
+	default void enterAnchor(Map<Box, Box> nodeForAnchor, Map<Box, Box> anchorForNode, Set<Box> nodes,
+			TreeConnector connector) {
 		final Box anchor = connector.getAnchor();
 		Box ancestor = anchor;
 		while (ancestor != null) {
 			if (nodes.contains(ancestor)) {
 				nodeForAnchor.put(anchor, ancestor);
+				anchorForNode.put(ancestor, anchor);
 				break;
 			}
 

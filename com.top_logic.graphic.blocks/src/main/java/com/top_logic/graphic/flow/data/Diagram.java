@@ -31,16 +31,16 @@ public interface Diagram extends Widget, com.top_logic.graphic.flow.operations.D
 	String CONTEXT__PROP = "context";
 
 	/** @see #getViewBoxX() */
-	String VIEWBOX_X__PROP = "viewBoxX";
+	String VIEW_BOX_X__PROP = "viewBoxX";
 
 	/** @see #getViewBoxY() */
-	String VIEWBOX_Y__PROP = "viewBoxY";
+	String VIEW_BOX_Y__PROP = "viewBoxY";
 
 	/** @see #getViewBoxWidth() */
-	String VIEWBOX_WIDTH__PROP = "viewBoxWidth";
+	String VIEW_BOX_WIDTH__PROP = "viewBoxWidth";
 
 	/** @see #getViewBoxHeight() */
-	String VIEWBOX_HEIGHT__PROP = "viewBoxHeight";
+	String VIEW_BOX_HEIGHT__PROP = "viewBoxHeight";
 
 	/**
 	 * The top-level diagram element.

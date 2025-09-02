@@ -7,7 +7,9 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 
 	private boolean _compact = false;
 
-	private boolean _alignTop = false;
+	private double _parentAlign = 0.0d;
+
+	private double _parentOffset = 0.0d;
 
 	private com.top_logic.graphic.flow.data.DiagramDirection _direction = com.top_logic.graphic.flow.data.DiagramDirection.LTR;
 
@@ -77,21 +79,39 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	}
 
 	@Override
-	public final boolean isAlignTop() {
-		return _alignTop;
+	public final double getParentAlign() {
+		return _parentAlign;
 	}
 
 	@Override
-	public com.top_logic.graphic.flow.data.TreeLayout setAlignTop(boolean value) {
-		internalSetAlignTop(value);
+	public com.top_logic.graphic.flow.data.TreeLayout setParentAlign(double value) {
+		internalSetParentAlign(value);
 		return this;
 	}
 
-	/** Internal setter for {@link #isAlignTop()} without chain call utility. */
-	protected final void internalSetAlignTop(boolean value) {
-		_listener.beforeSet(this, ALIGN_TOP__PROP, value);
-		_alignTop = value;
-		_listener.afterChanged(this, ALIGN_TOP__PROP);
+	/** Internal setter for {@link #getParentAlign()} without chain call utility. */
+	protected final void internalSetParentAlign(double value) {
+		_listener.beforeSet(this, PARENT_ALIGN__PROP, value);
+		_parentAlign = value;
+		_listener.afterChanged(this, PARENT_ALIGN__PROP);
+	}
+
+	@Override
+	public final double getParentOffset() {
+		return _parentOffset;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.TreeLayout setParentOffset(double value) {
+		internalSetParentOffset(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getParentOffset()} without chain call utility. */
+	protected final void internalSetParentOffset(double value) {
+		_listener.beforeSet(this, PARENT_OFFSET__PROP, value);
+		_parentOffset = value;
+		_listener.afterChanged(this, PARENT_OFFSET__PROP);
 	}
 
 	@Override
@@ -281,7 +301,8 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	private static java.util.List<String> PROPERTIES = java.util.Collections.unmodifiableList(
 		java.util.Arrays.asList(
 			COMPACT__PROP, 
-			ALIGN_TOP__PROP, 
+			PARENT_ALIGN__PROP, 
+			PARENT_OFFSET__PROP, 
 			DIRECTION__PROP, 
 			GAP_X__PROP, 
 			GAP_Y__PROP, 
@@ -307,7 +328,8 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	public Object get(String field) {
 		switch (field) {
 			case COMPACT__PROP: return isCompact();
-			case ALIGN_TOP__PROP: return isAlignTop();
+			case PARENT_ALIGN__PROP: return getParentAlign();
+			case PARENT_OFFSET__PROP: return getParentOffset();
 			case DIRECTION__PROP: return getDirection();
 			case GAP_X__PROP: return getGapX();
 			case GAP_Y__PROP: return getGapY();
@@ -322,7 +344,8 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	public void set(String field, Object value) {
 		switch (field) {
 			case COMPACT__PROP: internalSetCompact((boolean) value); break;
-			case ALIGN_TOP__PROP: internalSetAlignTop((boolean) value); break;
+			case PARENT_ALIGN__PROP: internalSetParentAlign((double) value); break;
+			case PARENT_OFFSET__PROP: internalSetParentOffset((double) value); break;
 			case DIRECTION__PROP: internalSetDirection((com.top_logic.graphic.flow.data.DiagramDirection) value); break;
 			case GAP_X__PROP: internalSetGapX((double) value); break;
 			case GAP_Y__PROP: internalSetGapY((double) value); break;
@@ -338,8 +361,10 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 		super.writeFields(scope, out);
 		out.name(COMPACT__PROP);
 		out.value(isCompact());
-		out.name(ALIGN_TOP__PROP);
-		out.value(isAlignTop());
+		out.name(PARENT_ALIGN__PROP);
+		out.value(getParentAlign());
+		out.name(PARENT_OFFSET__PROP);
+		out.value(getParentOffset());
 		out.name(DIRECTION__PROP);
 		getDirection().writeTo(out);
 		out.name(GAP_X__PROP);
@@ -365,8 +390,12 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 				out.value(isCompact());
 				break;
 			}
-			case ALIGN_TOP__PROP: {
-				out.value(isAlignTop());
+			case PARENT_ALIGN__PROP: {
+				out.value(getParentAlign());
+				break;
+			}
+			case PARENT_OFFSET__PROP: {
+				out.value(getParentOffset());
 				break;
 			}
 			case DIRECTION__PROP: {
@@ -405,7 +434,8 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	public void readField(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case COMPACT__PROP: setCompact(in.nextBoolean()); break;
-			case ALIGN_TOP__PROP: setAlignTop(in.nextBoolean()); break;
+			case PARENT_ALIGN__PROP: setParentAlign(in.nextDouble()); break;
+			case PARENT_OFFSET__PROP: setParentOffset(in.nextDouble()); break;
 			case DIRECTION__PROP: setDirection(com.top_logic.graphic.flow.data.DiagramDirection.readDiagramDirection(in)); break;
 			case GAP_X__PROP: setGapX(in.nextDouble()); break;
 			case GAP_Y__PROP: setGapY(in.nextDouble()); break;

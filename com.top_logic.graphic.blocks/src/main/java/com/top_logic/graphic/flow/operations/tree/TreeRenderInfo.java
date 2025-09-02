@@ -31,6 +31,8 @@ public class TreeRenderInfo {
 
 		double _width;
 
+		private double _offsetX;
+
 		/**
 		 * The width of this column (maximum width of nodes placed in this column).
 		 */
@@ -71,6 +73,20 @@ public class TreeRenderInfo {
 		 */
 		Box getBox(int i) {
 			return _boxes.get(i);
+		}
+
+		public void computeWidth() {
+			double maxWidth = 0;
+			for (Box node : getBoxes()) {
+				maxWidth = Math.max(maxWidth, node.getWidth());
+			}
+
+			_width = maxWidth;
+		}
+
+		public void setOffsetX(double offsetX) {
+			_offsetX = offsetX;
+
 		}
 	}
 
@@ -239,29 +255,33 @@ public class TreeRenderInfo {
 	 * its children.
 	 */
 	public void computeLayout() {
-		double bottomY = -_gapY;
+		double width = 0;
+		double height = 0;
 
 		// Enter tree nodes in columns and assign reasonable Y coordinates to nodes.
-		for (Box root : getRoots()) {
-			bottomY = layoutTree(0, root, bottomY);
+		if (!getRoots().isEmpty()) {
+			height -= -_gapY;
+			for (Box root : getRoots()) {
+				height = layoutTree(0, root, height);
+			}
 		}
 
 		// Compute column widths.
-		double minX = 0;
-		for (Column column : getColumns()) {
-			double maxWidth = 0;
-			for (Box node : column.getBoxes()) {
-				maxWidth = Math.max(maxWidth, node.getWidth());
+		if (!getColumns().isEmpty()) {
+			for (Column column : getColumns()) {
+				column.setOffsetX(width);
+				column.computeWidth();
+
+				width += column.getWidth();
+				width += _gapX;
 			}
 
-			column._width = maxWidth;
-
-			minX += maxWidth;
-			minX += _gapX;
+			// Subtract last gap.
+			width -= _gapX;
 		}
 
-		_width = minX - (getColumns().isEmpty() ? 0.0 : _gapX);
-		_height = bottomY;
+		_width = width;
+		_height = height;
 	}
 
 	/**

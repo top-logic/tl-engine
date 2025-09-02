@@ -4,7 +4,9 @@
 
 <p>Damit eine Nachricht gesendet werden kann, muss eine Ziel-Konfiguration im JMS-Service angelegt sein (weitere Information zum Senden unter <a class="tlObject" href="?page=jmsSend&amp;uuid=f8c53117-7d76-40ac-a2b7-8e4340988f03">JMS Nachrichten</a>). Der in der Konfiguration definierte Warteschlangenmanager muss unter der angegebenen Adresse erreichbar sein.</p>
 
-<p>Als Wartschlangenmanager und Server können verschiedene Message Queue Systeme (MQ Systeme) eingestzt werden. Für die Unterstützung der zwei gängigen MQ Systeme <strong>IBM MQ</strong> und <strong>ActiveMQ</strong> existieren bereits Module, die von Werk aus mitgeliefert werden.</p>
+<p>Sollte die Verbindung zum Message Queue System abbrechen, versucht die Anwendung diese wieder herzustellen, wenn versucht wird etwas zu senden. Ist das Message Queue System wieder erreichbar, kann die Verbindung auch durch einen Neustart des JMS Service wieder aufgebaut werden. Dienste können im <strong>Service Editor</strong> unter <strong>Administration > Development > Service Editor</strong> verwaltet werden.</p>
+
+<p>Als Wartschlangenmanager und Server können verschiedene Message Queue Systeme (MQ Systeme) eingesetzt werden. Für die Unterstützung der zwei gängigen MQ Systeme <strong>IBM MQ</strong> und <strong>ActiveMQ</strong> existieren bereits Module, die von Werk aus mitgeliefert werden.</p>
 
 <p>Des weiteren gibt es eine (nicht getestete) Unterstützung für JNDI (Java Naming and Directory Interface). <strong>Achtung:</strong> Hier gibt es keine vorgegebenen Konfigurationsoptionen, es muss also darauf geachtet werden, den JNDI Lookup für das entsprechende MQ System korrekt aufzubauen.</p>
 

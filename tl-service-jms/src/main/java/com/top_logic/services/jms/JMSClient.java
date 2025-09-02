@@ -147,7 +147,10 @@ public abstract class JMSClient extends AbstractConfiguredInstance<JMSClient.Con
 			public void onException(JMSException exception) {
 				InfoService.showWarning(I18NConstants.ERROR_CONNECTION_LOST,
 					I18NConstants.ERROR_CONNECTION_LOST_DETAILS);
-				Logger.warn("Connection to the MQ System lost.", exception, this);
+				Logger.warn(
+					"Connection to the MQ System lost. Please make sure the MQ system is up "
+						+ "and running before trying to send a message or restarting the JMSService.",
+					exception, this);
 			}
 		});
 	}

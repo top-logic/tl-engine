@@ -431,12 +431,12 @@ public class JSDiagramControl extends AbstractJSControl
 			float maxW = (float) _diagram.getRoot().getWidth();
 			float maxH = (float) _diagram.getRoot().getHeight();
 			if (maxW < newVBW && maxH < newVBH) {
-				if (ratio < 1) {
+				if ((maxW / parentW) < (maxH / parentH)) {
 					newVBH = maxH;
 					newVBW = (newVBH * ratio);
 				} else {
 					newVBW = maxW;
-					newVBH = (newVBW * ratio);
+					newVBH = (newVBW / ratio);
 				}
 			}
 

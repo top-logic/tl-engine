@@ -25,9 +25,9 @@ import com.top_logic.graphic.flow.data.Widget;
 public class TreeRenderInfo {
 
 	class Column {
-		List<TreeNode> _boxes = new ArrayList<>();
+		private List<TreeNode> _boxes = new ArrayList<>();
 
-		double _width;
+		private double _width;
 
 		private double _offsetX;
 
@@ -50,16 +50,23 @@ public class TreeRenderInfo {
 		}
 
 		/**
+		 * TODO
+		 */
+		public double getOffsetX() {
+			return _offsetX;
+		}
+
+		/**
 		 * The width of this column (maximum width of nodes placed in this column).
 		 */
-		double getWidth() {
+		public double getWidth() {
 			return _width;
 		}
 
 		/**
 		 * All layouted boxes that are placed in this column.
 		 */
-		List<TreeNode> getBoxes() {
+		public List<TreeNode> getBoxes() {
 			return _boxes;
 		}
 
@@ -68,7 +75,7 @@ public class TreeRenderInfo {
 		 *
 		 * @param root
 		 */
-		void addBox(TreeNode node) {
+		public void addBox(TreeNode node) {
 			_boxes.add(node);
 		}
 
@@ -77,18 +84,18 @@ public class TreeRenderInfo {
 		 *
 		 * @return
 		 */
-		int size() {
+		public int size() {
 			return _boxes.size();
 		}
 
 		/**
 		 * TODO
 		 *
-		 * @param i
+		 * @param index
 		 * @return
 		 */
-		TreeNode getBox(int i) {
-			return _boxes.get(i);
+		public TreeNode getBox(int index) {
+			return _boxes.get(index);
 		}
 
 		public void computeWidth() {
@@ -118,27 +125,27 @@ public class TreeRenderInfo {
 		}
 	}
 
+	private final Map<Box, TreeNode> _nodeForBox;
+
+	private final Map<Box, TreeNode> _nodeForAnchor;
+
+	private final List<TreeNode> _roots;
+
 	private final List<Column> _columns = new ArrayList<>();
 
-	private Map<Box, TreeNode> _nodeForAnchor;
+	private final double _gapX;
 
-	private List<TreeNode> _roots;
+	private final double _gapY;
 
-	private double _gapY;
+	private final boolean _compact;
 
-	private boolean _compact;
+	private final double _parentAlign;
 
-	private double _parentAlign;
-
-	private double _parentOffset;
-
-	private double _gapX;
+	private final double _parentOffset;
 
 	private double _width;
 
 	private double _height;
-
-	private Map<Box, TreeNode> _nodeSet;
 
 	/**
 	 * Creates a {@link TreeRenderInfo}.
@@ -150,9 +157,9 @@ public class TreeRenderInfo {
 		_gapY = gapY;
 		_parentAlign = parentAlign;
 		_parentOffset = parentOffset;
-		_nodeSet = new HashMap<>();
+		_nodeForBox = new HashMap<>();
 		for (Box node : nodes) {
-			_nodeSet.put(node, new TreeNode(node));
+			_nodeForBox.put(node, new TreeNode(node));
 		}
 
 		_nodeForAnchor = new HashMap<>();
@@ -178,7 +185,7 @@ public class TreeRenderInfo {
 		}
 
 		_roots = new ArrayList<>();
-		for (TreeNode node : _nodeSet.values()) {
+		for (TreeNode node : _nodeForBox.values()) {
 			if (node.getParent() == null) {
 				_roots.add(node);
 			}
@@ -199,7 +206,7 @@ public class TreeRenderInfo {
 		final Box anchor = connector.getAnchor();
 		Box ancestor = anchor;
 		while (ancestor != null) {
-			TreeNode node = _nodeSet.get(ancestor);
+			TreeNode node = _nodeForBox.get(ancestor);
 			if (node != null) {
 				node.setAnchor(anchor);
 				_nodeForAnchor.put(anchor, node);
@@ -254,7 +261,8 @@ public class TreeRenderInfo {
 	 * Shifts the subtree rooted at the given node to the bottom.
 	 */
 	public void shiftY(TreeNode node, double shiftY) {
-		node.getBox().setY(node.getBox().getY() + shiftY);
+		Box box = node.getBox();
+		box.setY(box.getY() + shiftY);
 		for (TreeNode child : node.getChildren()) {
 			shiftY(child, shiftY);
 		}
@@ -314,6 +322,7 @@ public class TreeRenderInfo {
 
 		double bottomY;
 
+		Box rootBox = root.getBox();
 		List<TreeNode> nextLevel = root.getChildren();
 		if (nextLevel.isEmpty()) {
 			// This is a leaf node.
@@ -328,8 +337,8 @@ public class TreeRenderInfo {
 			}
 
 			// Place node at the minimum Y coordinate possible.
-			root.getBox().setY(minY);
-			bottomY = minY + root.getBox().getHeight();
+			rootBox.setY(minY);
+			bottomY = minY + rootBox.getHeight();
 		} else {
 			// Recursively place all children.
 			double childBottomY = minY;
@@ -370,9 +379,9 @@ public class TreeRenderInfo {
 
 				nodeY += shiftY;
 			}
-			root.getBox().setY(nodeY);
+			rootBox.setY(nodeY);
 
-			bottomY = Math.max(root.getBox().getBottomY(), childBottomY);
+			bottomY = Math.max(rootBox.getBottomY(), childBottomY);
 		}
 
 		return bottomY;

@@ -185,13 +185,17 @@ public class Producer extends AbstractConfiguredInstance<Producer.Config<?>> {
 			_producer.send(_destination, message);
 		} catch (Exception exception) {
 			Logger.warn(exception.getMessage(), exception, this);
+			Logger.warn("Error sending a message by producer " + _name + ". "
+				+ "Problem with the connection to the MQ system. Trying to reconnect...", this);
 			InfoService.showWarning(I18NConstants.ERROR_SENDING_MSG__NAME.fill(_name),
 				I18NConstants.ERROR_NO_CONNECTION);
 			try {
 				_client.connect();
 				setup(_client);
+				Logger.info("Reconnect successful. Trying to resend message...", this);
 				InfoService.showInfo(I18NConstants.INFO_RECONNECT_SUCCESS);
 				_producer.send(_destination, message);
+				Logger.info("Resend successful.", this);
 				InfoService.showInfo(I18NConstants.INFO_RESEND_SUCCESS);
 			} catch (JMSException | NamingException ex) {
 				InfoService.logError(I18NConstants.ERROR_RECONNECT_FAILED, ex.getMessage(), ex, this);

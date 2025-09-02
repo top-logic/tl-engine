@@ -137,8 +137,6 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 				TLObject deleted = deletion.getObject();
 				TLObject toDelete = WrapperHistoryUtils.getCurrent(deleted);
 				if (toDelete == null) {
-					problems.add(I18NConstants.PROBLEM_OBJECT_TO_DELETE_NO_LONGER_EXISTS__OBJ
-						.fill(MetaLabelProvider.INSTANCE.getLabel(deleted)));
 					continue;
 				}
 

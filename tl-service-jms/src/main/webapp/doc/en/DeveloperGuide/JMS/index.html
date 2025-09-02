@@ -1,0 +1,172 @@
+<p><strong>JMS (Jakarta Messaging, formerly Java Message Service)</strong> is a message queue service used to send messages to a queue or topic.</p>
+
+<p>The JMS API allows messages to be sent to a server and retrieved from the server synchronously or asynchronously. The documentation for the JMS API can be found at this <a href="https://jakarta.ee/specifications/messaging/3.1/jakarta-messaging-spec-3.1.html#introduction">link</a>.</p>
+
+<p>In order for a message to be sent, a target configuration must be created in the JMS service (for more information on sending, see <a class="tlObject" href="?page=jmsSend&amp; uuid=f8c53117-7d76-40ac-a2b7-8e4340988f03">JMS Messages</a>). The queue manager defined in the configuration must be accessible at the specified address.</p>
+
+<p>If the connection to the message queue system is interrupted, the application will attempt to reestablish it when an attempt is made to send something. Once the message queue system is accessible again, the connection can also be reestablished by restarting the JMS service. Services can be managed in the <strong>Service Editor</strong> under <strong>Administration > Development > Service Editor</strong>.</p>
+
+<p>Various message queue systems (MQ systems) can be used as queue managers and servers. Modules are already available for supporting the two most common MQ systems, <strong>IBM MQ</strong> and <strong>ActiveMQ</strong>, and are supplied as standard.</p>
+
+<p>There is also (untested) support for JNDI (Java Naming and Directory Interface). <strong>Please note:</strong> There are no predefined configuration options here, so care must be taken to set up the JNDI lookup for the corresponding MQ system correctly.</p>
+
+<p></p>
+
+<h2>Supporting additional MQ systems</h2>
+
+<p>A separate module must be created for each additional MQ system that is to be supported. The structure of such a module is shown below using the existing module for ActiveMQ as an example.</p>
+
+<p>First, a new Maven project must be created to serve as the basis for the new module. (In our example, tl-service-jms-activemq)</p>
+
+<p>In the second step, the correct Java package must now be created in the <code class="hljs inlineCode">src/main/java</code> folder.</p>
+
+<p>To ensure that the module can access the required classes of the JMS service without any problems, the path should consist of the base path of the service <code class="hljs inlineCode">com.top_logic.services.jms</code> and the appended module name.</p>
+
+<p>The code for the ActiveMQ module is located in the following package: com.top_logic.services.jms.activemq. This package now contains two Java classes: ActiveMQClient.java and package-info.java. </p>
+
+<p>The configuration for the MQ system is created in the first class and the connection to it is prepared. In <code class="hljs inlineCode">package-info.java</code>, on the other hand, only the package path needs to be specified (here <code class="hljs inlineCode">package com.top_logic.services.jms.activemq;</code>).</p>
+
+<p>The classes for the module (e.g., <code class="hljs inlineCode">ActiveMQClient.java</code>) are named according to the scheme <em>MQSystemName</em> + Client (e.g., for IBM MQ, <code class="hljs inlineCode">IBMMQClient.java</code>).</p>
+
+<p> </p>
+
+<h3>Implementation</h3>
+
+<p>The module class (in our example <code class="hljs inlineCode">ActiveMQClient.java</code>) must extend the class <code class="hljs inlineCode">JMSClient</code> from <code class="hljs inlineCode">com.top_logic.services.jms</code>. </p>
+
+<pre>
+<code class="language-java">public class ActiveMQClient extends JMSClient {</code></pre>
+
+<p>This is necessary so that the JMSService can use the appropriate configuration. Furthermore, standard configurations that are always required are adopted in this way. </p>
+
+<p>First, the class now needs a configuration interface. The display order of the configuration options can be specified using the annotation <code class="hljs inlineCode">@DisplayOrder({})</code>, but this is optional.</p>
+
+<p>In a configuration interface, a get method must be created for each configuration, to which a name can also be assigned.</p>
+
+<p>The following example from <code class="hljs inlineCode">ActiveMQClient.java</code> contains references in the annotation to <code class="hljs inlineCode">PRODUCER_CONFIGS</code> and <code class="hljs inlineCode">CONSUMER_CONFIGS</code>, which are set in JMSClient.Config.</p>
+
+<p>These two options can be used in the annotation <code class="hljs inlineCode">@DisplayOrder({})</code>, but should not be changed or used elsewhere. </p>
+
+<pre>
+<code class="language-java">/**
+ * Configuration options for {@link ActiveMQClient}.
+ */
+@DisplayOrder({
+    Config.URL_SCHEME,
+    Config.HOST,
+    Config.PORT,
+    Config.USER,
+    Config.PASSWORD,
+    Config.PRODUCER_CONFIGS,
+    Config.CONSUMER_CONFIGS })
+public interface Config extends JMSClient.Config {
+
+    /**
+     * Configuration name for {@link #getURLScheme()}.
+     */
+    String URL_SCHEME = "url-scheme";
+
+    /**
+     * Configuration name for {@link #getHost()}.
+     */
+    String HOST = "host";
+
+    /**
+     * Configuration name for {@link #getPort()}.
+     */
+    String PORT = "port";
+
+    /**
+     * Configuration name for {@link #getUser()}.
+     */
+    String USER = "user";
+
+    /**
+     * Configuration name for {@link #getPassword()}.
+     */
+    String PASSWORD = "password";
+
+    /**
+     * The URL-Scheme of the connection.
+     */
+    @Mandatory
+    @Name(URL_SCHEME)
+    URLScheme getURLScheme();
+
+    /**
+     * The host of the target queue.
+     */
+    @Mandatory
+    @Name(HOST)
+    String getHost();
+
+    /**
+     * The port of the target queue.
+     */
+    @Name(PORT)
+    @IntDefault(-1)
+    int getPort();
+
+    /**
+     * The user name to log in to the message queue server.
+     */
+    @Name(USER)
+    String getUser();
+
+    /**
+     * The password to the given user name.
+     */
+    @Encrypted
+    @Name(PASSWORD)
+    String getPassword();
+}</code></pre>
+
+<p>As can be seen in the example above, the configuration options can be of different types and are given their configuration name as a string by the annotation <code class="hljs inlineCode">@Name()</code>. This is used to give the configuration a translatable name and, if desired, a tooltip. </p>
+
+<p>The type <code class="hljs inlineCode">URLScheme</code> is an enum and ensures that a drop-down menu appears in the configuration from which you can select an option from the enum. In this enum, one of four options can be selected.</p>
+
+<pre>
+<code class="language-java">public enum URLScheme {
+    TCP,
+    UDP,
+    VM,
+    JGROUPS;
+}</code></pre>
+
+<p>After configuration, the class still needs a constructor and must implement the abstract method <code class="hljs inlineCode">setupConnectionFactory</code>.</p>
+
+<pre>
+<code class="language-java">public ActiveMQClient(InstantiationContext context, Config config) {
+    super(context, config);
+}
+
+@Override
+public ConnectionFactory setupConnectionFactory() {
+    Config config = (Config) getConfig();
+    String url = config.getURLScheme().toString().toLowerCase() + "://" + config.getHost() + ":" + config.getPort();
+    ActiveMQConnectionFactory amqcf = new ActiveMQConnectionFactory(url);
+    amqcf.setUser(config.getUser());
+    amqcf.setPassword(config.getPassword());
+    return amqcf;
+}</code></pre>
+
+<p>All settings required by the selected MQ system to create a <code class="hljs inlineCode">ConnectionFactory</code> must now be made here. This must be returned so that a connection to the MQ system can be established.</p>
+
+<p> </p>
+
+<h3>Names, tooltips & translations</h3>
+
+<p>In addition to the Java package <code class="hljs inlineCode">com.top_logic.services.jms.activemq</code> that has been created, a folder <code class="hljs inlineCode">META-INF</code> must also be created, if it does not already exist. This folder contains one file for each language in which the configuration is to be available.</p>
+
+<p>The files must adhere to the following naming convention <code class="hljs inlineCode">messages_de.properties</code>, where <em>_de</em> represents the language abbreviation. (This could also be <em>_en</em>, for example.)</p>
+
+<p>In this file, each line specifies a name, tooltip, or translation. A line begins with the path of the value to be specified, followed by the text for that value. For example:</p>
+
+<pre>
+<code class="language-java">com.top_logic.services.jms.activemq.ActiveMQClient.Config.user = User
+com.top_logic.services.jms.activemq.ActiveMQClient.Config.user.tooltip = The user name for logging in to the message queue server.
+com.top_logic.services.jms.activemq.ActiveMQClient.Config.password = Password
+com.top_logic.services.jms.activemq.ActiveMQClient.Config.password.tooltip = The password for the specified user name.</code></pre>
+
+<p><br />
+<strong>The module is now complete and should be available for selection when configuring a target in JMSService in the user interface. </strong></p>

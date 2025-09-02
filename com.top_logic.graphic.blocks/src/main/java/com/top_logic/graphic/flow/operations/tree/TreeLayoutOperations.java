@@ -6,15 +6,7 @@
 package com.top_logic.graphic.flow.operations.tree;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
@@ -23,8 +15,8 @@ import com.top_logic.graphic.flow.data.DiagramDirection;
 import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
 import com.top_logic.graphic.flow.data.TreeLayout;
-import com.top_logic.graphic.flow.data.Widget;
 import com.top_logic.graphic.flow.operations.layout.FloatingLayoutOperations;
+import com.top_logic.graphic.flow.operations.tree.TreeRenderInfo.Column;
 
 /**
  * Operations for a {@link TreeLayout}.
@@ -59,63 +51,21 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
 		FloatingLayoutOperations.super.computeIntrinsicSize(context, offsetX, offsetY);
 
-		Set<Box> nodeSet = new HashSet<>(self().getNodes());
-
-		// Mapping of anchor boxes to layouted top-level boxes. A tree connection may connect a
-		// child node of a layouted box.
-		Map<Box, Box> nodeForAnchor = new HashMap<>();
-		Map<Box, Box> anchorForNode = new HashMap<>();
-		for (TreeConnection connection : self().getConnections()) {
-			enterAnchor(nodeForAnchor, anchorForNode, nodeSet, connection.getParent());
-			for (TreeConnector child : connection.getChildren()) {
-				enterAnchor(nodeForAnchor, anchorForNode, nodeSet, child);
-			}
-		}
-
-		// The parent and children relations on layouted nodes.
-		Map<Box, Box> parentForChildNode = new HashMap<>();
-		Map<Box, List<Box>> childrenForParentNode = new HashMap<>();
-		for (TreeConnection connection : self().getConnections()) {
-			Box parentNode = nodeForAnchor.get(connection.getParent().getAnchor());
-			List<Box> childNodes =
-				connection.getChildren().stream()
-					.map(TreeConnector::getAnchor)
-					.map(nodeForAnchor::get)
-					.filter(Objects::nonNull)
-					.collect(Collectors.toList());
-			for (Box childNode : childNodes) {
-				parentForChildNode.put(childNode, parentNode);
-			}
-			childrenForParentNode.put(parentNode, childNodes);
-		}
-
-		// The root nodes of the forest to layout.
-		List<Box> roots = new ArrayList<>();
-		for (Box node : self().getNodes()) {
-			if (parentForChildNode.get(node) == null) {
-				roots.add(node);
-			}
-		}
-		
-		// Sort roots by their (last) Y coordinates to get a stable order of the layout.
-		roots.sort(Comparator.comparingDouble(b -> b.getY()));
-
-		// List of columns to embed the tree to.
-		List<List<Box>> columns = new ArrayList<>();
+		TreeRenderInfo renderInfo = new TreeRenderInfo(self().getNodes(), self().getConnections());
 
 		// Enter tree nodes in columns and assign reasonable Y coordinates to nodes.
 		double bottomY = -self().getGapY();
-		for (Box root : roots) {
-			bottomY = layoutTree(columns, childrenForParentNode, anchorForNode, 0, root, bottomY);
+		for (Box root : renderInfo.getRoots()) {
+			bottomY = layoutTree(renderInfo, 0, root, bottomY);
 		}
 
 		List<Double> columnWidths = new ArrayList<>();
 
-		// Assign X coordinates to all nodes.
+		// Compute column widths.
 		double minX = 0;
-		for (List<Box> column : columns) {
+		for (Column column : renderInfo.getColumns()) {
 			double maxWidth = 0;
-			for (Box node : column) {
+			for (Box node : column.getBoxes()) {
 				maxWidth = Math.max(maxWidth, node.getWidth());
 			}
 
@@ -125,9 +75,9 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 			minX += self().getGapX();
 		}
 
-		context.setRenderInfo(self(), new TreeRenderInfo(columns, columnWidths));
+		context.setRenderInfo(self(), renderInfo);
 
-		self().setWidth(minX - (columns.isEmpty() ? 0.0 : self().getGapX()));
+		self().setWidth(minX - (renderInfo.getColumns().isEmpty() ? 0.0 : self().getGapX()));
 		self().setHeight(bottomY);
 	}
 
@@ -138,18 +88,13 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 	 *        The maximum Y coordinate used among all nodes placed so far (the parent and all of the
 	 *        current node's preceding siblings and their sub-trees.
 	 */
-	default double layoutTree(List<List<Box>> columns, Map<Box, List<Box>> children, Map<Box, Box> anchorForNode,
-			int level, Box node,
-			double parentBottomY) {
-		while (columns.size() <= level) {
-			columns.add(new ArrayList<>());
-		}
-		List<Box> column = columns.get(level);
+	default double layoutTree(TreeRenderInfo renderInfo, int level, Box node, double parentBottomY) {
+		Column column = renderInfo.mkColumn(level);
 
 		// The minimum Y coordinate, where the current node can be placed in its column.
 		double minY;
-		if (column.size() > 0) {
-			Box last = column.get(column.size() - 1);
+		if (column.getBoxes().size() > 0) {
+			Box last = column.getBoxes().get(column.getBoxes().size() - 1);
 			minY = last.getBottomY() + self().getGapY();
 		} else {
 			minY = 0.0;
@@ -159,18 +104,18 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 			minY = Math.max(parentBottomY, minY);
 		}
 
-		column.add(node);
+		column.addBox(node);
 
 		double bottomY;
 
-		List<Box> nextLevel = children.getOrDefault(node, Collections.emptyList());
+		List<Box> nextLevel = renderInfo.getChildren(node);
 		if (nextLevel.isEmpty()) {
 			// This is a leaf node.
 			if (!self().isCompact()) {
-				for (int l = level + 1; l < columns.size(); l++) {
-					List<Box> down = columns.get(l);
+				for (int l = level + 1; l < renderInfo.getColumns().size(); l++) {
+					Column down = renderInfo.getColumns().get(l);
 					if (down.size() > 0) {
-						Box bottom = down.get(down.size() - 1);
+						Box bottom = down.getBox(down.size() - 1);
 						minY = Math.max(minY, bottom.getBottomY() + self().getGapY());
 					}
 				}
@@ -183,24 +128,26 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 			// Recursively place all children.
 			double childBottomY = minY;
 			for (Box child : nextLevel) {
-				childBottomY = layoutTree(columns, children, anchorForNode, level + 1, child, childBottomY);
+				childBottomY = layoutTree(renderInfo, level + 1, child, childBottomY);
 			}
 
+			// Place parent node relative to its direct children.
 			Box firstChild = nextLevel.get(0);
 			Box lastChild = nextLevel.get(nextLevel.size() - 1);
 
-			Box firstAnchor = anchorForNode.getOrDefault(firstChild, firstChild);
-			Box lastAnchor = anchorForNode.getOrDefault(lastChild, lastChild);
+			Box firstAnchor = renderInfo.getAnchor(firstChild);
+			Box lastAnchor = renderInfo.getAnchor(lastChild);
 
-			double firstY = firstAnchor.getY() + 0.5 * firstAnchor.getHeight();
-			double lastY = lastAnchor.getY() + 0.5 * lastAnchor.getHeight();
+			// Note: Anchor boxes are up to this point relative to the node's coordinate.
+			double firstY = firstChild.getY() + firstAnchor.getY() + 0.5 * firstAnchor.getHeight();
+			double lastY = lastChild.getY() + lastAnchor.getY() + 0.5 * lastAnchor.getHeight();
 
-			// Place parent node relative to its direct children.
+			// The Y coordinate of the center of the node's anchor box.
 			double anchorY = firstY + (lastY - firstY) * self().getParentAlign() + self().getParentOffset();
 
-			Box nodeAnchor = anchorForNode.getOrDefault(node, node);
-			double nodeAnchorOffset = nodeAnchor.getY() - node.getY();
-			double nodeY = anchorY - 0.5 * nodeAnchor.getHeight() - nodeAnchorOffset;
+			Box nodeAnchor = renderInfo.getAnchor(node);
+
+			double nodeY = anchorY - nodeAnchor.getY() - 0.5 * nodeAnchor.getHeight();
 
 			if (nodeY >= minY) {
 				// Current node must be moved to the bottom to align with its children.
@@ -208,12 +155,14 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 			} else {
 				// Children must be moved to the bottom to align with the current node.
 
-				// Amount to shift the subtree to the bottom.
+				// nodeY < minY: Amount to shift the subtree to the bottom.
 				double shiftY = minY - nodeY;
 				for (Box child : nextLevel) {
-					shiftY(children, child, shiftY);
+					renderInfo.shiftY(child, shiftY);
 				}
 				childBottomY += shiftY;
+
+				nodeY += shiftY;
 			}
 			node.setY(nodeY);
 
@@ -221,50 +170,6 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 		}
 
 		return bottomY;
-	}
-
-	/**
-	 * Shifts the subtree rooted at the given node to the bottom.
-	 */
-	default void shiftY(Map<Box, List<Box>> children, Box node, double shiftY) {
-		node.setY(node.getY() + shiftY);
-		for (Box child : children.getOrDefault(node, Collections.emptyList())) {
-			shiftY(children, child, shiftY);
-		}
-	}
-
-	/**
-	 * Helper method to build the mapping from nodes (that are layouted) for anchor boxes (that are
-	 * visually connected).
-	 * 
-	 * @param nodeForAnchor
-	 *        The mapping from anchor to node that is built.
-	 * @param anchorForNode
-	 *        The mapping from node to its anchor that is built.
-	 * @param nodes
-	 *        all top-level tree nodes that are layouted.
-	 * @param connector
-	 *        The tree connector to analyze.
-	 */
-	default void enterAnchor(Map<Box, Box> nodeForAnchor, Map<Box, Box> anchorForNode, Set<Box> nodes,
-			TreeConnector connector) {
-		final Box anchor = connector.getAnchor();
-		Box ancestor = anchor;
-		while (ancestor != null) {
-			if (nodes.contains(ancestor)) {
-				nodeForAnchor.put(anchor, ancestor);
-				anchorForNode.put(ancestor, anchor);
-				break;
-			}
-
-			Widget parent = ancestor.getParent();
-			if (parent instanceof Box) {
-				ancestor = (Box) parent;
-			} else {
-				// Not found, most likely an error.
-				break;
-			}
-		}
 	}
 
 	@Override
@@ -280,11 +185,10 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 
 		// Offer available space to nodes.
 		double x = offsetX;
-		int columnIndex = 0;
-		for (List<Box> column : info.getColumns()) {
-			double columnWidth = info.getColumnWidths().get(columnIndex++);
+		for (Column column : info.getColumns()) {
+			double columnWidth = column.getWidth();
 
-			for (Box node : column) {
+			for (Box node : column.getBoxes()) {
 				node.distributeSize(context, x, node.getY() + dy, columnWidth, node.getHeight());
 			}
 

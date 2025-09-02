@@ -10,7 +10,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.vectomatic.dom.svg.OMSVGDocument;
@@ -61,6 +60,7 @@ import elemental2.dom.ResizeObserverEntry;
 import elemental2.dom.Response;
 import elemental2.dom.WheelEvent;
 import elemental2.promise.Promise;
+import jsinterop.annotations.JsFunction;
 
 /**
  * Client-side logic of a flow diagram control.
@@ -70,11 +70,63 @@ import elemental2.promise.Promise;
 public class JSDiagramControl extends AbstractJSControl
 		implements JSDiagramControlCommon, DiagramContext {
 
-	/**
-	 * Timeout in seconds to inform the server about change of the viewport position or scroll
-	 * level.
-	 */
-	private static final int TIMEOUT = 3;
+	private class Scope extends DefaultScope {
+
+		private double _changeTimeout;
+
+		private boolean _lazyRequest;
+
+		private final double _lazyRequestID;
+
+		/**
+		 * Creates a new Scope.
+		 */
+		public Scope(int totalParticipants, int participantId) {
+			super(totalParticipants, participantId);
+			reset();
+			_lazyRequestID = createLazyRequestID();
+		}
+
+		private native double createLazyRequestID() /*-{
+			return $wnd.services.ajax.createLazyRequestID();
+		}-*/;
+
+		@Override
+		public void afterChanged(Observable obj, String property) {
+			super.afterChanged(obj, property);
+			if (_processServerUpdate) {
+				_dirtyNodes.add((SharedGraphNode) obj);
+			} else {
+				if (_lazyRequest && obj.equals(_diagram)) {
+					_lazyRequest =
+						Diagram.VIEW_BOX_HEIGHT__PROP.equals(property) ||
+							Diagram.VIEW_BOX_WIDTH__PROP.equals(property) ||
+							Diagram.VIEW_BOX_Y__PROP.equals(property) ||
+							Diagram.VIEW_BOX_X__PROP.equals(property);
+				} else {
+					_lazyRequest = false;
+				}
+
+				if (_changeTimeout == 0) {
+					_changeTimeout = DomGlobal.setTimeout(JSDiagramControl.this::onChange, 10, this);
+				}
+			}
+		}
+
+		public void reset() {
+			_changeTimeout = 0;
+			_lazyRequest = true;
+		}
+
+		boolean lazyRequestPossible() {
+			return _lazyRequest;
+		}
+
+		double lazyRequestId() {
+			return _lazyRequestID;
+		}
+
+	}
 
 	private OMSVGDocument _svgDoc;
 
@@ -84,13 +136,11 @@ public class JSDiagramControl extends AbstractJSControl
 
 	private RenderContext _renderContext = new JSRenderContext();
 
-	private DefaultScope _scope;
+	private Scope _scope;
 
 	private Diagram _diagram;
 
 	final SubIdGenerator _nextId;
-
-	double _changeTimeout;
 
 	private HTMLDivElement _zoomDisplay;
 
@@ -105,8 +155,6 @@ public class JSDiagramControl extends AbstractJSControl
 	private OMSVGRect _viewbox;
 	
 	private ResizeObserver _observer;
-
-	private Timer _serverViewBoxUpdater = null;
 
 	/** Flag to indicate that currently a server side triggered diagram update is applied. */
 	boolean _processServerUpdate;
@@ -149,26 +197,7 @@ public class JSDiagramControl extends AbstractJSControl
 					return null;
 				}
 				try {
-					_scope = new DefaultScope(2, 1) {
-						@Override
-						protected void beforeChange() {
-							if (!_processServerUpdate) {
-								if (_changeTimeout != 0) {
-									DomGlobal.clearTimeout(_changeTimeout);
-								}
-								_changeTimeout = DomGlobal.setTimeout(JSDiagramControl.this::onChange, 10);
-							}
-						}
-						
-						@Override
-						public void afterChanged(Observable obj, String property) {
-							super.afterChanged(obj, property);
-							if (_processServerUpdate) {
-								_dirtyNodes.add((SharedGraphNode) obj);
-							}
-						}
-
-					};
+					_scope = new Scope(2, 1);
 					Diagram diagram = Diagram.readDiagram(_scope, new JsonReader(new StringR(json)));
 					diagram.setContext(this);
 
@@ -478,25 +507,10 @@ public class JSDiagramControl extends AbstractJSControl
 	}
 
 	private void updateServerViewbox() {
-		if (_serverViewBoxUpdater == null) {
-			_serverViewBoxUpdater = new Timer() {
-				@Override
-				public void run() {
-					if (!DomGlobal.document.contains(_control)) {
-						serverUpdateTriggered = null;
-						return;
-					}
-					_diagram.setViewBoxX(_viewbox.getX());
-					_diagram.setViewBoxY(_viewbox.getY());
-					_diagram.setViewBoxWidth(_viewbox.getWidth());
-					_diagram.setViewBoxHeight(_viewbox.getHeight());
-					_serverViewBoxUpdater = null;
-				}
-			};
-		} else {
-			_serverViewBoxUpdater.cancel();
-		}
-		_serverViewBoxUpdater.schedule((int) TimeUnit.SECONDS.toMillis(TIMEOUT));
+		_diagram.setViewBoxX(_viewbox.getX());
+		_diagram.setViewBoxY(_viewbox.getY());
+		_diagram.setViewBoxWidth(_viewbox.getWidth());
+		_diagram.setViewBoxHeight(_viewbox.getHeight());
 	}
 
 	@Override
@@ -536,46 +550,53 @@ public class JSDiagramControl extends AbstractJSControl
 	 * Called after some user-initiated changes occurred in the UI.
 	 */
 	void onChange(Object... args) {
-		_changeTimeout = 0;
-
-		if (_serverViewBoxUpdater != null) {
-			_serverViewBoxUpdater.cancel();
-			_serverViewBoxUpdater.run();
-			if (_changeTimeout != 0) {
-				// running updater has triggered a new timeout. Process all changes at one:
+		try {
+			if (!_scope.hasChanges()) {
+				DomGlobal.console.info("No update sent because there are no changes.");
 				return;
 			}
+
+			if (_scope.lazyRequestPossible()) {
+				sendLazyUpdate(getId(), unused -> {
+					applyScopeChanges(_scope.getDirty());
+					String patch = createPatch();
+
+					DomGlobal.console.info("Sending lazy updates: ", patch);
+					return patch;
+				}, _scope.lazyRequestId());
+			} else {
+				applyScopeChanges(_scope.getDirty());
+
+				String patch = createPatch();
+				if (!DomGlobal.document.contains(_control)) {
+					DomGlobal.console.info("Cancel sending update of patch, because control was removed from client: ",
+						patch);
+					return;
+				}
+
+				DomGlobal.console.info("Sending updates: ", patch);
+
+				sendUpdate(getId(), patch, _scope.lazyRequestId());
+			}
+		} finally {
+			_scope.reset();
 		}
 
+	}
 
-		applyScopeChanges(_scope.getDirty());
-
+	private String createPatch() {
 		try {
 			StringW buffer = new StringW();
 			_scope.createPatch(new de.haumacher.msgbuf.json.JsonWriter(buffer));
 
-			String patch = buffer.toString();
-
-			if (!DomGlobal.document.contains(_control)) {
-				DomGlobal.console.info("Cancel sending update of patch, because control was removed from client: ",
-					patch);
-				return;
-			}
-
-			DomGlobal.console.info("Sending updates: ", patch);
-
-			sendUpdate(getId(), patch, true);
-
+			return buffer.toString();
 		} catch (IOException ex) {
-			DomGlobal.console.error("Failed to write updates.", ex);
+			DomGlobal.console.error("Failed to create update patch.", ex);
+			return "[]";
 		}
 	}
 
 	private void applyScopeChanges(Collection<? extends SharedGraphNode> dirtyNodes) {
-		if (dirtyNodes.isEmpty()) {
-			return;
-		}
-
 		SvgWriter updateWriter = new SVGBuilder(_svgDoc, _svg) {
 			@Override
 			public void write(Drawable element) {
@@ -609,12 +630,44 @@ public class JSDiagramControl extends AbstractJSControl
 
 	}
 
-	private native void sendUpdate(String id, String patch, boolean showWait) /*-{
+	/**
+	 * General function class for JavaScript.
+	 */
+	@JsFunction
+	@FunctionalInterface
+	public interface JSFunction {
+		/**
+		 * Applies this function to the given argument.
+		 *
+		 * @param args
+		 *        the function argument
+		 * @return the function result
+		 */
+		Object apply(Object... args);
+
+	}
+
+	private native double sendLazyUpdate(String id, JSFunction patchSupplier, double requestID) /*-{
+		if (!$wnd.services.ajax.containsLazyRequest(requestID)) {
+			var argsSupplier = function() {
+				var patch = patchSupplier();
+				return {
+					controlCommand : "update",
+					controlID : id,
+					patch : patch
+				};
+			};
+			$wnd.services.ajax.executeOrUpdateWithLazyData(requestID, "dispatchControlCommand", argsSupplier);
+		}
+	}-*/;
+
+	private native void sendUpdate(String id, String patch, double requestID) /*-{
+		$wnd.services.ajax.dropLazyRequest(requestID);
 		$wnd.services.ajax.execute("dispatchControlCommand", {
 			controlCommand : "update",
 			controlID : id,
 			patch : patch
-		}, showWait)
+		}, true)
 	}-*/;
 
 	private native void logError(String message) /*-{

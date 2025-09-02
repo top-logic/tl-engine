@@ -79,8 +79,9 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 			double columnWidth = column.getWidth();
 
 			for (TreeNode node : column.getBoxes()) {
-				node.getBox().distributeSize(context, x, node.getBox().getY() + dy, columnWidth,
-					node.getBox().getHeight());
+				Box box = node.getBox();
+
+				box.distributeSize(context, x, box.getY() + dy, columnWidth, box.getHeight());
 			}
 
 			x += columnWidth;

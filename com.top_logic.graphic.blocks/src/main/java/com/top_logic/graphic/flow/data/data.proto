@@ -67,16 +67,16 @@ abstract message Box extends Widget {
 	Widget parent;
 
 	/** The X coordinate of the top-left edge of the rectangular region of this box. */
-	double x;
+	transient double x;
 	
 	/** The Y coordinate of the top-left edge of the rectangular region of this box. */
-	double y;
+	transient double y;
 	
 	/** The width of the rectangular region of this box. */
-	double width;
+	transient double width;
 	
 	/** The height of the rectangular region of this box. */
-	double height;
+	transient double height;
 }
 
 /** A layout that allows to freely place boxes at arbitrary positions. The layout does not impose any restrictions to the positions and sizes of the placed boxes. */
@@ -163,7 +163,7 @@ message TreeConnection extends Widget {
 	 * The position of the bar is given as absolute coordinate (X or Y depending on the layout direction) within 
 	 * the coordinate system of the {@link TreeLayout}.
 	 */
-	double barPosition;
+	transient double barPosition;
 }
 
 /** An anchor point of a connection to a node of the diagram. */
@@ -238,7 +238,7 @@ message Text extends Box {
 	string fillStyle;
 	
 	/** The Y offset from the top-left corner of the text box, where the text is rendered. */
-	double baseLine;
+	transient double baseLine;
 }
 
 /** An embedded image. */
@@ -645,10 +645,10 @@ message GridLayout extends Layout {
 	double gapY;
 	
 	/** The height of the rows. */
-	repeated double rowHeight;
+	transient repeated double rowHeight;
 	
 	/** The width of the columns. */
-	repeated double colWidth;
+	transient repeated double colWidth;
 }
 
 /** A layout of a row of boxes. */

@@ -22,7 +22,6 @@ import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.element.layout.meta.TLStructuredTypeFormBuilder;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.mig.html.ListModelBuilder;
@@ -112,13 +111,13 @@ public class ChangeLogListModelBuilder extends AbstractConfiguredInstance<Change
 
 	@Override
 	public boolean supportsModel(Object aModel, LayoutComponent aComponent) {
-		return true;
+		return aModel == null;
 	}
 
 	@Override
 	public Collection<?> getModel(Object businessModel, LayoutComponent aComponent) {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		TLModel model = ModelService.getApplicationModel();
+		KnowledgeBase kb = model.tKnowledgeBase();
 
 		Set<TLModule> excludeModules = getConfig().getExcludedModules().stream()
 			.map(excludeModule -> excludeModule.resolve(model))

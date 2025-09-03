@@ -34,7 +34,7 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 		}
 	};
 
-	private double _barPosition = 0.0d;
+	private transient double _barPosition = 0.0d;
 
 	/**
 	 * Creates a {@link TreeConnection_Impl} instance.
@@ -196,16 +196,29 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 		return TREE_CONNECTION__TYPE;
 	}
 
-	private static java.util.List<String> PROPERTIES = java.util.Collections.unmodifiableList(
-		java.util.Arrays.asList(
+	@SuppressWarnings("hiding")
+	static final java.util.List<String> PROPERTIES;
+	static {
+		java.util.List<String> local = java.util.Arrays.asList(
 			OWNER__PROP, 
 			PARENT__PROP, 
 			CHILDREN__PROP, 
-			BAR_POSITION__PROP));
+			BAR_POSITION__PROP);
+		java.util.List<String> tmp = new java.util.ArrayList<>();
+		tmp.addAll(com.top_logic.graphic.flow.data.impl.Widget_Impl.PROPERTIES);
+		tmp.addAll(local);
+		PROPERTIES = java.util.Collections.unmodifiableList(tmp);
+	}
 
-	private static java.util.Set<String> TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(new java.util.HashSet<>(
-			java.util.Arrays.asList(
-				)));
+	@SuppressWarnings("hiding")
+	static final java.util.Set<String> TRANSIENT_PROPERTIES;
+	static {
+		java.util.HashSet<String> tmp = new java.util.HashSet<>();
+		tmp.addAll(com.top_logic.graphic.flow.data.impl.Widget_Impl.TRANSIENT_PROPERTIES);
+		tmp.addAll(java.util.Arrays.asList(
+				BAR_POSITION__PROP));
+		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
+	}
 
 	@Override
 	public java.util.List<String> properties() {
@@ -251,8 +264,6 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 			x.writeTo(scope, out);
 		}
 		out.endArray();
-		out.name(BAR_POSITION__PROP);
-		out.value(getBarPosition());
 	}
 
 	@Override
@@ -304,7 +315,6 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 				setChildren(newValue);
 			}
 			break;
-			case BAR_POSITION__PROP: setBarPosition(in.nextDouble()); break;
 			default: super.readField(scope, in, field);
 		}
 	}

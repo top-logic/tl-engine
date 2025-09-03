@@ -13,7 +13,7 @@ public class GridLayout_Impl extends com.top_logic.graphic.flow.data.impl.Layout
 
 	private double _gapY = 0.0d;
 
-	private final java.util.List<Double> _rowHeight = new de.haumacher.msgbuf.util.ReferenceList<Double>() {
+	private transient final java.util.List<Double> _rowHeight = new de.haumacher.msgbuf.util.ReferenceList<Double>() {
 		@Override
 		protected void beforeAdd(int index, Double element) {
 			_listener.beforeAdd(GridLayout_Impl.this, ROW_HEIGHT__PROP, index, element);
@@ -30,7 +30,7 @@ public class GridLayout_Impl extends com.top_logic.graphic.flow.data.impl.Layout
 		}
 	};
 
-	private final java.util.List<Double> _colWidth = new de.haumacher.msgbuf.util.ReferenceList<Double>() {
+	private transient final java.util.List<Double> _colWidth = new de.haumacher.msgbuf.util.ReferenceList<Double>() {
 		@Override
 		protected void beforeAdd(int index, Double element) {
 			_listener.beforeAdd(GridLayout_Impl.this, COL_WIDTH__PROP, index, element);
@@ -264,18 +264,32 @@ public class GridLayout_Impl extends com.top_logic.graphic.flow.data.impl.Layout
 		return GRID_LAYOUT__TYPE;
 	}
 
-	private static java.util.List<String> PROPERTIES = java.util.Collections.unmodifiableList(
-		java.util.Arrays.asList(
+	@SuppressWarnings("hiding")
+	static final java.util.List<String> PROPERTIES;
+	static {
+		java.util.List<String> local = java.util.Arrays.asList(
 			ROWS__PROP, 
 			COLS__PROP, 
 			GAP_X__PROP, 
 			GAP_Y__PROP, 
 			ROW_HEIGHT__PROP, 
-			COL_WIDTH__PROP));
+			COL_WIDTH__PROP);
+		java.util.List<String> tmp = new java.util.ArrayList<>();
+		tmp.addAll(com.top_logic.graphic.flow.data.impl.Layout_Impl.PROPERTIES);
+		tmp.addAll(local);
+		PROPERTIES = java.util.Collections.unmodifiableList(tmp);
+	}
 
-	private static java.util.Set<String> TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(new java.util.HashSet<>(
-			java.util.Arrays.asList(
-				)));
+	@SuppressWarnings("hiding")
+	static final java.util.Set<String> TRANSIENT_PROPERTIES;
+	static {
+		java.util.HashSet<String> tmp = new java.util.HashSet<>();
+		tmp.addAll(com.top_logic.graphic.flow.data.impl.Layout_Impl.TRANSIENT_PROPERTIES);
+		tmp.addAll(java.util.Arrays.asList(
+				ROW_HEIGHT__PROP, 
+				COL_WIDTH__PROP));
+		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
+	}
 
 	@Override
 	public java.util.List<String> properties() {
@@ -324,18 +338,6 @@ public class GridLayout_Impl extends com.top_logic.graphic.flow.data.impl.Layout
 		out.value(getGapX());
 		out.name(GAP_Y__PROP);
 		out.value(getGapY());
-		out.name(ROW_HEIGHT__PROP);
-		out.beginArray();
-		for (double x : getRowHeight()) {
-			out.value(x);
-		}
-		out.endArray();
-		out.name(COL_WIDTH__PROP);
-		out.beginArray();
-		for (double x : getColWidth()) {
-			out.value(x);
-		}
-		out.endArray();
 	}
 
 	@Override
@@ -384,55 +386,7 @@ public class GridLayout_Impl extends com.top_logic.graphic.flow.data.impl.Layout
 			case COLS__PROP: setCols(in.nextInt()); break;
 			case GAP_X__PROP: setGapX(in.nextDouble()); break;
 			case GAP_Y__PROP: setGapY(in.nextDouble()); break;
-			case ROW_HEIGHT__PROP: {
-				java.util.List<Double> newValue = new java.util.ArrayList<>();
-				in.beginArray();
-				while (in.hasNext()) {
-					newValue.add(in.nextDouble());
-				}
-				in.endArray();
-				setRowHeight(newValue);
-			}
-			break;
-			case COL_WIDTH__PROP: {
-				java.util.List<Double> newValue = new java.util.ArrayList<>();
-				in.beginArray();
-				while (in.hasNext()) {
-					newValue.add(in.nextDouble());
-				}
-				in.endArray();
-				setColWidth(newValue);
-			}
-			break;
 			default: super.readField(scope, in, field);
-		}
-	}
-
-	@Override
-	public void writeElement(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field, Object element) throws java.io.IOException {
-		switch (field) {
-			case ROW_HEIGHT__PROP: {
-				out.value(((double) element));
-				break;
-			}
-			case COL_WIDTH__PROP: {
-				out.value(((double) element));
-				break;
-			}
-			default: super.writeElement(scope, out, field, element);
-		}
-	}
-
-	@Override
-	public Object readElement(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
-		switch (field) {
-			case ROW_HEIGHT__PROP: {
-				return in.nextDouble();
-			}
-			case COL_WIDTH__PROP: {
-				return in.nextDouble();
-			}
-			default: return super.readElement(scope, in, field);
 		}
 	}
 

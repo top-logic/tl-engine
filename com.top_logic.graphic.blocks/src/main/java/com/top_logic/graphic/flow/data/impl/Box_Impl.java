@@ -7,13 +7,13 @@ public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widg
 
 	private com.top_logic.graphic.flow.data.Widget _parent = null;
 
-	private double _x = 0.0d;
+	private transient double _x = 0.0d;
 
-	private double _y = 0.0d;
+	private transient double _y = 0.0d;
 
-	private double _width = 0.0d;
+	private transient double _width = 0.0d;
 
-	private double _height = 0.0d;
+	private transient double _height = 0.0d;
 
 	/**
 	 * Creates a {@link Box_Impl} instance.
@@ -146,17 +146,33 @@ public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widg
 		return this;
 	}
 
-	private static java.util.List<String> PROPERTIES = java.util.Collections.unmodifiableList(
-		java.util.Arrays.asList(
+	@SuppressWarnings("hiding")
+	static final java.util.List<String> PROPERTIES;
+	static {
+		java.util.List<String> local = java.util.Arrays.asList(
 			PARENT__PROP, 
 			X__PROP, 
 			Y__PROP, 
 			WIDTH__PROP, 
-			HEIGHT__PROP));
+			HEIGHT__PROP);
+		java.util.List<String> tmp = new java.util.ArrayList<>();
+		tmp.addAll(com.top_logic.graphic.flow.data.impl.Widget_Impl.PROPERTIES);
+		tmp.addAll(local);
+		PROPERTIES = java.util.Collections.unmodifiableList(tmp);
+	}
 
-	private static java.util.Set<String> TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(new java.util.HashSet<>(
-			java.util.Arrays.asList(
-				)));
+	@SuppressWarnings("hiding")
+	static final java.util.Set<String> TRANSIENT_PROPERTIES;
+	static {
+		java.util.HashSet<String> tmp = new java.util.HashSet<>();
+		tmp.addAll(com.top_logic.graphic.flow.data.impl.Widget_Impl.TRANSIENT_PROPERTIES);
+		tmp.addAll(java.util.Arrays.asList(
+				X__PROP, 
+				Y__PROP, 
+				WIDTH__PROP, 
+				HEIGHT__PROP));
+		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
+	}
 
 	@Override
 	public java.util.List<String> properties() {
@@ -194,14 +210,6 @@ public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widg
 	@Override
 	protected void writeFields(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
 		super.writeFields(scope, out);
-		out.name(X__PROP);
-		out.value(getX());
-		out.name(Y__PROP);
-		out.value(getY());
-		out.name(WIDTH__PROP);
-		out.value(getWidth());
-		out.name(HEIGHT__PROP);
-		out.value(getHeight());
 	}
 
 	@Override
@@ -238,10 +246,6 @@ public abstract class Box_Impl extends com.top_logic.graphic.flow.data.impl.Widg
 	@Override
 	public void readField(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
-			case X__PROP: setX(in.nextDouble()); break;
-			case Y__PROP: setY(in.nextDouble()); break;
-			case WIDTH__PROP: setWidth(in.nextDouble()); break;
-			case HEIGHT__PROP: setHeight(in.nextDouble()); break;
 			default: super.readField(scope, in, field);
 		}
 	}

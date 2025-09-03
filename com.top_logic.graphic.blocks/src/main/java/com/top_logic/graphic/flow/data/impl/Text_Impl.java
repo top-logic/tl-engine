@@ -17,7 +17,7 @@ public class Text_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl imp
 
 	private String _fillStyle = null;
 
-	private double _baseLine = 0.0d;
+	private transient double _baseLine = 0.0d;
 
 	/**
 	 * Creates a {@link Text_Impl} instance.
@@ -237,19 +237,32 @@ public class Text_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl imp
 		return TEXT__TYPE;
 	}
 
-	private static java.util.List<String> PROPERTIES = java.util.Collections.unmodifiableList(
-		java.util.Arrays.asList(
+	@SuppressWarnings("hiding")
+	static final java.util.List<String> PROPERTIES;
+	static {
+		java.util.List<String> local = java.util.Arrays.asList(
 			VALUE__PROP, 
 			FONT_WEIGHT__PROP, 
 			FONT_SIZE__PROP, 
 			FONT_FAMILY__PROP, 
 			STROKE_STYLE__PROP, 
 			FILL_STYLE__PROP, 
-			BASE_LINE__PROP));
+			BASE_LINE__PROP);
+		java.util.List<String> tmp = new java.util.ArrayList<>();
+		tmp.addAll(com.top_logic.graphic.flow.data.impl.Box_Impl.PROPERTIES);
+		tmp.addAll(local);
+		PROPERTIES = java.util.Collections.unmodifiableList(tmp);
+	}
 
-	private static java.util.Set<String> TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(new java.util.HashSet<>(
-			java.util.Arrays.asList(
-				)));
+	@SuppressWarnings("hiding")
+	static final java.util.Set<String> TRANSIENT_PROPERTIES;
+	static {
+		java.util.HashSet<String> tmp = new java.util.HashSet<>();
+		tmp.addAll(com.top_logic.graphic.flow.data.impl.Box_Impl.TRANSIENT_PROPERTIES);
+		tmp.addAll(java.util.Arrays.asList(
+				BASE_LINE__PROP));
+		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
+	}
 
 	@Override
 	public java.util.List<String> properties() {
@@ -314,8 +327,6 @@ public class Text_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl imp
 			out.name(FILL_STYLE__PROP);
 			out.value(getFillStyle());
 		}
-		out.name(BASE_LINE__PROP);
-		out.value(getBaseLine());
 	}
 
 	@Override
@@ -382,7 +393,6 @@ public class Text_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl imp
 			case FONT_FAMILY__PROP: setFontFamily(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case STROKE_STYLE__PROP: setStrokeStyle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case FILL_STYLE__PROP: setFillStyle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case BASE_LINE__PROP: setBaseLine(in.nextDouble()); break;
 			default: super.readField(scope, in, field);
 		}
 	}

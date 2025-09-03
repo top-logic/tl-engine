@@ -88,6 +88,12 @@ public class Fill_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_I
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Fill setRenderInfo(java.lang.Object value) {
+		internalSetRenderInfo(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return FILL__TYPE;
 	}

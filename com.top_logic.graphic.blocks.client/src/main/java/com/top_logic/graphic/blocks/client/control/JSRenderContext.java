@@ -9,7 +9,6 @@ import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.dom.client.CanvasElement;
 import com.google.gwt.dom.client.Document;
 
-import com.top_logic.graphic.blocks.svg.AbstractRenderContext;
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.TextMetrics;
 
@@ -18,7 +17,7 @@ import com.top_logic.graphic.blocks.svg.TextMetrics;
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class JSRenderContext extends AbstractRenderContext {
+public class JSRenderContext implements RenderContext {
 
 	private Context2d _context2d;
 

@@ -40,10 +40,11 @@ public interface TreeConnectorOperations extends WidgetOperations {
 	 */
 	default double getX() {
 		TreeLayout layout = self().getConnection().getOwner();
+		double offsetX = layout.treeInfo().getNodeForAnchor(self().getAnchor()).getX();
 		if (isParent()) {
-			return layout.fromX(self().getAnchor());
+			return offsetX + layout.fromX(self().getAnchor());
 		} else {
-			return layout.toX(self().getAnchor());
+			return offsetX + layout.toX(self().getAnchor());
 		}
 	}
 
@@ -51,7 +52,9 @@ public interface TreeConnectorOperations extends WidgetOperations {
 	 * The Y coordinate, where this connector connects to its anchor.
 	 */
 	default double getY() {
-		return self().getAnchor().getY() + self().getConnectPosition() * self().getAnchor().getHeight();
+		TreeLayout layout = self().getConnection().getOwner();
+		double offsetY = layout.treeInfo().getNodeForAnchor(self().getAnchor()).getY();
+		return offsetY + self().getAnchor().getY() + self().getConnectPosition() * self().getAnchor().getHeight();
 	}
 
 	@Override

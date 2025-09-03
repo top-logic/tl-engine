@@ -68,6 +68,12 @@ public class ClipBox_Impl extends com.top_logic.graphic.flow.data.impl.Decoratio
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.ClipBox setRenderInfo(java.lang.Object value) {
+		internalSetRenderInfo(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return CLIP_BOX__TYPE;
 	}

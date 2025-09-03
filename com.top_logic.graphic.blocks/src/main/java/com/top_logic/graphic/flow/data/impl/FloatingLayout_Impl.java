@@ -121,6 +121,12 @@ public class FloatingLayout_Impl extends com.top_logic.graphic.flow.data.impl.Bo
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.FloatingLayout setRenderInfo(java.lang.Object value) {
+		internalSetRenderInfo(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return FLOATING_LAYOUT__TYPE;
 	}

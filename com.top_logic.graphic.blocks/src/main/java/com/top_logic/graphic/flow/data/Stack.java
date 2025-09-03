@@ -59,6 +59,9 @@ public interface Stack extends Box, com.top_logic.graphic.flow.operations.StackO
 	@Override
 	com.top_logic.graphic.flow.data.Stack setClientId(String value);
 
+	@Override
+	com.top_logic.graphic.flow.data.Stack setRenderInfo(java.lang.Object value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.Stack readStack(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {

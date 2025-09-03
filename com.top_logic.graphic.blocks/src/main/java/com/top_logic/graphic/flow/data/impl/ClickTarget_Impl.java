@@ -169,6 +169,12 @@ public class ClickTarget_Impl extends com.top_logic.graphic.flow.data.impl.Decor
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.ClickTarget setRenderInfo(java.lang.Object value) {
+		internalSetRenderInfo(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return CLICK_TARGET__TYPE;
 	}

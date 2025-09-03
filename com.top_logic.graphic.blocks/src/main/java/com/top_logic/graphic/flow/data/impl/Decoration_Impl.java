@@ -93,6 +93,12 @@ public abstract class Decoration_Impl extends com.top_logic.graphic.flow.data.im
 		return this;
 	}
 
+	@Override
+	public com.top_logic.graphic.flow.data.Decoration setRenderInfo(java.lang.Object value) {
+		internalSetRenderInfo(value);
+		return this;
+	}
+
 	private static java.util.List<String> PROPERTIES = java.util.Collections.unmodifiableList(
 		java.util.Arrays.asList(
 			CONTENT__PROP));

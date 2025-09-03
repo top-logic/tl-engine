@@ -115,6 +115,24 @@ public class TreeRenderInfo {
 			_offsetX = offsetX;
 
 		}
+
+		/**
+		 * TODO
+		 *
+		 * @return
+		 */
+		public double getHeight() {
+			return size() == 0 ? 0 : getLast().getBottom();
+		}
+
+		/**
+		 * TODO
+		 *
+		 * @return
+		 */
+		public TreeNode getLast() {
+			return size() == 0 ? null : getNode(size() - 1);
+		}
 	}
 
 	private final Map<Box, TreeNode> _nodeForBox;
@@ -127,7 +145,9 @@ public class TreeRenderInfo {
 
 	private final double _gapX;
 
-	private final double _gapY;
+	private final double _siblingGapY;
+
+	private final double _subtreeGapY;
 
 	private final boolean _compact;
 
@@ -142,11 +162,12 @@ public class TreeRenderInfo {
 	/**
 	 * Creates a {@link TreeRenderInfo}.
 	 */
-	public TreeRenderInfo(boolean compact, double gapX, double gapY, double parentAlign, double parentOffset,
-			List<Box> nodes, List<TreeConnection> connections) {
+	public TreeRenderInfo(boolean compact, double gapX, double siblingGapY, double subtreeGapY, double parentAlign,
+			double parentOffset, List<Box> nodes, List<TreeConnection> connections) {
 		_compact = compact;
 		_gapX = gapX;
-		_gapY = gapY;
+		_siblingGapY = siblingGapY;
+		_subtreeGapY = subtreeGapY;
 		_parentAlign = parentAlign;
 		_parentOffset = parentOffset;
 		_nodeForBox = new HashMap<>();
@@ -288,12 +309,13 @@ public class TreeRenderInfo {
 		}
 
 		// Enter tree nodes in columns and assign reasonable Y coordinates to nodes.
+		for (TreeNode root : getRoots()) {
+			layoutTree(root);
+		}
+
 		double height = 0;
-		if (!getRoots().isEmpty()) {
-			height -= -_gapY;
-			for (TreeNode root : getRoots()) {
-				height = layoutTree(root, height);
-			}
+		for (Column column : getColumns()) {
+			height = Math.max(height, column.getHeight());
 		}
 
 		_width = width;
@@ -312,21 +334,18 @@ public class TreeRenderInfo {
 
 	/**
 	 * Helper method to layout a single tree within a forest.
-	 * 
-	 * @param parentBottomY
-	 *        The maximum Y coordinate used among all nodes placed so far (the parent and all of the
-	 *        current node's preceding siblings and their sub-trees.
 	 */
-	private double layoutTree(TreeNode root, double parentBottomY) {
+	private void layoutTree(TreeNode root) {
 		// The minimum Y coordinate, where the current node can be placed in its column.
-		double minY = root.getIndex() == 0 ? 0 : root.getColumnPredecessor().getBottom() + _gapY;
-		if (_compact) {
-			minY = Math.max(parentBottomY, minY);
+		double minY;
+		if (root.getIndex() == 0) {
+			minY = 0;
+		} else {
+			TreeNode predecessor = root.getColumnPredecessor();
+			boolean sameParent = predecessor.getParent() == root.getParent();
+			minY = predecessor.getBottom() + (sameParent ? _siblingGapY : _subtreeGapY);
 		}
 
-		double bottomY;
-
-		Box rootBox = root.getBox();
 		List<TreeNode> nextLevel = root.getChildren();
 		if (nextLevel.isEmpty()) {
 			// This is a leaf node.
@@ -336,19 +355,17 @@ public class TreeRenderInfo {
 					Column down = getColumns().get(l);
 					if (down.size() > 0) {
 						TreeNode bottom = down.getNode(down.size() - 1);
-						minY = Math.max(minY, bottom.getBottom() + _gapY);
+						minY = Math.max(minY, bottom.getBottom() + _subtreeGapY);
 					}
 				}
 			}
 
 			// Place node at the minimum Y coordinate possible.
 			root.setY(minY);
-			bottomY = minY + rootBox.getHeight();
 		} else {
 			// Recursively place all children.
-			double childBottomY = minY;
 			for (TreeNode child : nextLevel) {
-				childBottomY = layoutTree(child, childBottomY);
+				layoutTree(child);
 			}
 
 			// Place parent node relative to its direct children.
@@ -381,16 +398,11 @@ public class TreeRenderInfo {
 				for (TreeNode child : nextLevel) {
 					shiftY(child, shiftY);
 				}
-				childBottomY += shiftY;
 
 				nodeY += shiftY;
 			}
 			root.setY(nodeY);
-
-			bottomY = Math.max(root.getY() + rootBox.getHeight(), childBottomY);
 		}
-
-		return bottomY;
 	}
 
 	/**

@@ -49,9 +49,8 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 
 		TreeRenderInfo renderInfo =
 			new TreeRenderInfo(
-				self().isCompact(), self().getGapX(), self().getGapY(), self().getParentAlign(),
-				self().getParentOffset(),
-				self().getNodes(), self().getConnections());
+				self().isCompact(), self().getGapX(), self().getSibblingGapY(), self().getSubtreeGapY(),
+				self().getParentAlign(), self().getParentOffset(), self().getNodes(), self().getConnections());
 		self().setRenderInfo(renderInfo);
 
 		renderInfo.computeLayout(context);

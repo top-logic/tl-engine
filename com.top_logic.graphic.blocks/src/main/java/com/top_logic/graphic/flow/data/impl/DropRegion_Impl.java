@@ -118,6 +118,12 @@ public class DropRegion_Impl extends com.top_logic.graphic.flow.data.impl.Decora
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.DropRegion setRenderInfo(java.lang.Object value) {
+		internalSetRenderInfo(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return DROP_REGION__TYPE;
 	}

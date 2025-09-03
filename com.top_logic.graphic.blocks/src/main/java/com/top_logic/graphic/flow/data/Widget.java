@@ -106,6 +106,9 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 	/** @see #getClientId() */
 	String CLIENT_ID__PROP = "clientId";
 
+	/** @see #getRenderInfo() */
+	String RENDER_INFO__PROP = "renderInfo";
+
 	/** The type code of this instance. */
 	TypeKind kind();
 
@@ -153,6 +156,21 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 	 * Checks, whether {@link #getClientId()} has a value.
 	 */
 	boolean hasClientId();
+
+	/**
+	 * Private information that must be kept during the layout and rendering phases.
+	 */
+	java.lang.Object getRenderInfo();
+
+	/**
+	 * @see #getRenderInfo()
+	 */
+	com.top_logic.graphic.flow.data.Widget setRenderInfo(java.lang.Object value);
+
+	/**
+	 * Checks, whether {@link #getRenderInfo()} has a value.
+	 */
+	boolean hasRenderInfo();
 
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.Widget readWidget(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {

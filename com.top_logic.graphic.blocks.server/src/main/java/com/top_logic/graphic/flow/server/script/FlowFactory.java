@@ -615,7 +615,11 @@ public class FlowFactory {
 	 * @param gapX
 	 *        Gap between columns of tree nodes.
 	 * @param gapY
-	 *        Vertical gap between children.
+	 *        Vertical gap between children (for both siblings and non-siblings).
+	 * @param sibblingGapY
+	 *        Vertical gap between children if they belong to the same parent.
+	 * @param subtreeGapY
+	 *        Vertical gap between children if they belong to different subtrees.
 	 * @param stroke
 	 *        The stroke style for connections.
 	 * @param strokeWidth
@@ -632,7 +636,9 @@ public class FlowFactory {
 		@Mandatory List<? extends Box> nodes, 
 		@Mandatory List<? extends TreeConnection> connections,
 		@DoubleDefault(40) double gapX, 
-		@DoubleDefault(20) double gapY, 
+		Double gapY,
+		Double sibblingGapY,
+		Double subtreeGapY,
 		DiagramDirection direction,
 		@StringDefault("black") String stroke, 
 		@DoubleDefault(1) double strokeWidth, 
@@ -641,15 +647,13 @@ public class FlowFactory {
 			double parentAlign,
 		@DoubleDefault(0)
 		double parentOffset,
-			boolean alignTop,
 		String cssClass,
 		Object userObject 
 	) {
-		return TreeLayout.create()
+		TreeLayout result = TreeLayout.create()
 			.setNodes(nodes.stream().filter(Objects::nonNull).toList())
 			.setConnections(connections.stream().filter(Objects::nonNull).toList())
 			.setGapX(gapX)
-			.setGapY(gapY)
 			.setDirection(direction)
 			.setStrokeStyle(stroke)
 			.setThickness(strokeWidth)
@@ -658,6 +662,19 @@ public class FlowFactory {
 			.setParentOffset(parentOffset)
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
+
+		if (gapY != null) {
+			result.setSibblingGapY(gapY);
+			result.setSubtreeGapY(gapY);
+		}
+		if (sibblingGapY != null) {
+			result.setSibblingGapY(sibblingGapY);
+		}
+		if (subtreeGapY != null) {
+			result.setSubtreeGapY(subtreeGapY);
+		}
+
+		return result;
 	}
 
 	/**

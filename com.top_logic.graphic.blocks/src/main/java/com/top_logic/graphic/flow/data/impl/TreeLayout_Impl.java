@@ -15,7 +15,9 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 
 	private double _gapX = 40;
 
-	private double _gapY = 20;
+	private double _sibblingGapY = 20;
+
+	private double _subtreeGapY = 20;
 
 	private String _strokeStyle = "black";
 
@@ -152,21 +154,39 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 	}
 
 	@Override
-	public final double getGapY() {
-		return _gapY;
+	public final double getSibblingGapY() {
+		return _sibblingGapY;
 	}
 
 	@Override
-	public com.top_logic.graphic.flow.data.TreeLayout setGapY(double value) {
-		internalSetGapY(value);
+	public com.top_logic.graphic.flow.data.TreeLayout setSibblingGapY(double value) {
+		internalSetSibblingGapY(value);
 		return this;
 	}
 
-	/** Internal setter for {@link #getGapY()} without chain call utility. */
-	protected final void internalSetGapY(double value) {
-		_listener.beforeSet(this, GAP_Y__PROP, value);
-		_gapY = value;
-		_listener.afterChanged(this, GAP_Y__PROP);
+	/** Internal setter for {@link #getSibblingGapY()} without chain call utility. */
+	protected final void internalSetSibblingGapY(double value) {
+		_listener.beforeSet(this, SIBBLING_GAP_Y__PROP, value);
+		_sibblingGapY = value;
+		_listener.afterChanged(this, SIBBLING_GAP_Y__PROP);
+	}
+
+	@Override
+	public final double getSubtreeGapY() {
+		return _subtreeGapY;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.TreeLayout setSubtreeGapY(double value) {
+		internalSetSubtreeGapY(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getSubtreeGapY()} without chain call utility. */
+	protected final void internalSetSubtreeGapY(double value) {
+		_listener.beforeSet(this, SUBTREE_GAP_Y__PROP, value);
+		_subtreeGapY = value;
+		_listener.afterChanged(this, SUBTREE_GAP_Y__PROP);
 	}
 
 	@Override
@@ -311,7 +331,8 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 			PARENT_OFFSET__PROP, 
 			DIRECTION__PROP, 
 			GAP_X__PROP, 
-			GAP_Y__PROP, 
+			SIBBLING_GAP_Y__PROP, 
+			SUBTREE_GAP_Y__PROP, 
 			STROKE_STYLE__PROP, 
 			THICKNESS__PROP, 
 			CONNECTIONS__PROP));
@@ -338,7 +359,8 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 			case PARENT_OFFSET__PROP: return getParentOffset();
 			case DIRECTION__PROP: return getDirection();
 			case GAP_X__PROP: return getGapX();
-			case GAP_Y__PROP: return getGapY();
+			case SIBBLING_GAP_Y__PROP: return getSibblingGapY();
+			case SUBTREE_GAP_Y__PROP: return getSubtreeGapY();
 			case STROKE_STYLE__PROP: return getStrokeStyle();
 			case THICKNESS__PROP: return getThickness();
 			case CONNECTIONS__PROP: return getConnections();
@@ -354,7 +376,8 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 			case PARENT_OFFSET__PROP: internalSetParentOffset((double) value); break;
 			case DIRECTION__PROP: internalSetDirection((com.top_logic.graphic.flow.data.DiagramDirection) value); break;
 			case GAP_X__PROP: internalSetGapX((double) value); break;
-			case GAP_Y__PROP: internalSetGapY((double) value); break;
+			case SIBBLING_GAP_Y__PROP: internalSetSibblingGapY((double) value); break;
+			case SUBTREE_GAP_Y__PROP: internalSetSubtreeGapY((double) value); break;
 			case STROKE_STYLE__PROP: internalSetStrokeStyle((String) value); break;
 			case THICKNESS__PROP: internalSetThickness((double) value); break;
 			case CONNECTIONS__PROP: internalSetConnections(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.graphic.flow.data.TreeConnection.class, value)); break;
@@ -375,8 +398,10 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 		getDirection().writeTo(out);
 		out.name(GAP_X__PROP);
 		out.value(getGapX());
-		out.name(GAP_Y__PROP);
-		out.value(getGapY());
+		out.name(SIBBLING_GAP_Y__PROP);
+		out.value(getSibblingGapY());
+		out.name(SUBTREE_GAP_Y__PROP);
+		out.value(getSubtreeGapY());
 		out.name(STROKE_STYLE__PROP);
 		out.value(getStrokeStyle());
 		out.name(THICKNESS__PROP);
@@ -412,8 +437,12 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 				out.value(getGapX());
 				break;
 			}
-			case GAP_Y__PROP: {
-				out.value(getGapY());
+			case SIBBLING_GAP_Y__PROP: {
+				out.value(getSibblingGapY());
+				break;
+			}
+			case SUBTREE_GAP_Y__PROP: {
+				out.value(getSubtreeGapY());
 				break;
 			}
 			case STROKE_STYLE__PROP: {
@@ -444,7 +473,8 @@ public class TreeLayout_Impl extends com.top_logic.graphic.flow.data.impl.Floati
 			case PARENT_OFFSET__PROP: setParentOffset(in.nextDouble()); break;
 			case DIRECTION__PROP: setDirection(com.top_logic.graphic.flow.data.DiagramDirection.readDiagramDirection(in)); break;
 			case GAP_X__PROP: setGapX(in.nextDouble()); break;
-			case GAP_Y__PROP: setGapY(in.nextDouble()); break;
+			case SIBBLING_GAP_Y__PROP: setSibblingGapY(in.nextDouble()); break;
+			case SUBTREE_GAP_Y__PROP: setSubtreeGapY(in.nextDouble()); break;
 			case STROKE_STYLE__PROP: setStrokeStyle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case THICKNESS__PROP: setThickness(in.nextDouble()); break;
 			case CONNECTIONS__PROP: {

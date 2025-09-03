@@ -30,8 +30,11 @@ public interface TreeLayout extends FloatingLayout, com.top_logic.graphic.flow.o
 	/** @see #getGapX() */
 	String GAP_X__PROP = "gapX";
 
-	/** @see #getGapY() */
-	String GAP_Y__PROP = "gapY";
+	/** @see #getSibblingGapY() */
+	String SIBBLING_GAP_Y__PROP = "sibblingGapY";
+
+	/** @see #getSubtreeGapY() */
+	String SUBTREE_GAP_Y__PROP = "subtreeGapY";
 
 	/** @see #getStrokeStyle() */
 	String STROKE_STYLE__PROP = "strokeStyle";
@@ -97,14 +100,24 @@ public interface TreeLayout extends FloatingLayout, com.top_logic.graphic.flow.o
 	com.top_logic.graphic.flow.data.TreeLayout setGapX(double value);
 
 	/**
-	 * Vertical gap between nodes in a tree column.
+	 * Vertical gap between nodes in a tree column if they belong to the same parent.
 	 */
-	double getGapY();
+	double getSibblingGapY();
 
 	/**
-	 * @see #getGapY()
+	 * @see #getSibblingGapY()
 	 */
-	com.top_logic.graphic.flow.data.TreeLayout setGapY(double value);
+	com.top_logic.graphic.flow.data.TreeLayout setSibblingGapY(double value);
+
+	/**
+	 * Vertical gap between nodes in a tree column if they belong to different subtrees.
+	 */
+	double getSubtreeGapY();
+
+	/**
+	 * @see #getSubtreeGapY()
+	 */
+	com.top_logic.graphic.flow.data.TreeLayout setSubtreeGapY(double value);
 
 	/**
 	 * Stroke style of tree connections.

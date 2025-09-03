@@ -91,6 +91,14 @@ public class JSDiagramControl extends AbstractJSControl
 
 	int zoomLevel;
 
+	float controlW;
+
+	float controlH;
+
+	float newCtrlW;
+
+	float newCtrlH;
+
 	double dragStartX, dragStartY;
 
 	boolean draggingToPan;
@@ -132,7 +140,6 @@ public class JSDiagramControl extends AbstractJSControl
 		_control = document.getElementById(getId());
 		String contentUrl = _control.getAttribute(DATA_CONTENT_ATTR);
 
-		Element ctrlParent = _control.parentElement;
 		com.google.gwt.dom.client.Element ctrl = jsinterop.base.Js.cast(_control);
 
 		_svgDoc = OMSVGParser.currentDocument();
@@ -173,10 +180,10 @@ public class JSDiagramControl extends AbstractJSControl
 					diagram.layout(_renderContext);
 
 					if (diagram.getViewBoxWidth() == 0) {
-						diagram.setViewBoxWidth(ctrlParent.clientWidth);
+						diagram.setViewBoxWidth(_control.clientWidth);
 					}
 					if (diagram.getViewBoxHeight() == 0) {
-						diagram.setViewBoxHeight(ctrlParent.clientHeight - 5);
+						diagram.setViewBoxHeight(_control.clientHeight);
 					}
 
 					diagram.draw(svgBuilder());
@@ -194,6 +201,10 @@ public class JSDiagramControl extends AbstractJSControl
 						}
 					};
 
+					controlW = _control.clientWidth;
+					controlH = _control.clientHeight;
+					newCtrlW = controlW;
+					newCtrlH = controlH;
 					_viewbox = _svg.getViewBox().getBaseVal();
 					calcZoomLevel();
 				} catch (IOException ex) {
@@ -340,6 +351,8 @@ public class JSDiagramControl extends AbstractJSControl
 		ResizeObserverCallback resize = new ResizeObserverCallback() {
 			@Override
 			public Object onInvoke(JsArray<ResizeObserverEntry> p0, ResizeObserver p1) {
+				newCtrlW = _control.clientWidth;
+				newCtrlH = _control.clientHeight;
 				zoomSVG(0, 0, 0);
 				return null;
 			}
@@ -347,7 +360,7 @@ public class JSDiagramControl extends AbstractJSControl
 
 		_observer = new ResizeObserver(resize);
 
-		_observer.observe(ctrlParent);
+		_observer.observe(_control);
 
 	}
 
@@ -356,11 +369,11 @@ public class JSDiagramControl extends AbstractJSControl
 		double fract = 1;
 		for (int i = 0; fract >= 1; i++) {
 			level = i;
-			fract = 2 - (_viewbox.getWidth() / _control.parentElement.clientWidth) * JsMath.pow(2, level);
+			fract = 2 - (_viewbox.getWidth() / _control.clientWidth) * JsMath.pow(2, level);
 		}
 		double factor;
 		if (level == 0) {
-			factor = _control.parentElement.clientWidth / _viewbox.getWidth();
+			factor = _control.clientWidth / _viewbox.getWidth();
 		} else {
 			factor = level + fract;
 		}
@@ -373,6 +386,15 @@ public class JSDiagramControl extends AbstractJSControl
 		hideZoomDisplay.schedule(5 * 1000);
 	}
 
+	private double getFactor() {
+		float zL = zoomLevel;
+		float level = JsMath.trunc(zL / 100);
+		float fract = (float) JsNumber.parseFloat(new JsNumber((zL / 100) - level).toFixed(2));
+		// (2 - y) / 2^x -> x = ganze 100%; y = 10% Teile | Bsp. 320% -> x = 3, y = 0.2
+		return level == 0 ? _viewbox.getWidth() / controlW
+			: (2 - fract) / JsMath.pow(2, level);
+	}
+
 	private native int getWheelScrollFactor(Event event) /*-{
 		return $wnd.BAL.getWheelScrollFactor(event);
 	}-*/;
@@ -381,11 +403,7 @@ public class JSDiagramControl extends AbstractJSControl
 
 		double factor = 1;
 		if (!zoom) {
-			float zL = zoomLevel;
-			float level = JsMath.trunc(zL / 100);
-			float fract = (float) JsNumber.parseFloat(new JsNumber((zL / 100) - level).toFixed(2));
-			// (2 - y) / 2^x -> x = ganze 100%; y = 10% Teile | Bsp. 320% -> x = 3, y = 0.2
-			factor = (2 - fract) / JsMath.pow(2, level);
+			factor = getFactor();
 		}
 
 		float newX = (float) JsMath.max(0,
@@ -404,34 +422,34 @@ public class JSDiagramControl extends AbstractJSControl
 		if (_viewbox == null) {
 			return;
 		}
-		float parentW = _control.parentElement.clientWidth;
-		float parentH = _control.parentElement.clientHeight - 5;
 		if (zoomFactor >= 1) {
-			_viewbox.setWidth(parentW);
-			_viewbox.setHeight(parentH);
+			_viewbox.setWidth(controlW);
+			_viewbox.setHeight(controlH);
 			calcZoomLevel();
 			panSVG(-_viewbox.getX(), -_viewbox.getY(), true);
 		} else {
-			float deltaW = (float) (parentW * zoomFactor);
-			float deltaH = (float) (parentH * zoomFactor);
-			float ratio = parentW / parentH;
-			float vbW = _viewbox.getWidth();
-			float vbH = _viewbox.getHeight();
-			if (ratio != vbW / vbH && ratio != 0) {
-				vbH = (vbW / ratio);
-			}
+			float factor = (float) getFactor();
+			float diffW = (newCtrlW - controlW) * factor;
+			float diffH = (newCtrlH - controlH) * factor;
+			float vbW = _viewbox.getWidth() + diffW;
+			float vbH = _viewbox.getHeight() + diffH;
+			controlW = newCtrlW;
+			controlH = newCtrlH;
+			float deltaW = (float) (controlW * zoomFactor);
+			float deltaH = (float) (controlH * zoomFactor);
 			float newVBW = vbW - deltaW;
 			float newVBH = vbH - deltaH;
 
-			if (JsMath.abs(new JsNumber((newVBW - parentW) / parentW).toFixed(2)) < 0.05) {
-				newVBW = parentW;
-				newVBH = parentH;
+			if (JsMath.abs(new JsNumber((newVBW - controlW) / controlW).toFixed(2)) < 0.05) {
+				newVBW = controlW;
+				newVBH = controlH;
 			}
 
 			float maxW = (float) _diagram.getRoot().getWidth();
 			float maxH = (float) _diagram.getRoot().getHeight();
 			if (maxW < newVBW && maxH < newVBH) {
-				if ((maxW / parentW) < (maxH / parentH)) {
+				float ratio = controlW / controlH;
+				if ((maxW / controlW) < (maxH / controlH)) {
 					newVBH = maxH;
 					newVBW = (newVBH * ratio);
 				} else {

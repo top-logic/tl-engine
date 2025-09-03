@@ -113,8 +113,11 @@ message TreeLayout extends FloatingLayout {
 	/** Horizontal gap between columns of tree nodes. */
 	double gapX = 40;
 	
-	/** Vertical gap between nodes in a tree column. */
-	double gapY = 20;
+	/** Vertical gap between nodes in a tree column if they belong to the same parent. */
+	double sibblingGapY = 20;
+
+	/** Vertical gap between nodes in a tree column if they belong to different subtrees. */
+	double subtreeGapY = 20;
 
 	/** Stroke style of tree connections. */	
 	string strokeStyle = "black";

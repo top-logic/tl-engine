@@ -14,18 +14,24 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import com.google.common.base.Functions;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.diff.CollectionDiff;
 import com.top_logic.basic.col.diff.SetDiff;
 import com.top_logic.basic.col.diff.op.DiffOp;
 import com.top_logic.basic.col.diff.op.DiffOp.Visitor;
+import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.changelog.model.trans.TransientChangeSet;
 import com.top_logic.element.changelog.model.trans.TransientCreation;
 import com.top_logic.element.changelog.model.trans.TransientDeletion;
 import com.top_logic.element.changelog.model.trans.TransientModification;
 import com.top_logic.element.changelog.model.trans.TransientUpdate;
+import com.top_logic.knowledge.objects.identifier.ObjectReference;
+import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.ModelKind;
@@ -124,7 +130,7 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 
 				Object newValue = resolveNewValue(problems, rev, part, template, revived);
 
-				updateProperty(revived, part, newValue);
+				revived.tUpdate(part, newValue);
 			}
 		}
 
@@ -142,11 +148,29 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 
 				for (TLStructuredTypePart part : toDelete.tType().getAllParts()) {
 					if (part.getModelKind() == ModelKind.REFERENCE) {
-						if (((TLReference) part).isComposite()) {
-							// Clear composition references to make sure that only those objects are
-							// deleted that are requested to delete.
-							toDelete.tUpdate(part, null);
+						TLReference reference = (TLReference) part;
+
+						Map<ObjectReference, TLObject> newCompositeParts =
+							CollectionUtilShared.asCollection(toDelete.tValue(reference))
+							.stream()
+							.map(TLObject.class::cast)
+							.collect(
+								Collectors.toMap(WrapperHistoryUtils::getUnversionedIdentity, Functions.identity()));
+						CollectionUtilShared.asCollection(deleted.tValue(reference))
+							.stream()
+							.map(TLObject.class::cast)
+							.map(WrapperHistoryUtils::getUnversionedIdentity)
+							.forEach(newCompositeParts.keySet()::remove);
+						if (reference.isComposite()) {
+							/* Clear composition references to make sure that only those objects are
+							 * deleted that are requested to delete. */
+							toDelete.tUpdate(reference, null);
 						}
+						/* Delete additional composite parts that were not referenced at deletion
+						 * time to simulate automatic deletion of referenced objects. Objects that
+						 * were referenced at deletion time should have an own deletion entry in the
+						 * change set. */
+						KBUtils.deleteAll(newCompositeParts.values());
 					}
 				}
 
@@ -244,7 +268,7 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 						newValueMerged = newValue;
 					}
 
-					updateProperty(target, part, newValueMerged);
+					target.tUpdate(part, newValueMerged);
 				}
 			}
 		}
@@ -272,25 +296,6 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 					MetaLabelProvider.INSTANCE.getLabel(newValue)));
 		}
 		return newValue;
-	}
-
-	private void updateProperty(TLObject target, TLStructuredTypePart part, Object newValue) {
-		if (part.getModelKind() == ModelKind.REFERENCE) {
-			TLReference ref = (TLReference) part;
-			if (ref.isComposite()) {
-				// Replaced values must be deleted.
-
-				Object replacedValue = target.tValue(part);
-				HashSet<?> toDelete = new HashSet<>(CollectionUtil.asSet(replacedValue));
-				toDelete.removeAll(CollectionUtil.asSet(newValue));
-
-				for (Object del : toDelete) {
-					((TLObject) del).tDelete();
-				}
-			}
-		}
-
-		target.tUpdate(part, newValue);
 	}
 
 	private Object toCurrent(long rev, TLStructuredTypePart part, Object value) {

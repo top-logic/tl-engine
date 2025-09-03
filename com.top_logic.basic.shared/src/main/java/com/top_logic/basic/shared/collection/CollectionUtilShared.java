@@ -303,8 +303,30 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	}
 
 	/**
-	 * Wraps the given value(s) into a list, if it is neither <code>null</code> or already a
+	 * Wraps the given value(s) into a collection, if it is neither <code>null</code> or already a
 	 * collection.
+	 * 
+	 * <p>
+	 * The resulting collection must not be modified. It may either be the argument itself or a
+	 * read-only view.
+	 * </p>
+	 * 
+	 * @param value
+	 *        The value to wrap.
+	 * 
+	 * @see #asList(Object)
+	 * @see #asSet(Object)
+	 */
+	public static Collection<?> asCollection(Object value) {
+		if (value instanceof Collection<?>) {
+			return (Collection<?>) value;
+		} else {
+			return asList(value);
+		}
+	}
+
+	/**
+	 * Wraps the given value(s) into a list, if it is neither <code>null</code> or already a list.
 	 * 
 	 * <p>
 	 * The resulting list must not be modified. It may either be the argument itself or a read-only
@@ -317,6 +339,9 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	 * @return The given value, if it is already a list. A collection is converted to a list. A
 	 *         singleton value is wrapped into a singleton list. For <code>null</code>, the empty
 	 *         list is returned.
+	 * 
+	 * @see #asCollection(Object)
+	 * @see #asSet(Object)
 	 */
 	public static List<?> asList(Object value) {
 		if (value instanceof List<?>) {
@@ -386,7 +411,7 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	}
 
 	/**
-	 * Wraps the given value into a set, if it is neither <code>null</code> or already a collection.
+	 * Wraps the given value into a set, if it is neither <code>null</code> or already a set.
 	 * 
 	 * <p>
 	 * The resulting set must not be modified. It may either be the argument itself or a read-only
@@ -399,6 +424,9 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	 * @return The given value, if it is already a set. A collection is converted to a set. A
 	 *         singleton value is wrapped into a singleton set. For <code>null</code>, the empty set
 	 *         is returned.
+	 * 
+	 * @see #asCollection(Object)
+	 * @see #asList(Object)
 	 */
 	public static Set<?> asSet(Object value) {
 		if (value instanceof Set<?>) {

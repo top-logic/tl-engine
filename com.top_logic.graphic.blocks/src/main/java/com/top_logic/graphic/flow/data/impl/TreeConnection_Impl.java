@@ -186,6 +186,12 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.TreeConnection setRenderInfo(java.lang.Object value) {
+		internalSetRenderInfo(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return TREE_CONNECTION__TYPE;
 	}

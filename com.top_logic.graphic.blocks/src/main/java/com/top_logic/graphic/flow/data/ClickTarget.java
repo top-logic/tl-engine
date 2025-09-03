@@ -98,6 +98,9 @@ public interface ClickTarget extends Decoration, com.top_logic.graphic.flow.oper
 	@Override
 	com.top_logic.graphic.flow.data.ClickTarget setClientId(String value);
 
+	@Override
+	com.top_logic.graphic.flow.data.ClickTarget setRenderInfo(java.lang.Object value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.ClickTarget readClickTarget(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {

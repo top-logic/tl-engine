@@ -6,6 +6,7 @@
 package com.top_logic.graphic.flow.operations.tree;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -14,6 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
@@ -50,13 +52,6 @@ public class TreeRenderInfo {
 		}
 
 		/**
-		 * TODO
-		 */
-		public double getOffsetX() {
-			return _offsetX;
-		}
-
-		/**
 		 * The width of this column (maximum width of nodes placed in this column).
 		 */
 		public double getWidth() {
@@ -76,7 +71,9 @@ public class TreeRenderInfo {
 		 * @param root
 		 */
 		public void addBox(TreeNode node) {
+			int index = _boxes.size();
 			_boxes.add(node);
+			node.setColumn(this, index);
 		}
 
 		/**
@@ -94,7 +91,7 @@ public class TreeRenderInfo {
 		 * @param index
 		 * @return
 		 */
-		public TreeNode getBox(int index) {
+		public TreeNode getNode(int index) {
 			return _boxes.get(index);
 		}
 
@@ -107,21 +104,16 @@ public class TreeRenderInfo {
 			_width = maxWidth;
 		}
 
+		/**
+		 * TODO
+		 */
+		public double getOffsetX() {
+			return _offsetX;
+		}
+
 		public void setOffsetX(double offsetX) {
 			_offsetX = offsetX;
 
-		}
-
-		/**
-		 * The Y coordinate of the box that is inserted to this column next.
-		 */
-		public double getOffsetY() {
-			if (getBoxes().size() > 0) {
-				TreeNode last = getBoxes().get(getBoxes().size() - 1);
-				return last.getBox().getBottomY() + _gapY;
-			} else {
-				return 0.0;
-			}
 		}
 	}
 
@@ -247,22 +239,15 @@ public class TreeRenderInfo {
 		return _columns.get(level);
 	}
 
-	/**
-	 * TODO
-	 *
-	 * @param node
-	 * @return
-	 */
-	public Box getAnchor(TreeNode node) {
-		return node.getAnchor();
+	public TreeNode getNodeForAnchor(Box anchor) {
+		return _nodeForAnchor.get(anchor);
 	}
 
 	/**
-	 * Shifts the subtree rooted at the given node to the bottom.
+	 * Shifts the subtree rooted at the given node to the bottom by the given amount.
 	 */
 	public void shiftY(TreeNode node, double shiftY) {
-		Box box = node.getBox();
-		box.setY(box.getY() + shiftY);
+		node.setY(node.getY() + shiftY);
 		for (TreeNode child : node.getChildren()) {
 			shiftY(child, shiftY);
 		}
@@ -272,19 +257,14 @@ public class TreeRenderInfo {
 	 * Arranges nodes in columns so that a parent node is placed in a column left to the column of
 	 * its children.
 	 */
-	public void computeLayout() {
-		double width = 0;
-		double height = 0;
-
-		// Enter tree nodes in columns and assign reasonable Y coordinates to nodes.
-		if (!getRoots().isEmpty()) {
-			height -= -_gapY;
-			for (TreeNode root : getRoots()) {
-				height = layoutTree(0, root, height);
-			}
+	public void computeLayout(RenderContext context) {
+		// Insert tree nodes into columns.
+		for (TreeNode root : getRoots()) {
+			enterColumns(0, root);
 		}
 
 		// Compute column widths.
+		double width = 0;
 		if (!getColumns().isEmpty()) {
 			for (Column column : getColumns()) {
 				column.setOffsetX(width);
@@ -298,8 +278,36 @@ public class TreeRenderInfo {
 			width -= _gapX;
 		}
 
+		// Compute internal layout of nodes. This is required before computing the tree layout,
+		// since the internal position of the node's anchor must be known.
+		for (TreeNode node : _nodeForBox.values()) {
+			// Offer the whole column width to the node, but restrict its height to its intrinsic
+			// height. Place the node at (0,0) to make internal node coordinates relative. The node
+			// is placed externally by a transformed group when rendering.
+			node.getBox().distributeSize(context, 0, 0, node.getColumn().getWidth(), node.getBox().getHeight());
+		}
+
+		// Enter tree nodes in columns and assign reasonable Y coordinates to nodes.
+		double height = 0;
+		if (!getRoots().isEmpty()) {
+			height -= -_gapY;
+			for (TreeNode root : getRoots()) {
+				height = layoutTree(root, height);
+			}
+		}
+
 		_width = width;
 		_height = height;
+	}
+
+	private void enterColumns(int level, TreeNode root) {
+		Column column = mkColumn(level);
+		column.addBox(root);
+
+		List<TreeNode> nextLevel = root.getChildren();
+		for (TreeNode child : nextLevel) {
+			enterColumns(level + 1, child);
+		}
 	}
 
 	/**
@@ -309,16 +317,12 @@ public class TreeRenderInfo {
 	 *        The maximum Y coordinate used among all nodes placed so far (the parent and all of the
 	 *        current node's preceding siblings and their sub-trees.
 	 */
-	private double layoutTree(int level, TreeNode root, double parentBottomY) {
-		Column column = mkColumn(level);
-
+	private double layoutTree(TreeNode root, double parentBottomY) {
 		// The minimum Y coordinate, where the current node can be placed in its column.
-		double minY = column.getOffsetY();
+		double minY = root.getIndex() == 0 ? 0 : root.getColumnPredecessor().getBottom() + _gapY;
 		if (_compact) {
 			minY = Math.max(parentBottomY, minY);
 		}
-
-		column.addBox(root);
 
 		double bottomY;
 
@@ -327,40 +331,42 @@ public class TreeRenderInfo {
 		if (nextLevel.isEmpty()) {
 			// This is a leaf node.
 			if (!_compact) {
-				for (int l = level + 1; l < getColumns().size(); l++) {
+				// Use the minimum Y coordinate that has free space in all columns to the right.
+				for (int l = root.getLevel() + 1; l < getColumns().size(); l++) {
 					Column down = getColumns().get(l);
 					if (down.size() > 0) {
-						TreeNode bottom = down.getBox(down.size() - 1);
-						minY = Math.max(minY, bottom.getBox().getBottomY() + _gapY);
+						TreeNode bottom = down.getNode(down.size() - 1);
+						minY = Math.max(minY, bottom.getBottom() + _gapY);
 					}
 				}
 			}
 
 			// Place node at the minimum Y coordinate possible.
-			rootBox.setY(minY);
+			root.setY(minY);
 			bottomY = minY + rootBox.getHeight();
 		} else {
 			// Recursively place all children.
 			double childBottomY = minY;
 			for (TreeNode child : nextLevel) {
-				childBottomY = layoutTree(level + 1, child, childBottomY);
+				childBottomY = layoutTree(child, childBottomY);
 			}
 
 			// Place parent node relative to its direct children.
 			TreeNode firstChild = nextLevel.get(0);
 			TreeNode lastChild = nextLevel.get(nextLevel.size() - 1);
 
-			Box firstAnchor = getAnchor(firstChild);
-			Box lastAnchor = getAnchor(lastChild);
+			Box firstAnchor = firstChild.getAnchor();
+			Box lastAnchor = lastChild.getAnchor();
 
-			// Note: Anchor boxes are up to this point relative to the node's coordinate.
-			double firstY = firstChild.getBox().getY() + firstAnchor.getY() + 0.5 * firstAnchor.getHeight();
-			double lastY = lastChild.getBox().getY() + lastAnchor.getY() + 0.5 * lastAnchor.getHeight();
+			// Note: Anchor boxes are relative to the node's coordinate (which is 0,0 for each
+			// node).
+			double firstY = firstChild.getY() + firstAnchor.getY() + 0.5 * firstAnchor.getHeight();
+			double lastY = lastChild.getY() + lastAnchor.getY() + 0.5 * lastAnchor.getHeight();
 
 			// The Y coordinate of the center of the node's anchor box.
 			double anchorY = firstY + (lastY - firstY) * _parentAlign + _parentOffset;
 
-			Box nodeAnchor = getAnchor(root);
+			Box nodeAnchor = root.getAnchor();
 
 			double nodeY = anchorY - nodeAnchor.getY() - 0.5 * nodeAnchor.getHeight();
 
@@ -379,9 +385,9 @@ public class TreeRenderInfo {
 
 				nodeY += shiftY;
 			}
-			rootBox.setY(nodeY);
+			root.setY(nodeY);
 
-			bottomY = Math.max(rootBox.getBottomY(), childBottomY);
+			bottomY = Math.max(root.getY() + rootBox.getHeight(), childBottomY);
 		}
 
 		return bottomY;
@@ -403,6 +409,15 @@ public class TreeRenderInfo {
 	 */
 	public double getHeight() {
 		return _height;
+	}
+
+	/**
+	 * TODO
+	 *
+	 * @return
+	 */
+	public Collection<TreeNode> getNodes() {
+		return _nodeForBox.values();
 	}
 
 }

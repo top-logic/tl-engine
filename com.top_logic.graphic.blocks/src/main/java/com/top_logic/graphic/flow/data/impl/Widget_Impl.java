@@ -11,6 +11,8 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 
 	private transient String _clientId = null;
 
+	private transient java.lang.Object _renderInfo = null;
+
 	/**
 	 * Creates a {@link Widget_Impl} instance.
 	 */
@@ -87,16 +89,41 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 		return _clientId != null;
 	}
 
+	@Override
+	public final java.lang.Object getRenderInfo() {
+		return _renderInfo;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Widget setRenderInfo(java.lang.Object value) {
+		internalSetRenderInfo(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getRenderInfo()} without chain call utility. */
+	protected final void internalSetRenderInfo(java.lang.Object value) {
+		_listener.beforeSet(this, RENDER_INFO__PROP, value);
+		_renderInfo = value;
+		_listener.afterChanged(this, RENDER_INFO__PROP);
+	}
+
+	@Override
+	public final boolean hasRenderInfo() {
+		return _renderInfo != null;
+	}
+
 	private static java.util.List<String> PROPERTIES = java.util.Collections.unmodifiableList(
 		java.util.Arrays.asList(
 			CSS_CLASS__PROP, 
 			USER_OBJECT__PROP, 
-			CLIENT_ID__PROP));
+			CLIENT_ID__PROP, 
+			RENDER_INFO__PROP));
 
 	private static java.util.Set<String> TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(new java.util.HashSet<>(
 			java.util.Arrays.asList(
 				USER_OBJECT__PROP, 
-				CLIENT_ID__PROP)));
+				CLIENT_ID__PROP, 
+				RENDER_INFO__PROP)));
 
 	@Override
 	public java.util.List<String> properties() {
@@ -114,6 +141,7 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 			case CSS_CLASS__PROP: return getCssClass();
 			case USER_OBJECT__PROP: return getUserObject();
 			case CLIENT_ID__PROP: return getClientId();
+			case RENDER_INFO__PROP: return getRenderInfo();
 			default: return super.get(field);
 		}
 	}
@@ -124,6 +152,7 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 			case CSS_CLASS__PROP: internalSetCssClass((String) value); break;
 			case USER_OBJECT__PROP: internalSetUserObject((java.lang.Object) value); break;
 			case CLIENT_ID__PROP: internalSetClientId((String) value); break;
+			case RENDER_INFO__PROP: internalSetRenderInfo((java.lang.Object) value); break;
 		}
 	}
 
@@ -157,6 +186,13 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 			case CLIENT_ID__PROP: {
 				if (hasClientId()) {
 					out.value(getClientId());
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case RENDER_INFO__PROP: {
+				if (hasRenderInfo()) {
 				} else {
 					out.nullValue();
 				}

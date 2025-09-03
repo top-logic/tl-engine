@@ -85,6 +85,9 @@ public interface TreeConnector extends Widget, com.top_logic.graphic.flow.operat
 	@Override
 	com.top_logic.graphic.flow.data.TreeConnector setClientId(String value);
 
+	@Override
+	com.top_logic.graphic.flow.data.TreeConnector setRenderInfo(java.lang.Object value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.TreeConnector readTreeConnector(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {

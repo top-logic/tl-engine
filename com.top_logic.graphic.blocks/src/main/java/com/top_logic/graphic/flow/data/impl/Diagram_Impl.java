@@ -278,6 +278,12 @@ public class Diagram_Impl extends com.top_logic.graphic.flow.data.impl.Widget_Im
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Diagram setRenderInfo(java.lang.Object value) {
+		internalSetRenderInfo(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return DIAGRAM__TYPE;
 	}

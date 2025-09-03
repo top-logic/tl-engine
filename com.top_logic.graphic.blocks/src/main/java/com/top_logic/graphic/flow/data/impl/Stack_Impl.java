@@ -121,6 +121,12 @@ public class Stack_Impl extends com.top_logic.graphic.flow.data.impl.Box_Impl im
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Stack setRenderInfo(java.lang.Object value) {
+		internalSetRenderInfo(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return STACK__TYPE;
 	}

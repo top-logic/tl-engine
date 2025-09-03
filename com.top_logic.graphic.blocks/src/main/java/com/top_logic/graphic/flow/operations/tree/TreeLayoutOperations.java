@@ -13,7 +13,6 @@ import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
 import com.top_logic.graphic.flow.data.TreeLayout;
 import com.top_logic.graphic.flow.operations.layout.FloatingLayoutOperations;
-import com.top_logic.graphic.flow.operations.tree.TreeRenderInfo.Column;
 
 /**
  * Operations for a {@link TreeLayout}.
@@ -53,10 +52,9 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 				self().isCompact(), self().getGapX(), self().getGapY(), self().getParentAlign(),
 				self().getParentOffset(),
 				self().getNodes(), self().getConnections());
+		self().setRenderInfo(renderInfo);
 
-		renderInfo.computeLayout();
-
-		context.setRenderInfo(self(), renderInfo);
+		renderInfo.computeLayout(context);
 
 		self().setWidth(renderInfo.getWidth());
 		self().setHeight(renderInfo.getHeight());
@@ -64,51 +62,22 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 
 	@Override
 	default void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
-		double dy = offsetY - self().getY();
-
 		self().setX(offsetX);
 		self().setY(offsetY);
 		self().setWidth(width);
 		self().setHeight(height);
 
-		TreeRenderInfo info = context.getRenderInfo(self());
+		TreeRenderInfo info = treeInfo();
 
-		// Offer available space to nodes.
-		double x = offsetX;
-		for (Column column : info.getColumns()) {
-			double columnWidth = column.getWidth();
-
-			for (TreeNode node : column.getBoxes()) {
-				Box box = node.getBox();
-
-				box.distributeSize(context, x, box.getY() + dy, columnWidth, box.getHeight());
-			}
-
-			x += columnWidth;
-			x += self().getGapX();
-		}
-
+		// Note: The tree nodes have already their size assigned during the layout computation.
 		for (TreeConnection connection : self().getConnections()) {
 			TreeConnector parent = connection.getParent();
-			double fromX = fromX(parent.getAnchor());
+			Box parentAnchor = parent.getAnchor();
+			
+			TreeNode parentNode = info.getNodeForAnchor(parentAnchor);
 
-			double toX = Double.MAX_VALUE;
-			for (TreeConnector child : connection.getChildren()) {
-				if (child == null) {
-					// This is an invalid situation.
-					continue;
-				}
-
-				Box anchor = child.getAnchor();
-
-				// This should normally not happen and represents a hard to debug error in the
-				// diagram model.
-				if (anchor != null) {
-					toX = Math.min(toX, toX(anchor));
-				}
-			}
-
-			double barX = self().isCompact() ? toX - self().getGapX() / 2 : (fromX + toX) / 2;
+			double fromX = parentNode.getX() + parentNode.getColumn().getWidth();
+			double barX = fromX + self().getGapX() / 2;
 
 			connection.setBarPosition(barX);
 		}
@@ -116,11 +85,27 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 
 	@Override
 	default void drawContents(SvgWriter out) {
-		FloatingLayoutOperations.super.drawContents(out);
+		TreeRenderInfo info = treeInfo();
+
+		for (TreeNode node : info.getNodes()) {
+			out.beginGroup();
+			out.translate(node.getX(), node.getY());
+
+			out.write(node.getBox());
+
+			out.endGroup();
+		}
 
 		for (TreeConnection connection : self().getConnections()) {
 			out.write(connection);
 		}
+	}
+
+	/**
+	 * The rendering information that keeps the tree layout.
+	 */
+	default TreeRenderInfo treeInfo() {
+		return (TreeRenderInfo) self().getRenderInfo();
 	}
 
 	/** The X coordinate to place a parent connector. */

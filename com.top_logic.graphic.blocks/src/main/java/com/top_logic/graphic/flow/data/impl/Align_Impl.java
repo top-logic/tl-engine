@@ -110,6 +110,12 @@ public class Align_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Align setRenderInfo(java.lang.Object value) {
+		internalSetRenderInfo(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return ALIGN__TYPE;
 	}

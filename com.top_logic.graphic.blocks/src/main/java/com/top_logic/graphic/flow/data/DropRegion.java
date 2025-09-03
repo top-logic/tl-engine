@@ -75,6 +75,9 @@ public interface DropRegion extends Decoration, com.top_logic.graphic.flow.opera
 	@Override
 	com.top_logic.graphic.flow.data.DropRegion setClientId(String value);
 
+	@Override
+	com.top_logic.graphic.flow.data.DropRegion setRenderInfo(java.lang.Object value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.DropRegion readDropRegion(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {

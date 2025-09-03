@@ -253,6 +253,12 @@ public class PolygonalChain_Impl extends com.top_logic.graphic.flow.data.impl.Bo
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.PolygonalChain setRenderInfo(java.lang.Object value) {
+		internalSetRenderInfo(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return POLYGONAL_CHAIN__TYPE;
 	}

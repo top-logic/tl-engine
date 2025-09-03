@@ -42,6 +42,9 @@ path.tlbConnector {
 }
 
 .tlDiagram {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
 	transform-origin: top left;
 }
 

@@ -12,9 +12,9 @@ import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.operations.tree.TreeRenderInfo.Column;
 
 /**
- * 
+ * Temporary object that contains information for computing a tree layout.
  */
-public class TreeNode {
+class TreeNode {
 
 	private final Box _box;
 
@@ -34,6 +34,7 @@ public class TreeNode {
 	 * Creates a {@link TreeNode}.
 	 *
 	 * @param node
+	 *        The box that represents one node in a tree layout.
 	 */
 	public TreeNode(Box node) {
 		_box = node;
@@ -41,62 +42,56 @@ public class TreeNode {
 	}
 
 	/**
-	 * TODO
-	 *
-	 * @param anchor
-	 */
-	public void setAnchor(Box anchor) {
-		_anchor = anchor;
-	}
-
-	/**
-	 * TODO
+	 * The top-level box that represents a node in a tree layout.
 	 */
 	public Box getBox() {
 		return _box;
 	}
 
 	/**
-	 * TODO
+	 * A box that is contained in the top-level node's {@link #getBox()}
 	 */
 	public Box getAnchor() {
 		return _anchor;
 	}
 
 	/**
-	 * TODO
-	 *
-	 * @param parentNode
+	 * @see #getAnchor()
 	 */
-	public void setParent(TreeNode parent) {
-		_parent = parent;
+	public void setAnchor(Box anchor) {
+		_anchor = anchor;
 	}
 
 	/**
-	 * TODO
+	 * The parent tree node.
 	 */
 	public TreeNode getParent() {
 		return _parent;
 	}
 
 	/**
-	 * TODO
-	 *
-	 * @param childNodes
+	 * @see #getParent()
 	 */
-	public void setChildren(List<TreeNode> children) {
-		_children = children;
+	public void setParent(TreeNode parent) {
+		_parent = parent;
 	}
 
 	/**
-	 * TODO
+	 * The children nodes of this node.
 	 */
 	public List<TreeNode> getChildren() {
 		return _children;
 	}
 
 	/**
-	 * TODO
+	 * @see #getChildren()
+	 */
+	public void setChildren(List<TreeNode> children) {
+		_children = children;
+	}
+
+	/**
+	 * The column of the tree layout, where this node has been placed.
 	 */
 	public Column getColumn() {
 		return _column;
@@ -110,49 +105,48 @@ public class TreeNode {
 	}
 
 	/**
-	 * TODO
-	 *
-	 * @param column
-	 * @param index
+	 * @see #getColumn()
+	 * @see #getIndex()
 	 */
 	public void setColumn(Column column, int index) {
 		_column = column;
 		_index = index;
 	}
 
+	/**
+	 * The tree level of this node.
+	 * 
+	 * @see Column#getLevel()
+	 */
 	public int getLevel() {
 		return _column.getLevel();
 	}
 
 	/**
-	 * TODO
-	 *
-	 * @return
+	 * The X coordinate of this node (defined by the tree layout algorithm).
+	 * 
+	 * @see Column#getOffsetX()
 	 */
 	public double getX() {
 		return getColumn().getOffsetX();
 	}
 
 	/**
-	 * TODO
+	 * The Y coordinate of this node (defined by the tree layout algorithm).
 	 */
 	public double getY() {
 		return _offsetY;
 	}
 
 	/**
-	 * TODO
-	 *
-	 * @param minY
+	 * @see #getY()
 	 */
 	public void setY(double offsetY) {
 		_offsetY = offsetY;
 	}
 
 	/**
-	 * TODO
-	 *
-	 * @return
+	 * The Y coordinate of the bottom border of this node.
 	 */
 	public double getBottom() {
 		return getY() + getBox().getHeight();
@@ -163,15 +157,6 @@ public class TreeNode {
 	 */
 	public TreeNode getColumnPredecessor() {
 		return getIndex() == 0 ? null : getColumn().getNode(getIndex() - 1);
-	}
-
-	/**
-	 * TODO
-	 *
-	 * @return
-	 */
-	public TreeNode getLastChild() {
-		return getChildren().isEmpty() ? null : getChildren().get(getChildren().size() - 1);
 	}
 
 }

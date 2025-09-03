@@ -29,7 +29,7 @@ public class TreeRenderInfo {
 	class Column {
 		private List<TreeNode> _boxes = new ArrayList<>();
 
-		private double _width;
+		private double _columnWidth;
 
 		private double _offsetX;
 
@@ -39,13 +39,15 @@ public class TreeRenderInfo {
 		 * Creates a {@link Column}.
 		 *
 		 * @param level
+		 *        See {@link #getLevel()}.
 		 */
 		public Column(int level) {
 			_level = level;
 		}
 
 		/**
-		 * TODO
+		 * The level of the nodes that are placed to this column. A root node has level 0, a child
+		 * node has the level of its parent incremented by 1.
 		 */
 		public int getLevel() {
 			return _level;
@@ -55,7 +57,7 @@ public class TreeRenderInfo {
 		 * The width of this column (maximum width of nodes placed in this column).
 		 */
 		public double getWidth() {
-			return _width;
+			return _columnWidth;
 		}
 
 		/**
@@ -66,72 +68,54 @@ public class TreeRenderInfo {
 		}
 
 		/**
-		 * TODO
-		 *
-		 * @param root
+		 * Adds a new node to this {@link Column}.
 		 */
-		public void addBox(TreeNode node) {
+		public void addNode(TreeNode node) {
 			int index = _boxes.size();
 			_boxes.add(node);
 			node.setColumn(this, index);
 		}
 
 		/**
-		 * TODO
-		 *
-		 * @return
+		 * The number of nodes in this column.
 		 */
 		public int size() {
 			return _boxes.size();
 		}
 
 		/**
-		 * TODO
-		 *
-		 * @param index
-		 * @return
+		 * The node with the given index.
+		 * 
+		 * @see TreeNode#getIndex()
 		 */
 		public TreeNode getNode(int index) {
 			return _boxes.get(index);
 		}
 
+		/**
+		 * Computes the width of this column from the maximum width of its nodes.
+		 */
 		public void computeWidth() {
 			double maxWidth = 0;
 			for (TreeNode node : getBoxes()) {
 				maxWidth = Math.max(maxWidth, node.getBox().getWidth());
 			}
 
-			_width = maxWidth;
+			_columnWidth = maxWidth;
 		}
 
 		/**
-		 * TODO
+		 * The X coordinate of the left border of this column.
 		 */
 		public double getOffsetX() {
 			return _offsetX;
 		}
 
+		/**
+		 * @see #getOffsetX()
+		 */
 		public void setOffsetX(double offsetX) {
 			_offsetX = offsetX;
-
-		}
-
-		/**
-		 * TODO
-		 *
-		 * @return
-		 */
-		public double getHeight() {
-			return size() == 0 ? 0 : getLast().getBottom();
-		}
-
-		/**
-		 * TODO
-		 *
-		 * @return
-		 */
-		public TreeNode getLast() {
-			return size() == 0 ? null : getNode(size() - 1);
 		}
 	}
 
@@ -260,6 +244,9 @@ public class TreeRenderInfo {
 		return _columns.get(level);
 	}
 
+	/**
+	 * Resolves the tree node with the given anchor box.
+	 */
 	public TreeNode getNodeForAnchor(Box anchor) {
 		return _nodeForAnchor.get(anchor);
 	}
@@ -320,7 +307,7 @@ public class TreeRenderInfo {
 
 	private void enterColumns(int level, TreeNode root) {
 		Column column = mkColumn(level);
-		column.addBox(root);
+		column.addNode(root);
 
 		List<TreeNode> nextLevel = root.getChildren();
 		for (TreeNode child : nextLevel) {
@@ -395,27 +382,21 @@ public class TreeRenderInfo {
 	}
 
 	/**
-	 * TODO
-	 *
-	 * @return
+	 * The width of the complete tree.
 	 */
 	public double getWidth() {
 		return _width;
 	}
 
 	/**
-	 * TODO
-	 *
-	 * @return
+	 * The height of the complete tree.
 	 */
 	public double getHeight() {
 		return _height;
 	}
 
 	/**
-	 * TODO
-	 *
-	 * @return
+	 * All nodes of this tree.
 	 */
 	public Collection<TreeNode> getNodes() {
 		return _nodeForBox.values();

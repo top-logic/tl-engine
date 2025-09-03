@@ -165,4 +165,13 @@ public class TreeNode {
 		return getIndex() == 0 ? null : getColumn().getNode(getIndex() - 1);
 	}
 
+	/**
+	 * TODO
+	 *
+	 * @return
+	 */
+	public TreeNode getLastChild() {
+		return getChildren().isEmpty() ? null : getChildren().get(getChildren().size() - 1);
+	}
+
 }

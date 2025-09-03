@@ -188,6 +188,12 @@ public class Sized_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 	}
 
 	@Override
+	public com.top_logic.graphic.flow.data.Sized setRenderInfo(java.lang.Object value) {
+		internalSetRenderInfo(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return SIZED__TYPE;
 	}

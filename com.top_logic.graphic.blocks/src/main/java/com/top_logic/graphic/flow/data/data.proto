@@ -22,6 +22,9 @@ abstract message Widget {
 	 */
 	@Nullable
 	transient string clientId;
+	
+	/** Private information that must be kept during the layout and rendering phases. */
+	transient java.lang.Object renderInfo;
 }
 
 /** Top-level diagram element that can be layouted and rendered. */

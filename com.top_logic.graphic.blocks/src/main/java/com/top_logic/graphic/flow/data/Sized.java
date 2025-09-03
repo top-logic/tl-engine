@@ -124,6 +124,9 @@ public interface Sized extends Decoration, com.top_logic.graphic.flow.operations
 	@Override
 	com.top_logic.graphic.flow.data.Sized setClientId(String value);
 
+	@Override
+	com.top_logic.graphic.flow.data.Sized setRenderInfo(java.lang.Object value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.graphic.flow.data.Sized readSized(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {

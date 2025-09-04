@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objectlist
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<metaobjects>
+		<metaobject
+			object_name="A"
+			object_type="MOKnowledgeObject"
+			super_class="KnowledgeObject"
+		>
+			<annotations>
+				<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.ImplementationBindingAnnotation">
+					<binding application-type="com.top_logic.knowledge.wrap.DefaultWrapper"/>
+				</annotation>
+			</annotations>
+			<attributes>
+				<reference
+					att_name="alwaysCurrent"
+					by-value="true"
+					history-type="current"
+					monomorphic="true"
+					storage="com.top_logic.knowledge.CurrentOnlyReferenceStorage"
+					target-type="A"
+				/>
+			</attributes>
+		</metaobject>
+	</metaobjects>
+</objectlist>

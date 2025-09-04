@@ -110,8 +110,17 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 						.fill(MetaLabelProvider.INSTANCE.getLabel(currentTemplate)));
 					continue;
 				}
+				TLClass templateType = (TLClass) template.tType();
+				if (!WrapperHistoryUtils.isCurrent(templateType)) {
+					/* The type does not longer exists. Otherwise the type would be a current
+					 * element (the type of an object is always current). */
+					problems.add(I18NConstants.PROBLEM_TYPE_FOR_OBJECT_TO_CREATE_NO_LONGE_EXISTS__OBJ_TYPE.fill(
+						MetaLabelProvider.INSTANCE.getLabel(template),
+						MetaLabelProvider.INSTANCE.getLabel(templateType)));
+					continue;
+				}
 
-				TLObject revived = factory.createObject((TLClass) template.tType(), null, null, template.tIdLocal());
+				TLObject revived = factory.createObject(templateType, null, null, template.tIdLocal());
 				created.put(revived, template);
 			}
 		}

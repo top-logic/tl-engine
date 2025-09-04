@@ -435,7 +435,13 @@ public class ChangeLogBuilder {
 						continue;
 					}
 					ObjectKey partId = storage.getPartId(change.getValues());
-					TLStructuredTypePart part = _kb.resolveObjectKey(partId).getWrapper();
+					KnowledgeItem partKI = _kb.resolveObjectKey(partId);
+					if (partKI == null) {
+						/* Part is deleted in the meanwhile. It is possible to display the
+						 * change, but not to revert it. */
+						partKI = _kb.resolveObjectKey(inRevision(partId, revision));
+					}
+					TLStructuredTypePart part = partKI.getWrapper();
 
 					enter(newObject).add(part);
 				}

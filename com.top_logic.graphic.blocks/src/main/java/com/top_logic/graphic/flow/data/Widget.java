@@ -77,6 +77,9 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 		/** Type literal for {@link com.top_logic.graphic.flow.data.TreeConnection}. */
 		TREE_CONNECTION,
 
+		/** Type literal for {@link com.top_logic.graphic.flow.data.EdgeDecoration}. */
+		EDGE_DECORATION,
+
 		/** Type literal for {@link com.top_logic.graphic.flow.data.TreeConnector}. */
 		TREE_CONNECTOR,
 		;
@@ -91,6 +94,9 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 
 		/** Visit case for {@link com.top_logic.graphic.flow.data.TreeConnection}.*/
 		R visit(com.top_logic.graphic.flow.data.TreeConnection self, A arg) throws E;
+
+		/** Visit case for {@link com.top_logic.graphic.flow.data.EdgeDecoration}.*/
+		R visit(com.top_logic.graphic.flow.data.EdgeDecoration self, A arg) throws E;
 
 		/** Visit case for {@link com.top_logic.graphic.flow.data.TreeConnector}.*/
 		R visit(com.top_logic.graphic.flow.data.TreeConnector self, A arg) throws E;
@@ -184,6 +190,7 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 		switch (type) {
 			case Diagram.DIAGRAM__TYPE: result = com.top_logic.graphic.flow.data.Diagram.create(); break;
 			case TreeConnection.TREE_CONNECTION__TYPE: result = com.top_logic.graphic.flow.data.TreeConnection.create(); break;
+			case EdgeDecoration.EDGE_DECORATION__TYPE: result = com.top_logic.graphic.flow.data.EdgeDecoration.create(); break;
 			case TreeConnector.TREE_CONNECTOR__TYPE: result = com.top_logic.graphic.flow.data.TreeConnector.create(); break;
 			case FloatingLayout.FLOATING_LAYOUT__TYPE: result = com.top_logic.graphic.flow.data.FloatingLayout.create(); break;
 			case Text.TEXT__TYPE: result = com.top_logic.graphic.flow.data.Text.create(); break;

@@ -168,6 +168,9 @@ message TreeConnection extends Widget {
 	/** Length of dashes for a dashed border. */
 	repeated double dashes;
 	
+	/** Decorations to place on the connection. */
+	repeated EdgeDecoration decorations;
+	
 	/**
 	 * The placement of the connection bar that represents the fan-out from the one parent to its many children. 
 	 * The bar is rendered perpendicular to the line connecting the nodes with the bar. 
@@ -175,6 +178,56 @@ message TreeConnection extends Widget {
 	 * the coordinate system of the {@link TreeLayout}.
 	 */
 	transient double barPosition;
+}
+
+/** A decoration placed on an edge. */
+@Operations("com.top_logic.graphic.flow.operations.tree.EdgeDecorationOperations")
+message EdgeDecoration extends Widget {
+	/** 
+	 * A ratio of the length of the edge that determines the position where the content is placed on the edge. 
+	 * A value of <code>0.0</code> places the content at the start position of the edge. 
+	 * A value of <code>1.0</code> places the content at the end position of the edge. 
+	 */
+	double linePosition;
+	
+	/**
+	 * The position of the content box that is matched with the line position.
+	 */
+	OffsetPosition offsetPosition;
+	
+	/** The content to render relative to the edge. */
+    Box content;
+}
+
+/** A position specification of a canonical point within a box. */
+enum OffsetPosition {
+    /** The center of the box. */
+    @Name("center")
+	CENTER;
+    /** The center of the top border. */
+    @Name("center-top")
+	CENTER_TOP;
+    /** The center of the left border. */
+    @Name("center-left")
+	CENTER_LEFT;
+    /** The center of the bottom border. */
+    @Name("center-bottom")
+	CENTER_BOTTOM;
+    /** The center of the right border. */
+    @Name("center-right")
+	CENTER_RIGHT;
+    /** The top left corner. */
+    @Name("top-left")
+	TOP_LEFT;
+    /** The top right corner. */
+    @Name("top-right")
+	TOP_RIGHT;
+    /** The bottom left corner. */
+    @Name("bottom-left")
+	BOTTOM_LEFT;
+    @Name("bottom-right")
+    /** The bottom right corner. */
+	BOTTOM_RIGHT;
 }
 
 /** An anchor point of a connection to a node of the diagram. */

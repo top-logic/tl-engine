@@ -24,6 +24,15 @@ public interface TreeConnection extends Widget, com.top_logic.graphic.flow.opera
 	/** @see #getChild() */
 	String CHILD__PROP = "child";
 
+	/** @see #getStrokeStyle() */
+	String STROKE_STYLE__PROP = "strokeStyle";
+
+	/** @see #getThickness() */
+	String THICKNESS__PROP = "thickness";
+
+	/** @see #getDashes() */
+	String DASHES__PROP = "dashes";
+
 	/** @see #getBarPosition() */
 	String BAR_POSITION__PROP = "barPosition";
 
@@ -66,6 +75,56 @@ public interface TreeConnection extends Widget, com.top_logic.graphic.flow.opera
 	 * Checks, whether {@link #getChild()} has a value.
 	 */
 	boolean hasChild();
+
+	/**
+	 * The SVG <code>stroke</code> style. If not set, the default from the {@link TreeLayout} is used.
+	 */
+	String getStrokeStyle();
+
+	/**
+	 * @see #getStrokeStyle()
+	 */
+	com.top_logic.graphic.flow.data.TreeConnection setStrokeStyle(String value);
+
+	/**
+	 * Checks, whether {@link #getStrokeStyle()} has a value.
+	 */
+	boolean hasStrokeStyle();
+
+	/**
+	 * The thickness of the drawn border. If not set, the default from the {@link TreeLayout} is used.
+	 */
+	Double getThickness();
+
+	/**
+	 * @see #getThickness()
+	 */
+	com.top_logic.graphic.flow.data.TreeConnection setThickness(Double value);
+
+	/**
+	 * Checks, whether {@link #getThickness()} has a value.
+	 */
+	boolean hasThickness();
+
+	/**
+	 * Length of dashes for a dashed border.
+	 */
+	java.util.List<Double> getDashes();
+
+	/**
+	 * @see #getDashes()
+	 */
+	com.top_logic.graphic.flow.data.TreeConnection setDashes(java.util.List<? extends Double> value);
+
+	/**
+	 * Adds a value to the {@link #getDashes()} list.
+	 */
+	com.top_logic.graphic.flow.data.TreeConnection addDashe(double value);
+
+	/**
+	 * Removes a value from the {@link #getDashes()} list.
+	 */
+	void removeDashe(double value);
 
 	/**
 	 * The placement of the connection bar that represents the fan-out from the one parent to its many children. 

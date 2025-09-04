@@ -9,14 +9,6 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 
 	private double _thickness = 1.0;
 
-	private boolean _top = true;
-
-	private boolean _left = true;
-
-	private boolean _bottom = true;
-
-	private boolean _right = true;
-
 	private final java.util.List<Double> _dashes = new de.haumacher.msgbuf.util.ReferenceList<Double>() {
 		@Override
 		protected void beforeAdd(int index, Double element) {
@@ -33,6 +25,14 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 			_listener.afterChanged(Border_Impl.this, DASHES__PROP);
 		}
 	};
+
+	private boolean _top = true;
+
+	private boolean _left = true;
+
+	private boolean _bottom = true;
+
+	private boolean _right = true;
 
 	/**
 	 * Creates a {@link Border_Impl} instance.
@@ -82,6 +82,39 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 		_listener.beforeSet(this, THICKNESS__PROP, value);
 		_thickness = value;
 		_listener.afterChanged(this, THICKNESS__PROP);
+	}
+
+	@Override
+	public final java.util.List<Double> getDashes() {
+		return _dashes;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Border setDashes(java.util.List<? extends Double> value) {
+		internalSetDashes(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getDashes()} without chain call utility. */
+	protected final void internalSetDashes(java.util.List<? extends Double> value) {
+		_dashes.clear();
+		_dashes.addAll(value);
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Border addDashe(double value) {
+		internalAddDashe(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addDashe(double)} without chain call utility. */
+	protected final void internalAddDashe(double value) {
+		_dashes.add(value);
+	}
+
+	@Override
+	public final void removeDashe(double value) {
+		_dashes.remove(value);
 	}
 
 	@Override
@@ -157,39 +190,6 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 	}
 
 	@Override
-	public final java.util.List<Double> getDashes() {
-		return _dashes;
-	}
-
-	@Override
-	public com.top_logic.graphic.flow.data.Border setDashes(java.util.List<? extends Double> value) {
-		internalSetDashes(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getDashes()} without chain call utility. */
-	protected final void internalSetDashes(java.util.List<? extends Double> value) {
-		_dashes.clear();
-		_dashes.addAll(value);
-	}
-
-	@Override
-	public com.top_logic.graphic.flow.data.Border addDashe(double value) {
-		internalAddDashe(value);
-		return this;
-	}
-
-	/** Implementation of {@link #addDashe(double)} without chain call utility. */
-	protected final void internalAddDashe(double value) {
-		_dashes.add(value);
-	}
-
-	@Override
-	public final void removeDashe(double value) {
-		_dashes.remove(value);
-	}
-
-	@Override
 	public com.top_logic.graphic.flow.data.Border setContent(com.top_logic.graphic.flow.data.Box value) {
 		internalSetContent(value);
 		return this;
@@ -254,11 +254,11 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 		java.util.List<String> local = java.util.Arrays.asList(
 			STROKE_STYLE__PROP, 
 			THICKNESS__PROP, 
+			DASHES__PROP, 
 			TOP__PROP, 
 			LEFT__PROP, 
 			BOTTOM__PROP, 
-			RIGHT__PROP, 
-			DASHES__PROP);
+			RIGHT__PROP);
 		java.util.List<String> tmp = new java.util.ArrayList<>();
 		tmp.addAll(com.top_logic.graphic.flow.data.impl.Decoration_Impl.PROPERTIES);
 		tmp.addAll(local);
@@ -290,11 +290,11 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 		switch (field) {
 			case STROKE_STYLE__PROP: return getStrokeStyle();
 			case THICKNESS__PROP: return getThickness();
+			case DASHES__PROP: return getDashes();
 			case TOP__PROP: return isTop();
 			case LEFT__PROP: return isLeft();
 			case BOTTOM__PROP: return isBottom();
 			case RIGHT__PROP: return isRight();
-			case DASHES__PROP: return getDashes();
 			default: return super.get(field);
 		}
 	}
@@ -304,11 +304,11 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 		switch (field) {
 			case STROKE_STYLE__PROP: internalSetStrokeStyle((String) value); break;
 			case THICKNESS__PROP: internalSetThickness((double) value); break;
+			case DASHES__PROP: internalSetDashes(de.haumacher.msgbuf.util.Conversions.asList(Double.class, value)); break;
 			case TOP__PROP: internalSetTop((boolean) value); break;
 			case LEFT__PROP: internalSetLeft((boolean) value); break;
 			case BOTTOM__PROP: internalSetBottom((boolean) value); break;
 			case RIGHT__PROP: internalSetRight((boolean) value); break;
-			case DASHES__PROP: internalSetDashes(de.haumacher.msgbuf.util.Conversions.asList(Double.class, value)); break;
 			default: super.set(field, value); break;
 		}
 	}
@@ -320,6 +320,12 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 		out.value(getStrokeStyle());
 		out.name(THICKNESS__PROP);
 		out.value(getThickness());
+		out.name(DASHES__PROP);
+		out.beginArray();
+		for (double x : getDashes()) {
+			out.value(x);
+		}
+		out.endArray();
 		out.name(TOP__PROP);
 		out.value(isTop());
 		out.name(LEFT__PROP);
@@ -328,12 +334,6 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 		out.value(isBottom());
 		out.name(RIGHT__PROP);
 		out.value(isRight());
-		out.name(DASHES__PROP);
-		out.beginArray();
-		for (double x : getDashes()) {
-			out.value(x);
-		}
-		out.endArray();
 	}
 
 	@Override
@@ -345,6 +345,14 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 			}
 			case THICKNESS__PROP: {
 				out.value(getThickness());
+				break;
+			}
+			case DASHES__PROP: {
+				out.beginArray();
+				for (double x : getDashes()) {
+					out.value(x);
+				}
+				out.endArray();
 				break;
 			}
 			case TOP__PROP: {
@@ -363,14 +371,6 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 				out.value(isRight());
 				break;
 			}
-			case DASHES__PROP: {
-				out.beginArray();
-				for (double x : getDashes()) {
-					out.value(x);
-				}
-				out.endArray();
-				break;
-			}
 			default: super.writeFieldValue(scope, out, field);
 		}
 	}
@@ -380,10 +380,6 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 		switch (field) {
 			case STROKE_STYLE__PROP: setStrokeStyle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case THICKNESS__PROP: setThickness(in.nextDouble()); break;
-			case TOP__PROP: setTop(in.nextBoolean()); break;
-			case LEFT__PROP: setLeft(in.nextBoolean()); break;
-			case BOTTOM__PROP: setBottom(in.nextBoolean()); break;
-			case RIGHT__PROP: setRight(in.nextBoolean()); break;
 			case DASHES__PROP: {
 				java.util.List<Double> newValue = new java.util.ArrayList<>();
 				in.beginArray();
@@ -394,6 +390,10 @@ public class Border_Impl extends com.top_logic.graphic.flow.data.impl.Decoration
 				setDashes(newValue);
 			}
 			break;
+			case TOP__PROP: setTop(in.nextBoolean()); break;
+			case LEFT__PROP: setLeft(in.nextBoolean()); break;
+			case BOTTOM__PROP: setBottom(in.nextBoolean()); break;
+			case RIGHT__PROP: setRight(in.nextBoolean()); break;
 			default: super.readField(scope, in, field);
 		}
 	}

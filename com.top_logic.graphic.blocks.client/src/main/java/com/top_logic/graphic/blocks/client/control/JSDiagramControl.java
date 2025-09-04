@@ -123,7 +123,7 @@ public class JSDiagramControl extends AbstractJSControl
 	/**
 	 * The time, in seconds, that is waited before an update is sent to the server.
 	 */
-	static final int TIMEOUT = 1;
+	static final int TIMEOUT = 10;
 
 	/** Flag to indicate that currently a server side triggered diagram update is applied. */
 	boolean _processServerUpdate;

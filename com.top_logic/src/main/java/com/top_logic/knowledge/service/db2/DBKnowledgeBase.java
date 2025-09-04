@@ -4092,7 +4092,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	 * @see #resolveIdentifier(DBObjectKey,long)
 	 */
 	private KnowledgeItemInternal resolveIdentifier(DBObjectKey identity, boolean cacheOnly) {
-		return resolveIdentifier(identity, IN_SESSION_REVISION, cacheOnly, true);
+		return resolveIdentifier(identity, IN_SESSION_REVISION, cacheOnly, false);
 	}
 
 	/**
@@ -4108,15 +4108,15 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	KnowledgeItemInternal resolveIdentifier(DBObjectKey identity, long dataRevision) {
 		/* This method is called during commit or re-fetch. In this case the session revision is not
 		 * updated (it is to less), so that the validity state can not be checked. */
-		boolean checkValidity = false;
-		return resolveIdentifier(identity, dataRevision, false, checkValidity);
+		boolean ignoreValidity = true;
+		return resolveIdentifier(identity, dataRevision, false, ignoreValidity);
 	}
 
 	private KnowledgeItemInternal resolveIdentifier(DBObjectKey identity, long dataRevision, boolean cacheOnly,
-			boolean checkValidity) {
+			boolean ignoreValidity) {
 		KnowledgeItemInternal cached = identity.getCached();
 		if (cached != null) {
-			if (!checkValidity || cached.isAlive()) {
+			if (ignoreValidity || cached.isAlive()) {
 				return cached;
 			}
 		}

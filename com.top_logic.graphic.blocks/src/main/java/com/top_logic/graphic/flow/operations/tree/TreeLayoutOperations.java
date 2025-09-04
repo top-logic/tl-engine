@@ -47,6 +47,10 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
 		FloatingLayoutOperations.super.computeIntrinsicSize(context, offsetX, offsetY);
 
+		for (TreeConnection connection : self().getConnections()) {
+			connection.layout(context);
+		}
+
 		TreeRenderInfo renderInfo =
 			new TreeRenderInfo(
 				self().isCompact(), self().getGapX(), self().getSibblingGapY(), self().getSubtreeGapY(),
@@ -79,8 +83,6 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 			double barX = fromX + self().getGapX() / 2;
 
 			connection.setBarPosition(barX);
-			
-			connection.layout(context);
 		}
 	}
 

@@ -21,8 +21,8 @@ public interface TreeConnection extends Widget, com.top_logic.graphic.flow.opera
 	/** @see #getParent() */
 	String PARENT__PROP = "parent";
 
-	/** @see #getChildren() */
-	String CHILDREN__PROP = "children";
+	/** @see #getChild() */
+	String CHILD__PROP = "child";
 
 	/** @see #getBarPosition() */
 	String BAR_POSITION__PROP = "barPosition";
@@ -53,24 +53,19 @@ public interface TreeConnection extends Widget, com.top_logic.graphic.flow.opera
 	boolean hasParent();
 
 	/**
-	 * The connectors that are anchored to the children nodes of the connection.
+	 * The connector that is  anchored to the child node of the connection.
 	 */
-	java.util.List<com.top_logic.graphic.flow.data.TreeConnector> getChildren();
+	com.top_logic.graphic.flow.data.TreeConnector getChild();
 
 	/**
-	 * @see #getChildren()
+	 * @see #getChild()
 	 */
-	com.top_logic.graphic.flow.data.TreeConnection setChildren(java.util.List<? extends com.top_logic.graphic.flow.data.TreeConnector> value);
+	com.top_logic.graphic.flow.data.TreeConnection setChild(com.top_logic.graphic.flow.data.TreeConnector value);
 
 	/**
-	 * Adds a value to the {@link #getChildren()} list.
+	 * Checks, whether {@link #getChild()} has a value.
 	 */
-	com.top_logic.graphic.flow.data.TreeConnection addChildren(com.top_logic.graphic.flow.data.TreeConnector value);
-
-	/**
-	 * Removes a value from the {@link #getChildren()} list.
-	 */
-	void removeChildren(com.top_logic.graphic.flow.data.TreeConnector value);
+	boolean hasChild();
 
 	/**
 	 * The placement of the connection bar that represents the fan-out from the one parent to its many children. 

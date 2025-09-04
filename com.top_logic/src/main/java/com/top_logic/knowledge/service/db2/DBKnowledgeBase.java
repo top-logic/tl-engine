@@ -1243,7 +1243,6 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	private KnowledgeItemInternal itemById(DBContext context, ObjectKey requestedIdentity, long dataRevision,
 			boolean cacheOnly) {
 		if (dataRevision == IN_SESSION_REVISION) {
-			MOKnowledgeItem objectType = (MOKnowledgeItem) requestedIdentity.getObjectType();
 			long historyContext = requestedIdentity.getHistoryContext();
 			dataRevision = getDataRevision(historyContext);
 		}
@@ -3974,7 +3973,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 							// a different attribute had changed. Must inform referenced object
 							// because a filtered association query may base on the changed
 							// attribute.
-							KnowledgeItemInternal link = resolveIdentifier(linkKey, revision,false);
+							KnowledgeItemInternal link = resolveIdentifier(linkKey, revision);
 							ObjectKey referencedKey = link.getReferencedKey(reference);
 							if (referencedKey != null) {
 								collectReferenceChangesToBaseObject(revision, linkKey, referencedKey,
@@ -4093,7 +4092,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	 * @see #resolveIdentifier(DBObjectKey,long)
 	 */
 	private KnowledgeItemInternal resolveIdentifier(DBObjectKey identity, boolean cacheOnly) {
-		return resolveIdentifier(identity, IN_SESSION_REVISION, cacheOnly);
+		return resolveIdentifier(identity, IN_SESSION_REVISION, cacheOnly, true);
 	}
 
 	/**
@@ -4107,13 +4106,19 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	 * @return The item with the given key, or <code>null</code>, if none does exist.
 	 */
 	KnowledgeItemInternal resolveIdentifier(DBObjectKey identity, long dataRevision) {
-		return resolveIdentifier(identity, dataRevision, false);
+		/* This method is called during commit or re-fetch. In this case the session revision is not
+		 * updated (it is to less), so that the validity state can not be checked. */
+		boolean checkValidity = false;
+		return resolveIdentifier(identity, dataRevision, false, checkValidity);
 	}
 
-	private KnowledgeItemInternal resolveIdentifier(DBObjectKey identity, long dataRevision, boolean cacheOnly) {
+	private KnowledgeItemInternal resolveIdentifier(DBObjectKey identity, long dataRevision, boolean cacheOnly,
+			boolean checkValidity) {
 		KnowledgeItemInternal cached = identity.getCached();
-		if (cached != null && cached.isAlive()) {
-			return cached;
+		if (cached != null) {
+			if (!checkValidity || cached.isAlive()) {
+				return cached;
+			}
 		}
 		
 		DBContext context = getCurrentDBContext();

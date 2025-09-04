@@ -89,18 +89,29 @@ public class JSDiagramControl extends AbstractJSControl
 
 	private Timer hideZoomDisplay = null;
 
+	/**
+	 * The current percentage showing how much the SVG is zoomed in by.
+	 */
 	int zoomLevel;
 
-	float controlW;
+	/**
+	 * The current size of the control. (Available space for the SVG)
+	 */
+	float controlW, controlH;
 
-	float controlH;
+	/**
+	 * The new size of the control after a resize.
+	 */
+	float newCtrlW, newCtrlH;
 
-	float newCtrlW;
-
-	float newCtrlH;
-
+	/**
+	 * The mouse position at which the drag started.
+	 */
 	double dragStartX, dragStartY;
 
+	/**
+	 * Boolean flag if the user is currently dragging the SVG to pan it.
+	 */
 	boolean draggingToPan;
 
 	private OMSVGRect _viewbox;
@@ -109,7 +120,10 @@ public class JSDiagramControl extends AbstractJSControl
 
 	private Timer serverUpdateTriggered = null;
 
-	static final int TIMEOUT = 10; // timeout in seconds
+	/**
+	 * The time, in seconds, that is waited before an update is sent to the server.
+	 */
+	static final int TIMEOUT = 1;
 
 	/** Flag to indicate that currently a server side triggered diagram update is applied. */
 	boolean _processServerUpdate;
@@ -351,10 +365,17 @@ public class JSDiagramControl extends AbstractJSControl
 		ResizeObserverCallback resize = new ResizeObserverCallback() {
 			@Override
 			public Object onInvoke(JsArray<ResizeObserverEntry> p0, ResizeObserver p1) {
-				newCtrlW = _control.clientWidth;
-				newCtrlH = _control.clientHeight;
-				if (newCtrlW != controlW || newCtrlH != controlH) {
-					zoomSVG(0, 0, 0);
+				if (!DomGlobal.document.contains(_control)) {
+					serverUpdateTriggered = null;
+					_observer.disconnect();
+				} else {
+					newCtrlW = _control.clientWidth;
+					newCtrlH = _control.clientHeight;
+					// if a resize happened, set the new control size
+					if ((newCtrlW != 0 && newCtrlW != controlW) || (newCtrlH != 0 && newCtrlH != controlH)) {
+						// and adjust the viewbox accordingly without zoom and pan
+						zoomSVG(0, 0, 0);
+					}
 				}
 				return null;
 			}
@@ -370,6 +391,9 @@ public class JSDiagramControl extends AbstractJSControl
 		int level = 0;
 		double fract = 1;
 		for (int i = 0; fract >= 1; i++) {
+			if (controlW == 0) {
+				return;
+			}
 			level = i;
 			fract = 2 - (_viewbox.getWidth() / controlW) * JsMath.pow(2, level);
 		}
@@ -391,8 +415,8 @@ public class JSDiagramControl extends AbstractJSControl
 	private double getFactor() {
 		float zL = zoomLevel;
 		float level = JsMath.trunc(zL / 100);
-		float fract = (float) JsNumber.parseFloat(new JsNumber((zL / 100) - level).toFixed(2));
 		// (2 - y) / 2^x -> x = ganze 100%; y = 10% Teile | Bsp. 320% -> x = 3, y = 0.2
+		float fract = (float) JsNumber.parseFloat(new JsNumber((zL / 100) - level).toFixed(2));
 		return level == 0 ? _viewbox.getWidth() / controlW
 			: (2 - fract) / JsMath.pow(2, level);
 	}
@@ -402,12 +426,13 @@ public class JSDiagramControl extends AbstractJSControl
 	}-*/;
 
 	void panSVG(double panDeltaX, double panDeltaY, boolean zoom) {
-
+		// if the svg got zoomed the zoomfactor is already applied to the deltas
 		double factor = 1;
 		if (!zoom) {
 			factor = getFactor();
 		}
 
+		// if the SVG would be moved out of sight, limit it to the border
 		float newX = (float) JsMath.max(0,
 			JsMath.min(_viewbox.getX() + (panDeltaX * factor),
 				_diagram.getRoot().getWidth() - _viewbox.getWidth()));
@@ -430,37 +455,49 @@ public class JSDiagramControl extends AbstractJSControl
 			calcZoomLevel();
 			panSVG(-_viewbox.getX(), -_viewbox.getY(), true);
 		} else {
+			// get the current factor by that the svg is zoomed
 			float factor = (float) getFactor();
+			// calculate if the control size has changed and modify by the factor
 			float diffW = (newCtrlW - controlW) * factor;
 			float diffH = (newCtrlH - controlH) * factor;
+			// change the viewbox accordingly by the difference
 			float vbW = _viewbox.getWidth() + diffW;
 			float vbH = _viewbox.getHeight() + diffH;
+			// update the current control size
 			controlW = newCtrlW;
 			controlH = newCtrlH;
+			// calculate the deltas to zoom the SVG
 			float deltaW = (float) (controlW * zoomFactor);
 			float deltaH = (float) (controlH * zoomFactor);
+			// new viewbox sizes with added zoom
 			float newVBW = vbW - deltaW;
 			float newVBH = vbH - deltaH;
 
+			// if the zoom would pass the 100%, set it to 100% so the original 100% size is
+			// reachable
 			if ((zoomLevel < 100 && newVBW < controlW) || (zoomLevel > 100 && newVBW > controlW)
 				|| JsMath.abs(new JsNumber((newVBW - controlW) / controlW).toFixed(2)) < 0.05) {
 				newVBW = controlW;
 				newVBH = controlH;
 			}
 
+			// get the maximum size of the SVG content
 			float maxW = (float) _diagram.getRoot().getWidth();
 			float maxH = (float) _diagram.getRoot().getHeight();
+			// if this size is smaller than the new viewbox size
 			if (maxW < newVBW && maxH < newVBH) {
+				// limit it to the max size or to 100%, whichever is smaller
 				float ratio = controlW / controlH;
 				if ((maxW / controlW) < (maxH / controlH)) {
-					newVBH = (float) JsMath.max(maxH, controlH);
+					newVBH = (float) JsMath.max(maxH, JsMath.min(newVBH, controlH));
 					newVBW = (newVBH * ratio);
 				} else {
-					newVBW = (float) JsMath.max(maxW, controlW);
+					newVBW = (float) JsMath.max(maxW, JsMath.min(newVBW, controlW));
 					newVBH = (newVBW / ratio);
 				}
 			}
 
+			// set the new size of the viewbox
 			_viewbox.setWidth(newVBW);
 			_viewbox.setHeight(newVBH);
 			

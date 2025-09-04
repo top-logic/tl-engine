@@ -156,6 +156,17 @@ message TreeConnection extends Widget {
 
 	/** The connector that is  anchored to the child node of the connection. */
 	TreeConnector child;
+
+	/** The SVG <code>stroke</code> style. If not set, the default from the {@link TreeLayout} is used. */
+	@Nullable
+	string strokeStyle = "black";
+	
+	/** The thickness of the drawn border. If not set, the default from the {@link TreeLayout} is used. */
+	@Nullable
+	double thickness = 1.0;
+	
+	/** Length of dashes for a dashed border. */
+	repeated double dashes;
 	
 	/**
 	 * The placement of the connection bar that represents the fan-out from the one parent to its many children. 
@@ -528,8 +539,11 @@ message Border extends Decoration {
 	/** The SVG <code>stroke</code> style. */
 	string strokeStyle = "black";
 	
-	/** The thicknes of the drawn border. */
+	/** The thickness of the drawn border. */
 	double thickness = 1.0;
+	
+	/** Length of dashes for a dashed border. */
+	repeated double dashes;
 	
 	/** Whether the border is drawn above the content. */
 	bool top = true;
@@ -542,9 +556,6 @@ message Border extends Decoration {
 	
 	/** Whether the border is drawn on the right side of the content. */
 	bool right = true;
-	
-	/** Length of dashes for a dashed border. */
-	repeated double dashes;
 }
 
 /** A background drawn below some content. */

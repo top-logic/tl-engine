@@ -79,6 +79,8 @@ public interface TreeLayoutOperations extends FloatingLayoutOperations {
 			double barX = fromX + self().getGapX() / 2;
 
 			connection.setBarPosition(barX);
+			
+			connection.layout(context);
 		}
 	}
 

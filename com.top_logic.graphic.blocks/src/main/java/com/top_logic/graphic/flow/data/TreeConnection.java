@@ -33,6 +33,9 @@ public interface TreeConnection extends Widget, com.top_logic.graphic.flow.opera
 	/** @see #getDashes() */
 	String DASHES__PROP = "dashes";
 
+	/** @see #getDecorations() */
+	String DECORATIONS__PROP = "decorations";
+
 	/** @see #getBarPosition() */
 	String BAR_POSITION__PROP = "barPosition";
 
@@ -125,6 +128,26 @@ public interface TreeConnection extends Widget, com.top_logic.graphic.flow.opera
 	 * Removes a value from the {@link #getDashes()} list.
 	 */
 	void removeDashe(double value);
+
+	/**
+	 * Decorations to place on the connection.
+	 */
+	java.util.List<com.top_logic.graphic.flow.data.EdgeDecoration> getDecorations();
+
+	/**
+	 * @see #getDecorations()
+	 */
+	com.top_logic.graphic.flow.data.TreeConnection setDecorations(java.util.List<? extends com.top_logic.graphic.flow.data.EdgeDecoration> value);
+
+	/**
+	 * Adds a value to the {@link #getDecorations()} list.
+	 */
+	com.top_logic.graphic.flow.data.TreeConnection addDecoration(com.top_logic.graphic.flow.data.EdgeDecoration value);
+
+	/**
+	 * Removes a value from the {@link #getDecorations()} list.
+	 */
+	void removeDecoration(com.top_logic.graphic.flow.data.EdgeDecoration value);
 
 	/**
 	 * The placement of the connection bar that represents the fan-out from the one parent to its many children. 

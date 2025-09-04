@@ -353,7 +353,9 @@ public class JSDiagramControl extends AbstractJSControl
 			public Object onInvoke(JsArray<ResizeObserverEntry> p0, ResizeObserver p1) {
 				newCtrlW = _control.clientWidth;
 				newCtrlH = _control.clientHeight;
-				zoomSVG(0, 0, 0);
+				if (newCtrlW != controlW || newCtrlH != controlH) {
+					zoomSVG(0, 0, 0);
+				}
 				return null;
 			}
 		};
@@ -369,11 +371,11 @@ public class JSDiagramControl extends AbstractJSControl
 		double fract = 1;
 		for (int i = 0; fract >= 1; i++) {
 			level = i;
-			fract = 2 - (_viewbox.getWidth() / _control.clientWidth) * JsMath.pow(2, level);
+			fract = 2 - (_viewbox.getWidth() / controlW) * JsMath.pow(2, level);
 		}
 		double factor;
 		if (level == 0) {
-			factor = _control.clientWidth / _viewbox.getWidth();
+			factor = controlW / _viewbox.getWidth();
 		} else {
 			factor = level + fract;
 		}
@@ -440,7 +442,8 @@ public class JSDiagramControl extends AbstractJSControl
 			float newVBW = vbW - deltaW;
 			float newVBH = vbH - deltaH;
 
-			if (JsMath.abs(new JsNumber((newVBW - controlW) / controlW).toFixed(2)) < 0.05) {
+			if ((zoomLevel < 100 && newVBW < controlW) || (zoomLevel > 100 && newVBW > controlW)
+				|| JsMath.abs(new JsNumber((newVBW - controlW) / controlW).toFixed(2)) < 0.05) {
 				newVBW = controlW;
 				newVBH = controlH;
 			}
@@ -450,10 +453,10 @@ public class JSDiagramControl extends AbstractJSControl
 			if (maxW < newVBW && maxH < newVBH) {
 				float ratio = controlW / controlH;
 				if ((maxW / controlW) < (maxH / controlH)) {
-					newVBH = maxH;
+					newVBH = (float) JsMath.max(maxH, controlH);
 					newVBW = (newVBH * ratio);
 				} else {
-					newVBW = maxW;
+					newVBW = (float) JsMath.max(maxW, controlW);
 					newVBH = (newVBW / ratio);
 				}
 			}
@@ -477,6 +480,8 @@ public class JSDiagramControl extends AbstractJSControl
 				@Override
 				public void run() {
 					if (!DomGlobal.document.contains(_control)) {
+						DomGlobal.console.log("Abort Update because control no longer exists.");
+						_observer.disconnect();
 						serverUpdateTriggered = null;
 						return;
 					}

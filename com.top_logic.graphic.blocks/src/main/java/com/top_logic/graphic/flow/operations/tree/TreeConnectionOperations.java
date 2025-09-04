@@ -6,8 +6,11 @@
 package com.top_logic.graphic.flow.operations.tree;
 
 import com.top_logic.graphic.blocks.model.Drawable;
+import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
 import com.top_logic.graphic.flow.data.ConnectorSymbol;
+import com.top_logic.graphic.flow.data.EdgeDecoration;
+import com.top_logic.graphic.flow.data.OffsetPosition;
 import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
 import com.top_logic.graphic.flow.operations.util.DiagramUtil;
@@ -37,6 +40,15 @@ public interface TreeConnectionOperations extends Drawable {
 	 */
 	TreeConnection self();
 
+	/**
+	 * Layouts edge decorations.
+	 */
+	default void layout(RenderContext context) {
+		for (EdgeDecoration decoration : self().getDecorations()) {
+			decoration.layout(context);
+		}
+	}
+
 	@Override
 	default void draw(SvgWriter out) {
 		TreeConnector parent = self().getParent();
@@ -48,6 +60,8 @@ public interface TreeConnectionOperations extends Drawable {
 		double scale = actualThickness() / 2;
 
 		TreeConnector child = self().getChild();
+		double childX = child.getX() - inset(child.getSymbol()) * scale;
+		double childY = child.getY();
 
 		out.beginPath();
 		setStroke(out);
@@ -58,9 +72,6 @@ public interface TreeConnectionOperations extends Drawable {
 		out.setFill("none");
 		out.beginData();
 		{
-			double childX = child.getX() - inset(child.getSymbol()) * scale;
-			double childY = child.getY();
-			
 			out.moveToAbs(childX, childY);
 			out.lineToHorizontalAbs(barX);
 			out.lineToVerticalAbs(fromY);
@@ -71,6 +82,64 @@ public interface TreeConnectionOperations extends Drawable {
 
 		drawSymbol(out, child.getX(), child.getY(), 1, child.getSymbol(), scale);
 		drawSymbol(out, fromX, fromY, -1, parent.getSymbol(), scale);
+
+		for (EdgeDecoration decoration : self().getDecorations()) {
+			// Note: The line position is not used/supported for tree layouts.
+			OffsetPosition offsetPosition = decoration.getOffsetPosition();
+			double x = childX + offsetX(offsetPosition, decoration.getContent().getWidth());
+			double y = childY + offsetY(offsetPosition, decoration.getContent().getHeight());
+
+			out.beginGroup();
+			out.translate(x, y);
+			{
+				decoration.draw(out);
+			}
+			out.endGroup();
+		}
+	}
+
+	/**
+	 * Placement offset in X direction.
+	 */
+	default double offsetX(OffsetPosition offsetPosition, double width) {
+		switch (offsetPosition) {
+			case TOP_LEFT:
+			case CENTER_LEFT:
+			case BOTTOM_LEFT:
+				return 0;
+			case TOP_RIGHT:
+			case CENTER_RIGHT:
+			case BOTTOM_RIGHT:
+				return -width;
+			case CENTER_TOP:
+			case CENTER:
+			case CENTER_BOTTOM:
+				return -width / 2;
+		}
+		throw new IllegalArgumentException("No such position: " + offsetPosition);
+	}
+
+	/**
+	 * Placement offset in Y direction.
+	 */
+	default double offsetY(OffsetPosition offsetPosition, double height) {
+		switch (offsetPosition) {
+			case TOP_LEFT:
+			case TOP_RIGHT:
+			case CENTER_TOP:
+				return 0;
+
+			case BOTTOM_LEFT:
+			case BOTTOM_RIGHT:
+			case CENTER_BOTTOM:
+				return -height;
+
+			case CENTER_LEFT:
+			case CENTER_RIGHT:
+			case CENTER:
+				return -height / 2;
+		}
+		throw new IllegalArgumentException("No such position: " + offsetPosition);
 	}
 
 	/** 

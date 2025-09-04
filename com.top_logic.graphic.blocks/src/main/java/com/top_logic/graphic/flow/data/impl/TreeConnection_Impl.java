@@ -32,6 +32,23 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 		}
 	};
 
+	private final java.util.List<com.top_logic.graphic.flow.data.EdgeDecoration> _decorations = new de.haumacher.msgbuf.util.ReferenceList<com.top_logic.graphic.flow.data.EdgeDecoration>() {
+		@Override
+		protected void beforeAdd(int index, com.top_logic.graphic.flow.data.EdgeDecoration element) {
+			_listener.beforeAdd(TreeConnection_Impl.this, DECORATIONS__PROP, index, element);
+		}
+
+		@Override
+		protected void afterRemove(int index, com.top_logic.graphic.flow.data.EdgeDecoration element) {
+			_listener.afterRemove(TreeConnection_Impl.this, DECORATIONS__PROP, index, element);
+		}
+
+		@Override
+		protected void afterChanged() {
+			_listener.afterChanged(TreeConnection_Impl.this, DECORATIONS__PROP);
+		}
+	};
+
 	private transient double _barPosition = 0.0d;
 
 	/**
@@ -230,6 +247,40 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 	}
 
 	@Override
+	public final java.util.List<com.top_logic.graphic.flow.data.EdgeDecoration> getDecorations() {
+		return _decorations;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.TreeConnection setDecorations(java.util.List<? extends com.top_logic.graphic.flow.data.EdgeDecoration> value) {
+		internalSetDecorations(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getDecorations()} without chain call utility. */
+	protected final void internalSetDecorations(java.util.List<? extends com.top_logic.graphic.flow.data.EdgeDecoration> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'decorations' cannot be null.");
+		_decorations.clear();
+		_decorations.addAll(value);
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.TreeConnection addDecoration(com.top_logic.graphic.flow.data.EdgeDecoration value) {
+		internalAddDecoration(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addDecoration(com.top_logic.graphic.flow.data.EdgeDecoration)} without chain call utility. */
+	protected final void internalAddDecoration(com.top_logic.graphic.flow.data.EdgeDecoration value) {
+		_decorations.add(value);
+	}
+
+	@Override
+	public final void removeDecoration(com.top_logic.graphic.flow.data.EdgeDecoration value) {
+		_decorations.remove(value);
+	}
+
+	@Override
 	public final double getBarPosition() {
 		return _barPosition;
 	}
@@ -286,6 +337,7 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 			STROKE_STYLE__PROP, 
 			THICKNESS__PROP, 
 			DASHES__PROP, 
+			DECORATIONS__PROP, 
 			BAR_POSITION__PROP);
 		java.util.List<String> tmp = new java.util.ArrayList<>();
 		tmp.addAll(com.top_logic.graphic.flow.data.impl.Widget_Impl.PROPERTIES);
@@ -322,6 +374,7 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 			case STROKE_STYLE__PROP: return getStrokeStyle();
 			case THICKNESS__PROP: return getThickness();
 			case DASHES__PROP: return getDashes();
+			case DECORATIONS__PROP: return getDecorations();
 			case BAR_POSITION__PROP: return getBarPosition();
 			default: return super.get(field);
 		}
@@ -335,6 +388,7 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 			case STROKE_STYLE__PROP: internalSetStrokeStyle((String) value); break;
 			case THICKNESS__PROP: internalSetThickness((Double) value); break;
 			case DASHES__PROP: internalSetDashes(de.haumacher.msgbuf.util.Conversions.asList(Double.class, value)); break;
+			case DECORATIONS__PROP: internalSetDecorations(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.graphic.flow.data.EdgeDecoration.class, value)); break;
 			case BAR_POSITION__PROP: internalSetBarPosition((double) value); break;
 			default: super.set(field, value); break;
 		}
@@ -363,6 +417,12 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 		out.beginArray();
 		for (double x : getDashes()) {
 			out.value(x);
+		}
+		out.endArray();
+		out.name(DECORATIONS__PROP);
+		out.beginArray();
+		for (com.top_logic.graphic.flow.data.EdgeDecoration x : getDecorations()) {
+			x.writeTo(scope, out);
 		}
 		out.endArray();
 	}
@@ -418,6 +478,14 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 				out.endArray();
 				break;
 			}
+			case DECORATIONS__PROP: {
+				out.beginArray();
+				for (com.top_logic.graphic.flow.data.EdgeDecoration x : getDecorations()) {
+					x.writeTo(scope, out);
+				}
+				out.endArray();
+				break;
+			}
 			case BAR_POSITION__PROP: {
 				out.value(getBarPosition());
 				break;
@@ -443,6 +511,16 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 				setDashes(newValue);
 			}
 			break;
+			case DECORATIONS__PROP: {
+				java.util.List<com.top_logic.graphic.flow.data.EdgeDecoration> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(com.top_logic.graphic.flow.data.EdgeDecoration.readEdgeDecoration(scope, in));
+				}
+				in.endArray();
+				setDecorations(newValue);
+			}
+			break;
 			default: super.readField(scope, in, field);
 		}
 	}
@@ -454,6 +532,10 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 				out.value(((double) element));
 				break;
 			}
+			case DECORATIONS__PROP: {
+				((com.top_logic.graphic.flow.data.EdgeDecoration) element).writeTo(scope, out);
+				break;
+			}
 			default: super.writeElement(scope, out, field, element);
 		}
 	}
@@ -463,6 +545,9 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 		switch (field) {
 			case DASHES__PROP: {
 				return in.nextDouble();
+			}
+			case DECORATIONS__PROP: {
+				return com.top_logic.graphic.flow.data.EdgeDecoration.readEdgeDecoration(scope, in);
 			}
 			default: return super.readElement(scope, in, field);
 		}

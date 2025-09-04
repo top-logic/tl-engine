@@ -39,6 +39,7 @@ import com.top_logic.graphic.flow.data.Decoration;
 import com.top_logic.graphic.flow.data.Diagram;
 import com.top_logic.graphic.flow.data.DiagramDirection;
 import com.top_logic.graphic.flow.data.DropRegion;
+import com.top_logic.graphic.flow.data.EdgeDecoration;
 import com.top_logic.graphic.flow.data.Empty;
 import com.top_logic.graphic.flow.data.Fill;
 import com.top_logic.graphic.flow.data.FloatingLayout;
@@ -49,6 +50,7 @@ import com.top_logic.graphic.flow.data.ImageAlign;
 import com.top_logic.graphic.flow.data.ImageOrientation;
 import com.top_logic.graphic.flow.data.ImageScale;
 import com.top_logic.graphic.flow.data.MouseButton;
+import com.top_logic.graphic.flow.data.OffsetPosition;
 import com.top_logic.graphic.flow.data.Padding;
 import com.top_logic.graphic.flow.data.Point;
 import com.top_logic.graphic.flow.data.PolygonalChain;
@@ -684,6 +686,15 @@ public class FlowFactory {
 	 *        The parent node or connector that should be connected.
 	 * @param child
 	 *        The child node or connector to connect to the given child.
+	 * @param thickness
+	 *        the optional stroke width used for this connection. Default is taken from the tree
+	 *        layout.
+	 * @param strokeStyle
+	 *        The optional stroke style for this connection. Default is taken from the tree layout.
+	 * @param dashes
+	 *        An optional dashes array for rendering the edge. Default is to use a solid stroke.
+	 * @param decorations
+	 *        Additional decorations to place on the edge.
 	 */
 	@SideEffectFree
 	public static TreeConnection flowConnection(
@@ -691,7 +702,8 @@ public class FlowFactory {
 		@Mandatory Object child,
 		Double thickness,
 		String strokeStyle,
-		List<Double> dashes
+		List<Double> dashes, 
+		List<? extends EdgeDecoration> decorations
 	) {
 		if (parent == null) {
 			return null;
@@ -704,11 +716,35 @@ public class FlowFactory {
 			.setChild(asConnector(child))
 			.setThickness(thickness)
 			.setStrokeStyle(strokeStyle)
-			.setDashes(dashes);
+			.setDashes(dashes)
+			.setDecorations(decorations);
 	}
 
 	private static TreeConnector asConnector(Object node) {
 		return node instanceof TreeConnector connector ? connector : TreeConnector.create().setAnchor((Box) node);
+	}
+
+	/**
+	 * A connector to attach to a node to connect.
+	 * 
+	 * @param content
+	 *        The content to render as decoration.
+	 * @param linePosition
+	 *        A ratio of the length of the edge that determines the position where the content is
+	 *        placed on the edge. A value of 0.0 places the content at the start position of the
+	 *        edge. A value of 1.0 places the content at the end position of the edge.
+	 * @param offsetPosition
+	 *        The position of the content box that is matched with the line position.
+	 */
+	@SideEffectFree
+	public static EdgeDecoration flowDecoration(Box content, String cssClass, Object userObject, double linePosition,
+			OffsetPosition offsetPosition) {
+		return EdgeDecoration.create()
+			.setContent(content)
+			.setLinePosition(linePosition)
+			.setOffsetPosition(offsetPosition)
+			.setCssClass(cssClass)
+			.setUserObject(userObject);
 	}
 
 	/**

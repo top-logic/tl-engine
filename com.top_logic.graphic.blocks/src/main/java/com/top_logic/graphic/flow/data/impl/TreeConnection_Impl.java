@@ -11,6 +11,27 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 
 	private com.top_logic.graphic.flow.data.TreeConnector _child = null;
 
+	private String _strokeStyle = "black";
+
+	private Double _thickness = 1.0;
+
+	private final java.util.List<Double> _dashes = new de.haumacher.msgbuf.util.ReferenceList<Double>() {
+		@Override
+		protected void beforeAdd(int index, Double element) {
+			_listener.beforeAdd(TreeConnection_Impl.this, DASHES__PROP, index, element);
+		}
+
+		@Override
+		protected void afterRemove(int index, Double element) {
+			_listener.afterRemove(TreeConnection_Impl.this, DASHES__PROP, index, element);
+		}
+
+		@Override
+		protected void afterChanged() {
+			_listener.afterChanged(TreeConnection_Impl.this, DASHES__PROP);
+		}
+	};
+
 	private transient double _barPosition = 0.0d;
 
 	/**
@@ -130,6 +151,85 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 	}
 
 	@Override
+	public final String getStrokeStyle() {
+		return _strokeStyle;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.TreeConnection setStrokeStyle(String value) {
+		internalSetStrokeStyle(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getStrokeStyle()} without chain call utility. */
+	protected final void internalSetStrokeStyle(String value) {
+		_listener.beforeSet(this, STROKE_STYLE__PROP, value);
+		_strokeStyle = value;
+		_listener.afterChanged(this, STROKE_STYLE__PROP);
+	}
+
+	@Override
+	public final boolean hasStrokeStyle() {
+		return _strokeStyle != null;
+	}
+
+	@Override
+	public final Double getThickness() {
+		return _thickness;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.TreeConnection setThickness(Double value) {
+		internalSetThickness(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getThickness()} without chain call utility. */
+	protected final void internalSetThickness(Double value) {
+		_listener.beforeSet(this, THICKNESS__PROP, value);
+		_thickness = value;
+		_listener.afterChanged(this, THICKNESS__PROP);
+	}
+
+	@Override
+	public final boolean hasThickness() {
+		return _thickness != null;
+	}
+
+	@Override
+	public final java.util.List<Double> getDashes() {
+		return _dashes;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.TreeConnection setDashes(java.util.List<? extends Double> value) {
+		internalSetDashes(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getDashes()} without chain call utility. */
+	protected final void internalSetDashes(java.util.List<? extends Double> value) {
+		_dashes.clear();
+		_dashes.addAll(value);
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.TreeConnection addDashe(double value) {
+		internalAddDashe(value);
+		return this;
+	}
+
+	/** Implementation of {@link #addDashe(double)} without chain call utility. */
+	protected final void internalAddDashe(double value) {
+		_dashes.add(value);
+	}
+
+	@Override
+	public final void removeDashe(double value) {
+		_dashes.remove(value);
+	}
+
+	@Override
 	public final double getBarPosition() {
 		return _barPosition;
 	}
@@ -183,6 +283,9 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 			OWNER__PROP, 
 			PARENT__PROP, 
 			CHILD__PROP, 
+			STROKE_STYLE__PROP, 
+			THICKNESS__PROP, 
+			DASHES__PROP, 
 			BAR_POSITION__PROP);
 		java.util.List<String> tmp = new java.util.ArrayList<>();
 		tmp.addAll(com.top_logic.graphic.flow.data.impl.Widget_Impl.PROPERTIES);
@@ -216,6 +319,9 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 			case OWNER__PROP: return getOwner();
 			case PARENT__PROP: return getParent();
 			case CHILD__PROP: return getChild();
+			case STROKE_STYLE__PROP: return getStrokeStyle();
+			case THICKNESS__PROP: return getThickness();
+			case DASHES__PROP: return getDashes();
 			case BAR_POSITION__PROP: return getBarPosition();
 			default: return super.get(field);
 		}
@@ -226,6 +332,9 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 		switch (field) {
 			case PARENT__PROP: internalSetParent((com.top_logic.graphic.flow.data.TreeConnector) value); break;
 			case CHILD__PROP: internalSetChild((com.top_logic.graphic.flow.data.TreeConnector) value); break;
+			case STROKE_STYLE__PROP: internalSetStrokeStyle((String) value); break;
+			case THICKNESS__PROP: internalSetThickness((Double) value); break;
+			case DASHES__PROP: internalSetDashes(de.haumacher.msgbuf.util.Conversions.asList(Double.class, value)); break;
 			case BAR_POSITION__PROP: internalSetBarPosition((double) value); break;
 			default: super.set(field, value); break;
 		}
@@ -242,6 +351,20 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 			out.name(CHILD__PROP);
 			getChild().writeTo(scope, out);
 		}
+		if (hasStrokeStyle()) {
+			out.name(STROKE_STYLE__PROP);
+			out.value(getStrokeStyle());
+		}
+		if (hasThickness()) {
+			out.name(THICKNESS__PROP);
+			out.value(getThickness());
+		}
+		out.name(DASHES__PROP);
+		out.beginArray();
+		for (double x : getDashes()) {
+			out.value(x);
+		}
+		out.endArray();
 	}
 
 	@Override
@@ -271,6 +394,30 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 				}
 				break;
 			}
+			case STROKE_STYLE__PROP: {
+				if (hasStrokeStyle()) {
+					out.value(getStrokeStyle());
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case THICKNESS__PROP: {
+				if (hasThickness()) {
+					out.value(getThickness());
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case DASHES__PROP: {
+				out.beginArray();
+				for (double x : getDashes()) {
+					out.value(x);
+				}
+				out.endArray();
+				break;
+			}
 			case BAR_POSITION__PROP: {
 				out.value(getBarPosition());
 				break;
@@ -284,7 +431,40 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 		switch (field) {
 			case PARENT__PROP: setParent(com.top_logic.graphic.flow.data.TreeConnector.readTreeConnector(scope, in)); break;
 			case CHILD__PROP: setChild(com.top_logic.graphic.flow.data.TreeConnector.readTreeConnector(scope, in)); break;
+			case STROKE_STYLE__PROP: setStrokeStyle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case THICKNESS__PROP: setThickness(in.nextDouble()); break;
+			case DASHES__PROP: {
+				java.util.List<Double> newValue = new java.util.ArrayList<>();
+				in.beginArray();
+				while (in.hasNext()) {
+					newValue.add(in.nextDouble());
+				}
+				in.endArray();
+				setDashes(newValue);
+			}
+			break;
 			default: super.readField(scope, in, field);
+		}
+	}
+
+	@Override
+	public void writeElement(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field, Object element) throws java.io.IOException {
+		switch (field) {
+			case DASHES__PROP: {
+				out.value(((double) element));
+				break;
+			}
+			default: super.writeElement(scope, out, field, element);
+		}
+	}
+
+	@Override
+	public Object readElement(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+		switch (field) {
+			case DASHES__PROP: {
+				return in.nextDouble();
+			}
+			default: return super.readElement(scope, in, field);
 		}
 	}
 

@@ -4112,7 +4112,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 
 	private KnowledgeItemInternal resolveIdentifier(DBObjectKey identity, long dataRevision, boolean cacheOnly) {
 		KnowledgeItemInternal cached = identity.getCached();
-		if (cached != null) {
+		if (cached != null && cached.isAlive()) {
 			return cached;
 		}
 		

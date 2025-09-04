@@ -45,6 +45,7 @@ public interface TreeConnectionOperations extends Drawable {
 		double fromY = parent.getY();
 
 		double barX = self().getBarPosition();
+		double scale = actualThickness() / 2;
 
 		TreeConnector child = self().getChild();
 
@@ -57,19 +58,19 @@ public interface TreeConnectionOperations extends Drawable {
 		out.setFill("none");
 		out.beginData();
 		{
-			double childX = child.getX() - inset(child.getSymbol());
+			double childX = child.getX() - inset(child.getSymbol()) * scale;
 			double childY = child.getY();
 			
 			out.moveToAbs(childX, childY);
 			out.lineToHorizontalAbs(barX);
 			out.lineToVerticalAbs(fromY);
-			out.lineToHorizontalAbs(fromX + inset(parent.getSymbol()));
+			out.lineToHorizontalAbs(fromX + inset(parent.getSymbol()) * scale);
 		}
 		out.endData();
 		out.endPath();
 
-		drawSymbol(out, child.getX(), child.getY(), 1, child.getSymbol());
-		drawSymbol(out, fromX, fromY, -1, parent.getSymbol());
+		drawSymbol(out, child.getX(), child.getY(), 1, child.getSymbol(), scale);
+		drawSymbol(out, fromX, fromY, -1, parent.getSymbol(), scale);
 	}
 
 	/** 
@@ -106,7 +107,8 @@ public interface TreeConnectionOperations extends Drawable {
 	 *        The symbol type.
 	 */
 	default void drawSymbol(SvgWriter out, double fromX, double fromY, double direction,
-			ConnectorSymbol connectorSymbol) {
+			ConnectorSymbol connectorSymbol, double scale) {
+
 		switch (connectorSymbol) {
 			case NONE:
 				return;
@@ -114,8 +116,8 @@ public interface TreeConnectionOperations extends Drawable {
 			case CLOSED_ARROW:
 			case FILLED_ARROW: {
 				// Arrow to parent
-				double arrowOffset = ARROW_LENGTH * direction;
-				double arrowOpening = ARROW_WIDTH / 2;
+				double arrowOffset = ARROW_LENGTH * scale * direction;
+				double arrowOpening = ARROW_WIDTH * scale / 2;
 
 				out.beginPath();
 				setStroke(out);
@@ -144,10 +146,12 @@ public interface TreeConnectionOperations extends Drawable {
 				}
 				out.beginData();
 
-				out.moveToAbs(fromX - DIAMOND_RADIUS, fromY - DIAMOND_RADIUS);
-				out.lineToRel(DIAMOND_RADIUS, DIAMOND_RADIUS);
-				out.lineToRel(-DIAMOND_RADIUS, DIAMOND_RADIUS);
-				out.lineToRel(-DIAMOND_RADIUS, -DIAMOND_RADIUS);
+				double radius = DIAMOND_RADIUS * scale;
+
+				out.moveToAbs(fromX - radius, fromY - radius);
+				out.lineToRel(radius, radius);
+				out.lineToRel(-radius, radius);
+				out.lineToRel(-radius, -radius);
 				out.closePath();
 
 				out.endData();
@@ -163,17 +167,21 @@ public interface TreeConnectionOperations extends Drawable {
 	 * Sets the connection stroke style.
 	 */
 	default void setStroke(SvgWriter out) {
-		Double thickness = self().getThickness();
-		if (thickness != null) {
-			out.setStrokeWidth(thickness);
-		} else {
-			out.setStrokeWidth(self().getOwner().getThickness());
-		}
+		double actualThickness = actualThickness();
+		out.setStrokeWidth(actualThickness);
 		String strokeStyle = self().getStrokeStyle();
 		if (strokeStyle != null) {
 			out.setStroke(strokeStyle);
 		} else {
 			out.setStroke(self().getOwner().getStrokeStyle());
 		}
+	}
+
+	/**
+	 * The stroke width to use.
+	 */
+	default double actualThickness() {
+		Double thickness = self().getThickness();
+		return (thickness != null) ? thickness.doubleValue() : self().getOwner().getThickness();
 	}
 }

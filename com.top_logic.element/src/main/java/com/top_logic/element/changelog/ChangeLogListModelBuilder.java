@@ -7,7 +7,6 @@ package com.top_logic.element.changelog;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
@@ -27,7 +26,6 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLModel;
-import com.top_logic.model.TLModule;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
@@ -119,11 +117,6 @@ public class ChangeLogListModelBuilder extends AbstractConfiguredInstance<Change
 		TLModel model = ModelService.getApplicationModel();
 		KnowledgeBase kb = model.tKnowledgeBase();
 
-		Set<TLModule> excludeModules = getConfig().getExcludedModules().stream()
-			.map(excludeModule -> excludeModule.resolve(model))
-			.map(TLModule.class::cast)
-			.collect(Collectors.toSet());
-
 		Config<?> config = getConfig();
 
 		HistoryManager hm = kb.getHistoryManager();
@@ -143,7 +136,10 @@ public class ChangeLogListModelBuilder extends AbstractConfiguredInstance<Change
 		return new ChangeLogBuilder(kb, model)
 			.setAuthor(config.getAllUsers() ? null : TLContext.currentUser())
 			.setStartRev(startRev)
-			.setExcludedModules(excludeModules)
+			.setExcludedModules(getConfig().getExcludedModules()
+				.stream()
+				.map(TLModelPartRef::qualifiedName)
+				.collect(Collectors.toSet()))
 			.build();
 	}
 

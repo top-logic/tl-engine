@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CollectionUtil;
@@ -46,7 +45,6 @@ import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Revision;
-import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.StorageDetail;
@@ -96,7 +94,7 @@ public class ChangeLogBuilder {
 	 */
 	private Map<MOStructure, Map<String, SeparateTableStorage>> _storagesByTable = new HashMap<>();
 
-	private Set<TLModule> _excludeModules = Collections.emptySet();
+	private Set<String> _excludeModules = Collections.emptySet();
 
 	/**
 	 * Creates a {@link ChangeLogBuilder}.
@@ -176,16 +174,16 @@ public class ChangeLogBuilder {
 	}
 
 	/**
-	 * {@link TLModule}s that must not be regarded.
+	 * names of {@link TLModule}s that must not be regarded.
 	 */
-	public Set<TLModule> getExcludedModules() {
+	public Set<String> getExcludedModules() {
 		return _excludeModules;
 	}
 
 	/**
 	 * @see #getExcludedModules()
 	 */
-	public ChangeLogBuilder setExcludedModules(Set<TLModule> excluded) {
+	public ChangeLogBuilder setExcludedModules(Set<String> excluded) {
 		_excludeModules = excluded;
 		return this;
 	}
@@ -495,7 +493,7 @@ public class ChangeLogBuilder {
 		_storagesByTable = new HashMap<>();
 
 		for (TLModule module : _model.getModules()) {
-			if (_excludeModules.contains(module)) {
+			if (_excludeModules.contains(module.getName())) {
 				continue;
 			}
 			for (TLType type : module.getTypes()) {
@@ -548,14 +546,6 @@ public class ChangeLogBuilder {
 			return false;
 		}
 		TLModule module = obj.tType().getModule();
-		if (!WrapperHistoryUtils.isCurrent(module)) {
-			/* Must actually not happen. The type is current in almost all cases, also for historic
-			 * items. When the type does not longer exists, the type and therefore the module is
-			 * historic. Check for name of the module in this case. */
-			return _excludeModules.stream()
-				.map(TLModule::getName)
-				.anyMatch(Predicate.isEqual(module.getName()));
-		}
-		return _excludeModules.contains(module);
+		return _excludeModules.contains(module.getName());
 	}
 }

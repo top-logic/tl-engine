@@ -9,30 +9,7 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 
 	private com.top_logic.graphic.flow.data.TreeConnector _parent = null;
 
-	private final java.util.List<com.top_logic.graphic.flow.data.TreeConnector> _children = new de.haumacher.msgbuf.util.ReferenceList<com.top_logic.graphic.flow.data.TreeConnector>() {
-		@Override
-		protected void beforeAdd(int index, com.top_logic.graphic.flow.data.TreeConnector element) {
-			com.top_logic.graphic.flow.data.impl.TreeConnector_Impl added = (com.top_logic.graphic.flow.data.impl.TreeConnector_Impl) element;
-			com.top_logic.graphic.flow.data.TreeConnection oldContainer = added.getConnection();
-			if (oldContainer != null && oldContainer != TreeConnection_Impl.this) {
-				throw new IllegalStateException("Object may not be part of two different containers.");
-			}
-			_listener.beforeAdd(TreeConnection_Impl.this, CHILDREN__PROP, index, element);
-			added.internalSetConnection(TreeConnection_Impl.this);
-		}
-
-		@Override
-		protected void afterRemove(int index, com.top_logic.graphic.flow.data.TreeConnector element) {
-			com.top_logic.graphic.flow.data.impl.TreeConnector_Impl removed = (com.top_logic.graphic.flow.data.impl.TreeConnector_Impl) element;
-			removed.internalSetConnection(null);
-			_listener.afterRemove(TreeConnection_Impl.this, CHILDREN__PROP, index, element);
-		}
-
-		@Override
-		protected void afterChanged() {
-			_listener.afterChanged(TreeConnection_Impl.this, CHILDREN__PROP);
-		}
-	};
+	private com.top_logic.graphic.flow.data.TreeConnector _child = null;
 
 	private transient double _barPosition = 0.0d;
 
@@ -116,37 +93,40 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 	}
 
 	@Override
-	public final java.util.List<com.top_logic.graphic.flow.data.TreeConnector> getChildren() {
-		return _children;
+	public final com.top_logic.graphic.flow.data.TreeConnector getChild() {
+		return _child;
 	}
 
 	@Override
-	public com.top_logic.graphic.flow.data.TreeConnection setChildren(java.util.List<? extends com.top_logic.graphic.flow.data.TreeConnector> value) {
-		internalSetChildren(value);
+	public com.top_logic.graphic.flow.data.TreeConnection setChild(com.top_logic.graphic.flow.data.TreeConnector value) {
+		internalSetChild(value);
 		return this;
 	}
 
-	/** Internal setter for {@link #getChildren()} without chain call utility. */
-	protected final void internalSetChildren(java.util.List<? extends com.top_logic.graphic.flow.data.TreeConnector> value) {
-		if (value == null) throw new IllegalArgumentException("Property 'children' cannot be null.");
-		_children.clear();
-		_children.addAll(value);
+	/** Internal setter for {@link #getChild()} without chain call utility. */
+	protected final void internalSetChild(com.top_logic.graphic.flow.data.TreeConnector value) {
+		com.top_logic.graphic.flow.data.impl.TreeConnector_Impl before = (com.top_logic.graphic.flow.data.impl.TreeConnector_Impl) _child;
+		com.top_logic.graphic.flow.data.impl.TreeConnector_Impl after = (com.top_logic.graphic.flow.data.impl.TreeConnector_Impl) value;
+		if (after != null) {
+			com.top_logic.graphic.flow.data.TreeConnection oldContainer = after.getConnection();
+			if (oldContainer != null && oldContainer != this) {
+				throw new IllegalStateException("Object may not be part of two different containers.");
+			}
+		}
+		_listener.beforeSet(this, CHILD__PROP, value);
+		if (before != null) {
+			before.internalSetConnection(null);
+		}
+		_child = value;
+		if (after != null) {
+			after.internalSetConnection(this);
+		}
+		_listener.afterChanged(this, CHILD__PROP);
 	}
 
 	@Override
-	public com.top_logic.graphic.flow.data.TreeConnection addChildren(com.top_logic.graphic.flow.data.TreeConnector value) {
-		internalAddChildren(value);
-		return this;
-	}
-
-	/** Implementation of {@link #addChildren(com.top_logic.graphic.flow.data.TreeConnector)} without chain call utility. */
-	protected final void internalAddChildren(com.top_logic.graphic.flow.data.TreeConnector value) {
-		_children.add(value);
-	}
-
-	@Override
-	public final void removeChildren(com.top_logic.graphic.flow.data.TreeConnector value) {
-		_children.remove(value);
+	public final boolean hasChild() {
+		return _child != null;
 	}
 
 	@Override
@@ -202,7 +182,7 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 		java.util.List<String> local = java.util.Arrays.asList(
 			OWNER__PROP, 
 			PARENT__PROP, 
-			CHILDREN__PROP, 
+			CHILD__PROP, 
 			BAR_POSITION__PROP);
 		java.util.List<String> tmp = new java.util.ArrayList<>();
 		tmp.addAll(com.top_logic.graphic.flow.data.impl.Widget_Impl.PROPERTIES);
@@ -235,7 +215,7 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 		switch (field) {
 			case OWNER__PROP: return getOwner();
 			case PARENT__PROP: return getParent();
-			case CHILDREN__PROP: return getChildren();
+			case CHILD__PROP: return getChild();
 			case BAR_POSITION__PROP: return getBarPosition();
 			default: return super.get(field);
 		}
@@ -245,7 +225,7 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 	public void set(String field, Object value) {
 		switch (field) {
 			case PARENT__PROP: internalSetParent((com.top_logic.graphic.flow.data.TreeConnector) value); break;
-			case CHILDREN__PROP: internalSetChildren(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.graphic.flow.data.TreeConnector.class, value)); break;
+			case CHILD__PROP: internalSetChild((com.top_logic.graphic.flow.data.TreeConnector) value); break;
 			case BAR_POSITION__PROP: internalSetBarPosition((double) value); break;
 			default: super.set(field, value); break;
 		}
@@ -258,12 +238,10 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 			out.name(PARENT__PROP);
 			getParent().writeTo(scope, out);
 		}
-		out.name(CHILDREN__PROP);
-		out.beginArray();
-		for (com.top_logic.graphic.flow.data.TreeConnector x : getChildren()) {
-			x.writeTo(scope, out);
+		if (hasChild()) {
+			out.name(CHILD__PROP);
+			getChild().writeTo(scope, out);
 		}
-		out.endArray();
 	}
 
 	@Override
@@ -285,12 +263,12 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 				}
 				break;
 			}
-			case CHILDREN__PROP: {
-				out.beginArray();
-				for (com.top_logic.graphic.flow.data.TreeConnector x : getChildren()) {
-					x.writeTo(scope, out);
+			case CHILD__PROP: {
+				if (hasChild()) {
+					getChild().writeTo(scope, out);
+				} else {
+					out.nullValue();
 				}
-				out.endArray();
 				break;
 			}
 			case BAR_POSITION__PROP: {
@@ -305,38 +283,8 @@ public class TreeConnection_Impl extends com.top_logic.graphic.flow.data.impl.Wi
 	public void readField(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case PARENT__PROP: setParent(com.top_logic.graphic.flow.data.TreeConnector.readTreeConnector(scope, in)); break;
-			case CHILDREN__PROP: {
-				java.util.List<com.top_logic.graphic.flow.data.TreeConnector> newValue = new java.util.ArrayList<>();
-				in.beginArray();
-				while (in.hasNext()) {
-					newValue.add(com.top_logic.graphic.flow.data.TreeConnector.readTreeConnector(scope, in));
-				}
-				in.endArray();
-				setChildren(newValue);
-			}
-			break;
+			case CHILD__PROP: setChild(com.top_logic.graphic.flow.data.TreeConnector.readTreeConnector(scope, in)); break;
 			default: super.readField(scope, in, field);
-		}
-	}
-
-	@Override
-	public void writeElement(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonWriter out, String field, Object element) throws java.io.IOException {
-		switch (field) {
-			case CHILDREN__PROP: {
-				((com.top_logic.graphic.flow.data.TreeConnector) element).writeTo(scope, out);
-				break;
-			}
-			default: super.writeElement(scope, out, field, element);
-		}
-	}
-
-	@Override
-	public Object readElement(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
-		switch (field) {
-			case CHILDREN__PROP: {
-				return com.top_logic.graphic.flow.data.TreeConnector.readTreeConnector(scope, in);
-			}
-			default: return super.readElement(scope, in, field);
 		}
 	}
 

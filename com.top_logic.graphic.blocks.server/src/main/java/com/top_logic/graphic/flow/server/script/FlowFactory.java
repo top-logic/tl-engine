@@ -688,14 +688,23 @@ public class FlowFactory {
 	@SideEffectFree
 	public static TreeConnection flowConnection(
 		@Mandatory Object parent,
-		@Mandatory Object child
+		@Mandatory Object child,
+		Double thickness,
+		String strokeStyle,
+		List<Double> dashes
 	) {
 		if (parent == null) {
 			return null;
 		}
+		if (dashes == null) {
+			dashes = Collections.emptyList();
+		}
 		return TreeConnection.create()
 			.setParent(asConnector(parent))
-			.setChild(asConnector(child));
+			.setChild(asConnector(child))
+			.setThickness(thickness)
+			.setStrokeStyle(strokeStyle)
+			.setDashes(dashes);
 	}
 
 	private static TreeConnector asConnector(Object node) {

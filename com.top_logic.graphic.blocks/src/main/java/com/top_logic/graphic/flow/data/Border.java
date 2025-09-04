@@ -21,6 +21,9 @@ public interface Border extends Decoration, com.top_logic.graphic.flow.operation
 	/** @see #getThickness() */
 	String THICKNESS__PROP = "thickness";
 
+	/** @see #getDashes() */
+	String DASHES__PROP = "dashes";
+
 	/** @see #isTop() */
 	String TOP__PROP = "top";
 
@@ -33,9 +36,6 @@ public interface Border extends Decoration, com.top_logic.graphic.flow.operation
 	/** @see #isRight() */
 	String RIGHT__PROP = "right";
 
-	/** @see #getDashes() */
-	String DASHES__PROP = "dashes";
-
 	/**
 	 * The SVG <code>stroke</code> style.
 	 */
@@ -47,7 +47,7 @@ public interface Border extends Decoration, com.top_logic.graphic.flow.operation
 	com.top_logic.graphic.flow.data.Border setStrokeStyle(String value);
 
 	/**
-	 * The thicknes of the drawn border.
+	 * The thickness of the drawn border.
 	 */
 	double getThickness();
 
@@ -55,6 +55,26 @@ public interface Border extends Decoration, com.top_logic.graphic.flow.operation
 	 * @see #getThickness()
 	 */
 	com.top_logic.graphic.flow.data.Border setThickness(double value);
+
+	/**
+	 * Length of dashes for a dashed border.
+	 */
+	java.util.List<Double> getDashes();
+
+	/**
+	 * @see #getDashes()
+	 */
+	com.top_logic.graphic.flow.data.Border setDashes(java.util.List<? extends Double> value);
+
+	/**
+	 * Adds a value to the {@link #getDashes()} list.
+	 */
+	com.top_logic.graphic.flow.data.Border addDashe(double value);
+
+	/**
+	 * Removes a value from the {@link #getDashes()} list.
+	 */
+	void removeDashe(double value);
 
 	/**
 	 * Whether the border is drawn above the content.
@@ -95,26 +115,6 @@ public interface Border extends Decoration, com.top_logic.graphic.flow.operation
 	 * @see #isRight()
 	 */
 	com.top_logic.graphic.flow.data.Border setRight(boolean value);
-
-	/**
-	 * Length of dashes for a dashed border.
-	 */
-	java.util.List<Double> getDashes();
-
-	/**
-	 * @see #getDashes()
-	 */
-	com.top_logic.graphic.flow.data.Border setDashes(java.util.List<? extends Double> value);
-
-	/**
-	 * Adds a value to the {@link #getDashes()} list.
-	 */
-	com.top_logic.graphic.flow.data.Border addDashe(double value);
-
-	/**
-	 * Removes a value from the {@link #getDashes()} list.
-	 */
-	void removeDashe(double value);
 
 	@Override
 	com.top_logic.graphic.flow.data.Border setContent(com.top_logic.graphic.flow.data.Box value);

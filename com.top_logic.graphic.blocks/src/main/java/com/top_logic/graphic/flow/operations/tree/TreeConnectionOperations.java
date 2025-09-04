@@ -10,6 +10,7 @@ import com.top_logic.graphic.blocks.svg.SvgWriter;
 import com.top_logic.graphic.flow.data.ConnectorSymbol;
 import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
+import com.top_logic.graphic.flow.operations.util.DiagramUtil;
 
 /**
  * Custom operations for {@link TreeConnection}s.
@@ -48,8 +49,11 @@ public interface TreeConnectionOperations extends Drawable {
 		TreeConnector child = self().getChild();
 
 		out.beginPath();
-		out.setStroke(self().getOwner().getStrokeStyle());
-		out.setStrokeWidth(self().getOwner().getThickness());
+		setStroke(out);
+		if (!self().getDashes().isEmpty()) {
+			out.setStrokeDasharray(DiagramUtil.doubleArray(self().getDashes()));
+		}
+
 		out.setFill("none");
 		out.beginData();
 		{
@@ -114,8 +118,7 @@ public interface TreeConnectionOperations extends Drawable {
 				double arrowOpening = ARROW_WIDTH / 2;
 
 				out.beginPath();
-				out.setStroke(self().getOwner().getStrokeStyle());
-				out.setStrokeWidth(self().getOwner().getThickness());
+				setStroke(out);
 				if (connectorSymbol != ConnectorSymbol.FILLED_ARROW) {
 					out.setFill("none");
 				}
@@ -135,8 +138,7 @@ public interface TreeConnectionOperations extends Drawable {
 			case DIAMOND:
 			case FILLED_DIAMOND: {
 				out.beginPath();
-				out.setStroke(self().getOwner().getStrokeStyle());
-				out.setStrokeWidth(self().getOwner().getThickness());
+				setStroke(out);
 				if (connectorSymbol != ConnectorSymbol.FILLED_DIAMOND) {
 					out.setFill("none");
 				}
@@ -154,6 +156,24 @@ public interface TreeConnectionOperations extends Drawable {
 			}
 			default:
 				break;
+		}
+	}
+
+	/**
+	 * Sets the connection stroke style.
+	 */
+	default void setStroke(SvgWriter out) {
+		Double thickness = self().getThickness();
+		if (thickness != null) {
+			out.setStrokeWidth(thickness);
+		} else {
+			out.setStrokeWidth(self().getOwner().getThickness());
+		}
+		String strokeStyle = self().getStrokeStyle();
+		if (strokeStyle != null) {
+			out.setStroke(strokeStyle);
+		} else {
+			out.setStroke(self().getOwner().getStrokeStyle());
 		}
 	}
 }

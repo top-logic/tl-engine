@@ -98,11 +98,12 @@ flowChart(
             nodes: $nodes,
             connections: $parts
                 .filter(p -> !$p.get(`test.flowchart:FlowNode#inputs`).isEmpty())
-                .map(p -> flowConnection(
-                    parent: $nodeByPart[$p],
-                    children: $p.get(`test.flowchart:FlowNode#inputs`)
-                        .map(p -> $nodeByPart[$p])
-                ))
+                .map(p -> $p
+                    .get(`test.flowchart:FlowNode#inputs`)
+                    .map(c -> flowConnection(
+                        parent: $nodeByPart[$p],
+                        child: $nodeByPart[$c])))
+                .flatten()
         )
     )
 );

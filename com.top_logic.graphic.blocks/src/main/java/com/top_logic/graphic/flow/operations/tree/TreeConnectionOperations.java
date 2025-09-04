@@ -5,8 +5,6 @@
  */
 package com.top_logic.graphic.flow.operations.tree;
 
-import java.util.List;
-
 import com.top_logic.graphic.blocks.model.Drawable;
 import com.top_logic.graphic.blocks.svg.SvgWriter;
 import com.top_logic.graphic.flow.data.ConnectorSymbol;
@@ -47,36 +45,27 @@ public interface TreeConnectionOperations extends Drawable {
 
 		double barX = self().getBarPosition();
 
-		List<TreeConnector> children = self().getChildren();
-		if (!children.isEmpty()) {
-			out.beginPath();
-			out.setStroke(self().getOwner().getStrokeStyle());
-			out.setStrokeWidth(self().getOwner().getThickness());
-			out.setFill("none");
-			out.beginData();
+		TreeConnector child = self().getChild();
 
-			for (TreeConnector child : children) {
-				double childX = child.getX() - inset(child.getSymbol());
-				double childY = child.getY();
-
-				out.moveToAbs(childX, childY);
-				out.lineToHorizontalAbs(barX);
-				out.lineToVerticalAbs(fromY);
-				out.lineToHorizontalAbs(fromX + inset(parent.getSymbol()));
-			}
-
-			out.endData();
-			out.endPath();
+		out.beginPath();
+		out.setStroke(self().getOwner().getStrokeStyle());
+		out.setStrokeWidth(self().getOwner().getThickness());
+		out.setFill("none");
+		out.beginData();
+		{
+			double childX = child.getX() - inset(child.getSymbol());
+			double childY = child.getY();
 			
-			for (TreeConnector child : children) {
-				double childX = child.getX();
-				double childY = child.getY();
-
-				drawSymbol(out, childX, childY, 1, child.getSymbol());
-			}
-
-			drawSymbol(out, fromX, fromY, -1, parent.getSymbol());
+			out.moveToAbs(childX, childY);
+			out.lineToHorizontalAbs(barX);
+			out.lineToVerticalAbs(fromY);
+			out.lineToHorizontalAbs(fromX + inset(parent.getSymbol()));
 		}
+		out.endData();
+		out.endPath();
+
+		drawSymbol(out, child.getX(), child.getY(), 1, child.getSymbol());
+		drawSymbol(out, fromX, fromY, -1, parent.getSymbol());
 	}
 
 	/** 

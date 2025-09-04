@@ -46,6 +46,7 @@
 					<java name="flowFloating" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowFloating"/>
 					<java name="flowTree" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowTree"/>
 					<java name="flowConnection" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowConnection"/>
+					<java name="flowDecoration" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowDecoration"/>
 					<java name="flowConnector" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowConnector"/>
 					<java name="flowPolyline" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowPolyline"/>
 					<java name="flowPolygon" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowPolygon"/>

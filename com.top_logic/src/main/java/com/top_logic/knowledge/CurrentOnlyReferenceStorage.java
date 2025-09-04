@@ -6,10 +6,10 @@
 package com.top_logic.knowledge;
 
 import com.top_logic.dob.MOAttribute;
-import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.IdentifiedObject;
 import com.top_logic.dob.meta.ObjectContext;
+import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.Revision;
 
 /**
@@ -21,6 +21,7 @@ public class CurrentOnlyReferenceStorage extends ByValueReferenceStorageImpl {
 	/**
 	 * Singleton {@link CurrentOnlyReferenceStorage} instance.
 	 */
+	@SuppressWarnings("hiding")
 	public static final CurrentOnlyReferenceStorage INSTANCE = new CurrentOnlyReferenceStorage();
 
 	private CurrentOnlyReferenceStorage() {
@@ -34,18 +35,26 @@ public class CurrentOnlyReferenceStorage extends ByValueReferenceStorageImpl {
 		}
 		ObjectKey cachedKey = getObjectKey(cacheValue);
 		if (cachedKey.getHistoryContext() == Revision.CURRENT_REV) {
-			return getReferencedObject(context, cacheValue);
-		}
+			/* Context can be a current, but also an historic element. Current elements always have
+			 * current cached keys. Historical elements usually have cached historical keys.
+			 * However, when a key is resolved using this storage implementation, the application
+			 * value is a current object. The general mechanism then stores the key of the target
+			 * object (current) in the objects storage so that a current key is available in the
+			 * cache the next time it is accessed. */
+			IdentifiedObject currentRef = getReferencedObject(context, cacheValue);
+			if (currentRef != null) {
+				return currentRef;
+			}
+		} else {
+			ObjectKey currentKey = KBUtils.ensureHistoryContext(cachedKey, Revision.CURRENT_REV);
 
-		ObjectKey currentKey = new DefaultObjectKey(cachedKey.getBranchContext(), Revision.CURRENT_REV,
-			cachedKey.getObjectType(), cachedKey.getObjectName());
-
-		IdentifiedObject currentValue = context.resolveObject(currentKey);
-		if (currentValue == null) {
-			// Emergency: The value does no longer exist in current, try historic model access.
-			return getReferencedObject(context, cacheValue);
+			IdentifiedObject currentValue = context.resolveObject(currentKey);
+			if (currentValue != null) {
+				return currentValue;
+			}
 		}
-		return currentValue;
+		// Emergency: The value does no longer exist in current, try historic model access.
+		return super.fromCacheToApplicationValue(attribute, context, cacheValue);
 	}
 
 }

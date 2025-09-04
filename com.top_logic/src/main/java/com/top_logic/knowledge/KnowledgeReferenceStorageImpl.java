@@ -411,9 +411,9 @@ public abstract class KnowledgeReferenceStorageImpl extends MOReferenceStorageIm
 		final long historyContext;
 		switch (attribute.getHistoryType()) {
 			case CURRENT: {
-				/* If reference is load for an historic object, then the reference points to an
+				/* If reference is loaded for an historic object, then the reference points to an
 				 * object in the same historyContext. In this case no adapting to context is
-				 * necessary for that is object. */
+				 * necessary for that object. */
 				historyContext = context.tId().getHistoryContext();
 				break;
 			}

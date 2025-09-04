@@ -436,7 +436,7 @@ public class FlowFactory {
 	 * 
 	 * <p>
 	 * Use in combination with
-	 * {@link #flowPosition(Box, Double, Double, Double, Double, Double, Double, Double, Double, Object)}.
+	 * {@link #flowPosition(Box, Double, Double, Double, Double, Double, Double, Double, Double, boolean, Object)}.
 	 * </p>
 	 */
 	@SideEffectFree
@@ -681,21 +681,21 @@ public class FlowFactory {
 	 * Creates a connection for a tree layout.
 	 * 
 	 * @param parent
-	 *        The parent node or connector that should be connected to children.
-	 * @param children
-	 *        The children nodes or connectors to connect to the given parent.
+	 *        The parent node or connector that should be connected.
+	 * @param child
+	 *        The child node or connector to connect to the given child.
 	 */
 	@SideEffectFree
 	public static TreeConnection flowConnection(
-			@Mandatory Object parent,
-			@Mandatory List<?> children
+		@Mandatory Object parent,
+		@Mandatory Object child
 	) {
 		if (parent == null) {
 			return null;
 		}
 		return TreeConnection.create()
 			.setParent(asConnector(parent))
-			.setChildren(children.stream().filter(Objects::nonNull).map(FlowFactory::asConnector).toList());
+			.setChild(asConnector(child));
 	}
 
 	private static TreeConnector asConnector(Object node) {

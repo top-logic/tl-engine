@@ -7,13 +7,11 @@ package com.top_logic.graphic.flow.operations.tree;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.flow.data.Box;
@@ -154,35 +152,32 @@ public class TreeRenderInfo {
 		_subtreeGapY = subtreeGapY;
 		_parentAlign = parentAlign;
 		_parentOffset = parentOffset;
-		_nodeForBox = new HashMap<>();
+
+		// Create tree nodes from node boxes.
+		_nodeForBox = new LinkedHashMap<>();
 		for (Box node : nodes) {
 			_nodeForBox.put(node, new TreeNode(node));
 		}
 
+		// Resolve anchor boxes within nodes.
 		_nodeForAnchor = new HashMap<>();
 		for (TreeConnection connection : connections) {
 			enterAnchor(connection.getParent());
-			for (TreeConnector child : connection.getChildren()) {
-				enterAnchor(child);
-			}
+			enterAnchor(connection.getChild());
 		}
 
+		// Reconstruct tree structure.
 		for (TreeConnection connection : connections) {
 			TreeNode parentNode = _nodeForAnchor.get(connection.getParent().getAnchor());
-			List<TreeNode> childNodes =
-				connection.getChildren().stream()
-					.map(TreeConnector::getAnchor)
-					.map(_nodeForAnchor::get)
-					.filter(Objects::nonNull)
-					.collect(Collectors.toList());
-			for (TreeNode childNode : childNodes) {
-				childNode.setParent(parentNode);
-			}
-			parentNode.setChildren(Collections.unmodifiableList(childNodes));
+			TreeNode childNode = _nodeForAnchor.get(connection.getChild().getAnchor());
+
+			childNode.setParent(parentNode);
+			parentNode.addChild(childNode);
 		}
 
+		// Find root nodes.
 		_roots = new ArrayList<>();
-		for (TreeNode node : _nodeForBox.values()) {
+		for (TreeNode node : getNodes()) {
 			if (node.getParent() == null) {
 				_roots.add(node);
 			}
@@ -201,6 +196,9 @@ public class TreeRenderInfo {
 	 */
 	private void enterAnchor(TreeConnector connector) {
 		final Box anchor = connector.getAnchor();
+		if (_nodeForAnchor.containsKey(anchor)) {
+			return;
+		}
 		Box ancestor = anchor;
 		while (ancestor != null) {
 			TreeNode node = _nodeForBox.get(ancestor);
@@ -221,13 +219,6 @@ public class TreeRenderInfo {
 	}
 
 	/**
-	 * The organization of content boxes into columns.
-	 */
-	public List<Column> getColumns() {
-		return _columns;
-	}
-
-	/**
 	 * Layouted nodes without parents.
 	 */
 	public List<TreeNode> getRoots() {
@@ -235,13 +226,31 @@ public class TreeRenderInfo {
 	}
 
 	/**
-	 * Get or create a column for the given tree depth.
+	 * All nodes of this tree.
 	 */
-	public Column mkColumn(int level) {
-		while (_columns.size() <= level) {
-			_columns.add(new Column(level));
-		}
-		return _columns.get(level);
+	public Collection<TreeNode> getNodes() {
+		return _nodeForBox.values();
+	}
+
+	/**
+	 * The width of the complete tree.
+	 */
+	public double getWidth() {
+		return _width;
+	}
+
+	/**
+	 * The height of the complete tree.
+	 */
+	public double getHeight() {
+		return _height;
+	}
+
+	/**
+	 * The organization of content boxes into columns.
+	 */
+	public List<Column> getColumns() {
+		return _columns;
 	}
 
 	/**
@@ -249,18 +258,6 @@ public class TreeRenderInfo {
 	 */
 	public TreeNode getNodeForAnchor(Box anchor) {
 		return _nodeForAnchor.get(anchor);
-	}
-
-	/**
-	 * Shifts the subtree rooted at the given node to the bottom by the given amount.
-	 */
-	public void shiftY(TreeNode node, double shiftY) {
-		node.setY(node.getY() + shiftY);
-		_height = Math.max(_height, node.getBottom());
-
-		for (TreeNode child : node.getChildren()) {
-			shiftY(child, shiftY);
-		}
 	}
 
 	/**
@@ -309,10 +306,19 @@ public class TreeRenderInfo {
 		Column column = mkColumn(level);
 		column.addNode(root);
 
-		List<TreeNode> nextLevel = root.getChildren();
-		for (TreeNode child : nextLevel) {
+		for (TreeNode child : root.getChildren()) {
 			enterColumns(level + 1, child);
 		}
+	}
+
+	/**
+	 * Get or create a column for the given tree depth.
+	 */
+	private Column mkColumn(int level) {
+		while (_columns.size() <= level) {
+			_columns.add(new Column(level));
+		}
+		return _columns.get(level);
 	}
 
 	/**
@@ -382,24 +388,15 @@ public class TreeRenderInfo {
 	}
 
 	/**
-	 * The width of the complete tree.
+	 * Shifts the subtree rooted at the given node to the bottom by the given amount.
 	 */
-	public double getWidth() {
-		return _width;
-	}
-
-	/**
-	 * The height of the complete tree.
-	 */
-	public double getHeight() {
-		return _height;
-	}
-
-	/**
-	 * All nodes of this tree.
-	 */
-	public Collection<TreeNode> getNodes() {
-		return _nodeForBox.values();
+	private void shiftY(TreeNode node, double shiftY) {
+		node.setY(node.getY() + shiftY);
+		_height = Math.max(_height, node.getBottom());
+	
+		for (TreeNode child : node.getChildren()) {
+			shiftY(child, shiftY);
+		}
 	}
 
 }

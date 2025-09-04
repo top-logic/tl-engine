@@ -154,8 +154,8 @@ message TreeConnection extends Widget {
 	/** The connector that is anchored to the parent node of the connection. */
 	TreeConnector parent;
 
-	/** The connectors that are anchored to the children nodes of the connection. */
-	repeated TreeConnector children;
+	/** The connector that is  anchored to the child node of the connection. */
+	TreeConnector child;
 	
 	/**
 	 * The placement of the connection bar that represents the fan-out from the one parent to its many children. 

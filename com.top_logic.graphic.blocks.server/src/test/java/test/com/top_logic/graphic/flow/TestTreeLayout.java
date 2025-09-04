@@ -58,9 +58,13 @@ public class TestTreeLayout extends TestCase {
 				.addNode(n3 = node("N3"))
 				.addConnection(TreeConnection.create()
 					.setParent(connector(root))
-					.addChildren(connector(n1))
-					.addChildren(connector(n2))
-					.addChildren(connector(n3)))));
+					.setChild(connector(n1)))
+				.addConnection(TreeConnection.create()
+					.setParent(connector(root))
+					.setChild(connector(n2)))
+				.addConnection(TreeConnection.create()
+					.setParent(connector(root))
+					.setChild(connector(n3)))));
 		return diagram;
 	}
 
@@ -71,54 +75,74 @@ public class TestTreeLayout extends TestCase {
 			
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
-				height="172.0"
+				height="100%"
 				version="1.1"
-				viewBox="0.0 0.0 166.0 172.0"
-				width="166.0"
+				viewBox="0.0 0.0 0.0 0.0"
+				width="100%"
 			>
 				<g transform="translate(20.0,20.0)">
-					<text
-						x="6.0"
-						y="70.0"
-					>Root</text>
+					<g transform="translate(0.0,0.0)">
+						<text
+							x="6.0"
+							y="16.0"
+						>Root</text>
+						<path
+							d="M 0.5,0.5 L 59.5,0.5 L 59.5,23.5 L 0.5,23.5 z"
+							fill="none"
+							stroke="black"
+							stroke-width="1.0"
+						/>
+					</g>
+					<g transform="translate(100.0,0.0)">
+						<text
+							x="6.0"
+							y="16.0"
+						>N1</text>
+						<path
+							d="M 0.5,0.5 L 35.5,0.5 L 35.5,23.5 L 0.5,23.5 z"
+							fill="none"
+							stroke="black"
+							stroke-width="1.0"
+						/>
+					</g>
+					<g transform="translate(100.0,44.0)">
+						<text
+							x="6.0"
+							y="16.0"
+						>N2</text>
+						<path
+							d="M 0.5,0.5 L 35.5,0.5 L 35.5,23.5 L 0.5,23.5 z"
+							fill="none"
+							stroke="black"
+							stroke-width="1.0"
+						/>
+					</g>
+					<g transform="translate(100.0,88.0)">
+						<text
+							x="6.0"
+							y="16.0"
+						>N3</text>
+						<path
+							d="M 0.5,0.5 L 35.5,0.5 L 35.5,23.5 L 0.5,23.5 z"
+							fill="none"
+							stroke="black"
+							stroke-width="1.0"
+						/>
+					</g>
 					<path
-						d="M 0.5,54.5 L 59.5,54.5 L 59.5,77.5 L 0.5,77.5 z"
+						d="M 100.0,12.0 H 80.0 V 12.0 H 60.0"
 						fill="none"
 						stroke="black"
 						stroke-width="1.0"
 					/>
-					<text
-						x="96.0"
-						y="16.0"
-					>N1</text>
 					<path
-						d="M 90.5,0.5 L 125.5,0.5 L 125.5,23.5 L 90.5,23.5 z"
-						fill="none"
-						stroke="black"
-						stroke-width="1.0"
-					/>
-					<text
-						x="96.0"
-						y="70.0"
-					>N2</text>
-					<path
-						d="M 90.5,54.5 L 125.5,54.5 L 125.5,77.5 L 90.5,77.5 z"
-						fill="none"
-						stroke="black"
-						stroke-width="1.0"
-					/>
-					<text
-						x="96.0"
-						y="124.0"
-					>N3</text>
-					<path
-						d="M 90.5,108.5 L 125.5,108.5 L 125.5,131.5 L 90.5,131.5 z"
+						d="M 100.0,56.0 H 80.0 V 12.0 H 60.0"
 						fill="none"
 						stroke="black"
 						stroke-width="1.0"
 					/>
 					<path
-						d="M 60.0,66.0 H 75.0 M 90.0,12.0 L 75.0,12.0 L 75.0,66.0 M 90.0,66.0 L 75.0,66.0 L 75.0,66.0 M 90.0,120.0 L 75.0,120.0 L 75.0,66.0"
+						d="M 100.0,100.0 H 80.0 V 12.0 H 60.0"
 						fill="none"
 						stroke="black"
 						stroke-width="1.0"
@@ -159,17 +183,17 @@ public class TestTreeLayout extends TestCase {
 		if (rnd.nextDouble() > 0.2 + level * 0.1) {
 			int cnt = rnd.nextInt(1, 6);
 
-			TreeConnection connection = TreeConnection.create().setParent(connector(parent));
 			for (int n = 0; n < cnt; n++) {
 				Box child = randomNode(rnd);
 				tree.addNode(child);
 
-				connection.addChildren(connector(child));
+				tree.addConnection(TreeConnection.create()
+					.setParent(connector(parent))
+					.setChild(connector(child)));
 
 				buildTree(tree, level + 1, child, rnd);
 			}
 
-			tree.addConnection(connection);
 		}
 	}
 

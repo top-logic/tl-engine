@@ -5,7 +5,7 @@
  */
 package com.top_logic.graphic.flow.operations.tree;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.graphic.flow.data.Box;
@@ -22,7 +22,7 @@ class TreeNode {
 
 	private TreeNode _parent;
 
-	private List<TreeNode> _children = Collections.emptyList();
+	private final List<TreeNode> _children = new ArrayList<>();
 
 	private Column _column;
 
@@ -73,6 +73,10 @@ class TreeNode {
 	 * @see #getParent()
 	 */
 	public void setParent(TreeNode parent) {
+		if (_parent != null) {
+			throw new IllegalStateException("Node '" + _box + "' must not have more than one parent: "
+				+ _parent.getBox() + " and " + parent.getBox());
+		}
 		_parent = parent;
 	}
 
@@ -86,8 +90,8 @@ class TreeNode {
 	/**
 	 * @see #getChildren()
 	 */
-	public void setChildren(List<TreeNode> children) {
-		_children = children;
+	public void addChild(TreeNode child) {
+		_children.add(child);
 	}
 
 	/**
@@ -109,6 +113,9 @@ class TreeNode {
 	 * @see #getIndex()
 	 */
 	public void setColumn(Column column, int index) {
+		if (_column != null) {
+			throw new IllegalStateException("Not a tree or forest, cycle at: " + getBox());
+		}
 		_column = column;
 		_index = index;
 	}

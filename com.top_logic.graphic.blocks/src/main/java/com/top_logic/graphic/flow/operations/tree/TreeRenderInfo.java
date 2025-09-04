@@ -15,6 +15,7 @@ import java.util.Map;
 
 import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.flow.data.Box;
+import com.top_logic.graphic.flow.data.EdgeDecoration;
 import com.top_logic.graphic.flow.data.TreeConnection;
 import com.top_logic.graphic.flow.data.TreeConnector;
 import com.top_logic.graphic.flow.data.Widget;
@@ -32,6 +33,8 @@ public class TreeRenderInfo {
 		private double _offsetX;
 
 		private int _level;
+
+		private double _decorationWidth;
 
 		/**
 		 * Creates a {@link Column}.
@@ -115,6 +118,22 @@ public class TreeRenderInfo {
 		public void setOffsetX(double offsetX) {
 			_offsetX = offsetX;
 		}
+
+		/**
+		 * The maximum width of decorations placed on the left of this column.
+		 */
+		public double getDecorationWidth() {
+			return _decorationWidth;
+		}
+
+		/**
+		 * @see #getDecorationWidth()
+		 */
+		public void requestDecorationWidth(double decorationWidth) {
+			if (decorationWidth > _decorationWidth) {
+				_decorationWidth = decorationWidth;
+			}
+		}
 	}
 
 	private final Map<Box, TreeNode> _nodeForBox;
@@ -124,6 +143,8 @@ public class TreeRenderInfo {
 	private final List<TreeNode> _roots;
 
 	private final List<Column> _columns = new ArrayList<>();
+
+	private final List<TreeConnection> _connections;
 
 	private final double _gapX;
 
@@ -152,6 +173,7 @@ public class TreeRenderInfo {
 		_subtreeGapY = subtreeGapY;
 		_parentAlign = parentAlign;
 		_parentOffset = parentOffset;
+		_connections = connections;
 
 		// Create tree nodes from node boxes.
 		_nodeForBox = new LinkedHashMap<>();
@@ -271,13 +293,40 @@ public class TreeRenderInfo {
 		}
 
 		// Compute column widths.
+		for (Column column : getColumns()) {
+			column.computeWidth();
+		}
+
+		// Reserve space for decorations.
+		for (TreeConnection connection : _connections) {
+			Column column = getNodeForAnchor(connection.getChild().getAnchor()).getColumn();
+
+			double additionalWidth = 0;
+			for (EdgeDecoration decoration : connection.getDecorations()) {
+				double decorationWidth = decoration.getContent().getWidth();
+				additionalWidth = Math.max(additionalWidth,
+					decorationWidth
+					// Free space due to the column gap.
+					- _gapX / 2
+					// Free space due to the anchor width.
+					- (column.getWidth() - connection.getChild().getAnchor().getWidth()) / 2);
+			}
+
+			column.requestDecorationWidth(additionalWidth);
+		}
+
+		// Place columns and compute overall width.
 		double width = 0;
 		if (!getColumns().isEmpty()) {
 			for (Column column : getColumns()) {
+				// Additional width reserved for decorations.
+				width += column.getDecorationWidth();
+
 				column.setOffsetX(width);
-				column.computeWidth();
 
 				width += column.getWidth();
+
+				// Gap to the next column.
 				width += _gapX;
 			}
 

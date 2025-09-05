@@ -2504,6 +2504,68 @@ td.tl-table__cell .cDataItem li {
 }
 
 /* ==================================== */
+/* ======   ImageUploadControl    ===== */
+/* ==================================== */
+
+.cImgUpload input {
+	margin-left: 2px;
+}
+
+.cImgUpload input.first {
+	margin-left: 0px;
+}
+
+.cImgUpload input {
+	background-color: var(--background);
+}
+
+.cImgUpload input[type="file"] {
+	display: none;
+}
+
+.cImgUpload label {
+	display: inline-flex;
+	padding: 6rem;
+	border: dashed lightgray 4px;
+	border-radius: 1rem;
+/* 	box-shadow: inset 0px 0px 0px 1px var(--button-primary); */
+	cursor: pointer;
+	white-space: nowrap;
+	color: var(--text-primary);
+}
+
+.cImgUpload label .cmdImg {
+	padding-right: var(--spacing-02);
+}
+
+.cImgUpload label:hover {
+/* 	background: var(--button-primary-hover); */
+/* 	box-shadow: inset 0px 0px 0px 1px var(--button-primary-hover); */
+}
+
+.cImgUpload label:focus {
+/* 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset); */
+/* 	outline: none !important; */
+}
+
+.cImgUpload label:active {
+/* 	background: var(--button-primary-active); */
+}
+
+.cImgUpload label.cmdButtonDisabled {
+	background: var(--button-disabled);
+/* 	box-shadow: inset 0px 0px 0px 1px var(--button-disabled); */
+}
+
+.cImgUpload label.cmdButtonDisabled .cmdLabel {
+/* 	color: var(--text-on-color-disabled); */
+}
+
+.cImgUpload label.cmdButtonDisabled .cmdImg {
+/* 	color: var(--icon-on-color-disabled); */
+}
+
+/* ==================================== */
 /* ======     DownloadControl     ===== */
 /* ==================================== */
 

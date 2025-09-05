@@ -6,6 +6,9 @@
 			object_name="tl.doc.Page"
 			super_class="AttributedObject"
 		>
+			<annotations>
+				<key-attributes attributes="parent"/>
+			</annotations>
 			<attributes>
 				<mo_attribute
 					att_name="name"

@@ -82,6 +82,8 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 		_sourcePreload = new AssociationCachePreload(_sourceCodesQuery);
 		
 		_supportedLocales = unmodifiableList(list(getSupportedLocales()));
+
+		checkKeyAttributes(attribute, META_ATTRIBUTE_ATTRIBUTE_NAME, OBJECT_ATTRIBUTE_NAME);
 	}
 
 	@Override

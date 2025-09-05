@@ -46,6 +46,7 @@ import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLClass;
@@ -435,6 +436,13 @@ public class ChangeLogBuilder {
 						continue;
 					}
 					ObjectKey partId = storage.getPartId(change.getValues());
+					if (partId == null) {
+						Logger.error("Unable to determine part id for update of '"
+								+ MetaLabelProvider.INSTANCE.getLabel(newObject) + "' in revision '" + revision
+								+ "': Changes: " + change.getValues() + ", table: " + table + ", storage: " + storage,
+							ChangeLogBuilder.class);
+						continue;
+					}
 					KnowledgeItem partKI = _kb.resolveObjectKey(partId);
 					if (partKI == null) {
 						/* Part is deleted in the meanwhile. It is possible to display the

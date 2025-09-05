@@ -103,6 +103,9 @@ public class SingletonLinkStorage<C extends SingletonLinkStorage.Config<?>> exte
 
 		_preload = new SinglePreloadContribution(new AssociationNavigationPreload(getOutgoingQuery()));
 		_reversePreload = new SinglePreloadContribution(new AssociationNavigationPreload(getIncomingQuery()));
+
+		String partCol = monomophicTable() ? null : WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR;
+		checkKeyAttributes(attribute, partCol, DBKnowledgeAssociation.REFERENCE_SOURCE_NAME);
 	}
 
 	@Override

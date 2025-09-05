@@ -8,7 +8,9 @@ package com.top_logic.model.wysiwyg.storage;
 import static com.top_logic.basic.shared.collection.factory.CollectionFactoryShared.*;
 import static com.top_logic.layout.wysiwyg.ui.StructuredText.*;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -17,6 +19,8 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.Utils;
+import com.top_logic.element.meta.AssociationStorageDescriptor;
+import com.top_logic.element.meta.DefaultAssociationStorageDescriptor;
 import com.top_logic.element.meta.kbbased.storage.AbstractStorage;
 import com.top_logic.element.meta.kbbased.storage.ColumnStorage;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -47,6 +51,9 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 
 	private String _storageAttribute;
 
+	private List<DefaultAssociationStorageDescriptor> _storageDescriptors =
+		Collections.singletonList(newImageDescriptor(HTML_ATTRIBUTE_STORAGE));
+
 	/**
 	 * @param context
 	 *        {@link InstantiationContext} context to instantiate sub configurations.
@@ -67,6 +74,7 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 			// Default, if no database column is defined.
 			_storageAttribute = attribute.getName();
 		}
+		_storageDescriptors.forEach(descriptor -> descriptor.checkKeyAttributes(attribute));
 	}
 
 	@Override
@@ -170,6 +178,11 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 			return StringServices.isEmpty(((StructuredText) value).getSourceCode());
 		}
 		return super.isEmpty(value);
+	}
+
+	@Override
+	public List<? extends AssociationStorageDescriptor> getStorageDescriptors() {
+		return _storageDescriptors;
 	}
 
 }

@@ -32,6 +32,7 @@ import com.top_logic.element.changelog.model.trans.TransientCreation;
 import com.top_logic.element.changelog.model.trans.TransientDeletion;
 import com.top_logic.element.changelog.model.trans.TransientModification;
 import com.top_logic.element.changelog.model.trans.TransientUpdate;
+import com.top_logic.element.meta.AssociationStorageDescriptor;
 import com.top_logic.element.meta.SeparateTableStorage;
 import com.top_logic.element.meta.kbbased.storage.ColumnStorage;
 import com.top_logic.knowledge.event.ChangeSet;
@@ -90,10 +91,10 @@ public class ChangeLogBuilder {
 	private Map<TLStructuredType, Map<String, TLStructuredTypePart>> _columnBindingByType = new HashMap<>();
 
 	/**
-	 * For each table and column, the storage that uses that column to store values for foreign
-	 * objects (if any).
+	 * For each table and column, the descriptor that describes how values for foreign objects are
+	 * stored (if any).
 	 */
-	private Map<MOStructure, Map<String, SeparateTableStorage>> _storagesByTable = new HashMap<>();
+	private Map<MOStructure, Map<String, AssociationStorageDescriptor>> _descriptorsByTable = new HashMap<>();
 
 	private Set<String> _excludeModules = Collections.emptySet();
 
@@ -409,15 +410,15 @@ public class ChangeLogBuilder {
 
 		private void analyzeTechnicalUpdate(long revision, MetaObject table, Set<ObjectKey> createdDeletedKeys,
 				ItemChange change) {
-			Map<String, SeparateTableStorage> storages = _storagesByTable.get(table);
-			if (storages == null) {
+			Map<String, AssociationStorageDescriptor> descriptors = _descriptorsByTable.get(table);
+			if (descriptors == null) {
 				// Table is not used to store value of foreign objects.
 				return;
 			}
 
-			for (SeparateTableStorage storage : storages.values()) {
+			for (AssociationStorageDescriptor descriptor : descriptors.values()) {
 				// A row that stores (part of) an attribute value of some object.
-				ObjectKey objId = storage.getBaseObjectId(change.getValues());
+				ObjectKey objId = descriptor.getBaseObjectId(change.getValues());
 				if (objId != null) {
 					// Note: A table storing values for other objects is not required to do so for
 					// every row. An example is the inline collection storage, which may optionally
@@ -435,11 +436,12 @@ public class ChangeLogBuilder {
 					if (excludedByModule(newObject)) {
 						continue;
 					}
-					ObjectKey partId = storage.getPartId(change.getValues());
+					ObjectKey partId = descriptor.getPartId(change.getValues());
 					if (partId == null) {
 						Logger.error("Unable to determine part id for update of '"
 								+ MetaLabelProvider.INSTANCE.getLabel(newObject) + "' in revision '" + revision
-								+ "': Changes: " + change.getValues() + ", table: " + table + ", storage: " + storage,
+								+ "': Changes: " + change.getValues() + ", table: " + table + ", descriptor: "
+								+ descriptor,
 							ChangeLogBuilder.class);
 						continue;
 					}
@@ -504,7 +506,7 @@ public class ChangeLogBuilder {
 	 */
 	private void analyzeModel() {
 		_classesByTable = new HashMap<>();
-		_storagesByTable = new HashMap<>();
+		_descriptorsByTable = new HashMap<>();
 
 		for (TLModule module : _model.getModules()) {
 			if (_excludeModules.contains(module.getName())) {
@@ -544,14 +546,18 @@ public class ChangeLogBuilder {
 			return;
 		}
 		if (storage instanceof SeparateTableStorage associationStorage) {
-			String storageTable = associationStorage.getTable();
-			String storageColumn = associationStorage.getStorageColumn();
+			associationStorage.getStorageDescriptors().forEach(descriptor -> {
+				String storageTable = descriptor.getTable();
+				String storageColumn = descriptor.getStorageColumn();
 
-			MOStructure storageType = (MOStructure) _kb.getMORepository().getType(storageTable);
-			Map<String, SeparateTableStorage> storageByColumn =
-				_storagesByTable.computeIfAbsent(storageType, x -> new HashMap<>());
+				MOStructure storageType = (MOStructure) _kb.getMORepository().getType(storageTable);
+				Map<String, AssociationStorageDescriptor> storageByColumn =
+					_descriptorsByTable.computeIfAbsent(storageType, x -> new HashMap<>());
 
-			storageByColumn.putIfAbsent(storageColumn, associationStorage);
+				/* Each descriptor that uses the same storage column must deliver same base object
+				 * and part id. */
+				storageByColumn.putIfAbsent(storageColumn, descriptor);
+			});
 		}
 	}
 

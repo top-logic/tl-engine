@@ -1243,7 +1243,6 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	private KnowledgeItemInternal itemById(DBContext context, ObjectKey requestedIdentity, long dataRevision,
 			boolean cacheOnly) {
 		if (dataRevision == IN_SESSION_REVISION) {
-			MOKnowledgeItem objectType = (MOKnowledgeItem) requestedIdentity.getObjectType();
 			long historyContext = requestedIdentity.getHistoryContext();
 			dataRevision = getDataRevision(historyContext);
 		}
@@ -3974,7 +3973,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 							// a different attribute had changed. Must inform referenced object
 							// because a filtered association query may base on the changed
 							// attribute.
-							KnowledgeItemInternal link = resolveIdentifier(linkKey, revision,false);
+							KnowledgeItemInternal link = resolveIdentifier(linkKey, revision);
 							ObjectKey referencedKey = link.getReferencedKey(reference);
 							if (referencedKey != null) {
 								collectReferenceChangesToBaseObject(revision, linkKey, referencedKey,

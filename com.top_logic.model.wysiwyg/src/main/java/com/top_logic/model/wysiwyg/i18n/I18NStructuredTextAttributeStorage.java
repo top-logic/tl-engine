@@ -11,6 +11,7 @@ import static com.top_logic.layout.wysiwyg.ui.StructuredText.*;
 import static java.util.Collections.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -25,9 +26,9 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.basic.util.Utils;
-import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.element.meta.AssociationStorageDescriptor;
 import com.top_logic.element.meta.AttributeException;
-import com.top_logic.element.meta.SeparateTableStorage;
+import com.top_logic.element.meta.DefaultAssociationStorageDescriptor;
 import com.top_logic.element.meta.kbbased.storage.AbstractStorage;
 import com.top_logic.element.model.i18n.I18NAttributeStorage;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -50,7 +51,7 @@ import com.top_logic.util.TLContextManager;
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttributeStorage.Config<?>>
-		extends CommonStructuredTextAttributeStorage<C> implements SeparateTableStorage {
+		extends CommonStructuredTextAttributeStorage<C> {
 
 	/** Name of the database table storing the sources codes. */
 	public static final String SOURCES_CODES_TABLE_NAME = I18NAttributeStorage.I18N_STORAGE_KO_TYPE;
@@ -70,6 +71,13 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 
 	private PreloadContribution _sourcePreload;
 
+	private List<DefaultAssociationStorageDescriptor> _storageDescriptors = Arrays.asList(
+		new DefaultAssociationStorageDescriptor(SOURCES_CODES_TABLE_NAME,
+			OBJECT_ATTRIBUTE_NAME,
+			META_ATTRIBUTE_ATTRIBUTE_NAME,
+			SOURCE_CODE_ATTRIBUTE_NAME),
+		newImageDescriptor(IMAGES_TABLE_NAME));
+
 	/** {@link TypedConfiguration} constructor for {@link I18NStructuredTextAttributeStorage}. */
 	public I18NStructuredTextAttributeStorage(InstantiationContext context, C config) {
 		super(context, config);
@@ -83,27 +91,7 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 		
 		_supportedLocales = unmodifiableList(list(getSupportedLocales()));
 
-		checkKeyAttributes(attribute, META_ATTRIBUTE_ATTRIBUTE_NAME, OBJECT_ATTRIBUTE_NAME);
-	}
-
-	@Override
-	public String getTable() {
-		return SOURCES_CODES_TABLE_NAME;
-	}
-
-	@Override
-	public String getStorageColumn() {
-		return SOURCE_CODE_ATTRIBUTE_NAME;
-	}
-
-	@Override
-	public ObjectKey getBaseObjectId(Map<String, Object> row) {
-		return (ObjectKey) row.get(OBJECT_ATTRIBUTE_NAME);
-	}
-
-	@Override
-	public ObjectKey getPartId(Map<String, Object> row) {
-		return (ObjectKey) row.get(META_ATTRIBUTE_ATTRIBUTE_NAME);
+		_storageDescriptors.forEach(descriptor -> descriptor.checkKeyAttributes(attribute));
 	}
 
 	@Override
@@ -344,6 +332,11 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 			return ((I18NStructuredText) value).getEntries().isEmpty();
 		}
 		return super.isEmpty(value);
+	}
+
+	@Override
+	public List<? extends AssociationStorageDescriptor> getStorageDescriptors() {
+		return _storageDescriptors;
 	}
 
 }

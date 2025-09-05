@@ -7,8 +7,8 @@ package com.top_logic.knowledge;
 
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.identifier.ObjectKey;
-import com.top_logic.dob.meta.IdentifiedObject;
 import com.top_logic.dob.meta.ObjectContext;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.Revision;
 
@@ -41,15 +41,15 @@ public class CurrentOnlyReferenceStorage extends ByValueReferenceStorageImpl {
 			 * value is a current object. The general mechanism then stores the key of the target
 			 * object (current) in the objects storage so that a current key is available in the
 			 * cache the next time it is accessed. */
-			IdentifiedObject currentRef = getReferencedObject(context, cacheValue);
-			if (currentRef != null) {
+			KnowledgeItem currentRef = (KnowledgeItem) getReferencedObject(context, cacheValue);
+			if (currentRef != null && currentRef.isAlive()) {
 				return currentRef;
 			}
 		} else {
 			ObjectKey currentKey = KBUtils.ensureHistoryContext(cachedKey, Revision.CURRENT_REV);
 
-			IdentifiedObject currentValue = context.resolveObject(currentKey);
-			if (currentValue != null) {
+			KnowledgeItem currentValue = (KnowledgeItem) context.resolveObject(currentKey);
+			if (currentValue != null && currentValue.isAlive()) {
 				return currentValue;
 			}
 		}

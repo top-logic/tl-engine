@@ -4092,7 +4092,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	 * @see #resolveIdentifier(DBObjectKey,long)
 	 */
 	private KnowledgeItemInternal resolveIdentifier(DBObjectKey identity, boolean cacheOnly) {
-		return resolveIdentifier(identity, IN_SESSION_REVISION, cacheOnly, false);
+		return resolveIdentifier(identity, IN_SESSION_REVISION, cacheOnly);
 	}
 
 	/**
@@ -4106,19 +4106,13 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	 * @return The item with the given key, or <code>null</code>, if none does exist.
 	 */
 	KnowledgeItemInternal resolveIdentifier(DBObjectKey identity, long dataRevision) {
-		/* This method is called during commit or re-fetch. In this case the session revision is not
-		 * updated (it is to less), so that the validity state can not be checked. */
-		boolean ignoreValidity = true;
-		return resolveIdentifier(identity, dataRevision, false, ignoreValidity);
+		return resolveIdentifier(identity, dataRevision, false);
 	}
 
-	private KnowledgeItemInternal resolveIdentifier(DBObjectKey identity, long dataRevision, boolean cacheOnly,
-			boolean ignoreValidity) {
+	private KnowledgeItemInternal resolveIdentifier(DBObjectKey identity, long dataRevision, boolean cacheOnly) {
 		KnowledgeItemInternal cached = identity.getCached();
 		if (cached != null) {
-			if (ignoreValidity || cached.isAlive()) {
-				return cached;
-			}
+			return cached;
 		}
 		
 		DBContext context = getCurrentDBContext();

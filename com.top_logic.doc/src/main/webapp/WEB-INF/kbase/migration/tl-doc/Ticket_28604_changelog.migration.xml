@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_28604_changelog"
+		module="tl-doc"
+	/>
+	<dependencies>
+		<dependency name="Ticket_28604_Upgrade_commit_messages"
+			module="tl"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28298_add_group_member_options"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_28557_enlarge_contact_attributes"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+		<dependency name="Ticket_27999_Multiple_composition_tables"
+			module="tl-doc"
+		/>
+	</dependencies>
+	<processors>
+		<processor class="com.top_logic.knowledge.service.db2.migration.processor.XsltTableDefinitionBaselineProcessor"
+			transform="/WEB-INF/kbase/migration/tl-doc/Ticket_28604_changelog.transform.xslt"
+		/>
+	</processors>
+	<migration>
+		<type-mapping class=""/>
+	</migration>
+	<post-processors/>
+</migration>

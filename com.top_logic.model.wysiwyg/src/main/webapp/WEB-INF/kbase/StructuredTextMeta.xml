@@ -7,6 +7,7 @@
 				<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.KnowledgeItemFactoryAnnotation">
 					<implementation-factory class="com.top_logic.knowledge.service.db2.StaticKnowledgeObjectFactory" />
 				</annotation>
+				<key-attributes attributes="object, metaAttribute"/>
 			</annotations>
 			<attributes>
 				<reference att_name="object"

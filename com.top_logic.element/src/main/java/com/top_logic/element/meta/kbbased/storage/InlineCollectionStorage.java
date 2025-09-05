@@ -6,6 +6,8 @@
 package com.top_logic.element.meta.kbbased.storage;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,6 +23,7 @@ import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MOStructure;
+import com.top_logic.element.meta.AssociationStorageDescriptor;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.ReferenceStorage;
 import com.top_logic.element.meta.SeparateTableStorage;
@@ -56,7 +59,7 @@ import com.top_logic.util.error.TopLogicException;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public abstract class InlineCollectionStorage<C extends InlineCollectionStorage.Config<?>> extends CollectionStorage<C>
-		implements ReferenceStorage, CompositeStorage, SeparateTableStorage {
+		implements ReferenceStorage, CompositeStorage, SeparateTableStorage, AssociationStorageDescriptor {
 
 	/**
 	 * Configuration options to store the referrer of an object inline in the table of the target.
@@ -293,6 +296,11 @@ public abstract class InlineCollectionStorage<C extends InlineCollectionStorage.
 		 * TLReference, then this preload will actually load too many objects. But this doesn't
 		 * matter. */
 		return new ReferencePreload(getTable(), getConfig().getContainerColumn());
+	}
+
+	@Override
+	public List<? extends AssociationStorageDescriptor> getStorageDescriptors() {
+		return Collections.singletonList(this);
 	}
 
 }

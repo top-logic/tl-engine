@@ -5,12 +5,21 @@
  */
 package com.top_logic.element.meta;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.db.schema.setup.config.KeyAttributes;
 import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.dob.meta.MOClass;
+import com.top_logic.dob.meta.MOReference;
+import com.top_logic.dob.meta.MORepository;
 import com.top_logic.element.changelog.ChangeLogBuilder;
 import com.top_logic.element.meta.kbbased.storage.ColumnStorage;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.util.TLModelUtil;
 
 /**
  * {@link StorageImplementation} that stores values in a table other than the object table.
@@ -58,5 +67,55 @@ public interface SeparateTableStorage extends StorageImplementation {
 	 * </p>
 	 */
 	String getStorageColumn();
+
+	/**
+	 * Checks whether the given columns are configured as {@link KeyAttributes}.
+	 * 
+	 * <p>
+	 * It is necessary for the {@link ChangeLogBuilder}, that both columns are defined as key
+	 * attributes. Otherwise the change for the actual value does not contain the information base
+	 * object and part id, because these values have not changed. Being key attributes ensures that
+	 * these values are always delivered.
+	 * </p>
+	 * 
+	 * @param partCol
+	 *        Name of the {@link MOReference} holding the part returned by {@link #getPartId(Map)}.
+	 *        May be <code>null</code> when the part is not stored in the database.
+	 * @param baseObjectCol
+	 *        Name of the {@link MOReference} holding the part returned by
+	 *        {@link #getBaseObjectId(Map)}. May be <code>null</code> when the base object is not
+	 *        stored in the database.
+	 */
+	default boolean checkKeyAttributes(TLStructuredTypePart part, String partCol, String baseObjectCol) {
+		if (partCol == null && baseObjectCol == null) {
+			return true;
+		}
+		MORepository tableRepo = PersistencyLayer.getKnowledgeBase().getMORepository();
+		MOClass storageTable = (MOClass) tableRepo.getType(getTable());
+		Set<String> keyAttributes = new HashSet<>();
+		while (storageTable != null) {
+			KeyAttributes keyAnnotation = storageTable.getAnnotation(KeyAttributes.class);
+			if (keyAnnotation != null) {
+				keyAttributes.addAll(keyAnnotation.getAttributes());
+			}
+			storageTable = storageTable.getSuperclass();
+		}
+
+		if (partCol != null && !keyAttributes.contains(partCol)) {
+			Logger.error(
+				"Column '" + partCol + "' is not declared as key column in table '" + getTable()
+						+ "'. Changes for attribute '" + TLModelUtil.qualifiedName(part) + "' may not be detected.",
+				SeparateTableStorage.class);
+			return false;
+		}
+		if (baseObjectCol != null && !keyAttributes.contains(baseObjectCol)) {
+			Logger.error(
+				"Column '" + baseObjectCol + "' is not declared as key column in table '" + getTable()
+						+ "'. Changes for attribute '" + TLModelUtil.qualifiedName(part) + "' may not be detected.",
+				SeparateTableStorage.class);
+			return false;
+		}
+		return true;
+	}
 
 }

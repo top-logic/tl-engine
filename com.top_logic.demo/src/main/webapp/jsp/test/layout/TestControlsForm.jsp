@@ -1344,6 +1344,15 @@
 						</form:description>
 						<form:custom name="pictureField"/>
 					</form:descriptionCell>
+					
+					<form:hr key="imageUploadField"/>
+					
+					<form:descriptionCell>
+						<form:description>
+							<form:label name="imageUploadField"/>
+						</form:description>
+						<form:custom name="imageUploadField"/>
+					</form:descriptionCell>
 
 					<form:hr key="galleryField"/>
 					<form:cell>

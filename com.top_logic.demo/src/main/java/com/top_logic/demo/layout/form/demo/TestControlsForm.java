@@ -168,6 +168,7 @@ import com.top_logic.layout.form.control.DisplayImageControl;
 import com.top_logic.layout.form.control.DownloadControl;
 import com.top_logic.layout.form.control.DropDownControl;
 import com.top_logic.layout.form.control.FractionSelectControl;
+import com.top_logic.layout.form.control.ImageUploadControl;
 import com.top_logic.layout.form.control.IntegerInputControl;
 import com.top_logic.layout.form.control.MegaMenuControl;
 import com.top_logic.layout.form.control.OpenCalendarControl.OpenCalendar;
@@ -2455,6 +2456,11 @@ public class TestControlsForm extends FormComponent {
 		});
 		imageGroup.addMember(pictureField);
 		imageGroup.addMember(pictureInputField);
+
+		// TODO
+		DataField imageUpload = FormFactory.newDataField("imageUploadField");
+		imageUpload.setControlProvider((model, style) -> new ImageUploadControl((DataField) model));
+		imageGroup.addMember(imageUpload);
 
 	}
 

@@ -4115,6 +4115,43 @@ services.form = {
 		}
 
 	},
+	
+	ImageUploadControl: {
+		updateImage: function(controlID, newValue) {
+			var fileName = newValue[0].name;
+			var fileSize = newValue[0].size;
+			services.ajax.execute("dispatchControlCommand", {
+				controlCommand : "imageUpdate",
+				controlID : controlID,
+				value: fileName,
+				size: fileSize
+			});
+		},
+		
+		submit: function(controlID, uploadFieldID, uploadUrl) {
+			var fileupload = document.getElementById(uploadFieldID);
+			
+			services.ajax.showWaitPane();
+			
+			var formData = new FormData();
+			formData.append("file", fileupload.files[0]);
+			
+			var self = this;
+			fetch(uploadUrl, {
+			  method: "POST", 
+			  body: formData
+			}).then((response) => self.uploadPerformed(controlID));
+		},
+		
+		uploadPerformed: function(controlID) {
+			services.ajax.hideWaitPane();
+			
+			services.ajax.execute("dispatchControlCommand", {
+				controlCommand : "uploadPerformed",
+				controlID : controlID
+			});
+		}
+	},
 
 	ListControl : {
 		

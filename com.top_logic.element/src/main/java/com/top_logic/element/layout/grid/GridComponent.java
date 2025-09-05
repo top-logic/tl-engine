@@ -2204,7 +2204,9 @@ public class GridComponent extends EditComponent implements
 			if (hasFormContext()) {
 				AttributeFormContext formContext = getFormContext();
 				AttributeUpdateContainer updateContainer = formContext.getAttributeUpdateContainer();
-				for (Object selected : getSelectedCollection()) {
+				for (List<?> selectedPath : getSelectedPathsCollection()) {
+					Object selected = selectedPath.get(selectedPath.size() - 1);
+
 					FormGroup rowGroup = getRowGroup(selected);
 					removeFields(selected, rowGroup, updateContainer);
 					if (isTransient(selected)) {

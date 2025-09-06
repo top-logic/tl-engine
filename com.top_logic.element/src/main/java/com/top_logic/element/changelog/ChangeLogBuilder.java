@@ -5,6 +5,10 @@
  */
 package com.top_logic.element.changelog;
 
+import static com.top_logic.basic.db.sql.SQLFactory.*;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -17,15 +21,23 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.LongID;
 import com.top_logic.basic.SessionContext;
 import com.top_logic.basic.TLID;
+import com.top_logic.basic.db.sql.CompiledStatement;
+import com.top_logic.basic.db.sql.SQLSelect;
+import com.top_logic.basic.sql.ConnectionPool;
+import com.top_logic.basic.sql.DBType;
+import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.util.Utils;
+import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.identifier.DefaultObjectKey;
 import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.element.changelog.model.trans.TransientChangeSet;
 import com.top_logic.element.changelog.model.trans.TransientCreation;
@@ -42,10 +54,14 @@ import com.top_logic.knowledge.event.ItemDeletion;
 import com.top_logic.knowledge.event.ItemUpdate;
 import com.top_logic.knowledge.event.ObjectCreation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.service.BasicTypes;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryManager;
+import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Revision;
+import com.top_logic.knowledge.service.db2.RevisionType;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.ModelKind;
@@ -70,6 +86,8 @@ public class ChangeLogBuilder {
 	private final HistoryManager _hm;
 
 	private final TLModel _model;
+
+	private int _numberEntries;
 
 	private Revision _startRev;
 
@@ -176,7 +194,7 @@ public class ChangeLogBuilder {
 	}
 
 	/**
-	 * names of {@link TLModule}s that must not be regarded.
+	 * Names of {@link TLModule}s that must not be regarded.
 	 */
 	public Set<String> getExcludedModules() {
 		return _excludeModules;
@@ -191,6 +209,21 @@ public class ChangeLogBuilder {
 	}
 
 	/**
+	 * Maximal number of entries to display.
+	 */
+	public int getNumberEntries() {
+		return _numberEntries;
+	}
+
+	/**
+	 * @see #getNumberEntries()
+	 */
+	public ChangeLogBuilder setNumberEntries(int value) {
+		_numberEntries = value;
+		return this;
+	}
+
+	/**
 	 * Retrieves the change sets.
 	 */
 	public Collection<com.top_logic.element.changelog.model.ChangeSet> build() {
@@ -199,9 +232,10 @@ public class ChangeLogBuilder {
 		analyzeModel();
 
 		TLID authorIdFilter = _author == null ? null : _author.tIdLocal();
+		Revision startRev = computeActualStartRev();
 
 		Branch branch = _hm.getTrunk();
-		try (ChangeSetReader reader = _kb.getDiffReader(_startRev, branch, _stopRev, branch, true)) {
+		try (ChangeSetReader reader = _kb.getDiffReader(startRev, branch, _stopRev, branch, true)) {
 			while (true) {
 				ChangeSet changeSet = reader.read();
 				if (changeSet == null) {
@@ -229,10 +263,69 @@ public class ChangeLogBuilder {
 				}
 
 				log.add(entry);
+				if (limitEntryCount() && log.size() >= _numberEntries) {
+					break;
+				}
 			}
 		}
 
 		return log;
+	}
+
+	private Revision computeActualStartRev() {
+		if (_author == null) {
+			return _startRev;
+		}
+		if (!limitEntryCount()) {
+			return _startRev;
+		}
+		MOClass revisionType = BasicTypes.getRevisionType(_kb);
+		MOAttribute revAttribute = revisionType.getAttribute(BasicTypes.REVISION_REV_ATTRIBUTE);
+		String revDBName = revAttribute.getDbMapping()[0].getDBName();
+		MOAttribute authorAttribute = revisionType.getAttribute(RevisionType.AUTHOR_ATTRIBUTE_NAME);
+		String authorDBName = authorAttribute.getDbMapping()[0].getDBName();
+		
+		int maxEntries = _numberEntries;
+		if (!_includeTechnical) {
+			// Heuristics: Suppose for each actual commit a technical one.
+			maxEntries *= 2;
+		}
+		SQLSelect select = select(true,
+			columns(columnDef(column(revDBName), revDBName)),
+			table(revisionType.getDBMapping().getDBName()),
+			and(
+				le(parameter(DBType.LONG, "startRev"), column(revDBName)),
+				eqSQL(parameter(DBType.STRING, "author"), column(authorDBName))),
+			orders(order(true, column(revDBName))),
+			limit(literalInteger(maxEntries - 1), literalInteger(maxEntries)));
+		try {
+			ConnectionPool pool = KBUtils.getConnectionPool(_kb);
+			CompiledStatement sql = query(
+				parameters(
+					parameterDef(DBType.LONG, "startRev"),
+					parameterDef(DBType.STRING, "author")),
+				select)
+				.toSql(pool.getSQLDialect());
+			PooledConnection con = pool.borrowReadConnection();
+			try {
+				ResultSet res = sql.executeQuery(con, _startRev.getCommitNumber(), TLSessionContext.contextId(_author));
+				if (res.next()) {
+					long actualStartRev = res.getLong(revDBName);
+					return HistoryUtils.getRevision(actualStartRev);
+				} else {
+					return _startRev;
+				}
+			} finally {
+				pool.releaseReadConnection(con);
+			}
+		} catch (SQLException ex) {
+			Logger.error("Error determining start revision based on max entry count.", ex, ChangeLogBuilder.class);
+			return _startRev;
+		}
+	}
+
+	private boolean limitEntryCount() {
+		return _numberEntries > 0;
 	}
 
 	private class ChangeSetAnalyzer {

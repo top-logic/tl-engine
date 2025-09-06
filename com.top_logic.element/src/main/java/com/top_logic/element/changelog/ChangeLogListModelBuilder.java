@@ -14,8 +14,10 @@ import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.element.layout.meta.TLStructuredTypeFormBuilder;
@@ -41,6 +43,7 @@ public class ChangeLogListModelBuilder extends AbstractConfiguredInstance<Change
 	 */
 	@DisplayOrder({
 		Config.MAX_TIME,
+		Config.MAX_ENTRIES,
 		Config.ALL_USERS,
 		Config.INCLUDE_TECHNICAL_CHANGES,
 		Config.EXCLUDED_MODULES,
@@ -55,6 +58,9 @@ public class ChangeLogListModelBuilder extends AbstractConfiguredInstance<Change
 
 		/** Configuration name for {@link #getMaxTime()}. */
 		String MAX_TIME = "max-time";
+
+		/** Configuration name for {@link #getMaxEntries()}. */
+		String MAX_ENTRIES = "max-entries";
 
 		/** Configuration name for {@link #getExcludedModules()}. */
 		String EXCLUDED_MODULES = "excluded-modules";
@@ -83,6 +89,18 @@ public class ChangeLogListModelBuilder extends AbstractConfiguredInstance<Change
 		@Format(MillisFormat.class)
 		@Name(MAX_TIME)
 		long getMaxTime();
+
+		/**
+		 * The value specifies the maximum number of entries to be displayed.
+		 * 
+		 * <p>
+		 * A value <code>&lt;= 0</code> means all entries.
+		 * </p>
+		 */
+		@IntDefault(30)
+		@Name(MAX_ENTRIES)
+		@Label("Number entries")
+		int getMaxEntries();
 
 		/**
 		 * Modules in this list are not observed. I.e. no changes are reported for elements whose
@@ -136,6 +154,7 @@ public class ChangeLogListModelBuilder extends AbstractConfiguredInstance<Change
 		return new ChangeLogBuilder(kb, model)
 			.setAuthor(config.getAllUsers() ? null : TLContext.currentUser())
 			.setStartRev(startRev)
+			.setNumberEntries(getConfig().getMaxEntries())
 			.setExcludedModules(getConfig().getExcludedModules()
 				.stream()
 				.map(TLModelPartRef::qualifiedName)

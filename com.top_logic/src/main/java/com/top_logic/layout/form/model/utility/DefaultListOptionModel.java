@@ -10,7 +10,9 @@ import java.util.List;
 /**
  * This class is a container for select field options, stored as list.
  * 
- * @author     <a href="mailto:STS@top-logic.com">STS</a>
+ * @see LazyListOptionModel List option model with options delivered by a supplier.
+ * 
+ * @author <a href="mailto:stefan.steinert@top-logic.com">Stefan Steinert</a>
  */
 public class DefaultListOptionModel<T> implements ListOptionModel<T> {
 

@@ -5,21 +5,15 @@
  */
 package com.top_logic.layout.formeditor.accounts;
 
-import java.util.List;
-
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.element.layout.formeditor.implementation.additional.I18NConstants;
 import com.top_logic.html.template.HTMLTemplateFragment;
-import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.FormMember;
-import com.top_logic.layout.form.model.utility.ListOptionModel;
-import com.top_logic.layout.form.model.utility.OptionModelListener;
 import com.top_logic.layout.form.template.model.FormEditorElementTemplate;
 import com.top_logic.layout.formeditor.parts.ForeignAttributeDefinition;
 import com.top_logic.layout.formeditor.parts.ForeignAttributeTemplateProvider;
 import com.top_logic.model.form.implementation.FormEditorContext;
-import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.Resources;
 
 /**
@@ -59,34 +53,6 @@ public class RepresentativeField extends ForeignAttributeTemplateProvider {
 		}
 
 		return result;
-	}
-
-	private static final class AllRepresentativeGroups implements ListOptionModel<Group> {
-
-		/**
-		 * Singleton {@link RepresentativeField.AllRepresentativeGroups} instance.
-		 */
-		public static final RepresentativeField.AllRepresentativeGroups INSTANCE =
-			new RepresentativeField.AllRepresentativeGroups();
-
-		private AllRepresentativeGroups() {
-			// Singleton constructor.
-		}
-
-		@Override
-		public List<? extends Group> getBaseModel() {
-			return Person.all().stream().map(account -> account.getRepresentativeGroup()).toList();
-		}
-
-		@Override
-		public boolean addOptionListener(OptionModelListener listener) {
-			return false;
-		}
-
-		@Override
-		public boolean removeOptionListener(OptionModelListener listener) {
-			return false;
-		}
 	}
 
 }

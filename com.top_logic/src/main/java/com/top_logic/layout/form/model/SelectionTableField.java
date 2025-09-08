@@ -50,7 +50,7 @@ public class SelectionTableField extends SelectField {
 	 */
 	protected SelectionTableField(String name, List options, Accessor columnAccessor, boolean multiple,
 			boolean mandatory, boolean immutable, Constraint constraint) {
-		super(name, new DefaultListOptionModel(options), multiple, mandatory, immutable, constraint);
+		super(name, new DefaultListOptionModel<>(options), multiple, mandatory, immutable, constraint);
 		init(columnAccessor);
 	}
 

@@ -35,7 +35,7 @@ import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.db2.AssociationReference.CurrentDefault;
 import com.top_logic.layout.LabelProvider;
-import com.top_logic.layout.form.model.utility.DefaultListOptionModel;
+import com.top_logic.layout.form.model.utility.LazyListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.form.values.edit.annotation.ControlProvider;
@@ -232,7 +232,7 @@ public class TLBackReferenceFormBuilder extends TLReferenceFormBuilder {
 
 			@Override
 			public OptionModel<TLReference> apply(TLStructuredType targetType) {
-				return new DefaultListOptionModel<>(getAllForwardReferences(targetType));
+				return new LazyListOptionModel<>(() -> getAllForwardReferences(targetType));
 			}
 
 			private List<TLReference> getAllForwardReferences(TLStructuredType targetType) {

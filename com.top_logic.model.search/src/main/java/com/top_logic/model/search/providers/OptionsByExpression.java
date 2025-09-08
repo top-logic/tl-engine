@@ -239,9 +239,14 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 		@Override
 		public void valueChanged(FormField field, Object oldValue, Object newValue) {
 			// Invalidate.
+			resetBaseModel();
+			notifyChanged();
+		}
+
+		@Override
+		public void resetBaseModel() {
 			detach();
 			reset();
-			notifyChanged();
 		}
 
 		/**

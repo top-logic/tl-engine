@@ -37,6 +37,13 @@ public interface OptionModel<T> extends Iterable<T> {
 	int getOptionCount();
 
 	/**
+	 * Forces this {@link OptionModel} to recompute {@link #getBaseModel()} if possible..
+	 */
+	default void resetBaseModel() {
+		// optional method.
+	}
+
+	/**
 	 * The option to choose by default for a mandatory property that is automatically filled in the
 	 * UI.
 	 */

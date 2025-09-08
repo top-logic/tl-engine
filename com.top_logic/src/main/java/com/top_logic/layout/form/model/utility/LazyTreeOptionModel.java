@@ -63,6 +63,16 @@ public class LazyTreeOptionModel<N> extends OptionModelProxy<N> implements TreeO
 		return delegate;
 	}
 
+	@Override
+	public void resetBaseModel() {
+		if (_delegate == null) {
+			// No delegate yet created. Nothing to reset.
+			return;
+		}
+		super.resetBaseModel();
+		_delegate = null;
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public TLTreeModel<N> getBaseModel() {

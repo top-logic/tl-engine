@@ -7,7 +7,6 @@ package com.top_logic.element.layout.formeditor.implementation.additional;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
@@ -22,8 +21,7 @@ import com.top_logic.knowledge.service.event.Modification;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.SelectField;
-import com.top_logic.layout.form.model.utility.ListOptionModel;
-import com.top_logic.layout.form.model.utility.OptionModelListener;
+import com.top_logic.layout.form.model.utility.LazyListOptionModel;
 import com.top_logic.layout.form.template.model.FormEditorElementTemplate;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.tool.boundsec.wrap.Group;
@@ -59,40 +57,13 @@ public class GroupsField extends FieldDefinitionTemplateProvider {
 		}
 
 		FormMember displayingField = getMember();
-		((SelectField) displayingField).setOptionModel(AllGroups.INSTANCE);
+		((SelectField) displayingField).setOptionModel(new LazyListOptionModel<>(() -> Group.getAll()));
 
 		AttributeUpdate update = AttributeFormFactory.getAttributeUpdate(displayingField);
 		update.setDisabled(false);
 		update.setStoreAlgorithm(GroupsStorage.INSTANCE);
 
 		return result;
-	}
-
-	private static final class AllGroups implements ListOptionModel<Group> {
-
-		/**
-		 * Singleton {@link GroupsField.AllGroups} instance.
-		 */
-		public static final GroupsField.AllGroups INSTANCE = new GroupsField.AllGroups();
-
-		private AllGroups() {
-			// Singleton constructor.
-		}
-
-		@Override
-		public List<? extends Group> getBaseModel() {
-			return Group.getAll();
-		}
-
-		@Override
-		public boolean addOptionListener(OptionModelListener listener) {
-			return false;
-		}
-
-		@Override
-		public boolean removeOptionListener(OptionModelListener listener) {
-			return false;
-		}
 	}
 
 	private static final class GroupsStorage implements StoreAlgorithm {

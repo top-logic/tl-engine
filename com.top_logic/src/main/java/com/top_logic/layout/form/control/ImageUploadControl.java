@@ -273,7 +273,7 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		out.writeAttribute(SRC_ATTR,
 			getURLContext().getURL(context, imageHandler).appendParameter("itemVersion", _urlSuffix).getURL());
 		out.endEmptyTag();
-		renderClearImage(context, out, null, false);
+		renderClearImage(context, out, false);
 	}
 
 	/**
@@ -283,24 +283,17 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 	 *        the context in which rendering occurs
 	 * @param out
 	 *        the stream to write to
-	 * @param img
-	 *        The image to replace the current one. If <code>null</code> just the current image is
-	 *        cleared.
 	 * @param disabled
 	 *        whether the command should be disabled
 	 * @throws IOException
 	 *         iff the given {@link TagWriter} throws some
 	 */
-	void renderClearImage(DisplayContext context, TagWriter out, BinaryDataSource img, boolean disabled)
+	void renderClearImage(DisplayContext context, TagWriter out, boolean disabled)
 			throws IOException {
 		ButtonWriter buttonWriter =
 			new ButtonWriter(this, com.top_logic.layout.form.tag.Icons.DELETE_BUTTON,
 				com.top_logic.layout.form.tag.Icons.DELETE_BUTTON_DISABLED, ClearCommand.INSTANCE);
-		if (img != null) {
-//			buttonWriter.setJSArguments();
-		} else {
-			buttonWriter.setID(getClearID());
-		}
+		buttonWriter.setID(getClearID());
 		buttonWriter.setCss(FormConstants.CLEAR_BUTTON_CSS_CLASS);
 
 		if (disabled) {
@@ -666,8 +659,7 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 	}
 
 	/**
-	 * Command which is executed, either when the delete button is pressed or when a new image is
-	 * uploaded while there is currently one.
+	 * Command which is executed, when the delete button is pressed.
 	 */
 	private static class ClearCommand extends ImageUploadCommand {
 
@@ -680,14 +672,7 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		@Override
 		protected HandlerResult exec(DisplayContext commandContext, ImageUploadControl control,
 				Map<String, Object> arguments) {
-			BinaryDataSource image = (BinaryDataSource) arguments.get("");
-			if (image != null) {
-
-			} else {
-				// Clear of submit was clicked.
-				control.updateField(null);
-//				control.requestRepaint();
-			}
+			control.updateField(null);
 			return HandlerResult.DEFAULT_RESULT;
 		}
 

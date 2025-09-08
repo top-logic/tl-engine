@@ -8,6 +8,7 @@ package com.top_logic.layout.component.configuration;
 import java.io.IOError;
 import java.io.IOException;
 
+import com.top_logic.base.accesscontrol.ApplicationPages;
 import com.top_logic.base.services.simpleajax.ClientAction;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.base.services.simpleajax.JSSnipplet;
@@ -41,7 +42,6 @@ import com.top_logic.util.Resources;
 public class LogoutView extends AbstractConfiguredInstance<LogoutView.Config>
 		implements ViewConfiguration, View, HTMLConstants, Link {
 
-	private static final String LOGOUT_PAGE_PATH = "/jsp/main/LogoutPage.jsp";
 	private static final String XML_ATTRIBUTE_IMAGE = "image";
 	private static final String XML_ATTRIBUTE_CSS_CLASS = "cssClass";
 
@@ -174,7 +174,7 @@ public class LogoutView extends AbstractConfiguredInstance<LogoutView.Config>
 	 */
 	public static void appendLogoutAction(DisplayContext context, Appendable out, FrameScope source) throws IOException {
 		out.append("services.ajax.logout('");
-		out.append(LOGOUT_PAGE_PATH);
+		out.append(ApplicationPages.getInstance().getTriggerLogoutPage());
 		out.append("');");
 		context.getWindowScope().appendCloseAllWindowsCommand(out, source);
 	}

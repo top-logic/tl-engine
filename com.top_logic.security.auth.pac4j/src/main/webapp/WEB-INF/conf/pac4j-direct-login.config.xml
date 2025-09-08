@@ -2,6 +2,12 @@
 	<configs>
 		<config config:interface="com.top_logic.base.accesscontrol.ApplicationPages$Config">
 			<loginPage>/servlet/openid</loginPage>
+			
+			<!--
+			    Do not automatically re-login after logout, since this would make logout impossible, 
+			    since the session to the ID provider has not been dropped. 
+			-->
+			<logoutPage></logoutPage>
 		</config>
 	</configs>
 </application>

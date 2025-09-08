@@ -1977,6 +1977,7 @@
 			<loginRetryPage>/login.jsp</loginRetryPage>
 			<loginRetrySSO>/login.jsp</loginRetrySSO>
 			<loginErrorPage>/jsp/main/loginError.jsp</loginErrorPage>
+			<triggerLogoutPage>/jsp/main/LogoutPage.jsp</triggerLogoutPage>
 			<logoutPage>/login.jsp</logoutPage>
 			<buzzyPage>/jsp/main/buzzyPage.jsp</buzzyPage>
 			<noCookiePage>/jsp/main/LoginErrorPage_noCookies.jsp</noCookiePage>

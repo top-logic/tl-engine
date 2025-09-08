@@ -430,7 +430,7 @@ public class TopLogicServlet extends HttpServlet {
 	 */
 	protected void redirectToLogout(HttpServletRequest req, HttpServletResponse res)
 			throws IOException, ServletException {
-		redirectTo(ApplicationPages.getInstance().getLogoutPage(), req, res);
+		redirectTo(ApplicationPages.getInstance().getTriggerLogoutPage(), req, res);
     }    
 
 	/**

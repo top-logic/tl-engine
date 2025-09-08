@@ -65,7 +65,7 @@ public abstract class AbstractSelectFieldProvider extends AbstractFieldProvider 
 			boolean isSearch,
 			boolean isMandatoryDefault, Constraint mandatoryCheckerDefault, boolean isDisabled,
 			LabelProvider aLabelProvider, boolean isForList) {
-		return newSelectField(name, new DefaultListOptionModel(options), isMultipleDefault, isOrdered, isSearch,
+		return newSelectField(name, new DefaultListOptionModel<>(options), isMultipleDefault, isOrdered, isSearch,
 			isMandatoryDefault, mandatoryCheckerDefault, isDisabled, aLabelProvider, isForList);
 	}
 

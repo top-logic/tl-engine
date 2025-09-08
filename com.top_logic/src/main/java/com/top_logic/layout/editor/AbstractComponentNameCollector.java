@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.func.IFunction0;
-import com.top_logic.layout.form.model.utility.DefaultListOptionModel;
+import com.top_logic.layout.form.model.utility.LazyListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.mig.html.layout.ComponentName;
@@ -58,7 +58,7 @@ public abstract class AbstractComponentNameCollector extends Function0<OptionMod
 			.map(LayoutComponent::getName)
 			.collect(Collectors.toList());
 
-		return new DefaultListOptionModel<>(componentNames);
+		return new LazyListOptionModel<>(() -> componentNames);
 	}
 
 	/**

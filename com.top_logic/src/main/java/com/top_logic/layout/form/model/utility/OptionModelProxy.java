@@ -39,6 +39,11 @@ public abstract class OptionModelProxy<T> implements OptionModel<T> {
 		return delegate().removeOptionListener(listener);
 	}
 
+	@Override
+	public void resetBaseModel() {
+		delegate().resetBaseModel();
+	}
+
 	/**
 	 * The {@link OptionModel} to delegate methods to. Repeated calls of this method delivers the
 	 * same {@link OptionModel} instance.

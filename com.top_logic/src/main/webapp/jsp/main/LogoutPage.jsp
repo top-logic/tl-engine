@@ -1,4 +1,5 @@
-<%@page import="com.top_logic.basic.xml.TagUtil"
+<%@page import="com.top_logic.basic.StringServices"
+%><%@page import="com.top_logic.basic.xml.TagUtil"
 %><%@page extends="com.top_logic.util.NoContextJspBase"
 %><%@taglib uri="basic" prefix="basic"
 %><%@page import="com.top_logic.base.accesscontrol.ApplicationPages"
@@ -7,7 +8,8 @@
 %><%
 try {
 	String logoutPage = ApplicationPages.getInstance().getLogoutPage();
-	String logoutURL = request.getContextPath() + logoutPage;
+	String logoutURL = StringServices.isEmpty(logoutPage) ? null : request.getContextPath() + logoutPage;
+	String loginURL = request.getContextPath() + ApplicationPages.getInstance().getLoginPage();
 	Resources res = Resources.getInstance();
 	%>
 	<basic:html>
@@ -15,12 +17,14 @@ try {
 			<meta name="viewport"
 				content="width=device-width, initial-scale=1.0"
 			/>
-			<meta
-				content="1; URL=<%=logoutURL %>"
-				http-equiv="refresh"
-			/>
+			<% if (logoutURL != null) { %>
+				<meta
+					content="1; URL=<%=logoutURL %>"
+					http-equiv="refresh"
+				/>
+			<% } %>
 			<title>
-				TL logout screen
+				TopLogic Logout Screen
 			</title>
 
 			<style>
@@ -139,7 +143,7 @@ try {
 						icon="<%= com.top_logic.layout.Icons.APP_LOGO %>"
 					/>
 				</div>
-				<form action="<%=logoutURL %>">
+				<form action="<%=loginURL %>">
 					<div class="caption">
 						<div>
 							<h1>

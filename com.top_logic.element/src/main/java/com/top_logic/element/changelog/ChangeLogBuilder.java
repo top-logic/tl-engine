@@ -263,10 +263,12 @@ public class ChangeLogBuilder {
 				}
 
 				log.add(entry);
-				if (limitEntryCount() && log.size() >= _numberEntries) {
-					break;
-				}
 			}
+		}
+
+		int fetchedRevisions = log.size();
+		if (limitEntryCount() && fetchedRevisions > _numberEntries) {
+			return log.subList(fetchedRevisions - _numberEntries, fetchedRevisions);
 		}
 
 		return log;

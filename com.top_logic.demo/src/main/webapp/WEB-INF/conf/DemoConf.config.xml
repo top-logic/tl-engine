@@ -258,11 +258,6 @@
 			counting-seconds="-10"
 		>
 		</config>
-		
-		<config config:interface="com.top_logic.base.accesscontrol.ExternalAuthentication"
-			isEnabled="true"
-			reuseSession="true"
-		/>
 	</configs>
 	
 	<defaults>

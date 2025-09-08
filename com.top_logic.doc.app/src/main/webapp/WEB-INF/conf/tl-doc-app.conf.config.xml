@@ -78,11 +78,6 @@
 				<domain-mapper class="com.top_logic.element.layout.admin.StructureDomainMapper"/>
 			</layout>
 		</config>
-
-		<config config:interface="com.top_logic.base.accesscontrol.ExternalAuthentication"
-			isEnabled="false"
-		/>
-
 		<config config:interface="com.top_logic.doc.command.validation.PageValidators">
 			<validator class="com.top_logic.doc.app.importDoc.TracWikiValidator"/>
 		</config>

@@ -896,6 +896,7 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 	}
 	
 	public static HandlerResult openSelectorPopup(DisplayContext commandContext, WindowScope windowScope, SelectField targetField) {
+		targetField.getOptionModel().resetBaseModel();
 		AbstractSelectDialog selectDialog = targetField.getSelectDialogProvider().createSelectDialog(targetField);
 		selectDialog.open(windowScope);
 		return HandlerResult.DEFAULT_RESULT;

@@ -45,10 +45,12 @@ import com.top_logic.layout.form.CheckException;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.constraints.AbstractConstraint;
 import com.top_logic.layout.form.model.AbstractFormField;
 import com.top_logic.layout.form.model.DataField;
 import com.top_logic.layout.form.model.FormFieldInternals;
 import com.top_logic.layout.form.model.ReadOnlyListener;
+import com.top_logic.layout.image.gallery.ImageDataUtil;
 import com.top_logic.layout.renderers.ButtonComponentButtonRenderer;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -79,9 +81,13 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 	/** {@link IDBuilder} to get GUI identifier for the single data items. */
 	private final IDBuilder _idBuilder = new IDBuilder();
 
+	private final DeliverContentHandler imageHandler;
+
+	private int _urlSuffix = 0;
+
 	private static final Map<String, ? extends ControlCommand> DATA_ITEM_COMMANDS_WITHOUT_DOWNLOAD =
 		createCommandMap(new ControlCommand[] {
-			ImageUpdate.INSTANCE, UploadPerformedCommand.INSTANCE, FieldInspector.INSTANCE });
+			ImageUpdate.INSTANCE, UploadPerformedCommand.INSTANCE, ClearCommand.INSTANCE, FieldInspector.INSTANCE });
 //			FileNameUpdate.INSTANCE, UploadPerformedCommand.INSTANCE, ClearCommand.INSTANCE, FieldInspector.INSTANCE });
 
 	private static final Map<String, ? extends ControlCommand> DATA_ITEM_COMMANDS_WITH_DOWNLOAD =
@@ -96,6 +102,10 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 	 */
 	public ImageUploadControl(DataField model) {
 		super(model, commands(model));
+		this.imageHandler = new DeliverContentHandler();
+		if (!model.getDataItems().isEmpty()) {
+			imageHandler.setData(model.getDataItem());
+		}
 	}
 
 	private static Map<String, ? extends ControlCommand> commands(DataField model) {
@@ -120,6 +130,7 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 	void resetTempData() {
 		_uploadedImage = null;
 		_uploadErrors.clear();
+//		imageHandler.setData(_uploadedImage);
 	}
 
 	@Override
@@ -128,8 +139,18 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		final boolean disabled = dataField.isDisabled();
 		final BinaryData image = dataField.getDataItem();
 
-		// TODO: PFD ok? Bilder können ja auch als PDF gespeichert werden.
-		dataField.setAcceptedTypes("image/*,.pdf");
+		// TODO: PDF ok? Bilder können ja auch als PDF gespeichert werden.
+//		dataField.setAcceptedTypes("image/*,.pdf");
+		dataField.addConstraint(new AbstractConstraint() {
+
+			@Override
+			public boolean check(Object value) throws CheckException {
+				if (!isPictureOrNull(value)) {
+					throw new CheckException(ImageDataUtil.noValidImageExtension());
+				}
+				return true;
+			}
+		});
 
 		out.beginBeginTag(DIV);
 		writeControlAttributes(context, out);
@@ -138,16 +159,22 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 			if (dataField.isReadOnly()) {
 //				renderImageReadOnly(context, out, image);
 			} else {
-//				if (image == null) {
+				if (image == null) {
 					// in case there is currently no image in the field an
 					// upload is rendered
 					writeUploadButton(context, out);
-//				} else {
-//					renderImage(context, out, image);
-//				}
+				} else {
+					renderImage(context, out, image);
+				}
 			}
 		}
 		out.endTag(DIV);
+	}
+
+	boolean isPictureOrNull(Object value) {
+		BinaryData bdata = (BinaryData) value;
+
+		return bdata == null || ImageDataUtil.isSupportedImageFilename(bdata.getName());
 	}
 
 	/**
@@ -221,16 +248,21 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 					ButtonComponentButtonRenderer.CSS_CLASS_DISABLED_BUTTON));
 		}
 		out.endBeginTag();
+		out.beginBeginTag(SPAN);
+		out.writeAttribute(CLASS_ATTR, "centerLabel");
+		out.endBeginTag();
 		Icons.UPLOAD_ICON.writeWithCss(context, out, ButtonComponentButtonRenderer.CSS_CLASS_IMAGE);
 		out.beginBeginTag(SPAN);
 		out.writeAttribute(CLASS_ATTR, ButtonComponentButtonRenderer.CSS_CLASS_LABEL);
 		out.endBeginTag();
 		String label = context.getResources().getString(I18NConstants.UPLOAD_LABEL);
+		// TODO: anderes Label (z.B. "Bild hochladen")
 		final BinaryData image = getDataField().getDataItem();
 		if (image != null) {
 			label = image.getName();
 		}
 		out.writeText(label);
+		out.endTag(SPAN);
 		out.endTag(SPAN);
 		out.endTag(LABEL);
 	}
@@ -238,10 +270,44 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 	private void renderImage(DisplayContext context, TagWriter out, BinaryDataSource image) throws IOException {
 		out.beginBeginTag(IMG);
 		out.writeAttribute(ALT_ATTR, image.getName());
-		out.writeAttribute(SRC_ATTR, uploadURL(context).getURL());
-		out.writeAttribute(WIDTH_ATTR, "16rem");
-		out.writeAttribute(HEIGHT_ATTR, "16rem");
+		out.writeAttribute(SRC_ATTR,
+			getURLContext().getURL(context, imageHandler).appendParameter("itemVersion", _urlSuffix).getURL());
 		out.endEmptyTag();
+		renderClearImage(context, out, null, false);
+	}
+
+	/**
+	 * Renders the image whose command {@link ClearCommand clears} the content of the field.
+	 * 
+	 * @param context
+	 *        the context in which rendering occurs
+	 * @param out
+	 *        the stream to write to
+	 * @param img
+	 *        The image to replace the current one. If <code>null</code> just the current image is
+	 *        cleared.
+	 * @param disabled
+	 *        whether the command should be disabled
+	 * @throws IOException
+	 *         iff the given {@link TagWriter} throws some
+	 */
+	void renderClearImage(DisplayContext context, TagWriter out, BinaryDataSource img, boolean disabled)
+			throws IOException {
+		ButtonWriter buttonWriter =
+			new ButtonWriter(this, com.top_logic.layout.form.tag.Icons.DELETE_BUTTON,
+				com.top_logic.layout.form.tag.Icons.DELETE_BUTTON_DISABLED, ClearCommand.INSTANCE);
+		if (img != null) {
+//			buttonWriter.setJSArguments();
+		} else {
+			buttonWriter.setID(getClearID());
+		}
+		buttonWriter.setCss(FormConstants.CLEAR_BUTTON_CSS_CLASS);
+
+		if (disabled) {
+			buttonWriter.writeDisabledButton(context, out);
+		} else {
+			buttonWriter.writeButton(context, out);
+		}
 	}
 
 //	private void renderImageReadOnly(DisplayContext context, TagWriter out, BinaryData image)
@@ -316,6 +382,10 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		return getID() + "-upload";
 	}
 
+	String getClearID() {
+		return getID() + "-clear";
+	}
+
 	private URLBuilder uploadURL(DisplayContext context) {
 		return getURLContext().getURL(context, this);
 	}
@@ -379,6 +449,7 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		super.internalAttach();
 		final FrameScope urlContext = getURLContext();
 		urlContext.registerContentHandler(null, this);
+		urlContext.registerContentHandler(urlContext.createNewID(), imageHandler);
 	}
 
 	@Override
@@ -391,6 +462,7 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 	@Override
 	protected void internalDetach() {
 		getURLContext().deregisterContentHandler(this);
+		getURLContext().deregisterContentHandler(imageHandler);
 		// Control is detached
 		super.internalDetach();
 	}
@@ -446,6 +518,9 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		}
 
 		_uploadedImage = new DefaultDataItem(fileName, data, contentType);
+		imageHandler.setData(_uploadedImage);
+		_urlSuffix++;
+//		requestRepaint();
 	}
 
 	/**
@@ -463,7 +538,7 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 			updateField(newImage);
 		}
 
-		resetTempData();
+//		resetTempData();
 	}
 
 	private void updateField(BinaryDataSource newImage) {
@@ -587,6 +662,38 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		@Override
 		public ResKey getI18NKey() {
 			return I18NConstants.UPLOAD_COMPLETED_COMMAND;
+		}
+	}
+
+	/**
+	 * Command which is executed, either when the delete button is pressed or when a new image is
+	 * uploaded while there is currently one.
+	 */
+	private static class ClearCommand extends ImageUploadCommand {
+
+		public static final ClearCommand INSTANCE = new ClearCommand("clear");
+
+		protected ClearCommand(String id) {
+			super(id);
+		}
+
+		@Override
+		protected HandlerResult exec(DisplayContext commandContext, ImageUploadControl control,
+				Map<String, Object> arguments) {
+			BinaryDataSource image = (BinaryDataSource) arguments.get("");
+			if (image != null) {
+
+			} else {
+				// Clear of submit was clicked.
+				control.updateField(null);
+//				control.requestRepaint();
+			}
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		@Override
+		public ResKey getI18NKey() {
+			return I18NConstants.CLEAR_IMAGE;
 		}
 	}
 

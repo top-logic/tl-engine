@@ -184,6 +184,8 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey CLEAR_DATA_ITEM;
 
+	public static ResKey CLEAR_IMAGE;
+
 	public static ResKey UPDATE_FILE_NAME;
 
 	public static ResKey UPDATE_IMAGE;

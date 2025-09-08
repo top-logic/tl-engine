@@ -2507,6 +2507,11 @@ td.tl-table__cell .cDataItem li {
 /* ======   ImageUploadControl    ===== */
 /* ==================================== */
 
+.cImgUpload img {
+/* 	max-width: 20rem; */
+/* 	max-height: 14rem; */
+}
+
 .cImgUpload input {
 	margin-left: 2px;
 }
@@ -2525,13 +2530,19 @@ td.tl-table__cell .cDataItem li {
 
 .cImgUpload label {
 	display: inline-flex;
-	padding: 6rem;
+	width: 20rem;
+	height: 14rem;
+/* 	padding: 6rem; */
 	border: dashed lightgray 4px;
 	border-radius: 1rem;
 /* 	box-shadow: inset 0px 0px 0px 1px var(--button-primary); */
 	cursor: pointer;
 	white-space: nowrap;
 	color: var(--text-primary);
+}
+
+.cImgUpload label .centerLabel {
+	margin: auto;
 }
 
 .cImgUpload label .cmdImg {

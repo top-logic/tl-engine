@@ -49,10 +49,6 @@
 				<domain-mapper class="com.top_logic.element.layout.admin.StructureDomainMapper" />
 			</layout>
 		</config>
-		
-		<config config:interface="com.top_logic.base.accesscontrol.ExternalAuthentication"
-			isEnabled="false"
-		/>
 	</configs>
 	
 </application>

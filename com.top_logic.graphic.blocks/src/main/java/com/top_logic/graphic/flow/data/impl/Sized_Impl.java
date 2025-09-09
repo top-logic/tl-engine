@@ -13,6 +13,10 @@ public class Sized_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 
 	private Double _maxHeight = null;
 
+	private Double _desiredX = null;
+
+	private Double _desiredY = null;
+
 	private boolean _preserveAspectRatio = false;
 
 	/**
@@ -122,6 +126,52 @@ public class Sized_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 	}
 
 	@Override
+	public final Double getDesiredX() {
+		return _desiredX;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Sized setDesiredX(Double value) {
+		internalSetDesiredX(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getDesiredX()} without chain call utility. */
+	protected final void internalSetDesiredX(Double value) {
+		_listener.beforeSet(this, DESIRED_X__PROP, value);
+		_desiredX = value;
+		_listener.afterChanged(this, DESIRED_X__PROP);
+	}
+
+	@Override
+	public final boolean hasDesiredX() {
+		return _desiredX != null;
+	}
+
+	@Override
+	public final Double getDesiredY() {
+		return _desiredY;
+	}
+
+	@Override
+	public com.top_logic.graphic.flow.data.Sized setDesiredY(Double value) {
+		internalSetDesiredY(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getDesiredY()} without chain call utility. */
+	protected final void internalSetDesiredY(Double value) {
+		_listener.beforeSet(this, DESIRED_Y__PROP, value);
+		_desiredY = value;
+		_listener.afterChanged(this, DESIRED_Y__PROP);
+	}
+
+	@Override
+	public final boolean hasDesiredY() {
+		return _desiredY != null;
+	}
+
+	@Override
 	public final boolean isPreserveAspectRatio() {
 		return _preserveAspectRatio;
 	}
@@ -206,6 +256,8 @@ public class Sized_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 			MAX_WIDTH__PROP, 
 			MIN_HEIGHT__PROP, 
 			MAX_HEIGHT__PROP, 
+			DESIRED_X__PROP, 
+			DESIRED_Y__PROP, 
 			PRESERVE_ASPECT_RATIO__PROP);
 		java.util.List<String> tmp = new java.util.ArrayList<>();
 		tmp.addAll(com.top_logic.graphic.flow.data.impl.Decoration_Impl.PROPERTIES);
@@ -240,6 +292,8 @@ public class Sized_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 			case MAX_WIDTH__PROP: return getMaxWidth();
 			case MIN_HEIGHT__PROP: return getMinHeight();
 			case MAX_HEIGHT__PROP: return getMaxHeight();
+			case DESIRED_X__PROP: return getDesiredX();
+			case DESIRED_Y__PROP: return getDesiredY();
 			case PRESERVE_ASPECT_RATIO__PROP: return isPreserveAspectRatio();
 			default: return super.get(field);
 		}
@@ -252,6 +306,8 @@ public class Sized_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 			case MAX_WIDTH__PROP: internalSetMaxWidth((Double) value); break;
 			case MIN_HEIGHT__PROP: internalSetMinHeight((Double) value); break;
 			case MAX_HEIGHT__PROP: internalSetMaxHeight((Double) value); break;
+			case DESIRED_X__PROP: internalSetDesiredX((Double) value); break;
+			case DESIRED_Y__PROP: internalSetDesiredY((Double) value); break;
 			case PRESERVE_ASPECT_RATIO__PROP: internalSetPreserveAspectRatio((boolean) value); break;
 			default: super.set(field, value); break;
 		}
@@ -275,6 +331,14 @@ public class Sized_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 		if (hasMaxHeight()) {
 			out.name(MAX_HEIGHT__PROP);
 			out.value(getMaxHeight());
+		}
+		if (hasDesiredX()) {
+			out.name(DESIRED_X__PROP);
+			out.value(getDesiredX());
+		}
+		if (hasDesiredY()) {
+			out.name(DESIRED_Y__PROP);
+			out.value(getDesiredY());
 		}
 		out.name(PRESERVE_ASPECT_RATIO__PROP);
 		out.value(isPreserveAspectRatio());
@@ -315,6 +379,22 @@ public class Sized_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 				}
 				break;
 			}
+			case DESIRED_X__PROP: {
+				if (hasDesiredX()) {
+					out.value(getDesiredX());
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case DESIRED_Y__PROP: {
+				if (hasDesiredY()) {
+					out.value(getDesiredY());
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
 			case PRESERVE_ASPECT_RATIO__PROP: {
 				out.value(isPreserveAspectRatio());
 				break;
@@ -330,6 +410,8 @@ public class Sized_Impl extends com.top_logic.graphic.flow.data.impl.Decoration_
 			case MAX_WIDTH__PROP: setMaxWidth(in.nextDouble()); break;
 			case MIN_HEIGHT__PROP: setMinHeight(in.nextDouble()); break;
 			case MAX_HEIGHT__PROP: setMaxHeight(in.nextDouble()); break;
+			case DESIRED_X__PROP: setDesiredX(in.nextDouble()); break;
+			case DESIRED_Y__PROP: setDesiredY(in.nextDouble()); break;
 			case PRESERVE_ASPECT_RATIO__PROP: setPreserveAspectRatio(in.nextBoolean()); break;
 			default: super.readField(scope, in, field);
 		}

@@ -222,25 +222,35 @@ public class FlowChartComponent extends BuilderComponent
 			diagram.setMultiSelect(_selectionModel.isMultiSelectionSupported());
 		}
 
-		_control.setModel(diagram);
-
 		if (diagram != null) {
 			diagram.registerListener(_processUISelection);
 
 			_selectableIndex = diagram.getRoot().visit(new SelectableIndexCreator(), null).getIndex();
 			_observedIndex = diagram.getRoot()
 				.visit(new ObservedIndexCreator(node -> builder().getObserved(node, this)), null).getIndex();
+
+			// Remove objects from selection that are no longer present in the diagram.
+			for (Object oldSelected : selectionBefore) {
+				if (!_selectableIndex.containsKey(oldSelected)) {
+					_selectionModel.setSelected(oldSelected, false);
+				}
+			}
+
+			// Update the visible selection.
+			Collection<?> selection = SearchExpression.asCollection(getSelected());
+			List<SelectableBox> selectedBoxes = selection.stream().<SelectableBox> flatMap(x -> _selectableIndex.get(x).stream()).toList();
+			diagram.setSelection(selectedBoxes);
+			for (SelectableBox box : selectedBoxes) {
+				box.setSelected(true);
+			}
 		} else {
 			_selectableIndex = Collections.emptyMap();
 			_observedIndex = Collections.emptyMap();
+
+			_selectionModel.clear();
 		}
 
-		// Remove objects no longer present from selection.
-		for (Object oldSelected : selectionBefore) {
-			if (!_selectableIndex.containsKey(oldSelected)) {
-				_selectionModel.setSelected(oldSelected, false);
-			}
-		}
+		_control.setModel(diagram);
 	}
 
 	@Override

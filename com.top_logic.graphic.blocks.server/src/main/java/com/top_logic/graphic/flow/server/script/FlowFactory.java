@@ -259,10 +259,10 @@ public class FlowFactory {
 		}
 
 		if (x != null) {
-			sized.setX(x.doubleValue());
+			sized.setDesiredX(x.doubleValue());
 		}
 		if (y != null) {
-			sized.setY(y.doubleValue());
+			sized.setDesiredY(y.doubleValue());
 		}
 
 		return sized

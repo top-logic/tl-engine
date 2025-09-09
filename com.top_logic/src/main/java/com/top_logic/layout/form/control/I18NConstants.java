@@ -295,6 +295,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey UPLOAD_LABEL;
 
 	/**
+	 * @en Upload image
+	 * @tooltip Opens the file chooser for uploading an image.
+	 */
+	public static ResKey UPLOAD_IMAGE_LABEL;
+
+	/**
 	 * @en Select all
 	 */
 	public static ResKey CHECKLIST_ALL;

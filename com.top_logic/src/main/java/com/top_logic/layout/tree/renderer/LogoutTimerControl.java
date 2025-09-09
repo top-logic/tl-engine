@@ -136,7 +136,7 @@ public class LogoutTimerControl extends AbstractControlBase {
 			out.write(", ");
 			out.writeInt(ApplicationConfig.getInstance().getConfig(Config.class).getCountingSeconds());
 			out.write(", ");
-			out.writeJsString(context.getContextPath() + ApplicationPages.getInstance().getLogoutPage());
+			out.writeJsString(context.getContextPath() + ApplicationPages.getInstance().getTriggerLogoutPage());
 			out.write(");");
 			out.endScript();
 		}

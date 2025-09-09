@@ -9,6 +9,7 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 
 /**
  * Global configuration of special pages in the application.
@@ -77,11 +78,29 @@ public class ApplicationPages {
 		String getLoginRetryPage();
 
 		/**
-		 * Configuration option that determines the suffix to the applications context path to which
-		 * should be redirected to trigger a logout.
+		 * Application path that triggers a logout.
+		 * 
+		 * @see #getLogoutPage()
+		 */
+		@Mandatory
+		@Name("triggerLogoutPage")
+		String getTriggerLogoutPage();
+
+		/**
+		 * Application path to with the user is forwarded after a logout.
+		 * 
+		 * <p>
+		 * If the value is empty, the {@link #getTriggerLogoutPage()} is displayed permanently until
+		 * the user decides what to do next.
+		 * </p>
+		 * 
+		 * @implNote This pages is exclusively used by the {@link #getTriggerLogoutPage()} in a
+		 *           time-based redirect.
+		 * 
+		 * @see #getTriggerLogoutPage()
 		 */
 		@Name("logoutPage")
-		@Mandatory
+		@Nullable
 		String getLogoutPage();
 
 		/**

@@ -20,6 +20,13 @@ public interface SizedOperations extends DecorationOperations {
 
 	@Override
 	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY) {
+		if (self().getDesiredX() != null) {
+			offsetX = self().getDesiredX().doubleValue();
+		}
+		if (self().getDesiredY() != null) {
+			offsetY = self().getDesiredY().doubleValue();
+		}
+
 		self().setX(offsetX);
 		self().setY(offsetY);
 

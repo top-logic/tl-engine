@@ -8,6 +8,7 @@ package com.top_logic.graphic.flow.server.script;
 import com.top_logic.graphic.blocks.svg.SVGColor;
 import com.top_logic.graphic.blocks.svg.SvgUtil;
 import com.top_logic.model.search.expr.ToString;
+import com.top_logic.model.search.expr.config.operations.ValueConverter;
 
 /**
  * Converts {@link SVGColor} values to HTML color strings.

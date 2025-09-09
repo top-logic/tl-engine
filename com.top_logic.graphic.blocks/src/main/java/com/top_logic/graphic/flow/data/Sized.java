@@ -27,6 +27,12 @@ public interface Sized extends Decoration, com.top_logic.graphic.flow.operations
 	/** @see #getMaxHeight() */
 	String MAX_HEIGHT__PROP = "maxHeight";
 
+	/** @see #getDesiredX() */
+	String DESIRED_X__PROP = "desiredX";
+
+	/** @see #getDesiredY() */
+	String DESIRED_Y__PROP = "desiredY";
+
 	/** @see #isPreserveAspectRatio() */
 	String PRESERVE_ASPECT_RATIO__PROP = "preserveAspectRatio";
 
@@ -91,7 +97,37 @@ public interface Sized extends Decoration, com.top_logic.graphic.flow.operations
 	boolean hasMaxHeight();
 
 	/**
-	 * When content size is adjusted, the aspect ratio of the content ist kept.
+	 * The desired X coordinate of the top-left edge of the rectangular region of this box.
+	 */
+	Double getDesiredX();
+
+	/**
+	 * @see #getDesiredX()
+	 */
+	com.top_logic.graphic.flow.data.Sized setDesiredX(Double value);
+
+	/**
+	 * Checks, whether {@link #getDesiredX()} has a value.
+	 */
+	boolean hasDesiredX();
+
+	/**
+	 * The desired Y coordinate of the top-left edge of the rectangular region of this box.
+	 */
+	Double getDesiredY();
+
+	/**
+	 * @see #getDesiredY()
+	 */
+	com.top_logic.graphic.flow.data.Sized setDesiredY(Double value);
+
+	/**
+	 * Checks, whether {@link #getDesiredY()} has a value.
+	 */
+	boolean hasDesiredY();
+
+	/**
+	 * When content size is adjusted, the aspect ratio of the content is kept.
 	 */
 	boolean isPreserveAspectRatio();
 

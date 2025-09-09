@@ -53,20 +53,20 @@ public class LoadFromSession extends GenericMethod {
 		String key = asString(arguments[0]);
 		boolean persist = asBoolean(arguments[1]);
 
+		Object result;
 		if (persist) {
 			PersonalConfiguration pc = PersonalConfiguration.getPersonalConfiguration();
-			Object result = pc.getJSONValue(key);
+			result = pc.getJSONValue(key);
 			if (!isValid(result)) {
 				result = null;
 
 				// Drop value.
 				pc.setValue(key, null);
 			}
-			return result;
 		} else {
 			TLSessionContext session = DefaultDisplayContext.getDisplayContext().getSessionContext();
 			Map<String, Object> cacheMap = session.get(StoreInSession.SCRIPT_STATE);
-			Object result = cacheMap.get(key);
+			result = cacheMap.get(key);
 			if (!isValid(result)) {
 				result = null;
 
@@ -74,8 +74,8 @@ public class LoadFromSession extends GenericMethod {
 				// the value for "key" is not null.
 				cacheMap.remove(key);
 			}
-			return result;
 		}
+		return normalizeValue(result);
 	}
 
 	/**

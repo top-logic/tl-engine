@@ -45,7 +45,6 @@ import com.top_logic.layout.form.CheckException;
 import com.top_logic.layout.form.FormConstants;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
-import com.top_logic.layout.form.constraints.AbstractConstraint;
 import com.top_logic.layout.form.model.AbstractFormField;
 import com.top_logic.layout.form.model.DataField;
 import com.top_logic.layout.form.model.FormFieldInternals;
@@ -60,7 +59,8 @@ import com.top_logic.util.css.CssUtil;
  * Control for an image upload view of a {@link DataField} model.
  * 
  * <p>
- * An image upload can have . TODO
+ * An image upload can upload images either via file selection or via drop. If an image is uploaded
+ * it will be displayed and can be removed or replaced via drop.
  * </p>
  * 
  * @author <a href="mailto:sha@top-logic.com">Simon Haneke</a>
@@ -88,11 +88,15 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 	private static final Map<String, ? extends ControlCommand> DATA_ITEM_COMMANDS_WITHOUT_DOWNLOAD =
 		createCommandMap(new ControlCommand[] {
 			ImageUpdate.INSTANCE, UploadPerformedCommand.INSTANCE, ClearCommand.INSTANCE, FieldInspector.INSTANCE });
-//			FileNameUpdate.INSTANCE, UploadPerformedCommand.INSTANCE, ClearCommand.INSTANCE, FieldInspector.INSTANCE });
 
 	private static final Map<String, ? extends ControlCommand> DATA_ITEM_COMMANDS_WITH_DOWNLOAD =
 		createCommandMap(DATA_ITEM_COMMANDS_WITHOUT_DOWNLOAD, new ControlCommand[] {
 			DownloadCommand.INSTANCE });
+
+	/**
+	 * Java-script class of an {@link ImageUploadControl}.
+	 */
+	public static final String IMAGEUPLOAD_CONTROL_CLASS = FormConstants.FORM_PACKAGE + ".ImageUploadControl";
 
 	/**
 	 * Creates a {@link ImageUploadControl}.
@@ -130,45 +134,39 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 	void resetTempData() {
 		_uploadedImage = null;
 		_uploadErrors.clear();
-//		imageHandler.setData(_uploadedImage);
 	}
 
 	@Override
 	protected void writeEditable(DisplayContext context, TagWriter out) throws IOException {
 		final DataField dataField = getDataField();
-		final boolean disabled = dataField.isDisabled();
 		final BinaryData image = dataField.getDataItem();
+		final boolean editable = !(dataField.isImmutable() || dataField.isDisabled() || dataField.isReadOnly());
 
-		// TODO: PDF ok? Bilder können ja auch als PDF gespeichert werden.
-//		dataField.setAcceptedTypes("image/*,.pdf");
-		dataField.addConstraint(new AbstractConstraint() {
-
-			@Override
-			public boolean check(Object value) throws CheckException {
-				if (!isPictureOrNull(value)) {
-					throw new CheckException(ImageDataUtil.noValidImageExtension());
-				}
-				return true;
-			}
-		});
+		dataField.setAcceptedTypes("image/*");
 
 		out.beginBeginTag(DIV);
 		writeControlAttributes(context, out);
+		if (editable) {
+			writeOnDropImage(out);
+		}
 		out.endBeginTag();
 		{
-			if (dataField.isReadOnly()) {
-//				renderImageReadOnly(context, out, image);
+			if (image == null) {
+				// in case there is currently no image in the field an
+				// upload box is rendered
+				writeUploadButton(context, out, editable);
 			} else {
-				if (image == null) {
-					// in case there is currently no image in the field an
-					// upload is rendered
-					writeUploadButton(context, out);
-				} else {
-					renderImage(context, out, image);
-				}
+				renderImage(context, out, image, editable);
 			}
 		}
 		out.endTag(DIV);
+	}
+
+	private void writeOnDropImage(TagWriter out) {
+		out.writeAttribute(ONDRAGOVER_ATTR, "event.preventDefault();");
+		out.writeAttribute(ONDRAGENTER_ATTR, "this.classList.add('dragHover');");
+		out.writeAttribute(ONDRAGLEAVE_ATTR, "this.classList.remove('dragHover');");
+		out.writeAttribute(ONDROP_ATTR, IMAGEUPLOAD_CONTROL_CLASS + ".dropToUpload(event, '" + getID() + "')");
 	}
 
 	boolean isPictureOrNull(Object value) {
@@ -180,14 +178,9 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 	/**
 	 * Writes the button for selecting files to upload.
 	 */
-	private void writeUploadButton(DisplayContext context, TagWriter out) throws IOException {
-		/* add additional span to set control classes. needed to get mandatory style for example. */
-		out.beginBeginTag(SPAN);
-		writeControlClasses(out);
-		out.endBeginTag();
-		{
-			writeUploadButtonLabel(context, out);
-
+	private void writeUploadButton(DisplayContext context, TagWriter out, boolean editable) throws IOException {
+		writeUploadButtonLabel(context, out);
+		if (editable) {
 			out.beginBeginTag(INPUT);
 			out.writeAttribute(TYPE_ATTR, FILE_TYPE_VALUE);
 			out.writeAttribute(ID_ATTR, uploadId());
@@ -208,12 +201,11 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 			writeAcceptedFileTypes(out);
 			out.endEmptyTag();
 		}
-		out.endTag(SPAN);
 	}
 
 	private void writeOnFileInputChange(TagWriter out) throws IOException {
 		out.beginAttribute(ONCHANGE_ATTR);
-		out.append("services.form.ImageUploadControl.updateImage('");
+		out.append(IMAGEUPLOAD_CONTROL_CLASS + ".updateImage('");
 		out.append(getID());
 		out.append("', this.files)");
 		out.endAttribute();
@@ -237,7 +229,7 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		out.writeAttribute(ONCLICK_ATTR, "var e = BAL.getEvent(event); e.stopPropagation(); return true;");
 
 		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out,
-			context.getResources().getString(I18NConstants.UPLOAD_LABEL.tooltip()));
+			context.getResources().getString(I18NConstants.UPLOAD_IMAGE_LABEL.tooltip()));
 		if (getModel().isActive()) {
 			out.writeAttribute(CLASS_ATTR,
 				CssUtil.joinCssClasses(FormConstants.IS_UPLOAD_CSS_CLASS,
@@ -248,32 +240,28 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 					ButtonComponentButtonRenderer.CSS_CLASS_DISABLED_BUTTON));
 		}
 		out.endBeginTag();
-		out.beginBeginTag(SPAN);
-		out.writeAttribute(CLASS_ATTR, "centerLabel");
-		out.endBeginTag();
 		Icons.UPLOAD_ICON.writeWithCss(context, out, ButtonComponentButtonRenderer.CSS_CLASS_IMAGE);
 		out.beginBeginTag(SPAN);
 		out.writeAttribute(CLASS_ATTR, ButtonComponentButtonRenderer.CSS_CLASS_LABEL);
 		out.endBeginTag();
-		String label = context.getResources().getString(I18NConstants.UPLOAD_LABEL);
-		// TODO: anderes Label (z.B. "Bild hochladen")
+		String label = context.getResources().getString(I18NConstants.UPLOAD_IMAGE_LABEL);
 		final BinaryData image = getDataField().getDataItem();
 		if (image != null) {
 			label = image.getName();
 		}
 		out.writeText(label);
 		out.endTag(SPAN);
-		out.endTag(SPAN);
 		out.endTag(LABEL);
 	}
 
-	private void renderImage(DisplayContext context, TagWriter out, BinaryDataSource image) throws IOException {
+	private void renderImage(DisplayContext context, TagWriter out, BinaryDataSource image, boolean editable)
+			throws IOException {
 		out.beginBeginTag(IMG);
 		out.writeAttribute(ALT_ATTR, image.getName());
 		out.writeAttribute(SRC_ATTR,
 			getURLContext().getURL(context, imageHandler).appendParameter("itemVersion", _urlSuffix).getURL());
 		out.endEmptyTag();
-		renderClearImage(context, out, false);
+		renderClearImage(context, out, !editable);
 	}
 
 	/**
@@ -303,27 +291,24 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		}
 	}
 
-//	private void renderImageReadOnly(DisplayContext context, TagWriter out, BinaryData image)
-//			throws IOException {
-//		renderImage(context, out, new DownloadImageRenderer(getDataField().isDownload()), image);
-//	}
-
-//	private void renderImage(DisplayContext context, TagWriter out, ControlRenderer<? super IDownloadControl> renderer,
-//			BinaryDataSource image) throws IOException {
-//		DownloadControl control = new DownloadControl(image);
-//		control.setRenderer(renderer);
-//		control.write(context, out);
-//	}
-
 	@Override
 	protected void writeImmutable(DisplayContext context, TagWriter out) throws IOException {
-		out.beginBeginTag(SPAN);
+		final DataField dataField = getDataField();
+		final BinaryData image = dataField.getDataItem();
+
+		out.beginBeginTag(DIV);
 		writeControlAttributes(context, out);
 		out.endBeginTag();
 		{
-//			renderImageReadOnly(context, out, getDataField().getDataItem());
+			if (image == null) {
+				// in case there is currently no image in the field an
+				// upload box is rendered
+				writeUploadButton(context, out, false);
+			} else {
+				renderImage(context, out, image, false);
+			}
 		}
-		out.endTag(SPAN);
+		out.endTag(DIV);
 	}
 
 	@Override
@@ -335,8 +320,6 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 	}
 
 	private static String toFileName(String pathName) {
-		// return new File(name).getName();
-
 		for (int index = pathName.length() - 1; index >= 0; index--) {
 			final char potentialSeparator = pathName.charAt(index);
 			if ('/' == potentialSeparator || '\\' == potentialSeparator) {
@@ -383,6 +366,33 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		return getURLContext().getURL(context, this);
 	}
 
+	@Override
+	protected void internalAttach() {
+		super.internalAttach();
+		final FrameScope urlContext = getURLContext();
+		urlContext.registerContentHandler(null, this);
+		urlContext.registerContentHandler(urlContext.createNewID(), imageHandler);
+	}
+
+	@Override
+	protected void detachInvalidated() {
+		resetTempData();
+		_idBuilder.clear();
+		super.detachInvalidated();
+	}
+
+	@Override
+	protected void internalDetach() {
+		getURLContext().deregisterContentHandler(this);
+		getURLContext().deregisterContentHandler(imageHandler);
+		// Control is detached
+		super.internalDetach();
+	}
+
+	private FrameScope getURLContext() {
+		return getScope().getFrameScope();
+	}
+
 	/**
 	 * Command function invoked by the client, whenever files are selected.
 	 * 
@@ -425,43 +435,14 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 			addUpdate(new JSSnipplet(new AbstractDisplayValue() {
 				@Override
 				public void append(DisplayContext context, Appendable out) throws IOException {
-					out.append("services.form.ImageUploadControl.submit(");
+					out.append(IMAGEUPLOAD_CONTROL_CLASS + ".submit(");
 					TagUtil.writeJsString(out, getID());
-					out.append(",");
-					TagUtil.writeJsString(out, uploadId());
 					out.append(",");
 					TagUtil.writeJsString(out, uploadURL(context).getURL());
 					out.append(");");
 				}
 			}));
 		}
-	}
-
-	@Override
-	protected void internalAttach() {
-		super.internalAttach();
-		final FrameScope urlContext = getURLContext();
-		urlContext.registerContentHandler(null, this);
-		urlContext.registerContentHandler(urlContext.createNewID(), imageHandler);
-	}
-
-	@Override
-	protected void detachInvalidated() {
-		resetTempData();
-		_idBuilder.clear();
-		super.detachInvalidated();
-	}
-
-	@Override
-	protected void internalDetach() {
-		getURLContext().deregisterContentHandler(this);
-		getURLContext().deregisterContentHandler(imageHandler);
-		// Control is detached
-		super.internalDetach();
-	}
-
-	private FrameScope getURLContext() {
-		return getScope().getFrameScope();
 	}
 
 	/**
@@ -486,11 +467,6 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 			Logger.debug("File uploaded: " + fileName, DataItemControl.class);
 		}
 
-		// if (image.getSize() == 0 && getForbidEmptyFiles()) {
-//			_uploadErrors.add(I18NConstants.ERROR_UPLOAD_EMPTY_FILE__NAME.fill(fileName));
-//			return;
-//		}
-
 		long maxUploadSize = getDataField().getMaxUploadSize();
 		if (maxUploadSize > 0 && image.getSize() > maxUploadSize) {
 			_uploadErrors.add(I18NConstants.ERROR_UPLOAD_SIZE_EXCEEDED__NAME_LIMIT.fill(fileName, maxUploadSize));
@@ -513,7 +489,6 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		_uploadedImage = new DefaultDataItem(fileName, data, contentType);
 		imageHandler.setData(_uploadedImage);
 		_urlSuffix++;
-//		requestRepaint();
 	}
 
 	/**
@@ -526,12 +501,9 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 
 		if (_uploadedImage != null) {
 			BinaryDataSource newImage = null;
-			DataField fieldModel = getDataField();
 			newImage = _uploadedImage;
 			updateField(newImage);
 		}
-
-//		resetTempData();
 	}
 
 	private void updateField(BinaryDataSource newImage) {
@@ -615,9 +587,7 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		@Override
 		protected HandlerResult exec(DisplayContext commandContext, ImageUploadControl control,
 				Map<String, Object> arguments) {
-			@SuppressWarnings("unchecked")
 			final String fileName = (String) arguments.get(FILENAME_ATTR);
-			@SuppressWarnings("unchecked")
 			final Number fileSize = (Number) arguments.get(FILESIZE_ATTR);
 			control.notifyImageChanged(fileName, fileSize);
 			return HandlerResult.DEFAULT_RESULT;

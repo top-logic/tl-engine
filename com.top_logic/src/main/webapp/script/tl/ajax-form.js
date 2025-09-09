@@ -4117,9 +4117,20 @@ services.form = {
 	},
 	
 	ImageUploadControl: {
-		updateImage: function(controlID, newValue) {
-			var fileName = newValue[0].name;
-			var fileSize = newValue[0].size;
+		dropFiles: null,
+		
+		dropToUpload: function(event, controlID) {
+			event.preventDefault();
+			this.dropFiles = event.dataTransfer.files;
+			if (this.dropFiles.length != 0 && this.dropFiles[0].type.match("image.*")) {
+				this.updateImage(controlID, this.dropFiles);
+			}
+		},
+		
+		updateImage: function(controlID, files) {
+			var fileName = files[0].name;
+			var fileSize = files[0].size;
+			this.dropFiles = files;
 			services.ajax.execute("dispatchControlCommand", {
 				controlCommand : "imageUpdate",
 				controlID : controlID,
@@ -4128,13 +4139,11 @@ services.form = {
 			});
 		},
 		
-		submit: function(controlID, uploadFieldID, uploadUrl) {
-			var fileupload = document.getElementById(uploadFieldID);
-			
+		submit: function(controlID, uploadUrl) {
 			services.ajax.showWaitPane();
 			
 			var formData = new FormData();
-			formData.append("file", fileupload.files[0]);
+			formData.append("file", this.dropFiles[0]);
 			
 			var self = this;
 			fetch(uploadUrl, {

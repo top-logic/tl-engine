@@ -100,7 +100,12 @@ public interface AssociationStorageDescriptor {
 			return true;
 		}
 		MORepository tableRepo = PersistencyLayer.getKnowledgeBase().getMORepository();
-		MOClass storageTable = (MOClass) tableRepo.getType(getTable());
+		MOClass storageTable = (MOClass) tableRepo.getTypeOrNull(getTable());
+		if (storageTable == null) {
+			Logger.error("Missing table for attribute `" + TLModelUtil.qualifiedName(part) + "`: " + getTable(),
+				SeparateTableStorage.class);
+			return false;
+		}
 		Set<String> keyAttributes = new HashSet<>();
 		while (storageTable != null) {
 			KeyAttributes keyAnnotation = storageTable.getAnnotation(KeyAttributes.class);

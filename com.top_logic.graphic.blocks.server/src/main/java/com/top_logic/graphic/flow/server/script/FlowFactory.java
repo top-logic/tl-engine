@@ -68,11 +68,12 @@ import com.top_logic.graphic.flow.server.ui.handler.ServerDropHandler;
 import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.config.operations.ScriptConversion;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
+import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 
 /**
  * Factory for flow chart diagram elements.
  */
-public class FlowFactory {
+public class FlowFactory extends TLScriptFunctions {
 	
 	/**
 	 * Factory for Diagrams.

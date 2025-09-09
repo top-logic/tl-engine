@@ -101,6 +101,9 @@ public class TLScriptMethod extends GenericMethod {
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<TLScriptMethod> {
 
+		/** Separator between class name and method name. */
+		public static final char METHOD_SEPARATOR = '#';
+
 		private final Method _method;
 
 		private final ArgumentDescriptor _descriptor;
@@ -122,6 +125,11 @@ public class TLScriptMethod extends GenericMethod {
 			 */
 			@Mandatory
 			String getMethod();
+			
+			/**
+			 * Setter for {@link #getMethod()}.
+			 */
+			void setMethod(String value);
 		}
 
 		/**
@@ -131,7 +139,7 @@ public class TLScriptMethod extends GenericMethod {
 			super(context, config);
 
 			String method = config.getMethod();
-			int sepIndex = method.indexOf('#');
+			int sepIndex = method.indexOf(METHOD_SEPARATOR);
 			String methodName = method.substring(sepIndex + 1);
 			String className = method.substring(0, sepIndex);
 

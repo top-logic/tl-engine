@@ -9,11 +9,15 @@ import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
@@ -237,10 +241,58 @@ public class TLScriptMethod extends GenericMethod {
 					Logger.error("Cannot instantiate converter for: " + param, ex, TLScriptMethod.class);
 				}
 			}
-			return defaultConverter(param, param.getType());
+			return defaultConverterForType(param, param.getParameterizedType());
 		}
 
-		private ValueConverter defaultConverter(Parameter param, Class<?> type)
+		private ValueConverter defaultConverterForType(Parameter param, Type type)
+				throws NoSuchMethodException {
+			if (type instanceof Class<?>) {
+				return defaultConverterForClass(param, (Class<?>) type);
+			} else if (type instanceof ParameterizedType paramType) { 
+				Type rawType = paramType.getRawType();
+				if (rawType instanceof Class<?> rawClass) {
+					Type[] typeArgs = paramType.getActualTypeArguments();
+					if (typeArgs.length == 0 ) {
+						return defaultConverterForClass(param, rawClass);
+					}
+					if (rawClass.isAssignableFrom(List.class)) {
+						ValueConverter innerConverter = defaultConverterForType(param, typeArgs[0]);
+						if (innerConverter != null) {
+							return input -> CollectionUtil.asList(input).stream().map(innerConverter::fromScript)
+								.toList();
+						} else {
+							return CollectionUtil::asList;
+						}
+					}
+					if (rawClass.isAssignableFrom(Set.class)) {
+						ValueConverter innerConverter = defaultConverterForType(param, typeArgs[0]);
+						if (innerConverter != null) {
+							return input -> CollectionUtil.asSet(input).stream().map(innerConverter::fromScript)
+								.collect(Collectors.toSet());
+						} else {
+							return CollectionUtil::asSet;
+						}
+					}
+					return defaultConverterForClass(param, rawClass);
+				} else {
+					return null;
+				}
+			} else if (type instanceof WildcardType wildType) {
+				// Use only one upper bound. It is quite complicated to convert correct for all
+				// upper bounds.
+				for (Type upperBound : wildType.getUpperBounds()) {
+					ValueConverter innerConverter = defaultConverterForType(param, upperBound);
+					if (innerConverter != null) {
+						return innerConverter;
+					}
+				}
+				return null;
+			} else {
+				return null;
+			}
+		}
+
+		private ValueConverter defaultConverterForClass(Parameter param, Class<?> type)
 				throws NoSuchMethodException, SecurityException {
 			if (type == double.class) {
 				return input -> input instanceof Double ? input : asNumber(param, input).doubleValue();
@@ -296,7 +348,7 @@ public class TLScriptMethod extends GenericMethod {
 				};
 			} else if (type.isArray()) {
 				Class<?> componentType = type.componentType();
-				ValueConverter inner = defaultConverter(param, componentType);
+				ValueConverter inner = defaultConverterForClass(param, componentType);
 
 				return input -> {
 					if (input instanceof Collection<?> coll) {
@@ -313,12 +365,8 @@ public class TLScriptMethod extends GenericMethod {
 				// No conversion necessary.
 				return null;
 			} else if (type.isAssignableFrom(List.class)) {
-				// TODO: Convert content.
-				// Type paramType = param.getParameterizedType();
 				return CollectionUtil::asList;
 			} else if (type.isAssignableFrom(Set.class)) {
-				// TODO: Convert content.
-				// Type paramType = param.getParameterizedType();
 				return CollectionUtil::asSet;
 			} else {
 				return input -> asType(param, type, input);

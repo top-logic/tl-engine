@@ -21,40 +21,6 @@
 				</additional-files>
 			</instance>
 		</config>
-		
-		<config service-class="com.top_logic.model.search.expr.config.SearchBuilder">
-			<instance class="com.top_logic.model.search.expr.config.SearchBuilder">
-				<methods>
-					<java name="flowChart" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowChart"/>
-					<java name="flowEmpty" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowEmpty"/>
-					<java name="flowText" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowText"/>
-					<java name="flowImage" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowImage"/>
-					<java name="flowAlign" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowAlign"/>
-					<java name="flowBorder" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowBorder"/>
-					<java name="flowPosition" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowPosition"/>
-					<java name="flowFill" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowFill"/>
-					<java name="flowStack" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowStack"/>
-					<java name="flowPadding" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowPadding"/>
-					<java name="flowSelection" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowSelection"/>
-					<java name="flowClickTarget" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowClickTarget"/>
-					<java name="flowDropRegion" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowDropRegion"/>
-					<java name="flowTooltip" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowTooltip"/>
-					<java name="flowHorizontal" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowHorizontal"/>
-					<java name="flowVertical" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowVertical"/>
-					<java name="flowCompass" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowCompass"/>
-					<java name="flowGrid" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowGrid"/>
-					<java name="flowFloating" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowFloating"/>
-					<java name="flowTree" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowTree"/>
-					<java name="flowConnection" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowConnection"/>
-					<java name="flowDecoration" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowDecoration"/>
-					<java name="flowConnector" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowConnector"/>
-					<java name="flowPolyline" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowPolyline"/>
-					<java name="flowPolygon" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowPolygon"/>
-					<java name="flowPoint" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowPoint"/>
-					<java name="flowClipbox" method="com.top_logic.graphic.flow.server.script.FlowFactory#flowClipbox"/>
-				</methods>
-			</instance>
-		</config>
 	</services>
 
 	<configs>

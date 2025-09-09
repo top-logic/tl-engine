@@ -238,7 +238,8 @@ public class FlowChartComponent extends BuilderComponent
 
 			// Update the visible selection.
 			Collection<?> selection = SearchExpression.asCollection(getSelected());
-			List<SelectableBox> selectedBoxes = selection.stream().<SelectableBox> flatMap(x -> _selectableIndex.get(x).stream()).toList();
+			List<SelectableBox> selectedBoxes = selection.stream()
+				.<SelectableBox> flatMap(x -> CollectionUtil.toCollection(_selectableIndex.get(x)).stream()).toList();
 			diagram.setSelection(selectedBoxes);
 			for (SelectableBox box : selectedBoxes) {
 				box.setSelected(true);

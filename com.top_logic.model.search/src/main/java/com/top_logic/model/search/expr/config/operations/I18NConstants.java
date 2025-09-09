@@ -8,6 +8,7 @@ package com.top_logic.model.search.expr.config.operations;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
+import com.top_logic.basic.util.ResKey4;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -87,6 +88,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 ERROR_UNEXPECTED_ARGUMENT__FUN_CNT;
 
 	public static ResKey2 ERROR_WRONG_TARGET__ISCOMPATIBLEVALUE;
+
+	/**
+	 * @en The wrong argument was passed to parameter "{1}" of function "{0}". A value of type "{2}"
+	 *     was expected, but the value was: {3}
+	 */
+	public static ResKey4 ERROR_WRONG_ARGUMENT__FUN_ARG_EXPECTED_VAL;
 
 	static {
 		initConstants(I18NConstants.class);

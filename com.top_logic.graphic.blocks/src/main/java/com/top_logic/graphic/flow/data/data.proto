@@ -204,29 +204,37 @@ enum OffsetPosition {
     /** The center of the box. */
     @Name("center")
 	CENTER;
+	
     /** The center of the top border. */
     @Name("center-top")
 	CENTER_TOP;
+    
     /** The center of the left border. */
     @Name("center-left")
 	CENTER_LEFT;
+    
     /** The center of the bottom border. */
     @Name("center-bottom")
 	CENTER_BOTTOM;
+    
     /** The center of the right border. */
     @Name("center-right")
 	CENTER_RIGHT;
+    
     /** The top left corner. */
     @Name("top-left")
 	TOP_LEFT;
+    
     /** The top right corner. */
     @Name("top-right")
 	TOP_RIGHT;
+    
     /** The bottom left corner. */
     @Name("bottom-left")
 	BOTTOM_LEFT;
-    @Name("bottom-right")
+    
     /** The bottom right corner. */
+    @Name("bottom-right")
 	BOTTOM_RIGHT;
 }
 

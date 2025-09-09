@@ -45,6 +45,9 @@ public enum OffsetPosition implements de.haumacher.msgbuf.data.ProtocolEnum {
 	 */
 	BOTTOM_LEFT("bottom-left"),
 
+	/**
+	 * The bottom right corner.
+	 */
 	BOTTOM_RIGHT("bottom-right"),
 
 	;

@@ -2507,9 +2507,31 @@ td.tl-table__cell .cDataItem li {
 /* ======   ImageUploadControl    ===== */
 /* ==================================== */
 
+.cImgUpload {
+	width: fit-content;
+	height: fit-content;
+}
+
 .cImgUpload img {
-/* 	max-width: 20rem; */
-/* 	max-height: 14rem; */
+	max-width: 20rem;
+	max-height: 14rem;
+}
+
+.cImgUpload .fClear {
+	position: absolute;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--form-line-height);
+	height: var(--form-line-height);
+	transform: translate(-100%, 0);
+	border-bottom-left-radius: var(--spacing-02);
+	color: var(--button-fg, var(--icon-primary));
+}
+
+.cImgUpload .fClear:hover {
+	background: var(--field-hover);
+	text-decoration: none;
 }
 
 .cImgUpload input {
@@ -2532,48 +2554,52 @@ td.tl-table__cell .cDataItem li {
 	display: inline-flex;
 	width: 20rem;
 	height: 14rem;
-/* 	padding: 6rem; */
-	border: dashed lightgray 4px;
-	border-radius: 1rem;
-/* 	box-shadow: inset 0px 0px 0px 1px var(--button-primary); */
 	cursor: pointer;
 	white-space: nowrap;
+	align-items: center;
+	justify-content: center;
+	background: var(--field);
 	color: var(--text-primary);
-}
-
-.cImgUpload label .centerLabel {
-	margin: auto;
+	border-radius: var(--spacing-03);
+	border: dashed var(--border-subtle) 4px;
 }
 
 .cImgUpload label .cmdImg {
 	padding-right: var(--spacing-02);
 }
 
-.cImgUpload label:hover {
-/* 	background: var(--button-primary-hover); */
-/* 	box-shadow: inset 0px 0px 0px 1px var(--button-primary-hover); */
+.cImgUpload.dragHover label {
+	background: var(--field-hover);
+	border-color: var(--button-primary);
 }
 
-.cImgUpload label:focus {
-/* 	box-shadow: inset 0px 0px 0px 2px var(--focus),inset 0px 0px 0px 3px var(--focus-inset); */
-/* 	outline: none !important; */
+.cImgUpload label:hover:not(.cmdButtonDisabled) {
+	background: var(--field-hover);
+	border-color: var(--border-strong);
 }
 
-.cImgUpload label:active {
-/* 	background: var(--button-primary-active); */
+.cImgUpload label:focus:not(.cmdButtonDisabled) {
+	border-color: var(--focus);
+}
+
+.cImgUpload label:active:not(.cmdButtonDisabled) {
+	background: var(--field-hover);
+	border-color: var(--button-primary);
+	color: var(--button-primary-active);
 }
 
 .cImgUpload label.cmdButtonDisabled {
+	display: inline-flex;
 	background: var(--button-disabled);
-/* 	box-shadow: inset 0px 0px 0px 1px var(--button-disabled); */
+	cursor: default;
 }
 
 .cImgUpload label.cmdButtonDisabled .cmdLabel {
-/* 	color: var(--text-on-color-disabled); */
+	color: var(--text-on-color-disabled);
 }
 
 .cImgUpload label.cmdButtonDisabled .cmdImg {
-/* 	color: var(--icon-on-color-disabled); */
+	color: var(--text-on-color-disabled);
 }
 
 /* ==================================== */

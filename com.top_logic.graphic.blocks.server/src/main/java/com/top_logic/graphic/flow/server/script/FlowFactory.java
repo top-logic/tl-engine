@@ -66,6 +66,8 @@ import com.top_logic.graphic.flow.data.TreeLayout;
 import com.top_logic.graphic.flow.data.VerticalLayout;
 import com.top_logic.graphic.flow.server.ui.handler.ServerDropHandler;
 import com.top_logic.model.search.expr.ToString;
+import com.top_logic.model.search.expr.config.operations.ScriptConversion;
+import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 
 /**
  * Factory for flow chart diagram elements.

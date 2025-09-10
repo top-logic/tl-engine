@@ -652,7 +652,7 @@ public abstract class ResKey {
 	 * Derives a suffix key form this {@link ResKey}
 	 * 
 	 * @param suffix
-	 *        The suffix to appen to the internal representation.
+	 *        The suffix to append to the internal representation.
 	 * @return The new key.
 	 */
 	public final ResKey suffix(String suffix) {
@@ -688,7 +688,17 @@ public abstract class ResKey {
 	 * @see #tooltip()
 	 */
 	public final ResKey tooltipOptional() {
-		return tooltip().fallback(text(null));
+		return tooltip().optional();
+	}
+
+	/**
+	 * Derives an optional key form this {@link ResKey}, i.e. if no value is given for this key, the
+	 * optional key resolves to <code>null</code>.
+	 * 
+	 * @return A {@link ResKey} with <code>text(null)</code> as fallback.
+	 */
+	public final ResKey optional() {
+		return fallback(text(null));
 	}
 
 	/**

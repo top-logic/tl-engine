@@ -6,6 +6,9 @@
 
 package com.top_logic.model.search.expr.config.operations;
 
+import java.io.IOError;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collection;
@@ -15,6 +18,7 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -23,6 +27,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.treexf.TreeMaterializer.Factory;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.model.search.expr.config.MethodResolver;
 import com.top_logic.model.search.expr.config.SearchBuilder;
@@ -127,7 +132,21 @@ public class TLScriptMethodResolver extends AbstractConfiguredInstance<TLScriptM
 
 	@Override
 	public Optional<String> getDocumentation(DisplayContext context, String functionName) {
-		return Optional.empty();
+		Builder builder = _buildersByName.get(functionName);
+		if (builder == null) {
+			return Optional.empty();
+		}
+		HTMLFragment documentation = builder.documentation();
+		if (documentation == null) {
+			return Optional.empty();
+		}
+		StringWriter sw = new StringWriter();
+		try (TagWriter out = new TagWriter(sw)) {
+			documentation.write(context, out);
+		} catch (IOException ex) {
+			throw new IOError(ex);
+		}
+		return Optional.of(sw.toString());
 	}
 
 }

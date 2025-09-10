@@ -1,5 +1,4 @@
 /* Styles for display help for TL-Script.*/
-
 div.tlScriptDoc {
 	max-width: 500px;
 	overflow: auto;
@@ -13,9 +12,9 @@ div.tlScriptDoc {
 	color: var(--text-primary);
 	font-family: var(--font-family);
 	font-weight: bold;
-    font-size: var(--heading-compact-02-font-size);
-    line-height: var(--heading-compact-02-line-height);
-    letter-spacing: var(--heading-compact-02-letter-spacing);
+	font-size: var(--heading-compact-02-font-size);
+	line-height: var(--heading-compact-02-line-height);
+	letter-spacing: var(--heading-compact-02-letter-spacing);
 	border: 1px solid var(--border-subtle);
 	background: var(--layer);
 	padding: var(--spacing-02) var(--spacing-03);
@@ -41,6 +40,10 @@ div.tlScriptDoc {
 
 .tlDocTable tr:nth-child(odd) {
 	background: var(--background);
+}
+
+.tlScriptDoc .tlDocReturnType {
+	color: #3498db;
 }
 
 /*Styles for displaying the preview in a document tile.*/

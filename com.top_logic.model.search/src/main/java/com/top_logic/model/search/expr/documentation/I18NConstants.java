@@ -58,6 +58,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey MESSAGE_DOC_PARAMETERS_COLUMN_DEFAULT;
 
+	/**
+	 * @en Return value
+	 */
+	public static ResKey MESSAGE_DOC_RETURN_HEADER;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

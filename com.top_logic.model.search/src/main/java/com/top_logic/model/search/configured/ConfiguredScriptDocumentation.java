@@ -85,7 +85,7 @@ public class ConfiguredScriptDocumentation extends AbstractScriptDocumentation<S
 	protected boolean writeDescription(DisplayContext context, TagWriter out) throws IOException {
 		HtmlResKey description = _script.getDescription();
 		if (description != null) {
-			description.getHtml(context.getResources()).write(context, out);
+			description.getHtml().write(context, out);
 			return true;
 		}
 		return false;

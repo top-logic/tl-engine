@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -1008,8 +1009,12 @@ public class TLDoclet implements Doclet {
 					}
 					else if (isI18NExtension(typeMirror)) {
 						collectI18NConstantDoc(type);
-					}
-					else if (isThemeConstantsClass(typeMirror)) {
+					} else if (isTLScriptExtension(typeMirror)) {
+						collectMethodDoc(type, method -> {
+							Set<Modifier> modifiers = method.getModifiers();
+							return modifiers.contains(Modifier.PUBLIC) && modifiers.contains(Modifier.STATIC);
+						});
+					} else if (isThemeConstantsClass(typeMirror)) {
 						collectThemeConstantsDoc(type);
 					} else if (isWithPropertiesClass(typeMirror)) {
 						collectWithPropertiesDoc(type);
@@ -1597,6 +1602,11 @@ public class TLDoclet implements Doclet {
 				&& isSubType(typeElement, _wellKnown._i18nConstantsType);
 		}
 
+		boolean isTLScriptExtension(TypeMirror typeElement) {
+			return _wellKnown._tlScriptFunctionsType != null
+				&& isSubType(typeElement, _wellKnown._tlScriptFunctionsType);
+		}
+
 		boolean isThemeConstantsClass(TypeMirror typeElement) {
 			return _wellKnown._themeConstantsType != null
 				&& isSubType(typeElement, _wellKnown._themeConstantsType);
@@ -1605,6 +1615,47 @@ public class TLDoclet implements Doclet {
 		boolean isWithPropertiesClass(TypeMirror typeElement) {
 			return _wellKnown._withPropertiesType != null
 				&& isSubType(typeElement, _wellKnown._withPropertiesType);
+		}
+
+		private void collectMethodDoc(TypeElement type, Predicate<? super ExecutableElement> filter) {
+			for (ExecutableElement method : methodsIn(type)) {
+				if (!filter.test(method)) {
+					continue;
+				}
+				DocTreePath pathToMethod = docTreePathForElement(method);
+				if (pathToMethod == null) {
+					// field has no comment.
+					continue;
+				}
+				String methodKey = qualifiedName(type) + "." + asString(method);
+				for (DocTree tag : pathToMethod.getDocComment().getBlockTags()) {
+					if (tag.getKind() == DocTree.Kind.PARAM) {
+						ParamTree paramTree = (ParamTree) tag;
+						String paramName = paramTree.getName().getName().toString();
+
+						String description =
+							extractDoc(type, new DocTreePath(pathToMethod, paramTree), paramTree.getDescription());
+						String res = description.toString().trim();
+						if (res.isEmpty()) {
+							continue;
+						}
+
+						String key = methodKey + ".params." + paramName;
+						_configDoc.setProperty(key, res);
+					}
+				}
+				String annotatedLabel = getAnnotatedLabel(method);
+				if (annotatedLabel != null) {
+					_configDoc.setProperty(methodKey, annotatedLabel);
+				}
+
+				String infoDoc = extractDoc(type, method).trim();
+				if (!infoDoc.isEmpty()) {
+					_configDoc.setProperty(methodKey + ".tooltip", infoDoc);
+				}
+
+			}
+
 		}
 
 		private void collectI18NConstantDoc(TypeElement type) {

@@ -9,6 +9,8 @@ package com.top_logic.model.search.expr.config.operations;
 /**
  * Base class for classes that have functions to call in TL-Script.
  * 
+ * @impl This class is used in TLDoclet. It must be adapted, when this class is moved.
+ * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class TLScriptFunctions {

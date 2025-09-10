@@ -291,24 +291,37 @@ public class FlowChartComponent extends BuilderComponent
 	protected boolean receiveModelDeletedEvent(Set<TLObject> deletedObjects, Object changedBy) {
 		boolean result = super.receiveModelDeletedEvent(deletedObjects, changedBy);
 
+		// Remove deleted nodes from selection.
+		Collection<?> oldSelection = null;
+		Set<?> newSelection = null;
+
+		boolean touched = false;
 		for (Object deleted : deletedObjects) {
-			if (!_observedIndex.getOrDefault(deleted, Collections.emptyList()).isEmpty()) {
+			List<Widget> touchedElements = _observedIndex.getOrDefault(deleted, Collections.emptyList());
+			if (!touchedElements.isEmpty()) {
 				// A part has been deleted, redraw.
-				// TODO: Optimize update.
-				invalidate();
-				break;
+				if (!touched) {
+					touched = true;
+
+					// Lazy initialize only if it might be relevant.
+					oldSelection = _selectionModel.getSelection();
+					newSelection = new HashSet<>(oldSelection);
+				}
+
+				assert newSelection != null;
+				newSelection.removeAll(touchedElements);
 			}
 		}
 
-		// Remove deleted nodes from selection.
-		Collection<?> selectedNodes = _selectionModel.getSelection();
+		if (touched) {
+			assert newSelection != null;
+			assert oldSelection != null;
+			if (newSelection.size() != oldSelection.size()) {
+				_selectionModel.setSelection(newSelection);
+			}
 
-		FlowChartBuilder builder = builder();
-		Set<?> newSelection = selectedNodes.stream()
-			.filter(x -> !CollectionUtil.containsAny(builder.getObserved((Widget) x, this), deletedObjects))
-			.collect(Collectors.toSet());
-		if (newSelection.size() != selectedNodes.size()) {
-			_selectionModel.setSelection(newSelection);
+			// TODO: Optimize update.
+			invalidate();
 		}
 
 		return result;

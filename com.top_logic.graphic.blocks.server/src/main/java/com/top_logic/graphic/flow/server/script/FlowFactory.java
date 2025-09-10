@@ -20,6 +20,7 @@ import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.DoubleDefault;
@@ -76,9 +77,18 @@ import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 public class FlowFactory extends TLScriptFunctions {
 	
 	/**
-	 * Factory for Diagrams.
+	 * Factory for {@link Diagram}s.
+	 * 
+	 * @param root
+	 *        The root box to render.
+	 * @param cssClass
+	 *        The css class for the diagram.
+	 * @param userObject
+	 *        User object of the new diagram.
+	 * @return The newly created diagram.
 	 */
 	@SideEffectFree
+	@Label("Create chart")
 	public static Diagram flowChart(
 		Box root,
 		String cssClass,
@@ -92,8 +102,27 @@ public class FlowFactory extends TLScriptFunctions {
 
 	/**
 	 * Creates a text element.
+	 * 
+	 * @param text
+	 *        The actual text to render.
+	 * @param strokeStyle
+	 *        Stroke style for the text box.
+	 * @param fillStyle
+	 *        Style that is is used to fill the text box.
+	 * @param fontFamily
+	 *        Font family for the text.
+	 * @param fontSize
+	 *        Size of the text.
+	 * @param fontWeight
+	 *        Weight for the text
+	 * @param cssClass
+	 *        The css class for the text box.
+	 * @param userObject
+	 *        User object of the new text box.
+	 * @return The newly created text box.
 	 */
 	@SideEffectFree
+	@Label("Create text")
 	public static Box flowText(
 		@Mandatory String text,
 		String strokeStyle, 
@@ -140,8 +169,21 @@ public class FlowFactory extends TLScriptFunctions {
 
 	/**
 	 * Factory for {@link Align}.
+	 * 
+	 * @param content
+	 *        The box to align.
+	 * @param hAlign
+	 *        Horizontal alignment for the content.
+	 * @param vAlign
+	 *        Vertical alignment for the content.
+	 * @param cssClass
+	 *        The css class for the aligned box.
+	 * @param userObject
+	 *        User object of the new aligned box.
+	 * @return The new aligned box.
 	 */
 	@SideEffectFree
+	@Label("Align")
 	public static Decoration flowAlign(
 		@Mandatory Box content,
 		Alignment hAlign,
@@ -159,8 +201,21 @@ public class FlowFactory extends TLScriptFunctions {
 
 	/**
 	 * Factory for {@link Stack}.
+	 * 
+	 * <p>
+	 * A {@link Stack} writes several boxes on top of each other.
+	 * </p>
+	 * 
+	 * @param contents
+	 *        The boxes to stack
+	 * @param cssClass
+	 *        The css class for the stacking box.
+	 * @param userObject
+	 *        User object of the new stacking box.
+	 * @return The new stacking box.
 	 */
 	@SideEffectFree
+	@Label("Stack elements")
 	public static Stack flowStack(
 			List<Box> contents,
 			String cssClass,
@@ -172,9 +227,32 @@ public class FlowFactory extends TLScriptFunctions {
 	}
 
 	/**
-	 * Factory for {@link Border}.
+	 * Creates a {@link Border} around the given content.
+	 * 
+	 * @param content
+	 *        Content to create box for.
+	 * @param top
+	 *        Whether a border must be drawn at the top of the box.
+	 * @param left
+	 *        Whether a border must be drawn at the left side of the box.
+	 * @param right
+	 *        Whether a border must be drawn at the right side of the box.
+	 * @param bottom
+	 *        Whether a border must be drawn at the bottom of the box.
+	 * @param thickness
+	 *        Thickness of the border.
+	 * @param stroke
+	 *        Color of the border.
+	 * @param dashes
+	 *        Dashes of the border.
+	 * @param cssClass
+	 *        The css class for the border box.
+	 * @param userObject
+	 *        User object of the new border box.
+	 * @return The new border box.
 	 */
 	@SideEffectFree
+	@Label("Create borders")
 	public static Decoration flowBorder(
 		Box content,
 		@BooleanDefault(true) boolean top,
@@ -202,9 +280,20 @@ public class FlowFactory extends TLScriptFunctions {
 	}
 
 	/**
-	 * Factory for {@link Fill}.
+	 * Fills the given content with a given color.
+	 * 
+	 * @param content
+	 *        The content to fill with color.
+	 * @param fill
+	 *        The fill color of the box.
+	 * @param cssClass
+	 *        The css class for the fill box.
+	 * @param userObject
+	 *        User object of the new fill box.
+	 * @return The new fill box.
 	 */
 	@SideEffectFree
+	@Label("Fill")
 	public static Decoration flowFill(
 			Box content,
 		@StringDefault("gray") @ScriptConversion(ToStyle.class) String fill,
@@ -224,8 +313,33 @@ public class FlowFactory extends TLScriptFunctions {
 	 * <p>
 	 * This can be used in combination with {@link #flowFloating(List, String, Object)}.
 	 * </p>
+	 * 
+	 * @param content
+	 *        The box to position.
+	 * @param x
+	 *        Desired X position of the box.
+	 * @param y
+	 *        Desired Y position of the box
+	 * @param minWidth
+	 *        Minimum width of the new {@link Box}.
+	 * @param maxWidth
+	 *        Maximium width of the new {@link Box}.
+	 * @param width
+	 *        Concrete desired width of the new {@link Box}
+	 * @param minHeight
+	 *        Minimum height of the new {@link Box}.
+	 * @param maxHeight
+	 *        Maximium height of the new {@link Box}.
+	 * @param height
+	 *        Concrete desired height of the new {@link Box}
+	 * @param preserveAspectRatio
+	 *        Whether the ration between width and height must be preserved.
+	 * @param userObject
+	 *        User object of the new fill box.
+	 * @return The new positioned box.
 	 */
 	@SideEffectFree
+	@Label("Explicit position")
 	public static Box flowPosition(
 			@Mandatory Box content,
 			Double x,
@@ -275,8 +389,31 @@ public class FlowFactory extends TLScriptFunctions {
 
 	/**
 	 * Factory for {@link Padding}.
+	 * 
+	 * @param content
+	 *        The content to surround with padding.
+	 * @param all
+	 *        Padding for all sides.
+	 * @param horizontal
+	 *        Padding for both, left and right.
+	 * @param vertical
+	 *        Padding for both, top and bottom.
+	 * @param top
+	 *        Padding for the top side.
+	 * @param left
+	 *        Padding for the left side.
+	 * @param right
+	 *        Padding for the right side.
+	 * @param bottom
+	 *        Padding for the bottom side.
+	 * @param cssClass
+	 *        The css class for the padding box.
+	 * @param userObject
+	 *        User object of the new padding box.
+	 * @return The new padding box.
 	 */
 	@SideEffectFree
+	@Label("Create padding")
 	public static Box flowPadding(
 		@Mandatory Box content,
 		Double all,
@@ -319,8 +456,25 @@ public class FlowFactory extends TLScriptFunctions {
 
 	/**
 	 * Factory for {@link HorizontalLayout}.
+	 * 
+	 * <p>
+	 * Positions the contents side by side.
+	 * </p>
+	 * 
+	 * @param contents
+	 *        The elements to position.
+	 * @param gap
+	 *        Gap between the single boxes.
+	 * @param distribution
+	 *        How to handle extra space.
+	 * @param cssClass
+	 *        The css class for the horizontal box.
+	 * @param userObject
+	 *        User object of the new horizontal box.
+	 * @return The new horizontal box.
 	 */
 	@SideEffectFree
+	@Label("Align horizontal")
 	public static Box flowHorizontal(
 		@Mandatory List<Box> contents,
 		double gap,
@@ -349,8 +503,25 @@ public class FlowFactory extends TLScriptFunctions {
 
 	/**
 	 * Factory for {@link VerticalLayout}.
+	 * 
+	 * <p>
+	 * Positions the contents on top of each other.
+	 * </p>
+	 * 
+	 * @param contents
+	 *        The elements to position.
+	 * @param gap
+	 *        Gap between the single boxes.
+	 * @param distribution
+	 *        How to handle extra space.
+	 * @param cssClass
+	 *        The css class for the horizontal box.
+	 * @param userObject
+	 *        User object of the new horizontal box.
+	 * @return The new horizontal box.
 	 */
 	@SideEffectFree
+	@Label("Align vertical")
 	public static Box flowVertical(
 		@Mandatory List<Box> contents,
 		double gap,
@@ -376,8 +547,29 @@ public class FlowFactory extends TLScriptFunctions {
 
 	/**
 	 * Factory for {@link CompassLayout}.
+	 * 
+	 * <p>
+	 * Positions four boxes around of a fifth box.
+	 * </p>
+	 * 
+	 * @param center
+	 *        Box to position others around.
+	 * @param north
+	 *        The box to position above the center.
+	 * @param west
+	 *        The box to position to the left of the center.
+	 * @param east
+	 *        The box to position to the right of the center.
+	 * @param south
+	 *        The box to position under the center.
+	 * @param cssClass
+	 *        The css class for the new box.
+	 * @param userObject
+	 *        User object of the new box.
+	 * @return The new box.
 	 */
 	@SideEffectFree
+	@Label("Create compass")
 	public static CompassLayout flowCompass(
 		@Mandatory Box center,
 		Box north,
@@ -399,8 +591,22 @@ public class FlowFactory extends TLScriptFunctions {
 
 	/**
 	 * Factory for {@link GridLayout}.
+	 * 
+	 * @param contents
+	 *        Each entry in the list represents a row in the grid; the list entry (itself a list)
+	 *        contains the boxes top display in that row.
+	 * @param gapX
+	 *        The gap between the columns.
+	 * @param gapY
+	 *        The gap between the rows.
+	 * @param cssClass
+	 *        The css class for the new box.
+	 * @param userObject
+	 *        User object of the new box.
+	 * @return The new box.
 	 */
 	@SideEffectFree
+	@Label("Create Grid")
 	public static Box flowGrid(
 		@Mandatory List<List<Box>> contents,
 		double gapX,
@@ -443,8 +649,17 @@ public class FlowFactory extends TLScriptFunctions {
 	 * Use in combination with
 	 * {@link #flowPosition(Box, Double, Double, Double, Double, Double, Double, Double, Double, boolean, Object)}.
 	 * </p>
+	 * 
+	 * @param contents
+	 *        Contents of the new box.
+	 * @param cssClass
+	 *        The css class for the new box.
+	 * @param userObject
+	 *        User object of the new box.
+	 * @return The new box.
 	 */
 	@SideEffectFree
+	@Label("Create positioning box")
 	public static Box flowFloating(
 			@Mandatory List<? extends Box> contents,
 			String cssClass,
@@ -454,8 +669,19 @@ public class FlowFactory extends TLScriptFunctions {
 
 	/**
 	 * Factory for {@link Empty} boxes that produce gaps.
+	 * 
+	 * @param minWidth
+	 *        Minimum width for the empty space.
+	 * @param minHeight
+	 *        Minimum height for the empty space.
+	 * @param cssClass
+	 *        The css class for the new box.
+	 * @param userObject
+	 *        User object of the new box.
+	 * @return The new box.
 	 */
 	@SideEffectFree
+	@Label("Empty box")
 	public static Box flowEmpty(
 		double minWidth,
 		double minHeight,
@@ -471,8 +697,31 @@ public class FlowFactory extends TLScriptFunctions {
 
 	/**
 	 * Factory for {@link Image}.
+	 * 
+	 * <p>
+	 * Displays an image.
+	 * </p>
+	 * 
+	 * @param data
+	 *        Source data for the image.
+	 * @param width
+	 *        Width of the image.
+	 * @param height
+	 *        Height of the image.
+	 * @param align
+	 *        Where the image is aligned.
+	 * @param scale
+	 *        Scaling instruction for the image.
+	 * @param orientation
+	 *        Orientation of the image.
+	 * @param cssClass
+	 *        The css class for the new box.
+	 * @param userObject
+	 *        User object of the new box.
+	 * @return The new box.
 	 */
 	@SideEffectFree
+	@Label("Create image")
 	public static Box flowImage(
 		@Mandatory Object data,
 		Double width,
@@ -542,12 +791,20 @@ public class FlowFactory extends TLScriptFunctions {
 	}
 
 	/**
-	 * Creates an are that is user-selectable.
+	 * Creates a box that is user-selectable.
+	 * 
+	 * @param content
+	 *        Actual content of the box.
+	 * @param cssClass
+	 *        The css class for the new box.
+	 * @param userObject
+	 *        User object of the new box.
+	 * @return The new box.
 	 */
 	@SideEffectFree
+	@Label("Make selectable")
 	public static Box flowSelection(
-			@Mandatory
-		Box content,
+			@Mandatory Box content,
 		String cssClass,
 		Object userObject
 	) {
@@ -559,13 +816,24 @@ public class FlowFactory extends TLScriptFunctions {
 	
 	/**
 	 * Creates box that responds to mouse click events.
+	 * 
+	 * @param content
+	 *        The content box.
+	 * @param clickHandler
+	 *        The handler to execute when the mouse click event occurs.
+	 * @param buttons
+	 *        The buttons to react on.
+	 * @param cssClass
+	 *        The css class for the new box.
+	 * @param userObject
+	 *        User object of the new box.
+	 * @return The new box.
 	 */
 	@SideEffectFree
+	@Label("React on click")
 	public static Box flowClickTarget(
-			@Mandatory
-			Box content,
-			@Mandatory
-			ClickHandler clickHandler,
+			@Mandatory Box content,
+			@Mandatory ClickHandler clickHandler,
 			List<MouseButton> buttons,
 			String cssClass,
 			Object userObject
@@ -579,9 +847,20 @@ public class FlowFactory extends TLScriptFunctions {
 	}
 	
 	/**
-	 * Creates box that receives drop events..
+	 * Creates box that receives drop events.
+	 * 
+	 * @param content
+	 *        The content box.
+	 * @param dropHandler
+	 *        The handler to execute when an element is dropped on thw box.
+	 * @param cssClass
+	 *        The css class for the new box.
+	 * @param userObject
+	 *        User object of the new box.
+	 * @return The new box.
 	 */
 	@SideEffectFree
+	@Label("Create drop region")
 	public static Box flowDropRegion(
 			@Mandatory Box content,
 			@Mandatory ServerDropHandler dropHandler,
@@ -596,8 +875,19 @@ public class FlowFactory extends TLScriptFunctions {
 
 	/**
 	 * Creates box that displays a tooltip when the mouse hovers over its contents.
+	 * 
+	 * @param text
+	 *        The tooltip to display
+	 * @param content
+	 *        The content box.
+	 * @param cssClass
+	 *        The css class for the new box.
+	 * @param userObject
+	 *        User object of the new box.
+	 * @return The new box.
 	 */
 	@SideEffectFree
+	@Label("Add tooltip")
 	public static Box flowTooltip(
 			@Mandatory String text,
 			@Mandatory Box content,
@@ -633,10 +923,23 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        The layout direction.
 	 * @param compact
 	 *        Whether a compact layout is preferred.
+	 * @param parentAlign
+	 *        Factor to determine the placement of the parent node relative to it's children. With a
+	 *        value of zero the center of the parent node is placed at the same Y coordinate as the
+	 *        first of it's children. With a value of 1.0, the parent is aligned to its last child.
+	 *        A value in between, places the parent corresponding to the ratio between the first and
+	 *        the last child.
+	 * @param parentOffset
+	 *        Offset to add to the parent Y coordinate after the alignment operation based on parent
+	 *        ratio.
+	 * @param cssClass
+	 *        The css class for the new box.
 	 * @param userObject
 	 *        An arbitrary object to associate with the graphics element.
+	 * @return The new box.
 	 */
 	@SideEffectFree
+	@Label("Create tree")
 	public static Box flowTree(
 		@Mandatory List<? extends Box> nodes, 
 		@Mandatory List<? extends TreeConnection> connections,
@@ -698,8 +1001,11 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        An optional dashes array for rendering the edge. Default is to use a solid stroke.
 	 * @param decorations
 	 *        Additional decorations to place on the edge.
+	 * 
+	 * @return the new connection.
 	 */
 	@SideEffectFree
+	@Label("Create connection")
 	public static TreeConnection flowConnection(
 		@Mandatory Object parent,
 		@Mandatory Object child,
@@ -738,9 +1044,20 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        edge. A value of 1.0 places the content at the end position of the edge.
 	 * @param offsetPosition
 	 *        The position of the content box that is matched with the line position.
+	 * @param cssClass
+	 *        The css class for the new box.
+	 * @param userObject
+	 *        An arbitrary object to associate with the graphics element.
+	 * 
+	 * @return The new decoration.
 	 */
 	@SideEffectFree
-	public static EdgeDecoration flowDecoration(Box content, String cssClass, Object userObject, double linePosition,
+	@Label("Create edge decoration")
+	public static EdgeDecoration flowDecoration(
+			Box content,
+			String cssClass,
+			Object userObject,
+			double linePosition,
 			OffsetPosition offsetPosition) {
 		return EdgeDecoration.create()
 			.setContent(content)
@@ -752,8 +1069,21 @@ public class FlowFactory extends TLScriptFunctions {
 
 	/**
 	 * A connector to attach to a node to connect.
+	 * 
+	 * @param anchor
+	 *        The connected box.
+	 * @param pos
+	 *        Position where the connector is displayed.
+	 * @param symbol
+	 *        The symbol to display.
+	 * @param cssClass
+	 *        The css class for the new box.
+	 * @param userObject
+	 *        User object of the new box.
+	 * @return The new box.
 	 */
 	@SideEffectFree
+	@Label("Create connector")
 	public static TreeConnector flowConnector(
 		@Mandatory Box anchor,
 		@DoubleDefault(0.5) double pos,
@@ -778,8 +1108,15 @@ public class FlowFactory extends TLScriptFunctions {
 
 	/**
 	 * Creates a 2D {@link Point}.
+	 * 
+	 * @param x
+	 *        X position of the point.
+	 * @param y
+	 *        Y position of the point.
+	 * @return The new {@link Point}.
 	 */
 	@SideEffectFree
+	@Label("2D point")
 	public static Point flowPoint(double x, double y) {
 		return Point.create().setX(x).setY(y);
 	}
@@ -819,8 +1156,16 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        The style of the stroke.
 	 * @param thickness
 	 *        The width of the stroke.
+	 * @param dashes
+	 *        Length of dashes for a dashed border.
+	 * @param cssClass
+	 *        The css class for the new box.
+	 * @param userObject
+	 *        User object of the new box.
+	 * @return The new box.
 	 */
 	@SideEffectFree
+	@Label("Create polygon")
 	public static PolygonalChain flowPolygon(
 			List<Point> points,
 			@StringDefault("none") String fillStyle,
@@ -843,8 +1188,16 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        The style of the stroke.
 	 * @param thickness
 	 *        The width of the stroke.
+	 * @param dashes
+	 *        Length of dashes for a dashed border.
+	 * @param cssClass
+	 *        The css class for the new box.
+	 * @param userObject
+	 *        User object of the new box.
+	 * @return The new box.
 	 */
 	@SideEffectFree
+	@Label("Create poly line")
 	public static PolygonalChain flowPolyline(
 			List<Point> points,
 			@StringDefault("none") String fillStyle,
@@ -861,8 +1214,14 @@ public class FlowFactory extends TLScriptFunctions {
 	 * 
 	 * @param content
 	 *        The contents to clip.
+	 * @param cssClass
+	 *        The css class for the new box.
+	 * @param userObject
+	 *        User object of the new box.
+	 * @return The new box.
 	 */
 	@SideEffectFree
+	@Label("Clip content")
 	public static ClipBox flowClipbox(
 			@Mandatory Box content,
 			String cssClass,

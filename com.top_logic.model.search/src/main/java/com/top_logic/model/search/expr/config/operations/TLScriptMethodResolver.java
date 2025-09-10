@@ -81,28 +81,28 @@ public class TLScriptMethodResolver extends AbstractConfiguredInstance<TLScriptM
 				if (!Modifier.isPublic(m.getModifiers())) {
 					continue;
 				}
-				String methodName = m.getName();
+				String scriptName = Builder.getDefaultScriptName(m);
 				String qualifiedMethodName =
 						methodsClass.getCanonicalName() + TLScriptMethod.Builder.METHOD_SEPARATOR + m.getName();
 				
-				Builder clash = buildersByName.get(methodName);
+				Builder clash = buildersByName.get(scriptName);
 				if (clash != null) {
-					context.error("Ambiguous method name '" + methodName + "': " + qualifiedMethodName + " vs. "
+					context.error("Ambiguous script name '" + scriptName + "': " + qualifiedMethodName + " vs. "
 						+ asBuilderConfig(clash.getConfig()).getMethod());
 					continue;
 				}
 				try {
 					TLScriptMethod.Builder.Config scriptMethodConfig = asBuilderConfig(
 						TypedConfiguration.createConfigItemForImplementationClass(TLScriptMethod.Builder.class));
-					scriptMethodConfig.setName(methodName);
+					scriptMethodConfig.setName(scriptName);
 					scriptMethodConfig.setMethod(qualifiedMethodName);
 					TLScriptMethod.Builder scriptMethod = context.getInstance(scriptMethodConfig);
-					buildersByName.put(methodName, scriptMethod);
+					buildersByName.put(scriptName, scriptMethod);
 				} catch (ConfigurationException ex) {
 					context.error("Unable to create config for " + qualifiedMethodName, ex);
 					continue;
 				}
-				context.info("Created TL-Script method " + methodName + " => " + qualifiedMethodName);
+				context.info("Created TL-Script method " + scriptName + " => " + qualifiedMethodName);
 			}
 		}
 		_buildersByName = buildersByName;

@@ -16,6 +16,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.util.TLModelPartRef;
@@ -48,6 +49,7 @@ public abstract class AbstractScriptDocumentation<T> implements HTMLFragment {
 		writeSyntaxDescription(context, out);
 		writeDescriptionSection(context, out);
 		writeParametersTable(context, out);
+		writeReturnSection(context, out);
 
 
 		out.endTag(DIV);
@@ -57,7 +59,71 @@ public abstract class AbstractScriptDocumentation<T> implements HTMLFragment {
 		out.beginTag(H2);
 		writeLabel(context, out);
 		out.endTag(H2);
+	}
 
+	/**
+	 * Writes the "return" section.
+	 * 
+	 * @implSpec Uses the return values of {@link #getReturnType()} and/or
+	 *           {@link #getReturnDescription()}.
+	 */
+	protected void writeReturnSection(DisplayContext context, TagWriter out) throws IOException {
+		String returnType = getReturnType();
+		HTMLFragment returnDescription = getReturnDescription();
+		if (returnType == null && returnDescription == null) {
+			return;
+		}
+		out.beginTag(H2);
+		out.writeText(context.getResources().getString(I18NConstants.MESSAGE_DOC_RETURN_HEADER));
+		out.endTag(H2);
+		if (returnType != null) {
+			writeReturnType(context, out, returnType);
+		}
+		if (returnDescription != null) {
+			writeReturnDescription(context, out, returnDescription);
+		}
+	}
+
+	/**
+	 * Writes the actual "return" description.
+	 */
+	protected void writeReturnDescription(DisplayContext context, TagWriter out, HTMLFragment description)
+			throws IOException {
+		out.beginTag(PARAGRAPH);
+		description.write(context, out);
+		out.endTag(PARAGRAPH);
+	}
+
+	/**
+	 * Writes the actual "return" type.
+	 */
+	protected void writeReturnType(DisplayContext context, TagWriter out, String returnType) {
+		out.beginTag(PARAGRAPH);
+		out.beginBeginTag(SPAN);
+		out.writeAttribute(CLASS_ATTR, DocumentationConstants.DOCUMENTATION_RETURN_TYPE_CSS_CLASS);
+		out.endBeginTag();
+		out.beginTag(STRONG);
+		out.writeText(context.getResources().getString(I18NConstants.MESSAGE_DOC_PARAMETERS_COLUMN_TYPE));
+		out.writeText(":");
+		out.endTag(STRONG);
+		out.endTag(SPAN);
+		out.writeText(HTMLConstants.NBSP);
+		out.writeText(returnType);
+		out.endTag(PARAGRAPH);
+	}
+
+	/**
+	 * The type of the return value. May be <code>null</code>.
+	 */
+	protected String getReturnType() {
+		return null;
+	}
+
+	/**
+	 * The description of the return value. May be <code>null</code>.
+	 */
+	protected HTMLFragment getReturnDescription() {
+		return null;
 	}
 
 	/**

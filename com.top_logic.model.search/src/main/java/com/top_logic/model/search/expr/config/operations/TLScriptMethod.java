@@ -6,6 +6,7 @@
 package com.top_logic.model.search.expr.config.operations;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Executable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigUtil;
@@ -32,6 +34,8 @@ import com.top_logic.basic.config.annotation.defaults.FloatDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.html.i18n.DefaultHtmlResKey;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
@@ -39,6 +43,7 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.SearchExpressionFactory;
 import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.config.operations.DefaultScriptDocumentation.DocumentationParameter;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -118,6 +123,8 @@ public class TLScriptMethod extends GenericMethod {
 
 		private final boolean _canEvaluateAtCompileTime;
 
+		private final List<DocumentationParameter> _documentationParams = new ArrayList<>();
+
 		/**
 		 * Configuration options for {@link TLScriptMethod.Builder}.
 		 */
@@ -157,6 +164,9 @@ public class TLScriptMethod extends GenericMethod {
 				List<Converter> conversions = new ArrayList<>();
 				for (int n = 0; n < parameters.length; n++) {
 					Parameter p = parameters[n];
+					DocumentationParameter docuParam = new DocumentationParameter(p.getName());
+					docuParam.setDescription(parameterDescription(p));
+					docuParam.setType(typeString(p.getParameterizedType()));
 					{
 						ValueConverter converter = converter(p);
 
@@ -166,11 +176,14 @@ public class TLScriptMethod extends GenericMethod {
 
 						if (p.getAnnotation(Mandatory.class) != null) {
 							descriptor.mandatory(p.getName());
+							docuParam.setMandatory();
 						} else {
 							Object defaultValue = defaultValue(p);
 							descriptor.optional(p.getName(), () -> SearchExpressionFactory.literal(defaultValue));
+							docuParam.setOptional(ToString.toString(defaultValue));
 						}
 					}
+					_documentationParams.add(docuParam);
 				}
 				_descriptor = descriptor.build();
 				_conversions = conversions.toArray(new Converter[0]);
@@ -185,6 +198,65 @@ public class TLScriptMethod extends GenericMethod {
 				}
 			} catch (ClassNotFoundException | SecurityException | NoSuchMethodException ex) {
 				throw new RuntimeException(ex);
+			}
+		}
+
+		private ResKey key(Executable exectuable) {
+			return ResKey.forClass(exectuable.getDeclaringClass())
+				.suffix("." + exectuable.getName());
+		}
+
+		private HTMLFragment parameterDescription(Parameter p) {
+			return new DefaultHtmlResKey(key(p.getDeclaringExecutable())
+				.suffix(".param")
+				.suffix("." + p.getName()).tooltipOptional());
+		}
+
+		private HTMLFragment methodDescription(Method m) {
+			return new DefaultHtmlResKey(key(m).tooltipOptional());
+		}
+
+		private HTMLFragment returnDescription(Method m) {
+			return new DefaultHtmlResKey(key(m).suffix(".return").optional());
+		}
+
+		private ResKey methodLabel(Method m) {
+			return key(m);
+		}
+
+		private String typeString(Type type) {
+			if (type instanceof Class<?> classType) {
+				return classType.getSimpleName();
+			} else if (type instanceof ParameterizedType paramType) {
+				Type rawType = paramType.getRawType();
+				if (rawType instanceof Class rawClassType) {
+					if (rawClassType.isAssignableFrom(List.class)) {
+						String typeString = typeString(List.class);
+						String contentType = typeString(paramType.getActualTypeArguments()[0]);
+						if (!"Object".equals(contentType)) {
+							typeString += "<" + contentType + ">";
+						}
+						return typeString;
+					}
+					if (rawClassType.isAssignableFrom(Set.class)) {
+						String typeString = typeString(Set.class);
+						String contentType = typeString(paramType.getActualTypeArguments()[0]);
+						if (!"Object".equals(contentType)) {
+							typeString += "<" + contentType + ">";
+						}
+						return typeString;
+					}
+				}
+				return type.toString();
+			} else if(type instanceof WildcardType wildType) {
+				Type[] upperBounds = wildType.getUpperBounds();
+				if (upperBounds.length == 0) {
+					return typeString(Object.class);
+				} else {
+					return typeString(upperBounds[0]);
+				}
+			} else {
+				return type.toString();
 			}
 		}
 
@@ -415,6 +487,17 @@ public class TLScriptMethod extends GenericMethod {
 		@Override
 		public Object getId() {
 			return _method;
+		}
+
+		/**
+		 * Documentation for the TL-Script function.
+		 */
+		public HTMLFragment documentation() {
+			return new DefaultScriptDocumentation(getName(), _documentationParams)
+				.setLabel(methodLabel(_method))
+				.setDescription(methodDescription(_method))
+				.setReturnType(typeString(_method.getGenericReturnType()))
+				.setReturnDescription(returnDescription(_method));
 		}
 	}
 

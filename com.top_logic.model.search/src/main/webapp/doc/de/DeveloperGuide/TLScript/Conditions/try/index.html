@@ -1,0 +1,78 @@
+<h2>​​Syntax</h2>
+
+<pre>
+	<code>$argument.try($tryFunction, $catchFunction)</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Führt eine Funktion aus und behandelt auftretende Fehler durch eine Fallback-Funktion. Die try-Funktion implementiert ein try-catch-Verhalten für TLScript, das eine robuste Fehlerbehandlung ermöglicht.</p>
+
+<p>Die Funktion arbeitet mit drei Parametern:</p>
+
+<ol>
+	<li><strong>Argument</strong>: Der Wert, der an die try-Funktion weitergegeben wird</li>
+	<li><strong>Try-Funktion</strong>: Die auszuführende Funktion, die einen Fehler verursachen könnte</li>
+	<li><strong>Catch-Funktion</strong>: Die Fallback-Funktion, die bei einem Fehler ausgeführt wird</li>
+</ol>
+
+<p>Bei erfolgreicher Ausführung der try-Funktion wird deren Ergebnis zurückgegeben. Tritt ein Fehler auf, wird die catch-Funktion mit dem Fehler-Objekt als Parameter ausgeführt und deren Ergebnis zurückgegeben.</p>
+
+<h2>Paramter</h2>
+
+<table class="tlDocTable" style="height:155px; width:1517px">
+	<thead>
+		<tr>
+			<th>Bezeichnung</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Standard</th>
+		</tr>
+		<tr>
+			<td>argument</td>
+			<td>Any</td>
+			<td>Der Wert, der an die try-Funktion als Parameter übergeben wird</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>tryFunction</td>
+			<td>Funktion</td>
+			<td>Die Funktion, die ausgeführt werden soll. Erhält das Argument als Parameter</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td>catchFunction</td>
+			<td>Funktion</td>
+			<td>Die Fallback-Funktion, die bei einem Fehler ausgeführt wird. Erhält das Exception-Objekt als Parameter</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+	</thead>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Object</p>
+
+<p>Gibt das Ergebnis der try-Funktion zurück, wenn diese erfolgreich ausgeführt wurde. Bei einem Fehler wird das Ergebnis der catch-Funktion zurückgegeben.</p>
+
+<h2>Beispiele</h2>
+
+<pre>
+	<code>$emailAddress.try(
+  emailAddr -&gt; sendMail(
+    subject: $subject,
+    to: $emailAddr,
+    body: $emailBody
+  ),
+  catch: mailError -&gt; {
+    info("E-Mail-Zustellung fehlgeschlagen: " + $mailError);
+    false
+  }
+)</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Versucht eine E-Mail zu senden. Bei Erfolg wird das Ergebnis von <code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.4rem] px-1 py-px text-[0.9rem]">sendMail</code> zurückgegeben. Bei einem Fehler wird <code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.4rem] px-1 py-px text-[0.9rem]">false</code> zurückgegeben und eine Benutzerinfo.</p>

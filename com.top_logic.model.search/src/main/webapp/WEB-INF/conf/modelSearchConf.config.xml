@@ -652,7 +652,6 @@
 					<method name="dbConfig" class="com.top_logic.model.search.expr.config.operations.app.GetDBConfig$Builder"/>
 					<method name="appConfig" class="com.top_logic.model.search.expr.config.operations.app.GetAppConfig$Builder"/>
 					<method name="flatMap" class="com.top_logic.model.search.expr.config.operations.FlatMap$Builder"/>
-					
 				</methods>
 				<method-resolvers>
 					<method-resolver class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions$Module"/>

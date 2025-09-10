@@ -27,6 +27,7 @@ import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.DoubleDefault;
@@ -201,9 +202,19 @@ public class TLScriptMethod extends GenericMethod {
 			}
 		}
 
+		static String getDefaultScriptName(Method m) {
+			String scriptName = m.getName();
+			Name nameAnnotation = m.getAnnotation(Name.class);
+			if (nameAnnotation != null) {
+				scriptName = nameAnnotation.value();
+			}
+			return scriptName;
+		}
+
 		private ResKey key(Executable exectuable) {
+			// I18N are created using the default script name which is used as #getName()
 			return ResKey.forClass(exectuable.getDeclaringClass())
-				.suffix("." + exectuable.getName());
+				.suffix("." + getName());
 		}
 
 		private HTMLFragment parameterDescription(Parameter p) {

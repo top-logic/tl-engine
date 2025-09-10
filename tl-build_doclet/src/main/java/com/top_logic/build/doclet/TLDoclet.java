@@ -492,11 +492,16 @@ public class TLDoclet implements Doclet {
 				if (isSubType(classType, _wellKnown._exceptionType)) {
 					return "exception";
 				}
+				if (_wellKnown._tlScriptFunctionsType != null
+					&& isSubType(classType, _wellKnown._tlScriptFunctionsType)) {
+					return "tlscript";
+				}
 				return "class";
 			case ENUM:
 				return "enum";
 			case INTERFACE:
-				if (_wellKnown._configType != null && isSubType(classType, _wellKnown._configType)
+				if (_wellKnown._configType != null
+					&& isSubType(classType, _wellKnown._configType)
 					&& classType != _wellKnown._configType) {
 					return "config";
 				} else {
@@ -987,6 +992,14 @@ public class TLDoclet implements Doclet {
 	}
 
 	/**
+	 * Either the annotated Name or the method name.
+	 */
+	private String tlScriptName(ExecutableElement method) {
+		return _wellKnown.getAnnotatedName(method)
+			.orElseGet(() -> method.getSimpleName().toString());
+	}
+
+	/**
 	 * Writer creating
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -1012,6 +1025,8 @@ public class TLDoclet implements Doclet {
 				} else if (kind.equals("annotation")) {
 					collectType(type, type);
 					collectAnnotationElementDoc(type);
+				} else if (kind.equals("tlscript")) {
+					collectTLScriptDoc(type, isTLScriptMethod());
 				} else {
 					// Note: Even abstract classes must be documented, since e.g. services with
 					// multiple implementations are abstract, but only the abstract class is shown
@@ -1022,11 +1037,6 @@ public class TLDoclet implements Doclet {
 					}
 					else if (isI18NExtension(typeMirror)) {
 						collectI18NConstantDoc(type);
-					} else if (isTLScriptExtension(typeMirror)) {
-						collectMethodDoc(type, method -> {
-							Set<Modifier> modifiers = method.getModifiers();
-							return modifiers.contains(Modifier.PUBLIC) && modifiers.contains(Modifier.STATIC);
-						});
 					} else if (isThemeConstantsClass(typeMirror)) {
 						collectThemeConstantsDoc(type);
 					} else if (isWithPropertiesClass(typeMirror)) {
@@ -1037,6 +1047,13 @@ public class TLDoclet implements Doclet {
 				}
 			}
 
+		}
+
+		private Predicate<ExecutableElement> isTLScriptMethod() {
+			return method -> {
+				Set<Modifier> modifiers = method.getModifiers();
+				return modifiers.contains(Modifier.PUBLIC) && modifiers.contains(Modifier.STATIC);
+			};
 		}
 
 		/**
@@ -1275,10 +1292,15 @@ public class TLDoclet implements Doclet {
 											}
 										});
 										found = true;
-									} else if ("annotation"
-										.equals(kind(containingClass))) {
+									} else if ("annotation".equals(kind(containingClass))) {
 										buffer.append("<i>");
 										buffer.append(label(referencedElement, _startOfSentence));
+										buffer.appendClose(b -> b.append("</i>"));
+										found = true;
+									} else if ("tlscript".equals(kind(containingClass))
+										&& isTLScriptMethod().test((ExecutableElement) referencedElement)) {
+										buffer.append("<i>");
+										buffer.append(tlScriptName((ExecutableElement) referencedElement));
 										buffer.appendClose(b -> b.append("</i>"));
 										found = true;
 									}
@@ -1615,11 +1637,6 @@ public class TLDoclet implements Doclet {
 				&& isSubType(typeElement, _wellKnown._i18nConstantsType);
 		}
 
-		boolean isTLScriptExtension(TypeMirror typeElement) {
-			return _wellKnown._tlScriptFunctionsType != null
-				&& isSubType(typeElement, _wellKnown._tlScriptFunctionsType);
-		}
-
 		boolean isThemeConstantsClass(TypeMirror typeElement) {
 			return _wellKnown._themeConstantsType != null
 				&& isSubType(typeElement, _wellKnown._themeConstantsType);
@@ -1630,23 +1647,25 @@ public class TLDoclet implements Doclet {
 				&& isSubType(typeElement, _wellKnown._withPropertiesType);
 		}
 
-		private void collectMethodDoc(TypeElement type, Predicate<? super ExecutableElement> filter) {
+		private void collectTLScriptDoc(TypeElement type, Predicate<? super ExecutableElement> filter) {
 			for (ExecutableElement method : methodsIn(type)) {
 				if (!filter.test(method)) {
 					continue;
 				}
-				String methodKey = qualifiedName(type) + "." + asString(method);
-				Function<String, String> parameterKey = paramName -> methodKey + ".param." + paramName;
+				String scriptName = tlScriptName(method);
+				String methodKey = qualifiedName(type) + "." + scriptName;
+				_configDoc.setProperty(methodKey, label(method, scriptName, true));
 
+				Function<String, String> parameterKey = paramName -> methodKey + ".param." + paramName;
 				Map<String, VariableElement> parametersByName = method.getParameters()
 					.stream()
 					.collect(Collectors.toMap(p -> p.getSimpleName().toString(), Function.identity()));
 
 				// Write label for parameters
 				parametersByName.entrySet().forEach(k -> {
-					String annotatedLabel = getAnnotatedLabel(k.getValue());
-					if (annotatedLabel != null) {
-						_configDoc.setProperty(parameterKey.apply(k.getKey()), annotatedLabel);
+					String annotatedParamLabel = getAnnotatedLabel(k.getValue());
+					if (annotatedParamLabel != null) {
+						_configDoc.setProperty(parameterKey.apply(k.getKey()), annotatedParamLabel);
 					}
 				});
 
@@ -1692,11 +1711,6 @@ public class TLDoclet implements Doclet {
 						printWarning(method, "Missing description of return type of method '" + method + "'.");
 					}
 				}
-				String annotatedLabel = getAnnotatedLabel(method);
-				if (annotatedLabel != null) {
-					_configDoc.setProperty(methodKey, annotatedLabel);
-				}
-
 				String infoDoc = extractDoc(type, method).trim();
 				if (!infoDoc.isEmpty()) {
 					_configDoc.setProperty(tooltipKey(methodKey), infoDoc);

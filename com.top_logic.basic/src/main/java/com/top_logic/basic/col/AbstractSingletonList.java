@@ -9,6 +9,7 @@ import java.util.AbstractList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.RandomAccess;
 
 /**
  * {@link List} that contains exactly one non <code>null</code> element.
@@ -21,7 +22,7 @@ import java.util.List;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public abstract class AbstractSingletonList<T> extends AbstractList<T> {
+public abstract class AbstractSingletonList<T> extends AbstractList<T> implements RandomAccess {
 
 	@Override
 	public boolean add(T o) {

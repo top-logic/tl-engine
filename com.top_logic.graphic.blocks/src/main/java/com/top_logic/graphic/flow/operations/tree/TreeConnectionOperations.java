@@ -171,7 +171,7 @@ public interface TreeConnectionOperations extends Drawable {
 	 * @param fromY
 	 *        The Y position of the connector.
 	 * @param direction
-	 *        <code>-1<code> for a parent connector and <code>1</code> for a child connector.
+	 *        <code>-1</code> for a parent connector and <code>1</code> for a child connector.
 	 * @param connectorSymbol
 	 *        The symbol type.
 	 */

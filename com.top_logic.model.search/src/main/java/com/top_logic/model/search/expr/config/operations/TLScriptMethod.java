@@ -202,7 +202,7 @@ public class TLScriptMethod extends GenericMethod {
 			}
 		}
 
-		static String getDefaultScriptName(Method m) {
+		static String getLocalScriptName(Method m) {
 			String scriptName = m.getName();
 			Name nameAnnotation = m.getAnnotation(Name.class);
 			if (nameAnnotation != null) {
@@ -214,7 +214,7 @@ public class TLScriptMethod extends GenericMethod {
 		private ResKey key(Executable exectuable) {
 			// I18N are created using the default script name which is used as #getName()
 			return ResKey.forClass(exectuable.getDeclaringClass())
-				.suffix("." + getName());
+				.suffix("." + getLocalScriptName(_method));
 		}
 
 		private HTMLFragment parameterDescription(Parameter p) {

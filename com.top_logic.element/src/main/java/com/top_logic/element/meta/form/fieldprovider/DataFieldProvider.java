@@ -14,11 +14,16 @@ import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
 import com.top_logic.knowledge.gui.layout.upload.FileNameConstraint;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.control.DataItemControl;
+import com.top_logic.layout.form.control.ImageUploadControl;
 import com.top_logic.layout.form.model.DataField;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.values.edit.editor.AcceptedTypesChecker;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.ui.BinaryDisplay;
+import com.top_logic.model.annotate.ui.BinaryDisplay.BinaryPresentation;
 import com.top_logic.model.annotate.ui.TLAcceptedTypes;
+import com.top_logic.model.annotate.util.TLAnnotations;
 
 /**
  * {@link FieldProvider} for {@link TLStructuredTypePart}s of type {@link File}.
@@ -31,12 +36,37 @@ public class DataFieldProvider extends AbstractFieldProvider {
 	public FormMember createFormField(EditContext editContext, String fieldName) {
 		boolean isMandatory = editContext.isMandatory();
 		boolean isDisabled = editContext.isDisabled();
+		boolean isMultiple = editContext.isMultiple();
+
+		BinaryPresentation presentation =
+			TLAnnotations.getBinaryPresentation(editContext.getAnnotation(BinaryDisplay.class), isMultiple);
 
 		DataField field = FormFactory.newDataField(fieldName);
-
 		field.setMandatory(isMandatory);
 		field.setImmutable(isDisabled);
-		setAcceptedFileTypes(field, editContext.getAnnotation(TLAcceptedTypes.class));
+
+		TLAcceptedTypes acceptedTypes = editContext.getAnnotation(TLAcceptedTypes.class);
+		String accType = acceptedTypes != null ? acceptedTypes.getValue() : "";
+		String imgType = "image/*";
+		if (presentation == null && accType.equals(imgType)) {
+			presentation = BinaryPresentation.IMAGE_UPLOAD;
+		}
+
+		switch (presentation) {
+			case DATA_ITEM:
+				field.setControlProvider((model, style) -> new DataItemControl((DataField) model));
+				break;
+			case IMAGE_UPLOAD:
+				if (acceptedTypes != null && !accType.equals(imgType)) {
+					acceptedTypes.setValue("image/*");
+				}
+				field.setControlProvider((model, style) -> new ImageUploadControl((DataField) model));
+				break;
+			default:
+				throw BinaryPresentation.noSuchBinary(presentation);
+		}
+
+		setAcceptedFileTypes(field, acceptedTypes);
 
 		return field;
 	}

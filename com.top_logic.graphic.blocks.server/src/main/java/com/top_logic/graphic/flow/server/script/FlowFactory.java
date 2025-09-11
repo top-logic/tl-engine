@@ -68,12 +68,14 @@ import com.top_logic.graphic.flow.data.VerticalLayout;
 import com.top_logic.graphic.flow.server.ui.handler.ServerDropHandler;
 import com.top_logic.model.search.expr.ToString;
 import com.top_logic.model.search.expr.config.operations.ScriptConversion;
+import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 
 /**
  * Factory for flow chart diagram elements.
  */
+@ScriptPrefix("flow")
 public class FlowFactory extends TLScriptFunctions {
 	
 	/**
@@ -89,7 +91,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Create chart")
-	public static Diagram flowChart(
+	public static Diagram chart(
 		Box root,
 		String cssClass,
 		Object userObject
@@ -123,7 +125,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Create text")
-	public static Box flowText(
+	public static Box text(
 		@Mandatory String text,
 		String strokeStyle, 
 		String fillStyle, 
@@ -184,7 +186,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Align")
-	public static Decoration flowAlign(
+	public static Decoration align(
 		@Mandatory Box content,
 		Alignment hAlign,
 		Alignment vAlign,
@@ -216,7 +218,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Stack elements")
-	public static Stack flowStack(
+	public static Stack stack(
 			List<Box> contents,
 			String cssClass,
 			Object userObject) {
@@ -253,7 +255,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Create borders")
-	public static Decoration flowBorder(
+	public static Decoration border(
 		Box content,
 		@BooleanDefault(true) boolean top,
 		@BooleanDefault(true) boolean left,
@@ -294,7 +296,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Fill")
-	public static Decoration flowFill(
+	public static Decoration fill(
 			Box content,
 		@StringDefault("gray") @ScriptConversion(ToStyle.class) String fill,
 		String cssClass,
@@ -311,7 +313,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 * Factory for a box with an explicit position.
 	 * 
 	 * <p>
-	 * This can be used in combination with {@link #flowFloating(List, String, Object)}.
+	 * This can be used in combination with {@link #floating(List, String, Object)}.
 	 * </p>
 	 * 
 	 * @param content
@@ -340,7 +342,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Explicit position")
-	public static Box flowPosition(
+	public static Box position(
 			@Mandatory Box content,
 			Double x,
 			Double y,
@@ -414,7 +416,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Create padding")
-	public static Box flowPadding(
+	public static Box padding(
 		@Mandatory Box content,
 		Double all,
 		Double horizontal,
@@ -475,7 +477,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Align horizontal")
-	public static Box flowHorizontal(
+	public static Box horizontal(
 		@Mandatory List<Box> contents,
 		double gap,
 		SpaceDistribution distribution,
@@ -522,7 +524,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Align vertical")
-	public static Box flowVertical(
+	public static Box vertical(
 		@Mandatory List<Box> contents,
 		double gap,
 		SpaceDistribution distribution,
@@ -570,7 +572,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Create compass")
-	public static CompassLayout flowCompass(
+	public static CompassLayout compass(
 		@Mandatory Box center,
 		Box north,
 		Box west,
@@ -607,7 +609,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Create Grid")
-	public static Box flowGrid(
+	public static Box grid(
 		@Mandatory List<List<Box>> contents,
 		double gapX,
 		double gapY,
@@ -647,7 +649,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 * 
 	 * <p>
 	 * Use in combination with
-	 * {@link #flowPosition(Box, Double, Double, Double, Double, Double, Double, Double, Double, boolean, Object)}.
+	 * {@link #position(Box, Double, Double, Double, Double, Double, Double, Double, Double, boolean, Object)}.
 	 * </p>
 	 * 
 	 * @param contents
@@ -660,7 +662,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Create positioning box")
-	public static Box flowFloating(
+	public static Box floating(
 			@Mandatory List<? extends Box> contents,
 			String cssClass,
 			Object userObject) {
@@ -682,7 +684,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Empty box")
-	public static Box flowEmpty(
+	public static Box empty(
 		double minWidth,
 		double minHeight,
 		String cssClass,
@@ -722,7 +724,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Create image")
-	public static Box flowImage(
+	public static Box image(
 		@Mandatory Object data,
 		Double width,
 		Double height,
@@ -803,7 +805,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Make selectable")
-	public static Box flowSelection(
+	public static Box selection(
 			@Mandatory Box content,
 		String cssClass,
 		Object userObject
@@ -831,7 +833,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("React on click")
-	public static Box flowClickTarget(
+	public static Box clickTarget(
 			@Mandatory Box content,
 			@Mandatory ClickHandler clickHandler,
 			List<MouseButton> buttons,
@@ -861,7 +863,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Create drop region")
-	public static Box flowDropRegion(
+	public static Box dropRegion(
 			@Mandatory Box content,
 			@Mandatory ServerDropHandler dropHandler,
 			String cssClass,
@@ -888,7 +890,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Add tooltip")
-	public static Box flowTooltip(
+	public static Box tooltip(
 			@Mandatory String text,
 			@Mandatory Box content,
 			String cssClass,
@@ -940,7 +942,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Create tree")
-	public static Box flowTree(
+	public static Box tree(
 		@Mandatory List<? extends Box> nodes, 
 		@Mandatory List<? extends TreeConnection> connections,
 		@DoubleDefault(40) double gapX, 
@@ -1006,7 +1008,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Create connection")
-	public static TreeConnection flowConnection(
+	public static TreeConnection connection(
 		@Mandatory Object parent,
 		@Mandatory Object child,
 		Double thickness,
@@ -1053,7 +1055,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Create edge decoration")
-	public static EdgeDecoration flowDecoration(
+	public static EdgeDecoration decoration(
 			Box content,
 			String cssClass,
 			Object userObject,
@@ -1084,7 +1086,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Create connector")
-	public static TreeConnector flowConnector(
+	public static TreeConnector connector(
 		@Mandatory Box anchor,
 		@DoubleDefault(0.5) double pos,
 		ConnectorSymbol symbol,
@@ -1117,11 +1119,11 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("2D point")
-	public static Point flowPoint(double x, double y) {
+	public static Point point(double x, double y) {
 		return Point.create().setX(x).setY(y);
 	}
 
-	private static PolygonalChain flowPolygonalChain(
+	private static PolygonalChain polygonalChain(
 			List<Point> points,
 			boolean closed,
 			String fillStyle,
@@ -1166,7 +1168,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Create polygon")
-	public static PolygonalChain flowPolygon(
+	public static PolygonalChain polygon(
 			List<Point> points,
 			@StringDefault("none") String fillStyle,
 			@StringDefault("black") @ScriptConversion(ToStyle.class) String stroke,
@@ -1174,7 +1176,7 @@ public class FlowFactory extends TLScriptFunctions {
 			List<Double> dashes,
 			String cssClass,
 			Object userObject) {
-		return flowPolygonalChain(points, true, fillStyle, stroke, thickness, dashes, cssClass, userObject);
+		return polygonalChain(points, true, fillStyle, stroke, thickness, dashes, cssClass, userObject);
 	}
 
 	/**
@@ -1198,7 +1200,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Create poly line")
-	public static PolygonalChain flowPolyline(
+	public static PolygonalChain polyline(
 			List<Point> points,
 			@StringDefault("none") String fillStyle,
 			@StringDefault("black") @ScriptConversion(ToStyle.class) String stroke,
@@ -1206,7 +1208,7 @@ public class FlowFactory extends TLScriptFunctions {
 			List<Double> dashes,
 			String cssClass,
 			Object userObject) {
-		return flowPolygonalChain(points, false, fillStyle, stroke, thickness, dashes, cssClass, userObject);
+		return polygonalChain(points, false, fillStyle, stroke, thickness, dashes, cssClass, userObject);
 	}
 
 	/**
@@ -1222,7 +1224,7 @@ public class FlowFactory extends TLScriptFunctions {
 	 */
 	@SideEffectFree
 	@Label("Clip content")
-	public static ClipBox flowClipbox(
+	public static ClipBox clipbox(
 			@Mandatory Box content,
 			String cssClass,
 			Object userObject) {

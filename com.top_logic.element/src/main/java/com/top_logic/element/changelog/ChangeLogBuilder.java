@@ -27,6 +27,8 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.LongID;
 import com.top_logic.basic.SessionContext;
 import com.top_logic.basic.TLID;
+import com.top_logic.basic.col.LongRange;
+import com.top_logic.basic.col.LongRangeSet;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.db.sql.SQLSelect;
 import com.top_logic.basic.sql.ConnectionPool;
@@ -57,7 +59,6 @@ import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.BasicTypes;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryManager;
-import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Revision;
@@ -126,7 +127,11 @@ public class ChangeLogBuilder {
 		_hm = kb.getHistoryManager();
 
 		_startRev = _hm.getRevision(1);
-		_stopRev = _hm.getRevision(_hm.getLastRevision());
+		_stopRev = toRevision(_hm.getLastRevision());
+	}
+
+	private Revision toRevision(long commitNumber) {
+		return _hm.getRevision(commitNumber);
 	}
 
 	/**
@@ -228,15 +233,72 @@ public class ChangeLogBuilder {
 	 * Retrieves the change sets.
 	 */
 	public Collection<com.top_logic.element.changelog.model.ChangeSet> build() {
+		// all log messages. Sorted in descending order
 		List<com.top_logic.element.changelog.model.ChangeSet> log = new ArrayList<>();
+		// temporary list containing messages for a read range. Sorted in ascending order.
+		List<com.top_logic.element.changelog.model.ChangeSet> logsInRange = new ArrayList<>();
 
 		analyzeModel();
 
-		TLID authorIdFilter = _author == null ? null : _author.tIdLocal();
-		Revision startRev = computeActualStartRev();
+		List<LongRange> revisionRanges = getRevisionRanges();
+		processRevisions:
+		for (int i = revisionRanges.size() - 1; i >= 0; i--) {
+			logsInRange.clear();
+			LongRange range = revisionRanges.get(i);
 
+			long start = range.getStartValue();
+			long stop = range.getEndValue();
+
+			if (limitEntryCount()) {
+				while (true) {
+					/* Fetch a little bit more revisions than required because there may be
+					 * additional empty or technical changes, which are not reported. */
+					long maxFetchEntries = (long) ((_numberEntries - log.size()) * 1.5);
+
+					long chunkStop = Long.min(stop, start + maxFetchEntries);
+					readChanges(logsInRange, start, chunkStop);
+					// entries in log are sorted descending
+					Collections.reverse(logsInRange);
+					log.addAll(logsInRange);
+
+					int remaining = _numberEntries - log.size();
+					if (remaining == 0) {
+						// log list has correct size
+						break processRevisions;
+					}
+					if (remaining < 0) {
+						// log list is to long, skip oldest entries
+						log.subList(_numberEntries, log.size()).clear();
+						break processRevisions;
+					}
+
+					if (chunkStop == stop) {
+						break;
+					}
+					start = chunkStop + 1;
+				}
+			} else {
+				readChanges(logsInRange, start, stop);
+
+				// entries in log are sorted descending
+				Collections.reverse(logsInRange);
+				log.addAll(logsInRange);
+			}
+
+		}
+
+		// Return entries ascending
+		Collections.reverse(log);
+		return log;
+	}
+
+	private void readChanges(List<com.top_logic.element.changelog.model.ChangeSet> out, long start, long stop) {
+
+		TLID authorIdFilter = _author == null ? null : _author.tIdLocal();
 		Branch branch = _hm.getTrunk();
-		try (ChangeSetReader reader = _kb.getDiffReader(startRev, branch, _stopRev, branch, true)) {
+
+		try (ChangeSetReader reader =
+			_kb.getDiffReader(toRevision(start), branch, toRevision(stop), branch, true)) {
 			while (true) {
 				ChangeSet changeSet = reader.read();
 				if (changeSet == null) {
@@ -263,67 +325,56 @@ public class ChangeLogBuilder {
 					continue;
 				}
 
-				log.add(entry);
+				out.add(entry);
 			}
 		}
-
-		int fetchedRevisions = log.size();
-		if (limitEntryCount() && fetchedRevisions > _numberEntries) {
-			return log.subList(fetchedRevisions - _numberEntries, fetchedRevisions);
-		}
-
-		return log;
 	}
 
-	private Revision computeActualStartRev() {
+	private List<LongRange> getRevisionRanges() {
+		long startRev = _startRev.getCommitNumber();
+		long stopRev = _stopRev.getCommitNumber();
 		if (_author == null) {
-			return _startRev;
+			return LongRangeSet.range(startRev, stopRev);
 		}
-		if (!limitEntryCount()) {
-			return _startRev;
-		}
+
 		MOClass revisionType = BasicTypes.getRevisionType(_kb);
 		MOAttribute revAttribute = revisionType.getAttribute(BasicTypes.REVISION_REV_ATTRIBUTE);
 		String revDBName = revAttribute.getDbMapping()[0].getDBName();
 		MOAttribute authorAttribute = revisionType.getAttribute(RevisionType.AUTHOR_ATTRIBUTE_NAME);
 		String authorDBName = authorAttribute.getDbMapping()[0].getDBName();
-		
-		int maxEntries = _numberEntries;
-		if (!_includeTechnical) {
-			// Heuristics: Suppose for each actual commit a technical one.
-			maxEntries *= 2;
-		}
-		SQLSelect select = select(true,
+
+		SQLSelect select = selectDistinct(
 			columns(columnDef(column(revDBName), revDBName)),
 			table(revisionType.getDBMapping().getDBName()),
 			and(
 				le(parameter(DBType.LONG, "startRev"), column(revDBName)),
+				ge(parameter(DBType.LONG, "stopRev"), column(revDBName)),
 				eqSQL(parameter(DBType.STRING, "author"), column(authorDBName))),
-			orders(order(true, column(revDBName))),
-			limit(literalInteger(maxEntries - 1), literalInteger(maxEntries)));
+			orders(order(false, column(revDBName))));
 		try {
 			ConnectionPool pool = KBUtils.getConnectionPool(_kb);
 			CompiledStatement sql = query(
 				parameters(
 					parameterDef(DBType.LONG, "startRev"),
+					parameterDef(DBType.LONG, "stopRev"),
 					parameterDef(DBType.STRING, "author")),
 				select)
-				.toSql(pool.getSQLDialect());
+					.toSql(pool.getSQLDialect());
 			PooledConnection con = pool.borrowReadConnection();
 			try {
-				ResultSet res = sql.executeQuery(con, _startRev.getCommitNumber(), TLSessionContext.contextId(_author));
-				if (res.next()) {
-					long actualStartRev = res.getLong(revDBName);
-					return HistoryUtils.getRevision(actualStartRev);
-				} else {
-					return _startRev;
+				ResultSet res = sql.executeQuery(con, startRev, stopRev, TLSessionContext.contextId(_author));
+				List<LongRange> result = LongRangeSet.EMPTY_SET;
+				while (res.next()) {
+					long rev = res.getLong(revDBName);
+					result = LongRangeSet.union(result, LongRangeSet.range(rev, rev));
 				}
+				return result;
 			} finally {
 				pool.releaseReadConnection(con);
 			}
 		} catch (SQLException ex) {
 			Logger.error("Error determining start revision based on max entry count.", ex, ChangeLogBuilder.class);
-			return _startRev;
+			return LongRangeSet.range(startRev, stopRev);
 		}
 	}
 

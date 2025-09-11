@@ -169,7 +169,7 @@ public class DiagramControl extends AbstractControlBase
 
 	@Override
 	protected boolean hasUpdates() {
-		return _graphScope.hasChanges();
+		return _graphScope != null && _graphScope.hasChanges();
 	}
 
 	@Override

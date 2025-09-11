@@ -73,6 +73,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
@@ -398,7 +399,7 @@ public class ChangeLogBuilder {
 				}
 		
 				TLObject object = _kb.resolveObjectKey(creation.getOriginalObject()).getWrapper();
-				if (excludedByModule(object)) {
+				if (excludedByModule(object) || isPersistentCacheObject(object)) {
 					continue;
 				}
 		
@@ -411,6 +412,14 @@ public class ChangeLogBuilder {
 		
 				_entry.addChange(change);
 			}
+		}
+
+		private boolean isPersistentCacheObject(TLObject object) {
+			return TLAnnotations.isPersistentCache(object.tType());
+		}
+
+		private boolean isPersistentCacheAttribute(TLStructuredTypePart part) {
+			return TLAnnotations.isPersistentCache(part);
 		}
 
 		private void analyzeUpdates() {
@@ -427,7 +436,7 @@ public class ChangeLogBuilder {
 				}
 		
 				TLObject newObject = _kb.resolveObjectKey(update.getOriginalObject()).getWrapper();
-				if (excludedByModule(newObject)) {
+				if (excludedByModule(newObject) || isPersistentCacheObject(newObject)) {
 					continue;
 				}
 		
@@ -454,6 +463,10 @@ public class ChangeLogBuilder {
 					TLStructuredTypePart part = partByColumn.get(storageAttribute);
 					if (part == null) {
 						// A change that has no model representation, ignore.
+						continue;
+					}
+					if (isPersistentCacheAttribute(part)) {
+						// Value is just a persistent cache, ignore.
 						continue;
 					}
 
@@ -488,7 +501,7 @@ public class ChangeLogBuilder {
 				KnowledgeItem item =
 					_kb.resolveObjectKey(deletion.getObjectId().toObjectKey(_changeSet.getRevision() - 1));
 				TLObject object = item.getWrapper();
-				if (excludedByModule(object)) {
+				if (excludedByModule(object) || isPersistentCacheObject(object)) {
 					continue;
 				}
 
@@ -528,7 +541,7 @@ public class ChangeLogBuilder {
 					}
 
 					TLObject newObject = _kb.resolveObjectKey(newId).getWrapper();
-					if (excludedByModule(newObject)) {
+					if (excludedByModule(newObject) || isPersistentCacheObject(newObject)) {
 						continue;
 					}
 					ObjectKey partId = descriptor.getPartId(change.getValues());
@@ -547,6 +560,10 @@ public class ChangeLogBuilder {
 						partKI = _kb.resolveObjectKey(inRevision(partId, revision));
 					}
 					TLStructuredTypePart part = partKI.getWrapper();
+					if (isPersistentCacheAttribute(part)) {
+						// Value is just a persistent cache, ignore.
+						continue;
+					}
 
 					enter(newObject).add(part);
 				}

@@ -118,15 +118,22 @@ public class License extends de.haumacher.msgbuf.data.AbstractDataObject impleme
 		return LICENSE__TYPE;
 	}
 
-	private static java.util.List<String> PROPERTIES = java.util.Collections.unmodifiableList(
-		java.util.Arrays.asList(
+	static final java.util.List<String> PROPERTIES;
+	static {
+		java.util.List<String> local = java.util.Arrays.asList(
 			NAME__PROP, 
 			URL__PROP, 
-			COMMENTS__PROP));
+			COMMENTS__PROP);
+		PROPERTIES = java.util.Collections.unmodifiableList(local);
+	}
 
-	private static java.util.Set<String> TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(new java.util.HashSet<>(
-			java.util.Arrays.asList(
-				)));
+	static final java.util.Set<String> TRANSIENT_PROPERTIES;
+	static {
+		java.util.HashSet<String> tmp = new java.util.HashSet<>();
+		tmp.addAll(java.util.Arrays.asList(
+				));
+		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
+	}
 
 	@Override
 	public java.util.List<String> properties() {

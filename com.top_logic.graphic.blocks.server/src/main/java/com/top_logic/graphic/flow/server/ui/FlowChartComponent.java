@@ -5,7 +5,6 @@
  */
 package com.top_logic.graphic.flow.server.ui;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -210,8 +209,6 @@ public class FlowChartComponent extends BuilderComponent
 	protected void handleNewModel(Object newModel) {
 		super.handleNewModel(newModel);
 
-		List<?> selectionBefore = new ArrayList<>(_selectionModel.getSelection());
-
 		Diagram before = _control.getModel();
 		if (before != null) {
 			before.unregisterListener(_processUISelection);
@@ -229,16 +226,15 @@ public class FlowChartComponent extends BuilderComponent
 			_observedIndex = diagram.getRoot()
 				.visit(new ObservedIndexCreator(node -> builder().getObserved(node, this)), null).getIndex();
 
-			// Remove objects from selection that are no longer present in the diagram.
-			for (Object oldSelected : selectionBefore) {
-				if (!_selectableIndex.containsKey(oldSelected)) {
-					_selectionModel.setSelected(oldSelected, false);
-				}
+			Collection<?> oldSelection = SearchExpression.asCollection(getSelected());
+			Collection<?> newSelection = oldSelection.stream()
+				.filter(x -> _selectableIndex.containsKey(x)).toList();
+			if (newSelection.size() != oldSelection.size()) {
+				setSelected(newSelection);
 			}
 
 			// Update the visible selection.
-			Collection<?> selection = SearchExpression.asCollection(getSelected());
-			List<SelectableBox> selectedBoxes = selection.stream()
+			List<SelectableBox> selectedBoxes = newSelection.stream()
 				.<SelectableBox> flatMap(x -> CollectionUtil.toCollection(_selectableIndex.get(x)).stream()).toList();
 			diagram.setSelection(selectedBoxes);
 			for (SelectableBox box : selectedBoxes) {

@@ -5,6 +5,7 @@
  */
 package com.top_logic.graphic.flow.server.ui;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -89,12 +90,15 @@ public class FlowChartComponent extends BuilderComponent
 		}
 	};
 
-	private final SelectionListener _updateChannelSelection = new SelectionListener() {
+	private final SelectionListener<Object> _updateChannelSelection = new SelectionListener<>() {
 		@Override
-		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
+		public void notifySelectionChanged(SelectionModel<Object> model, SelectionEvent<Object> event) {
 			// Forward selection to component channel.
-			List<Object> selectedUserObjects = event.getNewSelection().stream()
-				.map(s -> s instanceof Widget w ? w.getUserObject() : null).filter(Objects::nonNull).toList();
+			Set<?> selectedUserObjects = event.getNewSelection().stream()
+				.map(s -> s instanceof Widget w ? w.getUserObject() : null)
+				.filter(Objects::nonNull)
+				.collect(Collectors.toSet());
+
 			setSelected(selectedUserObjects);
 		}
 	};
@@ -220,8 +224,6 @@ public class FlowChartComponent extends BuilderComponent
 		}
 
 		if (diagram != null) {
-			diagram.registerListener(_processUISelection);
-
 			_selectableIndex = diagram.getRoot().visit(new SelectableIndexCreator(), null).getIndex();
 			_observedIndex = diagram.getRoot()
 				.visit(new ObservedIndexCreator(node -> builder().getObserved(node, this)), null).getIndex();
@@ -233,13 +235,26 @@ public class FlowChartComponent extends BuilderComponent
 				setSelected(newSelection);
 			}
 
-			// Update the visible selection.
-			List<SelectableBox> selectedBoxes = newSelection.stream()
-				.<SelectableBox> flatMap(x -> CollectionUtil.toCollection(_selectableIndex.get(x)).stream()).toList();
-			diagram.setSelection(selectedBoxes);
-			for (SelectableBox box : selectedBoxes) {
-				box.setSelected(true);
+			boolean removed = _selectionModel.removeSelectionListener(_updateChannelSelection);
+			try {
+				_selectionModel.clear();
+
+				// Update the visible selection.
+				Set<SelectableBox> selectedBoxes = newSelection.stream()
+					.<SelectableBox> flatMap(x -> CollectionUtil.toCollection(_selectableIndex.get(x)).stream())
+					.collect(Collectors.toSet());
+				diagram.setSelection(new ArrayList<>(selectedBoxes));
+				for (SelectableBox box : selectedBoxes) {
+					box.setSelected(true);
+				}
+				_selectionModel.setSelection(selectedBoxes);
+			} finally {
+				if (removed) {
+					_selectionModel.addSelectionListener(_updateChannelSelection);
+				}
 			}
+
+			diagram.registerListener(_processUISelection);
 		} else {
 			_selectableIndex = Collections.emptyMap();
 			_observedIndex = Collections.emptyMap();

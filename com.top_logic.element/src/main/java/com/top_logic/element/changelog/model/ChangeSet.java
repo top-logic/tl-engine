@@ -159,27 +159,28 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 					if (part.getModelKind() == ModelKind.REFERENCE) {
 						TLReference reference = (TLReference) part;
 
-						Map<ObjectReference, TLObject> newCompositeParts =
-							CollectionUtilShared.asCollection(toDelete.tValue(reference))
-							.stream()
-							.map(TLObject.class::cast)
-							.collect(
-								Collectors.toMap(WrapperHistoryUtils::getUnversionedIdentity, Functions.identity()));
-						CollectionUtilShared.asCollection(deleted.tValue(reference))
-							.stream()
-							.map(TLObject.class::cast)
-							.map(WrapperHistoryUtils::getUnversionedIdentity)
-							.forEach(newCompositeParts.keySet()::remove);
 						if (reference.isComposite()) {
+							Map<ObjectReference, TLObject> newCompositeParts =
+								CollectionUtilShared.asCollection(toDelete.tValue(reference))
+									.stream()
+									.map(TLObject.class::cast)
+									.collect(
+										Collectors.toMap(WrapperHistoryUtils::getUnversionedIdentity,
+											Functions.identity()));
+							CollectionUtilShared.asCollection(deleted.tValue(reference))
+								.stream()
+								.map(TLObject.class::cast)
+								.map(WrapperHistoryUtils::getUnversionedIdentity)
+								.forEach(newCompositeParts.keySet()::remove);
 							/* Clear composition references to make sure that only those objects are
 							 * deleted that are requested to delete. */
 							toDelete.tUpdate(reference, null);
+							/* Delete additional composite parts that were not referenced at
+							 * deletion time to simulate automatic deletion of referenced objects.
+							 * Objects that were referenced at deletion time should have an own
+							 * deletion entry in the change set. */
+							KBUtils.deleteAll(newCompositeParts.values());
 						}
-						/* Delete additional composite parts that were not referenced at deletion
-						 * time to simulate automatic deletion of referenced objects. Objects that
-						 * were referenced at deletion time should have an own deletion entry in the
-						 * change set. */
-						KBUtils.deleteAll(newCompositeParts.values());
 					}
 				}
 

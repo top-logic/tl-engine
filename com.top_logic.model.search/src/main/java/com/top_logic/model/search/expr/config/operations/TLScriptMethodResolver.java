@@ -71,6 +71,7 @@ public class TLScriptMethodResolver extends AbstractConfiguredInstance<TLScriptM
 
 		Map<String, TLScriptMethod.Builder> buildersByName = new HashMap<>();
 		for (Class<?> methodsClass : allTLScriptFunctions) {
+			String scriptPrefix = computeScriptPrefix(methodsClass);
 			for (Method m : methodsClass.getDeclaredMethods()) {
 				if (m.isSynthetic()) {
 					continue;
@@ -81,7 +82,8 @@ public class TLScriptMethodResolver extends AbstractConfiguredInstance<TLScriptM
 				if (!Modifier.isPublic(m.getModifiers())) {
 					continue;
 				}
-				String scriptName = Builder.getDefaultScriptName(m);
+				String localScriptName = Builder.getLocalScriptName(m);
+				String scriptName = prefixLocalName(scriptPrefix, localScriptName);
 				String qualifiedMethodName =
 						methodsClass.getCanonicalName() + TLScriptMethod.Builder.METHOD_SEPARATOR + m.getName();
 				
@@ -109,6 +111,49 @@ public class TLScriptMethodResolver extends AbstractConfiguredInstance<TLScriptM
 		_factories = _buildersByName.entrySet()
 			.stream()
 			.collect(Collectors.toMap(Entry::getKey, e -> new SearchBuilder.BuilderFactory(e.getValue())));
+	}
+
+	private String prefixLocalName(String scriptPrefix, String localScriptName) {
+		if (scriptPrefix.isEmpty()) {
+			return localScriptName;
+		}
+		if (Character.isUpperCase(localScriptName.charAt(0))) {
+			return scriptPrefix + localScriptName;
+		}
+		StringBuilder builder = new StringBuilder(scriptPrefix);
+		builder.append(localScriptName);
+		// Ensure CamelCase
+		builder.setCharAt(scriptPrefix.length(), Character.toUpperCase(localScriptName.charAt(0)));
+		return builder.toString();
+	}
+
+	private String computeScriptPrefix(Class<?> methodsClass) {
+		ScriptPrefix scriptPrefix = methodsClass.getDeclaredAnnotation(ScriptPrefix.class);
+		if (scriptPrefix != null) {
+			return scriptPrefix.value();
+		}
+		String className = methodsClass.getSimpleName();
+		if (Character.isLowerCase(className.charAt(0))) {
+			return className;
+		}
+		char[] charArray = className.toCharArray();
+		int firstLowerCaseChar = -1;
+		for (int i = 1; i < charArray.length; i++) {
+			if (Character.isLowerCase(charArray[i])) {
+				firstLowerCaseChar = i;
+				break;
+			}
+			toLowerCase(charArray, i - 1);
+		}
+		if (firstLowerCaseChar == -1) {
+			// all upper case transform last char to lower case.
+			toLowerCase(charArray, charArray.length - 1);
+		}
+		return String.valueOf(charArray);
+	}
+
+	private static void toLowerCase(char[] value, int index) {
+		value[index] = Character.toLowerCase(value[index]);
 	}
 
 	private static TLScriptMethod.Builder.Config asBuilderConfig(ConfigurationItem c) {

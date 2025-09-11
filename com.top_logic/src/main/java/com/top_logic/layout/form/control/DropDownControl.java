@@ -216,7 +216,7 @@ public class DropDownControl extends AbstractSelectControl {
 		addJSFunction(out, "buttonDrop", "event", "this");
 		out.endAttribute();
 		out.beginAttribute(ONKEYDOWN_ATTR);
-		addJSFunction(out, "keyPressed", "event, " + isMultiple());
+		addJSFunction(out, "keyPressed", "event", Boolean.toString(isMultiple()));
 		out.endAttribute();
 	}
 
@@ -263,10 +263,10 @@ public class DropDownControl extends AbstractSelectControl {
 
 	private void addSearchEvents(TagWriter out) throws IOException {
 		out.beginAttribute(ONFOCUSOUT_ATTR);
-		addJSFunction(out, "lostFocus", null);
+		addJSFunction(out, "lostFocus");
 		out.endAttribute();
 		out.beginAttribute(ONKEYDOWN_ATTR);
-		addJSFunction(out, "keyPressed", "event, " + isMultiple());
+		addJSFunction(out, "keyPressed", "event", Boolean.toString(isMultiple()));
 		out.endAttribute();
 		out.beginAttribute(ONINPUT_ATTR);
 		addJSFunction(out, "search", "this");
@@ -343,13 +343,13 @@ public class DropDownControl extends AbstractSelectControl {
 
 	private void addItemEvents(TagWriter out) throws IOException {
 		out.beginAttribute(ONMOUSEOVER_ATTR);
-		addJSFunction(out, "setItemActive", "this, true, true");
+		addJSFunction(out, "setItemActive", "this", "true", "true");
 		out.endAttribute();
 		out.beginAttribute(ONFOCUSOUT_ATTR);
-		addJSFunction(out, "lostFocus", null);
+		addJSFunction(out, "lostFocus");
 		out.endAttribute();
 		out.beginAttribute(ONKEYDOWN_ATTR);
-		addJSFunction(out, "keyPressed", "event, " + isMultiple());
+		addJSFunction(out, "keyPressed", "event", Boolean.toString(isMultiple()));
 		out.endAttribute();
 		out.beginAttribute(ONCLICK_ATTR);
 		addJSFunction(out, "selectItem", "this");
@@ -429,7 +429,7 @@ public class DropDownControl extends AbstractSelectControl {
 		out.append("ddwttTagX");
 		out.endCssClasses();
 		out.beginAttribute(ONCLICK_ATTR);
-		addJSFunction(out, "removeTag", "this.parentElement, '" + itemID + "'");
+		addJSFunction(out, "removeTag", "this.parentElement", "'" + itemID + "'");
 		out.endAttribute();
 		xButton.endEmptyTag(context, out);
 	}
@@ -443,15 +443,13 @@ public class DropDownControl extends AbstractSelectControl {
 		out.append("(");
 
 		boolean first = true;
-		if (args != null) {
-			for (String custom : args) {
-				if (first) {
-					first = false;
-				} else {
-					out.append(", ");
-				}
-				out.append(custom);
+		for (String custom : args) {
+			if (first) {
+				first = false;
+			} else {
+				out.append(", ");
 			}
+			out.append(custom);
 		}
 		if (showWait(this)) {
 			if (first) {

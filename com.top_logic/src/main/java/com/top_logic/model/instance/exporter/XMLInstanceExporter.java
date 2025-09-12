@@ -113,8 +113,9 @@ public class XMLInstanceExporter {
 			return;
 		}
 
-		ObjectConf conf = exportObject(obj);
-		_objects.getObjects().add(conf);
+		Integer id = nextId();
+		_exportIds.put(obj, id);
+		_queue.add(obj);
 	}
 
 	private ObjectConf exportObject(TLObject obj) {

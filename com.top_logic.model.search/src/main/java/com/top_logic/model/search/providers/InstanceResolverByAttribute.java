@@ -16,8 +16,10 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.ModelKind;
@@ -47,19 +49,34 @@ public class InstanceResolverByAttribute extends AbstractConfiguredInstance<Inst
 	 * Configuration options for {@link InstanceResolverByIndex}.
 	 */
 	@TagName("resolver-by-attribute")
+	@DisplayOrder({
+		Config.TYPE,
+		Config.ATTRIBUTE,
+	})
 	public interface Config<I extends InstanceResolverByAttribute> extends PolymorphicConfiguration<I> {
+		/**
+		 * @see #getType()
+		 */
+		String TYPE = "type";
+
+		/**
+		 * @see #getAttribute()
+		 */
+		String ATTRIBUTE = "attribute";
 
 		/**
 		 * The type to resolve.
 		 */
+		@Name(TYPE)
 		@Mandatory
 		TLModelPartRef getType();
 
 		/**
 		 * The identifying attribute.
 		 */
+		@Name(ATTRIBUTE)
 		@Mandatory
-		@Options(fun = PrimitiveAttributesOfType.class, args = @Ref("type"), mapping = TLModelPartRef.PartMapping.class)
+		@Options(fun = PrimitiveAttributesOfType.class, args = @Ref(TYPE), mapping = TLModelPartRef.PartMapping.class)
 		TLModelPartRef getAttribute();
 
 		/**

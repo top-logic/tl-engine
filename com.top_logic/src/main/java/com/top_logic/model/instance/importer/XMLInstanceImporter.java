@@ -187,34 +187,41 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	 * 
 	 * @param objects
 	 *        The description of the objects to import.
+	 * @return The top-level objects that were present in the given configuration.
 	 */
-	public void importInstances(ObjectsConf objects) {
+	public List<TLObject> importInstances(ObjectsConf objects) {
 		for (ResolverDef def : objects.getResolvers().values()) {
 			InstanceResolver resolver = TypedConfigUtil.createInstance(def.getImpl());
 			addResolver(def.getType().qualifiedName(), resolver);
 		}
 
 		List<ObjectConf> configs = objects.getObjects();
-		importInstances(configs);
+		return importInstances(configs);
 	}
 
 	/**
 	 * Instantiates all given confiurations.
+	 * 
+	 * @return The objects imported from the given configurations.
 	 */
-	public void importInstances(List<ObjectConf> configs) {
+	public List<TLObject> importInstances(List<ObjectConf> configs) {
+		List<TLObject> result = new ArrayList<>();
 		for (ObjectConf config : configs) {
-			createObject(config);
+			TLObject obj = createObject(config);
+			result.add(obj);
 		}
 
 		for (ObjectConf config : configs) {
 			importObject(config);
 		}
+		return result;
 	}
 
-	private void createObject(ObjectConf config) {
+	private TLObject createObject(ObjectConf config) {
 		TLClass type = (TLClass) TLModelUtil.findType(_model, config.getType());
 		TLObject obj = _factory.createObject(type);
 		addObject(config.getId(), obj);
+		return obj;
 	}
 
 	private TLObject importObject(ObjectConf config) {

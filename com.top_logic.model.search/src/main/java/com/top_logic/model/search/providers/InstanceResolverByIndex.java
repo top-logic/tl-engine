@@ -10,9 +10,9 @@ import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.instance.exporter.XMLInstanceExporter;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
@@ -27,7 +27,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  */
 public class InstanceResolverByIndex implements InstanceResolver {
 
-	private TLClass _type;
+	private TLStructuredType _type;
 
 	private TLStructuredTypePart _part;
 
@@ -46,7 +46,7 @@ public class InstanceResolverByIndex implements InstanceResolver {
 	 *        The identifying primitive attribute.
 	 */
 	@CalledByReflection
-	public InstanceResolverByIndex(TLClass type, TLStructuredTypePart part) throws ParseException {
+	public InstanceResolverByIndex(TLStructuredType type, TLStructuredTypePart part) throws ParseException {
 		_type = type;
 		_part = part;
 		_idType = (TLPrimitive) _part.getType();

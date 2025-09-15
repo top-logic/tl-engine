@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.instance.importer.resolver;
 
+import com.top_logic.basic.Log;
 import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -13,7 +14,15 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 
 /**
- * {@link InstanceResolver} that can resolve any persistent object based on its {@link ObjectKey}.
+ * {@link InstanceResolver} that can resolve any persistent object based on its internal
+ * {@link ObjectKey}.
+ * 
+ * <p>
+ * Note: When this resolver is used, the export becomes system-dependent. This means, that the
+ * exported objects can only be re-imported into the same system they were exported from. This makes
+ * this resolver not usable for scenarios where the exported objects must be transfered between
+ * systems.
+ * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -39,7 +48,7 @@ public class PersistentObjectResolver implements InstanceResolver {
 	}
 
 	@Override
-	public TLObject resolve(String kind, String id) {
+	public TLObject resolve(Log log, String kind, String id) {
 		ObjectKey key;
 		try {
 			key = ObjectKey.fromStringObjectKey(_kb.getMORepository(), id);

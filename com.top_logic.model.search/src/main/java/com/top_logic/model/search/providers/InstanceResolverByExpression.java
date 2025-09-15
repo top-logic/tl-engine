@@ -6,7 +6,6 @@
 package com.top_logic.model.search.providers;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.Log;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
@@ -14,6 +13,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -79,7 +79,7 @@ public class InstanceResolverByExpression extends AbstractConfiguredInstance<Ins
 	}
 
 	@Override
-	public TLObject resolve(Log log, String kind, String id) {
+	public TLObject resolve(I18NLog log, String kind, String id) {
 		return SearchExpression.asTLObject(_resolver.getSearch(), _resolver.execute(id));
 	}
 

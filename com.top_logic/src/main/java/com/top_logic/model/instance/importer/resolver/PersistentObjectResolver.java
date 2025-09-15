@@ -5,7 +5,7 @@
  */
 package com.top_logic.model.instance.importer.resolver;
 
-import com.top_logic.basic.Log;
+import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -48,7 +48,7 @@ public class PersistentObjectResolver implements InstanceResolver {
 	}
 
 	@Override
-	public TLObject resolve(Log log, String kind, String id) {
+	public TLObject resolve(I18NLog log, String kind, String id) {
 		ObjectKey key;
 		try {
 			key = ObjectKey.fromStringObjectKey(_kb.getMORepository(), id);

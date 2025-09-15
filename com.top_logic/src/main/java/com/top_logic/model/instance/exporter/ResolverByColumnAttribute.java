@@ -5,7 +5,7 @@
  */
 package com.top_logic.model.instance.exporter;
 
-import com.top_logic.basic.Log;
+import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLObject;
@@ -40,7 +40,7 @@ public final class ResolverByColumnAttribute implements InstanceResolver {
 	}
 
 	@Override
-	public TLObject resolve(Log log, String kind, String id) {
+	public TLObject resolve(I18NLog log, String kind, String id) {
 		Object value = XMLInstanceImporter.parse(log, _idValueType, id);
 		KnowledgeObject item = (KnowledgeObject) PersistencyLayer.getKnowledgeBase()
 			.getObjectByAttribute(_tableName, _idColumn, value);

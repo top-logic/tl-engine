@@ -63,7 +63,7 @@ public class InstanceImportCommand extends AbstractCommandHandler {
 
 				XMLInstanceImporter importer =
 					new XMLInstanceImporter(applicationModel, ModelService.getInstance().getFactory());
-				importer.setLog(log.asLog());
+				importer.setLog(log);
 
 				KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 				try (Transaction tx = kb.beginTransaction(I18NConstants.IMPORTED_OBJECTS)) {

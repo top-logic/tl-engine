@@ -16,7 +16,6 @@ import java.util.Map;
 import org.apache.commons.codec.binary.Base64;
 
 import com.top_logic.basic.CollectionUtil;
-import com.top_logic.basic.Log;
 import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.LongID;
 import com.top_logic.basic.UnreachableAssertion;
@@ -26,9 +25,11 @@ import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.sql.DBType;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
@@ -71,11 +72,12 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 
 	private final TLModel _model;
 
-	private Log _log = new LogProtocol(XMLInstanceImporter.class);
+	private I18NLog _log =
+		new LogProtocol(XMLInstanceImporter.class).asI18NLog(ResourcesModule.getInstance().getLogBundle());
 
 	private Map<String, TLObject> _objectById = new HashMap<>();
 
-	private Resolvers _resolvers = new Resolvers();
+	private Resolvers _resolvers = new Resolvers(_log);
 
 	private InstanceResolver _defaultResolver = NoInstanceResolver.INSTANCE;
 
@@ -111,7 +113,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	 * 
 	 * @param kind
 	 *        The type kind to register the given resolver for. See
-	 *        {@link InstanceResolver#resolve(Log, String, String)}.
+	 *        {@link InstanceResolver#resolve(I18NLog, String, String)}.
 	 * 
 	 * @see #addResolver(String, InstanceResolver)
 	 */
@@ -166,18 +168,18 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	}
 
 	/**
-	 * The {@link Log} that is used for reporting errors in the import process.
+	 * The {@link I18NLog} that is used for reporting errors in the import process.
 	 * 
-	 * @see #setLog(Log)
+	 * @see #setLog(I18NLog)
 	 */
-	public Log getLog() {
+	public I18NLog getLog() {
 		return _log;
 	}
 
 	/**
 	 * @see #getLog()
 	 */
-	public void setLog(Log log) {
+	public void setLog(I18NLog log) {
 		_log = log;
 		_resolvers.setLog(log);
 	}
@@ -231,7 +233,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 			String attrName = valueConf.getName();
 			TLStructuredTypePart part = type.getPart(attrName);
 			if (part == null) {
-				_log.error("No such part '" + attrName + "' in type '" + type + "' at " + valueConf.location());
+				_log.error(I18NConstants.NO_SUCH_PART__ATTR_TYPE_LOC.fill(attrName, type, valueConf.location()));
 				continue;
 			}
 
@@ -239,14 +241,15 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 			try {
 				value = resolveValue(part, valueConf);
 			} catch (Exception ex) {
-				_log.error("Failed to resolve value at " + valueConf.location(), ex);
+				_log.error(I18NConstants.FAILED_TO_RESOLVE_VALUE__VAL_LOC_MSG.fill(valueConf.getValue(),
+					valueConf.location(), ex.getMessage()), ex);
 				continue;
 			}
 			try {
 				obj.tUpdate(part, value);
 			} catch (Exception ex) {
-				_log.error("Failed to set value '" + value + "' to attribute '" + part + "' at " + valueConf.location(),
-					ex);
+				_log.error(I18NConstants.FAILED_SETTING_VALUE__VAL_ATTR_LOC_MSG.fill(value, part, valueConf.location(),
+					ex.getMessage()), ex);
 			}
 		}
 		return obj;
@@ -256,7 +259,8 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 		Object value;
 		if (part.getModelKind() == ModelKind.REFERENCE) {
 			if (valueConf.getValue() != null) {
-				_log.error("Reference attribute must not be assigned a plain value at " + valueConf.location());
+				_log.error(I18NConstants.CANNOT_ASSIGN_PLAIN_VALUE_TO_REF__ATTR_VAL_LOC.fill(part, valueConf.getValue(),
+					valueConf.location()));
 			}
 			value = resolveCollectionValue(part, valueConf);
 		} else {
@@ -276,8 +280,8 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 			value = refs;
 		} else {
 			if (refs.size() > 1) {
-				_log.error("Multiple values cannot be stored into singleton reference '" + part + "' at "
-					+ valueConf.location());
+				_log.error(
+					I18NConstants.ERROR_STORING_COLLECTION_TO_SINGLE_REF__ATTR_LOC.fill(part, valueConf.location()));
 				value = refs.get(0);
 			} else {
 				value = CollectionUtil.getSingleValueFromCollection(refs);
@@ -323,7 +327,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	public TLObject visit(InstanceRefConf ref, TLStructuredTypePart arg) {
 		TLObject result = _objectById.get(ref.getId());
 		if (result == null) {
-			_log.error("Unresolved reference '" + ref.getId() + "' at " + ref.location());
+			_log.error(I18NConstants.UNRESOLVED_REFERENCE__ID_LOC.fill(ref.getId(), ref.location()));
 		}
 		return result;
 	}
@@ -334,7 +338,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 			createObject(ref);
 			return importObject(ref);
 		} catch (Exception ex) {
-			_log.error("Cannot import object " + ref.getId() + " of type '" + ref.getType() + "'.");
+			_log.error(I18NConstants.FAILED_TO_IMPORT__ID_TYPE_MSG.fill(ref.getId(), ref.getType(), ex.getMessage()), ex);
 			return null;
 		}
 	}
@@ -345,7 +349,9 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 			String kind = ref.getKind();
 			return resolver(kind).resolve(_log, kind, ref.getId());
 		} catch (Exception ex) {
-			_log.error("Cannot resolve object of type '" + ref.getKind() + "' with ID '" + ref.getId() + "'.", ex);
+			_log.error(
+				I18NConstants.FAILED_TO_RESOLVE_OBJECT__TYPE_ID_MSG.fill(ref.getKind(), ref.getId(), ex.getMessage()),
+				ex);
 			return null;
 		}
 	}
@@ -381,15 +387,15 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 
 				switch (type.getModelKind()) {
 					case DATATYPE: {
-						_log.error(
-							"Primitive type '" + typeName + "' has no part '" + partName + "' at " + ref.location());
+						_log.error(I18NConstants.PRIMITIVE_TYPE_WITH_PART__TYPE_PART_LOC.fill(typeName, partName,
+							ref.location()));
 						return null;
 					}
 					case ENUMERATION: {
 						TLClassifier part = resolveClassifier((TLEnumeration) type, partName);
 						if (part == null) {
-							_log.error(
-								"Enum '" + typeName + "' has no classifier '" + partName + "' at " + ref.location());
+							_log.error(I18NConstants.NO_SUCH_CLASSIFIER__TYPE_PART_LOC.fill(typeName, partName,
+								ref.location()));
 							return null;
 						}
 						return part;
@@ -398,15 +404,16 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 					case CLASS: {
 						TLStructuredTypePart part = ((TLStructuredType) type).getPart(partName);
 						if (part == null) {
-							_log.error("Type '" + typeName + "' has no part '" + partName + "' at " + ref.location());
+							_log.error(
+								I18NConstants.NO_SUCH_PART__TYPE_PART_LOC.fill(typeName, partName, ref.location()));
 							return null;
 						}
 						return part;
 					}
 
 					default:
-						_log.error("Unknown type kind '" + type.getModelKind() + "' of '" + typeName + "' at "
-							+ ref.location());
+						_log.error(I18NConstants.UNKNOWN_TYPE__KIND_TYPE_LOC.fill(type.getModelKind(), typeName,
+							ref.location()));
 						return null;
 				}
 
@@ -428,7 +435,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 				TLObject singleton = module.getSingleton(partName);
 				if (singleton == null) {
 					_log.error(
-						"No singleton '" + partName + "' defined in module '" + moduleName + "' at " + ref.location());
+						I18NConstants.NO_SUCH_SINGLETON__NAME_MODULE_LOC.fill(partName, moduleName, ref.location()));
 				}
 				return singleton;
 			} else {
@@ -456,7 +463,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	private TLModule resolveModule(ModelRefConf ref, String moduleName) {
 		TLModule module = _model.getModule(moduleName);
 		if (module == null) {
-			_log.error("Module '" + moduleName + "' not found in '" + ref.getName() + "' at " + ref.location());
+			_log.error(I18NConstants.NO_SUCH_MODULE__NAME_REF_LOC.fill(moduleName, ref.getName(), ref.location()));
 			return null;
 		}
 		return module;
@@ -465,7 +472,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	private TLType resolveType(ModelRefConf ref, TLModule module, String typeName) {
 		TLType type = module.getType(typeName);
 		if (type == null) {
-			_log.error("Type '" + typeName + "' not found in '" + ref.getName() + "' at " + ref.location());
+			_log.error(I18NConstants.NO_SUCH_TYPE__NAME_REF_LOC.fill(typeName, ref.getName(), ref.location()));
 			return null;
 		}
 		return type;
@@ -474,21 +481,23 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	/**
 	 * Parses a serialized primitive type value.
 	 */
-	public static Object parse(Log log, TLPrimitive type, String value) {
+	public static Object parse(I18NLog log, TLPrimitive type, String value) {
 		if (value == null || value.trim().isEmpty()) {
 			return null;
 		}
 		return type.getStorageMapping().getBusinessObject(parseStorageValue(log, type.getDBType(), value));
 	}
 
-	private static Object parseStorageValue(Log log, DBType dbType, String value) {
+	private static Object parseStorageValue(I18NLog log, DBType dbType, String value) {
 		switch (dbType) {
 			case BLOB: {
 				try {
 					byte[] result = Base64.decodeBase64(value);
 					return BinaryDataFactory.createBinaryData(result);
 				} catch (Exception ex) {
-					log.error("Invalid binary format in '" + value + "':" + ex.getMessage(), ex);
+					String prefix =
+						value.substring(0, Math.min(20, value.length())) + (value.length() > 40 ? "..." : "");
+					log.error(I18NConstants.INVALID_BINARY_FORMAT__VAL_MSG.fill(prefix, ex.getMessage()), ex);
 					return null;
 				}
 			}
@@ -500,7 +509,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 				try {
 					return XmlDateTimeFormat.INSTANCE.parseObject(value);
 				} catch (ParseException ex) {
-					log.error("Invalid date format in '" + value + "':" + ex.getMessage(), ex);
+					log.error(I18NConstants.INVALID_DATE_FORMAT__VAL_MSG.fill(value, ex.getMessage()), ex);
 					return null;
 				}
 			case DECIMAL:
@@ -508,42 +517,42 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 				try {
 					return Double.parseDouble(value);
 				} catch (NumberFormatException ex) {
-					log.error("Invalid number format in '" + value + "':" + ex.getMessage(), ex);
+					log.error(I18NConstants.INVALID_NUMBER_FORMAT__VAL_MSG.fill(value, ex.getMessage()), ex);
 					return null;
 				}
 			case FLOAT:
 				try {
 					return Float.parseFloat(value);
 				} catch (NumberFormatException ex) {
-					log.error("Invalid number format in '" + value + "':" + ex.getMessage(), ex);
+					log.error(I18NConstants.INVALID_NUMBER_FORMAT__VAL_MSG.fill(value, ex.getMessage()), ex);
 					return null;
 				}
 			case BYTE:
 				try {
 					return Byte.parseByte(value);
 				} catch (NumberFormatException ex) {
-					log.error("Invalid number format in '" + value + "':" + ex.getMessage(), ex);
+					log.error(I18NConstants.INVALID_NUMBER_FORMAT__VAL_MSG.fill(value, ex.getMessage()), ex);
 					return null;
 				}
 			case SHORT:
 				try {
 					return Short.parseShort(value);
 				} catch (NumberFormatException ex) {
-					log.error("Invalid number format in '" + value + "':" + ex.getMessage(), ex);
+					log.error(I18NConstants.INVALID_NUMBER_FORMAT__VAL_MSG.fill(value, ex.getMessage()), ex);
 					return null;
 				}
 			case INT:
 				try {
 					return Integer.parseInt(value);
 				} catch (NumberFormatException ex) {
-					log.error("Invalid number format in '" + value + "':" + ex.getMessage(), ex);
+					log.error(I18NConstants.INVALID_NUMBER_FORMAT__VAL_MSG.fill(value, ex.getMessage()), ex);
 					return null;
 				}
 			case LONG:
 				try {
 					return Long.parseLong(value);
 				} catch (NumberFormatException ex) {
-					log.error("Invalid number format in '" + value + "':" + ex.getMessage(), ex);
+					log.error(I18NConstants.INVALID_NUMBER_FORMAT__VAL_MSG.fill(value, ex.getMessage()), ex);
 					return null;
 				}
 			case CLOB:
@@ -554,7 +563,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 				try {
 					return LongID.fromExternalForm(value);
 				} catch (NumberFormatException ex) {
-					log.error("Invalid ID format in '" + value + "':" + ex.getMessage(), ex);
+					log.error(I18NConstants.INVALID_ID_FORMAT__VAL_MSG.fill(value, ex.getMessage()), ex);
 					return null;
 				}
 		}

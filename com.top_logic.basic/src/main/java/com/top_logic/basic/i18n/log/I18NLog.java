@@ -26,7 +26,16 @@ public interface I18NLog {
 	 * @see #log(Level, ResKey, Throwable)
 	 */
 	default void error(ResKey message) {
-		log(Level.ERROR, message, null);
+		error(message, null);
+	}
+
+	/**
+	 * Logs an {@link Level#ERROR} message.
+	 * 
+	 * @see #log(Level, ResKey, Throwable)
+	 */
+	default void error(ResKey message, Throwable ex) {
+		log(Level.ERROR, message, ex);
 	}
 
 	/**

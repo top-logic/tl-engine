@@ -426,6 +426,15 @@ public class ResourcesModule extends ConfiguredManagedClass<ResourcesModule.Conf
 	}
 
 	/**
+	 * The bundle for writing to the application log.
+	 * 
+	 * @see #getLogLocale()
+	 */
+	public I18NBundle getLogBundle() {
+		return getBundle(getLogLocale());
+	}
+
+	/**
 	 * Returns the resource for the given {@link Locale}.
 	 * 
 	 * @param requestedLocale

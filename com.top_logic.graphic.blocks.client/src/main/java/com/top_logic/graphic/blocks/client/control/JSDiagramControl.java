@@ -14,8 +14,10 @@ import java.util.stream.Collectors;
 
 import org.vectomatic.dom.svg.OMSVGDocument;
 import org.vectomatic.dom.svg.OMSVGElement;
+import org.vectomatic.dom.svg.OMSVGMatrix;
 import org.vectomatic.dom.svg.OMSVGRect;
 import org.vectomatic.dom.svg.OMSVGSVGElement;
+import org.vectomatic.dom.svg.impl.SVGGElement;
 import org.vectomatic.dom.svg.utils.OMSVGParser;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -250,6 +252,11 @@ public class JSDiagramControl extends AbstractJSControl
 					newCtrlH = controlH;
 					_viewbox = _svg.getViewBox().getBaseVal();
 					calcZoomLevel();
+
+					Element selectedPart = _control.querySelector(".tlSelected");
+					if (selectedPart != null) {
+						panIntoView(selectedPart);
+					}
 				} catch (IOException ex) {
 					DomGlobal.console.error("Failed to fetch diagram data: ", ex.getMessage());
 				}
@@ -415,6 +422,28 @@ public class JSDiagramControl extends AbstractJSControl
 
 	}
 
+	/**
+	 * Pans the SVG (moves the viewbox) to show a given element in the center.
+	 * 
+	 * @param elementToPanTo
+	 *        The element the viewbox should be moved to.
+	 */
+	public void panIntoView(Element elementToPanTo) {
+		SVGGElement element = (SVGGElement) _svg.getElementById(elementToPanTo.id).getElement();
+		OMSVGRect bbox = element.getBBox();
+		OMSVGMatrix ctm = element.getCTM();
+		double factorX = JsMath.sqrt(ctm.getA() * ctm.getA() + ctm.getB() * ctm.getB());
+		double factorY = JsMath.sqrt(ctm.getC() * ctm.getC() + ctm.getD() * ctm.getD());
+		if (factorX == 0 || factorY == 0) {
+			return;
+		}
+		double left = ctm.getE() / factorX;
+		double top = ctm.getF() / factorY;
+		double deltaX = left + bbox.getCenterX() - (_viewbox.getCenterX() - _viewbox.getX());
+		double deltaY = top + bbox.getCenterY() - (_viewbox.getCenterY() - _viewbox.getY());
+		panSVG(deltaX, deltaY, true);
+	}
+
 	private void calcZoomLevel() {
 		int level = 0;
 		double fract = 1;
@@ -453,10 +482,22 @@ public class JSDiagramControl extends AbstractJSControl
 		return $wnd.BAL.getWheelScrollFactor(event);
 	}-*/;
 
-	void panSVG(double panDeltaX, double panDeltaY, boolean zoom) {
+	/**
+	 * Pans the displayed section of the SVG by changing the viewbox.
+	 * 
+	 * @param panDeltaX
+	 *        Pixels to pan the SVG by horizontally (x-axis). Positive value moves the displayed
+	 *        section to the right, negative to the left.
+	 * @param panDeltaY
+	 *        Pixels to pan the SVG by vertically (y-axis). Positive value moves the displayed
+	 *        section to the bottom, negative to the top.
+	 * @param zoomApplied
+	 *        Boolean if the current zoom factor is already applied to the delta values.
+	 */
+	void panSVG(double panDeltaX, double panDeltaY, boolean zoomApplied) {
 		// if the svg got zoomed the zoomfactor is already applied to the deltas
 		double factor = 1;
-		if (!zoom) {
+		if (!zoomApplied) {
 			factor = getFactor();
 		}
 

@@ -13,8 +13,12 @@ import java.io.UncheckedIOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.ajax.server.util.JSControlUtil;
 import com.top_logic.base.services.simpleajax.JSFunctionCall;
@@ -54,8 +58,6 @@ import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonReader;
 import de.haumacher.msgbuf.json.JsonWriter;
 import de.haumacher.msgbuf.server.io.WriterAdapter;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * {@link Control} for displaying diagrams.
@@ -159,9 +161,20 @@ public class DiagramControl extends AbstractControlBase
 	@Override
 	public Menu createContextMenu(String contextInfo) {
 		Widget node = (Widget) _graphScope.resolveOrFail(Integer.parseInt(contextInfo));
-		Object userObject = node.getUserObject();
-		if (userObject == null) {
-			return null;
+
+		Object userObject;
+		if (_diagram.getSelection().contains(node)) {
+			// A context menu opened on a selected item means that the operation targets the whole
+			// selection.
+			userObject = _diagram.getSelection().stream()
+				.map(Widget::getUserObject)
+				.filter(Objects::nonNull)
+				.toList();
+		} else {
+			userObject = node.getUserObject();
+			if (userObject == null) {
+				return null;
+			}
 		}
 
 		return _contextMenuProvider.getContextMenu(node, userObject);

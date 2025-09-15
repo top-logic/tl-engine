@@ -12,20 +12,24 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Container;
+import com.top_logic.basic.config.annotation.DerivedRef;
+import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
+import com.top_logic.basic.config.annotation.Step;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.ModelKind;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.instance.exporter.Resolvers;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
 import com.top_logic.model.search.expr.parser.ParseException;
@@ -49,11 +53,12 @@ public class InstanceResolverByAttribute extends AbstractConfiguredInstance<Inst
 	 * Configuration options for {@link InstanceResolverByIndex}.
 	 */
 	@TagName("resolver-by-attribute")
-	@DisplayOrder({
-		Config.TYPE,
-		Config.ATTRIBUTE,
-	})
-	public interface Config<I extends InstanceResolverByAttribute> extends PolymorphicConfiguration<I> {
+	public interface Config<I extends InstanceResolverByAttribute> extends PolymorphicConfiguration<I>, ConfigPart {
+		/**
+		 * @see #getAnnotation()
+		 */
+		String ANNOTATION = "annotation";
+
 		/**
 		 * @see #getType()
 		 */
@@ -65,11 +70,23 @@ public class InstanceResolverByAttribute extends AbstractConfiguredInstance<Inst
 		String ATTRIBUTE = "attribute";
 
 		/**
-		 * The type to resolve.
+		 * The container of this configuration for accessing context.
 		 */
+		@Hidden
+		@Name(ANNOTATION)
+		@Container
+		TLAnnotation getAnnotation();
+
+		/**
+		 * The type to resolve (only accessible in the config editor).
+		 */
+		@Hidden
 		@Name(TYPE)
-		@Mandatory
-		TLModelPartRef getType();
+		@DerivedRef(steps={ @Step(ANNOTATION), @Step(TLAnnotation.ANNOTATED),
+			@Step(
+				type = com.top_logic.element.layout.meta.TLStructuredTypeFormBuilder.EditModel.class, 
+				value = com.top_logic.element.layout.meta.TLStructuredTypeFormBuilder.EditModel.EDITED_TYPE) })
+		TLStructuredType getType();
 
 		/**
 		 * The identifying attribute.
@@ -82,18 +99,14 @@ public class InstanceResolverByAttribute extends AbstractConfiguredInstance<Inst
 		/**
 		 * Option provider function for {@link Config#getAttribute()}.
 		 */
-		class PrimitiveAttributesOfType extends Function1<List<? extends TLStructuredTypePart>, TLModelPartRef> {
+		class PrimitiveAttributesOfType extends Function1<List<? extends TLStructuredTypePart>, TLStructuredType> {
 			@Override
-			public List<? extends TLStructuredTypePart> apply(TLModelPartRef arg) {
+			public List<? extends TLStructuredTypePart> apply(TLStructuredType arg) {
 				if (arg == null) {
 					return Collections.emptyList();
 				}
-				try {
-					return arg.resolveClass().getAllParts().stream()
+				return arg.getAllParts().stream()
 						.filter(p -> p.getType().getModelKind() == ModelKind.DATATYPE).toList();
-				} catch (ConfigurationException ex) {
-					return Collections.emptyList();
-				}
 			}
 		}
 	}
@@ -109,13 +122,12 @@ public class InstanceResolverByAttribute extends AbstractConfiguredInstance<Inst
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public InstanceResolverByAttribute(InstantiationContext context, Config<?> config)
-			throws ConfigurationException, ParseException {
+	public InstanceResolverByAttribute(InstantiationContext context, Config<?> config) throws ParseException {
 		super(context, config);
 
-		TLClass type = config.getType().resolveClass();
 		TLStructuredTypePart part = (TLStructuredTypePart) config.getAttribute().resolvePart();
 
+		TLStructuredType type = part.getOwner();
 		InstanceResolver resolver = Resolvers.idColumnResolver(type, part);
 		if (resolver == null) {
 			resolver = new InstanceResolverByIndex(type, part);

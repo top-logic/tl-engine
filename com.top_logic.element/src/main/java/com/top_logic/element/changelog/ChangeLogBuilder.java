@@ -297,8 +297,13 @@ public class ChangeLogBuilder {
 		TLID authorIdFilter = _author == null ? null : _author.tIdLocal();
 		Branch branch = _hm.getTrunk();
 
-		try (ChangeSetReader reader =
-			_kb.getDiffReader(toRevision(start), branch, toRevision(stop), branch, true)) {
+		/* Note: Use the revision before the actual "start" commit number as start revision, because
+		 * the diff reader creates events to come from given startRev to given stopRev, i.e. no
+		 * event for the given startRev is created! */
+		Revision startRev = toRevision(Math.max(start - 1, 1));
+		Revision stopRev = toRevision(stop);
+
+		try (ChangeSetReader reader = _kb.getDiffReader(startRev, branch, stopRev, branch, true)) {
 			while (true) {
 				ChangeSet changeSet = reader.read();
 				if (changeSet == null) {

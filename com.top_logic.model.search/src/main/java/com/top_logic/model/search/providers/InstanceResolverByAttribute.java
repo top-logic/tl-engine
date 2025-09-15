@@ -47,7 +47,7 @@ public class InstanceResolverByAttribute extends AbstractConfiguredInstance<Inst
 	 * Configuration options for {@link InstanceResolverByIndex}.
 	 */
 	@TagName("resolver-by-attribute")
-	public interface Config<I extends InstanceResolverByIndex> extends PolymorphicConfiguration<I> {
+	public interface Config<I extends InstanceResolverByAttribute> extends PolymorphicConfiguration<I> {
 
 		/**
 		 * The type to resolve.

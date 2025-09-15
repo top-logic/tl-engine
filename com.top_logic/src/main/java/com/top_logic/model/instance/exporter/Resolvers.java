@@ -25,11 +25,8 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.xml.XMLStreamUtil;
-import com.top_logic.knowledge.objects.KnowledgeObject;
-import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLClass;
-import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -57,7 +54,7 @@ import com.top_logic.model.util.TLModelUtil;
  */
 public class Resolvers {
 
-	private Log _log = new LogProtocol(XMLInstanceExporter.class);
+	Log _log = new LogProtocol(XMLInstanceExporter.class);
 
 	private final Map<TLStructuredType, InstanceResolver> _resolverByType = new HashMap<>();
 
@@ -160,19 +157,24 @@ public class Resolvers {
 			String idAttributeName = annotation.getValue();
 			TLStructuredTypePart idAttribute = type.getPart(idAttributeName);
 			if (idAttribute != null) {
-				return idResolver(type, idAttribute);
+				return idColumnResolver(type, idAttribute);
 			}
 		} else {
 			TLStructuredTypePart nameAttribute = type.getPart("name");
 			if (nameAttribute != null) {
-				return idResolver(type, nameAttribute);
+				return idColumnResolver(type, nameAttribute);
 			}
 		}
 
 		return null;
 	}
 
-	private InstanceResolver idResolver(TLStructuredType type, TLStructuredTypePart idAttribute) {
+	/**
+	 * Builds an {@link InstanceResolver} for a DB column-mapped attribute.
+	 *
+	 * @return The resolver or <code>null</code>, when there is no column mapping.
+	 */
+	public static InstanceResolver idColumnResolver(TLStructuredType type, TLStructuredTypePart idAttribute) {
 		TableName annotation = type.getAnnotation(TableName.class);
 		if (annotation == null) {
 			return null;
@@ -191,26 +193,7 @@ public class Resolvers {
 
 		TLType idType = idAttribute.getType();
 		if (idType instanceof TLPrimitive idValueType) {
-			String searchColumn = idColumn;
-			return new InstanceResolver() {
-				@Override
-				public TLObject resolve(String kind, String id) {
-					Object value = XMLInstanceImporter.parse(_log, idValueType, id);
-					KnowledgeObject item = (KnowledgeObject) PersistencyLayer.getKnowledgeBase()
-						.getObjectByAttribute(tableName, searchColumn, value);
-					if (item == null) {
-						_log.error("Cannot resolve object of type '" + type + "' with ID '" + id + "'.");
-						return null;
-					}
-					return item.getWrapper();
-				}
-
-				@Override
-				public String buildId(TLObject obj) {
-					Object id = obj.tValue(idAttribute);
-					return XMLInstanceExporter.serialize(idValueType, id);
-				}
-			};
+			return new ResolverByColumnAttribute(idAttribute, idValueType, tableName, idColumn);
 		}
 
 		return null;

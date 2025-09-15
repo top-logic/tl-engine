@@ -6,11 +6,14 @@
 package com.top_logic.model.search.providers;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Log;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -21,6 +24,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 /**
  * {@link InstanceResolver} implemented in TL-Script.
  */
+@InApp
 @Label("TL-Script instance resolver")
 public class InstanceResolverByExpression extends AbstractConfiguredInstance<InstanceResolverByExpression.Config<?>>
 		implements InstanceResolver {
@@ -32,6 +36,7 @@ public class InstanceResolverByExpression extends AbstractConfiguredInstance<Ins
 	/**
 	 * Configuration options for {@link InstanceResolverByExpression}.
 	 */
+	@TagName("resolver-by-expression")
 	public interface Config<I extends InstanceResolverByExpression> extends PolymorphicConfiguration<I> {
 
 		/**
@@ -74,7 +79,7 @@ public class InstanceResolverByExpression extends AbstractConfiguredInstance<Ins
 	}
 
 	@Override
-	public TLObject resolve(String kind, String id) {
+	public TLObject resolve(Log log, String kind, String id) {
 		return SearchExpression.asTLObject(_resolver.getSearch(), _resolver.execute(id));
 	}
 

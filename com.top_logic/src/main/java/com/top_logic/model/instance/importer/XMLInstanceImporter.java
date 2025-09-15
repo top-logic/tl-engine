@@ -111,7 +111,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	 * 
 	 * @param kind
 	 *        The type kind to register the given resolver for. See
-	 *        {@link InstanceResolver#resolve(String, String)}.
+	 *        {@link InstanceResolver#resolve(Log, String, String)}.
 	 * 
 	 * @see #addResolver(String, InstanceResolver)
 	 */
@@ -336,9 +336,9 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	public TLObject visit(GlobalRefConf ref, TLStructuredTypePart arg) {
 		try {
 			String kind = ref.getKind();
-			return resolver(kind).resolve(kind, ref.getId());
+			return resolver(kind).resolve(_log, kind, ref.getId());
 		} catch (Exception ex) {
-			_log.error("Cannot resolve object with ID '" + ref.getId() + "'.", ex);
+			_log.error("Cannot resolve object of type '" + ref.getKind() + "' with ID '" + ref.getId() + "'.", ex);
 			return null;
 		}
 	}

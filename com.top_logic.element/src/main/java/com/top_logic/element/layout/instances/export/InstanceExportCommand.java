@@ -11,6 +11,7 @@ import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
@@ -18,8 +19,11 @@ import javax.xml.stream.XMLStreamException;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.ConfigurationWriter;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.basic.xml.XMLPrettyPrinter;
@@ -37,7 +41,20 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * 
  * @see XMLInstanceExporter
  */
+@InApp
 public class InstanceExportCommand extends AbstractCommandHandler {
+
+	/**
+	 * Configuration options for {@link InstanceExportCommand}.
+	 */
+	public interface Config extends AbstractCommandHandler.Config {
+		/**
+		 * Additional setup actions that customize the export process.
+		 */
+		List<PolymorphicConfiguration<? extends ExportCustomization>> getCustomizations();
+	}
+
+	private final List<ExportCustomization> _customizations;
 
 	/**
 	 * Creates a {@link InstanceExportCommand} from configuration.
@@ -50,6 +67,8 @@ public class InstanceExportCommand extends AbstractCommandHandler {
 	@CalledByReflection
 	public InstanceExportCommand(InstantiationContext context, Config config) {
 		super(context, config);
+
+		_customizations = TypedConfiguration.getInstanceList(context, config.getCustomizations());
 	}
 
 	@Override
@@ -64,6 +83,10 @@ public class InstanceExportCommand extends AbstractCommandHandler {
 		String typeName = "objects";
 
 		XMLInstanceExporter exporter = new XMLInstanceExporter();
+		for (ExportCustomization customization : _customizations) {
+			customization.perform(exporter);
+		}
+
 		boolean first = true;
 		for (Object value : values) {
 			if (value instanceof TLObject obj) {

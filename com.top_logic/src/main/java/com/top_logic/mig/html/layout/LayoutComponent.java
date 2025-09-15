@@ -1227,7 +1227,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		if (model instanceof TLObject) {
 			getModelScope().removeModelListener((TLObject) model, this);
 		} else {
-			extractTLObjects(getModel()).forEach(tlObject -> getModelScope().removeModelListener(tlObject, this));
+			extractTLObjects(model).forEach(tlObject -> getModelScope().removeModelListener(tlObject, this));
 		}
 	}
 

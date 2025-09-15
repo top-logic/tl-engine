@@ -204,7 +204,7 @@ public class XMLInstanceExporter {
 
 		if (part.getModelKind() == ModelKind.REFERENCE) {
 			List<ValueConf> references = valueConf.getCollectionValue();
-			exportRef(references, value, ((TLReference) part).isComposite());
+			exportRef(references, part, value, ((TLReference) part).isComposite());
 		} else {
 			ValueResolver valueResolver = _resolvers.valueResolver(part);
 			if (valueResolver != NoValueResolver.INSTANCE) {
@@ -241,17 +241,18 @@ public class XMLInstanceExporter {
 		attributes.add(valueConf);
 	}
 
-	private void exportRef(List<ValueConf> references, Object value, boolean composite) {
+	private void exportRef(List<ValueConf> references, TLStructuredTypePart part, Object value, boolean composite) {
 		if (value instanceof Collection<?> collection) {
 			for (Object entry : collection) {
-				exportRefEntry(references, entry, composite);
+				exportRefEntry(references, part, entry, composite);
 			}
 		} else {
-			exportRefEntry(references, value, composite);
+			exportRefEntry(references, part, value, composite);
 		}
 	}
 
-	private void exportRefEntry(List<ValueConf> references, Object value, boolean composite) {
+	private void exportRefEntry(List<ValueConf> references, TLStructuredTypePart part, Object value,
+			boolean composite) {
 		if (value == null) {
 			return;
 		}
@@ -285,13 +286,10 @@ public class XMLInstanceExporter {
 					ref.setId(resolver.buildId(target));
 					references.add(ref);
 				} else {
-					_queue.add(target);
-
-					Integer newId = nextId();
-					_exportIds.put(target, newId);
-					InstanceRefConf ref = TypedConfiguration.newConfigItem(InstanceRefConf.class);
-					ref.setId(newId.toString());
-					references.add(ref);
+					Logger
+						.warn("Link in reference '" + part + "' to object of type '"
+							+ TLModelUtil.qualifiedName(target.tType())
+						+ "' without resolver ignored.", XMLInstanceExporter.class);
 				}
 			}
 		}

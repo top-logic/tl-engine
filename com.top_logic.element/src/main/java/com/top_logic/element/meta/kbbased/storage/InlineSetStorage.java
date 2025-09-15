@@ -76,8 +76,10 @@ public class InlineSetStorage<C extends InlineSetStorage.Config<?>> extends Inli
 			TLObject.class, table, getConfig().getContainerColumn(), null, TLObject.class, filter, true);
 
 		String partCol = getConfig().getReferenceColumn();
-		String baseObjectCol = getConfig().getContainerColumn();
-		checkKeyAttributes(attribute, partCol, baseObjectCol);
+		if (partCol != null) {
+			String baseObjectCol = getConfig().getContainerColumn();
+			checkKeyAttributes(attribute, partCol, baseObjectCol);
+		}
 	}
 
 	@Override

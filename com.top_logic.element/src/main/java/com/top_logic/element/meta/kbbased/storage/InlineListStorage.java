@@ -98,8 +98,10 @@ public class InlineListStorage<C extends InlineListStorage.Config<?>> extends In
 			getConfig().getContainerColumn(), getConfig().getOrderColumn(), filter, true);
 
 		String partCol = getConfig().getReferenceColumn();
-		String baseObjectCol = getConfig().getContainerColumn();
-		checkKeyAttributes(attribute, partCol, baseObjectCol);
+		if (partCol != null) {
+			String baseObjectCol = getConfig().getContainerColumn();
+			checkKeyAttributes(attribute, partCol, baseObjectCol);
+		}
 	}
 
 	@Override

@@ -200,8 +200,11 @@ public abstract class LinkStorage<C extends LinkStorage.Config<?>> extends Colle
 		initStorageMapping(attribute);
 		initReference(attribute);
 
-		String partCol = monomophicTable() ? null : WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR;
-		checkKeyAttributes(attribute, partCol, DBKnowledgeAssociation.REFERENCE_SOURCE_NAME);
+		if (!monomophicTable()) {
+			checkKeyAttributes(attribute,
+				WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR,
+				DBKnowledgeAssociation.REFERENCE_SOURCE_NAME);
+		}
 	}
 
 	/**

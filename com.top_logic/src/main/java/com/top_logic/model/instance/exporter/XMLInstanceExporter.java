@@ -18,6 +18,7 @@ import java.util.Set;
 
 import org.apache.commons.codec.binary.Base64;
 
+import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.UnreachableAssertion;
@@ -25,8 +26,10 @@ import com.top_logic.basic.config.InstanceAccess;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.XmlDateTimeFormat;
+import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.sql.DBType;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
@@ -64,7 +67,10 @@ public class XMLInstanceExporter {
 
 	private Set<TLObject> _queue = new LinkedHashSet<>();
 
-	private Resolvers _resolvers = new Resolvers();
+	private I18NLog _log =
+		new LogProtocol(XMLInstanceExporter.class).asI18NLog(ResourcesModule.getInstance().getLogBundle());
+
+	private Resolvers _resolvers = new Resolvers(_log);
 
 	private Map<TLModelPart, Boolean> _excludedParts = new HashMap<>();
 

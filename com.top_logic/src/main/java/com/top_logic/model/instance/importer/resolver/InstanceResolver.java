@@ -5,7 +5,7 @@
  */
 package com.top_logic.model.instance.importer.resolver;
 
-import com.top_logic.basic.Log;
+import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.instance.importer.schema.GlobalRefConf;
@@ -31,7 +31,7 @@ public interface InstanceResolver {
 	 * 
 	 * @return The resolved object, or <code>null</code>, if no such object was found.
 	 */
-	TLObject resolve(Log log, String kind, String id);
+	TLObject resolve(I18NLog log, String kind, String id);
 
 	/**
 	 * Creates a textual identifier for the given object.
@@ -39,7 +39,7 @@ public interface InstanceResolver {
 	 * @param obj
 	 *        The object to identify.
 	 * @return A textual identifier for the given object resolvable by
-	 *         {@link #resolve(Log, String, String)}. See {@link GlobalRefConf#getId()}.
+	 *         {@link #resolve(I18NLog, String, String)}. See {@link GlobalRefConf#getId()}.
 	 */
 	String buildId(TLObject obj);
 

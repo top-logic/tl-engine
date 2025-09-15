@@ -14,8 +14,6 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 
-import com.top_logic.basic.Log;
-import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationValueBinding;
@@ -24,6 +22,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.xml.XMLStreamUtil;
 import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLClass;
@@ -54,7 +53,7 @@ import com.top_logic.model.util.TLModelUtil;
  */
 public class Resolvers {
 
-	Log _log = new LogProtocol(XMLInstanceExporter.class);
+	private I18NLog _log;
 
 	private final Map<TLStructuredType, InstanceResolver> _resolverByType = new HashMap<>();
 
@@ -69,14 +68,14 @@ public class Resolvers {
 	/**
 	 * Creates {@link Resolvers}.
 	 */
-	public Resolvers() {
-		super();
+	public Resolvers(I18NLog log) {
+		_log = log;
 	}
 
 	/**
 	 * Updates the log output.
 	 */
-	public void setLog(Log log) {
+	public void setLog(I18NLog log) {
 		_log = log;
 	}
 
@@ -120,7 +119,7 @@ public class Resolvers {
 			TLStructuredType type = _typeByName.computeIfAbsent(kind, this::lookupType);
 			typeResolver = resolver(type);
 		} catch (Exception ex) {
-			_log.error("Cannot resolve type '" + kind + "'.", ex);
+			_log.error(I18NConstants.FAILED_RESOLVING_TYPE__KIND_MSG.fill(kind, ex.getMessage()), ex);
 			typeResolver = NoInstanceResolver.INSTANCE;
 		}
 		_resolverByKind.put(kind, typeResolver);
@@ -246,7 +245,8 @@ public class Resolvers {
 						in.close();
 						return result;
 					} catch (ConfigurationException | XMLStreamException ex) {
-						_log.error("Cannot read value of '" + concreteAttribute + "' from xml.", ex);
+						_log.error(I18NConstants.FAILED_READING_VALUE__ATR_MSG.fill(concreteAttribute, ex.getMessage()),
+							ex);
 						return null;
 					}
 				}
@@ -265,7 +265,8 @@ public class Resolvers {
 						out.writeEndElement();
 						out.close();
 					} catch (XMLStreamException ex) {
-						_log.error("Failed to serialize value of '" + concreteAttribute + "'.", ex);
+						_log.error(I18NConstants.FAILED_TO_SERIALIZE__VAL_ATTR_MSG.fill(value, concreteAttribute,
+							ex.getMessage()), ex);
 						return null;
 					}
 
@@ -306,7 +307,7 @@ public class Resolvers {
 		try {
 			return ConfigUtil.getInstance(bindingType);
 		} catch (ConfigurationException ex) {
-			_log.error("Cannot create value binding for '" + attribute + "'.", ex);
+			_log.error(I18NConstants.FAILED_TO_CREATE_BINDING__ATTR_MSG.fill(attribute, ex.getErrorKey()), ex);
 			return null;
 		}
 	}

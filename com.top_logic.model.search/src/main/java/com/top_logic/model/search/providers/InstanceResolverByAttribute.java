@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.Log;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
@@ -24,6 +23,7 @@ import com.top_logic.basic.config.annotation.Step;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.func.Function1;
+import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLObject;
@@ -136,7 +136,7 @@ public class InstanceResolverByAttribute extends AbstractConfiguredInstance<Inst
 	}
 
 	@Override
-	public TLObject resolve(Log log, String kind, String id) {
+	public TLObject resolve(I18NLog log, String kind, String id) {
 		return _resolver.resolve(log, kind, id);
 	}
 

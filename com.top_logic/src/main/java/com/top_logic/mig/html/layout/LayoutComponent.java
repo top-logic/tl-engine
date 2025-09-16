@@ -2359,7 +2359,10 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		return becameInvalid || superInvalidated;
 	}
 
-	private boolean isModelTouchedByAny(Set<TLObject> objs) {
+	/**
+	 * Whether one of the given objects is or is part of this component's model.
+	 */
+	protected boolean isModelTouchedByAny(Set<TLObject> objs) {
 		Object model = getModel();
 
 		return objs.contains(model) || (model instanceof Collection<?> coll && CollectionUtil.containsAny(objs, coll));

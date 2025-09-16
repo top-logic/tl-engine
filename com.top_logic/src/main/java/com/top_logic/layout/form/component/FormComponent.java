@@ -473,7 +473,7 @@ public class FormComponent extends BuilderComponent implements FormHandler, Form
 	@Override
     protected boolean receiveModelDeletedEvent(Set<TLObject> aModel, Object changedBy) {
 		boolean becameInvalid;
-		if (changedBy != this && hasFormContext() && aModel.contains(getModel())) {
+		if (changedBy != this && hasFormContext() && isModelTouchedByAny(aModel)) {
             try {
                 removeFormContext();
             } catch (Exception exp) {

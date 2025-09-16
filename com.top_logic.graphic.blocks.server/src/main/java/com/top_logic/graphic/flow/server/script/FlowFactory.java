@@ -7,6 +7,7 @@ package com.top_logic.graphic.flow.server.script;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
@@ -97,7 +98,7 @@ public class FlowFactory extends TLScriptFunctions {
 		Object userObject
 	) {
 		return Diagram.create()
-			.setRoot(root == null ? Empty.create() : root)
+			.setRoot(nonNull(root))
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}
@@ -488,12 +489,7 @@ public class FlowFactory extends TLScriptFunctions {
 			return Empty.create().setUserObject(userObject);
 		}
 
-		for (int i = 0; i < contents.size(); i++) {
-			Box e = contents.get(i);
-			if (e == null) {
-				contents.set(i, Empty.create());
-			}
-		}
+		contents = noNullContent(contents);
 
 		return HorizontalLayout.create()
 			.setGap(gap)
@@ -535,12 +531,7 @@ public class FlowFactory extends TLScriptFunctions {
 			return Empty.create().setUserObject(userObject);
 		}
 
-		for (int i = 0; i < contents.size(); i++) {
-			Box e = contents.get(i);
-			if (e == null) {
-				contents.set(i, Empty.create());
-			}
-		}
+		contents = noNullContent(contents);
 
 		return VerticalLayout.create().setGap(gap).setFill(distribution).setContents(contents)
 			.setCssClass(cssClass)
@@ -1106,6 +1097,35 @@ public class FlowFactory extends TLScriptFunctions {
 
 	private static Box nonNull(Box content) {
 		return content == null ? Empty.create() : content;
+	}
+
+	/**
+	 * Returns a list in which <code>null</code> was replaces by {@link Empty}.
+	 * 
+	 * <p>
+	 * The given list is not modified. The return value may be the given list or a new one.
+	 * </p>
+	 */
+	private static List<Box> noNullContent(List<Box> contents) {
+		int i = 0;
+		int size = contents.size();
+		for (; i < size; i++) {
+			if (contents.get(i) == null) {
+				break;
+			}
+		}
+		if (i == size) {
+			// No null
+			return contents;
+		}
+		List<Box> result = new ArrayList<>(size);
+		result.addAll(contents.subList(0, i));
+		result.add(Empty.create());
+		i++;
+		for (; i < size; i++) {
+			result.add(nonNull(contents.get(i)));
+		}
+		return result;
 	}
 
 	/**

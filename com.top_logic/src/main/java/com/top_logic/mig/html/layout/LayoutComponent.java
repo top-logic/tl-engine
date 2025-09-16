@@ -1227,7 +1227,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		if (model instanceof TLObject) {
 			getModelScope().removeModelListener((TLObject) model, this);
 		} else {
-			extractTLObjects(getModel()).forEach(tlObject -> getModelScope().removeModelListener(tlObject, this));
+			extractTLObjects(model).forEach(tlObject -> getModelScope().removeModelListener(tlObject, this));
 		}
 	}
 
@@ -2338,7 +2338,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	protected boolean receiveModelDeletedEvent(Set<TLObject> aModel, Object changedBy) {
 		/* has anyone deleted the model we are currently editing? */
 		boolean becameInvalid;
-		if (changedBy != this && aModel.contains(getModel())) {
+		if (changedBy != this && isModelTouchedByAny(aModel)) {
 			if (!hasMaster()) {
 				ModelSpec modelSpec = getConfig().getModelSpec();
 				if (modelSpec != null) {
@@ -2355,15 +2355,30 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		return becameInvalid || superInvalidated;
 	}
 
+	private boolean isModelTouchedByAny(Set<TLObject> objs) {
+		Object model = getModel();
+
+		return objs.contains(model) || (model instanceof Collection<?> coll && CollectionUtil.containsAny(objs, coll));
+	}
+
 	@Override
     protected boolean receiveModelChangedEvent(Object aModel, Object changedBy ) {
         if (! isInvalid()) {
-			if (aModel != null && changedBy != this && aModel == getModel()) {
+			if (aModel != null && changedBy != this && isModelTouchedBy(aModel)) {
 				return receiveMyModelChangeEvent(changedBy);
            }
        }
        return false;
    }
+
+	/**
+	 * Whether the given object is or is part of this component's model.
+	 */
+	private boolean isModelTouchedBy(Object obj) {
+		Object model = getModel();
+
+		return obj == model || (model instanceof Collection<?> coll && coll.contains(obj));
+	}
 
 	/**
 	 * Hook for individual model change event handling.

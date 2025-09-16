@@ -209,17 +209,21 @@ public class DefaultScriptingRecorder extends ScriptingRecorder {
 	}
 
 	@Override
-	protected void pauseImpl() {
+	protected boolean pauseImpl() {
+		boolean isRunning = !isPaused();
 		paused.set(true);
+		return isRunning;
 	}
 
 	@Override
-	protected void resumeImpl() {
+	protected boolean resumeImpl() {
+		boolean isPaused = isPaused();
 		paused.set(false);
+		return isPaused;
 	}
 
 	/**
-	 * Is the ScriptingRecorder temporarily paused?
+	 * Is the {@link ScriptingRecorder} temporarily paused?
 	 */
 	private boolean isPaused() {
 		return Boolean.TRUE.equals(paused.get());

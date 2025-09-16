@@ -343,36 +343,40 @@ public abstract class ScriptingRecorder extends ConfiguredManagedClass<Scripting
 	protected abstract boolean hasVetoImpl(FollowupActionRecording followupActionRecording);
 
 	/**
-	 * Pause the ScriptingRecorder temporarily.
+	 * Pause the {@link ScriptingRecorder} temporarily.
 	 * 
 	 * <p>
-	 * To continue the recording use {@link #resume()}
+	 * To continue the recording use {@link #resume()}.
 	 * </p>
+	 * 
+	 * @return Whether the {@link ScriptingRecorder} was running before.
 	 */
-	public static void pause() {
-		getInstance().pauseImpl();
+	public static boolean pause() {
+		return getInstance().pauseImpl();
 	}
 
 	/**
 	 * @see #pause()
 	 */
-	protected abstract void pauseImpl();
+	protected abstract boolean pauseImpl();
 
 	/**
-	 * Resume the ScriptingRecorder if it is paused.
+	 * Resume the {@link ScriptingRecorder} if it is paused.
 	 * 
 	 * <p>
-	 * To pause the recording use {@link #pause()}
+	 * To pause the recording use {@link #pause()}.
 	 * </p>
+	 * 
+	 * @return Whether the {@link ScriptingRecorder} was paused before.
 	 */
-	public static void resume() {
-		getInstance().resumeImpl();
+	public static boolean resume() {
+		return getInstance().resumeImpl();
 	}
 
 	/**
 	 * @see #resume()
 	 */
-	protected abstract void resumeImpl();
+	protected abstract boolean resumeImpl();
 
 	/**
 	 * Whether resource lookup should not log missing keys or auto-generate labels from keys, but

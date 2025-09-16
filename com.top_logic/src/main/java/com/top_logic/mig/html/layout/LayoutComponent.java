@@ -2343,7 +2343,11 @@ public abstract class LayoutComponent extends ModelEventAdapter
 				ModelSpec modelSpec = getConfig().getModelSpec();
 				if (modelSpec != null) {
 					setModel(TypedConfigUtil.createInstance(modelSpec).eval(this));
+				} else {
+					/* Ensure that the model channel does not contain deleted elements. */
+					setModel(null);
 				}
+
 			}
 			this.invalidate();
 			becameInvalid = true;

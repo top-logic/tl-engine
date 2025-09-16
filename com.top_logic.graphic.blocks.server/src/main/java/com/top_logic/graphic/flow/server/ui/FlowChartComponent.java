@@ -30,6 +30,7 @@ import com.top_logic.graphic.flow.data.SelectableBox;
 import com.top_logic.graphic.flow.data.Widget;
 import com.top_logic.graphic.flow.server.control.DiagramControl;
 import com.top_logic.layout.Control;
+import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.contextmenu.component.ContextMenuFactory;
 import com.top_logic.layout.basic.contextmenu.component.factory.SelectableContextMenuFactory;
 import com.top_logic.layout.channel.ComponentChannel;
@@ -38,6 +39,8 @@ import com.top_logic.layout.component.Selectable;
 import com.top_logic.layout.component.SelectableWithSelectionModel;
 import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.component.model.SelectionListener;
+import com.top_logic.layout.scripting.action.SelectAction.SelectionChangeKind;
+import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.structure.ControlRepresentable;
 import com.top_logic.layout.table.component.BuilderComponent;
 import com.top_logic.mig.html.SelectionModel;
@@ -66,6 +69,8 @@ public class FlowChartComponent extends BuilderComponent
 	private Map<Object, List<Widget>> _observedIndex = Collections.emptyMap();
 
 	private final SelectionModel _selectionModel;
+
+	boolean _uiSelectionProcessed = false;
 
 	private final SelectionListener _updateUISelection = new SelectionListener() {
 		@Override
@@ -129,6 +134,9 @@ public class FlowChartComponent extends BuilderComponent
 			boolean removed = pause();
 			try {
 				update.accept(_selectionModel);
+				if (ScriptingRecorder.isRecordingActive()) {
+					_uiSelectionProcessed = true;
+				}
 			} finally {
 				resume(removed);
 			}
@@ -207,6 +215,24 @@ public class FlowChartComponent extends BuilderComponent
 	@Override
 	public SelectionModel getSelectionModel() {
 		return _selectionModel;
+	}
+
+	@Override
+	protected boolean doValidateModel(DisplayContext context) {
+		if (_uiSelectionProcessed) {
+			/* ScriptingRecorder is paused during model validation. */
+			boolean wasPaused = ScriptingRecorder.resume();
+			try {
+				/* Scripting is active, because the value is only set in this case. */
+				ScriptingRecorder.recordSelection(this, getSelected(), true, SelectionChangeKind.ABSOLUTE);
+			} finally {
+				if (wasPaused) {
+					ScriptingRecorder.pause();
+				}
+			}
+			_uiSelectionProcessed = false;
+		}
+		return super.doValidateModel(context);
 	}
 
 	@Override

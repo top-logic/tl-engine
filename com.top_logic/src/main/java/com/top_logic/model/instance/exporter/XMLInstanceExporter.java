@@ -8,8 +8,10 @@ package com.top_logic.model.instance.exporter;
 import java.io.ByteArrayOutputStream;
 import java.io.IOError;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -30,6 +32,7 @@ import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.knowledge.service.db2.InitialDataSetupService;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
@@ -307,6 +310,37 @@ public class XMLInstanceExporter {
 
 	private String typeName(TLModelPart part) {
 		return _modelNames.computeIfAbsent(part, TLModelUtil::qualifiedName);
+	}
+
+	/**
+	 * Exports the given objects and converts them into a binary stream containing XML data.
+	 */
+	public BinaryDataSource exportInstances(Collection<? extends TLObject> values) {
+		return exportInstances(null, values);
+	}
+
+	/**
+	 * Exports the given objects and converts them into a binary stream containing XML data.
+	 */
+	public BinaryDataSource exportInstances(String downloadName, Collection<? extends TLObject> values) {
+		String typeName = "objects";
+		boolean first = true;
+		for (TLObject obj : values) {
+			if (first) {
+				typeName = obj.tType().getName();
+				first = false;
+			}
+			export(obj);
+		}
+		ObjectsConf export = getExportConfig();
+	
+		if (downloadName == null) {
+			downloadName =
+				new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss").format(new Date()) + "_" + typeName
+					+ InitialDataSetupService.FILE_SUFFIX;
+		}
+		InstanceXmlData instanceData = new InstanceXmlData(downloadName, export);
+		return instanceData;
 	}
 
 	/**

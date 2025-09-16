@@ -6,7 +6,6 @@
 package com.top_logic.element.meta.form.fieldprovider;
 
 import java.util.Comparator;
-import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfiguredInstance;
@@ -24,7 +23,7 @@ import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.constraints.GenericMandatoryConstraint;
 import com.top_logic.layout.form.model.SelectField;
-import com.top_logic.layout.form.model.utility.DefaultListOptionModel;
+import com.top_logic.layout.form.model.utility.LazyListOptionModel;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.form.selection.SelectDialogConfig;
@@ -145,13 +144,16 @@ public class ComplexFieldProvider extends AbstractSelectFieldProvider
 		if (!(options instanceof ListOptionModel)) {
 			return options;
 		}
-		List<?> baseOptions = ((ListOptionModel<?>) options).getBaseModel();
-		List<?> filteredOptions =
-			AttributeOperations.adjustOptions(editContext, baseOptions);
-		if (baseOptions == filteredOptions) {
-			return options;
-		}
-		return new DefaultListOptionModel<>(filteredOptions);
+		ListOptionModel<?> baseListModel = (ListOptionModel<?>) options;
+		return new LazyListOptionModel<Object>(
+			() -> AttributeOperations.adjustOptions(editContext, baseListModel.getBaseModel())) {
+
+			@Override
+			public void resetBaseModel() {
+				super.resetBaseModel();
+				baseListModel.resetBaseModel();
+			}
+		};
 	}
 
 }

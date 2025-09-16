@@ -477,7 +477,7 @@ public class SelectField extends AbstractFormField implements TableDataOwner, Op
 	 *     see above.
 	 */
 	public void setOptions(List<?> options) {
-		setOptionModel(new DefaultListOptionModel(options));
+		setOptionModel(new DefaultListOptionModel<>(options));
 	}
 
 	/**

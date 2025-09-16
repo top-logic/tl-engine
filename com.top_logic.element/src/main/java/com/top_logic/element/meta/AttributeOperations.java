@@ -75,6 +75,7 @@ import com.top_logic.knowledge.wrap.list.FastList;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.model.utility.DefaultListOptionModel;
+import com.top_logic.layout.form.model.utility.LazyListOptionModel;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
@@ -429,16 +430,7 @@ public class AttributeOperations {
 
 	private static ListOptionModel<?> createLazyListOptionModel(Filter<Object> optionsFilter,
 			Supplier<List<?>> options) {
-		LazyListUnmodifyable<?> lazyOptions = new LazyListUnmodifyable<>() {
-
-			@Override
-			protected List<?> initInstance() {
-				return FilterUtil.filterList(optionsFilter, options.get());
-			}
-
-		};
-
-		return new DefaultListOptionModel<>(lazyOptions);
+		return new LazyListOptionModel<>(() -> FilterUtil.filterList(optionsFilter, options.get()));
 	}
 
 	private static ListOptionModel<?> createFilteredOptionModel(Filter<Object> optionsFilter, List<?> allOptions) {

@@ -87,13 +87,15 @@ public class DisabledScriptingRecorder extends ScriptingRecorder {
 	}
 
 	@Override
-	protected void pauseImpl() {
+	protected boolean pauseImpl() {
 		// Ignore.
+		return false;
 	}
 
 	@Override
-	protected void resumeImpl() {
+	protected boolean resumeImpl() {
 		// Ignore.
+		return false;
 	}
 
 	@Override

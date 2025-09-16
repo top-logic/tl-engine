@@ -127,7 +127,7 @@ public abstract class AbstractFilterChartComponent extends JFreeChartComponent i
      */
     @Override
 	protected boolean receiveModelDeletedEvent(Set<TLObject> aModel, Object aChangedBy) {
-		if (aModel.contains(getModel())) {
+		if (isModelTouchedByAny(aModel)) {
             fireSecurityChanged((Object) null);
 			setModel(null);
             chart = null;

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments
+		createOpenerButtons="false"
+		height="80%"
+		helpID="ID_bb9e58e4_1553_4fa6_8bf8_219b1764ae52"
+		width="80%"
+		with-security-configuration="true"
+	>
+		<title>
+			<title key="dynamic.dbbc4d87-a9d0-4b89-a1b2-bb32b23c5d6c">
+				<en>My latest changes</en>
+				<de>Meine letzten Änderungen</de>
+			</title>
+		</title>
+		<security-label key="dynamic.b703f4ae-6965-4c29-9676-0747d9cc4ace">
+			<en>My latest changes</en>
+			<de>Meine letzten Änderungen</de>
+		</security-label>
+		<open-handler id="openChangeLogDialog"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			image="css:fa-solid fa-right-left"
+		>
+			<resourceKey key="dynamic.dbbc4d87-a9d0-4b89-a1b2-bb32b23c5d6c">
+				<en>My latest changes</en>
+				<de>Meine letzten Änderungen</de>
+			</resourceKey>
+		</open-handler>
+		<components>
+			<layout-reference resource="admin/myLatestChanges/innerLayout.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

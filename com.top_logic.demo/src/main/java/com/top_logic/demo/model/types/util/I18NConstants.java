@@ -45,6 +45,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResPrefix TYPE_GENERATOR_DIALOG;
 
 	public static ResPrefix TYPE_GENERATOR;
+
+	/**
+	 * @en Deleted mails.
+	 */
+	public static ResKey DELETED_MAILS;
 	
 	static {
 		initConstants(I18NConstants.class);

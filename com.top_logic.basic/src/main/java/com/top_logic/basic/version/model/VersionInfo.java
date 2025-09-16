@@ -231,7 +231,7 @@ public class VersionInfo extends de.haumacher.msgbuf.data.AbstractDataObject imp
 	}
 
 	/**
-	 * Date of the first releas of the software.
+	 * Date of the first release of the software.
 	 */
 	public final String getInceptionYear() {
 		return _inceptionYear;
@@ -484,8 +484,9 @@ public class VersionInfo extends de.haumacher.msgbuf.data.AbstractDataObject imp
 		return VERSION_INFO__TYPE;
 	}
 
-	private static java.util.List<String> PROPERTIES = java.util.Collections.unmodifiableList(
-		java.util.Arrays.asList(
+	static final java.util.List<String> PROPERTIES;
+	static {
+		java.util.List<String> local = java.util.Arrays.asList(
 			GROUP_ID__PROP, 
 			ARTIFACT_ID__PROP, 
 			VERSION__PROP, 
@@ -498,11 +499,26 @@ public class VersionInfo extends de.haumacher.msgbuf.data.AbstractDataObject imp
 			CONTRIBUTORS__PROP, 
 			DEVELOPERS__PROP, 
 			LICENSES__PROP, 
-			DEPENDENCIES__PROP));
+			DEPENDENCIES__PROP);
+		PROPERTIES = java.util.Collections.unmodifiableList(local);
+	}
+
+	static final java.util.Set<String> TRANSIENT_PROPERTIES;
+	static {
+		java.util.HashSet<String> tmp = new java.util.HashSet<>();
+		tmp.addAll(java.util.Arrays.asList(
+				));
+		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
+	}
 
 	@Override
 	public java.util.List<String> properties() {
 		return PROPERTIES;
+	}
+
+	@Override
+	public java.util.Set<String> transientProperties() {
+		return TRANSIENT_PROPERTIES;
 	}
 
 	@Override
@@ -628,35 +644,43 @@ public class VersionInfo extends de.haumacher.msgbuf.data.AbstractDataObject imp
 			case BUILD_QUALIFIER__PROP: setBuildQualifier(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case ORGANIZATION__PROP: setOrganization(com.top_logic.basic.version.model.Organisation.readOrganisation(in)); break;
 			case CONTRIBUTORS__PROP: {
+				java.util.List<com.top_logic.basic.version.model.Contributor> newValue = new java.util.ArrayList<>();
 				in.beginArray();
 				while (in.hasNext()) {
-					addContributor(com.top_logic.basic.version.model.Contributor.readContributor(in));
+					newValue.add(com.top_logic.basic.version.model.Contributor.readContributor(in));
 				}
 				in.endArray();
+				setContributors(newValue);
 			}
 			break;
 			case DEVELOPERS__PROP: {
+				java.util.List<com.top_logic.basic.version.model.Contributor> newValue = new java.util.ArrayList<>();
 				in.beginArray();
 				while (in.hasNext()) {
-					addDeveloper(com.top_logic.basic.version.model.Contributor.readContributor(in));
+					newValue.add(com.top_logic.basic.version.model.Contributor.readContributor(in));
 				}
 				in.endArray();
+				setDevelopers(newValue);
 			}
 			break;
 			case LICENSES__PROP: {
+				java.util.List<com.top_logic.basic.version.model.License> newValue = new java.util.ArrayList<>();
 				in.beginArray();
 				while (in.hasNext()) {
-					addLicense(com.top_logic.basic.version.model.License.readLicense(in));
+					newValue.add(com.top_logic.basic.version.model.License.readLicense(in));
 				}
 				in.endArray();
+				setLicenses(newValue);
 			}
 			break;
 			case DEPENDENCIES__PROP: {
+				java.util.List<com.top_logic.basic.version.model.VersionInfo> newValue = new java.util.ArrayList<>();
 				in.beginArray();
 				while (in.hasNext()) {
-					addDependencie(com.top_logic.basic.version.model.VersionInfo.readVersionInfo(in));
+					newValue.add(com.top_logic.basic.version.model.VersionInfo.readVersionInfo(in));
 				}
 				in.endArray();
+				setDependencies(newValue);
 			}
 			break;
 			default: super.readField(in, field);

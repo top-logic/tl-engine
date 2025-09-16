@@ -484,6 +484,7 @@
 			</annotation>
 			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.FullLoadAnnotation" 
 				full-load="true" />
+			<key-attributes attributes="source,dest"/>
 		</annotations>
 		
 		<attributes>
@@ -618,6 +619,7 @@
 			</annotation>
 			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.FullLoadAnnotation" 
 				full-load="true" />
+			<key-attributes attributes="source,dest,metaAttribute"/>
 		</annotations>
 		<attributes>
 			<source
@@ -674,6 +676,7 @@
 			</annotation>
 			<annotation config:interface="com.top_logic.knowledge.service.xml.annotation.FullLoadAnnotation" 
 				full-load="true" />
+			<key-attributes attributes="source,dest,metaAttribute"/>
 		</annotations>
 		<attributes>
 			<source

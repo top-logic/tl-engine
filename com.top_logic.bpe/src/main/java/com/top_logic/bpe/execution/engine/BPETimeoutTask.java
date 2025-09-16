@@ -29,7 +29,7 @@ public class BPETimeoutTask extends TaskImpl {
 			@Override
 			public void inContext() {
 				KnowledgeBase theKB = PersistencyLayer.getKnowledgeBase();
-				try (Transaction t = theKB.beginTransaction()) {
+				try (Transaction t = theKB.beginTransaction(I18NConstants.PROCESSED_TIMER_WORKFLOW_TASKS)) {
 					ExecutionEngine.getInstance().updateAll();
 					t.commit();
 				} catch (Exception e) {

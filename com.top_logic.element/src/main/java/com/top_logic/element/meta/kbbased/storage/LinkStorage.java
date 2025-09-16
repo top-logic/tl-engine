@@ -6,6 +6,7 @@
 package com.top_logic.element.meta.kbbased.storage;
 
 
+import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
@@ -17,12 +18,14 @@ import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.dob.MetaObject;
+import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.meta.AssociationStorage;
 import com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
+import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
@@ -196,6 +199,12 @@ public abstract class LinkStorage<C extends LinkStorage.Config<?>> extends Colle
 		super.init(attribute);
 		initStorageMapping(attribute);
 		initReference(attribute);
+
+		if (!monomophicTable()) {
+			checkKeyAttributes(attribute,
+				WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR,
+				DBKnowledgeAssociation.REFERENCE_SOURCE_NAME);
+		}
 	}
 
 	/**
@@ -220,6 +229,25 @@ public abstract class LinkStorage<C extends LinkStorage.Config<?>> extends Colle
 		_incomingQuery = LinkStorageUtil.createIncomingQuery(attribute, this);
 		_preload = new SinglePreloadContribution(new AssociationNavigationPreload(getOutgoingQuery()));
 		_reversePreload = new SinglePreloadContribution(new AssociationNavigationPreload(getIncomingQuery()));
+	}
+
+	@Override
+	public ObjectKey getBaseObjectId(Map<String, Object> row) {
+		return (ObjectKey) row.get(DBKnowledgeAssociation.REFERENCE_SOURCE_NAME);
+	}
+
+	@Override
+	public String getStorageColumn() {
+		return DBKnowledgeAssociation.REFERENCE_DEST_NAME;
+	}
+
+	@Override
+	public ObjectKey getPartId(Map<String, Object> row) {
+		if (monomophicTable()) {
+			return getAttribute().tId();
+		} else {
+			return (ObjectKey) row.get(WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR);
+		}
 	}
 
 	@Override

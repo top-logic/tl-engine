@@ -65,7 +65,7 @@ public class SaveReportCommand extends SaveExpressionCommand {
 		}
 		try {
 			KnowledgeBase kb = report.getKnowledgeBase();
-			try (Transaction tx = kb.beginTransaction()) {
+			try (Transaction tx = kb.beginTransaction(I18NConstants.UPDATED_SEARCH_REPORT)) {
 				publish(report, selectorContext);
 				report.setValue(FlexReport.ATTRIBUTE_REPORT, configString);
 				tx.commit();

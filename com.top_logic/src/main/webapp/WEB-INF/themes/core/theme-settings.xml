@@ -5,6 +5,9 @@
 		interface="com.top_logic.mig.html.layout.MainLayout"
 		value="com.top_logic.knowledge.gui.layout.TLMainLayout"
 	/>
+	<boolean name="closeDialogOnBackgroundClick"
+		value="true"
+	/>
 	<int name="VERSION_ROW_HEIGHT"
 		value="16"
 	/>

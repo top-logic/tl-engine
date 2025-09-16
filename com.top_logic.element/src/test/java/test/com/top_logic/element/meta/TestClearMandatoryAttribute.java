@@ -32,7 +32,7 @@ public class TestClearMandatoryAttribute extends TestWithModelExtension {
 
 		TLObject src;
 		TLObject dst;
-		try (Transaction tx = _kb.beginTransaction()) {
+		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			src = factory.createObject((TLClass) TLModelUtil.findType(testModule, "Src"));
 			dst = factory.createObject((TLClass) TLModelUtil.findType(testModule, "Dst"));
 			src.tUpdateByName("dest", dst);
@@ -41,7 +41,7 @@ public class TestClearMandatoryAttribute extends TestWithModelExtension {
 
 		assertTrue(dst.tValid());
 
-		try (Transaction tx = _kb.beginTransaction()) {
+		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			dst = (TLObject) src.tValueByName("dest");
 
 			// Clear composite reference (prevent deletion of dest together with src).

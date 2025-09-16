@@ -9,6 +9,7 @@ import com.top_logic.base.services.simpleajax.JavaScriptResKey;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -93,6 +94,36 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_CANNOT_EDIT;
 
 	public static ResKey ERROR_COMPONENT_CHANNEL_EXPECTED;
+
+	/**
+	 * @en Updated object: {0}
+	 */
+	public static ResKey1 UPDATED__MODEL;
+
+	/**
+	 * @en Deleted object: {0}
+	 */
+	public static ResKey1 DELETED__MODEL;
+
+	/**
+	 * @en Created object: {0}
+	 */
+	public static ResKey1 CREATED__MODEL;
+
+	/**
+	 * @en Performed operation "{0}" on "{1}".
+	 */
+	public static ResKey2 PERFORMED__OPERATION_MODEL;
+
+	/**
+	 * @en Performed operation "{0}".
+	 */
+	public static ResKey1 PERFORMED__OPERATION;
+
+	/**
+	 * @en Created object.
+	 */
+	public static ResKey CREATED_OBJECT;
 
 	static {
 		initConstants(I18NConstants.class);

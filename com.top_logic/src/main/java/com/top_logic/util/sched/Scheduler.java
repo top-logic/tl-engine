@@ -812,7 +812,8 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 */
 	private boolean requestClusterLock(final Task task) {
 		// No retry necessary, as a failed request means, an other cluster node is running the task.
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction transaction = PersistencyLayer.getKnowledgeBase()
+			.beginTransaction(I18NConstants.REQUESTED_CLUSTER_LOCK_FOR__TASK.fill(task.getName()));
 		try {
 			TaskLogWrapper logWrapper = (TaskLogWrapper) task.getLog();
 			logWrapper.touch();
@@ -1260,7 +1261,8 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 
 	private RetryResult<Void, Throwable> clearClusterLockUnsafe(Task task) {
 		TaskLogWrapper logWrapper = (TaskLogWrapper) task.getLog();
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction transaction = PersistencyLayer.getKnowledgeBase()
+			.beginTransaction(I18NConstants.CLEARED_CLUSTER_LOCK__TASK.fill(task.getName()));
 		try {
 			logWrapper.touch();
 			if (logWrapper.hasClusterLock()) {
@@ -1527,7 +1529,8 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 
 	private void forceUncheckedMarkTaskAsInactive(Task task) {
 		TaskLogWrapper logWrapper = (TaskLogWrapper) task.getLog();
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction transaction = PersistencyLayer.getKnowledgeBase()
+			.beginTransaction(I18NConstants.COMPLETED_TASK__TASK.fill(task.getName()));
 		try {
 			logWrapper.forceUncheckedMarkTaskAsInactive(task, I18NConstants.TASK_MARKED_AS_DONE_BY_SCHEDULER);
 			transaction.commit();

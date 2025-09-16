@@ -17,12 +17,14 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.formeditor.builder.ConfiguredDynamicFormBuilder;
 import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.component.WithCloseDialog;
+import com.top_logic.layout.component.WithCommitMessage;
 import com.top_logic.layout.form.component.AbstractFormCommandHandler;
 import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.TransactionHandler;
@@ -55,7 +57,7 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 	 * Configuration options for {@link TransactionHandlerByExpression} that are directly
 	 * configurable.
 	 */
-	public interface UIOptions extends WithPostCreateActions.Config, WithCloseDialog {
+	public interface UIOptions extends WithPostCreateActions.Config, WithCloseDialog, WithCommitMessage {
 
 		/**
 		 * @see #getCheckForm()
@@ -165,6 +167,7 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 		Config.AUTO_APPLY,
 		Config.TRANSACTION,
 		Config.OPERATION,
+		Config.COMMIT_MESSAGE,
 		Config.POST_CREATE_ACTIONS,
 		Config.CLOSE_DIALOG,
 		Config.CONFIRMATION,
@@ -198,9 +201,11 @@ public class TransactionHandlerByExpression extends AbstractFormCommandHandler
 	protected final HandlerResult applyChanges(LayoutComponent component, FormContext formContext, Object model,
 			Map<String, Object> arguments) {
 
+		ResKey message = ((Config) getConfig()).buildCommandMessage(component, this, model);
+
 		Object result;
 		if (config().isInTransaction()) {
-			try (Transaction tx = beginTransaction(model)) {
+			try (Transaction tx = beginTransaction(model, message)) {
 				result = performTransaction(component, formContext, model);
 				commit(tx, model);
 			}

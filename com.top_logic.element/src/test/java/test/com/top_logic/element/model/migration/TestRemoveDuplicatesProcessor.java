@@ -42,7 +42,7 @@ public class TestRemoveDuplicatesProcessor extends AbstractDBKnowledgeBaseCluste
 		KnowledgeObject source;
 		KnowledgeObject dest1;
 		KnowledgeObject dest2;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			source = newE("src1");
 			dest1 = newE("dst1");
 			dest2 = newE("dst2");
@@ -50,30 +50,30 @@ public class TestRemoveDuplicatesProcessor extends AbstractDBKnowledgeBaseCluste
 		}
 
 		KnowledgeAssociation link1;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			link1 = newAB(source, dest1);
 			tx.commit();
 		}
 
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			newAB(source, dest2);
 			tx.commit();
 		}
 
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			newAB(source, dest2);
 			tx.commit();
 		}
 
 		Revision duplicateRevision;
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			newAB(source, dest1);
 			tx.commit();
 			
 			duplicateRevision = tx.getCommitRevision();
 		}
 
-		try (Transaction tx = kb().beginTransaction()) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			link1.delete();
 			tx.commit();
 		}

@@ -74,10 +74,16 @@ public class InlineSetStorage<C extends InlineSetStorage.Config<?>> extends Inli
 		}
 		_outgoingQuery = IndexedLinkQuery.indexedLinkQuery(new NamedConstant(attribute.getName() + " liveQuery"),
 			TLObject.class, table, getConfig().getContainerColumn(), null, TLObject.class, filter, true);
+
+		String partCol = getConfig().getReferenceColumn();
+		if (partCol != null) {
+			String baseObjectCol = getConfig().getContainerColumn();
+			checkKeyAttributes(attribute, partCol, baseObjectCol);
+		}
 	}
 
 	@Override
-	protected String getTable() {
+	public String getTable() {
 		return _outgoingQuery.getAssociationTypeName();
 	}
 

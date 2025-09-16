@@ -27,6 +27,7 @@ import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.ExportColumns;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.TLObjectInitializers;
+import com.top_logic.model.annotate.TLPersistentCache;
 import com.top_logic.model.annotate.ui.ClassificationDisplay;
 import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPresentation;
 import com.top_logic.model.config.TLTypeAnnotation;
@@ -78,7 +79,7 @@ public class TLAnnotations {
 	}
 
 	/**
-	 * Lookup an annotation of the given annotation type in the given modelpart.
+	 * Lookup an annotation of the given annotation type in the given model part.
 	 * 
 	 * @param modelPart
 	 *        The annotated {@link TLModelPart}.
@@ -278,6 +279,32 @@ public class TLAnnotations {
 			return Collections.emptyList();
 		}
 		return TypedConfigUtil.createInstanceList(localInitializers.getInitializers());
+	}
+
+	/**
+	 * Whether the value of the part is actually a persistent cache.
+	 * 
+	 * @see #isPersistentCache(TLStructuredType)
+	 */
+	public static boolean isPersistentCache(TLStructuredTypePart typePart) {
+		TLPersistentCache annotation = getAnnotation(typePart, TLPersistentCache.class);
+		if (annotation != null) {
+			return annotation.getValue();
+		}
+		return false;
+	}
+
+	/**
+	 * Whether instanced of the given type is actually a persistent cache.
+	 * 
+	 * @see #isPersistentCache(TLStructuredTypePart)
+	 */
+	public static boolean isPersistentCache(TLStructuredType type) {
+		TLPersistentCache annotation = getAnnotation(type, TLPersistentCache.class);
+		if (annotation != null) {
+			return annotation.getValue();
+		}
+		return false;
 	}
 
 }

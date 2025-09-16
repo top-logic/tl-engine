@@ -85,7 +85,7 @@ public class FailedLogin extends AbstractWrapper {
 			clientIP = NO_CLIENT_IP;
     	}
         KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-        Transaction transaction = kb.beginTransaction();
+		Transaction transaction = kb.beginTransaction(I18NConstants.RECORDED_FAILED_LOGIN__NAME.fill(loginName));
         try {
 			KnowledgeObject ko = kb.createKnowledgeObject(KO_TYPE);
             ko.setAttributeValue(USER_NAME, loginName);

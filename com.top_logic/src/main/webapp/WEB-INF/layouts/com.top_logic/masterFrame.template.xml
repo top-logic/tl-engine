@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	groups="maintabbar"
+>
+	<properties extends="com.top_logic.mig.html.layout.SubComponentConfig, com.top_logic.layout.editor.config.DialogTemplateParameters">
+		<property name="closeDialogOnBackgroundClick"
+			type="boolean"
+		/>
+	</properties>
+
+	<component class="%MAIN_LAYOUT_CLASS%"
+		closeDialogOnBackgroundClick="${closeDialogOnBackgroundClick}"
+		components="${components}"
+		dialogs="${dialogs}"
+		horizontal="false"
+		icon="/images/favicon.png"
+		name="masterFrame"
+		resizable="false"
+		shortcutIcon="/images/favicon.png"
+		titleKey="tl.title"
+	>
+		<component-resolvers>
+			<component-resolver class="com.top_logic.layout.form.component.FormStateRecorder"/>
+		</component-resolvers>
+	</component>
+</config:template>

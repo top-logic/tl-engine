@@ -22,6 +22,7 @@ import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.MapUtil;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigUtil;
@@ -281,8 +282,8 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 	}
 
 	@Override
-	public TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues) {
-		return getFactory(type.getModule()).createObject(type, context, initialValues);
+	public TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues, TLID id) {
+		return getFactory(type.getModule()).createObject(type, context, initialValues, id);
 	}
 
 	@Override
@@ -308,7 +309,7 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 
 		InstantiationContext context = ApplicationConfig.getInstance().getServiceStartupContext();
 		
-		Transaction tx = kb().beginTransaction();
+		Transaction tx = kb().beginTransaction(I18NConstants.MODEL_SERVIVE_STARTUP);
 		try {
 			_modelConfig = new ModelConfigLoader().load(context, config());
 			if (_modelConfig == null) {

@@ -74,7 +74,7 @@ public class TestConfiguredNumberHandler extends BasicTestCase {
 						@Override
 						public void run() throws Exception {
 							{
-								Transaction tx = kb.beginTransaction();
+								Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 								numbers.add(handler.generateId(null));
 								
 								// Simulate long running transaction.

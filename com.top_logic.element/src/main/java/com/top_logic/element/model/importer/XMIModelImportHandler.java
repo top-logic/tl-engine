@@ -274,7 +274,8 @@ public class XMIModelImportHandler extends AbstractCommandHandler {
 				public HandlerResult executeCommand(DisplayContext context) {
 					Logger.info("Applying model patch: " + patch, XMIModelImportHandler.class);
 
-					try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+					try (Transaction tx = PersistencyLayer.getKnowledgeBase()
+						.beginTransaction(I18NConstants.IMPORTED_MODEL_PATCH__NAME.fill(modelDefinition.getName()))) {
 						ApplyModelPatch.applyPatch(log, targetModel, service.getFactory(), patch);
 
 						tx.commit();

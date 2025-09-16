@@ -50,6 +50,41 @@ public class I18NConstants extends I18NConstantsBase {
 	
 	public static ResKey1 RESOLVE_COMPONENT_ERROR__LAYOUT_KEY;
 
+	/**
+	 * @en Created component: {0}
+	 */
+	public static ResKey1 CREATED_COMPONENT__NAME;
+
+	/**
+	 * @en Added dialog: {0}
+	 */
+	public static ResKey1 ADDED_DIALOG__NAME;
+
+	/**
+	 * @en Added tab: {0}
+	 */
+	public static ResKey1 ADDED_TAB__NAME;
+
+	/**
+	 * @en Added component tile: {0}
+	 */
+	public static ResKey1 ADDED_COMPONENT_TILE__NAME;
+
+	/**
+	 * @en Reset layout configuration for user "{0}".
+	 */
+	public static ResKey1 RESET_LAYOUT_CONFIG__USER;
+
+	/**
+	 * @en Released layout configuration.
+	 */
+	public static ResKey RELEASED_LAYOUT_CONFIGURATION;
+
+	/**
+	 * @en Configured tabs.
+	 */
+	public static ResKey CONFIGURED_TABS;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

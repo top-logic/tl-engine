@@ -193,7 +193,7 @@ public class MailServer extends KBBasedManagedClass<MailServer.Config> implement
 		if (!_actived) {
 			return;
 		}
-		Transaction tx = kb().beginTransaction(Messages.INITIALISING_ROOT_FOLDER);
+		Transaction tx = kb().beginTransaction(I18NConstants.INITIALISING_ROOT_FOLDER);
 		try {
 			getRootFolder();
 		} catch (Exception ex) {
@@ -216,7 +216,7 @@ public class MailServer extends KBBasedManagedClass<MailServer.Config> implement
 
 		int messageCnt = messages.length;
 		if (messageCnt > 0) {
-			Transaction tx = kb().beginTransaction();
+			Transaction tx = kb().beginTransaction(I18NConstants.RECEIVED_MESSAGES);
 			try {
 				for (int position = 0; position < messageCnt; position++) {
 					Message message = messages[position];

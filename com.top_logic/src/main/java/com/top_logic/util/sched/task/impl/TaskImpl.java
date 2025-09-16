@@ -917,7 +917,8 @@ public class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl implements
 			// to prevent conflicts with the commit of taskStarted.
 			return RetryResult.createSuccess(true);
 		}
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction transaction = PersistencyLayer.getKnowledgeBase()
+			.beginTransaction(com.top_logic.util.sched.task.I18NConstants.STOPPED_CLUSTER_TASK__TASK.fill(getName()));
 		try {
 			TaskLogWrapper logWrapper = (TaskLogWrapper) getLog();
 			logWrapper.touch();

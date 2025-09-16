@@ -61,6 +61,12 @@ public class TestResKeyEncoding extends TestCase {
 		assertNull(decoded.arguments()[0]);
 	}
 
+	public void testEncodeNone() {
+		assertEncodeDecode(ResKey.NONE);
+		assertEncodeDecode(ResKey.none("some/layout/dir/myComp.xml#MyName", "foobar"));
+		assertEquals(ResKey.NONE.suffix("foobar"), ResKey.none(null, "foobar"));
+	}
+
 	public void testEncodeUnknown() {
 		ResKey key = message(new NamedConstant("foobar"));
 		String encoded = ResKey.encode(key);
@@ -150,6 +156,37 @@ public class TestResKeyEncoding extends TestCase {
 	public void testDecodeEmpty() {
 		assertNull(ResKey.decode(""));
 		assertNull(ResKey.decode(null));
+	}
+
+	public void testDecodeLiteralArg() {
+		ResKey result = ResKey.decode(
+			"class.com.top_logic.mig.html.layout.I18NConstants.CONFIGURED_COMPONENT__NAME/[#(\"TestButtonCreationForExisitingDialogTable\"@de, tooltip: {\"TestButtonCreationForExisitingDialogTable\"@de})]");
+		assertEquals("class.com.top_logic.mig.html.layout.I18NConstants.CONFIGURED_COMPONENT__NAME",
+			result.plain().getKey());
+		ResKey arg = (ResKey) result.arguments()[0];
+		assertEquals("TestButtonCreationForExisitingDialogTable",
+			ResourcesModule.getInstance().getBundle(Locale.GERMAN).getString(arg));
+		assertEquals("TestButtonCreationForExisitingDialogTable",
+			ResourcesModule.getInstance().getBundle(Locale.GERMAN).getString(arg.tooltip()));
+
+		Builder literalBuilder = ResKey.builder()
+			.add(Locale.GERMAN, "Hallo Welt!")
+			.add(Locale.ENGLISH, "Hello world!");
+
+		literalBuilder.suffix("tooltip")
+			.add(Locale.GERMAN, "Begrüßung")
+			.add(Locale.ENGLISH, "Greeding");
+
+		ResKey literal = literalBuilder.build();
+		assertEncodeDecode(literal);
+	}
+
+	private void assertEncodeDecode(ResKey key) {
+		String encoded = ResKey.encode(key);
+		ResKey decoded = ResKey.decode(encoded);
+		assertEquals(key, decoded);
+
+		assertEncodeDecode((Object) key);
 	}
 
 	private void assertEncodeDecode(Object value) {

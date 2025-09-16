@@ -23,7 +23,7 @@ import com.top_logic.basic.i18n.I18NConstantsBase;
  */
 @Format(ResKey.ValueFormat.class)
 @Binding(ResKey.ValueBinding.class)
-public interface ResKey1 {
+public interface ResKey1 extends ResKeyTemplate {
 
 	/**
 	 * Creates a {@link ResKey} using the given object as dynamic part of the translation.

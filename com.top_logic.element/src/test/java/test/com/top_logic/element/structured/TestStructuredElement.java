@@ -261,7 +261,7 @@ public class TestStructuredElement extends BasicTestCase {
 		try (Transaction tx = beginTransaction()) {
 			// Concrete class is defined in the root type.
 			TLClass subProjectType = (TLClass) ((TLScope) _projectRoot).getType("Subproject");
-			child = (StructuredElement) DynamicModelService.getInstance().createObject(subProjectType, parent, null);
+			child = (StructuredElement) DynamicModelService.getInstance().createObject(subProjectType, parent);
 			child.setValue("name", "genericSubProject");
 			parent.getChildrenModifiable().add(child);
 			tx.commit();
@@ -424,7 +424,7 @@ public class TestStructuredElement extends BasicTestCase {
 	}
 
 	private Transaction beginTransaction() {
-		return _projectRoot.getKnowledgeBase().beginTransaction();
+		return _projectRoot.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 	}
 
 	/**

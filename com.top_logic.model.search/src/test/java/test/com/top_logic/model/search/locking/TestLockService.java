@@ -245,7 +245,7 @@ public class TestLockService extends BasicTestCase {
 		return new ThreadContextSetup(test) {
 			@Override
 			protected void doSetUp() throws Exception {
-				try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+				try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 					DynamicModelService.extendModel(new AssertProtocol(), ModelService.getApplicationModel(),
 						ModelService.getInstance().getFactory(),
 						content("TestLockService.model.xml"));

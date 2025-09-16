@@ -33,7 +33,7 @@ public abstract class AbstractFolderTest extends BasicTestCase {
 	@Override
 	protected void tearDown() throws Exception {
 		if (parent != null) {
-			Transaction deleteParentTX = parent.getKnowledgeBase().beginTransaction();
+			Transaction deleteParentTX = parent.getKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 			WebFolder.deleteRecursively(parent);
 			deleteParentTX.commit();
 		}
@@ -66,7 +66,7 @@ public abstract class AbstractFolderTest extends BasicTestCase {
 			}
 			theFolder = WebFolder.getInstance(theProxy);
 			if (theFolder == null) {
-				Transaction createTX = WebFolder.getDefaultKnowledgeBase().beginTransaction();
+				Transaction createTX = WebFolder.getDefaultKnowledgeBase().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 				theFolder = WebFolder.createFolder(theName, PARENT_BASE);
 				createTX.commit();
 			}

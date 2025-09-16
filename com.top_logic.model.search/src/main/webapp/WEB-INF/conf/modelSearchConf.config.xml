@@ -281,6 +281,7 @@
 					<declaration file="/WEB-INF/model/tl-model-search/extension.tl.core.model.xml"/>
 					<declaration file="/WEB-INF/model/tl-model-search/extension.tl.folder.model.xml"/>
 					<declaration file="/WEB-INF/model/tl.model.search.model.xml"/>
+					<declaration file="/WEB-INF/model/tl-model-search/extension.tl.changelog.model.xml"/>
 				</declarations>
 				<settings>
 					<module name="SearchExpressionStructure">

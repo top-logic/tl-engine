@@ -98,6 +98,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey UPDATE_DIALOG_FILE;
 
+	/**
+	 * @en Created folder "{0}".
+	 */
+	public static ResKey1 CREATED_FOLDER__NAME;
+
+	/**
+	 * @en Updated documnet "{0}".
+	 */
+	public static ResKey1 UPDATED_DOCUMENT__NAME;
+
+	/**
+	 * @en Deleted document "{0}".
+	 */
+	public static ResKey1 DELETED_DOCUMENT__NAME;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

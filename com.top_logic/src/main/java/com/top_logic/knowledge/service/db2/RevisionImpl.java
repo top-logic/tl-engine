@@ -8,6 +8,7 @@ package com.top_logic.knowledge.service.db2;
 import com.top_logic.basic.LongID;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.IdentifierTypes;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.attr.MOAttributeImpl;
@@ -28,7 +29,7 @@ class RevisionImpl extends DBSystemObject implements Revision {
 
 	private String _author;
 
-	private String _log;
+	private ResKey _log;
 
 	private long _date;
 
@@ -36,7 +37,7 @@ class RevisionImpl extends DBSystemObject implements Revision {
 		super(kb, type);
 	}
 
-	/*package protected*/ void initNew(long commitNumber, String author, long date, String log) {
+	/* package protected */ void initNew(long commitNumber, String author, long date, ResKey log) {
 		initValues(commitNumber, author, date, log);
 		TLID objectName = LongID.valueOf(commitNumber);
 		initIdentifier(objectName, TLContext.TRUNK_ID);
@@ -54,14 +55,14 @@ class RevisionImpl extends DBSystemObject implements Revision {
 	 * @param log
 	 *        see {@link #getLog()}
 	 */
-	void initValues(long commitNumber, String author, long date, String log) {
+	void initValues(long commitNumber, String author, long date, ResKey log) {
 		initCommitNumber(commitNumber);
 		initAuthor(author);
 		initDate(date);
 		initLog(log);
 	}
 
-	void initLog(String log) {
+	void initLog(ResKey log) {
 		_log = log;
 	}
 
@@ -88,7 +89,7 @@ class RevisionImpl extends DBSystemObject implements Revision {
 	}
 	
 	@Override
-	public String getLog() {
+	public ResKey getLog() {
 		return _log;
 	}
 	

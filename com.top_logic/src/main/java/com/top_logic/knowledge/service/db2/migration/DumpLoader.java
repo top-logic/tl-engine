@@ -52,6 +52,7 @@ import com.top_logic.knowledge.event.EventWriter;
 import com.top_logic.knowledge.event.ObjectCreation;
 import com.top_logic.knowledge.event.convert.EventRewriter;
 import com.top_logic.knowledge.event.convert.StackedEventWriter;
+import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -352,7 +353,7 @@ public class DumpLoader extends Tool {
 		Iterator<UnversionedCreations> unversioned = reader.getUnversionedObjects(eventRev);
 		ChangeSet cs = new ChangeSet(eventRev);
 		cs.setCommit(new CommitEvent(eventRev, "migration", System.currentTimeMillis(),
-			"Migration for unversioned types"));
+			I18NConstants.SYNTHESIZED_COMMIT_DURING_REPLAY));
 
 		StopWatch readWatch = new StopWatch(), writeWatch = new StopWatch();
 		readWatch.start();

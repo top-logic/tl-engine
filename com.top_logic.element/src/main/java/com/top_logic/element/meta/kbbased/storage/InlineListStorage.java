@@ -96,10 +96,16 @@ public class InlineListStorage<C extends InlineListStorage.Config<?>> extends In
 		}
 		_outgoingQuery = AssociationQuery.createOrderedLinkQuery("inlineList", TLObject.class, table,
 			getConfig().getContainerColumn(), getConfig().getOrderColumn(), filter, true);
+
+		String partCol = getConfig().getReferenceColumn();
+		if (partCol != null) {
+			String baseObjectCol = getConfig().getContainerColumn();
+			checkKeyAttributes(attribute, partCol, baseObjectCol);
+		}
 	}
 
 	@Override
-	protected String getTable() {
+	public String getTable() {
 		return _outgoingQuery.getAssociationTypeName();
 	}
 

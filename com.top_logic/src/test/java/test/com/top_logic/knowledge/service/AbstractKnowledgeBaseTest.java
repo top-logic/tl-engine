@@ -13,7 +13,7 @@ import test.com.top_logic.basic.ReflectionUtils;
 
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.NameValueBuffer;
-import com.top_logic.basic.message.Message;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.identifier.DefaultObjectKey;
@@ -24,6 +24,7 @@ import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.CommitHandler;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -47,10 +48,10 @@ public abstract class AbstractKnowledgeBaseTest extends BasicTestCase {
 	}
 
 	public Transaction begin() {
-		return begin(null);
+		return begin(I18NConstants.NO_COMMIT_MESSAGE);
 	}
 	
-	public Transaction begin(Message modificationDescription) {
+	public Transaction begin(ResKey modificationDescription) {
 		return kb().beginTransaction(modificationDescription);
 	}
 
@@ -61,7 +62,6 @@ public abstract class AbstractKnowledgeBaseTest extends BasicTestCase {
 	public void commit(Transaction tx, String testDescription) {
 		commit(tx, testDescription, false);
 	}
-
 	
 	public void commit(Transaction tx, boolean expectFailure) {
 		commit(tx, null, expectFailure);

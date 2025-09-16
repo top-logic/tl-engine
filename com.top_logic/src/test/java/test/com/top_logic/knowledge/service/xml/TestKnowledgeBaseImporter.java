@@ -36,7 +36,7 @@ public class TestKnowledgeBaseImporter extends BasicTestCase {
 
 	public void testImport() throws DataObjectException {
 		KnowledgeBase kb = KBSetup.getKnowledgeBase();
-		Transaction tx = kb.beginTransaction();
+		Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
 		try {
 			KnowledgeBaseImporter.importObjects(kb, getImportFile("KBData.xml"), false, new AssertProtocol());
 			checkImport(kb);

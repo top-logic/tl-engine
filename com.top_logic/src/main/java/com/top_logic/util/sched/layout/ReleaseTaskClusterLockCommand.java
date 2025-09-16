@@ -120,7 +120,9 @@ public class ReleaseTaskClusterLockCommand extends PreconditionCommandHandler {
 	 * </p>
 	 */
 	protected void clearLock(Task task) {
-		Transaction transaction = PersistencyLayer.getKnowledgeBase().beginTransaction();
+		Transaction transaction =
+			PersistencyLayer.getKnowledgeBase()
+				.beginTransaction(I18NConstants.RELEASED_CLUSTER_LOCK__TASK.fill(task.getName()));
 		try {
 			clearLockWithinTransaction(task);
 			transaction.commit();

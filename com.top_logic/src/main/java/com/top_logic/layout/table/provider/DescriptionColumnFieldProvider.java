@@ -104,7 +104,7 @@ public class DescriptionColumnFieldProvider extends AbstractFieldProvider {
 			@Override
 			public void valueChanged(FormField field, Object oldValue, Object newValue) {
 				try (Transaction tx =
-					PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+					PersistencyLayer.getKnowledgeBase().beginTransaction(I18NConstants.UPDATED_DOCUMENT_DESCRIPTION)) {
 					if (isWebFolder) {
 						((WebFolder) content).setDescription(newValue.toString());
 					} else {

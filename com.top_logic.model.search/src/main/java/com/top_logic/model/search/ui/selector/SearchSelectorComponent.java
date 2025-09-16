@@ -230,9 +230,9 @@ public class SearchSelectorComponent extends ExpressionSelectorComponent<SearchE
 					tabbar.makeVisible(child);
 					((SearchExpressionEditor) child).setFormModel(expressionWrapper, searchAndReport);
 
-					HandlerResult result = ((SearchExpressionEditor) child).search(expr -> {
+					HandlerResult result = ((SearchExpressionEditor) child).search((expr, src) -> {
 						if (expr != null) {
-							return searchComponent.execute(expr, false);
+							return searchComponent.execute(expr, false, src);
 						}
 						return HandlerResult.DEFAULT_RESULT;
 					});

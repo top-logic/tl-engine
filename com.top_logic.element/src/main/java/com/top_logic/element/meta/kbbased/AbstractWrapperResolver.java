@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.TLID;
 import com.top_logic.basic.col.NameValueBuffer;
 import com.top_logic.basic.col.NameValueBuilder;
 import com.top_logic.basic.module.BasicRuntimeModule;
@@ -61,16 +62,14 @@ public abstract class AbstractWrapperResolver extends ModelFactory {
 	}
 
 	@Override
-	public TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues) {
+	public TLObject createObject(TLClass type, TLObject context, ValueProvider initialValues, TLID id) {
 		TLFactory.failIfAbstract(type);
 
 		String tableType = TLAnnotations.getTable(type);
 		KnowledgeBase kb = getKnowledgeBase();
 		NameValueBuffer createValues = new NameValueBuffer();
 		buildInitialValues(createValues, tableType, type);
-		KnowledgeObject item = kb.createKnowledgeObject(tableType, createValues);
-
-		TLObject result = WrapperFactory.getWrapper(item);
+		TLObject result = kb.createObject(kb.getHistoryManager().getContextBranch(), id, tableType, createValues);
 		if (result != null) {
 			if (result instanceof TLScope) {
 				MetaElementFactory typeFactory = MetaElementFactory.getInstance();
@@ -121,7 +120,7 @@ public abstract class AbstractWrapperResolver extends ModelFactory {
 	 * @throws CreateElementException
 	 *         if the wrapper can not be created
 	 * 
-	 * @deprecated Implement {@link #createObject(TLClass, TLObject, ValueProvider)}
+	 * @deprecated Implement {@link #createObject(TLClass, TLObject, ValueProvider, TLID)}
 	 */
 	@Deprecated
 	protected final AttributedWrapper createNewWrapper(String anElementName, NameValueBuffer initialValues) {
@@ -235,7 +234,7 @@ public abstract class AbstractWrapperResolver extends ModelFactory {
 	 *        {@link #buildInitialValues(NameValueBuilder, String, TLClass)}
 	 * @return the new Wrapper
 	 * 
-	 * @deprecated Implement {@link #createObject(TLClass, TLObject, ValueProvider)}
+	 * @deprecated Implement {@link #createObject(TLClass, TLObject, ValueProvider, TLID)}
 	 */
 	@Deprecated
 	protected AttributedWrapper getNewWrapper(String staticTypeName, TLClass type, NameValueBuffer initialValues)
@@ -340,7 +339,7 @@ public abstract class AbstractWrapperResolver extends ModelFactory {
 		protected final E newImplementationInstance() throws ModuleException {
 			Transaction tx =
 				PersistencyLayer.getKnowledgeBase().beginTransaction(
-					Messages.START_UP_WRAPPER_RESOLVER__IMPLCLASS.fill(getImplementation()));
+					I18NConstants.START_UP_WRAPPER_RESOLVER__IMPLCLASS.fill(getImplementation().getSimpleName()));
 			E impl = createImplementation();
 			try {
 				tx.commit();

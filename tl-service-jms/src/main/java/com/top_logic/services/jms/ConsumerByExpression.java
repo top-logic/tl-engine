@@ -9,6 +9,12 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
+import jakarta.jms.BytesMessage;
+import jakarta.jms.JMSException;
+import jakarta.jms.MapMessage;
+import jakarta.jms.Message;
+import jakarta.jms.TextMessage;
+
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
@@ -18,12 +24,6 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-
-import jakarta.jms.BytesMessage;
-import jakarta.jms.JMSException;
-import jakarta.jms.MapMessage;
-import jakarta.jms.Message;
-import jakarta.jms.TextMessage;
 
 /**
  * Consumer implementation that processes the message via a TL-Script function.
@@ -75,7 +75,7 @@ public class ConsumerByExpression extends Consumer<ConsumerByExpression.Config> 
 
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 			if (getConfig().getTransaction()) {
-				try (Transaction tx = kb.beginTransaction()) {
+				try (Transaction tx = kb.beginTransaction(I18NConstants.PROCESSED_JMS_MESSAGE)) {
 					internalProcess(message);
 					tx.commit();
 				}

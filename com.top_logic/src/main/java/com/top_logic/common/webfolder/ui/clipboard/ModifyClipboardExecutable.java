@@ -100,14 +100,16 @@ public class ModifyClipboardExecutable extends CommandField {
 	}
 
 	private void addToClipboardCommit(Wrapper aModel, Clipboard clipboard) {
-		try (Transaction theTX = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+		try (Transaction theTX = PersistencyLayer.getKnowledgeBase().beginTransaction(
+			I18NConstants.ADDED_TO_CLIPBOARD)) {
 			clipboard.add(aModel);
 			theTX.commit();
 		}
 	}
 
 	private void removeFromClipboardCommit(Wrapper aModel, Clipboard clipboard) {
-		try (Transaction theTX = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+		try (Transaction theTX = PersistencyLayer.getKnowledgeBase().beginTransaction(
+			I18NConstants.REMOVED_FROM_CLIPBOARD)) {
 			clipboard.remove(aModel);
 			theTX.commit();
 		}

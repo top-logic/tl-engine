@@ -22,6 +22,21 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey OPEN_CHART_DETAIL = legacyKey("reporting.matrix.chart.openChartDetails");
 
+	/**
+	 * @en Created search report.
+	 */
+	public static ResKey CREATED_SEARCH_REPORT;
+
+	/**
+	 * @en Deleted search report.
+	 */
+	public static ResKey DELETED_SEARCH_REPORT;
+
+	/**
+	 * @en Updated search report.
+	 */
+	public static ResKey UPDATED_SEARCH_REPORT;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

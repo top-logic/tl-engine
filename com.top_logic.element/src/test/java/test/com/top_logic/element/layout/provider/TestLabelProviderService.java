@@ -43,7 +43,7 @@ public class TestLabelProviderService extends BasicTestCase {
 		LabelProviderService service = LabelProviderService.getInstance();
 		Revision r1;
 		ANode obj;
-		try (Transaction tx = kb.beginTransaction()) {
+		try (Transaction tx = kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			ANode root = TestTypesFactory.getInstance().getRootSingleton();
 			obj = (ANode) root.createChild("TestLabelProviderService", ANode.A_NODE_TYPE);
 

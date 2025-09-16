@@ -11,6 +11,7 @@ import static com.top_logic.layout.wysiwyg.ui.StructuredText.*;
 import static java.util.Collections.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -25,7 +26,9 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.basic.util.Utils;
+import com.top_logic.element.meta.AssociationStorageDescriptor;
 import com.top_logic.element.meta.AttributeException;
+import com.top_logic.element.meta.DefaultAssociationStorageDescriptor;
 import com.top_logic.element.meta.kbbased.storage.AbstractStorage;
 import com.top_logic.element.model.i18n.I18NAttributeStorage;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -68,6 +71,13 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 
 	private PreloadContribution _sourcePreload;
 
+	private List<DefaultAssociationStorageDescriptor> _storageDescriptors = Arrays.asList(
+		new DefaultAssociationStorageDescriptor(SOURCES_CODES_TABLE_NAME,
+			OBJECT_ATTRIBUTE_NAME,
+			META_ATTRIBUTE_ATTRIBUTE_NAME,
+			SOURCE_CODE_ATTRIBUTE_NAME),
+		newImageDescriptor(IMAGES_TABLE_NAME));
+
 	/** {@link TypedConfiguration} constructor for {@link I18NStructuredTextAttributeStorage}. */
 	public I18NStructuredTextAttributeStorage(InstantiationContext context, C config) {
 		super(context, config);
@@ -80,6 +90,8 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 		_sourcePreload = new AssociationCachePreload(_sourceCodesQuery);
 		
 		_supportedLocales = unmodifiableList(list(getSupportedLocales()));
+
+		_storageDescriptors.forEach(descriptor -> descriptor.checkKeyAttributes(attribute));
 	}
 
 	@Override
@@ -320,6 +332,11 @@ public class I18NStructuredTextAttributeStorage<C extends I18NStructuredTextAttr
 			return ((I18NStructuredText) value).getEntries().isEmpty();
 		}
 		return super.isEmpty(value);
+	}
+
+	@Override
+	public List<? extends AssociationStorageDescriptor> getStorageDescriptors() {
+		return _storageDescriptors;
 	}
 
 }

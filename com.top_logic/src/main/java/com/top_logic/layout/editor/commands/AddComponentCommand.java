@@ -71,7 +71,8 @@ public class AddComponentCommand extends AbstractComponentConfigurationCommandHa
 			ConfigurationItem parmeters, List<AdditionalComponentDefinition> additional) {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
-		try (Transaction tx = kb.beginTransaction()) {
+		try (Transaction tx =
+			kb.beginTransaction(I18NConstants.CREATED_COMPONENT__NAME.fill(component.getTitleKey()))) {
 			LayoutTemplateUtils.createComponent(component, definition, parmeters, additional);
 
 			tx.commit();

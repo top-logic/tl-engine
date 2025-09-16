@@ -22,6 +22,7 @@ import com.top_logic.layout.component.WithCloseDialog;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.model.FormContext;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
@@ -48,7 +49,7 @@ import com.top_logic.util.error.TopLogicException;
  *           </p>
  * 
  *           <ul>
- *           <li>{@link #beginTransaction(Object)}</li>
+ *           <li>{@link #beginTransaction(Object, ResKey)}</li>
  *           <li>{@link #createObject(LayoutComponent, Object, FormContainer, Map)}</li>
  *           <li>{@link #commit(Transaction, Object)}</li>
  *           <li>{@link #afterCommit(LayoutComponent, Object)}</li>
@@ -130,9 +131,18 @@ public abstract class AbstractCreateCommandHandler extends AbstractFormCommandHa
 	@Override
 	protected final HandlerResult applyChanges(LayoutComponent component, FormContext formContext, Object model,
 			Map<String, Object> arguments) {
+		ResKey customMessage = getCustomCommitMessage(arguments);
+		ResKey message = customMessage == null
+			? I18NConstants.CREATED_OBJECT
+			: customMessage;
 		{
-			try (Transaction tx = beginTransaction(model)) {
+			try (Transaction tx = beginTransaction(model, message)) {
 				Object newObject = createObject(component, model, formContext, arguments);
+
+				if (customMessage == null && tx.getState() == Transaction.STATE_OPEN) {
+					tx.setCommitMessage(
+						I18NConstants.CREATED__MODEL.fill(MetaLabelProvider.INSTANCE.getLabel(newObject)));
+				}
 
 				commit(tx, model);
 

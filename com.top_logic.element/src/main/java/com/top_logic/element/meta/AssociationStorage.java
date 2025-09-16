@@ -6,6 +6,8 @@
 package com.top_logic.element.meta;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
@@ -20,16 +22,10 @@ import com.top_logic.model.TLStructuredTypePart;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public interface AssociationStorage extends ReferenceStorage {
+public interface AssociationStorage extends ReferenceStorage, SeparateTableStorage, AssociationStorageDescriptor {
 
 	/**
-	 * The name of the association table in which this {@link AssociationStorage} stores the data
-	 * for the {@link TLStructuredTypePart}.
-	 */
-	String getTable();
-
-	/**
-	 * Whether the {@link #getTable() table} stores the date for only one
+	 * Whether the {@link #getTable() table} stores attribute data for only one
 	 * {@link TLStructuredTypePart} or for many.
 	 */
 	boolean monomophicTable();
@@ -49,5 +45,10 @@ public interface AssociationStorage extends ReferenceStorage {
 	 * @see #getIncomingQuery()
 	 */
 	AbstractAssociationQuery<KnowledgeAssociation, ? extends Collection<KnowledgeAssociation>> getOutgoingQuery();
+
+	@Override
+	default List<? extends AssociationStorageDescriptor> getStorageDescriptors() {
+		return Collections.singletonList(this);
+	}
 
 }

@@ -5,6 +5,8 @@
  */
 package com.top_logic.model.instance.importer.schema;
 
+import com.top_logic.model.instance.importer.UnresolvedRef;
+
 /**
  * Visitor interface for the {@link ValueConf} hierarchy.
  * 
@@ -15,7 +17,7 @@ public interface ValueVisitor<R, A> {
 	/**
 	 * Visit case for {@link InstanceRefConf}.
 	 */
-	R visit(InstanceRefConf ref, A arg);
+	R visit(InstanceRefConf ref, A arg) throws UnresolvedRef;
 
 	/**
 	 * Visit case for {@link ModelRefConf}.

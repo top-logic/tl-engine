@@ -87,7 +87,7 @@
         x -> throw("This is a test error"),
         error -> "Caught: " + $error
     );
-    $result; // Expected: "Caught: com.top_logic.model.search.expr.ScriptAbort: This is a test error"
+    $result; // Expected: "This is a test error"
 }]]></value>
 			</value>
 		</action>

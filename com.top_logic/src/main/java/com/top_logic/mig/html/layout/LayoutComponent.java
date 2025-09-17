@@ -2343,7 +2343,11 @@ public abstract class LayoutComponent extends ModelEventAdapter
 				ModelSpec modelSpec = getConfig().getModelSpec();
 				if (modelSpec != null) {
 					setModel(TypedConfigUtil.createInstance(modelSpec).eval(this));
+				} else {
+					/* Ensure that the model channel does not contain deleted elements. */
+					setModel(null);
 				}
+
 			}
 			this.invalidate();
 			becameInvalid = true;
@@ -2355,7 +2359,10 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		return becameInvalid || superInvalidated;
 	}
 
-	private boolean isModelTouchedByAny(Set<TLObject> objs) {
+	/**
+	 * Whether one of the given objects is or is part of this component's model.
+	 */
+	protected boolean isModelTouchedByAny(Set<TLObject> objs) {
 		Object model = getModel();
 
 		return objs.contains(model) || (model instanceof Collection<?> coll && CollectionUtil.containsAny(objs, coll));

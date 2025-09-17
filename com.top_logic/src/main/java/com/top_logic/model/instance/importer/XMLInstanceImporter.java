@@ -82,6 +82,16 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	private InstanceResolver _defaultResolver = NoInstanceResolver.INSTANCE;
 
 	/**
+	 * Actions for resolving forwards references in the import.
+	 * 
+	 * <p>
+	 * A forwards references is the usage of an import-local object ID in a value before the object
+	 * that is identified by this ID has been imported.
+	 * </p>
+	 */
+	private List<Runnable> _delayed = new ArrayList<>();
+
+	/**
 	 * Creates a {@link XMLInstanceImporter}.
 	 *
 	 * @param model
@@ -216,6 +226,12 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 		for (ObjectConf config : configs) {
 			importObject(config);
 		}
+
+		for (Runnable delayed : _delayed) {
+			delayed.run();
+		}
+		_delayed.clear();
+
 		return result;
 	}
 
@@ -237,77 +253,139 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 				continue;
 			}
 
-			Object value;
 			try {
-				value = resolveValue(part, valueConf);
+				loadValue(storage(obj, part, valueConf), valueConf);
 			} catch (Exception ex) {
 				_log.error(I18NConstants.FAILED_TO_RESOLVE_VALUE__VAL_LOC_MSG.fill(valueConf.getValue(),
 					valueConf.location(), ex.getMessage()), ex);
 				continue;
 			}
-			try {
-				obj.tUpdate(part, value);
-			} catch (Exception ex) {
-				_log.error(I18NConstants.FAILED_SETTING_VALUE__VAL_ATTR_LOC_MSG.fill(value, part, valueConf.location(),
-					ex.getMessage()), ex);
-			}
 		}
 		return obj;
 	}
 
-	private Object resolveValue(TLStructuredTypePart part, AttributeValueConf valueConf) {
-		Object value;
-		if (part.getModelKind() == ModelKind.REFERENCE) {
-			if (valueConf.getValue() != null) {
-				_log.error(I18NConstants.CANNOT_ASSIGN_PLAIN_VALUE_TO_REF__ATTR_VAL_LOC.fill(part, valueConf.getValue(),
-					valueConf.location()));
+	private Storage storage(TLObject obj, TLStructuredTypePart part, AttributeValueConf valueConf) {
+		return new Storage() {
+			@Override
+			public TLStructuredTypePart getPart() {
+				return part;
 			}
-			value = resolveCollectionValue(part, valueConf);
+
+			@Override
+			public void set(Object value) {
+				Object storageValue;
+
+				if (part.isMultiple()) {
+					storageValue = asCollection(value);
+				} else {
+					if (value instanceof Collection<?> coll) {
+						if (coll.size() > 1) {
+							_log.error(
+								I18NConstants.ERROR_STORING_COLLECTION_TO_SINGLE_REF__ATTR_LOC.fill(part,
+									valueConf.location()));
+							storageValue = CollectionUtil.getFirst(coll);
+						} else {
+							storageValue = CollectionUtil.getSingleValueFromCollection(coll);
+						}
+					} else {
+						storageValue = value;
+					}
+				}
+
+				try {
+					obj.tUpdate(part, storageValue);
+				} catch (Exception ex) {
+					_log.error(
+						I18NConstants.FAILED_SETTING_VALUE__VAL_ATTR_LOC_MSG.fill(value, part, valueConf.location(),
+							ex.getMessage()),
+						ex);
+				}
+			}
+		};
+	}
+
+	private static Collection<?> asCollection(Object value) {
+		if (value instanceof Collection<?> coll) {
+			return coll;
+		} else if (value == null) {
+			return Collections.emptyList();
+		} else {
+			return Collections.singletonList(value);
+		}
+	}
+
+	private void loadValue(Storage storage, AttributeValueConf valueConf) {
+		if (storage.getPart().getModelKind() == ModelKind.REFERENCE) {
+			if (valueConf.getValue() != null) {
+				_log.error(I18NConstants.CANNOT_ASSIGN_PLAIN_VALUE_TO_REF__ATTR_VAL_LOC.fill(
+					storage.getPart(), valueConf.getValue(), valueConf.location()));
+			}
+			loadCollectionValue(storage, valueConf);
 		} else {
 			if (valueConf.getCollectionValue().size() > 0) {
-				value = resolveCollectionValue(part, valueConf);
+				loadCollectionValue(storage, valueConf);
 			} else {
-				value = parse(_log, (TLPrimitive) part.getType(), valueConf.getValue());
+				storage.set(parse(_log, (TLPrimitive) storage.getPart().getType(), valueConf.getValue()));
 			}
 		}
-		return value;
 	}
 
-	private Object resolveCollectionValue(TLStructuredTypePart part, AttributeValueConf valueConf) {
-		List<Object> refs = resolve(part, valueConf.getCollectionValue());
-		Object value;
-		if (part.isMultiple()) {
-			value = refs;
-		} else {
-			if (refs.size() > 1) {
-				_log.error(
-					I18NConstants.ERROR_STORING_COLLECTION_TO_SINGLE_REF__ATTR_LOC.fill(part, valueConf.location()));
-				value = refs.get(0);
-			} else {
-				value = CollectionUtil.getSingleValueFromCollection(refs);
-			}
-		}
-		return value;
+	private void loadCollectionValue(Storage storage, AttributeValueConf valueConf) {
+		loadCollectionValue(storage, valueConf.getCollectionValue());
 	}
 
-	private List<Object> resolve(TLStructuredTypePart part, List<ValueConf> references) {
+	private void loadCollectionValue(Storage storage, List<ValueConf> references) {
 		if (references.isEmpty()) {
-			return Collections.emptyList();
+			storage.set(Collections.emptyList());
 		}
-		if (references.size() == 1) {
-			return Collections.singletonList(resolveSingle(part, references.get(0)));
+		else if (references.size() == 1) {
+			ValueConf valueConf = references.get(0);
+
+			try {
+				loadSingle(storage, valueConf);
+			} catch (UnresolvedRef ex) {
+				_delayed.add(() -> {
+					try {
+						loadSingle(storage, valueConf);
+					} catch (UnresolvedRef ex2) {
+						InstanceRefConf ref = ex2.getRef();
+						_log.error(I18NConstants.UNRESOLVED_REFERENCE__ID_LOC.fill(ref.getId(), ref.location()));
+					}
+				});
+			}
 		}
+		else {
+			try {
+				loadCollection(storage, references);
+			} catch (UnresolvedRef ex) {
+				_delayed.add(() -> {
+					try {
+						loadCollection(storage, references);
+					} catch (UnresolvedRef ex2) {
+						InstanceRefConf ref = ex2.getRef();
+						_log.error(I18NConstants.UNRESOLVED_REFERENCE__ID_LOC.fill(ref.getId(), ref.location()));
+					}
+				});
+			}
+		}
+	}
+
+	private void loadSingle(Storage storage, ValueConf valueConf) throws UnresolvedRef {
+		storage.set(resolveSingle(storage.getPart(), valueConf));
+	}
+
+	private void loadCollection(Storage storage, List<ValueConf> references) throws UnresolvedRef {
 		ArrayList<Object> result = new ArrayList<>(references.size());
 		for (ValueConf ref : references) {
-			Object element = resolveSingle(part, ref);
+			Object element = resolveSingle(storage.getPart(), ref);
 			if (element != null) {
 				result.add(element);
 			}
 		}
-		return result;
+		storage.set(result);
 	}
 
-	private Object resolveSingle(TLStructuredTypePart part, ValueConf ref) {
+	private Object resolveSingle(TLStructuredTypePart part, ValueConf ref) throws UnresolvedRef {
 		return ref.visit(this, part);
 	}
 
@@ -324,10 +402,10 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	}
 
 	@Override
-	public TLObject visit(InstanceRefConf ref, TLStructuredTypePart arg) {
+	public TLObject visit(InstanceRefConf ref, TLStructuredTypePart arg) throws UnresolvedRef {
 		TLObject result = _objectById.get(ref.getId());
 		if (result == null) {
-			_log.error(I18NConstants.UNRESOLVED_REFERENCE__ID_LOC.fill(ref.getId(), ref.location()));
+			throw new UnresolvedRef(ref);
 		}
 		return result;
 	}
@@ -616,6 +694,21 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 		reader.setSource(source);
 		ObjectsConf config = (ObjectsConf) reader.read();
 		return config;
+	}
+
+	/**
+	 * A storage location, where a value can be stored.
+	 */
+	interface Storage {
+		/**
+		 * The attribute that describes this storage location.
+		 */
+		TLStructuredTypePart getPart();
+
+		/**
+		 * The setter that accepts the value to be stored.
+		 */
+		void set(Object value);
 	}
 
 }

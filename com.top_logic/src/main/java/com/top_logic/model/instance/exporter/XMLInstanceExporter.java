@@ -13,10 +13,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.codec.binary.Base64;
 
@@ -64,11 +62,11 @@ public class XMLInstanceExporter {
 
 	private int _nextId = 1;
 
-	private Map<TLObject, Integer> _exportIds = new HashMap<>();
+	private Map<TLObject, Ref> _exportIds = new HashMap<>();
 
 	private Map<TLModelPart, String> _modelNames = new HashMap<>();
 
-	private Set<TLObject> _queue = new LinkedHashSet<>();
+	private List<TLObject> _queue = new ArrayList<>();
 
 	private I18NLog _log =
 		new LogProtocol(XMLInstanceExporter.class).asI18NLog(ResourcesModule.getInstance().getLogBundle());
@@ -116,21 +114,21 @@ public class XMLInstanceExporter {
 		if (obj == null) {
 			return;
 		}
-		Integer existing = _exportIds.get(obj);
+
+		// Mark the object to be explicitly part of the export, no matter if it is referenced from
+		// some composition reference, or not.
+		_queue.add(obj);
+
+		Ref existing = _exportIds.get(obj);
 		if (existing != null) {
 			// Already part of the export.
 			return;
 		}
 
-		Integer id = nextId();
-		_exportIds.put(obj, id);
-		_queue.add(obj);
-	}
-
-	private ObjectConf exportObject(TLObject obj) {
-		Integer id = nextId();
-		_exportIds.put(obj, id);
-		return export(obj, id);
+		// Assign an ID for the object that can be used when the object is referenced from the
+		// exported graph. This makes the IDs of the top-level objects to be the first n IDs in the
+		// export.
+		newRef(obj);
 	}
 
 	/**
@@ -146,17 +144,27 @@ public class XMLInstanceExporter {
 			List<TLObject> batch = new ArrayList<>(_queue);
 			_queue.clear();
 			for (TLObject next : batch) {
-				Integer id = _exportIds.get(next);
-				ObjectConf conf = export(next, id);
+				Ref ref = _exportIds.get(next);
+				if (ref.isExported()) {
+					// Skip.
+					continue;
+				}
+				ObjectConf conf = exportObject(next, ref);
 
 				_objects.getObjects().add(conf);
 			}
 		}
 	}
 
-	private ObjectConf export(TLObject obj, Integer id) {
+	private ObjectConf exportObject(TLObject obj) {
+		return exportObject(obj, newRef(obj));
+	}
+
+	private ObjectConf exportObject(TLObject obj, Ref ref) {
+		ref.markExported();
+
 		ObjectConf conf = TypedConfiguration.newConfigItem(ObjectConf.class);
-		conf.setId(id.toString());
+		conf.setId(Integer.toString(ref.getId()));
 		conf.setType(typeName(obj.tType()));
 
 		exportAttributes(conf.getAttributes(), obj);
@@ -213,7 +221,7 @@ public class XMLInstanceExporter {
 
 		if (part.getModelKind() == ModelKind.REFERENCE) {
 			List<ValueConf> references = valueConf.getCollectionValue();
-			exportRef(references, part, value, ((TLReference) part).isComposite());
+			exportRef(references, value, ((TLReference) part).isComposite());
 		} else {
 			ValueResolver valueResolver = _resolvers.valueResolver(part);
 			if (valueResolver != NoValueResolver.INSTANCE) {
@@ -250,18 +258,17 @@ public class XMLInstanceExporter {
 		attributes.add(valueConf);
 	}
 
-	private void exportRef(List<ValueConf> references, TLStructuredTypePart part, Object value, boolean composite) {
+	private void exportRef(List<ValueConf> references, Object value, boolean composite) {
 		if (value instanceof Collection<?> collection) {
 			for (Object entry : collection) {
-				exportRefEntry(references, part, entry, composite);
+				exportRefEntry(references, entry, composite);
 			}
 		} else {
-			exportRefEntry(references, part, value, composite);
+			exportRefEntry(references, value, composite);
 		}
 	}
 
-	private void exportRefEntry(List<ValueConf> references, TLStructuredTypePart part, Object value,
-			boolean composite) {
+	private void exportRefEntry(List<ValueConf> references, Object value, boolean composite) {
 		if (value == null) {
 			return;
 		}
@@ -271,20 +278,22 @@ public class XMLInstanceExporter {
 			ref.setName(typeName(modelPart));
 			references.add(ref);
 		} else {
-			Integer existing = _exportIds.get(value);
-			if (existing != null) {
-				InstanceRefConf ref = TypedConfiguration.newConfigItem(InstanceRefConf.class);
-				ref.setId(existing.toString());
-				references.add(ref);
+			TLObject target = (TLObject) value;
+
+			Ref existingRef = _exportIds.get(target);
+			if (existingRef != null) {
+				if (composite && !existingRef.isExported()) {
+					references.add(exportObject(target, existingRef));
+				} else {
+					references.add(refConfig(existingRef));
+				}
 			} else {
-				TLObject target = (TLObject) value;
 				if (exclude(target.tType())) {
 					return;
 				}
 
 				if (composite) {
-					ObjectConf config = exportObject(target);
-					references.add(config);
+					references.add(exportObject(target));
 					return;
 				}
 
@@ -295,17 +304,24 @@ public class XMLInstanceExporter {
 					ref.setId(resolver.buildId(target));
 					references.add(ref);
 				} else {
-					Logger
-						.warn("Link in reference '" + part + "' to object of type '"
-							+ TLModelUtil.qualifiedName(target.tType())
-						+ "' without resolver ignored.", XMLInstanceExporter.class);
+					// The object may be exported later on when it occurs in some composition
+					// reference.
+					references.add(refConfig(newRef(target)));
 				}
 			}
 		}
 	}
 
-	private Integer nextId() {
-		return Integer.valueOf(_nextId++);
+	private InstanceRefConf refConfig(Ref newRef) {
+		InstanceRefConf result = TypedConfiguration.newConfigItem(InstanceRefConf.class);
+		result.setId(Integer.toString(newRef.getId()));
+		return result;
+	}
+
+	private Ref newRef(TLObject obj) {
+		Ref newRef = new Ref(_nextId++);
+		_exportIds.put(obj, newRef);
+		return newRef;
 	}
 
 	private String typeName(TLModelPart part) {
@@ -403,6 +419,37 @@ public class XMLInstanceExporter {
 			return data;
 		}
 		throw new IllegalArgumentException("Not expected for binary data: " + value.getClass());
+	}
+
+	private static class Ref {
+
+		private int _id;
+
+		private boolean _exported;
+
+		/**
+		 * Creates a {@link Ref}.
+		 */
+		public Ref(int id) {
+			_id = id;
+		}
+
+		public int getId() {
+			return _id;
+		}
+
+		/**
+		 * Whether the referenced object is already serialized.
+		 */
+		public boolean isExported() {
+			return _exported;
+		}
+
+		public void markExported() {
+			assert !_exported : "Must not export twice.";
+
+			_exported = true;
+		}
 	}
 
 }

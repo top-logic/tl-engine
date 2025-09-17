@@ -11,6 +11,7 @@ import java.util.List;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Container;
@@ -26,11 +27,16 @@ import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.ModelKind;
+import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.TLType;
+import com.top_logic.model.access.WithStorageAttribute;
 import com.top_logic.model.annotate.TLAnnotation;
-import com.top_logic.model.instance.exporter.Resolvers;
+import com.top_logic.model.config.annotation.TableName;
+import com.top_logic.model.instance.exporter.ResolverByColumnAttribute;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
 import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.util.TLModelPartRef;
@@ -128,7 +134,7 @@ public class InstanceResolverByAttribute extends AbstractConfiguredInstance<Inst
 		TLStructuredTypePart part = (TLStructuredTypePart) config.getAttribute().resolvePart();
 
 		TLStructuredType type = part.getOwner();
-		InstanceResolver resolver = Resolvers.idColumnResolver(type, part);
+		InstanceResolver resolver = idColumnResolver(type, part);
 		if (resolver == null) {
 			resolver = new InstanceResolverByIndex(type, part);
 		}
@@ -143,6 +149,36 @@ public class InstanceResolverByAttribute extends AbstractConfiguredInstance<Inst
 	@Override
 	public String buildId(TLObject obj) {
 		return _resolver.buildId(obj);
+	}
+
+	/**
+	 * Builds an {@link InstanceResolver} for a DB column-mapped attribute.
+	 *
+	 * @return The resolver or <code>null</code>, when there is no column mapping.
+	 */
+	public static InstanceResolver idColumnResolver(TLStructuredType type, TLStructuredTypePart idAttribute) {
+		TableName annotation = type.getAnnotation(TableName.class);
+		if (annotation == null) {
+			return null;
+		}
+
+		String tableName = annotation.getName();
+		StorageDetail storage = idAttribute.getStorageImplementation();
+
+		String idColumn = idAttribute.getName();
+		if (storage instanceof ConfiguredInstance<?> configuredInstance) {
+			PolymorphicConfiguration<?> storageConfig = configuredInstance.getConfig();
+			if (storageConfig instanceof WithStorageAttribute columnStorageConfig) {
+				idColumn = columnStorageConfig.getStorageAttribute();
+			}
+		}
+
+		TLType idType = idAttribute.getType();
+		if (idType instanceof TLPrimitive idValueType) {
+			return new ResolverByColumnAttribute(idAttribute, idValueType, tableName, idColumn);
+		}
+
+		return null;
 	}
 
 }

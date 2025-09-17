@@ -1,0 +1,83 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>$objects.myFunction(
+    name: "my-export.objects.xml", 
+    excludes: [`my.module:MyType#excludedRef`], 
+    includes: [`my.module:MyType#includedRef`])</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Exports a set of object instances to XML. The generated format can be read in again later using the <code class="hljs inlineCode">instanceImport()</code> function to instantiate objects. By default, all objects referenced from the input objects via composition references are also exported. If an object from the object graph exported in this way is referenced via a regular reference, then this object must either also be included in the export via a composition reference, or the regular reference must be treated as a composition reference via the <code class="hljs inlineCode">includes</code> parameter, or excluded from the export via the <code class="hljs inlineCode">excludes</code> parameter.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td><code class="hljs inlineCode">objects</code></td>
+			<td>Set of objects</td>
+			<td>The set of objects to be exported. Based on these objects, all objects that can be accessed via composition references are also exported.</td>
+			<td>Yes</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">name</code></td>
+			<td>Character string</td>
+			<td>The file name of the export file</td>
+			<td>no</td>
+			<td><code class="hljs inlineCode">"&lt;Datum&gt;-&lt;Typ&gt;.objects.xml"</code></td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">excludes</code></td>
+			<td>Set of attributes and/or types</td>
+			<td>All attributes specified in this set are excluded from the export. If a type is specified, all attributes of this type are excluded.</td>
+			<td>no</td>
+			<td><code class="hljs inlineCode">[]</code></td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">includes</code></td>
+			<td>Set of attributes and/or types</td>
+			<td>All references specified in this set are treated as compositions and the objects referenced by them are included in the export. If a class is specified, then all references that have this class as a type are included in the export.</td>
+			<td>no</td>
+			<td><code class="hljs inlineCode">[]</code></td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> Binary value</p>
+
+<p>The XML file generated from the object graph.</p>
+
+<h2>Examples</h2>
+
+<h3>All accounts as XML export</h3>
+
+<pre>
+	<code>all(`tl.accounts:Person`)
+    .instanceExport(
+        name: "all-accounts.xml",
+        includes: [
+            `tl.accounts:Person#representativeGroup`, 
+            `tl.accounts:Person#contact`])</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Output:</strong></span> XML file with all accounts in the system including their contacts and deputy groups.</p>
+
+<p> </p>
+
+<p> </p>
+
+<p> </p>

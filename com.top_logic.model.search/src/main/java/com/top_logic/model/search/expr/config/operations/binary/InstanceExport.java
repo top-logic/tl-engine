@@ -50,7 +50,7 @@ public class InstanceExport extends GenericMethod {
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Collection<?> objects = asCollection(arguments[0]);
-		String downloadName = asString(arguments[1]);
+		String downloadName = asString(arguments[1], null);
 		Collection<?> excludes = asCollection(arguments[2]);
 		Collection<?> includes = asCollection(arguments[3]);
 

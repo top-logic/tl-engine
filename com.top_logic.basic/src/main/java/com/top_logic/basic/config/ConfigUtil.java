@@ -2138,7 +2138,7 @@ public class ConfigUtil {
 	 * If the given class implements {@link ExternallyNamed} the constant with the same
 	 * {@link ExternallyNamed#getExternalName()} is returned.
 	 * </p>
-	 * </p>
+	 * <p>
 	 * If the given class implements {@link ProtocolEnum} the constant with the same
 	 * {@link ProtocolEnum#protocolName()} is returned.
 	 * </p>

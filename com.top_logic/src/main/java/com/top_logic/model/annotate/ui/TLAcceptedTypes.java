@@ -32,6 +32,11 @@ public interface TLAcceptedTypes extends StringAnnotation, TLAttributeAnnotation
 	/**
 	 * Comma separated list of accepted file types.
 	 * 
+	 * <p>
+	 * An accepted file type can either be a MIME type like <code>image/*</code> or
+	 * <code>image/jpeg</code>, or a file pattern such as <code>*.xml</code>.
+	 * </p>
+	 * 
 	 * @see DataField#getAcceptedTypes()
 	 */
 	@Override

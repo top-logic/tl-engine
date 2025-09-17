@@ -11,8 +11,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.io.FilenameUtils;
-
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dsa.util.MimeTypes;
 import com.top_logic.knowledge.gui.layout.upload.FileNameStrategy;
@@ -60,11 +58,18 @@ public class AcceptedTypesChecker implements FileNameStrategy {
 			return null;
 		}
 		// Type check
-		String fileExtension = FilenameUtils.getExtension(fileName);
-		String wildcardFile = "*." + fileExtension;
 		for (String acceptedType : _acceptedFilePattern) {
-			if (acceptedType.equalsIgnoreCase(wildcardFile) || acceptedType.equalsIgnoreCase(fileName)) {
-				return null;
+			int wildcardIndex = acceptedType.lastIndexOf('*');
+			if (wildcardIndex >= 0) {
+				String pattern = acceptedType.substring(wildcardIndex + 1);
+				if (fileName.length() >= pattern.length()
+					&& fileName.substring(fileName.length() - pattern.length()).equalsIgnoreCase(pattern)) {
+					return null;
+				}
+			} else {
+				if (acceptedType.equalsIgnoreCase(fileName)) {
+					return null;
+				}
 			}
 		}
 
@@ -91,11 +96,11 @@ public class AcceptedTypesChecker implements FileNameStrategy {
 				toReturn.append(",");
 			}
 
-			String fileNames = it.next();
+			String filePattern = it.next();
 			if (resolveMimeTypes) {
-				toReturn.append(_mimeTypes.getMimeType(fileNames));
+				toReturn.append(filePattern.replace("*", ""));
 			} else {
-				toReturn.append(fileNames);
+				toReturn.append(filePattern);
 			}
 		}
 		return toReturn.toString();

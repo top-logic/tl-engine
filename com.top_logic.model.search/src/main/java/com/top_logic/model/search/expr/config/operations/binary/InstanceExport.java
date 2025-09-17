@@ -70,7 +70,7 @@ public class InstanceExport extends GenericMethod {
 	public static final class Builder extends AbstractSimpleMethodBuilder<InstanceExport> {
 
 		private static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
-			.mandatory("input")
+			.mandatory("objects")
 			.optional("name")
 			.optional("excludes")
 			.optional("includes")

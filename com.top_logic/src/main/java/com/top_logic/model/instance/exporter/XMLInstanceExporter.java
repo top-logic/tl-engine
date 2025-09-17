@@ -15,6 +15,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.apache.commons.codec.binary.Base64;
 
@@ -73,7 +74,9 @@ public class XMLInstanceExporter {
 
 	private Resolvers _resolvers = new Resolvers(_log);
 
-	private Map<TLModelPart, Boolean> _excludedParts = new HashMap<>();
+	private PartSet _excludedParts = new PartSet(this::computeExclude);
+
+	private PartSet _includedParts = new PartSet(this::computeInclude);
 
 	/**
 	 * Creates a {@link XMLInstanceExporter}.
@@ -97,14 +100,28 @@ public class XMLInstanceExporter {
 		_objects.getResolvers().put(def.getType(), def);
 		_resolvers.put(type, resolver);
 
-		_excludedParts.put(type, Boolean.FALSE);
+		_excludedParts.remove(type);
 	}
 
 	/**
 	 * Adds a type part to exclude from export.
 	 */
 	public void addExclude(TLModelPart part) {
-		_excludedParts.put(part, Boolean.TRUE);
+		_excludedParts.add(part);
+	}
+
+	/**
+	 * Adds a type part or type to include in an export.
+	 * 
+	 * <p>
+	 * By default, only composition references are followed. For objects in all other references
+	 * there must either exist a resolver, or the reference must be excluded from export. By
+	 * explicitly including a reference or a type to an export, objects in those included references
+	 * or references of that value type are treated like composition references.
+	 * </p>
+	 */
+	public void addInclude(TLModelPart part) {
+		_includedParts.add(part);
 	}
 
 	/**
@@ -174,7 +191,7 @@ public class XMLInstanceExporter {
 
 	private void exportAttributes(List<AttributeValueConf> attributes, TLObject obj) {
 		for (TLStructuredTypePart part : obj.tType().getAllParts()) {
-			if (exclude(part)) {
+			if (isExluded(part)) {
 				continue;
 			}
 
@@ -186,31 +203,34 @@ public class XMLInstanceExporter {
 		}
 	}
 
-	private boolean exclude(TLModelPart part) {
-		Boolean exclude = _excludedParts.get(part);
-		if (exclude == null) {
-			exclude = Boolean.valueOf(computeExclude(part));
-			_excludedParts.put(part, exclude);
-		}
-		return exclude.booleanValue();
+	private boolean isExluded(TLModelPart part) {
+		return _excludedParts.contains(part);
+	}
+
+	private boolean isIncluded(TLModelPart part) {
+		return _includedParts.contains(part);
 	}
 
 	/**
-	 * Whether to exclude the given {@link TLStructuredTypePart} from export.
+	 * Whether to exclude the given given {@link TLStructuredType} or {@link TLStructuredTypePart}
+	 * from export.
 	 * 
 	 * @param part
 	 *        The part in question.
 	 */
 	protected boolean computeExclude(TLModelPart part) {
-		if (part instanceof TLStructuredTypePart attribute) {
-			if (attribute.isDerived()) {
-				return true;
-			}
+		return part instanceof TLStructuredTypePart attr && attr.isDerived();
+	}
 
-			return exclude(attribute.getType());
-		} else {
-			return false;
-		}
+	/**
+	 * Whether to explicitly include the given {@link TLStructuredType} or
+	 * {@link TLStructuredTypePart} in the export.
+	 * 
+	 * @param part
+	 *        The part in question.
+	 */
+	protected boolean computeInclude(TLModelPart part) {
+		return false;
 	}
 
 	private void exportAttribute(List<AttributeValueConf> attributes, TLObject obj, TLStructuredTypePart part) {
@@ -221,7 +241,7 @@ public class XMLInstanceExporter {
 
 		if (part.getModelKind() == ModelKind.REFERENCE) {
 			List<ValueConf> references = valueConf.getCollectionValue();
-			exportRef(references, value, ((TLReference) part).isComposite());
+			exportRef(references, value, ((TLReference) part).isComposite() || isIncluded(part));
 		} else {
 			ValueResolver valueResolver = _resolvers.valueResolver(part);
 			if (valueResolver != NoValueResolver.INSTANCE) {
@@ -288,7 +308,7 @@ public class XMLInstanceExporter {
 					references.add(refConfig(existingRef));
 				}
 			} else {
-				if (exclude(target.tType())) {
+				if (isExluded(target.tType())) {
 					return;
 				}
 
@@ -452,4 +472,61 @@ public class XMLInstanceExporter {
 		}
 	}
 
+	private static class PartSet {
+		private final Function<TLModelPart, Boolean> _implicitMembers;
+
+		private final Map<TLModelPart, Boolean> _parts = new HashMap<>();
+
+		/**
+		 * Creates a {@link PartSet}.
+		 */
+		public PartSet(Function<TLModelPart, Boolean> implicitMembers) {
+			_implicitMembers = implicitMembers;
+		}
+
+		/**
+		 * Excludes all parts with the given type from this set.
+		 */
+		public void remove(TLStructuredType type) {
+			_parts.put(type, Boolean.FALSE);
+		}
+
+		/**
+		 * Determines whether the given part is in this set.
+		 */
+		public boolean contains(TLModelPart part) {
+			Boolean value = _parts.get(part);
+			if (value == null) {
+				value = Boolean.valueOf(computeContains(part));
+				_parts.put(part, value);
+			}
+			return value.booleanValue();
+		}
+
+		/**
+		 * Whether to exclude the given {@link TLStructuredTypePart} from export.
+		 * 
+		 * @param part
+		 *        The part in question.
+		 */
+		protected boolean computeContains(TLModelPart part) {
+			if (_implicitMembers.apply(part)) {
+				return true;
+			}
+
+			if (part instanceof TLStructuredTypePart attribute) {
+				return contains(attribute.getType());
+			} else {
+				return false;
+			}
+		}
+
+		/**
+		 * Adds the given part from this set.
+		 */
+		public void add(TLModelPart part) {
+			_parts.put(part, Boolean.TRUE);
+		}
+
+	}
 }

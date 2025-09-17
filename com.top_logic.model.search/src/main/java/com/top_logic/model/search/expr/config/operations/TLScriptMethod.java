@@ -417,33 +417,11 @@ public class TLScriptMethod extends GenericMethod {
 						input : 
 							(input == null ? null : ToString.toString(input));
 			} else if (type.isEnum()) {
-				Method valueOf = lookupValueOf(type);
-				return input -> {
-					if (input instanceof String) {
-						try {
-							return valueOf.invoke(null, input);
-						} catch (InvocationTargetException | IllegalAccessException
-								| IllegalArgumentException ex) {
-							throw new RuntimeException(ex);
-						}
-					}
-					return input;
-				};
+				return input -> asEnum(param, type, input);
 			} else if (type.isArray()) {
 				Class<?> componentType = type.componentType();
 				ValueConverter inner = defaultConverterForClass(param, componentType);
-
-				return input -> {
-					if (input instanceof Collection<?> coll) {
-						Object result = Array.newInstance(componentType, coll.size());
-						int index = 0;
-						for (Object x : coll) {
-							Array.set(result, index++, inner.fromScript(x));
-						}
-						return result;
-					}
-					return input;
-				};
+				return input -> asArray(componentType, inner, input);
 			} else if (type == Object.class) {
 				// No conversion necessary.
 				return null;
@@ -454,6 +432,42 @@ public class TLScriptMethod extends GenericMethod {
 			} else {
 				return input -> asType(param, type, input);
 			}
+		}
+
+		private Object asEnum(Parameter param, Class<?> type, Object input) {
+			if (type.isInstance(input)) {
+				return input;
+			}
+			if (input == null) {
+				return null;
+			}
+			String externalName = input instanceof String ? (String) input : ToString.toString(input);
+			try {
+				@SuppressWarnings("unchecked")
+				Class<? extends Enum<?>> enumType = (Class<? extends Enum<?>>) type;
+				return ConfigUtil.getEnum(enumType, externalName);
+			} catch (ConfigurationException ex) {
+				throw new TopLogicException(I18NConstants.ERROR_WRONG_ARGUMENT__FUN_ARG_EXPECTED_VAL.fill(getName(),
+					param.getName(), type.getSimpleName(), input), ex);
+			}
+		}
+
+		private Object asArray(Class<?> componentType, ValueConverter inner, Object input) {
+			if (input == null) {
+				return null;
+			}
+			if (input instanceof Collection<?> coll) {
+				Object result = Array.newInstance(componentType, coll.size());
+				int index = 0;
+				for (Object x : coll) {
+					Array.set(result, index++, inner.fromScript(x));
+				}
+				return result;
+			}
+			Object converted = inner.fromScript(input);
+			Object result = Array.newInstance(componentType, 1);
+			Array.set(result, 0, converted);
+			return result;
 		}
 
 		private Object asType(Parameter param, Class<?> type, Object input) {
@@ -473,14 +487,6 @@ public class TLScriptMethod extends GenericMethod {
 			} else {
 				throw new TopLogicException(I18NConstants.ERROR_WRONG_ARGUMENT__FUN_ARG_EXPECTED_VAL.fill(getName(),
 					param.getName(), "Number", input));
-			}
-		}
-
-		private Method lookupValueOf(Class<?> type) throws NoSuchMethodException {
-			try {
-				return type.getMethod("valueOfProtocol", String.class);
-			} catch (NoSuchMethodException ex) {
-				return type.getMethod("valueOf", String.class);
 			}
 		}
 

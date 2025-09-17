@@ -37,7 +37,7 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
  * String), it is possible to annotate a {@link ValueConverter} using the annotation
  * {@link ScriptConversion}.</li>
  * </ol>
- * <p>
+ * </p>
  * 
  * @impl This class is used in TLDoclet. It must be adapted, when this class is moved.
  * 

@@ -30,10 +30,13 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.annotation.defaults.ByteDefault;
+import com.top_logic.basic.config.annotation.defaults.CharDefault;
 import com.top_logic.basic.config.annotation.defaults.DoubleDefault;
 import com.top_logic.basic.config.annotation.defaults.FloatDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
+import com.top_logic.basic.config.annotation.defaults.ShortDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.i18n.DefaultHtmlResKey;
@@ -303,6 +306,24 @@ public class TLScriptMethod extends GenericMethod {
 			} else if (type == Boolean.class) {
 				BooleanDefault defAnnotation = p.getAnnotation(BooleanDefault.class);
 				return defAnnotation == null ? null : Boolean.valueOf(defAnnotation.value());
+			} else if (type == char.class) {
+				CharDefault defAnnotation = p.getAnnotation(CharDefault.class);
+				return Character.valueOf(defAnnotation == null ? 0 : defAnnotation.value());
+			} else if (type == Character.class) {
+				CharDefault defAnnotation = p.getAnnotation(CharDefault.class);
+				return defAnnotation == null ? null : Character.valueOf(defAnnotation.value());
+			} else if (type == short.class) {
+				ShortDefault defAnnotation = p.getAnnotation(ShortDefault.class);
+				return Short.valueOf(defAnnotation == null ? 0 : defAnnotation.value());
+			} else if (type == Short.class) {
+				ShortDefault defAnnotation = p.getAnnotation(ShortDefault.class);
+				return defAnnotation == null ? null : Short.valueOf(defAnnotation.value());
+			} else if (type == byte.class) {
+				ByteDefault defAnnotation = p.getAnnotation(ByteDefault.class);
+				return Byte.valueOf(defAnnotation == null ? 0 : defAnnotation.value());
+			} else if (type == Byte.class) {
+				ByteDefault defAnnotation = p.getAnnotation(ByteDefault.class);
+				return defAnnotation == null ? null : Byte.valueOf(defAnnotation.value());
 			} else if (type == String.class) {
 				StringDefault defAnnotation = p.getAnnotation(StringDefault.class);
 				return defAnnotation == null ? null : defAnnotation.value();

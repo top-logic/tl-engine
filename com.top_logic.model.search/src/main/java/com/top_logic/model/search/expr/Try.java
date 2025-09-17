@@ -89,7 +89,7 @@ public class Try extends GenericMethod {
 			if (e instanceof ScriptAbort) { // coming from a throw() call
 				ScriptAbort scriptAbort = (ScriptAbort) e;
 				Object value = scriptAbort.getValue();
-				// Pass message, original argument, and value from ScriptAbort
+				// Pass message, original argument, and value from the throw() call
 				return catchFunction.eval(definitions, scriptAbort.getMessage(), argument, value);
 			} else if (e instanceof I18NException) {
 				ResKey errorKey = ((I18NException) e).getErrorKey();

@@ -6,7 +6,10 @@
 
 package com.top_logic.model.search.expr.config.operations;
 
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.LongDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 
 /**
  * Base class for classes that have functions to call from TL-Script.
@@ -21,6 +24,20 @@ import com.top_logic.basic.config.annotation.Name;
  * by using the {@link ScriptPrefix} annotation; a different name for suffix can be determined by
  * using the {@link Name} annotation at the method.
  * </p>
+ * 
+ * <p>
+ * Each method parameter becomes a TL-Script parameter.
+ * <ol>
+ * <li>To mark a parameter as mandatory, annotate the method parameter as {@link Mandatory
+ * mandatory}.</li>
+ * <li>It is possible to define a default value for a primitive parameter type using the
+ * corresponding default annotation. For example, use {@link StringDefault} for strings and
+ * {@link LongDefault} for long values.</li>
+ * <li>When a parameter cannot be natively be converted from TL-Script values (e.g., long to
+ * String), it is possible to annotate a {@link ValueConverter} using the annotation
+ * {@link ScriptConversion}.</li>
+ * </ol>
+ * <p>
  * 
  * @impl This class is used in TLDoclet. It must be adapted, when this class is moved.
  * 

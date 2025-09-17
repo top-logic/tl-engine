@@ -34,7 +34,7 @@ public class ScriptAbort extends TopLogicException {
 	}
 
 	/**
-	 * Gets the value associated with this ScriptAbort.
+	 * Gets the value associated with this {@link ScriptAbort}.
 	 */
 	public Object getValue() {
 		return _value;

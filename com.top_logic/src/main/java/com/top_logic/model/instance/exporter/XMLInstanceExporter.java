@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.math3.util.Pair;
 
 import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.Logger;
@@ -30,6 +31,7 @@ import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.sql.DBType;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.knowledge.service.db2.InitialDataSetupService;
 import com.top_logic.model.ModelKind;
@@ -53,6 +55,7 @@ import com.top_logic.model.instance.importer.schema.PrimitiveValueConf;
 import com.top_logic.model.instance.importer.schema.ValueConf;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Algorithm for exporting objects to configurations for re-importing later on.
@@ -145,7 +148,7 @@ public class XMLInstanceExporter {
 		// Assign an ID for the object that can be used when the object is referenced from the
 		// exported graph. This makes the IDs of the top-level objects to be the first n IDs in the
 		// export.
-		newRef(obj);
+		newRef(null, obj);
 	}
 
 	/**
@@ -153,6 +156,23 @@ public class XMLInstanceExporter {
 	 */
 	public ObjectsConf getExportConfig() {
 		processQueue();
+		List<ResKey> errors = _exportIds.entrySet().stream()
+			.filter(e -> !e.getValue().isExported())
+			.map(e -> new Pair<>(e.getValue().getContainer(), e.getKey().tType()))
+			.distinct()
+			.map(p -> I18NConstants.REFERENCED_OBJECT_NOT_INCLUDED__TYPE_ATTR
+				.fill(TLModelUtil.qualifiedName(p.getSecond()), TLModelUtil.qualifiedName(p.getFirst())))
+			.toList();
+		
+		if (!errors.isEmpty()) {
+			TopLogicException ex = null;
+			for (ResKey message : errors) {
+				ex = new TopLogicException(message, ex);
+			}
+			assert ex != null;
+			throw ex;
+		}
+		
 		return _objects;
 	}
 
@@ -173,8 +193,8 @@ public class XMLInstanceExporter {
 		}
 	}
 
-	private ObjectConf exportObject(TLObject obj) {
-		return exportObject(obj, newRef(obj));
+	private ObjectConf exportObject(TLStructuredTypePart container, TLObject obj) {
+		return exportObject(obj, newRef(container, obj));
 	}
 
 	private ObjectConf exportObject(TLObject obj, Ref ref) {
@@ -241,7 +261,7 @@ public class XMLInstanceExporter {
 
 		if (part.getModelKind() == ModelKind.REFERENCE) {
 			List<ValueConf> references = valueConf.getCollectionValue();
-			exportRef(references, value, ((TLReference) part).isComposite() || isIncluded(part));
+			exportRef(part, references, value, ((TLReference) part).isComposite() || isIncluded(part));
 		} else {
 			ValueResolver valueResolver = _resolvers.valueResolver(part);
 			if (valueResolver != NoValueResolver.INSTANCE) {
@@ -278,17 +298,19 @@ public class XMLInstanceExporter {
 		attributes.add(valueConf);
 	}
 
-	private void exportRef(List<ValueConf> references, Object value, boolean composite) {
+	private void exportRef(TLStructuredTypePart container, List<ValueConf> references, Object value,
+			boolean composite) {
 		if (value instanceof Collection<?> collection) {
 			for (Object entry : collection) {
-				exportRefEntry(references, entry, composite);
+				exportRefEntry(container, references, entry, composite);
 			}
 		} else {
-			exportRefEntry(references, value, composite);
+			exportRefEntry(container, references, value, composite);
 		}
 	}
 
-	private void exportRefEntry(List<ValueConf> references, Object value, boolean composite) {
+	private void exportRefEntry(TLStructuredTypePart container, List<ValueConf> references, Object value,
+			boolean composite) {
 		if (value == null) {
 			return;
 		}
@@ -313,7 +335,7 @@ public class XMLInstanceExporter {
 				}
 
 				if (composite) {
-					references.add(exportObject(target));
+					references.add(exportObject(container, target));
 					return;
 				}
 
@@ -326,7 +348,7 @@ public class XMLInstanceExporter {
 				} else {
 					// The object may be exported later on when it occurs in some composition
 					// reference.
-					references.add(refConfig(newRef(target)));
+					references.add(refConfig(newRef(container, target)));
 				}
 			}
 		}
@@ -338,8 +360,8 @@ public class XMLInstanceExporter {
 		return result;
 	}
 
-	private Ref newRef(TLObject obj) {
-		Ref newRef = new Ref(_nextId++);
+	private Ref newRef(TLStructuredTypePart container, TLObject obj) {
+		Ref newRef = new Ref(_nextId++, container);
 		_exportIds.put(obj, newRef);
 		return newRef;
 	}
@@ -447,15 +469,25 @@ public class XMLInstanceExporter {
 
 		private boolean _exported;
 
+		private TLStructuredTypePart _container;
+
 		/**
 		 * Creates a {@link Ref}.
 		 */
-		public Ref(int id) {
+		public Ref(int id, TLStructuredTypePart container) {
 			_id = id;
+			_container = container;
 		}
 
 		public int getId() {
 			return _id;
+		}
+
+		/**
+		 * The reference that initially included the referenced object to the export scope.
+		 */
+		public TLStructuredTypePart getContainer() {
+			return _container;
 		}
 
 		/**

@@ -35,6 +35,13 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 FAILED_RESOLVING_TYPE__KIND_MSG;
 
+	/**
+	 * @en Object of type {0} was referenced from the exported object graph, but it is neither
+	 *     referenced from a composition reference, nor was its referring reference {1} explicitly
+	 *     included nor excluded.
+	 */
+	public static ResKey2 REFERENCED_OBJECT_NOT_INCLUDED__TYPE_ATTR;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

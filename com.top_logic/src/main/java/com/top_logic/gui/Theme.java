@@ -570,8 +570,7 @@ public class Theme {
 		for (int n = 0; n < templateCnt; n++) {
 			buffer.load(templateNames[n]);
 		}
-		String contextPath = AliasManager.getInstance().getAlias(AliasManager.APP_CONTEXT);
-		buffer.replaceVariables(destinationName, contextPath, this);
+		buffer.replaceVariables(destinationName, this);
 		buffer.save(destinationName);
 		return destinationName + "?t=" + System.currentTimeMillis();
     }

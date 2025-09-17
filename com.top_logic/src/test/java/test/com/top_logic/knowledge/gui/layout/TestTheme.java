@@ -232,7 +232,7 @@ public class TestTheme extends BasicTestCase {
 		CSSBuffer buffer = new CSSBuffer();
 		String cssVariableEvaluation = String.format(CSSBuffer.VARIABLE_EVALUATION_FORMAT, themeVariableName);
 		buffer.readStyleSheet(null, new StringReader(cssVariableEvaluation));
-		buffer.replaceVariables(null, "/demo", theme);
+		buffer.replaceVariables(null, theme);
 		String cssVariableDefinition = String.format(CSSBuffer.VARIABLE_DEFINITION_FORMAT, themeVariableName, expectedValue);
 		assertContains(cssVariableDefinition, buffer.toString());
 	}

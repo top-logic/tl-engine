@@ -216,16 +216,16 @@ public class TestTheme extends BasicTestCase {
 		ThemeConfig config2 = mkConfig("/themes/TestTheme2");
 		initialize(theme2, Arrays.asList(theme1), config2, mappings());
 
-		assertCSSVariableDefinition(theme1, "url(/demo/themes/TestTheme1/data/a.txt)", "KEY1");
-		assertCSSVariableDefinition(theme1, "url(/demo/themes/TestTheme1/data/a.txt)", "KEY1");
-		assertCSSVariableDefinition(theme1, "url(/demo/themes/TestTheme1/data/a.txt)", "KEY1a");
-		assertCSSVariableDefinition(theme1, "url(/demo/themes/TestTheme1/data/b.txt)", "KEY2");
-		assertCSSVariableDefinition(theme1, "url(/demo/themes/TestTheme1/data/b.txt)", "KEY2a");
+		assertCSSVariableDefinition(theme1, "url(../themes/TestTheme1/data/a.txt)", "KEY1");
+		assertCSSVariableDefinition(theme1, "url(../themes/TestTheme1/data/a.txt)", "KEY1");
+		assertCSSVariableDefinition(theme1, "url(../themes/TestTheme1/data/a.txt)", "KEY1a");
+		assertCSSVariableDefinition(theme1, "url(../themes/TestTheme1/data/b.txt)", "KEY2");
+		assertCSSVariableDefinition(theme1, "url(../themes/TestTheme1/data/b.txt)", "KEY2a");
 
-		assertCSSVariableDefinition(theme2, "url(/demo/themes/TestTheme2/data/a.txt)", "KEY1");
-		assertCSSVariableDefinition(theme2, "url(/demo/themes/TestTheme2/data/a.txt)", "KEY1a");
-		assertCSSVariableDefinition(theme2, "url(/demo/themes/TestTheme1/data/b.txt)", "KEY2");
-		assertCSSVariableDefinition(theme2, "url(/demo/themes/TestTheme1/data/b.txt)", "KEY2a");
+		assertCSSVariableDefinition(theme2, "url(../themes/TestTheme2/data/a.txt)", "KEY1");
+		assertCSSVariableDefinition(theme2, "url(../themes/TestTheme2/data/a.txt)", "KEY1a");
+		assertCSSVariableDefinition(theme2, "url(../themes/TestTheme1/data/b.txt)", "KEY2");
+		assertCSSVariableDefinition(theme2, "url(../themes/TestTheme1/data/b.txt)", "KEY2a");
 	}
 
 	private void assertCSSVariableDefinition(Theme theme, String expectedValue, String themeVariableName) throws IOException {
@@ -372,16 +372,16 @@ public class TestTheme extends BasicTestCase {
 		ThemeConfig config3 = mkConfig("/themes/TestTheme3");
 		initialize(theme3, Arrays.asList(theme1, theme2), config3, mappings());
 
-		assertCSSVariableDefinition(theme1, "url(/demo/themes/TestTheme1/data/a.txt)", "KEY1");
-		assertCSSVariableDefinition(theme1, "url(/demo/themes/TestTheme1/data/a.txt)", "KEY1a");
+		assertCSSVariableDefinition(theme1, "url(../themes/TestTheme1/data/a.txt)", "KEY1");
+		assertCSSVariableDefinition(theme1, "url(../themes/TestTheme1/data/a.txt)", "KEY1a");
 		assertCSSVariableDefinition(theme1, "ExpectedVar", "KEY2");
 
-		assertCSSVariableDefinition(theme2, "url(/demo/themes/TestTheme2/data/a.txt)", "KEY1");
+		assertCSSVariableDefinition(theme2, "url(../themes/TestTheme2/data/a.txt)", "KEY1");
 		assertCSSVariableDefinition(theme2, "IgnoredVar", "KEY2");
 		assertCSSVariableDefinition(theme2, "ExpectedVarTheme2", "KEY3");
 
-		assertCSSVariableDefinition(theme3, "url(/demo/themes/TestTheme1/data/a.txt)", "KEY1");
-		assertCSSVariableDefinition(theme3, "url(/demo/themes/TestTheme1/data/a.txt)", "KEY1a");
+		assertCSSVariableDefinition(theme3, "url(../themes/TestTheme1/data/a.txt)", "KEY1");
+		assertCSSVariableDefinition(theme3, "url(../themes/TestTheme1/data/a.txt)", "KEY1a");
 		assertCSSVariableDefinition(theme3, "ExpectedVar", "KEY2");
 		assertCSSVariableDefinition(theme3, "ExpectedVarTheme2", "KEY3");
 	}

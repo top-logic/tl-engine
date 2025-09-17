@@ -119,7 +119,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="Caught: com.top_logic.model.search.expr.ScriptAbort: This is a test error"
+				value="Caught: This is a test error"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -186,13 +186,14 @@
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 				<value><![CDATA[{
-    argument = -5;
+    argument = 0;
     result = $argument.try(
         x -> {
-            if($x < 0, throw("Negative values not allowed: " + $x), $x * $x);
+            y = $x - 5;
+            if($y < 0, throw(message: "Negative values not allowed.", value: $y), $x * $y);
         },
-        error -> {
-            logMessage = toString("Validation failed: ", $error);
+        error -> origArgument -> givenValue -> {
+            logMessage = toString("Validation with argument '" + $origArgument + "' and resulting value '" + $givenValue + "' failed. Reason: ", $error);
             $logMessage;
         }
     );
@@ -228,7 +229,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="Validation failed: com.top_logic.model.search.expr.ScriptAbort: Negative values not allowed: -5"
+				value="Validation with argument '0' and resulting value '-5' failed. Reason: Negative values not allowed."
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -1276,6 +1277,61 @@
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
 				value="Default value for empty input"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
+			user-id="root"
+		>
+			<field config:interface="com.top_logic.layout.form.FuzzyFormMemberNaming$Name"
+				label="Suchausdruck"
+			>
+				<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+					tab-path="Administration > Development > Script Konsole > Editor"
+				/>
+			</field>
+			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
+				<value><![CDATA[{
+    argument = "";
+    result = $argument.try(
+        emptyStr -> {
+            if($emptyStr.length() == 0, 
+               throw("Empty string not allowed"), 
+               $emptyStr);
+        }
+    );
+    $result == null;
+}]]></value>
+			</value>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
+			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
+			command-label="Script ausführen"
+			command-name="executeSearchConsole"
+			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
+			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
+			user-id="root"
+		>
+			<arguments/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="0"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.BooleanNaming$Name"
+				value="true"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"

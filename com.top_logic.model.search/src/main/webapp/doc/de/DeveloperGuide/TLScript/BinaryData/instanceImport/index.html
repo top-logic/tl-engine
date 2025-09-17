@@ -1,0 +1,47 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>$xml.instanceImport(transient: false)</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Ließt eine XML Datei, die mit der Funktion <code class="hljs inlineCode">instanceExport()</code> erzeugt wurde wieder ein und legt die darin enthaltenen Objekte an und liefert die Root-Objekte als Ergebnis zurück.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td><code class="hljs inlineCode">xml</code></td>
+			<td>XML-Datei (Binärwert)</td>
+			<td>Die XML-Datei, aus der Objekte eingelesen werden sollen</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">transient</code></td>
+			<td>Wahrheitswert</td>
+			<td>Ob die Objektanlage transient erfolgen soll. Wenn die persistente Objekte angelegt werden, muss die Funktion aus einem Transaktionskontext heraus aufgerufen werden.</td>
+			<td>nein</td>
+			<td><code class="hljs inlineCode">false</code></td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Menge von Fachobjekten</p>
+
+<p>Die Menge der exportierten Objekte. Objekte, die mitexportiert wurden, weil sie in Kompositionsreferenzen enthalten waren, werden nicht explizit zurückgeliefert.</p>
+
+<p> </p>

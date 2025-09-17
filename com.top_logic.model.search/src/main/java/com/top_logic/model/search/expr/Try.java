@@ -9,6 +9,8 @@ import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.exception.I18NException;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -32,7 +34,7 @@ import com.top_logic.util.error.TopLogicException;
  * <pre>
 * $emailAddress.try(
 *   emailAddr -> sendMail(subject: $subject, to: $emailAddr, body: $body),
-*   catch: error -> log("Mail failed: " + $error)
+*   catch: error -> originalArg -> log("Mail failed for " + $originalArg + ": " + $error)
 * )
  * </pre>
  */
@@ -62,22 +64,39 @@ public class Try extends GenericMethod {
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		if (arguments.length < 3) {
+		if (arguments.length < 2) {
 			throw new TopLogicException(
-				asResKey("Try method requires 3 arguments: argument, tryFunction, and catchFunction."));
+				I18NConstants.ERROR_TRY_METHOD_REQUIRES_TWO_ARGUMENTS);
 		}
 
 		Object argument = arguments[0];
 		SearchExpression tryFunction = asSearchExpression(arguments[1]);
-		SearchExpression catchFunction = asSearchExpression(arguments[2]);
+		SearchExpression catchFunction = null;
+
+		// Check if catch function is provided and not null
+		if (arguments.length > 2 && arguments[2] != null) {
+			catchFunction = asSearchExpression(arguments[2]);
+		}
 
 		try {
 			// Execute the try function with the given argument
 			return tryFunction.eval(definitions, argument);
 		} catch (Exception e) {
-			// If an exception occurs, execute the catch function
-			// Pass the exception as an argument to the catch function
-			return catchFunction.eval(definitions, e);
+			// If no catch function provided, return null
+			if (catchFunction == null) {
+				return null;
+			}
+			if (e instanceof ScriptAbort) { // coming from a throw() call
+				ScriptAbort scriptAbort = (ScriptAbort) e;
+				Object value = scriptAbort.getValue();
+				// Pass message, original argument, and value from ScriptAbort
+				return catchFunction.eval(definitions, scriptAbort.getMessage(), argument, value);
+			} else if (e instanceof I18NException) {
+				ResKey errorKey = ((I18NException) e).getErrorKey();
+				return catchFunction.eval(definitions, errorKey, argument);
+			} else {
+				return catchFunction.eval(definitions, e.getMessage(), argument);
+			}
 		}
 	}
 
@@ -90,7 +109,7 @@ public class Try extends GenericMethod {
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("argument")
 			.mandatory("tryFunction")
-			.mandatory("catchFunction")
+			.optional("catchFunction")
 			.build();
 
 		/**

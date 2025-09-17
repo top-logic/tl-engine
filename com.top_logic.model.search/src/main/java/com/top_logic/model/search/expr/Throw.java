@@ -14,7 +14,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
-import com.top_logic.model.search.expr.config.operations.MethodBuilder;
+import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -50,13 +50,13 @@ public class Throw extends GenericMethod {
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		ResKey message = toResKey(arguments[0]);
 		if (message != null) {
-			TopLogicException problem = new ScriptAbort(message);
+			ResKey details = arguments.length > 1 ? toResKey(arguments[1]) : null;
+			Object value = arguments.length > 2 ? arguments[2] : null;
+
+			TopLogicException problem = new ScriptAbort(message, value);
 			problem.initSeverity(ErrorSeverity.WARNING);
-			if (arguments.length > 1) {
-				ResKey details = toResKey(arguments[1]);
-				if (details != null) {
-					problem.initDetails(details);
-				}
+			if (details != null) {
+				problem.initDetails(details);
 			}
 			throw problem;
 		}
@@ -75,9 +75,17 @@ public class Throw extends GenericMethod {
 	}
 
 	/**
-	 * {@link MethodBuilder} creating {@link Throw}.
+	 * {@link AbstractSimpleMethodBuilder} creating a {@link Throw} function.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<Throw> {
+
+		/** Description of parameters for a {@link Throw}. */
+		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("message")
+			.optional("details")
+			.optional("value")
+			.build();
+
 		/**
 		 * Creates a {@link Builder}.
 		 */
@@ -86,11 +94,14 @@ public class Throw extends GenericMethod {
 		}
 
 		@Override
-		public Throw build(Expr expr, SearchExpression[] args)
-				throws ConfigurationException {
-			checkArgs(expr, args, 1, 2);
-			return new Throw(getName(), args);
+		public ArgumentDescriptor descriptor() {
+			return DESCRIPTOR;
 		}
 
+		@Override
+		public Throw build(Expr expr, SearchExpression[] args)
+				throws ConfigurationException {
+			return new Throw(getConfig().getName(), args);
+		}
 	}
 }

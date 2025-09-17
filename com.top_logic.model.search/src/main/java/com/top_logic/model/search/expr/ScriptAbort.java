@@ -16,11 +16,28 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class ScriptAbort extends TopLogicException {
 
+	private Object _value;
+
 	/**
 	 * Creates a {@link ScriptAbort}.
 	 */
 	public ScriptAbort(ResKey errorKey) {
 		super(errorKey);
+	}
+
+	/**
+	 * Creates a {@link ScriptAbort} with a value.
+	 */
+	public ScriptAbort(ResKey errorKey, Object value) {
+		super(errorKey);
+		_value = value;
+	}
+
+	/**
+	 * Gets the value associated with this ScriptAbort.
+	 */
+	public Object getValue() {
+		return _value;
 	}
 
 }

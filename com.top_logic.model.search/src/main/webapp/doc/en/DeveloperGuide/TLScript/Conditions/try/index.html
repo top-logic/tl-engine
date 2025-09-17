@@ -6,7 +6,9 @@
 
 <h2>Description</h2>
 
-<p>Executes a function and handles any errors that occur using a fallback function. The try function implements a try-catch behavior for TLScript that enables robust error handling.</p>
+<div>
+<div>Executes a try function on the passed argument and handles any errors that occur using a catch function. The try function implements a try-catch behavior for TLScript that enables robust error handling.</div>
+</div>
 
 <p>The function works with three parameters:</p>
 
@@ -16,7 +18,15 @@
 	<li><strong>Catch function</strong>: The fallback function that is executed in the event of an error</li>
 </ol>
 
-<p>If the try function is executed successfully, its result is returned. If an error occurs, the catch function is executed with the error object as a parameter and its result is returned.</p>
+<div>
+<div>If the try function is executed successfully, its result is returned. If an error occurs, the catch function is executed with specific parameters:</div>
+
+<ul>
+	<li><strong>Exception triggered by throw()</strong>: catch function receives (error message, original argument, specified value in the throw() function)</li>
+	<li><strong>I18NException</strong>: catch function receives (ResKey, original argument)</li>
+	<li><strong>Regular exception</strong>: catch function receives (error message, original argument)</li>
+</ul>
+</div>
 
 <h2>Parameters</h2>
 
@@ -47,8 +57,8 @@
 			<td>catchFunction</td>
 			<td>function</td>
 			<td>The fallback function that is executed when an error occurs. Receives the exception object as a parameter</td>
-			<td>yes</td>
-			<td>-</td>
+			<td>no</td>
+			<td>null</td>
 		</tr>
 	</thead>
 </table>
@@ -57,7 +67,9 @@
 
 <p><strong>Type:</strong> Object</p>
 
-<p>Returns the result of the try function if it was executed successfully. If an error occurs, the result of the catch function is returned.</p>
+<div>
+<div>Returns the result of the try function if it was executed successfully. If an error occurs, the result of the catch function is returned. If no catch function is specified, <code class="hljs inlineCode">null</code>is returned in the event of an error.</div>
+</div>
 
 <h2>Examples</h2>
 
@@ -68,11 +80,11 @@
     to: $emailAddr,
     body: $emailBody
   ),
-  catch: mailError -&gt; {
-    info("E-Mail-Zustellung fehlgeschlagen: " + $mailError);
+  mailError -&gt; emailAddr -&gt; {
+    info("E-Mail-Zustellung an " + $emailAddr + " fehlgeschlagen. Grund: " + $mailError);
     false
   }
 )</code>
 </pre>
 
-<p><strong>Output: </strong>Attempts to send an e-mail. If successful, the result of <code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.4rem] px-1 py-px text-[0.9rem]">sendMail</code> is returned. If an error occurs, <code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.4rem] px-1 py-px text-[0.9rem]">false</code> and a user info are returned.</p>
+<p><strong>Output: </strong>Attempts to send an e-mail. If successful, the result of <code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.4rem] px-1 py-px text-[0.9rem]">sendMail</code> is returned. If an error occurs, <code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.4rem] px-1 py-px text-[0.9rem]">false</code> is returned and a user info with the attempted e-mail address.</p>

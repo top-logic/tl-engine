@@ -17,6 +17,8 @@ import com.top_logic.layout.I18NConstantsBase;
 @SuppressWarnings("javadoc")
 public class I18NConstants extends I18NConstantsBase {
 
+	public static ResKey ERROR_TRY_METHOD_REQUIRES_TWO_ARGUMENTS;
+
 	public static ResKey3 ERROR_EVALUATION_FAILED__EXPR_ARGS_DEFS;
 
 	public static ResKey2 ERROR_NOT_A_DATE__VAL_EXPR;

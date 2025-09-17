@@ -52,10 +52,14 @@ public class InstanceExport extends GenericMethod {
 		Collection<?> objects = asCollection(arguments[0]);
 		String downloadName = asString(arguments[1]);
 		Collection<?> excludes = asCollection(arguments[2]);
+		Collection<?> includes = asCollection(arguments[3]);
 
 		XMLInstanceExporter exporter = new XMLInstanceExporter();
-		for (Object exclude : excludes) {
-			exporter.addExclude((TLModelPart) exclude);
+		for (Object modelPart : excludes) {
+			exporter.addExclude((TLModelPart) modelPart);
+		}
+		for (Object modelPart : includes) {
+			exporter.addInclude((TLModelPart) modelPart);
 		}
 		return exporter.exportInstances(downloadName, CollectionUtil.dynamicCastView(TLObject.class, objects));
 	}
@@ -69,6 +73,7 @@ public class InstanceExport extends GenericMethod {
 			.mandatory("input")
 			.optional("name")
 			.optional("excludes")
+			.optional("includes")
 			.build();
 
 		/**

@@ -156,6 +156,7 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
 					<useIncrementalCompilation>false</useIncrementalCompilation>
+					<parameters>true</parameters>
 
 					<annotationProcessors>com.top_logic.build.processor.TypeIndexer</annotationProcessors>
 

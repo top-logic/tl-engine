@@ -2,6 +2,13 @@
 
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<module name="tl.accounts">
+		<class name="Group">
+			<annotations>
+				<instance-resolver>
+					<resolver-by-attribute attribute="tl.accounts:Group#name"/>
+				</instance-resolver>
+			</annotations>
+		</class>
 		<class name="Person">
 			<annotations>
 				<form-definition>
@@ -71,6 +78,9 @@
 						</code>
 					</form>
 				</form-definition>
+				<instance-resolver>
+					<resolver-by-attribute attribute="tl.accounts:Person#name"/>
+				</instance-resolver>
 			</annotations>
 		</class>
 	</module>

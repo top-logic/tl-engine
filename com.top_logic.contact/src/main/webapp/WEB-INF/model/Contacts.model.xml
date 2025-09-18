@@ -326,9 +326,7 @@
 					<annotations>
 						<visibility value="hidden"/>
 						<storage-algorithm>
-							<primitive-storage
-								storage-attribute="FKey"
-							/>
+							<primitive-storage storage-attribute="FKey"/>
 						</storage-algorithm>
 					</annotations>
 				</property>

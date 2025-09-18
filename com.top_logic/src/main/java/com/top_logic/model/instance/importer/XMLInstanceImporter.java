@@ -413,6 +413,16 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	@Override
 	public Object visit(ObjectConf ref, TLStructuredTypePart arg) {
 		try {
+			String globalId = ref.getGlobalId();
+			if (globalId != null) {
+				// Check, whether the object is already present in the target system.
+				String kind = ref.getType();
+				TLObject existing = resolver(kind).resolve(_log, kind, globalId);
+				if (existing != null) {
+					addObject(ref.getId(), existing);
+					return existing;
+				}
+			}
 			createObject(ref);
 			return importObject(ref);
 		} catch (Exception ex) {
@@ -425,7 +435,15 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	public TLObject visit(GlobalRefConf ref, TLStructuredTypePart arg) {
 		try {
 			String kind = ref.getKind();
-			return resolver(kind).resolve(_log, kind, ref.getId());
+			TLObject result = resolver(kind).resolve(_log, kind, ref.getId());
+			if (result != null) {
+				String localId = ref.getLocalId();
+				if (localId != null) {
+					// Remember for later use without resolving the global reference again.
+					addObject(localId, result);
+				}
+			}
+			return result;
 		} catch (Exception ex) {
 			_log.error(
 				I18NConstants.FAILED_TO_RESOLVE_OBJECT__TYPE_ID_MSG.fill(ref.getKind(), ref.getId(), ex.getMessage()),

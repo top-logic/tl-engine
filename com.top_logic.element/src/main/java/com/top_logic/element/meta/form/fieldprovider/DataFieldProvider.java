@@ -20,6 +20,7 @@ import com.top_logic.layout.form.model.DataField;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.values.edit.editor.AcceptedTypesChecker;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.LabelPositionAnnotation;
 import com.top_logic.model.annotate.ui.BinaryDisplay;
 import com.top_logic.model.annotate.ui.BinaryDisplay.BinaryPresentation;
 import com.top_logic.model.annotate.ui.TLAcceptedTypes;
@@ -60,7 +61,11 @@ public class DataFieldProvider extends AbstractFieldProvider {
 				if (acceptedTypes != null && !accType.equals(imgType)) {
 					acceptedTypes.setValue("image/*");
 				}
-				field.setControlProvider((model, style) -> new ImageUploadControl((DataField) model));
+				LabelPositionAnnotation labelAnnotation =
+					TLAnnotations.getAnnotation(editContext, LabelPositionAnnotation.class);
+				boolean hasLabelPosAnnotation = (labelAnnotation != null);
+				field.setControlProvider(
+					(model, style) -> new ImageUploadControl((DataField) model, hasLabelPosAnnotation));
 				break;
 			default:
 				throw BinaryPresentation.noSuchBinary(presentation);

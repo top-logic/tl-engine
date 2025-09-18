@@ -29,7 +29,7 @@ public class ExcludeTypes extends AbstractConfiguredInstance<ExcludeTypes.Config
 	@TagName("exclude-types")
 	public interface Config<I extends ExcludeTypes> extends PolymorphicConfiguration<I> {
 		/**
-		 * The typea to exclude from export.
+		 * The types to exclude from export.
 		 */
 		@Format(TLModelPartRefsFormat.class)
 		@Mandatory

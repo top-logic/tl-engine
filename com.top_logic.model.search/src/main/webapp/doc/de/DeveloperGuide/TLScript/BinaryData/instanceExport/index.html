@@ -1,0 +1,83 @@
+<h2>Syntax</h2>
+
+<pre>
+<code>$objects.instanceExport(
+    name: "my-export.objects.xml", 
+    excludes: [`my.module:MyType#excludedRef`], 
+    includes: [`my.module:MyType#includedRef`])</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Exportiert eine Menge von Objekt-Instanzen nach XML. Das erzeugte Format kann mit der Funktion <code class="hljs inlineCode">instanceImport()</code> später wieder eingelesen und zu Objekten instanziiert werden. Standardmäßig werden alle aus den Eingabe-Objekten über Kompositionsreferenzen referenzierten Objekte mitexportiert. Wenn ein Objekt aus dem so exportierten Objektgraphen über eine reguläre Referenz referenziert wird, dann muss dieses Objekt entweder auch über eine Kompositionsreferenz in den Export eingeschlossen werden, oder die reguläre Referenz muss über den <code class="hljs inlineCode">includes</code>-Parameter wie eine Kompositionsreferenz behandelt, oder über den <code class="hljs inlineCode">excludes</code>-Parameter vom Export ausgeschlossen werden.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td><code class="hljs inlineCode">objects</code></td>
+			<td>Menge von Objekten</td>
+			<td>Die Menge der zu exportierenden Objekte. Ausgehend von diesen Objekten werden alle über Kompositionsreferenzen erreichbaren Objekte mitexportiert.</td>
+			<td>ja</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">name</code></td>
+			<td>Zeichenkette</td>
+			<td>Der Dateiname der Export-Datei</td>
+			<td>nein</td>
+			<td><code class="hljs inlineCode">"&lt;Datum&gt;-&lt;Typ&gt;.objects.xml"</code></td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">excludes</code></td>
+			<td>Menge von Attributen und/oder Typen</td>
+			<td>Alle in dieser Menge angegebenen Attribute werden vom Export ausgeschossen. Wird ein Typ angegeben, werden alle Attribute dieses Typs ausgeschlossen.</td>
+			<td>nein</td>
+			<td><code class="hljs inlineCode">[]</code></td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">includes</code></td>
+			<td>Menge von Attributen und/oder Typen</td>
+			<td>Alle in dieser Menge angegebenen Referenzen werden wie Kompositionen behandelt und die von ihnen referenzierten Objekte werden in den Export eingeschlossen. Wird eine Klasse angegeben, dann werden alle Referenzen die diese Klasse als Typ haben in den Export eingeschlossen.</td>
+			<td>nein</td>
+			<td><code class="hljs inlineCode">[]</code></td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><span style="color:#3498db"><strong>Typ:</strong></span> Binärwert</p>
+
+<p>Die aus dem Objekgraphen erzeugte XML-Datei.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Alle Accounts als XML-Export</h3>
+
+<pre>
+<code>all(`tl.accounts:Person`)
+    .instanceExport(
+        name: "all-accounts.xml",
+        includes: [
+            `tl.accounts:Person#representativeGroup`, 
+            `tl.accounts:Person#contact`])</code>
+</pre>
+
+<p><span style="color:#3498db"><strong>Ausgabe:</strong></span> XML-Datei mit allen Accounts im System inklusive ihrer Kontakte und Stellvertretergruppen.</p>
+
+<p> </p>
+
+<p> </p>
+
+<p> </p>

@@ -6,6 +6,7 @@
 package com.top_logic.element.layout.instances.importer;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -42,6 +43,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Imported objects.
 	 */
 	public static ResKey IMPORTED_OBJECTS;
+
+	/**
+	 * @en Objects imported: {0}
+	 */
+	public static ResKey1 IMPORTED_OBJECTS__OBJS;
 
 	static {
 		initConstants(I18NConstants.class);

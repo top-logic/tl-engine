@@ -8,16 +8,19 @@ package com.top_logic.model.instance.exporter;
 import java.io.ByteArrayOutputStream;
 import java.io.IOError;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.function.Function;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.math3.util.Pair;
 
+import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.UnreachableAssertion;
@@ -25,8 +28,12 @@ import com.top_logic.basic.config.InstanceAccess;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.XmlDateTimeFormat;
+import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.sql.DBType;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.knowledge.service.db2.InitialDataSetupService;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
@@ -48,6 +55,7 @@ import com.top_logic.model.instance.importer.schema.PrimitiveValueConf;
 import com.top_logic.model.instance.importer.schema.ValueConf;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Algorithm for exporting objects to configurations for re-importing later on.
@@ -58,15 +66,20 @@ public class XMLInstanceExporter {
 
 	private int _nextId = 1;
 
-	private Map<TLObject, Integer> _exportIds = new HashMap<>();
+	private Map<TLObject, Ref> _exportIds = new HashMap<>();
 
 	private Map<TLModelPart, String> _modelNames = new HashMap<>();
 
-	private Set<TLObject> _queue = new LinkedHashSet<>();
+	private List<TLObject> _queue = new ArrayList<>();
 
-	private Resolvers _resolvers = new Resolvers();
+	private I18NLog _log =
+		new LogProtocol(XMLInstanceExporter.class).asI18NLog(ResourcesModule.getInstance().getLogBundle());
 
-	private Map<TLModelPart, Boolean> _excludedParts = new HashMap<>();
+	private Resolvers _resolvers = new Resolvers(_log);
+
+	private PartSet _excludedParts = new PartSet(this::computeExclude);
+
+	private PartSet _includedParts = new PartSet(this::computeInclude);
 
 	/**
 	 * Creates a {@link XMLInstanceExporter}.
@@ -90,14 +103,28 @@ public class XMLInstanceExporter {
 		_objects.getResolvers().put(def.getType(), def);
 		_resolvers.put(type, resolver);
 
-		_excludedParts.put(type, Boolean.FALSE);
+		_excludedParts.remove(type);
 	}
 
 	/**
 	 * Adds a type part to exclude from export.
 	 */
 	public void addExclude(TLModelPart part) {
-		_excludedParts.put(part, Boolean.TRUE);
+		_excludedParts.add(part);
+	}
+
+	/**
+	 * Adds a type part or type to include in an export.
+	 * 
+	 * <p>
+	 * By default, only composition references are followed. For objects in all other references
+	 * there must either exist a resolver, or the reference must be excluded from export. By
+	 * explicitly including a reference or a type to an export, objects in those included references
+	 * or references of that value type are treated like composition references.
+	 * </p>
+	 */
+	public void addInclude(TLModelPart part) {
+		_includedParts.add(part);
 	}
 
 	/**
@@ -107,20 +134,21 @@ public class XMLInstanceExporter {
 		if (obj == null) {
 			return;
 		}
-		Integer existing = _exportIds.get(obj);
+
+		// Mark the object to be explicitly part of the export, no matter if it is referenced from
+		// some composition reference, or not.
+		_queue.add(obj);
+
+		Ref existing = _exportIds.get(obj);
 		if (existing != null) {
 			// Already part of the export.
 			return;
 		}
 
-		ObjectConf conf = exportObject(obj);
-		_objects.getObjects().add(conf);
-	}
-
-	private ObjectConf exportObject(TLObject obj) {
-		Integer id = nextId();
-		_exportIds.put(obj, id);
-		return export(obj, id);
+		// Assign an ID for the object that can be used when the object is referenced from the
+		// exported graph. This makes the IDs of the top-level objects to be the first n IDs in the
+		// export.
+		newRef(null, obj);
 	}
 
 	/**
@@ -128,6 +156,23 @@ public class XMLInstanceExporter {
 	 */
 	public ObjectsConf getExportConfig() {
 		processQueue();
+		List<ResKey> errors = _exportIds.entrySet().stream()
+			.filter(e -> !e.getValue().isExported())
+			.map(e -> new Pair<>(e.getValue().getContainer(), e.getKey().tType()))
+			.distinct()
+			.map(p -> I18NConstants.REFERENCED_OBJECT_NOT_INCLUDED__TYPE_ATTR
+				.fill(TLModelUtil.qualifiedName(p.getSecond()), TLModelUtil.qualifiedName(p.getFirst())))
+			.toList();
+		
+		if (!errors.isEmpty()) {
+			TopLogicException ex = null;
+			for (ResKey message : errors) {
+				ex = new TopLogicException(message, ex);
+			}
+			assert ex != null;
+			throw ex;
+		}
+		
 		return _objects;
 	}
 
@@ -136,17 +181,27 @@ public class XMLInstanceExporter {
 			List<TLObject> batch = new ArrayList<>(_queue);
 			_queue.clear();
 			for (TLObject next : batch) {
-				Integer id = _exportIds.get(next);
-				ObjectConf conf = export(next, id);
+				Ref ref = _exportIds.get(next);
+				if (ref.isExported()) {
+					// Skip.
+					continue;
+				}
+				ObjectConf conf = exportObject(next, ref);
 
 				_objects.getObjects().add(conf);
 			}
 		}
 	}
 
-	private ObjectConf export(TLObject obj, Integer id) {
+	private ObjectConf exportObject(TLStructuredTypePart container, TLObject obj) {
+		return exportObject(obj, newRef(container, obj));
+	}
+
+	private ObjectConf exportObject(TLObject obj, Ref ref) {
+		ref.markExported();
+
 		ObjectConf conf = TypedConfiguration.newConfigItem(ObjectConf.class);
-		conf.setId(id.toString());
+		conf.setId(Integer.toString(ref.getId()));
 		conf.setType(typeName(obj.tType()));
 
 		exportAttributes(conf.getAttributes(), obj);
@@ -156,7 +211,7 @@ public class XMLInstanceExporter {
 
 	private void exportAttributes(List<AttributeValueConf> attributes, TLObject obj) {
 		for (TLStructuredTypePart part : obj.tType().getAllParts()) {
-			if (exclude(part)) {
+			if (isExluded(part)) {
 				continue;
 			}
 
@@ -168,31 +223,34 @@ public class XMLInstanceExporter {
 		}
 	}
 
-	private boolean exclude(TLModelPart part) {
-		Boolean exclude = _excludedParts.get(part);
-		if (exclude == null) {
-			exclude = Boolean.valueOf(computeExclude(part));
-			_excludedParts.put(part, exclude);
-		}
-		return exclude.booleanValue();
+	private boolean isExluded(TLModelPart part) {
+		return _excludedParts.contains(part);
+	}
+
+	private boolean isIncluded(TLModelPart part) {
+		return _includedParts.contains(part);
 	}
 
 	/**
-	 * Whether to exclude the given {@link TLStructuredTypePart} from export.
+	 * Whether to exclude the given given {@link TLStructuredType} or {@link TLStructuredTypePart}
+	 * from export.
 	 * 
 	 * @param part
 	 *        The part in question.
 	 */
 	protected boolean computeExclude(TLModelPart part) {
-		if (part instanceof TLStructuredTypePart attribute) {
-			if (attribute.isDerived()) {
-				return true;
-			}
+		return part instanceof TLStructuredTypePart attr && attr.isDerived();
+	}
 
-			return exclude(attribute.getType());
-		} else {
-			return false;
-		}
+	/**
+	 * Whether to explicitly include the given {@link TLStructuredType} or
+	 * {@link TLStructuredTypePart} in the export.
+	 * 
+	 * @param part
+	 *        The part in question.
+	 */
+	protected boolean computeInclude(TLModelPart part) {
+		return false;
 	}
 
 	private void exportAttribute(List<AttributeValueConf> attributes, TLObject obj, TLStructuredTypePart part) {
@@ -203,7 +261,7 @@ public class XMLInstanceExporter {
 
 		if (part.getModelKind() == ModelKind.REFERENCE) {
 			List<ValueConf> references = valueConf.getCollectionValue();
-			exportRef(references, value, ((TLReference) part).isComposite());
+			exportRef(part, references, value, ((TLReference) part).isComposite() || isIncluded(part));
 		} else {
 			ValueResolver valueResolver = _resolvers.valueResolver(part);
 			if (valueResolver != NoValueResolver.INSTANCE) {
@@ -240,17 +298,19 @@ public class XMLInstanceExporter {
 		attributes.add(valueConf);
 	}
 
-	private void exportRef(List<ValueConf> references, Object value, boolean composite) {
+	private void exportRef(TLStructuredTypePart container, List<ValueConf> references, Object value,
+			boolean composite) {
 		if (value instanceof Collection<?> collection) {
 			for (Object entry : collection) {
-				exportRefEntry(references, entry, composite);
+				exportRefEntry(container, references, entry, composite);
 			}
 		} else {
-			exportRefEntry(references, value, composite);
+			exportRefEntry(container, references, value, composite);
 		}
 	}
 
-	private void exportRefEntry(List<ValueConf> references, Object value, boolean composite) {
+	private void exportRefEntry(TLStructuredTypePart container, List<ValueConf> references, Object value,
+			boolean composite) {
 		if (value == null) {
 			return;
 		}
@@ -260,20 +320,22 @@ public class XMLInstanceExporter {
 			ref.setName(typeName(modelPart));
 			references.add(ref);
 		} else {
-			Integer existing = _exportIds.get(value);
-			if (existing != null) {
-				InstanceRefConf ref = TypedConfiguration.newConfigItem(InstanceRefConf.class);
-				ref.setId(existing.toString());
-				references.add(ref);
+			TLObject target = (TLObject) value;
+
+			Ref existingRef = _exportIds.get(target);
+			if (existingRef != null) {
+				if (composite && !existingRef.isExported()) {
+					references.add(exportObject(target, existingRef));
+				} else {
+					references.add(refConfig(existingRef));
+				}
 			} else {
-				TLObject target = (TLObject) value;
-				if (exclude(target.tType())) {
+				if (isExluded(target.tType())) {
 					return;
 				}
 
 				if (composite) {
-					ObjectConf config = exportObject(target);
-					references.add(config);
+					references.add(exportObject(container, target));
 					return;
 				}
 
@@ -284,24 +346,59 @@ public class XMLInstanceExporter {
 					ref.setId(resolver.buildId(target));
 					references.add(ref);
 				} else {
-					_queue.add(target);
-
-					Integer newId = nextId();
-					_exportIds.put(target, newId);
-					InstanceRefConf ref = TypedConfiguration.newConfigItem(InstanceRefConf.class);
-					ref.setId(newId.toString());
-					references.add(ref);
+					// The object may be exported later on when it occurs in some composition
+					// reference.
+					references.add(refConfig(newRef(container, target)));
 				}
 			}
 		}
 	}
 
-	private Integer nextId() {
-		return Integer.valueOf(_nextId++);
+	private InstanceRefConf refConfig(Ref newRef) {
+		InstanceRefConf result = TypedConfiguration.newConfigItem(InstanceRefConf.class);
+		result.setId(Integer.toString(newRef.getId()));
+		return result;
+	}
+
+	private Ref newRef(TLStructuredTypePart container, TLObject obj) {
+		Ref newRef = new Ref(_nextId++, container);
+		_exportIds.put(obj, newRef);
+		return newRef;
 	}
 
 	private String typeName(TLModelPart part) {
 		return _modelNames.computeIfAbsent(part, TLModelUtil::qualifiedName);
+	}
+
+	/**
+	 * Exports the given objects and converts them into a binary stream containing XML data.
+	 */
+	public BinaryDataSource exportInstances(Collection<? extends TLObject> values) {
+		return exportInstances(null, values);
+	}
+
+	/**
+	 * Exports the given objects and converts them into a binary stream containing XML data.
+	 */
+	public BinaryDataSource exportInstances(String downloadName, Collection<? extends TLObject> values) {
+		String typeName = "objects";
+		boolean first = true;
+		for (TLObject obj : values) {
+			if (first) {
+				typeName = obj.tType().getName();
+				first = false;
+			}
+			export(obj);
+		}
+		ObjectsConf export = getExportConfig();
+	
+		if (downloadName == null) {
+			downloadName =
+				new SimpleDateFormat("yyyy-MM-dd_hh-mm-ss").format(new Date()) + "_" + typeName
+					+ InitialDataSetupService.FILE_SUFFIX;
+		}
+		InstanceXmlData instanceData = new InstanceXmlData(downloadName, export);
+		return instanceData;
 	}
 
 	/**
@@ -366,4 +463,102 @@ public class XMLInstanceExporter {
 		throw new IllegalArgumentException("Not expected for binary data: " + value.getClass());
 	}
 
+	private static class Ref {
+
+		private int _id;
+
+		private boolean _exported;
+
+		private TLStructuredTypePart _container;
+
+		/**
+		 * Creates a {@link Ref}.
+		 */
+		public Ref(int id, TLStructuredTypePart container) {
+			_id = id;
+			_container = container;
+		}
+
+		public int getId() {
+			return _id;
+		}
+
+		/**
+		 * The reference that initially included the referenced object to the export scope.
+		 */
+		public TLStructuredTypePart getContainer() {
+			return _container;
+		}
+
+		/**
+		 * Whether the referenced object is already serialized.
+		 */
+		public boolean isExported() {
+			return _exported;
+		}
+
+		public void markExported() {
+			assert !_exported : "Must not export twice.";
+
+			_exported = true;
+		}
+	}
+
+	private static class PartSet {
+		private final Function<TLModelPart, Boolean> _implicitMembers;
+
+		private final Map<TLModelPart, Boolean> _parts = new HashMap<>();
+
+		/**
+		 * Creates a {@link PartSet}.
+		 */
+		public PartSet(Function<TLModelPart, Boolean> implicitMembers) {
+			_implicitMembers = implicitMembers;
+		}
+
+		/**
+		 * Excludes all parts with the given type from this set.
+		 */
+		public void remove(TLStructuredType type) {
+			_parts.put(type, Boolean.FALSE);
+		}
+
+		/**
+		 * Determines whether the given part is in this set.
+		 */
+		public boolean contains(TLModelPart part) {
+			Boolean value = _parts.get(part);
+			if (value == null) {
+				value = Boolean.valueOf(computeContains(part));
+				_parts.put(part, value);
+			}
+			return value.booleanValue();
+		}
+
+		/**
+		 * Whether to exclude the given {@link TLStructuredTypePart} from export.
+		 * 
+		 * @param part
+		 *        The part in question.
+		 */
+		protected boolean computeContains(TLModelPart part) {
+			if (_implicitMembers.apply(part)) {
+				return true;
+			}
+
+			if (part instanceof TLStructuredTypePart attribute) {
+				return contains(attribute.getType());
+			} else {
+				return false;
+			}
+		}
+
+		/**
+		 * Adds the given part from this set.
+		 */
+		public void add(TLModelPart part) {
+			_parts.put(part, Boolean.TRUE);
+		}
+
+	}
 }

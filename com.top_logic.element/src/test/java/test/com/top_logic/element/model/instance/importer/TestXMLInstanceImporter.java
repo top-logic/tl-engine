@@ -11,10 +11,13 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.element.model.util.TLModelTest;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.basic.BufferingProtocol;
+import com.top_logic.basic.Log;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLEnumeration;
@@ -45,7 +48,10 @@ public class TestXMLInstanceImporter extends TLModelTest {
 		TLFactory factory = ModelService.getInstance().getFactory();
 		TLModel model = getModel();
 
+		Log testLog = new BufferingProtocol();
+
 		XMLInstanceImporter importer = new XMLInstanceImporter(model, factory);
+		importer.setLog(testLog.asI18NLog(ResourcesModule.getInstance().getBundle(ResourcesModule.getLogLocale())));
 		importer.addResolver(AccountResolver.KIND,
 			new AccountResolver());
 		importer.addResolver(PersistentObjectResolver.KIND,
@@ -54,8 +60,8 @@ public class TestXMLInstanceImporter extends TLModelTest {
 
 		importer.importInstances(configs);
 
-		if (importer.getLog().hasErrors()) {
-			fail(importer.getLog().getFirstProblem().toString());
+		if (testLog.hasErrors()) {
+			fail(testLog.getFirstProblem().toString());
 		}
 
 		TLObject a1 = importer.getObject("a1");

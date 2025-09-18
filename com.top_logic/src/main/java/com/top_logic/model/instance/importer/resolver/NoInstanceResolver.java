@@ -5,6 +5,7 @@
  */
 package com.top_logic.model.instance.importer.resolver;
 
+import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.model.TLObject;
 
 /**
@@ -24,7 +25,7 @@ public class NoInstanceResolver implements InstanceResolver {
 	}
 
 	@Override
-	public TLObject resolve(String kind, String id) {
+	public TLObject resolve(I18NLog log, String kind, String id) {
 		throw new UnsupportedOperationException("No instance resolver for kind '" + kind + "': " + id);
 	}
 

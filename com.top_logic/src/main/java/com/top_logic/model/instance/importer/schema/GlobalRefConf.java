@@ -7,6 +7,7 @@ package com.top_logic.model.instance.importer.schema;
 
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
 
@@ -42,7 +43,7 @@ public interface GlobalRefConf extends ValueConf {
 	 * and may vary from {@link #getKind() type} to {@link #getKind() type}.
 	 * </p>
 	 * 
-	 * @see InstanceResolver#resolve(String, String)
+	 * @see InstanceResolver#resolve(I18NLog, String, String)
 	 */
 	@Mandatory
 	String getId();

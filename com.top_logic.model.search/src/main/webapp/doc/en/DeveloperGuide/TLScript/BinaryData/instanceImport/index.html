@@ -1,0 +1,47 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>$xml.instanceImport(transient: false)</code>
+</pre>
+
+<h2>Description</h2>
+
+<p>Rereads an XML file that was created with the <code class="hljs inlineCode">instanceExport()</code> function and creates the objects contained in it and returns the root objects as the result.</p>
+
+<h2>Parameters</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>File name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td><code class="hljs inlineCode">xml</code></td>
+			<td>XML file (binary value)</td>
+			<td>The XML file from which objects are to be read in</td>
+			<td>Yes</td>
+			<td>-</td>
+		</tr>
+		<tr>
+			<td><code class="hljs inlineCode">transient</code></td>
+			<td>Truth value</td>
+			<td>Whether the object creation should be transient. If the persistent objects are created, the function must be called from a transaction context.</td>
+			<td>no</td>
+			<td><code class="hljs inlineCode">false</code></td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Return value</h2>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> Set of objects</p>
+
+<p>The set of exported objects. Objects that were also exported because they were contained in composition references are not explicitly returned.</p>
+
+<p> </p>

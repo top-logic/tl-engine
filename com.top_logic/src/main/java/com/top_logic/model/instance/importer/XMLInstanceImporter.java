@@ -16,7 +16,6 @@ import java.util.Map;
 import org.apache.commons.codec.binary.Base64;
 
 import com.top_logic.basic.CollectionUtil;
-import com.top_logic.basic.Log;
 import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.LongID;
 import com.top_logic.basic.UnreachableAssertion;
@@ -26,9 +25,11 @@ import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.XmlDateTimeFormat;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.sql.DBType;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
@@ -71,13 +72,24 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 
 	private final TLModel _model;
 
-	private Log _log = new LogProtocol(XMLInstanceImporter.class);
+	private I18NLog _log =
+		new LogProtocol(XMLInstanceImporter.class).asI18NLog(ResourcesModule.getInstance().getLogBundle());
 
 	private Map<String, TLObject> _objectById = new HashMap<>();
 
-	private Resolvers _resolvers = new Resolvers();
+	private Resolvers _resolvers = new Resolvers(_log);
 
 	private InstanceResolver _defaultResolver = NoInstanceResolver.INSTANCE;
+
+	/**
+	 * Actions for resolving forwards references in the import.
+	 * 
+	 * <p>
+	 * A forwards references is the usage of an import-local object ID in a value before the object
+	 * that is identified by this ID has been imported.
+	 * </p>
+	 */
+	private List<Runnable> _delayed = new ArrayList<>();
 
 	/**
 	 * Creates a {@link XMLInstanceImporter}.
@@ -111,7 +123,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	 * 
 	 * @param kind
 	 *        The type kind to register the given resolver for. See
-	 *        {@link InstanceResolver#resolve(String, String)}.
+	 *        {@link InstanceResolver#resolve(I18NLog, String, String)}.
 	 * 
 	 * @see #addResolver(String, InstanceResolver)
 	 */
@@ -166,18 +178,18 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	}
 
 	/**
-	 * The {@link Log} that is used for reporting errors in the import process.
+	 * The {@link I18NLog} that is used for reporting errors in the import process.
 	 * 
-	 * @see #setLog(Log)
+	 * @see #setLog(I18NLog)
 	 */
-	public Log getLog() {
+	public I18NLog getLog() {
 		return _log;
 	}
 
 	/**
 	 * @see #getLog()
 	 */
-	public void setLog(Log log) {
+	public void setLog(I18NLog log) {
 		_log = log;
 		_resolvers.setLog(log);
 	}
@@ -187,34 +199,47 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	 * 
 	 * @param objects
 	 *        The description of the objects to import.
+	 * @return The top-level objects that were present in the given configuration.
 	 */
-	public void importInstances(ObjectsConf objects) {
+	public List<TLObject> importInstances(ObjectsConf objects) {
 		for (ResolverDef def : objects.getResolvers().values()) {
 			InstanceResolver resolver = TypedConfigUtil.createInstance(def.getImpl());
 			addResolver(def.getType().qualifiedName(), resolver);
 		}
 
 		List<ObjectConf> configs = objects.getObjects();
-		importInstances(configs);
+		return importInstances(configs);
 	}
 
 	/**
 	 * Instantiates all given confiurations.
+	 * 
+	 * @return The objects imported from the given configurations.
 	 */
-	public void importInstances(List<ObjectConf> configs) {
+	public List<TLObject> importInstances(List<ObjectConf> configs) {
+		List<TLObject> result = new ArrayList<>();
 		for (ObjectConf config : configs) {
-			createObject(config);
+			TLObject obj = createObject(config);
+			result.add(obj);
 		}
 
 		for (ObjectConf config : configs) {
 			importObject(config);
 		}
+
+		for (Runnable delayed : _delayed) {
+			delayed.run();
+		}
+		_delayed.clear();
+
+		return result;
 	}
 
-	private void createObject(ObjectConf config) {
+	private TLObject createObject(ObjectConf config) {
 		TLClass type = (TLClass) TLModelUtil.findType(_model, config.getType());
 		TLObject obj = _factory.createObject(type);
 		addObject(config.getId(), obj);
+		return obj;
 	}
 
 	private TLObject importObject(ObjectConf config) {
@@ -224,79 +249,143 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 			String attrName = valueConf.getName();
 			TLStructuredTypePart part = type.getPart(attrName);
 			if (part == null) {
-				_log.error("No such part '" + attrName + "' in type '" + type + "' at " + valueConf.location());
+				_log.error(I18NConstants.NO_SUCH_PART__ATTR_TYPE_LOC.fill(attrName, type, valueConf.location()));
 				continue;
 			}
 
-			Object value;
 			try {
-				value = resolveValue(part, valueConf);
+				loadValue(storage(obj, part, valueConf), valueConf);
 			} catch (Exception ex) {
-				_log.error("Failed to resolve value at " + valueConf.location(), ex);
+				_log.error(I18NConstants.FAILED_TO_RESOLVE_VALUE__VAL_LOC_MSG.fill(valueConf.getValue(),
+					valueConf.location(), ex.getMessage()), ex);
 				continue;
-			}
-			try {
-				obj.tUpdate(part, value);
-			} catch (Exception ex) {
-				_log.error("Failed to set value '" + value + "' to attribute '" + part + "' at " + valueConf.location(),
-					ex);
 			}
 		}
 		return obj;
 	}
 
-	private Object resolveValue(TLStructuredTypePart part, AttributeValueConf valueConf) {
-		Object value;
-		if (part.getModelKind() == ModelKind.REFERENCE) {
-			if (valueConf.getValue() != null) {
-				_log.error("Reference attribute must not be assigned a plain value at " + valueConf.location());
+	private Storage storage(TLObject obj, TLStructuredTypePart part, AttributeValueConf valueConf) {
+		return new Storage() {
+			@Override
+			public TLStructuredTypePart getPart() {
+				return part;
 			}
-			value = resolveCollectionValue(part, valueConf);
+
+			@Override
+			public void set(Object value) {
+				Object storageValue;
+
+				if (part.isMultiple()) {
+					storageValue = asCollection(value);
+				} else {
+					if (value instanceof Collection<?> coll) {
+						if (coll.size() > 1) {
+							_log.error(
+								I18NConstants.ERROR_STORING_COLLECTION_TO_SINGLE_REF__ATTR_LOC.fill(part,
+									valueConf.location()));
+							storageValue = CollectionUtil.getFirst(coll);
+						} else {
+							storageValue = CollectionUtil.getSingleValueFromCollection(coll);
+						}
+					} else {
+						storageValue = value;
+					}
+				}
+
+				try {
+					obj.tUpdate(part, storageValue);
+				} catch (Exception ex) {
+					_log.error(
+						I18NConstants.FAILED_SETTING_VALUE__VAL_ATTR_LOC_MSG.fill(value, part, valueConf.location(),
+							ex.getMessage()),
+						ex);
+				}
+			}
+		};
+	}
+
+	private static Collection<?> asCollection(Object value) {
+		if (value instanceof Collection<?> coll) {
+			return coll;
+		} else if (value == null) {
+			return Collections.emptyList();
+		} else {
+			return Collections.singletonList(value);
+		}
+	}
+
+	private void loadValue(Storage storage, AttributeValueConf valueConf) {
+		if (storage.getPart().getModelKind() == ModelKind.REFERENCE) {
+			if (valueConf.getValue() != null) {
+				_log.error(I18NConstants.CANNOT_ASSIGN_PLAIN_VALUE_TO_REF__ATTR_VAL_LOC.fill(
+					storage.getPart(), valueConf.getValue(), valueConf.location()));
+			}
+			loadCollectionValue(storage, valueConf);
 		} else {
 			if (valueConf.getCollectionValue().size() > 0) {
-				value = resolveCollectionValue(part, valueConf);
+				loadCollectionValue(storage, valueConf);
 			} else {
-				value = parse(_log, (TLPrimitive) part.getType(), valueConf.getValue());
+				storage.set(parse(_log, (TLPrimitive) storage.getPart().getType(), valueConf.getValue()));
 			}
 		}
-		return value;
 	}
 
-	private Object resolveCollectionValue(TLStructuredTypePart part, AttributeValueConf valueConf) {
-		List<Object> refs = resolve(part, valueConf.getCollectionValue());
-		Object value;
-		if (part.isMultiple()) {
-			value = refs;
-		} else {
-			if (refs.size() > 1) {
-				_log.error("Multiple values cannot be stored into singleton reference '" + part + "' at "
-					+ valueConf.location());
-				value = refs.get(0);
-			} else {
-				value = CollectionUtil.getSingleValueFromCollection(refs);
-			}
-		}
-		return value;
+	private void loadCollectionValue(Storage storage, AttributeValueConf valueConf) {
+		loadCollectionValue(storage, valueConf.getCollectionValue());
 	}
 
-	private List<Object> resolve(TLStructuredTypePart part, List<ValueConf> references) {
+	private void loadCollectionValue(Storage storage, List<ValueConf> references) {
 		if (references.isEmpty()) {
-			return Collections.emptyList();
+			storage.set(Collections.emptyList());
 		}
-		if (references.size() == 1) {
-			return Collections.singletonList(resolveSingle(part, references.get(0)));
+		else if (references.size() == 1) {
+			ValueConf valueConf = references.get(0);
+
+			try {
+				loadSingle(storage, valueConf);
+			} catch (UnresolvedRef ex) {
+				_delayed.add(() -> {
+					try {
+						loadSingle(storage, valueConf);
+					} catch (UnresolvedRef ex2) {
+						InstanceRefConf ref = ex2.getRef();
+						_log.error(I18NConstants.UNRESOLVED_REFERENCE__ID_LOC.fill(ref.getId(), ref.location()));
+					}
+				});
+			}
 		}
+		else {
+			try {
+				loadCollection(storage, references);
+			} catch (UnresolvedRef ex) {
+				_delayed.add(() -> {
+					try {
+						loadCollection(storage, references);
+					} catch (UnresolvedRef ex2) {
+						InstanceRefConf ref = ex2.getRef();
+						_log.error(I18NConstants.UNRESOLVED_REFERENCE__ID_LOC.fill(ref.getId(), ref.location()));
+					}
+				});
+			}
+		}
+	}
+
+	private void loadSingle(Storage storage, ValueConf valueConf) throws UnresolvedRef {
+		storage.set(resolveSingle(storage.getPart(), valueConf));
+	}
+
+	private void loadCollection(Storage storage, List<ValueConf> references) throws UnresolvedRef {
 		ArrayList<Object> result = new ArrayList<>(references.size());
 		for (ValueConf ref : references) {
-			Object element = resolveSingle(part, ref);
+			Object element = resolveSingle(storage.getPart(), ref);
 			if (element != null) {
 				result.add(element);
 			}
 		}
-		return result;
+		storage.set(result);
 	}
 
-	private Object resolveSingle(TLStructuredTypePart part, ValueConf ref) {
+	private Object resolveSingle(TLStructuredTypePart part, ValueConf ref) throws UnresolvedRef {
 		return ref.visit(this, part);
 	}
 
@@ -313,10 +402,10 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	}
 
 	@Override
-	public TLObject visit(InstanceRefConf ref, TLStructuredTypePart arg) {
+	public TLObject visit(InstanceRefConf ref, TLStructuredTypePart arg) throws UnresolvedRef {
 		TLObject result = _objectById.get(ref.getId());
 		if (result == null) {
-			_log.error("Unresolved reference '" + ref.getId() + "' at " + ref.location());
+			throw new UnresolvedRef(ref);
 		}
 		return result;
 	}
@@ -327,7 +416,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 			createObject(ref);
 			return importObject(ref);
 		} catch (Exception ex) {
-			_log.error("Cannot import object " + ref.getId() + " of type '" + ref.getType() + "'.");
+			_log.error(I18NConstants.FAILED_TO_IMPORT__ID_TYPE_MSG.fill(ref.getId(), ref.getType(), ex.getMessage()), ex);
 			return null;
 		}
 	}
@@ -336,9 +425,11 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	public TLObject visit(GlobalRefConf ref, TLStructuredTypePart arg) {
 		try {
 			String kind = ref.getKind();
-			return resolver(kind).resolve(kind, ref.getId());
+			return resolver(kind).resolve(_log, kind, ref.getId());
 		} catch (Exception ex) {
-			_log.error("Cannot resolve object with ID '" + ref.getId() + "'.", ex);
+			_log.error(
+				I18NConstants.FAILED_TO_RESOLVE_OBJECT__TYPE_ID_MSG.fill(ref.getKind(), ref.getId(), ex.getMessage()),
+				ex);
 			return null;
 		}
 	}
@@ -374,15 +465,15 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 
 				switch (type.getModelKind()) {
 					case DATATYPE: {
-						_log.error(
-							"Primitive type '" + typeName + "' has no part '" + partName + "' at " + ref.location());
+						_log.error(I18NConstants.PRIMITIVE_TYPE_WITH_PART__TYPE_PART_LOC.fill(typeName, partName,
+							ref.location()));
 						return null;
 					}
 					case ENUMERATION: {
 						TLClassifier part = resolveClassifier((TLEnumeration) type, partName);
 						if (part == null) {
-							_log.error(
-								"Enum '" + typeName + "' has no classifier '" + partName + "' at " + ref.location());
+							_log.error(I18NConstants.NO_SUCH_CLASSIFIER__TYPE_PART_LOC.fill(typeName, partName,
+								ref.location()));
 							return null;
 						}
 						return part;
@@ -391,15 +482,16 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 					case CLASS: {
 						TLStructuredTypePart part = ((TLStructuredType) type).getPart(partName);
 						if (part == null) {
-							_log.error("Type '" + typeName + "' has no part '" + partName + "' at " + ref.location());
+							_log.error(
+								I18NConstants.NO_SUCH_PART__TYPE_PART_LOC.fill(typeName, partName, ref.location()));
 							return null;
 						}
 						return part;
 					}
 
 					default:
-						_log.error("Unknown type kind '" + type.getModelKind() + "' of '" + typeName + "' at "
-							+ ref.location());
+						_log.error(I18NConstants.UNKNOWN_TYPE__KIND_TYPE_LOC.fill(type.getModelKind(), typeName,
+							ref.location()));
 						return null;
 				}
 
@@ -421,7 +513,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 				TLObject singleton = module.getSingleton(partName);
 				if (singleton == null) {
 					_log.error(
-						"No singleton '" + partName + "' defined in module '" + moduleName + "' at " + ref.location());
+						I18NConstants.NO_SUCH_SINGLETON__NAME_MODULE_LOC.fill(partName, moduleName, ref.location()));
 				}
 				return singleton;
 			} else {
@@ -449,7 +541,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	private TLModule resolveModule(ModelRefConf ref, String moduleName) {
 		TLModule module = _model.getModule(moduleName);
 		if (module == null) {
-			_log.error("Module '" + moduleName + "' not found in '" + ref.getName() + "' at " + ref.location());
+			_log.error(I18NConstants.NO_SUCH_MODULE__NAME_REF_LOC.fill(moduleName, ref.getName(), ref.location()));
 			return null;
 		}
 		return module;
@@ -458,7 +550,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	private TLType resolveType(ModelRefConf ref, TLModule module, String typeName) {
 		TLType type = module.getType(typeName);
 		if (type == null) {
-			_log.error("Type '" + typeName + "' not found in '" + ref.getName() + "' at " + ref.location());
+			_log.error(I18NConstants.NO_SUCH_TYPE__NAME_REF_LOC.fill(typeName, ref.getName(), ref.location()));
 			return null;
 		}
 		return type;
@@ -467,21 +559,23 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	/**
 	 * Parses a serialized primitive type value.
 	 */
-	public static Object parse(Log log, TLPrimitive type, String value) {
+	public static Object parse(I18NLog log, TLPrimitive type, String value) {
 		if (value == null || value.trim().isEmpty()) {
 			return null;
 		}
 		return type.getStorageMapping().getBusinessObject(parseStorageValue(log, type.getDBType(), value));
 	}
 
-	private static Object parseStorageValue(Log log, DBType dbType, String value) {
+	private static Object parseStorageValue(I18NLog log, DBType dbType, String value) {
 		switch (dbType) {
 			case BLOB: {
 				try {
 					byte[] result = Base64.decodeBase64(value);
 					return BinaryDataFactory.createBinaryData(result);
 				} catch (Exception ex) {
-					log.error("Invalid binary format in '" + value + "':" + ex.getMessage(), ex);
+					String prefix =
+						value.substring(0, Math.min(20, value.length())) + (value.length() > 40 ? "..." : "");
+					log.error(I18NConstants.INVALID_BINARY_FORMAT__VAL_MSG.fill(prefix, ex.getMessage()), ex);
 					return null;
 				}
 			}
@@ -493,7 +587,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 				try {
 					return XmlDateTimeFormat.INSTANCE.parseObject(value);
 				} catch (ParseException ex) {
-					log.error("Invalid date format in '" + value + "':" + ex.getMessage(), ex);
+					log.error(I18NConstants.INVALID_DATE_FORMAT__VAL_MSG.fill(value, ex.getMessage()), ex);
 					return null;
 				}
 			case DECIMAL:
@@ -501,42 +595,42 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 				try {
 					return Double.parseDouble(value);
 				} catch (NumberFormatException ex) {
-					log.error("Invalid number format in '" + value + "':" + ex.getMessage(), ex);
+					log.error(I18NConstants.INVALID_NUMBER_FORMAT__VAL_MSG.fill(value, ex.getMessage()), ex);
 					return null;
 				}
 			case FLOAT:
 				try {
 					return Float.parseFloat(value);
 				} catch (NumberFormatException ex) {
-					log.error("Invalid number format in '" + value + "':" + ex.getMessage(), ex);
+					log.error(I18NConstants.INVALID_NUMBER_FORMAT__VAL_MSG.fill(value, ex.getMessage()), ex);
 					return null;
 				}
 			case BYTE:
 				try {
 					return Byte.parseByte(value);
 				} catch (NumberFormatException ex) {
-					log.error("Invalid number format in '" + value + "':" + ex.getMessage(), ex);
+					log.error(I18NConstants.INVALID_NUMBER_FORMAT__VAL_MSG.fill(value, ex.getMessage()), ex);
 					return null;
 				}
 			case SHORT:
 				try {
 					return Short.parseShort(value);
 				} catch (NumberFormatException ex) {
-					log.error("Invalid number format in '" + value + "':" + ex.getMessage(), ex);
+					log.error(I18NConstants.INVALID_NUMBER_FORMAT__VAL_MSG.fill(value, ex.getMessage()), ex);
 					return null;
 				}
 			case INT:
 				try {
 					return Integer.parseInt(value);
 				} catch (NumberFormatException ex) {
-					log.error("Invalid number format in '" + value + "':" + ex.getMessage(), ex);
+					log.error(I18NConstants.INVALID_NUMBER_FORMAT__VAL_MSG.fill(value, ex.getMessage()), ex);
 					return null;
 				}
 			case LONG:
 				try {
 					return Long.parseLong(value);
 				} catch (NumberFormatException ex) {
-					log.error("Invalid number format in '" + value + "':" + ex.getMessage(), ex);
+					log.error(I18NConstants.INVALID_NUMBER_FORMAT__VAL_MSG.fill(value, ex.getMessage()), ex);
 					return null;
 				}
 			case CLOB:
@@ -547,7 +641,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 				try {
 					return LongID.fromExternalForm(value);
 				} catch (NumberFormatException ex) {
-					log.error("Invalid ID format in '" + value + "':" + ex.getMessage(), ex);
+					log.error(I18NConstants.INVALID_ID_FORMAT__VAL_MSG.fill(value, ex.getMessage()), ex);
 					return null;
 				}
 		}
@@ -600,6 +694,21 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 		reader.setSource(source);
 		ObjectsConf config = (ObjectsConf) reader.read();
 		return config;
+	}
+
+	/**
+	 * A storage location, where a value can be stored.
+	 */
+	interface Storage {
+		/**
+		 * The attribute that describes this storage location.
+		 */
+		TLStructuredTypePart getPart();
+
+		/**
+		 * The setter that accepts the value to be stored.
+		 */
+		void set(Object value);
 	}
 
 }

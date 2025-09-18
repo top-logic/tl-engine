@@ -24,6 +24,7 @@ import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.module.BasicRuntimeModule;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -142,7 +143,7 @@ public abstract class AbstractSearchExpressionTest extends BasicTestCase {
 		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			ObjectsConf config = XMLInstanceImporter.loadConfig(resource(name));
 			importer = new XMLInstanceImporter(model(), ModelService.getInstance().getFactory());
-			importer.setLog(new AssertProtocol());
+			importer.setLog(new AssertProtocol().asI18NLog(ResourcesModule.getInstance().getLogBundle()));
 			importer.importInstances(config);
 
 			tx.commit();

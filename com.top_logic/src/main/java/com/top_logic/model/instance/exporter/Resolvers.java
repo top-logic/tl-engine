@@ -14,30 +14,21 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 
-import com.top_logic.basic.Log;
-import com.top_logic.basic.LogProtocol;
 import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationValueBinding;
-import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.xml.XMLStreamUtil;
-import com.top_logic.knowledge.objects.KnowledgeObject;
-import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLClass;
-import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.StorageMapping;
-import com.top_logic.model.access.WithStorageAttribute;
-import com.top_logic.model.annotate.ui.TLIDColumn;
-import com.top_logic.model.config.annotation.TableName;
 import com.top_logic.model.instance.annotation.TLInstanceResolver;
 import com.top_logic.model.instance.annotation.TLValueResolver;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
@@ -57,7 +48,7 @@ import com.top_logic.model.util.TLModelUtil;
  */
 public class Resolvers {
 
-	private Log _log = new LogProtocol(XMLInstanceExporter.class);
+	private I18NLog _log;
 
 	private final Map<TLStructuredType, InstanceResolver> _resolverByType = new HashMap<>();
 
@@ -72,14 +63,14 @@ public class Resolvers {
 	/**
 	 * Creates {@link Resolvers}.
 	 */
-	public Resolvers() {
-		super();
+	public Resolvers(I18NLog log) {
+		_log = log;
 	}
 
 	/**
 	 * Updates the log output.
 	 */
-	public void setLog(Log log) {
+	public void setLog(I18NLog log) {
 		_log = log;
 	}
 
@@ -123,7 +114,7 @@ public class Resolvers {
 			TLStructuredType type = _typeByName.computeIfAbsent(kind, this::lookupType);
 			typeResolver = resolver(type);
 		} catch (Exception ex) {
-			_log.error("Cannot resolve type '" + kind + "'.", ex);
+			_log.error(I18NConstants.FAILED_RESOLVING_TYPE__KIND_MSG.fill(kind, ex.getMessage()), ex);
 			typeResolver = NoInstanceResolver.INSTANCE;
 		}
 		_resolverByKind.put(kind, typeResolver);
@@ -150,70 +141,13 @@ public class Resolvers {
 	 */
 	protected InstanceResolver computeResolver(TLStructuredType type) {
 		TLInstanceResolver resoverAnnotation = type.getAnnotation(TLInstanceResolver.class);
-		if (resoverAnnotation != null) {
-			PolymorphicConfiguration<? extends InstanceResolver> resolverConfig = resoverAnnotation.getImpl();
-			InstanceResolver resolver = TypedConfigUtil.createInstance(resolverConfig);
-			return resolver;
-		}
-		TLIDColumn annotation = type.getAnnotation(TLIDColumn.class);
-		if (annotation != null) {
-			String idAttributeName = annotation.getValue();
-			TLStructuredTypePart idAttribute = type.getPart(idAttributeName);
-			if (idAttribute != null) {
-				return idResolver(type, idAttribute);
-			}
-		} else {
-			TLStructuredTypePart nameAttribute = type.getPart("name");
-			if (nameAttribute != null) {
-				return idResolver(type, nameAttribute);
-			}
-		}
-
-		return null;
-	}
-
-	private InstanceResolver idResolver(TLStructuredType type, TLStructuredTypePart idAttribute) {
-		TableName annotation = type.getAnnotation(TableName.class);
-		if (annotation == null) {
+		if (resoverAnnotation == null) {
 			return null;
 		}
 
-		String tableName = annotation.getName();
-		StorageDetail storage = idAttribute.getStorageImplementation();
-
-		String idColumn = idAttribute.getName();
-		if (storage instanceof ConfiguredInstance<?> configuredInstance) {
-			PolymorphicConfiguration<?> storageConfig = configuredInstance.getConfig();
-			if (storageConfig instanceof WithStorageAttribute columnStorageConfig) {
-				idColumn = columnStorageConfig.getStorageAttribute();
-			}
-		}
-
-		TLType idType = idAttribute.getType();
-		if (idType instanceof TLPrimitive idValueType) {
-			String searchColumn = idColumn;
-			return new InstanceResolver() {
-				@Override
-				public TLObject resolve(String kind, String id) {
-					Object value = XMLInstanceImporter.parse(_log, idValueType, id);
-					KnowledgeObject item = (KnowledgeObject) PersistencyLayer.getKnowledgeBase()
-						.getObjectByAttribute(tableName, searchColumn, value);
-					if (item == null) {
-						_log.error("Cannot resolve object of type '" + type + "' with ID '" + id + "'.");
-						return null;
-					}
-					return item.getWrapper();
-				}
-
-				@Override
-				public String buildId(TLObject obj) {
-					Object id = obj.tValue(idAttribute);
-					return XMLInstanceExporter.serialize(idValueType, id);
-				}
-			};
-		}
-
-		return null;
+		PolymorphicConfiguration<? extends InstanceResolver> resolverConfig = resoverAnnotation.getImpl();
+		InstanceResolver resolver = TypedConfigUtil.createInstance(resolverConfig);
+		return resolver;
 	}
 
 	private InstanceResolver findInheritedResolver(TLStructuredType type) {
@@ -263,7 +197,8 @@ public class Resolvers {
 						in.close();
 						return result;
 					} catch (ConfigurationException | XMLStreamException ex) {
-						_log.error("Cannot read value of '" + concreteAttribute + "' from xml.", ex);
+						_log.error(I18NConstants.FAILED_READING_VALUE__ATR_MSG.fill(concreteAttribute, ex.getMessage()),
+							ex);
 						return null;
 					}
 				}
@@ -282,7 +217,8 @@ public class Resolvers {
 						out.writeEndElement();
 						out.close();
 					} catch (XMLStreamException ex) {
-						_log.error("Failed to serialize value of '" + concreteAttribute + "'.", ex);
+						_log.error(I18NConstants.FAILED_TO_SERIALIZE__VAL_ATTR_MSG.fill(value, concreteAttribute,
+							ex.getMessage()), ex);
 						return null;
 					}
 
@@ -323,7 +259,7 @@ public class Resolvers {
 		try {
 			return ConfigUtil.getInstance(bindingType);
 		} catch (ConfigurationException ex) {
-			_log.error("Cannot create value binding for '" + attribute + "'.", ex);
+			_log.error(I18NConstants.FAILED_TO_CREATE_BINDING__ATTR_MSG.fill(attribute, ex.getErrorKey()), ex);
 			return null;
 		}
 	}

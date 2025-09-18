@@ -7,6 +7,7 @@ package com.top_logic.model.instance.importer.schema;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Abstract;
+import com.top_logic.model.instance.importer.UnresolvedRef;
 
 /**
  * Configuration referencing an object in an {@link ObjectsConf object import declaration}.
@@ -25,6 +26,6 @@ public interface ValueConf extends ConfigurationItem {
 	 *        The visit argument to pass to the visitor.
 	 * @return The result returned from the visitor.
 	 */
-	<R, A> R visit(ValueVisitor<R, A> v, A arg);
+	<R, A> R visit(ValueVisitor<R, A> v, A arg) throws UnresolvedRef;
 
 }

@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.layout.instances.importer;
 
+import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.AbortExecutionException;
@@ -21,8 +22,10 @@ import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.form.FormHandler;
 import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.layout.messagebox.ProgressDialog;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLModel;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.instance.importer.schema.ObjectsConf;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
@@ -60,7 +63,7 @@ public class InstanceImportCommand extends AbstractCommandHandler {
 
 				XMLInstanceImporter importer =
 					new XMLInstanceImporter(applicationModel, ModelService.getInstance().getFactory());
-				importer.setLog(log.asLog());
+				importer.setLog(log);
 
 				KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 				try (Transaction tx = kb.beginTransaction(I18NConstants.IMPORTED_OBJECTS)) {
@@ -69,7 +72,9 @@ public class InstanceImportCommand extends AbstractCommandHandler {
 						ObjectsConf objects = XMLInstanceImporter.loadConfig(data);
 
 						log.info(I18NConstants.IMPORTING_OBJECTS);
-						importer.importInstances(objects);
+						List<TLObject> result = importer.importInstances(objects);
+						log.info(
+							I18NConstants.IMPORTED_OBJECTS__OBJS.fill(MetaLabelProvider.INSTANCE.getLabel(result)));
 
 						log.info(I18NConstants.COMMITTING_CHANGES);
 						tx.commit();

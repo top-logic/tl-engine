@@ -256,9 +256,7 @@ public class ChangeLogBuilder {
 					long maxFetchEntries = (long) ((_numberEntries - log.size()) * 1.5);
 
 					long chunkStart = Long.max(start, stop - maxFetchEntries);
-					readChanges(logsInRange, chunkStart, stop);
-					// entries in log are sorted descending
-					Collections.reverse(logsInRange);
+					readChangesDescending(logsInRange, chunkStart, stop);
 					log.addAll(logsInRange);
 
 					int remaining = _numberEntries - log.size();
@@ -278,10 +276,7 @@ public class ChangeLogBuilder {
 					stop = chunkStart - 1;
 				}
 			} else {
-				readChanges(logsInRange, start, stop);
-
-				// entries in log are sorted descending
-				Collections.reverse(logsInRange);
+				readChangesDescending(logsInRange, start, stop);
 				log.addAll(logsInRange);
 			}
 
@@ -290,6 +285,14 @@ public class ChangeLogBuilder {
 		// Return entries ascending
 		Collections.reverse(log);
 		return log;
+	}
+
+	private void readChangesDescending(List<com.top_logic.element.changelog.model.ChangeSet> out, long start,
+			long stop) {
+		out.clear();
+		readChanges(out, start, stop);
+		// entries are filled in ascending order to output
+		Collections.reverse(out);
 	}
 
 	private void readChanges(List<com.top_logic.element.changelog.model.ChangeSet> out, long start, long stop) {

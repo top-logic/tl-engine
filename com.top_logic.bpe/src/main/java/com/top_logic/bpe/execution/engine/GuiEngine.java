@@ -15,10 +15,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.bpe.bpml.display.ConfigurableCondition;
 import com.top_logic.bpe.bpml.display.RuleCondition;
 import com.top_logic.bpe.bpml.display.RuleType;
 import com.top_logic.bpe.bpml.display.SequenceFlowRule;
-import com.top_logic.bpe.bpml.display.ConfigurableCondition;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.bpml.model.Edge;
 import com.top_logic.bpe.bpml.model.ExclusiveGateway;
@@ -252,7 +252,7 @@ public class GuiEngine {
 		if (resultPerson != null) {
 			Person currentResultPerson = WrapperHistoryUtils.getCurrent(resultPerson);
 			return currentResultPerson == accountToCheck
-				|| currentResultPerson.getRepresentativeGroup().containsPerson(accountToCheck);
+				|| (currentResultPerson != null && currentResultPerson.getRepresentativeGroup().containsPerson(accountToCheck));
 		}
 		if (actor instanceof Group) {
 			return ((Group) actor).containsPerson(accountToCheck);

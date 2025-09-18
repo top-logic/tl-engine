@@ -255,8 +255,8 @@ public class ChangeLogBuilder {
 					 * additional empty or technical changes, which are not reported. */
 					long maxFetchEntries = (long) ((_numberEntries - log.size()) * 1.5);
 
-					long chunkStop = Long.min(stop, start + maxFetchEntries);
-					readChanges(logsInRange, start, chunkStop);
+					long chunkStart = Long.max(start, stop - maxFetchEntries);
+					readChanges(logsInRange, chunkStart, stop);
 					// entries in log are sorted descending
 					Collections.reverse(logsInRange);
 					log.addAll(logsInRange);
@@ -272,10 +272,10 @@ public class ChangeLogBuilder {
 						break processRevisions;
 					}
 
-					if (chunkStop == stop) {
+					if (chunkStart == start) {
 						break;
 					}
-					start = chunkStop + 1;
+					stop = chunkStart - 1;
 				}
 			} else {
 				readChanges(logsInRange, start, stop);

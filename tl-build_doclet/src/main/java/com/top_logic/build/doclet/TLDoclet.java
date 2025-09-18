@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -491,11 +492,16 @@ public class TLDoclet implements Doclet {
 				if (isSubType(classType, _wellKnown._exceptionType)) {
 					return "exception";
 				}
+				if (_wellKnown._tlScriptFunctionsType != null
+					&& isSubType(classType, _wellKnown._tlScriptFunctionsType)) {
+					return "tlscript";
+				}
 				return "class";
 			case ENUM:
 				return "enum";
 			case INTERFACE:
-				if (_wellKnown._configType != null && isSubType(classType, _wellKnown._configType)
+				if (_wellKnown._configType != null
+					&& isSubType(classType, _wellKnown._configType)
 					&& classType != _wellKnown._configType) {
 					return "config";
 				} else {
@@ -868,6 +874,19 @@ public class TLDoclet implements Doclet {
 		return null;
 	}
 
+	private ReturnTree returnTag(ExecutableElement method) {
+		List<ReturnTree> tags = returnTags(method);
+		switch (tags.size()) {
+			case 0:
+				return null;
+			case 1:
+				return tags.get(0);
+			default:
+				printWarning(method, "ERROR: Multiple return tags for " + qualifiedName(method));
+				return tags.get(0);
+		}
+	}
+
 	private List<ReturnTree> returnTags(Element elem) {
 		return returnTags(docTrees().getDocCommentTree(elem));
 	}
@@ -973,6 +992,14 @@ public class TLDoclet implements Doclet {
 	}
 
 	/**
+	 * Either the annotated Name or the method name.
+	 */
+	private String tlScriptName(ExecutableElement method) {
+		return _wellKnown.getAnnotatedName(method)
+			.orElseGet(() -> method.getSimpleName().toString());
+	}
+
+	/**
 	 * Writer creating
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -998,6 +1025,8 @@ public class TLDoclet implements Doclet {
 				} else if (kind.equals("annotation")) {
 					collectType(type, type);
 					collectAnnotationElementDoc(type);
+				} else if (kind.equals("tlscript")) {
+					collectTLScriptDoc(type, isTLScriptMethod());
 				} else {
 					// Note: Even abstract classes must be documented, since e.g. services with
 					// multiple implementations are abstract, but only the abstract class is shown
@@ -1008,8 +1037,7 @@ public class TLDoclet implements Doclet {
 					}
 					else if (isI18NExtension(typeMirror)) {
 						collectI18NConstantDoc(type);
-					}
-					else if (isThemeConstantsClass(typeMirror)) {
+					} else if (isThemeConstantsClass(typeMirror)) {
 						collectThemeConstantsDoc(type);
 					} else if (isWithPropertiesClass(typeMirror)) {
 						collectWithPropertiesDoc(type);
@@ -1019,6 +1047,13 @@ public class TLDoclet implements Doclet {
 				}
 			}
 
+		}
+
+		private Predicate<ExecutableElement> isTLScriptMethod() {
+			return method -> {
+				Set<Modifier> modifiers = method.getModifiers();
+				return modifiers.contains(Modifier.PUBLIC) && modifiers.contains(Modifier.STATIC);
+			};
 		}
 
 		/**
@@ -1117,7 +1152,7 @@ public class TLDoclet implements Doclet {
 
 			String doc = extractDoc(configurationType, type);
 			if (!doc.isEmpty()) {
-				_configDoc.setProperty(key + ".tooltip", doc);
+				_configDoc.setProperty(tooltipKey(key), doc);
 			}
 		}
 
@@ -1257,10 +1292,15 @@ public class TLDoclet implements Doclet {
 											}
 										});
 										found = true;
-									} else if ("annotation"
-										.equals(kind(containingClass))) {
+									} else if ("annotation".equals(kind(containingClass))) {
 										buffer.append("<i>");
 										buffer.append(label(referencedElement, _startOfSentence));
+										buffer.appendClose(b -> b.append("</i>"));
+										found = true;
+									} else if ("tlscript".equals(kind(containingClass))
+										&& isTLScriptMethod().test((ExecutableElement) referencedElement)) {
+										buffer.append("<i>");
+										buffer.append(tlScriptName((ExecutableElement) referencedElement));
 										buffer.appendClose(b -> b.append("</i>"));
 										found = true;
 									}
@@ -1537,7 +1577,7 @@ public class TLDoclet implements Doclet {
 				_configDoc.setProperty(key, label(field, propertyName, true));
 				String doc = extractDoc(type, field);
 				if (!doc.isEmpty()) {
-					_configDoc.setProperty(key + ".tooltip", doc);
+					_configDoc.setProperty(tooltipKey(key), doc);
 				}
 			}
 		}
@@ -1550,7 +1590,7 @@ public class TLDoclet implements Doclet {
 				_configDoc.setProperty(key, label(element, propertyName, true));
 				String doc = extractDoc(type, element);
 				if (!doc.isEmpty()) {
-					_configDoc.setProperty(key + ".tooltip", doc);
+					_configDoc.setProperty(tooltipKey(key), doc);
 				}
 			}
 		}
@@ -1582,7 +1622,7 @@ public class TLDoclet implements Doclet {
 
 				String doc = extractDoc(containingClass(method), method);
 				if (!doc.isEmpty()) {
-					_configDoc.setProperty(key + ".tooltip", doc);
+					_configDoc.setProperty(tooltipKey(key), doc);
 				}
 			}
 		}
@@ -1605,6 +1645,81 @@ public class TLDoclet implements Doclet {
 		boolean isWithPropertiesClass(TypeMirror typeElement) {
 			return _wellKnown._withPropertiesType != null
 				&& isSubType(typeElement, _wellKnown._withPropertiesType);
+		}
+
+		private void collectTLScriptDoc(TypeElement type, Predicate<? super ExecutableElement> filter) {
+			for (ExecutableElement method : methodsIn(type)) {
+				if (!filter.test(method)) {
+					continue;
+				}
+				String scriptName = tlScriptName(method);
+				String methodKey = qualifiedName(type) + "." + scriptName;
+				_configDoc.setProperty(methodKey, label(method, scriptName, true));
+
+				Function<String, String> parameterKey = paramName -> methodKey + ".param." + paramName;
+				Map<String, VariableElement> parametersByName = method.getParameters()
+					.stream()
+					.collect(Collectors.toMap(p -> p.getSimpleName().toString(), Function.identity()));
+
+				// Write label for parameters
+				parametersByName.entrySet().forEach(k -> {
+					String annotatedParamLabel = getAnnotatedLabel(k.getValue());
+					if (annotatedParamLabel != null) {
+						_configDoc.setProperty(parameterKey.apply(k.getKey()), annotatedParamLabel);
+					}
+				});
+
+				DocTreePath pathToMethod = docTreePathForElement(method);
+				if (pathToMethod == null) {
+					printWarning(method, "Missing description of method '" + method + "'.");
+					continue;
+				}
+
+				// Write tooltip for parameters
+				for (DocTree tag : pathToMethod.getDocComment().getBlockTags()) {
+					if (tag.getKind() == DocTree.Kind.PARAM) {
+						ParamTree paramTree = (ParamTree) tag;
+						String paramName = paramTree.getName().getName().toString();
+						if (!parametersByName.containsKey(paramName)) {
+							continue;
+						}
+
+						String description =
+							extractDoc(type, new DocTreePath(pathToMethod, paramTree), paramTree.getDescription());
+						String res = description.toString().trim();
+						if (res.isEmpty()) {
+							continue;
+						}
+						_configDoc.setProperty(tooltipKey(parameterKey.apply(paramName)), res);
+						parametersByName.remove(paramName);
+					}
+				}
+				if (!parametersByName.isEmpty()) {
+					parametersByName.values()
+						.forEach(p -> printWarning(p, "Missing description for parameter '" + p + "'."));
+				}
+				TypeMirror returnType = method.getReturnType();
+				if (returnType instanceof NoType && returnType.getKind() == TypeKind.VOID) {
+					// No return value:
+				} else {
+					ReturnTree returnTag = returnTag(method);
+					if (returnTag != null) {
+						String returnDoc =
+							extractDoc(type, new DocTreePath(pathToMethod, returnTag), returnTag.getDescription());
+						_configDoc.setProperty(methodKey + ".return", returnDoc);
+					} else {
+						printWarning(method, "Missing description of return type of method '" + method + "'.");
+					}
+				}
+				String infoDoc = extractDoc(type, method).trim();
+				if (!infoDoc.isEmpty()) {
+					_configDoc.setProperty(tooltipKey(methodKey), infoDoc);
+				} else {
+					printWarning(method, "Missing description of method '" + method + "'.");
+				}
+
+			}
+
 		}
 
 		private void collectI18NConstantDoc(TypeElement type) {
@@ -1633,7 +1748,7 @@ public class TLDoclet implements Doclet {
 							String tooltipDoc =
 								extractDoc(type, new DocTreePath(pathToField, tooltip), tooltip.getContent());
 							if (!tooltipDoc.isEmpty()) {
-								_configDoc.setProperty(key + ".tooltip", tooltipDoc);
+								_configDoc.setProperty(tooltipKey(key), tooltipDoc);
 							}
 						}
 
@@ -1754,6 +1869,10 @@ public class TLDoclet implements Doclet {
 				}
 			}
 			return false;
+		}
+
+		private static String tooltipKey(String baseKey) {
+			return baseKey + ".tooltip";
 		}
 
 	}
@@ -2792,19 +2911,6 @@ public class TLDoclet implements Doclet {
 			ReturnTree returnTag = returnTag(method);
 			writeDoc(method, returnTag, () -> returnTag.getDescription());
 			endElement();
-		}
-
-		private ReturnTree returnTag(ExecutableElement method) {
-			List<ReturnTree> tags = returnTags(method);
-			switch (tags.size()) {
-				case 0:
-					return null;
-				case 1:
-					return tags.get(0);
-				default:
-					printWarning(method, "ERROR: Multiple return tags for " + qualifiedName(method));
-					return tags.get(0);
-			}
 		}
 
 		private void writeTypeRef(TypeElement type) throws XMLStreamException {

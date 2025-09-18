@@ -651,6 +651,7 @@
 				</methods>
 				<method-resolvers>
 					<method-resolver class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions$Module"/>
+					<method-resolver class="com.top_logic.model.search.expr.config.operations.TLScriptMethodResolver"/>
 				</method-resolvers>
 			</instance>
 		</config>

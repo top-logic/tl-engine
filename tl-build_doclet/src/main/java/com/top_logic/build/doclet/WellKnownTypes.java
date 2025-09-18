@@ -35,6 +35,8 @@ public class WellKnownTypes {
 
 	private static final String TEMPLATE_VARIABLE_ANNOTATION = "com.top_logic.layout.basic.TemplateVariable";
 
+	TypeMirror _tlScriptFunctionsType;
+
 	TypeMirror _configType;
 
 	TypeMirror _errorType;
@@ -95,6 +97,7 @@ public class WellKnownTypes {
 		_i18nConstantsType = typeMirror("com.top_logic.basic.i18n.I18NConstantsBase");
 		_themeConstantsType = typeMirror("com.top_logic.layout.basic.IconsBase");
 		_withPropertiesType = typeMirror("com.top_logic.layout.template.WithProperties");
+		_tlScriptFunctionsType = typeMirror("com.top_logic.model.search.expr.config.operations.TLScriptFunctions");
 		_reskeyTypes = Arrays.asList(
 			typeMirror("com.top_logic.basic.util.ResKey"),
 			typeMirror("com.top_logic.basic.util.ResKey1"),

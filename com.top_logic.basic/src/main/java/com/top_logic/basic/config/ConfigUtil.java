@@ -25,6 +25,8 @@ import java.util.Properties;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
 
+import de.haumacher.msgbuf.data.ProtocolEnum;
+
 /**
  * Utilities for parsing configuration values.
  * 
@@ -2131,23 +2133,31 @@ public class ConfigUtil {
 
 	/**
 	 * Returns the constant of the given {@link Enum} class with the given name.
-	 * If the given class implements {@link ExternallyNamed} the constant with
-	 * the same {@link ExternallyNamed#getExternalName()} is returned.
+	 * 
+	 * <p>
+	 * If the given class implements {@link ExternallyNamed} the constant with the same
+	 * {@link ExternallyNamed#getExternalName()} is returned.
+	 * </p>
+	 * <p>
+	 * If the given class implements {@link ProtocolEnum} the constant with the same
+	 * {@link ProtocolEnum#protocolName()} is returned.
+	 * </p>
 	 * 
 	 * @param enumType
 	 *        the enum class to check
 	 * @param externalName
 	 *        the external name to resolve
 	 * 
-	 * @return the enum with the given external name (if it is
-	 *         {@link ExternallyNamed}) or the given name
+	 * @return the enum with the given external name (if it is {@link ExternallyNamed}) or the given
+	 *         name
 	 * 
 	 * @throws ConfigurationException
 	 *         iff no enum constant is found.
 	 */
 	public static <T extends Enum<?>> T getEnum(Class<? extends T> enumType, String externalName)
 			throws ConfigurationException {
-		T result = getEnumConstant(enumType, externalName);
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		T result = (T) getEnumConstant((Class) enumType, externalName);
 		if (result != null) {
 			return result;
 		}
@@ -2169,23 +2179,29 @@ public class ConfigUtil {
 	 *         {@link ExternallyNamed}) or the given name, or <code>null</code> if none was found
 	 * 
 	 */	
-	private static <T extends Enum<?>> T getEnumConstant(Class<? extends T> enumType, String externalName) {
+	private static <T extends Enum<T>> T getEnumConstant(Class<T> enumType, String externalName) {
 		T result = null;
-		final T[] enumConstants = enumType.getEnumConstants();
 		if (ExternallyNamed.class.isAssignableFrom(enumType)) {
-			for (T constant : enumConstants) {
-				final String name = ((ExternallyNamed) constant).getExternalName();
+			for (T constant : enumType.getEnumConstants()) {
+				String name = ((ExternallyNamed) constant).getExternalName();
+				if (externalName.equals(name)) {
+					result = constant;
+					break;
+				}
+			}
+		} else if (ProtocolEnum.class.isAssignableFrom(enumType)) {
+			for (T constant : enumType.getEnumConstants()) {
+				String name = ((ProtocolEnum) constant).protocolName();
 				if (externalName.equals(name)) {
 					result = constant;
 					break;
 				}
 			}
 		} else {
-			for (T constant : enumConstants) {
-				if (externalName.equals(constant.name())) {
-					result = constant;
-					break;
-				}
+			try {
+				result = Enum.valueOf(enumType, externalName);
+			} catch (NullPointerException | IllegalArgumentException ex) {
+				result = null;
 			}
 		}
 		return result;

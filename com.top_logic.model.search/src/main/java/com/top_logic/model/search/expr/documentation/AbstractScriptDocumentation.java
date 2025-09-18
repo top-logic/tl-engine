@@ -11,11 +11,11 @@ import java.io.IOException;
 import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
-import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.util.TLModelPartRef;
@@ -48,6 +48,7 @@ public abstract class AbstractScriptDocumentation<T> implements HTMLFragment {
 		writeSyntaxDescription(context, out);
 		writeDescriptionSection(context, out);
 		writeParametersTable(context, out);
+		writeReturnSection(context, out);
 
 
 		out.endTag(DIV);
@@ -57,7 +58,71 @@ public abstract class AbstractScriptDocumentation<T> implements HTMLFragment {
 		out.beginTag(H2);
 		writeLabel(context, out);
 		out.endTag(H2);
+	}
 
+	/**
+	 * Writes the "return" section.
+	 * 
+	 * @implSpec Uses the return values of {@link #getReturnType()} and/or
+	 *           {@link #getReturnDescription()}.
+	 */
+	protected void writeReturnSection(DisplayContext context, TagWriter out) throws IOException {
+		String returnType = getReturnType();
+		HTMLFragment returnDescription = getReturnDescription();
+		if (returnType == null && returnDescription == null) {
+			return;
+		}
+		out.beginTag(H2);
+		out.writeText(context.getResources().getString(I18NConstants.MESSAGE_DOC_RETURN_HEADER));
+		out.endTag(H2);
+		if (returnType != null) {
+			writeReturnType(context, out, returnType);
+		}
+		if (returnDescription != null) {
+			writeReturnDescription(context, out, returnDescription);
+		}
+	}
+
+	/**
+	 * Writes the actual "return" description.
+	 */
+	protected void writeReturnDescription(DisplayContext context, TagWriter out, HTMLFragment description)
+			throws IOException {
+		out.beginTag(PARAGRAPH);
+		description.write(context, out);
+		out.endTag(PARAGRAPH);
+	}
+
+	/**
+	 * Writes the actual "return" type.
+	 */
+	protected void writeReturnType(DisplayContext context, TagWriter out, String returnType) {
+		out.beginTag(PARAGRAPH);
+		out.beginBeginTag(SPAN);
+		out.writeAttribute(CLASS_ATTR, DocumentationConstants.DOCUMENTATION_RETURN_TYPE_CSS_CLASS);
+		out.endBeginTag();
+		out.beginTag(STRONG);
+		out.writeText(context.getResources().getString(I18NConstants.MESSAGE_DOC_PARAMETERS_COLUMN_TYPE));
+		out.writeText(":");
+		out.endTag(STRONG);
+		out.endTag(SPAN);
+		out.writeText(HTMLConstants.NBSP);
+		out.writeText(returnType);
+		out.endTag(PARAGRAPH);
+	}
+
+	/**
+	 * The type of the return value. May be <code>null</code>.
+	 */
+	protected String getReturnType() {
+		return null;
+	}
+
+	/**
+	 * The description of the return value. May be <code>null</code>.
+	 */
+	protected HTMLFragment getReturnDescription() {
+		return null;
 	}
 
 	/**
@@ -72,35 +137,45 @@ public abstract class AbstractScriptDocumentation<T> implements HTMLFragment {
 	 */
 	protected abstract void writeLabel(DisplayContext context, TagWriter out) throws IOException;
 
-	private void writeSyntaxDescription(DisplayContext context, TagWriter out) {
+	/**
+	 * Writes the section describing the syntax of the script.
+	 */
+	protected void writeSyntaxDescription(DisplayContext context, TagWriter out) {
 		out.beginTag(H2);
 		out.writeText(context.getResources().getString(I18NConstants.MESSAGE_DOC_SYNTAX_HEADER));
 		out.endTag(H2);
-		writeUnchainedCall(context, out);
-		writeChainedCall(context, out);
+
+		writeCallSyntax(context, out);
 	}
 
-	private void writeChainedCall(DisplayContext context, TagWriter out) {
-		if (_parameters.isEmpty()) {
-			// No parameters -> no chaining.
-			return;
-		}
+	/**
+	 * Writes the syntax in chained manor, e.g.
+	 * 
+	 * <pre>
+	 * $owner.doSomething(arg: $arg)
+	 * </pre>
+	 * 
+	 * @see #writeCallSyntax(DisplayContext, TagWriter)
+	 * @throws IllegalStateException
+	 *         When {@link #parameters()} is empty.
+	 */
+	protected void writeChainedCall(DisplayContext context, TagWriter out) {
 		out.beginTag(PRE);
 		out.beginTag(CODE);
 		out.writeText('$');
-		out.writeText(parameterName(_parameters.get(0)));
+		out.writeText(parameterName(parameters().get(0)));
 		out.writeText('.');
 		out.writeText(scriptName(context));
 		out.writeText('(');
-		switch (_parameters.size()) {
+		switch (parameters().size()) {
 			case 0: {
-				throw new UnreachableAssertion("Empty parameters are handled before.");
+				throw new IllegalStateException("No chaining without parameters.");
 			}
 			case 1: {
 				break;
 			}
 			case 2: {
-				String parameterName = parameterName(_parameters.get(1));
+				String parameterName = parameterName(parameters().get(1));
 				out.writeText(parameterName);
 				out.writeText(": $");
 				out.writeText(parameterName);
@@ -108,8 +183,8 @@ public abstract class AbstractScriptDocumentation<T> implements HTMLFragment {
 			}
 			default: {
 				boolean firstParam = true;
-				for (int i = 1; i < _parameters.size(); i++) {
-					T parameter = _parameters.get(i);
+				for (int i = 1; i < parameters().size(); i++) {
+					T parameter = parameters().get(i);
 					String parameterName = parameterName(parameter);
 
 					if (!firstParam) {
@@ -129,17 +204,26 @@ public abstract class AbstractScriptDocumentation<T> implements HTMLFragment {
 		out.endTag(PRE);
 	}
 
-	private void writeUnchainedCall(DisplayContext context, TagWriter out) {
+	/**
+	 * Writes the default call syntax, e.g.
+	 * 
+	 * <pre>
+	 * doSomething(owner: $owner, arg: $arg)
+	 * </pre>
+	 * 
+	 * @see #writeChainedCall(DisplayContext, TagWriter)
+	 */
+	protected void writeCallSyntax(DisplayContext context, TagWriter out) {
 		out.beginTag(PRE);
 		out.beginTag(CODE);
 		out.writeText(scriptName(context));
 		out.writeText('(');
-		switch (_parameters.size()) {
+		switch (parameters().size()) {
 			case 0: {
 				break;
 			}
 			case 1: {
-				String parameterName = parameterName(_parameters.get(0));
+				String parameterName = parameterName(parameters().get(0));
 				out.writeText(parameterName);
 				out.writeText(": $");
 				out.writeText(parameterName);
@@ -147,7 +231,7 @@ public abstract class AbstractScriptDocumentation<T> implements HTMLFragment {
 			}
 			default: {
 				boolean firstParam = true;
-				for (T parameter : _parameters) {
+				for (T parameter : parameters()) {
 					String parameterName = parameterName(parameter);
 
 					if (!firstParam) {
@@ -218,7 +302,7 @@ public abstract class AbstractScriptDocumentation<T> implements HTMLFragment {
 
 	private void writeParametersTable(DisplayContext context, TagWriter out)
 			throws IOException {
-		if (_parameters.isEmpty()) {
+		if (parameters().isEmpty()) {
 			return;
 		}
 		Resources res = context.getResources();
@@ -235,7 +319,7 @@ public abstract class AbstractScriptDocumentation<T> implements HTMLFragment {
 		writeTH(out, res, I18NConstants.MESSAGE_DOC_PARAMETERS_COLUMN_DEFAULT);
 		out.endTag(THEAD);
 		out.beginTag(TBODY);
-		for (T parameter : _parameters) {
+		for (T parameter : parameters()) {
 			out.beginTag(TR);
 			writeParameter(context, out, parameter);
 			out.endTag(TR);
@@ -333,6 +417,13 @@ public abstract class AbstractScriptDocumentation<T> implements HTMLFragment {
 	protected static String getTypeName(TLModelPartRef type) {
 		TLModelPart resolved = type.resolve();
 		return MetaLabelProvider.INSTANCE.getLabel(resolved);
+	}
+
+	/**
+	 * The parameters of the written TL-Script function.
+	 */
+	protected List<T> parameters() {
+		return _parameters;
 	}
 
 }

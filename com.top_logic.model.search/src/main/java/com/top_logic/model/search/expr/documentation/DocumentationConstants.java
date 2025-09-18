@@ -23,4 +23,9 @@ public interface DocumentationConstants {
 	 */
 	String PARAMETER_TABLE_CSS_CLASS = "tlDocTable";
 
+	/**
+	 * CSS class for the element containing the return type of a function.
+	 */
+	String DOCUMENTATION_RETURN_TYPE_CSS_CLASS = "tlDocReturnType";
+
 }

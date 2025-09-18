@@ -5,6 +5,7 @@
  */
 package com.top_logic.html.i18n;
 
+import java.io.IOException;
 import java.util.Objects;
 
 import javax.xml.stream.XMLStreamException;
@@ -12,10 +13,13 @@ import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfigurationValueBinding;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationValueBinding;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.util.Resources;
 
@@ -24,8 +28,8 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class DefaultHtmlResKey
-		implements HtmlResKey, HtmlResKey1, HtmlResKey2, HtmlResKey3, HtmlResKey4, HtmlResKey5, HtmlResKeyN {
+public class DefaultHtmlResKey implements HtmlResKey, HtmlResKey1, HtmlResKey2, HtmlResKey3, HtmlResKey4, HtmlResKey5,
+		HtmlResKeyN, HTMLFragment {
 
 	private final ResKey _content;
 
@@ -47,6 +51,20 @@ public class DefaultHtmlResKey
 	public HTMLFragment getHtml(Resources resources) {
 		String content = resources.getString(content());
 		return Fragments.htmlSource(content);
+	}
+
+	@Override
+	public HTMLFragment getHtml() {
+		return this;
+	}
+
+	@SuppressWarnings("deprecation")
+	@Override
+	public void write(DisplayContext context, TagWriter out) throws IOException {
+		String content = context.getResources().getString(content());
+		if (!StringServices.isEmpty(content)) {
+			out.writeContent(content);
+		}
 	}
 
 	@SuppressWarnings("deprecation")

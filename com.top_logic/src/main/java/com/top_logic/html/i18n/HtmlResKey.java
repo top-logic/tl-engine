@@ -52,4 +52,13 @@ public interface HtmlResKey {
 	 */
 	HTMLFragment getHtml(Resources resources);
 
+	/**
+	 * {@link HTMLFragment HTML} stored by the {@link Resources} in the rendering context
+	 * represented by this {@link HtmlResKey}.
+	 *
+	 * @return An {@link HTMLFragment} rendering the HTML for the {@link Resources} in the rendering
+	 *         context.
+	 */
+	HTMLFragment getHtml();
+
 }

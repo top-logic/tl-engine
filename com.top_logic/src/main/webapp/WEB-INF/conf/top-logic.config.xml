@@ -2360,7 +2360,7 @@
 		</config>
 		
 		<config config:interface="com.top_logic.util.monitor.SystemEnvironmentBuilder$GlobalConfig">
-			<protected-alias pattern="(?i)(_PASS|_CRED|_PWD|_API_KEY)[^_]*$" />
+			<protected-alias pattern="(?i)(_PASS|_CRED|_PWD|_API_KEY|_SECRET)[^_]*$" />
 			<!-- Attention: Do not use %TRANSLATION_API_KEY%, because this will be replaced by the value! -->
 			<protected-alias pattern="TRANSLATION_API_KEY" />
 		</config>

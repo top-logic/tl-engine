@@ -2457,7 +2457,6 @@ public class TestControlsForm extends FormComponent {
 		imageGroup.addMember(pictureField);
 		imageGroup.addMember(pictureInputField);
 
-		// TODO
 		DataField imageUpload = FormFactory.newDataField("imageUploadField");
 		imageUpload.setControlProvider((model, style) -> new ImageUploadControl((DataField) model));
 		imageGroup.addMember(imageUpload);

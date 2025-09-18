@@ -85,6 +85,8 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 
 	private int _urlSuffix = 0;
 
+	private boolean _defaultLabelAbove = true;
+
 	private static final Map<String, ? extends ControlCommand> DATA_ITEM_COMMANDS_WITHOUT_DOWNLOAD =
 		createCommandMap(new ControlCommand[] {
 			ImageUpdate.INSTANCE, UploadPerformedCommand.INSTANCE, ClearCommand.INSTANCE, FieldInspector.INSTANCE });
@@ -112,6 +114,21 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		}
 	}
 
+	/**
+	 * Creates a {@link ImageUploadControl}.
+	 * 
+	 * @param model
+	 *        The {@link DataField} model.
+	 * @param hasLabelPosAnnotation
+	 *        If the field has a specified annotation for the label position.
+	 */
+	public ImageUploadControl(DataField model, boolean hasLabelPosAnnotation) {
+		this(model);
+		if (hasLabelPosAnnotation) {
+			deactivateDefaultLabelAbove();
+		}
+	}
+
 	private static Map<String, ? extends ControlCommand> commands(DataField model) {
 		return model.isDownload() ? DATA_ITEM_COMMANDS_WITH_DOWNLOAD : DATA_ITEM_COMMANDS_WITHOUT_DOWNLOAD;
 	}
@@ -121,6 +138,22 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		return "cImgUpload";
 	}
 	
+	/**
+	 * Turns off the default above positioning of the label.
+	 */
+	public void deactivateDefaultLabelAbove() {
+		_defaultLabelAbove = false;
+	}
+
+	/**
+	 * Getter for the current state of the default label positioning.
+	 *
+	 * @return if the default label above is active (no annoted position)
+	 */
+	public boolean isDefaultLabelAbove() {
+		return _defaultLabelAbove;
+	}
+
 	/**
 	 * type safe getter for the model of this control, i.e. actually calls
 	 * {@link #getModel()}
@@ -179,12 +212,10 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 	 * Writes the button for selecting files to upload.
 	 */
 	private void writeUploadButton(DisplayContext context, TagWriter out, boolean editable) throws IOException {
-		writeUploadButtonLabel(context, out);
 		if (editable) {
 			out.beginBeginTag(INPUT);
 			out.writeAttribute(TYPE_ATTR, FILE_TYPE_VALUE);
 			out.writeAttribute(ID_ATTR, uploadId());
-			out.writeAttribute(STYLE_ATTR, "display: none;");
 			out.writeAttribute(CLASS_ATTR, FormConstants.IS_UPLOAD_CSS_CLASS);
 
 			// Prevent a click that opens the file chooser to also select a table row (if displayed
@@ -200,6 +231,7 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 			writeOnFileInputChange(out);
 			writeAcceptedFileTypes(out);
 			out.endEmptyTag();
+			writeUploadButtonLabel(context, out);
 		}
 	}
 
@@ -261,7 +293,9 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		out.writeAttribute(SRC_ATTR,
 			getURLContext().getURL(context, imageHandler).appendParameter("itemVersion", _urlSuffix).getURL());
 		out.endEmptyTag();
-		renderClearImage(context, out, !editable);
+		if (editable) {
+			renderClearImage(context, out, !editable);
+		}
 	}
 
 	/**

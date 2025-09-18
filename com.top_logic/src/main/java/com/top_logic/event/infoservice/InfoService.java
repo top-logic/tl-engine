@@ -415,7 +415,7 @@ public class InfoService {
 	 *        shown.
 	 * @return {@link HTMLFragment} containing a describing text and a list of messages
 	 */
-	private static HTMLFragment getMessageList(List<ResKey> messages, ResKey description) {
+	public static HTMLFragment getMessageList(List<ResKey> messages, ResKey description) {
 		HTMLFragment list = messageList(messages);
 		if (description != null) {
 			HTMLFragment text = p(message(description));

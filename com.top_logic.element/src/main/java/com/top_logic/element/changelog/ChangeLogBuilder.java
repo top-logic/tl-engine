@@ -255,10 +255,8 @@ public class ChangeLogBuilder {
 					 * additional empty or technical changes, which are not reported. */
 					long maxFetchEntries = (long) ((_numberEntries - log.size()) * 1.5);
 
-					long chunkStop = Long.min(stop, start + maxFetchEntries);
-					readChanges(logsInRange, start, chunkStop);
-					// entries in log are sorted descending
-					Collections.reverse(logsInRange);
+					long chunkStart = Long.max(start, stop - maxFetchEntries);
+					readChangesDescending(logsInRange, chunkStart, stop);
 					log.addAll(logsInRange);
 
 					int remaining = _numberEntries - log.size();
@@ -272,16 +270,13 @@ public class ChangeLogBuilder {
 						break processRevisions;
 					}
 
-					if (chunkStop == stop) {
+					if (chunkStart == start) {
 						break;
 					}
-					start = chunkStop + 1;
+					stop = chunkStart - 1;
 				}
 			} else {
-				readChanges(logsInRange, start, stop);
-
-				// entries in log are sorted descending
-				Collections.reverse(logsInRange);
+				readChangesDescending(logsInRange, start, stop);
 				log.addAll(logsInRange);
 			}
 
@@ -290,6 +285,14 @@ public class ChangeLogBuilder {
 		// Return entries ascending
 		Collections.reverse(log);
 		return log;
+	}
+
+	private void readChangesDescending(List<com.top_logic.element.changelog.model.ChangeSet> out, long start,
+			long stop) {
+		out.clear();
+		readChanges(out, start, stop);
+		// entries are filled in ascending order to output
+		Collections.reverse(out);
 	}
 
 	private void readChanges(List<com.top_logic.element.changelog.model.ChangeSet> out, long start, long stop) {

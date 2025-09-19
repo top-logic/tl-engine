@@ -236,7 +236,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="bird"
+				value="cat"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -257,7 +257,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="cat"
+				value="elephant"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -278,7 +278,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="dog"
+				value="elep"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -299,7 +299,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="elep"
+				value="dog"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -320,7 +320,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="elephant"
+				value="hippopotamus"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -362,7 +362,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="hippopotamus"
+				value="bird"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -420,7 +420,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="fifth"
+				value="first"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -441,7 +441,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="first"
+				value="second"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -462,7 +462,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="fourth"
+				value="third"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -483,7 +483,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="second"
+				value="fourth"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -504,7 +504,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="sixth"
+				value="fifth"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -525,7 +525,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="third"
+				value="sixth"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -625,7 +625,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-				value="3.0"
+				value="20.0"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -646,7 +646,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-				value="4.0"
+				value="3.0"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -667,7 +667,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-				value="5.0"
+				value="4.0"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -688,7 +688,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-				value="20.0"
+				value="40.0"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -709,7 +709,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-				value="40.0"
+				value="5.0"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -842,7 +842,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="Marketing: Frank"
+				value="Sales: Diana"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -863,7 +863,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="Sales: Diana"
+				value="Sales: Eve"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -884,7 +884,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="Sales: Eve"
+				value="Marketing: Frank"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -1135,8 +1135,8 @@
 					displayed-row-index="0"
 				/>
 			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-				value="4.0"
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="test"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -1157,7 +1157,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="test"
+				value="TEST"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
@@ -1177,8 +1177,8 @@
 					displayed-row-index="2"
 				/>
 			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="TEST"
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+				value="4.0"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"

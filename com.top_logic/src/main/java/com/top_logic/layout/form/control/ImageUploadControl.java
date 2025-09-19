@@ -1,4 +1,4 @@
-/**
+/*
  * SPDX-FileCopyrightText: 2025 (c) Business Operation Systems GmbH <info@top-logic.com>
  * 
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
@@ -92,7 +92,7 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 
 	private static final Map<String, ? extends ControlCommand> DATA_ITEM_COMMANDS_WITHOUT_DOWNLOAD =
 		createCommandMap(new ControlCommand[] {
-			ImageUpdate.INSTANCE, UploadPerformedCommand.INSTANCE, ClearCommand.INSTANCE, FieldInspector.INSTANCE });
+			ImageUpdateCommand.INSTANCE, UploadPerformedCommand.INSTANCE, ClearCommand.INSTANCE, FieldInspector.INSTANCE });
 
 	private static final Map<String, ? extends ControlCommand> DATA_ITEM_COMMANDS_WITH_DOWNLOAD =
 		createCommandMap(DATA_ITEM_COMMANDS_WITHOUT_DOWNLOAD, new ControlCommand[] {
@@ -635,15 +635,15 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 	/**
 	 * Command which is executed if a new file is selected on the client.
 	 */
-	private static class ImageUpdate extends ImageUploadCommand {
+	private static class ImageUpdateCommand extends ImageUploadCommand {
 
 		private static final String FILENAME_ATTR = "value";
 
 		private static final String FILESIZE_ATTR = "size";
 
-		public static final ImageUpdate INSTANCE = new ImageUpdate("imageUpdate");
+		public static final ImageUpdateCommand INSTANCE = new ImageUpdateCommand("imageUpdate");
 
-		protected ImageUpdate(String id) {
+		protected ImageUpdateCommand(String id) {
 			super(id);
 		}
 
@@ -658,7 +658,7 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 
 		@Override
 		public ResKey getI18NKey() {
-			return I18NConstants.UPDATE_IMAGE;
+			return I18NConstants.UPDATE_IMAGE_COMMAND;
 		}
 	}
 

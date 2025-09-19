@@ -188,7 +188,7 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey UPDATE_FILE_NAME;
 
-	public static ResKey UPDATE_IMAGE;
+	public static ResKey UPDATE_IMAGE_COMMAND;
 
 	public static ResKey TOGGLE_CALENDAR_VISIBILITY;
 

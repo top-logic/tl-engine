@@ -2507,10 +2507,16 @@ td.tl-table__cell .cDataItem li {
 /* ======   ImageUploadControl    ===== */
 /* ==================================== */
 
-.cImgUpload img {
+.cImgUpload img:not(.annotatedMaxW) {
 	max-width: stretch;
 	max-width: -moz-available;
 	max-width: -webkit-fill-available;
+}
+
+.cImgUpload img.annotatedMaxW {
+	width: stretch;
+	width: -moz-available;
+	width: -webkit-fill-available;
 }
 
 .cImgUpload .fClear {

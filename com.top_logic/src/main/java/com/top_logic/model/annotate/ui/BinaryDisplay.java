@@ -39,23 +39,32 @@ import com.top_logic.model.config.TLTypeAnnotation;
 public interface BinaryDisplay extends TLAttributeAnnotation, TLTypeAnnotation {
 
 	/**
-	 * Configuration name for the {@link #getValue()} property.
+	 * Configuration name for the {@link #getPresentation()} property.
 	 */
-	String VALUE = "value";
+	String PRESENTATION = "presentation";
 
 	/**
 	 * How to display this attribute by default.
 	 * 
 	 * @see BinaryPresentation
 	 */
-	@Name(VALUE)
+	@Name(PRESENTATION)
 	@Label("Presentation")
-	BinaryPresentation getValue();
+	BinaryPresentation getPresentation();
 
 	/**
-	 * @see #getValue()
+	 * @see #getPresentation()
 	 */
-	void setValue(BinaryPresentation value);
+	void setPresentation(BinaryPresentation value);
+
+	/**
+	 * Creates a {@link BinaryDisplay} annotation with the given presentation value.
+	 */
+	static BinaryDisplay display(BinaryPresentation presentation) {
+		BinaryDisplay result = TypedConfiguration.newConfigItem(BinaryDisplay.class);
+		result.setPresentation(presentation);
+		return result;
+	}
 
 	/**
 	 * Presentation of binary data for a binary attribute.
@@ -99,14 +108,5 @@ public interface BinaryDisplay extends TLAttributeAnnotation, TLTypeAnnotation {
 			throw new UnreachableAssertion("There is no such " + BinaryPresentation.class.getName() + ": " + o);
 		}
 
-	}
-
-	/**
-	 * Creates a {@link BinaryDisplay} annotation with the given presentation value.
-	 */
-	static BinaryDisplay display(BinaryPresentation presentation) {
-		BinaryDisplay result = TypedConfiguration.newConfigItem(BinaryDisplay.class);
-		result.setValue(presentation);
-		return result;
 	}
 }

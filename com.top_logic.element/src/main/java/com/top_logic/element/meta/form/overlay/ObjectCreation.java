@@ -11,7 +11,10 @@ import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Revision;
+import com.top_logic.knowledge.service.db2.PersistentObject;
+import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
@@ -110,6 +113,20 @@ public class ObjectCreation extends FormObjectOverlay {
 
 	@Override
 	public Object defaultValue(TLStructuredTypePart part) {
+		if (part.isDerived()) {
+			if (part.getModelKind() == ModelKind.REFERENCE && ((TLReference) part).isBackwards()) {
+				// Find forwards reference.
+				TLReference backwards = (TLReference) part;
+				TLReference forwards = backwards.getOppositeEnd().getReference();
+				return tReferers(forwards);
+			} else {
+				if (part.getName().equals(PersistentObject.T_TYPE_ATTR)) {
+					return tType();
+				} else {
+					return part.getStorageImplementation().getAttributeValue(this, part);
+				}
+			}
+		}
 		DefaultProvider defaultProvider = DisplayAnnotations.getDefaultProvider(part);
 		if (defaultProvider != null) {
 			return defaultProvider.createDefault(_container, part, true);

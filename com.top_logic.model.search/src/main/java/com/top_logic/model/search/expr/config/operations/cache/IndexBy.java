@@ -18,17 +18,24 @@ import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
+import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.util.error.TopLogicException;
+
 
 /**
  * Indexes the elements of a list with key lookup function.
  * 
  * <p>
  * In contrast to {@link GroupBy}, the resulting map only stores a single value for a certain key.
- * If no reduce function is given as second argument, the keys retrieved from the objects in the
+ * If no reduce function is given as third argument, the keys retrieved from the objects in the
  * source list must be unique. Otherwise, multiple objects with the same key are passed to the
  * reduce function and only the result is stored.
+ * </p>
+ * 
+ * <p>
+ * An optional mapping function can be provided as fourth argument to transform values before
+ * storing them in the result map. If no mapping function is given, the original objects are stored.
  * </p>
  * 
  * @see GroupBy
@@ -57,45 +64,65 @@ public class IndexBy extends GenericMethod {
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Collection<?> source = asCollection(arguments[0]);
-		SearchExpression fun = asSearchExpression(arguments[1]);
+		SearchExpression keyFun = asSearchExpression(arguments[1]);
+
+		SearchExpression clashFun = null;
+		if (arguments.length >= 3 && arguments[2] != null) {
+			clashFun = asSearchExpression(arguments[2]);
+		}
+
+		SearchExpression mapFun = null;
+		if (arguments.length >= 4 && arguments[3] != null) {
+			mapFun = asSearchExpression(arguments[3]);
+		}
 
 		Map<Object, Object> result = new LinkedHashMap<>();
-		if (arguments.length >= 3) {
-			SearchExpression reduce = asSearchExpression(arguments[2]);
 
-			for (Object obj : source) {
-				Object key = fun.eval(definitions, obj);
+		for (Object obj : source) {
+			Object key = keyFun.eval(definitions, obj);
 
-				Object value;
-				if (result.containsKey(key)) {
-					value = reduce.eval(definitions, result.get(key), obj);
+			// Apply mapping function if provided
+			Object valueToStore = (mapFun != null) ? mapFun.eval(definitions, obj) : obj;
+
+			if (result.containsKey(key)) {
+				if (clashFun != null) {
+					// Resolve clash using clashFun
+					Object existingValue = result.get(key);
+					Object resolvedValue = clashFun.eval(definitions, existingValue, valueToStore);
+					result.put(key, resolvedValue);
 				} else {
-					value = obj;
-				}
-
-				result.put(key, value);
-			}
-		} else {
-			for (Object obj : source) {
-				Object key = fun.eval(definitions, obj);
-
-				if (result.containsKey(key)) {
-					Object clash = result.get(key);
-
+					// No clash resolution provided - throw error
 					throw new TopLogicException(
-						I18NConstants.ERROR_MULTIPLE_VALUES_WITH_SAME_KEY__KEY_V1_V2_EXPR.fill(key, clash, obj, this));
+						I18NConstants.ERROR_MULTIPLE_VALUES_WITH_SAME_KEY__KEY_V1_V2_EXPR.fill(key, result.get(key),
+							valueToStore, this));
 				}
-
-				result.put(key, obj);
+			} else {
+				// No clash - store the value
+				result.put(key, valueToStore);
 			}
 		}
+
 		return result;
 	}
 
 	/**
-	 * {@link MethodBuilder} creating {@link IndexBy}.
+	 * {@link MethodBuilder} creating {@link IndexBy} expressions.
 	 */
 	public static final class Builder extends AbstractSimpleMethodBuilder<IndexBy> {
+
+		/**
+		 * Argument descriptor for the indexBy() function: - mandatory "collection": The input
+		 * collection to index - mandatory "keyFun": The function to extract keys from elements -
+		 * optional "clashFun": Function to resolve key conflicts (2 parameters) - optional
+		 * "mapFun": Function to transform values before storing (1 parameter)
+		 */
+		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
+			.mandatory("collection")
+			.mandatory("keyFun")
+			.optional("clashFun")
+			.optional("mapFun")
+			.build();
+
 		/**
 		 * Creates a {@link Builder}.
 		 */
@@ -104,11 +131,16 @@ public class IndexBy extends GenericMethod {
 		}
 
 		@Override
-		public IndexBy build(Expr expr, SearchExpression[] args)
-				throws ConfigurationException {
-			checkArgs(expr, args, 2, 3);
+		public ArgumentDescriptor descriptor() {
+			return DESCRIPTOR;
+		}
+
+		@Override
+		public IndexBy build(Expr expr, SearchExpression[] args) throws ConfigurationException {
+			checkArgs(expr, args, 2, 4);
 			return new IndexBy(getConfig().getName(), args);
 		}
 
 	}
+
 }

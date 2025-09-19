@@ -335,6 +335,7 @@
 					<method name="stringStartsWith" class="com.top_logic.model.search.expr.config.operations.StringStartsWithBuilder"/>
 					<method name="stringContains" class="com.top_logic.model.search.expr.config.operations.StringContainsBuilder"/>
 					<method name="stringEndsWith" class="com.top_logic.model.search.expr.config.operations.StringEndsWithBuilder"/>
+					<method name="with" class="com.top_logic.model.search.expr.config.operations.With$Builder"/>
 					
 					<method name="subString" class="com.top_logic.model.search.expr.config.operations.string.SubString$Builder"/>
 					<method name="toLowerCase" class="com.top_logic.model.search.expr.config.operations.string.ToLowerCase$Builder"/>

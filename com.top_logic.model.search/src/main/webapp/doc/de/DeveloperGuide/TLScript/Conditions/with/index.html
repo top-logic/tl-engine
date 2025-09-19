@@ -1,0 +1,97 @@
+<h2>Syntax</h2>
+
+<pre>
+	<code>$input.with($func)</code>
+</pre>
+
+<h2>Beschreibung</h2>
+
+<p>Wendet die Funktion <code class="hljs inlineCode">func</code> auf den gesamten Eingabewert <code class="hljs inlineCode">input</code> an und gibt das Ergebnis dieser Funktion zurück. Im Gegensatz zu <a class="tlObject" data-custom="true" href="?page=map&amp;uuid=c382824b-adb0-468c-8508-c4297b61bb3d">map()</a> oder <a class="tlObject" data-custom="true" href="?page=foreach&amp;uuid=5c0582a6-75c9-4683-9c25-0442737f7d08">foreach()</a>, die eine Funktion auf jedes Element einer Menge anwenden, wendet <code class="hljs inlineCode">with()</code> die Funktion auf das komplette Ergebnis des vorherigen Ausdrucks in der Kette an.</p>
+
+<p>Dies ermöglicht es, das Ergebnis eines komplexen Ausdrucks mehrfach zu verwenden, ohne die Kette unterbrechen oder den Ausdruck in einen Block umbauen zu müssen. Die Funktion <code class="hljs inlineCode">func</code> erhält das gesamte Ergebnis als Argument und kann darauf beliebig zugreifen.</p>
+
+<h2>Parameter</h2>
+
+<table class="tlDocTable">
+	<thead>
+		<tr>
+			<th>Name</th>
+			<th>Typ</th>
+			<th>Beschreibung</th>
+			<th>Pflicht</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>input</td>
+			<td>Beliebig</td>
+			<td>Der Eingabewert, der vollständig an die Funktion übergeben wird. Dies ist typischerweise das Ergebnis des vorherigen Ausdrucks in einer Methodenkette.</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>func</td>
+			<td>Funktion</td>
+			<td>Die Funktion, die auf den gesamten Eingabewert angewendet werden soll. Diese Funktion erhält einen Parameter (den Eingabewert) und kann diesen mehrfach verwenden.</td>
+			<td>ja</td>
+			<td> </td>
+		</tr>
+	</tbody>
+</table>
+
+<h2>Rückgabewert</h2>
+
+<p><strong>Typ:</strong> Beliebig</p>
+
+<p>Das Ergebnis der Auswertung der Funktion <code class="hljs inlineCode">func</code>. Der Rückgabetyp hängt davon ab, was die Funktion <code class="hljs inlineCode">func</code> zurückgibt.</p>
+
+<h2>Beispiele</h2>
+
+<h3>Berechnung von Statistiken auf einer Liste</h3>
+
+<pre>
+	<code>list(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30)
+  .filter(x -&gt; $x &gt; 5)
+  .with(largeNumbers -&gt; {
+    "count": $largeNumbers.size(),
+    "sum": $largeNumbers.sum(),
+    "average": $largeNumbers.sum() / $largeNumbers.size(),
+    "min": $largeNumbers.min(),
+    "max": $largeNumbers.max(),
+    "doubled": $largeNumbers.map(x -&gt; $x * 2)
+  })</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Ein Objekt mit den berechneten Statistiken: <code>{count=9.0, sum=130.0, average=14.444444444444445, min=6.0, max=30.0, doubled=[12.0, 14.0, 16.0, 18.0, 20.0, 30.0, 40.0, 50.0, 60.0]}</code>.</p>
+
+<h3>Bedingte Verarbeitung</h3>
+
+<pre>
+	<code>$data
+  .filter(item -&gt; $item.equals("active"))
+  .with(activeItems -&gt; 
+      if($activeItems.size() &gt; 0,
+          {"status": "success", "data": $activeItems},
+          {"status": "empty", "message": "Keine aktiven Einträge gefunden"}
+      )
+  )</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Je nach Ergebnis entweder ein Erfolg-Objekt mit den aktiven Einträgen oder ein Meldungsobjekt, wenn keine aktiven Einträge gefunden wurden.</p>
+
+<h3>Transformation mit Referenz auf das Original</h3>
+
+<pre>
+	<code>$customers
+  .filter(c -&gt; $c["orders"].size() &gt; 5)
+  .with(topCustomers -&gt; {
+      "customers": $topCustomers,
+      "summary": "Top-Kunden: " + $topCustomers.size() + " Kunden mit mehr als 5 Bestellungen",
+      "averageOrders": $topCustomers.map(c -&gt; $c["orders"].size()).sum() / $topCustomers.size()
+  })</code>
+</pre>
+
+<p><strong>Ausgabe: </strong>Ein Objekt, das sowohl die gefilterten Kundenliste enthält als auch eine Zusammenfassung und berechnete Durchschnittswerte basierend auf diesen Kunden.</p>
+
+<p>​</p>

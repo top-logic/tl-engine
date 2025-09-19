@@ -35,6 +35,7 @@ import com.top_logic.layout.AbstractDisplayValue;
 import com.top_logic.layout.ContentHandler;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.URLBuilder;
 import com.top_logic.layout.URLParser;
@@ -86,6 +87,8 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 	private int _urlSuffix = 0;
 
 	private boolean _defaultLabelAbove = true;
+
+	private String _maxWidth = "", _maxHeight = "", _dims = "";
 
 	private static final Map<String, ? extends ControlCommand> DATA_ITEM_COMMANDS_WITHOUT_DOWNLOAD =
 		createCommandMap(new ControlCommand[] {
@@ -155,8 +158,28 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 	}
 
 	/**
-	 * type safe getter for the model of this control, i.e. actually calls
-	 * {@link #getModel()}
+	 * Sets the maximum dimension the displayed image is allowed to have.
+	 * 
+	 * @implNote: The given values may have no effect since there may be stricter or smaller
+	 *            limitations.
+	 */
+	public void setMaxDimensions(DisplayDimension maxWidth, DisplayDimension maxHeight) {
+		if (maxWidth != null) {
+			_maxWidth = maxWidth.toString();
+			if (!_maxWidth.isBlank()) {
+				_dims = "max-width: " + _maxWidth + "; ";
+			}
+		}
+		if (maxHeight != null) {
+			_maxHeight = maxHeight.toString();
+			if (!_maxHeight.isBlank()) {
+				_dims = _dims + "max-height: " + _maxHeight + ";";
+			}
+		}
+	}
+
+	/**
+	 * type safe getter for the model of this control, i.e. actually calls {@link #getModel()}
 	 * 
 	 * @see #getModel()
 	 */
@@ -289,6 +312,12 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 	private void renderImage(DisplayContext context, TagWriter out, BinaryDataSource image, boolean editable)
 			throws IOException {
 		out.beginBeginTag(IMG);
+		if (!_dims.isBlank()) {
+			if (!_maxWidth.isBlank()) {
+				out.writeAttribute(CLASS_ATTR, "annotatedMaxW");
+			}
+			out.writeAttribute(STYLE_ATTR, _dims);
+		}
 		out.writeAttribute(ALT_ATTR, image.getName());
 		out.writeAttribute(SRC_ATTR,
 			getURLContext().getURL(context, imageHandler).appendParameter("itemVersion", _urlSuffix).getURL());
@@ -685,5 +714,4 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 			return I18NConstants.CLEAR_IMAGE;
 		}
 	}
-
 }

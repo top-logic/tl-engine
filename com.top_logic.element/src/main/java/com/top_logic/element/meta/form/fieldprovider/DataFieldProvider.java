@@ -24,12 +24,16 @@ import com.top_logic.model.annotate.LabelPositionAnnotation;
 import com.top_logic.model.annotate.ui.BinaryDisplay;
 import com.top_logic.model.annotate.ui.BinaryDisplay.BinaryPresentation;
 import com.top_logic.model.annotate.ui.TLAcceptedTypes;
+import com.top_logic.model.annotate.ui.TLDimensions;
 import com.top_logic.model.annotate.util.TLAnnotations;
 
 /**
  * {@link FieldProvider} for {@link TLStructuredTypePart}s of type {@link File}.
  * 
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
+ *
+ *         Updated 2025 by
+ * @author <a href="mailto:sha@top-logic.com">Simon Haneke</a>
  */
 public class DataFieldProvider extends AbstractFieldProvider {
 
@@ -61,11 +65,7 @@ public class DataFieldProvider extends AbstractFieldProvider {
 				if (acceptedTypes != null && !accType.equals(imgType)) {
 					acceptedTypes.setValue("image/*");
 				}
-				LabelPositionAnnotation labelAnnotation =
-					TLAnnotations.getAnnotation(editContext, LabelPositionAnnotation.class);
-				boolean hasLabelPosAnnotation = (labelAnnotation != null);
-				field.setControlProvider(
-					(model, style) -> new ImageUploadControl((DataField) model, hasLabelPosAnnotation));
+				field.setControlProvider((model, style) -> createImgUploadCtrl((DataField) model, editContext));
 				break;
 			default:
 				throw BinaryPresentation.noSuchBinary(presentation);
@@ -74,6 +74,28 @@ public class DataFieldProvider extends AbstractFieldProvider {
 		setAcceptedFileTypes(field, acceptedTypes);
 
 		return field;
+	}
+
+	/**
+	 * @param datafield
+	 *        The {@link DataField} to display as {@link ImageUploadControl}.
+	 * @param editContext
+	 *        The {@link EditContext} of this {@link DataField}.
+	 * @return newly created {@link ImageUploadControl} with set annotations
+	 */
+	private ImageUploadControl createImgUploadCtrl(DataField datafield, EditContext editContext) {
+		LabelPositionAnnotation labelAnnotation =
+			TLAnnotations.getAnnotation(editContext, LabelPositionAnnotation.class);
+		TLDimensions maxDimensions = editContext.getAnnotation(TLDimensions.class);
+
+		ImageUploadControl control = new ImageUploadControl(datafield);
+		if (labelAnnotation != null) {
+			control.deactivateDefaultLabelAbove();
+		}
+		if (maxDimensions != null) {
+			control.setMaxDimensions(maxDimensions.getWidth(), maxDimensions.getHeight());
+		}
+		return control;
 	}
 
 	/**

@@ -143,7 +143,7 @@ public class TLAnnotations {
 		if (annotation == null) {
 			return BinaryPresentation.DATA_ITEM;
 		}
-		return annotation.getValue();
+		return annotation.getPresentation();
 	}
 
 	/**

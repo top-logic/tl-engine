@@ -1,74 +1,133 @@
 <h2>Syntax</h2>
-<pre>	<code>$list.indexBy($key-fun)
 
-$list.indexBy($key-fun, $clash-fun)</code>
+<pre>
+	<code>$list.indexBy($key-fun)
+
+$list.indexBy($key-fun, $clash-fun)
+
+$list.indexBy($key-fun, $map-fun)
+
+$list.indexBy($key-fun, $clash-fun, $map-fun)</code>
 </pre>
+
 <h2>Description</h2>
+
 <p>Assigns a key value to each value in the list.</p>
-<p>Unlike <a class="tlObject" data-custom="true" href="?page=groupBy&amp;uuid=0ceea055-4867-461a-9a86-d6ed56272dd8">Grouping</a>, the values in the resulting dictionary are not lists, but individual elements. Therefore the calculated key values must be unique for the elements of the input set. Key conflicts can be resolved by specifying an optional <code class="hljs inlineCode">clash-fun</code>.</p>
-<h2>Parameter</h2>
+
+<p>In contrast to <a class="tlObject" data-custom="false" href="?page=groupBy&amp;uuid=0ceea055-4867-461a-9a86-d6ed56272dd8">grouping</a>, the values in the resulting dictionary are not lists, but individual elements. Therefore, the calculated key values must be unique for the elements of the input set. Key conflicts can be resolved by specifying an optional <code class="hljs inlineCode">clash-fun</code>. You can also specify <code class="hljs inlineCode">map-fun</code> to determine which value is saved for each key in the resulting dictionary.</p>
+
+<h2>Parameters</h2>
+
 <table class="tlDocTable">
- <thead>
-  <tr>
-   <th>Name</th>
-   <th>Type</th>
-   <th>Description</th>
-   <th>Mandatory</th>
-   <th>Default</th>
-  </tr>
- </thead>
- <tbody>
-  <tr>
-   <td>list</td>
-   <td>Set</td>
-   <td>A list to be indexed.</td>
-   <td>yes</td>
-   <td></td>
-  </tr>
-  <tr>
-   <td>key-fun</td>
-   <td>Function</td>
-   <td>Key function according to which the indexes are to be displayed.</td>
-   <td>yes</td>
-   <td></td>
-  </tr>
-  <tr>
-   <td>clash-fun</td>
-   <td>Function</td>
-   <td>Clash function after which key duplicates can be resolved. Without this function duplicates will generate error messages.</td>
-   <td>no</td>
-   <td>No resolution of duplicates.</td>
-  </tr>
- </tbody>
+	<thead>
+		<tr>
+			<th>Key name</th>
+			<th>Type</th>
+			<th>Type Description</th>
+			<th>Mandatory</th>
+			<th>Default</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>list</td>
+			<td>Quantity</td>
+			<td>A list that is to be indexed.</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>keyFun</td>
+			<td>Function</td>
+			<td>Key function according to which the indices are to be displayed.</td>
+			<td>yes</td>
+			<td> </td>
+		</tr>
+		<tr>
+			<td>clashFun</td>
+			<td>function</td>
+			<td>Clash function according to which key duplicates can be resolved. Without this function, duplicates generate error messages.</td>
+			<td>no</td>
+			<td>No resolution of duplicates.</td>
+		</tr>
+		<tr>
+			<td>mapFun</td>
+			<td>function</td>
+			<td>Map function that transforms the values stored in the list. Takes a parameter (the list element) and returns the value to be saved.</td>
+			<td>no</td>
+			<td>Original values are saved.</td>
+		</tr>
+	</tbody>
 </table>
+
 <h2>Return value</h2>
-<p><span style="color:#3498db"><strong>Type:</strong></span> Business object</p>
+
+<p><span style="color:#3498db"><strong>Type:</strong></span> Subject object</p>
+
 <p>A dictionary in which all values in the list are assigned to an index.</p>
+
 <h2>Examples</h2>
-<h3>Indexing by name shortcut</h3>
-<pre>	<code>list("Smith Joe", "Parker Jane", "Taylor Tom", "Black Tyler", "Brown Erik")
+
+<h3>Indexing by name abbreviation</h3>
+
+<pre>
+	<code>list("Smith Joe", "Parker Jane", "Taylor Tom", "Black Tyler", "Brown Erik")
    .indexBy(name -&gt; $name.subString(0, 3))</code>
 </pre>
-<p><span style="color:#3498db"><strong>Output:</strong></span> A dictionary with the values:</p>
-<pre><code>{
+
+<p><strong>Output:</strong> A dictionary with the values:</p>
+
+<pre>
+<code>{
    "Smi":  "Smith Joe",
    "Par":  "Parker Jane",
    "Tay":  "Taylor Tom", 
    "Bla":  "Black Tyler",
    "Bro":  "Brown Erik"
 }</code></pre>
-<p>From each name, the first 3 letters are used as an index.</p>
-<h3>Indexing by name shortcut with clash function</h3>
-<pre>	<code>list("Smith Joe", "Parker Jane", "Brown Erik", "Taylor Tom", "Black Tyler", "Brook Ashley", "Browning Dave")
+
+<p>The first 3 letters of each name are used as an index.</p>
+
+<h3>Indexing by name abbreviation with clash function</h3>
+
+<pre>
+	<code>list("Smith Joe", "Parker Jane", "Brown Erik", "Taylor Tom", "Black Tyler", "Brook Ashley", "Browning Dave")
    .indexBy(name -&gt; $name.subString(0, 3), name1 -&gt; name2 -&gt; $name1 + " and " + $name2)
 </code>
 </pre>
-<p><span style="color:#3498db"><strong>Output:</strong></span> A dictionary with the values:</p>
-<pre><code>{
+
+<p><strong>Output:</strong> A dictionary with the values:</p>
+
+<pre>
+<code>{
    "Smi":  "Smith Joe",
    "Par":  "Parker Jane",
    "Tay":  "Taylor Tom", 
    "Bla":  "Black Tyler",
    "Bro":  "Brown Erik and Brook Ashley and Browning Dave"
 }</code></pre>
-<p>The three names "Brown Erik", "Brook Ashley", "Browning Dave" get the same keys by the key function. Without clash function an error message would come out. In this case the names for the key are put together.</p>
+
+<p>The three names "Brown Erik", "Brook Ashley", "Browning Dave" are given the same keys by the key function. Without the clash function, an error message would be displayed. In this case, the names are combined for the key.</p>
+
+<h3>Indexing by name abbreviation with clash function and map function</h3>
+
+<pre>
+<code>list("Smith Joe 45", "Parker Jane 32", "Brown Erik 28", "Taylor Tom 41", "Black Tyler 35", "Brook Ashley 29", "Browning Dave 33")
+   .indexBy(
+       name -&gt; $name.subString(0, 3), 
+       age1 -&gt; age2 -&gt; ($age1 + $age2) / 2,
+       name -&gt; numberFormat("#").parse($name.subString($name.length() - 2))
+   )</code></pre>
+
+<p><strong>Output:</strong> A dictionary with the values:</p>
+
+<pre>
+<code>{
+   "Smi": 45.0,
+   "Par": 32.0,
+   "Tay": 41.0, 
+   "Bla": 35.0,
+   "Bro": 30.0
+}</code></pre>
+
+<p>The names are indexed according to the first 3 letters. The last 2 characters (the age) are extracted from each name and saved as a number with <code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.4rem] px-1 py-px text-[0.9rem]">numberFormat("#").parse()</code> (mapFun). The average age is calculated for the three names with the prefix "Bro": (28 + 29 + 33) / 2 = 30.</p>

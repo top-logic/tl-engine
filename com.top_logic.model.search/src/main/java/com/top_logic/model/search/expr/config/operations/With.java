@@ -7,6 +7,7 @@ package com.top_logic.model.search.expr.config.operations;
 
 import java.util.List;
 
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.model.TLType;
@@ -15,7 +16,6 @@ import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link GenericMethod} that applies a function to the entire result of a previous expression.
@@ -66,12 +66,6 @@ public class With extends GenericMethod {
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		// Validate that we have exactly 2 arguments
-		if (arguments.length != 2) {
-			throw new TopLogicException(I18NConstants.ERROR_TWO_ARGUMENTS_EXPECTED__CNT_EXPR
-				.fill(arguments.length, this));
-		}
-		
 		Object inputValue = arguments[0];
 		SearchExpression function = asSearchExpression(arguments[1]);
 		
@@ -111,7 +105,8 @@ public class With extends GenericMethod {
 		}
 
 		@Override
-		public With build(Expr expr, SearchExpression[] args) {
+		public With build(Expr expr, SearchExpression[] args) throws ConfigurationException {
+			checkArgs(expr, args, 2, 2);
 			return new With(getConfig().getName(), args);
 		}
 

@@ -21,11 +21,13 @@ import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.model.ModelKind;
+import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
+import com.top_logic.model.fallback.StorageWithFallback;
 
 /**
  * Transient {@link TLObject} implementation.
@@ -86,6 +88,10 @@ public class TransientTLObjectImpl extends TransientObject {
 	}
 
 	private Object directValue(TLStructuredTypePart part) {
+		StorageDetail storageImplementation = part.getStorageImplementation();
+		if (storageImplementation instanceof StorageWithFallback) {
+			return storageImplementation.getAttributeValue(this, part);
+		}
 		if (part.isDerived()) {
 			if (part.getModelKind() == ModelKind.REFERENCE && ((TLReference) part).isBackwards()) {
 				// Find forwards reference.
@@ -96,7 +102,7 @@ public class TransientTLObjectImpl extends TransientObject {
 				if (part.getName().equals(PersistentObject.T_TYPE_ATTR)) {
 					return tType();
 				} else {
-					return part.getStorageImplementation().getAttributeValue(this, part);
+					return storageImplementation.getAttributeValue(this, part);
 				}
 			}
 		}

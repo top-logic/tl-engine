@@ -396,20 +396,33 @@ a.cmdLink:visited {
 }
 
 .menuTitle {
-	position: relative;
 	display: flex;
 	height: var(--POPUP_TITLE_HEIGHT);
-	padding-left: 2px;
 	background-color: var(--layer-accent);
 	color: var(--layer-accent-text);
 	--button-fg: var(--layer-accent-icon);
 }
+	
+/* ================================ */
+/* ====== Limit Context Menus ===== */
+/* ================================ */
+/* Settings to limit Context-Menu Titles so the context menu does not grow bigger than the options. */
+.menuTitle {
+	width: 100%;
+	position: absolute;
+	transform: translateY(calc(0px - var(--POPUP_TITLE_HEIGHT)));
+}
+
+.menuTitle + :not(.menuTitle) {
+	margin-top: var(--POPUP_TITLE_HEIGHT);
+}
+/* ================================ */
 
 .menuTitleContents {
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
-	padding: 0 3px;
+	padding: 0 5px;
 	align-self: center;
 }
 

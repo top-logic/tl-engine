@@ -161,7 +161,9 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 			cons.close();
 		}
 		_consumers = null;
-		_mqClient.close();
+		if (_mqClient != null) {
+			_mqClient.close();
+		}
 		super.shutDown();
 	}
 

@@ -19,7 +19,7 @@ import com.top_logic.model.annotate.TargetType;
 import com.top_logic.model.config.TLTypeAnnotation;
 
 /**
- * Display settings for an attribute that is entered by uploading a binary data file.
+ * Display settings for an attribute, that contains binary data and allows uploading of files.
  * 
  * <p>
  * This annotation is useful for attributes of type {@link BinaryData}.
@@ -35,7 +35,7 @@ import com.top_logic.model.config.TLTypeAnnotation;
 	TLTypeKind.BINARY
 })
 @InApp
-@Label("Binary display")
+@Label("Binary data display")
 public interface BinaryDisplay extends TLAttributeAnnotation, TLTypeAnnotation {
 
 	/**
@@ -67,22 +67,22 @@ public interface BinaryDisplay extends TLAttributeAnnotation, TLTypeAnnotation {
 	}
 
 	/**
-	 * Presentation of binary data for a binary attribute.
+	 * Presentation / Display options for a binary attribute.
 	 * 
 	 * @see ReferencePresentation
 	 */
 	public enum BinaryPresentation implements ExternallyNamed {
 
 		/**
-		 * Display as data item.
+		 * Display as button to upload files and a list of the uploaded files.
 		 */
-		@Label("Data item")
+		@Label("Button with file list")
 		DATA_ITEM("data-item"),
 
 		/**
-		 * Display as image upload.
+		 * Display as field to upload via click or drop and display of the uploaded image.
 		 */
-		@Label("Image upload")
+		@Label("Image drop field")
 		IMAGE_UPLOAD("image-upload");
 
 		private final String _externalName;

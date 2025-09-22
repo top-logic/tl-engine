@@ -173,6 +173,9 @@ public class InstanceResolverByAttribute extends AbstractConfiguredInstance<Inst
 			PolymorphicConfiguration<?> storageConfig = configuredInstance.getConfig();
 			if (storageConfig instanceof WithStorageAttribute columnStorageConfig) {
 				idColumn = columnStorageConfig.getStorageAttribute();
+				if (idColumn == null) {
+					idColumn = idAttribute.getName();
+				}
 			}
 		}
 

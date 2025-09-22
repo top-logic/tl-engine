@@ -7,6 +7,7 @@ package com.top_logic.element.layout.instances.importer;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.Logger;
@@ -74,7 +75,8 @@ public class InstanceImportCommand extends AbstractCommandHandler {
 						log.info(I18NConstants.IMPORTING_OBJECTS);
 						List<TLObject> result = importer.importInstances(objects);
 						log.info(
-							I18NConstants.IMPORTED_OBJECTS__OBJS.fill(MetaLabelProvider.INSTANCE.getLabel(result)));
+							I18NConstants.IMPORTED_OBJECTS__OBJS.fill(MetaLabelProvider.INSTANCE
+								.getLabel(result.stream().filter(Objects::nonNull).toList())));
 
 						log.info(I18NConstants.COMMITTING_CHANGES);
 						tx.commit();

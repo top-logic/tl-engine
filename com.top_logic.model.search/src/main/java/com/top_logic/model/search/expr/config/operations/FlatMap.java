@@ -8,7 +8,6 @@ package com.top_logic.model.search.expr.config.operations;
 import java.util.Collection;
 import java.util.List;
 
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.model.TLType;
@@ -29,7 +28,7 @@ import com.top_logic.model.util.TLModelUtil;
  * </p>
  * 
  * <p>
- * This is equivalent to <code>collection.map(function).flatten()</code> but more efficient as it
+ * This is equivalent to <code>collection.map($func).flatten()</code> but more efficient as it
  * avoids creating intermediate collections.
  * </p>
  * 
@@ -75,19 +74,10 @@ public class FlatMap extends GenericMethod {
 		
 		for (Object element : collection) {
 			Object functionResult = function.eval(definitions, element);
-			if (functionResult instanceof java.util.Collection) {
-				result.addAll(asCollection(functionResult));
-			} else {
-				result.add(functionResult);
-			}
+			result.addAll(asCollection(functionResult));
 		}
 		
 		return result;
-	}
-
-	@Override
-	public boolean isSideEffectFree() {
-		return false;
 	}
 
 	/**
@@ -97,12 +87,11 @@ public class FlatMap extends GenericMethod {
 
 		/**
 		 * Argument descriptor for the <code>flatMap()</code> function: - mandatory "collection":
-		 * The input collection to process - mandatory "function": The function to apply to each
-		 * element
+		 * The input collection to process - mandatory "func": The function to apply to each element
 		 */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("collection")
-			.mandatory("function")
+			.mandatory("func")
 			.build();
 
 		/**
@@ -118,8 +107,7 @@ public class FlatMap extends GenericMethod {
 		}
 
 		@Override
-		public FlatMap build(Expr expr, SearchExpression[] args) throws ConfigurationException {
-			checkArgs(expr, args, 2, 2);
+		public FlatMap build(Expr expr, SearchExpression[] args) {
 			return new FlatMap(getConfig().getName(), args);
 		}
 

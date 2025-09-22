@@ -3,13 +3,13 @@
 <p> </p>
 
 <pre>
-<code>$collection.flatMap($function)</code></pre>
+<code>$collection.flatMap($func)</code></pre>
 
 <h2>Beschreibung</h2>
 
-<p>Wendet die Funktion <code class="hljs inlineCode">function</code> auf jedes Element der Collection <code class="hljs inlineCode">collection</code> an und glättet die Ergebnisse zu einer einzigen Collection zusammen. Wenn die Funktion für ein Element eine Collection zurückgibt, werden alle Elemente dieser Collection zum Ergebnis hinzugefügt. Wenn die Funktion einen einzelnen Wert zurückgibt, wird dieser Wert direkt zum Ergebnis hinzugefügt.</p>
+<p>Wendet die Funktion <code class="hljs inlineCode">func</code> auf jedes Element der Collection <code class="hljs inlineCode">collection</code> an und glättet die Ergebnisse zu einer einzigen Collection zusammen. Wenn die Funktion für ein Element eine Collection zurückgibt, werden alle Elemente dieser Collection zum Ergebnis hinzugefügt. Wenn die Funktion einen einzelnen Wert zurückgibt, wird dieser Wert direkt zum Ergebnis hinzugefügt.</p>
 
-<p>Dies ist äquivalent zu <code class="hljs inlineCode">collection.map(function).flatten()</code>, aber effizienter, da keine Zwischen-Collections erstellt werden.</p>
+<p>Dies ist äquivalent zu <code class="hljs inlineCode">collection.map($func).flatten()</code>, aber effizienter, da keine Zwischen-Collections erstellt werden.</p>
 
 <h2>Parameter</h2>
 
@@ -32,7 +32,7 @@
 			<td> </td>
 		</tr>
 		<tr>
-			<td>function</td>
+			<td>func</td>
 			<td>Funktion</td>
 			<td>Die Funktion, die auf jedes Element angewendet wird. Die Funktion kann entweder eine Collection oder einen einzelnen Wert zurückgeben.</td>
 			<td>ja</td>
@@ -62,14 +62,15 @@
 <h3>Listen zusammenführen</h3>
 
 <pre>
-<code>list( 
-    list("A", "B"), 
-    list("C", "D", "E") 
-).flatMap(sublist -&gt; $sublist) </code></pre>
+<code>list(
+  list(1, 2, 3),
+  list(4, 5), 
+  list(6, 7, 8, 9)
+).flatMap(sublist -> $sublist.filter(x -> $x % 2 == 0)) </code></pre>
 
-<p><strong>Ausgabe:</strong> <code>["A", "B", "C", "D", "E"]</code></p>
+<p><strong>Output:</strong> <code>[2, 4, 6, 8]</code></p>
 
-<p>Die verschachtelten Listen werden zu einer flachen Liste zusammengeführt.</p>
+<p>Die verschachtelten Listen werden gefiltert, um nur gerade Zahlen zu erhalten, dann werden alle Ergebnisse zu einer flachen Liste zusammengeführt.</p>
 
 <h3>Vergleich mit map().flatten()</h3>
 

@@ -3,13 +3,13 @@
 <p> </p>
 
 <pre>
-<code>$collection.flatMap($function)</code></pre>
+<code>$collection.flatMap($func)</code></pre>
 
 <h2>Description</h2>
 
-<p>Applies the function <code class="hljs inlineCode">function</code> to each element of the collection <code class="hljs inlineCode">collection</code> and smoothes the results into a single collection. If the function returns a collection for an element, all elements of this collection are added to the result. If the function returns a single value, this value is added directly to the result.</p>
+<p>Applies the function <code class="hljs inlineCode">func</code> to each element of the collection <code class="hljs inlineCode">collection</code> and smoothes the results into a single collection. If the function returns a collection for an element, all elements of this collection are added to the result. If the function returns a single value, this value is added directly to the result.</p>
 
-<p>This is equivalent to <code class="hljs inlineCode">collection.map(function).flatten()</code>, but more efficient as no intermediate collections are created.</p>
+<p>This is equivalent to <code class="hljs inlineCode">collection.map($func).flatten()</code>, but more efficient as no intermediate collections are created.</p>
 
 <h2>Parameters</h2>
 
@@ -32,7 +32,7 @@
 			<td> </td>
 		</tr>
 		<tr>
-			<td>function</td>
+			<td>func</td>
 			<td>Function</td>
 			<td>The function that is applied to each element. The function can return either a collection or a single value.</td>
 			<td>yes</td>
@@ -62,14 +62,15 @@
 <h3>Merge lists</h3>
 
 <pre>
-<code>list( 
-    list("A", "B"), 
-    list("C", "D", "E") 
-).flatMap(sublist -&gt; $sublist) </code></pre>
+<code>list(
+  list(1, 2, 3),
+  list(4, 5), 
+  list(6, 7, 8, 9)
+).flatMap(sublist -> $sublist.filter(x -> $x % 2 == 0)) </code></pre>
 
-<p><strong>Output:</strong> <code>["A", "B", "C", "D", "E"]</code></p>
+<p><strong>Output:</strong> <code>[2, 4, 6, 8]</code></p>
 
-<p>The nested lists are merged into a flat list.</p>
+<p>Each sublist is filtered to include only even numbers, then all results are flattened into a single list.</p>
 
 <h3>Comparison with map().flatten()</h3>
 

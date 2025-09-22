@@ -15,6 +15,7 @@ import com.ibm.msg.client.jakarta.wmq.WMQConstants;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Encrypted;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
@@ -120,11 +121,12 @@ public class IBMMQClient extends JMSClient {
 		 * The Option to activate the IBM auto-reconnect.
 		 */
 		@Name(AUTO_RECONNECT)
+		@Label("IBM auto-reconnect")
 		@BooleanDefault(false)
 		boolean getAutoReconnect();
 
 		/**
-		 * The time in milliseconds that the IBM auto-reconnect tries to reconnect.
+		 * The time in MillisFormat that the IBM auto-reconnect tries to reconnect for.
 		 */
 		@Name(RECONNECT_TIMEOUT)
 		@StringDefault("4min")

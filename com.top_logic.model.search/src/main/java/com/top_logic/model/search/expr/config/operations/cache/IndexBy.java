@@ -103,10 +103,10 @@ public class IndexBy extends GenericMethod {
 	public static final class Builder extends AbstractSimpleMethodBuilder<IndexBy> {
 
 		/**
-		 * Argument descriptor for the indexBy() function: - mandatory "collection": The input
-		 * collection to index - mandatory "keyFun": The function to extract keys from elements -
-		 * optional "clashFun": Function to resolve key conflicts (2 parameters) - optional
-		 * "mapFun": Function to transform values before storing (1 parameter)
+		 * Argument descriptor for the <code>indexBy()</code> function: - mandatory "collection":
+		 * The input collection to index - mandatory "keyFun": The function to extract keys from
+		 * elements - optional "clashFun": Function to resolve key conflicts (2 parameters) -
+		 * optional "mapFun": Function to transform values before storing (1 parameter)
 		 */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("collection")

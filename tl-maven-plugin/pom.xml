@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-all</artifactId>
-		<version>7.9.6</version>
+		<version>0.0.10-AEMA</version>
 		
 		<relativePath>../tl-parent-all</relativePath>
 	</parent>

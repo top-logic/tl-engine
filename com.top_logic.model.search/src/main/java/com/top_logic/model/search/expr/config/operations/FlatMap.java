@@ -65,14 +65,13 @@ public class FlatMap extends GenericMethod {
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		Object inputCollection = arguments[0];
+		Collection<?> inputCollection = asCollection(arguments[0]);
 		SearchExpression function = asSearchExpression(arguments[1]);
 		
-		// Apply the function to each element and flatten the results
-		Collection<?> collection = asCollection(inputCollection);
 		List<Object> result = new java.util.ArrayList<>();
 		
-		for (Object element : collection) {
+		// Apply the function to each element and flatten the results
+		for (Object element : inputCollection) {
 			Object functionResult = function.eval(definitions, element);
 			result.addAll(asCollection(functionResult));
 		}

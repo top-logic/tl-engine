@@ -28,6 +28,7 @@ import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.StorageDetail;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredType;
@@ -38,7 +39,6 @@ import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.config.annotation.TableName;
 import com.top_logic.model.instance.exporter.ResolverByColumnAttribute;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
-import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
@@ -128,7 +128,7 @@ public class InstanceResolverByAttribute extends AbstractConfiguredInstance<Inst
 	 *        The configuration.
 	 */
 	@CalledByReflection
-	public InstanceResolverByAttribute(InstantiationContext context, Config<?> config) throws ParseException {
+	public InstanceResolverByAttribute(InstantiationContext context, Config<?> config) {
 		super(context, config);
 
 		TLStructuredTypePart part = (TLStructuredTypePart) config.getAttribute().resolvePart();
@@ -136,7 +136,7 @@ public class InstanceResolverByAttribute extends AbstractConfiguredInstance<Inst
 		TLStructuredType type = part.getOwner();
 		InstanceResolver resolver = idColumnResolver(type, part);
 		if (resolver == null) {
-			resolver = new InstanceResolverByIndex(type, part);
+			resolver = new InstanceResolverByIndex((TLClass) type, part);
 		}
 		_resolver = resolver;
 	}

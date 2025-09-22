@@ -174,7 +174,7 @@ public class TopLogicServlet extends HttpServlet {
 		final TLSessionContext session = this.getSession(request, response);
 		if (session == null) {
 			// User has no session.
-			redirectToLogout(request, response);
+			redirectTo(ApplicationPages.getInstance().getLoginPage(), request, response);
 			return;
 		}
 
@@ -191,7 +191,7 @@ public class TopLogicServlet extends HttpServlet {
 				"Enforcing logout due to session missmatch: " + subession.getPerson() + " vs. "
 					+ session.getOriginalUser(), TopLogicServlet.class);
 			invalidateSession(request);
-			redirectToLogout(request, response);
+			redirectTo(ApplicationPages.getInstance().getLogoutPage(), request, response);
 			return;
 		}
 
@@ -419,21 +419,6 @@ public class TopLogicServlet extends HttpServlet {
     }
 
     /**
-	 * Forwards the request to the configured logout page.
-	 * 
-	 * @exception ServletException
-	 *            If an error in {@link HttpServlet} occurs.
-	 * @exception IOException
-	 *            If I/O operation fails.
-	 * 
-	 * @see com.top_logic.base.accesscontrol.ApplicationPages.Config#getLogoutPage()
-	 */
-	protected void redirectToLogout(HttpServletRequest req, HttpServletResponse res)
-			throws IOException, ServletException {
-		redirectTo(ApplicationPages.getInstance().getLogoutPage(), req, res);
-    }    
-
-	/**
 	 * Redirects the client to the given page.
 	 *
 	 * @param aRequest

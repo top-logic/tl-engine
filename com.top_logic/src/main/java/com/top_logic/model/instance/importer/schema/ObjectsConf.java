@@ -36,7 +36,7 @@ public interface ObjectsConf extends ConfigurationItem {
 	 * Description of objects to import.
 	 */
 	@DefaultContainer
-	List<ObjectConf> getObjects();
+	List<ValueConf> getObjects();
 
 	/**
 	 * Resolver entry associating an {@link InstanceResolver} with a {@link TLStructuredType}.

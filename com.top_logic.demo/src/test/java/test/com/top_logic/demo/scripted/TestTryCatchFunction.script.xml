@@ -186,14 +186,13 @@
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 				<value><![CDATA[{
-    argument = 0;
+    argument = -5;
     result = $argument.try(
         x -> {
-            y = $x - 5;
-            if($y < 0, throw(message: "Negative values not allowed.", value: $y), $x * $y);
+            if($x < 0, throw("Negative values not allowed."), $x * $x);
         },
-        error -> origArgument -> givenValue -> {
-            logMessage = toString("Validation with argument '" + $origArgument + "' and resulting value '" + $givenValue + "' failed. Reason: ", $error);
+        error -> origArgument -> {
+            logMessage = toString("Validation with argument '" + $origArgument + "' failed. Reason: ", $error);
             $logMessage;
         }
     );
@@ -229,7 +228,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="Validation with argument '0' and resulting value '-5' failed. Reason: Negative values not allowed."
+				value="Validation with argument '-5' failed. Reason: Negative values not allowed."
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"

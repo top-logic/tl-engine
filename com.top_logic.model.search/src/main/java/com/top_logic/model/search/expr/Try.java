@@ -7,7 +7,6 @@ package com.top_logic.model.search.expr;
 
 import java.util.List;
 
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.exception.I18NException;
 import com.top_logic.basic.util.ResKey;
@@ -17,7 +16,6 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * TLScript method implementing try-catch functionality for exception handling.
@@ -64,19 +62,9 @@ public class Try extends GenericMethod {
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
-		if (arguments.length < 2) {
-			throw new TopLogicException(
-				I18NConstants.ERROR_TRY_METHOD_REQUIRES_TWO_ARGUMENTS);
-		}
-
 		Object argument = arguments[0];
 		SearchExpression tryFunction = asSearchExpression(arguments[1]);
-		SearchExpression catchFunction = null;
-
-		// Check if catch function is provided and not null
-		if (arguments.length > 2 && arguments[2] != null) {
-			catchFunction = asSearchExpression(arguments[2]);
-		}
+		SearchExpression catchFunction = arguments[2] == null ? null : asSearchExpression(arguments[2]);
 
 		try {
 			// Execute the try function with the given argument
@@ -86,12 +74,7 @@ public class Try extends GenericMethod {
 			if (catchFunction == null) {
 				return null;
 			}
-			if (e instanceof ScriptAbort) { // coming from a throw() call
-				ScriptAbort scriptAbort = (ScriptAbort) e;
-				Object value = scriptAbort.getValue();
-				// Pass message, original argument, and value from the throw() call
-				return catchFunction.eval(definitions, scriptAbort.getMessage(), argument, value);
-			} else if (e instanceof I18NException) {
+			if (e instanceof I18NException) {
 				ResKey errorKey = ((I18NException) e).getErrorKey();
 				return catchFunction.eval(definitions, errorKey, argument);
 			} else {
@@ -108,8 +91,8 @@ public class Try extends GenericMethod {
 		/** Description of parameters for a {@link Try}. */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("argument")
-			.mandatory("tryFunction")
-			.optional("catchFunction")
+			.mandatory("tryFunc")
+			.optional("catchFunc")
 			.build();
 
 		/**
@@ -125,8 +108,7 @@ public class Try extends GenericMethod {
 		}
 
 		@Override
-		public Try build(Expr expr, SearchExpression[] args)
-				throws ConfigurationException {
+		public Try build(Expr expr, SearchExpression[] args) {
 			return new Try(getConfig().getName(), args);
 		}
 	}

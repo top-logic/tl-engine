@@ -1,7 +1,7 @@
 <h2>​​Syntax</h2>
 
 <pre>
-	<code>$argument.try($tryFunction, $catchFunction)</code>
+	<code>$argument.try($tryFunc, $catchFunc)</code>
 </pre>
 
 <h2>Beschreibung</h2>
@@ -22,7 +22,6 @@
 <div>Bei erfolgreicher Ausführung der try-Funktion wird deren Ergebnis zurückgegeben. Tritt ein Fehler auf, wird die catch-Funktion mit spezifischen Parametern ausgeführt:</div>
 
 <ul>
-	<li><strong>Exception durch throw() ausgelöst</strong>: catch-Funktion erhält (Fehlermeldung, ursprüngliches Argument, angegebener Wert in der throw()-Funktion)</li>
 	<li><strong>I18NException</strong>: catch-Funktion erhält (ResKey, ursprüngliches Argument)</li>
 	<li><strong>Reguläre Exception</strong>: catch-Funktion erhält (Fehlermeldung, ursprüngliches Argument)</li>
 </ul>
@@ -47,14 +46,16 @@
 			<td>-</td>
 		</tr>
 		<tr>
-			<td>tryFunction</td>
+			<td>
+			<p>tryFunc</p>
+			</td>
 			<td>Funktion</td>
 			<td>Die Funktion, die ausgeführt werden soll. Erhält das Argument als Parameter</td>
 			<td>ja</td>
 			<td>-</td>
 		</tr>
 		<tr>
-			<td>catchFunction</td>
+			<td>catchFunc</td>
 			<td>Funktion</td>
 			<td>Die Fallback-Funktion, die bei einem Fehler ausgeführt wird. Erhält das Exception-Objekt als Parameter</td>
 			<td>nein</td>

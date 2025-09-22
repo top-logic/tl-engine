@@ -7,7 +7,6 @@ package com.top_logic.model.search.expr;
 
 import java.util.List;
 
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResKey;
@@ -50,14 +49,15 @@ public class Throw extends GenericMethod {
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		ResKey message = toResKey(arguments[0]);
 		if (message != null) {
-			ResKey details = arguments.length > 1 ? toResKey(arguments[1]) : null;
-			Object value = arguments.length > 2 ? arguments[2] : null;
-
-			TopLogicException problem = new ScriptAbort(message, value);
+			TopLogicException problem = new ScriptAbort(message);
 			problem.initSeverity(ErrorSeverity.WARNING);
-			if (details != null) {
-				problem.initDetails(details);
+			if (arguments.length > 1) {
+				ResKey details = toResKey(arguments[1]);
+				if (details != null) {
+					problem.initDetails(details);
+				}
 			}
+
 			throw problem;
 		}
 		return null;
@@ -83,7 +83,6 @@ public class Throw extends GenericMethod {
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("message")
 			.optional("details")
-			.optional("value")
 			.build();
 
 		/**
@@ -99,8 +98,7 @@ public class Throw extends GenericMethod {
 		}
 
 		@Override
-		public Throw build(Expr expr, SearchExpression[] args)
-				throws ConfigurationException {
+		public Throw build(Expr expr, SearchExpression[] args) {
 			return new Throw(getConfig().getName(), args);
 		}
 	}

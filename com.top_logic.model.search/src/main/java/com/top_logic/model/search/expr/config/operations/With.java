@@ -7,7 +7,6 @@ package com.top_logic.model.search.expr.config.operations;
 
 import java.util.List;
 
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.model.TLType;
@@ -89,7 +88,7 @@ public class With extends GenericMethod {
 		 */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("input")
-			.mandatory("function")
+			.mandatory("func")
 			.build();
 
 		/**
@@ -105,8 +104,7 @@ public class With extends GenericMethod {
 		}
 
 		@Override
-		public With build(Expr expr, SearchExpression[] args) throws ConfigurationException {
-			checkArgs(expr, args, 2, 2);
+		public With build(Expr expr, SearchExpression[] args) {
 			return new With(getConfig().getName(), args);
 		}
 

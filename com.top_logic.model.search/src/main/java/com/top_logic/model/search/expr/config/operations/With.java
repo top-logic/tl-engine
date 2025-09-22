@@ -71,11 +71,6 @@ public class With extends GenericMethod {
 		return function.eval(definitions, inputValue);
 	}
 
-	@Override
-	public boolean isSideEffectFree() {
-		return false;
-	}
-
 	/**
 	 * {@link MethodBuilder} creating {@link With} expressions.
 	 */

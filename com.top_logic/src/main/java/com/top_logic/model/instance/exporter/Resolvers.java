@@ -147,6 +147,7 @@ public class Resolvers {
 
 		PolymorphicConfiguration<? extends InstanceResolver> resolverConfig = resoverAnnotation.getImpl();
 		InstanceResolver resolver = TypedConfigUtil.createInstance(resolverConfig);
+		resolver.initType(type);
 		return resolver;
 	}
 

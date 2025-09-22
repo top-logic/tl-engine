@@ -17,6 +17,7 @@ public class Flex extends TypedExpression {
 
 	Flex(Expression context, String typeName, String attributeName) {
 		super(context, typeName);
+		assert attributeName != null;
 		this.name = attributeName;
 	}
 	

@@ -181,12 +181,15 @@ public class XMLInstanceExporter {
 			List<TLObject> batch = new ArrayList<>(_queue);
 			_queue.clear();
 			for (TLObject next : batch) {
+				ValueConf conf;
 				Ref ref = _exportIds.get(next);
 				if (ref.isExported()) {
-					// Skip.
-					continue;
+					// Just remember the reference to have the same set of objects available during
+					// import.
+					conf = refConfig(ref);
+				} else {
+					conf = exportObject(next, ref);
 				}
-				ObjectConf conf = exportObject(next, ref);
 
 				_objects.getObjects().add(conf);
 			}

@@ -45,6 +45,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 ERROR_UNZIP_FAILED__NAME_MSG;
 
 	/**
+	 * @en Instance import of file "{0}" failed.
+	 */
+	public static ResKey1 INSTANCE_IMPORT_FAILED__FILE;
+
+	/**
 	 * @en Instance import of file "{0}" failed: {1}
 	 */
 	public static ResKey2 INSTANCE_IMPORT_FAILED__FILE_MSG;

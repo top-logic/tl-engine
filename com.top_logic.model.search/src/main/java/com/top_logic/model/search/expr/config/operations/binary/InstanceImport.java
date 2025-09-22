@@ -9,7 +9,9 @@ import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.i18n.log.BufferingI18NLog;
 import com.top_logic.basic.io.BinaryContent;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
@@ -61,7 +63,18 @@ public class InstanceImport extends GenericMethod {
 				new XMLInstanceImporter(ModelService.getInstance().getModel(),
 					allocateTransient ? TransientObjectFactory.INSTANCE : ModelService.getInstance().getFactory());
 
-			return importer.importInstances(objects);
+			BufferingI18NLog log = new BufferingI18NLog();
+			importer.setLog(log);
+
+			List<TLObject> result = importer.importInstances(objects);
+
+			if (log.hasErrors()) {
+				throw log.asException(I18NConstants.INSTANCE_IMPORT_FAILED__FILE.fill(xmlData.getName()));
+			} else {
+				log.forwardToApplicationLog(InstanceImport.class);
+			}
+
+			return result;
 		} catch (ConfigurationException ex) {
 			throw new TopLogicException(
 				I18NConstants.INSTANCE_IMPORT_FAILED__FILE_MSG.fill(xmlData.getName(), ex.getErrorKey()), ex);

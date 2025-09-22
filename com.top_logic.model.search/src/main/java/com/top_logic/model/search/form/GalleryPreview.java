@@ -175,8 +175,14 @@ public class GalleryPreview extends AbstractPreviewContent<GalleryPreview.Config
 	 * Service method to create a default preview for the given {@link GalleryPreview}.
 	 */
 	public static HTMLFragment createGalleryContent(GalleryImage galleryImage) {
-		BinaryDataSource image = galleryImage.getImage();
+		return createImageContent(galleryImage.getImage());
+	}
 
+	/**
+	 * Service method to create a default preview for the given {@link BinaryDataSource} containing
+	 * image data.
+	 */
+	public static HTMLFragment createImageContent(BinaryDataSource image) {
 		Dimension maximalSize = null;
 		return defaultPreview(new DisplayImageControl(image, maximalSize), "galleryPreview");
 	}

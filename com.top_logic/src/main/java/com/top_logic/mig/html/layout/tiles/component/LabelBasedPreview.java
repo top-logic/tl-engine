@@ -8,6 +8,7 @@ package com.top_logic.mig.html.layout.tiles.component;
 import static com.top_logic.layout.basic.fragments.Fragments.*;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.InlineList;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.InstantiationContext;
@@ -87,6 +88,7 @@ public class LabelBasedPreview<C extends LabelBasedPreview.Config<?>> extends Co
 			try {
 				label = label(tile);
 			} catch (RuntimeException ex) {
+				Logger.error("Preview label generation failed.", ex, LabelBasedPreview.class);
 				errors = InlineList.add(ResKey.class, errors,
 					I18NConstants.ERROR_LABEL_PREVIEW_LABEL__MSG.fill(errorMessage(ex)));
 				label = text("ERROR");
@@ -95,6 +97,7 @@ public class LabelBasedPreview<C extends LabelBasedPreview.Config<?>> extends Co
 			try {
 				description = description(tile);
 			} catch (RuntimeException ex) {
+				Logger.error("Preview description generation failed.", ex, LabelBasedPreview.class);
 				errors = InlineList.add(ResKey.class, errors,
 					I18NConstants.ERROR_LABEL_PREVIEW_DESCRIPTION__MSG.fill(errorMessage(ex)));
 				description = text("ERROR");
@@ -103,6 +106,7 @@ public class LabelBasedPreview<C extends LabelBasedPreview.Config<?>> extends Co
 			try {
 				previewContent = previewContent(tile);
 			} catch (RuntimeException ex) {
+				Logger.error("Preview content generation failed.", ex, LabelBasedPreview.class);
 				errors = InlineList.add(ResKey.class, errors,
 					I18NConstants.ERROR_LABEL_PREVIEW_CONTENT__MSG.fill(errorMessage(ex)));
 				previewContent = defaultPreviewContent(text("ERROR"), null);

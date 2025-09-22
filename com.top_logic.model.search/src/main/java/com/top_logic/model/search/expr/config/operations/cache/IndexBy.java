@@ -10,7 +10,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
@@ -66,15 +65,8 @@ public class IndexBy extends GenericMethod {
 		Collection<?> source = asCollection(arguments[0]);
 		SearchExpression keyFun = asSearchExpression(arguments[1]);
 
-		SearchExpression clashFun = null;
-		if (arguments.length >= 3 && arguments[2] != null) {
-			clashFun = asSearchExpression(arguments[2]);
-		}
-
-		SearchExpression mapFun = null;
-		if (arguments.length >= 4 && arguments[3] != null) {
-			mapFun = asSearchExpression(arguments[3]);
-		}
+		SearchExpression clashFun = arguments[2] == null ? null : asSearchExpression(arguments[2]);
+		SearchExpression mapFun = arguments[3] == null ? null : asSearchExpression(arguments[3]);
 
 		Map<Object, Object> result = new LinkedHashMap<>();
 
@@ -82,23 +74,23 @@ public class IndexBy extends GenericMethod {
 			Object key = keyFun.eval(definitions, obj);
 
 			// Apply mapping function if provided
-			Object valueToStore = (mapFun != null) ? mapFun.eval(definitions, obj) : obj;
+			Object processedValue = (mapFun == null) ? obj : mapFun.eval(definitions, obj);
 
 			if (result.containsKey(key)) {
-				if (clashFun != null) {
-					// Resolve clash using clashFun
-					Object existingValue = result.get(key);
-					Object resolvedValue = clashFun.eval(definitions, existingValue, valueToStore);
-					result.put(key, resolvedValue);
-				} else {
+				if (clashFun == null) {
 					// No clash resolution provided - throw error
 					throw new TopLogicException(
 						I18NConstants.ERROR_MULTIPLE_VALUES_WITH_SAME_KEY__KEY_V1_V2_EXPR.fill(key, result.get(key),
-							valueToStore, this));
+							processedValue, this));
+				} else {
+					// Resolve clash using clashFun
+					Object existingValue = result.get(key);
+					Object resolvedValue = clashFun.eval(definitions, existingValue, processedValue);
+					result.put(key, resolvedValue);
 				}
 			} else {
 				// No clash - store the value
-				result.put(key, valueToStore);
+				result.put(key, processedValue);
 			}
 		}
 
@@ -136,8 +128,7 @@ public class IndexBy extends GenericMethod {
 		}
 
 		@Override
-		public IndexBy build(Expr expr, SearchExpression[] args) throws ConfigurationException {
-			checkArgs(expr, args, 2, 4);
+		public IndexBy build(Expr expr, SearchExpression[] args) {
 			return new IndexBy(getConfig().getName(), args);
 		}
 

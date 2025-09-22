@@ -1,20 +1,20 @@
 <h2>Syntax</h2>
 
 <pre>
-	<code>$list.indexBy($key-fun)
+	<code>$list.indexBy($keyFun)
 
-$list.indexBy($key-fun, $clash-fun)
+$list.indexBy($keyFun, $clashFun)
 
-$list.indexBy($key-fun, $map-fun)
+$list.indexBy($keyFun, $mapFun)
 
-$list.indexBy($key-fun, $clash-fun, $map-fun)</code>
+$list.indexBy($keyFun, $clashFun, $mapFun)</code>
 </pre>
 
 <h2>Description</h2>
 
 <p>Assigns a key value to each value in the list.</p>
 
-<p>In contrast to <a class="tlObject" data-custom="false" href="?page=groupBy&amp;uuid=0ceea055-4867-461a-9a86-d6ed56272dd8">grouping</a>, the values in the resulting dictionary are not lists, but individual elements. Therefore, the calculated key values must be unique for the elements of the input set. Key conflicts can be resolved by specifying an optional <code class="hljs inlineCode">clash-fun</code>. You can also specify <code class="hljs inlineCode">map-fun</code> to determine which value is saved for each key in the resulting dictionary.</p>
+<p>In contrast to <a class="tlObject" data-custom="false" href="?page=groupBy&amp;uuid=0ceea055-4867-461a-9a86-d6ed56272dd8">grouping</a>, the values in the resulting dictionary are not lists, but individual elements. Therefore, the calculated key values must be unique for the elements of the input set. Key conflicts can be resolved by specifying an optional <code class="hljs inlineCode">clashFun</code>. You can also specify <code class="hljs inlineCode">mapFun</code> to determine which value is saved for each key in the resulting dictionary.</p>
 
 <h2>Parameters</h2>
 
@@ -72,7 +72,7 @@ $list.indexBy($key-fun, $clash-fun, $map-fun)</code>
 
 <pre>
 	<code>list("Smith Joe", "Parker Jane", "Taylor Tom", "Black Tyler", "Brown Erik")
-   .indexBy(name -&gt; $name.subString(0, 3))</code>
+   .indexBy(keyFun: name -&gt; $name.subString(0, 3))</code>
 </pre>
 
 <p><strong>Output:</strong> A dictionary with the values:</p>
@@ -92,7 +92,7 @@ $list.indexBy($key-fun, $clash-fun, $map-fun)</code>
 
 <pre>
 	<code>list("Smith Joe", "Parker Jane", "Brown Erik", "Taylor Tom", "Black Tyler", "Brook Ashley", "Browning Dave")
-   .indexBy(name -&gt; $name.subString(0, 3), name1 -&gt; name2 -&gt; $name1 + " and " + $name2)
+   .indexBy(keyFun: name -&gt; $name.subString(0, 3), clashFun: name1 -&gt; name2 -&gt; $name1 + " and " + $name2)
 </code>
 </pre>
 
@@ -112,22 +112,22 @@ $list.indexBy($key-fun, $clash-fun, $map-fun)</code>
 <h3>Indexing by name abbreviation with clash function and map function</h3>
 
 <pre>
-<code>list("Smith Joe 45", "Parker Jane 32", "Brown Erik 28", "Taylor Tom 41", "Black Tyler 35", "Brook Ashley 29", "Browning Dave 33")
-   .indexBy(
-       name -&gt; $name.subString(0, 3), 
-       age1 -&gt; age2 -&gt; ($age1 + $age2) / 2,
-       name -&gt; numberFormat("#").parse($name.subString($name.length() - 2))
-   )</code></pre>
+<code>list(
+    {"name": "Smith", "age": 45},
+    {"name": "Parker", "age": 32},
+    {"name": "Brown", "age": 28},
+    {"name": "Brown", "age": 35},
+    {"name": "Brown", "age": 33},
+    {"name": "Taylor", "age": 41}
+).indexBy(
+    keyFun: person -&gt; $person["name"],
+    clashFun: age1 -&gt; age2 -&gt; ($age1 + $age2) / 2,
+    mapFun: person -&gt; $person["age"]
+)</code></pre>
 
 <p><strong>Output:</strong> A dictionary with the values:</p>
 
 <pre>
-<code>{
-   "Smi": 45.0,
-   "Par": 32.0,
-   "Tay": 41.0, 
-   "Bla": 35.0,
-   "Bro": 30.0
-}</code></pre>
+<code>{Smith=45.0, Parker=32.0, Brown=32.25, Taylor=41.0}</code></pre>
 
-<p>The names are indexed according to the first 3 letters. The last 2 characters (the age) are extracted from each name and saved as a number with <code class="bg-text-200/5 border border-0.5 border-border-300 text-danger-000 whitespace-pre-wrap rounded-[0.4rem] px-1 py-px text-[0.9rem]">numberFormat("#").parse()</code> (mapFun). The average age is calculated for the three names with the prefix "Bro": (28 + 29 + 33) / 2 = 30.</p>
+<p>The names are used as keys. The age is extracted from each person object and saved as a value (mapFun). If several persons have the same name, the ages are averaged in pairs (clashFun).</p>

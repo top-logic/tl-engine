@@ -23,7 +23,6 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.i18n.log.BufferingI18NLog;
-import com.top_logic.basic.i18n.log.BufferingI18NLog.Entry;
 import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.BinaryData;
@@ -191,17 +190,8 @@ public class InitialProcessSetupService extends ManagedClass {
 				.filter(Level.FATAL));
 		BPMLImporter importer = new BPMLImporter(log);
 		Collaboration newCollaboration = importer.importBPML(binding, source);
-		if (errors.hasEntries()) {
-			// Hack to get a structured error display: Join multiple errors in a chain of
-			// TopLogicException instances.
-			Throwable details = null;
-			List<Entry> entries = errors.getEntries();
-			for (int n = entries.size() - 1; n >= 0; n--) {
-				Entry e = entries.get(n);
-				details = new TopLogicException(e.getMessage(), details);
-			}
-			throw new TopLogicException(I18NConstants.ERROR_IMPORT_FAILED, details)
-				.initSeverity(ErrorSeverity.WARNING);
+		if (errors.hasEntries(Level.WARN)) {
+			throw errors.asException(I18NConstants.ERROR_IMPORT_FAILED);
 		}
 		return newCollaboration;
 	}

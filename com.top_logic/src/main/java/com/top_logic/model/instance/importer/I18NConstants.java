@@ -51,6 +51,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey3 FAILED_TO_IMPORT__ID_TYPE_MSG;
 
 	/**
+	 * @en Failed to resolve object of type "{0}" with ID "{1}".
+	 */
+	public static ResKey2 FAILED_TO_RESOLVE_OBJECT__TYPE_ID;
+
+	/**
 	 * @en Failed to resolve object of type "{0}" with ID "{1}": {2}
 	 */
 	public static ResKey3 FAILED_TO_RESOLVE_OBJECT__TYPE_ID_MSG;

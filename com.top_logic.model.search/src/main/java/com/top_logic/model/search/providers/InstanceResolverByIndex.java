@@ -18,6 +18,7 @@ import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.instance.exporter.XMLInstanceExporter;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
@@ -41,16 +42,18 @@ public class InstanceResolverByIndex implements InstanceResolver {
 	/**
 	 * Creates a {@link InstanceResolverByIndex} from configuration.
 	 * 
-	 * @param type
-	 *        The type to load all instances from.
 	 * @param part
 	 *        The identifying primitive attribute.
 	 */
 	@CalledByReflection
-	public InstanceResolverByIndex(TLClass type, TLStructuredTypePart part) {
-		_type = type;
+	public InstanceResolverByIndex(TLStructuredTypePart part) {
 		_part = part;
 		_idType = (TLPrimitive) _part.getType();
+	}
+
+	@Override
+	public void initType(TLStructuredType type) {
+		_type = (TLClass) type;
 	}
 
 	@Override

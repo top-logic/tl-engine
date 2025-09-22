@@ -7,6 +7,7 @@ package com.top_logic.model.instance.importer.resolver;
 
 import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.instance.importer.schema.GlobalRefConf;
 
@@ -42,5 +43,15 @@ public interface InstanceResolver {
 	 *         {@link #resolve(I18NLog, String, String)}. See {@link GlobalRefConf#getId()}.
 	 */
 	String buildId(TLObject obj);
+
+	/**
+	 * Callback that initializes this resolver with the type it was declared for.
+	 * 
+	 * @param type
+	 *        The type this resolver was declared on.
+	 */
+	default void initType(TLStructuredType type) {
+		// Hook for implementations.
+	}
 
 }

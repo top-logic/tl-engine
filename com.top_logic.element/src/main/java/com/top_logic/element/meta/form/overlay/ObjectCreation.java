@@ -11,7 +11,10 @@ import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Revision;
+import com.top_logic.knowledge.service.db2.PersistentObject;
+import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
@@ -110,6 +113,27 @@ public class ObjectCreation extends FormObjectOverlay {
 
 	@Override
 	public Object defaultValue(TLStructuredTypePart part) {
+		// This method computes the value to use, if the form has no field for the given part of
+		// this FormObjectOverlay.
+		// In case of ObjectCreation where we don't have a base-object as fallback, this will either
+		// be a calculated value or a default-value.
+		// In case of derived attributes consider the storage-implementation to calculate the value:
+		// See com.top_logic.model.impl.TransientTLObjectImpl.directValue(TLStructuredTypePart)
+		if (part.isDerived()) {
+			if (part.getModelKind() == ModelKind.REFERENCE && ((TLReference) part).isBackwards()) {
+				// Find forwards reference.
+				TLReference backwards = (TLReference) part;
+				TLReference forwards = backwards.getOppositeEnd().getReference();
+				return tReferers(forwards);
+			} else {
+				if (part.getName().equals(PersistentObject.T_TYPE_ATTR)) {
+					return tType();
+				} else {
+					return part.getStorageImplementation().getAttributeValue(this, part);
+				}
+			}
+		}
+		// Otherwise we check if a default value is configured.
 		DefaultProvider defaultProvider = DisplayAnnotations.getDefaultProvider(part);
 		if (defaultProvider != null) {
 			return defaultProvider.createDefault(_container, part, true);

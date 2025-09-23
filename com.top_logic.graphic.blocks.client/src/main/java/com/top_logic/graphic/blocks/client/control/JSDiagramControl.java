@@ -596,22 +596,26 @@ public class JSDiagramControl extends AbstractJSControl
 
 				DomGlobal.console.info("Apply server-side patch: " + patch);
 
-				JsonReader json = new JsonReader(new StringR(patch));
+				if (_scope == null) {
+					throw new IllegalStateException("No scope available.");
+				}
 				// avoid sending changes back to server.
-				_processServerUpdate = true;
-				try {
-					_scope.applyChanges(json);
-					if (!_dirtyNodes.isEmpty()) {
-						applyScopeChanges(_dirtyNodes);
-						_dirtyNodes.clear();
+				try (JsonReader json = new JsonReader(new StringR(patch))) {
+					_processServerUpdate = true;
+					try {
+						_scope.applyChanges(json);
+						if (!_dirtyNodes.isEmpty()) {
+							applyScopeChanges(_dirtyNodes);
+							_dirtyNodes.clear();
+						}
+						_scope.dropChanges();
+					} finally {
+						_processServerUpdate = false;
 					}
-					_scope.dropChanges();
 				} catch (IOException ex) {
 					String error = "Unable to apply diagram patch: " + ex.getMessage();
 					DomGlobal.console.error(error);
 					logError(error);
-				} finally {
-					_processServerUpdate = false;
 				}
 
 				break;
@@ -728,9 +732,9 @@ public class JSDiagramControl extends AbstractJSControl
 			var argsSupplier = function() {
 				var patch = patchSupplier();
 				return {
-					controlCommand : "update",
-					controlID : id,
-					patch : patch
+					controlCommand:"update",
+					controlID:id,
+					patch:patch
 				};
 			};
 			$wnd.services.ajax.executeOrUpdateWithLazyData(requestID, "dispatchControlCommand", argsSupplier);
@@ -740,9 +744,9 @@ public class JSDiagramControl extends AbstractJSControl
 	private native void sendUpdate(String id, String patch, double requestID) /*-{
 		$wnd.services.ajax.dropLazyRequest(requestID);
 		$wnd.services.ajax.execute("dispatchControlCommand", {
-			controlCommand : "update",
-			controlID : id,
-			patch : patch
+			controlCommand:"update",
+			controlID:id,
+			patch:patch
 		}, true)
 	}-*/;
 
@@ -805,19 +809,19 @@ public class JSDiagramControl extends AbstractJSControl
 
 	private native void dispatchClick(String id, int nodeId, JsArrayString mouseButtons) /*-{
 		$wnd.services.ajax.execute("dispatchControlCommand", {
-			controlCommand : "dispatchClick",
-			controlID : id,
-			nodeId : nodeId,
-			mouseButtons : mouseButtons
+			controlCommand:"dispatchClick",
+			controlID:id,
+			nodeId:nodeId,
+			mouseButtons:mouseButtons
 		}, false)
 	}-*/;
 
 	private native void dispatchDrop(String id, int nodeId) /*-{
 		$wnd.services.ajax.execute("dispatchControlCommand", {
-			controlCommand : "dispatchDrop",
-			controlID : id,
-			nodeId : nodeId,
-			data : $wnd.tlDnD.data
+			controlCommand:"dispatchDrop",
+			controlID:id,
+			nodeId:nodeId,
+			data:$wnd.tlDnD.data
 		}, false)
 	}-*/;
 }

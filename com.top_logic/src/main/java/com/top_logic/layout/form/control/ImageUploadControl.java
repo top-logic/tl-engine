@@ -213,10 +213,10 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		out.endBeginTag();
 		{
 			writeUploadInput(context, out, editable);
-			if (image == null && editable) {
+			if (image == null) {
 				// in case there is currently no image in the field an
 				// upload box is rendered
-				writeUploadButtonLabel(context, out);
+				writeUploadButtonLabel(context, out, editable);
 			} else {
 				renderImage(context, out, image, editable);
 			}
@@ -246,27 +246,27 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 	 * Writes the button for selecting files to upload.
 	 */
 	private void writeUploadInput(DisplayContext context, TagWriter out, boolean editable) throws IOException {
-		if (editable) {
-			out.beginBeginTag(INPUT);
-			out.writeAttribute(TYPE_ATTR, FILE_TYPE_VALUE);
-			out.writeAttribute(ID_ATTR, uploadId());
-			out.writeAttribute(CLASS_ATTR, FormConstants.IS_UPLOAD_CSS_CLASS);
+		if (!editable)
+			return;
+		out.beginBeginTag(INPUT);
+		out.writeAttribute(TYPE_ATTR, FILE_TYPE_VALUE);
+		out.writeAttribute(ID_ATTR, uploadId());
+		out.writeAttribute(CLASS_ATTR, FormConstants.IS_UPLOAD_CSS_CLASS);
 
-			// Prevent a click that opens the file chooser to also select a table row (if displayed
-			// in a table cell). Otherwise the row might get redrawn an the underlying control
-			// removed. Note: This hack must be done at the label element forwarding the event to
-			// the
-			// file input and the file input itself to "really" prevent the event from bubbling.
-			out.writeAttribute(ONCLICK_ATTR, "var e = BAL.getEvent(event); e.stopPropagation(); return true;");
+		// Prevent a click that opens the file chooser to also select a table row (if displayed
+		// in a table cell). Otherwise the row might get redrawn an the underlying control
+		// removed. Note: This hack must be done at the label element forwarding the event to
+		// the
+		// file input and the file input itself to "really" prevent the event from bubbling.
+		out.writeAttribute(ONCLICK_ATTR, "var e = BAL.getEvent(event); e.stopPropagation(); return true;");
 
-			if (!getModel().isActive()) {
-				out.writeAttribute(DISABLED_ATTR, DISABLED_DISABLED_VALUE);
-			}
-			writeOnPasteFocusImage(out);
-			writeOnFileInputChange(out);
-			writeAcceptedFileTypes(out);
-			out.endEmptyTag();
+		if (!getModel().isActive()) {
+			out.writeAttribute(DISABLED_ATTR, DISABLED_DISABLED_VALUE);
 		}
+		writeOnPasteFocusImage(out);
+		writeOnFileInputChange(out);
+		writeAcceptedFileTypes(out);
+		out.endEmptyTag();
 	}
 
 	private void writeOnPasteFocusImage(TagWriter out) {
@@ -290,7 +290,9 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		}
 	}
 
-	private void writeUploadButtonLabel(DisplayContext context, TagWriter out) throws IOException {
+	private void writeUploadButtonLabel(DisplayContext context, TagWriter out, boolean editable) throws IOException {
+		if (!editable)
+			return;
 		out.beginBeginTag(LABEL);
 		out.writeAttribute(FOR_ATTR, uploadId());
 

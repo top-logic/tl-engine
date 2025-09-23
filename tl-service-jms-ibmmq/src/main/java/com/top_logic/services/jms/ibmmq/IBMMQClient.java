@@ -126,7 +126,7 @@ public class IBMMQClient extends JMSClient {
 		boolean getAutoReconnect();
 
 		/**
-		 * The time in MillisFormat that the IBM auto-reconnect tries to reconnect for.
+		 * The time in {@link MillisFormat} that the IBM auto-reconnect tries to reconnect for.
 		 */
 		@Name(RECONNECT_TIMEOUT)
 		@StringDefault("4min")

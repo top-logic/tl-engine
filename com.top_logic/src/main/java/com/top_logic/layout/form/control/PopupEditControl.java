@@ -29,7 +29,6 @@ import com.top_logic.layout.Renderer;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.VetoException;
 import com.top_logic.layout.basic.Command;
-import com.top_logic.layout.basic.Command.CommandChain;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.layout.basic.ControlCommandModel;
@@ -409,7 +408,7 @@ public class PopupEditControl extends AbstractFormFieldControl {
 		layout.addChild(editlayout);
 
 		Command closeAction = dialogModel.getCloseAction();
-		CommandChain apply = new CommandChain(getApplyCommand(originalField, editField), closeAction);
+		Command apply = getApplyCommand(originalField, editField).andThen(closeAction);
 		dialogModel.setDefaultCommand(apply);
 		LayoutControlAdapter buttonsLayout = new LayoutControlAdapter(getButtonsTag(apply, closeAction));
 		buttonsLayout.setConstraint(

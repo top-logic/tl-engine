@@ -121,9 +121,7 @@ public class FilterOptionsUtil {
 		@Override
 		protected void fillButtons(List<CommandModel> buttons) {
 			CommandModel ok = MessageBox.button(ButtonType.OK,
-				new Command.CommandChain(
-					new ApplyFilterOptionsExecutable(_viewModel, getFormContext()),
-					getDiscardClosure()));
+				closeDialogAfter(new ApplyFilterOptionsExecutable(_viewModel, getFormContext())));
 			buttons.add(ok);
 
 			addCancel(buttons);

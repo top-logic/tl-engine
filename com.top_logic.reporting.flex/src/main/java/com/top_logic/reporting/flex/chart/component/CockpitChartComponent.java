@@ -43,7 +43,6 @@ import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.basic.Command;
-import com.top_logic.layout.basic.Command.CommandChain;
 import com.top_logic.layout.basic.CommandModel;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
@@ -574,8 +573,8 @@ public class CockpitChartComponent extends AbstractChartComponent {
 					return HandlerResult.DEFAULT_RESULT;
 				}
 			};
-			final Command continuation = setSelection;
-			someButtons.add(MessageBox.button(ButtonType.OK, new CommandChain(continuation, getDiscardClosure())));
+			Command continuation = closeDialogAfter(setSelection);
+			someButtons.add(MessageBox.button(ButtonType.OK, continuation));
 			addCancel(someButtons);
 		}
 

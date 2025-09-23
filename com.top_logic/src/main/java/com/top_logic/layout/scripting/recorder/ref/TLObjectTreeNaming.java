@@ -18,6 +18,7 @@ import java.util.Objects;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.col.TupleFactory.Pair;
 import com.top_logic.basic.col.search.SearchResult;
 import com.top_logic.basic.config.ApplicationConfig;
@@ -46,7 +47,7 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
-public class TLObjectTreeNaming extends AbstractModelNamingScheme<TLObject, TLObjectTreeNaming.TLObjectTreeName> {
+public class TLObjectTreeNaming extends GlobalModelNamingScheme<TLObject, TLObjectTreeNaming.TLObjectTreeName> {
 
 	/** {@link ModelName} for the {@link TLObjectTreeNaming}. */
 	public interface TLObjectTreeName extends ModelName {
@@ -149,15 +150,24 @@ public class TLObjectTreeNaming extends AbstractModelNamingScheme<TLObject, TLOb
 	}
 
 	@Override
-	protected boolean isCompatibleModel(TLObject model) {
+	public Maybe<TLObjectTreeName> buildName(TLObject model) {
+		if (isCompatibleModel(model)) {
+			TLObjectTreeName name = createName();
+			initName(name, model);
+			return Maybe.some(name);
+		} else {
+			return Maybe.none();
+		}
+	}
+
+	private boolean isCompatibleModel(TLObject model) {
 		if (model.tType().getModelKind() != ModelKind.CLASS) {
 			return false;
 		}
 		return model.tContainer() != null;
 	}
 
-	@Override
-	protected void initName(TLObjectTreeName name, TLObject model) {
+	private void initName(TLObjectTreeName name, TLObject model) {
 		Pair<TLObject, List<TLObjectTreeStep>> rootAndPath = getRootAndCreatePath(model);
 		List<TLObjectTreeStep> path = rootAndPath.getSecond();
 		name.setPath(path);

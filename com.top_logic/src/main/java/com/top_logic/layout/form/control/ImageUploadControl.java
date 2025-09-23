@@ -103,6 +103,10 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 	 */
 	public static final String IMAGEUPLOAD_CONTROL_CLASS = FormConstants.FORM_PACKAGE + ".ImageUploadControl";
 
+	private String getJsSetCtrlID() {
+		return IMAGEUPLOAD_CONTROL_CLASS + ".controlID = '" + getID() + "'; ";
+	}
+
 	/**
 	 * Creates a {@link ImageUploadControl}.
 	 * 
@@ -204,13 +208,15 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		writeControlAttributes(context, out);
 		if (editable) {
 			writeOnDropImage(out);
+			writeOnPasteOverImage(out);
 		}
 		out.endBeginTag();
 		{
-			if (image == null) {
+			writeUploadInput(context, out, editable);
+			if (image == null && editable) {
 				// in case there is currently no image in the field an
 				// upload box is rendered
-				writeUploadButton(context, out, editable);
+				writeUploadButtonLabel(context, out);
 			} else {
 				renderImage(context, out, image, editable);
 			}
@@ -222,7 +228,12 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		out.writeAttribute(ONDRAGOVER_ATTR, "event.preventDefault();");
 		out.writeAttribute(ONDRAGENTER_ATTR, "this.classList.add('dragHover');");
 		out.writeAttribute(ONDRAGLEAVE_ATTR, "this.classList.remove('dragHover');");
-		out.writeAttribute(ONDROP_ATTR, IMAGEUPLOAD_CONTROL_CLASS + ".dropToUpload(event, '" + getID() + "')");
+		out.writeAttribute(ONDROP_ATTR, getJsSetCtrlID() + IMAGEUPLOAD_CONTROL_CLASS + ".dropToUpload(event);");
+	}
+
+	private void writeOnPasteOverImage(TagWriter out) {
+		out.writeAttribute(ONMOUSEENTER_ATTR, getJsSetCtrlID() + IMAGEUPLOAD_CONTROL_CLASS + ".addPaste()");
+		out.writeAttribute(ONMOUSELEAVE_ATTR, getJsSetCtrlID() + IMAGEUPLOAD_CONTROL_CLASS + ".removePaste()");
 	}
 
 	boolean isPictureOrNull(Object value) {
@@ -234,7 +245,7 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 	/**
 	 * Writes the button for selecting files to upload.
 	 */
-	private void writeUploadButton(DisplayContext context, TagWriter out, boolean editable) throws IOException {
+	private void writeUploadInput(DisplayContext context, TagWriter out, boolean editable) throws IOException {
 		if (editable) {
 			out.beginBeginTag(INPUT);
 			out.writeAttribute(TYPE_ATTR, FILE_TYPE_VALUE);
@@ -251,18 +262,24 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 			if (!getModel().isActive()) {
 				out.writeAttribute(DISABLED_ATTR, DISABLED_DISABLED_VALUE);
 			}
+			writeOnPasteFocusImage(out);
 			writeOnFileInputChange(out);
 			writeAcceptedFileTypes(out);
 			out.endEmptyTag();
-			writeUploadButtonLabel(context, out);
 		}
+	}
+
+	private void writeOnPasteFocusImage(TagWriter out) {
+		out.writeAttribute(ONFOCUS_ATTR, getJsSetCtrlID() + IMAGEUPLOAD_CONTROL_CLASS + ".addPaste()");
+		out.writeAttribute(ONBLUR_ATTR, getJsSetCtrlID() + IMAGEUPLOAD_CONTROL_CLASS + ".removePaste()");
+		out.writeAttribute(ONPASTE_ATTR, getJsSetCtrlID() + IMAGEUPLOAD_CONTROL_CLASS + ".dropToUpload(event);");
 	}
 
 	private void writeOnFileInputChange(TagWriter out) throws IOException {
 		out.beginAttribute(ONCHANGE_ATTR);
-		out.append(IMAGEUPLOAD_CONTROL_CLASS + ".updateImage('");
-		out.append(getID());
-		out.append("', this.files)");
+		out.append(IMAGEUPLOAD_CONTROL_CLASS + ".updateImage(");
+		out.append(IMAGEUPLOAD_CONTROL_CLASS);// getID());
+		out.append(", this.files)");
 		out.endAttribute();
 	}
 
@@ -363,11 +380,7 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 		writeControlAttributes(context, out);
 		out.endBeginTag();
 		{
-			if (image == null) {
-				// in case there is currently no image in the field an
-				// upload box is rendered
-				writeUploadButton(context, out, false);
-			} else {
+			if (image != null) {
 				renderImage(context, out, image, false);
 			}
 		}

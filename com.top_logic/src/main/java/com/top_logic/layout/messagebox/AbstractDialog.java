@@ -67,6 +67,14 @@ public abstract class AbstractDialog {
 	}
 
 	/**
+	 * Service method to create a command that closes this dialog after the given command was
+	 * executed.
+	 */
+	public Command closeDialogAfter(Command cmd) {
+		return cmd.andThen(getDiscardClosure());
+	}
+
+	/**
 	 * @see #open(WindowScope)
 	 */
 	public HandlerResult open(DisplayContext context) {

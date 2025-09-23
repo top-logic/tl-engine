@@ -82,7 +82,6 @@ public class GuiInspectorControl extends AbstractFormDialog {
 		annotateButtonsAsDontRecord(buttonList);
 	}
 
-	@SuppressWarnings("synthetic-access")
 	private CommandModel createResetButton() {
 		return MessageBox.button(I18NConstants.RESET, Icons.RESET, Icons.RESET_DISABLED, new FormResetter());
 	}
@@ -93,8 +92,7 @@ public class GuiInspectorControl extends AbstractFormDialog {
 	}
 
 	private CommandModel createCreateAssertionsButton() {
-		Command createAssertionsAndCloseDialogCommand =
-			new Command.CommandChain(new RecordAssertionsCommand(_model.getAssertions()), getDiscardClosure());
+		Command createAssertionsAndCloseDialogCommand = closeDialogAfter(new RecordAssertionsCommand(_model.getAssertions()));
 		return MessageBox.button(I18NConstants.CREATE_ASSERTIONS, Icons.CREATE_ASSERTIONS,
 			Icons.CREATE_ASSERTIONS_DISABLED, createAssertionsAndCloseDialogCommand);
 	}

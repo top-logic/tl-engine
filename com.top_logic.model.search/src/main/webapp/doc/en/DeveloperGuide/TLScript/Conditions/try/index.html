@@ -1,19 +1,18 @@
 <h2>Syntax</h2>
 
 <pre>
-	<code>$argument.try($tryFunc, $catchFunc)</code>
+	<code>try($tryFunc, $catchFunc)</code>
 </pre>
 
 <h2>Description</h2>
 
 <div>
-<div>Executes a try function on the passed argument and handles any errors that occur using a catch function. The try function implements a try-catch behavior for TLScript that enables robust error handling.</div>
+<div>Executes a try function and handles any errors that occur using a catch function. The try function implements a try-catch behavior for TLScript that enables robust error handling.</div>
 </div>
 
-<p>The function works with three parameters:</p>
+<p>The function works with two parameters:</p>
 
 <ol>
-	<li><strong>Argument</strong>: The value that is passed to the try function</li>
 	<li><strong>Try function</strong>: The function to be executed that could cause an error</li>
 	<li><strong>Catch function</strong>: The fallback function that is executed in the event of an error</li>
 </ol>
@@ -39,23 +38,18 @@
 			<th>Standard</th>
 		</tr>
 		<tr>
-			<td>argument</td>
-			<td>Any</td>
-			<td>The value that is passed to the try function as a parameter</td>
-			<td>Yes</td>
-			<td>-</td>
-		</tr>
-		<tr>
-			<td>tryFunc</td>
+			<td>
+			<p>tryFunc</p>
+			</td>
 			<td>Function</td>
-			<td>The function that is to be executed. Receives the argument as a parameter</td>
+			<td>The function that is to be executed.</td>
 			<td>yes</td>
 			<td>-</td>
 		</tr>
 		<tr>
 			<td>catchFunc</td>
 			<td>Function</td>
-			<td>The fallback function that is executed when an error occurs. Receives the exception object as a parameter</td>
+			<td>The fallback function that is executed in the event of an error. Receives the exception object as a parameter</td>
 			<td>no</td>
 			<td>null</td>
 		</tr>
@@ -73,13 +67,13 @@
 <h2>Examples</h2>
 
 <pre>
-	<code>$emailAddress.try(
-  emailAddr -&gt; sendMail(
+	<code>try(
+  sendMail(
     subject: $subject,
     to: $emailAddr,
     body: $emailBody
   ),
-  mailError -&gt; emailAddr -&gt; {
+  catchFun: mailError -&gt; {
     info("E-Mail-Zustellung an " + $emailAddr + " fehlgeschlagen. Grund: " + $mailError);
     false
   }

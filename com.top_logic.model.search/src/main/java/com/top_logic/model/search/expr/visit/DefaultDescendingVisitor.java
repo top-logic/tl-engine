@@ -51,6 +51,7 @@ import com.top_logic.model.search.expr.Sort;
 import com.top_logic.model.search.expr.StringContains;
 import com.top_logic.model.search.expr.StringEndsWith;
 import com.top_logic.model.search.expr.StringStartsWith;
+import com.top_logic.model.search.expr.Try;
 import com.top_logic.model.search.expr.TupleExpression;
 import com.top_logic.model.search.expr.Union;
 import com.top_logic.model.search.expr.Update;
@@ -315,6 +316,15 @@ public class DefaultDescendingVisitor<R, A> extends DescendingVisitor<R, A> {
 	@Override
 	protected R composeArithmetic(ArithmeticExpr expr, A arg, R leftResult, R rightResult) {
 		return compose(expr, arg, combine(leftResult, rightResult));
+	}
+
+	@Override
+	protected R composeTry(Try expr, A arg, R tryResult, R catchResult) {
+		if (catchResult == null) {
+			return compose(expr, arg, tryResult);
+		} else {
+			return compose(expr, arg, combine(tryResult, catchResult));
+		}
 	}
 
 	/**

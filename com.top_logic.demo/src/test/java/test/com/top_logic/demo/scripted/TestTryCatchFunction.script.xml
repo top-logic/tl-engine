@@ -30,9 +30,9 @@
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 				<value><![CDATA[{
-    argument = 10;
-    result = $argument.try(
-        x -> $x * 2,
+    x = 10;
+    result = try(
+        $x * 2,
         error -> "Error occurred: " + $error
     );
     $result; // Expected: 20
@@ -82,12 +82,12 @@
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 				<value><![CDATA[{
-    argument = "test";
-    result = $argument.try(
-        x -> throw("This is a test error"),
+    x = "test";
+    result = try(
+        throw("This is a test error"),
         error -> "Caught: " + $error
     );
-    $result; // Expected: "This is a test error"
+    $result; // Expected: "Caught: This is a test error"
 }]]></value>
 			</value>
 		</action>
@@ -134,9 +134,9 @@
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 				<value><![CDATA[{
-    argument = "Hello World";
-    result = $argument.try(
-        x -> toUpperCase($x),
+    x = "Hello World";
+    result = try(
+        toUpperCase($x),
         error -> "Failed to process: " + $error
     );
     $result; // Expected: "HELLO WORLD"
@@ -186,13 +186,13 @@
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 				<value><![CDATA[{
-    argument = -5;
-    result = $argument.try(
-        x -> {
-            if($x < 0, throw("Negative values not allowed."), $x * $x);
+    x = -5;
+    result = try(
+        {
+            if($x < 0, throw("Negative values not allowed: " + $x), $x * $x);
         },
-        error -> origArgument -> {
-            logMessage = toString("Validation with argument '" + $origArgument + "' failed. Reason: ", $error);
+        error -> {
+            logMessage = toString("Validation failed: ", $error);
             $logMessage;
         }
     );
@@ -228,7 +228,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="Validation with argument '-5' failed. Reason: Negative values not allowed."
+				value="Validation failed: Negative values not allowed: -5"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -243,9 +243,9 @@
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 				<value><![CDATA[{
-    argument = list(1, 2, 3, 4, 5);
-    result = $argument.try(
-        numbers -> {
+    numbers = list(1, 2, 3, 4, 5);
+    result = try(
+        {
             doubled = $numbers.map(n -> $n * 2);
             filtered = $doubled.filter(n -> $n > 4);
             {
@@ -358,15 +358,11 @@
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 				<value><![CDATA[{
+    x = generateSequenceId("123");
 
-    argument = "not-a-number";
-
-    result = $argument.try(
-
-        x -> messageFormat("Good {0}!").parse($x),
-
+    result = try(
+        messageFormat("Good {0}!").parse($x),
         error -> -1  // Return default number instead of string
-
     );
 
     $result; // Expected: -1
@@ -376,8 +372,8 @@
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 			command-implementation-comment="com.top_logic.model.search.providers.ScriptConsoleHandler"
-			command-label="Script ausführen"
-			command-name="executeSearchConsole"
+			command-label="Script ausführen und Änderungen speichern"
+			command-name="updateSearchConsole"
 			component-implementation-comment="com.top_logic.model.search.ui.ExpertSearchExpressionEditor"
 			component-name="com.top_logic.model.search/admin/scriptConsole.layout.xml#ExpertModelSearchEditor"
 			user-id="root"
@@ -417,9 +413,9 @@
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 				<value><![CDATA[{
-    argument = "valid@email.com";
-    result = $argument.try(
-        email -> $email.stringContains("@"),
+    email = "valid@email.com";
+    result = try(
+        $email.stringContains("@"),
         error -> false
     );
     $result; // Expected: true
@@ -469,13 +465,13 @@
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 				<value><![CDATA[{
-    argument = "test-data";
-    result = $argument.try(
-        data -> {
+    data = "test-data";
+    result = try(
+        {
             // Nested try-catch
-            nestedResult = $data.try(
-                innerData -> {
-                    if($innerData == "test-data", 
+            nestedResult = try(
+                {
+                    if($data == "test-data", 
                        "Inner success", 
                        throw("Inner validation failed"));
                 },
@@ -532,16 +528,17 @@
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 				<value><![CDATA[{
-    argument = "fail-me";
-    result = $argument.try(
-        data -> throw("First error"),
+    data = "fail-me";
+    recoveryData = "recovery-data";
+    result = try(
+        throw("First error"),
         error -> {
             // Try to recover with nested try-catch
-            recoveryResult = "recovery-data".try(
-                recoveryData -> "Recovered with: " + $recoveryData,
+            recoveryResult = try(
+                "Recovered with: " + $recoveryData,
                 recoveryError -> "Recovery also failed"
             );
-            "Caught first error, recovery: " + $recoveryResult;
+            "Caught: "+ $error + ". " + $recoveryResult;
         }
     );
     $result;
@@ -576,7 +573,7 @@
 				/>
 			</actual-value>
 			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="Caught first error, recovery: Recovered with: recovery-data"
+				value="Caught: First error. Recovered with: recovery-data"
 			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
@@ -591,13 +588,15 @@
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 				<value><![CDATA[{
-    argument = 5;
-    result = $argument.try(
-        x -> {
-            level1 = ($x * 2).try(
-                doubled -> {
-                    level2 = ($doubled + 10).try(
-                        sum -> $sum / 2,
+    x = 5;
+    result = try(
+        {
+            doubled = $x * 2;
+            level1 = try(
+                {
+                    sum = $doubled + 10;
+                    level2 = try(
+                        $sum / 2,
                         error -> "Level 2 error"
                     );
                     $level2;
@@ -655,11 +654,11 @@
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 				<value><![CDATA[{
-    argument = list("1", "2", "invalid", "4", "5");
-    result = $argument.try(
-        stringNumbers -> $stringNumbers
-            .map(str -> $str.try(
-                s -> numberFormat("#").parse($s),
+    stringNumbers = list("1", "2", "invalid", "4", "5");
+    result = try(
+        $stringNumbers
+            .map(str -> try(
+                numberFormat("#").parse($str),
                 error -> 0
             ))
             .filter(num -> $num > 0),
@@ -775,9 +774,9 @@
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 				<value><![CDATA[{
-    argument = 15;
-    result = $argument.try(
-        num -> {
+    num = 15;
+    result = try(
+        {
             processedValue = if($num > 10, $num * 2, $num);
             category = $processedValue > 20 ? "high" : "normal";
             {
@@ -865,15 +864,16 @@
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 				<value><![CDATA[{
-    argument = "hello";
-    result = $argument
-        .try(
-            str -> toUpperCase($str),
+    str = "hello";
+    result = try(
+            toUpperCase($str),
             error -> "DEFAULT"
         )
-        .try(
-            upperStr -> $upperStr + " WORLD",
-            error -> "FALLBACK"
+        .with(tryResult -> 
+            try(
+                $tryResult + " WORLD",
+                error -> "FALLBACK"
+            )
         );
     $result; // Expected: "HELLO WORLD"
 }]]></value>
@@ -922,16 +922,16 @@
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 				<value><![CDATA[{
-    argument = list(
+    people = list(
         {"name": "Alice", "age": "25"},
         {"name": "Bob", "age": "invalid"},
         {"name": "Charlie", "age": "30"}
     );
     
-    result = $argument.try(
-        people -> $people.map(person -> {
-            validAge = $person["age"].try(
-                ageStr -> numberFormat("#").parse($ageStr),
+    result = try(
+        $people.map(person -> {
+            validAge = try(
+                numberFormat("#").parse($person["age"]),
                 error -> 0
             );
             {
@@ -1106,22 +1106,22 @@
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 				<value><![CDATA[{
-    argument = {
+    config = {
         "users": list("user1", "user2", "user3"),
         "operation": "validate"
     };
     
-    result = $argument.try(
-        config -> {
-            users = $config["users"];
+    result = try(
+        {
+            userList = $config["users"];
             operation = $config["operation"];
             
-            processedUsers = $users.try(
-                userList -> $userList
+            processedUsers = try(
+                $userList
                     .filter(user -> $user != null)
                     .map(user -> {
-                        processed = $user.try(
-                            u -> toUpperCase($u),
+                        processed = try(
+                            toUpperCase($user),
                             error -> "INVALID_USER"
                         );
                         $processed;
@@ -1234,9 +1234,9 @@
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 				<value><![CDATA[{
-    argument = "";
-    result = $argument.try(
-        emptyStr -> {
+    emptyStr = "";
+    result = try(
+        {
             if($emptyStr.length() == 0, 
                throw("Empty string not allowed"), 
                $emptyStr);
@@ -1290,9 +1290,9 @@
 			</field>
 			<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name">
 				<value><![CDATA[{
-    argument = "";
-    result = $argument.try(
-        emptyStr -> {
+    emptyStr = "";
+    result = try(
+        {
             if($emptyStr.length() == 0, 
                throw("Empty string not allowed"), 
                $emptyStr);

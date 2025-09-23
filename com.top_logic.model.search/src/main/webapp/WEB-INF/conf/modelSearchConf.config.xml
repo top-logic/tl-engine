@@ -394,6 +394,7 @@
 					<method name="getKey" class="com.top_logic.model.search.expr.config.operations.struct.GetKey$Builder"/>
 					<method name="getValue" class="com.top_logic.model.search.expr.config.operations.struct.GetValue$Builder"/>
 
+					<method name="try" class="com.top_logic.model.search.expr.Try$Builder"/>
 					<method name="ifElse" class="com.top_logic.model.search.expr.config.operations.IfElseBuilder"/>
 					<method name="if" class="com.top_logic.model.search.expr.config.operations.IfElseBuilder"/>
 					<method name="isEmpty" class="com.top_logic.model.search.expr.config.operations.IsEmptyBuilder"/>

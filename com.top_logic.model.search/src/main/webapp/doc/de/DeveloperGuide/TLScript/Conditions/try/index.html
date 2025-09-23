@@ -1,19 +1,18 @@
 <h2>​​Syntax</h2>
 
 <pre>
-	<code>$argument.try($tryFunc, $catchFunc)</code>
+	<code>try($tryFunc, $catchFunc)</code>
 </pre>
 
 <h2>Beschreibung</h2>
 
 <div>
-<div>Führt eine Try-Funktion auf dem übergebenen Argument aus und behandelt auftretende Fehler durch eine Catch-Funktion. Die try-Funktion implementiert ein try-catch-Verhalten für TLScript, das eine robuste Fehlerbehandlung ermöglicht.</div>
+<div>Führt eine Try-Funktion aus und behandelt auftretende Fehler durch eine Catch-Funktion. Die try-Funktion implementiert ein try-catch-Verhalten für TLScript, das eine robuste Fehlerbehandlung ermöglicht.</div>
 </div>
 
-<p>Die Funktion arbeitet mit drei Parametern:</p>
+<p>Die Funktion arbeitet mit zwei Parametern:</p>
 
 <ol>
-	<li><strong>Argument</strong>: Der Wert, der an die try-Funktion weitergegeben wird</li>
 	<li><strong>Try-Funktion</strong>: Die auszuführende Funktion, die einen Fehler verursachen könnte</li>
 	<li><strong>Catch-Funktion</strong>: Die Fallback-Funktion, die bei einem Fehler ausgeführt wird</li>
 </ol>
@@ -39,18 +38,11 @@
 			<th>Standard</th>
 		</tr>
 		<tr>
-			<td>argument</td>
-			<td>Any</td>
-			<td>Der Wert, der an die try-Funktion als Parameter übergeben wird</td>
-			<td>ja</td>
-			<td>-</td>
-		</tr>
-		<tr>
 			<td>
 			<p>tryFunc</p>
 			</td>
 			<td>Funktion</td>
-			<td>Die Funktion, die ausgeführt werden soll. Erhält das Argument als Parameter</td>
+			<td>Die Funktion, die ausgeführt werden soll.</td>
 			<td>ja</td>
 			<td>-</td>
 		</tr>
@@ -75,13 +67,13 @@
 <h2>Beispiele</h2>
 
 <pre>
-	<code>$emailAddress.try(
-  emailAddr -&gt; sendMail(
+	<code>try(
+  sendMail(
     subject: $subject,
     to: $emailAddr,
     body: $emailBody
   ),
-  mailError -&gt; emailAddr -&gt; {
+  catchFun: mailError -&gt; {
     info("E-Mail-Zustellung an " + $emailAddr + " fehlgeschlagen. Grund: " + $mailError);
     false
   }

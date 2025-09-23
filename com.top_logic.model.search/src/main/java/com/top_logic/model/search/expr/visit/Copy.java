@@ -54,6 +54,7 @@ import com.top_logic.model.search.expr.Sort;
 import com.top_logic.model.search.expr.StringContains;
 import com.top_logic.model.search.expr.StringEndsWith;
 import com.top_logic.model.search.expr.StringStartsWith;
+import com.top_logic.model.search.expr.Try;
 import com.top_logic.model.search.expr.TupleExpression;
 import com.top_logic.model.search.expr.TupleExpression.Coord;
 import com.top_logic.model.search.expr.Union;
@@ -356,6 +357,12 @@ public class Copy extends DescendingVisitor<SearchExpression, Void> {
 	protected SearchExpression composeArithmetic(ArithmeticExpr expr, Void arg, SearchExpression leftResult,
 			SearchExpression rightResult) {
 		return arithmetic(expr.getOp(), leftResult, rightResult);
+	}
+
+	@Override
+	protected SearchExpression composeTry(Try expr, Void arg, SearchExpression tryResult,
+			SearchExpression catchResult) {
+		return new Try(tryResult, catchResult);
 	}
 
 	/**

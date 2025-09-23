@@ -55,6 +55,7 @@ import com.top_logic.model.search.expr.StringContains;
 import com.top_logic.model.search.expr.StringEndsWith;
 import com.top_logic.model.search.expr.StringOperation;
 import com.top_logic.model.search.expr.StringStartsWith;
+import com.top_logic.model.search.expr.Try;
 import com.top_logic.model.search.expr.TupleExpression;
 import com.top_logic.model.search.expr.TupleExpression.Coord;
 import com.top_logic.model.search.expr.Union;
@@ -360,6 +361,15 @@ public abstract class GenericDescendingVisitor<R, A> extends AbstractDescendingV
 	@Override
 	public R visitSort(Sort expr, A arg) {
 		return compose(expr, arg, descendPart(expr, arg, expr.getList()), descendPart(expr, arg, expr.getComparator()));
+	}
+
+	@Override
+	public R visitTry(Try expr, A arg) {
+		if (expr.getCatchBlock() == null) {
+			return compose(expr, arg, descendParts(expr, arg, expr.getTryBlock(), null));
+		} else {
+			return compose(expr, arg, descendParts(expr, arg, expr.getTryBlock(), expr.getCatchBlock()));
+		}
 	}
 
 	/**

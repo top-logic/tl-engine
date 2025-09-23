@@ -951,10 +951,6 @@ table td .cDecoratedCell :is(.lFlexible,.lFixedLeft) > .cTooltip {
 	align-items: center;
 }
 
-table .cDecoratedCell > .lFlexible > :first-child:not(a) {
-	flex-grow: 2;
-}
-
 table td span.cDecoratedCell {
 	gap: var(--spacing-01);
 }

@@ -47,7 +47,7 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
-public class TLObjectTreeNaming extends GlobalModelNamingScheme<TLObject, TLObjectTreeNaming.TLObjectTreeName> {
+public class TLObjectTreeNaming extends ModelNamingScheme<Object, TLObject, TLObjectTreeNaming.TLObjectTreeName> {
 
 	/** {@link ModelName} for the {@link TLObjectTreeNaming}. */
 	public interface TLObjectTreeName extends ModelName {
@@ -146,11 +146,11 @@ public class TLObjectTreeNaming extends GlobalModelNamingScheme<TLObject, TLObje
 
 	/** Creates a {@link TLObjectTreeNaming}. */
 	public TLObjectTreeNaming() {
-		super(TLObject.class, TLObjectTreeName.class);
+		super(TLObject.class, TLObjectTreeName.class, Object.class);
 	}
 
 	@Override
-	public Maybe<TLObjectTreeName> buildName(TLObject model) {
+	public Maybe<TLObjectTreeName> buildName(Object valueContext, TLObject model) {
 		if (isCompatibleModel(model)) {
 			TLObjectTreeName name = createName();
 			initName(name, model);
@@ -195,7 +195,7 @@ public class TLObjectTreeNaming extends GlobalModelNamingScheme<TLObject, TLObje
 	}
 
 	@Override
-	public TLObject locateModel(ActionContext context, TLObjectTreeName name) {
+	public TLObject locateModel(ActionContext context, Object valueContext, TLObjectTreeName name) {
 		TLObject root = (TLObject) context.resolve(name.getRoot());
 		TLObject node = root;
 		for (TLObjectTreeStep step : name.getPath()) {

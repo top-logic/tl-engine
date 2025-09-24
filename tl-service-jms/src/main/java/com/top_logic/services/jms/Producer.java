@@ -10,20 +10,23 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
 
+import javax.naming.NamingException;
+
 import jakarta.activation.MimeType;
 import jakarta.activation.MimeTypeParseException;
-
-import com.top_logic.basic.config.AbstractConfiguredInstance;
-import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.io.binary.BinaryDataSource;
-import com.top_logic.event.infoservice.InfoService;
-
 import jakarta.jms.BytesMessage;
 import jakarta.jms.Destination;
 import jakarta.jms.JMSContext;
 import jakarta.jms.JMSException;
 import jakarta.jms.JMSProducer;
+import jakarta.jms.Message;
 import jakarta.jms.TextMessage;
+
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.event.infoservice.InfoService;
 
 /**
  * Class for a JMS Producer (sends messages to a queue).
@@ -35,6 +38,8 @@ public class Producer extends AbstractConfiguredInstance<Producer.Config<?>> {
 	private JMSProducer _producer;
 
 	private JMSContext _context;
+
+	private JMSClient _client;
 
 	private final String _name;
 
@@ -71,13 +76,14 @@ public class Producer extends AbstractConfiguredInstance<Producer.Config<?>> {
 	 *        The Object establishing the connection and holding the {@link JMSContext}.
 	 */
 	public void setup(JMSClient client) {
-		_context = client.getContext();
+		_client = client;
+		_context = _client.getContext();
 		_producer = _context.createProducer();
-		_charsetProperty = client.getCharsetProperty();
+		_charsetProperty = _client.getCharsetProperty();
 
 		Config.Type type = getConfig().getType();
 		String destName = getConfig().getDestName();
-		_destination = client.createDestination(type, destName);
+		_destination = _client.createDestination(type, destName);
 	}
 
 	/**
@@ -88,7 +94,7 @@ public class Producer extends AbstractConfiguredInstance<Producer.Config<?>> {
 	 */
 	public void send(String text) {
 		TextMessage message = _context.createTextMessage(text);
-		_producer.send(_destination, message);
+		sendOrReconnect(message);
 	}
 
 	/**
@@ -147,7 +153,7 @@ public class Producer extends AbstractConfiguredInstance<Producer.Config<?>> {
 			throw new IOError(ex);
 		}
 
-		_producer.send(_destination, message);
+		sendOrReconnect(message);
 	}
 
 	/**
@@ -158,5 +164,42 @@ public class Producer extends AbstractConfiguredInstance<Producer.Config<?>> {
 	 */
 	public void send(Map map) {
 		_producer.send(_destination, map);
+	}
+
+	private boolean hasContextChanged() {
+		return _context != _client.getContext();
+	}
+
+	/**
+	 * Method to send a message to a queue or a topic and reconnect on Error.
+	 * 
+	 * @param message
+	 *        Message to be sent
+	 */
+	void sendOrReconnect(Message message) {
+		if (hasContextChanged()) {
+			setup(_client);
+		}
+
+		try {
+			_producer.send(_destination, message);
+		} catch (Exception exception) {
+			Logger.warn(exception.getMessage(), exception, this);
+			Logger.warn("Error sending a message by producer " + _name + ". "
+				+ "Problem with the connection to the MQ system. Trying to reconnect...", this);
+			InfoService.showWarning(I18NConstants.ERROR_SENDING_MSG__NAME.fill(_name),
+				I18NConstants.ERROR_NO_CONNECTION);
+			try {
+				_client.connect();
+				setup(_client);
+				Logger.info("Reconnect successful. Trying to resend message...", this);
+				InfoService.showInfo(I18NConstants.INFO_RECONNECT_SUCCESS);
+				_producer.send(_destination, message);
+				Logger.info("Resend successful.", this);
+				InfoService.showInfo(I18NConstants.INFO_RESEND_SUCCESS);
+			} catch (JMSException | NamingException ex) {
+				InfoService.logError(I18NConstants.ERROR_RECONNECT_FAILED, ex.getMessage(), ex, this);
+			}
+		}
 	}
 }

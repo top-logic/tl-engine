@@ -203,6 +203,14 @@ public class DiagramControl extends AbstractControlBase
 	}
 
 	@Override
+	protected void reset() {
+		super.reset();
+		if (_graphScope != null) {
+			_graphScope.dropChanges();
+		}
+	}
+
+	@Override
 	public void handleContent(DisplayContext context, String id, URLParser url) throws IOException, ServletException {
 		HttpServletResponse response = context.asResponse();
 		if (_diagram == null) {

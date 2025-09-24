@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.basic;
 
+import java.util.Objects;
+
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.util.ResKey;
@@ -52,6 +54,18 @@ public interface Command {
 		public final HandlerResult executeCommand(DisplayContext context) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
+
+		@Override
+		public Command compose(Command before) {
+			Objects.requireNonNull(before);
+			return before;
+		}
+
+		@Override
+		public Command andThen(Command after) {
+			Objects.requireNonNull(after);
+			return after;
+		}
 	};
 
 	/**
@@ -87,6 +101,54 @@ public interface Command {
 			return result;
 		}
 
+	}
+
+	/**
+	 * Returns a {@link Command} that first executes this command and then the {@code after}
+	 * command. If evaluation of either command throws an exception, it is relayed to the caller of
+	 * the composed command.
+	 *
+	 * <p>
+	 * If the result of this command is not {@link HandlerResult#isSuccess()}, then the
+	 * {@code after} command is not executed.
+	 * </p>
+	 *
+	 * @param after
+	 *        The {@link Command} to execute after this command is executed.
+	 * @return A command that first executes this command and then the {@code after} command.
+	 * @throws NullPointerException
+	 *         if after is null
+	 * 
+	 * @see #compose(Command)
+	 * @see CommandChain
+	 */
+	public default Command andThen(Command after) {
+		Objects.requireNonNull(after);
+		return new CommandChain(this, after);
+	}
+
+	/**
+	 * Returns a {@link Command} that first executes the {@code before} command, and then this
+	 * command. If evaluation of either command throws an exception, it is relayed to the caller of
+	 * the composed command.
+	 * 
+	 * <p>
+	 * If the result of the {@code before} command is not {@link HandlerResult#isSuccess()}, then
+	 * this command is not executed.
+	 * </p>
+	 *
+	 * @param before
+	 *        The {@link Command} to execute before this command is executed.
+	 * @return A command that first executes the {@code before} command and then this command.
+	 * @throws NullPointerException
+	 *         if before is null
+	 * 
+	 * @see #andThen(Command)
+	 * @see CommandChain
+	 */
+	public default Command compose(Command before) {
+		Objects.requireNonNull(before);
+		return before.andThen(this);
 	}
 
 	/**

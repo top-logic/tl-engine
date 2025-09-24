@@ -181,12 +181,15 @@ public class XMLInstanceExporter {
 			List<TLObject> batch = new ArrayList<>(_queue);
 			_queue.clear();
 			for (TLObject next : batch) {
+				ValueConf conf;
 				Ref ref = _exportIds.get(next);
 				if (ref.isExported()) {
-					// Skip.
-					continue;
+					// Just remember the reference to have the same set of objects available during
+					// import.
+					conf = refConfig(ref);
+				} else {
+					conf = exportObject(next, ref);
 				}
-				ObjectConf conf = exportObject(next, ref);
 
 				_objects.getObjects().add(conf);
 			}
@@ -200,9 +203,14 @@ public class XMLInstanceExporter {
 	private ObjectConf exportObject(TLObject obj, Ref ref) {
 		ref.markExported();
 
+		InstanceResolver resolver = _resolvers.resolver(obj.tType());
+
 		ObjectConf conf = TypedConfiguration.newConfigItem(ObjectConf.class);
 		conf.setId(Integer.toString(ref.getId()));
 		conf.setType(typeName(obj.tType()));
+		if (resolver != null) {
+			conf.setGlobalId(resolver.buildId(obj));
+		}
 
 		exportAttributes(conf.getAttributes(), obj);
 
@@ -341,10 +349,14 @@ public class XMLInstanceExporter {
 
 				InstanceResolver resolver = _resolvers.resolver(target.tType());
 				if (resolver != null) {
-					GlobalRefConf ref = TypedConfiguration.newConfigItem(GlobalRefConf.class);
-					ref.setKind(typeName(target.tType()));
-					ref.setId(resolver.buildId(target));
-					references.add(ref);
+					Ref localRef = newRef(container, target);
+					localRef.markExported();
+
+					GlobalRefConf globalRef = TypedConfiguration.newConfigItem(GlobalRefConf.class);
+					globalRef.setKind(typeName(target.tType()));
+					globalRef.setId(resolver.buildId(target));
+					globalRef.setLocalId(Integer.toString(localRef.getId()));
+					references.add(globalRef);
 				} else {
 					// The object may be exported later on when it occurs in some composition
 					// reference.

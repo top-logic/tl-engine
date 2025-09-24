@@ -6,6 +6,7 @@
 package com.top_logic.model.instance.importer.schema;
 
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
@@ -52,5 +53,21 @@ public interface GlobalRefConf extends ValueConf {
 	 * @see #getId()
 	 */
 	void setId(String value);
+
+	/**
+	 * When set, defines the ID to reference the same object locally during the same import.
+	 * 
+	 * <p>
+	 * Setting this property makes resolving the same object multiple times more efficient during
+	 * re-import.
+	 * </p>
+	 */
+	@Nullable
+	String getLocalId();
+
+	/**
+	 * @see #getLocalId()
+	 */
+	void setLocalId(String value);
 
 }

@@ -91,6 +91,34 @@
 						<other-attributes/>
 					</form>
 				</form-definition>
+				<instance-resolver>
+					<resolver-by-expression>
+						<identity><![CDATA[contact -> {
+    account = $contact.get(`Contacts:PersonContact#account`);
+    $account == null 
+    ? "name:" + $contact.get(`Contacts:PersonContact#fullName`)
+    : "account:" + $account.get(`tl.accounts:Person#name`)
+}]]></identity>
+						<resolver><![CDATA[id -> switch {
+    $id.stringStartsWith("account:"): {
+        login = $id.subString("account:".length());
+        all(`tl.accounts:Person`)
+            .filter(p -> $p.get(`tl.accounts:Person#name`) == $login)
+            .singleElement()
+            .get(`tl.accounts:Person#contact`)
+    };
+    
+    $id.stringStartsWith("name:"): {
+        fullName = $id.subString("name:".length());
+        all(`Contacts:PersonContact`)
+            .filter(p -> $p.get(`Contacts:PersonContact#fullName`) == $fullName)
+            .singleElement()
+    };
+    
+    default: throw("Invalid contact ID: " + $id);
+}]]></resolver>
+					</resolver-by-expression>
+				</instance-resolver>
 			</annotations>
 		</class>
 	</module>

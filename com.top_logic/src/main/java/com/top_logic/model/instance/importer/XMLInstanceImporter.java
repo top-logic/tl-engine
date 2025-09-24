@@ -207,24 +207,25 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 			addResolver(def.getType().qualifiedName(), resolver);
 		}
 
-		List<ObjectConf> configs = objects.getObjects();
+		List<ValueConf> configs = objects.getObjects();
 		return importInstances(configs);
 	}
 
 	/**
-	 * Instantiates all given confiurations.
+	 * Instantiates all given configurations.
 	 * 
 	 * @return The objects imported from the given configurations.
 	 */
-	public List<TLObject> importInstances(List<ObjectConf> configs) {
+	public List<TLObject> importInstances(List<? extends ValueConf> configs) {
 		List<TLObject> result = new ArrayList<>();
-		for (ObjectConf config : configs) {
-			TLObject obj = createObject(config);
+		for (ValueConf config : configs) {
+			TLObject obj;
+			try {
+				obj = (TLObject) config.visit(this, null);
+			} catch (UnresolvedRef ex) {
+				obj = null;
+			}
 			result.add(obj);
-		}
-
-		for (ObjectConf config : configs) {
-			importObject(config);
 		}
 
 		for (Runnable delayed : _delayed) {
@@ -334,7 +335,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 		loadCollectionValue(storage, valueConf.getCollectionValue());
 	}
 
-	private void loadCollectionValue(Storage storage, List<ValueConf> references) {
+	private void loadCollectionValue(Storage storage, List<? extends ValueConf> references) {
 		if (references.isEmpty()) {
 			storage.set(Collections.emptyList());
 		}
@@ -374,7 +375,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 		storage.set(resolveSingle(storage.getPart(), valueConf));
 	}
 
-	private void loadCollection(Storage storage, List<ValueConf> references) throws UnresolvedRef {
+	private void loadCollection(Storage storage, List<? extends ValueConf> references) throws UnresolvedRef {
 		ArrayList<Object> result = new ArrayList<>(references.size());
 		for (ValueConf ref : references) {
 			Object element = resolveSingle(storage.getPart(), ref);
@@ -413,6 +414,16 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	@Override
 	public Object visit(ObjectConf ref, TLStructuredTypePart arg) {
 		try {
+			String globalId = ref.getGlobalId();
+			if (globalId != null) {
+				// Check, whether the object is already present in the target system.
+				String kind = ref.getType();
+				TLObject existing = resolver(kind).resolve(_log, kind, globalId);
+				if (existing != null) {
+					addObject(ref.getId(), existing);
+					return existing;
+				}
+			}
 			createObject(ref);
 			return importObject(ref);
 		} catch (Exception ex) {
@@ -425,7 +436,15 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	public TLObject visit(GlobalRefConf ref, TLStructuredTypePart arg) {
 		try {
 			String kind = ref.getKind();
-			return resolver(kind).resolve(_log, kind, ref.getId());
+			TLObject result = resolver(kind).resolve(_log, kind, ref.getId());
+			if (result != null) {
+				String localId = ref.getLocalId();
+				if (localId != null) {
+					// Remember for later use without resolving the global reference again.
+					addObject(localId, result);
+				}
+			}
+			return result;
 		} catch (Exception ex) {
 			_log.error(
 				I18NConstants.FAILED_TO_RESOLVE_OBJECT__TYPE_ID_MSG.fill(ref.getKind(), ref.getId(), ex.getMessage()),
@@ -672,7 +691,7 @@ public class XMLInstanceImporter implements ValueVisitor<Object, TLStructuredTyp
 	 * 
 	 * @see #importInstances(ObjectsConf)
 	 */
-	public static List<ObjectConf> loadConfigs(Content source) throws ConfigurationException {
+	public static List<ValueConf> loadConfigs(Content source) throws ConfigurationException {
 		return loadConfig(source).getObjects();
 	}
 

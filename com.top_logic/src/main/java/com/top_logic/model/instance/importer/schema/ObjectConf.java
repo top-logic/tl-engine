@@ -44,6 +44,24 @@ public interface ObjectConf extends ValueConf {
 	void setId(String value);
 
 	/**
+	 * A global ID for the exported object.
+	 * 
+	 * <p>
+	 * Setting this property marks this exported object as fallback. During re-import, the object is
+	 * only allocated, if there is not yet an object identified by the given global ID in the target
+	 * system. If the given global ID can be resolved in the target system, this object is used
+	 * instead of the exported one.
+	 * </p>
+	 */
+	@Nullable
+	String getGlobalId();
+
+	/**
+	 * @see #getGlobalId()
+	 */
+	void setGlobalId(String value);
+
+	/**
 	 * The type name (qualified name of the {@link TLClass}) the imported object should be an
 	 * instance of.
 	 */

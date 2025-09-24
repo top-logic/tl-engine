@@ -1,24 +1,24 @@
 <h2>​​Syntax</h2>
 
 <pre>
-	<code>try($tryFunc, $catchFunc)</code>
+	<code>try($tryBlock, $catchFun)</code>
 </pre>
 
 <h2>Beschreibung</h2>
 
 <div>
-<div>Führt eine Try-Funktion aus und behandelt auftretende Fehler durch eine Catch-Funktion. Die try-Funktion implementiert ein try-catch-Verhalten für TLScript, das eine robuste Fehlerbehandlung ermöglicht.</div>
+<div>Führt einen Try-Block aus und behandelt auftretende Fehler durch eine Catch-Funktion. Die try-Funktion implementiert ein try-catch-Verhalten für TLScript, das eine robuste Fehlerbehandlung ermöglicht.</div>
 </div>
 
 <p>Die Funktion arbeitet mit zwei Parametern:</p>
 
 <ol>
-	<li><strong>Try-Funktion</strong>: Die auszuführende Funktion, die einen Fehler verursachen könnte</li>
+	<li><strong>Try-Block</strong>: Der auszuführende Code-Block oder Ausdruck, der einen Fehler verursachen könnte</li>
 	<li><strong>Catch-Funktion</strong>: Die Fallback-Funktion, die bei einem Fehler ausgeführt wird</li>
 </ol>
 
 <div>
-<div>Bei erfolgreicher Ausführung der try-Funktion wird deren Ergebnis zurückgegeben. Tritt ein Fehler auf, wird die catch-Funktion mit spezifischen Parametern ausgeführt:</div>
+<div>Bei erfolgreicher Ausführung des try-Blocks wird dessen Ergebnis zurückgegeben. Tritt ein Fehler auf, wird die catch-Funktion mit spezifischen Parametern ausgeführt:</div>
 
 <ul>
 	<li><strong>I18NException</strong>: catch-Funktion erhält (ResKey, ursprüngliches Argument)</li>
@@ -26,7 +26,7 @@
 </ul>
 </div>
 
-<h2>Paramter</h2>
+<h2>Parameter</h2>
 
 <table class="tlDocTable" style="height:155px; width:1517px">
 	<thead>
@@ -39,15 +39,15 @@
 		</tr>
 		<tr>
 			<td>
-			<p>tryFunc</p>
+			<p>tryBlock</p>
 			</td>
-			<td>Funktion</td>
-			<td>Die Funktion, die ausgeführt werden soll.</td>
+			<td>Code-Block / Ausdruck</td>
+			<td>Der Code-Block oder Ausdruck, der ausgeführt werden soll.</td>
 			<td>ja</td>
 			<td>-</td>
 		</tr>
 		<tr>
-			<td>catchFunc</td>
+			<td>catchFun</td>
 			<td>Funktion</td>
 			<td>Die Fallback-Funktion, die bei einem Fehler ausgeführt wird. Erhält das Exception-Objekt als Parameter</td>
 			<td>nein</td>
@@ -61,7 +61,7 @@
 <p><strong>Typ:</strong> Object</p>
 
 <div>
-<div>Gibt das Ergebnis der try-Funktion zurück, wenn diese erfolgreich ausgeführt wurde. Bei einem Fehler wird das Ergebnis der catch-Funktion zurückgegeben. Ist keine catch-Funktion angegeben, wird bei einem Fehler <code class="hljs inlineCode">null</code>zurückgegeben.</div>
+<div>Gibt das Ergebnis des try-Blocks zurück, wenn dieser erfolgreich ausgeführt wurde. Bei einem Fehler wird das Ergebnis der catch-Funktion zurückgegeben. Ist keine catch-Funktion angegeben, wird bei einem Fehler<code class="hljs inlineCode">null</code>zurückgegeben.</div>
 </div>
 
 <h2>Beispiele</h2>

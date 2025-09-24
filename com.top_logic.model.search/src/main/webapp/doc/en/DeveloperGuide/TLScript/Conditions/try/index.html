@@ -1,24 +1,24 @@
 <h2>Syntax</h2>
 
 <pre>
-	<code>try($tryFunc, $catchFunc)</code>
+	<code>try($tryBlock, $catchFun)</code>
 </pre>
 
 <h2>Description</h2>
 
 <div>
-<div>Executes a try function and handles any errors that occur using a catch function. The try function implements a try-catch behavior for TLScript that enables robust error handling.</div>
+<div>Executes a try block and handles any errors that occur using a catch function. The try function implements a try-catch behavior for TLScript that enables robust error handling.</div>
 </div>
 
 <p>The function works with two parameters:</p>
 
 <ol>
-	<li><strong>Try function</strong>: The function to be executed that could cause an error</li>
+	<li><strong>Try block</strong>: The code block or expression to be executed that could cause an error</li>
 	<li><strong>Catch function</strong>: The fallback function that is executed in the event of an error</li>
 </ol>
 
 <div>
-<div>If the try function is executed successfully, its result is returned. If an error occurs, the catch function is executed with specific parameters:</div>
+<div>If the try block is executed successfully, its result is returned. If an error occurs, the catch function is executed with specific parameters:</div>
 
 <ul>
 	<li><strong>I18NException</strong>: catch function receives (ResKey, original argument)</li>
@@ -39,17 +39,17 @@
 		</tr>
 		<tr>
 			<td>
-			<p>tryFunc</p>
+			<p>tryBlock</p>
 			</td>
-			<td>Function</td>
-			<td>The function that is to be executed.</td>
+			<td>Code block / expression</td>
+			<td>The code block or expression that is to be executed.</td>
 			<td>yes</td>
 			<td>-</td>
 		</tr>
 		<tr>
-			<td>catchFunc</td>
+			<td>catchFun</td>
 			<td>Function</td>
-			<td>The fallback function that is executed in the event of an error. Receives the exception object as a parameter</td>
+			<td>The fallback function that is executed when an error occurs. Receives the exception object as a parameter</td>
 			<td>no</td>
 			<td>null</td>
 		</tr>
@@ -61,7 +61,7 @@
 <p><strong>Type:</strong> Object</p>
 
 <div>
-<div>Returns the result of the try function if it was executed successfully. If an error occurs, the result of the catch function is returned. If no catch function is specified, <code class="hljs inlineCode">null</code>is returned in the event of an error.</div>
+<div>Returns the result of the try block if it was executed successfully. If an error occurs, the result of the catch function is returned. If no catch function is specified,<code class="hljs inlineCode">null</code>is returned in the event of an error.</div>
 </div>
 
 <h2>Examples</h2>

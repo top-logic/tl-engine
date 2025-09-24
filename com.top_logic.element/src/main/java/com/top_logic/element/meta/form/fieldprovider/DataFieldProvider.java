@@ -65,7 +65,13 @@ public class DataFieldProvider extends AbstractFieldProvider {
 				if (acceptedTypes != null && !accType.equals(imgType)) {
 					acceptedTypes.setValue("image/*");
 				}
-				field.setControlProvider((model, style) -> createImgUploadCtrl((DataField) model, editContext));
+				if (editContext.inTableContext()) {
+					if (acceptedTypes == null)
+						field.setAcceptedTypes("image/*");
+					field.setControlProvider((model, style) -> new DataItemControl((DataField) model));
+				} else {
+					field.setControlProvider((model, style) -> createImgUploadCtrl((DataField) model, editContext));
+				}
 				break;
 			default:
 				throw BinaryPresentation.noSuchBinary(presentation);

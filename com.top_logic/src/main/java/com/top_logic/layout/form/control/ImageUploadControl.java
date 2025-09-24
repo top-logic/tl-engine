@@ -304,15 +304,17 @@ public class ImageUploadControl extends AbstractFormFieldControl implements Cont
 
 		OverlibTooltipFragmentGenerator.INSTANCE.writeTooltipAttributes(context, out,
 			context.getResources().getString(I18NConstants.UPLOAD_IMAGE_LABEL.tooltip()));
-		if (getModel().isActive()) {
-			out.writeAttribute(CLASS_ATTR,
-				CssUtil.joinCssClasses(FormConstants.IS_UPLOAD_CSS_CLASS,
-					ButtonComponentButtonRenderer.CSS_CLASS_ENABLED_BUTTON));
-		} else {
-			out.writeAttribute(CLASS_ATTR,
-				CssUtil.joinCssClasses(FormConstants.IS_UPLOAD_CSS_CLASS,
-					ButtonComponentButtonRenderer.CSS_CLASS_DISABLED_BUTTON));
+
+		String lClass1 = FormConstants.IS_UPLOAD_CSS_CLASS;
+		String lClass2 = getModel().isActive() ? ButtonComponentButtonRenderer.CSS_CLASS_ENABLED_BUTTON
+			: ButtonComponentButtonRenderer.CSS_CLASS_DISABLED_BUTTON;
+		String lClass3 = !_maxWidth.isBlank() ? "annotatedMaxW" : "";
+		CssUtil.writeCombinedCssClasses(out, lClass1, lClass2, lClass3);
+
+		if (!_dims.isBlank()) {
+			out.writeAttribute(STYLE_ATTR, _dims);
 		}
+
 		out.endBeginTag();
 		Icons.UPLOAD_ICON.writeWithCss(context, out, ButtonComponentButtonRenderer.CSS_CLASS_IMAGE);
 		out.beginBeginTag(SPAN);

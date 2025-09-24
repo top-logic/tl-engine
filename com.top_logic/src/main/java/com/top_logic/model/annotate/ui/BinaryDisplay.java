@@ -102,7 +102,7 @@ public interface BinaryDisplay extends TLAttributeAnnotation, TLTypeAnnotation {
 		 * 
 		 * @param o
 		 *        The {@link BinaryPresentation} which must not exist.
-		 * @return For convenience reasons to use "throw noSuchBinary(...)".
+		 * @return For convenience reasons to use <code>throw noSuchBinary(...)</code>.
 		 */
 		public static UnreachableAssertion noSuchBinary(BinaryPresentation o) {
 			throw new UnreachableAssertion("There is no such " + BinaryPresentation.class.getName() + ": " + o);

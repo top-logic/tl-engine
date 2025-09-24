@@ -31,6 +31,10 @@ import com.top_logic.graphic.flow.data.Widget;
 import com.top_logic.graphic.flow.server.control.DiagramControl;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.basic.DirtyHandling;
+import com.top_logic.layout.basic.check.ChangeHandler;
+import com.top_logic.layout.basic.check.MasterSlaveCheckProvider;
 import com.top_logic.layout.basic.contextmenu.component.ContextMenuFactory;
 import com.top_logic.layout.basic.contextmenu.component.factory.SelectableContextMenuFactory;
 import com.top_logic.layout.channel.ComponentChannel;
@@ -42,12 +46,14 @@ import com.top_logic.layout.component.model.SelectionListener;
 import com.top_logic.layout.scripting.action.SelectAction.SelectionChangeKind;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.structure.ControlRepresentable;
+import com.top_logic.layout.structure.DialogWindowControl;
 import com.top_logic.layout.table.component.BuilderComponent;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelConfig;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.tool.boundsec.HandlerResult;
 
 import de.haumacher.msgbuf.observer.Listener;
 import de.haumacher.msgbuf.observer.Observable;
@@ -76,22 +82,7 @@ public class FlowChartComponent extends BuilderComponent
 		@Override
 		public void notifySelectionChanged(SelectionModel model, SelectionEvent event) {
 			// Forward selection to UI.
-			Set<?> newSelection = event.getNewSelection();
-
-			HashSet<Object> newlySelected = new HashSet<>(newSelection);
-			List<SelectableBox> uiSelection = _control.getModel().getSelection();
-			for (int n = uiSelection.size() - 1; n >= 0; n--) {
-				SelectableBox uiSelected = uiSelection.get(n);
-				if (!newSelection.contains(uiSelected)) {
-					uiSelection.remove(n);
-					uiSelected.setSelected(false);
-				}
-				newlySelected.remove(uiSelected);
-			}
-			for (Object x : newlySelected) {
-				uiSelection.add((SelectableBox) x);
-				((SelectableBox) x).setSelected(true);
-			}
+			updateUISelection(event.getNewSelection());
 		}
 	};
 
@@ -109,6 +100,9 @@ public class FlowChartComponent extends BuilderComponent
 	};
 
 	private final Listener _processUISelection = new Listener() {
+
+		private final List<Consumer<SelectionModel>> _deferredUpdates = new ArrayList<>();
+
 		@Override
 		public void beforeSet(Observable obj, String property, Object value) {
 			if (Diagram.SELECTION__PROP.equals(property)) {
@@ -131,6 +125,61 @@ public class FlowChartComponent extends BuilderComponent
 		}
 
 		private void update(Consumer<SelectionModel> update) {
+			Collection<? extends ChangeHandler> handlers =
+				MasterSlaveCheckProvider.INSTANCE.getCheckScope(FlowChartComponent.this).getAffectedFormHandlers();
+
+			DirtyHandling dirtyHandling = DirtyHandling.getInstance();
+			if (!dirtyHandling.checkDirty(handlers)) {
+				updateDirectly(update);
+			} else {
+				boolean firstUpdate = _deferredUpdates.isEmpty();
+				_deferredUpdates.add(update);
+				if (!firstUpdate) {
+					// Dialog has been opened before.
+					return;
+				}
+				DialogWindowControl dialog =
+					dirtyHandling.createConfirmDialog(this::applyDeferredUpdates, this::cancelUpdates, handlers);
+
+				DefaultDisplayContext.getDisplayContext()
+					.getWindowScope()
+					.openDialog(dialog);
+			}
+		}
+
+		/**
+		 * @param continuationContext
+		 *        {@link DisplayContext} when applying updates.
+		 */
+		private HandlerResult applyDeferredUpdates(DisplayContext continuationContext) {
+			boolean removed = pause();
+			try {
+				try {
+					_deferredUpdates.forEach(deferred -> deferred.accept(_selectionModel));
+					if (ScriptingRecorder.isRecordingActive()) {
+						_uiSelectionProcessed = true;
+					}
+				} finally {
+					_deferredUpdates.clear();
+				}
+			} finally {
+				resume(removed);
+			}
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		/**
+		 * @param cancelContext
+		 *        {@link DisplayContext} when the user cancels selection change.
+		 */
+		private HandlerResult cancelUpdates(DisplayContext cancelContext) {
+			// Re-install old selection.
+			updateUISelection(_selectionModel.getSelection());
+			_deferredUpdates.clear();
+			return HandlerResult.DEFAULT_RESULT;
+		}
+
+		private void updateDirectly(Consumer<SelectionModel> update) {
 			boolean removed = pause();
 			try {
 				update.accept(_selectionModel);
@@ -366,5 +415,22 @@ public class FlowChartComponent extends BuilderComponent
 
 	private FlowChartBuilder builder() {
 		return (FlowChartBuilder) getBuilder();
+	}
+
+	void updateUISelection(Set<?> newSelection) {
+		HashSet<Object> newlySelected = new HashSet<>(newSelection);
+		List<SelectableBox> uiSelection = _control.getModel().getSelection();
+		for (int n = uiSelection.size() - 1; n >= 0; n--) {
+			SelectableBox uiSelected = uiSelection.get(n);
+			if (!newSelection.contains(uiSelected)) {
+				uiSelection.remove(n);
+				uiSelected.setSelected(false);
+			}
+			newlySelected.remove(uiSelected);
+		}
+		for (Object x : newlySelected) {
+			uiSelection.add((SelectableBox) x);
+			((SelectableBox) x).setSelected(true);
+		}
 	}
 }

@@ -25,7 +25,6 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
 import com.top_logic.layout.DisplayValue;
-import com.top_logic.layout.FrameScope;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.VetoException;
 import com.top_logic.layout.WindowScope;
@@ -248,11 +247,11 @@ public class DirtyHandling {
 
 	/**
 	 * This method opens a dialog to inform the user that some {@link ChangeHandler} have changes
-	 * and must be checked. The dialog allows the user to decide whether the changes shall be
-	 * stored, discarded or whether the action shall be canceled.
+	 * and must be checked. The dialog allows the user to decide whether to save or discard the
+	 * changes or cancel the action.
 	 * 
 	 * @param command
-	 *        the command to execute if the user does not cancel the action. action.
+	 *        The command to execute if the user does not cancel the action.
 	 * @param affectedFormHandlers
 	 *        The {@link ChangeHandler}s which may have changes. At least one of them must be
 	 *        changed.
@@ -262,7 +261,7 @@ public class DirtyHandling {
 	 */
 	public void openConfirmDialog(Command command, Collection<? extends ChangeHandler> affectedFormHandlers,
 			WindowScope scope) {
-		DialogWindowControl dialog = createDialogWindowControl(scope, command, affectedFormHandlers);
+		DialogWindowControl dialog = createConfirmDialog(command, Command.DO_NOTHING, affectedFormHandlers);
 		scope.openDialog(dialog);
 	}
 
@@ -289,13 +288,26 @@ public class DirtyHandling {
 		return false;
 	}
 
-	private DialogWindowControl createDialogWindowControl(WindowScope scope, Command command,
+	/**
+	 * Creates the dialog displaying the information that some {@link ChangeHandler} have changes
+	 * and must be checked. The dialog allows the user to decide whether to save or discard the
+	 * changes or cancel the action.
+	 * 
+	 * @param continueCommand
+	 *        The command to execute if the user does not cancel the action.
+	 * @param cancelCommand
+	 *        The command to execute when the user cancel the action.
+	 * @param affectedFormHandlers
+	 *        The {@link ChangeHandler}s which may have changes. At least one of them must be
+	 *        changed.
+	 * 
+	 * @see #openConfirmDialog(Command, Collection, WindowScope)
+	 */
+	public DialogWindowControl createConfirmDialog(Command continueCommand, Command cancelCommand,
 			Collection<? extends ChangeHandler> affectedFormHandlers) {
-		FrameScope ids = scope.getTopLevelFrameScope();
-		String fcId = ids.createNewID();
 		DefaultDialogModel dialogModel =
 			new DefaultDialogModel(layoutData(), DIRTY_HANDLING_DIALOG_TITLE, false, true, null);
-		FormContext ctx = new FormContext(fcId, RES_PREFIX);
+		FormContext ctx = new FormContext("confirmContext", RES_PREFIX);
 
 		FormGroup buttons = new FormGroup(BUTTONS_GROUP, RES_PREFIX);
 		Command closeAction = dialogModel.getCloseAction();
@@ -318,7 +330,7 @@ public class DirtyHandling {
 			}
 		}
 		
-		Command applyHander = new ApplyChanges(command, closeAction, affectedFormHandlers);
+		Command applyHander = new ApplyChanges(continueCommand, closeAction, affectedFormHandlers);
 		CommandField theApply = FormFactory.newCommandField(APPLY_CHANGES, applyHander);
 		
 		if (!canApply) {
@@ -331,10 +343,10 @@ public class DirtyHandling {
 		
 		buttons.addMember(theApply);
 		dialogModel.setDefaultCommand(theApply);
-		Command discardHandler = new DiscardChanges(command, closeAction, affectedFormHandlers);
+		Command discardHandler = new DiscardChanges(continueCommand, closeAction, affectedFormHandlers);
 		CommandField discardChanges = FormFactory.newCommandField(DISCARD_CHANGES, discardHandler);
 		buttons.addMember(discardChanges);
-		CommandField cancel = FormFactory.newCommandField(CANCEL, closeAction);
+		CommandField cancel = FormFactory.newCommandField(CANCEL, closeAction.compose(cancelCommand));
 		buttons.addMember(cancel);
 		ctx.addMember(buttons);
 
@@ -342,12 +354,13 @@ public class DirtyHandling {
 			FormGroup changedMembers = new FormGroup("changedMember", RES_PREFIX);
 			ctx.addMember(changedMembers);
 			Iterator<? extends ChangeHandler> it = affectedFormHandlers.iterator();
+			int i = 0;
 			while (it.hasNext()) {
 				ChangeHandler current = it.next();
 				if (current.isChanged()) {
 					String description = current.getChangeDescription();
 					if (description != null) {
-						changedMembers.addMember(FormFactory.newStringField(ids.createNewID(), description, true));
+						changedMembers.addMember(FormFactory.newStringField("change_" + (i++), description, true));
 					}
 				}
 			}

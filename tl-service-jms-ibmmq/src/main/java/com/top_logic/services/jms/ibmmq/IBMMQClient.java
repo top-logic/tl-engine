@@ -5,21 +5,26 @@
  */
 package com.top_logic.services.jms.ibmmq;
 
-import com.ibm.msg.client.jakarta.jms.JmsConnectionFactory;
+import jakarta.jms.ConnectionFactory;
+import jakarta.jms.JMSException;
+
+import com.ibm.mq.jakarta.jms.MQConnectionFactory;
 import com.ibm.msg.client.jakarta.jms.JmsFactoryFactory;
 import com.ibm.msg.client.jakarta.wmq.WMQConstants;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Encrypted;
+import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.services.jms.JMSClient;
 import com.top_logic.util.Resources;
-
-import jakarta.jms.ConnectionFactory;
-import jakarta.jms.JMSException;
 
 /**
  * Configuration class for a connection to an IMB MQ System.
@@ -36,6 +41,8 @@ public class IBMMQClient extends JMSClient {
 		Config.PORT,
 		Config.USER,
 		Config.PASSWORD,
+		Config.AUTO_RECONNECT,
+		Config.RECONNECT_TIMEOUT,
 		Config.CHANNEL,
 		Config.QUEUE_MANAGER,
 		Config.PRODUCER_CONFIGS,
@@ -62,6 +69,16 @@ public class IBMMQClient extends JMSClient {
 		 * Configuration name for {@link #getPassword()}.
 		 */
 		String PASSWORD = "password";
+
+		/**
+		 * Configuration name for {@link #getAutoReconnect()}.
+		 */
+		String AUTO_RECONNECT = "auto-reconnect";
+
+		/**
+		 * Configuration name for {@link #getReconnectTimeout()}.
+		 */
+		String RECONNECT_TIMEOUT = "reconnect-timeout";
 
 		/**
 		 * Configuration name for {@link #getChannel()}.
@@ -101,6 +118,22 @@ public class IBMMQClient extends JMSClient {
 		String getPassword();
 
 		/**
+		 * The Option to activate the IBM auto-reconnect.
+		 */
+		@Name(AUTO_RECONNECT)
+		@Label("IBM auto-reconnect")
+		@BooleanDefault(false)
+		boolean getAutoReconnect();
+
+		/**
+		 * The time in {@link MillisFormat} that the IBM auto-reconnect tries to reconnect for.
+		 */
+		@Name(RECONNECT_TIMEOUT)
+		@StringDefault("4min")
+		@Format(MillisFormat.class)
+		long getReconnectTimeout();
+
+		/**
 		 * The channel of the target queue.
 		 */
 		@Mandatory
@@ -136,9 +169,9 @@ public class IBMMQClient extends JMSClient {
 	public ConnectionFactory setupConnectionFactory() throws JMSException {
 		Config<?> config = (Config<?>) getConfig();
 		JmsFactoryFactory ibmff;
-		JmsConnectionFactory ibmcf;
+		MQConnectionFactory ibmcf;
 		ibmff = JmsFactoryFactory.getInstance(WMQConstants.JAKARTA_WMQ_PROVIDER);
-		ibmcf = ibmff.createConnectionFactory();
+		ibmcf = (MQConnectionFactory) ibmff.createConnectionFactory();
 
 		// Set properties for the connection
 		ibmcf.setStringProperty(WMQConstants.WMQ_HOST_NAME, config.getHost());
@@ -150,6 +183,10 @@ public class IBMMQClient extends JMSClient {
 			Resources.getSystemInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE));
 		ibmcf.setStringProperty(WMQConstants.USERID, config.getUser());
 		ibmcf.setStringProperty(WMQConstants.PASSWORD, config.getPassword());
+		if (config.getAutoReconnect()) {
+			ibmcf.setClientReconnectOptions(WMQConstants.WMQ_CLIENT_RECONNECT_Q_MGR);
+			ibmcf.setClientReconnectTimeout((int) config.getReconnectTimeout());
+		}
 		return ibmcf;
 	}
 

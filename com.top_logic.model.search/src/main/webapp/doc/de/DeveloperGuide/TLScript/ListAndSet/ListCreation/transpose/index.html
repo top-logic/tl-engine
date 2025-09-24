@@ -3,14 +3,14 @@
 <pre>
 	<code>$collection.transpose()
 
-$collection.transpose($func)</code>
+$collection.transpose($fun)</code>
 </pre>
 
 <h2>Beschreibung</h2>
 
 <p>Transponiert eine Sammlung von Listen, indem Elemente an entsprechenden Positionen kombiniert werden.</p>
 
-<p>Die Funktion nimmt eine Sammlung entgegen, die bis zu 2 Listen enthalten kann, und kombiniert deren Elemente an entsprechenden Positionen. Wenn eine Transpositionsfunktion <code class="hljs inlineCode">func</code>bereitgestellt wird, wird diese zur Kombination der Elemente verwendet. Andernfalls werden Tupel der kombinierten Elemente zurückgegeben.</p>
+<p>Die Funktion nimmt eine Sammlung entgegen, die eine beliebige Anzahl von Listen enthalten kann, und kombiniert deren Elemente an entsprechenden Positionen. Wenn eine Transpositionsfunktion<code class="hljs inlineCode">fun</code>bereitgestellt wird, wird diese zur Kombination der Elemente verwendet. Andernfalls werden Tupel der kombinierten Elemente zurückgegeben.</p>
 
 <p>Wenn die beiden Listen unterschiedliche Längen haben, wird die kürzere Liste mit <code class="hljs inlineCode">null</code>-Werten aufgefüllt.</p>
 
@@ -30,15 +30,15 @@ $collection.transpose($func)</code>
 		<tr>
 			<td>collection</td>
 			<td>Aufzählung</td>
-			<td>Eine Sammlung, die bis zu 2 Listen enthält. Die Listen werden element-weise kombiniert. Wenn nur eine Liste vorhanden ist, wird sie unverändert verarbeitet. Leere Sammlungen ergeben ein leeres Ergebnis.</td>
+			<td>Eine Sammlung, die eine beliebige Anzahl von Listen enthält. Die Listen werden elementweise kombiniert. Wenn nur eine Liste vorhanden ist, wird sie unverändert verarbeitet. Leere Sammlungen ergeben ein leeres Ergebnis.</td>
 			<td>ja</td>
 			<td> </td>
 		</tr>
 		<tr>
-			<td>func</td>
+			<td>fun</td>
 			<td>Funktion</td>
 			<td>
-			<p>Eine optionale Funktion, die zur Kombination der entsprechenden Elemente aus den beiden Listen verwendet wird. Die Funktion erhält zwei Parameter: das Element aus der ersten Liste und das Element aus der zweiten Liste. Wenn nicht angegeben, werden Tupel-Objekte erstellt.</p>
+			<p>Eine optionale Funktion, die zur Kombination der entsprechenden Elemente aus den beiden Listen verwendet wird. Die Funktion erhält so viele Parameter, wie Listen in der Sammlung enthalten sind. Wenn nicht angegeben, werden Tupel-Listen erstellt.</p>
 			</td>
 			<td>nein</td>
 			<td>
@@ -52,7 +52,7 @@ $collection.transpose($func)</code>
 
 <p><strong>Typ:</strong> List</p>
 
-<p>Eine Liste der kombinierten Elemente. Wenn keine Transpositionsfunktion angegeben wurde, enthält die Liste Tupel-Objekte mit den Schlüsseln <code class="hljs inlineCode">"0"</code> und <code class="hljs inlineCode">"1"</code>. Wenn eine Funktion angegeben wurde, enthält die Liste die Ergebnisse dieser Funktion für jedes Elementpaar. Die Länge des Ergebnisses entspricht der längsten Eingabeliste.</p>
+<p>Eine Liste der kombinierten Elemente. Wenn keine Transpositionsfunktion angegeben wurde, enthält die Liste Tupel in Form von Listen. Jede Tupel-Liste enthält die Elemente an der entsprechenden Position aus den Eingabelisten. Wenn eine Funktion angegeben wurde, enthält die Liste die Ergebnisse dieser Funktion für jedes Elementtupel. Die Länge des Ergebnisses entspricht der längsten Eingabeliste.</p>
 
 <h2>Beispiele</h2>
 
@@ -65,18 +65,19 @@ $collection.transpose($func)</code>
 ).transpose()</code>
 </pre>
 
-<p><strong>Ausgabe: </strong> Eine Liste von Tupel-Objekten: <code class="hljs inlineCode">[{"0": "A", "1": 1}, {"0": "B", "1": 2}, {"0": "C", "1": 3}]</code></p>
+<p><strong>Ausgabe: </strong> Eine Liste von Tupel-Objekten: <code class="hljs inlineCode">[["A", 1], ["B", 2], ["C", 3]]</code></p>
 
 <h3>Transposition mit Kombinationsfunktion</h3>
 
 <pre>
 	<code>list(
     list("Hallo", "Guten", "Auf"),
-    list("Welt", "Tag", "Wiedersehen")
-).transpose(first -&gt; second -&gt; $first + " " + $second)</code>
+    list("Welt", "Tag", "Wiedersehen"),
+    list(null, "!", "?")
+).transpose(first -&gt; second -&gt; third -&gt; $first + " " + $second + $third)</code>
 </pre>
 
-<p><strong>Ausgabe: </strong> Eine Liste kombinierter Strings: <code class="hljs inlineCode">["Hallo Welt", "Guten Tag", "Auf Wiedersehen"]</code></p>
+<p><strong>Ausgabe: </strong> Eine Liste kombinierter Strings: <code class="hljs inlineCode">[Hallo Welt, Guten Tag!, Auf Wiedersehen?]</code></p>
 
 <h3>Transposition mit unterschiedlichen Listenlängen</h3>
 

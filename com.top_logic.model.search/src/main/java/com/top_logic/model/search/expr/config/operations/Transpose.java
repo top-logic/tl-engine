@@ -7,9 +7,8 @@ package com.top_logic.model.search.expr.config.operations;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -20,16 +19,15 @@ import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link GenericMethod} that transposes a collection of lists, combining elements at corresponding
  * positions.
  * 
  * <p>
- * Takes a collection containing up to 2 lists and combines their elements at corresponding
+ * Takes a collection containing any number of lists and combines their elements at corresponding
  * positions. If a transpose function is provided, it's used to combine the elements. Otherwise,
- * returns tuples of the combined elements.
+ * returns tuples (as lists) of the combined elements.
  * </p>
  * 
  * @author <a href="mailto:jhu@top-logic.com">Jonathan Hüsing</a>
@@ -56,62 +54,57 @@ public class Transpose extends GenericMethod {
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		Collection<?> collection = asCollection(arguments[0]);
-		
-		if (collection.size() > 2) {
-			throw new TopLogicException(I18NConstants.ERROR_TOO_MANY_LISTS__FUN_TRANSPOSE.fill(collection.size()));
-		}
-		
-		List<?> list1 = null;
-		List<?> list2 = null;
-		
-		int index = 0;
+
+		// Convert all elements in the collection to lists
+		List<List<?>> innerLists = new ArrayList<>();
 		for (Object item : collection) {
-			if (item instanceof Collection<?>) {
-				if (index == 0) {
-					list1 = asList(item);
-				} else if (index == 1) {
-					list2 = asList(item);
-				}
-				index++;
+			innerLists.add(asList(item));
+		}
+
+		if (innerLists.isEmpty()) {
+			return Collections.emptyList();
+		}
+
+		// Find the maximum length among all inner lists
+		int maxSize = 0;
+		for (List<?> innerList : innerLists) {
+			if (innerList.size() > maxSize) {
+				maxSize = innerList.size();
 			}
 		}
-		
-		if (list1 == null) {
-			return List.of();
-		}
-		
-		if (list2 == null) {
-			list2 = List.of();
-		}
-		
-		int maxSize = Math.max(list1.size(), list2.size());
-		List<Object> result = new ArrayList<>(maxSize);
-		
+
+		// Handle with transpose function
 		if (arguments.length > 1 && arguments[1] != null) {
 			SearchExpression transposeFunction = asSearchExpression(arguments[1]);
-			
+			List<Object> result = new ArrayList<>(maxSize);
+
 			for (int i = 0; i < maxSize; i++) {
-				Object elem1 = i < list1.size() ? list1.get(i) : null;
-				Object elem2 = i < list2.size() ? list2.get(i) : null;
-				
-				Object combined = transposeFunction.eval(definitions, elem1, elem2);
+				Object[] args = new Object[innerLists.size()];
+				for (int j = 0; j < innerLists.size(); j++) {
+					List<?> innerList = innerLists.get(j);
+					args[j] = i < innerList.size() ? innerList.get(i) : null;
+				}
+				Object combined = transposeFunction.eval(definitions, args);
 				result.add(combined);
 			}
-		} else {
-			for (int i = 0; i < maxSize; i++) {
-				Object elem1 = i < list1.size() ? list1.get(i) : null;
-				Object elem2 = i < list2.size() ? list2.get(i) : null;
-				Map<String, Object> tuple = new LinkedHashMap<>();
-				tuple.put("0", elem1);
-				tuple.put("1", elem2);
 
+			return result;
+		}
+		// Handle without transpose function (return tuples as lists)
+		else {
+			List<List<Object>> result = new ArrayList<>(maxSize);
+
+			for (int i = 0; i < maxSize; i++) {
+				List<Object> tuple = new ArrayList<>(innerLists.size());
+				for (List<?> innerList : innerLists) {
+					tuple.add(i < innerList.size() ? innerList.get(i) : null);
+				}
 				result.add(tuple);
 			}
-		}
-		
-		return result;
-	}
 
+			return result;
+		}
+	}
 
 	/**
 	 * {@link AbstractSimpleMethodBuilder} creating {@link Transpose}.
@@ -121,7 +114,7 @@ public class Transpose extends GenericMethod {
 		/** Description of parameters for a {@link Transpose}. */
 		public static final ArgumentDescriptor DESCRIPTOR = ArgumentDescriptor.builder()
 			.mandatory("collection")
-			.optional("func")
+			.optional("fun")
 			.build();
 
 		/**
@@ -141,7 +134,5 @@ public class Transpose extends GenericMethod {
 				throws ConfigurationException {
 			return new Transpose(getConfig().getName(), args);
 		}
-
 	}
-
 }

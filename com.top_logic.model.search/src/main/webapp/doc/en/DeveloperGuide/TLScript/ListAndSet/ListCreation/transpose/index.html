@@ -3,14 +3,14 @@
 <pre>
 	<code>$collection.transpose()
 
-$collection.transpose($func)</code>
+$collection.transpose($fun)</code>
 </pre>
 
 <h2>Description</h2>
 
 <p>Transposes a collection of lists by combining elements at corresponding positions.</p>
 
-<p>The function accepts a collection that can contain up to 2 lists and combines their elements at the corresponding positions. If a transposition function <code class="hljs inlineCode">func</code>is provided, this is used to combine the elements. Otherwise, tuples of the combined elements are returned.</p>
+<p>The function accepts a collection, which can contain any number of lists, and combines their elements at the corresponding positions. If a transposition function<code class="hljs inlineCode">fun</code>is provided, this is used to combine the elements. Otherwise, tuples of the combined elements are returned.</p>
 
 <p>If the two lists have different lengths, the shorter list is filled with <code class="hljs inlineCode">null</code> values.</p>
 
@@ -30,15 +30,15 @@ $collection.transpose($func)</code>
 		<tr>
 			<td>Collection</td>
 			<td>Enumeration</td>
-			<td>A collection that contains up to 2 lists. The lists are combined element by element. If only one list is present, it is processed unchanged. Empty collections produce an empty result.</td>
+			<td>A collection that contains any number of lists. The lists are combined element by element. If there is only one list, it is processed unchanged. Empty collections produce an empty result.</td>
 			<td>yes</td>
 			<td> </td>
 		</tr>
 		<tr>
-			<td>func</td>
+			<td>fun</td>
 			<td>Function</td>
 			<td>
-			<p>An optional function that is used to combine the corresponding elements from the two lists. The function receives two parameters: the element from the first list and the element from the second list. If not specified, tuple objects are created.</p>
+			<p>An optional function that is used to combine the corresponding elements from the two lists. The function receives as many parameters as there are lists in the collection. If not specified, tuple lists are created.</p>
 			</td>
 			<td>no</td>
 			<td>
@@ -52,7 +52,7 @@ $collection.transpose($func)</code>
 
 <p><strong>Type:</strong> List</p>
 
-<p>A list of the combined elements. If no transposition function was specified, the list contains tuple objects with the keys <code class="hljs inlineCode">"0"</code> and <code class="hljs inlineCode">"1"</code>. If a function has been specified, the list contains the results of this function for each element pair. The length of the result corresponds to the longest input list.</p>
+<p>A list of the combined elements. If no transposition function has been specified, the list contains tuples in the form of lists. Each tuple list contains the elements at the corresponding position from the input lists. If a function has been specified, the list contains the results of this function for each element tuple. The length of the result corresponds to the longest input list.</p>
 
 <h2>Examples</h2>
 
@@ -65,18 +65,19 @@ $collection.transpose($func)</code>
 ).transpose()</code>
 </pre>
 
-<p><strong>Output: </strong> A list of tuple objects: <code class="hljs inlineCode">[{"0": "A", "1": 1}, {"0": "B", "1": 2}, {"0": "C", "1": 3}]</code></p>
+<p><strong>Output: </strong> A list of tuple objects: <code class="hljs inlineCode">[["A", 1], ["B", 2], ["C", 3]]</code></p>
 
 <h3>Transposition with combination function</h3>
 
 <pre>
 	<code>list(
     list("Hallo", "Guten", "Auf"),
-    list("Welt", "Tag", "Wiedersehen")
-).transpose(first -&gt; second -&gt; $first + " " + $second)</code>
+    list("Welt", "Tag", "Wiedersehen"),
+    list(null, "!", "?")
+).transpose(first -&gt; second -&gt; third -&gt; $first + " " + $second + $third)</code>
 </pre>
 
-<p><strong>Output: </strong> A list of combined strings: <code class="hljs inlineCode">["Hallo Welt", "Guten Tag", "Auf Wiedersehen"]</code></p>
+<p><strong>Output: </strong> A list of combined strings: <code class="hljs inlineCode">[Hallo Welt, Guten Tag!, Auf Wiedersehen?]</code></p>
 
 <h3>Transposition with different list lengths</h3>
 

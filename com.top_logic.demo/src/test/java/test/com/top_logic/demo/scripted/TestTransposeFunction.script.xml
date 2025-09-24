@@ -39,7 +39,7 @@
   // Execute transpose
   result = $testLists.transpose();
   
-  $result;
+  $result.flatten();
 }]]></value>
 			</value>
 		</action>
@@ -70,26 +70,9 @@
 					displayed-row-index="0"
 				/>
 			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
-				<values>
-					<value>
-						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-							value="0"
-						/>
-						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-							value="A"
-						/>
-					</value>
-					<value>
-						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-							value="1"
-						/>
-						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-							value="1.0"
-						/>
-					</value>
-				</values>
-			</expected-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="A"
+			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 			comparision="equals"
@@ -108,26 +91,9 @@
 					displayed-row-index="1"
 				/>
 			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
-				<values>
-					<value>
-						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-							value="0"
-						/>
-						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-							value="B"
-						/>
-					</value>
-					<value>
-						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-							value="1"
-						/>
-						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-							value="2.0"
-						/>
-					</value>
-				</values>
-			</expected-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+				value="1.0"
+			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 			comparision="equals"
@@ -146,26 +112,72 @@
 					displayed-row-index="2"
 				/>
 			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
-				<values>
-					<value>
-						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-							value="0"
-						/>
-						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-							value="C"
-						/>
-					</value>
-					<value>
-						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-							value="1"
-						/>
-						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
-							value="3.0"
-						/>
-					</value>
-				</values>
-			</expected-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="B"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="3"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+				value="2.0"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="4"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="C"
+			/>
+		</action>
+		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
+			comparision="equals"
+			inverted="false"
+			user-id="root"
+		>
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.RowTableValue"
+				column-label="Result"
+			>
+				<table config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
+					<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
+						tab-path="Administration > Development > Script Konsole > Ergebnis"
+					/>
+				</table>
+				<row-object config:interface="com.top_logic.layout.scripting.recorder.ref.value.DisplayedTableRowNaming$Name"
+					displayed-row-index="5"
+				/>
+			</actual-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.DoubleNaming$Name"
+				value="3.0"
+			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
 			user-id="root"
@@ -460,24 +472,9 @@
 					displayed-row-index="0"
 				/>
 			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
-				<values>
-					<value>
-						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-							value="0"
-						/>
-						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-							value="Alpha"
-						/>
-					</value>
-					<value>
-						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-							value="1"
-						/>
-						<value config:interface=""/>
-					</value>
-				</values>
-			</expected-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="Alpha"
+			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 			comparision="equals"
@@ -496,24 +493,9 @@
 					displayed-row-index="1"
 				/>
 			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
-				<values>
-					<value>
-						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-							value="0"
-						/>
-						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-							value="Beta"
-						/>
-					</value>
-					<value>
-						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-							value="1"
-						/>
-						<value config:interface=""/>
-					</value>
-				</values>
-			</expected-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="Beta"
+			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.assertion.ValueAssertionOp"
 			comparision="equals"
@@ -532,24 +514,9 @@
 					displayed-row-index="2"
 				/>
 			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.MapNaming$Name">
-				<values>
-					<value>
-						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-							value="0"
-						/>
-						<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-							value="Gamma"
-						/>
-					</value>
-					<value>
-						<key config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-							value="1"
-						/>
-						<value config:interface=""/>
-					</value>
-				</values>
-			</expected-value>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
+				value="Gamma"
+			/>
 		</action>
 		<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
 			user-id="root"

@@ -1,13 +1,7 @@
 <h2>Syntax</h2>
 
 <pre>
-	<code>$list.indexBy($keyFun)
-
-$list.indexBy($keyFun, $clashFun)
-
-$list.indexBy($keyFun, $mapFun)
-
-$list.indexBy($keyFun, $clashFun, $mapFun)</code>
+	<code>$list.indexBy($keyFun, $clashFun, $mapFun)</code>
 </pre>
 
 <h2>Description</h2>
@@ -39,21 +33,21 @@ $list.indexBy($keyFun, $clashFun, $mapFun)</code>
 		<tr>
 			<td>keyFun</td>
 			<td>Function</td>
-			<td>Key function according to which the indices are to be displayed.</td>
+			<td>Key function according to which the indices are to be generated.</td>
 			<td>yes</td>
 			<td> </td>
 		</tr>
 		<tr>
 			<td>clashFun</td>
 			<td>function</td>
-			<td>Clash function according to which key duplicates can be resolved. Without this function, duplicates generate error messages.</td>
+			<td>Clash function according to which key duplicates can be resolved. Without this function, duplicates generate error messages. If a mapFun is also specified, the mapped values are obtained, not the original entries from the list.</td>
 			<td>no</td>
 			<td>No resolution of duplicates.</td>
 		</tr>
 		<tr>
 			<td>mapFun</td>
 			<td>function</td>
-			<td>Map function that transforms the values stored in the list. Takes a parameter (the list element) and returns the value to be saved.</td>
+			<td>Map function that transforms the values stored in the list. Takes a parameter (the list element) and returns the value to be saved. The transformation takes place after the key calculation has been completed.</td>
 			<td>no</td>
 			<td>Original values are saved.</td>
 		</tr>
@@ -62,7 +56,7 @@ $list.indexBy($keyFun, $clashFun, $mapFun)</code>
 
 <h2>Return value</h2>
 
-<p><span style="color:#3498db"><strong>Type:</strong></span> Subject object</p>
+<p><span style="color:#3498db"><strong>Type:</strong></span> Specialized object</p>
 
 <p>A dictionary in which all values in the list are assigned to an index.</p>
 
@@ -112,14 +106,13 @@ $list.indexBy($keyFun, $clashFun, $mapFun)</code>
 <h3>Indexing by name abbreviation with clash function and map function</h3>
 
 <pre>
-<code>list(
-    {"name": "Smith", "age": 45},
-    {"name": "Parker", "age": 32},
-    {"name": "Brown", "age": 28},
-    {"name": "Brown", "age": 35},
-    {"name": "Brown", "age": 33},
-    {"name": "Taylor", "age": 41}
-).indexBy(
+<code>[{"name": "Smith", "age": 45},
+ {"name": "Parker", "age": 32},
+ {"name": "Brown", "age": 28},
+ {"name": "Brown", "age": 35},
+ {"name": "Brown", "age": 33},
+ {"name": "Taylor", "age": 41}
+].indexBy(
     keyFun: person -&gt; $person["name"],
     clashFun: age1 -&gt; age2 -&gt; ($age1 + $age2) / 2,
     mapFun: person -&gt; $person["age"]

@@ -1,13 +1,7 @@
 <h2>Syntax</h2>
 
 <pre>
-	<code>$list.indexBy($keyFun)
-
-$list.indexBy($keyFun, $clashFun)
-
-$list.indexBy($keyFun, $mapFun)
-
-$list.indexBy($keyFun, $clashFun, $mapFun)</code>
+	<code>$list.indexBy($keyFun, $clashFun, $mapFun)</code>
 </pre>
 
 <h2>Beschreibung</h2>
@@ -39,21 +33,21 @@ $list.indexBy($keyFun, $clashFun, $mapFun)</code>
 		<tr>
 			<td>keyFun</td>
 			<td>Funktion</td>
-			<td>Schlüsselfunktion, nach der die Indizes erzeigt werden sollen.</td>
+			<td>Schlüsselfunktion, nach der die Indizes erzeugt werden sollen.</td>
 			<td>ja</td>
 			<td> </td>
 		</tr>
 		<tr>
 			<td>clashFun</td>
 			<td>Funktion</td>
-			<td>Clashfunktion, nach der Key-Duplikate aufgelöst werden können. Ohne diese Funktion erzeugen Duplikate Fehlermeldungen.</td>
+			<td>Clashfunktion, nach der Key-Duplikate aufgelöst werden können. Ohne diese Funktion erzeugen Duplikate Fehlermeldungen. Wenn auch eine mapFun angegeben ist, erhält man die gemappten Werte, nicht die Originaleinträge aus der Liste.</td>
 			<td>nein</td>
 			<td>Keine Auflösung von Duplikaten.</td>
 		</tr>
 		<tr>
 			<td>mapFun</td>
 			<td>Funktion</td>
-			<td>Mapfunktion, welche die in der Liste gespeicherten Werte transformiert. Nimmt einen Parameter (das Listenelement) und gibt den zu speichernden Wert zurück.</td>
+			<td>Mapfunktion, welche die in der Liste gespeicherten Werte transformiert. Nimmt einen Parameter (das Listenelement) und gibt den zu speichernden Wert zurück. Die Transformation findet statt, nachdem die Schlüsselberechnung abgeschlossen ist.</td>
 			<td>nein</td>
 			<td>Originalwerte werden gespeichert.</td>
 		</tr>
@@ -112,14 +106,13 @@ $list.indexBy($keyFun, $clashFun, $mapFun)</code>
 <h3>​Indizierung nach Namenskürzel mit Clash-Funktion und Map-Funktion</h3>
 
 <pre>
-<code>list(
-    {"name": "Smith", "age": 45},
-    {"name": "Parker", "age": 32},
-    {"name": "Brown", "age": 28},
-    {"name": "Brown", "age": 35},
-    {"name": "Brown", "age": 33},
-    {"name": "Taylor", "age": 41}
-).indexBy(
+<code>[{"name": "Smith", "age": 45},
+ {"name": "Parker", "age": 32},
+ {"name": "Brown", "age": 28},
+ {"name": "Brown", "age": 35},
+ {"name": "Brown", "age": 33},
+ {"name": "Taylor", "age": 41}
+].indexBy(
     keyFun: person -&gt; $person["name"],
     clashFun: age1 -&gt; age2 -&gt; ($age1 + $age2) / 2,
     mapFun: person -&gt; $person["age"]

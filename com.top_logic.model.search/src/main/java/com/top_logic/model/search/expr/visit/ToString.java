@@ -54,6 +54,7 @@ import com.top_logic.model.search.expr.Sort;
 import com.top_logic.model.search.expr.StringContains;
 import com.top_logic.model.search.expr.StringEndsWith;
 import com.top_logic.model.search.expr.StringStartsWith;
+import com.top_logic.model.search.expr.Try;
 import com.top_logic.model.search.expr.TupleExpression;
 import com.top_logic.model.search.expr.TupleExpression.Coord;
 import com.top_logic.model.search.expr.UnaryOperation;
@@ -509,6 +510,18 @@ public class ToString implements Visitor<Void, StringBuilder> {
 		arg.append('"');
 		expr.getValue().visit(this, arg);
 		arg.append('"');
+		return none();
+	}
+
+	@Override
+	public Void visitTry(Try expr, StringBuilder out) {
+		out.append("try(");
+		expr.getTryBlock().visit(this, out);
+		if (expr.getCatchBlock() != null) {
+			out.append(", ");
+			expr.getCatchBlock().visit(this, out);
+		}
+		out.append(")");
 		return none();
 	}
 

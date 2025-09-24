@@ -670,6 +670,12 @@ public class SearchExpressionFactory {
 		// Dynamic safety is only required for protected attributes.
 		return SafeHTML.getInstance().getAttributeChecker(name) != null;
 	}
+	/**
+	 * Creates a {@link Try} expression.
+	 */
+	public static Try tryExpr(SearchExpression tryBlock, SearchExpression catchBlock) {
+		return new Try(tryBlock, catchBlock);
+	}
 
 	/**
 	 * Creates a {@link ReduceOperation} expression.

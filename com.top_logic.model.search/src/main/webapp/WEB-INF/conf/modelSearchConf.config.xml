@@ -394,6 +394,7 @@
 					<method name="getKey" class="com.top_logic.model.search.expr.config.operations.struct.GetKey$Builder"/>
 					<method name="getValue" class="com.top_logic.model.search.expr.config.operations.struct.GetValue$Builder"/>
 
+					<method name="try" class="com.top_logic.model.search.expr.Try$Builder"/>
 					<method name="ifElse" class="com.top_logic.model.search.expr.config.operations.IfElseBuilder"/>
 					<method name="if" class="com.top_logic.model.search.expr.config.operations.IfElseBuilder"/>
 					<method name="isEmpty" class="com.top_logic.model.search.expr.config.operations.IsEmptyBuilder"/>
@@ -652,7 +653,6 @@
 					<method name="dbConfig" class="com.top_logic.model.search.expr.config.operations.app.GetDBConfig$Builder"/>
 					<method name="appConfig" class="com.top_logic.model.search.expr.config.operations.app.GetAppConfig$Builder"/>
 					<method name="flatMap" class="com.top_logic.model.search.expr.config.operations.FlatMap$Builder"/>
-					
 				</methods>
 				<method-resolvers>
 					<method-resolver class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions$Module"/>

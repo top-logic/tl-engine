@@ -5,11 +5,17 @@
  */
 package com.top_logic.model.search.providers;
 
-import java.io.StringReader;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.i18n.log.I18NLog;
+import com.top_logic.basic.logging.Level;
+import com.top_logic.element.meta.MetaElementUtil;
+import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredType;
@@ -17,9 +23,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.instance.exporter.XMLInstanceExporter;
 import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.instance.importer.resolver.InstanceResolver;
-import com.top_logic.model.search.expr.parser.ParseException;
-import com.top_logic.model.search.expr.parser.SearchExpressionParser;
-import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.util.TLModelUtil;
 
 /**
  * {@link InstanceResolver} that builds in index of all instances of a certain type to resolve
@@ -27,34 +31,29 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  */
 public class InstanceResolverByIndex implements InstanceResolver {
 
-	private TLStructuredType _type;
+	private TLClass _type;
 
 	private TLStructuredTypePart _part;
 
 	private TLPrimitive _idType;
-
-	private QueryExecutor _indexBuilder;
 
 	private Map<Object, TLObject> _index;
 
 	/**
 	 * Creates a {@link InstanceResolverByIndex} from configuration.
 	 * 
-	 * @param type
-	 *        The type to load all instances from.
 	 * @param part
 	 *        The identifying primitive attribute.
 	 */
 	@CalledByReflection
-	public InstanceResolverByIndex(TLStructuredType type, TLStructuredTypePart part) throws ParseException {
-		_type = type;
+	public InstanceResolverByIndex(TLStructuredTypePart part) {
 		_part = part;
 		_idType = (TLPrimitive) _part.getType();
+	}
 
-		_indexBuilder = QueryExecutor
-			.compile(
-				new SearchExpressionParser(new StringReader("t -> attr -> all($t).indexBy(x -> $x.get($attr))"))
-					.expr());
+	@Override
+	public void initType(TLStructuredType type) {
+		_type = (TLClass) type;
 	}
 
 	@Override
@@ -67,10 +66,31 @@ public class InstanceResolverByIndex implements InstanceResolver {
 		Object value = XMLInstanceImporter.parse(log, _idType, id);
 
 		if (_index == null) {
-			@SuppressWarnings("unchecked")
-			Map<Object, TLObject> index = (Map<Object, TLObject>) _indexBuilder.execute(_type, _part);
+			_index = new HashMap<>();
 
-			_index = index;
+			Set<Object> clashes = null;
+			for (TLObject obj : MetaElementUtil.getAllInstancesOf(_type, TLObject.class)) {
+				Object key = obj.tValue(_part);
+				TLObject clash = _index.put(key, obj);
+				if (clash != null) {
+					log.log(Level.WARN, I18NConstants.NON_UNIQUE_KEY__TYPE_ATTR_KEY_OBJ1_OBJ2.fill(
+						TLModelUtil.qualifiedName(_type),
+						TLModelUtil.qualifiedName(_part),
+						MetaLabelProvider.INSTANCE.getLabel(key),
+						MetaLabelProvider.INSTANCE.getLabel(obj),
+						MetaLabelProvider.INSTANCE.getLabel(clash)));
+
+					if (clashes == null) {
+						clashes = new HashSet<>();
+					}
+					clashes.add(key);
+				}
+			}
+
+			if (clashes != null) {
+				// Do not provide random data.
+				_index.keySet().removeAll(clashes);
+			}
 		}
 
 		return _index.get(value);

@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.form.component;
 
+import java.util.List;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
@@ -15,6 +17,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
@@ -23,9 +26,15 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DefaultRefVisitor;
 import com.top_logic.layout.ModelSpec;
 import com.top_logic.layout.basic.DefaultDisplayContext;
@@ -34,10 +43,17 @@ import com.top_logic.layout.channel.linking.impl.ChannelLinking;
 import com.top_logic.layout.channel.linking.impl.DirectLinking;
 import com.top_logic.layout.channel.linking.ref.ComponentRef;
 import com.top_logic.layout.channel.linking.ref.NamedComponent;
+import com.top_logic.layout.component.WithCommitMessage;
+import com.top_logic.layout.form.FormHandler;
 import com.top_logic.layout.form.component.edit.EditMode;
+import com.top_logic.layout.form.component.edit.EditMode.EditorMode;
+import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Plug-in for an {@link AbstractCreateCommandHandler} for specifying common action to be done after
@@ -173,7 +189,6 @@ public interface PostCreateAction {
 	 */
 	@InApp
 	class SetEditMode extends AbstractConfiguredInstance<SetEditMode.Config> implements PostCreateAction {
-
 		/**
 		 * Configuration options for {@link PostCreateAction.SetEditMode}.
 		 */
@@ -186,6 +201,12 @@ public interface PostCreateAction {
 			@Mandatory
 			@DefaultContainer
 			ComponentRef getComponentRef();
+
+			/**
+			 * The mode to set on the {@link #getComponentRef() target component}.
+			 */
+			@FormattedDefault(EditMode.EDIT_MODE_NAME)
+			EditorMode getMode();
 		}
 
 		/**
@@ -199,11 +220,36 @@ public interface PostCreateAction {
 		public void handleNew(LayoutComponent component, Object newModel) {
 			LayoutComponent editComponent =
 				DefaultRefVisitor.resolveReference(getConfig().getComponentRef(), component);
-			if (editComponent instanceof EditMode) {
-				((EditMode) editComponent).setEditMode();
+			if (editComponent instanceof EditMode editor) {
+				getConfig().getMode().apply(editor);
 			}
 		}
+	}
 
+	/**
+	 * {@link PostCreateAction} storing the form context of the context component back its model.
+	 */
+	@InApp
+	class FormApply implements PostCreateAction {
+		@Override
+		public void handleNew(LayoutComponent component, Object newModel) {
+			if (component instanceof FormHandler form && form.hasFormContext()) {
+				FormContext formContext = form.getFormContext();
+				if (formContext != null) {
+					boolean ok = formContext.checkAll();
+					if (!ok) {
+						HandlerResult error = AbstractApplyCommandHandler.createErrorResult(formContext);
+
+						TopLogicException ex = new TopLogicException(error.getErrorMessage());
+						ex.initDetails(error.getEncodedErrors().get(0));
+						ex.initSeverity(ErrorSeverity.WARNING);
+						throw ex;
+					}
+
+					formContext.store();
+				}
+			}
+		}
 	}
 
 	/**
@@ -371,6 +417,62 @@ public interface PostCreateAction {
 		@Override
 		public void handleNew(LayoutComponent component, Object newModel) {
 			component.closeDialog();
+		}
+	}
+
+	/**
+	 * Performs actions in a transaction context.
+	 */
+	@InApp
+	public class InTransaction extends AbstractConfiguredInstance<InTransaction.Config<?>>
+			implements PostCreateAction {
+
+		private final List<PostCreateAction> _actions;
+
+		private CommandHandler _command;
+
+		/**
+		 * Configuration options for {@link InTransaction}.
+		 */
+		@TagName(Config.TAG_NAME)
+		@DisplayOrder({
+			Config.COMMIT_MESSAGE,
+			Config.POST_CREATE_ACTIONS,
+		})
+		public interface Config<I extends InTransaction>
+				extends PolymorphicConfiguration<I>, WithPostCreateActions.Config, WithCommitMessage {
+
+			/**
+			 * Short-cut tag name for configuring a {@link InTransaction} action.
+			 */
+			String TAG_NAME = "in-transaction";
+
+		}
+
+		/**
+		 * Creates a {@link InTransaction} from configuration.
+		 * 
+		 * @param context
+		 *        The context for instantiating sub configurations.
+		 * @param config
+		 *        The configuration.
+		 */
+		@CalledByReflection
+		public InTransaction(InstantiationContext context, Config<?> config) {
+			super(context, config);
+			_actions = TypedConfiguration.getInstanceList(context, config.getPostCreateActions());
+			context.resolveReference(InstantiationContext.OUTER, CommandHandler.class, c -> _command = c);
+		}
+
+		@Override
+		public void handleNew(LayoutComponent component, Object model) {
+			ResKey message = getConfig().buildCommandMessage(component, _command, model);
+
+			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(message)) {
+				WithPostCreateActions.processCreateActions(_actions, component, model);
+
+				tx.commit();
+			}
 		}
 	}
 

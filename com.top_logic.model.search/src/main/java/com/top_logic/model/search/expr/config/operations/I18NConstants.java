@@ -95,8 +95,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey4 ERROR_WRONG_ARGUMENT__FUN_ARG_EXPECTED_VAL;
 
-	public static ResKey1 ERROR_TOO_MANY_LISTS__FUN_TRANSPOSE;
-
 	static {
 		initConstants(I18NConstants.class);
 	}

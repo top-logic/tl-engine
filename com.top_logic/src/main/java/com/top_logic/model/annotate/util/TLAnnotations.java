@@ -16,6 +16,8 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.layout.form.model.DataField;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -28,6 +30,8 @@ import com.top_logic.model.annotate.ExportColumns;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.TLObjectInitializers;
 import com.top_logic.model.annotate.TLPersistentCache;
+import com.top_logic.model.annotate.ui.BinaryDisplay;
+import com.top_logic.model.annotate.ui.BinaryDisplay.BinaryPresentation;
 import com.top_logic.model.annotate.ui.ClassificationDisplay;
 import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPresentation;
 import com.top_logic.model.config.TLTypeAnnotation;
@@ -125,6 +129,21 @@ public class TLAnnotations {
 			}
 		}
 		return annotation.getValue();
+	}
+
+	/**
+	 * Determines how the {@link DataField} of a {@link BinaryData} shall be presented.
+	 * 
+	 * @param annotation
+	 *        The annotation determining the display. If <code>null</code>, a default is applied.
+	 * @param multiple
+	 *        Whether multiple values are allowed in the current context.
+	 */
+	public static BinaryPresentation getBinaryPresentation(BinaryDisplay annotation, boolean multiple) {
+		if (annotation == null) {
+			return BinaryPresentation.DATA_ITEM;
+		}
+		return annotation.getPresentation();
 	}
 
 	/**

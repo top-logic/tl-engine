@@ -184,7 +184,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey CLEAR_DATA_ITEM;
 
+	public static ResKey CLEAR_IMAGE;
+
 	public static ResKey UPDATE_FILE_NAME;
+
+	public static ResKey UPDATE_IMAGE_COMMAND;
 
 	public static ResKey TOGGLE_CALENDAR_VISIBILITY;
 
@@ -289,6 +293,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @tooltip Opens the file chooser for uploading a file.
 	 */
 	public static ResKey UPLOAD_LABEL;
+
+	/**
+	 * @en Upload image
+	 * @tooltip Opens the file chooser for uploading an image.
+	 */
+	public static ResKey UPLOAD_IMAGE_LABEL;
 
 	/**
 	 * @en Select all

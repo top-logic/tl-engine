@@ -2504,6 +2504,123 @@ td.tl-table__cell .cDataItem li {
 }
 
 /* ==================================== */
+/* ======   ImageUploadControl    ===== */
+/* ==================================== */
+
+.cImgUpload input {
+	margin-left: 2px;
+}
+
+.cImgUpload input.first {
+	margin-left: 0px;
+}
+
+.cImgUpload input {
+	background-color: var(--background);
+}
+
+.cImgUpload input[type="file"] {
+	opacity: 0;
+	position: absolute;
+}
+
+.cImgUpload .fClear {
+	position: absolute;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--form-line-height);
+	height: var(--form-line-height);
+	transform: translate(-100%, 0);
+	border-bottom-left-radius: var(--spacing-02);
+	color: var(--button-fg, var(--icon-primary));
+}
+
+.cImgUpload .fClear:hover {
+	background: var(--field-hover);
+	text-decoration: none;
+}
+
+.cImgUpload img:not(.annotatedMaxW) {
+	max-width: stretch;
+	max-width: -moz-available;
+	max-width: -webkit-fill-available;
+}
+
+.cImgUpload img.annotatedMaxW {
+	width: stretch;
+	width: -moz-available;
+	width: -webkit-fill-available;
+}
+
+.cImgUpload label {
+	display: inline-flex;
+	cursor: pointer;
+	
+	width: stretch;
+	width: -moz-available;
+	width: -webkit-fill-available;
+	height: 14rem;
+	
+	padding: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	align-items: center;
+	justify-content: center;
+	
+	background: var(--field);
+	color: var(--text-primary);
+	border: dashed var(--border-subtle) 4px;
+}
+
+.cImgUpload label > * {
+	pointer-events: none;
+}
+
+.cImgUpload label .cmdImg {
+	padding-right: var(--spacing-02);
+}
+
+.cImgUpload label .cmdLabel {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.cImgUpload.dragHover label {
+	background: var(--field-hover);
+	border-color: var(--button-primary);
+}
+
+.cImgUpload label:hover:not(.cmdButtonDisabled) {
+	background: var(--field-hover);
+	border-color: var(--border-strong);
+}
+
+.cImgUpload input[type="file"]:focus + label:not(.cmdButtonDisabled) {
+	border-color: var(--focus);
+}
+
+.cImgUpload label:active:not(.cmdButtonDisabled) {
+	background: var(--field-hover);
+	border-color: var(--button-primary);
+	color: var(--button-primary-active);
+}
+
+.cImgUpload label.cmdButtonDisabled {
+	display: inline-flex;
+	background: var(--button-disabled);
+	cursor: default;
+}
+
+.cImgUpload label.cmdButtonDisabled .cmdLabel {
+	color: var(--text-on-color-disabled);
+}
+
+.cImgUpload label.cmdButtonDisabled .cmdImg {
+	color: var(--text-on-color-disabled);
+}
+
+/* ==================================== */
 /* ======     DownloadControl     ===== */
 /* ==================================== */
 

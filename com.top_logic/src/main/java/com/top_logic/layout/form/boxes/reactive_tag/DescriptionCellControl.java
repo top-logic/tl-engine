@@ -6,6 +6,7 @@
 package com.top_logic.layout.form.boxes.reactive_tag;
 
 import java.io.IOException;
+import java.util.List;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
@@ -19,11 +20,14 @@ import com.top_logic.layout.basic.AbstractControlBase;
 import com.top_logic.layout.basic.TemplateVariable;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.form.FormMember;
+import com.top_logic.layout.form.boxes.tag.JSPLayoutedControls;
 import com.top_logic.layout.form.control.CheckboxControl;
 import com.top_logic.layout.form.control.ErrorControl;
 import com.top_logic.layout.form.control.IconSelectControl;
+import com.top_logic.layout.form.control.ImageUploadControl;
 import com.top_logic.layout.form.control.LabelControl;
 import com.top_logic.layout.form.control.TextInputControl;
+import com.top_logic.layout.form.model.DataField;
 import com.top_logic.layout.form.model.VisibilityModel;
 import com.top_logic.layout.form.model.VisibilityModel.AlwaysVisible;
 import com.top_logic.layout.form.template.ControlProvider;
@@ -197,7 +201,21 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	 * @see #isLabelFirst()
 	 */
 	public void setLabelPosition(LabelPosition labelPosition) {
-		_labelPosition = labelPosition;
+		Control ctrl = null;
+		if (_model instanceof JSPLayoutedControls) {
+			List<HTMLFragment> controls = ((JSPLayoutedControls) _model).getControls();
+			if (controls.size() == 1)
+				ctrl = (Control) controls.get(0);
+		} else if (_member instanceof DataField) {
+			ControlProvider cp = _member.getControlProvider();
+			if (cp != null)
+				ctrl = cp.createControl(_member);
+		}
+		if (ctrl instanceof ImageUploadControl && ((ImageUploadControl) ctrl).isDefaultLabelAbove()) {
+			_labelPosition = LabelPosition.ABOVE;
+		} else {
+			_labelPosition = labelPosition;
+		}
 	}
 
 	/**

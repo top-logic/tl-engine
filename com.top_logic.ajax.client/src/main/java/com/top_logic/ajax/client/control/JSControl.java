@@ -32,6 +32,8 @@ public interface JSControl {
 	 * @param args
 	 *        Arguments to the command.
 	 */
-	void invoke(String command, Object[] args);
+	default void invoke(String command, Object[] args) {
+		throw new IllegalArgumentException("Command '" + command + "' not supported.");
+	}
 
 }

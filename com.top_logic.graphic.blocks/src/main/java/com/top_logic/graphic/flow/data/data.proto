@@ -1,0 +1,808 @@
+package com.top_logic.graphic.flow.data;
+
+option SharedGraph;
+option NoXml;
+option NoBinary;
+
+/** Common base class for all diagram elements that can be rendered to SVG. */
+@Operations("com.top_logic.graphic.flow.operations.WidgetOperations")
+abstract message Widget {
+
+	/** Custom CSS class to add to the SVG element. */
+	@Nullable
+	string cssClass;
+
+	/**
+	 * An arbitrary object that can be associated with this graphics elements.
+	 */
+	transient java.lang.Object userObject;
+	
+	/**
+	 * Identifier to associate this graphics element to the client DOM.
+	 */
+	@Nullable
+	transient string clientId;
+	
+	/** Private information that must be kept during the layout and rendering phases. */
+	transient java.lang.Object renderInfo;
+}
+
+/** Top-level diagram element that can be layouted and rendered. */
+@Operations("com.top_logic.graphic.flow.operations.DiagramOperations")
+message Diagram extends Widget {
+	/** The top-level diagram element. */
+	Box root;
+
+	/** The list of currently selected diagram elements. */	
+	@Ref
+	repeated SelectableBox selection;
+	
+	/** Whether multi-selection is supported */
+	boolean multiSelect;
+	
+	/** Internal field for storing the current click handler registration (client-side only). */
+	transient com.top_logic.graphic.blocks.svg.event.Registration clickHandler;
+	
+	/** Local (client-side) diagram-wide operation context to allow client-server communication. */
+	transient com.top_logic.graphic.flow.callback.DiagramContext context;
+	
+	/** X coordinate of the view box. */
+	double viewBoxX;
+	
+	/** Y coordinate of the view box. */
+	double viewBoxY;
+	
+	/** Width of the view box. */
+	double viewBoxWidth;
+	
+	/** Height of the view box. */
+	double viewBoxHeight;
+}
+
+/** A rectangular region of a {@link Diagram}. */
+@Operations("com.top_logic.graphic.flow.operations.BoxOperations")
+abstract message Box extends Widget {
+	/** The widget that contains/renders this widget. */
+	@Container
+	Widget parent;
+
+	/** The X coordinate of the top-left edge of the rectangular region of this box. */
+	transient double x;
+	
+	/** The Y coordinate of the top-left edge of the rectangular region of this box. */
+	transient double y;
+	
+	/** The width of the rectangular region of this box. */
+	transient double width;
+	
+	/** The height of the rectangular region of this box. */
+	transient double height;
+}
+
+/** A layout that allows to freely place boxes at arbitrary positions. The layout does not impose any restrictions to the positions and sizes of the placed boxes. */
+@Operations("com.top_logic.graphic.flow.operations.layout.FloatingLayoutOperations")
+message FloatingLayout extends Box {
+	/** Top-level floating elements. */
+	repeated Box nodes;
+}
+
+/** A layout that connects nodes with one-to-many connectors forming a tree. */
+@Operations("com.top_logic.graphic.flow.operations.tree.TreeLayoutOperations")
+message TreeLayout extends FloatingLayout {
+	/** Whether to minimize vertical space required to layout the tree. */
+	boolean compact;
+	
+	/** 
+	 * Factor to determine the placement of the parent node relative to it's children. 
+	 * With a value of zero the center of the parent node is placed at the same Y coordinate 
+	 * as the first of it's children. With a value of 1.0, the parent is aligned to its last child. 
+	 * A value in between, places the parent corresponding to the ratio between the first 
+	 * and the last child.
+	 */
+	@Default(0.5)
+	double parentAlign;
+	
+	/**
+	 * Offset to add to the parent Y coordinate after the alignment operation based on {@link #parentRatio}.
+	 */	
+	double parentOffset;
+	
+	/** The layout direction of nodes (from top/parent to bottom/children) */
+	DiagramDirection direction;
+	
+	/** Horizontal gap between columns of tree nodes. */
+	double gapX = 40;
+	
+	/** Vertical gap between nodes in a tree column if they belong to the same parent. */
+	double sibblingGapY = 20;
+
+	/** Vertical gap between nodes in a tree column if they belong to different subtrees. */
+	double subtreeGapY = 20;
+
+	/** Stroke style of tree connections. */	
+	string strokeStyle = "black";
+	
+	/** Stroke width of tree connections. */	
+	double thickness = 1.0;
+	
+	/** The connections connecting the {@link #nodes} of the tree. */
+	repeated TreeConnection connections;
+}
+
+/** A layout direction for a structured diagram. */
+enum DiagramDirection {
+	/** Diagram contents is layouted from left to right. */
+	ltr;
+	
+	/** Diagram contents is layouted from right to left. */
+	rtl; 
+	
+	/** Diagram contents is layouted from top to bottom. */
+	topdown; 
+	
+	/** Diagram contents is layouted from bottom to top. */
+	bottomup;
+}
+
+/** A connection in a {@link TreeLayout} that links contents of the diagram with one-to-many edges. */
+@Operations("com.top_logic.graphic.flow.operations.tree.TreeConnectionOperations")
+message TreeConnection extends Widget {
+	/** The {@link TreeLayout} that is responsible for this connection. */
+	@Container
+	TreeLayout owner;
+	
+	/** The connector that is anchored to the parent node of the connection. */
+	TreeConnector parent;
+
+	/** The connector that is  anchored to the child node of the connection. */
+	TreeConnector child;
+
+	/** The SVG <code>stroke</code> style. If not set, the default from the {@link TreeLayout} is used. */
+	@Nullable
+	string strokeStyle = "black";
+	
+	/** The thickness of the drawn border. If not set, the default from the {@link TreeLayout} is used. */
+	@Nullable
+	double thickness = 1.0;
+	
+	/** Length of dashes for a dashed border. */
+	repeated double dashes;
+	
+	/** Decorations to place on the connection. */
+	repeated EdgeDecoration decorations;
+	
+	/**
+	 * The placement of the connection bar that represents the fan-out from the one parent to its many children. 
+	 * The bar is rendered perpendicular to the line connecting the nodes with the bar. 
+	 * The position of the bar is given as absolute coordinate (X or Y depending on the layout direction) within 
+	 * the coordinate system of the {@link TreeLayout}.
+	 */
+	transient double barPosition;
+}
+
+/** A decoration placed on an edge. */
+@Operations("com.top_logic.graphic.flow.operations.tree.EdgeDecorationOperations")
+message EdgeDecoration extends Widget {
+	/** 
+	 * A ratio of the length of the edge that determines the position where the content is placed on the edge. 
+	 * A value of <code>0.0</code> places the content at the start position of the edge. 
+	 * A value of <code>1.0</code> places the content at the end position of the edge. 
+	 */
+	double linePosition;
+	
+	/**
+	 * The position of the content box that is matched with the line position.
+	 */
+	OffsetPosition offsetPosition;
+	
+	/** The content to render relative to the edge. */
+    Box content;
+}
+
+/** A position specification of a canonical point within a box. */
+enum OffsetPosition {
+    /** The center of the box. */
+    @Name("center")
+	CENTER;
+	
+    /** The center of the top border. */
+    @Name("center-top")
+	CENTER_TOP;
+    
+    /** The center of the left border. */
+    @Name("center-left")
+	CENTER_LEFT;
+    
+    /** The center of the bottom border. */
+    @Name("center-bottom")
+	CENTER_BOTTOM;
+    
+    /** The center of the right border. */
+    @Name("center-right")
+	CENTER_RIGHT;
+    
+    /** The top left corner. */
+    @Name("top-left")
+	TOP_LEFT;
+    
+    /** The top right corner. */
+    @Name("top-right")
+	TOP_RIGHT;
+    
+    /** The bottom left corner. */
+    @Name("bottom-left")
+	BOTTOM_LEFT;
+    
+    /** The bottom right corner. */
+    @Name("bottom-right")
+	BOTTOM_RIGHT;
+}
+
+/** An anchor point of a connection to a node of the diagram. */
+@Operations("com.top_logic.graphic.flow.operations.tree.TreeConnectorOperations")
+message TreeConnector extends Widget {
+	/** The connection that owns this connector. */
+	@Container
+	TreeConnection connection;
+
+	/** The connected box. The box is expected to be part of some top-level node of the owning {@link TreeLayout}. */
+	@Ref
+	Box anchor;
+	
+	/** 
+	 * The starting point of the connection within the {@link #anchor} box. 
+	 * <p>
+	 * The position describes the starting point by giving a percentage (0..1) of the length of the side of the {@link #anchor} box, where this connection is placed. 
+	 * The side of the {@link #anchor} box where the connection starts depends on the {@link DiagramDirection} of the owning {@link TreeLayout}.
+	 * </p>
+	 */
+	double connectPosition = 0.5;
+	
+	/** The connector symbol to display. */
+	ConnectorSymbol symbol;
+}
+
+/** Description of connector symbols. */
+enum ConnectorSymbol {
+	/** Display no connector symbol. */
+	none;
+	
+	/** An open arrow. */
+	arrow;
+	
+	/** A closed (triangular) arrow. */
+	closedArrow;
+	
+	/** A filled (triangular) arrow. */
+	filledArrow;
+	
+	/** A diamond. */
+	diamond;
+
+	/** A filled diamond. */
+	filledDiamond;
+}
+
+/** A line of text. */
+@Operations("com.top_logic.graphic.flow.operations.TextOperations")
+message Text extends Box {
+	/** The text to render. */
+	string value;
+	
+	/** The SVG <code>font-weight</code> style. */
+	@Nullable
+	string fontWeight;
+
+	/** The SVG <code>font-size</code> style. */
+	@Nullable
+	string fontSize;
+
+	/** The SVG <code>font-family</code> style. */
+	@Nullable
+	string fontFamily;
+	
+	/** The SVG <code>stroke</code> style. */
+	@Nullable
+	string strokeStyle;
+
+	/** The SVG <code>fill</code> style. */
+	@Nullable
+	string fillStyle;
+	
+	/** The Y offset from the top-left corner of the text box, where the text is rendered. */
+	transient double baseLine;
+}
+
+/** An embedded image. */
+@Operations("com.top_logic.graphic.flow.operations.ImageOperations")
+message Image extends Box {
+	/** The URL where the image data resides. */
+	string href;
+	
+	/** The width of the image data. */
+	double imgWidth;
+	
+	/** The height of the image data. */
+	double imgHeight;
+	
+	/** The alignment of the image data to the displayed image box. */	
+	ImageAlign align;
+	
+	/** The scaling of the image data within the image box. */	
+	ImageScale scale;
+	
+	/** The image transformation before display. */
+	ImageOrientation orientation;
+}
+
+/** Image transformation. */
+enum ImageOrientation {
+	/** The image is displayed as encoded in the image data. */
+    normal;
+    
+	/** The image is flipped horizontally. */
+    flipH;
+    
+	/** The image is rotated by 180°. */
+    rotate180;
+    
+	/** The image is flipped vertically. */
+	flipV;
+	
+	/** The image is flipped horizontally, and rotated by 270° counter-clockwise. */
+	flipH_rotate270;
+	
+	/** The image is rotated by 90° counter-clockwise. */
+	rotate90;
+
+	/** The image is flipped horizontally and rotated by 90° counter-clockwise. */
+	flipH_rotate90;
+
+	/** The image is rotated by 270° counter-clockwise. */
+	rotate270;
+}
+
+/** Alignment of an image within a box. */
+enum ImageAlign {
+
+	/**
+	 * Forces uniform scaling. Align the midpoint X value of the element's <code>viewBox</code> with the midpoint
+	 * X value of the viewport. Align the midpoint Y value of the element's <code>viewBox</code> with the
+	 * midpoint Y value of the viewport. This is the default value.
+	 */
+	xMidYMid;
+
+	/**
+	 * Forces uniform scaling. Align the <code>min-x</code> of the element's <code>viewBox</code> with the
+	 * smallest X value of the viewport. Align the <code>min-y</code> of the element's <code>viewBox</code> with
+	 * the smallest Y value of the viewport.
+	 */
+	xMinYMin;
+
+	/**
+	 * Forces uniform scaling. Align the midpoint X value of the element's <code>viewBox</code> with the midpoint
+	 * X value of the viewport. Align the <code>min-y</code> of the element's <code>viewBox</code> with the
+	 * smallest Y value of the viewport.
+	 */
+	xMidYMin;
+
+	/**
+	 * Forces uniform scaling. Align the <code>min-x</code>+<code>width</code> of the element's
+	 * <code>viewBox</code> with the maximum X value of the viewport. Align the <code>min-y</code> of the
+	 * element's <code>viewBox</code> with the smallest Y value of the viewport.
+	 */
+	xMaxYMin;
+
+	/**
+	 * Forces uniform scaling. Align the <code>min-x</code> of the element's <code>viewBox</code> with the
+	 * smallest X value of the viewport. Align the midpoint Y value of the element's <code>viewBox</code> with
+	 * the midpoint Y value of the viewport.
+	 */
+	xMinYMid;
+
+	/**
+	 * Forces uniform scaling. Align the <code>min-x</code>+<code>width</code> of the element's
+	 * <code>viewBox</code> with the maximum X value of the viewport. Align the midpoint Y value of the element's
+	 * <code>viewBox</code> with the midpoint Y value of the viewport.
+	 */
+	xMaxYMid;
+
+	/**
+	 * Forces uniform scaling. Align the <code>min-x</code> of the element's <code>viewBox</code> with the
+	 * smallest X value of the viewport. Align the <code>min-y</code>+<code>height</code> of the
+	 * element's <code>viewBox</code> with the maximum Y value of the viewport.
+	 */
+	xMinYMax;
+
+	/**
+	 * Forces uniform scaling. Align the midpoint X value of the element's <code>viewBox</code> with the midpoint
+	 * X value of the viewport. Align the <code>min-y</code>+<code>height</code> of the element's
+	 * <code>viewBox</code> with the maximum Y value of the viewport.
+	 */
+	xMidYMax;
+
+	/**
+	 * Forces uniform scaling. Align the <code>min-x</code>+<code>width</code> of the element's
+	 * <code>viewBox</code> with the maximum X value of the viewport. Align the
+	 * <code>min-y</code>+<code>height</code> of the element's <code>viewBox</code> with the maximum Y value of
+	 * the viewport.
+	 */
+	xMaxYMax;
+
+	/**
+	 * Does not force uniform scaling. Scale the graphic content of the given element non-uniformly
+	 * if necessary such that the element's bounding box exactly matches the viewport rectangle.
+	 * Note that if <code>align</code> is none, then the optional <code>meetOrSlice</code> value is
+	 * ignored.
+	 */
+	none;
+
+}
+
+/** Scaling instruction for an image within a box. */
+enum ImageScale {
+	/**
+	 * Scales the graphic such that:
+	 * <ul>
+	 * <li>The aspect ratio is preserved.</li>
+	 * <li>The entire <code>viewBox</code> is visible within the viewport.</li>
+	 * <li>The <code>viewBox</code> is scaled up as much as possible, while still meeting the other
+	 * criteria.</li>
+	 * </ul>
+	 * 
+	 * <p>
+	 * In this case, if the aspect ratio of the graphic does not match the viewport, some of the
+	 * viewport will extend beyond the bounds of the <code>viewBox</code> (i.e., the area into which the <code>viewBox</code>
+	 * will draw will be smaller than the viewport). meet
+	 * </p>
+	 */
+	meet;
+
+	/**
+	 * Scales the graphic such that:
+	 * 
+	 * <ul>
+	 * <li>The aspect ratio is preserved.</li>
+	 * <li>The entire viewport is covered by the <code>viewBox</code>.</li>
+	 * <li>The <code>viewBox</code> is scaled down as much as possible, while still meeting the other
+	 * criteria.</li>
+	 * </ul>
+	 * 
+	 * <p>
+	 * In this case, if the aspect ratio of the <code>viewBox</code> does not match the viewport, some of the
+	 * <code>viewBox</code> will extend beyond the bounds of the viewport (i.e., the area into which the <code>viewBox</code>
+	 * will draw is larger than the viewport). slice
+	 * </p>
+	 */
+	slice;
+
+}
+
+/** An empty region. */
+@Operations("com.top_logic.graphic.flow.operations.EmptyOperations")
+message Empty extends Box {
+	/** The minimum width of the element to allow to reserve some space. */
+	double minWidth;
+	
+	/** The minimum height of the element to allow to reserve some space. */
+	double minHeight;
+}
+
+/** Write several boxes on top of each other. */
+@Operations("com.top_logic.graphic.flow.operations.StackOperations")
+message Stack extends Box {
+	/** The boxes that are rendered one over the other. The box that is on the bottom is the first in the list. */
+	repeated Box contents;
+}
+
+/** A box that draws some decoration around another box. */
+@Operations("com.top_logic.graphic.flow.operations.DecorationOperations")
+abstract message Decoration extends Box {
+	/** The content box that is decorated. */
+	Box content;
+}
+
+/** A box that can be interactively selected by the user. */
+@Operations("com.top_logic.graphic.flow.operations.SelectableBoxOperations")
+message SelectableBox extends Decoration {
+
+	/** Whether this element is currently selected. */
+	bool selected;
+	
+	/** Internal field to store the click handler registration (client-side only). */
+	transient com.top_logic.graphic.blocks.svg.event.Registration clickHandler;
+	
+}
+
+/** A box that reacts on interactive mouse click events invoking a callback. */
+@Operations("com.top_logic.graphic.flow.operations.ClickTargetOperations")
+message ClickTarget extends Decoration {
+
+	/** The mouse buttons to react on. */
+	repeated MouseButton buttons;
+
+	/** Server-side-only field to store the callback to invoke when the element is clicked. */
+	transient com.top_logic.graphic.flow.callback.ClickHandler clickHandler;
+	
+	/** Internal field to store the click handler registration (client-side only). */
+	transient com.top_logic.graphic.blocks.svg.event.Registration handlerRegistration;
+	
+}
+
+/** A box that accepts drop events by invoking a server callback. */
+@Operations("com.top_logic.graphic.flow.operations.DropRegionOperations")
+message DropRegion extends Decoration {
+
+	/** Server-side-only field to store the callback to invoke when a drop occurs. */
+	transient com.top_logic.graphic.flow.callback.DropHandler dropHandler;
+	
+	/** Internal field to store the drop handler registration (client-side only). */
+	transient com.top_logic.graphic.blocks.svg.event.Registration handlerRegistration;
+	
+}
+
+/** A box that shows a tooltip when the mouse hovers over its contents. */
+@Operations("com.top_logic.graphic.flow.operations.TooltipOperations")
+message Tooltip extends Decoration {
+
+	/** The text to display as tooltip */
+	@Nullable
+	string text;
+	
+}
+
+/** Mouse buttons that can be used to interact with diagram elements. */
+enum MouseButton {
+	/**
+	 * The left mouse button.
+	 */
+	LEFT;
+
+	/**
+	 * The right mouse button.
+	 */
+	RIGHT;
+
+	/**
+	 * The middle mouse button.
+	 */
+	MIDDLE;
+}
+
+/** An alignment of some box within a potentially larger content box.  */
+@Operations("com.top_logic.graphic.flow.operations.AlignOperations")
+message Align extends Decoration {
+	/** Instruction for horizontal alignment. */
+	Alignment xAlign;
+	
+	/** Instruction for vertical alignment. */
+	Alignment yAlign;
+}
+
+/** An alignment instruction. */
+enum Alignment {
+	/** The content is aligned to the start coordinate of the container (left-to-right and top-to-bottom). */
+	start;
+	
+	/** The content is centered within the available space of the container. */
+	middle;
+	
+	/** The content is aligned to the end coordinate of the container (left-to-right and top-to-bottom). */
+	stop;
+	
+	/** The content is stretched to fit the size of the container. */
+	strech;
+}
+
+/** A border drawn around some content.  */
+@Operations("com.top_logic.graphic.flow.operations.BorderOperations")
+message Border extends Decoration {
+	/** The SVG <code>stroke</code> style. */
+	string strokeStyle = "black";
+	
+	/** The thickness of the drawn border. */
+	double thickness = 1.0;
+	
+	/** Length of dashes for a dashed border. */
+	repeated double dashes;
+	
+	/** Whether the border is drawn above the content. */
+	bool top = true;
+	
+	/** Whether the border is drawn on the left side of the content. */
+	bool left = true;
+	
+	/** Whether the border is drawn below the content. */
+	bool bottom = true;
+	
+	/** Whether the border is drawn on the right side of the content. */
+	bool right = true;
+}
+
+/** A background drawn below some content. */
+@Operations("com.top_logic.graphic.flow.operations.FillOperations")
+message Fill extends Decoration {
+	/** The SVG <code>fill</code> style. */
+	string fillStyle = "black";
+}
+
+/** Padding around some content. */
+@Operations("com.top_logic.graphic.flow.operations.PaddingOperations")
+message Padding extends Decoration {
+	/** The padding on top of the content. */
+	double top;
+	
+	/** The padding at the left side of the content. */
+	double left;
+	
+	/** The padding below the content. */
+	double bottom;
+	
+	/** The padding at the right side of the content. */
+	double right;
+}
+
+/** Element with explicit given width and height. */
+@Operations("com.top_logic.graphic.flow.operations.SizedOperations")
+message Sized extends Decoration {
+
+	/** Minimum width of content. */
+	@Nullable
+	double minWidth;
+	
+	/** Maximum width of content. */
+	@Nullable
+	double maxWidth;
+	
+	/** Minimum height of content. */
+	@Nullable
+	double minHeight;
+	
+	/** Maximum height of content. */
+	@Nullable
+	double maxHeight;
+	
+	/** The desired X coordinate of the top-left edge of the rectangular region of this box. */
+	@Nullable
+	double desiredX;
+	
+	/** The desired Y coordinate of the top-left edge of the rectangular region of this box. */
+	@Nullable
+	double desiredY;
+	
+	/** When content size is adjusted, the aspect ratio of the content is kept. */
+	bool preserveAspectRatio;
+	
+}
+
+/** A layout that places boxes around some centerd content box. */
+@Operations("com.top_logic.graphic.flow.operations.layout.CompassLayoutOperations")
+message CompassLayout extends Box {
+	/** The heading placed on top of the content. */
+	Box north;
+	
+	/** Sidebar placed left to the content. */
+	Box west;
+	
+	/** Sidebar placed right to the content. */
+	Box east;
+	
+	/** Footer placed below th content. */
+	Box south;
+	
+	/** The main content. */
+	Box center;
+	
+	/** The height of the main content. */
+	double centerHeight;
+	
+	/** The horizontal padding around the center where the sidebars are placed. */
+	double hPadding;
+	
+	/** The vertical padding around the center, where the header and footer is placed. */
+	double vPadding;
+}
+
+/** A box that computes the size and position of multiple content boxes. */
+abstract message Layout extends Box {
+	/** The content boxes to be layouted. */
+	repeated Box contents;
+}
+
+/** A tabular layout consisting of rows and columns. */
+@Operations("com.top_logic.graphic.flow.operations.layout.GridLayoutOperations")
+message GridLayout extends Layout {
+	/** The number of rows. */
+	int rows;
+	
+	/** The number of columns. */
+	int cols;
+	
+	/** The gap between columns. */
+	double gapX;
+	
+	/** The gap between rows. */
+	double gapY;
+	
+	/** The height of the rows. */
+	transient repeated double rowHeight;
+	
+	/** The width of the columns. */
+	transient repeated double colWidth;
+}
+
+/** A layout of a row of boxes. */
+abstract message RowLayout extends Layout {
+	/** The gap between boxes in the row. */
+	double gap;
+	
+	/** Instruction how to use extra space available.  */
+	SpaceDistribution fill;
+}
+
+/** A horizontal row of boxes. */
+@Operations("com.top_logic.graphic.flow.operations.layout.HorizontalLayoutOperations")
+message HorizontalLayout extends RowLayout {
+}
+
+/** A vertical column of boxes. */
+@Operations("com.top_logic.graphic.flow.operations.layout.VerticalLayoutOperations")
+message VerticalLayout extends RowLayout {
+}
+
+/** Instruction how to use extra space in a row layout. */
+enum SpaceDistribution {
+	/** Do not use extra space, allow to {@link Align} the row within its container. */
+	NONE;
+	
+	/** Stretch the content boxes but keep the gap constant. */
+	STRETCH_CONTENT;
+	
+	/** Stretch the gap between boxes. */
+	STRETCH_GAP;
+	
+	/** Evenly distribute extra space among the content and the gap between boxes. */
+	STRETCH_ALL;
+}
+
+/** A 2D point. */
+message Point {
+
+	/** The X coordinate of the point. */
+	double x;
+	
+	/** The Y coordinate of the point. */
+	double y;
+}
+
+/** A polygonal chain in the diagram. */
+@Operations("com.top_logic.graphic.flow.operations.PolygonalChainOperations")
+message PolygonalChain extends Box {
+
+	/** The corners in the polygonal chain. */
+	repeated Point points;
+	
+	/** Whether a polygonal chain is closed, i.e. there is an additional synthetic line between the first and the last point. */
+	boolean closed;
+	
+	/** The SVG <code>stroke</code> style. */
+	@Nullable
+	string strokeStyle;
+	
+	/** The SVG <code>fill</code> style. */
+	@Nullable
+	string fillStyle;
+	
+	/** Thickness of drawn lines. */
+	double thickness = 1.0;
+	
+	/** Length of dashes for a dashed border. */
+	repeated double dashes;
+
+}
+
+/** A box whose content is clipped. */
+@Operations("com.top_logic.graphic.flow.operations.ClipBoxOperations")
+message ClipBox extends Decoration {
+  // Nothing additional here	
+}

@@ -1,0 +1,192 @@
+package com.top_logic.graphic.flow.data;
+
+/**
+ * Top-level diagram element that can be layouted and rendered.
+ */
+public interface Diagram extends Widget, com.top_logic.graphic.flow.operations.DiagramOperations {
+
+	/**
+	 * Creates a {@link com.top_logic.graphic.flow.data.Diagram} instance.
+	 */
+	static com.top_logic.graphic.flow.data.Diagram create() {
+		return new com.top_logic.graphic.flow.data.impl.Diagram_Impl();
+	}
+
+	/** Identifier for the {@link com.top_logic.graphic.flow.data.Diagram} type in JSON format. */
+	String DIAGRAM__TYPE = "Diagram";
+
+	/** @see #getRoot() */
+	String ROOT__PROP = "root";
+
+	/** @see #getSelection() */
+	String SELECTION__PROP = "selection";
+
+	/** @see #isMultiSelect() */
+	String MULTI_SELECT__PROP = "multiSelect";
+
+	/** @see #getClickHandler() */
+	String CLICK_HANDLER__PROP = "clickHandler";
+
+	/** @see #getContext() */
+	String CONTEXT__PROP = "context";
+
+	/** @see #getViewBoxX() */
+	String VIEW_BOX_X__PROP = "viewBoxX";
+
+	/** @see #getViewBoxY() */
+	String VIEW_BOX_Y__PROP = "viewBoxY";
+
+	/** @see #getViewBoxWidth() */
+	String VIEW_BOX_WIDTH__PROP = "viewBoxWidth";
+
+	/** @see #getViewBoxHeight() */
+	String VIEW_BOX_HEIGHT__PROP = "viewBoxHeight";
+
+	/**
+	 * The top-level diagram element.
+	 */
+	com.top_logic.graphic.flow.data.Box getRoot();
+
+	/**
+	 * @see #getRoot()
+	 */
+	com.top_logic.graphic.flow.data.Diagram setRoot(com.top_logic.graphic.flow.data.Box value);
+
+	/**
+	 * Checks, whether {@link #getRoot()} has a value.
+	 */
+	boolean hasRoot();
+
+	/**
+	 * The list of currently selected diagram elements.
+	 */
+	java.util.List<com.top_logic.graphic.flow.data.SelectableBox> getSelection();
+
+	/**
+	 * @see #getSelection()
+	 */
+	com.top_logic.graphic.flow.data.Diagram setSelection(java.util.List<? extends com.top_logic.graphic.flow.data.SelectableBox> value);
+
+	/**
+	 * Adds a value to the {@link #getSelection()} list.
+	 */
+	com.top_logic.graphic.flow.data.Diagram addSelection(com.top_logic.graphic.flow.data.SelectableBox value);
+
+	/**
+	 * Removes a value from the {@link #getSelection()} list.
+	 */
+	void removeSelection(com.top_logic.graphic.flow.data.SelectableBox value);
+
+	/**
+	 * Whether multi-selection is supported
+	 */
+	boolean isMultiSelect();
+
+	/**
+	 * @see #isMultiSelect()
+	 */
+	com.top_logic.graphic.flow.data.Diagram setMultiSelect(boolean value);
+
+	/**
+	 * Internal field for storing the current click handler registration (client-side only).
+	 */
+	com.top_logic.graphic.blocks.svg.event.Registration getClickHandler();
+
+	/**
+	 * @see #getClickHandler()
+	 */
+	com.top_logic.graphic.flow.data.Diagram setClickHandler(com.top_logic.graphic.blocks.svg.event.Registration value);
+
+	/**
+	 * Checks, whether {@link #getClickHandler()} has a value.
+	 */
+	boolean hasClickHandler();
+
+	/**
+	 * Local (client-side) diagram-wide operation context to allow client-server communication.
+	 */
+	com.top_logic.graphic.flow.callback.DiagramContext getContext();
+
+	/**
+	 * @see #getContext()
+	 */
+	com.top_logic.graphic.flow.data.Diagram setContext(com.top_logic.graphic.flow.callback.DiagramContext value);
+
+	/**
+	 * Checks, whether {@link #getContext()} has a value.
+	 */
+	boolean hasContext();
+
+	/**
+	 * X coordinate of the view box.
+	 */
+	double getViewBoxX();
+
+	/**
+	 * @see #getViewBoxX()
+	 */
+	com.top_logic.graphic.flow.data.Diagram setViewBoxX(double value);
+
+	/**
+	 * Y coordinate of the view box.
+	 */
+	double getViewBoxY();
+
+	/**
+	 * @see #getViewBoxY()
+	 */
+	com.top_logic.graphic.flow.data.Diagram setViewBoxY(double value);
+
+	/**
+	 * Width of the view box.
+	 */
+	double getViewBoxWidth();
+
+	/**
+	 * @see #getViewBoxWidth()
+	 */
+	com.top_logic.graphic.flow.data.Diagram setViewBoxWidth(double value);
+
+	/**
+	 * Height of the view box.
+	 */
+	double getViewBoxHeight();
+
+	/**
+	 * @see #getViewBoxHeight()
+	 */
+	com.top_logic.graphic.flow.data.Diagram setViewBoxHeight(double value);
+
+	@Override
+	com.top_logic.graphic.flow.data.Diagram setCssClass(String value);
+
+	@Override
+	com.top_logic.graphic.flow.data.Diagram setUserObject(java.lang.Object value);
+
+	@Override
+	com.top_logic.graphic.flow.data.Diagram setClientId(String value);
+
+	@Override
+	com.top_logic.graphic.flow.data.Diagram setRenderInfo(java.lang.Object value);
+
+	/** Reads a new instance from the given reader. */
+	static com.top_logic.graphic.flow.data.Diagram readDiagram(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
+			return (com.top_logic.graphic.flow.data.Diagram) scope.resolveOrFail(in.nextInt());
+		}
+		in.beginArray();
+		String type = in.nextString();
+		assert DIAGRAM__TYPE.equals(type);
+		int id = in.nextInt();
+		com.top_logic.graphic.flow.data.impl.Diagram_Impl result = new com.top_logic.graphic.flow.data.impl.Diagram_Impl();
+		scope.readData(result, id, in);
+		in.endArray();
+		return result;
+	}
+
+	@Override
+	default Diagram self() {
+		return this;
+	}
+
+}

@@ -208,11 +208,30 @@ public class LabelBasedPreview<C extends LabelBasedPreview.Config<?>> extends Co
 	 * 
 	 * @param tile
 	 *        The {@link ComponentTile} to create label for.
+	 * 
+	 * @return {@link #labelPart(HTMLFragment)} with some content, if there should be a label part
+	 *         in the tile.
 	 */
 	protected HTMLFragment label(ComponentTile tile) {
+		HTMLFragment content = labelContent(tile);
+		if (content != empty()) {
+			return labelPart(content);
+		} else {
+			return empty();
+		}
+	}
+
+	/**
+	 * Produces the label part of a tile.
+	 * 
+	 * <p>
+	 * Must be returned from {@link #label(ComponentTile)}, if the card should have a label.
+	 * </p>
+	 */
+	protected HTMLFragment labelPart(HTMLFragment labelContent) {
 		return h5("card-title",
 			a(attributes(attribute(HTMLConstants.HREF_ATTR, HTMLConstants.HREF_EMPTY_LINK)), 
-				labelContent(tile)));
+				labelContent));
 	}
 
 	/**

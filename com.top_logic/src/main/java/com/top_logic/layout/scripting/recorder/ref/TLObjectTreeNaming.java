@@ -15,24 +15,39 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.col.TupleFactory.Pair;
+import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.col.search.SearchResult;
+import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
+import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.scripting.runtime.ActionContext;
+import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
+import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.TLType;
+import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 
@@ -46,12 +61,15 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
-public class TLObjectTreeNaming extends AbstractModelNamingScheme<TLObject, TLObjectTreeNaming.TLObjectTreeName> {
+public class TLObjectTreeNaming extends ModelNamingScheme<Object, TLObject, TLObjectTreeNaming.TLObjectTreeName> {
 
 	/** {@link ModelName} for the {@link TLObjectTreeNaming}. */
 	public interface TLObjectTreeName extends ModelName {
 
-		/** The root {@link TLObject} from which the {@link #getPath()} starts. */
+		/**
+		 * The root {@link TLObject} from which the {@link #getPath()} starts. If not given, the
+		 * root object is derived from the value context of the name.
+		 */
 		ModelName getRoot();
 
 		/** @see #getRoot() */
@@ -145,48 +163,129 @@ public class TLObjectTreeNaming extends AbstractModelNamingScheme<TLObject, TLOb
 
 	/** Creates a {@link TLObjectTreeNaming}. */
 	public TLObjectTreeNaming() {
-		super(TLObject.class, TLObjectTreeName.class);
+		super(TLObject.class, TLObjectTreeName.class, Object.class);
 	}
 
 	@Override
-	protected boolean isCompatibleModel(TLObject model) {
+	public Maybe<TLObjectTreeName> buildName(Object valueContext, TLObject model) {
+		if (isCompatibleModel(model)) {
+			TLObjectTreeName name = createName();
+			initName(name, valueContext, model);
+			return Maybe.some(name);
+		} else {
+			return Maybe.none();
+		}
+	}
+
+	private boolean isCompatibleModel(TLObject model) {
 		if (model.tType().getModelKind() != ModelKind.CLASS) {
 			return false;
 		}
 		return model.tContainer() != null;
 	}
 
-	@Override
-	protected void initName(TLObjectTreeName name, TLObject model) {
-		Pair<TLObject, List<TLObjectTreeStep>> rootAndPath = getRootAndCreatePath(model);
-		List<TLObjectTreeStep> path = rootAndPath.getSecond();
-		name.setPath(path);
-		name.setRoot(ModelResolver.buildModelName(rootAndPath.getFirst()));
-	}
-
-	private Pair<TLObject, List<TLObjectTreeStep>> getRootAndCreatePath(TLObject node) {
+	private void initName(TLObjectTreeName name, Object valueContext, TLObject model) {
 		List<TLObjectTreeStep> path = list();
-		TLObject child = node;
-		TLObject parent = child.tContainer();
-		while (parent != null) {
-			path.add(createStep(child));
-			child = parent;
+
+		TLObject node = model;
+		TLObject parent = node.tContainer();
+		while (true) {
+			ModelName contextName = buildLocalName(valueContext, node);
+			if (contextName != null) {
+				name.setRoot(contextName);
+				break;
+			}
+			if (parent == null) {
+				// Hit the top of the hierarchy.
+				TLObject root = node;
+				name.setRoot(ModelResolver.buildModelName(root));
+				break;
+			}
+
+			path.add(createStep(node));
+			node = parent;
 			parent = parent.tContainer();
 		}
 		reverse(path);
-		TLObject root = child;
-		return new Pair<>(root, path);
+
+		name.setPath(path);
 	}
 
-	private TLObjectTreeStep createStep(TLObject child) {
-		String attribute = child.tContainerReference().getName();
-		String label = getLabel(child);
+	/**
+	 * Tries to create a context-local name for the given object.
+	 * 
+	 * @return a context-local name for the given object, or <code>null</code>, if this is not
+	 *         possible.
+	 */
+	private ModelName buildLocalName(Object valueContext, TLObject obj) {
+		if (valueContext instanceof LayoutComponent component) {
+			// Note: Other channels as the model channel cannot be used to identify a context
+			// object, since an operation on component A might e.g. chance the value the component
+			// A's selection. Since the action is recorded after the operation, it may try to
+			// reference an object based on state that is not available during replay. Typically,
+			// the model channel of component A does not change, when performing an operation on
+			// that component.
+			Collection<?> model = CollectionUtil.asCollection(component.getModel());
+			if (model.isEmpty()) {
+				return null;
+			} else if (model.size() == 1) {
+				if (model.iterator().next() == obj) {
+					ComponentModel.Config<?> channelRef =
+						TypedConfiguration.newConfigItem(ComponentModel.Config.class);
+					return channelRef;
+				}
+			} else {
+				TLStructuredType type = obj.tType();
+				List<TLObject> withType = model.stream()
+					.filter(x -> x instanceof TLObject)
+					.map(x -> ((TLObject) x))
+					.filter(x -> x.tType() == type).toList();
+				if (withType.isEmpty()) {
+					return null;
+				} else if (withType.size() == 1) {
+					if (withType.iterator().next() == obj) {
+						ComponentModel.Config<?> channelRef =
+							TypedConfiguration.newConfigItem(ComponentModel.Config.class);
+						channelRef.setType(TLModelPartRef.ref(type));
+						return channelRef;
+					}
+				} else {
+					String id = getLabel(obj);
+					List<TLObject> withId = withType.stream().filter(x -> id.equals(getLabel(x))).toList();
+					if (withId.isEmpty()) {
+						return null;
+					} else if (withId.size() == 1) {
+						if (withId.iterator().next() == obj) {
+							ComponentModel.Config<?> channelRef =
+								TypedConfiguration.newConfigItem(ComponentModel.Config.class);
+							channelRef.setType(TLModelPartRef.ref(type));
+							channelRef.setId(id);
+							return channelRef;
+						}
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	private TLObjectTreeStep createStep(TLObject node) {
+		String attribute = node.tContainerReference().getName();
+		String label = getLabel(node);
 		return TLObjectTreeStep.create(attribute, label);
 	}
 
 	@Override
-	public TLObject locateModel(ActionContext context, TLObjectTreeName name) {
-		TLObject root = (TLObject) context.resolve(name.getRoot());
+	public TLObject locateModel(ActionContext context, Object valueContext, TLObjectTreeName name) {
+		TLObject root;
+		ModelName rootName = name.getRoot();
+		if (rootName instanceof LocalName<?> localName) {
+			ContextResolver resolver = TypedConfigUtil.createInstance(localName);
+			root = (TLObject) resolver.resolve(this::getLabel, valueContext);
+		} else {
+			root = (TLObject) context.resolve(rootName);
+		}
+
 		TLObject node = root;
 		for (TLObjectTreeStep step : name.getPath()) {
 			node = findChild(node, step);
@@ -275,12 +374,15 @@ public class TLObjectTreeNaming extends AbstractModelNamingScheme<TLObject, TLOb
 	}
 
 	private LabelProvider searchLabelProvider(TLClass type) {
-		LabelProvider labelProvider = getLabelProviders().get(type);
+		Map<TLClass, LabelProvider> labelProviders = getLabelProviders();
+		LabelProvider labelProvider = labelProviders.get(type);
 		if (labelProvider != null) {
 			return labelProvider;
 		}
+
 		LabelProvider superTypeLabelProvider = searchLabelProviderInSuperTypes(type);
-		getLabelProviders().put(type, superTypeLabelProvider);
+		Map<TLClass, LabelProvider> labelProviders2 = getLabelProviders();
+		labelProviders2.put(type, superTypeLabelProvider);
 		return superTypeLabelProvider;
 	}
 
@@ -330,6 +432,97 @@ public class TLObjectTreeNaming extends AbstractModelNamingScheme<TLObject, TLOb
 
 	private void logError(String message, Throwable exception) {
 		Logger.error(message, exception, TLObjectTreeNaming.class);
+	}
+
+	/**
+	 * {@link ModelName} that can be instantiated to a {@link ContextResolver}.
+	 */
+	public interface LocalName<I extends ContextResolver> extends ModelName, PolymorphicConfiguration<I> {
+		// Marker interface.
+	}
+
+	/**
+	 * Algorithm for resolving the value context of a {@link ModelNamingScheme} to a root object to
+	 * start locating an object.
+	 */
+	public interface ContextResolver {
+		/**
+		 * Resolves the root object from the naming scheme's value context.
+		 */
+		Object resolve(Function<TLObject, String> idProvider, Object valueContext);
+	}
+
+	/**
+	 * {@link ContextResolver} for the context component's model.
+	 */
+	public static class ComponentModel extends AbstractConfiguredInstance<ComponentModel.Config<?>>
+			implements ContextResolver {
+
+		/**
+		 * Configuration options for {@link TLObjectTreeNaming.ComponentModel}.
+		 */
+		public interface Config<I extends TLObjectTreeNaming.ComponentModel> extends LocalName<I> {
+			/**
+			 * Type of the referenced model. If set, used to identify object uniquely.
+			 */
+			TLModelPartRef getType();
+
+			/**
+			 * @see #getType()
+			 */
+			void setType(TLModelPartRef value);
+
+			/**
+			 * Unique name of the referenced object. If set, used to identify the object uniquely.
+			 */
+			@Nullable
+			String getId();
+
+			/**
+			 * @see #getId()
+			 */
+			void setId(String id);
+
+		}
+
+		/**
+		 * Creates a {@link TLObjectTreeNaming.ComponentModel} from configuration.
+		 * 
+		 * @param context
+		 *        The context for instantiating sub configurations.
+		 * @param config
+		 *        The configuration.
+		 */
+		@CalledByReflection
+		public ComponentModel(InstantiationContext context, Config<?> config) {
+			super(context, config);
+		}
+
+		@Override
+		public Object resolve(Function<TLObject, String> idProvider, Object valueContext) {
+			Stream<TLObject> candidates =
+				CollectionUtil.asCollection(((LayoutComponent) valueContext).getModel())
+					.stream()
+					.filter(x -> x instanceof TLObject)
+					.map(x -> ((TLObject) x));
+			TLModelPartRef typeRef = getConfig().getType();
+			if (typeRef != null) {
+				TLType type = typeRef.resolveType();
+				candidates = candidates.filter(x -> x.tType() == type);
+			}
+			String id = getConfig().getId();
+			if (id != null) {
+				candidates = candidates.filter(x -> id.equals(idProvider.apply(x)));
+			}
+			List<TLObject> matches = candidates.toList();
+			if (matches.isEmpty()) {
+				throw ApplicationAssertions.fail(getConfig(), "No match found.");
+			}
+			if (matches.size() > 1) {
+				throw ApplicationAssertions.fail(getConfig(), "No unique match found, candidates: " + matches);
+			}
+			return matches.get(0);
+		}
 	}
 
 }
